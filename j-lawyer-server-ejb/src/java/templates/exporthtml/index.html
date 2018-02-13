@@ -1,0 +1,179 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>j-lawyer Export</title>
+<link href="j-lawyer_style.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+<div id="jlawyer_header_wrapper">
+    <div id="jlawyer_header">
+    	<div id="site_title">
+            
+		<h2>{{filenumber}}</h2>
+                <span>{{filename}}</span>
+            
+        </div>
+        <p>{{filenotice}}</p>
+    
+    </div> 
+
+</div> 
+
+<div id="jlawyer_menu_wrapper">
+    <div id="jlawyer_menu">
+        
+        <ul>
+            <li><a href="#home" class="current">{{filenumber}}</a></li>
+            <li><a href="#parties" target="_parent">Beteiligte</a></li>
+            <li><a href="#documents" target="_parent">Dokumente</a></li>
+            <li><a href="#claims" target="_parent">Sch&auml;den</a></li>
+            <li><a href="#reviews">Wiedervorlagen</a></li>
+            <li><a href="#history">Historie</a></li>
+        </ul>    	
+    
+    </div> 
+</div>
+
+<div id="jlawyer_content_wrapper">
+
+	<div id="jlawyer_sidebar">
+    
+    	<div class="sidebar_box">
+        	
+            <h2>{{filenumber}}<a name="home"></a></h2>
+            
+            <div class="news_box">
+                <a href="#">Kurzrubrum:</a>
+                <p class="post_info">{{filename}}</p>
+		<a href="#">wegen:</a>
+                <p class="post_info">{{filereason}}</p>
+            </div>
+            
+<div class="news_box">
+                <a href="#">Sachgebiet:</a>
+                <p class="post_info">{{filesubjectfield}}</p>
+<a href="#">Anwalt:</a>
+                <p class="post_info">{{lawyer}}</p>
+<a href="#">Sachbearbeiter:</a>
+                <p class="post_info">{{assistant}}</p>
+            </div>
+
+<div class="news_box">
+                <a href="#">Notizen:</a>
+                <p class="post_info">{{filenotice}}</p>
+            </div>
+        
+        </div><div class="sidebar_box_bottom"></div>
+        
+        <div class="sidebar_box">
+			
+            <h2>Sch&auml;den<a name="claims"></a></h2>
+            
+            <div class="news_box">
+                <a href="#">Schadennummer:</a>
+                <p class="post_info">{{claimnumber}}</p>
+<a href="#">Gegenstandswert:</a>
+                <p class="post_info">{{claimvalue}} EUR</p>
+            </div>
+            
+            <div class="cleaner"></div>
+        
+        </div><div class="sidebar_box_bottom"></div>
+
+<div class="sidebar_box">
+			
+            <h2>Wiedervorlagen und Fristen<a name="reviews"></a></h2>
+            
+            <div class="news_box">
+		<table>
+		  <!-- tr><td><p class="post_info">01.01.2013</p></td><td><p class="post_info">dings</p></td></tr -->
+		  {{reviews}}
+		</table>
+                
+            </div>
+            
+            <div class="cleaner"></div>
+        
+        </div><div class="sidebar_box_bottom"></div>
+    
+    </div> <!-- end of the sidebar -->
+    
+    <div id="jlawyer_content">
+    
+    	<div class="content_box">
+        
+        	<h2>Beteiligte:<a name="parties"></a></h2>
+            
+
+		  <div class="news_box">
+                <a href="#">Mandanten:</a>
+                {{clients}}
+		
+            </div>
+
+	        <div class="news_box">
+                <a href="#">Gegner:</a>
+                {{opponents}}
+            </div>
+
+	    <div class="news_box">
+                <a href="#">Dritte:</a>
+                {{opponentattorneys}}
+            </div>
+        	<div class="cleaner"></div>
+        </div><div class="content_box_bottom"></div>
+        
+        <div class="content_box">
+        
+        	<h2>Dokumente<a name="documents"></a></h2>
+            
+		<table>
+		  {{documents}}
+		</table>
+
+            
+        
+        	<div class="cleaner"></div>
+        </div><div class="content_box_bottom"></div>
+    
+
+	<div class="content_box">
+        
+        	<h2>Historie<a name="history"></a></h2>
+		
+		<table>
+		  <!-- tr><td><p class="post_info">01.01.2013 10:03</p></td><td><p class="post_info">admin</p></td><td><p class="post_info">dings</p></td></tr -->
+		  {{history}}
+		</table>
+        
+        	<div class="cleaner"></div>
+        </div><div class="content_box_bottom"></div>
+
+    </div> <!-- end of content -->
+    
+    <div class="cleaner"></div>
+
+</div>
+
+<div id="jlawyer_footer_wrapper">
+
+    <div id="jlawyer_footer">
+    
+        <ul class="footer_menu">
+                    <li><a href="#home">{{filenumber}}</a></li>
+                    <li><a href="#parties" target="_parent">Beteiligte</a></li>
+                    <li><a href="#documents" target="_parent">Dokumente</a></li>
+                    <li><a href="#claims" target="_parent">Sch&auml;den</a></li>
+                    <li><a href="#reviews">Wiedervorlagen</a></li>
+                    <li class="last_menu"><a href="#history">Historie</a></li>
+                </ul>
+                
+                Exportiert aus <a href="http://www.j-lawyer.org">j-lawyer</a> | 
+                
+    </div>
+    
+</div>
+
+</body>
+</html>

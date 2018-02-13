@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://www.netbeans.org/ns/project/1">
+    <type>org.netbeans.modules.j2ee.ejbjarproject</type>
+    <configuration>
+        <data xmlns="http://www.netbeans.org/ns/j2ee-ejbjarproject/3">
+            <name>j-lawyer-server-ejb</name>
+            <minimum-ant-version>1.6.5</minimum-ant-version>
+            <included-library dirs="100">reference.j-lawyer-server-entities.dist</included-library>
+            <included-library dirs="200">reference.j-lawyer-server-api.jar</included-library>
+            <included-library dirs="200">file.reference.log4j.jar</included-library>
+            <included-library dirs="200">reference.j-lawyer-server-common.jar</included-library>
+            <included-library dirs="200">file.reference.mysql-connector-java-5.1.37-bin.jar</included-library>
+            <included-library dirs="200">file.reference.joda-time-2.1.jar</included-library>
+            <included-library dirs="200">file.reference.jollyday-0.4.7.jar</included-library>
+            <included-library dirs="200">file.reference.tika-app-1.5.jar</included-library>
+            <included-library dirs="200">file.reference.lucene-analyzers-common-4.7.0.jar</included-library>
+            <included-library dirs="200">file.reference.lucene-core-4.7.0.jar</included-library>
+            <included-library dirs="200">file.reference.lucene-queryparser-4.7.0.jar</included-library>
+            <included-library dirs="200">file.reference.lucene-highlighter-4.7.0.jar</included-library>
+            <included-library dirs="200">file.reference.lucene-memory-4.7.0.jar</included-library>
+            <included-library dirs="200">file.reference.lucene-queries-4.7.0.jar</included-library>
+            <included-library dirs="200">file.reference.java-rdfa-0.4.2.jar</included-library>
+            <included-library dirs="200">file.reference.jena-core-2.7.4.jar</included-library>
+            <included-library dirs="200">file.reference.jena-iri-0.9.4.jar</included-library>
+            <included-library dirs="200">file.reference.commons-validator-1.4.0.jar</included-library>
+            <included-library dirs="200">reference.j-lawyer-fax.jar</included-library>
+            <included-library dirs="200">reference.j-lawyer-drebis-stubs.jar</included-library>
+            <included-library dirs="200">file.reference.xmlrpc-client-3.1.3.jar</included-library>
+            <included-library dirs="200">file.reference.xmlrpc-common-3.1.3.jar</included-library>
+            <included-library dirs="200">file.reference.xmlrpc-server-3.1.3.jar</included-library>
+            <included-library dirs="200">file.reference.ws-commons-util-1.0.2.jar</included-library>
+            <included-library dirs="200">file.reference.commons-lang3-3.5.jar</included-library>
+            <included-library dirs="200">file.reference.commons-logging-1.2.jar</included-library>
+            <included-library dirs="200">file.reference.commons-net-3.5.jar</included-library>
+            <included-library dirs="200">file.reference.commons-vfs2-2.1.jar</included-library>
+            <included-library dirs="200">file.reference.jcifs-1.3.18.jar</included-library>
+            <included-library dirs="200">file.reference.jsch-0.1.54.jar</included-library>
+            <included-library dirs="200">file.reference.odfdom-java-0.8.11-incubating.jar</included-library>
+            <included-library dirs="200">file.reference.simple-odf-0.8.2-incubating.jar</included-library>
+            <included-library dirs="200">file.reference.xslt-runner-1.2.4-incubating.jar</included-library>
+            <included-library dirs="200">file.reference.xslt-runner-task-1.2.4-incubating.jar</included-library>
+            <source-roots>
+                <root id="src.dir"/>
+            </source-roots>
+            <test-roots>
+                <root id="test.src.dir"/>
+            </test-roots>
+        </data>
+        <libraries xmlns="http://www.netbeans.org/ns/ant-project-libraries/1">
+            <definitions>.././lib/nblibraries.properties</definitions>
+        </libraries>
+        <references xmlns="http://www.netbeans.org/ns/ant-project-references/1">
+            <reference>
+                <foreign-project>j-lawyer-drebis-stubs</foreign-project>
+                <artifact-type>jar</artifact-type>
+                <script>build.xml</script>
+                <target>jar</target>
+                <clean-target>clean</clean-target>
+                <id>jar</id>
+            </reference>
+            <reference>
+                <foreign-project>j-lawyer-fax</foreign-project>
+                <artifact-type>jar</artifact-type>
+                <script>build.xml</script>
+                <target>jar</target>
+                <clean-target>clean</clean-target>
+                <id>jar</id>
+            </reference>
+            <reference>
+                <foreign-project>j-lawyer-server-api</foreign-project>
+                <artifact-type>jar</artifact-type>
+                <script>build.xml</script>
+                <target>jar</target>
+                <clean-target>clean</clean-target>
+                <id>jar</id>
+            </reference>
+            <reference>
+                <foreign-project>j-lawyer-server-common</foreign-project>
+                <artifact-type>jar</artifact-type>
+                <script>build.xml</script>
+                <target>jar</target>
+                <clean-target>clean</clean-target>
+                <id>jar</id>
+            </reference>
+            <reference>
+                <foreign-project>j-lawyer-server-entities</foreign-project>
+                <artifact-type>jar</artifact-type>
+                <script>build.xml</script>
+                <target>dist</target>
+                <clean-target>clean</clean-target>
+                <id>dist</id>
+            </reference>
+        </references>
+    </configuration>
+</project>

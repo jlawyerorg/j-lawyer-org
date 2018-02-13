@@ -1,0 +1,2 @@
+Manifest-Version: 1.0
+Class-Path: j-lawyer-server-ejb.jar j-lawyer-server-entities.jar lib/jcifs-1.3.18.jar lib/jsch-0.1.54.jar lib/commons-vfs2-2.1.jar lib/commons-net-3.5.jar
