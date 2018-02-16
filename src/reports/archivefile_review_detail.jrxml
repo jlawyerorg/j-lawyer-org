@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="demo_address" language="groovy" pageWidth="555" pageHeight="802" columnWidth="555" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0">
+	<property name="ireport.zoom" value="1.0"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<field name="reviewDate" class="java.lang.String"/>
+	<field name="reviewReason" class="java.lang.String"/>
+        <field name="reviewTypeName" class="java.lang.String"/>
+        <field name="doneStatus" class="java.lang.String"/>
+        <field name="fileNumber" class="java.lang.String"/>
+        <field name="fileName" class="java.lang.String"/>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<title>
+		<!-- band height="20" splitType="Stretch">
+			<staticText>
+				<reportElement x="0" y="3" width="400" height="17"/>
+				<textElement>
+					<font size="12" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Wiedervorlagen/Fristen]]></text>
+			</staticText>
+                        
+                        <staticText>
+				<reportElement x="273" y="3" width="80" height="17"/>
+				<textElement>
+					<font size="12" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Termine]]></text>
+			</staticText>
+                        
+                        <line>
+				<reportElement x="0" y="19" width="525" height="1"/>
+			</line>
+                        <line>
+				<reportElement x="263" y="0" width="1" height="20"/>
+			</line>
+		</band -->
+	</title>
+	<pageHeader>
+		<band height="12" splitType="Stretch">
+                    
+                    <line>
+				<reportElement x="263" y="0" width="1" height="12"/>
+			</line>
+                </band>
+                
+	</pageHeader>
+	<columnHeader>
+		<!-- band height="12" splitType="Stretch"/ -->
+	</columnHeader>
+	<detail>
+		<band height="15" splitType="Stretch">
+			<line>
+				<reportElement x="263" y="0" width="1" height="15"/>
+			</line>
+                        
+                        <textField>
+				<reportElement x="0" y="0" width="70" height="15"/>
+				<textElement>
+					<font size="10" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.util.Date"><![CDATA[$F{reviewDate}]]></textFieldExpression>
+			</textField>
+			<!-- textField isStretchWithOverflow="true">
+				<reportElement x="80" y="0" width="120" height="17"/>
+				<textElement>
+					<font size="10"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{fileNumber}]]></textFieldExpression>
+			</textField>
+                        <textField isStretchWithOverflow="true">
+				<reportElement x="200" y="0" width="120" height="17"/>
+				<textElement>
+					<font size="10"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{fileName}]]></textFieldExpression>
+			</textField -->
+                        <textField isStretchWithOverflow="true">
+				<reportElement x="70" y="0" width="190" height="15"/>
+				<textElement>
+					<font size="10"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{reviewReason} +" (" + $F{reviewTypeName} +")"]]></textFieldExpression>
+			</textField>
+                        <!-- textField isStretchWithOverflow="true">
+				<reportElement x="400" y="0" width="120" height="17"/>
+				<textElement>
+					<font size="10"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{doneStatus}]]></textFieldExpression>
+			</textField -->
+                        
+                        
+                        
+		</band>
+	</detail>
+	<columnFooter>
+		<!-- band height="20" splitType="Stretch"/ -->
+	</columnFooter>
+	<pageFooter>
+		<!-- band height="30" splitType="Stretch">
+                <staticText>
+				<reportElement positionType="Float" x="0" y="10" width="340" height="20"/>
+				<textElement>
+					<font size="12" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Termine   ]]></text>
+			</staticText>
+                        </band -->
+	</pageFooter>
+	<summary>
+		<!-- band height="10" splitType="Stretch"/ -->
+	</summary>
+</jasperReport>
