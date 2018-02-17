@@ -689,34 +689,34 @@ import org.apache.log4j.Logger;
 
 /**
  *
- * @author  jens
+ * @author jens
  */
 public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements ThemeableEditor {
-    
-    private static final Logger log=Logger.getLogger(QuickArchiveFileSearchPanel.class.getName());
-    
+
+    private static final Logger log = Logger.getLogger(QuickArchiveFileSearchPanel.class.getName());
+
     private String detailsEditorClass;
-    private Image backgroundImage=null;
-    
+    private Image backgroundImage = null;
+
     /**
      * Creates new form QuickArchiveFileSearchPanel
      */
     public QuickArchiveFileSearchPanel() {
         initComponents();
-        UserSettings userSet=UserSettings.getInstance();
+        UserSettings userSet = UserSettings.getInstance();
         //this.detailsEditorClass=detailsEditorClass;
-        if(userSet.isCurrentUserInRole(UserSettings.ROLE_WRITECASE)) {
-            this.detailsEditorClass=EditArchiveFileDetailsPanel.class.getName();
+        if (userSet.isCurrentUserInRole(UserSettings.ROLE_WRITECASE)) {
+            this.detailsEditorClass = EditArchiveFileDetailsPanel.class.getName();
         } else {
-            this.detailsEditorClass=ViewArchiveFileDetailsPanel.class.getName();
+            this.detailsEditorClass = ViewArchiveFileDetailsPanel.class.getName();
         }
-        
-        String[] colNames=new String[] {"Aktenzeichen", "Kurzrubrum", "wegen", "archiviert", "Anwalt", "Tags"};
-        QuickArchiveFileSearchTableModel model=new QuickArchiveFileSearchTableModel(colNames, 0);
+
+        String[] colNames = new String[]{"Aktenzeichen", "Kurzrubrum", "wegen", "archiviert", "Anwalt", "Tags"};
+        QuickArchiveFileSearchTableModel model = new QuickArchiveFileSearchTableModel(colNames, 0);
         this.tblResults.setModel(model);
-        
+
         this.tblResults.setDefaultRenderer(Object.class, new QuickArchiveFileSearchCellRenderer());
-        
+
         this.tblResults.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "Enter");
         this.tblResults.getActionMap().put("Enter", new AbstractAction() {
             @Override
@@ -724,64 +724,67 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
                 useSelection();
             }
         });
-        
+
         /*RowSorter<TableModel> sorter = new TableRowSorter<TableModel>(model);
         this.tblResults.setRowSorter(sorter);*/
     }
-    
+
     public void populateTags(List<String> tags) {
-        Object selected=this.cmbTags.getSelectedItem();
-        if(selected==null)
-            selected="";
-        
+        Object selected = this.cmbTags.getSelectedItem();
+        if (selected == null) {
+            selected = "";
+        }
+
         this.cmbTags.removeAllItems();
         this.cmbTags.addItem("");
-        for(String t: tags)
+        for (String t : tags) {
             this.cmbTags.addItem(t);
-        
-        if(tags.contains(selected))
+        }
+
+        if (tags.contains(selected)) {
             this.cmbTags.setSelectedItem(selected);
-        else
+        } else {
             this.cmbTags.setSelectedIndex(0);
+        }
     }
-    
+
     public void clearInputs() {
         this.txtSearchString.setText("");
-        String[] colNames=new String[] {"Aktenzeichen", "Kurzrubrum", "wegen", "archiviert", "Anwalt", "Tags"};
-        QuickArchiveFileSearchTableModel model=new QuickArchiveFileSearchTableModel(colNames, 0);
+        String[] colNames = new String[]{"Aktenzeichen", "Kurzrubrum", "wegen", "archiviert", "Anwalt", "Tags"};
+        QuickArchiveFileSearchTableModel model = new QuickArchiveFileSearchTableModel(colNames, 0);
         this.tblResults.setModel(model);
-        
-        
-        
+
     }
-    
+
     public void setBackgroundImage(Image image) {
-        this.backgroundImage=image;
+        this.backgroundImage = image;
         this.tblResults.setOpaque(false);
-        
+
     }
-    
+
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
-        if(this.backgroundImage != null)
-            g.drawImage(this.backgroundImage, 0,0,this.getWidth(),this.getHeight(),this);
+        if (this.backgroundImage != null) {
+            g.drawImage(this.backgroundImage, 0, 0, this.getWidth(), this.getHeight(), this);
+        }
     }
-    
+
     public void updateTable() {
-        if(("".equals(this.txtSearchString.getText()) && this.tblResults.getRowCount()>0) || !("".equals(this.txtSearchString.getText()))) {
+        if (("".equals(this.txtSearchString.getText()) && this.tblResults.getRowCount() > 0) || !("".equals(this.txtSearchString.getText()))) {
             this.cmdQuickSearchActionPerformed(null);
         }
     }
-    
-    /** This method is called from within the constructor to
-     * initialize the form.
-     * WARNING: Do NOT modify this code. The content of this method is
-     * always regenerated by the Form Editor.
+
+    /**
+     * This method is called from within the constructor to initialize the form.
+     * WARNING: Do NOT modify this code. The content of this method is always
+     * regenerated by the Form Editor.
      */
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
         popupArchiveFileActions = new javax.swing.JPopupMenu();
+        mnuOpenSelectedArchiveFile = new javax.swing.JMenuItem();
         mnuDeleteSelectedArchiveFiles = new javax.swing.JMenuItem();
         jLabel1 = new javax.swing.JLabel();
         txtSearchString = new javax.swing.JTextField();
@@ -796,6 +799,16 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
         cmbTags = new javax.swing.JComboBox();
         jPanel1 = new javax.swing.JPanel();
         cmdExport = new javax.swing.JButton();
+
+        mnuOpenSelectedArchiveFile.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder.png"))); // NOI18N
+        mnuOpenSelectedArchiveFile.setText("öffnen");
+        mnuOpenSelectedArchiveFile.setToolTipText("gewählte Akten löschen");
+        mnuOpenSelectedArchiveFile.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuOpenSelectedArchiveFileActionPerformed(evt);
+            }
+        });
+        popupArchiveFileActions.add(mnuOpenSelectedArchiveFile);
 
         mnuDeleteSelectedArchiveFiles.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editdelete.png"))); // NOI18N
         mnuDeleteSelectedArchiveFiles.setText("löschen");
@@ -950,43 +963,40 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
     }// </editor-fold>//GEN-END:initComponents
 
     private void mnuDeleteSelectedArchiveFilesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuDeleteSelectedArchiveFilesActionPerformed
-        
+
         int response = JOptionPane.showConfirmDialog(this, "Ausgewählte Akte(n) löschen?", "Akte löschen", JOptionPane.YES_NO_OPTION);
         if (response != JOptionPane.YES_OPTION) {
             return;
         }
-        
+
         ThreadUtils.setWaitCursor(this, false);
-        int[] selectedIndices=this.tblResults.getSelectedRows();
+        int[] selectedIndices = this.tblResults.getSelectedRows();
         Arrays.sort(selectedIndices);
-        ArrayList<String> ids=new ArrayList<String>();
-        for(int i=0;i<selectedIndices.length;i++) {
-            QuickArchiveFileSearchRowIdentifier id=(QuickArchiveFileSearchRowIdentifier)this.tblResults.getValueAt(selectedIndices[i], 0);
+        ArrayList<String> ids = new ArrayList<String>();
+        for (int i = 0; i < selectedIndices.length; i++) {
+            QuickArchiveFileSearchRowIdentifier id = (QuickArchiveFileSearchRowIdentifier) this.tblResults.getValueAt(selectedIndices[i], 0);
             ids.add(id.getArchiveFileDTO().getId());
         }
-        
-        
-        
+
         EditorsRegistry.getInstance().updateStatus("Lösche " + ids.size() + " Akte(n)...", false);
-        ClientSettings settings=ClientSettings.getInstance();
+        ClientSettings settings = ClientSettings.getInstance();
         try {
             //InitialContext context = new InitialContext(settings.getLookupProperties());
-            JLawyerServiceLocator locator=JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+
             //Object object = locator.lookup("SystemManagementBean");
             //ArchiveFileServiceRemoteHome home = (ArchiveFileServiceRemoteHome)locator.getRemoteHome("ejb/ArchiveFileServiceBean", ArchiveFileServiceRemoteHome.class);
             ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
-            for(int i=ids.size()-1;i>-1;i--) {
+            for (int i = ids.size() - 1; i > -1; i--) {
                 fileService.removeArchiveFile(ids.get(i));
-                QuickArchiveFileSearchTableModel model=(QuickArchiveFileSearchTableModel)this.tblResults.getModel();
+                QuickArchiveFileSearchTableModel model = (QuickArchiveFileSearchTableModel) this.tblResults.getModel();
                 model.removeRow(tblResults.convertRowIndexToModel(selectedIndices[i]));
-                
+
             }
-            
+
             //fileService.remove();
-                   
             EditorsRegistry.getInstance().clearStatus(false);
-            
+
         } catch (Exception ex) {
             log.error("Error deleting archive files", ex);
             JOptionPane.showMessageDialog(this, "Fehler beim Löschen: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
@@ -998,75 +1008,80 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
     }//GEN-LAST:event_mnuDeleteSelectedArchiveFilesActionPerformed
 
     private void useSelection() {
-        int row=this.tblResults.getSelectedRow();
-            QuickArchiveFileSearchRowIdentifier id=(QuickArchiveFileSearchRowIdentifier)this.tblResults.getValueAt(row, 0);
-            Object editor=null;
-            try {
-                editor=EditorsRegistry.getInstance().getEditor(this.detailsEditorClass);
-                
-                if(editor instanceof ThemeableEditor) {
-                    // inherit the background to newly created child editors
-                    ((ThemeableEditor)editor).setBackgroundImage(this.backgroundImage);
-                }
-                if(editor instanceof PopulateOptionsEditor) {
-                    ((PopulateOptionsEditor)editor).populateOptions();
-                }       
-                ((ArchiveFilePanel)editor).setArchiveFileDTO(id.getArchiveFileDTO());
-                ((ArchiveFilePanel)editor).setOpenedFromEditorClass(this.getClass().getName());
-                EditorsRegistry.getInstance().setMainEditorsPaneView((Component)editor);
-                
-            } catch (Exception ex) {
-                log.error("Error creating editor from class " + this.detailsEditorClass, ex);
-                JOptionPane.showMessageDialog(this, "Fehler beim Laden des Editors: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+        int row = this.tblResults.getSelectedRow();
+        if (row < 0) {
+            return;
+        }
+        QuickArchiveFileSearchRowIdentifier id = (QuickArchiveFileSearchRowIdentifier) this.tblResults.getValueAt(row, 0);
+        Object editor = null;
+        try {
+            editor = EditorsRegistry.getInstance().getEditor(this.detailsEditorClass);
+
+            if (editor instanceof ThemeableEditor) {
+                // inherit the background to newly created child editors
+                ((ThemeableEditor) editor).setBackgroundImage(this.backgroundImage);
             }
+            if (editor instanceof PopulateOptionsEditor) {
+                ((PopulateOptionsEditor) editor).populateOptions();
+            }
+            ((ArchiveFilePanel) editor).setArchiveFileDTO(id.getArchiveFileDTO());
+            ((ArchiveFilePanel) editor).setOpenedFromEditorClass(this.getClass().getName());
+            EditorsRegistry.getInstance().setMainEditorsPaneView((Component) editor);
+
+        } catch (Exception ex) {
+            log.error("Error creating editor from class " + this.detailsEditorClass, ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim Laden des Editors: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+        }
     }
-    
+
     private void tblResultsMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblResultsMouseClicked
-        if(evt.getClickCount()==2 && evt.getButton()==evt.BUTTON1) {
+        if (evt.getClickCount() == 2 && evt.getButton() == evt.BUTTON1) {
             this.useSelection();
-                
-        } else if(evt.getClickCount()==1 && evt.getButton()==evt.BUTTON3) {
-            if(this.tblResults.getSelectedRowCount()<1) {
+
+        } else if (evt.getClickCount() == 1 && evt.getButton() == evt.BUTTON3) {
+            if (this.tblResults.getSelectedRowCount() < 1) {
                 return;
             }
             this.popupArchiveFileActions.show(this.tblResults, evt.getX(), evt.getY());
         } else if (evt.getClickCount() == 1 && evt.getButton() == evt.BUTTON1) {
             if (this.tblResults.getSelectedRowCount() == 1) {
-                int row=this.tblResults.getSelectedRow();
-                QuickArchiveFileSearchRowIdentifier id=(QuickArchiveFileSearchRowIdentifier)this.tblResults.getValueAt(row, 0);
-                ArchiveFileBean afb=id.getArchiveFileDTO();
+                int row = this.tblResults.getSelectedRow();
+                QuickArchiveFileSearchRowIdentifier id = (QuickArchiveFileSearchRowIdentifier) this.tblResults.getValueAt(row, 0);
+                ArchiveFileBean afb = id.getArchiveFileDTO();
                 lblSummary.setText(this.getArchiveFileAsHtml(afb));
             } else {
                 lblSummary.setText("");
             }
         }
-        
+
     }//GEN-LAST:event_tblResultsMouseClicked
 
     private String getArchiveFileAsHtml(ArchiveFileBean afb) {
-        StringBuffer html=new StringBuffer();
+        StringBuffer html = new StringBuffer();
         html.append("<html><body>");
         html.append("<table>");
         html.append("<tr><td>").append("Aktenzeichen: ").append("</td><td>").append(afb.getFileNumber()).append("</td></tr>");
         html.append("<tr><td>").append("Kurzrubrum: ").append("</td><td>").append(afb.getName()).append("</td></tr>");
-        if(afb.getReason()!=null)
+        if (afb.getReason() != null) {
             html.append("<tr><td>").append("wegen: ").append("</td><td>").append(afb.getReason()).append("</td></tr>");
-        if(afb.getNotice()!=null)
+        }
+        if (afb.getNotice() != null) {
             html.append("<tr><td>").append("Notiz: ").append("</td><td>").append(afb.getNotice()).append("</td></tr>");
-        if(afb.getLawyer()!=null)
+        }
+        if (afb.getLawyer() != null) {
             html.append("<tr><td>").append("Anwalt: ").append("</td><td>").append(afb.getLawyer()).append("</td></tr>");
-        if(afb.getAssistant()!=null)
+        }
+        if (afb.getAssistant() != null) {
             html.append("<tr><td>").append("Sachbearbeiter: ").append("</td><td>").append(afb.getAssistant()).append("</td></tr>");
-        
-        
-        
+        }
+
         html.append("</table>");
         html.append("</body></html>");
         return html.toString();
     }
-    
+
     private void txtSearchStringKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtSearchStringKeyPressed
-        if(evt.getKeyCode()==evt.VK_ENTER) {
+        if (evt.getKeyCode() == evt.VK_ENTER) {
             this.cmdQuickSearchActionPerformed(null);
         }
     }//GEN-LAST:event_txtSearchStringKeyPressed
@@ -1075,28 +1090,30 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
         // perform search here
         ThreadUtils.setWaitCursor(this);
         EditorsRegistry.getInstance().updateStatus("Suche Akten...");
-        String tag=null;
-        Object selectedTag=this.cmbTags.getSelectedItem();
-        if(selectedTag!=null)
-            tag=selectedTag.toString();
+        String tag = null;
+        Object selectedTag = this.cmbTags.getSelectedItem();
+        if (selectedTag != null) {
+            tag = selectedTag.toString();
+        }
         new Thread(new QuickArchiveFileSearchThread(this, this.txtSearchString.getText(), this.chkIncludeArchive.isSelected(), tag, this.tblResults)).start();
-        
+
     }//GEN-LAST:event_cmdQuickSearchActionPerformed
 
     private void tblResultsKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_tblResultsKeyReleased
-        if (this.tblResults.getSelectedRowCount() == 1 && (evt.getKeyCode()==evt.VK_DOWN || evt.getKeyCode()==evt.VK_UP)) {
-            int row=this.tblResults.getSelectedRow();
-                QuickArchiveFileSearchRowIdentifier id=(QuickArchiveFileSearchRowIdentifier)this.tblResults.getValueAt(row, 0);
-                ArchiveFileBean afb=id.getArchiveFileDTO();
-                lblSummary.setText(this.getArchiveFileAsHtml(afb));
+        if (this.tblResults.getSelectedRowCount() == 1 && (evt.getKeyCode() == evt.VK_DOWN || evt.getKeyCode() == evt.VK_UP)) {
+            int row = this.tblResults.getSelectedRow();
+            QuickArchiveFileSearchRowIdentifier id = (QuickArchiveFileSearchRowIdentifier) this.tblResults.getValueAt(row, 0);
+            ArchiveFileBean afb = id.getArchiveFileDTO();
+            lblSummary.setText(this.getArchiveFileAsHtml(afb));
         } else {
             lblSummary.setText("");
         }
     }//GEN-LAST:event_tblResultsKeyReleased
 
     private void cmbTagsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbTagsActionPerformed
-        if(this.txtSearchString.getText().length()>2)
+        if (this.txtSearchString.getText().length() > 2) {
             this.cmdQuickSearchActionPerformed(null);
+        }
     }//GEN-LAST:event_cmbTagsActionPerformed
 
     private void cmdExportActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdExportActionPerformed
@@ -1111,8 +1128,12 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
     private void tblResultsMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblResultsMousePressed
         TableUtils.handleRowClick(tblResults, evt);
     }//GEN-LAST:event_tblResultsMousePressed
-    
-    
+
+    private void mnuOpenSelectedArchiveFileActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuOpenSelectedArchiveFileActionPerformed
+        this.useSelection();
+    }//GEN-LAST:event_mnuOpenSelectedArchiveFileActionPerformed
+
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JCheckBox chkIncludeArchive;
     private javax.swing.JComboBox cmbTags;
@@ -1126,6 +1147,7 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
     protected javax.swing.JLabel lblPanelTitle;
     private javax.swing.JLabel lblSummary;
     private javax.swing.JMenuItem mnuDeleteSelectedArchiveFiles;
+    private javax.swing.JMenuItem mnuOpenSelectedArchiveFile;
     private javax.swing.JPopupMenu popupArchiveFileActions;
     private javax.swing.JTable tblResults;
     private javax.swing.JTextField txtSearchString;
@@ -1136,6 +1158,4 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
         return this.backgroundImage;
     }
 
-    
-    
 }
