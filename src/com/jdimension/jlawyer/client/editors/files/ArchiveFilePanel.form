@@ -384,6 +384,19 @@
             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuFreeTextMessageActionPerformed"/>
           </Events>
         </MenuItem>
+        <Component class="javax.swing.JPopupMenu$Separator" name="jSeparator5">
+        </Component>
+        <MenuItem class="javax.swing.JMenuItem" name="mnuUseDocumentAsTemplate">
+          <Properties>
+            <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+              <Image iconType="3" name="/icons/editcopy.png"/>
+            </Property>
+            <Property name="text" type="java.lang.String" value="als Vorlage speichern"/>
+          </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuUseDocumentAsTemplateActionPerformed"/>
+          </Events>
+        </MenuItem>
       </SubComponents>
     </Container>
     <Component class="javax.swing.ButtonGroup" name="btGrpReviewType">
