@@ -990,7 +990,7 @@ public class TemplatesPanel extends javax.swing.JPanel implements ThemeableEdito
 
     private void cmdNewActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdNewActionPerformed
         
-        NewTemplateDialog dlg=new NewTemplateDialog(EditorsRegistry.getInstance().getMainWindow(), true,null);
+        NewTemplateDialog dlg=new NewTemplateDialog(EditorsRegistry.getInstance().getMainWindow(), true,null,"");
         
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);

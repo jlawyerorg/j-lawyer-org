@@ -682,11 +682,11 @@ public class NewTemplateDialog extends javax.swing.JDialog {
     private static final Logger log = Logger.getLogger(NewTemplateDialog.class.getName());
     
     private GenericNode folder=null;
-
+    
     /**
      * Creates new form BankSearchDialog
      */
-    public NewTemplateDialog(java.awt.Frame parent, boolean modal, GenericNode folder) {
+    public NewTemplateDialog(java.awt.Frame parent, boolean modal, GenericNode folder, String newName) {
         super(parent, modal);
         this.folder=folder;
         initComponents();
@@ -714,6 +714,20 @@ public class NewTemplateDialog extends javax.swing.JDialog {
             JOptionPane.showMessageDialog(this, "Fehler beim Laden der Vorlagen: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
 
         }
+        
+        if(newName!=null) {
+            if(newName.length()>0)
+                this.cmbTemplates.setSelectedItem(newName);
+        }
+        
+        if(newName!=null) {
+        if(newName.toLowerCase().endsWith(".ods") || newName.toLowerCase().endsWith(".odt")) {
+            newName=newName.substring(0,newName.length()-4);
+        }
+        }
+        
+        this.txtFileName.setText(newName);
+        
 
     }
 
@@ -854,7 +868,7 @@ public class NewTemplateDialog extends javax.swing.JDialog {
         java.awt.EventQueue.invokeLater(new Runnable() {
 
             public void run() {
-                new NewTemplateDialog(new javax.swing.JFrame(), true, null).setVisible(true);
+                new NewTemplateDialog(new javax.swing.JFrame(), true, null,"").setVisible(true);
             }
         });
     }

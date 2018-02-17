@@ -1137,7 +1137,12 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
         DefaultMutableTreeNode selNode = (DefaultMutableTreeNode) tp.getLastPathComponent();
         GenericNode folder = (GenericNode) selNode.getUserObject();
 
-        NewTemplateDialog dlg = new NewTemplateDialog(EditorsRegistry.getInstance().getMainWindow(), true, folder);
+        String newName="neue Vorlage";
+        if (this.lstTemplates.getSelectedValue() != null) {
+            newName=this.lstTemplates.getSelectedValue().toString();
+        }
+        
+        NewTemplateDialog dlg = new NewTemplateDialog(EditorsRegistry.getInstance().getMainWindow(), true, folder, newName);
 
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
