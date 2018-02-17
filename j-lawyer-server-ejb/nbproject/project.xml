@@ -13,6 +13,7 @@
             <included-library dirs="200">file.reference.joda-time-2.1.jar</included-library>
             <included-library dirs="200">file.reference.jollyday-0.4.7.jar</included-library>
             <included-library dirs="200">file.reference.tika-app-1.5.jar</included-library>
+            <included-library dirs="200">file.reference.j-lawyer-drebis-stubs.jar</included-library>
             <included-library dirs="200">file.reference.lucene-analyzers-common-4.7.0.jar</included-library>
             <included-library dirs="200">file.reference.lucene-core-4.7.0.jar</included-library>
             <included-library dirs="200">file.reference.lucene-queryparser-4.7.0.jar</included-library>
@@ -24,7 +25,6 @@
             <included-library dirs="200">file.reference.jena-iri-0.9.4.jar</included-library>
             <included-library dirs="200">file.reference.commons-validator-1.4.0.jar</included-library>
             <included-library dirs="200">reference.j-lawyer-fax.jar</included-library>
-            <included-library dirs="200">reference.j-lawyer-drebis-stubs.jar</included-library>
             <included-library dirs="200">file.reference.xmlrpc-client-3.1.3.jar</included-library>
             <included-library dirs="200">file.reference.xmlrpc-common-3.1.3.jar</included-library>
             <included-library dirs="200">file.reference.xmlrpc-server-3.1.3.jar</included-library>
@@ -50,14 +50,6 @@
             <definitions>.././lib/nblibraries.properties</definitions>
         </libraries>
         <references xmlns="http://www.netbeans.org/ns/ant-project-references/1">
-            <reference>
-                <foreign-project>j-lawyer-drebis-stubs</foreign-project>
-                <artifact-type>jar</artifact-type>
-                <script>build.xml</script>
-                <target>jar</target>
-                <clean-target>clean</clean-target>
-                <id>jar</id>
-            </reference>
             <reference>
                 <foreign-project>j-lawyer-fax</foreign-project>
                 <artifact-type>jar</artifact-type>
