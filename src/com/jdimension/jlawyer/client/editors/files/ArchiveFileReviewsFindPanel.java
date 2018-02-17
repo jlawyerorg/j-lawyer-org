@@ -762,6 +762,7 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
         rdTypeRespite = new javax.swing.JRadioButton();
         rdTypeReview = new javax.swing.JRadioButton();
         jLabel1 = new javax.swing.JLabel();
+        cmdReset = new javax.swing.JButton();
         jLabel18 = new javax.swing.JLabel();
         lblPanelTitle = new javax.swing.JLabel();
         jPanel2 = new javax.swing.JPanel();
@@ -861,14 +862,36 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
         grpType.add(rdAllTypes);
         rdAllTypes.setSelected(true);
         rdAllTypes.setText("alle");
+        rdAllTypes.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                rdAllTypesActionPerformed(evt);
+            }
+        });
 
         grpType.add(rdTypeRespite);
         rdTypeRespite.setText("Fristen");
+        rdTypeRespite.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                rdTypeRespiteActionPerformed(evt);
+            }
+        });
 
         grpType.add(rdTypeReview);
         rdTypeReview.setText("Wiedervorlagen");
+        rdTypeReview.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                rdTypeReviewActionPerformed(evt);
+            }
+        });
 
         jLabel1.setText("nach Typ:");
+
+        cmdReset.setText("x");
+        cmdReset.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdResetActionPerformed(evt);
+            }
+        });
 
         org.jdesktop.layout.GroupLayout jPanel1Layout = new org.jdesktop.layout.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
@@ -898,11 +921,13 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
                     .add(jPanel1Layout.createSequentialGroup()
                         .add(jLabel3)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(txtToDate, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 162, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                        .add(txtToDate, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 162, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .add(18, 18, 18)
+                        .add(cmdReset))
                     .add(rdAllTypes)
                     .add(rdTypeRespite)
                     .add(rdTypeReview))
-                .addContainerGap(303, Short.MAX_VALUE))
+                .addContainerGap(244, Short.MAX_VALUE))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -913,7 +938,8 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
                     .add(txtFromDate, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                         .add(jLabel2)
-                        .add(jLabel4)))
+                        .add(jLabel4))
+                    .add(cmdReset))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(jLabel5)
@@ -1017,7 +1043,7 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 236, Short.MAX_VALUE)
+                .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 230, Short.MAX_VALUE)
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -1182,6 +1208,26 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
     private void tblResultsMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblResultsMousePressed
         TableUtils.handleRowClick(tblResults, evt);
     }//GEN-LAST:event_tblResultsMousePressed
+
+    private void cmdResetActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdResetActionPerformed
+        this.rdNotDoneStatus.setSelected(true);
+        this.rdAllTypes.setSelected(true);
+        this.txtFromDate.setDate(null);
+        this.txtToDate.setDate(null);
+        this.cmdRefreshActionPerformed(null);
+    }//GEN-LAST:event_cmdResetActionPerformed
+
+    private void rdAllTypesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rdAllTypesActionPerformed
+        this.cmdRefreshActionPerformed(null);
+    }//GEN-LAST:event_rdAllTypesActionPerformed
+
+    private void rdTypeRespiteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rdTypeRespiteActionPerformed
+        this.cmdRefreshActionPerformed(null);
+    }//GEN-LAST:event_rdTypeRespiteActionPerformed
+
+    private void rdTypeReviewActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rdTypeReviewActionPerformed
+        this.cmdRefreshActionPerformed(null);
+    }//GEN-LAST:event_rdTypeReviewActionPerformed
     
     private ReviewsStub getPrintValues() {
         ArrayList<ArchiveFileReviewsBean> revList=new ArrayList<ArchiveFileReviewsBean>();
@@ -1203,6 +1249,7 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
     private javax.swing.JButton cmdExport;
     private javax.swing.JButton cmdPrint;
     private javax.swing.JButton cmdRefresh;
+    private javax.swing.JButton cmdReset;
     private javax.swing.ButtonGroup grpStatus;
     private javax.swing.ButtonGroup grpType;
     private javax.swing.JLabel jLabel1;
