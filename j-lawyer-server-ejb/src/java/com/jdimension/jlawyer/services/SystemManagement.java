@@ -1033,78 +1033,6 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     
     @Override
     @RolesAllowed({"loginRole"})
-    public boolean deleteTemplate(String fileName) throws Exception {
-        String localBaseDir = System.getProperty("jlawyer.server.basedirectory");
-        localBaseDir = localBaseDir.trim();
-        if (!localBaseDir.endsWith(System.getProperty("file.separator"))) {
-            localBaseDir = localBaseDir + System.getProperty("file.separator");
-        }
-        
-        localBaseDir = localBaseDir + "templates" + System.getProperty("file.separator");
-        
-        String rem = localBaseDir + fileName;
-        
-        File f = new File(rem);
-        return f.delete();
-    }
-    
-    @Override
-    @RolesAllowed({"loginRole"})
-    public boolean addTemplateFromTemplate(String fileName, String basedOnTemplateFileName) throws Exception {
-        String localBaseDir = System.getProperty("jlawyer.server.basedirectory");
-        localBaseDir = localBaseDir.trim();
-        if (!localBaseDir.endsWith(System.getProperty("file.separator"))) {
-            localBaseDir = localBaseDir + System.getProperty("file.separator");
-        }
-        
-        localBaseDir = localBaseDir + "templates" + System.getProperty("file.separator");
-        
-        String src = localBaseDir + basedOnTemplateFileName;
-        String dst = localBaseDir + fileName;
-        
-        copyFile(src, dst);
-        
-        return true;
-    }
-    
-    @Override
-    @RolesAllowed({"loginRole"})
-    public Collection getAllTemplateNames() {
-        String localBaseDir = System.getProperty("jlawyer.server.basedirectory");
-        localBaseDir = localBaseDir.trim();
-        if (!localBaseDir.endsWith(System.getProperty("file.separator"))) {
-            localBaseDir = localBaseDir + System.getProperty("file.separator");
-        }
-        
-        localBaseDir = localBaseDir + "templates" + System.getProperty("file.separator");
-        
-        File f = new File(localBaseDir);
-        File[] files = f.listFiles();
-        ArrayList list = new ArrayList();
-        for (File curFile : files) {
-            list.add(curFile.getName());
-        }
-        Collections.sort(list, String.CASE_INSENSITIVE_ORDER);
-        return list;
-    }
-    
-    @Override
-    @RolesAllowed({"loginRole"})
-    public List<String> getPlaceHoldersInTemplate(String templateName) throws Exception {
-        
-        String localBaseDir = System.getProperty("jlawyer.server.basedirectory");
-        localBaseDir = localBaseDir.trim();
-        if (!localBaseDir.endsWith(System.getProperty("file.separator"))) {
-            localBaseDir = localBaseDir + System.getProperty("file.separator");
-        }
-        
-        localBaseDir = localBaseDir + "templates" + System.getProperty("file.separator") + templateName;
-        
-        return LibreOfficeAccess.getPlaceHolders(localBaseDir);
-    }
-    
-    @Override
-    @RolesAllowed({"loginRole"})
     public List<AppUserBean> getUsers() {
         return this.userBeanFacade.findAll();
         
@@ -1179,41 +1107,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         AppUserBean u = this.userBeanFacade.findByPrincipalId(principalId);
         this.userBeanFacade.remove(u);
     }
-    
-    @Override
-    @RolesAllowed({"loginRole"})
-    public byte[] getTemplateContent(String fileName) throws Exception {
-        String localBaseDir = System.getProperty("jlawyer.server.basedirectory");
-        localBaseDir = localBaseDir.trim();
-        if (!localBaseDir.endsWith(System.getProperty("file.separator"))) {
-            localBaseDir = localBaseDir + System.getProperty("file.separator");
-        }
-        
-        localBaseDir = localBaseDir + "templates" + System.getProperty("file.separator");
-        
-        String rem = localBaseDir + fileName;
-        
-        File f = new File(rem);
-        return readFile(f);
-    }
-    
-    @Override
-    @RolesAllowed({"loginRole"})
-    public void setTemplateContent(String fileName, byte[] content) throws Exception {
-        String localBaseDir = System.getProperty("jlawyer.server.basedirectory");
-        localBaseDir = localBaseDir.trim();
-        if (!localBaseDir.endsWith(System.getProperty("file.separator"))) {
-            localBaseDir = localBaseDir + System.getProperty("file.separator");
-        }
-        
-        localBaseDir = localBaseDir + "templates" + System.getProperty("file.separator");
-        
-        String upd = localBaseDir + fileName;
-        
-        File f = new File(upd);
-        writeFile(f, content);
-    }
-    
+   
     @Override
     @RolesAllowed({"loginRole"})
     public ServerInformation getServerInformation() {
@@ -1588,33 +1482,6 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         StreamResult result = new StreamResult(wildFlyConf);
         
         transformer.transform(source, result);
-        
-        return true;
-    }
-    
-    @Override
-    public boolean addTemplate(String fileName, byte[] data) throws Exception {
-        String localBaseDir = System.getProperty("jlawyer.server.basedirectory");
-        localBaseDir = localBaseDir.trim();
-        if (!localBaseDir.endsWith(System.getProperty("file.separator"))) {
-            localBaseDir = localBaseDir + System.getProperty("file.separator");
-        }
-        
-        localBaseDir = localBaseDir + "templates" + System.getProperty("file.separator");
-        
-        String dst = localBaseDir + fileName;
-        
-        File f2 = new File(dst);
-        
-        if (f2.exists()) {
-            throw new Exception("Zieldatei existiert bereits!");
-        }
-        
-        OutputStream out = new FileOutputStream(f2);
-        
-        out.write(data);
-        
-        out.close();
         
         return true;
     }
