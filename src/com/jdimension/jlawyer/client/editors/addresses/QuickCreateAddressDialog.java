@@ -661,77 +661,56 @@
  * For more information on this, and how to apply and follow the GNU AGPL, see
  * <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.client.editors.files;
+package com.jdimension.jlawyer.client.editors.addresses;
 
+import com.jdimension.jlawyer.client.configuration.CitySearchDialog;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
-import com.jdimension.jlawyer.client.editors.addresses.QuickAddressSearchRowIdentifier;
-import com.jdimension.jlawyer.client.editors.addresses.QuickAddressSearchTableModel;
-import com.jdimension.jlawyer.client.editors.addresses.QuickAddressSearchThread;
-import com.jdimension.jlawyer.client.editors.addresses.QuickCreateAddressDialog;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
-import com.jdimension.jlawyer.client.utils.ThreadUtils;
+import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.persistence.AddressBean;
-import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
-import com.jdimension.jlawyer.persistence.ArchiveFileBean;
-import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
+import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
+import com.jdimension.jlawyer.services.AddressServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
-import com.jdimension.jlawyer.ui.tagging.TagUtils;
-import java.awt.Rectangle;
-import java.awt.event.ActionEvent;
-import java.awt.event.KeyEvent;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import javax.swing.AbstractAction;
-import javax.swing.DefaultListModel;
-import javax.swing.JComponent;
-import javax.swing.JList;
+import javax.swing.DefaultComboBoxModel;
 import javax.swing.JOptionPane;
-import javax.swing.KeyStroke;
 import org.apache.log4j.Logger;
 
 /**
  *
  * @author jens
  */
-public class AddAddressSearchDialog extends javax.swing.JDialog {
+public class QuickCreateAddressDialog extends javax.swing.JDialog {
 
-    private static final Logger log = Logger.getLogger(AddAddressSearchDialog.class.getName());
-    private JList targetListBox = null;
-    private int targetReferenceType = -1;
-
+    private static final Logger log = Logger.getLogger(QuickCreateAddressDialog.class.getName());
+    
+    private AddressBean result=null;
+    
     /**
      * Creates new form AddAddressSearchDialog
      */
-    public AddAddressSearchDialog(java.awt.Frame parent, boolean modal, JList targetListBox, int referenceType) {
+    public QuickCreateAddressDialog(java.awt.Dialog parent, boolean modal) {
         super(parent, modal);
-        this.targetReferenceType = referenceType;
-        this.targetListBox = targetListBox;
         initComponents();
-        String[] colNames = new String[]{"Name", "Vorname", "Firma", "PLZ", "Ort", "Strasse", "Land", "Tags"};
-        QuickAddressSearchTableModel model = new QuickAddressSearchTableModel(colNames, 0);
-        this.tblResults.setModel(model);
-        ComponentUtils.autoSizeColumns(tblResults);
+        this.result=null;
+        
+        ClientSettings settings = ClientSettings.getInstance();
+        AppOptionGroupBean[] titles = settings.getTitles();
+        String[] titleItems = new String[titles.length + 1];
 
-        this.cmbTags.removeAllItems();
-        this.cmbTags.addItem("");
-        ClientSettings s = ClientSettings.getInstance();
-        List<String> tags = s.getAddressTagsInUse();
-        for (String tag : tags) {
-            this.cmbTags.addItem(tag);
+        titleItems[0] = "";
+        for (int i = 0; i < titles.length; i++) {
+            AppOptionGroupBean aogb = (AppOptionGroupBean) titles[i];
+            titleItems[i + 1] = aogb.getValue();
+
         }
-        this.cmbTags.setSelectedIndex(0);
+        StringUtils.sortIgnoreCase(titleItems);
 
-        this.tblResults.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "Enter");
-        this.tblResults.getActionMap().put("Enter", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent ae) {
-                useSelection();
-            }
-        });
-
+        DefaultComboBoxModel titleModel = new DefaultComboBoxModel(titleItems);
+        this.cmbTitle.setModel(titleModel);
+        
+        
         ComponentUtils.restoreDialogSize(this);
     }
 
@@ -743,60 +722,48 @@ public class AddAddressSearchDialog extends javax.swing.JDialog {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jLabel1 = new javax.swing.JLabel();
-        txtSearchString = new javax.swing.JTextField();
-        cmdQuickSearch = new javax.swing.JButton();
-        jScrollPane1 = new javax.swing.JScrollPane();
-        tblResults = new javax.swing.JTable();
-        cmbTags = new javax.swing.JComboBox();
         cmdCancel = new javax.swing.JButton();
         cmdUseSelection = new javax.swing.JButton();
-        cmdAddNew = new javax.swing.JButton();
+        jPanel1 = new javax.swing.JPanel();
+        jLabel1 = new javax.swing.JLabel();
+        jLabel2 = new javax.swing.JLabel();
+        jLabel3 = new javax.swing.JLabel();
+        txtFirstName = new javax.swing.JTextField();
+        txtName = new javax.swing.JTextField();
+        txtCompany = new javax.swing.JTextField();
+        jLabel25 = new javax.swing.JLabel();
+        cmbTitle = new javax.swing.JComboBox();
+        txtBirthDate = new javax.swing.JTextField();
+        jLabel29 = new javax.swing.JLabel();
+        jPanel2 = new javax.swing.JPanel();
+        jLabel4 = new javax.swing.JLabel();
+        jLabel5 = new javax.swing.JLabel();
+        jLabel6 = new javax.swing.JLabel();
+        txtZipCode = new javax.swing.JTextField();
+        txtStreet = new javax.swing.JTextField();
+        txtCity = new javax.swing.JTextField();
+        jLabel7 = new javax.swing.JLabel();
+        txtCountry = new javax.swing.JTextField();
+        cmdChooseCity = new javax.swing.JButton();
+        jPanel3 = new javax.swing.JPanel();
+        jLabel8 = new javax.swing.JLabel();
+        jLabel9 = new javax.swing.JLabel();
+        jLabel10 = new javax.swing.JLabel();
+        txtFax = new javax.swing.JTextField();
+        txtPhone = new javax.swing.JTextField();
+        txtEmail = new javax.swing.JTextField();
+        jLabel11 = new javax.swing.JLabel();
+        txtWebsite = new javax.swing.JTextField();
+        txtMobile = new javax.swing.JTextField();
+        jLabel19 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        setTitle("neuer Kontakt (Schnellerfassung)");
         addComponentListener(new java.awt.event.ComponentAdapter() {
             public void componentResized(java.awt.event.ComponentEvent evt) {
                 formComponentResized(evt);
             }
         });
-
-        jLabel1.setText("Suchanfrage:");
-
-        txtSearchString.addKeyListener(new java.awt.event.KeyAdapter() {
-            public void keyPressed(java.awt.event.KeyEvent evt) {
-                txtSearchStringKeyPressed(evt);
-            }
-        });
-
-        cmdQuickSearch.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/find.png"))); // NOI18N
-        cmdQuickSearch.setToolTipText("Suchen");
-        cmdQuickSearch.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdQuickSearchActionPerformed(evt);
-            }
-        });
-
-        tblResults.setModel(new javax.swing.table.DefaultTableModel(
-            new Object [][] {
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null}
-            },
-            new String [] {
-                "Title 1", "Title 2", "Title 3", "Title 4"
-            }
-        ));
-        tblResults.getTableHeader().setReorderingAllowed(false);
-        tblResults.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                tblResultsMouseClicked(evt);
-            }
-        });
-        jScrollPane1.setViewportView(tblResults);
-
-        cmbTags.setMaximumRowCount(15);
-        cmbTags.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
 
         cmdCancel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png"))); // NOI18N
         cmdCancel.setText("Schliessen");
@@ -814,13 +781,188 @@ public class AddAddressSearchDialog extends javax.swing.JDialog {
             }
         });
 
-        cmdAddNew.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit_add.png"))); // NOI18N
-        cmdAddNew.setToolTipText("Schnellerfassung");
-        cmdAddNew.addActionListener(new java.awt.event.ActionListener() {
+        jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder(javax.swing.BorderFactory.createTitledBorder("Name und Firmenname")));
+
+        jLabel1.setText("Name:");
+
+        jLabel2.setText("Vorname:");
+
+        jLabel3.setText("Firma:");
+
+        jLabel25.setText("Titel:");
+
+        cmbTitle.setMaximumRowCount(30);
+        cmbTitle.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+
+        jLabel29.setText("geboren:");
+
+        org.jdesktop.layout.GroupLayout jPanel1Layout = new org.jdesktop.layout.GroupLayout(jPanel1);
+        jPanel1.setLayout(jPanel1Layout);
+        jPanel1Layout.setHorizontalGroup(
+            jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jPanel1Layout.createSequentialGroup()
+                .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(jLabel2)
+                    .add(jLabel1)
+                    .add(jLabel3)
+                    .add(jLabel25))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(txtName, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 558, Short.MAX_VALUE)
+                    .add(txtFirstName)
+                    .add(txtCompany)
+                    .add(jPanel1Layout.createSequentialGroup()
+                        .add(cmbTitle, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                        .add(jLabel29)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(txtBirthDate, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 125, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap())
+        );
+        jPanel1Layout.setVerticalGroup(
+            jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel1Layout.createSequentialGroup()
+                .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(cmbTitle, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(jLabel25)
+                    .add(txtBirthDate, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(jLabel29))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(jLabel1)
+                    .add(txtName, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(jLabel2)
+                    .add(txtFirstName, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(jLabel3)
+                    .add(txtCompany, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+
+        jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder(javax.swing.BorderFactory.createTitledBorder("Adresse")));
+
+        jLabel4.setText("Strasse:");
+
+        jLabel5.setText("PLZ:");
+
+        jLabel6.setText("Ort:");
+
+        jLabel7.setText("Land:");
+
+        cmdChooseCity.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/find.png"))); // NOI18N
+        cmdChooseCity.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdAddNewActionPerformed(evt);
+                cmdChooseCityActionPerformed(evt);
             }
         });
+
+        org.jdesktop.layout.GroupLayout jPanel2Layout = new org.jdesktop.layout.GroupLayout(jPanel2);
+        jPanel2.setLayout(jPanel2Layout);
+        jPanel2Layout.setHorizontalGroup(
+            jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jPanel2Layout.createSequentialGroup()
+                .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(jLabel5)
+                    .add(jLabel4)
+                    .add(jLabel6)
+                    .add(jLabel7))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
+                    .add(org.jdesktop.layout.GroupLayout.LEADING, txtStreet)
+                    .add(org.jdesktop.layout.GroupLayout.LEADING, txtZipCode, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 510, Short.MAX_VALUE)
+                    .add(org.jdesktop.layout.GroupLayout.LEADING, txtCity)
+                    .add(txtCountry))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(cmdChooseCity)
+                .addContainerGap())
+        );
+        jPanel2Layout.setVerticalGroup(
+            jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jPanel2Layout.createSequentialGroup()
+                .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(jLabel4)
+                    .add(txtStreet, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(jLabel5)
+                    .add(cmdChooseCity)
+                    .add(txtZipCode, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(jLabel6)
+                    .add(txtCity, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(jLabel7)
+                    .add(txtCountry, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(20, Short.MAX_VALUE))
+        );
+
+        jPanel3.setBorder(javax.swing.BorderFactory.createTitledBorder(javax.swing.BorderFactory.createTitledBorder("Kontaktdaten")));
+
+        jLabel8.setText("Telefon:");
+
+        jLabel9.setText("Fax:");
+
+        jLabel10.setText("Email:");
+
+        txtEmail.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyPressed(java.awt.event.KeyEvent evt) {
+                txtEmailKeyPressed(evt);
+            }
+        });
+
+        jLabel11.setText("Homepage:");
+
+        jLabel19.setText("Mobil:");
+
+        org.jdesktop.layout.GroupLayout jPanel3Layout = new org.jdesktop.layout.GroupLayout(jPanel3);
+        jPanel3.setLayout(jPanel3Layout);
+        jPanel3Layout.setHorizontalGroup(
+            jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jPanel3Layout.createSequentialGroup()
+                .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(jLabel9)
+                    .add(jLabel8)
+                    .add(jLabel10)
+                    .add(jLabel11)
+                    .add(jLabel19))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(txtFax)
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, txtPhone)
+                    .add(txtWebsite)
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, txtEmail)
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, txtMobile))
+                .addContainerGap())
+        );
+        jPanel3Layout.setVerticalGroup(
+            jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jPanel3Layout.createSequentialGroup()
+                .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(jLabel8)
+                    .add(txtPhone, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .add(13, 13, 13)
+                .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(jLabel9)
+                    .add(txtFax, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(txtMobile, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(jLabel19))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(jLabel10)
+                    .add(txtEmail, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .add(13, 13, 13)
+                .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(jLabel11)
+                    .add(txtWebsite, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(20, Short.MAX_VALUE))
+        );
 
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -829,40 +971,26 @@ public class AddAddressSearchDialog extends javax.swing.JDialog {
             .add(layout.createSequentialGroup()
                 .addContainerGap()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 705, Short.MAX_VALUE)
-                    .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
-                        .add(jLabel1)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(txtSearchString)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(cmdQuickSearch)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                        .add(cmbTags, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                    .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
-                        .add(0, 0, Short.MAX_VALUE)
+                    .add(layout.createSequentialGroup()
+                        .add(0, 379, Short.MAX_VALUE)
                         .add(cmdUseSelection)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(cmdCancel))
-                    .add(layout.createSequentialGroup()
-                        .add(cmdAddNew)
-                        .add(0, 0, Short.MAX_VALUE)))
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(jPanel3, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(layout.createSequentialGroup()
                 .addContainerGap()
-                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(cmdQuickSearch)
-                    .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                        .add(jLabel1)
-                        .add(txtSearchString, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                    .add(cmbTags, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                .add(cmdAddNew)
+                .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 359, Short.MAX_VALUE)
+                .add(jPanel2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel3, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(cmdCancel)
                     .add(cmdUseSelection))
@@ -871,125 +999,86 @@ public class AddAddressSearchDialog extends javax.swing.JDialog {
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
-
-    private void tblResultsMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblResultsMouseClicked
-        if (evt.getClickCount() == 2 && evt.getButton() == evt.BUTTON1) {
-            this.useSelection();
-
-        }
-    }//GEN-LAST:event_tblResultsMouseClicked
-
-    private void cmdQuickSearchActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdQuickSearchActionPerformed
-// perform search here
-        EditorsRegistry.getInstance().updateStatus("Suche Adressen...");
-        ThreadUtils.setWaitCursor(this);
-        Object tag = this.cmbTags.getSelectedItem();
-        String sTag = null;
-        if (tag != null) {
-            sTag = tag.toString();
-        }
-        new Thread(new QuickAddressSearchThread(this, this.txtSearchString.getText(), sTag, this.tblResults)).start();
-    }//GEN-LAST:event_cmdQuickSearchActionPerformed
-
-    private void useSelection() {
-        int row = this.tblResults.getSelectedRow();
-        QuickAddressSearchRowIdentifier id = (QuickAddressSearchRowIdentifier) this.tblResults.getValueAt(row, 0);
-
-        DefaultListModel model = (DefaultListModel) this.targetListBox.getModel();
-        model.addElement(id.getAddressDTO());
-
-        try {
-            ClientSettings settings = ClientSettings.getInstance();
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            ArchiveFileServiceRemote afRem = locator.lookupArchiveFileServiceRemote();
-            Collection col = afRem.getArchiveFileAddressesForAddress(id.getAddressDTO().getId());
-            List<ArchiveFileBean> clientFiles = new ArrayList<ArchiveFileBean>();
-            List<ArchiveFileBean> opponentFiles = new ArrayList<ArchiveFileBean>();
-            List<ArchiveFileBean> opponentAttFiles = new ArrayList<ArchiveFileBean>();
-            for (Object o : col) {
-                ArchiveFileAddressesBean afb = (ArchiveFileAddressesBean) o;
-                if (afb.getReferenceType() == ArchiveFileAddressesBean.REFERENCETYPE_CLIENT) {
-                    clientFiles.add(afb.getArchiveFileKey());
-                } else if (afb.getReferenceType() == ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT) {
-                    opponentFiles.add(afb.getArchiveFileKey());
-                } else if (afb.getReferenceType() == ArchiveFileAddressesBean.REFERENCETYPE_OPPONENTATTORNEY) {
-                    opponentAttFiles.add(afb.getArchiveFileKey());
-                }
-            }
-            boolean conflict = false;
-            if (this.targetReferenceType == ArchiveFileAddressesBean.REFERENCETYPE_CLIENT && opponentFiles.size() > 0) {
-                conflict = true;
-            }
-            if (this.targetReferenceType == ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT && clientFiles.size() > 0) {
-                conflict = true;
-            }
-            if (conflict) {
-                JOptionPane.showMessageDialog(this, "Warnung: es liegt ein Interessenkonflikt vor!\n(Beteiligter ist in verschiedenen Akten sowohl Mandant als auch Gegner)!", "Warnung", JOptionPane.WARNING_MESSAGE);
-            }
-        } catch (Exception ex) {
-            log.error("Error getting archive files for address", ex);
-            JOptionPane.showMessageDialog(this, "Fehler beim Prüfen von Interessenkonflikten: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
-            EditorsRegistry.getInstance().clearStatus();
-            return;
-        }
-
-        this.setVisible(false);
-        this.dispose();
-    }
-
-    private void txtSearchStringKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtSearchStringKeyPressed
-        if (evt.getKeyCode() == evt.VK_ENTER) {
-            this.cmdQuickSearchActionPerformed(null);
-        }
-    }//GEN-LAST:event_txtSearchStringKeyPressed
-
+    
     private void formComponentResized(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentResized
         ComponentUtils.storeDialogSize(this);
     }//GEN-LAST:event_formComponentResized
 
     private void cmdCancelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCancelActionPerformed
-
+        
         this.setVisible(false);
+        this.dispose();
     }//GEN-LAST:event_cmdCancelActionPerformed
 
+    private void fillDTO(AddressBean adr) throws Exception {
+        adr.setCity(this.txtCity.getText());
+            adr.setCompany(this.txtCompany.getText());
+            if (this.cmbTitle.getSelectedItem() != null) {
+                adr.setTitle(this.cmbTitle.getSelectedItem().toString());
+            } else {
+                adr.setTitle("");
+            }
+            adr.setCountry(this.txtCountry.getText());
+            adr.setEmail(this.txtEmail.getText());
+            adr.setFax(this.txtFax.getText());
+            adr.setFirstName(this.txtFirstName.getText());
+            
+            adr.setName(this.txtName.getText());
+            adr.setPhone(this.txtPhone.getText());
+            adr.setMobile(this.txtMobile.getText());
+            adr.setStreet(this.txtStreet.getText());
+            adr.setWebsite(this.txtWebsite.getText());
+            adr.setZipCode(this.txtZipCode.getText());
+
+            adr.setBirthDate(this.txtBirthDate.getText());
+            
+    }
+    
+    
     private void cmdUseSelectionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdUseSelectionActionPerformed
-        int row = this.tblResults.getSelectedRow();
-        if (row >= 0) {
-            this.useSelection();
+        if ((this.txtName.getText() == null || "".equals(this.txtName.getText())) && (this.txtCompany.getText() == null || "".equals(this.txtCompany.getText()))) {
+            JOptionPane.showMessageDialog(this, "Es muß mindestens ein Name oder ein Firmenname angegeben werden, um eine Adresse zu speichern.", "Adressen - Gültigkeitsprüfung", JOptionPane.INFORMATION_MESSAGE);
+            return;
         }
+
+        ClientSettings settings = ClientSettings.getInstance();
+        EditorsRegistry.getInstance().updateStatus("Adresse wird gespeichert...");
+        try {
+            //InitialContext context = new InitialContext(settings.getLookupProperties());
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+
+            AddressServiceRemote addressService = locator.lookupAddressServiceRemote();
+
+            this.result = new AddressBean();
+            
+            this.fillDTO(this.result);
+
+            
+                this.result=addressService.createAddress(this.result);
+            
+            EditorsRegistry.getInstance().updateStatus("Adresse gespeichert.", 5000);
+
+        } catch (Exception ex) {
+            log.error("Error saving address", ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim Speichern: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            EditorsRegistry.getInstance().clearStatus();
+            return;
+        }
+        
+        this.setVisible(false);
+            this.dispose();
+        
     }//GEN-LAST:event_cmdUseSelectionActionPerformed
 
-    private void cmdAddNewActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdAddNewActionPerformed
-        QuickCreateAddressDialog qca = new QuickCreateAddressDialog(this, true);
-        FrameUtils.centerDialog(qca, EditorsRegistry.getInstance().getMainWindow());
-        qca.setVisible(true);
+    private void cmdChooseCityActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdChooseCityActionPerformed
+        CitySearchDialog dlg = new CitySearchDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.txtZipCode, this.txtCity);
+        FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
+        dlg.setVisible(true);
+    }//GEN-LAST:event_cmdChooseCityActionPerformed
 
-        AddressBean result = qca.getResult();
-        if (result != null) {
-            QuickAddressSearchTableModel model = (QuickAddressSearchTableModel) this.tblResults.getModel();
-            QuickAddressSearchRowIdentifier identifier = new QuickAddressSearchRowIdentifier(result);
-            Object[] row = new Object[]{identifier, result.getFirstName(), result.getCompany(), result.getZipCode(), result.getCity(), result.getStreet(), result.getCountry(), ""};
-            model.addRow(row);
-            int scrollToRow = getRowForObject(identifier);
-            if (scrollToRow > -1) {
-                this.tblResults.getSelectionModel().setSelectionInterval(scrollToRow, scrollToRow);
-                this.tblResults.scrollRectToVisible(new Rectangle(this.tblResults.getCellRect(scrollToRow, 0, true)));
-            }
-        }
-    }//GEN-LAST:event_cmdAddNewActionPerformed
-
-    private int getRowForObject(QuickAddressSearchRowIdentifier id) {
-        for (int i = 0; i < this.tblResults.getRowCount(); i++) {
-            Object value = this.tblResults.getValueAt(i, 0);
-            if (value instanceof QuickAddressSearchRowIdentifier) {
-                if (id.equals(value)) {
-                    return i;
-                }
-            }
-        }
-
-        return -1;
-    }
+    private void txtEmailKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtEmailKeyPressed
+        
+    }//GEN-LAST:event_txtEmailKeyPressed
 
     /**
      * @param args the command line arguments
@@ -998,19 +1087,51 @@ public class AddAddressSearchDialog extends javax.swing.JDialog {
         java.awt.EventQueue.invokeLater(new Runnable() {
 
             public void run() {
-                new AddAddressSearchDialog(new javax.swing.JFrame(), true, null, -1).setVisible(true);
+                new QuickCreateAddressDialog(null, true).setVisible(true);
             }
         });
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JComboBox cmbTags;
-    private javax.swing.JButton cmdAddNew;
+    protected javax.swing.JComboBox cmbTitle;
     private javax.swing.JButton cmdCancel;
-    private javax.swing.JButton cmdQuickSearch;
+    private javax.swing.JButton cmdChooseCity;
     private javax.swing.JButton cmdUseSelection;
     private javax.swing.JLabel jLabel1;
-    private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JTable tblResults;
-    private javax.swing.JTextField txtSearchString;
+    private javax.swing.JLabel jLabel10;
+    private javax.swing.JLabel jLabel11;
+    private javax.swing.JLabel jLabel19;
+    private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel jLabel25;
+    private javax.swing.JLabel jLabel29;
+    private javax.swing.JLabel jLabel3;
+    private javax.swing.JLabel jLabel4;
+    private javax.swing.JLabel jLabel5;
+    private javax.swing.JLabel jLabel6;
+    private javax.swing.JLabel jLabel7;
+    private javax.swing.JLabel jLabel8;
+    private javax.swing.JLabel jLabel9;
+    private javax.swing.JPanel jPanel1;
+    private javax.swing.JPanel jPanel2;
+    private javax.swing.JPanel jPanel3;
+    protected javax.swing.JTextField txtBirthDate;
+    protected javax.swing.JTextField txtCity;
+    protected javax.swing.JTextField txtCompany;
+    protected javax.swing.JTextField txtCountry;
+    protected javax.swing.JTextField txtEmail;
+    protected javax.swing.JTextField txtFax;
+    protected javax.swing.JTextField txtFirstName;
+    protected javax.swing.JTextField txtMobile;
+    protected javax.swing.JTextField txtName;
+    protected javax.swing.JTextField txtPhone;
+    protected javax.swing.JTextField txtStreet;
+    protected javax.swing.JTextField txtWebsite;
+    protected javax.swing.JTextField txtZipCode;
     // End of variables declaration//GEN-END:variables
+
+    /**
+     * @return the result
+     */
+    public AddressBean getResult() {
+        return result;
+    }
 }

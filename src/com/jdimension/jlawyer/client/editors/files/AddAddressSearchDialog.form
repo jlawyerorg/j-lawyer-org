@@ -171,6 +171,9 @@
         </Property>
         <Property name="toolTipText" type="java.lang.String" value="Schnellerfassung"/>
       </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdAddNewActionPerformed"/>
+      </Events>
     </Component>
   </SubComponents>
 </Form>
