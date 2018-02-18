@@ -700,13 +700,13 @@ public interface SystemManagementRemote {
 
     boolean addFromMasterTemplate(String fileName, String basedOnFileName) throws Exception;
 
-    boolean deleteTemplate(String fileName) throws Exception;
+    //boolean deleteTemplate(String fileName) throws Exception;
     
-    boolean addTemplateFromTemplate(String fileName, String basedOnTemplateFileName) throws Exception;
+    //boolean addTemplateFromTemplate(String fileName, String basedOnTemplateFileName) throws Exception;
 
-    Collection getAllTemplateNames();
+    //Collection getAllTemplateNames();
     
-    List<String> getPlaceHoldersInTemplate(String templateName) throws Exception;
+    //List<String> getPlaceHoldersInTemplate(String templateName) throws Exception;
 
     List<AppUserBean> getUsers();
 
@@ -720,9 +720,9 @@ public interface SystemManagementRemote {
 
     
     
-    byte[] getTemplateContent(String fileName) throws Exception;
+    //byte[] getTemplateContent(String fileName) throws Exception;
 
-    void setTemplateContent(String fileName, byte[] content) throws Exception;
+    //void setTemplateContent(String fileName, byte[] content) throws Exception;
 
     ServerInformation getServerInformation();
 
@@ -750,7 +750,7 @@ public interface SystemManagementRemote {
 
     boolean setServerInterfaceBindings(String ip) throws Exception;
 
-    boolean addTemplate(String fileName, byte[] data) throws Exception;
+    //boolean addTemplate(String fileName, byte[] data) throws Exception;
 
     boolean addTemplate(GenericNode folder, String fileName, byte[] data) throws Exception;
 

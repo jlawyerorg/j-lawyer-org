@@ -705,8 +705,6 @@ public interface ArchiveFileServiceRemote {
 
     Collection<ArchiveFileReviewsBean> getAllOpenReviews();
 
-    ArchiveFileDocumentsBean addDocumentFromTemplate(String archiveFileId, String fileName, String templateName, Hashtable placeHolderValues, String dictateSign) throws Exception;
-
     Collection getDocuments(String archiveFileKey);
 
     boolean archiveFileExists(String id);
