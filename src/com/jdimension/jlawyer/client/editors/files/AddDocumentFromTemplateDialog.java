@@ -706,7 +706,6 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog {
     private AddressBean opp = null;
     private AddressBean oppAtt = null;
     private AddressBean cl = null;
-    private ArrayList<String> allTemplates = null;
     private boolean initializing = true;
     private JTable tblReviewReasons = null;
 
@@ -722,7 +721,6 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog {
         this.aFile = aFile;
         this.opp = opp;
         this.oppAtt = oppAtt;
-        this.allTemplates = new ArrayList<String>();
         initComponents();
 
         this.cmbClients.removeAllItems();
@@ -758,22 +756,22 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog {
 
         ClientSettings settings = ClientSettings.getInstance();
         EditorsRegistry.getInstance().updateStatus("Lade Dokumentvorlagen...");
-        try {
-            //InitialContext context = new InitialContext(settings.getLookupProperties());
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            Collection templates = locator.lookupSystemManagementRemote().getAllTemplateNames();
-            this.allTemplates.add("");
-            for (Object template : templates) {
-                this.allTemplates.add(template.toString());
-
-            }
-
-        } catch (Exception ex) {
-            log.error("Error loading template names", ex);
-            JOptionPane.showMessageDialog(this, "Fehler Laden der Dokumentvorlagen: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
-            EditorsRegistry.getInstance().clearStatus();
-            return;
-        }
+//        try {
+//            //InitialContext context = new InitialContext(settings.getLookupProperties());
+//            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+//            Collection templates = locator.lookupSystemManagementRemote().getAllTemplateNames();
+//            this.allTemplates.add("");
+//            for (Object template : templates) {
+//                this.allTemplates.add(template.toString());
+//
+//            }
+//
+//        } catch (Exception ex) {
+//            log.error("Error loading template names", ex);
+//            JOptionPane.showMessageDialog(this, "Fehler Laden der Dokumentvorlagen: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+//            EditorsRegistry.getInstance().clearStatus();
+//            return;
+//        }
         this.cmdAddDocument.setEnabled(false);
 
         AppOptionGroupBean[] dictateSigns = settings.getDictateSignDtos();
@@ -1650,13 +1648,11 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog {
         //EditorsRegistry.getInstance().updateStatus("Adresse wird gespeichert...");
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-//            boolean admin = locator.lookupSecurityServiceRemote().isAdmin();
-//            if (admin) {
-            Collection fileNames = locator.lookupSystemManagementRemote().getAllTemplateNames();
-
-            for (Object o : fileNames) {
-                model.addElement(o);
-            }
+//            Collection fileNames = locator.lookupSystemManagementRemote().getAllTemplateNames();
+//
+//            for (Object o : fileNames) {
+//                model.addElement(o);
+//            }
 
             GenericNode templateTree = locator.lookupSystemManagementRemote().getAllTemplatesTree();
 

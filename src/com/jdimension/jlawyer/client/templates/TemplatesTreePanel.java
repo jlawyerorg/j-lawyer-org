@@ -765,13 +765,12 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
         //EditorsRegistry.getInstance().updateStatus("Adresse wird gespeichert...");
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-//            boolean admin = locator.lookupSecurityServiceRemote().isAdmin();
-//            if (admin) {
-            Collection fileNames = locator.lookupSystemManagementRemote().getAllTemplateNames();
 
-            for (Object o : fileNames) {
-                model.addElement(o);
-            }
+//            Collection fileNames = locator.lookupSystemManagementRemote().getAllTemplateNames();
+//
+//            for (Object o : fileNames) {
+//                model.addElement(o);
+//            }
 
             GenericNode templateTree = locator.lookupSystemManagementRemote().getAllTemplatesTree();
 
