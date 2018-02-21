@@ -666,6 +666,7 @@ package com.jdimension.jlawyer.client.desktop;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.fax.BalanceInformation;
+import com.jdimension.jlawyer.fax.SipgateException;
 import com.jdimension.jlawyer.services.AddressServiceRemote;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
@@ -746,8 +747,11 @@ public class SystemStateTimerTask extends java.util.TimerTask {
             
         } catch (Throwable ex) {
             log.error("Error connecting to server", ex);
-            //JOptionPane.showMessageDialog(this.owner, "Verbindungsfehler: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
-            ThreadUtils.showErrorDialog(this.owner, java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/SystemStateTimerTask").getString("msg.connectionerror"), new Object[] {ex.getMessage()}), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/SystemStateTimerTask").getString("msg.error"));
+            String errorMsg=java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/SystemStateTimerTask").getString("msg.connectionerror"), new Object[] {ex.getMessage()});
+            if(ex instanceof SipgateException) {
+                errorMsg="Keine Sipgate-Verbindung: " + ex.getMessage();
+            }
+            ThreadUtils.showErrorDialog(this.owner, errorMsg, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/SystemStateTimerTask").getString("msg.error"));
             return;
         }
         
