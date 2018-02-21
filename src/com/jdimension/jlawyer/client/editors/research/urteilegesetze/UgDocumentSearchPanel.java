@@ -987,7 +987,7 @@ public class UgDocumentSearchPanel extends javax.swing.JPanel implements Themeab
             }
             this.scrollResults.repaint();
             this.scrollResults.revalidate();
-        } catch (Exception ex) {
+        } catch (Throwable ex) {
             log.error("Error performing index search", ex);
             JOptionPane.showMessageDialog(this, "Fehler bei der Suche: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
             EditorsRegistry.getInstance().clearStatus();
