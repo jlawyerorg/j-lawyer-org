@@ -777,5 +777,7 @@ public interface SystemManagementRemote {
     List<String> getPlaceHoldersForTemplate(GenericNode folder, String templateName) throws Exception;
 
     List<GenericNode> searchTemplateFolders(String query) throws Exception;
+
+    String getTemplatePreview(GenericNode folder, String fileName) throws Exception;
     
 }
