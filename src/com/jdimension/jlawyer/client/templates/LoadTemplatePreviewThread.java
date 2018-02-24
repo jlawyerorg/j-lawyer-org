@@ -674,6 +674,7 @@ import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
+import javax.swing.JSplitPane;
 import javax.swing.SwingUtilities;
 import org.apache.log4j.Logger;
 import org.jlawyer.data.tree.GenericNode;
@@ -690,12 +691,14 @@ public class LoadTemplatePreviewThread implements Runnable {
     
     private GenericNode f = null;
     private JPanel pnlPreview = null;
+    private JSplitPane split=null;
     private String fileName = null;
 
-    public LoadTemplatePreviewThread(GenericNode folder, String fileName, JPanel pnlPreview) {
+    public LoadTemplatePreviewThread(GenericNode folder, String fileName, JPanel pnlPreview, JSplitPane split) {
         this.f = folder;
         this.pnlPreview = pnlPreview;
         this.fileName = fileName;
+        this.split=split;
     }
     
     public static boolean isRunning() {
@@ -707,6 +710,7 @@ public class LoadTemplatePreviewThread implements Runnable {
 
         try {
             running=true;
+            int divLoc=this.split.getDividerLocation();
             //this.pnlPreview.setVisible(false);
             ThreadUtils.setVisible(pnlPreview, false);
             //this.pnlPreview.removeAll();
@@ -734,6 +738,7 @@ public class LoadTemplatePreviewThread implements Runnable {
             ThreadUtils.addComponent(pnlPreview, preview, BorderLayout.CENTER);
             //this.pnlPreview.add(preview, BorderLayout.CENTER);
             ThreadUtils.setVisible(pnlPreview, true);
+            ThreadUtils.setSplitDividerLocation(split, divLoc);
 
             running=false;
         } catch (Exception ex) {

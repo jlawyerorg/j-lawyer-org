@@ -1673,7 +1673,7 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
         if (this.lstTemplates.getSelectedValue() == null) {
             this.clearDocumentPreview("Vorschau nicht verfügbar");
         } else {
-            int divLoc=this.jSplitPane2.getDividerLocation();
+            
             Object selection=this.lstTemplates.getSelectedValue();
             if(selection==null)
                 return;
@@ -1687,9 +1687,8 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
                 DefaultMutableTreeNode selNode = (DefaultMutableTreeNode) tp.getLastPathComponent();
                 GenericNode folder = (GenericNode) selNode.getUserObject();
             
-            new Thread(new LoadTemplatePreviewThread(folder, selectedTemplate, this.pnlPreview)).start();
+            new Thread(new LoadTemplatePreviewThread(folder, selectedTemplate, this.pnlPreview, this.jSplitPane2)).start();
             
-            this.jSplitPane2.setDividerLocation(divLoc);
         }
     }
 }
