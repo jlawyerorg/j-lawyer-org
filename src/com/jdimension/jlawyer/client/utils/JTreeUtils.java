@@ -664,6 +664,8 @@
 package com.jdimension.jlawyer.client.utils;
 
 import javax.swing.JTree;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.TreePath;
 
 /**
  *
@@ -675,6 +677,22 @@ public class JTreeUtils {
 
         for (int i = 0; i < jTree.getRowCount(); i++) {
             jTree.expandRow(i);
+        }
+
+    }
+
+    public static void expandToLevel(JTree jTree, int level) {
+
+        if (jTree.getModel().getRoot() != null) {
+            if (jTree.getModel().getRoot() instanceof DefaultMutableTreeNode) {
+                DefaultMutableTreeNode currentNode = (DefaultMutableTreeNode)jTree.getModel().getRoot();
+                do {
+                    if (currentNode.getLevel() < level) {
+                        jTree.expandPath(new TreePath(currentNode.getPath()));
+                    }
+                    currentNode = currentNode.getNextNode();
+                } while (currentNode != null);
+            }
         }
 
     }

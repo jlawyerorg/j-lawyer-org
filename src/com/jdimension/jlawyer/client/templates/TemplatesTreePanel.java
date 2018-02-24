@@ -779,7 +779,8 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
 
             DefaultTreeModel tm = new DefaultTreeModel(rootNode);
             this.treeFolders.setModel(tm);
-            JTreeUtils.expandAll(this.treeFolders);
+            //JTreeUtils.expandAll(this.treeFolders);
+            JTreeUtils.expandToLevel(treeFolders, 1);
 
             this.treeFolders.setSelectionRow(0);
 
