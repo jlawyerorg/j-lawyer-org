@@ -665,6 +665,7 @@ package com.jdimension.jlawyer.client.templates;
 
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.ThemeableEditor;
+import com.jdimension.jlawyer.client.editors.documents.viewer.DocumentViewerFactory;
 import com.jdimension.jlawyer.client.launcher.Launcher;
 import com.jdimension.jlawyer.client.launcher.LauncherFactory;
 import com.jdimension.jlawyer.client.launcher.TemplateDocumentStore;
@@ -675,6 +676,8 @@ import com.jdimension.jlawyer.client.utils.JTreeUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.services.SystemManagementRemote;
+import java.awt.BorderLayout;
+import java.awt.FlowLayout;
 import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.Point;
@@ -690,6 +693,7 @@ import java.awt.dnd.DropTargetDragEvent;
 import java.awt.dnd.DropTargetDropEvent;
 import java.awt.dnd.DropTargetEvent;
 import java.awt.dnd.DropTargetListener;
+import java.awt.event.KeyEvent;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -699,9 +703,12 @@ import java.util.List;
 import java.util.TooManyListenersException;
 import javax.swing.DefaultListModel;
 import javax.swing.DropMode;
+import javax.swing.JComponent;
 import javax.swing.JFileChooser;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JProgressBar;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
@@ -748,6 +755,8 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
         
         this.refreshTree();
 
+        this.clearDocumentPreview("");
+        
         try {
             getMyDropTarget().addDropTargetListener(getDropTargetHandler());
         } catch (TooManyListenersException ex) {
@@ -881,6 +890,8 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
         jPanel1 = new javax.swing.JPanel();
         cmdRefresh = new javax.swing.JButton();
         cmdAddExisting = new javax.swing.JButton();
+        jSplitPane2 = new javax.swing.JSplitPane();
+        pnlPreview = new javax.swing.JPanel();
         jSplitPane1 = new javax.swing.JSplitPane();
         jScrollPane1 = new javax.swing.JScrollPane();
         lstTemplates = new javax.swing.JList();
@@ -997,6 +1008,12 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
             }
         });
 
+        jSplitPane2.setDividerLocation(-1);
+        jSplitPane2.setResizeWeight(0.7);
+
+        pnlPreview.setLayout(new java.awt.BorderLayout());
+        jSplitPane2.setRightComponent(pnlPreview);
+
         lstTemplates.setModel(new javax.swing.AbstractListModel() {
             String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" };
             public int getSize() { return strings.length; }
@@ -1006,6 +1023,16 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
         lstTemplates.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 lstTemplatesMouseClicked(evt);
+            }
+        });
+        lstTemplates.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyReleased(java.awt.event.KeyEvent evt) {
+                lstTemplatesKeyReleased(evt);
+            }
+        });
+        lstTemplates.addListSelectionListener(new javax.swing.event.ListSelectionListener() {
+            public void valueChanged(javax.swing.event.ListSelectionEvent evt) {
+                lstTemplatesValueChanged(evt);
             }
         });
         jScrollPane1.setViewportView(lstTemplates);
@@ -1029,16 +1056,24 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
 
         jSplitPane1.setLeftComponent(jScrollPane2);
 
+        jSplitPane2.setLeftComponent(jSplitPane1);
+
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(layout.createSequentialGroup()
+            .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
-                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jSplitPane1)
-                    .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
-                        .add(0, 72, Short.MAX_VALUE)
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
+                    .add(jSplitPane2)
+                    .add(layout.createSequentialGroup()
+                        .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .add(18, 18, 18)
+                        .add(jLabel18)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .add(layout.createSequentialGroup()
+                        .add(0, 0, Short.MAX_VALUE)
                         .add(cmdAddExisting)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(cmdNewODS)
@@ -1049,13 +1084,7 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(cmdDelete)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(cmdEdit))
-                    .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
-                        .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .add(18, 18, 18)
-                        .add(jLabel18)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                        .add(cmdEdit)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -1067,8 +1096,8 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
                     .add(lblPanelTitle)
                     .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jSplitPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 292, Short.MAX_VALUE)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jSplitPane2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 398, Short.MAX_VALUE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(cmdEdit)
                     .add(cmdNew)
@@ -1124,6 +1153,9 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
     private void lstTemplatesMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lstTemplatesMouseClicked
         if (evt.getClickCount() == 2) {
             this.cmdEditActionPerformed(null);
+        } else if (evt.getClickCount() == 1 && !evt.isConsumed()) {
+            evt.consume();
+            //this.updateDocumentPreview();
         }
     }//GEN-LAST:event_lstTemplatesMouseClicked
 
@@ -1360,6 +1392,18 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
         }
     }//GEN-LAST:event_mnuRenameFolderActionPerformed
 
+    private void lstTemplatesValueChanged(javax.swing.event.ListSelectionEvent evt) {//GEN-FIRST:event_lstTemplatesValueChanged
+        if (!evt.getValueIsAdjusting()) {
+            this.updateDocumentPreview();
+        }
+    }//GEN-LAST:event_lstTemplatesValueChanged
+
+    private void lstTemplatesKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_lstTemplatesKeyReleased
+        if (evt.getKeyCode() == KeyEvent.VK_DOWN || evt.getKeyCode() == KeyEvent.VK_UP) {
+            this.updateDocumentPreview();
+        }
+    }//GEN-LAST:event_lstTemplatesKeyReleased
+
     private void showPopupMenu(java.awt.event.MouseEvent evt) {
         if (evt.isPopupTrigger()) {
             int row = this.treeFolders.getRowForLocation(evt.getX(), evt.getY());
@@ -1576,11 +1620,13 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JSplitPane jSplitPane1;
+    private javax.swing.JSplitPane jSplitPane2;
     protected javax.swing.JLabel lblPanelTitle;
     private javax.swing.JList lstTemplates;
     private javax.swing.JMenuItem mnuNewFolder;
     private javax.swing.JMenuItem mnuRemoveFolder;
     private javax.swing.JMenuItem mnuRenameFolder;
+    private javax.swing.JPanel pnlPreview;
     private javax.swing.JPopupMenu popFolders;
     private javax.swing.JTree treeFolders;
     // End of variables declaration//GEN-END:variables
@@ -1588,5 +1634,62 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
     @Override
     public Image getBackgroundImage() {
         return this.backgroundImage;
+    }
+    
+    private void clearDocumentPreview(String newText) {
+        try {
+            int divLoc=this.jSplitPane2.getDividerLocation();
+            this.pnlPreview.setVisible(false);
+            this.pnlPreview.removeAll();
+//            ThreadUtils.setLayout(pnlPreview, new FlowLayout());
+//            JProgressBar loading = new JProgressBar();
+//            loading.setIndeterminate(true);
+//
+//            this.pnlPreview.add(loading);
+//            this.pnlPreview.setVisible(true);
+//            try {
+//                // there were some unclear occasions where the document preview panel would still show the preview of the last document in the case that was loaded before this one
+//                Thread.sleep(100);
+//            } catch (Throwable t) {
+//            }
+
+            JComponent preview = DocumentViewerFactory.getDocumentViewer("dummy.txt", newText, null, this.pnlPreview.getWidth(), this.pnlPreview.getHeight());
+            this.pnlPreview.setVisible(false);
+//            this.pnlPreview.remove(loading);
+            ThreadUtils.setLayout(pnlPreview, new BorderLayout());
+            this.pnlPreview.add(preview, BorderLayout.CENTER);
+            this.pnlPreview.setVisible(true);
+            this.jSplitPane2.setDividerLocation(divLoc);
+        } catch (Exception ex) {
+            log.error(ex);
+            this.pnlPreview.removeAll();
+            this.pnlPreview.add(new JLabel("Vorschau nicht verfügbar..."));
+            ThreadUtils.showErrorDialog(this, "Fehler beim Generieren der Vorschau: " + ex.getMessage(), "Fehler");
+
+        }
+    }
+    
+    public void updateDocumentPreview() {
+        if (this.lstTemplates.getSelectedValue() == null) {
+            this.clearDocumentPreview("Vorschau nicht verfügbar");
+        } else {
+            int divLoc=this.jSplitPane2.getDividerLocation();
+            Object selection=this.lstTemplates.getSelectedValue();
+            if(selection==null)
+                return;
+            String selectedTemplate=selection.toString();
+            
+            TreePath tp = this.treeFolders.getSelectionPath();
+                if (tp == null) {
+                    log.error("no folder selected - returning...");
+                    return;
+                }
+                DefaultMutableTreeNode selNode = (DefaultMutableTreeNode) tp.getLastPathComponent();
+                GenericNode folder = (GenericNode) selNode.getUserObject();
+            
+            new Thread(new LoadTemplatePreviewThread(folder, selectedTemplate, this.pnlPreview)).start();
+            
+            this.jSplitPane2.setDividerLocation(divLoc);
+        }
     }
 }
