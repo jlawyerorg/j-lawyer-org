@@ -2169,32 +2169,6 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         PreviewGenerator pg = new PreviewGenerator(this.archiveFileDocumentsFacade);
         return pg.getDocumentPreview(id);
 
-//        ArchiveFileDocumentsBean db=this.archiveFileDocumentsFacade.find(id);
-//        String aId=db.getArchiveFileKey().getId();
-//        
-//        if(!this.previewExists(aId, db.getName()))
-//            this.createPreview(aId, db.getName());
-//        
-//        String localBaseDir = System.getProperty("jlawyer.server.basedirectory");
-//        localBaseDir=localBaseDir.trim();
-//        if (!localBaseDir.endsWith(System.getProperty("file.separator"))) {
-//            localBaseDir = localBaseDir + System.getProperty("file.separator");
-//        }
-//        
-//        String dst=localBaseDir + "archivefiles-preview" + System.getProperty("file.separator") + aId + System.getProperty("file.separator");
-//        
-//        File dstDir=new File(dst);
-//        dstDir.mkdirs();
-//                
-//        dst=dst + db.getName();
-//        
-//        File dstFile=new File(dst);
-//        
-//        if(!(dstFile.exists())) {
-//            throw new Exception ("Dokumentvorschau " + dst + " existiert nicht!");
-//        }
-//        
-//        return SystemManagement.readTextFile(dstFile);
     }
 
     @Override

@@ -707,6 +707,7 @@ import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathFactory;
 import org.apache.log4j.Logger;
+import org.apache.tika.Tika;
 import org.jboss.security.annotation.SecurityDomain;
 import org.jlawyer.data.tree.GenericNode;
 import org.jlawyer.data.tree.TreeNodeUtils;
@@ -1757,6 +1758,41 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         this.searchForTemplates(rootFolder, root, list, query);
         return list;
         
+    }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public String getTemplatePreview(GenericNode folder, String fileName) throws Exception {
+        String localBaseDir = System.getProperty("jlawyer.server.basedirectory");
+        localBaseDir = localBaseDir.trim();
+        if (!localBaseDir.endsWith(System.getProperty("file.separator"))) {
+            localBaseDir = localBaseDir + System.getProperty("file.separator");
+        }
+        
+        localBaseDir = localBaseDir + "templates" + TreeNodeUtils.buildNodePath(folder);
+        
+        String read = localBaseDir + File.separator + fileName;
+        
+        Tika tika=new Tika();
+        try {
+            Reader r=tika.parse(new File(read));
+            BufferedReader br=new BufferedReader(r);
+            StringWriter sw=new StringWriter();
+            BufferedWriter bw=new BufferedWriter(sw);
+            char[] buffer=new char[1024];
+            int bytesRead=-1;
+            while((bytesRead=br.read(buffer))>-1) {
+                bw.write(buffer,0,bytesRead);
+            }
+            bw.close();
+            br.close();
+            
+            return sw.toString();
+            
+        } catch (Throwable t) {
+            log.error("Error creating template preview", t);
+        }
+        return "";
     }
     
 }
