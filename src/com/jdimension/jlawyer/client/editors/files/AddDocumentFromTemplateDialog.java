@@ -1661,7 +1661,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog {
 
             DefaultTreeModel tm = new DefaultTreeModel(rootNode);
             this.treeFolders.setModel(tm);
-            JTreeUtils.expandAll(this.treeFolders);
+            JTreeUtils.expandToLevel(this.treeFolders, 1);
 
             this.treeFolders.setSelectionRow(0);
 
