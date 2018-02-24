@@ -911,6 +911,7 @@ public class BackupTask extends java.util.TimerTask {
         }
 
         long fileCount = 0;
+        ArrayList<String> errorList = new ArrayList<String>();
         try {
             List<File> fileList = new ArrayList<File>();
             log.info("Getting references to all files in: " + directoryToZip.getCanonicalPath());
@@ -918,12 +919,12 @@ public class BackupTask extends java.util.TimerTask {
             //fileList.add(dumpFile);
             fileCount = fileList.size();
             log.info("Creating zip file");
-            if(encrypt) {
-                writeEncryptedZipFile(zipFileName, directoryToZip, fileList, backupDir, encryptionPassword);
+            if (encrypt) {
+                writeEncryptedZipFile(zipFileName, directoryToZip, fileList, backupDir, encryptionPassword, errorList);
             } else {
-                writeZipFile(zipFileName, directoryToZip, fileList, backupDir);
+                writeZipFile(zipFileName, directoryToZip, fileList, backupDir, errorList);
             }
-            
+
             log.info("Backup finished");
 
             if (syncLocation.length() > 0) {
@@ -991,6 +992,11 @@ public class BackupTask extends java.util.TimerTask {
         }
         exportEnd = new Date();
 
+        // print errors to log file
+        for (String s : errorList) {
+            log.error(s);
+        }
+
         Date backupEnd = new Date();
         try {
             InitialContext ic = new InitialContext();
@@ -1001,7 +1007,11 @@ public class BackupTask extends java.util.TimerTask {
             body.append("Server:          ").append(ServerInformation.getHostName()).append("\r\n");
             body.append("Startzeitpunkt:  ").append(dfMailTime.format(backupStart)).append("\r\n");
             body.append("Endzeitpunkt:    ").append(dfMailTime.format(backupEnd)).append("\r\n");
-            body.append("Dateien:         ").append(fileCount).append("\r\n");
+            if (errorList.size() > 0) {
+                body.append("Dateien:         ").append(fileCount).append(", " + errorList.size() + " mit WARNUNGEN!\r\n");
+            } else {
+                body.append("Dateien:         ").append(fileCount).append("\r\n");
+            }
             body.append("Verzeichnis:     ").append(backupDir.getAbsolutePath()).append("\r\n");
             body.append("Dateiname:       ").append(zipFileName).append("\r\n");
             File zip = new File(backupDir.toString() + System.getProperty("file.separator") + zipFileName);
@@ -1150,7 +1160,7 @@ public class BackupTask extends java.util.TimerTask {
 
     }
 
-    public static void writeZipFile(String fileName, File directoryToZip, List<File> fileList, File backupDir) throws Exception {
+    public static void writeZipFile(String fileName, File directoryToZip, List<File> fileList, File backupDir, ArrayList<String> errorList) throws Exception {
 
         FileOutputStream fos = new FileOutputStream(backupDir.toString() + System.getProperty("file.separator") + fileName);
         ZipOutputStream zos = new ZipOutputStream(fos);
@@ -1158,7 +1168,7 @@ public class BackupTask extends java.util.TimerTask {
         for (File file : fileList) {
 
             if (!file.isDirectory()) { // we only zip files, not directories
-                addToZip(directoryToZip, file, zos);
+                addToZip(directoryToZip, file, zos, errorList);
             }
         }
 
@@ -1169,19 +1179,19 @@ public class BackupTask extends java.util.TimerTask {
 
     private static String guessFileNameEncoding(List<File> fileList) {
 
-        Hashtable ht=new Hashtable<String,Integer>();
-        
+        Hashtable ht = new Hashtable<String, Integer>();
+
         for (File file : fileList) {
             if (!file.isDirectory()) {
-                
+
                 try {
                     byte[] b = file.getName().getBytes("ISO8859-15");
                     CharsetDetector charDetect = new CharsetDetector();
                     charDetect.setText(b);
                     String charSet = charDetect.detect().getName();
-                    if(ht.containsKey(charSet)) {
-                        Integer i=(Integer)(ht.get(charSet));
-                        ht.put(charSet, new Integer(i.intValue()+1));
+                    if (ht.containsKey(charSet)) {
+                        Integer i = (Integer) (ht.get(charSet));
+                        ht.put(charSet, new Integer(i.intValue() + 1));
                     } else {
                         ht.put(charSet, new Integer(1));
                     }
@@ -1192,27 +1202,28 @@ public class BackupTask extends java.util.TimerTask {
                 }
             }
         }
-        
-        String returnCharset="ISO-8859-15";
-        int returnCharsetNumber=0;
-        for(Object k: ht.keySet()) {
-            String cs=k.toString();
-            Integer total=(Integer)(ht.get(k));
-            if(total>returnCharsetNumber) {
-                returnCharset=cs;
-                returnCharsetNumber=total;
+
+        String returnCharset = "ISO-8859-15";
+        int returnCharsetNumber = 0;
+        for (Object k : ht.keySet()) {
+            String cs = k.toString();
+            Integer total = (Integer) (ht.get(k));
+            if (total > returnCharsetNumber) {
+                returnCharset = cs;
+                returnCharsetNumber = total;
             }
         }
-        if(returnCharset.startsWith("ISO-8859"))
-            returnCharset="ISO-8859-15";
+        if (returnCharset.startsWith("ISO-8859")) {
+            returnCharset = "ISO-8859-15";
+        }
         return returnCharset;
     }
 
-    public static void writeEncryptedZipFile(String fileName, File directoryToZip, List<File> fileList, File backupDir, String encryptionPassword) throws Exception {
+    public static void writeEncryptedZipFile(String fileName, File directoryToZip, List<File> fileList, File backupDir, String encryptionPassword, ArrayList<String> errorList) throws Exception {
 
         // Initiate ZipFile object with the path/name of the zip file.
         ZipFile zipFile = new ZipFile(backupDir.toString() + System.getProperty("file.separator") + fileName);
-        String fileNameEncoding=guessFileNameEncoding(fileList);
+        String fileNameEncoding = guessFileNameEncoding(fileList);
         log.info("guessed filename encoding " + fileNameEncoding);
         zipFile.setFileNameCharset(fileNameEncoding);
 
@@ -1265,13 +1276,13 @@ public class BackupTask extends java.util.TimerTask {
         for (File file : fileList) {
 
             if (!file.isDirectory()) { // we only zip files, not directories
-                addToZipWithEncryption(directoryToZip, file, zipFile, encryptionPassword);
+                addToZipWithEncryption(directoryToZip, file, zipFile, encryptionPassword, errorList);
             }
         }
 
     }
 
-    public static void addToZip(File directoryToZip, File file, ZipOutputStream zos) throws FileNotFoundException,
+    public static void addToZip(File directoryToZip, File file, ZipOutputStream zos, ArrayList<String> errorList) throws FileNotFoundException,
             IOException {
 
         FileInputStream fis = new FileInputStream(file);
@@ -1294,7 +1305,7 @@ public class BackupTask extends java.util.TimerTask {
         fis.close();
     }
 
-    public static void addToZipWithEncryption(File directoryToZip, File file, ZipFile zipFile, String encryptionPassword) throws ZipException,
+    public static void addToZipWithEncryption(File directoryToZip, File file, ZipFile zipFile, String encryptionPassword, ArrayList<String> errorList) throws ZipException,
             IOException {
 
         // we want the zipEntry's path to be a relative path that is relative
@@ -1320,8 +1331,22 @@ public class BackupTask extends java.util.TimerTask {
         relFolderParams.setPassword(encryptionPassword);
         relFolderParams.setRootFolderInZip(folderInZip);
         //relFolderParams.setDefaultFolderPath("test/dings");
+        try {
+            zipFile.addFile(file, relFolderParams);
+        } catch (Throwable t) {
+            if (file.getName().toLowerCase().endsWith(".sql")) {
+                // database MUST NOT fail
+                log.error(t);
+                throw new ZipException("Error zipencrypting " + file.getName(), t);
+            } else {
+                errorList.add("Error zipencrypting " + file.getName());
+                log.error(t);
+                if (errorList.size() > 20) {
+                    throw new ZipException("Too many errors during zip encryption");
+                }
+            }
+        }
 
-        zipFile.addFile(file, relFolderParams);
     }
 
     /**
