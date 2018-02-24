@@ -1240,13 +1240,11 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
         int returnVal = chooser.showOpenDialog(this);
         if (returnVal == JFileChooser.APPROVE_OPTION) {
             try {
-                //this.txtImportFile.setText(chooser.getSelectedFile().getCanonicalPath());
                 File[] fileArray = chooser.getSelectedFiles();
                 ArrayList<File> files = new ArrayList<File>();
                 for (File f : fileArray) {
-                    if (f.getName().toLowerCase().endsWith(".odt") || f.getName().toLowerCase().endsWith(".ods")) {
                         files.add(f);
-                    }
+                    
                 }
 
                 TreePath tp = this.treeFolders.getSelectionPath();
@@ -1264,17 +1262,6 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
 
                 a.start();
 
-//                ClientSettings settings = ClientSettings.getInstance();
-//                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-//
-//                for (File f : files) {
-//                    byte[] data = FileUtils.readFile(f);
-//                    ArchiveFileDocumentsBean doc = locator.lookupArchiveFileServiceRemote().addDocument(this.dto.getId(), f.getName(), data, null);
-//                    ArchiveFileDocumentsTableModel m = (ArchiveFileDocumentsTableModel) this.tblDocuments.getModel();
-//                    m.addRow(new Object[]{doc, doc.getName()});
-//
-//
-//                }
             } catch (Exception ioe) {
                 log.error("Error uploading document", ioe);
                 JOptionPane.showMessageDialog(this, "Fehler beim Laden der Datei: " + ioe.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
@@ -1388,25 +1375,6 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
                 this.mnuRenameFolder.setEnabled(true);
             }
 
-//            FolderContainer folderC = (FolderContainer) tn.getUserObject();
-//            Folder f = folderC.getFolder();
-//            if (FolderContainer.INBOX.equalsIgnoreCase(f.getName()) || FolderContainer.SENT.equalsIgnoreCase(f.getName()) || FolderContainer.TRASH.equalsIgnoreCase(f.getName())) {
-//                this.mnuRemoveFolder.setEnabled(false);
-//            } else {
-//                this.mnuRemoveFolder.setEnabled(true);
-//            }
-//
-//            if (FolderContainer.TRASH.equalsIgnoreCase(f.getName())) {
-//                this.mnuEmptyTrash.setEnabled(true);
-//            } else {
-//                this.mnuEmptyTrash.setEnabled(false);
-//            }
-//
-//            if (f instanceof POP3Folder) {
-//                this.mnuNewFolder.setEnabled(false);
-//                this.mnuRemoveFolder.setEnabled(false);
-//                this.mnuEmptyTrash.setEnabled(false);
-//            }
             this.popFolders.show(evt.getComponent(), evt.getX(), evt.getY());
         }
     }
@@ -1564,9 +1532,8 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
                         ArrayList<File> files = new ArrayList<File>();
                         for (Object fo : transferData) {
                             if (fo instanceof File) {
-                                if (((File) fo).getName().toLowerCase().endsWith(".odt") || ((File) fo).getName().toLowerCase().endsWith(".ods")) {
                                     files.add((File) fo);
-                                }
+                                
                             }
                         }
 
