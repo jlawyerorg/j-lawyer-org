@@ -2631,7 +2631,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
     @Override
     @RolesAllowed({"readArchiveFileRole"})
-    public List<ArchiveFileBean> getTagged(String tagName, int limit) {
+    public List<ArchiveFileBean> getTagged(String[] tagName, int limit) {
         JDBCUtils utils = new JDBCUtils();
         Connection con = null;
         ResultSet rs = null;
@@ -2641,9 +2641,10 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         try {
             con = utils.getConnection();
 
-            st = con.prepareStatement("select a1.archiveFileKey from (SELECT archiveFileKey, MAX(changeDate) as maxChangeDate FROM ArchiveFileHistoryBean GROUP BY archiveFileKey order by maxChangeDate DESC) a1, ArchiveFileBean a2, ArchiveFileTagsBean a3 where a1.archiveFileKey = a2.id and a2.archived=0 and a2.id = a3.archiveFileKey and a3.tagName=? order by maxChangeDate DESC limit 0,?");
+            st = con.prepareStatement("select a1.archiveFileKey from (SELECT archiveFileKey, MAX(changeDate) as maxChangeDate FROM ArchiveFileHistoryBean GROUP BY archiveFileKey order by maxChangeDate DESC) a1, ArchiveFileBean a2, ArchiveFileTagsBean a3 where a1.archiveFileKey = a2.id and a2.archived=0 and a2.id = a3.archiveFileKey and a3.tagName in (?) order by maxChangeDate DESC limit 0,?");
 
-            st.setString(1, tagName);
+            
+            st.setArray(1, con.createArrayOf("VARCHAR", tagName));
             st.setInt(2, limit);
             rs = st.executeQuery();
             while (rs.next()) {
