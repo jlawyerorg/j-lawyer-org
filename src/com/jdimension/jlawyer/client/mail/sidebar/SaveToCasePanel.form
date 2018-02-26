@@ -33,19 +33,11 @@
                           </Group>
                           <Component id="jLabel1" alignment="0" min="-2" max="-2" attributes="0"/>
                           <Group type="102" alignment="0" attributes="0">
-                              <Component id="cmdSaveMessageWithoutAttachments" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace max="-2" attributes="0"/>
-                              <Component id="lblSaveWithoutAttachments" min="-2" max="-2" attributes="0"/>
-                          </Group>
-                          <Group type="102" alignment="0" attributes="0">
                               <Component id="cmdSaveFullMessage" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
-                              <Component id="lblSaveFull" min="-2" max="-2" attributes="0"/>
-                          </Group>
-                          <Group type="102" alignment="0" attributes="0">
-                              <Component id="cmdSaveSeparate" min="-2" max="-2" attributes="0"/>
+                              <Component id="cmdSaveMessageWithoutAttachments" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
-                              <Component id="lblSaveSeparate" min="-2" max="-2" attributes="0"/>
+                              <Component id="cmdSaveSeparate" min="-2" max="-2" attributes="0"/>
                           </Group>
                       </Group>
                       <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
@@ -70,19 +62,10 @@
               <EmptySpace max="-2" attributes="0"/>
               <Component id="cmbCaseTag" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
-              <Group type="103" groupAlignment="1" attributes="0">
-                  <Component id="cmdSaveFullMessage" alignment="1" min="-2" max="-2" attributes="0"/>
-                  <Component id="lblSaveFull" min="-2" max="-2" attributes="0"/>
-              </Group>
-              <EmptySpace max="-2" attributes="0"/>
-              <Group type="103" groupAlignment="1" attributes="0">
+              <Group type="103" groupAlignment="0" attributes="0">
+                  <Component id="cmdSaveFullMessage" min="-2" max="-2" attributes="0"/>
                   <Component id="cmdSaveMessageWithoutAttachments" min="-2" max="-2" attributes="0"/>
-                  <Component id="lblSaveWithoutAttachments" min="-2" max="-2" attributes="0"/>
-              </Group>
-              <EmptySpace max="-2" attributes="0"/>
-              <Group type="103" groupAlignment="1" attributes="0">
                   <Component id="cmdSaveSeparate" min="-2" max="-2" attributes="0"/>
-                  <Component id="lblSaveSeparate" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace max="32767" attributes="0"/>
           </Group>
@@ -144,21 +127,13 @@
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdSaveFullMessageActionPerformed"/>
       </Events>
     </Component>
-    <Component class="javax.swing.JLabel" name="lblSaveFull">
-      <Properties>
-        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-          <Font name="Dialog" size="12" style="0"/>
-        </Property>
-        <Property name="text" type="java.lang.String" value="vollst&#xe4;ndig"/>
-      </Properties>
-    </Component>
     <Component class="javax.swing.JButton" name="cmdSaveMessageWithoutAttachments">
       <Properties>
         <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
           <Font name="Dialog" size="8" style="1"/>
         </Property>
         <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-          <Image iconType="3" name="/icons/filesave.png"/>
+          <Image iconType="3" name="/icons/filesave-noattachment.png"/>
         </Property>
         <Property name="toolTipText" type="java.lang.String" value="Email ohne Anh&#xe4;nge in Akte speichern"/>
         <Property name="margin" type="java.awt.Insets" editor="org.netbeans.beaninfo.editors.InsetsEditor">
@@ -168,14 +143,6 @@
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdSaveMessageWithoutAttachmentsActionPerformed"/>
       </Events>
-    </Component>
-    <Component class="javax.swing.JLabel" name="lblSaveWithoutAttachments">
-      <Properties>
-        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-          <Font name="Dialog" size="12" style="0"/>
-        </Property>
-        <Property name="text" type="java.lang.String" value="ohne Anhang"/>
-      </Properties>
     </Component>
     <Component class="javax.swing.JComboBox" name="cmbCaseTag">
       <Properties>
@@ -204,7 +171,7 @@
           <Font name="Dialog" size="8" style="1"/>
         </Property>
         <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-          <Image iconType="3" name="/icons/filesave.png"/>
+          <Image iconType="3" name="/icons/filesave-separate.png"/>
         </Property>
         <Property name="toolTipText" type="java.lang.String" value="E-Mail und Anh&#xe4;nge werden beide separat in die Akte &#xfc;bernommen"/>
         <Property name="margin" type="java.awt.Insets" editor="org.netbeans.beaninfo.editors.InsetsEditor">
@@ -214,15 +181,6 @@
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdSaveSeparateActionPerformed"/>
       </Events>
-    </Component>
-    <Component class="javax.swing.JLabel" name="lblSaveSeparate">
-      <Properties>
-        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-          <Font name="Dialog" size="12" style="0"/>
-        </Property>
-        <Property name="text" type="java.lang.String" value="separat"/>
-        <Property name="toolTipText" type="java.lang.String" value="E-Mail und Anh&#xe4;nge werden beide separat in die Akte &#xfc;bernommen"/>
-      </Properties>
     </Component>
   </SubComponents>
 </Form>
