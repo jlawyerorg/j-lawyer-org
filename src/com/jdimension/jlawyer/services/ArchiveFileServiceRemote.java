@@ -765,7 +765,7 @@ public interface ArchiveFileServiceRemote {
 
     byte[] exportCaseToHtml(String caseId) throws Exception;
 
-    List<ArchiveFileBean> getTagged(String tagName, int limit);
+    List<ArchiveFileBean> getTagged(String[] tagName, int limit);
 
     boolean setDocumentDate(String id, Date date) throws Exception;
 
