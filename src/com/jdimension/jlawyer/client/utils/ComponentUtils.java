@@ -666,11 +666,15 @@ package com.jdimension.jlawyer.client.utils;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import java.awt.Component;
 import java.awt.Container;
+import java.util.ArrayList;
+import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JList;
+import javax.swing.JPopupMenu;
 import javax.swing.JTable;
 import javax.swing.JTree;
+import javax.swing.MenuElement;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import org.apache.log4j.Logger;
@@ -834,5 +838,18 @@ public class ComponentUtils {
         } catch (Throwable t) {
             log.error("can not restore size of dialog", t);
         }
+    }
+
+    public static String[] getSelectedMenuItems(JPopupMenu pop) {
+        ArrayList<String> list = new ArrayList<String>();
+        for (MenuElement me : pop.getSubElements()) {
+            if (me.getComponent() instanceof JCheckBoxMenuItem) {
+                JCheckBoxMenuItem mi = ((JCheckBoxMenuItem) me.getComponent());
+                if (mi.isSelected()) {
+                    list.add(mi.getText());
+                }
+            }
+        }
+        return list.toArray(new String[list.size()]);
     }
 }

@@ -673,12 +673,16 @@ import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Component;
 import java.awt.GridLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.ItemListener;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Hashtable;
 import java.util.List;
+import java.util.TimerTask;
 import javax.swing.*;
 import org.apache.log4j.Logger;
 
@@ -693,24 +697,24 @@ public class TaggedTimerTask extends java.util.TimerTask {
     private JPanel resultUI;
     private JSplitPane split;
     private boolean ignoreCurrentEditor = false;
-    private JComboBox cmbTags = null;
+    private JPopupMenu popTags=null;
     private String source = null;
 
     /**
      * Creates a new instance of SystemStateTimerTask
      */
-    public TaggedTimerTask(Component owner, JPanel resultPanel, JSplitPane split, JComboBox tagsBox, boolean ignoreCurrentEditor, String source) {
+    public TaggedTimerTask(Component owner, JPanel resultPanel, JSplitPane split, JPopupMenu popTags, boolean ignoreCurrentEditor, String source) {
         super();
         this.owner = owner;
         this.resultUI = resultPanel;
         this.split = split;
         this.ignoreCurrentEditor = ignoreCurrentEditor;
-        this.cmbTags = tagsBox;
+        this.popTags=popTags;
         this.source = source;
     }
 
-    public TaggedTimerTask(Component owner, JPanel resultPanel, JSplitPane split, JComboBox tagsBox, String source) {
-        this(owner, resultPanel, split, tagsBox, false, source);
+    public TaggedTimerTask(Component owner, JPanel resultPanel, JSplitPane split, JPopupMenu popTags, String source) {
+        this(owner, resultPanel, split, popTags, false, source);
     }
 
     public void run() {
@@ -724,33 +728,54 @@ public class TaggedTimerTask extends java.util.TimerTask {
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
-            String lastFilterTag = settings.getConfiguration(ClientSettings.CONF_DESKTOP_LASTFILTERTAG, "");
+            String[] lastFilterTags = settings.getConfigurationArray(ClientSettings.CONF_DESKTOP_LASTFILTERTAG, new String[]{""});
             List<String> tagsInUse = settings.getArchiveFileTagsInUse();
 
             // update combobox with tags that are currently in use, but only if there was an actual change
             List<String> currentComboItems = new ArrayList<String>();
-            DefaultComboBoxModel currentModel = (DefaultComboBoxModel) cmbTags.getModel();
-            for (int i = 0; i < currentModel.getSize(); i++) {
-                currentComboItems.add(currentModel.getElementAt(i).toString());
+            MenuElement[] elements=this.popTags.getSubElements();
+            for (MenuElement e: elements) {
+                currentComboItems.add(((JCheckBoxMenuItem)e.getComponent()).getText());
+                //this.popTags.add(new JCheckBoxMenuItem(currentModel.getElementAt(i).toString()));
+                
             }
             Collections.sort(currentComboItems);
             if (!tagsInUse.equals(currentComboItems)) {
                 if (tagsInUse == null) {
                     tagsInUse = new ArrayList<String>();
                 }
-                ItemListener[] itemListeners = cmbTags.getItemListeners();
-                for (ItemListener l : itemListeners) {
-                    cmbTags.removeItemListener(l);
+                
+                this.popTags.removeAll();
+                for(String t: tagsInUse) {
+                    JCheckBoxMenuItem mi=new JCheckBoxMenuItem(t);
+                    if(Arrays.binarySearch(lastFilterTags, t)>-1) {
+                        mi.setSelected(true);
+                    } else {
+                        mi.setSelected(false);
+                    }
+                    this.popTags.add(mi);
                 }
-                DefaultComboBoxModel dcbm = new DefaultComboBoxModel(tagsInUse.toArray());
-                cmbTags.setModel(dcbm);
-                cmbTags.setSelectedItem(lastFilterTag);
-                for (ItemListener l : itemListeners) {
-                    cmbTags.addItemListener(l);
+                for(MenuElement me: this.popTags.getSubElements()) {
+                    ((JCheckBoxMenuItem)me.getComponent()).addActionListener(new ActionListener() {
+                        @Override
+                        public void actionPerformed(ActionEvent e) {
+                            ArrayList<String> al=new ArrayList<String>();
+                            for(MenuElement me: popTags.getSubElements()) {
+                                JCheckBoxMenuItem mi=((JCheckBoxMenuItem)me.getComponent());
+                                if(mi.isSelected())
+                                    al.add(mi.getText());
+                            }
+                            settings.setConfigurationArray(settings.CONF_DESKTOP_LASTFILTERTAG, al.toArray(new String[al.size()]));
+                            TimerTask taggedTask = new TaggedTimerTask(EditorsRegistry.getInstance().getMainWindow(), resultUI, split, popTags, true, "cmbTagFilterItemStateChanged");
+                            new java.util.Timer().schedule(taggedTask, 10);
+                        }
+                        
+                    });
                 }
+                
             }
 
-            if ("".equals(lastFilterTag)) {
+            if (lastFilterTags.length==0) {
                 return;
             }
 
@@ -764,7 +789,7 @@ public class TaggedTimerTask extends java.util.TimerTask {
 
             ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
 
-            myNewList = fileService.getTagged(lastFilterTag, 50);
+            myNewList = fileService.getTagged(lastFilterTags, 50);
 
             String temp = settings.getConfiguration(ClientSettings.CONF_DESKTOP_ONLYMYTAGGED, "false");
             if ("true".equalsIgnoreCase(temp)) {

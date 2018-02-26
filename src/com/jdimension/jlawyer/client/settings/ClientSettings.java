@@ -745,6 +745,7 @@ public class ClientSettings {
     public static final String CONF_VOIP_LASTSIPSMS="client.voip.lastsipsms";
     public static final String CONF_VOIP_LASTSIPVOICE="client.voip.lastsipvoice";
     
+    private static String ARRAY_DELIMITER="#####";
     
     private static final Logger log=Logger.getLogger(ClientSettings.class.getName());
     private static ClientSettings instance=null;
@@ -814,6 +815,16 @@ public class ClientSettings {
         return value;
     }
     
+    public String[] getConfigurationArray(String key, String[] defaultValue) {
+        String value=this.clientConfiguration.getProperty(key);
+        if(value==null)
+            return defaultValue;
+        
+        String[] ary=value.split(ARRAY_DELIMITER);
+        
+        return ary;
+    }
+    
     public void removeConfiguration(String key) {
         if(this.clientConfiguration.containsKey(key))
             this.clientConfiguration.remove(key);
@@ -825,6 +836,16 @@ public class ClientSettings {
     
     public void setConfiguration(String key, String value) {
         this.clientConfiguration.setProperty(key, value);
+    }
+    
+    public void setConfigurationArray(String key, String[] value) {
+        StringBuffer sb=new StringBuffer();
+        if(value==null)
+            value=new String[]{""};
+        for(String v: value) {
+            sb.append(v).append(ARRAY_DELIMITER);
+        }
+        this.clientConfiguration.setProperty(key, sb.toString());
     }
     
     public static synchronized ClientSettings getInstance() {
