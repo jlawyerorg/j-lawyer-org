@@ -10,10 +10,6 @@
             <minimum-ant-version>1.6.5</minimum-ant-version>
             <web-module-libraries>
                 <library dirs="200">
-                    <file>${reference.j-lawyer-server-common.jar}</file>
-                    <path-in-war>WEB-INF/lib</path-in-war>
-                </library>
-                <library dirs="200">
                     <file>${file.reference.jboss-jaxrs-api_2.0_spec-1.0.0.Final.jar}</file>
                 </library>
                 <library dirs="100">
@@ -25,6 +21,9 @@
                 <library dirs="200">
                     <file>${reference.j-lawyer-io-common.jar}</file>
                     <path-in-war>WEB-INF/lib</path-in-war>
+                </library>
+                <library dirs="200">
+                    <file>${reference.j-lawyer-server-common.jar}</file>
                 </library>
             </web-module-libraries>
             <web-module-additional-libraries/>
