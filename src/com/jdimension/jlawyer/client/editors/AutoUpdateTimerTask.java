@@ -755,7 +755,7 @@ public class AutoUpdateTimerTask extends java.util.TimerTask {
 
             String csession = installationHash +",user=" + userHash + ",java=" + javaVersion + ",os=" + osName + ",osversion=" + osVersion + ",adrc=" + addressCount + ",afc=" + archiveFileCount + ",docc=" + docCount + ",j-lawyer=" + VersionUtils.getFullClientVersion() + ",drebis=" + drebismode + ",voip=" + voipmode + ",backup=" + backupmode;
 
-            URL updateURL = new URL("http://www.j-lawyer.org/downloads/updatecheck.xml?csession=" + Crypto.encrypt(csession));
+            URL updateURL = new URL("https://www.j-lawyer.org/downloads/updatecheck.xml?csession=" + Crypto.encrypt(csession));
             URLConnection urlCon = updateURL.openConnection();
             urlCon.setRequestProperty("User-Agent", "j-lawyer Client v" + VersionUtils.getFullClientVersion());
 

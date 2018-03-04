@@ -829,7 +829,7 @@ public class ShowURLDialog extends javax.swing.JDialog {
         /* Create and display the dialog */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                ShowURLDialog dialog = new ShowURLDialog(new javax.swing.JFrame(), true, "http://www.j-lawyer.org");
+                ShowURLDialog dialog = new ShowURLDialog(new javax.swing.JFrame(), true, "https://www.j-lawyer.org");
                 dialog.addWindowListener(new java.awt.event.WindowAdapter() {
                     @Override
                     public void windowClosing(java.awt.event.WindowEvent e) {

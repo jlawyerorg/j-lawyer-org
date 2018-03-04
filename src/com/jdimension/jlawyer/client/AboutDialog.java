@@ -688,7 +688,7 @@ public class AboutDialog extends javax.swing.JDialog {
         sb.append("<br/><br/>");
         sb.append(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/AboutDialog").getString("license.long"));
         sb.append("<br/>&nbsp;<br/>");
-        sb.append("<a href=\"http://www.j-lawyer.org/?page_id=41\">http://www.j-lawyer.org</a>");
+        sb.append("<a href=\"https://www.j-lawyer.org/?page_id=41\">https://www.j-lawyer.org</a>");
         sb.append("<br/><br/>");
         sb.append("<b>");
         sb.append(java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/AboutDialog").getString("server.version"), new Object[] {VersionUtils.getServerVersion()}));

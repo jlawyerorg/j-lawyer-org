@@ -771,8 +771,8 @@ public class ClientSettings {
     private ArrayList<InsuranceInfo> insurances=new ArrayList<InsuranceInfo>();
     private ArrayList<InsuranceInfo> motorInsurances=new ArrayList<InsuranceInfo>();
     
-    private String urlForum="http://www.j-lawyer.org/?page_id=673";
-    private String urlHelp="http://www.j-lawyer.org/?page_id=11";
+    private String urlForum="https://www.j-lawyer.org/?page_id=673";
+    private String urlHelp="https://www.j-lawyer.org/?page_id=11";
     
     /**
      * Creates a new instance of ClientSettings

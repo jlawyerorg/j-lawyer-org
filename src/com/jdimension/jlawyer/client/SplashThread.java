@@ -911,7 +911,7 @@ public class SplashThread implements Runnable {
     private void loadHelp() throws Exception {
         this.updateProgress(false, 1, 0, "");
 
-        URL updateURL = new URL("http://www.j-lawyer.org/downloads/tip-list.xml");
+        URL updateURL = new URL("https://www.j-lawyer.org/downloads/tip-list.xml");
         URLConnection urlCon = updateURL.openConnection();
         urlCon.setRequestProperty("User-Agent", "j-lawyer Client v" + VersionUtils.getFullClientVersion());
         urlCon.setConnectTimeout(5000);

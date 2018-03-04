@@ -718,7 +718,7 @@ public class ImportZipCodesThread implements Runnable {
         
         File tmpF=null;
         try {
-        URL updateURL = new URL("http://www.j-lawyer.org/downloads/plz.txt");
+        URL updateURL = new URL("https://www.j-lawyer.org/downloads/plz.txt");
             URLConnection urlCon=updateURL.openConnection();
             urlCon.setRequestProperty("User-Agent", "j-lawyer Client v" + VersionUtils.getFullClientVersion());
             InputStream is = urlCon.getInputStream();
