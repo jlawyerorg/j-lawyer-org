@@ -6,7 +6,6 @@
             <name>j-lawyer-client</name>
             <explicit-platform explicit-source-supported="true"/>
             <source-roots>
-                <root id="src.src-bizcal.dir"/>
                 <root id="src.dir"/>
             </source-roots>
             <test-roots>

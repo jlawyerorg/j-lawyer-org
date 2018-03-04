@@ -369,9 +369,9 @@
                               <Group type="103" groupAlignment="3" attributes="0">
                                   <Component id="jLabel9" alignment="3" min="-2" max="-2" attributes="0"/>
                                   <Component id="cmdRefreshTagged" alignment="3" min="-2" max="-2" attributes="0"/>
+                                  <Component id="chkOnlyMyTagged" alignment="3" min="-2" max="-2" attributes="0"/>
                               </Group>
                               <Component id="cmdTagFilter" min="-2" max="-2" attributes="0"/>
-                              <Component id="chkOnlyMyTagged" alignment="1" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <EmptySpace max="-2" attributes="0"/>
                           <Component id="jScrollPane4" pref="42" max="32767" attributes="0"/>
