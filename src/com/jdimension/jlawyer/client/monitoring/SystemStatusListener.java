@@ -674,7 +674,7 @@ import javax.jms.ObjectMessage;
 import org.apache.log4j.Logger;
 
 /**
- *
+ * @deprecated JMS has been removed from the client in 1.9.1
  * @author jens
  */
 public class SystemStatusListener implements MessageListener {

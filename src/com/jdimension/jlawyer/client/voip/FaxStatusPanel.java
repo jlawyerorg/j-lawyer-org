@@ -665,6 +665,7 @@ package com.jdimension.jlawyer.client.voip;
 
 import com.jdimension.jlawyer.client.editors.StatusBarProvider;
 import com.jdimension.jlawyer.client.editors.ThemeableEditor;
+import com.jdimension.jlawyer.client.editors.documents.ScannerDocumentsTimerTask;
 import com.jdimension.jlawyer.client.events.Event;
 import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.events.EventConsumer;
@@ -685,6 +686,8 @@ import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 import javax.jms.*;
 import javax.swing.Icon;
 import javax.swing.JOptionPane;
@@ -728,34 +731,6 @@ public class FaxStatusPanel extends javax.swing.JPanel implements ThemeableEdito
         }
     }
 
-    public class FaxTopicListener implements MessageListener {
-
-        public void onMessage(Message msg) {
-            
-            try {
-                Serializable obj = ((ObjectMessage) msg).getObject();
-                EventBroker eb=EventBroker.getInstance();
-                if (obj instanceof FaxQueueBean) {
-                    final FaxQueueBean fb = (FaxQueueBean) obj;
-                    if (fb.getSentBy().equals(UserSettings.getInstance().getCurrentUser().getPrincipalId())) {
-                        eb.publishEvent(new FaxFailedEvent(fb));
-                    }
-                } else if (obj instanceof List) {
-                    //DefaultTableModel tm = new DefaultTableModel(new String[]{"Gesendet", "von", "Absenderkennung", "an", "Empfängerkennung", "Datei", "aktueller Status", "Status vom", "Akte"}, 0);
-                    ArrayList<FaxQueueBean> qList = (ArrayList<FaxQueueBean>) obj;
-                    eb.publishEvent(new FaxStatusEvent(qList));
-
-                }
-
-
-                //ThreadUtils.setTableModel(tblDirContent, model);
-            } catch (JMSException ex) {
-                log.error("could not process JMS message", ex);
-            }
-
-        }
-    }
-
     /**
      * Creates new form AddressPanel
      */
@@ -772,24 +747,11 @@ public class FaxStatusPanel extends javax.swing.JPanel implements ThemeableEdito
 
 
         this.refreshList();
+        
+        Timer timer = new Timer();
+        TimerTask faxTask = new FaxQueueTimerTask();
+        timer.schedule(faxTask, 7500, 14000);
 
-        ClientSettings settings = ClientSettings.getInstance();
-        try {
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-
-            Topic t = locator.lookupJMSTopic("java:/topic/faxQueueTopic");
-            ConnectionFactory cf = locator.lookupJMSConnectionFactory();
-            Connection con = cf.createConnection(UserSettings.getInstance().getCurrentUser().getPrincipalId(), UserSettings.getInstance().getCurrentUser().getPassword());
-            Session session = con.createSession(false, Session.AUTO_ACKNOWLEDGE);
-            con.start();
-            session.createConsumer(t).setMessageListener(new FaxTopicListener());
-
-            Runtime.getRuntime().addShutdownHook(new Thread(new JMSCleanUp(con, session)));
-
-        } catch (Throwable ex) {
-            log.error(ex);
-            ThreadUtils.showErrorDialog(this, "Fehler bei der Anmeldung für Fax-Statusmeldungen: " + ex.getMessage(), "Fehler");
-        }
 
     }
     

@@ -678,27 +678,21 @@ import com.jdimension.jlawyer.client.events.ScannerStatusEvent;
 import com.jdimension.jlawyer.client.events.SystemStatusEvent;
 import com.jdimension.jlawyer.client.launcher.DocumentMonitorDialog;
 import com.jdimension.jlawyer.client.launcher.DocumentObserver;
-import com.jdimension.jlawyer.client.monitoring.SystemStatusListener;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.ServerSettings;
-import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.DesktopUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
-import com.jdimension.jlawyer.client.utils.JMSCleanUp;
 import com.jdimension.jlawyer.client.utils.NavigationUtils;
 import com.jdimension.jlawyer.client.utils.SystrayUtils;
-import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.server.constants.MonitoringConstants;
 import com.jdimension.jlawyer.server.constants.OptionConstants;
 import com.jdimension.jlawyer.server.modules.ModuleMetadata;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Color;
 import java.awt.Component;
-import javax.jms.Connection;
-import javax.jms.ConnectionFactory;
-import javax.jms.Session;
-import javax.jms.Topic;
+import java.util.Timer;
+import java.util.TimerTask;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JOptionPane;
@@ -786,23 +780,27 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             }
         });
 
-        try {
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-
-            Topic t = locator.lookupJMSTopic("java:/topic/systemMonitoringTopic");
-            //Topic t = locator.lookupJMSTopic("java:jboss/exported/jms/topic/systemMonitoringTopic");
-            ConnectionFactory cf = locator.lookupJMSConnectionFactory();
-            Connection con = cf.createConnection(UserSettings.getInstance().getCurrentUser().getPrincipalId(), UserSettings.getInstance().getCurrentUser().getPassword());
-            Session session = con.createSession(false, Session.AUTO_ACKNOWLEDGE);
-            con.start();
-            session.createConsumer(t).setMessageListener(new SystemStatusListener());
-
-            Runtime.getRuntime().addShutdownHook(new Thread(new JMSCleanUp(con, session)));
-
-        } catch (Throwable ex) {
-            log.error(ex);
-            ThreadUtils.showErrorDialog(this, java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("error.jms.systemmonitoring"), new Object[]{ex.getMessage()}), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.error"));
-        }
+        Timer timer = new Timer();
+        TimerTask monitorStateTask = new MonitoringStateTimerTask();
+        timer.schedule(monitorStateTask, 5500, 60000*10);
+        
+//        try {
+//            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+//
+//            Topic t = locator.lookupJMSTopic("java:/topic/systemMonitoringTopic");
+//            //Topic t = locator.lookupJMSTopic("java:jboss/exported/jms/topic/systemMonitoringTopic");
+//            ConnectionFactory cf = locator.lookupJMSConnectionFactory();
+//            Connection con = cf.createConnection(UserSettings.getInstance().getCurrentUser().getPrincipalId(), UserSettings.getInstance().getCurrentUser().getPassword());
+//            Session session = con.createSession(false, Session.AUTO_ACKNOWLEDGE);
+//            con.start();
+//            session.createConsumer(t).setMessageListener(new SystemStatusListener());
+//
+//            Runtime.getRuntime().addShutdownHook(new Thread(new JMSCleanUp(con, session)));
+//
+//        } catch (Throwable ex) {
+//            log.error(ex);
+//            ThreadUtils.showErrorDialog(this, java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("error.jms.systemmonitoring"), new Object[]{ex.getMessage()}), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.error"));
+//        }
 
     }
 

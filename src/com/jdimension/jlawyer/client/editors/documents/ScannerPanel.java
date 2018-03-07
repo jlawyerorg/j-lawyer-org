@@ -663,6 +663,7 @@
  */
 package com.jdimension.jlawyer.client.editors.documents;
 
+import com.jdimension.jlawyer.client.MonitoringStateTimerTask;
 import com.jdimension.jlawyer.client.editors.StatusBarProvider;
 import com.jdimension.jlawyer.client.editors.ThemeableEditor;
 import com.jdimension.jlawyer.client.editors.documents.viewer.DocumentViewerFactory;
@@ -700,6 +701,8 @@ import java.util.Date;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Locale;
+import java.util.Timer;
+import java.util.TimerTask;
 import javax.jms.*;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.Icon;
@@ -794,25 +797,6 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
         }
     }
     
-    public class FileNamesListener implements MessageListener {
-        
-        public void onMessage(Message msg) {
-            try {
-                
-                Serializable obj = ((ObjectMessage) msg).getObject();
-                Hashtable<File, Date> fileNames = (Hashtable<File, Date>) obj;
-                
-                EventBroker eb = EventBroker.getInstance();
-                eb.publishEvent(new ScannerStatusEvent(fileNames));
-
-                //ThreadUtils.setTableModel(tblDirContent, model);
-            } catch (JMSException ex) {
-                log.error("could not process JMS message", ex);
-            }
-            
-        }
-    }
-    
     @Override
     protected void finalize() throws Throwable {
         super.finalize();
@@ -868,32 +852,20 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
         };
         this.tblDirContent.setDefaultRenderer(Object.class, r);
         
-        this.refreshList();
+        // do not need to get an initial state, will auto-update after 6.5s
+        //this.refreshList();
         
         String[] colNames = new String[]{"Aktion", "Akte", ""};
         DefaultTableModel model = new DefaultTableModel(colNames, 0);
         ThreadUtils.setTableModel(this.tblActions, model);
         
-        try {
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            
-            Topic t = locator.lookupJMSTopic("java:/topic/dirObserverTopic");
-            ConnectionFactory cf = locator.lookupJMSConnectionFactory();
-            Connection con = cf.createConnection(UserSettings.getInstance().getCurrentUser().getPrincipalId(), UserSettings.getInstance().getCurrentUser().getPassword());
-            Session session = con.createSession(false, Session.AUTO_ACKNOWLEDGE);
-            con.start();
-            session.createConsumer(t).setMessageListener(new FileNamesListener());
-            
-            Runtime.getRuntime().addShutdownHook(new Thread(new JMSCleanUp(con, session)));
-            
-        } catch (Throwable ex) {
-            log.error(ex);
-            ThreadUtils.showErrorDialog(this, "Fehler bei der Anmeldung für neue Scans: " + ex.getMessage(), "Fehler");
-        }
-        
         //this.splitMain.setDividerLocation(0.5d);
         this.splitMain.setDividerLocation(300);
         ThreadUtils.setSplitDividerLocation(splitTop, (int) tblDirContent.getPreferredSize().getWidth());
+        
+        Timer timer = new Timer();
+        TimerTask scannerTask = new ScannerDocumentsTimerTask();
+        timer.schedule(scannerTask, 6500, 15000);
 
 //        final int numberOfScans=this.tblDirContent.getModel().getRowCount();
 //        new Thread(new Runnable() {
