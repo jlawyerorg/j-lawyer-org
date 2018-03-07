@@ -920,7 +920,9 @@ public class ImportContactsDialog extends javax.swing.JDialog {
 
                     if (v.getOrganization() != null) {
                         if (v.getOrganization().getValues().size() > 0) {
-                            ab.setCompany(v.getOrganization().getValues().get(0).toString());
+                            if(v.getOrganization().getValues().get(0)!=null) {
+                                ab.setCompany(v.getOrganization().getValues().get(0).toString());
+                            }
                         }
                     }
 
