@@ -851,6 +851,9 @@ public class SendAction extends ProgressableAction {
                     if(attachmentNames.trim().length()>0) {
                         newName=attachmentNames.trim() + " per E-Mail"; 
                     }
+                    if(newName.length()>250) {
+                        newName=newName.substring(0,249);
+                    }
                     newName = newName + ".eml";
                     newName=FileUtils.sanitizeFileName(newName);
                     java.util.Date sentPrefix = new Date();
