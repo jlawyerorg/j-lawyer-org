@@ -707,6 +707,8 @@ public class VoipService implements VoipServiceRemote, VoipServiceLocal {
     private ArchiveFileServiceLocal fileSvc;
     @EJB
     private SystemManagementLocal sysMan;
+    @EJB
+    private SingletonServiceLocal singleton;
     
 
     @Override
@@ -836,23 +838,24 @@ public class VoipService implements VoipServiceRemote, VoipServiceLocal {
 
     private void publishQueueList() {
         try {
-            InitialContext ic = new InitialContext();
-            ConnectionFactory cf = (ConnectionFactory) ic.lookup("/ConnectionFactory");
-            Topic observerTopic = (Topic) ic.lookup("/topic/faxQueueTopic");
-            Connection connection = cf.createConnection();
-            Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-            MessageProducer producer = session.createProducer(observerTopic);
-            connection.start();
-            //TextMessage message = session.createTextMessage("This is an order");
+//            InitialContext ic = new InitialContext();
+//            ConnectionFactory cf = (ConnectionFactory) ic.lookup("/ConnectionFactory");
+//            Topic observerTopic = (Topic) ic.lookup("/topic/faxQueueTopic");
+//            Connection connection = cf.createConnection();
+//            Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+//            MessageProducer producer = session.createProducer(observerTopic);
+//            connection.start();
+            
             ArrayList<FaxQueueBean> list = new ArrayList<FaxQueueBean>();
             list.addAll(this.faxFacade.findAll());
-            ObjectMessage msg = session.createObjectMessage(list);
-            producer.send(msg);
-
-            connection.stop();
-            producer.close();
-            session.close();
-            connection.close();
+            singleton.setFaxQueue(list);
+//            ObjectMessage msg = session.createObjectMessage(list);
+//            producer.send(msg);
+//
+//            connection.stop();
+//            producer.close();
+//            session.close();
+//            connection.close();
         } catch (Exception ex) {
             log.error("could not publish fax queue list", ex);
         }

@@ -667,6 +667,7 @@ import com.jdimension.jlawyer.persistence.ServerSettingsBean;
 import com.jdimension.jlawyer.persistence.ServerSettingsBeanFacadeLocal;
 import com.jdimension.jlawyer.server.constants.MonitoringConstants;
 import com.jdimension.jlawyer.server.utils.ServerInformation;
+import com.jdimension.jlawyer.services.SingletonServiceLocal;
 import java.io.File;
 import java.lang.management.ManagementFactory;
 import java.lang.management.OperatingSystemMXBean;
@@ -715,7 +716,8 @@ public class SystemMonitorTask extends java.util.TimerTask {
             InitialContext ic = new InitialContext();
             ServerSettingsBeanFacadeLocal settings = (ServerSettingsBeanFacadeLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ServerSettingsBeanFacade!com.jdimension.jlawyer.persistence.ServerSettingsBeanFacadeLocal");
             //SystemManagementRemote sysMan= (SystemManagementRemote) ic.lookup("java:/j-lawyer-server/SystemManagement/remote");
-
+            SingletonServiceLocal singleton = (SingletonServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/SingletonService!com.jdimension.jlawyer.services.SingletonServiceLocal");
+            
             this.cpuErrorLevel = getLimit(settings, "jlawyer.server.monitor.cpuerror", this.cpuErrorLevel);
             this.cpuWarnLevel = getLimit(settings, "jlawyer.server.monitor.cpuwarn", this.cpuWarnLevel);
             this.diskErrorLevel = getLimit(settings, "jlawyer.server.monitor.diskerror", this.diskErrorLevel);
@@ -812,7 +814,8 @@ public class SystemMonitorTask extends java.util.TimerTask {
                 //}
             }
 
-            this.publishStatus(new Integer(aggregate));
+            //this.publishStatus(new Integer(aggregate));
+            singleton.setSystemStatus(aggregate);
         } catch (Throwable ex) {
             log.error("Error publishing system monitoring status", ex);
         }
@@ -1067,22 +1070,22 @@ public class SystemMonitorTask extends java.util.TimerTask {
         }
     }
 
-    private void publishStatus(int level) throws Exception {
-        InitialContext ic = new InitialContext();
-        ConnectionFactory cf = (ConnectionFactory) ic.lookup("/ConnectionFactory");
-        Topic observerTopic = (Topic) ic.lookup("/topic/systemMonitoringTopic");
-        Connection connection = cf.createConnection();
-        Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-        MessageProducer producer = session.createProducer(observerTopic);
-        connection.start();
-        //TextMessage message = session.createTextMessage("This is an order");
-        ObjectMessage msg = session.createObjectMessage(new Integer(level));
-        producer.send(msg);
-
-        connection.stop();
-        producer.close();
-        session.close();
-        connection.close();
-
-    }
+//    private void publishStatus(int level) throws Exception {
+//        InitialContext ic = new InitialContext();
+//        ConnectionFactory cf = (ConnectionFactory) ic.lookup("/ConnectionFactory");
+//        Topic observerTopic = (Topic) ic.lookup("/topic/systemMonitoringTopic");
+//        Connection connection = cf.createConnection();
+//        Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+//        MessageProducer producer = session.createProducer(observerTopic);
+//        connection.start();
+//        //TextMessage message = session.createTextMessage("This is an order");
+//        ObjectMessage msg = session.createObjectMessage(new Integer(level));
+//        producer.send(msg);
+//
+//        connection.stop();
+//        producer.close();
+//        session.close();
+//        connection.close();
+//
+//    }
 }

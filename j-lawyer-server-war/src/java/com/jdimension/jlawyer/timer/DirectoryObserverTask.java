@@ -665,6 +665,7 @@ package com.jdimension.jlawyer.timer;
 
 import com.jdimension.jlawyer.persistence.ServerSettingsBean;
 import com.jdimension.jlawyer.persistence.ServerSettingsBeanFacadeLocal;
+import com.jdimension.jlawyer.services.SingletonServiceLocal;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -691,11 +692,13 @@ public class DirectoryObserverTask extends java.util.TimerTask {
         //Calendar now = Calendar.getInstance();
 
         ServerSettingsBean mode = null;
+        SingletonServiceLocal singleton=null;
         try {
             InitialContext ic = new InitialContext();
             //ServerSettingsBeanFacadeLocal settings = (ServerSettingsBeanFacadeLocal) ic.lookup("j-lawyer-server/ServerSettingsBeanFacade/local");
             // ServerSettingsBeanFacade!com.jdimension.jlawyer.persistence.ServerSettingsBeanFacadeLocal	
             ServerSettingsBeanFacadeLocal settings = (ServerSettingsBeanFacadeLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ServerSettingsBeanFacade!com.jdimension.jlawyer.persistence.ServerSettingsBeanFacadeLocal");
+            singleton = (SingletonServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/SingletonService!com.jdimension.jlawyer.services.SingletonServiceLocal");
             mode = settings.find("jlawyer.server.observe.directory");
             if (mode == null || "".equals(mode.getSettingValue())) {
                 log.info("directory observation is switched off");
@@ -735,32 +738,35 @@ public class DirectoryObserverTask extends java.util.TimerTask {
             if (!fileNames.equals(formerList)) {
                 // distribute to JMS topic
                 try {
-                    this.publishList(fileObjects);
+                    //this.publishList(fileObjects);
+                    singleton.setObservedFiles(fileObjects);
                 } catch (Throwable ex) {
                     log.error("Errors publishing observed directory content", ex);
                 }
             }
+        } else {
+            singleton.setObservedFiles(fileObjects);
         }
         formerList = fileNames;
 
     }
 
-    private void publishList(Hashtable<File,Date> fileNames) throws Exception {
-        InitialContext ic = new InitialContext();
-        ConnectionFactory cf = (ConnectionFactory) ic.lookup("/ConnectionFactory");
-        Topic observerTopic = (Topic) ic.lookup("/topic/dirObserverTopic");
-        Connection connection = cf.createConnection();
-        Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-        MessageProducer producer = session.createProducer(observerTopic);
-        connection.start();
-        //TextMessage message = session.createTextMessage("This is an order");
-        ObjectMessage msg=session.createObjectMessage(fileNames);
-        producer.send(msg);
-        
-        connection.stop();
-        producer.close();
-        session.close();
-        connection.close();
-
-    }
+//    private void publishList(Hashtable<File,Date> fileNames) throws Exception {
+//        InitialContext ic = new InitialContext();
+//        ConnectionFactory cf = (ConnectionFactory) ic.lookup("/ConnectionFactory");
+//        Topic observerTopic = (Topic) ic.lookup("/topic/dirObserverTopic");
+//        Connection connection = cf.createConnection();
+//        Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+//        MessageProducer producer = session.createProducer(observerTopic);
+//        connection.start();
+//        //TextMessage message = session.createTextMessage("This is an order");
+//        ObjectMessage msg=session.createObjectMessage(fileNames);
+//        producer.send(msg);
+//        
+//        connection.stop();
+//        producer.close();
+//        session.close();
+//        connection.close();
+//
+//    }
 }
