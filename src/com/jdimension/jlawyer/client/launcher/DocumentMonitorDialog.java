@@ -675,20 +675,34 @@ import javax.swing.SwingUtilities;
 public class DocumentMonitorDialog extends javax.swing.JDialog implements DocumentObserverListener {
 
     private boolean shuttingDown=false;
+    private boolean cancelClose=false;
     
     /**
      * Creates new form DocumentMonitorDialog
      */
     public DocumentMonitorDialog(java.awt.Frame parent, boolean modal, String caption) {
         this(parent, modal, caption, false);
+        this.cancelClose=false;
+    }
+    
+    public boolean hasUserCancelled() {
+        return this.cancelClose;
     }
     
     public DocumentMonitorDialog(java.awt.Frame parent, boolean modal, String caption, boolean shuttingDown) {
         super(parent, modal);
+        this.cancelClose=false;
         
         initComponents();
         
         this.shuttingDown=shuttingDown;
+        if(this.shuttingDown) {
+            this.cmdCancel.setEnabled(true);
+            cmdClose.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/exit.png")));
+        } else {
+            this.cmdCancel.setEnabled(false);
+        }
+        
         this.lblCaption.setText(caption);
         //((DefaultListModel)this.lstOpenDocs.getModel()).removeAllElements();
         this.lstOpenDocs.setModel(new DefaultListModel());
@@ -723,6 +737,7 @@ public class DocumentMonitorDialog extends javax.swing.JDialog implements Docume
         lstOpenDocs = new javax.swing.JList<>();
         cmdClose = new javax.swing.JButton();
         lblCaption = new javax.swing.JLabel();
+        cmdCancel = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Dokumentmonitor");
@@ -744,6 +759,14 @@ public class DocumentMonitorDialog extends javax.swing.JDialog implements Docume
 
         lblCaption.setText("jLabel1");
 
+        cmdCancel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png"))); // NOI18N
+        cmdCancel.setText("Abbrechen");
+        cmdCancel.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdCancelActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -753,7 +776,9 @@ public class DocumentMonitorDialog extends javax.swing.JDialog implements Docume
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addGap(0, 601, Short.MAX_VALUE)
+                        .addGap(0, 465, Short.MAX_VALUE)
+                        .addComponent(cmdCancel)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cmdClose))
                     .addComponent(lblCaption, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
@@ -766,7 +791,9 @@ public class DocumentMonitorDialog extends javax.swing.JDialog implements Docume
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 294, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(cmdClose)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(cmdClose)
+                    .addComponent(cmdCancel))
                 .addContainerGap())
         );
 
@@ -790,6 +817,14 @@ public class DocumentMonitorDialog extends javax.swing.JDialog implements Docume
         this.setVisible(false);
         this.dispose();
     }//GEN-LAST:event_cmdCloseActionPerformed
+
+    private void cmdCancelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCancelActionPerformed
+        this.cancelClose=true;
+        
+        this.setVisible(false);
+        this.dispose();
+        
+    }//GEN-LAST:event_cmdCancelActionPerformed
 
     /**
      * @param args the command line arguments
@@ -834,6 +869,7 @@ public class DocumentMonitorDialog extends javax.swing.JDialog implements Docume
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton cmdCancel;
     private javax.swing.JButton cmdClose;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JLabel lblCaption;

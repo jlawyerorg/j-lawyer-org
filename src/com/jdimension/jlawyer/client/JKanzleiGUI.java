@@ -764,7 +764,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
 //        EditorsRegistry registry = EditorsRegistry.getInstance();
 //        registry.setMainEditorsPane(this.scrollMain);
         registry.setStatusLabel(this.statusLabel);
-        
+
 //        try {
 //            MainPanel mainPanel = (MainPanel) EditorsRegistry.getInstance().getEditor(MainPanel.class.getName());
 //            mainPanel.setAddressCount(initialAddressCount);
@@ -782,8 +782,8 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
 
         Timer timer = new Timer();
         TimerTask monitorStateTask = new MonitoringStateTimerTask();
-        timer.schedule(monitorStateTask, 5500, 60000*10);
-        
+        timer.schedule(monitorStateTask, 5500, 60000 * 10);
+
 //        try {
 //            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 //
@@ -801,7 +801,6 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
 //            log.error(ex);
 //            ThreadUtils.showErrorDialog(this, java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("error.jms.systemmonitoring"), new Object[]{ex.getMessage()}), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.error"));
 //        }
-
     }
 
     @Override
@@ -856,10 +855,11 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             this.lblScanStatus.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/scanner.png")));
             this.lblScanStatus.setText("" + ((ScannerStatusEvent) e).getFileNames().size());
             this.lblScanStatus.setToolTipText(((ScannerStatusEvent) e).getFileNames().size() + " " + java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/editors/EditorsRegistry").getString("status.scansfound"));
-            if(((ScannerStatusEvent) e).getFileNames().size()>0)
+            if (((ScannerStatusEvent) e).getFileNames().size() > 0) {
                 this.lblScanStatus.setEnabled(true);
-            else
+            } else {
                 this.lblScanStatus.setEnabled(false);
+            }
         } else if (e instanceof FaxStatusEvent) {
 
             this.lblFaxStatus.setText(" " + ((FaxStatusEvent) e).getFaxList().size());
@@ -875,28 +875,29 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
                 this.lblFaxStatus.setForeground(Color.black);
 
             }
-            if(((FaxStatusEvent) e).getFaxList().size()>0)
+            if (((FaxStatusEvent) e).getFaxList().size() > 0) {
                 this.lblFaxStatus.setEnabled(true);
-            else
+            } else {
                 this.lblFaxStatus.setEnabled(false);
+            }
 
         } else if (e instanceof EmailStatusEvent) {
             this.lblMailStatus.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder_inbox.png")));
             this.lblMailStatus.setText("" + ((EmailStatusEvent) e).getUnread());
             this.lblMailStatus.setToolTipText(((EmailStatusEvent) e).getUnread() + " " + java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/editors/EditorsRegistry").getString("status.unreadmails"));
             this.lblMailStatus.setEnabled(true);
-        } else if(e instanceof BeaStatusEvent) {
+        } else if (e instanceof BeaStatusEvent) {
             this.lblBeaStatus.setEnabled(true);
-            if(((BeaStatusEvent) e).getUnread()>0) {
+            if (((BeaStatusEvent) e).getUnread() > 0) {
                 this.lblBeaStatus.setText("(*)");
                 this.lblBeaStatus.setToolTipText("es gibt ungelesene beA-Nachrichten");
             } else {
                 this.lblBeaStatus.setText("-");
                 this.lblBeaStatus.setToolTipText("keine ungelesenen beA-Nachrichten");
             }
-        } else if(e instanceof DrebisStatusEvent) {
-            
-            if(((DrebisStatusEvent) e).getMessages()>0) {
+        } else if (e instanceof DrebisStatusEvent) {
+
+            if (((DrebisStatusEvent) e).getMessages() > 0) {
                 this.lblDrebisStatus.setEnabled(true);
                 this.lblDrebisStatus.setText("" + ((DrebisStatusEvent) e).getMessages());
                 this.lblDrebisStatus.setToolTipText("es gibt ungelesene Drebis-Nachrichten");
@@ -977,7 +978,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuForum = new javax.swing.JMenuItem();
         mnuAbout = new javax.swing.JMenuItem();
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(javax.swing.WindowConstants.DO_NOTHING_ON_CLOSE);
         java.util.ResourceBundle bundle = java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI"); // NOI18N
         setTitle(bundle.getString("title")); // NOI18N
         setIconImage(new ImageIcon(getClass().getResource("/icons/folder.png")).getImage());
@@ -1516,31 +1517,40 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     private void formWindowClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosing
 
         DocumentObserver observer = DocumentObserver.getInstance();
+        boolean cancelled = false;
         if (observer.hasUnsavedDocuments()) {
 
             DocumentMonitorDialog moni = new DocumentMonitorDialog(EditorsRegistry.getInstance().getMainWindow(), true, "ungespeicherte Dokumente:", true);
             FrameUtils.centerDialog(moni, EditorsRegistry.getInstance().getMainWindow());
             moni.setVisible(true);
+            cancelled = moni.hasUserCancelled();
+            
 
         }
+        
+        if (!cancelled) {
+                ClientSettings settings = ClientSettings.getInstance();
+                try {
+                    log.debug("storing client configuration");
+                    settings.saveConfiguration();
+                } catch (Exception ex) {
+                    log.error("Error saving client configuration", ex);
+                    JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("error.savingsettings") + ex.getMessage(), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.error"), JOptionPane.ERROR_MESSAGE);
+                }
 
-        ClientSettings settings = ClientSettings.getInstance();
-        try {
-            log.debug("storing client configuration");
-            settings.saveConfiguration();
-        } catch (Exception ex) {
-            log.error("Error saving client configuration", ex);
-            JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("error.savingsettings") + ex.getMessage(), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.error"), JOptionPane.ERROR_MESSAGE);
-        }
+                try {
+                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                    locator.lookupSearchServiceRemote().reOpenIndex();
 
-        try {
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            locator.lookupSearchServiceRemote().reOpenIndex();
+                } catch (Throwable ex) {
+                    log.error("Error re-opening search index", ex);
+                    return;
+                }
+                this.setVisible(false);
+                this.dispose();
+                System.exit(0);
+            }
 
-        } catch (Throwable ex) {
-            log.error("Error re-opening search index", ex);
-            return;
-        }
 
     }//GEN-LAST:event_formWindowClosing
 
