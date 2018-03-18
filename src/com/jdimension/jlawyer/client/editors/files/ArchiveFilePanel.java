@@ -685,6 +685,7 @@ import com.jdimension.jlawyer.client.editors.addresses.EditAddressDetailsPanel;
 import com.jdimension.jlawyer.client.editors.addresses.ViewAddressDetailsPanel;
 import com.jdimension.jlawyer.client.editors.documents.*;
 import com.jdimension.jlawyer.client.editors.documents.viewer.DocumentViewerFactory;
+import com.jdimension.jlawyer.client.encryption.PDFEncryptionDialog;
 import com.jdimension.jlawyer.client.events.DocumentAddedEvent;
 import com.jdimension.jlawyer.client.events.Event;
 import com.jdimension.jlawyer.client.events.EventBroker;
@@ -1378,6 +1379,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         mnuSendDocument = new javax.swing.JMenuItem();
         mnuSendDocumentPDF = new javax.swing.JMenuItem();
         mnuOpenInExternalMailer = new javax.swing.JMenuItem();
+        jSeparator6 = new javax.swing.JPopupMenu.Separator();
+        mnuSaveDocumentEncrypted = new javax.swing.JMenuItem();
         jSeparator2 = new javax.swing.JPopupMenu.Separator();
         mnuSendBeaDocument = new javax.swing.JMenuItem();
         mnuSendBeaDocumentPDF = new javax.swing.JMenuItem();
@@ -1720,6 +1723,16 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
         });
         documentsPopup.add(mnuOpenInExternalMailer);
+        documentsPopup.add(jSeparator6);
+
+        mnuSaveDocumentEncrypted.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/gpg.png"))); // NOI18N
+        mnuSaveDocumentEncrypted.setText("verschlüsseltes PDF exportieren");
+        mnuSaveDocumentEncrypted.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuSaveDocumentEncryptedActionPerformed(evt);
+            }
+        });
+        documentsPopup.add(mnuSaveDocumentEncrypted);
         documentsPopup.add(jSeparator2);
 
         mnuSendBeaDocument.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/bea16.png"))); // NOI18N
@@ -4167,7 +4180,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             File faxFile = null;
             try {
                 ClientSettings settings = ClientSettings.getInstance();
-                FileConverter conv = FileConverter.getInstance();
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                 ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
                 int[] selectedRows = this.tblDocuments.getSelectedRows();
@@ -5088,15 +5100,16 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     private void mnuUseDocumentAsTemplateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuUseDocumentAsTemplateActionPerformed
         try {
-            
-            SelectTemplateFolderDialog stf=new SelectTemplateFolderDialog(EditorsRegistry.getInstance().getMainWindow(), true);
+
+            SelectTemplateFolderDialog stf = new SelectTemplateFolderDialog(EditorsRegistry.getInstance().getMainWindow(), true);
             FrameUtils.centerDialog(stf, EditorsRegistry.getInstance().getMainWindow());
             stf.setVisible(true);
             //FrameUtils.centerDialog(stf, EditorsRegistry.getInstance().getMainWindow());
-            GenericNode targetFolder=stf.getSelectedFolder();
-            if(targetFolder==null)
+            GenericNode targetFolder = stf.getSelectedFolder();
+            if (targetFolder == null) {
                 return;
-            
+            }
+
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
@@ -5118,9 +5131,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                         JOptionPane.showMessageDialog(this, "Dateiname darf nicht leer sein.", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
                         continue;
                     }
-                    
+
                     locator.lookupSystemManagementRemote().addTemplate(targetFolder, newName, content);
-                    
+
                 }
 
             }
@@ -5130,6 +5143,38 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             JOptionPane.showMessageDialog(this, "Fehler beim Kopieren des Dokuments: " + ioe.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
         }
     }//GEN-LAST:event_mnuUseDocumentAsTemplateActionPerformed
+
+    private void mnuSaveDocumentEncryptedActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSaveDocumentEncryptedActionPerformed
+
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
+            int[] selectedRows = this.tblDocuments.getSelectedRows();
+            DefaultTableModel tModel = (DefaultTableModel) this.tblDocuments.getModel();
+            for (int i = selectedRows.length - 1; i > -1; i--) {
+                ArchiveFileDocumentsBean doc = (ArchiveFileDocumentsBean) this.tblDocuments.getValueAt(selectedRows[i], 0);
+                byte[] content = locator.lookupArchiveFileServiceRemote().getDocumentContent(doc.getId());
+                String tmpUrl = FileUtils.createTempFile(doc.getName(), content);
+
+                if(!(tmpUrl.toLowerCase().endsWith(".pdf"))) {
+                    FileConverter conv = FileConverter.getInstance();
+                    tmpUrl=conv.convertToPDF(tmpUrl);
+                }
+                
+                PDFEncryptionDialog encDlg=new PDFEncryptionDialog(EditorsRegistry.getInstance().getMainWindow(), true, tmpUrl);
+                FrameUtils.centerDialog(encDlg, EditorsRegistry.getInstance().getMainWindow());
+                encDlg.setVisible(true);
+
+                return;
+            }
+
+        } catch (Exception ioe) {
+            log.error("Error encrypting document", ioe);
+            JOptionPane.showMessageDialog(this, "Fehler beim Verschlüsseln des Dokuments: " + ioe.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+        }
+
+    }//GEN-LAST:event_mnuSaveDocumentEncryptedActionPerformed
 
     private AddressBean[] convertArray(Object[] in) {
         if (in != null) {
@@ -5475,6 +5520,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JPopupMenu.Separator jSeparator3;
     private javax.swing.JPopupMenu.Separator jSeparator4;
     private javax.swing.JPopupMenu.Separator jSeparator5;
+    private javax.swing.JPopupMenu.Separator jSeparator6;
     protected javax.swing.JLabel lblArchivedSince;
     private javax.swing.JLabel lblCustom1;
     private javax.swing.JLabel lblCustom2;
@@ -5504,6 +5550,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JMenuItem mnuRemoveParty;
     private javax.swing.JMenuItem mnuRemoveReview;
     private javax.swing.JMenuItem mnuRenameDocument;
+    private javax.swing.JMenuItem mnuSaveDocumentEncrypted;
     private javax.swing.JMenuItem mnuSendBea;
     private javax.swing.JMenuItem mnuSendBeaDocument;
     private javax.swing.JMenuItem mnuSendBeaDocumentPDF;
