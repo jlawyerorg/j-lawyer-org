@@ -3843,7 +3843,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
             DefaultTableModel tModel = (DefaultTableModel) this.tblDocuments.getModel();
             ArchiveFileDocumentsBean doc = (ArchiveFileDocumentsBean) this.tblDocuments.getValueAt(selectedRows[0], 0);
-            String newName = this.getNewFileName(doc.getName());
+            String newName = FileUtils.getNewFileName(doc.getName(), false, null, this, "Dokument umbenennen");
             if (newName == null) {
                 return;
             }
@@ -5139,40 +5139,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
             return out;
         }
-        return null;
-    }
-
-    public String getNewFileName(String currentFileName) {
-//        Object response = JOptionPane.showInputDialog(EditorsRegistry.getInstance().getMainWindow(), "Neuer Dateiname:", "Datei umbenennen", JOptionPane.QUESTION_MESSAGE, null, null, currentFileName);
-//        if (response != null) {
-//
-//            String newName = response.toString();
-//            if ("".equalsIgnoreCase(newName)) {
-//                return null;
-//            }
-//
-//            newName=FileUtils.preserveExtension(currentFileName, newName);
-//
-//            return FileUtils.sanitizeFileName(newName);
-//        }
-
-        NewFilenameOptionPanel p = new NewFilenameOptionPanel();
-        p.setFilename(currentFileName);
-        JOptionPane pane = new JOptionPane(p, JOptionPane.QUESTION_MESSAGE);
-        JDialog dialog = pane.createDialog(this, "Datei umbenennen");
-        dialog.setVisible(true);
-        if (p.getFilename() != null) {
-
-            String newName = p.getFilename();
-            if ("".equalsIgnoreCase(newName)) {
-                return null;
-            }
-
-            newName = FileUtils.preserveExtension(currentFileName, newName);
-
-            return FileUtils.sanitizeFileName(newName);
-        }
-
         return null;
     }
 

@@ -671,6 +671,7 @@ import com.jdimension.jlawyer.client.launcher.LauncherFactory;
 import com.jdimension.jlawyer.client.launcher.TemplateDocumentStore;
 import com.jdimension.jlawyer.client.processing.ProgressIndicator;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.JTreeUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
@@ -880,9 +881,11 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
         mnuRemoveFolder = new javax.swing.JMenuItem();
         mnuNewFolder = new javax.swing.JMenuItem();
         mnuRenameFolder = new javax.swing.JMenuItem();
-        cmdEdit = new javax.swing.JButton();
-        cmdNew = new javax.swing.JButton();
-        cmdDelete = new javax.swing.JButton();
+        popTemplates = new javax.swing.JPopupMenu();
+        mnuEditTemplate = new javax.swing.JMenuItem();
+        mnuRenameTemplate = new javax.swing.JMenuItem();
+        mnuCopyTemplate = new javax.swing.JMenuItem();
+        mnuDeleteTemplate = new javax.swing.JMenuItem();
         jLabel18 = new javax.swing.JLabel();
         lblPanelTitle = new javax.swing.JLabel();
         cmdNewODT = new javax.swing.JButton();
@@ -925,29 +928,41 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
         });
         popFolders.add(mnuRenameFolder);
 
-        cmdEdit.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit.png"))); // NOI18N
-        cmdEdit.setText("Bearbeiten");
-        cmdEdit.addActionListener(new java.awt.event.ActionListener() {
+        mnuEditTemplate.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit.png"))); // NOI18N
+        mnuEditTemplate.setText("bearbeiten");
+        mnuEditTemplate.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdEditActionPerformed(evt);
+                mnuEditTemplateActionPerformed(evt);
             }
         });
+        popTemplates.add(mnuEditTemplate);
 
-        cmdNew.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit_add.png"))); // NOI18N
-        cmdNew.setText("vorhandene kopieren");
-        cmdNew.addActionListener(new java.awt.event.ActionListener() {
+        mnuRenameTemplate.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit.png"))); // NOI18N
+        mnuRenameTemplate.setText("umbenennen");
+        mnuRenameTemplate.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdNewActionPerformed(evt);
+                mnuRenameTemplateActionPerformed(evt);
             }
         });
+        popTemplates.add(mnuRenameTemplate);
 
-        cmdDelete.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editdelete.png"))); // NOI18N
-        cmdDelete.setText("Löschen");
-        cmdDelete.addActionListener(new java.awt.event.ActionListener() {
+        mnuCopyTemplate.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editcopy.png"))); // NOI18N
+        mnuCopyTemplate.setText("kopieren");
+        mnuCopyTemplate.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdDeleteActionPerformed(evt);
+                mnuCopyTemplateActionPerformed(evt);
             }
         });
+        popTemplates.add(mnuCopyTemplate);
+
+        mnuDeleteTemplate.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/trashcan_full.png"))); // NOI18N
+        mnuDeleteTemplate.setText("löschen");
+        mnuDeleteTemplate.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuDeleteTemplateActionPerformed(evt);
+            }
+        });
+        popTemplates.add(mnuDeleteTemplate);
 
         jLabel18.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder_documents_big.png"))); // NOI18N
 
@@ -1008,7 +1023,6 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
             }
         });
 
-        jSplitPane2.setDividerLocation(-1);
         jSplitPane2.setResizeWeight(0.7);
 
         pnlPreview.setLayout(new java.awt.BorderLayout());
@@ -1021,6 +1035,9 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
         });
         lstTemplates.setDragEnabled(true);
         lstTemplates.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                lstTemplatesMousePressed(evt);
+            }
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 lstTemplatesMouseClicked(evt);
             }
@@ -1071,20 +1088,14 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
                         .add(18, 18, 18)
                         .add(jLabel18)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .add(lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 757, Short.MAX_VALUE))
                     .add(layout.createSequentialGroup()
                         .add(0, 0, Short.MAX_VALUE)
                         .add(cmdAddExisting)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(cmdNewODS)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(cmdNewODT)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(cmdNew)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(cmdDelete)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(cmdEdit)))
+                        .add(cmdNewODT)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -1099,9 +1110,6 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
                 .add(jSplitPane2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 398, Short.MAX_VALUE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(cmdEdit)
-                    .add(cmdNew)
-                    .add(cmdDelete)
                     .add(cmdNewODT)
                     .add(cmdNewODS)
                     .add(cmdAddExisting))
@@ -1109,104 +1117,18 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    private void cmdEditActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdEditActionPerformed
-
-        if (this.lstTemplates.getSelectedValue() == null) {
-            return;
-        }
-
-        TreePath tp = this.treeFolders.getSelectionPath();
-        if (tp == null) {
-            log.error("no folder selected - returning...");
-            return;
-        }
-        DefaultMutableTreeNode selNode = (DefaultMutableTreeNode) tp.getLastPathComponent();
-        GenericNode folder = (GenericNode) selNode.getUserObject();
-
-        ClientSettings settings = ClientSettings.getInstance();
-        String tmpUrl = null;
-        byte[] content = null;
-        try {
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            content = locator.lookupSystemManagementRemote().getTemplateData(folder, this.lstTemplates.getSelectedValue().toString());
-            //tmpUrl=FileUtils.createTempFile(this.lstTemplates.getSelectedValue().toString(), content);
-        } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Fehler beim Laden des Dokuments: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-        try {
-            TemplateDocumentStore store = new TemplateDocumentStore(folder, "templates-" + this.lstTemplates.getSelectedValue().toString(), this.lstTemplates.getSelectedValue().toString(), false);
-            Launcher launcher = LauncherFactory.getLauncher(this.lstTemplates.getSelectedValue().toString(), content, store);
-            launcher.launch();
-        } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Fehler beim Öffnen des Dokuments: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
-        }
-
-
-    }//GEN-LAST:event_cmdEditActionPerformed
-
     private void cmdRefreshActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRefreshActionPerformed
         this.refreshTree();
     }//GEN-LAST:event_cmdRefreshActionPerformed
 
     private void lstTemplatesMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lstTemplatesMouseClicked
         if (evt.getClickCount() == 2) {
-            this.cmdEditActionPerformed(null);
+            this.mnuEditTemplateActionPerformed(null);
         } else if (evt.getClickCount() == 1 && !evt.isConsumed()) {
             evt.consume();
             //this.updateDocumentPreview();
         }
     }//GEN-LAST:event_lstTemplatesMouseClicked
-
-    private void cmdNewActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdNewActionPerformed
-
-        TreePath tp = this.treeFolders.getSelectionPath();
-        if (tp == null) {
-            log.error("no folder selected - returning...");
-            return;
-        }
-        DefaultMutableTreeNode selNode = (DefaultMutableTreeNode) tp.getLastPathComponent();
-        GenericNode folder = (GenericNode) selNode.getUserObject();
-
-        String newName="neue Vorlage";
-        if (this.lstTemplates.getSelectedValue() != null) {
-            newName=this.lstTemplates.getSelectedValue().toString();
-        }
-        
-        NewTemplateDialog dlg = new NewTemplateDialog(EditorsRegistry.getInstance().getMainWindow(), true, folder, newName);
-
-        FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
-        dlg.setVisible(true);
-
-        this.refreshList();
-    }//GEN-LAST:event_cmdNewActionPerformed
-
-    private void cmdDeleteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdDeleteActionPerformed
-        if (this.lstTemplates.getSelectedValue() != null) {
-
-            TreePath tp = this.treeFolders.getSelectionPath();
-            if (tp == null) {
-                log.error("no folder selected - returning...");
-                return;
-            }
-            DefaultMutableTreeNode selNode = (DefaultMutableTreeNode) tp.getLastPathComponent();
-            GenericNode folder = (GenericNode) selNode.getUserObject();
-
-            ClientSettings settings = ClientSettings.getInstance();
-            //EditorsRegistry.getInstance().updateStatus("Adresse wird gespeichert...");
-            try {
-                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                for (Object delTempl : this.lstTemplates.getSelectedValuesList()) {
-                    locator.lookupSystemManagementRemote().deleteTemplate(folder, delTempl.toString());
-                }
-            } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this, "Fehler beim Löschen des Dokuments: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
-            }
-
-        }
-        this.refreshList();
-    }//GEN-LAST:event_cmdDeleteActionPerformed
 
     private void cmdNewODTActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdNewODTActionPerformed
         String fileName = JOptionPane.showInputDialog(this, "Dateiname ohne Verzeichnis und Erweiterung: ", "neue Master-Vorlage (Text)", JOptionPane.QUESTION_MESSAGE);
@@ -1403,6 +1325,124 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
             this.updateDocumentPreview();
         }
     }//GEN-LAST:event_lstTemplatesKeyReleased
+
+    private void lstTemplatesMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lstTemplatesMousePressed
+        if(evt.getModifiers()==evt.BUTTON2_MASK || evt.getModifiers()==evt.BUTTON2_DOWN_MASK || evt.getModifiers()==evt.BUTTON3_MASK || evt.getModifiers()==evt.BUTTON3_DOWN_MASK) {
+            if(this.lstTemplates.getSelectedValues().length>0)
+                this.popTemplates.show(this.lstTemplates, evt.getX(), evt.getY());
+        }
+    }//GEN-LAST:event_lstTemplatesMousePressed
+
+    private void mnuEditTemplateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuEditTemplateActionPerformed
+        if (this.lstTemplates.getSelectedValue() == null) {
+            return;
+        }
+
+        TreePath tp = this.treeFolders.getSelectionPath();
+        if (tp == null) {
+            log.error("no folder selected - returning...");
+            return;
+        }
+        DefaultMutableTreeNode selNode = (DefaultMutableTreeNode) tp.getLastPathComponent();
+        GenericNode folder = (GenericNode) selNode.getUserObject();
+
+        ClientSettings settings = ClientSettings.getInstance();
+        String tmpUrl = null;
+        byte[] content = null;
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            content = locator.lookupSystemManagementRemote().getTemplateData(folder, this.lstTemplates.getSelectedValue().toString());
+            //tmpUrl=FileUtils.createTempFile(this.lstTemplates.getSelectedValue().toString(), content);
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Fehler beim Laden des Dokuments: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        try {
+            TemplateDocumentStore store = new TemplateDocumentStore(folder, "templates-" + this.lstTemplates.getSelectedValue().toString(), this.lstTemplates.getSelectedValue().toString(), false);
+            Launcher launcher = LauncherFactory.getLauncher(this.lstTemplates.getSelectedValue().toString(), content, store);
+            launcher.launch();
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Fehler beim Öffnen des Dokuments: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+        }
+    }//GEN-LAST:event_mnuEditTemplateActionPerformed
+
+    private void mnuRenameTemplateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuRenameTemplateActionPerformed
+        if (this.lstTemplates.getSelectedValue() == null) {
+            return;
+        }
+
+        TreePath tp = this.treeFolders.getSelectionPath();
+        if (tp == null) {
+            log.error("no folder selected - returning...");
+            return;
+        }
+        DefaultMutableTreeNode selNode = (DefaultMutableTreeNode) tp.getLastPathComponent();
+        GenericNode folder = (GenericNode) selNode.getUserObject();
+        String newName=FileUtils.getNewFileName(this.lstTemplates.getSelectedValue().toString(), false, null, this, "Vorlage umbenennen");
+        if(newName==null)
+            return;
+
+        ClientSettings settings = ClientSettings.getInstance();
+        String tmpUrl = null;
+        byte[] content = null;
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            locator.lookupSystemManagementRemote().renameTemplate(folder, this.lstTemplates.getSelectedValue().toString(), newName);
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Fehler beim Umbenennen der Vorlage: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        this.refreshList();
+    }//GEN-LAST:event_mnuRenameTemplateActionPerformed
+
+    private void mnuCopyTemplateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuCopyTemplateActionPerformed
+        TreePath tp = this.treeFolders.getSelectionPath();
+        if (tp == null) {
+            log.error("no folder selected - returning...");
+            return;
+        }
+        DefaultMutableTreeNode selNode = (DefaultMutableTreeNode) tp.getLastPathComponent();
+        GenericNode folder = (GenericNode) selNode.getUserObject();
+
+        String newName="neue Vorlage";
+        if (this.lstTemplates.getSelectedValue() != null) {
+            newName=this.lstTemplates.getSelectedValue().toString();
+        }
+        
+        NewTemplateDialog dlg = new NewTemplateDialog(EditorsRegistry.getInstance().getMainWindow(), true, folder, newName);
+
+        FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
+        dlg.setVisible(true);
+
+        this.refreshList();
+    }//GEN-LAST:event_mnuCopyTemplateActionPerformed
+
+    private void mnuDeleteTemplateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuDeleteTemplateActionPerformed
+        if (this.lstTemplates.getSelectedValue() != null) {
+
+            TreePath tp = this.treeFolders.getSelectionPath();
+            if (tp == null) {
+                log.error("no folder selected - returning...");
+                return;
+            }
+            DefaultMutableTreeNode selNode = (DefaultMutableTreeNode) tp.getLastPathComponent();
+            GenericNode folder = (GenericNode) selNode.getUserObject();
+
+            ClientSettings settings = ClientSettings.getInstance();
+            //EditorsRegistry.getInstance().updateStatus("Adresse wird gespeichert...");
+            try {
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                for (Object delTempl : this.lstTemplates.getSelectedValuesList()) {
+                    locator.lookupSystemManagementRemote().deleteTemplate(folder, delTempl.toString());
+                }
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, "Fehler beim Löschen des Dokuments: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            }
+
+        }
+        this.refreshList();
+    }//GEN-LAST:event_mnuDeleteTemplateActionPerformed
 
     private void showPopupMenu(java.awt.event.MouseEvent evt) {
         if (evt.isPopupTrigger()) {
@@ -1609,9 +1649,6 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton cmdAddExisting;
-    private javax.swing.JButton cmdDelete;
-    private javax.swing.JButton cmdEdit;
-    private javax.swing.JButton cmdNew;
     private javax.swing.JButton cmdNewODS;
     private javax.swing.JButton cmdNewODT;
     private javax.swing.JButton cmdRefresh;
@@ -1623,11 +1660,16 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
     private javax.swing.JSplitPane jSplitPane2;
     protected javax.swing.JLabel lblPanelTitle;
     private javax.swing.JList lstTemplates;
+    private javax.swing.JMenuItem mnuCopyTemplate;
+    private javax.swing.JMenuItem mnuDeleteTemplate;
+    private javax.swing.JMenuItem mnuEditTemplate;
     private javax.swing.JMenuItem mnuNewFolder;
     private javax.swing.JMenuItem mnuRemoveFolder;
     private javax.swing.JMenuItem mnuRenameFolder;
+    private javax.swing.JMenuItem mnuRenameTemplate;
     private javax.swing.JPanel pnlPreview;
     private javax.swing.JPopupMenu popFolders;
+    private javax.swing.JPopupMenu popTemplates;
     private javax.swing.JTree treeFolders;
     // End of variables declaration//GEN-END:variables
 
