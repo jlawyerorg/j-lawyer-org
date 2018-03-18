@@ -779,5 +779,7 @@ public interface SystemManagementRemote {
     List<GenericNode> searchTemplateFolders(String query) throws Exception;
 
     String getTemplatePreview(GenericNode folder, String fileName) throws Exception;
+
+    void renameTemplate(GenericNode folder, String fromName, String toName) throws Exception;
     
 }
