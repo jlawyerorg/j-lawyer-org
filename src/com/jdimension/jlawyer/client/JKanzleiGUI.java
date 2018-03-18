@@ -1544,7 +1544,6 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
 
                 } catch (Throwable ex) {
                     log.error("Error re-opening search index", ex);
-                    return;
                 }
                 this.setVisible(false);
                 this.dispose();
