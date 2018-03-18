@@ -1794,5 +1794,26 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         }
         return "";
     }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public void renameTemplate(GenericNode folder, String fromName, String toName) throws Exception {
+        String localBaseDir = System.getProperty("jlawyer.server.basedirectory");
+        localBaseDir = localBaseDir.trim();
+        if (!localBaseDir.endsWith(System.getProperty("file.separator"))) {
+            localBaseDir = localBaseDir + System.getProperty("file.separator");
+        }
+        
+        localBaseDir = localBaseDir + "templates" + TreeNodeUtils.buildNodePath(folder);
+        
+        String from = localBaseDir + File.separator + fromName;
+        String to = localBaseDir + File.separator + toName;
+        
+        File fromFile = new File(from);
+        if(!fromFile.exists())
+            throw new Exception("Vorlage " + fromName + " existiert nicht!");
+        
+        fromFile.renameTo(new File(to));
+    }
     
 }
