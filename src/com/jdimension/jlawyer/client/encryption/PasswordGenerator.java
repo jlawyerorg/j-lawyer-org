@@ -773,7 +773,6 @@ public final class PasswordGenerator {
         /**
          * Get an object to use.
          *
-         * @return the {@link gr.idrymavmela.business.lib.PasswordGenerator}
          * object.
          */
         public PasswordGenerator build() {
