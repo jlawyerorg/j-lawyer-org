@@ -949,7 +949,7 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
         
         boolean withTag=false;
         if(tagName!=null && tagName.length>0) {
-            if(tagName.length==1 && "".equals(tagName[0].length())) {
+            if(tagName.length==1 && "".equals(tagName[0])) {
                 withTag=false;
             } else {
                 withTag=true;
@@ -1047,7 +1047,7 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
         
         boolean withTag=false;
         if(tagName!=null && tagName.length>0) {
-            if(tagName.length==1 && "".equals(tagName[0].length())) {
+            if(tagName.length==1 && "".equals(tagName[0])) {
                 withTag=false;
             } else {
                 withTag=true;
