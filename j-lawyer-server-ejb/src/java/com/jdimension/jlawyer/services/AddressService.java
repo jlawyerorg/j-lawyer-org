@@ -1069,6 +1069,11 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
                 st.setString(8, wildCard);
                 st.setString(9, wildCard);
                 //st.setString(10, tag);
+                int index=10;
+            for(String t: tagName) {
+                st.setString(index, t);
+                index=index+1;
+            }
             } else {
                 st = con.prepareStatement("select addressKey, tagName from AddressTagsBean where addressKey in (" + PS_SEARCHENHANCED_2 + ")");
                 String wildCard = "%" + StringUtils.germanToUpperCase(query) + "%";
