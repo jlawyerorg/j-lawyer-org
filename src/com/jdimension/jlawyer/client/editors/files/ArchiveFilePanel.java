@@ -2286,11 +2286,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         jLabel15.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/search.png"))); // NOI18N
 
         txtSearchDocumentNames.addKeyListener(new java.awt.event.KeyAdapter() {
-            public void keyTyped(java.awt.event.KeyEvent evt) {
-                txtSearchDocumentNamesKeyTyped(evt);
-            }
-            public void keyPressed(java.awt.event.KeyEvent evt) {
-                txtSearchDocumentNamesKeyPressed(evt);
+            public void keyReleased(java.awt.event.KeyEvent evt) {
+                txtSearchDocumentNamesKeyReleased(evt);
             }
         });
 
@@ -4980,14 +4977,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
     }//GEN-LAST:event_mnuShowBeaIdentityActionPerformed
 
-    private void txtSearchDocumentNamesKeyTyped(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtSearchDocumentNamesKeyTyped
-
-        this.documentHits.clear();
-        this.tblDocuments.repaint();
-
-
-    }//GEN-LAST:event_txtSearchDocumentNamesKeyTyped
-
     private void mnuOpenDocumentMicrosoftOfficeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuOpenDocumentMicrosoftOfficeActionPerformed
         try {
             int row = this.tblDocuments.getSelectedRow();
@@ -5023,16 +5012,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     private void cmdClearSearchActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdClearSearchActionPerformed
         this.txtSearchDocumentNames.setText("");
-        this.txtSearchDocumentNamesKeyTyped(null);
+        this.txtSearchDocumentNamesKeyReleased(null);
     }//GEN-LAST:event_cmdClearSearchActionPerformed
-
-    private void txtSearchDocumentNamesKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtSearchDocumentNamesKeyPressed
-        if (this.txtSearchDocumentNames.getText().length() > 0) {
-            this.cmdClearSearch.setEnabled(true);
-        } else {
-            this.cmdClearSearch.setEnabled(false);
-        }
-    }//GEN-LAST:event_txtSearchDocumentNamesKeyPressed
 
     private void splitDocumentsPropertyChange(java.beans.PropertyChangeEvent evt) {//GEN-FIRST:event_splitDocumentsPropertyChange
         if (!this.initializing) {
@@ -5175,6 +5156,17 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
 
     }//GEN-LAST:event_mnuSaveDocumentEncryptedActionPerformed
+
+    private void txtSearchDocumentNamesKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtSearchDocumentNamesKeyReleased
+        this.documentHits.clear();
+        this.tblDocuments.repaint();
+        
+        if (this.txtSearchDocumentNames.getText().length() > 0) {
+            this.cmdClearSearch.setEnabled(true);
+        } else {
+            this.cmdClearSearch.setEnabled(false);
+        }
+    }//GEN-LAST:event_txtSearchDocumentNamesKeyReleased
 
     private AddressBean[] convertArray(Object[] in) {
         if (in != null) {
