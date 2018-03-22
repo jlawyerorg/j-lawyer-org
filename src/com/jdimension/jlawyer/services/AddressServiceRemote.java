@@ -700,8 +700,8 @@ public interface AddressServiceRemote {
 
     List<String> searchTagsInUse();
 
-    AddressBean[] searchEnhanced(String query, String tag);
+    AddressBean[] searchEnhanced(String query, String[] tagName);
 
-    Hashtable<String,ArrayList<String>> searchTagsEnhanced(String query, String tag);
+    Hashtable<String,ArrayList<String>> searchTagsEnhanced(String query, String[] tagName);
     
 }
