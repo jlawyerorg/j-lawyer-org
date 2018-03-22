@@ -954,7 +954,7 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
             } else {
                 withTag=true;
             }
-            withTag=true;
+            
         }
         
         ArrayList<AddressBean> list=new ArrayList<AddressBean>();
@@ -1052,7 +1052,7 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
             } else {
                 withTag=true;
             }
-            withTag=true;
+            
         }
         
         Hashtable<String,ArrayList<String>> list=new Hashtable<String,ArrayList<String>>();
