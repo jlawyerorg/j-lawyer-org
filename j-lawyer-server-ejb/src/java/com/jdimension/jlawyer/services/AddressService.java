@@ -704,7 +704,6 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
     @EJB
     private AddressTagsBeanFacadeLocal addressTagsFacade;
 
-    private static final String PS_SEARCHENHANCED_1="select AddressBean.id from AddressBean, AddressTagsBean where (ucase(name) like ? or ucase(firstname) like ? or ucase(company) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(email) like ? or ucase(phone) like ? or ucase(mobile) like ?) and (AddressTagsBean.tagName=? and AddressTagsBean.addressKey=AddressBean.id)";
     private static final String PS_SEARCHENHANCED_2="select id from AddressBean where ucase(name) like ? or ucase(firstname) like ? or ucase(company) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(email) like ? or ucase(phone) like ? or ucase(mobile) like ?";
     
     @Override
@@ -942,14 +941,14 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
 
     @Override
     @RolesAllowed({"readAddressRole"})
-    public AddressBean[] searchEnhanced(String query, String tag) {
+    public AddressBean[] searchEnhanced(String query, String[] tagName) {
         JDBCUtils utils=new JDBCUtils();
         Connection con=null;
         ResultSet rs=null;
         PreparedStatement st=null;
         
         boolean withTag=false;
-        if(tag!=null && !("".equalsIgnoreCase(tag.trim()))) {
+        if(tagName!=null && tagName.length>0) {
             withTag=true;
         }
         
@@ -958,7 +957,14 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
             con=utils.getConnection();
             
             if (withTag) {
-                st = con.prepareStatement(PS_SEARCHENHANCED_1);
+                
+                String inClause="";
+            for(String t: tagName) {
+                inClause=inClause + ",?";
+            }
+            inClause=inClause.replaceFirst(",", "");
+                            
+                st = con.prepareStatement("select AddressBean.id from AddressBean, AddressTagsBean where (ucase(name) like ? or ucase(firstname) like ? or ucase(company) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(email) like ? or ucase(phone) like ? or ucase(mobile) like ?) and (AddressTagsBean.tagName in (" + inClause + ") and AddressTagsBean.addressKey=AddressBean.id)");
                 String wildCard = "%" + StringUtils.germanToUpperCase(query) + "%";
                 st.setString(1, wildCard);
                 st.setString(2, wildCard);
@@ -969,7 +975,7 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
                 st.setString(7, wildCard);
                 st.setString(8, wildCard);
                 st.setString(9, wildCard);
-                st.setString(10, tag);
+                //st.setString(10, tag);
             } else {
                 st = con.prepareStatement(PS_SEARCHENHANCED_2);
                 String wildCard = "%" + StringUtils.germanToUpperCase(query) + "%";
@@ -1023,14 +1029,14 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
 
     @Override
     @RolesAllowed({"readAddressRole"})
-    public Hashtable<String,ArrayList<String>> searchTagsEnhanced(String query, String tag) {
+    public Hashtable<String,ArrayList<String>> searchTagsEnhanced(String query, String[] tagName) {
         JDBCUtils utils=new JDBCUtils();
         Connection con=null;
         ResultSet rs=null;
         PreparedStatement st=null;
         
         boolean withTag=false;
-        if(tag!=null && !("".equalsIgnoreCase(tag.trim()))) {
+        if(tagName!=null && tagName.length>0) {
             withTag=true;
         }
         
@@ -1039,7 +1045,14 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
             con=utils.getConnection();
             
             if (withTag) {
-                st = con.prepareStatement("select addressKey, tagName from AddressTagsBean where addressKey in (" + PS_SEARCHENHANCED_1 + ")");
+                
+                String inClause="";
+            for(String t: tagName) {
+                inClause=inClause + ",?";
+            }
+            inClause=inClause.replaceFirst(",", "");
+                
+                st = con.prepareStatement("select addressKey, tagName from AddressTagsBean where addressKey in (" + "select AddressBean.id from AddressBean, AddressTagsBean where (ucase(name) like ? or ucase(firstname) like ? or ucase(company) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(email) like ? or ucase(phone) like ? or ucase(mobile) like ?) and (AddressTagsBean.tagName in (" + inClause + ") and AddressTagsBean.addressKey=AddressBean.id)" + ")");
                 String wildCard = "%" + StringUtils.germanToUpperCase(query) + "%";
                 st.setString(1, wildCard);
                 st.setString(2, wildCard);
@@ -1050,7 +1063,7 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
                 st.setString(7, wildCard);
                 st.setString(8, wildCard);
                 st.setString(9, wildCard);
-                st.setString(10, tag);
+                //st.setString(10, tag);
             } else {
                 st = con.prepareStatement("select addressKey, tagName from AddressTagsBean where addressKey in (" + PS_SEARCHENHANCED_2 + ")");
                 String wildCard = "%" + StringUtils.germanToUpperCase(query) + "%";
@@ -1070,12 +1083,12 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
             //AddressLocalHome home=this.lookupAddressBean();
             while(rs.next()) {
                 String id = rs.getString(1);
-                String tagName= rs.getString(2);
+                String tag= rs.getString(2);
                 if(!list.containsKey(id)) {
                     list.put(id, new ArrayList<String>());
                 }
                 ArrayList<String> tagList=list.get(id);
-                tagList.add(tagName);
+                tagList.add(tag);
             }
         } catch (SQLException sqle) {
             log.error("Error finding addresses", sqle);
