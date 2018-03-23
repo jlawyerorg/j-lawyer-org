@@ -699,6 +699,16 @@ public class ArchiveFileAddressesBean implements Serializable {
     @JoinColumn(name = "archiveFileKey", referencedColumnName = "id")
     @ManyToOne
     private ArchiveFileBean archiveFileKey;
+    @Column(name = "reference")
+    private int reference;
+    @Column(name = "contact")
+    private int contact;
+    @Column(name = "custom1")
+    private int custom1;
+    @Column(name = "custom2")
+    private int custom2;
+    @Column(name = "custom3")
+    private int custom3;
 
     public ArchiveFileAddressesBean() {
     }
@@ -767,6 +777,76 @@ public class ArchiveFileAddressesBean implements Serializable {
     @Override
     public String toString() {
         return "com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean[ id=" + id + " ]";
+    }
+
+    /**
+     * @return the reference
+     */
+    public int getReference() {
+        return reference;
+    }
+
+    /**
+     * @param reference the reference to set
+     */
+    public void setReference(int reference) {
+        this.reference = reference;
+    }
+
+    /**
+     * @return the contact
+     */
+    public int getContact() {
+        return contact;
+    }
+
+    /**
+     * @param contact the contact to set
+     */
+    public void setContact(int contact) {
+        this.contact = contact;
+    }
+
+    /**
+     * @return the custom1
+     */
+    public int getCustom1() {
+        return custom1;
+    }
+
+    /**
+     * @param custom1 the custom1 to set
+     */
+    public void setCustom1(int custom1) {
+        this.custom1 = custom1;
+    }
+
+    /**
+     * @return the custom2
+     */
+    public int getCustom2() {
+        return custom2;
+    }
+
+    /**
+     * @param custom2 the custom2 to set
+     */
+    public void setCustom2(int custom2) {
+        this.custom2 = custom2;
+    }
+
+    /**
+     * @return the custom3
+     */
+    public int getCustom3() {
+        return custom3;
+    }
+
+    /**
+     * @param custom3 the custom3 to set
+     */
+    public void setCustom3(int custom3) {
+        this.custom3 = custom3;
     }
     
 }
