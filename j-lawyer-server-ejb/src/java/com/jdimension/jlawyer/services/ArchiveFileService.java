@@ -2087,13 +2087,13 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             if (withArchive) {
                 // with archive
                 if (withTag) {
-                    
+
                     String inClause = "";
                     for (String t : tagName) {
                         inClause = inClause + ",?";
                     }
                     inClause = inClause.replaceFirst(",", "");
-                    
+
                     // with archive and tag
                     st = con.prepareStatement("select ArchiveFileBean.id from ArchiveFileBean, ArchiveFileTagsBean where (ucase(name) like ? or ucase(fileNumber) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ?) and (ArchiveFileTagsBean.tagName in (" + inClause + ") and ArchiveFileTagsBean.archiveFileKey=ArchiveFileBean.id)");
                     st.setString(1, wildCard);
@@ -2102,7 +2102,11 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                     st.setString(4, wildCard);
                     st.setString(5, wildCard);
                     st.setString(6, wildCard);
-                    //st.setString(7, tag);
+                    int index = 7;
+                    for (String t : tagName) {
+                        st.setString(index, t);
+                        index = index + 1;
+                    }
                 } else {
                     // with archive but no tag
                     st = con.prepareStatement(PS_SEARCHENHANCED_2);
@@ -2114,15 +2118,14 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                     st.setString(6, wildCard);
                 }
             } else // without archive
-            {
-                if (withTag) {
-                    
+             if (withTag) {
+
                     String inClause = "";
                     for (String t : tagName) {
                         inClause = inClause + ",?";
                     }
                     inClause = inClause.replaceFirst(",", "");
-                    
+
                     // without archive and with tag
                     st = con.prepareStatement("select ArchiveFileBean.id from ArchiveFileBean, ArchiveFileTagsBean where (ucase(name) like ? or ucase(fileNumber) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ?) and archived=0 and (ArchiveFileTagsBean.tagName in (" + inClause + ") and ArchiveFileTagsBean.archiveFileKey=ArchiveFileBean.id)");
                     st.setString(1, wildCard);
@@ -2131,7 +2134,11 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                     st.setString(4, wildCard);
                     st.setString(5, wildCard);
                     st.setString(6, wildCard);
-                    //st.setString(7, tag);
+                    int index = 7;
+                    for (String t : tagName) {
+                        st.setString(index, t);
+                        index = index + 1;
+                    }
                 } else {
                     // without archive and no tag
                     st = con.prepareStatement(PS_SEARCHENHANCED_4);
@@ -2142,7 +2149,6 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                     st.setString(5, wildCard);
                     st.setString(6, wildCard);
                 }
-            }
 
             rs = st.executeQuery();
 
@@ -2770,7 +2776,11 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                     st.setString(4, wildCard);
                     st.setString(5, wildCard);
                     st.setString(6, wildCard);
-                    //st.setString(7, tag);
+                    int index = 7;
+                    for (String t : tagNames) {
+                        st.setString(index, t);
+                        index = index + 1;
+                    }
                 } else {
                     // with archive but no tag
                     st = con.prepareStatement("select archiveFileKey, tagName from ArchiveFileTagsBean where archiveFileKey in (" + PS_SEARCHENHANCED_2 + ")");
@@ -2782,8 +2792,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                     st.setString(6, wildCard);
                 }
             } else // without archive
-            {
-                if (withTag) {
+             if (withTag) {
                     String inClause = "";
                     for (String t : tagNames) {
                         inClause = inClause + ",?";
@@ -2797,7 +2806,11 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                     st.setString(4, wildCard);
                     st.setString(5, wildCard);
                     st.setString(6, wildCard);
-                    //st.setString(7, tag);
+                    int index = 7;
+                    for (String t : tagNames) {
+                        st.setString(index, t);
+                        index = index + 1;
+                    }
                 } else {
                     // without archive and no tag
                     st = con.prepareStatement("select archiveFileKey, tagName from ArchiveFileTagsBean where archiveFileKey in (" + PS_SEARCHENHANCED_4 + ")");
@@ -2808,7 +2821,6 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                     st.setString(5, wildCard);
                     st.setString(6, wildCard);
                 }
-            }
 
             rs = st.executeQuery();
 
