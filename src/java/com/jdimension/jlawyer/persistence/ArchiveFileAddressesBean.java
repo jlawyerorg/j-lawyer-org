@@ -700,15 +700,15 @@ public class ArchiveFileAddressesBean implements Serializable {
     @ManyToOne
     private ArchiveFileBean archiveFileKey;
     @Column(name = "reference")
-    private int reference;
+    private String reference;
     @Column(name = "contact")
-    private int contact;
+    private String contact;
     @Column(name = "custom1")
-    private int custom1;
+    private String custom1;
     @Column(name = "custom2")
-    private int custom2;
+    private String custom2;
     @Column(name = "custom3")
-    private int custom3;
+    private String custom3;
 
     public ArchiveFileAddressesBean() {
     }
@@ -782,70 +782,70 @@ public class ArchiveFileAddressesBean implements Serializable {
     /**
      * @return the reference
      */
-    public int getReference() {
+    public String getReference() {
         return reference;
     }
 
     /**
      * @param reference the reference to set
      */
-    public void setReference(int reference) {
+    public void setReference(String reference) {
         this.reference = reference;
     }
 
     /**
      * @return the contact
      */
-    public int getContact() {
+    public String getContact() {
         return contact;
     }
 
     /**
      * @param contact the contact to set
      */
-    public void setContact(int contact) {
+    public void setContact(String contact) {
         this.contact = contact;
     }
 
     /**
      * @return the custom1
      */
-    public int getCustom1() {
+    public String getCustom1() {
         return custom1;
     }
 
     /**
      * @param custom1 the custom1 to set
      */
-    public void setCustom1(int custom1) {
+    public void setCustom1(String custom1) {
         this.custom1 = custom1;
     }
 
     /**
      * @return the custom2
      */
-    public int getCustom2() {
+    public String getCustom2() {
         return custom2;
     }
 
     /**
      * @param custom2 the custom2 to set
      */
-    public void setCustom2(int custom2) {
+    public void setCustom2(String custom2) {
         this.custom2 = custom2;
     }
 
     /**
      * @return the custom3
      */
-    public int getCustom3() {
+    public String getCustom3() {
         return custom3;
     }
 
     /**
      * @param custom3 the custom3 to set
      */
-    public void setCustom3(int custom3) {
+    public void setCustom3(String custom3) {
         this.custom3 = custom3;
     }
     
