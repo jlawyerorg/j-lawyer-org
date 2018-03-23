@@ -455,5 +455,17 @@ alter table AddressBean add index `IDX_MOBILE` (mobile);
 
 insert into ServerSettingsBean(settingKey, settingValue) values('jlawyer.server.database.version','01900') ON DUPLICATE KEY UPDATE settingValue     = '01900';
 
+
+##############################################
+# introduced with change from 1.9 to 1.9.1
+##############################################
+
+alter table ArchiveFileAddressesBean add `reference` VARCHAR(50) BINARY;
+# Sachbearbeiter
+alter table ArchiveFileAddressesBean add `contact` VARCHAR(50) BINARY;
+alter table ArchiveFileAddressesBean add `custom1` VARCHAR(250) BINARY;
+alter table ArchiveFileAddressesBean add `custom2` VARCHAR(250) BINARY;
+alter table ArchiveFileAddressesBean add `custom3` VARCHAR(250) BINARY;
+
 commit;
 
