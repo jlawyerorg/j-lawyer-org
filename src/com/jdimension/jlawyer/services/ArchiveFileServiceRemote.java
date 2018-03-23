@@ -745,7 +745,7 @@ public interface ArchiveFileServiceRemote {
 
     List<String> searchTagsInUse();
 
-    ArchiveFileBean[] searchEnhanced(String query, boolean withArchive, String tag);
+    ArchiveFileBean[] searchEnhanced(String query, boolean withArchive, String[] tagName);
 
     String getDocumentPreview(String id) throws Exception;
 
@@ -769,7 +769,7 @@ public interface ArchiveFileServiceRemote {
 
     boolean setDocumentDate(String id, Date date) throws Exception;
 
-    Hashtable<String,ArrayList<String>> searchTagsEnhanced(String query, boolean withArchive, String tag);
+    Hashtable<String,ArrayList<String>> searchTagsEnhanced(String query, boolean withArchive, String[] tagName);
 
     ArchiveFileDocumentsBean addDocumentFromTemplate(String archiveFileId, String fileName, GenericNode templateFolder, String templateName, Hashtable placeHolderValues, String dictateSign) throws Exception;
 
