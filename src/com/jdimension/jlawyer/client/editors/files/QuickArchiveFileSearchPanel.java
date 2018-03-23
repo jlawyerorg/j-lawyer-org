@@ -673,6 +673,7 @@ import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import com.jdimension.jlawyer.ui.tagging.TagUtils;
 import java.awt.Component;
 import java.awt.Graphics;
 import java.awt.Image;
@@ -730,22 +731,7 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
     }
 
     public void populateTags(List<String> tags) {
-        Object selected = this.cmbTags.getSelectedItem();
-        if (selected == null) {
-            selected = "";
-        }
-
-        this.cmbTags.removeAllItems();
-        this.cmbTags.addItem("");
-        for (String t : tags) {
-            this.cmbTags.addItem(t);
-        }
-
-        if (tags.contains(selected)) {
-            this.cmbTags.setSelectedItem(selected);
-        } else {
-            this.cmbTags.setSelectedIndex(0);
-        }
+        TagUtils.populateTags(tags, cmdTagFilter, popTagFilter);
     }
 
     public void clearInputs() {
@@ -786,6 +772,8 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
         popupArchiveFileActions = new javax.swing.JPopupMenu();
         mnuOpenSelectedArchiveFile = new javax.swing.JMenuItem();
         mnuDeleteSelectedArchiveFiles = new javax.swing.JMenuItem();
+        popTagFilter = new javax.swing.JPopupMenu();
+        cmdTagFilter = new javax.swing.JButton();
         jLabel1 = new javax.swing.JLabel();
         txtSearchString = new javax.swing.JTextField();
         jScrollPane1 = new javax.swing.JScrollPane();
@@ -796,7 +784,6 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
         lblPanelTitle = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
         chkIncludeArchive = new javax.swing.JCheckBox();
-        cmbTags = new javax.swing.JComboBox();
         jPanel1 = new javax.swing.JPanel();
         cmdExport = new javax.swing.JButton();
 
@@ -819,6 +806,13 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
             }
         });
         popupArchiveFileActions.add(mnuDeleteSelectedArchiveFiles);
+
+        cmdTagFilter.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/favorites.png"))); // NOI18N
+        cmdTagFilter.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                cmdTagFilterMousePressed(evt);
+            }
+        });
 
         jLabel1.setText("Suchanfrage:");
 
@@ -875,13 +869,6 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
 
         chkIncludeArchive.setText("Archivsuche");
 
-        cmbTags.setMaximumRowCount(30);
-        cmbTags.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmbTagsActionPerformed(evt);
-            }
-        });
-
         jPanel1.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(255, 255, 255), 2, true));
         jPanel1.setOpaque(false);
 
@@ -924,10 +911,10 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
                         .add(txtSearchString)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(cmdQuickSearch)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                        .add(chkIncludeArchive)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(cmbTags, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                        .add(chkIncludeArchive)
+                        .add(18, 18, 18)
+                        .add(cmdTagFilter))
                     .add(jScrollPane2)
                     .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
                         .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
@@ -951,9 +938,8 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
                     .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                         .add(jLabel1)
                         .add(txtSearchString, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                    .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                        .add(cmbTags, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .add(chkIncludeArchive)))
+                    .add(cmdTagFilter)
+                    .add(chkIncludeArchive))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 243, Short.MAX_VALUE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
@@ -1090,12 +1076,8 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
         // perform search here
         ThreadUtils.setWaitCursor(this);
         EditorsRegistry.getInstance().updateStatus("Suche Akten...");
-        String tag = null;
-        Object selectedTag = this.cmbTags.getSelectedItem();
-        if (selectedTag != null) {
-            tag = selectedTag.toString();
-        }
-        new Thread(new QuickArchiveFileSearchThread(this, this.txtSearchString.getText(), this.chkIncludeArchive.isSelected(), tag, this.tblResults)).start();
+        
+        new Thread(new QuickArchiveFileSearchThread(this, this.txtSearchString.getText(), this.chkIncludeArchive.isSelected(), TagUtils.getSelectedTags(this.popTagFilter), this.tblResults)).start();
 
     }//GEN-LAST:event_cmdQuickSearchActionPerformed
 
@@ -1109,12 +1091,6 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
             lblSummary.setText("");
         }
     }//GEN-LAST:event_tblResultsKeyReleased
-
-    private void cmbTagsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbTagsActionPerformed
-        if (this.txtSearchString.getText().length() > 2) {
-            this.cmdQuickSearchActionPerformed(null);
-        }
-    }//GEN-LAST:event_cmbTagsActionPerformed
 
     private void cmdExportActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdExportActionPerformed
         try {
@@ -1133,12 +1109,16 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
         this.useSelection();
     }//GEN-LAST:event_mnuOpenSelectedArchiveFileActionPerformed
 
+    private void cmdTagFilterMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdTagFilterMousePressed
+        this.popTagFilter.show(this.cmdTagFilter, evt.getX(), evt.getY());
+    }//GEN-LAST:event_cmdTagFilterMousePressed
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JCheckBox chkIncludeArchive;
-    private javax.swing.JComboBox cmbTags;
     private javax.swing.JButton cmdExport;
     private javax.swing.JButton cmdQuickSearch;
+    private javax.swing.JButton cmdTagFilter;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JPanel jPanel1;
@@ -1148,6 +1128,7 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
     private javax.swing.JLabel lblSummary;
     private javax.swing.JMenuItem mnuDeleteSelectedArchiveFiles;
     private javax.swing.JMenuItem mnuOpenSelectedArchiveFile;
+    private javax.swing.JPopupMenu popTagFilter;
     private javax.swing.JPopupMenu popupArchiveFileActions;
     private javax.swing.JTable tblResults;
     private javax.swing.JTextField txtSearchString;

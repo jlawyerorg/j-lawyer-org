@@ -687,10 +687,10 @@ public class QuickAddressSearchThread implements Runnable {
     private String query;
     private Component owner;
     private JTable target;
-    private String tag;
+    private String[] tag;
     
     /** Creates a new instance of QuickAddressSearchThread */
-    public QuickAddressSearchThread(Component owner, String query, String tag, JTable target) {
+    public QuickAddressSearchThread(Component owner, String query, String[] tag, JTable target) {
         this.query=query;
         this.owner=owner;
         this.target=target;

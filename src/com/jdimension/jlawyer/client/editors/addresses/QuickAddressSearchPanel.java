@@ -664,6 +664,7 @@
 package com.jdimension.jlawyer.client.editors.addresses;
 
 import com.jdimension.jlawyer.client.configuration.PopulateOptionsEditor;
+import com.jdimension.jlawyer.client.desktop.TaggedTimerTask;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.ThemeableEditor;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
@@ -676,19 +677,25 @@ import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.services.AddressServiceRemote;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import com.jdimension.jlawyer.ui.tagging.TagUtils;
 import java.awt.Component;
 import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.TimerTask;
 import javax.swing.AbstractAction;
+import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComponent;
 import javax.swing.JOptionPane;
 import javax.swing.KeyStroke;
+import javax.swing.MenuElement;
 import org.apache.log4j.Logger;
 
 /**
@@ -707,6 +714,7 @@ public class QuickAddressSearchPanel extends javax.swing.JPanel implements Theme
      */
     public QuickAddressSearchPanel() {
         initComponents();
+        
         UserSettings userSet = UserSettings.getInstance();
         //this.detailsEditorClass=detailsEditorClass;
         if (userSet.isCurrentUserInRole(UserSettings.ROLE_WRITEADDRESS)) {
@@ -725,27 +733,20 @@ public class QuickAddressSearchPanel extends javax.swing.JPanel implements Theme
                 useSelection();
             }
         });
-
+        
         ComponentUtils.autoSizeColumns(tblResults);
+        
+        
+        
+//        List<String> tagsInUse = ClientSettings.getInstance().getAddressTagsInUse();
+//        String[] lastFilterTags = ClientSettings.getInstance().getConfigurationArray(ClientSettings.CONF_ADDRESS_LASTFILTERTAG, new String[]{""});
+//        TagUtils.updateTagSelector(this, popTagFilter, al, tagsInUse, lastFilterTags);
     }
 
     public void populateTags(List<String> tags) {
-        Object selected = this.cmbTags.getSelectedItem();
-        if (selected == null) {
-            selected = "";
-        }
 
-        this.cmbTags.removeAllItems();
-        this.cmbTags.addItem("");
-        for (String t : tags) {
-            this.cmbTags.addItem(t);
-        }
-
-        if (tags.contains(selected)) {
-            this.cmbTags.setSelectedItem(selected);
-        } else {
-            this.cmbTags.setSelectedIndex(0);
-        }
+        TagUtils.populateTags(tags, cmdTagFilter, popTagFilter);
+        
     }
 
     public void clearInputs() {
@@ -785,6 +786,7 @@ public class QuickAddressSearchPanel extends javax.swing.JPanel implements Theme
         popupAddressActions = new javax.swing.JPopupMenu();
         mnuOpenSelectedAddress = new javax.swing.JMenuItem();
         mnuDeleteSelectedAddresses = new javax.swing.JMenuItem();
+        popTagFilter = new javax.swing.JPopupMenu();
         jLabel1 = new javax.swing.JLabel();
         txtSearchString = new javax.swing.JTextField();
         jScrollPane1 = new javax.swing.JScrollPane();
@@ -794,9 +796,9 @@ public class QuickAddressSearchPanel extends javax.swing.JPanel implements Theme
         lblSummary = new javax.swing.JLabel();
         jLabel18 = new javax.swing.JLabel();
         lblPanelTitle = new javax.swing.JLabel();
-        cmbTags = new javax.swing.JComboBox();
         jPanel1 = new javax.swing.JPanel();
         cmdExport = new javax.swing.JButton();
+        cmdTagFilter = new javax.swing.JButton();
 
         mnuOpenSelectedAddress.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/vcard.png"))); // NOI18N
         mnuOpenSelectedAddress.setText("öffnen");
@@ -870,13 +872,6 @@ public class QuickAddressSearchPanel extends javax.swing.JPanel implements Theme
         lblPanelTitle.setForeground(new java.awt.Color(255, 255, 255));
         lblPanelTitle.setText("jLabel19");
 
-        cmbTags.setMaximumRowCount(30);
-        cmbTags.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmbTagsActionPerformed(evt);
-            }
-        });
-
         jPanel1.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(255, 255, 255), 2, true));
         jPanel1.setOpaque(false);
 
@@ -905,6 +900,13 @@ public class QuickAddressSearchPanel extends javax.swing.JPanel implements Theme
                 .addContainerGap())
         );
 
+        cmdTagFilter.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/favorites.png"))); // NOI18N
+        cmdTagFilter.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                cmdTagFilterMousePressed(evt);
+            }
+        });
+
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -912,7 +914,7 @@ public class QuickAddressSearchPanel extends javax.swing.JPanel implements Theme
             .add(layout.createSequentialGroup()
                 .addContainerGap()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 573, Short.MAX_VALUE)
+                    .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 651, Short.MAX_VALUE)
                     .add(jScrollPane2)
                     .add(layout.createSequentialGroup()
                         .add(jLabel1)
@@ -920,8 +922,8 @@ public class QuickAddressSearchPanel extends javax.swing.JPanel implements Theme
                         .add(txtSearchString)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(cmdQuickSearch)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(cmbTags, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                        .add(cmdTagFilter))
                     .add(layout.createSequentialGroup()
                         .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .add(18, 18, 18)
@@ -941,10 +943,10 @@ public class QuickAddressSearchPanel extends javax.swing.JPanel implements Theme
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(org.jdesktop.layout.GroupLayout.TRAILING, cmdQuickSearch)
-                    .add(cmbTags, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                         .add(jLabel1)
-                        .add(txtSearchString, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
+                        .add(txtSearchString, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                    .add(cmdTagFilter))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 190, Short.MAX_VALUE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
@@ -1080,12 +1082,8 @@ public class QuickAddressSearchPanel extends javax.swing.JPanel implements Theme
         // perform search here
         EditorsRegistry.getInstance().updateStatus("Suche Adressen...");
         ThreadUtils.setWaitCursor(this);
-        String tag = null;
-        Object selectedTag = this.cmbTags.getSelectedItem();
-        if (selectedTag != null) {
-            tag = selectedTag.toString();
-        }
-        new Thread(new QuickAddressSearchThread(this, this.txtSearchString.getText(), tag, this.tblResults)).start();
+        
+        new Thread(new QuickAddressSearchThread(this, this.txtSearchString.getText(), TagUtils.getSelectedTags(this.popTagFilter), this.tblResults)).start();
 
     }//GEN-LAST:event_cmdQuickSearchActionPerformed
 
@@ -1125,12 +1123,6 @@ public class QuickAddressSearchPanel extends javax.swing.JPanel implements Theme
         }
     }//GEN-LAST:event_tblResultsKeyReleased
 
-    private void cmbTagsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbTagsActionPerformed
-        if (this.txtSearchString.getText().length() > 2) {
-            this.cmdQuickSearchActionPerformed(null);
-        }
-    }//GEN-LAST:event_cmbTagsActionPerformed
-
     private void cmdExportActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdExportActionPerformed
         try {
             TableUtils.exportAndLaunch("adresssuche-export.csv", this.tblResults);
@@ -1148,11 +1140,15 @@ public class QuickAddressSearchPanel extends javax.swing.JPanel implements Theme
         this.useSelection();
     }//GEN-LAST:event_mnuOpenSelectedAddressActionPerformed
 
+    private void cmdTagFilterMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdTagFilterMousePressed
+        this.popTagFilter.show(this.cmdTagFilter, evt.getX(), evt.getY());
+    }//GEN-LAST:event_cmdTagFilterMousePressed
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JComboBox cmbTags;
     private javax.swing.JButton cmdExport;
     private javax.swing.JButton cmdQuickSearch;
+    private javax.swing.JButton cmdTagFilter;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel18;
     private javax.swing.JPanel jPanel1;
@@ -1162,6 +1158,7 @@ public class QuickAddressSearchPanel extends javax.swing.JPanel implements Theme
     private javax.swing.JLabel lblSummary;
     private javax.swing.JMenuItem mnuDeleteSelectedAddresses;
     private javax.swing.JMenuItem mnuOpenSelectedAddress;
+    private javax.swing.JPopupMenu popTagFilter;
     private javax.swing.JPopupMenu popupAddressActions;
     private javax.swing.JTable tblResults;
     private javax.swing.JTextField txtSearchString;

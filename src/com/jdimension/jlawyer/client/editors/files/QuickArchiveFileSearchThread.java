@@ -692,12 +692,12 @@ public class QuickArchiveFileSearchThread implements Runnable {
     private Component owner;
     private JTable target;
     private boolean withArchive;
-    private String tag;
+    private String[] tag;
 
     /**
      * Creates a new instance of QuickArchiveFileSearchThread
      */
-    public QuickArchiveFileSearchThread(Component owner, String query, boolean withArchive, String tag, JTable target) {
+    public QuickArchiveFileSearchThread(Component owner, String query, boolean withArchive, String[] tag, JTable target) {
         this.query = query;
         this.owner = owner;
         this.target = target;

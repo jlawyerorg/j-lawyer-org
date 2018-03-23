@@ -715,15 +715,10 @@ public class AddAddressSearchDialog extends javax.swing.JDialog {
         this.tblResults.setModel(model);
         ComponentUtils.autoSizeColumns(tblResults);
 
-        this.cmbTags.removeAllItems();
-        this.cmbTags.addItem("");
         ClientSettings s = ClientSettings.getInstance();
         List<String> tags = s.getAddressTagsInUse();
-        for (String tag : tags) {
-            this.cmbTags.addItem(tag);
-        }
-        this.cmbTags.setSelectedIndex(0);
-
+        TagUtils.populateTags(tags, cmdTagFilter, popTagFilter);
+        
         this.tblResults.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "Enter");
         this.tblResults.getActionMap().put("Enter", new AbstractAction() {
             @Override
@@ -743,15 +738,16 @@ public class AddAddressSearchDialog extends javax.swing.JDialog {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        popTagFilter = new javax.swing.JPopupMenu();
         jLabel1 = new javax.swing.JLabel();
         txtSearchString = new javax.swing.JTextField();
         cmdQuickSearch = new javax.swing.JButton();
         jScrollPane1 = new javax.swing.JScrollPane();
         tblResults = new javax.swing.JTable();
-        cmbTags = new javax.swing.JComboBox();
         cmdCancel = new javax.swing.JButton();
         cmdUseSelection = new javax.swing.JButton();
         cmdAddNew = new javax.swing.JButton();
+        cmdTagFilter = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         addComponentListener(new java.awt.event.ComponentAdapter() {
@@ -795,9 +791,6 @@ public class AddAddressSearchDialog extends javax.swing.JDialog {
         });
         jScrollPane1.setViewportView(tblResults);
 
-        cmbTags.setMaximumRowCount(15);
-        cmbTags.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
-
         cmdCancel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png"))); // NOI18N
         cmdCancel.setText("Schliessen");
         cmdCancel.addActionListener(new java.awt.event.ActionListener() {
@@ -822,6 +815,13 @@ public class AddAddressSearchDialog extends javax.swing.JDialog {
             }
         });
 
+        cmdTagFilter.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/favorites.png"))); // NOI18N
+        cmdTagFilter.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                cmdTagFilterMousePressed(evt);
+            }
+        });
+
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -837,7 +837,7 @@ public class AddAddressSearchDialog extends javax.swing.JDialog {
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(cmdQuickSearch)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                        .add(cmbTags, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                        .add(cmdTagFilter))
                     .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
                         .add(0, 0, Short.MAX_VALUE)
                         .add(cmdUseSelection)
@@ -857,7 +857,7 @@ public class AddAddressSearchDialog extends javax.swing.JDialog {
                     .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                         .add(jLabel1)
                         .add(txtSearchString, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                    .add(cmbTags, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                    .add(cmdTagFilter))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                 .add(cmdAddNew)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
@@ -883,12 +883,8 @@ public class AddAddressSearchDialog extends javax.swing.JDialog {
 // perform search here
         EditorsRegistry.getInstance().updateStatus("Suche Adressen...");
         ThreadUtils.setWaitCursor(this);
-        Object tag = this.cmbTags.getSelectedItem();
-        String sTag = null;
-        if (tag != null) {
-            sTag = tag.toString();
-        }
-        new Thread(new QuickAddressSearchThread(this, this.txtSearchString.getText(), sTag, this.tblResults)).start();
+        
+        new Thread(new QuickAddressSearchThread(this, this.txtSearchString.getText(), TagUtils.getSelectedTags(popTagFilter), this.tblResults)).start();
     }//GEN-LAST:event_cmdQuickSearchActionPerformed
 
     private void useSelection() {
@@ -978,6 +974,10 @@ public class AddAddressSearchDialog extends javax.swing.JDialog {
         }
     }//GEN-LAST:event_cmdAddNewActionPerformed
 
+    private void cmdTagFilterMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdTagFilterMousePressed
+        this.popTagFilter.show(this.cmdTagFilter, evt.getX(), evt.getY());
+    }//GEN-LAST:event_cmdTagFilterMousePressed
+
     private int getRowForObject(QuickAddressSearchRowIdentifier id) {
         for (int i = 0; i < this.tblResults.getRowCount(); i++) {
             Object value = this.tblResults.getValueAt(i, 0);
@@ -1003,13 +1003,14 @@ public class AddAddressSearchDialog extends javax.swing.JDialog {
         });
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JComboBox cmbTags;
     private javax.swing.JButton cmdAddNew;
     private javax.swing.JButton cmdCancel;
     private javax.swing.JButton cmdQuickSearch;
+    private javax.swing.JButton cmdTagFilter;
     private javax.swing.JButton cmdUseSelection;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JPopupMenu popTagFilter;
     private javax.swing.JTable tblResults;
     private javax.swing.JTextField txtSearchString;
     // End of variables declaration//GEN-END:variables

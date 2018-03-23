@@ -663,15 +663,31 @@
  */
 package com.jdimension.jlawyer.ui.tagging;
 
+import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.utils.ThreadUtils;
+import com.jdimension.jlawyer.persistence.ArchiveFileTagsBean;
+import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import java.awt.Component;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Hashtable;
+import java.util.List;
+import javax.swing.JButton;
+import javax.swing.JCheckBoxMenuItem;
+import javax.swing.JPopupMenu;
+import javax.swing.MenuElement;
+import org.apache.log4j.Logger;
 
 /**
  *
  * @author jens
  */
 public class TagUtils {
+    
+    private static final Logger log=Logger.getLogger(TagUtils.class.getName());
     
     public static String getTagList(String id, Hashtable<String, ArrayList<String>> tags) {
         if (tags.containsKey(id)) {
@@ -689,6 +705,90 @@ public class TagUtils {
             return returnValue;
         } else {
             return "";
+        }
+    }
+    
+    public static void populateTags(List<String> tags, JButton cmdTagFilter, JPopupMenu popTagFilter) {
+        ActionListener al=new ActionListener() {
+                        @Override
+                        public void actionPerformed(ActionEvent e) {
+                            boolean selected=false;
+                            for(MenuElement me: popTagFilter.getSubElements()) {
+                                JCheckBoxMenuItem mi=((JCheckBoxMenuItem)me.getComponent());
+                                if(mi.isSelected()) {
+                                    selected=true;
+                                    break;
+                                }
+                            }
+                            if(selected) {
+                                cmdTagFilter.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/favorites-green.png")));
+                            } else {
+                                cmdTagFilter.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/favorites.png")));
+                            }
+                                
+                            
+                        }
+                        
+                    };
+    
+        List<String> currentComboItems = new ArrayList<String>();
+        List<String> lastFilterTags = new ArrayList<String>();
+            MenuElement[] elements=popTagFilter.getSubElements();
+            for (MenuElement e: elements) {
+                currentComboItems.add(((JCheckBoxMenuItem)e.getComponent()).getText());
+                if(((JCheckBoxMenuItem)e.getComponent()).isSelected())
+                    lastFilterTags.add(((JCheckBoxMenuItem)e.getComponent()).getText());
+            }
+            Collections.sort(currentComboItems);
+            if (!tags.equals(currentComboItems)) {
+                if (tags == null) {
+                    tags = new ArrayList<String>();
+                }
+                
+                popTagFilter.removeAll();
+                for(String t: tags) {
+                    JCheckBoxMenuItem mi=new JCheckBoxMenuItem(t);
+                    if(Arrays.binarySearch(lastFilterTags.toArray(), t)>-1) {
+                        mi.setSelected(true);
+                    } else {
+                        mi.setSelected(false);
+                    }
+                    popTagFilter.add(mi);
+                }
+                for(MenuElement me: popTagFilter.getSubElements()) {
+                    ((JCheckBoxMenuItem)me.getComponent()).addActionListener(al);
+                }
+                
+            }
+    }
+    
+    public static String[] getSelectedTags(JPopupMenu popup) {
+        ArrayList<String> selected=new ArrayList<String>();
+        MenuElement[] elements=popup.getSubElements();
+            for (MenuElement e: elements) {
+                if(((JCheckBoxMenuItem)e.getComponent()).isSelected())
+                    selected.add(((JCheckBoxMenuItem)e.getComponent()).getText());
+            }
+            return selected.toArray(new String[0]);
+    }
+    
+    public static void updateTagSelector(Component owner, JPopupMenu popTags, ActionListener menuItemActionListener, List<String> tagsInUse, String[] lastFilterTags) {
+        Hashtable<String, List<ArchiveFileTagsBean>> tags = new Hashtable<String, List<ArchiveFileTagsBean>>();
+        //List<ArchiveFileBean> othersNewList = new ArrayList<ArchiveFileBean>();
+        try {
+            //System.out.println("TaggedTimerTask#run @ " + System.currentTimeMillis() + " from " + source);
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+
+            
+
+            // update combobox with tags that are currently in use, but only if there was an actual change
+            
+        } catch (Throwable ex) {
+            log.error("Error connecting to server", ex);
+            //JOptionPane.showMessageDialog(this.owner, "Verbindungsfehler: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            ThreadUtils.showErrorDialog(owner, java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/TaggedTimerTask").getString("msg.connectionerror"), new Object[]{ex.getMessage()}), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/TaggedTimerTask").getString("msg.error"));
+            return;
         }
     }
     

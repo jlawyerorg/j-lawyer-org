@@ -670,6 +670,7 @@ import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.persistence.AddressBean;
+import com.jdimension.jlawyer.ui.tagging.TagUtils;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
@@ -707,14 +708,9 @@ public class AddRecipientSearchDialog extends javax.swing.JDialog {
         QuickAddressSearchTableModel model = new QuickAddressSearchTableModel(colNames, 0);
         this.tblResults.setModel(model);
 
-        this.cmbTags.removeAllItems();
-        this.cmbTags.addItem("");
         ClientSettings s = ClientSettings.getInstance();
         List<String> tags = s.getAddressTagsInUse();
-        for (String tag : tags) {
-            this.cmbTags.addItem(tag);
-        }
-        this.cmbTags.setSelectedIndex(0);
+        TagUtils.populateTags(tags, cmdTagFilter, popTagFilter);
 
         ComponentUtils.restoreDialogSize(this);
 
@@ -758,12 +754,13 @@ public class AddRecipientSearchDialog extends javax.swing.JDialog {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        popTagFilter = new javax.swing.JPopupMenu();
         jLabel1 = new javax.swing.JLabel();
         txtSearchString = new javax.swing.JTextField();
         cmdQuickSearch = new javax.swing.JButton();
         jScrollPane1 = new javax.swing.JScrollPane();
         tblResults = new javax.swing.JTable();
-        cmbTags = new javax.swing.JComboBox();
+        cmdTagFilter = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         addComponentListener(new java.awt.event.ComponentAdapter() {
@@ -807,8 +804,12 @@ public class AddRecipientSearchDialog extends javax.swing.JDialog {
         });
         jScrollPane1.setViewportView(tblResults);
 
-        cmbTags.setMaximumRowCount(15);
-        cmbTags.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+        cmdTagFilter.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/favorites.png"))); // NOI18N
+        cmdTagFilter.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                cmdTagFilterMousePressed(evt);
+            }
+        });
 
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -825,7 +826,7 @@ public class AddRecipientSearchDialog extends javax.swing.JDialog {
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(cmdQuickSearch)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                        .add(cmbTags, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
+                        .add(cmdTagFilter)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -837,7 +838,7 @@ public class AddRecipientSearchDialog extends javax.swing.JDialog {
                     .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                         .add(jLabel1)
                         .add(txtSearchString, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                    .add(cmbTags, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                    .add(cmdTagFilter, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 268, Short.MAX_VALUE)
                 .addContainerGap())
@@ -900,12 +901,8 @@ public class AddRecipientSearchDialog extends javax.swing.JDialog {
 // perform search here
         EditorsRegistry.getInstance().updateStatus("Suche Adressen...");
         ThreadUtils.setWaitCursor(this);
-        Object tag = this.cmbTags.getSelectedItem();
-        String sTag = null;
-        if (tag != null) {
-            sTag = tag.toString();
-        }
-        new Thread(new QuickEmailSearchThread(this, this.txtSearchString.getText().trim(), sTag, this.tblResults)).start();
+        
+        new Thread(new QuickEmailSearchThread(this, this.txtSearchString.getText().trim(), TagUtils.getSelectedTags(popTagFilter), this.tblResults)).start();
     }//GEN-LAST:event_cmdQuickSearchActionPerformed
 
     private void txtSearchStringKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtSearchStringKeyPressed
@@ -927,6 +924,10 @@ public class AddRecipientSearchDialog extends javax.swing.JDialog {
         ComponentUtils.storeDialogSize(this);
     }//GEN-LAST:event_formComponentResized
 
+    private void cmdTagFilterMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdTagFilterMousePressed
+        this.popTagFilter.show(this.cmdTagFilter, evt.getX(), evt.getY());
+    }//GEN-LAST:event_cmdTagFilterMousePressed
+
     /**
      * @param args the command line arguments
      */
@@ -940,10 +941,11 @@ public class AddRecipientSearchDialog extends javax.swing.JDialog {
         });
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JComboBox cmbTags;
     private javax.swing.JButton cmdQuickSearch;
+    private javax.swing.JButton cmdTagFilter;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JPopupMenu popTagFilter;
     private javax.swing.JTable tblResults;
     private javax.swing.JTextField txtSearchString;
     // End of variables declaration//GEN-END:variables
