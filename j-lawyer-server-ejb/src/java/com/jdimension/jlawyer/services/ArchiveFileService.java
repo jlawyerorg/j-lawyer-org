@@ -2943,4 +2943,27 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         return this.archiveFileDocumentsFacade.find(docId);
     }
 
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public List<AddressBean> getAddressesForCase(String archiveFileKey) {
+        ArchiveFileBean aFile = this.archiveFileFacade.find(archiveFileKey);
+
+        List resultList = this.archiveFileAddressesFacade.findByArchiveFileKey(aFile);
+
+        ArrayList addressList = new ArrayList();
+        for (Object client : resultList) {
+            addressList.add(((ArchiveFileAddressesBean) client).getAddressKey());
+            
+        }
+        return addressList;
+    }
+
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public List<ArchiveFileAddressesBean> getInvolvementDetailsForCase(String archiveFileKey) {
+        ArchiveFileBean aFile = this.archiveFileFacade.find(archiveFileKey);
+        List resultList = this.archiveFileAddressesFacade.findByArchiveFileKey(aFile);
+        return resultList;
+    }
+
 }
