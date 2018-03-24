@@ -773,4 +773,8 @@ public interface ArchiveFileServiceRemote {
 
     ArchiveFileDocumentsBean addDocumentFromTemplate(String archiveFileId, String fileName, GenericNode templateFolder, String templateName, Hashtable placeHolderValues, String dictateSign) throws Exception;
 
+    List<AddressBean> getAddressesForCase(String archiveFileKey);
+
+    List<ArchiveFileAddressesBean> getInvolvementDetailsForCase(String archiveFileKey);
+
 }
