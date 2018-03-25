@@ -680,11 +680,11 @@ import javax.xml.bind.annotation.XmlRootElement;
     @NamedQuery(name = "ArchiveFileAddressesBean.findByArchiveFileKeyAndReferenceType", query = "SELECT a FROM ArchiveFileAddressesBean a WHERE a.id = :id and a.referenceType = :referenceType"),
     @NamedQuery(name = "ArchiveFileAddressesBean.findByReferenceType", query = "SELECT a FROM ArchiveFileAddressesBean a WHERE a.referenceType = :referenceType")})
 public class ArchiveFileAddressesBean implements Serializable {
-    
-    public static final int REFERENCETYPE_CLIENT=10;
-    public static final int REFERENCETYPE_OPPONENT=20;
-    public static final int REFERENCETYPE_OPPONENTATTORNEY=30;
-    
+
+    public static final int REFERENCETYPE_CLIENT = 10;
+    public static final int REFERENCETYPE_OPPONENT = 20;
+    public static final int REFERENCETYPE_OPPONENTATTORNEY = 30;
+
     private static final long serialVersionUID = 1L;
     @Id
     @Basic(optional = false)
@@ -732,6 +732,28 @@ public class ArchiveFileAddressesBean implements Serializable {
 
     public int getReferenceType() {
         return referenceType;
+    }
+
+    public String getReferenceTypeAsString() {
+        if (referenceType == ArchiveFileAddressesBean.REFERENCETYPE_CLIENT) {
+            return "Mandant";
+        } else if (referenceType == ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT) {
+            return "Gegner";
+        } else if (referenceType == ArchiveFileAddressesBean.REFERENCETYPE_OPPONENTATTORNEY) {
+            return "Dritte";
+        }
+        return "unbekannt";
+    }
+    
+    public int getReferenceTypeAsInt(String refType) {
+        if ("Mandant".equals(refType) ) {
+            return ArchiveFileAddressesBean.REFERENCETYPE_CLIENT;
+        } else if ("Gegner".equals(refType)) {
+            return ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT;
+        } else if ("Dritte".equals(refType)) {
+            return ArchiveFileAddressesBean.REFERENCETYPE_OPPONENTATTORNEY;
+        }
+        return ArchiveFileAddressesBean.REFERENCETYPE_CLIENT;
     }
 
     public void setReferenceType(int referenceType) {
@@ -848,5 +870,5 @@ public class ArchiveFileAddressesBean implements Serializable {
     public void setCustom3(String custom3) {
         this.custom3 = custom3;
     }
-    
+
 }
