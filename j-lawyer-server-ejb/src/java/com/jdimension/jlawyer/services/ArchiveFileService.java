@@ -2953,7 +2953,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         ArrayList addressList = new ArrayList();
         for (Object client : resultList) {
             addressList.add(((ArchiveFileAddressesBean) client).getAddressKey());
-            
+
         }
         return addressList;
     }
@@ -2963,6 +2963,22 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     public List<ArchiveFileAddressesBean> getInvolvementDetailsForCase(String archiveFileKey) {
         ArchiveFileBean aFile = this.archiveFileFacade.find(archiveFileKey);
         List resultList = this.archiveFileAddressesFacade.findByArchiveFileKey(aFile);
+        if (resultList != null) {
+            if (resultList.size() > 0) {
+                Collections.sort(resultList, new Comparator() {
+                    @Override
+                    public int compare(Object o1, Object o2) {
+                        if (o1 != null && o2 != null) {
+                            if (o1 instanceof ArchiveFileAddressesBean && o2 instanceof ArchiveFileAddressesBean) {
+                                return ((ArchiveFileAddressesBean)o1).getReferenceTypeAsString().compareTo(((ArchiveFileAddressesBean)o2).getReferenceTypeAsString());
+                            }
+                        }
+                        return -1;
+                    }
+
+                });
+            }
+        }
         return resultList;
     }
 
