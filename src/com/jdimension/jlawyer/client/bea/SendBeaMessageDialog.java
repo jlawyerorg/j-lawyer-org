@@ -681,11 +681,11 @@ import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.event.ActionEvent;
-import java.awt.event.KeyEvent;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Hashtable;
+import java.util.List;
 import javax.swing.*;
 import org.apache.log4j.Logger;
 import org.jlawyer.bea.model.Identity;
@@ -823,6 +823,12 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
         this.lblFrom.setText(f);
     }
 
+    public void addAllToClient(List<AddressBean> list) {
+        for(AddressBean o: list) {
+            this.addToClient(o);
+        }
+    }
+    
     public void addToClient(AddressBean ab) {
         if (ab == null) {
             return;
@@ -838,6 +844,12 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
         //this.txtTo.setText(ab.getEmail());
     }
 
+    public void addAllToOpponent(List<AddressBean> list) {
+        for(AddressBean o: list) {
+            this.addToOpponent(o);
+        }
+    }
+    
     public void addToOpponent(AddressBean ab) {
         if (ab == null) {
             return;
@@ -854,6 +866,12 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
 
     }
 
+    public void addAllToOpponentAttorney(List<AddressBean> list) {
+        for(AddressBean o: list) {
+            this.addToOpponentAttorney(o);
+        }
+    }
+    
     public void addToOpponentAttorney(AddressBean ab) {
         if (ab == null) {
             return;

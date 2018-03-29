@@ -663,72 +663,95 @@
  */
 package com.jdimension.jlawyer.client.editors.files;
 
+import com.jdimension.jlawyer.client.bea.BeaAccess;
+import com.jdimension.jlawyer.client.bea.BeaLoginDialog;
+import com.jdimension.jlawyer.client.bea.IdentityPanel;
+import com.jdimension.jlawyer.client.bea.SendBeaMessageDialog;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
-import com.jdimension.jlawyer.client.editors.addresses.QuickAddressSearchRowIdentifier;
-import com.jdimension.jlawyer.client.editors.addresses.QuickAddressSearchTableModel;
-import com.jdimension.jlawyer.client.editors.addresses.QuickAddressSearchThread;
-import com.jdimension.jlawyer.client.editors.addresses.QuickCreateAddressDialog;
-import com.jdimension.jlawyer.client.settings.ClientSettings;
-import com.jdimension.jlawyer.client.utils.ComponentUtils;
+import com.jdimension.jlawyer.client.mail.SendEmailDialog;
+import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
-import com.jdimension.jlawyer.client.utils.ThreadUtils;
+import com.jdimension.jlawyer.client.utils.StringUtils;
+import com.jdimension.jlawyer.client.voip.PlaceCallDialog;
+import com.jdimension.jlawyer.client.voip.SendFaxDialog;
+import com.jdimension.jlawyer.client.voip.SendSmsDialog;
 import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
-import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
-import com.jdimension.jlawyer.services.JLawyerServiceLocator;
-import com.jdimension.jlawyer.ui.tagging.TagUtils;
-import java.awt.Rectangle;
-import java.awt.event.ActionEvent;
-import java.awt.event.KeyEvent;
+import java.awt.Color;
+import java.awt.Component;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
-import javax.swing.AbstractAction;
 import javax.swing.DefaultListModel;
-import javax.swing.JComponent;
-import javax.swing.JList;
+import javax.swing.JDialog;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.KeyStroke;
 import org.apache.log4j.Logger;
+import org.jlawyer.bea.model.Identity;
 
 /**
  *
  * @author jens
  */
-public class AddAddressSearchDialog extends javax.swing.JDialog {
+public class InvolvedPartyEntryPanel extends javax.swing.JPanel {
 
-    private static final Logger log = Logger.getLogger(AddAddressSearchDialog.class.getName());
-    private int targetReferenceType = -1;
-    private AddressBean resultAddress=null;
-    private ArchiveFileAddressesBean resultInvolvement=null;
-
+    private static final Logger log = Logger.getLogger(InvolvedPartyEntryPanel.class.getName());
+    //DecimalFormat df = new DecimalFormat("0.00%");
+    private AddressBean a = null;
+    private ArchiveFileAddressesBean afa=null;
+    private ArchiveFileBean caseDto=null;
+    
+    private String openedFromEditorClass=null;
+    private InvolvedPartiesPanel container=null;
+    private ArchiveFilePanel casePanel=null;
+    
     /**
-     * Creates new form AddAddressSearchDialog
+     * Creates new form HitPanel
      */
-    public AddAddressSearchDialog(java.awt.Frame parent, boolean modal, int targetReferenceType) {
-        super(parent, modal);
-        this.targetReferenceType=targetReferenceType;
+    public InvolvedPartyEntryPanel(ArchiveFileBean caseDto, ArchiveFilePanel casePanel, InvolvedPartiesPanel container, String openedFromClassName, boolean beaEnabled) {
         initComponents();
-        String[] colNames = new String[]{"Name", "Vorname", "Firma", "PLZ", "Ort", "Strasse", "Land", "Tags"};
-        QuickAddressSearchTableModel model = new QuickAddressSearchTableModel(colNames, 0);
-        this.tblResults.setModel(model);
-        ComponentUtils.autoSizeColumns(tblResults);
-
-        ClientSettings s = ClientSettings.getInstance();
-        List<String> tags = s.getAddressTagsInUse();
-        TagUtils.populateTags(tags, cmdTagFilter, popTagFilter);
+        this.openedFromEditorClass=openedFromClassName;
+        this.container=container;
+        this.casePanel=casePanel;
+        this.caseDto=caseDto;
         
-        this.tblResults.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "Enter");
-        this.tblResults.getActionMap().put("Enter", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent ae) {
-                useSelection();
-            }
-        });
+        this.mnuSendBea.setEnabled(beaEnabled);
+            
+    }
+    
+    public AddressBean getAdress() {
+        return this.a;
+    }
+    
+    public ArchiveFileAddressesBean getInvolvement() {
+        this.afa.setReference(this.txtReference.getText());
+        this.afa.setContact(this.txtContact.getText());
+        this.afa.setCustom1(this.txtCustom1.getText());
+        this.afa.setCustom2(this.txtCustom2.getText());
+        this.afa.setCustom3(this.txtCustom3.getText());
+        if("Mandant".equalsIgnoreCase(this.cmbRefType.getSelectedItem().toString())) {
+            this.afa.setReferenceType(ArchiveFileAddressesBean.REFERENCETYPE_CLIENT);
+        } else if("Gegner".equalsIgnoreCase(this.cmbRefType.getSelectedItem().toString())) {
+            this.afa.setReferenceType(ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT);
+        } else if("Dritte".equalsIgnoreCase(this.cmbRefType.getSelectedItem().toString())) {
+            this.afa.setReferenceType(ArchiveFileAddressesBean.REFERENCETYPE_OPPONENTATTORNEY);
+        } 
+        return this.afa;
+    }
 
-        ComponentUtils.restoreDialogSize(this);
+    public void setEntry(AddressBean a, ArchiveFileAddressesBean afa) {
+        this.a = a;
+        this.afa=afa;
+        
+        this.lblAddress.setText(this.a.toDisplayName());
+        this.lblAddress.setToolTipText(this.a.toShortHtml());
+        this.cmbRefType.setSelectedItem(afa.getReferenceTypeAsString());
+        this.txtContact.setText(afa.getContact());
+        this.txtCustom1.setText(afa.getCustom1());
+        this.txtCustom2.setText(afa.getCustom2());
+        this.txtCustom3.setText(afa.getCustom3());
+        this.txtReference.setText(afa.getReference());
+
     }
 
     /**
@@ -736,298 +759,477 @@ public class AddAddressSearchDialog extends javax.swing.JDialog {
      * WARNING: Do NOT modify this code. The content of this method is always
      * regenerated by the Form Editor.
      */
+    @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        popTagFilter = new javax.swing.JPopupMenu();
-        jLabel1 = new javax.swing.JLabel();
-        txtSearchString = new javax.swing.JTextField();
-        cmdQuickSearch = new javax.swing.JButton();
-        jScrollPane1 = new javax.swing.JScrollPane();
-        tblResults = new javax.swing.JTable();
-        cmdCancel = new javax.swing.JButton();
-        cmdUseSelection = new javax.swing.JButton();
-        cmdAddNew = new javax.swing.JButton();
-        cmdTagFilter = new javax.swing.JButton();
+        partiesPopup = new javax.swing.JPopupMenu();
+        mnuRemoveParty = new javax.swing.JMenuItem();
+        mnuSendEmail = new javax.swing.JMenuItem();
+        mnuSendBea = new javax.swing.JMenuItem();
+        mnuShowBeaIdentity = new javax.swing.JMenuItem();
+        mnuSendSms = new javax.swing.JMenuItem();
+        mnuCallMobile = new javax.swing.JMenuItem();
+        mnuCallPhone = new javax.swing.JMenuItem();
+        mnuSendFax = new javax.swing.JMenuItem();
+        lblAddress = new javax.swing.JLabel();
+        cmbRefType = new javax.swing.JComboBox<>();
+        jLabel2 = new javax.swing.JLabel();
+        txtContact = new javax.swing.JTextField();
+        jLabel3 = new javax.swing.JLabel();
+        txtReference = new javax.swing.JTextField();
+        lblCustom1 = new javax.swing.JLabel();
+        txtCustom1 = new javax.swing.JTextField();
+        lblCustom2 = new javax.swing.JLabel();
+        txtCustom2 = new javax.swing.JTextField();
+        lblCustom3 = new javax.swing.JLabel();
+        txtCustom3 = new javax.swing.JTextField();
+        cmdActions = new javax.swing.JButton();
+        cmdToAddress = new javax.swing.JButton();
+        lblType = new javax.swing.JLabel();
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
-        addComponentListener(new java.awt.event.ComponentAdapter() {
-            public void componentResized(java.awt.event.ComponentEvent evt) {
-                formComponentResized(evt);
-            }
-        });
-
-        jLabel1.setText("Suchanfrage:");
-
-        txtSearchString.addKeyListener(new java.awt.event.KeyAdapter() {
-            public void keyPressed(java.awt.event.KeyEvent evt) {
-                txtSearchStringKeyPressed(evt);
-            }
-        });
-
-        cmdQuickSearch.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/find.png"))); // NOI18N
-        cmdQuickSearch.setToolTipText("Suchen");
-        cmdQuickSearch.addActionListener(new java.awt.event.ActionListener() {
+        mnuRemoveParty.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editdelete.png"))); // NOI18N
+        mnuRemoveParty.setText("löschen");
+        mnuRemoveParty.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdQuickSearchActionPerformed(evt);
+                mnuRemovePartyActionPerformed(evt);
             }
         });
+        partiesPopup.add(mnuRemoveParty);
 
-        tblResults.setModel(new javax.swing.table.DefaultTableModel(
-            new Object [][] {
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null}
-            },
-            new String [] {
-                "Title 1", "Title 2", "Title 3", "Title 4"
+        mnuSendEmail.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/mail_send.png"))); // NOI18N
+        mnuSendEmail.setText("E-Mail verfassen");
+        mnuSendEmail.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuSendEmailActionPerformed(evt);
             }
-        ));
-        tblResults.getTableHeader().setReorderingAllowed(false);
-        tblResults.addMouseListener(new java.awt.event.MouseAdapter() {
+        });
+        partiesPopup.add(mnuSendEmail);
+
+        mnuSendBea.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/bea16.png"))); // NOI18N
+        mnuSendBea.setText("Nachricht verfassen");
+        mnuSendBea.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuSendBeaActionPerformed(evt);
+            }
+        });
+        partiesPopup.add(mnuSendBea);
+
+        mnuShowBeaIdentity.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/bea16.png"))); // NOI18N
+        mnuShowBeaIdentity.setText("Identität anzeigen");
+        mnuShowBeaIdentity.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuShowBeaIdentityActionPerformed(evt);
+            }
+        });
+        partiesPopup.add(mnuShowBeaIdentity);
+
+        mnuSendSms.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/sms_protocol.png"))); // NOI18N
+        mnuSendSms.setText("SMS senden");
+        mnuSendSms.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuSendSmsActionPerformed(evt);
+            }
+        });
+        partiesPopup.add(mnuSendSms);
+
+        mnuCallMobile.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/sipphone.png"))); // NOI18N
+        mnuCallMobile.setText("anrufen (mobil)");
+        mnuCallMobile.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuCallMobileActionPerformed(evt);
+            }
+        });
+        partiesPopup.add(mnuCallMobile);
+
+        mnuCallPhone.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/sipphone.png"))); // NOI18N
+        mnuCallPhone.setText("anrufen (Festnetz)");
+        mnuCallPhone.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuCallPhoneActionPerformed(evt);
+            }
+        });
+        partiesPopup.add(mnuCallPhone);
+
+        mnuSendFax.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/kfax.png"))); // NOI18N
+        mnuSendFax.setText("Fax senden");
+        mnuSendFax.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuSendFaxActionPerformed(evt);
+            }
+        });
+        partiesPopup.add(mnuSendFax);
+
+        lblAddress.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        lblAddress.setText("Kutschke, Jens");
+        lblAddress.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        lblAddress.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
-                tblResultsMouseClicked(evt);
+                lblAddressMouseClicked(evt);
+            }
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                lblAddressMouseExited(evt);
+            }
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                lblAddressMouseEntered(evt);
             }
         });
-        jScrollPane1.setViewportView(tblResults);
 
-        cmdCancel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png"))); // NOI18N
-        cmdCancel.setText("Schliessen");
-        cmdCancel.addActionListener(new java.awt.event.ActionListener() {
+        cmbRefType.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Mandant", "Gegner", "Dritte" }));
+        cmbRefType.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdCancelActionPerformed(evt);
+                cmbRefTypeActionPerformed(evt);
             }
         });
 
-        cmdUseSelection.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png"))); // NOI18N
-        cmdUseSelection.setText("Übernehmen");
-        cmdUseSelection.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdUseSelectionActionPerformed(evt);
-            }
-        });
+        jLabel2.setText("Ansprechpartner:");
 
-        cmdAddNew.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit_add.png"))); // NOI18N
-        cmdAddNew.setToolTipText("Schnellerfassung");
-        cmdAddNew.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdAddNewActionPerformed(evt);
-            }
-        });
+        jLabel3.setText("Zeichen:");
 
-        cmdTagFilter.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/favorites.png"))); // NOI18N
-        cmdTagFilter.addMouseListener(new java.awt.event.MouseAdapter() {
+        lblCustom1.setText("Eigene 1:");
+
+        lblCustom2.setText("Eigene 2:");
+
+        lblCustom3.setText("Eigene 3:");
+
+        cmdActions.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/14_layer_lowerlayer.png"))); // NOI18N
+        cmdActions.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mousePressed(java.awt.event.MouseEvent evt) {
-                cmdTagFilterMousePressed(evt);
+                cmdActionsMousePressed(evt);
+            }
+        });
+        cmdActions.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdActionsActionPerformed(evt);
             }
         });
 
-        org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
-        getContentPane().setLayout(layout);
+        cmdToAddress.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/vcard.png"))); // NOI18N
+        cmdToAddress.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdToAddressActionPerformed(evt);
+            }
+        });
+
+        lblType.setBackground(new java.awt.Color(51, 0, 204));
+        lblType.setForeground(new java.awt.Color(51, 0, 204));
+        lblType.setText("  ");
+        lblType.setOpaque(true);
+
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
+        this.setLayout(layout);
         layout.setHorizontalGroup(
-            layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(layout.createSequentialGroup()
-                .addContainerGap()
-                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 705, Short.MAX_VALUE)
-                    .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
-                        .add(jLabel1)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(txtSearchString)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(cmdQuickSearch)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                        .add(cmdTagFilter))
-                    .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
-                        .add(0, 0, Short.MAX_VALUE)
-                        .add(cmdUseSelection)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(cmdCancel))
-                    .add(layout.createSequentialGroup()
-                        .add(cmdAddNew)
-                        .add(0, 0, Short.MAX_VALUE)))
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addComponent(lblType)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(lblCustom1, javax.swing.GroupLayout.PREFERRED_SIZE, 77, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(lblCustom2, javax.swing.GroupLayout.PREFERRED_SIZE, 77, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(lblCustom3, javax.swing.GroupLayout.PREFERRED_SIZE, 77, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel2))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(txtCustom1)
+                            .addComponent(txtContact, javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(txtCustom3)
+                            .addComponent(txtCustom2, javax.swing.GroupLayout.Alignment.LEADING)))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(lblAddress, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jLabel3)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(txtReference, javax.swing.GroupLayout.PREFERRED_SIZE, 111, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(cmbRefType, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(cmdToAddress)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdActions)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
-            layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(layout.createSequentialGroup()
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(cmdQuickSearch)
-                    .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                        .add(jLabel1)
-                        .add(txtSearchString, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                    .add(cmdTagFilter))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                .add(cmdAddNew)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 359, Short.MAX_VALUE)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(cmdCancel)
-                    .add(cmdUseSelection))
-                .addContainerGap())
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(cmdActions)
+                    .addComponent(cmdToAddress)
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(cmbRefType, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(lblAddress)
+                        .addComponent(txtReference, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(jLabel3)))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel2)
+                    .addComponent(txtContact, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(lblCustom1)
+                    .addComponent(txtCustom1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(lblCustom2)
+                    .addComponent(txtCustom2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(lblCustom3)
+                    .addComponent(txtCustom3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .addComponent(lblType, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
-
-        pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void tblResultsMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblResultsMouseClicked
-        if (evt.getClickCount() == 2 && evt.getButton() == evt.BUTTON1) {
-            this.useSelection();
-
+    private void cmbRefTypeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbRefTypeActionPerformed
+        if("Mandant".equalsIgnoreCase(cmbRefType.getSelectedItem().toString())) {
+            this.lblType.setBackground(new Color(153, 204, 0));
+        } else if ("Gegner".equalsIgnoreCase(cmbRefType.getSelectedItem().toString())) {
+            this.lblType.setBackground(new Color(255, 51, 0).brighter());
+        }else if ("Dritte".equalsIgnoreCase(cmbRefType.getSelectedItem().toString())) {
+            this.lblType.setBackground(new Color(102, 204, 255));
         }
-    }//GEN-LAST:event_tblResultsMouseClicked
+    }//GEN-LAST:event_cmbRefTypeActionPerformed
 
-    private void cmdQuickSearchActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdQuickSearchActionPerformed
-// perform search here
-        EditorsRegistry.getInstance().updateStatus("Suche Adressen...");
-        ThreadUtils.setWaitCursor(this);
+    private void mnuRemovePartyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuRemovePartyActionPerformed
+
+        this.casePanel.removeInvolvedParty(this);
         
-        new Thread(new QuickAddressSearchThread(this, this.txtSearchString.getText(), TagUtils.getSelectedTags(popTagFilter), this.tblResults)).start();
-    }//GEN-LAST:event_cmdQuickSearchActionPerformed
 
-    private void useSelection() {
-        int row = this.tblResults.getSelectedRow();
-        QuickAddressSearchRowIdentifier id = (QuickAddressSearchRowIdentifier) this.tblResults.getValueAt(row, 0);
-        
-        //DefaultListModel model = (DefaultListModel) this.targetListBox.getModel();
-        //model.addElement(id.getAddressDTO());
+    }//GEN-LAST:event_mnuRemovePartyActionPerformed
 
-        try {
-            ClientSettings settings = ClientSettings.getInstance();
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            ArchiveFileServiceRemote afRem = locator.lookupArchiveFileServiceRemote();
-            Collection col = afRem.getArchiveFileAddressesForAddress(id.getAddressDTO().getId());
-            List<ArchiveFileBean> clientFiles = new ArrayList<ArchiveFileBean>();
-            List<ArchiveFileBean> opponentFiles = new ArrayList<ArchiveFileBean>();
-            List<ArchiveFileBean> opponentAttFiles = new ArrayList<ArchiveFileBean>();
-            for (Object o : col) {
-                ArchiveFileAddressesBean afb = (ArchiveFileAddressesBean) o;
-                if (afb.getReferenceType() == ArchiveFileAddressesBean.REFERENCETYPE_CLIENT) {
-                    clientFiles.add(afb.getArchiveFileKey());
-                } else if (afb.getReferenceType() == ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT) {
-                    opponentFiles.add(afb.getArchiveFileKey());
-                } else if (afb.getReferenceType() == ArchiveFileAddressesBean.REFERENCETYPE_OPPONENTATTORNEY) {
-                    opponentAttFiles.add(afb.getArchiveFileKey());
-                }
-            }
-            boolean conflict = false;
-            if (this.targetReferenceType == ArchiveFileAddressesBean.REFERENCETYPE_CLIENT && opponentFiles.size() > 0) {
-                conflict = true;
-            }
-            if (this.targetReferenceType == ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT && clientFiles.size() > 0) {
-                conflict = true;
-            }
-            if (conflict) {
-                JOptionPane.showMessageDialog(this, "Warnung: es liegt ein Interessenkonflikt vor!\n(Beteiligter ist in verschiedenen Akten sowohl Mandant als auch Gegner)!", "Warnung", JOptionPane.WARNING_MESSAGE);
-            }
-        } catch (Exception ex) {
-            log.error("Error getting archive files for address", ex);
-            JOptionPane.showMessageDialog(this, "Fehler beim Prüfen von Interessenkonflikten: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
-            EditorsRegistry.getInstance().clearStatus();
-            return;
-        }
-
-        this.resultAddress=id.getAddressDTO();
-        ArchiveFileAddressesBean afa=new ArchiveFileAddressesBean();
-        afa.setAddressKey(resultAddress);
-        //afa.setArchiveFileKey(this.resultAddress);
-        afa.setReferenceType(targetReferenceType);
-        this.resultInvolvement=afa;
-        
-        this.setVisible(false);
-        this.dispose();
-    }
     
-    public AddressBean getResultAddress() {
-        return this.resultAddress;
-    }
     
-    public ArchiveFileAddressesBean getResultInvolvement() {
-        return this.resultInvolvement;
-    }
+    private void mnuSendEmailActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSendEmailActionPerformed
+        
+            if (this.a.getEmail() == null || "".equals(this.a.getEmail())) {
+                JOptionPane.showMessageDialog(this, "Zu diesem Kontakt ist keine Emailadresse erfasst.", "Fehler", JOptionPane.ERROR_MESSAGE);
 
-    private void txtSearchStringKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtSearchStringKeyPressed
-        if (evt.getKeyCode() == evt.VK_ENTER) {
-            this.cmdQuickSearchActionPerformed(null);
-        }
-    }//GEN-LAST:event_txtSearchStringKeyPressed
+            } else {
+                SendEmailDialog dlg = new SendEmailDialog(EditorsRegistry.getInstance().getMainWindow(), false);
+                dlg.setArchiveFile(this.caseDto);
+                dlg.setTo(this.a.getEmail());
+                dlg.addAllToClient(this.container.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_CLIENT));
+                dlg.addAllToOpponent(this.container.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT));
+                dlg.addAllToOpponentAttorney(this.container.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_OPPONENTATTORNEY));
+                
+                FrameUtils.centerDialog(dlg, null);
+                dlg.setVisible(true);
+            }
+        
+    }//GEN-LAST:event_mnuSendEmailActionPerformed
 
-    private void formComponentResized(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentResized
-        ComponentUtils.storeDialogSize(this);
-    }//GEN-LAST:event_formComponentResized
-
-    private void cmdCancelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCancelActionPerformed
-
-        this.setVisible(false);
-    }//GEN-LAST:event_cmdCancelActionPerformed
-
-    private void cmdUseSelectionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdUseSelectionActionPerformed
-        int row = this.tblResults.getSelectedRow();
-        if (row >= 0) {
-            this.useSelection();
-        }
-    }//GEN-LAST:event_cmdUseSelectionActionPerformed
-
-    private void cmdAddNewActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdAddNewActionPerformed
-        QuickCreateAddressDialog qca = new QuickCreateAddressDialog(this, true);
-        FrameUtils.centerDialog(qca, EditorsRegistry.getInstance().getMainWindow());
-        qca.setVisible(true);
-
-        AddressBean result = qca.getResult();
-        if (result != null) {
-            QuickAddressSearchTableModel model = (QuickAddressSearchTableModel) this.tblResults.getModel();
-            QuickAddressSearchRowIdentifier identifier = new QuickAddressSearchRowIdentifier(result);
-            Object[] row = new Object[]{identifier, result.getFirstName(), result.getCompany(), result.getZipCode(), result.getCity(), result.getStreet(), result.getCountry(), ""};
-            model.addRow(row);
-            int scrollToRow = getRowForObject(identifier);
-            if (scrollToRow > -1) {
-                this.tblResults.getSelectionModel().setSelectionInterval(scrollToRow, scrollToRow);
-                this.tblResults.scrollRectToVisible(new Rectangle(this.tblResults.getCellRect(scrollToRow, 0, true)));
+    private void mnuSendBeaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSendBeaActionPerformed
+        
+        if (!BeaAccess.hasInstance()) {
+            BeaLoginDialog loginPanel = new BeaLoginDialog(EditorsRegistry.getInstance().getMainWindow(), true, null);
+            loginPanel.setVisible(true);
+            if (!BeaAccess.hasInstance()) {
+                return;
             }
         }
-    }//GEN-LAST:event_cmdAddNewActionPerformed
 
-    private void cmdTagFilterMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdTagFilterMousePressed
-        this.popTagFilter.show(this.cmdTagFilter, evt.getX(), evt.getY());
-    }//GEN-LAST:event_cmdTagFilterMousePressed
+            if (this.a.getBeaSafeId() == null || "".equals(this.a.getBeaSafeId())) {
+                JOptionPane.showMessageDialog(this, "Zu diesem Kontakt ist keine beA-Adresse erfasst.", "Fehler", JOptionPane.ERROR_MESSAGE);
 
-    private int getRowForObject(QuickAddressSearchRowIdentifier id) {
-        for (int i = 0; i < this.tblResults.getRowCount(); i++) {
-            Object value = this.tblResults.getValueAt(i, 0);
-            if (value instanceof QuickAddressSearchRowIdentifier) {
-                if (id.equals(value)) {
-                    return i;
+            } else {
+                Identity iTo = null;
+                try {
+                    BeaAccess bea = BeaAccess.getInstance();
+                    iTo = bea.getIdentity(this.a.getBeaSafeId());
+                } catch (Throwable t) {
+                    log.error(t);
+                    JOptionPane.showMessageDialog(this, "Identität des beA-Teilnehmers kann nicht ermittelt werden", "Fehler", JOptionPane.ERROR_MESSAGE);
+                    return;
                 }
+                SendBeaMessageDialog dlg = new SendBeaMessageDialog(EditorsRegistry.getInstance().getMainWindow(), false);
+                dlg.setArchiveFile(this.caseDto);
+                dlg.setTo(iTo);
+                dlg.addAllToClient(this.container.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_CLIENT));
+                dlg.addAllToOpponent(this.container.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT));
+                dlg.addAllToOpponentAttorney(this.container.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_OPPONENTATTORNEY));
+                FrameUtils.centerDialog(dlg, null);
+                dlg.setVisible(true);
+            }
+        
+    }//GEN-LAST:event_mnuSendBeaActionPerformed
+
+    private void mnuShowBeaIdentityActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuShowBeaIdentityActionPerformed
+        
+        if (!BeaAccess.hasInstance()) {
+            BeaLoginDialog loginPanel = new BeaLoginDialog(EditorsRegistry.getInstance().getMainWindow(), true, null);
+            loginPanel.setVisible(true);
+            if (!BeaAccess.hasInstance()) {
+                return;
             }
         }
 
-        return -1;
-    }
+        
+            if (this.a.getBeaSafeId() == null || "".equals(this.a.getBeaSafeId())) {
+                JOptionPane.showMessageDialog(this, "Zu diesem Kontakt ist keine beA-Adresse erfasst.", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
 
-    /**
-     * @param args the command line arguments
-     */
-    public static void main(String args[]) {
-        java.awt.EventQueue.invokeLater(new Runnable() {
+            } else {
+                Identity iTo = null;
+                try {
+                    BeaAccess bea = BeaAccess.getInstance();
+                    iTo = bea.getIdentity(this.a.getBeaSafeId());
 
-            public void run() {
-                new AddAddressSearchDialog(new javax.swing.JFrame(), true, -1).setVisible(true);
+                    JDialog dlg = new JDialog(EditorsRegistry.getInstance().getMainWindow(), true);
+                    IdentityPanel ip = new IdentityPanel();
+                    ip.setIdentity(iTo);
+                    ip.doLayout();
+                    dlg.add(ip);
+                    dlg.setSize(700, 250);
+                    dlg.setTitle("beA Identität zur Safe ID " + iTo.getSafeId());
+                    //dlg.setSize(ip.getPreferredSize());
+                    FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
+                    dlg.setVisible(true);
+
+                } catch (Throwable t) {
+                    log.error(t);
+                    JOptionPane.showMessageDialog(this, "Identität des beA-Teilnehmers kann nicht ermittelt werden", "Fehler", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
             }
-        });
-    }
+        
+    }//GEN-LAST:event_mnuShowBeaIdentityActionPerformed
+
+    private void mnuSendSmsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSendSmsActionPerformed
+            if (this.a.getMobile() == null || "".equals(this.a.getMobile())) {
+                JOptionPane.showMessageDialog(this, "Zu diesem Kontakt ist keine Mobilnummer erfasst.", "Fehler", JOptionPane.ERROR_MESSAGE);
+
+            } else {
+
+                ServerSettings set = ServerSettings.getInstance();
+                String mode = set.getSetting(set.SERVERCONF_VOIPMODE, "on");
+                if ("on".equalsIgnoreCase(mode)) {
+                    SendSmsDialog dlg = new SendSmsDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.a);
+                    FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
+                    dlg.setVisible(true);
+                } else {
+                    JOptionPane.showMessageDialog(this, "Voice-over-IP - Integration ist nicht aktiviert!", "SMS senden", JOptionPane.INFORMATION_MESSAGE);
+
+                }
+
+            }
+        
+    }//GEN-LAST:event_mnuSendSmsActionPerformed
+
+    private void mnuCallMobileActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuCallMobileActionPerformed
+            if (this.a.getMobile() == null || "".equals(this.a.getMobile())) {
+                JOptionPane.showMessageDialog(this, "Zu diesem Kontakt ist keine Mobilnummer erfasst.", "Fehler", JOptionPane.ERROR_MESSAGE);
+
+            } else {
+
+                ServerSettings set = ServerSettings.getInstance();
+                String mode = set.getSetting(set.SERVERCONF_VOIPMODE, "on");
+                if ("on".equalsIgnoreCase(mode)) {
+                    PlaceCallDialog dlg = new PlaceCallDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.a, this.a.getMobile());
+                    FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
+                    dlg.setVisible(true);
+                } else {
+                    JOptionPane.showMessageDialog(this, "Voice-over-IP - Integration ist nicht aktiviert!", "Anruf tätigen", JOptionPane.INFORMATION_MESSAGE);
+
+                }
+
+            }
+        
+    }//GEN-LAST:event_mnuCallMobileActionPerformed
+
+    private void mnuCallPhoneActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuCallPhoneActionPerformed
+            if (this.a.getPhone() == null || "".equals(this.a.getPhone())) {
+                JOptionPane.showMessageDialog(this, "Zu diesem Kontakt ist keine Festnetznummer erfasst.", "Fehler", JOptionPane.ERROR_MESSAGE);
+
+            } else {
+
+                ServerSettings set = ServerSettings.getInstance();
+                String mode = set.getSetting(set.SERVERCONF_VOIPMODE, "on");
+                if ("on".equalsIgnoreCase(mode)) {
+                    PlaceCallDialog dlg = new PlaceCallDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.a, this.a.getPhone());
+                    FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
+                    dlg.setVisible(true);
+                } else {
+                    JOptionPane.showMessageDialog(this, "Voice-over-IP - Integration ist nicht aktiviert!", "Anruf tätigen", JOptionPane.INFORMATION_MESSAGE);
+
+                }
+
+            }
+        
+    }//GEN-LAST:event_mnuCallPhoneActionPerformed
+
+    private void mnuSendFaxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSendFaxActionPerformed
+        ServerSettings set = ServerSettings.getInstance();
+        String mode = set.getSetting(set.SERVERCONF_VOIPMODE, "on");
+        if ("on".equalsIgnoreCase(mode)) {
+            ArrayList<AddressBean> faxList = new ArrayList<AddressBean>();
+
+        
+            faxList.addAll(this.container.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_CLIENT));
+            faxList.addAll(this.container.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT));
+            faxList.addAll(this.container.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_OPPONENTATTORNEY));
+            
+                SendFaxDialog dlg = new SendFaxDialog(EditorsRegistry.getInstance().getMainWindow(), true, faxList, this.a, this.caseDto.getId());
+                FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
+                dlg.setVisible(true);
+            
+
+        } else {
+            JOptionPane.showMessageDialog(this, "Voice-over-IP - Integration ist nicht aktiviert!", "Fax senden", JOptionPane.INFORMATION_MESSAGE);
+
+        }
+    }//GEN-LAST:event_mnuSendFaxActionPerformed
+
+    private void cmdActionsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdActionsActionPerformed
+        
+    }//GEN-LAST:event_cmdActionsActionPerformed
+
+    private void cmdActionsMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdActionsMousePressed
+        this.partiesPopup.show(evt.getComponent(), evt.getX(), evt.getY());
+    }//GEN-LAST:event_cmdActionsMousePressed
+
+    private void cmdToAddressActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdToAddressActionPerformed
+        this.casePanel.switchToAddressView(this.a);
+    }//GEN-LAST:event_cmdToAddressActionPerformed
+
+    private void lblAddressMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblAddressMouseEntered
+        this.lblAddress.setForeground(new Color(0, 0, 255));
+    }//GEN-LAST:event_lblAddressMouseEntered
+
+    private void lblAddressMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblAddressMouseExited
+        this.lblAddress.setForeground(Color.BLACK);
+    }//GEN-LAST:event_lblAddressMouseExited
+
+    private void lblAddressMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblAddressMouseClicked
+        this.cmdToAddressActionPerformed(null);
+    }//GEN-LAST:event_lblAddressMouseClicked
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton cmdAddNew;
-    private javax.swing.JButton cmdCancel;
-    private javax.swing.JButton cmdQuickSearch;
-    private javax.swing.JButton cmdTagFilter;
-    private javax.swing.JButton cmdUseSelection;
-    private javax.swing.JLabel jLabel1;
-    private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JPopupMenu popTagFilter;
-    private javax.swing.JTable tblResults;
-    private javax.swing.JTextField txtSearchString;
+    private javax.swing.JComboBox<String> cmbRefType;
+    private javax.swing.JButton cmdActions;
+    private javax.swing.JButton cmdToAddress;
+    private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel jLabel3;
+    private javax.swing.JLabel lblAddress;
+    private javax.swing.JLabel lblCustom1;
+    private javax.swing.JLabel lblCustom2;
+    private javax.swing.JLabel lblCustom3;
+    private javax.swing.JLabel lblType;
+    private javax.swing.JMenuItem mnuCallMobile;
+    private javax.swing.JMenuItem mnuCallPhone;
+    private javax.swing.JMenuItem mnuRemoveParty;
+    private javax.swing.JMenuItem mnuSendBea;
+    private javax.swing.JMenuItem mnuSendEmail;
+    private javax.swing.JMenuItem mnuSendFax;
+    private javax.swing.JMenuItem mnuSendSms;
+    private javax.swing.JMenuItem mnuShowBeaIdentity;
+    private javax.swing.JPopupMenu partiesPopup;
+    private javax.swing.JTextField txtContact;
+    private javax.swing.JTextField txtCustom1;
+    private javax.swing.JTextField txtCustom2;
+    private javax.swing.JTextField txtCustom3;
+    private javax.swing.JTextField txtReference;
     // End of variables declaration//GEN-END:variables
 }

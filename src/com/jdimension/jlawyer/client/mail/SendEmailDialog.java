@@ -685,6 +685,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Hashtable;
+import java.util.List;
 import java.util.logging.Level;
 import javax.swing.*;
 import org.apache.log4j.Logger;
@@ -896,6 +897,24 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         this.lblFrom.setText(f);
     }
 
+    public void addAllToOpponentAttorney(List<AddressBean> list) {
+        for(AddressBean o: list) {
+            this.addToOpponentAttorney(o);
+        }
+    }
+    
+    public void addAllToOpponent(List<AddressBean> list) {
+        for(AddressBean o: list) {
+            this.addToOpponent(o);
+        }
+    }
+    
+    public void addAllToClient(List<AddressBean> list) {
+        for(AddressBean o: list) {
+            this.addToClient(o);
+        }
+    }
+    
     public void addToClient(AddressBean ab) {
         if (ab == null) {
             return;

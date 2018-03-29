@@ -770,8 +770,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private ArchiveFileBean dto = null;
     private String openedFromEditorClass = null;
     private Image backgroundImage = null;
-    private JList partiesPopupSource = null;
-
+    
     protected NumberFormat currencyFormat = NumberFormat.getNumberInstance();
 
     private DropTarget dropTarget;
@@ -883,7 +882,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
         };
         this.tblDocuments.setDefaultRenderer(Object.class, r);
-
+        
         String[] colNames2 = new String[]{"Änderung", "Nutzer", "Beschreibung"};
         ArchiveFileHistoryTableModel model2 = new ArchiveFileHistoryTableModel(colNames2, 0);
         this.tblHistory.setModel(model2);
@@ -893,19 +892,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         ArchiveFileReviewReasonsTableModel model3 = new ArchiveFileReviewReasonsTableModel(colNames3, 0);
         this.tblReviewReasons.setModel(model3);
 
-        DefaultListModel clientsListModel = new DefaultListModel();
-        this.lstClients.setModel(clientsListModel);
-        this.lstClients.setCellRenderer(new AddressBeanListCellRenderer());
-
-        DefaultListModel opponentsListModel = new DefaultListModel();
-        this.lstOpponents.setModel(opponentsListModel);
-        this.lstOpponents.setCellRenderer(new AddressBeanListCellRenderer());
-
-        DefaultListModel opponentAttorneysListModel = new DefaultListModel();
-        this.lstOpponentAttorneys.setModel(opponentAttorneysListModel);
-        this.lstOpponentAttorneys.setCellRenderer(new AddressBeanListCellRenderer());
-
-        //this.cmbDictateSign.setRenderer(new OptionGroupListCellRenderer());
         this.cmbReviewReason.setRenderer(new OptionGroupListCellRenderer());
 
         if (DrebisUtils.isDrebisEnabled()) {
@@ -925,11 +911,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
 
         if (BeaAccess.isBeaEnabled()) {
-            this.mnuSendBea.setEnabled(true);
             this.mnuSendBeaDocument.setEnabled(true);
             this.mnuSendBeaDocumentPDF.setEnabled(true);
         } else {
-            this.mnuSendBea.setEnabled(false);
             this.mnuSendBeaDocument.setEnabled(false);
             this.mnuSendBeaDocumentPDF.setEnabled(false);
         }
@@ -1010,10 +994,12 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.cmdSearchClient.setEnabled(!readOnly);
         this.cmdSearchOpponent.setEnabled(!readOnly);
         this.cmdSearchOpponentAttorney.setEnabled(!readOnly);
-        this.lstClients.setEnabled(!readOnly);
-        this.lstOpponentAttorneys.setEnabled(!readOnly);
-        this.lstOpponents.setEnabled(!readOnly);
-        //this.tblDocuments.setEnabled(!readOnly);
+        
+        // todo?
+//        this.lstClients.setEnabled(!readOnly);
+//        this.lstOpponentAttorneys.setEnabled(!readOnly);
+//        this.lstOpponents.setEnabled(!readOnly);
+        
         this.mnuRemoveDocument.setEnabled(!readOnly);
         this.mnuDuplicateDocument.setEnabled(!readOnly);
         this.mnuDuplicateDocumentAsPdf.setEnabled(!readOnly);
@@ -1075,6 +1061,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.documentHits.clear();
         lblDocumentHits.setText(" ");
 
+        this.pnlInvolvedParties.removeAll();
+        
         DefaultTableModel tm = ((DefaultTableModel) this.tblReviewReasons.getModel());
         while (tm.getRowCount() > 0) {
             tm.removeRow(tm.getRowCount() - 1);
@@ -1122,10 +1110,12 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         while (tm.getRowCount() > 0) {
             tm.removeRow(tm.getRowCount() - 1);
         }
+        
+        this.pnlInvolvedParties.removeAll();
 
         ProgressIndicator pi = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
         pi.setShowCancelButton(false);
-        ArchiveFileDetailLoadAction a = new ArchiveFileDetailLoadAction(pi, this, dto.getId(), this.tblHistory, this.tblDocuments, this.lstClients, this.lstOpponents, this.lstOpponentAttorneys, this.tblReviewReasons, this.tagPanel, !this.cmdSave.isEnabled(), selectDocumentWithFileName, this.lblArchivedSince, dto.getArchivedBoolean());
+        ArchiveFileDetailLoadAction a = new ArchiveFileDetailLoadAction(pi, this, dto.getId(), this.dto, this.tblHistory, this.tblDocuments, this.pnlInvolvedParties, this.tblReviewReasons, this.tagPanel, !this.cmdSave.isEnabled(), BeaAccess.isBeaEnabled(), selectDocumentWithFileName, this.lblArchivedSince, dto.getArchivedBoolean());
 
         a.start();
 
@@ -1149,6 +1139,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.txtFileNumber.setText("");
         this.txtName.setText("");
         this.txtNotice.setText("");
+        this.pnlInvolvedParties.removeAll();
         //this.cmbDictateSign.setSelectedItem("");
         this.cmbLawyer.setSelectedItem("");
         this.cmbAssistant.setSelectedItem("");
@@ -1165,7 +1156,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 //        this.tblDocuments.setModel(model1);
 //        this.tblDocuments.setVisible(true);
         this.clearTableModel(this.tblDocuments);
-
+        
 //        this.tblHistory.setVisible(false);
 //        String[] colNames2=new String[] {"Änderung", "Nutzer", "Beschreibung"};
 //        ArchiveFileHistoryTableModel model2=new ArchiveFileHistoryTableModel(colNames2, 0);
@@ -1179,21 +1170,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         //this.tblReviewReasons.setModel(model3);
         //this.tblReviewReasons.setVisible(true);
         this.clearTableModel(this.tblReviewReasons);
-
-        //this.lstClients.setVisible(false);
-        DefaultListModel clientsListModel = new DefaultListModel();
-        this.lstClients.setModel(clientsListModel);
-        //this.lstClients.setVisible(true);
-
-        //this.lstOpponents.setVisible(false);
-        DefaultListModel opponentsListModel = new DefaultListModel();
-        this.lstOpponents.setModel(opponentsListModel);
-        //this.lstOpponents.setVisible(true);
-
-        //this.lstOpponentAttorneys.setVisible(false);
-        DefaultListModel opponentAttorneysListModel = new DefaultListModel();
-        this.lstOpponentAttorneys.setModel(opponentAttorneysListModel);
-        //this.lstOpponentAttorneys.setVisible(true);
 
         this.clearDocumentPreview("");
 
@@ -1350,15 +1326,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        partiesPopup = new javax.swing.JPopupMenu();
-        mnuRemoveParty = new javax.swing.JMenuItem();
-        mnuSendEmail = new javax.swing.JMenuItem();
-        mnuSendBea = new javax.swing.JMenuItem();
-        mnuShowBeaIdentity = new javax.swing.JMenuItem();
-        mnuSendSms = new javax.swing.JMenuItem();
-        mnuCallMobile = new javax.swing.JMenuItem();
-        mnuCallPhone = new javax.swing.JMenuItem();
-        mnuSendFax = new javax.swing.JMenuItem();
         reviewsPopup = new javax.swing.JPopupMenu();
         mnuSetReviewDone = new javax.swing.JMenuItem();
         mnuSetReviewOpen = new javax.swing.JMenuItem();
@@ -1418,18 +1385,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         chkArchived = new javax.swing.JCheckBox();
         lblArchivedSince = new javax.swing.JLabel();
         tabParties = new javax.swing.JPanel();
-        jPanel4 = new javax.swing.JPanel();
         cmdSearchClient = new javax.swing.JButton();
-        jScrollPane1 = new javax.swing.JScrollPane();
-        lstClients = new javax.swing.JList();
-        jPanel5 = new javax.swing.JPanel();
         cmdSearchOpponent = new javax.swing.JButton();
-        jScrollPane2 = new javax.swing.JScrollPane();
-        lstOpponents = new javax.swing.JList();
-        jPanel6 = new javax.swing.JPanel();
         cmdSearchOpponentAttorney = new javax.swing.JButton();
-        jScrollPane3 = new javax.swing.JScrollPane();
-        lstOpponentAttorneys = new javax.swing.JList();
+        jScrollPane8 = new javax.swing.JScrollPane();
+        pnlInvolvedParties = new com.jdimension.jlawyer.client.editors.files.InvolvedPartiesPanel();
         tabDocuments = new javax.swing.JPanel();
         jPanel7 = new javax.swing.JPanel();
         cmdNewDocument = new javax.swing.JButton();
@@ -1497,78 +1457,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         cmdExportHtml = new javax.swing.JButton();
         cmdSave = new javax.swing.JButton();
         cmdHeaderAddNote = new javax.swing.JButton();
-
-        mnuRemoveParty.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editdelete.png"))); // NOI18N
-        mnuRemoveParty.setText("löschen");
-        mnuRemoveParty.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                mnuRemovePartyActionPerformed(evt);
-            }
-        });
-        partiesPopup.add(mnuRemoveParty);
-
-        mnuSendEmail.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/mail_send.png"))); // NOI18N
-        mnuSendEmail.setText("E-Mail verfassen");
-        mnuSendEmail.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                mnuSendEmailActionPerformed(evt);
-            }
-        });
-        partiesPopup.add(mnuSendEmail);
-
-        mnuSendBea.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/bea16.png"))); // NOI18N
-        mnuSendBea.setText("Nachricht verfassen");
-        mnuSendBea.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                mnuSendBeaActionPerformed(evt);
-            }
-        });
-        partiesPopup.add(mnuSendBea);
-
-        mnuShowBeaIdentity.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/bea16.png"))); // NOI18N
-        mnuShowBeaIdentity.setText("Identität anzeigen");
-        mnuShowBeaIdentity.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                mnuShowBeaIdentityActionPerformed(evt);
-            }
-        });
-        partiesPopup.add(mnuShowBeaIdentity);
-
-        mnuSendSms.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/sms_protocol.png"))); // NOI18N
-        mnuSendSms.setText("SMS senden");
-        mnuSendSms.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                mnuSendSmsActionPerformed(evt);
-            }
-        });
-        partiesPopup.add(mnuSendSms);
-
-        mnuCallMobile.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/sipphone.png"))); // NOI18N
-        mnuCallMobile.setText("anrufen (mobil)");
-        mnuCallMobile.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                mnuCallMobileActionPerformed(evt);
-            }
-        });
-        partiesPopup.add(mnuCallMobile);
-
-        mnuCallPhone.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/sipphone.png"))); // NOI18N
-        mnuCallPhone.setText("anrufen (Festnetz)");
-        mnuCallPhone.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                mnuCallPhoneActionPerformed(evt);
-            }
-        });
-        partiesPopup.add(mnuCallPhone);
-
-        mnuSendFax.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/kfax.png"))); // NOI18N
-        mnuSendFax.setText("Fax senden");
-        mnuSendFax.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                mnuSendFaxActionPerformed(evt);
-            }
-        });
-        partiesPopup.add(mnuSendFax);
 
         mnuSetReviewDone.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png"))); // NOI18N
         mnuSetReviewDone.setText("erledigt");
@@ -1830,7 +1718,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(tagPanel, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 186, Short.MAX_VALUE)
+            .add(tagPanel, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 271, Short.MAX_VALUE)
         );
 
         jPanel3.setBorder(javax.swing.BorderFactory.createTitledBorder("Notizen"));
@@ -1855,7 +1743,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         jPanel3Layout.setVerticalGroup(
             jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel3Layout.createSequentialGroup()
-                .add(txtNoticePane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 145, Short.MAX_VALUE)
+                .add(txtNoticePane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 129, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -2000,15 +1888,13 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 .addContainerGap()
                 .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jPanel2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .add(jPanel2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jPanel3, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .add(jPanel3, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
         tabPaneArchiveFile.addTab("allgemeine Daten", new javax.swing.ImageIcon(getClass().getResource("/icons/folder.png")), tabGeneralData); // NOI18N
-
-        jPanel4.setBorder(javax.swing.BorderFactory.createTitledBorder("Mandanten"));
 
         cmdSearchClient.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/find.png"))); // NOI18N
         cmdSearchClient.addActionListener(new java.awt.event.ActionListener() {
@@ -2017,111 +1903,12 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
         });
 
-        lstClients.setModel(new javax.swing.AbstractListModel() {
-            String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" };
-            public int getSize() { return strings.length; }
-            public Object getElementAt(int i) { return strings[i]; }
-        });
-        lstClients.addMouseMotionListener(new java.awt.event.MouseMotionAdapter() {
-            public void mouseMoved(java.awt.event.MouseEvent evt) {
-                lstClientsMouseMoved(evt);
-            }
-        });
-        lstClients.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mousePressed(java.awt.event.MouseEvent evt) {
-                lstClientsMousePressed(evt);
-            }
-            public void mouseReleased(java.awt.event.MouseEvent evt) {
-                lstClientsMouseReleased(evt);
-            }
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                lstClientsMouseClicked(evt);
-            }
-        });
-        lstClients.addListSelectionListener(new javax.swing.event.ListSelectionListener() {
-            public void valueChanged(javax.swing.event.ListSelectionEvent evt) {
-                lstClientsValueChanged(evt);
-            }
-        });
-        jScrollPane1.setViewportView(lstClients);
-
-        org.jdesktop.layout.GroupLayout jPanel4Layout = new org.jdesktop.layout.GroupLayout(jPanel4);
-        jPanel4.setLayout(jPanel4Layout);
-        jPanel4Layout.setHorizontalGroup(
-            jPanel4Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel4Layout.createSequentialGroup()
-                .addContainerGap()
-                .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 855, Short.MAX_VALUE)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(cmdSearchClient)
-                .addContainerGap())
-        );
-        jPanel4Layout.setVerticalGroup(
-            jPanel4Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(jPanel4Layout.createSequentialGroup()
-                .add(jPanel4Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(cmdSearchClient)
-                    .add(jPanel4Layout.createSequentialGroup()
-                        .add(1, 1, 1)
-                        .add(jScrollPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 112, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(76, Short.MAX_VALUE))
-        );
-
-        jPanel5.setBorder(javax.swing.BorderFactory.createTitledBorder("Gegner"));
-
         cmdSearchOpponent.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/find.png"))); // NOI18N
         cmdSearchOpponent.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmdSearchOpponentActionPerformed(evt);
             }
         });
-
-        lstOpponents.setModel(new javax.swing.AbstractListModel() {
-            String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" };
-            public int getSize() { return strings.length; }
-            public Object getElementAt(int i) { return strings[i]; }
-        });
-        lstOpponents.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                lstOpponentsMouseClicked(evt);
-            }
-            public void mousePressed(java.awt.event.MouseEvent evt) {
-                lstOpponentsMousePressed(evt);
-            }
-            public void mouseReleased(java.awt.event.MouseEvent evt) {
-                lstOpponentsMouseReleased(evt);
-            }
-        });
-        lstOpponents.addMouseMotionListener(new java.awt.event.MouseMotionAdapter() {
-            public void mouseMoved(java.awt.event.MouseEvent evt) {
-                lstOpponentsMouseMoved(evt);
-            }
-        });
-        jScrollPane2.setViewportView(lstOpponents);
-
-        org.jdesktop.layout.GroupLayout jPanel5Layout = new org.jdesktop.layout.GroupLayout(jPanel5);
-        jPanel5.setLayout(jPanel5Layout);
-        jPanel5Layout.setHorizontalGroup(
-            jPanel5Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel5Layout.createSequentialGroup()
-                .addContainerGap()
-                .add(jScrollPane2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 855, Short.MAX_VALUE)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(cmdSearchOpponent)
-                .addContainerGap())
-        );
-        jPanel5Layout.setVerticalGroup(
-            jPanel5Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(jPanel5Layout.createSequentialGroup()
-                .add(jPanel5Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(cmdSearchOpponent)
-                    .add(jPanel5Layout.createSequentialGroup()
-                        .add(1, 1, 1)
-                        .add(jScrollPane2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 112, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(65, Short.MAX_VALUE))
-        );
-
-        jPanel6.setBorder(javax.swing.BorderFactory.createTitledBorder("Dritte"));
 
         cmdSearchOpponentAttorney.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/find.png"))); // NOI18N
         cmdSearchOpponentAttorney.addActionListener(new java.awt.event.ActionListener() {
@@ -2130,52 +1917,18 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
         });
 
-        lstOpponentAttorneys.setModel(new javax.swing.AbstractListModel() {
-            String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" };
-            public int getSize() { return strings.length; }
-            public Object getElementAt(int i) { return strings[i]; }
-        });
-        lstOpponentAttorneys.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                lstOpponentAttorneysMouseClicked(evt);
-            }
-            public void mousePressed(java.awt.event.MouseEvent evt) {
-                lstOpponentAttorneysMousePressed(evt);
-            }
-            public void mouseReleased(java.awt.event.MouseEvent evt) {
-                lstOpponentAttorneysMouseReleased(evt);
-            }
-        });
-        lstOpponentAttorneys.addMouseMotionListener(new java.awt.event.MouseMotionAdapter() {
-            public void mouseMoved(java.awt.event.MouseEvent evt) {
-                lstOpponentAttorneysMouseMoved(evt);
-            }
-        });
-        jScrollPane3.setViewportView(lstOpponentAttorneys);
+        org.jdesktop.layout.GroupLayout pnlInvolvedPartiesLayout = new org.jdesktop.layout.GroupLayout(pnlInvolvedParties);
+        pnlInvolvedParties.setLayout(pnlInvolvedPartiesLayout);
+        pnlInvolvedPartiesLayout.setHorizontalGroup(
+            pnlInvolvedPartiesLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(0, 927, Short.MAX_VALUE)
+        );
+        pnlInvolvedPartiesLayout.setVerticalGroup(
+            pnlInvolvedPartiesLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(0, 631, Short.MAX_VALUE)
+        );
 
-        org.jdesktop.layout.GroupLayout jPanel6Layout = new org.jdesktop.layout.GroupLayout(jPanel6);
-        jPanel6.setLayout(jPanel6Layout);
-        jPanel6Layout.setHorizontalGroup(
-            jPanel6Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel6Layout.createSequentialGroup()
-                .addContainerGap()
-                .add(jScrollPane3, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 855, Short.MAX_VALUE)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(cmdSearchOpponentAttorney)
-                .addContainerGap())
-        );
-        jPanel6Layout.setVerticalGroup(
-            jPanel6Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(jPanel6Layout.createSequentialGroup()
-                .add(jPanel6Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jPanel6Layout.createSequentialGroup()
-                        .add(cmdSearchOpponentAttorney)
-                        .add(0, 82, Short.MAX_VALUE))
-                    .add(jPanel6Layout.createSequentialGroup()
-                        .add(1, 1, 1)
-                        .add(jScrollPane3, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)))
-                .addContainerGap())
-        );
+        jScrollPane8.setViewportView(pnlInvolvedParties);
 
         org.jdesktop.layout.GroupLayout tabPartiesLayout = new org.jdesktop.layout.GroupLayout(tabParties);
         tabParties.setLayout(tabPartiesLayout);
@@ -2184,21 +1937,26 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             .add(tabPartiesLayout.createSequentialGroup()
                 .addContainerGap()
                 .add(tabPartiesLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jPanel4, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .add(jPanel5, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .add(jPanel6, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .add(jScrollPane8, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 945, Short.MAX_VALUE)
+                    .add(tabPartiesLayout.createSequentialGroup()
+                        .add(cmdSearchClient)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(cmdSearchOpponent)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(cmdSearchOpponentAttorney)
+                        .add(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         tabPartiesLayout.setVerticalGroup(
             tabPartiesLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(tabPartiesLayout.createSequentialGroup()
+            .add(org.jdesktop.layout.GroupLayout.TRAILING, tabPartiesLayout.createSequentialGroup()
                 .addContainerGap()
-                .add(jPanel4, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .add(tabPartiesLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(cmdSearchClient)
+                    .add(cmdSearchOpponent)
+                    .add(cmdSearchOpponentAttorney))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jPanel5, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jPanel6, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addContainerGap())
+                .add(jScrollPane8, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 614, Short.MAX_VALUE))
         );
 
         tabPaneArchiveFile.addTab("Beteiligte", new javax.swing.ImageIcon(getClass().getResource("/icons/vcard.png")), tabParties); // NOI18N
@@ -2346,7 +2104,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                         .add(cmdClearSearch)
                         .add(cmdAddNote)))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(splitDocuments, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 499, Short.MAX_VALUE)
+                .add(splitDocuments, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 568, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -2438,7 +2196,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                     .add(jLabel5)
                     .add(jLabel6)
                     .add(txtClaimValue, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 461, Short.MAX_VALUE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 530, Short.MAX_VALUE)
                 .add(jPanel8Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(cmdMotorCoverage)
                     .add(cmdCoverage)
@@ -2581,7 +2339,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                         .add(cmdNewReview))
                     .add(cmdShowReviewSelector))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                .add(tblReviewReasonsPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 395, Short.MAX_VALUE)
+                .add(tblReviewReasonsPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 464, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -2649,7 +2407,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 .add(lblCustom3)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jScrollPane6, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(374, Short.MAX_VALUE))
+                .addContainerGap(443, Short.MAX_VALUE))
         );
 
         tabPaneArchiveFile.addTab("Eigene", new javax.swing.ImageIcon(getClass().getResource("/icons16/kate.png")), jPanel11); // NOI18N
@@ -2668,7 +2426,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         );
         tabPrintLayout.setVerticalGroup(
             tabPrintLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(0, 589, Short.MAX_VALUE)
+            .add(0, 658, Short.MAX_VALUE)
         );
 
         tabPaneArchiveFile.addTab("Drucken", new javax.swing.ImageIcon(getClass().getResource("/icons/printer.png")), tabPrint); // NOI18N
@@ -2766,7 +2524,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(cmdAddHistory)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                .add(jScrollPane4, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 436, Short.MAX_VALUE)
+                .add(jScrollPane4, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 505, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -3085,14 +2843,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
     }
 
-    private void showPartiesPopup(MouseEvent evt) {
-        this.partiesPopupSource = (JList) evt.getSource();
-
-        if (evt.isPopupTrigger() && evt.getComponent().isEnabled()) {
-            this.partiesPopup.show(evt.getComponent(), evt.getX(), evt.getY());
-        }
-    }
-
     private void cmdNewReviewActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdNewReviewActionPerformed
         if (this.txtReviewDateField.getText().length() == 10) {
 
@@ -3150,81 +2900,46 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
     }//GEN-LAST:event_cmdNewReviewActionPerformed
 
-    private void lstOpponentAttorneysMouseMoved(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lstOpponentAttorneysMouseMoved
-        int index = this.lstOpponentAttorneys.locationToIndex(evt.getPoint());
-        if (index > -1) {
-            AddressBean adr = (AddressBean) this.lstOpponentAttorneys.getModel().getElementAt(index);
-            if (adr != null) {
-                this.lstOpponentAttorneys.setToolTipText(this.getToolTipForAddress(adr));
-            }
-        } else {
-            this.lstOpponentAttorneys.setToolTipText(null);
-        }
-    }//GEN-LAST:event_lstOpponentAttorneysMouseMoved
-
-    private void lstOpponentsMouseMoved(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lstOpponentsMouseMoved
-        int index = this.lstOpponents.locationToIndex(evt.getPoint());
-        if (index > -1) {
-            AddressBean adr = (AddressBean) this.lstOpponents.getModel().getElementAt(index);
-            if (adr != null) {
-                this.lstOpponents.setToolTipText(this.getToolTipForAddress(adr));
-            }
-        } else {
-            this.lstOpponents.setToolTipText(null);
-        }
-    }//GEN-LAST:event_lstOpponentsMouseMoved
-
-    private void lstClientsMouseMoved(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lstClientsMouseMoved
-        int index = this.lstClients.locationToIndex(evt.getPoint());
-        if (index > -1) {
-            AddressBean adr = (AddressBean) this.lstClients.getModel().getElementAt(index);
-            if (adr != null) {
-                this.lstClients.setToolTipText(this.getToolTipForAddress(adr));
-            }
-        } else {
-            this.lstClients.setToolTipText(null);
-        }
-    }//GEN-LAST:event_lstClientsMouseMoved
-
     private String getToolTipForAddress(AddressBean adr) {
         return adr.toShortHtml();
     }
 
-    private void lstClientsValueChanged(javax.swing.event.ListSelectionEvent evt) {//GEN-FIRST:event_lstClientsValueChanged
-        /*
-         * AddressDTO dto=(AddressDTO)this.lstClients.getSelectedValue();
-         * if(dto==null) { this.lstClients.setToolTipText("für Details Adresse
-         * auswählen"); } else { String toolTip="<html>";
-         * if(dto.getName()!=null) { toolTip=toolTip + "<b>Name:</b> " +
-         * dto.getName() + "<br>"; } if(dto.getFirstName()!=null) {
-         * toolTip=toolTip + "<b>Vorname:</b> " + dto.getFirstName() + "<br>"; }
-         * if(dto.getCompany()!=null) { toolTip=toolTip + "<b>Firma:</b> " +
-         * dto.getCompany() + "<br>"; } //this.lstClients.l
-         *
-         * toolTip=toolTip + "</html>"; this.lstClients.setToolTipText(toolTip);
-         * }
-         */
-    }//GEN-LAST:event_lstClientsValueChanged
-
     private void cmdSearchOpponentAttorneyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSearchOpponentAttorneyActionPerformed
-        AddAddressSearchDialog dlg = new AddAddressSearchDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.lstOpponentAttorneys, ArchiveFileAddressesBean.REFERENCETYPE_OPPONENTATTORNEY);
+        AddAddressSearchDialog dlg = new AddAddressSearchDialog(EditorsRegistry.getInstance().getMainWindow(), true, ArchiveFileAddressesBean.REFERENCETYPE_OPPONENTATTORNEY);
         dlg.setTitle("Dritten hinzufügen");
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
+        AddressBean adrb=dlg.getResultAddress();
+        ArchiveFileAddressesBean afab=dlg.getResultInvolvement();
+        afab.setArchiveFileKey(dto);
+        InvolvedPartyEntryPanel ipep=new InvolvedPartyEntryPanel(dto, this, this.pnlInvolvedParties, this.getClass().getName(), BeaAccess.isBeaEnabled());
+        this.pnlInvolvedParties.add(ipep);
     }//GEN-LAST:event_cmdSearchOpponentAttorneyActionPerformed
 
     private void cmdSearchOpponentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSearchOpponentActionPerformed
-        AddAddressSearchDialog dlg = new AddAddressSearchDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.lstOpponents, ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT);
+        AddAddressSearchDialog dlg = new AddAddressSearchDialog(EditorsRegistry.getInstance().getMainWindow(), true, ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT);
         dlg.setTitle("Gegner hinzufügen");
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
+        AddressBean adrb=dlg.getResultAddress();
+        ArchiveFileAddressesBean afab=dlg.getResultInvolvement();
+        afab.setArchiveFileKey(dto);
+        InvolvedPartyEntryPanel ipep=new InvolvedPartyEntryPanel(dto, this, this.pnlInvolvedParties, this.getClass().getName(), BeaAccess.isBeaEnabled());
+        this.pnlInvolvedParties.add(ipep);
     }//GEN-LAST:event_cmdSearchOpponentActionPerformed
 
     private void cmdSearchClientActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSearchClientActionPerformed
-        AddAddressSearchDialog dlg = new AddAddressSearchDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.lstClients, ArchiveFileAddressesBean.REFERENCETYPE_CLIENT);
+        AddAddressSearchDialog dlg = new AddAddressSearchDialog(EditorsRegistry.getInstance().getMainWindow(), true, ArchiveFileAddressesBean.REFERENCETYPE_CLIENT);
         dlg.setTitle("Mandant hinzufügen");
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
+        AddressBean adrb=dlg.getResultAddress();
+        ArchiveFileAddressesBean afab=dlg.getResultInvolvement();
+        afab.setArchiveFileKey(dto);
+        InvolvedPartyEntryPanel ipep=new InvolvedPartyEntryPanel(dto, this, this.pnlInvolvedParties, this.getClass().getName(), BeaAccess.isBeaEnabled());
+        ipep.setEntry(adrb, afab);
+        ipep.setAlignmentX(Component.LEFT_ALIGNMENT);
+        this.pnlInvolvedParties.add(ipep);
     }//GEN-LAST:event_cmdSearchClientActionPerformed
 
     public boolean confirmSave(String question, String tagToActivate) {
@@ -3356,63 +3071,21 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     }//GEN-LAST:event_cmdSaveActionPerformed
 
-    private void mnuRemovePartyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuRemovePartyActionPerformed
-
-        JList listSource = (JList) this.partiesPopupSource;
-        int[] selectedRows = listSource.getSelectedIndices();
-        ListModel model = listSource.getModel();
-
-        for (int i = selectedRows.length - 1; i > -1; i--) {
-            ((DefaultListModel) model).remove(selectedRows[i]);
-        }
-
-    }//GEN-LAST:event_mnuRemovePartyActionPerformed
-
-    private void lstClientsMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lstClientsMousePressed
-        //this.lstClients.get
-//        if ( SwingUtilities.isRightMouseButton(evt) )
-//		{
-//			lstClients.setS.setSelectedIndex(lstClients.locationToIndex(evt.getPoint()));
-//		}
-
-        ListUtils.handleRowClick(lstClients, evt);
-
-        this.showPartiesPopup(evt);
-    }//GEN-LAST:event_lstClientsMousePressed
-
-    private void lstClientsMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lstClientsMouseReleased
-        this.showPartiesPopup(evt);
-    }//GEN-LAST:event_lstClientsMouseReleased
-
-    private void lstOpponentsMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lstOpponentsMousePressed
-        ListUtils.handleRowClick(lstOpponents, evt);
-        this.showPartiesPopup(evt);
-    }//GEN-LAST:event_lstOpponentsMousePressed
-
-    private void lstOpponentsMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lstOpponentsMouseReleased
-        this.showPartiesPopup(evt);
-    }//GEN-LAST:event_lstOpponentsMouseReleased
-
-    private void lstOpponentAttorneysMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lstOpponentAttorneysMousePressed
-        ListUtils.handleRowClick(lstOpponentAttorneys, evt);
-        this.showPartiesPopup(evt);
-    }//GEN-LAST:event_lstOpponentAttorneysMousePressed
-
-    private void lstOpponentAttorneysMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lstOpponentAttorneysMouseReleased
-        this.showPartiesPopup(evt);
-    }//GEN-LAST:event_lstOpponentAttorneysMouseReleased
-
     private void cmdNewDocumentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdNewDocumentActionPerformed
 
-        AddressBean cl = (AddressBean) this.lstClients.getSelectedValue();
-        AddressBean opp = (AddressBean) this.lstOpponents.getSelectedValue();
-        AddressBean oppAtt = (AddressBean) this.lstOpponentAttorneys.getSelectedValue();
+//        AddressBean cl = (AddressBean) this.lstClients.getSelectedValue();
+//        AddressBean opp = (AddressBean) this.lstOpponents.getSelectedValue();
+//        AddressBean oppAtt = (AddressBean) this.lstOpponentAttorneys.getSelectedValue();
 
-        Object[] allCl = ComponentUtils.getAllListElements(this.lstClients);
-        Object[] allOpp = ComponentUtils.getAllListElements(this.lstOpponents);
-        Object[] allOppAtt = ComponentUtils.getAllListElements(this.lstOpponentAttorneys);
+//        Object[] allCl = ComponentUtils.getAllListElements(this.lstClients);
+//        Object[] allOpp = ComponentUtils.getAllListElements(this.lstOpponents);
+//        Object[] allOppAtt = ComponentUtils.getAllListElements(this.lstOpponentAttorneys);
+        
+        List<AddressBean> allCl = this.pnlInvolvedParties.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_CLIENT);
+        List<AddressBean> allOpp = this.pnlInvolvedParties.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT);
+        List<AddressBean> allOppAtt = this.pnlInvolvedParties.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_OPPONENTATTORNEY);
 
-        AddDocumentFromTemplateDialog dlg = new AddDocumentFromTemplateDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.tblDocuments, this.dto, cl, opp, oppAtt, allCl, allOpp, allOppAtt, this.tblReviewReasons);
+        AddDocumentFromTemplateDialog dlg = new AddDocumentFromTemplateDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.tblDocuments, this.dto, null, null, null, allCl, allOpp, allOppAtt, this.tblReviewReasons);
         dlg.setTitle("Dokument hinzufügen");
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
@@ -3781,67 +3454,28 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
     }//GEN-LAST:event_tabPrintComponentResized
 
-    private void lstClientsMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lstClientsMouseClicked
-        if (evt.getClickCount() == 2 && this.cmdSave.isEnabled()) {
-            this.switchToAddressView(this.lstClients);
-        }
-    }//GEN-LAST:event_lstClientsMouseClicked
-
-    private void lstOpponentsMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lstOpponentsMouseClicked
-        if (evt.getClickCount() == 2 && this.cmdSave.isEnabled()) {
-            this.switchToAddressView(this.lstOpponents);
-        }
-    }//GEN-LAST:event_lstOpponentsMouseClicked
-
-    private void lstOpponentAttorneysMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lstOpponentAttorneysMouseClicked
-        if (evt.getClickCount() == 2 && this.cmdSave.isEnabled()) {
-            this.switchToAddressView(this.lstOpponentAttorneys);
-        }
-    }//GEN-LAST:event_lstOpponentAttorneysMouseClicked
-
-    private void mnuSendEmailActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSendEmailActionPerformed
-        JList listSource = (JList) this.partiesPopupSource;
-        int[] selectedRows = listSource.getSelectedIndices();
-        //ListModel model = listSource.getModel();
-
-        if (selectedRows.length > 0) {
-            Object selection = listSource.getSelectedValue();
-            AddressBean ab = (AddressBean) selection;
-            if (ab.getEmail() == null || "".equals(ab.getEmail())) {
-                JOptionPane.showMessageDialog(this, "Zu diesem Kontakt ist keine Emailadresse erfasst.", "Fehler", JOptionPane.ERROR_MESSAGE);
-
+    public void removeInvolvedParty(InvolvedPartyEntryPanel ipep) {
+        this.pnlInvolvedParties.remove(ipep);
+        this.pnlInvolvedParties.revalidate();
+        
+        // redo background colors
+        JPanel temp=new JPanel();
+        Color defaultC=temp.getBackground();
+        
+        int i=0;
+        for(Component c: this.pnlInvolvedParties.getComponents()) {
+            if (i % 2 == 0) {
+                c.setBackground(defaultC.brighter());
             } else {
-                SendEmailDialog dlg = new SendEmailDialog(EditorsRegistry.getInstance().getMainWindow(), false);
-                dlg.setArchiveFile(dto);
-                dlg.setTo(ab.getEmail());
-                Object[] list = (Object[]) ((DefaultListModel) lstClients.getModel()).toArray();
-                AddressBean[] abeans = convertArray(list);
-                for (AddressBean abean : abeans) {
-                    dlg.addToClient(abean);
-                }
-                dlg.addToClient((AddressBean) this.lstClients.getSelectedValue());
-
-                //dlg.addRecipientCandidates(convertArray(list));
-                list = (Object[]) ((DefaultListModel) this.lstOpponents.getModel()).toArray();
-                abeans = convertArray(list);
-                for (AddressBean abean : abeans) {
-                    dlg.addToOpponent(abean);
-                }
-                dlg.addToOpponent((AddressBean) this.lstOpponents.getSelectedValue());
-                //dlg.addRecipientCandidates(convertArray(list));
-                list = (Object[]) ((DefaultListModel) this.lstOpponentAttorneys.getModel()).toArray();
-                abeans = convertArray(list);
-                for (AddressBean abean : abeans) {
-                    dlg.addToOpponentAttorney(abean);
-                }
-                dlg.addToOpponentAttorney((AddressBean) this.lstOpponentAttorneys.getSelectedValue());
-                //dlg.addRecipientCandidates(convertArray(list));
-                FrameUtils.centerDialog(dlg, null);
-                dlg.setVisible(true);
+                c.setBackground(defaultC);
             }
+            i++;
         }
-    }//GEN-LAST:event_mnuSendEmailActionPerformed
-
+        
+        
+        
+    }
+    
     private void mnuRenameDocumentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuRenameDocumentActionPerformed
         try {
             ClientSettings settings = ClientSettings.getInstance();
@@ -3882,22 +3516,16 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         SendEmailDialog dlg = new SendEmailDialog(EditorsRegistry.getInstance().getMainWindow(), false);
         //dlg.setTo(ab.getEmail());
 
-        Object[] list = (Object[]) ((DefaultListModel) lstClients.getModel()).toArray();
         dlg.setArchiveFile(dto);
-        AddressBean[] abeans = convertArray(list);
-        for (AddressBean abean : abeans) {
+        for (AddressBean abean : this.pnlInvolvedParties.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_CLIENT)) {
             dlg.addToClient(abean);
         }
         //dlg.addRecipientCandidates(convertArray(list));
-        list = (Object[]) ((DefaultListModel) this.lstOpponents.getModel()).toArray();
-        abeans = convertArray(list);
-        for (AddressBean abean : abeans) {
+        for (AddressBean abean : this.pnlInvolvedParties.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT)) {
             dlg.addToOpponent(abean);
         }
         //dlg.addRecipientCandidates(convertArray(list));
-        list = (Object[]) ((DefaultListModel) this.lstOpponentAttorneys.getModel()).toArray();
-        abeans = convertArray(list);
-        for (AddressBean abean : abeans) {
+        for (AddressBean abean : this.pnlInvolvedParties.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_OPPONENTATTORNEY)) {
             dlg.addToOpponentAttorney(abean);
         }
         //dlg.addRecipientCandidates(convertArray(list));
@@ -3929,22 +3557,16 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         SendEmailDialog dlg = new SendEmailDialog(EditorsRegistry.getInstance().getMainWindow(), false);
         //dlg.setTo(ab.getEmail());
 
-        Object[] list = (Object[]) ((DefaultListModel) lstClients.getModel()).toArray();
         dlg.setArchiveFile(dto);
-        AddressBean[] abeans = convertArray(list);
-        for (AddressBean abean : abeans) {
+        for (AddressBean abean : this.pnlInvolvedParties.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_CLIENT)) {
             dlg.addToClient(abean);
         }
         //dlg.addRecipientCandidates(convertArray(list));
-        list = (Object[]) ((DefaultListModel) this.lstOpponents.getModel()).toArray();
-        abeans = convertArray(list);
-        for (AddressBean abean : abeans) {
+        for (AddressBean abean : this.pnlInvolvedParties.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT)) {
             dlg.addToOpponent(abean);
         }
         //dlg.addRecipientCandidates(convertArray(list));
-        list = (Object[]) ((DefaultListModel) this.lstOpponentAttorneys.getModel()).toArray();
-        abeans = convertArray(list);
-        for (AddressBean abean : abeans) {
+        for (AddressBean abean : this.pnlInvolvedParties.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_OPPONENTATTORNEY)) {
             dlg.addToOpponentAttorney(abean);
         }
         //dlg.addRecipientCandidates(convertArray(list));
@@ -3955,35 +3577,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         a.start();
 
-//        try {
-//            ClientSettings settings = ClientSettings.getInstance();
-//            ApplicationLauncher appLauncher = ApplicationLauncher.getInstance();
-//            FileConverter conv=FileConverter.getInstance();
-//            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-//            ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
-//            int[] selectedRows = this.tblDocuments.getSelectedRows();
-//            DefaultTableModel tModel = (DefaultTableModel) this.tblDocuments.getModel();
-//            for (int i = selectedRows.length - 1; i > -1; i--) {
-//                ArchiveFileDocumentsBean doc = (ArchiveFileDocumentsBean) this.tblDocuments.getValueAt(selectedRows[i], 0);
-//                byte[] content = locator.lookupArchiveFileServiceRemote().getDocumentContent(doc.getId());
-//                        String tmpUrl = appLauncher.createTempFile(doc.getName(), content);
-//                        if(doc.getName().toLowerCase().endsWith(".pdf")) {
-//                            dlg.addAttachment(tmpUrl, doc.getDictateSign());
-//                        } else {
-//                            String pdfUrl=conv.convertToPDF(tmpUrl);
-//                            dlg.addAttachment(pdfUrl, doc.getDictateSign());
-//                            new File(tmpUrl).deleteOnExit();
-//                        }
-//
-//            }
-//
-//        } catch (Exception ioe) {
-//            log.error("Error sending document", ioe);
-//            JOptionPane.showMessageDialog(this, "Fehler beim Senden des Dokuments: " + ioe.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
-//        }
-//
-//        FrameUtils.centerDialog(dlg, null);
-//        dlg.setVisible(true);
     }//GEN-LAST:event_mnuSendDocumentPDFActionPerformed
 
     private void mnuOpenInExternalMailerActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuOpenInExternalMailerActionPerformed
@@ -4021,151 +3614,21 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
     }//GEN-LAST:event_mnuOpenInExternalMailerActionPerformed
 
-    private void mnuSendSmsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSendSmsActionPerformed
-        JList listSource = (JList) this.partiesPopupSource;
-        int[] selectedRows = listSource.getSelectedIndices();
-
-        if (selectedRows.length > 0) {
-            Object selection = listSource.getSelectedValue();
-            AddressBean ab = (AddressBean) selection;
-            if (ab.getMobile() == null || "".equals(ab.getMobile())) {
-                JOptionPane.showMessageDialog(this, "Zu diesem Kontakt ist keine Mobilnummer erfasst.", "Fehler", JOptionPane.ERROR_MESSAGE);
-
-            } else {
-
-                ServerSettings set = ServerSettings.getInstance();
-                String mode = set.getSetting(set.SERVERCONF_VOIPMODE, "on");
-                if ("on".equalsIgnoreCase(mode)) {
-                    SendSmsDialog dlg = new SendSmsDialog(EditorsRegistry.getInstance().getMainWindow(), true, ab);
-                    FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
-                    dlg.setVisible(true);
-                } else {
-                    JOptionPane.showMessageDialog(this, "Voice-over-IP - Integration ist nicht aktiviert!", "SMS senden", JOptionPane.INFORMATION_MESSAGE);
-
-                }
-
-            }
-        }
-    }//GEN-LAST:event_mnuSendSmsActionPerformed
-
-    private void mnuCallMobileActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuCallMobileActionPerformed
-        JList listSource = (JList) this.partiesPopupSource;
-        int[] selectedRows = listSource.getSelectedIndices();
-
-        if (selectedRows.length > 0) {
-            Object selection = listSource.getSelectedValue();
-            AddressBean ab = (AddressBean) selection;
-            if (ab.getMobile() == null || "".equals(ab.getMobile())) {
-                JOptionPane.showMessageDialog(this, "Zu diesem Kontakt ist keine Mobilnummer erfasst.", "Fehler", JOptionPane.ERROR_MESSAGE);
-
-            } else {
-
-                ServerSettings set = ServerSettings.getInstance();
-                String mode = set.getSetting(set.SERVERCONF_VOIPMODE, "on");
-                if ("on".equalsIgnoreCase(mode)) {
-                    PlaceCallDialog dlg = new PlaceCallDialog(EditorsRegistry.getInstance().getMainWindow(), true, ab, ab.getMobile());
-                    FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
-                    dlg.setVisible(true);
-                } else {
-                    JOptionPane.showMessageDialog(this, "Voice-over-IP - Integration ist nicht aktiviert!", "Anruf tätigen", JOptionPane.INFORMATION_MESSAGE);
-
-                }
-
-            }
-        }
-    }//GEN-LAST:event_mnuCallMobileActionPerformed
-
-    private void mnuCallPhoneActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuCallPhoneActionPerformed
-        JList listSource = (JList) this.partiesPopupSource;
-        int[] selectedRows = listSource.getSelectedIndices();
-
-        if (selectedRows.length > 0) {
-            Object selection = listSource.getSelectedValue();
-            AddressBean ab = (AddressBean) selection;
-            if (ab.getPhone() == null || "".equals(ab.getPhone())) {
-                JOptionPane.showMessageDialog(this, "Zu diesem Kontakt ist keine Festnetznummer erfasst.", "Fehler", JOptionPane.ERROR_MESSAGE);
-
-            } else {
-
-                ServerSettings set = ServerSettings.getInstance();
-                String mode = set.getSetting(set.SERVERCONF_VOIPMODE, "on");
-                if ("on".equalsIgnoreCase(mode)) {
-                    PlaceCallDialog dlg = new PlaceCallDialog(EditorsRegistry.getInstance().getMainWindow(), true, ab, ab.getPhone());
-                    FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
-                    dlg.setVisible(true);
-                } else {
-                    JOptionPane.showMessageDialog(this, "Voice-over-IP - Integration ist nicht aktiviert!", "Anruf tätigen", JOptionPane.INFORMATION_MESSAGE);
-
-                }
-
-            }
-        }
-    }//GEN-LAST:event_mnuCallPhoneActionPerformed
-
-    private void mnuSendFaxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSendFaxActionPerformed
-        ServerSettings set = ServerSettings.getInstance();
-        String mode = set.getSetting(set.SERVERCONF_VOIPMODE, "on");
-        if ("on".equalsIgnoreCase(mode)) {
-            ArrayList<AddressBean> faxList = new ArrayList<AddressBean>();
-
-            JList listSource = (JList) this.partiesPopupSource;
-            int[] selectedRows = listSource.getSelectedIndices();
-            //ListModel model = listSource.getModel();
-
-            if (selectedRows.length > 0) {
-                Object selection = listSource.getSelectedValue();
-                AddressBean ab = (AddressBean) selection;
-
-                Object[] list = (Object[]) ((DefaultListModel) lstClients.getModel()).toArray();
-                AddressBean[] abeans = convertArray(list);
-                for (AddressBean abean : abeans) {
-                    faxList.add(abean);
-                }
-
-                list = (Object[]) ((DefaultListModel) this.lstOpponents.getModel()).toArray();
-                abeans = convertArray(list);
-                for (AddressBean abean : abeans) {
-                    faxList.add(abean);
-                }
-
-                list = (Object[]) ((DefaultListModel) this.lstOpponentAttorneys.getModel()).toArray();
-                abeans = convertArray(list);
-                for (AddressBean abean : abeans) {
-                    faxList.add(abean);
-                }
-
-                SendFaxDialog dlg = new SendFaxDialog(EditorsRegistry.getInstance().getMainWindow(), true, faxList, ab, this.dto.getId());
-                FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
-                dlg.setVisible(true);
-            }
-
-        } else {
-            JOptionPane.showMessageDialog(this, "Voice-over-IP - Integration ist nicht aktiviert!", "Fax senden", JOptionPane.INFORMATION_MESSAGE);
-
-        }
-    }//GEN-LAST:event_mnuSendFaxActionPerformed
-
     private void mnuSendDocumentFaxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSendDocumentFaxActionPerformed
         ServerSettings set = ServerSettings.getInstance();
         String mode = set.getSetting(set.SERVERCONF_VOIPMODE, "on");
         if ("on".equalsIgnoreCase(mode)) {
             ArrayList<AddressBean> faxList = new ArrayList<AddressBean>();
 
-            Object[] list = (Object[]) ((DefaultListModel) lstClients.getModel()).toArray();
-            AddressBean[] abeans = convertArray(list);
-            for (AddressBean abean : abeans) {
+            for (AddressBean abean : this.pnlInvolvedParties.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_CLIENT)) {
                 faxList.add(abean);
             }
 
-            list = (Object[]) ((DefaultListModel) this.lstOpponents.getModel()).toArray();
-            abeans = convertArray(list);
-            for (AddressBean abean : abeans) {
+            for (AddressBean abean : this.pnlInvolvedParties.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT)) {
                 faxList.add(abean);
             }
 
-            list = (Object[]) ((DefaultListModel) this.lstOpponentAttorneys.getModel()).toArray();
-            abeans = convertArray(list);
-            for (AddressBean abean : abeans) {
+            for (AddressBean abean : this.pnlInvolvedParties.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_OPPONENTATTORNEY)) {
                 faxList.add(abean);
             }
 
@@ -4211,23 +3674,17 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     private void mnuCoverageActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuCoverageActionPerformed
 
-        Object[] list = (Object[]) ((DefaultListModel) lstClients.getModel()).toArray();
-        AddressBean[] abeans = convertArray(list);
         ArrayList<AddressBean> clients = new ArrayList<AddressBean>();
-        for (AddressBean abean : abeans) {
+        for (AddressBean abean : this.pnlInvolvedParties.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_CLIENT)) {
             clients.add(abean);
         }
 
-        Object[] list2 = (Object[]) ((DefaultListModel) this.lstOpponents.getModel()).toArray();
-        abeans = convertArray(list2);
         ArrayList<AddressBean> others = new ArrayList<AddressBean>();
-        for (AddressBean abean : abeans) {
+        for (AddressBean abean : this.pnlInvolvedParties.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT)) {
             others.add(abean);
         }
 
-        Object[] list3 = (Object[]) ((DefaultListModel) this.lstOpponentAttorneys.getModel()).toArray();
-        abeans = convertArray(list3);
-        for (AddressBean abean : abeans) {
+        for (AddressBean abean : this.pnlInvolvedParties.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_OPPONENTATTORNEY)) {
             others.add(abean);
         }
 
@@ -4271,23 +3728,18 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     }//GEN-LAST:event_mnuCoverageActionPerformed
 
     private void mnuMotorCoverageActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuMotorCoverageActionPerformed
-        Object[] list = (Object[]) ((DefaultListModel) lstClients.getModel()).toArray();
-        AddressBean[] abeans = convertArray(list);
+        
         ArrayList<AddressBean> clients = new ArrayList<AddressBean>();
-        for (AddressBean abean : abeans) {
+        for (AddressBean abean : this.pnlInvolvedParties.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_CLIENT)) {
             clients.add(abean);
         }
 
-        Object[] list2 = (Object[]) ((DefaultListModel) this.lstOpponents.getModel()).toArray();
-        abeans = convertArray(list2);
         ArrayList<AddressBean> others = new ArrayList<AddressBean>();
-        for (AddressBean abean : abeans) {
+        for (AddressBean abean : this.pnlInvolvedParties.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT)) {
             others.add(abean);
         }
 
-        Object[] list3 = (Object[]) ((DefaultListModel) this.lstOpponentAttorneys.getModel()).toArray();
-        abeans = convertArray(list3);
-        for (AddressBean abean : abeans) {
+        for (AddressBean abean : this.pnlInvolvedParties.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_OPPONENTATTORNEY)) {
             others.add(abean);
         }
 
@@ -4422,10 +3874,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     }//GEN-LAST:event_cmdSendMessageActionPerformed
 
     private void mnuFreeTextMessageActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuFreeTextMessageActionPerformed
-        Object[] list = (Object[]) ((DefaultListModel) lstClients.getModel()).toArray();
-        AddressBean[] abeans = convertArray(list);
+        
         ArrayList<AddressBean> clients = new ArrayList<AddressBean>();
-        for (AddressBean abean : abeans) {
+        for (AddressBean abean : this.pnlInvolvedParties.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_CLIENT)) {
             clients.add(abean);
         }
 
@@ -4758,6 +4209,18 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
     }//GEN-LAST:event_mnuPostponeReviewActionPerformed
 
+    private List<AddressBean> getInvolvedParties(int referenceType) {
+        ArrayList<AddressBean> parties=new ArrayList<AddressBean>();
+        for(Component c: this.pnlInvolvedParties.getComponents()) {
+            if(c instanceof InvolvedPartyEntryPanel) {
+                InvolvedPartyEntryPanel ipep=(InvolvedPartyEntryPanel)c;
+                if(ipep.getInvolvement().getReferenceType()==referenceType)
+                    parties.add(ipep.getAdress());
+            }
+        }
+        return parties;
+    }
+    
     private void mnuSendBeaDocumentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSendBeaDocumentActionPerformed
         if (!BeaAccess.hasInstance()) {
             BeaLoginDialog loginPanel = new BeaLoginDialog(EditorsRegistry.getInstance().getMainWindow(), true, null);
@@ -4770,32 +4233,25 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         SendBeaMessageDialog dlg = new SendBeaMessageDialog(EditorsRegistry.getInstance().getMainWindow(), false);
         //dlg.setTo(ab.getEmail());
 
-        Object[] list = (Object[]) ((DefaultListModel) lstClients.getModel()).toArray();
         dlg.setArchiveFile(dto);
-        AddressBean[] abeans = convertArray(list);
-        for (AddressBean abean : abeans) {
+        for (AddressBean abean : this.pnlInvolvedParties.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_CLIENT)) {
             if (!StringUtils.isEmpty(abean.getBeaSafeId())) {
                 dlg.addToClient(abean);
             }
         }
         //dlg.addRecipientCandidates(convertArray(list));
-        list = (Object[]) ((DefaultListModel) this.lstOpponents.getModel()).toArray();
-        abeans = convertArray(list);
-        for (AddressBean abean : abeans) {
+        for (AddressBean abean : this.pnlInvolvedParties.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT)) {
             if (!StringUtils.isEmpty(abean.getBeaSafeId())) {
                 dlg.addToOpponent(abean);
             }
         }
         //dlg.addRecipientCandidates(convertArray(list));
-        list = (Object[]) ((DefaultListModel) this.lstOpponentAttorneys.getModel()).toArray();
-        abeans = convertArray(list);
-        for (AddressBean abean : abeans) {
+        for (AddressBean abean : this.pnlInvolvedParties.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_OPPONENTATTORNEY)) {
             if (!StringUtils.isEmpty(abean.getBeaSafeId())) {
                 dlg.addToOpponentAttorney(abean);
             }
         }
-        //dlg.addRecipientCandidates(convertArray(list));
-
+        
         try {
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
@@ -4831,26 +4287,20 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         SendBeaMessageDialog dlg = new SendBeaMessageDialog(EditorsRegistry.getInstance().getMainWindow(), false);
         //dlg.setTo(ab.getEmail());
 
-        Object[] list = (Object[]) ((DefaultListModel) lstClients.getModel()).toArray();
         dlg.setArchiveFile(dto);
-        AddressBean[] abeans = convertArray(list);
-        for (AddressBean abean : abeans) {
+        for (AddressBean abean : this.pnlInvolvedParties.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_CLIENT)) {
             if (!StringUtils.isEmpty(abean.getBeaSafeId())) {
                 dlg.addToClient(abean);
             }
         }
         //dlg.addRecipientCandidates(convertArray(list));
-        list = (Object[]) ((DefaultListModel) this.lstOpponents.getModel()).toArray();
-        abeans = convertArray(list);
-        for (AddressBean abean : abeans) {
+        for (AddressBean abean : this.pnlInvolvedParties.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT)) {
             if (!StringUtils.isEmpty(abean.getBeaSafeId())) {
                 dlg.addToOpponent(abean);
             }
         }
         //dlg.addRecipientCandidates(convertArray(list));
-        list = (Object[]) ((DefaultListModel) this.lstOpponentAttorneys.getModel()).toArray();
-        abeans = convertArray(list);
-        for (AddressBean abean : abeans) {
+        for (AddressBean abean : this.pnlInvolvedParties.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_OPPONENTATTORNEY)) {
             if (!StringUtils.isEmpty(abean.getBeaSafeId())) {
                 dlg.addToOpponentAttorney(abean);
             }
@@ -4863,119 +4313,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         a.start();
     }//GEN-LAST:event_mnuSendBeaDocumentPDFActionPerformed
-
-    private void mnuSendBeaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSendBeaActionPerformed
-        JList listSource = (JList) this.partiesPopupSource;
-        int[] selectedRows = listSource.getSelectedIndices();
-        //ListModel model = listSource.getModel();
-
-        if (!BeaAccess.hasInstance()) {
-            BeaLoginDialog loginPanel = new BeaLoginDialog(EditorsRegistry.getInstance().getMainWindow(), true, null);
-            loginPanel.setVisible(true);
-            if (!BeaAccess.hasInstance()) {
-                return;
-            }
-        }
-
-        if (selectedRows.length > 0) {
-            Object selection = listSource.getSelectedValue();
-            AddressBean ab = (AddressBean) selection;
-            if (ab.getBeaSafeId() == null || "".equals(ab.getBeaSafeId())) {
-                JOptionPane.showMessageDialog(this, "Zu diesem Kontakt ist keine beA-Adresse erfasst.", "Fehler", JOptionPane.ERROR_MESSAGE);
-
-            } else {
-                Identity iTo = null;
-                try {
-                    BeaAccess bea = BeaAccess.getInstance();
-                    iTo = bea.getIdentity(ab.getBeaSafeId());
-                } catch (Throwable t) {
-                    log.error(t);
-                    JOptionPane.showMessageDialog(this, "Identität des beA-Teilnehmers kann nicht ermittelt werden", "Fehler", JOptionPane.ERROR_MESSAGE);
-                    return;
-                }
-                SendBeaMessageDialog dlg = new SendBeaMessageDialog(EditorsRegistry.getInstance().getMainWindow(), false);
-                dlg.setArchiveFile(dto);
-                dlg.setTo(iTo);
-                Object[] list = (Object[]) ((DefaultListModel) lstClients.getModel()).toArray();
-                AddressBean[] abeans = convertArray(list);
-                for (AddressBean abean : abeans) {
-                    if (!StringUtils.isEmpty(abean.getBeaSafeId())) {
-                        dlg.addToClient(abean);
-                    }
-                }
-                //if(!StringUtils.isEmpty(((AddressBean)this.lstClients.getSelectedValue())))
-                dlg.addToClient((AddressBean) this.lstClients.getSelectedValue());
-
-                //dlg.addRecipientCandidates(convertArray(list));
-                list = (Object[]) ((DefaultListModel) this.lstOpponents.getModel()).toArray();
-                abeans = convertArray(list);
-                for (AddressBean abean : abeans) {
-                    if (!StringUtils.isEmpty(abean.getBeaSafeId())) {
-                        dlg.addToOpponent(abean);
-                    }
-                }
-                dlg.addToOpponent((AddressBean) this.lstOpponents.getSelectedValue());
-                //dlg.addRecipientCandidates(convertArray(list));
-                list = (Object[]) ((DefaultListModel) this.lstOpponentAttorneys.getModel()).toArray();
-                abeans = convertArray(list);
-                for (AddressBean abean : abeans) {
-                    if (!StringUtils.isEmpty(abean.getBeaSafeId())) {
-                        dlg.addToOpponentAttorney(abean);
-                    }
-                }
-                dlg.addToOpponentAttorney((AddressBean) this.lstOpponentAttorneys.getSelectedValue());
-                //dlg.addRecipientCandidates(convertArray(list));
-                FrameUtils.centerDialog(dlg, null);
-                dlg.setVisible(true);
-            }
-        }
-    }//GEN-LAST:event_mnuSendBeaActionPerformed
-
-    private void mnuShowBeaIdentityActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuShowBeaIdentityActionPerformed
-        JList listSource = (JList) this.partiesPopupSource;
-        int[] selectedRows = listSource.getSelectedIndices();
-        //ListModel model = listSource.getModel();
-
-        if (!BeaAccess.hasInstance()) {
-            BeaLoginDialog loginPanel = new BeaLoginDialog(EditorsRegistry.getInstance().getMainWindow(), true, null);
-            loginPanel.setVisible(true);
-            if (!BeaAccess.hasInstance()) {
-                return;
-            }
-        }
-
-        if (selectedRows.length > 0) {
-            Object selection = listSource.getSelectedValue();
-            AddressBean ab = (AddressBean) selection;
-            if (ab.getBeaSafeId() == null || "".equals(ab.getBeaSafeId())) {
-                JOptionPane.showMessageDialog(this, "Zu diesem Kontakt ist keine beA-Adresse erfasst.", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
-
-            } else {
-                Identity iTo = null;
-                try {
-                    BeaAccess bea = BeaAccess.getInstance();
-                    iTo = bea.getIdentity(ab.getBeaSafeId());
-
-                    JDialog dlg = new JDialog(EditorsRegistry.getInstance().getMainWindow(), true);
-                    IdentityPanel ip = new IdentityPanel();
-                    ip.setIdentity(iTo);
-                    ip.doLayout();
-                    dlg.add(ip);
-                    dlg.setSize(700, 250);
-                    dlg.setTitle("beA Identität zur Safe ID " + iTo.getSafeId());
-                    //dlg.setSize(ip.getPreferredSize());
-                    FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
-                    dlg.setVisible(true);
-
-                } catch (Throwable t) {
-                    log.error(t);
-                    JOptionPane.showMessageDialog(this, "Identität des beA-Teilnehmers kann nicht ermittelt werden", "Fehler", JOptionPane.ERROR_MESSAGE);
-                    return;
-                }
-
-            }
-        }
-    }//GEN-LAST:event_mnuShowBeaIdentityActionPerformed
 
     private void mnuOpenDocumentMicrosoftOfficeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuOpenDocumentMicrosoftOfficeActionPerformed
         try {
@@ -5047,9 +4384,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     }//GEN-LAST:event_mnuEditReviewActionPerformed
 
     private void mnuSetDocumentDateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSetDocumentDateActionPerformed
-
-        //dlg.setTo(ab.getEmail());
-        Object[] list = (Object[]) ((DefaultListModel) lstClients.getModel()).toArray();
 
         try {
             ClientSettings settings = ClientSettings.getInstance();
@@ -5179,7 +4513,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         return null;
     }
 
-    private void switchToAddressView(JList list) {
+    public void switchToAddressView(AddressBean selection) {
         try {
             Object editor = null;
             if (this.cmdSave.isEnabled()) {
@@ -5188,7 +4522,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 editor = EditorsRegistry.getInstance().getEditor(ViewAddressDetailsPanel.class.getName());
             }
 
-            AddressBean selection = (AddressBean) list.getSelectedValue();
             if (selection == null) {
                 return;
             }
@@ -5237,38 +4570,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
         }
 
-        DefaultListModel clientModel = (DefaultListModel) this.lstClients.getModel();
-        Object[] clientEntries = clientModel.toArray();
-        aFile.removeAllClients();
-        for (int i = 0; i < clientEntries.length; i++) {
-            AddressBean client = (AddressBean) clientEntries[i];
-            ArchiveFileAddressesBean aadto = new ArchiveFileAddressesBean();
-            aadto.setReferenceType(aadto.REFERENCETYPE_CLIENT);
-            aadto.setAddressKey(client);
-            aFile.addClient(aadto);
-        }
-
-        DefaultListModel opponentModel = (DefaultListModel) this.lstOpponents.getModel();
-        Object[] opponentEntries = opponentModel.toArray();
-        aFile.removeAllOpponents();
-        for (int i = 0; i < opponentEntries.length; i++) {
-            AddressBean opponent = (AddressBean) opponentEntries[i];
-            ArchiveFileAddressesBean aadto = new ArchiveFileAddressesBean();
-            aadto.setReferenceType(aadto.REFERENCETYPE_OPPONENT);
-            aadto.setAddressKey(opponent);
-            aFile.addOpponent(aadto);
-        }
-
-        DefaultListModel opponentAttorneyModel = (DefaultListModel) this.lstOpponentAttorneys.getModel();
-        Object[] opponentAttorneyEntries = opponentAttorneyModel.toArray();
-        aFile.removeAllOpponentAttorneys();
-        for (int i = 0; i < opponentAttorneyEntries.length; i++) {
-            AddressBean opponentAttorney = (AddressBean) opponentAttorneyEntries[i];
-            ArchiveFileAddressesBean aadto = new ArchiveFileAddressesBean();
-            aadto.setReferenceType(aadto.REFERENCETYPE_OPPONENTATTORNEY);
-            aadto.setAddressKey(opponentAttorney);
-            aFile.addOpponentAttorney(aadto);
-        }
+        this.pnlInvolvedParties.updateInvolvedPartiesForCase(aFile);
 
         if (withReviews) {
             ArchiveFileReviewReasonsTableModel reviewsModel = (ArchiveFileReviewReasonsTableModel) this.tblReviewReasons.getModel();
@@ -5341,6 +4643,35 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 }
             }
         }
+    }
+
+    private boolean containsSameInvolvements(List<ArchiveFileAddressesBean> first, List<ArchiveFileAddressesBean> second) {
+        if(first.size()!=second.size())
+            return false;
+        for(ArchiveFileAddressesBean f: first) {
+            String adrId=f.getAddressKey().getId();
+            int rt=f.getReferenceType();
+            boolean contained=false;
+            for(ArchiveFileAddressesBean s: second) {
+                if(adrId.equals(s.getAddressKey().getId()) && rt==s.getReferenceType()) {
+                    contained=true;
+                    if(!f.getContact().equals(s.getContact()))
+                        return false;
+                    if(!f.getCustom1().equals(s.getCustom1()))
+                        return false;
+                    if(!f.getCustom2().equals(s.getCustom2()))
+                        return false;
+                    if(!f.getCustom3().equals(s.getCustom3()))
+                        return false;
+                    if(!f.getReference().equals(s.getReference()))
+                        return false;
+                    break;
+                }
+            }
+            if(!contained)
+                return false;
+        }
+        return true;
     }
 
     protected class DropTargetHandler implements DropTargetListener {
@@ -5495,18 +4826,13 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JPanel jPanel13;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
-    private javax.swing.JPanel jPanel4;
-    private javax.swing.JPanel jPanel5;
-    private javax.swing.JPanel jPanel6;
     private javax.swing.JPanel jPanel7;
     private javax.swing.JPanel jPanel8;
     private javax.swing.JPanel jPanel9;
-    private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JScrollPane jScrollPane2;
-    private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JScrollPane jScrollPane4;
     private javax.swing.JScrollPane jScrollPane6;
     private javax.swing.JScrollPane jScrollPane7;
+    private javax.swing.JScrollPane jScrollPane8;
     private javax.swing.JPopupMenu.Separator jSeparator1;
     private javax.swing.JPopupMenu.Separator jSeparator2;
     private javax.swing.JPopupMenu.Separator jSeparator3;
@@ -5520,11 +4846,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JLabel lblDocumentHits;
     private javax.swing.JLabel lblHeaderInfo;
     protected javax.swing.JLabel lblPanelTitle;
-    protected javax.swing.JList lstClients;
-    protected javax.swing.JList lstOpponentAttorneys;
-    protected javax.swing.JList lstOpponents;
-    private javax.swing.JMenuItem mnuCallMobile;
-    private javax.swing.JMenuItem mnuCallPhone;
     private javax.swing.JMenuItem mnuCopyDocumentToOtherCase;
     private javax.swing.JMenuItem mnuCoverage;
     private javax.swing.JMenuItem mnuDirectPrint;
@@ -5539,25 +4860,19 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JMenuItem mnuOpenInExternalMailer;
     private javax.swing.JMenuItem mnuPostponeReview;
     private javax.swing.JMenuItem mnuRemoveDocument;
-    private javax.swing.JMenuItem mnuRemoveParty;
     private javax.swing.JMenuItem mnuRemoveReview;
     private javax.swing.JMenuItem mnuRenameDocument;
     private javax.swing.JMenuItem mnuSaveDocumentEncrypted;
-    private javax.swing.JMenuItem mnuSendBea;
     private javax.swing.JMenuItem mnuSendBeaDocument;
     private javax.swing.JMenuItem mnuSendBeaDocumentPDF;
     private javax.swing.JMenuItem mnuSendDocument;
     private javax.swing.JMenuItem mnuSendDocumentFax;
     private javax.swing.JMenuItem mnuSendDocumentPDF;
-    private javax.swing.JMenuItem mnuSendEmail;
-    private javax.swing.JMenuItem mnuSendFax;
-    private javax.swing.JMenuItem mnuSendSms;
     private javax.swing.JMenuItem mnuSetDocumentDate;
     private javax.swing.JMenuItem mnuSetReviewDone;
     private javax.swing.JMenuItem mnuSetReviewOpen;
-    private javax.swing.JMenuItem mnuShowBeaIdentity;
     private javax.swing.JMenuItem mnuUseDocumentAsTemplate;
-    private javax.swing.JPopupMenu partiesPopup;
+    protected com.jdimension.jlawyer.client.editors.files.InvolvedPartiesPanel pnlInvolvedParties;
     private javax.swing.JPanel pnlPreview;
     private javax.swing.JRadioButton radioReviewTypeFollowUp;
     private javax.swing.JRadioButton radioReviewTypeRespite;
@@ -5661,14 +4976,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             return true;
         }
 
-        DefaultListModel opponentAttorneyModel = (DefaultListModel) this.lstOpponentAttorneys.getModel();
-        Object[] opponentAttorneyEntries = opponentAttorneyModel.toArray();
-
-        DefaultListModel opponentModel = (DefaultListModel) this.lstOpponents.getModel();
-        Object[] opponentEntries = opponentModel.toArray();
-
-        DefaultListModel clientModel = (DefaultListModel) this.lstClients.getModel();
-        Object[] clientEntries = clientModel.toArray();
+        List<AddressBean> clientEntries = this.pnlInvolvedParties.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_CLIENT);
+        List<AddressBean> opponentEntries = this.pnlInvolvedParties.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT);
+        List<AddressBean> opponentAttorneyEntries = this.pnlInvolvedParties.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_OPPONENTATTORNEY);
 
         Collection clientsOnServer = null;
         Collection opponentsOnServer = null;
@@ -5681,6 +4991,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             clientsOnServer = fileService.getClients(this.dto.getId());
             opponentsOnServer = fileService.getOpponents(this.dto.getId());
             opponentAttorneysOnServer = fileService.getOpponentAttorneys(this.dto.getId());
+            List<ArchiveFileAddressesBean> involved=fileService.getInvolvementDetailsForCase(this.dto.getId());
 
             if (!containsSameAddresses(clientsOnServer, clientEntries)) {
                 return true;
@@ -5689,6 +5000,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 return true;
             }
             if (!containsSameAddresses(opponentAttorneysOnServer, opponentAttorneyEntries)) {
+                return true;
+            }
+            if (!containsSameInvolvements(involved, this.pnlInvolvedParties.getInvolvedParties())) {
                 return true;
             }
 
@@ -5700,9 +5014,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         return false;
     }
 
-    private boolean containsSameAddresses(Collection list, Object[] abeans) {
+    private boolean containsSameAddresses(Collection list, List<AddressBean> abeans) {
 
-        if (list.size() != abeans.length) {
+        if (list.size() != abeans.size()) {
             return false;
         }
 

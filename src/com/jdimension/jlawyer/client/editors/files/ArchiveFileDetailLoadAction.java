@@ -679,11 +679,13 @@ import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.ui.tagging.ArchiveFileTagActionListener;
 import com.jdimension.jlawyer.ui.tagging.TagToggleButton;
 import java.awt.Component;
+import java.awt.GridLayout;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 import javax.swing.*;
 import javax.swing.table.TableRowSorter;
@@ -698,38 +700,40 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
     private static final Logger log = Logger.getLogger(ArchiveFileDetailLoadAction.class.getName());
 
     private String archiveFileKey;
+    private ArchiveFileBean caseDto;
     private ArchiveFilePanel owner;
     private JTable historyTarget;
     private JTable docTarget;
-    private JList clients;
-    private JList opponents;
-    private JList opponentAttorneys;
+    private JTable partiesTarget;
+    private InvolvedPartiesPanel contactsForCasePanel;
     private JTable tblReviews;
     private JPanel tagPanel;
     private JLabel lblArchivedSince;
     private boolean isArchived = false;
     private boolean readOnly = false;
+    private boolean beaEnabled=false;
     private String selectDocumentWithFileName;
 
     private SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy HH:mm");
 
-    public ArchiveFileDetailLoadAction(ProgressIndicator i, ArchiveFilePanel owner, String archiveFileKey, JTable historyTarget, JTable docTarget, JList clients, JList opponents, JList opponentAttorneys, JTable tblReviews, JPanel tagPanel, boolean readOnly, String selectDocumentWithFileName, JLabel lblArchivedSince, boolean isArchived) {
+    public ArchiveFileDetailLoadAction(ProgressIndicator i, ArchiveFilePanel owner, String archiveFileKey, ArchiveFileBean caseDto, JTable historyTarget, JTable docTarget, InvolvedPartiesPanel contactsForCasePanel, JTable tblReviews, JPanel tagPanel, boolean readOnly, boolean beaEnabled, String selectDocumentWithFileName, JLabel lblArchivedSince, boolean isArchived) {
         super(i, false);
         //this.table = table;
         //this.dlg = dlg;
 
-        this.clients = clients;
-        this.opponents = opponents;
-        this.opponentAttorneys = opponentAttorneys;
         this.archiveFileKey = archiveFileKey;
+        this.caseDto=caseDto;
         this.owner = owner;
         this.historyTarget = historyTarget;
         this.docTarget = docTarget;
+        this.partiesTarget=partiesTarget;
+        this.contactsForCasePanel=contactsForCasePanel;
         this.tblReviews = tblReviews;
         this.tagPanel = tagPanel;
         this.lblArchivedSince = lblArchivedSince;
         this.isArchived = isArchived;
         this.readOnly = readOnly;
+        this.beaEnabled=beaEnabled;
         this.selectDocumentWithFileName = selectDocumentWithFileName;
 
     }
@@ -747,59 +751,12 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
     @Override
     public boolean execute() throws Exception {
 
-//        try {
-//            ClientSettings settings = ClientSettings.getInstance();
-//            ApplicationLauncher appLauncher = ApplicationLauncher.getInstance();
-//            FileConverter conv = FileConverter.getInstance();
-//            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-//            ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
-//            int[] selectedRows = this.table.getSelectedRows();
-//            DefaultTableModel tModel = (DefaultTableModel) this.table.getModel();
-//            for (int i = selectedRows.length - 1; i > -1; i--) {
-//                if (this.isCancelled()) {
-//                    return true;
-//                }
-//
-//                ArchiveFileDocumentsBean doc = (ArchiveFileDocumentsBean) this.table.getValueAt(selectedRows[i], 0);
-//
-//                this.progress("Konvertiere zu PDF: " + doc.getName());
-//                byte[] content = locator.lookupArchiveFileServiceRemote().getDocumentContent(doc.getId());
-//                String tmpUrl = appLauncher.createTempFile(doc.getName(), content);
-//                if (doc.getName().toLowerCase().endsWith(".pdf")) {
-//                    dlg.addAttachment(tmpUrl, doc.getDictateSign());
-//                } else {
-//                    String pdfUrl = conv.convertToPDF(tmpUrl);
-//                    try {
-//                        // give some more time to LibreOfficed to shut down
-//                        Thread.sleep(2500);
-//                    } catch (Throwable t) {
-//                        log.error(t);
-//                    }
-//                    dlg.addAttachment(pdfUrl, doc.getDictateSign());
-//                    new File(tmpUrl).deleteOnExit();
-//                }
-//
-//            }
-//
-//        } catch (Exception ioe) {
-//            log.error("Error converting documents", ioe);
-//            JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Konvertieren der Dokumente: " + ioe.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
-//        }
-//        SwingUtilities.invokeLater(new Thread(new Runnable() {
-//
-//            public void run() {
-//                try {
-//                    FrameUtils.centerDialog(dlg, null);
-//                    dlg.setVisible(true);
-//                } catch (Throwable t) {
-//                    log.error(t);
-//                }
-//            }
-//        }));
         this.progress("Lade Akte...");
 
         ArchiveFileHistoryBean[] dtos = null;
         Collection documents = null;
+        List<AddressBean> addressesForCase=null;
+        List<ArchiveFileAddressesBean> involvementForCase=null;
         Collection clients = null;
         Collection opponents = null;
         Collection opponentAttorneys = null;
@@ -814,12 +771,15 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
             settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
-            //ArchiveFileServiceRemoteHome home = (ArchiveFileServiceRemoteHome)locator.getRemoteHome("ejb/ArchiveFileServiceBean", ArchiveFileServiceRemoteHome.class);
             this.progress("Lade Akte: Historie...");
             fileService = locator.lookupArchiveFileServiceRemote();
             dtos = fileService.getHistoryForArchiveFile(this.archiveFileKey);
             this.progress("Lade Akte: Mandanten...");
             clients = fileService.getClients(this.archiveFileKey);
+
+            addressesForCase=fileService.getAddressesForCase(archiveFileKey);
+            involvementForCase=fileService.getInvolvementDetailsForCase(archiveFileKey);
+            
             this.progress("Lade Akte: Gegner...");
             opponents = fileService.getOpponents(this.archiveFileKey);
             this.progress("Lade Akte: Dritte...");
@@ -908,32 +868,39 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
         //ThreadUtils.setTableModel(this.docTarget, docModel);
 
         this.progress("Aktualisiere Dialog: Mandanten...");
-        DefaultListModel clientModel = new DefaultListModel();
-        if (clients != null) {
-            for (Object client : clients) {
-                clientModel.addElement(client);
+        
+        this.contactsForCasePanel.removeAll();
+        GridLayout layout = new GridLayout(involvementForCase.size(), 1);
+        this.contactsForCasePanel.setLayout(layout);
+        int i = 0;
+        for (ArchiveFileAddressesBean afab: involvementForCase) {
+            AddressBean address=null;
+            for(AddressBean ab: addressesForCase ) {
+                        if(ab.getId().equals(afab.getAddressKey().getId())) {
+                            address=ab;
+                            break;
+                        }
+                    }
+            
+            
+            InvolvedPartyEntryPanel ep = new InvolvedPartyEntryPanel(this.caseDto, this.owner, this.contactsForCasePanel, this.getClass().getName(), this.beaEnabled);
+            ep.setEntry(address, afab);
+            if (i % 2 == 0) {
+                ep.setBackground(ep.getBackground().brighter());
             }
+            
+            ep.setAlignmentX(Component.LEFT_ALIGNMENT);
+            this.contactsForCasePanel.add(ep);
+            i++;
+            
+
         }
-        ThreadUtils.setListModel(this.clients, clientModel);
+        layout.setRows(i);
 
         this.progress("Aktualisiere Dialog: Gegner...");
-        DefaultListModel opponentModel = new DefaultListModel();
-        if (opponents != null) {
-            for (Object opponent : opponents) {
-                opponentModel.addElement(opponent);
-            }
-        }
-        ThreadUtils.setListModel(this.opponents, opponentModel);
-
+        
         this.progress("Aktualisiere Dialog: Dritte...");
-        DefaultListModel opponentAttModel = new DefaultListModel();
-        if (opponentAttorneys != null) {
-            for (Object opponentAtt : opponentAttorneys) {
-                opponentAttModel.addElement(opponentAtt);
-            }
-        }
-        ThreadUtils.setListModel(this.opponentAttorneys, opponentAttModel);
-
+        
         this.progress("Aktualisiere Dialog: Wiedervorlagen und Fristen...");
         String[] colNames3 = new String[]{"Datum", "Typ", "Grund", "erledigt", "verantwortlich"};
         ArchiveFileReviewReasonsTableModel model3 = new ArchiveFileReviewReasonsTableModel(colNames3, 0);

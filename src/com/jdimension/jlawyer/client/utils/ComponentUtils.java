@@ -667,6 +667,7 @@ import com.jdimension.jlawyer.client.settings.ClientSettings;
 import java.awt.Component;
 import java.awt.Container;
 import java.util.ArrayList;
+import java.util.List;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
@@ -711,6 +712,12 @@ public class ComponentUtils {
     public static void addAllItemsToCombobox(JComboBox cmb, Object[] objects) {
         for (int i = 0; i < objects.length; i++) {
             cmb.addItem(objects[i]);
+        }
+    }
+    
+    public static void addAllItemsToCombobox(JComboBox cmb, List objects) {
+        for (int i = 0; i < objects.size(); i++) {
+            cmb.addItem(objects.get(i));
         }
     }
 

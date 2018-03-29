@@ -666,6 +666,7 @@ package com.jdimension.jlawyer.client.editors.files;
 import com.jdimension.jlawyer.client.editors.ResetOnDisplayEditor;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.StringUtils;
+import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.util.Collection;
@@ -742,13 +743,13 @@ public class NewArchiveFilePanel extends ArchiveFilePanel implements ResetOnDisp
             }
         }
         
-        if(!(this.lstOpponentAttorneys.getModel().getSize()==0)) {
+        if(!(this.pnlInvolvedParties.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_OPPONENTATTORNEY).size()==0)) {
             return true;
         }
-        if(!(this.lstOpponents.getModel().getSize()==0)) {
+        if(!(this.pnlInvolvedParties.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT).size()==0)) {
             return true;
         }
-        if(!(this.lstClients.getModel().getSize()==0)) {
+        if(!(this.pnlInvolvedParties.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_CLIENT).size()==0)) {
             return true;
         }
         

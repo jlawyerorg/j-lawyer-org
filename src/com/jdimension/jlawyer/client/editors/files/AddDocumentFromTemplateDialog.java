@@ -712,7 +712,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog {
     /**
      * Creates new form AddDocumentDialog
      */
-    public AddDocumentFromTemplateDialog(java.awt.Frame parent, boolean modal, JTable targetTable, ArchiveFileBean aFile, AddressBean cl, AddressBean opp, AddressBean oppAtt, Object[] allCl, Object[] allOpp, Object[] allOppAtt, JTable tblReviewReasons) {
+    public AddDocumentFromTemplateDialog(java.awt.Frame parent, boolean modal, JTable targetTable, ArchiveFileBean aFile, AddressBean cl, AddressBean opp, AddressBean oppAtt, List<AddressBean> allCl, List<AddressBean> allOpp, List<AddressBean> allOppAtt, JTable tblReviewReasons) {
         super(parent, modal);
         this.initializing = true;
         this.targetTable = targetTable;
@@ -756,22 +756,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog {
 
         ClientSettings settings = ClientSettings.getInstance();
         EditorsRegistry.getInstance().updateStatus("Lade Dokumentvorlagen...");
-//        try {
-//            //InitialContext context = new InitialContext(settings.getLookupProperties());
-//            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-//            Collection templates = locator.lookupSystemManagementRemote().getAllTemplateNames();
-//            this.allTemplates.add("");
-//            for (Object template : templates) {
-//                this.allTemplates.add(template.toString());
-//
-//            }
-//
-//        } catch (Exception ex) {
-//            log.error("Error loading template names", ex);
-//            JOptionPane.showMessageDialog(this, "Fehler Laden der Dokumentvorlagen: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
-//            EditorsRegistry.getInstance().clearStatus();
-//            return;
-//        }
+
         this.cmdAddDocument.setEnabled(false);
 
         AppOptionGroupBean[] dictateSigns = settings.getDictateSignDtos();
