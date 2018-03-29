@@ -755,6 +755,7 @@ public class ServerSettings {
     
     public static final String DATA_CUSTOMFIELD_ADDRESS_PREFIX="data.customfields.address.";
     public static final String DATA_CUSTOMFIELD_ARCHIVEFILE_PREFIX="data.customfields.archivefile.";
+    public static final String DATA_CUSTOMFIELD_ARCHIVEFILE_INVOLVED_PREFIX="data.customfields.archivefile.involved.";
     
     public static final String SERVERCONF_DOCUMENTS_WAITFOR_MAC="jlawyer.server.documents.waitforprocess.mac";
     

@@ -954,6 +954,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuArchiveFileOptionsSubjectFields = new javax.swing.JMenuItem();
         mnuArchiveFileTags = new javax.swing.JMenuItem();
         mnuArchiveFileCustomFields = new javax.swing.JMenuItem();
+        mnuArchiveFileCustomFieldsInvolvements = new javax.swing.JMenuItem();
         mnuArchiveFileOptionsCaseNumbering = new javax.swing.JMenuItem();
         mnuDocumentOptions = new javax.swing.JMenu();
         mnuScanOptions = new javax.swing.JMenuItem();
@@ -1239,6 +1240,15 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             }
         });
         mnuArchiveFileOptions.add(mnuArchiveFileCustomFields);
+
+        mnuArchiveFileCustomFieldsInvolvements.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/kate.png"))); // NOI18N
+        mnuArchiveFileCustomFieldsInvolvements.setText("Eigene Felder (Beteiligte)");
+        mnuArchiveFileCustomFieldsInvolvements.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuArchiveFileCustomFieldsInvolvementsActionPerformed(evt);
+            }
+        });
+        mnuArchiveFileOptions.add(mnuArchiveFileCustomFieldsInvolvements);
 
         mnuArchiveFileOptionsCaseNumbering.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/package_system.png"))); // NOI18N
         mnuArchiveFileOptionsCaseNumbering.setText(bundle.getString("menu.settings.cases.numbering")); // NOI18N
@@ -2005,6 +2015,26 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         }
     }//GEN-LAST:event_mnuBeaSettingsActionPerformed
 
+    private void mnuArchiveFileCustomFieldsInvolvementsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuArchiveFileCustomFieldsInvolvementsActionPerformed
+        ClientSettings settings = ClientSettings.getInstance();
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            boolean currentlyAdmin = locator.lookupSecurityServiceRemote().isAdmin();
+            if (currentlyAdmin) {
+                CustomFieldConfigurationDialog dlg = new CustomFieldConfigurationDialog(this, true);
+                dlg.setTitle(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("dialog.title.casecustomfields"));
+                dlg.setConfigCategoryPrefix(ServerSettings.DATA_CUSTOMFIELD_ARCHIVEFILE_INVOLVED_PREFIX);
+                FrameUtils.centerDialog(dlg, this);
+                dlg.setVisible(true);
+            } else {
+                JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.adminrequired"), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.hint"), JOptionPane.INFORMATION_MESSAGE);
+            }
+        } catch (Exception ex) {
+            log.error(ex);
+            JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("error.launchsettings") + ex.getMessage(), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.error"), JOptionPane.INFORMATION_MESSAGE);
+        }
+    }//GEN-LAST:event_mnuArchiveFileCustomFieldsInvolvementsActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -2041,6 +2071,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     private javax.swing.JMenuItem mnuAddressTags;
     private javax.swing.JMenuItem mnuAdminConsole;
     private javax.swing.JMenuItem mnuArchiveFileCustomFields;
+    private javax.swing.JMenuItem mnuArchiveFileCustomFieldsInvolvements;
     private javax.swing.JMenu mnuArchiveFileOptions;
     private javax.swing.JMenuItem mnuArchiveFileOptionsCaseNumbering;
     private javax.swing.JMenuItem mnuArchiveFileOptionsDictateSign;
