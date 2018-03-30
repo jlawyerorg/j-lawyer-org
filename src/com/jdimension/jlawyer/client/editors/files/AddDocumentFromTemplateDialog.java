@@ -708,26 +708,25 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog {
     private AddressBean cl = null;
     private boolean initializing = true;
     private JTable tblReviewReasons = null;
+    private List<ArchiveFileAddressesBean> involved=null;
 
     /**
      * Creates new form AddDocumentDialog
      */
-    public AddDocumentFromTemplateDialog(java.awt.Frame parent, boolean modal, JTable targetTable, ArchiveFileBean aFile, AddressBean cl, AddressBean opp, AddressBean oppAtt, List<AddressBean> allCl, List<AddressBean> allOpp, List<AddressBean> allOppAtt, JTable tblReviewReasons) {
+    public AddDocumentFromTemplateDialog(java.awt.Frame parent, boolean modal, JTable targetTable, ArchiveFileBean aFile, List<ArchiveFileAddressesBean> involved, List<AddressBean> allCl, List<AddressBean> allOpp, List<AddressBean> allOppAtt, JTable tblReviewReasons) {
         super(parent, modal);
         this.initializing = true;
         this.targetTable = targetTable;
         this.tblReviewReasons = tblReviewReasons;
-        this.cl = cl;
         this.aFile = aFile;
-        this.opp = opp;
-        this.oppAtt = oppAtt;
+        this.involved=involved;
         initComponents();
 
         this.cmbClients.removeAllItems();
         this.cmbClients.setRenderer(new AddressBeanListCellRenderer());
         //this.cmbClients.addItem(null);
         ComponentUtils.addAllItemsToCombobox(cmbClients, allCl);
-        ComponentUtils.selectComboboxItem(cmbClients, this.cl);
+        //ComponentUtils.selectComboboxItem(cmbClients, this.cl);
         if (this.cl == null && this.cmbClients.getItemCount() > 0) {
             this.cl = (AddressBean) this.cmbClients.getItemAt(0);
         }
@@ -736,7 +735,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog {
         this.cmbOpponents.setRenderer(new AddressBeanListCellRenderer());
         //this.cmbOpponents.addItem(null);
         ComponentUtils.addAllItemsToCombobox(cmbOpponents, allOpp);
-        ComponentUtils.selectComboboxItem(cmbOpponents, this.opp);
+        //ComponentUtils.selectComboboxItem(cmbOpponents, this.opp);
         if (this.opp == null && this.cmbOpponents.getItemCount() > 0) {
             this.opp = (AddressBean) this.cmbOpponents.getItemAt(0);
         }
@@ -745,7 +744,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog {
         //this.cmbOpponentAttorneys.addItem(null);
         this.cmbOpponentAttorneys.setRenderer(new AddressBeanListCellRenderer());
         ComponentUtils.addAllItemsToCombobox(cmbOpponentAttorneys, allOppAtt);
-        ComponentUtils.selectComboboxItem(cmbOpponentAttorneys, this.oppAtt);
+        //ComponentUtils.selectComboboxItem(cmbOpponentAttorneys, this.oppAtt);
         if (this.oppAtt == null && this.cmbOpponentAttorneys.getItemCount() > 0) {
             this.oppAtt = (AddressBean) this.cmbOpponentAttorneys.getItemAt(0);
         }
@@ -1563,7 +1562,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog {
                 for (String ph : placeHolders) {
                     ht.put(ph, "");
                 }
-                ht = PlaceHolderUtils.getPlaceHolderValues(ht, aFile, cl, opp, oppAtt, this.cmbDictateSigns.getSelectedItem().toString());
+                ht = PlaceHolderUtils.getPlaceHolderValues(ht, aFile, involved, cl, opp, oppAtt, this.cmbDictateSigns.getSelectedItem().toString());
 
                 Enumeration htEn = ht.keys();
                 while (htEn.hasMoreElements()) {
@@ -1713,7 +1712,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog {
         java.awt.EventQueue.invokeLater(new Runnable() {
 
             public void run() {
-                new AddDocumentFromTemplateDialog(new javax.swing.JFrame(), true, null, null, null, null, null, null, null, null, null).setVisible(true);
+                new AddDocumentFromTemplateDialog(new javax.swing.JFrame(), true, null, null, null, null, null, null, null).setVisible(true);
             }
         });
     }

@@ -3084,8 +3084,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         List<AddressBean> allCl = this.pnlInvolvedParties.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_CLIENT);
         List<AddressBean> allOpp = this.pnlInvolvedParties.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT);
         List<AddressBean> allOppAtt = this.pnlInvolvedParties.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_OPPONENTATTORNEY);
+        List<ArchiveFileAddressesBean> involved=this.pnlInvolvedParties.getInvolvedParties();
 
-        AddDocumentFromTemplateDialog dlg = new AddDocumentFromTemplateDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.tblDocuments, this.dto, null, null, null, allCl, allOpp, allOppAtt, this.tblReviewReasons);
+        AddDocumentFromTemplateDialog dlg = new AddDocumentFromTemplateDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.tblDocuments, this.dto, involved, allCl, allOpp, allOppAtt, this.tblReviewReasons);
         dlg.setTitle("Dokument hinzufügen");
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);

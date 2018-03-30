@@ -1535,7 +1535,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                 for (String ph : placeHolderNames) {
                     ht.put(ph, "");
                 }
-                Hashtable<String, String> htValues = PlaceHolderUtils.getPlaceHolderValues(ht, this.contextArchiveFile, this.contextClient, this.contextOpponent, this.contextOppAttorney, this.contextDictateSign);
+                Hashtable<String, String> htValues = PlaceHolderUtils.getPlaceHolderValues(ht, this.contextArchiveFile, null, this.contextClient, this.contextOpponent, this.contextOppAttorney, this.contextDictateSign);
                 this.txtSubject.setText(EmailTemplateAccess.replacePlaceHolders(tpl.getSubject(), htValues));
 
                 placeHolderNames = EmailTemplateAccess.getPlaceHoldersInTemplate(tpl.getBody());
@@ -1543,7 +1543,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                 for (String ph : placeHolderNames) {
                     ht.put(ph, "");
                 }
-                htValues = PlaceHolderUtils.getPlaceHolderValues(ht, this.contextArchiveFile, this.contextClient, this.contextOpponent, this.contextOppAttorney, this.contextDictateSign);
+                htValues = PlaceHolderUtils.getPlaceHolderValues(ht, this.contextArchiveFile, null, this.contextClient, this.contextOpponent, this.contextOppAttorney, this.contextDictateSign);
                 //this.taBody.setText(EmailTemplateAccess.replacePlaceHolders(tpl.getBody(), htValues) + System.getProperty("line.separator") + System.getProperty("line.separator") + this.cu.getEmailSignature());
 
                 if (tpl.isText()) {
