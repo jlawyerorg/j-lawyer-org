@@ -715,6 +715,11 @@ public class PlaceHolders {
     public static final String MANDANT_EIGENE2 = "{{MANDANT_EIGENE2}}";
     public static final String MANDANT_EIGENE3 = "{{MANDANT_EIGENE3}}";
     public static final String MANDANT_GEB = "{{MANDANT_GEB}}";
+    public static final String MANDANT_AKTE_ZEICHEN = "{{MANDANT_AKTE_ZEICHEN}}";
+    public static final String MANDANT_AKTE_KONTAKT = "{{MANDANT_AKTE_KONTAKT}}";
+    public static final String MANDANT_AKTE_EIGENE1 = "{{MANDANT_AKTE_EIGENE1}}";
+    public static final String MANDANT_AKTE_EIGENE2 = "{{MANDANT_AKTE_EIGENE2}}";
+    public static final String MANDANT_AKTE_EIGENE3 = "{{MANDANT_AKTE_EIGENE3}}";
     public static final String GEGNER_NAME = "{{GEGNER_NAME}}";
     public static final String GEGNER_VORNAME = "{{GEGNER_VORNAME}}";
     public static final String GEGNER_FIRMA = "{{GEGNER_FIRMA}}";
@@ -740,6 +745,11 @@ public class PlaceHolders {
     public static final String GEGNER_EIGENE2 = "{{GEGNER_EIGENE2}}";
     public static final String GEGNER_EIGENE3 = "{{GEGNER_EIGENE3}}";
     public static final String GEGNER_GEB = "{{GEGNER_GEB}}";
+    public static final String GEGNER_AKTE_ZEICHEN = "{{GEGNER_AKTE_ZEICHEN}}";
+    public static final String GEGNER_AKTE_KONTAKT = "{{GEGNER_AKTE_KONTAKT}}";
+    public static final String GEGNER_AKTE_EIGENE1 = "{{GEGNER_AKTE_EIGENE1}}";
+    public static final String GEGNER_AKTE_EIGENE2 = "{{GEGNER_AKTE_EIGENE2}}";
+    public static final String GEGNER_AKTE_EIGENE3 = "{{GEGNER_AKTE_EIGENE3}}";
     
     // starting with 1.5, GEGNERVT* is just an alias for backwards compatibility
     // not contained in ALLPLACEHOLDERS anymore
@@ -789,6 +799,11 @@ public class PlaceHolders {
     public static final String DRITTE_EIGENE2 = "{{DRITTE_EIGENE2}}";
     public static final String DRITTE_EIGENE3 = "{{DRITTE_EIGENE3}}";
     public static final String DRITTE_GEB = "{{DRITTE_GEB}}";
+    public static final String DRITTE_AKTE_ZEICHEN = "{{DRITTE_AKTE_ZEICHEN}}";
+    public static final String DRITTE_AKTE_KONTAKT = "{{DRITTE_AKTE_KONTAKT}}";
+    public static final String DRITTE_AKTE_EIGENE1 = "{{DRITTE_AKTE_EIGENE1}}";
+    public static final String DRITTE_AKTE_EIGENE2 = "{{DRITTE_AKTE_EIGENE2}}";
+    public static final String DRITTE_AKTE_EIGENE3 = "{{DRITTE_AKTE_EIGENE3}}";
     
     public static final String AKTE_NR = "{{AKTE_NR}}";
     public static final String AKTE_ZEICHEN = "{{AKTE_ZEICHEN}}";
@@ -861,6 +876,11 @@ public class PlaceHolders {
         ALLPLACEHOLDERS.add(MANDANT_EIGENE2);
         ALLPLACEHOLDERS.add(MANDANT_EIGENE3);
         ALLPLACEHOLDERS.add(MANDANT_GEB);
+        ALLPLACEHOLDERS.add(MANDANT_AKTE_EIGENE1);
+        ALLPLACEHOLDERS.add(MANDANT_AKTE_EIGENE2);
+        ALLPLACEHOLDERS.add(MANDANT_AKTE_EIGENE3);
+        ALLPLACEHOLDERS.add(MANDANT_AKTE_ZEICHEN);
+        ALLPLACEHOLDERS.add(MANDANT_AKTE_KONTAKT);
         ALLPLACEHOLDERS.add(GEGNER_NAME);
         ALLPLACEHOLDERS.add(GEGNER_VORNAME);
         ALLPLACEHOLDERS.add(GEGNER_FIRMA);
@@ -886,6 +906,11 @@ public class PlaceHolders {
         ALLPLACEHOLDERS.add(GEGNER_EIGENE2);
         ALLPLACEHOLDERS.add(GEGNER_EIGENE3);
         ALLPLACEHOLDERS.add(GEGNER_GEB);
+        ALLPLACEHOLDERS.add(GEGNER_AKTE_EIGENE1);
+        ALLPLACEHOLDERS.add(GEGNER_AKTE_EIGENE2);
+        ALLPLACEHOLDERS.add(GEGNER_AKTE_EIGENE3);
+        ALLPLACEHOLDERS.add(GEGNER_AKTE_ZEICHEN);
+        ALLPLACEHOLDERS.add(GEGNER_AKTE_KONTAKT);
         ALLPLACEHOLDERS.add(DRITTE_NR);
         ALLPLACEHOLDERS.add(DRITTE_NAME);
         ALLPLACEHOLDERS.add(DRITTE_VORNAME);
@@ -912,6 +937,11 @@ public class PlaceHolders {
         ALLPLACEHOLDERS.add(DRITTE_EIGENE2);
         ALLPLACEHOLDERS.add(DRITTE_EIGENE3);
         ALLPLACEHOLDERS.add(DRITTE_GEB);
+        ALLPLACEHOLDERS.add(DRITTE_AKTE_EIGENE1);
+        ALLPLACEHOLDERS.add(DRITTE_AKTE_EIGENE2);
+        ALLPLACEHOLDERS.add(DRITTE_AKTE_EIGENE3);
+        ALLPLACEHOLDERS.add(DRITTE_AKTE_ZEICHEN);
+        ALLPLACEHOLDERS.add(DRITTE_AKTE_KONTAKT);
         ALLPLACEHOLDERS.add(AKTE_NR);
         ALLPLACEHOLDERS.add(AKTE_ZEICHEN);
         ALLPLACEHOLDERS.add(AKTE_KURZRUBRUM);
