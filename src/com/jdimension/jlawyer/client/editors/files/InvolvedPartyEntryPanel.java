@@ -779,19 +779,20 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel {
         mnuSendFax = new javax.swing.JMenuItem();
         lblAddress = new javax.swing.JLabel();
         cmbRefType = new javax.swing.JComboBox<>();
-        jLabel2 = new javax.swing.JLabel();
-        txtContact = new javax.swing.JTextField();
         jLabel3 = new javax.swing.JLabel();
         txtReference = new javax.swing.JTextField();
-        lblCustom1 = new javax.swing.JLabel();
-        txtCustom1 = new javax.swing.JTextField();
-        lblCustom2 = new javax.swing.JLabel();
-        txtCustom2 = new javax.swing.JTextField();
-        lblCustom3 = new javax.swing.JLabel();
-        txtCustom3 = new javax.swing.JTextField();
         cmdActions = new javax.swing.JButton();
         cmdToAddress = new javax.swing.JButton();
         lblType = new javax.swing.JLabel();
+        jXTaskPane1 = new org.jdesktop.swingx.JXTaskPane();
+        jLabel2 = new javax.swing.JLabel();
+        lblCustom1 = new javax.swing.JLabel();
+        lblCustom2 = new javax.swing.JLabel();
+        lblCustom3 = new javax.swing.JLabel();
+        txtContact = new javax.swing.JTextField();
+        txtCustom1 = new javax.swing.JTextField();
+        txtCustom2 = new javax.swing.JTextField();
+        txtCustom3 = new javax.swing.JTextField();
 
         mnuRemoveParty.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editdelete.png"))); // NOI18N
         mnuRemoveParty.setText("löschen");
@@ -887,15 +888,7 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel {
             }
         });
 
-        jLabel2.setText("Ansprechpartner:");
-
         jLabel3.setText("Zeichen:");
-
-        lblCustom1.setText("Eigene 1:");
-
-        lblCustom2.setText("Eigene 2:");
-
-        lblCustom3.setText("Eigene 3:");
 
         cmdActions.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/14_layer_lowerlayer.png"))); // NOI18N
         cmdActions.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -921,6 +914,65 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel {
         lblType.setText("  ");
         lblType.setOpaque(true);
 
+        jXTaskPane1.setExpanded(false);
+        jXTaskPane1.setForeground(new java.awt.Color(255, 255, 255));
+        jXTaskPane1.setTitle("Details");
+        jXTaskPane1.setAnimated(false);
+
+        jLabel2.setText("Ansprechpartner:");
+
+        lblCustom1.setText("Eigene 1:");
+
+        lblCustom2.setText("Eigene 2:");
+
+        lblCustom3.setText("Eigene 3:");
+
+        txtCustom1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                txtCustom1ActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout jXTaskPane1Layout = new javax.swing.GroupLayout(jXTaskPane1.getContentPane());
+        jXTaskPane1.getContentPane().setLayout(jXTaskPane1Layout);
+        jXTaskPane1Layout.setHorizontalGroup(
+            jXTaskPane1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jXTaskPane1Layout.createSequentialGroup()
+                .addGroup(jXTaskPane1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(lblCustom1)
+                    .addComponent(lblCustom2)
+                    .addComponent(lblCustom3))
+                .addGap(72, 72, 72)
+                .addGroup(jXTaskPane1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(txtCustom1, javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(txtCustom2, javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(txtCustom3, javax.swing.GroupLayout.Alignment.TRAILING)))
+            .addGroup(jXTaskPane1Layout.createSequentialGroup()
+                .addComponent(jLabel2)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(txtContact))
+        );
+        jXTaskPane1Layout.setVerticalGroup(
+            jXTaskPane1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jXTaskPane1Layout.createSequentialGroup()
+                .addGroup(jXTaskPane1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(txtContact, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel2))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jXTaskPane1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(txtCustom1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(lblCustom1))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jXTaskPane1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(txtCustom2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(lblCustom2))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jXTaskPane1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(txtCustom3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(lblCustom3))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -930,34 +982,23 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel2)
-                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                                .addComponent(lblCustom3, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addComponent(lblCustom2, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addComponent(lblCustom1, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(txtCustom1)
-                            .addComponent(txtContact, javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(txtCustom3)
-                            .addComponent(txtCustom2, javax.swing.GroupLayout.Alignment.LEADING)))
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(lblAddress, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(lblAddress, javax.swing.GroupLayout.DEFAULT_SIZE, 278, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(jLabel3)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(txtReference, javax.swing.GroupLayout.PREFERRED_SIZE, 111, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addGap(18, 18, 18)
                         .addComponent(cmbRefType, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cmdToAddress)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(cmdActions)))
+                        .addComponent(cmdActions))
+                    .addComponent(jXTaskPane1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(lblType, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -969,23 +1010,8 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel {
                         .addComponent(txtReference, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addComponent(jLabel3)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel2)
-                    .addComponent(txtContact, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(lblCustom1)
-                    .addComponent(txtCustom1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(lblCustom2)
-                    .addComponent(txtCustom2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(lblCustom3)
-                    .addComponent(txtCustom3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addComponent(jXTaskPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-            .addComponent(lblType, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -1212,12 +1238,17 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel {
         this.cmdToAddressActionPerformed(null);
     }//GEN-LAST:event_lblAddressMouseClicked
 
+    private void txtCustom1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtCustom1ActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_txtCustom1ActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JComboBox<String> cmbRefType;
     private javax.swing.JButton cmdActions;
     private javax.swing.JButton cmdToAddress;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
+    private org.jdesktop.swingx.JXTaskPane jXTaskPane1;
     private javax.swing.JLabel lblAddress;
     private javax.swing.JLabel lblCustom1;
     private javax.swing.JLabel lblCustom2;

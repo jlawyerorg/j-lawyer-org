@@ -118,36 +118,20 @@
               <Component id="lblType" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Group type="102" alignment="0" attributes="0">
-                      <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="jLabel2" min="-2" max="-2" attributes="0"/>
-                          <Group type="103" alignment="0" groupAlignment="1" max="-2" attributes="0">
-                              <Component id="lblCustom3" alignment="0" max="32767" attributes="0"/>
-                              <Component id="lblCustom2" alignment="0" max="32767" attributes="0"/>
-                              <Component id="lblCustom1" alignment="0" max="32767" attributes="0"/>
-                          </Group>
-                      </Group>
-                      <EmptySpace max="-2" attributes="0"/>
-                      <Group type="103" groupAlignment="1" attributes="0">
-                          <Component id="txtCustom1" alignment="1" max="32767" attributes="0"/>
-                          <Component id="txtContact" alignment="0" max="32767" attributes="0"/>
-                          <Component id="txtCustom3" alignment="1" max="32767" attributes="0"/>
-                          <Component id="txtCustom2" alignment="0" max="32767" attributes="0"/>
-                      </Group>
-                  </Group>
-                  <Group type="102" alignment="0" attributes="0">
-                      <Component id="lblAddress" max="32767" attributes="0"/>
-                      <EmptySpace max="-2" attributes="0"/>
+                  <Group type="102" attributes="0">
+                      <Component id="lblAddress" pref="278" max="32767" attributes="0"/>
+                      <EmptySpace type="unrelated" max="-2" attributes="0"/>
                       <Component id="jLabel3" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="txtReference" min="-2" pref="111" max="-2" attributes="0"/>
-                      <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                      <EmptySpace type="separate" max="-2" attributes="0"/>
                       <Component id="cmbRefType" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
                       <Component id="cmdToAddress" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="cmdActions" min="-2" max="-2" attributes="0"/>
                   </Group>
+                  <Component id="jXTaskPane1" max="32767" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
           </Group>
@@ -155,12 +139,13 @@
     </DimensionLayout>
     <DimensionLayout dim="1">
       <Group type="103" groupAlignment="0" attributes="0">
+          <Component id="lblType" max="32767" attributes="0"/>
           <Group type="102" alignment="0" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
                   <Component id="cmdActions" alignment="0" min="-2" max="-2" attributes="0"/>
                   <Component id="cmdToAddress" alignment="0" min="-2" max="-2" attributes="0"/>
-                  <Group type="103" groupAlignment="3" attributes="0">
+                  <Group type="103" alignment="0" groupAlignment="3" attributes="0">
                       <Component id="cmbRefType" alignment="3" min="-2" max="-2" attributes="0"/>
                       <Component id="lblAddress" alignment="3" min="-2" max="-2" attributes="0"/>
                       <Component id="txtReference" alignment="3" min="-2" max="-2" attributes="0"/>
@@ -168,28 +153,9 @@
                   </Group>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
-              <Group type="103" groupAlignment="3" attributes="0">
-                  <Component id="jLabel2" alignment="3" min="-2" max="-2" attributes="0"/>
-                  <Component id="txtContact" alignment="3" min="-2" max="-2" attributes="0"/>
-              </Group>
-              <EmptySpace max="-2" attributes="0"/>
-              <Group type="103" groupAlignment="3" attributes="0">
-                  <Component id="lblCustom1" alignment="3" min="-2" max="-2" attributes="0"/>
-                  <Component id="txtCustom1" alignment="3" min="-2" max="-2" attributes="0"/>
-              </Group>
-              <EmptySpace max="-2" attributes="0"/>
-              <Group type="103" groupAlignment="3" attributes="0">
-                  <Component id="lblCustom2" alignment="3" min="-2" max="-2" attributes="0"/>
-                  <Component id="txtCustom2" alignment="3" min="-2" max="-2" attributes="0"/>
-              </Group>
-              <EmptySpace max="-2" attributes="0"/>
-              <Group type="103" groupAlignment="3" attributes="0">
-                  <Component id="lblCustom3" alignment="3" min="-2" max="-2" attributes="0"/>
-                  <Component id="txtCustom3" alignment="3" min="-2" max="-2" attributes="0"/>
-              </Group>
+              <Component id="jXTaskPane1" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="32767" attributes="0"/>
           </Group>
-          <Component id="lblType" max="32767" attributes="0"/>
       </Group>
     </DimensionLayout>
   </Layout>
@@ -227,40 +193,12 @@
         <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;String&gt;"/>
       </AuxValues>
     </Component>
-    <Component class="javax.swing.JLabel" name="jLabel2">
-      <Properties>
-        <Property name="text" type="java.lang.String" value="Ansprechpartner:"/>
-      </Properties>
-    </Component>
-    <Component class="javax.swing.JTextField" name="txtContact">
-    </Component>
     <Component class="javax.swing.JLabel" name="jLabel3">
       <Properties>
         <Property name="text" type="java.lang.String" value="Zeichen:"/>
       </Properties>
     </Component>
     <Component class="javax.swing.JTextField" name="txtReference">
-    </Component>
-    <Component class="javax.swing.JLabel" name="lblCustom1">
-      <Properties>
-        <Property name="text" type="java.lang.String" value="Eigene 1:"/>
-      </Properties>
-    </Component>
-    <Component class="javax.swing.JTextField" name="txtCustom1">
-    </Component>
-    <Component class="javax.swing.JLabel" name="lblCustom2">
-      <Properties>
-        <Property name="text" type="java.lang.String" value="Eigene 2:"/>
-      </Properties>
-    </Component>
-    <Component class="javax.swing.JTextField" name="txtCustom2">
-    </Component>
-    <Component class="javax.swing.JLabel" name="lblCustom3">
-      <Properties>
-        <Property name="text" type="java.lang.String" value="Eigene 3:"/>
-      </Properties>
-    </Component>
-    <Component class="javax.swing.JTextField" name="txtCustom3">
     </Component>
     <Component class="javax.swing.JButton" name="cmdActions">
       <Properties>
@@ -295,5 +233,99 @@
         <Property name="opaque" type="boolean" value="true"/>
       </Properties>
     </Component>
+    <Container class="org.jdesktop.swingx.JXTaskPane" name="jXTaskPane1">
+      <Properties>
+        <Property name="expanded" type="boolean" value="false"/>
+        <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
+          <Color blue="ff" green="ff" red="ff" type="rgb"/>
+        </Property>
+        <Property name="title" type="java.lang.String" value="Details"/>
+        <Property name="animated" type="boolean" value="false"/>
+      </Properties>
+
+      <Layout>
+        <DimensionLayout dim="0">
+          <Group type="103" groupAlignment="0" attributes="0">
+              <Group type="102" attributes="0">
+                  <Group type="103" groupAlignment="0" attributes="0">
+                      <Component id="lblCustom1" min="-2" max="-2" attributes="0"/>
+                      <Component id="lblCustom2" min="-2" max="-2" attributes="0"/>
+                      <Component id="lblCustom3" min="-2" max="-2" attributes="0"/>
+                  </Group>
+                  <EmptySpace min="-2" pref="72" max="-2" attributes="0"/>
+                  <Group type="103" groupAlignment="0" attributes="0">
+                      <Component id="txtCustom1" alignment="1" max="32767" attributes="0"/>
+                      <Component id="txtCustom2" alignment="1" max="32767" attributes="0"/>
+                      <Component id="txtCustom3" alignment="1" max="32767" attributes="0"/>
+                  </Group>
+              </Group>
+              <Group type="102" attributes="0">
+                  <Component id="jLabel2" min="-2" max="-2" attributes="0"/>
+                  <EmptySpace max="-2" attributes="0"/>
+                  <Component id="txtContact" max="32767" attributes="0"/>
+              </Group>
+          </Group>
+        </DimensionLayout>
+        <DimensionLayout dim="1">
+          <Group type="103" groupAlignment="0" attributes="0">
+              <Group type="102" attributes="0">
+                  <Group type="103" groupAlignment="3" attributes="0">
+                      <Component id="txtContact" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="jLabel2" alignment="3" min="-2" max="-2" attributes="0"/>
+                  </Group>
+                  <EmptySpace max="-2" attributes="0"/>
+                  <Group type="103" groupAlignment="3" attributes="0">
+                      <Component id="txtCustom1" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="lblCustom1" alignment="3" min="-2" max="-2" attributes="0"/>
+                  </Group>
+                  <EmptySpace max="-2" attributes="0"/>
+                  <Group type="103" groupAlignment="3" attributes="0">
+                      <Component id="txtCustom2" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="lblCustom2" alignment="3" min="-2" max="-2" attributes="0"/>
+                  </Group>
+                  <EmptySpace max="-2" attributes="0"/>
+                  <Group type="103" groupAlignment="3" attributes="0">
+                      <Component id="txtCustom3" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="lblCustom3" alignment="3" min="-2" max="-2" attributes="0"/>
+                  </Group>
+                  <EmptySpace max="32767" attributes="0"/>
+              </Group>
+          </Group>
+        </DimensionLayout>
+      </Layout>
+      <SubComponents>
+        <Component class="javax.swing.JLabel" name="jLabel2">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="Ansprechpartner:"/>
+          </Properties>
+        </Component>
+        <Component class="javax.swing.JLabel" name="lblCustom1">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="Eigene 1:"/>
+          </Properties>
+        </Component>
+        <Component class="javax.swing.JLabel" name="lblCustom2">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="Eigene 2:"/>
+          </Properties>
+        </Component>
+        <Component class="javax.swing.JLabel" name="lblCustom3">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="Eigene 3:"/>
+          </Properties>
+        </Component>
+        <Component class="javax.swing.JTextField" name="txtContact">
+        </Component>
+        <Component class="javax.swing.JTextField" name="txtCustom1">
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="txtCustom1ActionPerformed"/>
+          </Events>
+        </Component>
+        <Component class="javax.swing.JTextField" name="txtCustom2">
+        </Component>
+        <Component class="javax.swing.JTextField" name="txtCustom3">
+        </Component>
+      </SubComponents>
+    </Container>
   </SubComponents>
 </Form>
