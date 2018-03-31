@@ -689,6 +689,12 @@ public class StringUtils extends ServerStringUtils {
         Arrays.sort(list, new SortIgnoreCase());
     }
     
+    public static String nonNull(String s) {
+        if(s==null)
+            s="";
+        return s;
+    }
+    
     static class SortIgnoreCase implements Comparator<Object> {
         public int compare(Object o1, Object o2) {
             String s1 = (String) o1;

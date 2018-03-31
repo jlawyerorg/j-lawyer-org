@@ -4656,15 +4656,15 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             for(ArchiveFileAddressesBean s: second) {
                 if(adrId.equals(s.getAddressKey().getId()) && rt==s.getReferenceType()) {
                     contained=true;
-                    if(!f.getContact().equals(s.getContact()))
+                    if(!StringUtils.nonNull(f.getContact()).equals(s.getContact()))
                         return false;
-                    if(!f.getCustom1().equals(s.getCustom1()))
+                    if(!StringUtils.nonNull(f.getCustom1()).equals(s.getCustom1()))
                         return false;
-                    if(!f.getCustom2().equals(s.getCustom2()))
+                    if(!StringUtils.nonNull(f.getCustom2()).equals(s.getCustom2()))
                         return false;
-                    if(!f.getCustom3().equals(s.getCustom3()))
+                    if(!StringUtils.nonNull(f.getCustom3()).equals(s.getCustom3()))
                         return false;
-                    if(!f.getReference().equals(s.getReference()))
+                    if(!StringUtils.nonNull(f.getReference()).equals(s.getReference()))
                         return false;
                     break;
                 }
