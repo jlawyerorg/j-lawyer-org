@@ -790,10 +790,10 @@ public class BoxAccess {
                     ThreadUtils.setTextField(currentHost, "");
                     ThreadUtils.setVisible(progress, true);
                     String host = getDefaultHostName();
-                    
+
                     boolean reachable = false;
                     reachable = NetworkScanner.isReachableOnHost(host);
-                    
+
                     if (reachable) {
                         ThreadUtils.setTextField(currentHost, host);
                     } else {
@@ -803,11 +803,11 @@ public class BoxAccess {
                             ThreadUtils.setTextField(currentHost, host);
                         } else {
                             String clientIp = getClientIpV4();
-                            NetworkScanner scanner=NetworkScanner.getInstance();
-                            String boxIp=scanner.scanNetwork(clientIp);
-                            if(boxIp!=null)
-                            ThreadUtils.setTextField(currentHost, boxIp);
-                            else {
+                            NetworkScanner scanner = NetworkScanner.getInstance();
+                            String boxIp = scanner.scanNetwork(clientIp);
+                            if (boxIp != null) {
+                                ThreadUtils.setTextField(currentHost, boxIp);
+                            } else {
                                 ThreadUtils.setTextField(currentHost, "Keine j-lawyer.BOX gefunden");
                             }
                         }
@@ -920,19 +920,7 @@ public class BoxAccess {
     }
 
     public void boxReboot(final JLabel output, final JProgressBar progress, String lastSuccessFulHost) {
-//        String testHost = this.getDefaultHostName();
-//        ThreadUtils.setLabel(output, "Verbinde zu " + testHost);
-//        boolean reachable=this.isReachableOnHost(testHost);
-//        if(!reachable) {
-//            testHost=this.getAlternativeHostName();
-//            ThreadUtils.setLabel(output, "Verbinde zu " + testHost);
-//            reachable=this.isReachableOnHost(testHost);
-//            if(!reachable) {
-//                testHost=lastSuccessFulHost;
-//                ThreadUtils.setLabel(output, "Verbinde zu " + testHost);
-//            }
-//        }
-//        final String host=testHost;
+
         final String host = lastSuccessFulHost;
         new Thread(new Runnable() {
             public void run() {
@@ -944,6 +932,36 @@ public class BoxAccess {
                     String stdout = new Shell.Plain(shell).exec("reboot");
                     ThreadUtils.setLabel(output, "Reboot läuft und kann bis zu 3min dauern");
                     ThreadUtils.setToolTipText(output, "Reboot läuft und kann bis zu 3min dauern");
+                    ThreadUtils.setLabelForeGround(output, Color.GREEN.darker().darker());
+                    ThreadUtils.setVisible(progress, false);
+
+                } catch (Throwable e) {
+                    String msg = e.getMessage();
+                    if (msg != null && msg.indexOf("Auth fail") > -1) {
+                        msg = "Falsches Passwort!";
+                    }
+                    ThreadUtils.setLabel(output, msg);
+                    ThreadUtils.setToolTipText(output, msg);
+                    ThreadUtils.setLabelForeGround(output, Color.RED.darker().darker());
+                    ThreadUtils.setVisible(progress, false);
+                }
+            }
+        }).start();
+    }
+
+    public void boxShutdown(final JLabel output, final JProgressBar progress, String lastSuccessFulHost) {
+
+        final String host = lastSuccessFulHost;
+        new Thread(new Runnable() {
+            public void run() {
+                try {
+                    ThreadUtils.setVisible(progress, true);
+                    ThreadUtils.setLabel(output, "Box wird heruntergefahren...");
+                    ThreadUtils.setLabelForeGround(output, Color.GREEN.darker().darker());
+                    Shell shell = new SSHByPassword(host, 22, "root", password);
+                    String stdout = new Shell.Plain(shell).exec("shutdown now");
+                    ThreadUtils.setLabel(output, "Herunterfahren angefordert");
+                    ThreadUtils.setToolTipText(output, "Sie können die j-lawyer.BOX vom Strom trennen sobald nur noch die rote LED leuchtet");
                     ThreadUtils.setLabelForeGround(output, Color.GREEN.darker().darker());
                     ThreadUtils.setVisible(progress, false);
 

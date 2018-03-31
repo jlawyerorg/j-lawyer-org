@@ -795,6 +795,7 @@ public class LoginDialog extends javax.swing.JFrame {
         jLabel7 = new javax.swing.JLabel();
         txtCurrentHost = new javax.swing.JTextField();
         jLabel8 = new javax.swing.JLabel();
+        cmdBoxShutdown = new javax.swing.JButton();
 
         jButton1.setText("jButton1");
 
@@ -977,6 +978,14 @@ public class LoginDialog extends javax.swing.JFrame {
 
         jLabel8.setText("Operationen:");
 
+        cmdBoxShutdown.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/shutdown-red.png"))); // NOI18N
+        cmdBoxShutdown.setToolTipText("j-lawyer.BOX herunterfahren");
+        cmdBoxShutdown.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdBoxShutdownActionPerformed(evt);
+            }
+        });
+
         org.jdesktop.layout.GroupLayout jPanel3Layout = new org.jdesktop.layout.GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);
         jPanel3Layout.setHorizontalGroup(
@@ -988,23 +997,28 @@ public class LoginDialog extends javax.swing.JFrame {
                     .add(jLabel8))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(jPanel3Layout.createSequentialGroup()
+                        .add(cmdBoxCheck)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(cmdBoxServiceRestart)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(cmdBoxReboot)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(cmdBoxShutdown)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(cmdMgmtConsole)
+                        .add(0, 0, Short.MAX_VALUE))
                     .add(txtBoxPassword)
                     .add(lblBoxOutput, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .add(boxProgress, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
                     .add(jPanel3Layout.createSequentialGroup()
                         .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                            .add(jLabel7)
+                            .add(txtCurrentHost, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 245, Short.MAX_VALUE)
                             .add(jPanel3Layout.createSequentialGroup()
-                                .add(cmdBoxCheck)
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                .add(cmdBoxServiceRestart)
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                .add(cmdBoxReboot)
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                .add(cmdMgmtConsole))
-                            .add(txtCurrentHost, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 245, Short.MAX_VALUE))
+                                .add(jLabel7)
+                                .add(0, 0, Short.MAX_VALUE)))
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(cmdScanNetwork)))
+                        .add(cmdScanNetwork))
+                    .add(boxProgress, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
         jPanel3Layout.setVerticalGroup(
@@ -1014,27 +1028,28 @@ public class LoginDialog extends javax.swing.JFrame {
                 .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(jLabel6)
                     .add(txtBoxPassword, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
-                    .add(jPanel3Layout.createSequentialGroup()
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
                         .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                            .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
-                                .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                                    .add(cmdBoxCheck)
-                                    .add(cmdBoxServiceRestart))
-                                .add(cmdBoxReboot)
-                                .add(cmdMgmtConsole))
-                            .add(jLabel8))
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(boxProgress, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                            .add(cmdBoxCheck)
+                            .add(cmdBoxServiceRestart))
+                        .add(cmdBoxReboot))
+                    .add(jLabel8)
+                    .add(cmdMgmtConsole)
+                    .add(cmdBoxShutdown))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(boxProgress, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel3Layout.createSequentialGroup()
                         .add(lblBoxOutput)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(jLabel7)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(txtCurrentHost, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                    .add(cmdScanNetwork))
-                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, cmdScanNetwork))
+                .addContainerGap(18, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("j-lawyer.BOX ", new javax.swing.ImageIcon(getClass().getResource("/icons/greyled.png")), jPanel3); // NOI18N
@@ -1208,6 +1223,11 @@ public class LoginDialog extends javax.swing.JFrame {
         box.scanNetworkForBox(lblBoxOutput, this.txtCurrentHost, boxProgress);
     }//GEN-LAST:event_cmdScanNetworkActionPerformed
 
+    private void cmdBoxShutdownActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdBoxShutdownActionPerformed
+        BoxAccess box=new BoxAccess(this.txtBoxPassword.getText());
+        box.boxReboot(lblBoxOutput, boxProgress, this.txtServer.getText());
+    }//GEN-LAST:event_cmdBoxShutdownActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -1224,6 +1244,7 @@ public class LoginDialog extends javax.swing.JFrame {
     private javax.swing.JButton cmdBoxCheck;
     private javax.swing.JButton cmdBoxReboot;
     private javax.swing.JButton cmdBoxServiceRestart;
+    private javax.swing.JButton cmdBoxShutdown;
     private javax.swing.JButton cmdCancel;
     private javax.swing.JButton cmdLogin;
     private javax.swing.JButton cmdMgmtConsole;
