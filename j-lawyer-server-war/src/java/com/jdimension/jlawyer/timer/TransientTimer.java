@@ -692,11 +692,8 @@ public class TransientTimer {
         if(timer==null) {
             timer=new Timer();
             
-            // temporary for development
-            //timer.schedule(new BackupTask(), 45000, 30000*1);
-            
-            // start after 5mins and run every 58mins
-            timer.schedule(new BackupTask(), 60000*5, 60000*58);
+            // start after 5mins and run every 60mins
+            timer.schedule(new IterativeBackupTask(), 60000*5, 60000*60);
             
             // start after 20s and run every 12s
             timer.schedule(new DirectoryObserverTask(), 20000, 12000);
@@ -715,7 +712,7 @@ public class TransientTimer {
     
     public void scheduleAdHocBackup() {
         if(timer!=null) {
-            timer.schedule(new BackupTask(true), 3000);
+            timer.schedule(new IterativeBackupTask(true), 3000);
         }
     }
     

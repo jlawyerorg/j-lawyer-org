@@ -701,6 +701,10 @@ public class SyncTest {
         this.ftpUser=System.getenv("ftpuser");
         this.ftpHome=System.getenv("ftphome");
         
+        this.ftpUser="jens";
+        this.ftpPassword="srv247";
+        this.ftpHome="jens";
+        
     }
 
     @After

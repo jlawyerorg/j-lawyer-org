@@ -661,155 +661,630 @@
  * For more information on this, and how to apply and follow the GNU AGPL, see
  * <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.sync;
+package com.jdimension.jlawyer.timer;
 
+import com.jdimension.jlawyer.export.HTMLExport;
+import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.persistence.ServerSettingsBean;
+import com.jdimension.jlawyer.persistence.ServerSettingsBeanFacadeLocal;
+import com.jdimension.jlawyer.server.utils.ServerFileUtils;
+import com.jdimension.jlawyer.server.utils.ServerInformation;
+import com.jdimension.jlawyer.services.ArchiveFileServiceLocal;
+import com.jdimension.jlawyer.services.SystemManagementLocal;
 import com.jdimension.jlawyer.storage.VirtualFile;
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
+import com.jdimension.jlawyer.sync.FolderSync;
+import com.jdimension.jlawyer.timer.executors.BackupResult;
+import com.jdimension.jlawyer.timer.executors.IterativeBackupExecutor;
+import java.io.*;
+import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
+import javax.naming.InitialContext;
+import net.lingala.zip4j.core.ZipFile;
+import net.lingala.zip4j.exception.ZipException;
+import net.lingala.zip4j.model.ZipParameters;
+import net.lingala.zip4j.util.Zip4jConstants;
 import org.apache.log4j.Logger;
+import org.apache.tika.parser.txt.CharsetDetector;
 
 /**
  *
  * @author jens
  */
-public class FolderSync {
-    
-    private static final Logger log=Logger.getLogger(FolderSync.class.getName());
-    
-    private File from=null;
-    private VirtualFile to=null;
-    
-    public FolderSync(File from, VirtualFile target) {
-        this.from=from;
-        this.to=target;
+@javax.annotation.security.RunAs("readArchiveFileRole")
+public class IterativeBackupTask extends java.util.TimerTask {
+
+    private static Logger log = Logger.getLogger(IterativeBackupTask.class.getName());
+    private static SimpleDateFormat dfMailDate = new SimpleDateFormat("dd.MM.yyyy");
+    private static SimpleDateFormat dfMailTime = new SimpleDateFormat("HH:mm:ss");
+    private static DecimalFormat mbFormat = new DecimalFormat("0.0");
+    private boolean adHoc = false;
+
+    public IterativeBackupTask() {
+        this.adHoc = false;
     }
-    
-    public void synchronize() throws Exception {
-        synchronize(180);
+
+    public IterativeBackupTask(boolean adhoc) {
+        this.adHoc = adhoc;
     }
-    
-    public void synchronize(int ignoreNewerThanSeconds) throws Exception {
-        
-        if(!from.isDirectory())
-            throw new Exception ("Source is not a directory");
-        
-        if(!to.isDirectory()) {
-            throw new Exception ("Target is not a directory");
-        }
-        
-        if(!to.isReadable() || !to.isWritable()) {
-            throw new Exception ("Target has invalid file permissions");
-        }
-        
-        // FILES
-        // 1: delete from target what is not in source
-        
-            // get a list of files in source
-            File[] sourceFiles=from.listFiles();
-            ArrayList<String>sourceFileNames=new ArrayList<String>();
-            for(File f: sourceFiles) {
-                if(f.isFile())
-                    sourceFileNames.add(f.getName());
-            }
-            
-            // iterate over target files
-            for(VirtualFile f: to.listFiles()) {
-                if(f.isFile() && !sourceFileNames.contains(f.getName())) {
-                    log.info("Deleting " + f.getName() + " from sync location");
-                    f.delete();
+
+    @Override
+    public void run() {
+
+        Date backupStart = new Date();
+        Date syncStart = null;
+        Date syncEnd = null;
+        Date exportStart = null;
+        Date exportEnd = null;
+
+        String dbUser = "";
+        String dbPassword = "";
+        String dbPort = "3306";
+        String syncLocation = "";
+        boolean syncSuccess = true;
+        boolean exportSuccess = true;
+        boolean exportEnabled = true;
+        String exportLocation = "";
+        String encryptionPassword = "";
+        boolean encrypt = false;
+
+        try {
+            InitialContext ic = new InitialContext();
+            //ServerSettingsBeanFacadeLocal settings = (ServerSettingsBeanFacadeLocal) ic.lookup("j-lawyer-server/ServerSettingsBeanFacade/local");
+            ServerSettingsBeanFacadeLocal settings = (ServerSettingsBeanFacadeLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ServerSettingsBeanFacade!com.jdimension.jlawyer.persistence.ServerSettingsBeanFacadeLocal");
+            ServerSettingsBean mode = settings.find("jlawyer.server.backup.backupmode");
+            if (!this.adHoc) {
+                if (mode != null) {
+                    if ("off".equalsIgnoreCase(mode.getSettingValue())) {
+                        return;
+                    }
+                } else {
+                    return;
                 }
             }
-        
-        
-        
-        // 2: copy to target what is only in source
-        
-            // get a list of files in target
-            Collection<VirtualFile> targetFiles=to.listFiles();
-            ArrayList<String>targetFileNames=new ArrayList<String>();
-            for(VirtualFile f: targetFiles) {
-                if(f.isFile())
-                    targetFileNames.add(f.getName());
+
+            ServerSettingsBean encryptPwd = settings.find("jlawyer.server.backup.encryptionpwd");
+            if (encryptPwd != null) {
+                if (encryptPwd.getSettingValue() != null) {
+                    if (encryptPwd.getSettingValue().length() > 0) {
+                        encrypt = true;
+                        encryptionPassword = encryptPwd.getSettingValue();
+                    }
+                }
             }
-            
-            // iterate over source files
-            for(File f: from.listFiles()) {
-                if(f.isFile()) {
-                    if(!targetFileNames.contains(f.getName())) {
-                        // only copy if not currently being written (last modified at least 3 mins ago)
-                        if((System.currentTimeMillis() - f.lastModified()) > 1000*ignoreNewerThanSeconds) {
-                            log.info("Copying " + f.getName() + " to sync location");
-                            to.copyLocalFile(f);
-                        }
-                    } else {
-                        // compare size, copy if different
-                        long fromLength=f.length();
-                        long toLength=-1;
-                        for(VirtualFile toFile: targetFiles) {
-                            if(toFile.isFile() && toFile.getName().equals(f.getName())) {
-                                toLength=toFile.length();
-                                break;
+
+            ServerSettingsBean dbUserB = settings.find("jlawyer.server.backup.dbuser");
+            if (dbUserB != null) {
+                dbUser = dbUserB.getSettingValue();
+            }
+
+            ServerSettingsBean dbPasswordB = settings.find("jlawyer.server.backup.dbpassword");
+            if (dbPasswordB != null) {
+                dbPassword = dbPasswordB.getSettingValue();
+            }
+
+            ServerSettingsBean dbPortB = settings.find("jlawyer.server.backup.dbport");
+            if (dbPortB != null) {
+                dbPort = dbPortB.getSettingValue();
+            }
+
+            if (dbUser == null || "".equals(dbUser)) {
+                log.warn("missing backup configuration - skipping backup!");
+                return;
+            }
+
+            ServerSettingsBean syncSetting = settings.find("jlawyer.server.backup.synctarget");
+            if (syncSetting != null) {
+                syncLocation = syncSetting.getSettingValue();
+                if (syncLocation != null) {
+                    syncLocation = syncLocation.trim();
+                } else {
+                    syncLocation = "";
+                }
+            }
+
+            ServerSettingsBean exportSetting = settings.find("jlawyer.server.backup.exporttarget");
+            if (exportSetting != null) {
+                exportLocation = exportSetting.getSettingValue();
+                if (exportLocation != null) {
+                    exportLocation = exportLocation.trim();
+                } else {
+                    exportLocation = "";
+                }
+            }
+
+            if (!this.adHoc) {
+                boolean mon = this.dayEnabled(settings, "jlawyer.server.backup.monday");
+                boolean tue = this.dayEnabled(settings, "jlawyer.server.backup.tuesday");
+                boolean wed = this.dayEnabled(settings, "jlawyer.server.backup.wednesday");
+                boolean thu = this.dayEnabled(settings, "jlawyer.server.backup.thursday");
+                boolean fri = this.dayEnabled(settings, "jlawyer.server.backup.friday");
+                boolean sat = this.dayEnabled(settings, "jlawyer.server.backup.saturday");
+                boolean sun = this.dayEnabled(settings, "jlawyer.server.backup.sunday");
+
+                Calendar now = Calendar.getInstance();
+                int weekday = now.get(Calendar.DAY_OF_WEEK);
+                if (weekday == Calendar.MONDAY && mon == false) {
+                    return;
+                } else if (weekday == Calendar.TUESDAY && tue == false) {
+                    return;
+                } else if (weekday == Calendar.WEDNESDAY && wed == false) {
+                    return;
+                } else if (weekday == Calendar.THURSDAY && thu == false) {
+                    return;
+                } else if (weekday == Calendar.FRIDAY && fri == false) {
+                    return;
+                } else if (weekday == Calendar.SATURDAY && sat == false) {
+                    return;
+                } else if (weekday == Calendar.SUNDAY && sun == false) {
+                    return;
+                }
+
+                int hour = now.get(Calendar.HOUR_OF_DAY);
+                ServerSettingsBean hourB = settings.find("jlawyer.server.backup.hour");
+                String hourS = "23";
+                if (hourB != null) {
+                    hourS = hourB.getSettingValue();
+                }
+                if (hour != Integer.parseInt(hourS)) {
+                    return;
+                }
+            }
+
+        } catch (Throwable t) {
+            log.error("Error getting ServerSettingsBean", t);
+        }
+
+        File directoryToZip = new File(System.getProperty("jlawyer.server.basedirectory").trim());
+        String backupDir = directoryToZip.getParentFile().getPath() + System.getProperty("file.separator") + "backups";
+        String dataDir = directoryToZip.getParentFile().getPath() + System.getProperty("file.separator") + "j-lawyer-data";
+
+        
+        IterativeBackupExecutor ibe = new IterativeBackupExecutor(dataDir, backupDir, dbUser, dbPassword, dbPort, encryptionPassword);
+        String subject = "";
+        StringBuffer body = new StringBuffer();
+        BackupResult backupResult=null;
+        try {
+            backupResult=ibe.execute();
+        } catch (Throwable t) {
+            subject = "Fehlgeschlagen: ";
+            body.append(t.getMessage()).append("\r\n\r\n");
+        }
+
+        File exportDir = null;
+        if (exportLocation.length() > 0) {
+            exportDir = new File(exportLocation);
+            exportDir.mkdirs();
+        }
+
+        try {
+
+            log.info("Backup finished");
+
+            if (syncLocation.length() > 0) {
+                log.info("Starting sync to " + syncLocation);
+                syncStart = new Date();
+
+                try {
+                    VirtualFile vf = VirtualFile.getFile(syncLocation);
+                    FolderSync sync = new FolderSync(new File(backupDir), vf);
+                    // we can be sure the file is written, so sync without lastmodified check
+                    sync.synchronize(0);
+                    vf.close();
+                } catch (Throwable t) {
+                    log.error("failed to sync: " + t.getMessage(), t);
+                    syncSuccess = false;
+                    subject = "Fehlgeschlagen: ";
+                }
+
+                syncEnd = new Date();
+                log.info("Sync finished");
+            }
+
+            exportEnabled = exportLocation.length() > 0;
+            exportStart = new Date();
+            if (exportEnabled) {
+                log.info("Starting export to " + exportLocation);
+                InitialContext ic = new InitialContext();
+                ArchiveFileServiceLocal caseSvc = (ArchiveFileServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal");
+                ArrayList<String> caseIds = caseSvc.getAllArchiveFileIds();
+                HTMLExport export = new HTMLExport(exportDir, caseSvc);
+                for (String id : caseIds) {
+                    ArchiveFileBean afb = caseSvc.getArchiveFileUnrestricted(id);
+
+                    File caseDir = export.getExportFolderName(afb);
+                    Date lastModified = caseSvc.getLastChangedForArchiveFile(id);
+                    boolean needsExport = true;
+                    if (caseDir.exists()) {
+
+                        File lastExported = new File(caseDir + File.separator + ".lastchanged");
+                        if (lastExported.exists()) {
+                            String lastExportedTime = ServerFileUtils.readFileAsString(lastExported);
+                            String lastModifiedTime = "" + lastModified.getTime();
+                            if (lastExportedTime.trim().equals(lastModifiedTime.trim())) {
+                                needsExport = false;
                             }
                         }
-                        if(fromLength != toLength) {
-                            log.info("Copying " + f.getName() + " to sync location");
-                            to.copyLocalFile(f);
+                    }
+                    if (needsExport) {
+                        try {
+                            ServerFileUtils.getInstance().deleteRecursively(caseDir);
+                            export.export(afb, lastModified);
+                        } catch (Throwable t) {
+                            log.error("Error exporting " + afb.getFileNumber(), t);
                         }
                     }
                 }
-                
+                export.exportReviews();
+                log.info("Export finished");
             }
-            
-            
-            
-            
-            // DIRECTORIES
-            
-            // 1: delete from target what is not in source
-        
-            // get a list of files in source
-            File[] sourceDirs=from.listFiles();
-            ArrayList<String>sourceDirNames=new ArrayList<String>();
-            for(File f: sourceDirs) {
-                if(f.isDirectory())
-                    sourceDirNames.add(f.getName());
+
+        } catch (Throwable ex) {
+            log.error("Errors creating backup", ex);
+            subject = "Fehlgeschlagen: ";
+            body.append(ex.getMessage()).append("\r\n\r\n");
+        }
+        exportEnd = new Date();
+
+        Date backupEnd = new Date();
+        try {
+            InitialContext ic = new InitialContext();
+            //SystemManagementLocal sysMan = (SystemManagementLocal) ic.lookup("j-lawyer-server/SystemManagement/local");
+            SystemManagementLocal sysMan = (SystemManagementLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/SystemManagement!com.jdimension.jlawyer.services.SystemManagementLocal");
+            subject = subject + "j-lawyer.org Datensicherung vom " + dfMailDate.format(new Date());
+            body.append("Informationen zu Ihrer turnusmäßigen Datensicherung:\r\n\r\n");
+            body.append("Server:          ").append(ServerInformation.getHostName()).append("\r\n");
+            body.append("Startzeitpunkt:  ").append(dfMailTime.format(backupStart)).append("\r\n");
+            body.append("Endzeitpunkt:    ").append(dfMailTime.format(backupEnd)).append("\r\n");
+            if (backupResult.getErrorList().size() > 0) {
+                body.append("Dateien:         ").append(backupResult.getFileCount()).append(", " + backupResult.getErrorList().size() + " mit WARNUNGEN!\r\n");
+            } else {
+                body.append("Dateien:         ").append(backupResult.getFileCount()).append("\r\n");
             }
+            body.append("Verzeichnis:     ").append(new File(backupDir).getAbsolutePath()).append("\r\n");
             
-            // iterate over target files
-            for(VirtualFile f: to.listFiles()) {
-                if(f.isDirectory() && !sourceDirNames.contains(f.getName())) {
-                    log.info("Deleting " + f.getName() + " from sync location");
-                    f.delete();
-                }
+            double fileLenMB = (double) (((double) backupResult.getByteSize()) / 1024d / 1024d);
+            String cryptInfo = "nein";
+            if (encrypt) {
+                cryptInfo = "ja";
             }
-        
-        
-        
-        // 2: copy to target what is only in source
-        
-            // get a list of files in target
-            Collection<VirtualFile> targetDirs=to.listFiles();
-            ArrayList<String>targetDirNames=new ArrayList<String>();
-            for(VirtualFile f: targetDirs) {
-                if(f.isDirectory())
-                    targetDirNames.add(f.getName());
+            body.append("verschlüsselt:   ").append(cryptInfo).append("\r\n");
+            body.append("Dateigröße:      ").append(mbFormat.format(fileLenMB)).append("MB\r\n");
+            String syncStatus = "erfolgreich";
+            if (!syncSuccess) {
+                syncStatus = "FEHLGESCHLAGEN!";
             }
-            
-            // iterate over source files
-            for(File f: from.listFiles()) {
-                if(f.isDirectory() && !targetDirNames.contains(f.getName())) {
-                    
-                    to.createDirectory(f.getName());
-                    FolderSync fs=new FolderSync(f, VirtualFile.getFile(to.getLocation() + "/" + f.getName() + "/"));
-                    fs.synchronize(ignoreNewerThanSeconds);
-                }
+            if (syncLocation.length() > 0) {
+                body.append("Synchronisation: ").append(syncStatus).append("\r\n");
+                body.append("  von:           ").append(dfMailTime.format(syncStart)).append("\r\n");
+                body.append("  bis:           ").append(dfMailTime.format(syncEnd)).append("\r\n");
             }
-        
-        
-        
-        
-        
+            String exportStatus = "erfolgreich";
+            if (!exportSuccess) {
+                exportStatus = "FEHLGESCHLAGEN!";
+            }
+            if (exportEnabled) {
+                body.append("HTML-Export:     ").append(exportStatus).append("\r\n");
+                body.append("  von:           ").append(dfMailTime.format(exportStart)).append("\r\n");
+                body.append("  bis:           ").append(dfMailTime.format(exportEnd)).append("\r\n");
+            }
+            body.append("\r\n");
+            body.append("Hinweis: Speichern Sie die Sicherungsdatei regelmäßig auf einem anderen Medium, idealerweise in anderen Räumlichkeiten (für den Fall eines Diebstahls oder Brandes).");
+
+            sysMan.statusMail(subject, body.toString());
+        } catch (Throwable t) {
+            log.error("Could not send status mail", t);
+        }
+
     }
-    
+
+    private boolean dayEnabled(ServerSettingsBeanFacadeLocal s, String dayKey) {
+        ServerSettingsBean b = s.find(dayKey);
+        if (b != null) {
+            return Boolean.parseBoolean(b.getSettingValue());
+        }
+        return false;
+    }
+
+    private static File dumpDatabase(String user, String password, String port, String backupDir) {
+
+        String osName = System.getProperty("os.name").toLowerCase();
+        String path = "";
+        if (osName.indexOf("win") > -1) {
+
+        } else if (osName.indexOf("linux") > -1) {
+
+        } else if (osName.startsWith("mac")) {
+            path = "/usr/local/mysql/bin/";
+        }
+
+        String[] cmd = null;
+        if ("".equals(password) || password == null) {
+            cmd = new String[]{
+                path + "mysqldump",
+                "-P",
+                port,
+                "-u" + user,
+                "jlawyerdb"
+            };
+        } else {
+            cmd = new String[]{
+                path + "mysqldump",
+                "-P",
+                port,
+                "-u" + user,
+                "-p" + password,
+                "jlawyerdb"
+            };
+        }
+
+        Runtime shell = Runtime.getRuntime();
+        Process process = null;
+        Writer fileWriter = null;
+
+        File f = new File(backupDir + System.getProperty("file.separator") + "jlawyerdb-dump.sql");
+        try {
+
+            if (f.exists()) {
+                f.delete();
+            }
+
+            fileWriter = new FileWriter(f);
+            process = shell.exec(cmd);
+            //process.waitFor();
+
+            BufferedReader br = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            String line = null;
+
+            while ((line = br.readLine()) != null) {
+                fileWriter.write(line);
+                fileWriter.write(System.getProperty("line.separator"));
+            }
+            f.setLastModified(System.currentTimeMillis());
+            br.close();
+
+        } catch (IOException ex) {
+            //res = false;
+            log.error(ex);
+            if (fileWriter != null) {
+                try {
+                    fileWriter.close();
+
+                } catch (IOException e) {
+                }
+            }
+
+        } finally {
+            if (fileWriter != null) {
+                try {
+                    fileWriter.close();
+
+                } catch (IOException ex) {
+                }
+            }
+        }
+        return f;
+    }
+
+    public static void getAllFiles(File dir, List<File> fileList) throws IOException {
+
+        File[] files = dir.listFiles();
+        for (File file : files) {
+            fileList.add(file);
+            if (file.isDirectory()) {
+                //System.out.println("directory:" + file.getCanonicalPath());
+                if (!("searchindex".equals(file.getName())) && !("archivefiles-preview".equals(file.getName()))) {
+                    getAllFiles(file, fileList);
+                }
+            } else {
+                //System.out.println("     file:" + file.getCanonicalPath());
+            }
+        }
+
+    }
+
+    public static void writeZipFile(String fileName, File directoryToZip, List<File> fileList, File backupDir, ArrayList<String> errorList) throws Exception {
+
+        FileOutputStream fos = new FileOutputStream(backupDir.toString() + System.getProperty("file.separator") + fileName);
+        ZipOutputStream zos = new ZipOutputStream(fos);
+
+        for (File file : fileList) {
+
+            if (!file.isDirectory()) { // we only zip files, not directories
+                addToZip(directoryToZip, file, zos, errorList);
+            }
+        }
+
+        zos.close();
+        fos.close();
+
+    }
+
+    private static String guessFileNameEncoding(List<File> fileList) {
+
+        Hashtable ht = new Hashtable<String, Integer>();
+
+        for (File file : fileList) {
+            if (!file.isDirectory()) {
+
+                try {
+                    byte[] b = file.getName().getBytes("ISO8859-15");
+                    CharsetDetector charDetect = new CharsetDetector();
+                    charDetect.setText(b);
+                    String charSet = charDetect.detect().getName();
+                    if (ht.containsKey(charSet)) {
+                        Integer i = (Integer) (ht.get(charSet));
+                        ht.put(charSet, new Integer(i.intValue() + 1));
+                    } else {
+                        ht.put(charSet, new Integer(1));
+                    }
+                    //fName = new String(b, charSet);
+                } catch (Throwable e) {
+                    log.error("no charset detected for " + file.getName());
+                    //fName = fh.getFileName();
+                }
+            }
+        }
+
+        String returnCharset = "ISO-8859-15";
+        int returnCharsetNumber = 0;
+        for (Object k : ht.keySet()) {
+            String cs = k.toString();
+            Integer total = (Integer) (ht.get(k));
+            if (total > returnCharsetNumber) {
+                returnCharset = cs;
+                returnCharsetNumber = total;
+            }
+        }
+        if (returnCharset.startsWith("ISO-8859")) {
+            returnCharset = "ISO-8859-15";
+        }
+        return returnCharset;
+    }
+
+    public static void writeEncryptedZipFile(String fileName, File directoryToZip, List<File> fileList, File backupDir, String encryptionPassword, ArrayList<String> errorList) throws Exception {
+
+        // Initiate ZipFile object with the path/name of the zip file.
+        ZipFile zipFile = new ZipFile(backupDir.toString() + System.getProperty("file.separator") + fileName);
+        String fileNameEncoding = guessFileNameEncoding(fileList);
+        log.info("guessed filename encoding " + fileNameEncoding);
+        zipFile.setFileNameCharset(fileNameEncoding);
+
+//			// Build the list of files to be added in the array list
+//			// Objects of type File have to be added to the ArrayList
+//			ArrayList filesToAdd = new ArrayList();
+//			filesToAdd.add(new File("/home/jens/Invoice.pdf"));
+//			filesToAdd.add(new File("/home/jens/j-lawyer-drebis.png"));
+//			filesToAdd.add(new File("/home/jens/j-lawyer-mydesktop.png"));
+//			
+//			// Initiate Zip Parameters which define various properties such
+//			// as compression method, etc. More parameters are explained in other
+//			// examples
+//			ZipParameters parameters = new ZipParameters();
+//			parameters.setCompressionMethod(Zip4jConstants.COMP_DEFLATE); // set compression method to deflate compression
+//			
+//			// Set the compression level. This value has to be in between 0 to 9
+//			// Several predefined compression levels are available
+//			// DEFLATE_LEVEL_FASTEST - Lowest compression level but higher speed of compression
+//			// DEFLATE_LEVEL_FAST - Low compression level but higher speed of compression
+//			// DEFLATE_LEVEL_NORMAL - Optimal balance between compression level/speed
+//			// DEFLATE_LEVEL_MAXIMUM - High compression level with a compromise of speed
+//			// DEFLATE_LEVEL_ULTRA - Highest compression level but low speed
+//			parameters.setCompressionLevel(Zip4jConstants.DEFLATE_LEVEL_NORMAL); 
+//			
+//			// Set the encryption flag to true
+//			// If this is set to false, then the rest of encryption properties are ignored
+//			parameters.setEncryptFiles(true);
+//			
+//			// Set the encryption method to AES Zip Encryption
+//			parameters.setEncryptionMethod(Zip4jConstants.ENC_METHOD_AES);
+//			
+//			// Set AES Key strength. Key strengths available for AES encryption are:
+//			// AES_STRENGTH_128 - For both encryption and decryption
+//			// AES_STRENGTH_192 - For decryption only
+//			// AES_STRENGTH_256 - For both encryption and decryption
+//			// Key strength 192 cannot be used for encryption. But if a zip file already has a
+//			// file encrypted with key strength of 192, then Zip4j can decrypt this file
+//			parameters.setAesKeyStrength(Zip4jConstants.AES_STRENGTH_256);
+//			
+//			// Set password
+//			parameters.setPassword("test123!");
+//			
+//			// Now add files to the zip file
+//			// Note: To add a single file, the method addFile can be used
+//			// Note: If the zip file already exists and if this zip file is a split file
+//			// then this method throws an exception as Zip Format Specification does not 
+//			// allow updating split zip files
+//			zipFile.addFiles(filesToAdd, parameters);
+        for (File file : fileList) {
+
+            if (!file.isDirectory()) { // we only zip files, not directories
+                addToZipWithEncryption(directoryToZip, file, zipFile, encryptionPassword, errorList);
+            }
+        }
+
+    }
+
+    public static void addToZip(File directoryToZip, File file, ZipOutputStream zos, ArrayList<String> errorList) throws FileNotFoundException,
+            IOException {
+
+        FileInputStream fis = new FileInputStream(file);
+
+        // we want the zipEntry's path to be a relative path that is relative
+        // to the directory being zipped, so chop off the rest of the path
+        String zipFilePath = file.getCanonicalPath().substring(directoryToZip.getCanonicalPath().length() + 1,
+                file.getCanonicalPath().length());
+        log.info("Writing '" + zipFilePath + "' to zip file");
+        ZipEntry zipEntry = new ZipEntry(zipFilePath);
+        zos.putNextEntry(zipEntry);
+
+        byte[] bytes = new byte[1024];
+        int length;
+        while ((length = fis.read(bytes)) >= 0) {
+            zos.write(bytes, 0, length);
+        }
+
+        zos.closeEntry();
+        fis.close();
+    }
+
+    public static void addToZipWithEncryption(File directoryToZip, File file, ZipFile zipFile, String encryptionPassword, ArrayList<String> errorList) throws ZipException,
+            IOException {
+
+        // we want the zipEntry's path to be a relative path that is relative
+        // to the directory being zipped, so chop off the rest of the path
+        String zipFilePath = file.getCanonicalPath().substring(directoryToZip.getCanonicalPath().length() + 1,
+                file.getCanonicalPath().length());
+        if (zipFilePath.startsWith(File.separator)) {
+            zipFilePath = zipFilePath.substring(1, zipFilePath.length() - 1);
+        }
+        log.info("Writing '" + zipFilePath + "' to encrypted zip file");
+
+        int fileNameIndex = zipFilePath.indexOf(file.getName());
+        String folderInZip = "";
+        if (fileNameIndex > 0) {
+            folderInZip = zipFilePath.substring(0, fileNameIndex - 1);
+        }
+        ZipParameters relFolderParams = new ZipParameters();
+        relFolderParams.setCompressionMethod(Zip4jConstants.COMP_DEFLATE); // set compression method to deflate compression
+        relFolderParams.setCompressionLevel(Zip4jConstants.DEFLATE_LEVEL_NORMAL);
+        relFolderParams.setEncryptFiles(true);
+        relFolderParams.setEncryptionMethod(Zip4jConstants.ENC_METHOD_AES);
+        relFolderParams.setAesKeyStrength(Zip4jConstants.AES_STRENGTH_256);
+        relFolderParams.setPassword(encryptionPassword);
+        relFolderParams.setRootFolderInZip(folderInZip);
+        //relFolderParams.setDefaultFolderPath("test/dings");
+        try {
+            zipFile.addFile(file, relFolderParams);
+        } catch (Throwable t) {
+            if (file.getName().toLowerCase().endsWith(".sql")) {
+                // database MUST NOT fail
+                log.error(t);
+                throw new ZipException("Error zipencrypting " + file.getName(), t);
+            } else {
+                errorList.add("Error zipencrypting " + file.getName());
+                log.error(t);
+                if (errorList.size() > 20) {
+                    throw new ZipException("Too many errors during zip encryption");
+                }
+            }
+        }
+
+    }
+
+    /**
+     * @return the adHoc
+     */
+    public boolean isAdHoc() {
+        return adHoc;
+    }
+
+    /**
+     * @param adHoc the adHoc to set
+     */
+    public void setAdHoc(boolean adHoc) {
+        this.adHoc = adHoc;
+    }
 }

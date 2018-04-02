@@ -709,36 +709,7 @@ public class AutoStartServlet extends HttpServlet {
         File masterTemplatesFile = new File(localBaseDir + "mastertemplates");
         masterTemplatesFile.mkdirs();
 
-//        File textMaster = new File(localBaseDir + "mastertemplates" + System.getProperty("file.separator") + "master-text.odt");
-//        if (!textMaster.exists()) {
-//            // copy master templates from JAR if non-existent
-//            try {
-//                //InputStream is = this.getClass().getResourceAsStream("/mastertemplates/master-text.odt");
-//                String inFile=System.getProperty("jlawyer.server.initdir");
-//                inFile=inFile.trim();
-//                if(!inFile.endsWith(System.getProperty("file.separator"))) {
-//                    inFile=inFile+System.getProperty("file.separator");
-//                }
-//                inFile=inFile+"mastertemplates" + System.getProperty("file.separator") + "master-text.odt";
-//                
-//                InputStream is = new FileInputStream (inFile);
-//                FileOutputStream fOut = new FileOutputStream(textMaster);
-//                byte[] buffer = new byte[256];
-//                int len = 0;
-//                while ((len = is.read(buffer)) > 0) {
-//                    fOut.write(buffer, 0, len);
-//                }
-//                is.close();
-//                fOut.close();
-//
-//            } catch (Exception ex) {
-//                ex.printStackTrace();
-//                try {
-//                    Thread.sleep(3500);
-//                } catch (Throwable t) {
-//                }
-//            }
-//        }
+
 
         File archiveFilesFile = new File(localBaseDir + "archivefiles");
         archiveFilesFile.mkdirs();

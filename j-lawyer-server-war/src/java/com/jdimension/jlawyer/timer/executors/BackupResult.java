@@ -659,4 +659,60 @@ specific requirements.
 if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
-*/
+ */
+package com.jdimension.jlawyer.timer.executors;
+
+import java.util.ArrayList;
+
+/**
+ *
+ * @author jens
+ */
+public class BackupResult {
+    
+    private int fileCount=0;
+    private double byteSize=0;
+    private ArrayList<String> errorList=new ArrayList<String>();
+    
+    public BackupResult() {
+        
+    }
+    
+    public void increaseFileCounter() {
+        this.setFileCount(this.getFileCount() + 1);
+    }
+    
+    public void increaseFileSize(double size) {
+        this.byteSize=this.byteSize+size;
+    }
+
+    /**
+     * @return the fileCount
+     */
+    public int getFileCount() {
+        return fileCount;
+    }
+    
+    public double getByteSize() {
+        return this.byteSize;
+    }
+
+    /**
+     * @param fileCount the fileCount to set
+     */
+    public void setFileCount(int fileCount) {
+        this.fileCount = fileCount;
+    }
+
+    /**
+     * @return the errorList
+     */
+    public ArrayList<String> getErrorList() {
+        return errorList;
+    }
+    
+    public void addError(String error) {
+        this.errorList.add(error);
+    }
+    
+}

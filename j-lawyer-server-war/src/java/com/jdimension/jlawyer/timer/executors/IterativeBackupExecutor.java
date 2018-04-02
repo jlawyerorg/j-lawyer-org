@@ -661,155 +661,500 @@
  * For more information on this, and how to apply and follow the GNU AGPL, see
  * <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.sync;
+package com.jdimension.jlawyer.timer.executors;
 
-import com.jdimension.jlawyer.storage.VirtualFile;
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
+import java.io.*;
+import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
+import net.lingala.zip4j.core.ZipFile;
+import net.lingala.zip4j.exception.ZipException;
+import net.lingala.zip4j.model.ZipParameters;
+import net.lingala.zip4j.util.Zip4jConstants;
 import org.apache.log4j.Logger;
+import org.apache.tika.parser.txt.CharsetDetector;
 
 /**
  *
  * @author jens
  */
-public class FolderSync {
-    
-    private static final Logger log=Logger.getLogger(FolderSync.class.getName());
-    
-    private File from=null;
-    private VirtualFile to=null;
-    
-    public FolderSync(File from, VirtualFile target) {
-        this.from=from;
-        this.to=target;
+public class IterativeBackupExecutor {
+
+    private static final Logger log = Logger.getLogger(IterativeBackupExecutor.class.getName());
+    private static final SimpleDateFormat dfMailDate = new SimpleDateFormat("dd.MM.yyyy");
+    private static final SimpleDateFormat dfMailTime = new SimpleDateFormat("HH:mm:ss");
+    private static final DecimalFormat mbFormat = new DecimalFormat("0.0");
+
+    // these directories will be zipped entirely with each backup run
+    private final String[] fullBackupDirs = new String[]{"emailtemplates", "mastertemplates", "faxqueue", "templates"};
+    // these directories will be zipped on a per subdirectory basis and only if there are changes
+    private final String[] iterativeBackupDirs = new String[]{"archivefiles"};
+
+    private String dbUser = null;
+    private String dbPassword = null;
+    private String dbPort = null;
+    private String encryptionPassword = "";
+    private String dataDirectory = null;
+    private String backupDirectory = null;
+
+    public IterativeBackupExecutor(String dataDirectory, String backupDirectory, String dbUser, String dbPassword, String dbPort, String encryptionPassword) {
+        this.dataDirectory = dataDirectory;
+        this.backupDirectory = backupDirectory;
+        this.dbPassword = dbPassword;
+        this.dbUser = dbUser;
+        this.dbPort = dbPort;
+        this.encryptionPassword = encryptionPassword;
     }
-    
-    public void synchronize() throws Exception {
-        synchronize(180);
-    }
-    
-    public void synchronize(int ignoreNewerThanSeconds) throws Exception {
-        
-        if(!from.isDirectory())
-            throw new Exception ("Source is not a directory");
-        
-        if(!to.isDirectory()) {
-            throw new Exception ("Target is not a directory");
+
+    public BackupResult execute() throws Exception {
+
+        BackupResult backupResult = new BackupResult();
+
+        boolean encrypt = false;
+        if (this.encryptionPassword != null && !"".equals(this.encryptionPassword)) {
+            encrypt = true;
         }
-        
-        if(!to.isReadable() || !to.isWritable()) {
-            throw new Exception ("Target has invalid file permissions");
+
+        if (dbUser == null || "".equals(dbUser) || dbPassword == null || dbPort == null || "".equals(dbPort)) {
+            log.warn("missing backup configuration - skipping backup!");
+            throw new Exception("missing backup configuration - skipping backup!");
         }
-        
-        // FILES
-        // 1: delete from target what is not in source
-        
-            // get a list of files in source
-            File[] sourceFiles=from.listFiles();
-            ArrayList<String>sourceFileNames=new ArrayList<String>();
-            for(File f: sourceFiles) {
-                if(f.isFile())
-                    sourceFileNames.add(f.getName());
-            }
-            
-            // iterate over target files
-            for(VirtualFile f: to.listFiles()) {
-                if(f.isFile() && !sourceFileNames.contains(f.getName())) {
-                    log.info("Deleting " + f.getName() + " from sync location");
-                    f.delete();
+
+        SimpleDateFormat df = new SimpleDateFormat("yyyyMMdd");
+        SimpleDateFormat dftime = new SimpleDateFormat("yyyyMMdd_HHmmss");
+        String encrypted = "";
+        if (encrypt) {
+            encrypted = "-encrypted";
+        }
+
+        File backupDir = new File(this.backupDirectory);
+        backupDir.mkdirs();
+
+        File dumpFile = dumpDatabase(dbUser, dbPassword, dbPort, this.backupDirectory);
+        backupResult.increaseFileCounter();
+        backupResult.increaseFileSize(dumpFile.length());
+        if (!dumpFile.exists()) {
+            throw new Exception("Datenbank-Dump konnte nicht erstellt werden!");
+        } else if (dumpFile.length() < 1500) {
+            throw new Exception("Datenbank-Dump unvollständig!");
+        }
+
+        Date backupDate = new Date();
+        ArrayList<String> errorList = new ArrayList<String>();
+        try {
+            for (String fullBackupDir : fullBackupDirs) {
+                List<File> fileList = new ArrayList<File>();
+
+                log.info("Getting references to all files in: " + this.dataDirectory + File.separator + fullBackupDir);
+                getAllFiles(new File(this.dataDirectory + File.separator + fullBackupDir), fileList);
+                log.info("Creating zip file");
+                File targetDir = new File(this.backupDirectory + File.separator + fullBackupDir);
+                targetDir.mkdirs();
+                this.clearDirectory(targetDir);
+                String zipFileName = df.format(backupDate) + "-" + fullBackupDir + encrypted + ".zip";
+                if (encrypt) {
+                    writeEncryptedZipFile(zipFileName, new File(this.dataDirectory + File.separator + fullBackupDir), fileList, targetDir, encryptionPassword, backupResult);
+                } else {
+                    writeZipFile(zipFileName, new File(this.dataDirectory + File.separator + fullBackupDir), fileList, targetDir, backupResult);
                 }
             }
-        
-        
-        
-        // 2: copy to target what is only in source
-        
-            // get a list of files in target
-            Collection<VirtualFile> targetFiles=to.listFiles();
-            ArrayList<String>targetFileNames=new ArrayList<String>();
-            for(VirtualFile f: targetFiles) {
-                if(f.isFile())
-                    targetFileNames.add(f.getName());
-            }
-            
-            // iterate over source files
-            for(File f: from.listFiles()) {
-                if(f.isFile()) {
-                    if(!targetFileNames.contains(f.getName())) {
-                        // only copy if not currently being written (last modified at least 3 mins ago)
-                        if((System.currentTimeMillis() - f.lastModified()) > 1000*ignoreNewerThanSeconds) {
-                            log.info("Copying " + f.getName() + " to sync location");
-                            to.copyLocalFile(f);
-                        }
-                    } else {
-                        // compare size, copy if different
-                        long fromLength=f.length();
-                        long toLength=-1;
-                        for(VirtualFile toFile: targetFiles) {
-                            if(toFile.isFile() && toFile.getName().equals(f.getName())) {
-                                toLength=toFile.length();
-                                break;
-                            }
-                        }
-                        if(fromLength != toLength) {
-                            log.info("Copying " + f.getName() + " to sync location");
-                            to.copyLocalFile(f);
+
+            for (String itBackupDir : iterativeBackupDirs) {
+
+                // remove files in backup dir that are no longer in the source
+                File currentBackupDir = new File(this.backupDirectory + File.separator + itBackupDir);
+                if(currentBackupDir.exists()) {
+                for(File checkIfRemoved: currentBackupDir.listFiles()) {
+                    if(checkIfRemoved==null) {
+                        // backup dir does not exist - skip
+                        break;
+                    }
+                    if(checkIfRemoved.isDirectory()) {
+                        File test=new File(this.dataDirectory + File.separator + itBackupDir + File.separator + checkIfRemoved.getName());
+                        if(!test.exists()) {
+                            // remove
+                            this.clearDirectory(checkIfRemoved);
+                            checkIfRemoved.delete();
                         }
                     }
                 }
+                }
                 
-            }
-            
-            
-            
-            
-            // DIRECTORIES
-            
-            // 1: delete from target what is not in source
-        
-            // get a list of files in source
-            File[] sourceDirs=from.listFiles();
-            ArrayList<String>sourceDirNames=new ArrayList<String>();
-            for(File f: sourceDirs) {
-                if(f.isDirectory())
-                    sourceDirNames.add(f.getName());
-            }
-            
-            // iterate over target files
-            for(VirtualFile f: to.listFiles()) {
-                if(f.isDirectory() && !sourceDirNames.contains(f.getName())) {
-                    log.info("Deleting " + f.getName() + " from sync location");
-                    f.delete();
+                File dir = new File(this.dataDirectory + File.separator + itBackupDir);
+                File[] children = dir.listFiles();
+                for (File child : children) {
+                    if (child.isDirectory()) {
+                        List<File> fileList = new ArrayList<File>();
+
+                        log.info("Getting references to all files in: " + this.dataDirectory + File.separator + itBackupDir + File.separator + child.getName());
+                        getAllFiles(new File(this.dataDirectory + File.separator + itBackupDir + File.separator + child.getName()), fileList);
+                        File targetDir = new File(this.backupDirectory + File.separator + itBackupDir + File.separator + child.getName());
+                        targetDir.mkdirs();
+                        if (encrypt) {
+                            // delete backups that are not encrypted
+                            for (File temp : targetDir.listFiles()) {
+                                if (temp.getName().indexOf("encrypted") < 0) {
+                                    temp.delete();
+                                }
+                            }
+                        } else {
+                            // delete backups that are encrypted
+                            for (File temp : targetDir.listFiles()) {
+                                if (temp.getName().indexOf("encrypted") >= 0) {
+                                    temp.delete();
+                                }
+                            }
+                        }
+                        boolean requiresUpdate = this.requiresUpdate(targetDir, fileList);
+                        if (requiresUpdate) {
+                            this.clearDirectory(targetDir);
+                            String zipFileName = child.getName() + encrypted + ".zip";
+                            if (encrypt) {
+                                writeEncryptedZipFile(zipFileName, new File(this.dataDirectory + File.separator + itBackupDir + File.separator + child.getName()), fileList, targetDir, encryptionPassword, null);
+                            } else {
+                                writeZipFile(zipFileName, new File(this.dataDirectory + File.separator + itBackupDir + File.separator + child.getName()), fileList, targetDir, null);
+                            }
+                        } else {
+                            for(File fsize: targetDir.listFiles()) {
+                                // count the bytes of the backup
+                                backupResult.increaseFileSize(fsize.length());
+                            }
+                            for(File fsize: new File(this.dataDirectory + File.separator + itBackupDir + File.separator + child.getName()).listFiles()) {
+                                // and the number of files in the source
+                                backupResult.increaseFileCounter();
+                            }
+                        }
+
+                    }
+
                 }
             }
-        
-        
-        
-        // 2: copy to target what is only in source
-        
-            // get a list of files in target
-            Collection<VirtualFile> targetDirs=to.listFiles();
-            ArrayList<String>targetDirNames=new ArrayList<String>();
-            for(VirtualFile f: targetDirs) {
-                if(f.isDirectory())
-                    targetDirNames.add(f.getName());
-            }
-            
-            // iterate over source files
-            for(File f: from.listFiles()) {
-                if(f.isDirectory() && !targetDirNames.contains(f.getName())) {
-                    
-                    to.createDirectory(f.getName());
-                    FolderSync fs=new FolderSync(f, VirtualFile.getFile(to.getLocation() + "/" + f.getName() + "/"));
-                    fs.synchronize(ignoreNewerThanSeconds);
-                }
-            }
-        
-        
-        
-        
-        
+
+            log.info("Backup finished");
+
+        } catch (Throwable ex) {
+            log.error("Errors creating backup", ex);
+            throw new Exception("Backup-Fehler: " + ex.getMessage());
+        }
+
+        // print errors to log file
+        for (String s : errorList) {
+            log.error(s);
+        }
+
+        return backupResult;
+
     }
-    
+
+    private void clearDirectory(File dir) throws Exception {
+        File[] files = dir.listFiles();
+        for (File file : files) {
+
+            if (file.isDirectory()) {
+                this.clearDirectory(file);
+
+            }
+            file.delete();
+
+        }
+    }
+
+    private static File dumpDatabase(String user, String password, String port, String backupDir) {
+
+        String osName = System.getProperty("os.name").toLowerCase();
+        String path = "";
+        if (osName.indexOf("win") > -1) {
+
+        } else if (osName.indexOf("linux") > -1) {
+
+        } else if (osName.startsWith("mac")) {
+            path = "/usr/local/mysql/bin/";
+        }
+
+        String[] cmd = null;
+        if ("".equals(password) || password == null) {
+            cmd = new String[]{
+                path + "mysqldump",
+                "-P",
+                port,
+                "-u" + user,
+                "jlawyerdb"
+            };
+        } else {
+            cmd = new String[]{
+                path + "mysqldump",
+                "-P",
+                port,
+                "-u" + user,
+                "-p" + password,
+                "jlawyerdb"
+            };
+        }
+
+        Runtime shell = Runtime.getRuntime();
+        Process process = null;
+        Writer fileWriter = null;
+
+        File f = new File(backupDir + System.getProperty("file.separator") + "jlawyerdb-dump.sql");
+        try {
+
+            if (f.exists()) {
+                f.delete();
+            }
+
+            fileWriter = new FileWriter(f);
+            process = shell.exec(cmd);
+            //process.waitFor();
+
+            BufferedReader br = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            String line = null;
+
+            while ((line = br.readLine()) != null) {
+                fileWriter.write(line);
+                fileWriter.write(System.getProperty("line.separator"));
+            }
+            f.setLastModified(System.currentTimeMillis());
+            br.close();
+
+        } catch (IOException ex) {
+            //res = false;
+            log.error(ex);
+            if (fileWriter != null) {
+                try {
+                    fileWriter.close();
+
+                } catch (IOException e) {
+                }
+            }
+
+        } finally {
+            if (fileWriter != null) {
+                try {
+                    fileWriter.close();
+
+                } catch (IOException ex) {
+                }
+            }
+        }
+        return f;
+    }
+
+    public static void getAllFiles(File dir, List<File> fileList) throws IOException {
+
+        File[] files = dir.listFiles();
+        for (File file : files) {
+            fileList.add(file);
+            if (file.isDirectory()) {
+                //System.out.println("directory:" + file.getCanonicalPath());
+                if (!("searchindex".equals(file.getName())) && !("archivefiles-preview".equals(file.getName()))) {
+                    getAllFiles(file, fileList);
+                }
+            } else {
+                //System.out.println("     file:" + file.getCanonicalPath());
+            }
+        }
+
+    }
+
+    public static void writeZipFile(String fileName, File directoryToZip, List<File> fileList, File backupDir, BackupResult backupResult) throws Exception {
+
+        FileOutputStream fos = new FileOutputStream(backupDir.toString() + System.getProperty("file.separator") + fileName);
+        ZipOutputStream zos = new ZipOutputStream(fos);
+
+        for (File file : fileList) {
+
+            if (!file.isDirectory()) { // we only zip files, not directories
+                addToZip(directoryToZip, file, zos, backupResult);
+            }
+        }
+
+        zos.close();
+        fos.close();
+
+        if (backupResult != null) {
+            backupResult.increaseFileSize(new File(backupDir.toString() + System.getProperty("file.separator") + fileName).length());
+        }
+
+    }
+
+    private static String guessFileNameEncoding(List<File> fileList) {
+
+        Hashtable ht = new Hashtable<String, Integer>();
+
+        for (File file : fileList) {
+            if (!file.isDirectory()) {
+
+                try {
+                    byte[] b = file.getName().getBytes("ISO8859-15");
+                    CharsetDetector charDetect = new CharsetDetector();
+                    charDetect.setText(b);
+                    String charSet = charDetect.detect().getName();
+                    if (ht.containsKey(charSet)) {
+                        Integer i = (Integer) (ht.get(charSet));
+                        ht.put(charSet, new Integer(i.intValue() + 1));
+                    } else {
+                        ht.put(charSet, new Integer(1));
+                    }
+                    //fName = new String(b, charSet);
+                } catch (Throwable e) {
+                    log.error("no charset detected for " + file.getName());
+                    //fName = fh.getFileName();
+                }
+            }
+        }
+
+        String returnCharset = "ISO-8859-15";
+        int returnCharsetNumber = 0;
+        for (Object k : ht.keySet()) {
+            String cs = k.toString();
+            Integer total = (Integer) (ht.get(k));
+            if (total > returnCharsetNumber) {
+                returnCharset = cs;
+                returnCharsetNumber = total;
+            }
+        }
+        if (returnCharset.startsWith("ISO-8859")) {
+            returnCharset = "ISO-8859-15";
+        }
+        return returnCharset;
+    }
+
+    public static void writeEncryptedZipFile(String fileName, File directoryToZip, List<File> fileList, File backupDir, String encryptionPassword, BackupResult backupResult) throws Exception {
+
+        // Initiate ZipFile object with the path/name of the zip file.
+        ZipFile zipFile = new ZipFile(backupDir.toString() + System.getProperty("file.separator") + fileName);
+        String fileNameEncoding = guessFileNameEncoding(fileList);
+        log.info("guessed filename encoding " + fileNameEncoding);
+        zipFile.setFileNameCharset(fileNameEncoding);
+
+        for (File file : fileList) {
+
+            if (!file.isDirectory()) { // we only zip files, not directories
+                addToZipWithEncryption(directoryToZip, file, zipFile, encryptionPassword, backupResult);
+
+            }
+        }
+        if (backupResult != null) {
+            backupResult.increaseFileSize(new File(backupDir.toString() + System.getProperty("file.separator") + fileName).length());
+        }
+
+    }
+
+    public static void addToZip(File directoryToZip, File file, ZipOutputStream zos, BackupResult backupResult) throws FileNotFoundException,
+            IOException {
+
+        FileInputStream fis = new FileInputStream(file);
+
+        // we want the zipEntry's path to be a relative path that is relative
+        // to the directory being zipped, so chop off the rest of the path
+        String zipFilePath = file.getCanonicalPath().substring(directoryToZip.getCanonicalPath().length() + 1,
+                file.getCanonicalPath().length());
+        log.info("Writing '" + zipFilePath + "' to zip file");
+        ZipEntry zipEntry = new ZipEntry(zipFilePath);
+        zos.putNextEntry(zipEntry);
+
+        byte[] bytes = new byte[1024];
+        int length;
+        while ((length = fis.read(bytes)) >= 0) {
+            zos.write(bytes, 0, length);
+        }
+
+        zos.closeEntry();
+        fis.close();
+
+        if (backupResult != null) {
+            backupResult.increaseFileCounter();
+        }
+    }
+
+    public static void addToZipWithEncryption(File directoryToZip, File file, ZipFile zipFile, String encryptionPassword, BackupResult backupResult) throws ZipException,
+            IOException {
+
+        // we want the zipEntry's path to be a relative path that is relative
+        // to the directory being zipped, so chop off the rest of the path
+        String zipFilePath = file.getCanonicalPath().substring(directoryToZip.getCanonicalPath().length() + 1,
+                file.getCanonicalPath().length());
+        if (zipFilePath.startsWith(File.separator)) {
+            zipFilePath = zipFilePath.substring(1, zipFilePath.length() - 1);
+        }
+        log.info("Writing '" + zipFilePath + "' to encrypted zip file");
+
+        int fileNameIndex = zipFilePath.indexOf(file.getName());
+        String folderInZip = "";
+        if (fileNameIndex > 0) {
+            folderInZip = zipFilePath.substring(0, fileNameIndex - 1);
+        }
+        ZipParameters relFolderParams = new ZipParameters();
+        relFolderParams.setCompressionMethod(Zip4jConstants.COMP_DEFLATE); // set compression method to deflate compression
+        relFolderParams.setCompressionLevel(Zip4jConstants.DEFLATE_LEVEL_NORMAL);
+        relFolderParams.setEncryptFiles(true);
+        relFolderParams.setEncryptionMethod(Zip4jConstants.ENC_METHOD_AES);
+        relFolderParams.setAesKeyStrength(Zip4jConstants.AES_STRENGTH_256);
+        relFolderParams.setPassword(encryptionPassword);
+        relFolderParams.setRootFolderInZip(folderInZip);
+        //relFolderParams.setDefaultFolderPath("test/dings");
+        try {
+            zipFile.addFile(file, relFolderParams);
+        } catch (Throwable t) {
+            if (file.getName().toLowerCase().endsWith(".sql")) {
+                // database MUST NOT fail
+                log.error(t);
+                throw new ZipException("Error zipencrypting " + file.getName(), t);
+            } else {
+                backupResult.addError("Error zipencrypting " + file.getName());
+                log.error(t);
+                if (backupResult.getErrorList().size() > 20) {
+                    throw new ZipException("Too many errors during zip encryption");
+                }
+            }
+        }
+        if (backupResult != null) {
+            backupResult.increaseFileCounter();
+        }
+
+    }
+
+    private boolean requiresUpdate(File targetDir, List<File> fileList) {
+        long filesLastModified = 0;
+
+        boolean oldBackupExists = false;
+        File oldBackup = null;
+        for (File existing : targetDir.listFiles()) {
+            if (existing.isFile()) {
+                if (existing.getName().toLowerCase().endsWith(".zip")) {
+                    oldBackupExists = true;
+                    oldBackup = existing;
+                    break;
+                }
+            }
+        }
+        if (!oldBackupExists) {
+            return true;
+        }
+
+        // find last modified of case documents
+        for (File f : fileList) {
+            if (f.isFile()) {
+                if (f.lastModified() > filesLastModified) {
+                    filesLastModified = f.lastModified();
+                }
+            }
+        }
+
+        // backup when there are new or updated files
+        if (filesLastModified > oldBackup.lastModified()) {
+            return true;
+        }
+
+        // backup when last backup is older than 7 days
+        if ((System.currentTimeMillis() - oldBackup.lastModified()) > 7 * 24 * 60 * 60 * 1000) {
+            return true;
+        }
+
+        return false;
+
+    }
+
 }
