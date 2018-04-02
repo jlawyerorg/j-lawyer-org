@@ -798,9 +798,13 @@ public class FolderSync {
             
             // iterate over source files
             for(File f: from.listFiles()) {
-                if(f.isDirectory() && !targetDirNames.contains(f.getName())) {
+                if(f.isDirectory()) {
                     
-                    to.createDirectory(f.getName());
+                    
+                    if(!targetDirNames.contains(f.getName())) {
+                        to.createDirectory(f.getName());
+                    }
+                    
                     FolderSync fs=new FolderSync(f, VirtualFile.getFile(to.getLocation() + "/" + f.getName() + "/"));
                     fs.synchronize(ignoreNewerThanSeconds);
                 }
