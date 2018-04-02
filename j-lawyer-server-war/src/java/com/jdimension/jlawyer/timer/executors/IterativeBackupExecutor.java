@@ -1152,6 +1152,9 @@ public class IterativeBackupExecutor {
         if ((System.currentTimeMillis() - oldBackup.lastModified()) > 7 * 24 * 60 * 60 * 1000) {
             return true;
         }
+        
+        // note: this does not respect documents that were deleted - the last modified date of the remaining files do not indicate that
+        // there have been deletions - but this will be picked up with the forced backup each 7 days
 
         return false;
 
