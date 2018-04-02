@@ -775,7 +775,7 @@ public class SambaFile extends VirtualFile {
         if(!this.sf.isDirectory() || !this.sf.exists())
             throw new Exception("Can only create sub directory in a directory and directory must exist");
         
-        SmbFile newDir=new SmbFile(location + name);
+        SmbFile newDir=new SmbFile(location + "/" + name + "/");
         if(!newDir.exists())
             newDir.mkdirs();
     }

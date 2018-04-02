@@ -836,7 +836,7 @@ public class LocalSshFtpFile extends VirtualFile {
         if(!this.fo.isFolder() || !this.fo.exists())
             throw new Exception("Can only create sub directory in a directory and directory must exist");
         
-        LocalSshFtpFile newDir=new LocalSshFtpFile(this.location + name);
+        LocalSshFtpFile newDir=new LocalSshFtpFile(this.location + "/" + name + "/");
         if(!newDir.exists())
             newDir.createFolder();
     }
