@@ -731,6 +731,12 @@ public class IterativeBackupExecutor {
 
         File backupDir = new File(this.backupDirectory);
         backupDir.mkdirs();
+        
+        // delete old zip files. the root never has a zip, except for when it is there from an old installation
+        for(File zip: backupDir.listFiles()) {
+            if(zip.isFile() && zip.getName().toLowerCase().endsWith(".zip"))
+                zip.delete();
+        }
 
         File dumpFile = dumpDatabase(dbUser, dbPassword, dbPort, this.backupDirectory);
         backupResult.increaseFileCounter();
@@ -747,7 +753,6 @@ public class IterativeBackupExecutor {
             for (String fullBackupDir : fullBackupDirs) {
                 List<File> fileList = new ArrayList<File>();
 
-                log.info("Getting references to all files in: " + this.dataDirectory + File.separator + fullBackupDir);
                 getAllFiles(new File(this.dataDirectory + File.separator + fullBackupDir), fileList);
                 log.info("Creating zip file");
                 File targetDir = new File(this.backupDirectory + File.separator + fullBackupDir);
