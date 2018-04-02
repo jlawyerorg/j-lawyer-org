@@ -680,6 +680,10 @@ public abstract class VirtualFile {
         throw new Exception("Location type is not supported");
     }
     
+    public abstract String getLocation();
+    
+    public abstract long length() throws Exception;
+    
     public abstract Collection<VirtualFile> listFiles() throws Exception;
     
     public abstract boolean isFile() throws Exception;
@@ -701,4 +705,6 @@ public abstract class VirtualFile {
     public abstract void close() throws Exception;
     
     public abstract void copyLocalFile(File f) throws Exception;
+    
+    public abstract void createDirectory(String name) throws Exception;
 }

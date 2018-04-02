@@ -711,9 +711,26 @@ public class LocalFileTest {
      @Test
      public void testIsDirectory() {
         try {
-            VirtualFile vf=VirtualFile.getFile("file:///var/lib/jenkins/jlawyertest/");
+            VirtualFile vf=VirtualFile.getFile("file://tmp/");
             Assert.assertTrue(vf.isDirectory());
             Assert.assertFalse(vf.isFile());
+        } catch (Exception ex) {
+            Assert.fail(ex.getMessage());
+        }
+     }
+     
+     @Test
+     public void testCreateDeleteDirectory() {
+        try {
+            VirtualFile vf=VirtualFile.getFile("file:///tmp/");
+            
+            String subDir=""+ System.currentTimeMillis();
+            vf.createDirectory(subDir);
+            
+            vf=VirtualFile.getFile("file:///tmp/" + subDir + "/");
+            vf.delete();
+            
+            
         } catch (Exception ex) {
             Assert.fail(ex.getMessage());
         }

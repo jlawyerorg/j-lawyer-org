@@ -731,6 +731,23 @@ public class SftpTest {
      }
      
      @Test
+     public void testCreateDeleteDirectory() {
+        try {
+            VirtualFile vf=VirtualFile.getFile("sftp://" + this.ftpUser + ":" + this.ftpPassword +  "@hpgen8/home/" + this.ftpHome + "/temp2/");
+            
+            String subDir=""+ System.currentTimeMillis();
+            vf.createDirectory(subDir);
+            
+            vf=VirtualFile.getFile("sftp://" + this.ftpUser + ":" + this.ftpPassword +  "@hpgen8/home/" + this.ftpHome + "/temp2/" + subDir + "/");
+            vf.delete();
+            
+            
+        } catch (Exception ex) {
+            Assert.fail(ex.getMessage());
+        }
+     }
+     
+     @Test
      public void testCopy() {
         try {
             VirtualFile vf=VirtualFile.getFile("sftp://" + this.ftpUser + ":" + this.ftpPassword +  "@hpgen8/home/" + this.ftpHome + "/temp2/");

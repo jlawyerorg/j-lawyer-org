@@ -741,6 +741,23 @@ public class SmbTest {
      }
      
      @Test
+     public void testCreateDeleteDirectory() {
+        try {
+            VirtualFile vf=VirtualFile.getFile("smb://j-lawyer-box/j-lawyer-share/daten/temp/unittest/");
+            
+            String subDir=""+ System.currentTimeMillis();
+            vf.createDirectory(subDir);
+            
+            vf=VirtualFile.getFile("smb://j-lawyer-box/j-lawyer-share/daten/temp/unittest/" + subDir + "/");
+            vf.delete();
+            
+            
+        } catch (Exception ex) {
+            Assert.fail(ex.getMessage());
+        }
+     }
+     
+     @Test
      public void testDelete() {
         try {
             VirtualFile vf=VirtualFile.getFile("smb://j-lawyer-box/j-lawyer-share/daten/");

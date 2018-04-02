@@ -679,9 +679,11 @@ import jcifs.smb.SmbFile;
 public class SambaFile extends VirtualFile {
     
     private SmbFile sf=null;
+    private String location=null;
     
     public SambaFile(String location) throws Exception {
         this.sf=new SmbFile(location);
+        this.location=location;
     }
 
     @Override
@@ -766,6 +768,31 @@ public class SambaFile extends VirtualFile {
     @Override
     public boolean isWritable() throws Exception {
         return this.sf.canWrite();
+    }
+
+    @Override
+    public void createDirectory(String name) throws Exception {
+        if(!this.sf.isDirectory() || !this.sf.exists())
+            throw new Exception("Can only create sub directory in a directory and directory must exist");
+        
+        SmbFile newDir=new SmbFile(location + name);
+        if(!newDir.exists())
+            newDir.mkdirs();
+    }
+
+    @Override
+    public String getLocation() {
+        return this.location;
+    }
+
+    @Override
+    public long length() throws Exception {
+        if(this.sf.isDirectory())
+            return 0;
+        else if(this.sf.isFile())
+            return this.sf.length();
+        else
+            return 0;
     }
     
 }
