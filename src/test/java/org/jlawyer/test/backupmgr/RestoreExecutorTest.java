@@ -663,8 +663,8 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package org.jlawyer.test.backupmgr;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.io.IOException;
+import java.util.Properties;
 import org.jlawyer.backupmgr.impl.RestoreExecutor;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -678,38 +678,59 @@ import org.junit.Test;
  * @author jens
  */
 public class RestoreExecutorTest {
-    
+
+    private String mysqlPassword = null;
+    private String backupDirectory = null;
+    private String dataDirectory = null;
+    private String encryptionPassword = null;
+
     public RestoreExecutorTest() {
     }
-    
+
     @BeforeClass
     public static void setUpClass() {
     }
-    
+
     @AfterClass
     public static void tearDownClass() {
     }
-    
+
     @Before
     public void setUp() {
+//        Properties p = new Properties();
+//        try {
+//            String propLocation="/test/test.properties";
+//            System.out.println("using properties from " + propLocation);
+//            p.load(Thread.currentThread().getContextClassLoader().getResourceAsStream(propLocation));
+//            
+//            this.mysqlPassword = p.getProperty("mysqlpwd");
+//            this.directory = p.getProperty("/tmp");
+//            this.encryptionPassword = p.getProperty("encryptionpwd");
+//        } catch (IOException ex) {
+//            ex.printStackTrace();
+//        }
+
+        this.mysqlPassword="sulibo64";
+        this.backupDirectory="/home/jens/dev/projects/backups/";
+        this.dataDirectory="/home/jens/dev/projects/j-lawyer-data/";
+        this.encryptionPassword="dummy";
     }
-    
+
     @After
     public void tearDown() {
     }
 
-     @Test
-     public void testValidateDatabaseConnection() {
-         System.out.println("Using MySQL password " + System.getProperty("mysqlpwd"));
-         //RestoreExecutor re=new RestoreExecutor(System.getProperty("mysqlpwd"));
-         RestoreExecutor re=new RestoreExecutor("sulibo64");
-         
+    @Test
+    public void testValidate() {
+        System.out.println("Using MySQL password " + this.mysqlPassword);
+        RestoreExecutor re = new RestoreExecutor(this.dataDirectory, this.backupDirectory, this.encryptionPassword, this.mysqlPassword);
+
         try {
-            re.validateDatabaseConnection();
+            re.validate();
         } catch (Exception ex) {
             ex.printStackTrace();
             Assert.fail(ex.getMessage());
         }
-     
-     }
+
+    }
 }

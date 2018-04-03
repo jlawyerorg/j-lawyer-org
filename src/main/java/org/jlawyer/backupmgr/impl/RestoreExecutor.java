@@ -663,27 +663,128 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package org.jlawyer.backupmgr.impl;
 
+import java.io.File;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.util.ArrayList;
 
 /**
  *
  * @author jens
  */
 public class RestoreExecutor {
-    
-    private String mysqlPassword=null;
-    
-    public RestoreExecutor(String mysqlPassword) {
-        
-        this.mysqlPassword=mysqlPassword;
-        
-        
+
+    private String mysqlPassword = null;
+    private String backupDirectory = null;
+    private String dataDirectory = null;
+    private String encryptionPassword = null;
+
+    public RestoreExecutor(String dataDir, String backupDir, String encryptionPassword, String mysqlPassword) {
+
+        this.mysqlPassword = mysqlPassword;
+        this.dataDirectory = dataDir;
+        this.backupDirectory=backupDir;
+        this.encryptionPassword = encryptionPassword;
+
     }
-    
-    public void validateDatabaseConnection() throws Exception {
+
+    public void validate() throws Exception {
+        this.validateBackupDirectory();
+        this.validateDataDirectory();
+        this.validateDatabaseConnection();
+
+    }
+
+    private void validateDatabaseConnection() throws Exception {
         Class.forName("com.mysql.jdbc.Driver");
         Connection mysql = DriverManager.getConnection("jdbc:mysql://localhost/jlawyerdb?user=root&useSSL=false&password=" + mysqlPassword);
-    } 
+        ResultSet rs = mysql.getMetaData().getCatalogs();
+        boolean jlawyerdbFound = false;
+        while (rs.next()) {
+            System.out.println("TABLE_CAT = " + rs.getString("TABLE_CAT"));
+            if ("jlawyerdb".equals(rs.getString("TABLE_CAT").toLowerCase())) {
+                jlawyerdbFound = true;
+            }
+        }
+        rs.close();
+        mysql.close();
+        if (!jlawyerdbFound) {
+            throw new Exception("Datenbank 'jlawyerdb' nicht gefunden!");
+        }
+
+    }
+
+    private void validateBackupDirectory() throws Exception {
+        File dir = new File(this.backupDirectory);
+        ArrayList<String> subDirs = new ArrayList<String>();
+        if (!dir.exists()) {
+            throw new Exception("Verzeichnis '" + this.backupDirectory + "' existiert nicht!");
+        }
+
+        if (!dir.isDirectory()) {
+            throw new Exception("'" + this.backupDirectory + "' ist kein Verzeichnis!");
+        }
+
+        if (!dir.canRead()) {
+            throw new Exception("Verzeichnis '" + this.backupDirectory + "' ist nicht lesbar!");
+        }
+
+        boolean dumpExists = false;
+        for (File f : dir.listFiles()) {
+            if (f.isDirectory()) {
+                subDirs.add(f.getName());
+            } else if (f.isFile()) {
+                if ("jlawyerdb-dump.sql".equals(f.getName())) {
+                    dumpExists = true;
+                }
+            }
+        }
+        if (!subDirs.contains("archivefiles") || !subDirs.contains("templates") || !subDirs.contains("mastertemplates") || !subDirs.contains("emailtemplates")) {
+            throw new Exception("Verzeichnis unvollständig - benötigt werden Unterverzeichnisse: archivefiles, templates, emailtemplates, mastertemplates");
+        }
+
+        if (!dumpExists) {
+            throw new Exception("Datenbanksicherung 'jlawyerdb-dump.sql' fehlt!");
+        }
+    }
     
+    private void validateDataDirectory() throws Exception {
+        File dir = new File(this.dataDirectory);
+        ArrayList<String> subDirs = new ArrayList<String>();
+        if (!dir.exists()) {
+            throw new Exception("Verzeichnis '" + this.dataDirectory + "' existiert nicht!");
+        }
+
+        if (!dir.isDirectory()) {
+            throw new Exception("'" + this.dataDirectory + "' ist kein Verzeichnis!");
+        }
+
+        if (!dir.canRead()) {
+            throw new Exception("Verzeichnis '" + this.dataDirectory + "' ist nicht lesbar!");
+        }
+        
+        if (!dir.canWrite()) {
+            throw new Exception("Verzeichnis '" + this.dataDirectory + "' ist nicht schreibbar!");
+        }
+
+        boolean dumpExists = false;
+        for (File f : dir.listFiles()) {
+            if (f.isDirectory()) {
+                subDirs.add(f.getName());
+            } else if (f.isFile()) {
+                if ("jlawyerdb-dump.sql".equals(f.getName())) {
+                    dumpExists = true;
+                }
+            }
+        }
+        if (!subDirs.contains("archivefiles") || !subDirs.contains("templates") || !subDirs.contains("mastertemplates") || !subDirs.contains("emailtemplates")) {
+            throw new Exception("Verzeichnis unvollständig - benötigt werden Unterverzeichnisse: archivefiles, templates, emailtemplates, mastertemplates");
+        }
+
+        if (dumpExists) {
+            throw new Exception("Datenbanksicherung 'jlawyerdb-dump.sql' im Datenverzeichnis gefunden! Wurde aus Versehen das Backupverzeichnis gewählt?");
+        }
+    }
+
 }

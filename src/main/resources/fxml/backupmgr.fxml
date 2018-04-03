@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.scene.image.*?>
 <?import javafx.scene.text.*?>
 <?import javafx.geometry.*?>
 <?import java.lang.*?>
@@ -8,7 +9,7 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<AnchorPane id="AnchorPane" prefHeight="260.0" prefWidth="876.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.jlawyer.backupmgr.controller.BackupMgrController">
+<AnchorPane id="AnchorPane" prefHeight="306.0" prefWidth="876.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.jlawyer.backupmgr.controller.BackupMgrController">
    <children>
       <AmbientLight color="CHARTREUSE" layoutX="258.0" layoutY="200.0" lightOn="true" />
       <Label layoutX="14.0" layoutY="14.0" text="Hinweis: ">
@@ -17,7 +18,7 @@
          </font>
       </Label>
       <Label layoutX="91.0" layoutY="15.0" text="Die Wiederherstellung ersetzt alle vorhandenen Daten!" />
-      <VBox alignment="TOP_CENTER" layoutX="12.0" layoutY="40.0" prefHeight="223.0" prefWidth="857.0" spacing="10.0">
+      <VBox alignment="TOP_CENTER" layoutX="12.0" layoutY="40.0" prefHeight="223.0" prefWidth="855.0" spacing="10.0">
          <children>
             <GridPane hgap="10.0" prefHeight="138.0" prefWidth="936.0">
               <columnConstraints>
@@ -29,6 +30,7 @@
                 <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
                 <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
                 <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                  <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
               </rowConstraints>
                <children>
                   <Label text="Datensicherungsordner:">
@@ -43,13 +45,17 @@
                   </Label>
                   <Label text="Datenbankpasswort:" GridPane.rowIndex="2" />
                   <TextField fx:id="txtBackupDir" editable="false" GridPane.columnIndex="1" />
-                  <TextField GridPane.columnIndex="1" GridPane.rowIndex="1" />
-                  <TextField GridPane.columnIndex="1" GridPane.rowIndex="2" />
+                  <TextField fx:id="txtEncryptionPwd" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                  <TextField fx:id="txtMysqlPwd" GridPane.columnIndex="1" GridPane.rowIndex="2" />
                   <Button fx:id="cmdBrowseBackupDir" mnemonicParsing="false" onAction="#cmdBrowseBackupDirClicked" text="..." GridPane.columnIndex="2" />
+                  <Label text="j-lawyer.org Datenverzeichnis:" GridPane.rowIndex="3" />
+                  <TextField fx:id="txtDataDir" editable="false" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+                  <Button fx:id="cmdBrowseDataDir" mnemonicParsing="false" onAction="#cmdBrowseDataDirClicked" text="..." GridPane.columnIndex="2" GridPane.rowIndex="3" />
                </children>
             </GridPane>
-            <Button mnemonicParsing="false" text="Wiederherstellen" />
-            <ProgressBar prefHeight="20.0" prefWidth="839.0" progress="0.0" />
+            <Button fx:id="cmdRestore" mnemonicParsing="false" onAction="#cmdRestoreClicked" text="Wiederherstellen" />
+            <ProgressBar fx:id="prgRestore" prefHeight="20.0" prefWidth="839.0" progress="0.0" />
+            <Label fx:id="lblProgress" prefHeight="15.0" prefWidth="837.0" />
          </children>
       </VBox>
    </children>
