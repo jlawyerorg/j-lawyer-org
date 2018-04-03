@@ -683,7 +683,7 @@ public class RestoreExecutor {
     
     public void validateDatabaseConnection() throws Exception {
         Class.forName("com.mysql.jdbc.Driver");
-        Connection mysql = DriverManager.getConnection("jdbc:mysql://localhost/jlawyerdb?user=root&password=" + mysqlPassword);
+        Connection mysql = DriverManager.getConnection("jdbc:mysql://localhost/jlawyerdb?user=root&useSSL=false&password=" + mysqlPassword);
     } 
     
 }
