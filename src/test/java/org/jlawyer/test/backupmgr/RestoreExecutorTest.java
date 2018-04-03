@@ -702,6 +702,7 @@ public class RestoreExecutorTest {
      public void testValidateDatabaseConnection() {
          System.out.println("Using MySQL password " + System.getProperty("mysqlpwd"));
          RestoreExecutor re=new RestoreExecutor(System.getProperty("mysqlpwd"));
+         
         try {
             re.validateDatabaseConnection();
         } catch (Exception ex) {

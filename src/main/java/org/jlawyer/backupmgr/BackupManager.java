@@ -660,9 +660,12 @@ specific requirements.
 if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
-*/
+ */
 package org.jlawyer.backupmgr;
 
+import java.awt.GraphicsDevice;
+import java.awt.GraphicsEnvironment;
+import java.awt.HeadlessException;
 import java.net.URL;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
@@ -674,10 +677,10 @@ import javafx.stage.Stage;
  * @author jens
  */
 public class BackupManager extends Application {
-    
+
     @Override
     public void start(Stage primaryStage) throws Exception {
-        
+
         String resourcePath = "/fxml/backupmgr.fxml";
         URL location = getClass().getResource(resourcePath);
         FXMLLoader fxmlLoader = new FXMLLoader(location);
@@ -688,14 +691,37 @@ public class BackupManager extends Application {
         primaryStage.setScene(scene);
         primaryStage.setResizable(false);
         primaryStage.show();
-       
+
     }
 
     /**
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-        launch(args);
+
+        if (isReallyHeadless()) {
+            System.out.println("j-lawyer.org Backup Manager (ohne grafische Oberflaeche)");
+            // todo: launch as command line client
+        } else {
+            System.out.println("j-lawyer.org Backup Manager (grafische Oberflaeche)");
+            BackupManager.launch(args);
+        }
+        
+       //launch(args);
+    }
+
+    private static boolean isReallyHeadless() {
+        if (GraphicsEnvironment.isHeadless()) {
+            return true;
+        }
+        try {
+            GraphicsDevice[] screenDevices = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices();
+            return screenDevices == null || screenDevices.length == 0;
+        } catch (HeadlessException e) {
+            e.printStackTrace();
+            return true;
+        }
     }
     
+
 }
