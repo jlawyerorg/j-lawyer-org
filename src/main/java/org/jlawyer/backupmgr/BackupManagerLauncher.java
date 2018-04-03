@@ -661,55 +661,56 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package org.jlawyer.test.backupmgr;
+package org.jlawyer.backupmgr;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import org.jlawyer.backupmgr.impl.RestoreExecutor;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import java.awt.GraphicsDevice;
+import java.awt.GraphicsEnvironment;
+import java.awt.HeadlessException;
+import java.net.URL;
+import javafx.application.Application;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Scene;
+import javafx.stage.Stage;
 
 /**
  *
  * @author jens
  */
-public class RestoreExecutorTest {
-    
-    public RestoreExecutorTest() {
-    }
-    
-    @BeforeClass
-    public static void setUpClass() {
-    }
-    
-    @AfterClass
-    public static void tearDownClass() {
-    }
-    
-    @Before
-    public void setUp() {
-    }
-    
-    @After
-    public void tearDown() {
+public class BackupManagerLauncher {
+
+    /**
+     * @param args the command line arguments
+     */
+    public static void main(String[] args) {
+
+        if (isReallyHeadless()) {
+            System.out.println("j-lawyer.org Backup Manager (ohne grafische Oberflaeche)");
+            // todo: launch as command line client
+        } else {
+            System.out.println("j-lawyer.org Backup Manager (grafische Oberflaeche)");
+            new Thread() {
+            @Override
+            public void run() {
+                javafx.application.Application.launch(BackupManager.class);
+            }
+        }.start();
+        }
+        
+       //launch(args);
     }
 
-     @Test
-     public void testValidateDatabaseConnection() {
-         System.out.println("Using MySQL password " + System.getProperty("mysqlpwd"));
-         //RestoreExecutor re=new RestoreExecutor(System.getProperty("mysqlpwd"));
-         RestoreExecutor re=new RestoreExecutor("sulibo64");
-         
-        try {
-            re.validateDatabaseConnection();
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            Assert.fail(ex.getMessage());
+    private static boolean isReallyHeadless() {
+        if (GraphicsEnvironment.isHeadless()) {
+            return true;
         }
-     
-     }
+        try {
+            GraphicsDevice[] screenDevices = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices();
+            return screenDevices == null || screenDevices.length == 0;
+        } catch (HeadlessException e) {
+            e.printStackTrace();
+            return true;
+        }
+    }
+    
+
 }
