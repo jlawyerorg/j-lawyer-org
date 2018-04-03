@@ -700,7 +700,7 @@ public class RestoreExecutorTest {
 
      @Test
      public void testValidateDatabaseConnection() {
-         RestoreExecutor re=new RestoreExecutor("mysqlpwd");
+         RestoreExecutor re=new RestoreExecutor(System.getProperty("mysqlpwd"));
         try {
             re.validateDatabaseConnection();
         } catch (Exception ex) {
