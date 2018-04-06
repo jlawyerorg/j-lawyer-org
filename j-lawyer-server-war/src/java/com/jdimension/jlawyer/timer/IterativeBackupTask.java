@@ -1150,7 +1150,8 @@ public class IterativeBackupTask extends java.util.TimerTask {
         ZipFile zipFile = new ZipFile(backupDir.toString() + System.getProperty("file.separator") + fileName);
         String fileNameEncoding = guessFileNameEncoding(fileList);
         log.info("guessed filename encoding " + fileNameEncoding);
-        zipFile.setFileNameCharset(fileNameEncoding);
+        //zipFile.setFileNameCharset(fileNameEncoding);
+        zipFile.setFileNameCharset("UTF-8");
 
 //			// Build the list of files to be added in the array list
 //			// Objects of type File have to be added to the ArrayList
