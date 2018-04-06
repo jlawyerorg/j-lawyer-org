@@ -664,10 +664,19 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package org.jlawyer.backupmgr.impl;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
+import net.lingala.zip4j.core.ZipFile;
+import net.lingala.zip4j.model.FileHeader;
+import net.lingala.zip4j.model.UnzipParameters;
 
 /**
  *
@@ -679,21 +688,48 @@ public class RestoreExecutor {
     private String backupDirectory = null;
     private String dataDirectory = null;
     private String encryptionPassword = null;
+    private String filenameEncoding=null;
 
     public RestoreExecutor(String dataDir, String backupDir, String encryptionPassword, String mysqlPassword) {
 
         this.mysqlPassword = mysqlPassword;
         this.dataDirectory = dataDir;
-        this.backupDirectory=backupDir;
+        this.backupDirectory = backupDir;
         this.encryptionPassword = encryptionPassword;
 
     }
 
     public void validate() throws Exception {
+        this.validateEncoding();
         this.validateBackupDirectory();
         this.validateDataDirectory();
         this.validateDatabaseConnection();
+        this.validateEncryption();
+        
+        
 
+    }
+    
+    public void validateEncoding() throws Exception {
+        File metadataDir=new File(this.backupDirectory + File.separator + ".metadata");
+        if(!metadataDir.exists())
+            throw new Exception("Datensicherungsinformationen (Metadaten) fehlen!");
+        
+        for(File meta: metadataDir.listFiles()) {
+            if(meta.isFile() && meta.getName().toLowerCase().startsWith("encoding.")) {
+                String metaName=meta.getName();
+                this.filenameEncoding=metaName.substring("encoding.".length(),metaName.length());
+                return;
+            }
+        }
+        if(this.filenameEncoding==null)
+            throw new Exception("Datensicherungsinformationen (Metadaten) fehlen!");
+        
+        
+    }
+    
+    public String getFilenameEncoding() {
+        return this.filenameEncoding;
     }
 
     private void validateDatabaseConnection() throws Exception {
@@ -702,7 +738,7 @@ public class RestoreExecutor {
         ResultSet rs = mysql.getMetaData().getCatalogs();
         boolean jlawyerdbFound = false;
         while (rs.next()) {
-            System.out.println("TABLE_CAT = " + rs.getString("TABLE_CAT"));
+            //System.out.println("TABLE_CAT = " + rs.getString("TABLE_CAT"));
             if ("jlawyerdb".equals(rs.getString("TABLE_CAT").toLowerCase())) {
                 jlawyerdbFound = true;
             }
@@ -713,6 +749,108 @@ public class RestoreExecutor {
             throw new Exception("Datenbank 'jlawyerdb' nicht gefunden!");
         }
 
+    }
+
+    private void validateEncryption() throws Exception {
+        
+        if(this.filenameEncoding==null)
+            throw new Exception("Unbekannte Dateinamen-Codierung!");
+        
+        if ("".equals(this.encryptionPassword) || this.encryptionPassword == null) {
+            // no encryption
+            File templateDir = new File(this.backupDirectory + File.separator + "templates");
+            for (File zip : templateDir.listFiles()) {
+                if (zip.isFile() && zip.getName().toLowerCase().endsWith(".zip")) {
+                    this.tryUnzip(zip, System.getProperty("java.io.tmpdir") + File.separator + System.currentTimeMillis());
+                }
+            }
+        } else {
+            // with encryption
+            File templateDir = new File(this.backupDirectory + File.separator + "templates");
+            for (File zip : templateDir.listFiles()) {
+                if (zip.isFile() && zip.getName().toLowerCase().endsWith(".zip")) {
+                    this.tryUnzipWithPassword(zip, System.getProperty("java.io.tmpdir") + File.separator + System.currentTimeMillis(), this.encryptionPassword);
+                }
+            }
+        }
+    }
+
+    private void tryUnzipWithPassword(File source, String targetDir, String password) throws Exception {
+
+        ZipFile zipFile = new ZipFile(source);
+        if (zipFile.isEncrypted()) {
+            zipFile.setPassword(password);
+        }
+        //zipFile.extractAll(targetDir);
+
+        UnzipParameters param = new UnzipParameters();
+        //zipFile.setFileNameCharset("ISO8859-15");
+        zipFile.setFileNameCharset(this.filenameEncoding);
+        List list = zipFile.getFileHeaders();
+
+        for (Iterator iterator = list.iterator(); iterator.hasNext();) {
+            FileHeader fh = (FileHeader) iterator.next();
+            //byte[] b = fh.getFileName().getBytes("ISO8859-1");
+            byte[] b = fh.getFileName().getBytes(this.filenameEncoding);
+            String fName = new String(b, this.filenameEncoding);
+//            String fName = null;
+//            try {
+//                CharsetDetector charDetect = new CharsetDetector();
+//                charDetect.setText(b);
+//                String charSet = charDetect.detect().getName();
+//                if(charSet.toLowerCase().indexOf("utf")<0)
+//                    charSet="UTF-8";
+//                //fName = new String(b, charSet);
+//                fName = new String(b, "UTF-8");
+//            } catch (Throwable e) {
+//                fName = fh.getFileName();
+//            }
+            zipFile.extractFile(fh, targetDir, param, fName);
+        }
+
+    }
+
+    private void tryUnzip(File source, String targetDir) throws Exception {
+        File target = new File(targetDir);
+        if (!target.exists()) {
+            target.mkdirs();
+        }
+
+        byte[] buffer = new byte[4096];
+        //get the zip file content
+        ZipInputStream zis
+                = new ZipInputStream(new FileInputStream(source));
+        //get the zipped file list entry
+        ZipEntry ze = zis.getNextEntry();
+
+        while (ze != null) {
+
+            String fileName = ze.getName();
+            File newFile = new File(targetDir + File.separator + fileName);
+
+            System.out.println("file unzip : " + newFile.getAbsoluteFile());
+
+            if (ze.isDirectory()) {
+                newFile.mkdirs();
+            } else {
+                //create all non exists folders
+                //else you will hit FileNotFoundException for compressed folder
+                new File(newFile.getParent()).mkdirs();
+
+                FileOutputStream fos = new FileOutputStream(newFile);
+
+                int len;
+                while ((len = zis.read(buffer)) > 0) {
+                    fos.write(buffer, 0, len);
+                }
+
+                fos.close();
+            }
+            ze = zis.getNextEntry();
+        }
+
+        zis.closeEntry();
+        zis.close();
     }
 
     private void validateBackupDirectory() throws Exception {
@@ -748,7 +886,7 @@ public class RestoreExecutor {
             throw new Exception("Datenbanksicherung 'jlawyerdb-dump.sql' fehlt!");
         }
     }
-    
+
     private void validateDataDirectory() throws Exception {
         File dir = new File(this.dataDirectory);
         ArrayList<String> subDirs = new ArrayList<String>();
@@ -763,7 +901,7 @@ public class RestoreExecutor {
         if (!dir.canRead()) {
             throw new Exception("Verzeichnis '" + this.dataDirectory + "' ist nicht lesbar!");
         }
-        
+
         if (!dir.canWrite()) {
             throw new Exception("Verzeichnis '" + this.dataDirectory + "' ist nicht schreibbar!");
         }

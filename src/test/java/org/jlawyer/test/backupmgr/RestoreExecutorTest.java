@@ -713,7 +713,7 @@ public class RestoreExecutorTest {
         this.mysqlPassword="sulibo64";
         this.backupDirectory="/home/jens/dev/projects/backups/";
         this.dataDirectory="/home/jens/dev/projects/j-lawyer-data/";
-        this.encryptionPassword="dummy";
+        this.encryptionPassword="j-dimension";
     }
 
     @After
