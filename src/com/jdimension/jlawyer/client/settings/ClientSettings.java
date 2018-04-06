@@ -736,6 +736,8 @@ public class ClientSettings {
     public static final String CONF_SCANS_LASTTAG="client.scans.lasttag";
     public static final String CONF_SCANS_DELETEENABLED="client.scans.deleteenabled";
     
+    public static final String CONF_CASE_LASTUPLOADDIR="client.case.lastuploaddir";
+    
     public static final String CONF_MAIL_HTMLWHITELIST="client.mail.htmlwhitelist";
     public static final String CONF_MAIL_SAVETOARCHIVEFILE="client.mail.savetoarchivefile";
     public static final String CONF_MAIL_DOWNLOADRESTRICTION="client.mail.downloadrestriction";

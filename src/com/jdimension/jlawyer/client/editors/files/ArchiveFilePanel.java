@@ -3224,14 +3224,33 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private void cmdUploadDocumentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdUploadDocumentActionPerformed
         JFileChooser chooser = new JFileChooser();
         chooser.setMultiSelectionEnabled(true);
+        
+        ClientSettings settings = ClientSettings.getInstance();
+        String lastUploadDir=settings.getConfiguration(ClientSettings.CONF_CASE_LASTUPLOADDIR, null);
+        if(lastUploadDir!=null) {
+            File lud=new File(lastUploadDir);
+            if(lud.exists())
+                if(lud.isDirectory())
+                    chooser.setCurrentDirectory(lud);
+        }
+        
         int returnVal = chooser.showOpenDialog(this);
         if (returnVal == JFileChooser.APPROVE_OPTION) {
             try {
                 //this.txtImportFile.setText(chooser.getSelectedFile().getCanonicalPath());
                 File[] fileArray = chooser.getSelectedFiles();
                 ArrayList<File> files = new ArrayList<File>();
+                boolean lastUploadSaved = false;
                 for (File f : fileArray) {
                     files.add(f);
+                    
+                    if (f.isFile() && !lastUploadSaved) {
+                        String parent = f.getParent();
+                        if (parent != null) {
+                            settings.setConfiguration(ClientSettings.CONF_CASE_LASTUPLOADDIR, parent);
+                            lastUploadSaved=true;
+                        }
+                    }
                 }
 
                 ThreadUtils.setWaitCursor(this);
@@ -3241,17 +3260,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
                 a.start();
 
-//                ClientSettings settings = ClientSettings.getInstance();
-//                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-//
-//                for (File f : files) {
-//                    byte[] data = FileUtils.readFile(f);
-//                    ArchiveFileDocumentsBean doc = locator.lookupArchiveFileServiceRemote().addDocument(this.dto.getId(), f.getName(), data, null);
-//                    ArchiveFileDocumentsTableModel m = (ArchiveFileDocumentsTableModel) this.tblDocuments.getModel();
-//                    m.addRow(new Object[]{doc, doc.getName()});
-//
-//
-//                }
             } catch (Exception ioe) {
                 log.error("Error uploading document", ioe);
                 JOptionPane.showMessageDialog(this, "Fehler beim Laden der Datei: " + ioe.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
