@@ -674,6 +674,7 @@ import java.util.List;
 public class ReviewsStub extends GenericStub {
 
     private List<ReviewsDetail> reviews;
+    private String searchCriteria=null;
     
     public ReviewsStub() {
         super();
@@ -692,6 +693,20 @@ public class ReviewsStub extends GenericStub {
      */
     public void setReviews(List<ReviewsDetail> reviews) {
         this.reviews = reviews;
+    }
+
+    /**
+     * @return the searchCriteria
+     */
+    public String getSearchCriteria() {
+        return searchCriteria;
+    }
+
+    /**
+     * @param searchCriteria the searchCriteria to set
+     */
+    public void setSearchCriteria(String searchCriteria) {
+        this.searchCriteria = searchCriteria;
     }
     
     

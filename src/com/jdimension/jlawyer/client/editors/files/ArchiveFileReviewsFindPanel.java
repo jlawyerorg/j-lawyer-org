@@ -679,6 +679,7 @@ import java.awt.Component;
 import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.event.KeyEvent;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import javax.swing.JOptionPane;
 import net.sf.jasperreports.engine.JasperFillManager;
@@ -1233,6 +1234,38 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
         ArrayList<ArchiveFileReviewsBean> revList=new ArrayList<ArchiveFileReviewsBean>();
         ArrayList<ArchiveFileBean> fileList=new ArrayList<ArchiveFileBean>();
         
+        StringBuffer critBuffer=new StringBuffer();
+        SimpleDateFormat df=new SimpleDateFormat("dd.MM.yyyy");
+        Date fromDate=this.txtFromDate.getDate();
+        if(fromDate!=null) {
+        fromDate.setHours(0);
+        fromDate.setMinutes(0);
+        fromDate.setSeconds(0);
+        critBuffer.append("von: ").append(df.format(fromDate));
+        }
+        Date toDate=this.txtToDate.getDate();
+        if(toDate!=null) {
+        toDate.setHours(0);
+        toDate.setMinutes(0);
+        toDate.setSeconds(0);
+        critBuffer.append(" bis: ").append(df.format(toDate));
+        }
+        String typeString="alle";
+        if(this.rdTypeRespite.isSelected())
+            typeString="Fristen";
+        if(this.rdTypeReview.isSelected())
+            typeString="Wiedervorlagen";
+        critBuffer.append("  Typen: ").append(typeString);
+        
+        String statusString="alle";
+        if(this.rdDoneStatus.isSelected())
+            statusString="erledigt";
+        if(this.rdNotDoneStatus.isSelected())
+            statusString="offen";
+        critBuffer.append("  Status: ").append(statusString);
+        
+        
+        
         for(int i=0;i<this.tblResults.getRowCount();i++) {
             ArchiveFileReviewsRowIdentifier id=(ArchiveFileReviewsRowIdentifier)this.tblResults.getValueAt(i, 0);
             ArchiveFileReviewsBean rev=id.getReviewDTO();
@@ -1240,7 +1273,7 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
             revList.add(rev);
             fileList.add(ar);
         }
-        return PrintStubGenerator.getStub(revList, fileList);
+        return PrintStubGenerator.getStub(revList, fileList, critBuffer.toString());
         
         
     }

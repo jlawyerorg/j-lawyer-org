@@ -679,7 +679,7 @@ public class PrintStubGenerator {
 
     private static SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
 
-    public static ReviewsStub getStub(ArrayList<ArchiveFileReviewsBean> revList, ArrayList<ArchiveFileBean> fileList) {
+    public static ReviewsStub getStub(ArrayList<ArchiveFileReviewsBean> revList, ArrayList<ArchiveFileBean> fileList, String criteriaString) {
         ArrayList<ReviewsDetail> result = new ArrayList<ReviewsDetail>();
         for (int i = 0; i < revList.size(); i++) {
             ArchiveFileReviewsBean rev = revList.get(i);
@@ -689,6 +689,7 @@ public class PrintStubGenerator {
         }
         ReviewsStub s = new ReviewsStub();
         s.setReviews(result);
+        s.setSearchCriteria(criteriaString);
         return s;
     }
 
