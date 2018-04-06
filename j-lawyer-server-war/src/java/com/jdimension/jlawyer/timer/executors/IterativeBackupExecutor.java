@@ -664,6 +664,7 @@
 package com.jdimension.jlawyer.timer.executors;
 
 import java.io.*;
+import java.nio.charset.Charset;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -731,6 +732,20 @@ public class IterativeBackupExecutor {
 
         File backupDir = new File(this.backupDirectory);
         backupDir.mkdirs();
+        
+        File metadataDir=new File(this.backupDirectory + File.separator + ".metadata");
+        if(!metadataDir.exists())
+            metadataDir.mkdirs();
+        
+        // clear former metadata
+        for(File metaFile: metadataDir.listFiles()) {
+            if(metaFile.isFile())
+                metaFile.delete();
+        }
+        
+        // store encoding, will be used by backup manager during restore
+        File encodingFile = new File(this.backupDirectory + File.separator + ".metadata" + File.separator + "encoding." + Charset.defaultCharset());
+        encodingFile.createNewFile();
         
         // delete old zip files. the root never has a zip, except for when it is there from an old installation
         for(File zip: backupDir.listFiles()) {
@@ -1030,9 +1045,11 @@ public class IterativeBackupExecutor {
 
         // Initiate ZipFile object with the path/name of the zip file.
         ZipFile zipFile = new ZipFile(backupDir.toString() + System.getProperty("file.separator") + fileName);
-        String fileNameEncoding = guessFileNameEncoding(fileList);
-        log.info("guessed filename encoding " + fileNameEncoding);
-        zipFile.setFileNameCharset(fileNameEncoding);
+        
+                // this did not work well, when unzipping on the same box with same encoding, special chars would still be messed up
+//        String fileNameEncoding = guessFileNameEncoding(fileList);
+//        log.info("guessed filename encoding " + fileNameEncoding);
+//        zipFile.setFileNameCharset(fileNameEncoding);
 
         for (File file : fileList) {
 

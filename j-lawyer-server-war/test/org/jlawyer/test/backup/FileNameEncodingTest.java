@@ -82,25 +82,19 @@ permission, would make you directly or secondarily liable for
 infringement under applicable copyright law, except executing it on a
 computer or modifying a private copy.  Propagation includes copying,
 distribution (with or without modification), making available to the
-public
-
-, and in some countries other activities as well.
+public, and in some countries other activities as well.
 
   To "convey" a work means any kind of propagation that enables other
 parties to make or receive copies.  Mere interaction with a user through
 a computer network, with no transfer of a copy, is not conveying.
 
-  An interactive user interface displays 
-
-"Appropriate Legal Notices"
+  An interactive user interface displays "Appropriate Legal Notices"
 to the extent that it includes a convenient and prominently visible
 feature that (1) displays an appropriate copyright notice, and (2)
 tells the user that there is no warranty for the work (except to the
 extent that warranties are provided), that licensees may convey the
 work under this License, and how to view a copy of this License.  If
-the interface presents 
-
-a list of user commands or options, such as a
+the interface presents a list of user commands or options, such as a
 menu, a prominent item in the list meets this criterion.
 
   1. Source Code.
@@ -109,8 +103,7 @@ menu, a prominent item in the list meets this criterion.
 for making modifications to it.  "Object code" means any non-source
 form of a work.
 
-  A "Standard Interface" means an interface that 
-either is an official
+  A "Standard Interface" means an interface that either is an official
 standard defined by a recognized standards body, or, in the case of
 interfaces specified for a particular programming language, one that
 is widely used among developers working in that language.
@@ -120,9 +113,7 @@ than the work as a whole, that (a) is included in the normal form of
 packaging a Major Component, but which is not part of that Major
 Component, and (b) serves only to enable use of the work with that
 Major Component, or to implement a Standard Interface for which an
-implementation is available to the public in 
-
-source code form.  A
+implementation is available to the public in source code form.  A
 "Major Component", in this context, means a major essential component
 (kernel, window system, and so on) of the specific operating system
 (if any) on which the executable work runs, or a compiler used to
@@ -135,8 +126,7 @@ control those activities.  However, it does not include the work's
 System Libraries, or general-purpose tools or generally available free
 programs which are used unmodified in performing those activities but
 which are not part of the work.  For example, Corresponding Source
-includes interface definition 
-files associated with source files for
+includes interface definition files associated with source files for
 the work, and the source code for shared libraries and dynamically
 linked subprograms that the work is specifically designed to require,
 such as by intimate data communication or control flow between those
@@ -285,9 +275,7 @@ in one of these ways:
 
     e) Convey the object code using peer-to-peer transmission, provided
     you inform other peers where the object code and Corresponding
-    Source of the work are being offered to the general public at 
-
-no
+    Source of the work are being offered to the general public at no
     charge under subsection 6d.
 
   A separable portion of the object code, whose source code is excluded
@@ -300,8 +288,7 @@ or household purposes, or (2) anything designed or sold for incorporation
 into a dwelling.  In determining whether a product is a consumer product,
 doubtful cases shall be resolved in favor of coverage.  For a particular
 product received by a particular user, "normally used" refers to a
-typical or common use of that class of 
-product, regardless of the status
+typical or common use of that class of product, regardless of the status
 of the particular user or of the way in which the particular user
 actually uses, or expects or is expected to use, the product.  A product
 is a consumer product regardless of whether the product has substantial
@@ -651,9 +638,7 @@ the "copyright" line and a pointer to where the full notice is found.
     (at your option) any later version.
 
     This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without 
-
-even the implied warranty of
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU Affero General Public License for more details.
 
@@ -665,8 +650,7 @@ Also add information on how to contact you by electronic and paper mail.
   If your software can interact with users remotely through a computer
 network, you should also make sure that it provides a way for users to
 get its source.  For example, if your program is a web application, its
-interface could 
-display a "Source" link that leads users to an archive
+interface could display a "Source" link that leads users to an archive
 of the code.  There are many ways you could offer source, and different
 solutions will be better for different programs; see section 13 for the
 specific requirements.
@@ -675,155 +659,116 @@ specific requirements.
 if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
-*/
-
+ */
 package org.jlawyer.test.backup;
 
-import com.jdimension.jlawyer.timer.executors.BackupResult;
-import com.jdimension.jlawyer.timer.executors.IterativeBackupExecutor;
 import java.io.File;
+import java.util.Iterator;
+import java.util.List;
 import junit.framework.Assert;
 import net.lingala.zip4j.core.ZipFile;
+import net.lingala.zip4j.exception.ZipException;
+import net.lingala.zip4j.model.FileHeader;
+import net.lingala.zip4j.model.UnzipParameters;
+import net.lingala.zip4j.model.ZipParameters;
+import net.lingala.zip4j.util.Zip4jConstants;
+import org.apache.tika.parser.txt.CharsetDetector;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
-
+import static org.junit.Assert.*;
 
 /**
  *
  * @author jens
  */
-public class BackupExecutorTest {
-    
-    public BackupExecutorTest() {
+public class FileNameEncodingTest {
+
+    public FileNameEncodingTest() {
     }
-    
+
     @BeforeClass
     public static void setUpClass() {
     }
-    
+
     @AfterClass
     public static void tearDownClass() {
     }
-    
+
     @Before
     public void setUp() {
     }
-    
+
     @After
     public void tearDown() {
     }
-    
+
     @Test
-    public void testBackupUnEncrypted() {
-    
-        
-        long start=System.currentTimeMillis();
+    public void testZip4JFileNameEncoding() {
+
+        String dataDir = "/home/jens/dev/projects/j-lawyer-data/templates";
+        String backupDir = "/tmp/" + System.currentTimeMillis();
+        new File(backupDir).mkdirs();
+        String zipFilePath = backupDir.toString() + System.getProperty("file.separator") + "testbackup.zip";
+
+        // ZIPPING
         try {
-            Thread.sleep(2000);
-        } catch (InterruptedException ex) {
-            // ignore
-        }
-        String dataDir="/home/jens/dev/projects/j-lawyer-data";
-        String backupDir="/home/jens/dev/projects/backups";
-//        String dataDir="/usr/local/j-lawyer-server/j-lawyer-data";
-//        String backupDir="/usr/local/j-lawyer-server/backups";
-        String mysqlPwd=System.getenv("mysqlpwd");
-        mysqlPwd="sulibo64";
-        IterativeBackupExecutor ibe=new IterativeBackupExecutor(dataDir, backupDir, "root", mysqlPwd, "3306", "");
-        
-        try {
-            BackupResult br=ibe.execute();
-            Assert.assertTrue(existsAndIsNewerThan(new File(backupDir + File.separator + "templates"), start));
-            Assert.assertTrue(existsAndIsNewerThan(new File(backupDir + File.separator + "mastertemplates"), start));
-            Assert.assertTrue(existsAndIsNewerThan(new File(backupDir + File.separator + "emailtemplates"), start));
-            Assert.assertTrue(existsAndIsNewerThan(new File(backupDir + File.separator + "faxqueue"), start));
-            Assert.assertTrue(existsAndIsNewerThan(new File(backupDir + File.separator + "jlawyerdb-dump.sql"), start));
-            for(File f: new File(backupDir + File.separator + "archivefiles").listFiles()) {
-                if(f.isDirectory()) {
-                    Assert.assertTrue(existsAndIsNewerThan(new File(backupDir + File.separator + "archivefiles" + File.separator + f.getName()), start));
+
+            ZipFile zipFile = new ZipFile(zipFilePath);
+            //zipFile.setFileNameCharset("UTF-8");
+
+            for (File file : new File(dataDir).listFiles()) {
+
+                if (!file.isDirectory()) { // we only zip files, not directories
+
+                    ZipParameters relFolderParams = new ZipParameters();
+                    relFolderParams.setCompressionMethod(Zip4jConstants.COMP_DEFLATE); // set compression method to deflate compression
+                    relFolderParams.setCompressionLevel(Zip4jConstants.DEFLATE_LEVEL_NORMAL);
+                    relFolderParams.setEncryptFiles(true);
+                    relFolderParams.setEncryptionMethod(Zip4jConstants.ENC_METHOD_AES);
+                    relFolderParams.setAesKeyStrength(Zip4jConstants.AES_STRENGTH_256);
+                    relFolderParams.setPassword("dummy");
+                    
+
+                    zipFile.addFile(file, relFolderParams);
+                    
+
                 }
             }
-        } catch (Exception ex) {
-            ex.printStackTrace();
+        } catch (Throwable t) {
+            t.printStackTrace();
             Assert.fail();
         }
-        
-    
-    }
-    
-    @Test
-    public void testBackupEncrypted() {
-    
-        
-        long start=System.currentTimeMillis();
+
+        // UNZIPPING
         try {
-            Thread.sleep(2000);
-        } catch (InterruptedException ex) {
-            // ignore
-        }
-        String dataDir="/home/jens/dev/projects/j-lawyer-data";
-        String backupDir="/home/jens/dev/projects/backups";
-        IterativeBackupExecutor ibe=new IterativeBackupExecutor(dataDir, backupDir, "root", "sulibo64", "3306", "1337");
-        
-        try {
-            BackupResult br=ibe.execute();
-            
-            Assert.assertTrue(existsAndIsNewerThan(new File(backupDir + File.separator + "templates"), start));
-            Assert.assertTrue(existsAndIsNewerThan(new File(backupDir + File.separator + "mastertemplates"), start));
-            Assert.assertTrue(existsAndIsNewerThan(new File(backupDir + File.separator + "emailtemplates"), start));
-            Assert.assertTrue(existsAndIsNewerThan(new File(backupDir + File.separator + "faxqueue"), start));
-            Assert.assertTrue(existsAndIsNewerThan(new File(backupDir + File.separator + "jlawyerdb-dump.sql"), start));
-            for(File f: new File(backupDir + File.separator + "archivefiles").listFiles()) {
-                if(f.isDirectory()) {
-                    // files might not have been changed, so we do not necessarily see new zips 
-                    Assert.assertTrue(exists(new File(backupDir + File.separator + "archivefiles" + File.separator + f.getName())));
-                }
+            String extractDir=backupDir + "/extracted";
+            new File(extractDir).mkdirs();
+            ZipFile zipFile = new ZipFile(zipFilePath);
+            if (zipFile.isEncrypted()) {
+                zipFile.setPassword("dummy");
             }
-        } catch (Exception ex) {
-            ex.printStackTrace();
+            //zipFile.extractAll(targetDir);
+
+            UnzipParameters param = new UnzipParameters();
+            //zipFile.setFileNameCharset("ISO8859-15");
+            zipFile.setFileNameCharset("UTF-8");
+            List list = zipFile.getFileHeaders();
+
+            for (Iterator iterator = list.iterator(); iterator.hasNext();) {
+                FileHeader fh = (FileHeader) iterator.next();
+                //byte[] b = fh.getFileName().getBytes("ISO8859-1");
+                byte[] b = fh.getFileName().getBytes("UTF-8");
+                String fName = new String(b, "UTF-8");
+                System.out.println("Extracting " + fName);
+                zipFile.extractFile(fh, extractDir, param, fName);
+            }
+        } catch (Throwable t) {
+            t.printStackTrace();
             Assert.fail();
         }
-        
-    
-    }
-    
-    private boolean existsAndIsNewerThan(File f, long timestamp) {
-        if(f.isFile()) {
-            boolean exists=f.exists();
-            boolean newer=false;
-            if(exists) {
-                newer=f.lastModified()>timestamp;
-            }
-            return exists && newer;
-        } else {
-            File[] children=f.listFiles();
-            boolean oneChild=children.length==1;
-            if(!oneChild)
-                return false;
-            boolean zip=children[0].getName().toLowerCase().endsWith(".zip");
-            boolean newer=children[0].lastModified()>timestamp;
-            return zip && newer;
-            
-        }
-    }
-    
-    private boolean exists(File f) {
-        if(f.isFile()) {
-            boolean exists=f.exists();
-            
-            return exists;
-        } else {
-            File[] children=f.listFiles();
-            boolean oneChild=children.length==1;
-            if(!oneChild)
-                return false;
-            boolean zip=children[0].getName().toLowerCase().endsWith(".zip");
-            return zip;
-            
-        }
+
     }
 }
