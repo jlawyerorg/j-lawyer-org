@@ -701,16 +701,26 @@ public class AddAddressSearchDialog extends javax.swing.JDialog {
 
     private static final Logger log = Logger.getLogger(AddAddressSearchDialog.class.getName());
     private int targetReferenceType = -1;
-    private AddressBean resultAddress=null;
-    private ArchiveFileAddressesBean resultInvolvement=null;
+    private AddressBean resultAddress = null;
+    private ArchiveFileAddressesBean resultInvolvement = null;
 
     /**
      * Creates new form AddAddressSearchDialog
      */
     public AddAddressSearchDialog(java.awt.Frame parent, boolean modal, int targetReferenceType) {
         super(parent, modal);
-        this.targetReferenceType=targetReferenceType;
+        this.targetReferenceType = targetReferenceType;
         initComponents();
+
+        if (this.targetReferenceType == ArchiveFileAddressesBean.REFERENCETYPE_CLIENT) {
+            this.cmbRefType.setSelectedItem("Mandant");
+        } else if (this.targetReferenceType == ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT) {
+            this.cmbRefType.setSelectedItem("Gegner");
+        }
+        if (this.targetReferenceType == ArchiveFileAddressesBean.REFERENCETYPE_OPPONENTATTORNEY) {
+            this.cmbRefType.setSelectedItem("Dritte");
+        }
+
         String[] colNames = new String[]{"Name", "Vorname", "Firma", "PLZ", "Ort", "Strasse", "Land", "Tags"};
         QuickAddressSearchTableModel model = new QuickAddressSearchTableModel(colNames, 0);
         this.tblResults.setModel(model);
@@ -719,7 +729,7 @@ public class AddAddressSearchDialog extends javax.swing.JDialog {
         ClientSettings s = ClientSettings.getInstance();
         List<String> tags = s.getAddressTagsInUse();
         TagUtils.populateTags(tags, cmdTagFilter, popTagFilter);
-        
+
         this.tblResults.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "Enter");
         this.tblResults.getActionMap().put("Enter", new AbstractAction() {
             @Override
@@ -749,6 +759,8 @@ public class AddAddressSearchDialog extends javax.swing.JDialog {
         cmdUseSelection = new javax.swing.JButton();
         cmdAddNew = new javax.swing.JButton();
         cmdTagFilter = new javax.swing.JButton();
+        cmbRefType = new javax.swing.JComboBox<>();
+        jLabel2 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         addComponentListener(new java.awt.event.ComponentAdapter() {
@@ -823,6 +835,15 @@ public class AddAddressSearchDialog extends javax.swing.JDialog {
             }
         });
 
+        cmbRefType.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Mandant", "Gegner", "Dritte" }));
+        cmbRefType.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmbRefTypeActionPerformed(evt);
+            }
+        });
+
+        jLabel2.setText("hinzufügen als:");
+
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -846,7 +867,10 @@ public class AddAddressSearchDialog extends javax.swing.JDialog {
                         .add(cmdCancel))
                     .add(layout.createSequentialGroup()
                         .add(cmdAddNew)
-                        .add(0, 0, Short.MAX_VALUE)))
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .add(jLabel2)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(cmbRefType, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -860,7 +884,11 @@ public class AddAddressSearchDialog extends javax.swing.JDialog {
                         .add(txtSearchString, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                     .add(cmdTagFilter))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                .add(cmdAddNew)
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
+                    .add(cmdAddNew)
+                    .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                        .add(cmbRefType, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .add(jLabel2)))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 359, Short.MAX_VALUE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
@@ -884,17 +912,16 @@ public class AddAddressSearchDialog extends javax.swing.JDialog {
 // perform search here
         EditorsRegistry.getInstance().updateStatus("Suche Adressen...");
         ThreadUtils.setWaitCursor(this);
-        
+
         new Thread(new QuickAddressSearchThread(this, this.txtSearchString.getText(), TagUtils.getSelectedTags(popTagFilter), this.tblResults)).start();
     }//GEN-LAST:event_cmdQuickSearchActionPerformed
 
     private void useSelection() {
         int row = this.tblResults.getSelectedRow();
         QuickAddressSearchRowIdentifier id = (QuickAddressSearchRowIdentifier) this.tblResults.getValueAt(row, 0);
-        
+
         //DefaultListModel model = (DefaultListModel) this.targetListBox.getModel();
         //model.addElement(id.getAddressDTO());
-
         try {
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
@@ -930,21 +957,21 @@ public class AddAddressSearchDialog extends javax.swing.JDialog {
             return;
         }
 
-        this.resultAddress=id.getAddressDTO();
-        ArchiveFileAddressesBean afa=new ArchiveFileAddressesBean();
+        this.resultAddress = id.getAddressDTO();
+        ArchiveFileAddressesBean afa = new ArchiveFileAddressesBean();
         afa.setAddressKey(resultAddress);
         //afa.setArchiveFileKey(this.resultAddress);
         afa.setReferenceType(targetReferenceType);
-        this.resultInvolvement=afa;
-        
+        this.resultInvolvement = afa;
+
         this.setVisible(false);
         this.dispose();
     }
-    
+
     public AddressBean getResultAddress() {
         return this.resultAddress;
     }
-    
+
     public ArchiveFileAddressesBean getResultInvolvement() {
         return this.resultInvolvement;
     }
@@ -994,6 +1021,15 @@ public class AddAddressSearchDialog extends javax.swing.JDialog {
         this.popTagFilter.show(this.cmdTagFilter, evt.getX(), evt.getY());
     }//GEN-LAST:event_cmdTagFilterMousePressed
 
+    private void cmbRefTypeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbRefTypeActionPerformed
+        if ("Mandant".equals(this.cmbRefType.getSelectedItem()))
+            this.targetReferenceType = ArchiveFileAddressesBean.REFERENCETYPE_CLIENT;
+        else if ("Gegner".equals(this.cmbRefType.getSelectedItem()))
+            this.targetReferenceType = ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT;
+        if ("Dritte".equals(this.cmbRefType.getSelectedItem()))
+            this.targetReferenceType = ArchiveFileAddressesBean.REFERENCETYPE_OPPONENTATTORNEY;
+    }//GEN-LAST:event_cmbRefTypeActionPerformed
+
     private int getRowForObject(QuickAddressSearchRowIdentifier id) {
         for (int i = 0; i < this.tblResults.getRowCount(); i++) {
             Object value = this.tblResults.getValueAt(i, 0);
@@ -1019,12 +1055,14 @@ public class AddAddressSearchDialog extends javax.swing.JDialog {
         });
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JComboBox<String> cmbRefType;
     private javax.swing.JButton cmdAddNew;
     private javax.swing.JButton cmdCancel;
     private javax.swing.JButton cmdQuickSearch;
     private javax.swing.JButton cmdTagFilter;
     private javax.swing.JButton cmdUseSelection;
     private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel2;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JPopupMenu popTagFilter;
     private javax.swing.JTable tblResults;

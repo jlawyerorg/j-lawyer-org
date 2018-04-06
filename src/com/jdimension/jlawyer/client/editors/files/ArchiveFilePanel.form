@@ -776,17 +776,13 @@
           <Layout>
             <DimensionLayout dim="0">
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Group type="102" alignment="0" attributes="0">
+                  <Group type="102" attributes="0">
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="jScrollPane8" pref="945" max="32767" attributes="0"/>
-                          <Group type="102" attributes="0">
-                              <Component id="cmdSearchClient" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace max="-2" attributes="0"/>
-                              <Component id="cmdSearchOpponent" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace max="-2" attributes="0"/>
-                              <Component id="cmdSearchOpponentAttorney" min="-2" max="-2" attributes="0"/>
+                          <Component id="jScrollPane8" alignment="0" pref="945" max="32767" attributes="0"/>
+                          <Group type="102" alignment="1" attributes="0">
                               <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                              <Component id="cmdSearchClient" min="-2" max="-2" attributes="0"/>
                           </Group>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
@@ -797,11 +793,7 @@
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" alignment="1" attributes="0">
                       <EmptySpace max="-2" attributes="0"/>
-                      <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="cmdSearchClient" min="-2" max="-2" attributes="0"/>
-                          <Component id="cmdSearchOpponent" min="-2" max="-2" attributes="0"/>
-                          <Component id="cmdSearchOpponentAttorney" min="-2" max="-2" attributes="0"/>
-                      </Group>
+                      <Component id="cmdSearchClient" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="jScrollPane8" pref="614" max="32767" attributes="0"/>
                   </Group>
@@ -812,31 +804,11 @@
             <Component class="javax.swing.JButton" name="cmdSearchClient">
               <Properties>
                 <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-                  <Image iconType="3" name="/icons/find.png"/>
+                  <Image iconType="3" name="/icons/edit_add.png"/>
                 </Property>
               </Properties>
               <Events>
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdSearchClientActionPerformed"/>
-              </Events>
-            </Component>
-            <Component class="javax.swing.JButton" name="cmdSearchOpponent">
-              <Properties>
-                <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-                  <Image iconType="3" name="/icons/find.png"/>
-                </Property>
-              </Properties>
-              <Events>
-                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdSearchOpponentActionPerformed"/>
-              </Events>
-            </Component>
-            <Component class="javax.swing.JButton" name="cmdSearchOpponentAttorney">
-              <Properties>
-                <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-                  <Image iconType="3" name="/icons/find.png"/>
-                </Property>
-              </Properties>
-              <Events>
-                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdSearchOpponentAttorneyActionPerformed"/>
               </Events>
             </Component>
             <Container class="javax.swing.JScrollPane" name="jScrollPane8">

@@ -992,8 +992,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.cmdUploadDocument.setEnabled(!readOnly);
         this.cmdNewReview.setEnabled(!readOnly);
         this.cmdSearchClient.setEnabled(!readOnly);
-        this.cmdSearchOpponent.setEnabled(!readOnly);
-        this.cmdSearchOpponentAttorney.setEnabled(!readOnly);
         
         // todo?
 //        this.lstClients.setEnabled(!readOnly);
@@ -1386,8 +1384,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         lblArchivedSince = new javax.swing.JLabel();
         tabParties = new javax.swing.JPanel();
         cmdSearchClient = new javax.swing.JButton();
-        cmdSearchOpponent = new javax.swing.JButton();
-        cmdSearchOpponentAttorney = new javax.swing.JButton();
         jScrollPane8 = new javax.swing.JScrollPane();
         pnlInvolvedParties = new com.jdimension.jlawyer.client.editors.files.InvolvedPartiesPanel();
         tabDocuments = new javax.swing.JPanel();
@@ -1896,24 +1892,10 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         tabPaneArchiveFile.addTab("allgemeine Daten", new javax.swing.ImageIcon(getClass().getResource("/icons/folder.png")), tabGeneralData); // NOI18N
 
-        cmdSearchClient.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/find.png"))); // NOI18N
+        cmdSearchClient.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit_add.png"))); // NOI18N
         cmdSearchClient.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmdSearchClientActionPerformed(evt);
-            }
-        });
-
-        cmdSearchOpponent.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/find.png"))); // NOI18N
-        cmdSearchOpponent.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdSearchOpponentActionPerformed(evt);
-            }
-        });
-
-        cmdSearchOpponentAttorney.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/find.png"))); // NOI18N
-        cmdSearchOpponentAttorney.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdSearchOpponentAttorneyActionPerformed(evt);
             }
         });
 
@@ -1938,23 +1920,16 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 .addContainerGap()
                 .add(tabPartiesLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(jScrollPane8, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 945, Short.MAX_VALUE)
-                    .add(tabPartiesLayout.createSequentialGroup()
-                        .add(cmdSearchClient)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(cmdSearchOpponent)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(cmdSearchOpponentAttorney)
-                        .add(0, 0, Short.MAX_VALUE)))
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, tabPartiesLayout.createSequentialGroup()
+                        .add(0, 0, Short.MAX_VALUE)
+                        .add(cmdSearchClient)))
                 .addContainerGap())
         );
         tabPartiesLayout.setVerticalGroup(
             tabPartiesLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(org.jdesktop.layout.GroupLayout.TRAILING, tabPartiesLayout.createSequentialGroup()
                 .addContainerGap()
-                .add(tabPartiesLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(cmdSearchClient)
-                    .add(cmdSearchOpponent)
-                    .add(cmdSearchOpponentAttorney))
+                .add(cmdSearchClient)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jScrollPane8, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 614, Short.MAX_VALUE))
         );
@@ -2904,33 +2879,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         return adr.toShortHtml();
     }
 
-    private void cmdSearchOpponentAttorneyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSearchOpponentAttorneyActionPerformed
-        AddAddressSearchDialog dlg = new AddAddressSearchDialog(EditorsRegistry.getInstance().getMainWindow(), true, ArchiveFileAddressesBean.REFERENCETYPE_OPPONENTATTORNEY);
-        dlg.setTitle("Dritten hinzufügen");
-        FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
-        dlg.setVisible(true);
-        AddressBean adrb=dlg.getResultAddress();
-        ArchiveFileAddressesBean afab=dlg.getResultInvolvement();
-        afab.setArchiveFileKey(dto);
-        InvolvedPartyEntryPanel ipep=new InvolvedPartyEntryPanel(dto, this, this.pnlInvolvedParties, this.getClass().getName(), BeaAccess.isBeaEnabled());
-        this.pnlInvolvedParties.add(ipep);
-    }//GEN-LAST:event_cmdSearchOpponentAttorneyActionPerformed
-
-    private void cmdSearchOpponentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSearchOpponentActionPerformed
-        AddAddressSearchDialog dlg = new AddAddressSearchDialog(EditorsRegistry.getInstance().getMainWindow(), true, ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT);
-        dlg.setTitle("Gegner hinzufügen");
-        FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
-        dlg.setVisible(true);
-        AddressBean adrb=dlg.getResultAddress();
-        ArchiveFileAddressesBean afab=dlg.getResultInvolvement();
-        afab.setArchiveFileKey(dto);
-        InvolvedPartyEntryPanel ipep=new InvolvedPartyEntryPanel(dto, this, this.pnlInvolvedParties, this.getClass().getName(), BeaAccess.isBeaEnabled());
-        this.pnlInvolvedParties.add(ipep);
-    }//GEN-LAST:event_cmdSearchOpponentActionPerformed
-
     private void cmdSearchClientActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSearchClientActionPerformed
         AddAddressSearchDialog dlg = new AddAddressSearchDialog(EditorsRegistry.getInstance().getMainWindow(), true, ArchiveFileAddressesBean.REFERENCETYPE_CLIENT);
-        dlg.setTitle("Mandant hinzufügen");
+        dlg.setTitle("Beteiligte hinzufügen");
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
         AddressBean adrb=dlg.getResultAddress();
@@ -4797,8 +4748,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JButton cmdPrint;
     private javax.swing.JButton cmdSave;
     private javax.swing.JButton cmdSearchClient;
-    private javax.swing.JButton cmdSearchOpponent;
-    private javax.swing.JButton cmdSearchOpponentAttorney;
     private javax.swing.JButton cmdSendMessage;
     private javax.swing.JButton cmdShowHistorySelector;
     private javax.swing.JButton cmdShowReviewSelector;
