@@ -1635,18 +1635,19 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
         File dbFile = new File(dst);
         if (!(dbFile.exists())) {
-            throw new Exception("Dokument " + dst + " existiert nicht und kann nicht gelöscht werden!");
+            log.warn("Dokument " + dst + " existiert nicht und kann nicht gelöscht werden!");
+        } else {
+            boolean deleted = dbFile.delete();
+            if (!deleted) {
+                throw new Exception("Dokument " + dst + " konnte nicht gelöscht werden!");
+            }
         }
-        boolean deleted = dbFile.delete();
-        if (!deleted) {
-            throw new Exception("Dokument " + dst + " konnte nicht gelöscht werden!");
-        }
-
+        
         try {
             PreviewGenerator pg = new PreviewGenerator(this.archiveFileDocumentsFacade);
             pg.deletePreview(aFile.getId(), db.getName());
         } catch (Throwable t) {
-            log.error("Error deleting document preview", t);
+            log.warn("Error deleting document preview", t);
         }
 
         ArchiveFileHistoryBean newHistEntry = new ArchiveFileHistoryBean();
