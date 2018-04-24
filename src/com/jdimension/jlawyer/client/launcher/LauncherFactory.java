@@ -666,17 +666,12 @@ package com.jdimension.jlawyer.client.launcher;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.FileUtils;
-import com.jdimension.jlawyer.client.utils.StringGenerator;
-import com.jdimension.jlawyer.persistence.ArchiveFileBean;
-import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
-import freemarker.log.Logger;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -695,7 +690,7 @@ public class LauncherFactory {
     public static Launcher getMicrosoftOfficeLauncher(String fileName, byte[] content, ObservedDocumentStore store) throws Exception {
         String url = createTempFile(fileName, content, store.isReadOnly());
 
-        // first check for internal launchers
+        // first checsk for internal launchers
         String lowerFileName = fileName.toLowerCase();
 
         String osName = System.getProperty("os.name").toLowerCase();
