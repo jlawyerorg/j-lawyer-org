@@ -2672,7 +2672,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             }
             inClause = inClause.replaceFirst(",", "");
 
-            st = con.prepareStatement("select distinct(archiveFileKey) from (select a1.archiveFileKey from (SELECT archiveFileKey, MAX(changeDate) as maxChangeDate FROM ArchiveFileHistoryBean GROUP BY archiveFileKey order by maxChangeDate DESC) a1, ArchiveFileBean a2, ArchiveFileTagsBean a3 where a1.archiveFileKey = a2.id and a2.archived=0 and a2.id = a3.archiveFileKey and a3.tagName in (" + inClause + ") order by maxChangeDate DESC limit 0,?)");
+            st = con.prepareStatement("select archiveFileKey from (select a1.archiveFileKey from (SELECT archiveFileKey, MAX(changeDate) as maxChangeDate FROM ArchiveFileHistoryBean GROUP BY archiveFileKey order by maxChangeDate DESC) a1, ArchiveFileBean a2, ArchiveFileTagsBean a3 where a1.archiveFileKey = a2.id and a2.archived=0 and a2.id = a3.archiveFileKey and a3.tagName in (" + inClause + ") order by maxChangeDate DESC limit 0,?");
 
             int index = 1;
             for (String t : tagName) {
@@ -2681,9 +2681,14 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             }
             st.setInt(index, limit);
             rs = st.executeQuery();
+            ArrayList<String> keyCache=new ArrayList<String>();
             while (rs.next()) {
                 String id = rs.getString(1);
-                returnList.add(this.archiveFileFacade.find(id));
+                // there might be duplicate cases in the result set
+                if(!keyCache.contains(id)) {
+                    keyCache.add(id);
+                    returnList.add(this.archiveFileFacade.find(id));
+                }
             }
 
             try {
