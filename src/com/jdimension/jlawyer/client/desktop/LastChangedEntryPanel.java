@@ -671,6 +671,7 @@ import com.jdimension.jlawyer.client.editors.files.EditArchiveFileDetailsPanel;
 import com.jdimension.jlawyer.client.editors.files.ViewArchiveFileDetailsPanel;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
+import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
@@ -725,7 +726,7 @@ public class LastChangedEntryPanel extends javax.swing.JPanel {
             this.lblChangedBy.setIcon(UserSettings.getInstance().getUserSmallIcon(e.getLastChangedBy()));
         
         String lawyerCaption=java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/LastChangedEntryPanel").getString("attorney");
-        String tooltip="<html><b>" + e.getFileNumber() + " " + e.getName() + "</b><br/>" + e.getReason() + "<br/>"  + lawyerCaption + ": " + e.getLastChangedBy() + "</html>";
+        String tooltip="<html><b>" + e.getFileNumber() + " " + StringUtils.nonNull(e.getName()) + "</b><br/>" + StringUtils.nonNull(e.getReason()) + "<br/>"  + StringUtils.nonNull(lawyerCaption) + ": " + StringUtils.nonNull(e.getLastChangedBy()) + "</html>";
         this.lblDescription.setToolTipText(tooltip);
         
         this.lblTags.setText("");
