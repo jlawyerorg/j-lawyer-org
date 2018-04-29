@@ -775,6 +775,7 @@ public class SystemResource {
         SystemManagementLocal sys = (SystemManagementLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/SystemManagement!com.jdimension.jlawyer.services.SystemManagementLocal");
            return sys.getServerInterfacesBoundTo();
         } catch (Exception ex) {
+            ex.printStackTrace();
             return "unknown";
         }
         
