@@ -892,6 +892,9 @@ public class VoipService implements VoipServiceRemote, VoipServiceLocal {
 
         boolean removed = false;
         for (String id : sessionIds) {
+            if(id==null)
+                continue;
+            
             FaxQueueBean fb = this.faxFacade.find(id);
             String qFile = fb.getPdfQueueFile();
             if (fb != null) {
