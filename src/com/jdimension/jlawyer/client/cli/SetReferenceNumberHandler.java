@@ -663,68 +663,78 @@
  */
 package com.jdimension.jlawyer.client.cli;
 
-import java.util.ArrayList;
+import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import javax.swing.JTextArea;
 
 /**
  *
  * @author jens
  */
-public class CommandHandlerFactory {
-    
-    private static ArrayList<CommandHandler> handlerList=new ArrayList<CommandHandler>();
-    
-    static {
-        handlerList.add(new HelpHandler(true));
-        handlerList.add(new ServerInfoHandler(true));
-        handlerList.add(new GetSettingHandler(true));
-        handlerList.add(new SetSettingHandler(true));
-        handlerList.add(new GetBindingsHandler(true));
-        handlerList.add(new SetBindingsHandler(true));
-        handlerList.add(new SysPropertiesHandler(true));
-        handlerList.add(new SetReferenceNumberHandler(true));
+public class SetReferenceNumberHandler extends CommandHandler {
+
+    public SetReferenceNumberHandler(boolean info) {
+        super(info);
     }
-    
-    public static ArrayList<CommandHandler> getAllHandlers() {
-        return handlerList;
+
+    @Override
+    public String getDescription() {
+        return "updates the reference number of a case";
     }
-    
-    public static CommandHandler getHandler(String cmdWithParams, boolean info) {
-        
-        String command=getCommand(cmdWithParams);
-        for(CommandHandler ch: handlerList) {
-            if(ch.handlesCommand(command)) {
-                ch.setInfoEnalbed(info);
-                return ch;
+
+    @Override
+    public String getCommand() {
+        return "setrefno";
+    }
+
+    @Override
+    public boolean handleCommand(String[] params, JTextArea ta) {
+        ClientSettings settings = ClientSettings.getInstance();
+        try {
+
+            if (params.length != 2) {
+                handleHelp(ta);
+                return true;
             }
+
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            String oldRef = params[0];
+            String newRef = params[1];
+            ArchiveFileBean afb=locator.lookupArchiveFileServiceRemote().getArchiveFileByFileNumber(oldRef);
+            if(afb==null) {
+                outLine("reference number " + oldRef + " does not exist", ta);
+                
+            } else {
+                outLine("reference number " + oldRef + " found", ta);
+                boolean success=locator.lookupArchiveFileServiceRemote().udpateFileNumber(oldRef, newRef);
+                if(success)
+                    outLine("reference number changed to " + newRef, ta);
+                else
+                    outLine("reference number could not be changed!", ta);
+            }
+            
+
+        } catch (Exception ex) {
+            outLineError(ex.getMessage(), ta);
         }
-        
-        return new CommandHandler(true);
-        
+
+        return true;
     }
-    
-    public static String getCommand(String cmdWithParams) {
-        int index=cmdWithParams.indexOf(' ');
-        if(index<0)
-            index=cmdWithParams.length();
-        
-        String command=cmdWithParams.substring(0, index);
-        return command;
+
+    @Override
+    public void handleHelp(JTextArea ta) {
+        outLine("setrefno <old-ref-no> <new-ref-no>", ta);
+        outLine("  old-ref-no: current reference number - the one to be changed", ta);
+        outLine("  new-ref-no: new reference number", ta);
     }
-    
-    public static boolean isHelpRequest(String[] params) {
-        if(params.length==1)
-            return "?".equals(params[0]);
+
+    @Override
+    public boolean handlesCommand(String cmd) {
+        if ("setrefno".equals(cmd)) {
+            return true;
+        }
+
         return false;
     }
-    
-    public static String[] getParams(String cmdWithParams) {
-        String command=getCommand(cmdWithParams);
-        cmdWithParams=cmdWithParams.substring(command.length());
-        if(cmdWithParams.startsWith(" "))
-            cmdWithParams=cmdWithParams.substring(1);
-        if(cmdWithParams.length()==0)
-            return new String[] {};
-        return cmdWithParams.split(" ");
-    }
-    
 }
