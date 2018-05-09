@@ -2988,4 +2988,25 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         return resultList;
     }
 
+    @Override
+    @RolesAllowed({"adminRole"})
+    public boolean udpateFileNumber(String from, String to) throws Exception {
+        ArchiveFileBean afb=this.getArchiveFileByFileNumber(from);
+        if(afb==null)
+            return false;
+        afb.setFileNumber(to);
+        this.archiveFileFacade.edit(afb);
+        
+        StringGenerator idGen = new StringGenerator();
+        ArchiveFileHistoryBean newHistEntry = new ArchiveFileHistoryBean();
+        newHistEntry.setId(idGen.getID().toString());
+        newHistEntry.setArchiveFileKey(afb);
+        newHistEntry.setChangeDate(new Date());
+        newHistEntry.setChangeDescription("Aktenzeichen geändert: " + from + " --> " + to);
+        newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
+        this.archiveFileHistoryFacade.create(newHistEntry);
+        
+        return true;
+    }
+
 }
