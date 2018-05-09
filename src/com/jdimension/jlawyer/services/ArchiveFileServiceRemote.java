@@ -777,4 +777,6 @@ public interface ArchiveFileServiceRemote {
 
     List<ArchiveFileAddressesBean> getInvolvementDetailsForCase(String archiveFileKey);
 
+    boolean udpateFileNumber(String from, String to) throws Exception;
+
 }
