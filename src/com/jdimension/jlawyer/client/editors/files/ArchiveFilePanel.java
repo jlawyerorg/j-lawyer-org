@@ -3365,7 +3365,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     }//GEN-LAST:event_mnuDuplicateDocumentActionPerformed
 
     private void tblReviewReasonsMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblReviewReasonsMouseClicked
-        if (!evt.isPopupTrigger() && evt.getComponent().isEnabled()) {
+        if (evt.getClickCount()==1 && !evt.isPopupTrigger() && evt.getComponent().isEnabled()) {
             Point p = evt.getPoint();
             int col = this.tblReviewReasons.columnAtPoint(p);
             if (col == 3) {
@@ -3388,6 +3388,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
                 this.tblReviewReasons.setValueAt(new Boolean(reviewDto.getDoneBoolean()), row, col);
             }
+        } else if(evt.getClickCount() == 2 && !evt.isConsumed()) {
+            this.mnuEditReviewActionPerformed(null);
         }
 
     }//GEN-LAST:event_tblReviewReasonsMouseClicked
@@ -4333,7 +4335,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private void mnuEditReviewActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuEditReviewActionPerformed
         int[] selectedRows = this.tblReviewReasons.getSelectedRows();
         for (int i = 0; i < selectedRows.length; i++) {
-            evt.getSource();
+            //evt.getSource();
             ArchiveFileReviewsBean review = (ArchiveFileReviewsBean) this.tblReviewReasons.getValueAt(selectedRows[i], 0);
             EditorOrDuplicateReviewDialog dlg = new EditorOrDuplicateReviewDialog(EditorOrDuplicateReviewDialog.MODE_EDIT, EditorsRegistry.getInstance().getMainWindow(), true, this.dto.getId(), review, this.tblReviewReasons);
             FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
