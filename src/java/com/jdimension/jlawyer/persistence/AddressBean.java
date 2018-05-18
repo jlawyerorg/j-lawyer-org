@@ -785,6 +785,8 @@ public class AddressBean implements Serializable {
     private String custom3;
     @Column(name = "beaSafeId")
     private String beaSafeId;
+    @Column(name = "encryptionPwd")
+    private String encryptionPwd;
     
     @OneToMany(mappedBy = "addressKey")
     private List<ArchiveFileAddressesBean> archiveFileAddressesBeanList;
@@ -1273,6 +1275,20 @@ public class AddressBean implements Serializable {
      */
     public void setBeaSafeId(String beaSafeId) {
         this.beaSafeId = beaSafeId;
+    }
+
+    /**
+     * @return the encryptionPwd
+     */
+    public String getEncryptionPwd() {
+        return encryptionPwd;
+    }
+
+    /**
+     * @param encryptionPwd the encryptionPwd to set
+     */
+    public void setEncryptionPwd(String encryptionPwd) {
+        this.encryptionPwd = encryptionPwd;
     }
     
 }
