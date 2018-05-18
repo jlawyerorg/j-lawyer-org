@@ -7,5 +7,6 @@ alter table ArchiveFileAddressesBean add `custom1` VARCHAR(250) BINARY;
 alter table ArchiveFileAddressesBean add `custom2` VARCHAR(250) BINARY;
 alter table ArchiveFileAddressesBean add `custom3` VARCHAR(250) BINARY;
 
+alter table AddressBean add `encryptionPwd` VARCHAR(30) BINARY;
 
 commit;
