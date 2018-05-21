@@ -689,7 +689,7 @@ public class UgAccess {
     private WebTarget webTarget = null;
 
     private UgAccess() {
-        String BASE_URI = "http://urteile-gesetze.de:9090/extapi/v1/";
+        String BASE_URI = "https://urteile-gesetze.de/extapi/v1/";
         client = javax.ws.rs.client.ClientBuilder.newClient();
         //WebTarget webTarget = client.target(BASE_URI).path("restws");
         webTarget = client.target(BASE_URI);
