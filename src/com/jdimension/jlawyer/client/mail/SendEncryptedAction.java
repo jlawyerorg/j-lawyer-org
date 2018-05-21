@@ -661,58 +661,311 @@
  * For more information on this, and how to apply and follow the GNU AGPL, see
  * <https://www.gnu.org/licenses/>.
  */
-package org.jlawyer.test.client.mail;
+package com.jdimension.jlawyer.client.mail;
 
-import com.jdimension.jlawyer.client.mail.EmailUtils;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import static org.junit.Assert.*;
+import com.jdimension.jlawyer.client.encryption.PDFEncryptor;
+import com.jdimension.jlawyer.client.events.DocumentAddedEvent;
+import com.jdimension.jlawyer.client.events.EventBroker;
+import com.jdimension.jlawyer.client.launcher.LauncherFactory;
+import com.jdimension.jlawyer.client.processing.ProgressIndicator;
+import com.jdimension.jlawyer.client.processing.ProgressableAction;
+import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.utils.FileUtils;
+import com.jdimension.jlawyer.persistence.AddressBean;
+import com.jdimension.jlawyer.persistence.AppUserBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileHistoryBean;
+import com.jdimension.jlawyer.services.AddressServiceRemote;
+import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
+import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.Properties;
+import javax.activation.DataHandler;
+import javax.activation.FileDataSource;
+import javax.mail.*;
+import javax.mail.internet.*;
+import javax.swing.JDialog;
+import org.apache.log4j.Logger;
 
 /**
  *
  * @author jens
  */
-public class MailTest {
-    
-    public MailTest() {
-    }
-    
-    @BeforeClass
-    public static void setUpClass() {
-    }
-    
-    @AfterClass
-    public static void tearDownClass() {
-    }
-    
-    @Before
-    public void setUp() {
-    }
-    
-    @After
-    public void tearDown() {
+public class SendEncryptedAction extends ProgressableAction {
+
+    private static final Logger log = Logger.getLogger(SendEncryptedAction.class.getName());
+    private static SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy, HH:mm");
+    private ArrayList<String> attachments = null;
+    private AppUserBean cu = null;
+    private boolean readReceipt = false;
+    private String to = "";
+    private String cc = "";
+    private String bcc = "";
+    private String subject = "";
+    private String body = "";
+    private String contentType = "text/plain";
+    private ArchiveFileBean archiveFile = null;
+    private ArrayList<String> mails=null;
+
+    public SendEncryptedAction(ProgressIndicator i, JDialog cleanAfter, ArrayList<String> attachments, AppUserBean cu, boolean readReceipt, String to, String cc, String bcc, String subject, String body, String contentType) {
+        super(i, false, cleanAfter);
+        this.attachments = attachments;
+        this.cu = cu;
+        this.readReceipt = readReceipt;
+        this.to = to;
+        this.cc = cc;
+        this.bcc = bcc;
+        this.subject = subject;
+        this.body = body;
+        this.contentType = contentType;
+        
+        this.mails = EmailUtils.getAllMailAddressesFromString(this.to);
+            mails.addAll(EmailUtils.getAllMailAddressesFromString(this.cc));
+            mails.addAll(EmailUtils.getAllMailAddressesFromString(this.bcc));
     }
 
-     @Test
-     public void testValidMailAddress() {
-         
-         Assert.assertTrue(EmailUtils.isValidEmailAddress("info@j-lawyer.org"));
-         Assert.assertFalse(EmailUtils.isValidEmailAddress(".com"));
-         Assert.assertFalse(EmailUtils.isValidEmailAddress("this-at-that"));
-     
-     }
-     
-     @Test
-     public void testGetAllFromString() {
-         
-         Assert.assertTrue(EmailUtils.getAllMailAddressesFromString("info@j-lawyer.org gugge jetztaber@spaeter.com").contains("info@j-lawyer.org"));
-         Assert.assertTrue(EmailUtils.getAllMailAddressesFromString("info@j-lawyer.org gugge jetztaber@spaeter.com").contains("jetztaber@spaeter.com"));
-         Assert.assertFalse(EmailUtils.getAllMailAddressesFromString("info@j-lawyer.org gugge jetztaber@spaeter.com").contains("gugge"));
-         
-     
-     }
+    public SendEncryptedAction(ProgressIndicator i, JDialog cleanAfter, ArrayList<String> attachments, AppUserBean cu, boolean readReceipt, String to, String cc, String bcc, String subject, String body, String contentType, ArchiveFileBean af) {
+        this(i, cleanAfter, attachments, cu, readReceipt, to, cc, bcc, subject, body, contentType);
+        this.archiveFile = af;
+    }
+
+    @Override
+    public int getMax() {
+        return this.mails.size() * 7;
+    }
+
+    @Override
+    public int getMin() {
+        return 0;
+    }
+
+    @Override
+    public boolean execute() throws Exception {
+
+        this.progress("Verbinde...");
+        Properties props = new Properties();
+
+        String protocol = "smtp";
+        if (cu.isEmailOutSsl()) {
+            protocol = "smtps";
+            props.put("mail.smtp.ssl.enable", "true");
+        }
+
+        props.put("mail.smtp.host", cu.getEmailOutServer());
+        //props.put("mail.smtp.port", "25");
+        props.put("mail.smtp.user", cu.getEmailOutUser());
+        props.put("mail.smtp.auth", true);
+        props.put("mail.smtps.host", cu.getEmailOutServer());
+        //props.put("mail.smtps.port", "25");
+        if (cu.isEmailStartTls()) {
+            props.put("mail.smtp.starttls.enable", "true");
+        }
+        props.put("mail.smtps.user", cu.getEmailOutUser());
+        props.put("mail.smtps.auth", true);
+        props.put("mail.from", cu.getEmailAddress());
+        props.put("mail.password", cu.getEmailOutPwd());
+
+        // add outbox properties for storing in "sent"
+        props.setProperty("mail.store.protocol", cu.getEmailInType());
+        if (cu.isEmailInSsl()) {
+            props.setProperty("mail." + cu.getEmailInType() + ".ssl.enable", "true");
+        }
+
+        javax.mail.Authenticator auth = new javax.mail.Authenticator() {
+
+            @Override
+            public PasswordAuthentication getPasswordAuthentication() {
+                return new PasswordAuthentication(cu.getEmailOutUser(), cu.getEmailOutPwd());
+            }
+        };
+
+        Session session = Session.getInstance(props, auth);
+
+        try {
+            Transport bus = session.getTransport("smtp");
+
+            // Connect only once here
+            // Transport.send() disconnects after each send
+            // Usually, no username and password is required for SMTP
+            bus.connect(cu.getEmailOutServer(), cu.getEmailOutUser(), cu.getEmailOutPwd());
+
+            Throwable storeException = null;
+            for (String currentRecipientMail : mails) {
+                this.progress("Verschlüsseln der Anhänge für " + currentRecipientMail + "...");
+                ArrayList<String> encryptedAttachments = new ArrayList<String>();
+                ArrayList<String> cleanUpAttachments = new ArrayList<String>();
+                for (String unencrypted : this.attachments) {
+                    ClientSettings settings = ClientSettings.getInstance();
+                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                    AddressServiceRemote adr = locator.lookupAddressServiceRemote();
+                    AddressBean[] found = adr.searchSimple(currentRecipientMail);
+                    if (found != null && found.length == 1 && found[0].supportsCrypto()) {
+                        File fIn = new File(unencrypted);
+                        String fInDir = fIn.getParentFile().getPath();
+                        String enc = PDFEncryptor.encryptPdf(unencrypted, fInDir, found[0].getEncryptionPwd());
+                        encryptedAttachments.add(enc);
+                        cleanUpAttachments.add(enc);
+                    } else {
+                        encryptedAttachments.add(unencrypted);
+                    }
+                }
+                this.progress("Erstelle Nachricht an " + currentRecipientMail + "...");
+                MimeMessage msg = new MimeMessage(session);
+
+                msg.setFrom(new InternetAddress(cu.getEmailAddress(), cu.getEmailSenderName()));
+
+                if (this.readReceipt) {
+                    msg.setHeader("Disposition-Notification-To", cu.getEmailAddress());
+                    msg.setHeader("Return-Receipt-To", cu.getEmailAddress());
+                }
+
+                msg.setRecipients(Message.RecipientType.TO, currentRecipientMail);
+//                msg.setRecipients(Message.RecipientType.CC, cc);
+//                msg.setRecipients(Message.RecipientType.BCC, bcc);
+
+                msg.setSubject(subject);
+                msg.setSentDate(new Date());
+                //msg.setText(this.taBody.getText());
+
+                Multipart multiPart = new MimeMultipart();
+
+                MimeBodyPart messageText = new MimeBodyPart();
+                //messageText.setContent(body, "text/plain; charset=UTF-8");
+                messageText.setContent(body, this.contentType + "; charset=UTF-8");
+                multiPart.addBodyPart(messageText);
+
+                String attachmentNames = "";
+                for (String url : encryptedAttachments) {
+
+                    MimeBodyPart att = new MimeBodyPart();
+                    FileDataSource attFile = new FileDataSource(url);
+                    att.setDataHandler(new DataHandler(attFile));
+                    att.setFileName(attFile.getName());
+                    attachmentNames = attachmentNames + attFile.getName() + " ";
+                    multiPart.addBodyPart(att);
+                }
+
+                msg.setContent(multiPart);
+
+                this.progress("Sende an " + currentRecipientMail + "...");
+                //Transport.send(msg);
+                msg.saveChanges();
+                bus.send(msg);
+
+                try {
+                    if (this.archiveFile != null) {
+
+                        ClientSettings settings = ClientSettings.getInstance();
+                        JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                        ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
+
+                        this.progress("Speichern in Akte " + this.archiveFile.getFileNumber());
+                        ByteArrayOutputStream bOut = new ByteArrayOutputStream();
+                        msg.writeTo(bOut);
+                        bOut.close();
+                        byte[] data = bOut.toByteArray();
+
+                        String newName = currentRecipientMail + " - " + msg.getSubject();
+                        if (attachmentNames.trim().length() > 0) {
+                            newName = currentRecipientMail + " - " + attachmentNames.trim() + " per E-Mail";
+                        }
+                        if (newName.length() > 250) {
+                            newName = newName.substring(0, 249);
+                        }
+                        newName = newName + ".eml";
+                        newName = FileUtils.sanitizeFileName(newName);
+                        java.util.Date sentPrefix = new Date();
+                        newName = FileUtils.getNewFileName(newName, true, sentPrefix, this.indicator, "Datei umbenennen");
+
+                        if (newName != null) {
+                            if (newName.trim().length() == 0) {
+                                newName = "E-Mail";
+                            }
+
+                            if (!newName.toLowerCase().endsWith(".eml")) {
+                                newName = newName + ".eml";
+                            }
+
+                            ArchiveFileDocumentsBean newDoc = afs.addDocument(this.archiveFile.getId(), newName, data, "");
+
+                            ArchiveFileHistoryBean historyDto = new ArchiveFileHistoryBean();
+                            historyDto.setChangeDate(new Date());
+                            historyDto.setChangeDescription("E-Mail gesendet an " + currentRecipientMail + ": " + msg.getSubject());
+                            afs.addHistory(this.archiveFile.getId(), historyDto);
+
+                            EventBroker eb = EventBroker.getInstance();
+                            eb.publishEvent(new DocumentAddedEvent(newDoc));
+
+                        }
+
+                    } else {
+                        this.progress("Überspringe Speichern in Akte...");
+                    }
+                } catch (Throwable t) {
+                    log.error("Could not save message to archive file", t);
+                    storeException = t;
+                }
+
+                bus.close();
+
+                this.progress("Suche Ordner 'Gesendet'...");
+                Store store = session.getStore(cu.getEmailInType());
+                store.connect(cu.getEmailInServer(), cu.getEmailInUser(), cu.getEmailInPwd());
+
+                Folder folder = store.getFolder(FolderContainer.INBOX);
+                if (!folder.isOpen()) {
+                    folder.open(Folder.READ_WRITE);
+                }
+
+                Folder sent = EmailUtils.getSentFolder(folder);
+                if (sent != null) {
+                    this.progress("Kopiere Nachricht in 'Gesendet'...");
+                    sent.open(Folder.READ_WRITE);
+                    msg.setFlag(Flags.Flag.SEEN, true);
+                    sent.appendMessages(new Message[]{msg});
+
+                }
+
+                try {
+                    EmailUtils.closeIfIMAP(folder);
+                    //folder.close(true);
+                } catch (Throwable t) {
+                    log.error(t);
+                }
+
+                store.close();
+
+                for (String url : cleanUpAttachments) {
+                    File f = new File(url);
+                    if (f.exists()) {
+                        LauncherFactory.cleanupTempFile(url);
+                    }
+                }
+
+            }
+
+            for (String url : this.attachments) {
+                File f = new File(url);
+                if (f.exists()) {
+                    LauncherFactory.cleanupTempFile(url);
+                }
+            }
+
+            if (storeException != null) {
+                throw new Exception("Fehler beim Speichern: " + storeException.getMessage());
+            }
+
+        } catch (Exception mex) {
+            log.error(mex);
+//            JOptionPane.showMessageDialog(this, "Fehler beim Senden: " + mex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            throw new Exception("Fehler beim Senden: " + mex.getMessage());
+        }
+        return true;
+
+    }
 }

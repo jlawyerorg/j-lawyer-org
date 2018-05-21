@@ -668,16 +668,19 @@ import com.jdimension.jlawyer.client.editors.documents.SearchAndAssignDialog;
 import com.jdimension.jlawyer.client.editors.files.AddressBeanListCellRenderer;
 import com.jdimension.jlawyer.client.launcher.LauncherFactory;
 import com.jdimension.jlawyer.client.processing.ProgressIndicator;
+import com.jdimension.jlawyer.client.processing.ProgressableAction;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.PlaceHolderUtils;
+import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.email.EmailTemplate;
 import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.services.AddressServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
@@ -686,7 +689,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Hashtable;
 import java.util.List;
-import java.util.logging.Level;
 import javax.swing.*;
 import org.apache.log4j.Logger;
 
@@ -898,23 +900,23 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
     }
 
     public void addAllToOpponentAttorney(List<AddressBean> list) {
-        for(AddressBean o: list) {
+        for (AddressBean o : list) {
             this.addToOpponentAttorney(o);
         }
     }
-    
+
     public void addAllToOpponent(List<AddressBean> list) {
-        for(AddressBean o: list) {
+        for (AddressBean o : list) {
             this.addToOpponent(o);
         }
     }
-    
+
     public void addAllToClient(List<AddressBean> list) {
-        for(AddressBean o: list) {
+        for (AddressBean o : list) {
             this.addToClient(o);
         }
     }
-    
+
     public void addToClient(AddressBean ab) {
         if (ab == null) {
             return;
@@ -1014,6 +1016,11 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         this.contextDictateSign = dictateSign;
         this.attachments.add(tempUrl);
         ((DefaultListModel) this.lstAttachments.getModel()).addElement(new File(tempUrl).getName());
+        if(!tempUrl.toLowerCase().endsWith(".pdf")) {
+            this.chkEncryption.setSelected(false);
+            this.chkEncryption.setEnabled(false);
+            this.lblEncryption.setText("Verschlüsselung nur für PDF");
+        }
 
     }
 
@@ -1066,9 +1073,11 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         text = new javax.swing.JRadioButton();
         html = new javax.swing.JRadioButton();
         chkReadReceipt = new javax.swing.JCheckBox();
+        chkEncryption = new javax.swing.JToggleButton();
+        lblEncryption = new javax.swing.JLabel();
+        chkSaveAsDocument = new javax.swing.JCheckBox();
         cmdRecipientsCc = new javax.swing.JButton();
         cmdRecipientsBcc = new javax.swing.JButton();
-        chkSaveAsDocument = new javax.swing.JCheckBox();
 
         mnuSearchRecipient.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/find.png"))); // NOI18N
         mnuSearchRecipient.setText("suchen");
@@ -1239,7 +1248,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                 .addComponent(jLabel5)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(cmbOpponentAtt, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(13, Short.MAX_VALUE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         txtCc.addKeyListener(new java.awt.event.KeyAdapter() {
@@ -1296,6 +1305,27 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
 
         chkReadReceipt.setText("Lesebestätigung anfordern");
 
+        chkEncryption.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/gpg-disabled-red.png"))); // NOI18N
+        chkEncryption.setBorder(null);
+        chkEncryption.setBorderPainted(false);
+        chkEncryption.setContentAreaFilled(false);
+        chkEncryption.setSelectedIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/gpg.png"))); // NOI18N
+        chkEncryption.addChangeListener(new javax.swing.event.ChangeListener() {
+            public void stateChanged(javax.swing.event.ChangeEvent evt) {
+                chkEncryptionStateChanged(evt);
+            }
+        });
+        chkEncryption.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                chkEncryptionActionPerformed(evt);
+            }
+        });
+
+        lblEncryption.setText("unverschlüsselt senden");
+
+        chkSaveAsDocument.setSelected(true);
+        chkSaveAsDocument.setText("als Dokument speichern");
+
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
@@ -1304,11 +1334,19 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                 .addContainerGap()
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addComponent(text)
+                        .addComponent(chkEncryption)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(html))
-                    .addComponent(chkReadReceipt))
-                .addContainerGap(91, Short.MAX_VALUE))
+                        .addComponent(lblEncryption, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(jPanel2Layout.createSequentialGroup()
+                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(chkSaveAsDocument)
+                            .addGroup(jPanel2Layout.createSequentialGroup()
+                                .addComponent(text)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(html))
+                            .addComponent(chkReadReceipt))
+                        .addGap(0, 80, Short.MAX_VALUE)))
+                .addContainerGap())
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1317,7 +1355,14 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                     .addComponent(html)
                     .addComponent(text))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(chkReadReceipt))
+                .addComponent(chkReadReceipt)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(chkSaveAsDocument)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(chkEncryption)
+                    .addComponent(lblEncryption, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         cmdRecipientsCc.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/find.png"))); // NOI18N
@@ -1334,9 +1379,6 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
             }
         });
 
-        chkSaveAsDocument.setSelected(true);
-        chkSaveAsDocument.setText("als Dokument speichern");
-
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -1348,8 +1390,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(layout.createSequentialGroup()
                                 .addComponent(jToolBar1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addComponent(chkSaveAsDocument))
+                                .addGap(0, 0, Short.MAX_VALUE))
                             .addComponent(contentPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(jScrollPane2))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -1408,19 +1449,17 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                     .addComponent(jLabel3)
                     .addComponent(txtSubject, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(jToolBar1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(chkSaveAsDocument))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jToolBar1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(contentPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 60, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(contentPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 60, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                 .addContainerGap())
         );
 
@@ -1440,7 +1479,10 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         //SendAction a=new SendAction(dlg, this, this.attachments, this.cu, this.chkReadReceipt.isSelected(), this.txtTo.getText(), this.txtCc.getText(), this.txtBcc.getText(), this.txtSubject.getText(), this.taBody.getText());
         EditorImplementation ed = (EditorImplementation) this.contentPanel.getComponent(0);
         String contentType = ed.getContentType();
-        SendAction a = null;
+        ArrayList<String> mails = EmailUtils.getAllMailAddressesFromString(this.txtTo.getText());
+        mails.addAll(EmailUtils.getAllMailAddressesFromString(this.txtCc.getText()));
+        mails.addAll(EmailUtils.getAllMailAddressesFromString(this.txtBcc.getText()));
+        ProgressableAction a = null;
         if (this.chkSaveAsDocument.isSelected()) {
             if (this.contextArchiveFile == null) {
                 SearchAndAssignDialog saDlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true);
@@ -1450,7 +1492,40 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                 saDlg.dispose();
 
             }
-            a = new SendAction(dlg, this, this.attachments, this.cu, this.chkReadReceipt.isSelected(), this.txtTo.getText(), this.txtCc.getText(), this.txtBcc.getText(), this.txtSubject.getText(), ed.getText(), contentType, this.contextArchiveFile);
+
+            if (this.chkEncryption.isSelected()) {
+                int crypto = 0;
+                try {
+                    crypto = this.cryptoRecipients(mails);
+                } catch (Throwable t) {
+                    ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler: " + t.getMessage(), "Fehler");
+                    return;
+                }
+                if (crypto < mails.size()) {
+                    int response = JOptionPane.showConfirmDialog(this, "Verschlüsselung für " + crypto + " von " + mails.size() + " Empfängern - fortfahren?", "Verschlüsselung", JOptionPane.YES_NO_OPTION);
+                    if (response == JOptionPane.NO_OPTION) {
+                        return;
+                    }
+                }
+                a = new SendEncryptedAction(dlg, this, this.attachments, this.cu, this.chkReadReceipt.isSelected(), this.txtTo.getText(), this.txtCc.getText(), this.txtBcc.getText(), this.txtSubject.getText(), ed.getText(), contentType, this.contextArchiveFile);
+            } else {
+                a = new SendAction(dlg, this, this.attachments, this.cu, this.chkReadReceipt.isSelected(), this.txtTo.getText(), this.txtCc.getText(), this.txtBcc.getText(), this.txtSubject.getText(), ed.getText(), contentType, this.contextArchiveFile);
+            }
+        } else if (this.chkEncryption.isSelected()) {
+            int crypto = 0;
+            try {
+                crypto = this.cryptoRecipients(mails);
+            } catch (Throwable t) {
+                ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler: " + t.getMessage(), "Fehler");
+                return;
+            }
+            if (crypto < mails.size()) {
+                int response = JOptionPane.showConfirmDialog(this, "Verschlüsselung für " + crypto + " von " + mails.size() + " Empfängern - fortfahren?", "Verschlüsselung", JOptionPane.YES_NO_OPTION);
+                if (response == JOptionPane.NO_OPTION) {
+                    return;
+                }
+            }
+            a = new SendEncryptedAction(dlg, this, this.attachments, this.cu, this.chkReadReceipt.isSelected(), this.txtTo.getText(), this.txtCc.getText(), this.txtBcc.getText(), this.txtSubject.getText(), ed.getText(), contentType);
         } else {
             a = new SendAction(dlg, this, this.attachments, this.cu, this.chkReadReceipt.isSelected(), this.txtTo.getText(), this.txtCc.getText(), this.txtBcc.getText(), this.txtSubject.getText(), ed.getText(), contentType);
         }
@@ -1458,6 +1533,25 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
 
 
     }//GEN-LAST:event_cmdSendActionPerformed
+
+    private int cryptoRecipients(ArrayList<String> mails) throws Exception {
+        int cryptoSupported = 0;
+        ClientSettings settings = ClientSettings.getInstance();
+        JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+        AddressServiceRemote adr = locator.lookupAddressServiceRemote();
+        for (String m : mails) {
+            AddressBean[] found = adr.searchSimple(m);
+            if (found.length > 1) {
+                throw new Exception(m + " ist mehreren Kontakten zugeordnet - Verschlüsselung nicht möglich!");
+            }
+            if(found.length==0)
+                continue;
+            if (found[0].supportsCrypto()) {
+                cryptoSupported++;
+            }
+        }
+        return cryptoSupported;
+    }
 
     private void cmdAttachActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdAttachActionPerformed
         JFileChooser chooser = new JFileChooser();
@@ -1480,15 +1574,6 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         }
     }//GEN-LAST:event_cmdAttachActionPerformed
 
-//    public void addRecipientCandidates(AddressBean[] list) {
-//        if(list!=null) {
-//            for(AddressBean ab: list) {
-//                if(ab.getEmail()!=null && !("".equals(ab.getEmail()))) {
-//                    this.addRecipientCandidate(ab.getEmail(), ab.toDisplayName());
-//                }
-//            }
-//        }
-//    }
     private void addRecipientCandidate(AddressBean ab, String suffix) {
         if (ab.getEmail() != null && !("".equals(ab.getEmail()))) {
             JCheckBoxMenuItem mi = new JCheckBoxMenuItem();
@@ -1738,6 +1823,25 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
 //        }
     }//GEN-LAST:event_txtBccKeyReleased
 
+    private void chkEncryptionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkEncryptionActionPerformed
+        if (this.chkEncryption.isSelected()) {
+
+//                this.chkEncryption.setSelected(false);
+        } else {
+            //this.encryptionPwd=null;
+        }
+    }//GEN-LAST:event_chkEncryptionActionPerformed
+
+    private void chkEncryptionStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_chkEncryptionStateChanged
+        if (this.chkEncryption.isSelected()) {
+            this.lblEncryption.setText("verschlüsselt senden");
+            this.chkEncryption.setToolTipText("<html>Dokumente werden verschlüsselt versandt</html>");
+        } else {
+            this.lblEncryption.setText("unverschlüsselt senden");
+            this.chkEncryption.setToolTipText("Dokumente werden ohne Schutz versandt");
+        }
+    }//GEN-LAST:event_chkEncryptionStateChanged
+
     /**
      * @param args the command line arguments
      */
@@ -1789,6 +1893,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.ButtonGroup buttonGroupTextHtml;
+    private javax.swing.JToggleButton chkEncryption;
     private javax.swing.JCheckBox chkReadReceipt;
     private javax.swing.JCheckBox chkSaveAsDocument;
     private javax.swing.JComboBox cmbClient;
@@ -1818,6 +1923,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
     private javax.swing.JPopupMenu.Separator jSeparator2;
     private javax.swing.JPopupMenu.Separator jSeparator3;
     private javax.swing.JToolBar jToolBar1;
+    private javax.swing.JLabel lblEncryption;
     private javax.swing.JLabel lblFrom;
     private javax.swing.JList lstAttachments;
     private javax.swing.JMenuItem mnuSearchRecipient;

@@ -673,7 +673,8 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Properties;
-import java.util.logging.Level;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import javax.mail.*;
 import javax.mail.Flags;
 import javax.mail.Folder;
@@ -988,6 +989,18 @@ public class EmailUtils {
             result = false;
         }
         return result;
+    }
+    
+    public static ArrayList<String> getAllMailAddressesFromString(String s) {
+        ArrayList<String> mails=new ArrayList<String>();
+        //Pattern pattern = Pattern.compile("[\\w.]+@[\\w.]+");
+        Pattern pattern = Pattern.compile("[a-zA-Z0-9-_.]+@[a-zA-Z0-9-_.]+");
+        Matcher matcher = pattern.matcher(s);
+        while(matcher.find()){
+            String group = matcher.group();
+            mails.add(group);
+        }
+        return mails;
     }
 
     public static boolean isReceiptRequested(Message msg) {

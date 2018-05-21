@@ -689,7 +689,7 @@ import org.apache.pdfbox.pdmodel.encryption.StandardProtectionPolicy;
  *
  * @author jens
  */
-public class PDFEnryptor {
+public class PDFEncryptor {
 
     public static String encryptPdf(String pdfSourcePath, String targetDirectory, String password) throws Exception {
         File pdfSourceFile=new File(pdfSourcePath);

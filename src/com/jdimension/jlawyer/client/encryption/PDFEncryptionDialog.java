@@ -851,7 +851,7 @@ public class PDFEncryptionDialog extends javax.swing.JDialog {
         try {
             ClientSettings.getInstance().setConfiguration("client.archivefiles.encryptedpdf.lastdir", this.txtLastDir.getText());
             ClientSettings.getInstance().setConfiguration("client.archivefiles.encryptedpdf.lastpwd", this.txtPassword.getText());
-            PDFEnryptor.encryptPdf(this.pdfSourceFile, this.txtLastDir.getText(), this.txtPassword.getText());
+            PDFEncryptor.encryptPdf(this.pdfSourceFile, this.txtLastDir.getText(), this.txtPassword.getText());
             cmdEncrypt.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png")));
             this.cmdCancel.setEnabled(false);
             

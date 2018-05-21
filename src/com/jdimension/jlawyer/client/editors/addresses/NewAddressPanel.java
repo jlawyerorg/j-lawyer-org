@@ -784,6 +784,9 @@ public class NewAddressPanel extends AddressPanel implements ResetOnDisplayEdito
         if (!StringUtils.isEmpty(this.txtBirthDate.getText())) {
             return true;
         }
+        if (!StringUtils.isEmpty(this.encryptionPwd)) {
+            return true;
+        }
 
         return false;
     }
