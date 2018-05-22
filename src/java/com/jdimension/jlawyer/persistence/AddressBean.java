@@ -1089,6 +1089,15 @@ public class AddressBean implements Serializable {
         return toolTip;
     }
     
+    public boolean supportsCrypto() {
+        if(this.encryptionPwd==null)
+            return false;
+        
+        if(this.encryptionPwd.trim().length()>0)
+            return true;
+        return false;
+    }
+    
     public String toDisplayName() {
         String returnValue = "";
         
