@@ -719,6 +719,7 @@ import java.awt.Component;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Graphics;
+import java.awt.GridLayout;
 import java.awt.Image;
 import java.awt.Point;
 import java.awt.datatransfer.DataFlavor;
@@ -791,6 +792,10 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.dto = null;
         this.initializing = true;
         initComponents();
+        
+        GridLayout layout = new GridLayout(1, 1);
+        this.pnlInvolvedParties.setLayout(layout);
+        
         this.initializing = false;
 
         if (LauncherFactory.isMicrosoftOfficeSupported()) {
@@ -2890,7 +2895,17 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         InvolvedPartyEntryPanel ipep=new InvolvedPartyEntryPanel(dto, this, this.pnlInvolvedParties, this.getClass().getName(), BeaAccess.isBeaEnabled());
         ipep.setEntry(adrb, afab);
         ipep.setAlignmentX(Component.LEFT_ALIGNMENT);
+        
+        GridLayout layout = new GridLayout(this.pnlInvolvedParties.getComponentCount()+1, 1);
+        this.pnlInvolvedParties.setLayout(layout);
+        
         this.pnlInvolvedParties.add(ipep);
+        this.pnlInvolvedParties.revalidate();
+        this.pnlInvolvedParties.repaint();
+        ipep.revalidate();
+        ipep.repaint();
+        ipep.doLayout();
+        this.pnlInvolvedParties.doLayout();
     }//GEN-LAST:event_cmdSearchClientActionPerformed
 
     public boolean confirmSave(String question, String tagToActivate) {
