@@ -1028,6 +1028,8 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel {
     private void mnuRemovePartyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuRemovePartyActionPerformed
 
         this.casePanel.removeInvolvedParty(this);
+        this.container.revalidate();
+        this.container.repaint();
         
 
     }//GEN-LAST:event_mnuRemovePartyActionPerformed
