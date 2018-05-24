@@ -686,6 +686,11 @@ public class SendSmsDialog extends javax.swing.JDialog {
 
     private static final Logger log=Logger.getLogger(SendSmsDialog.class.getName());
     
+    public SendSmsDialog(java.awt.Frame parent, boolean modal, AddressBean ab, String text) {
+        this(parent, modal, ab);
+        this.txtBody.setText(text);
+    }
+    
     /**
      * Creates new form SendSmsDialog
      */

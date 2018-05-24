@@ -723,7 +723,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
     private AddressBean dto = null;
     private String openedFromEditorClass = null;
     private Image backgroundImage = null;
-    protected String encryptionPwd=null;
+    protected String encryptionPwd = null;
 
     /**
      * Creates new form AddressPanel
@@ -851,6 +851,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
 
         this.txtBeaSafeId.setEnabled(!readOnly);
         this.chkEncryption.setEnabled(!readOnly);
+        this.cmdNewSmsWithEncryptionPassword.setEnabled(!readOnly);
 
         for (Component c : this.tagPanel.getComponents()) {
             c.setEnabled(!readOnly);
@@ -859,11 +860,14 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
 
     public void setAddressDTO(AddressBean dto) {
         this.dto = dto;
-        this.encryptionPwd=this.dto.getEncryptionPwd();
-        if(!StringUtils.isEmpty(encryptionPwd))
+        this.encryptionPwd = this.dto.getEncryptionPwd();
+        if (!StringUtils.isEmpty(encryptionPwd)) {
+            this.cmdNewSmsWithEncryptionPassword.setEnabled(true);
             this.chkEncryption.setSelected(true);
-        else
+        } else {
+            this.cmdNewSmsWithEncryptionPassword.setEnabled(false);
             this.chkEncryption.setSelected(false);
+        }
         this.lblHeaderInfo.setText(dto.toDisplayName());
         this.txtBankAccount.setText(dto.getBankAccount());
         this.txtBankCode.setText(dto.getBankCode());
@@ -987,59 +991,60 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
 
     public boolean confirmSave(String question, String tagToActivate) {
         int response = JOptionPane.showConfirmDialog(this, question, "Adresse speichern", JOptionPane.YES_NO_OPTION);
-                if (response == JOptionPane.YES_OPTION) {
-                    ClientSettings settings = ClientSettings.getInstance();
-                    EditorsRegistry.getInstance().updateStatus("Adresse wird gespeichert...");
-                    try {
-                        //InitialContext context = new InitialContext(settings.getLookupProperties());
-                        JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+        if (response == JOptionPane.YES_OPTION) {
+            ClientSettings settings = ClientSettings.getInstance();
+            EditorsRegistry.getInstance().updateStatus("Adresse wird gespeichert...");
+            try {
+                //InitialContext context = new InitialContext(settings.getLookupProperties());
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
-                        AddressServiceRemote aService = locator.lookupAddressServiceRemote();
+                AddressServiceRemote aService = locator.lookupAddressServiceRemote();
 
-                        this.dto = new AddressBean();
-                        this.fillDTO(this.dto);
+                this.dto = new AddressBean();
+                this.fillDTO(this.dto);
 
-                        this.dto = aService.createAddress(this.dto);
-                        
-                        if(tagToActivate != null && !"".equalsIgnoreCase(tagToActivate)) {
-                            AddressTagsBean tagBean = new AddressTagsBean();
-                            tagBean.setTagName(tagToActivate);
-                            aService.setTag(this.dto.getId(), tagBean, true);
-                        }
-                        
-                        this.setAddressDTO(this.dto);
-                        //fileService.remove();
+                this.dto = aService.createAddress(this.dto);
 
-                        // we need to update the search tables because they pass their cached DTOs to the editors
-                        // without updating, they would still have the old invalid data
-                        try {
-                            Object editor = EditorsRegistry.getInstance().getEditor(EditAddressPanel.class.getName());
-                            ((QuickAddressSearchPanel) editor).updateTable();
-
-                        } catch (Exception ex) {
-                            log.error("Error creating editor from class " + this.openedFromEditorClass, ex);
-                            JOptionPane.showMessageDialog(this, "Fehler beim Laden des Editors: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
-                        }
-
-                        EditorsRegistry.getInstance().updateStatus("Adresse gespeichert.", 5000);
-                        return true;
-                    } catch (Exception ex) {
-                        log.error("Error saving address", ex);
-                        JOptionPane.showMessageDialog(this, "Fehler beim Speichern: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
-                        EditorsRegistry.getInstance().clearStatus();
-                        return false;
-                    }
-                } else {
-                    // do nothing
-                    
+                if (tagToActivate != null && !"".equalsIgnoreCase(tagToActivate)) {
+                    AddressTagsBean tagBean = new AddressTagsBean();
+                    tagBean.setTagName(tagToActivate);
+                    aService.setTag(this.dto.getId(), tagBean, true);
                 }
+
+                this.setAddressDTO(this.dto);
+                //fileService.remove();
+
+                // we need to update the search tables because they pass their cached DTOs to the editors
+                // without updating, they would still have the old invalid data
+                try {
+                    Object editor = EditorsRegistry.getInstance().getEditor(EditAddressPanel.class.getName());
+                    ((QuickAddressSearchPanel) editor).updateTable();
+
+                } catch (Exception ex) {
+                    log.error("Error creating editor from class " + this.openedFromEditorClass, ex);
+                    JOptionPane.showMessageDialog(this, "Fehler beim Laden des Editors: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+                }
+
+                EditorsRegistry.getInstance().updateStatus("Adresse gespeichert.", 5000);
+                return true;
+            } catch (Exception ex) {
+                log.error("Error saving address", ex);
+                JOptionPane.showMessageDialog(this, "Fehler beim Speichern: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+                EditorsRegistry.getInstance().clearStatus();
                 return false;
+            }
+        } else {
+            // do nothing
+
+        }
+        return false;
     }
-    
+
     public void clearInputs() {
         this.dto = null;
-        this.encryptionPwd=null;
+        this.encryptionPwd = null;
         this.chkEncryption.setSelected(false);
+        this.cmdNewSmsWithEncryptionPassword.setEnabled(false);
         this.lblHeaderInfo.setText("");
         this.txtBankAccount.setText("");
         this.txtBankCode.setText("");
@@ -1080,7 +1085,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         this.txtBirthDate.setText("");
 
         this.txtBeaSafeId.setText("");
-        
+
         this.tagPanel.removeAll();
         ArrayList<String> sortedTags = new ArrayList<String>();
         AppOptionGroupBean[] tagOptions = ClientSettings.getInstance().getAddressTagDtos();
@@ -1100,7 +1105,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         }
 
         ThreadUtils.repaintComponent(tagPanel);
-        
+
     }
 
     public void setBackgroundImage(Image image) {
@@ -1276,6 +1281,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         cmdBackToSearch = new javax.swing.JButton();
         chkEncryption = new javax.swing.JToggleButton();
         lblEncryption = new javax.swing.JLabel();
+        cmdNewSmsWithEncryptionPassword = new javax.swing.JButton();
 
         jTabbedPane1.addChangeListener(new javax.swing.event.ChangeListener() {
             public void stateChanged(javax.swing.event.ChangeEvent evt) {
@@ -1313,7 +1319,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
                     .add(org.jdesktop.layout.GroupLayout.LEADING, txtStreet)
-                    .add(org.jdesktop.layout.GroupLayout.LEADING, txtZipCode, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 752, Short.MAX_VALUE)
+                    .add(org.jdesktop.layout.GroupLayout.LEADING, txtZipCode, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 780, Short.MAX_VALUE)
                     .add(org.jdesktop.layout.GroupLayout.LEADING, txtCity)
                     .add(txtCountry))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
@@ -1369,7 +1375,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
                     .add(jLabel25))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(txtName, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 800, Short.MAX_VALUE)
+                    .add(txtName, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 828, Short.MAX_VALUE)
                     .add(txtFirstName)
                     .add(txtCompany)
                     .add(jPanel1Layout.createSequentialGroup()
@@ -1639,7 +1645,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
                     .add(jLabel20))
                 .add(19, 19, 19)
                 .add(jPanel5Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(txtInsuranceNumber, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 658, Short.MAX_VALUE)
+                    .add(txtInsuranceNumber, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 686, Short.MAX_VALUE)
                     .add(jPanel5Layout.createSequentialGroup()
                         .add(chkLegalProtection)
                         .add(0, 0, Short.MAX_VALUE))
@@ -1732,7 +1738,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
                     .add(jLabel22))
                 .add(19, 19, 19)
                 .add(jPanel11Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(txtTrafficInsuranceNumber, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 658, Short.MAX_VALUE)
+                    .add(txtTrafficInsuranceNumber, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 686, Short.MAX_VALUE)
                     .add(jPanel11Layout.createSequentialGroup()
                         .add(chkTrafficLegalProtection)
                         .add(0, 0, Short.MAX_VALUE))
@@ -1843,7 +1849,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
                     .add(jLabel16))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel6Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
-                    .add(cmbSalutation, 0, 784, Short.MAX_VALUE)
+                    .add(cmbSalutation, 0, 812, Short.MAX_VALUE)
                     .add(cmbComplimentaryClose, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
@@ -1889,7 +1895,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
             jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel14Layout.createSequentialGroup()
                 .add(tagPanel, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 776, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .add(0, 116, Short.MAX_VALUE))
+                .add(0, 144, Short.MAX_VALUE))
         );
         jPanel14Layout.setVerticalGroup(
             jPanel14Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -1900,7 +1906,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         jPanel13.setLayout(jPanel13Layout);
         jPanel13Layout.setHorizontalGroup(
             jPanel13Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(0, 926, Short.MAX_VALUE)
+            .add(0, 954, Short.MAX_VALUE)
             .add(jPanel13Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                 .add(jPanel13Layout.createSequentialGroup()
                     .addContainerGap()
@@ -1948,7 +1954,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
                             .add(lblCustom2)
                             .add(lblCustom3))
                         .add(0, 0, Short.MAX_VALUE))
-                    .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 902, Short.MAX_VALUE))
+                    .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 930, Short.MAX_VALUE))
                 .addContainerGap())
         );
         jPanel15Layout.setVerticalGroup(
@@ -1990,7 +1996,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
             jPanel10Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel10Layout.createSequentialGroup()
                 .addContainerGap()
-                .add(jScrollPane2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 902, Short.MAX_VALUE)
+                .add(jScrollPane2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 930, Short.MAX_VALUE)
                 .addContainerGap())
         );
         jPanel10Layout.setVerticalGroup(
@@ -2086,6 +2092,14 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         lblEncryption.setForeground(new java.awt.Color(255, 255, 255));
         lblEncryption.setText("unverschlüsselt");
 
+        cmdNewSmsWithEncryptionPassword.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/sms_protocol.png"))); // NOI18N
+        cmdNewSmsWithEncryptionPassword.setToolTipText("Passwort per SMS senden");
+        cmdNewSmsWithEncryptionPassword.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdNewSmsWithEncryptionPasswordActionPerformed(evt);
+            }
+        });
+
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -2097,16 +2111,16 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
                     .add(layout.createSequentialGroup()
                         .add(jPanel16, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                        .add(jLabel18)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                            .add(layout.createSequentialGroup()
-                                .add(jLabel18)
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                .add(lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                .add(chkEncryption))
                             .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
-                                .add(0, 0, Short.MAX_VALUE)
-                                .add(lblEncryption))))
+                                .add(chkEncryption)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(cmdNewSmsWithEncryptionPassword))
+                            .add(lblEncryption)))
                     .add(jTabbedPane1))
                 .addContainerGap())
         );
@@ -2117,9 +2131,10 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(jLabel18)
                     .add(layout.createSequentialGroup()
-                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
                             .add(lblPanelTitle)
-                            .add(chkEncryption))
+                            .add(chkEncryption)
+                            .add(cmdNewSmsWithEncryptionPassword))
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(lblEncryption))
                     .add(jPanel16, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
@@ -2298,8 +2313,9 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         if (!BeaAccess.hasInstance()) {
             BeaLoginDialog loginPanel = new BeaLoginDialog(EditorsRegistry.getInstance().getMainWindow(), true, this);
             loginPanel.setVisible(true);
-            if(!BeaAccess.hasInstance())
+            if (!BeaAccess.hasInstance()) {
                 return;
+            }
         }
 
         try {
@@ -2315,7 +2331,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
             //dlg.setSize(ip.getPreferredSize());
             FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
             dlg.setVisible(true);
-            
+
         } catch (Throwable t) {
             log.error(t);
         }
@@ -2325,8 +2341,9 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         if (!BeaAccess.hasInstance()) {
             BeaLoginDialog loginPanel = new BeaLoginDialog(EditorsRegistry.getInstance().getMainWindow(), true, this);
             loginPanel.setVisible(true);
-            if(!BeaAccess.hasInstance())
+            if (!BeaAccess.hasInstance()) {
                 return;
+            }
         }
 
         try {
@@ -2385,23 +2402,24 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         if (!BeaAccess.hasInstance()) {
             BeaLoginDialog loginPanel = new BeaLoginDialog(EditorsRegistry.getInstance().getMainWindow(), true, this);
             loginPanel.setVisible(true);
-            if(!BeaAccess.hasInstance())
+            if (!BeaAccess.hasInstance()) {
                 return;
+            }
         }
         try {
-        BeaAccess bea=BeaAccess.getInstance();
-        Identity i=bea.getIdentity(this.txtBeaSafeId.getText());
-        
-        SendBeaMessageDialog dlg = new SendBeaMessageDialog(EditorsRegistry.getInstance().getMainWindow(), false);
-        dlg.setTo(i);
-        // we do not know what role this person has - so put it as all three types
-        dlg.addToClient(dto);
-        dlg.addToOpponent(dto);
-        dlg.addToOpponentAttorney(dto);
+            BeaAccess bea = BeaAccess.getInstance();
+            Identity i = bea.getIdentity(this.txtBeaSafeId.getText());
 
-        FrameUtils.centerDialog(dlg, null);
-        dlg.setVisible(true);
-        
+            SendBeaMessageDialog dlg = new SendBeaMessageDialog(EditorsRegistry.getInstance().getMainWindow(), false);
+            dlg.setTo(i);
+            // we do not know what role this person has - so put it as all three types
+            dlg.addToClient(dto);
+            dlg.addToOpponent(dto);
+            dlg.addToOpponentAttorney(dto);
+
+            FrameUtils.centerDialog(dlg, null);
+            dlg.setVisible(true);
+
         } catch (Throwable t) {
             log.error(t);
             JOptionPane.showMessageDialog(this, "Identität des beA-Teilnehmers kann nicht ermittelt werden: " + t.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
@@ -2409,7 +2427,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
     }//GEN-LAST:event_cmdSendBeaActionPerformed
 
     private void chkEncryptionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkEncryptionActionPerformed
-        if(this.chkEncryption.isSelected()) {
+        if (this.chkEncryption.isSelected()) {
             PasswordGenerator passwordGenerator = new PasswordGenerator.PasswordGeneratorBuilder()
                     .useDigits(true)
                     .useLower(true)
@@ -2419,23 +2437,52 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
             Object newPwd = JOptionPane.showInputDialog(this, "neues Passwort: ", "Verschlüsselungspasswort anlegen", JOptionPane.QUESTION_MESSAGE, null, null, password);
             if (newPwd == null) {
                 this.chkEncryption.setSelected(false);
+                this.cmdNewSmsWithEncryptionPassword.setEnabled(false);
                 return;
             }
             this.encryptionPwd = newPwd.toString();
         } else {
-            this.encryptionPwd=null;
+            this.encryptionPwd = null;
         }
     }//GEN-LAST:event_chkEncryptionActionPerformed
 
     private void chkEncryptionStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_chkEncryptionStateChanged
-        if(this.chkEncryption.isSelected()) {
+        if (this.chkEncryption.isSelected()) {
             this.lblEncryption.setText("verschlüsselt");
+            this.cmdNewSmsWithEncryptionPassword.setEnabled(true);
             this.chkEncryption.setToolTipText("<html>Dokumente werden verschlüsselt versandt<br/>Passwort: " + StringUtils.nonEmpty(this.encryptionPwd) + "</html>");
         } else {
             this.lblEncryption.setText("unverschlüsselt");
+            this.cmdNewSmsWithEncryptionPassword.setEnabled(false);
             this.chkEncryption.setToolTipText("Dokumente werden ohne Schutz versandt");
         }
     }//GEN-LAST:event_chkEncryptionStateChanged
+
+    private void cmdNewSmsWithEncryptionPasswordActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdNewSmsWithEncryptionPasswordActionPerformed
+        ServerSettings set = ServerSettings.getInstance();
+        String mode = set.getSetting(set.SERVERCONF_VOIPMODE, "on");
+        if ("on".equalsIgnoreCase(mode)) {
+
+            ServerSettings serverSettings = ServerSettings.getInstance();
+            String company = "";
+            if (serverSettings.hasSetting(serverSettings.PROFILE_COMPANYNAME)) {
+                company = serverSettings.getSetting(serverSettings.PROFILE_COMPANYNAME, "");
+            }
+
+            String smsText = "";
+            if (!StringUtils.isEmpty(company)) {
+                smsText = "Passwort zum Entsperren empfangener Dokumente: " + this.encryptionPwd + " - Mit frdl. Gruessen, Ihre " + company;
+            } else {
+                smsText = "Passwort zum Entsperren empfangener Dokumente: " + this.encryptionPwd;
+            }
+            SendSmsDialog dlg = new SendSmsDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.dto, smsText);
+            FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
+            dlg.setVisible(true);
+        } else {
+            JOptionPane.showMessageDialog(this, "Voice-over-IP - Integration ist nicht aktiviert!", "SMS senden", JOptionPane.INFORMATION_MESSAGE);
+
+        }
+    }//GEN-LAST:event_cmdNewSmsWithEncryptionPasswordActionPerformed
 
     private void enableEmailButton() {
         if (this.txtEmail.getText().length() > 0) {
@@ -2593,6 +2640,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
     private javax.swing.JButton cmdNewCall2;
     private javax.swing.JButton cmdNewFax;
     private javax.swing.JButton cmdNewSms;
+    private javax.swing.JButton cmdNewSmsWithEncryptionPassword;
     private javax.swing.JButton cmdSave;
     private javax.swing.JButton cmdSendBea;
     private javax.swing.JButton cmdSendEmail;
@@ -2790,65 +2838,65 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
 
         return false;
     }
-    
+
     private void fillDTO(AddressBean adr) throws Exception {
         adr.setBankAccount(this.txtBankAccount.getText());
-            adr.setBankCode(this.txtBankCode.getText());
-            adr.setBankName(this.txtBankName.getText());
-            adr.setCity(this.txtCity.getText());
-            adr.setCompany(this.txtCompany.getText());
-            if (this.cmbComplimentaryClose.getSelectedItem() != null) {
-                adr.setComplimentaryClose(this.cmbComplimentaryClose.getSelectedItem().toString());
-            } else {
-                adr.setComplimentaryClose("");
-            }
-            if (this.cmbTitle.getSelectedItem() != null) {
-                adr.setTitle(this.cmbTitle.getSelectedItem().toString());
-            } else {
-                adr.setTitle("");
-            }
-            adr.setCountry(this.txtCountry.getText());
-            adr.setEmail(this.txtEmail.getText());
-            adr.setFax(this.txtFax.getText());
-            adr.setFirstName(this.txtFirstName.getText());
-            adr.setInsuranceNumber(this.txtInsuranceNumber.getText());
-            if (this.cmbInsurance.getSelectedItem() != null) {
-                adr.setInsuranceName(this.cmbInsurance.getSelectedItem().toString());
-            } else {
-                adr.setInsuranceName(null);
-            }
-            adr.setLegalProtectionBoolean(this.chkLegalProtection.isSelected());
+        adr.setBankCode(this.txtBankCode.getText());
+        adr.setBankName(this.txtBankName.getText());
+        adr.setCity(this.txtCity.getText());
+        adr.setCompany(this.txtCompany.getText());
+        if (this.cmbComplimentaryClose.getSelectedItem() != null) {
+            adr.setComplimentaryClose(this.cmbComplimentaryClose.getSelectedItem().toString());
+        } else {
+            adr.setComplimentaryClose("");
+        }
+        if (this.cmbTitle.getSelectedItem() != null) {
+            adr.setTitle(this.cmbTitle.getSelectedItem().toString());
+        } else {
+            adr.setTitle("");
+        }
+        adr.setCountry(this.txtCountry.getText());
+        adr.setEmail(this.txtEmail.getText());
+        adr.setFax(this.txtFax.getText());
+        adr.setFirstName(this.txtFirstName.getText());
+        adr.setInsuranceNumber(this.txtInsuranceNumber.getText());
+        if (this.cmbInsurance.getSelectedItem() != null) {
+            adr.setInsuranceName(this.cmbInsurance.getSelectedItem().toString());
+        } else {
+            adr.setInsuranceName(null);
+        }
+        adr.setLegalProtectionBoolean(this.chkLegalProtection.isSelected());
 
-            adr.setTrafficInsuranceNumber(this.txtTrafficInsuranceNumber.getText());
-            adr.setTrafficInsuranceName(this.txtTrafficInsurance.getText());
-            adr.setTrafficLegalProtectionBoolean(this.chkTrafficLegalProtection.isSelected());
+        adr.setTrafficInsuranceNumber(this.txtTrafficInsuranceNumber.getText());
+        adr.setTrafficInsuranceName(this.txtTrafficInsurance.getText());
+        adr.setTrafficLegalProtectionBoolean(this.chkTrafficLegalProtection.isSelected());
 
-            adr.setMotorInsuranceNumber(this.txtMotorInsuranceNumber.getText());
-            if (this.cmbMotorInsurance.getSelectedItem() != null) {
-                adr.setMotorInsuranceName(this.cmbMotorInsurance.getSelectedItem().toString());
-            } else {
-                adr.setMotorInsuranceName(null);
-            }
+        adr.setMotorInsuranceNumber(this.txtMotorInsuranceNumber.getText());
+        if (this.cmbMotorInsurance.getSelectedItem() != null) {
+            adr.setMotorInsuranceName(this.cmbMotorInsurance.getSelectedItem().toString());
+        } else {
+            adr.setMotorInsuranceName(null);
+        }
 
-            adr.setName(this.txtName.getText());
-            adr.setPhone(this.txtPhone.getText());
-            adr.setMobile(this.txtMobile.getText());
-            if (this.cmbSalutation.getSelectedItem() != null) {
-                adr.setSalutation(this.cmbSalutation.getSelectedItem().toString());
-            } else {
-                adr.setSalutation("");
-            }
-            adr.setStreet(this.txtStreet.getText());
-            adr.setWebsite(this.txtWebsite.getText());
-            adr.setZipCode(this.txtZipCode.getText());
+        adr.setName(this.txtName.getText());
+        adr.setPhone(this.txtPhone.getText());
+        adr.setMobile(this.txtMobile.getText());
+        if (this.cmbSalutation.getSelectedItem() != null) {
+            adr.setSalutation(this.cmbSalutation.getSelectedItem().toString());
+        } else {
+            adr.setSalutation("");
+        }
+        adr.setStreet(this.txtStreet.getText());
+        adr.setWebsite(this.txtWebsite.getText());
+        adr.setZipCode(this.txtZipCode.getText());
 
-            adr.setCustom1(this.txtCustom1.getText());
-            adr.setCustom2(this.txtCustom2.getText());
-            adr.setCustom3(this.taCustom3.getText());
-            adr.setBirthDate(this.txtBirthDate.getText());
-            adr.setBeaSafeId(this.txtBeaSafeId.getText());
-            
-            adr.setEncryptionPwd(this.encryptionPwd);
+        adr.setCustom1(this.txtCustom1.getText());
+        adr.setCustom2(this.txtCustom2.getText());
+        adr.setCustom3(this.taCustom3.getText());
+        adr.setBirthDate(this.txtBirthDate.getText());
+        adr.setBeaSafeId(this.txtBeaSafeId.getText());
+
+        adr.setEncryptionPwd(this.encryptionPwd);
     }
 
     @Override

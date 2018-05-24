@@ -23,18 +23,17 @@
                   <Group type="102" alignment="0" attributes="0">
                       <Component id="jPanel16" min="-2" max="-2" attributes="0"/>
                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                      <Component id="jLabel18" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="lblPanelTitle" max="32767" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Group type="102" attributes="0">
-                              <Component id="jLabel18" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace max="-2" attributes="0"/>
-                              <Component id="lblPanelTitle" max="32767" attributes="0"/>
-                              <EmptySpace max="-2" attributes="0"/>
-                              <Component id="chkEncryption" min="-2" max="-2" attributes="0"/>
-                          </Group>
                           <Group type="102" alignment="1" attributes="0">
-                              <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
-                              <Component id="lblEncryption" min="-2" max="-2" attributes="0"/>
+                              <Component id="chkEncryption" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Component id="cmdNewSmsWithEncryptionPassword" min="-2" max="-2" attributes="0"/>
                           </Group>
+                          <Component id="lblEncryption" min="-2" max="-2" attributes="0"/>
                       </Group>
                   </Group>
                   <Component id="jTabbedPane1" alignment="0" max="32767" attributes="0"/>
@@ -50,9 +49,10 @@
               <Group type="103" groupAlignment="0" attributes="0">
                   <Component id="jLabel18" min="-2" max="-2" attributes="0"/>
                   <Group type="102" attributes="0">
-                      <Group type="103" groupAlignment="3" attributes="0">
-                          <Component id="lblPanelTitle" alignment="3" min="-2" max="-2" attributes="0"/>
-                          <Component id="chkEncryption" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="1" attributes="0">
+                          <Component id="lblPanelTitle" min="-2" max="-2" attributes="0"/>
+                          <Component id="chkEncryption" min="-2" max="-2" attributes="0"/>
+                          <Component id="cmdNewSmsWithEncryptionPassword" min="-2" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="lblEncryption" min="-2" max="-2" attributes="0"/>
@@ -146,7 +146,7 @@
                           <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="1" attributes="0">
                               <Component id="txtStreet" alignment="0" max="32767" attributes="0"/>
-                              <Component id="txtZipCode" alignment="0" pref="752" max="32767" attributes="0"/>
+                              <Component id="txtZipCode" alignment="0" pref="780" max="32767" attributes="0"/>
                               <Component id="txtCity" alignment="0" max="32767" attributes="0"/>
                               <Component id="txtCountry" max="32767" attributes="0"/>
                           </Group>
@@ -262,7 +262,7 @@
                           </Group>
                           <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="0" attributes="0">
-                              <Component id="txtName" pref="800" max="32767" attributes="0"/>
+                              <Component id="txtName" pref="828" max="32767" attributes="0"/>
                               <Component id="txtFirstName" alignment="0" max="32767" attributes="0"/>
                               <Component id="txtCompany" alignment="0" max="32767" attributes="0"/>
                               <Group type="102" alignment="0" attributes="0">
@@ -735,7 +735,7 @@
                           </Group>
                           <EmptySpace min="-2" pref="19" max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="0" attributes="0">
-                              <Component id="txtInsuranceNumber" pref="658" max="32767" attributes="0"/>
+                              <Component id="txtInsuranceNumber" pref="686" max="32767" attributes="0"/>
                               <Group type="102" attributes="0">
                                   <Component id="chkLegalProtection" min="-2" max="-2" attributes="0"/>
                                   <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
@@ -931,7 +931,7 @@
                           </Group>
                           <EmptySpace min="-2" pref="19" max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="0" attributes="0">
-                              <Component id="txtTrafficInsuranceNumber" alignment="0" pref="658" max="32767" attributes="0"/>
+                              <Component id="txtTrafficInsuranceNumber" alignment="0" pref="686" max="32767" attributes="0"/>
                               <Group type="102" attributes="0">
                                   <Component id="chkTrafficLegalProtection" min="-2" max="-2" attributes="0"/>
                                   <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
@@ -1132,7 +1132,7 @@
                           </Group>
                           <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="1" attributes="0">
-                              <Component id="cmbSalutation" pref="784" max="32767" attributes="0"/>
+                              <Component id="cmbSalutation" pref="812" max="32767" attributes="0"/>
                               <Component id="cmbComplimentaryClose" alignment="1" max="32767" attributes="0"/>
                           </Group>
                           <EmptySpace max="-2" attributes="0"/>
@@ -1220,7 +1220,7 @@
           <Layout>
             <DimensionLayout dim="0">
               <Group type="103" groupAlignment="0" attributes="0">
-                  <EmptySpace min="0" pref="926" max="32767" attributes="0"/>
+                  <EmptySpace min="0" pref="954" max="32767" attributes="0"/>
                   <Group type="103" rootIndex="1" groupAlignment="0" attributes="0">
                       <Group type="102" alignment="0" attributes="0">
                           <EmptySpace max="-2" attributes="0"/>
@@ -1258,7 +1258,7 @@
                   <Group type="103" groupAlignment="0" attributes="0">
                       <Group type="102" alignment="0" attributes="0">
                           <Component id="tagPanel" min="-2" pref="776" max="-2" attributes="0"/>
-                          <EmptySpace min="0" pref="116" max="32767" attributes="0"/>
+                          <EmptySpace min="0" pref="144" max="32767" attributes="0"/>
                       </Group>
                   </Group>
                 </DimensionLayout>
@@ -1310,7 +1310,7 @@
                               </Group>
                               <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                           </Group>
-                          <Component id="jScrollPane1" alignment="0" pref="902" max="32767" attributes="0"/>
+                          <Component id="jScrollPane1" alignment="0" pref="930" max="32767" attributes="0"/>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
                   </Group>
@@ -1402,7 +1402,7 @@
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" attributes="0">
                       <EmptySpace max="-2" attributes="0"/>
-                      <Component id="jScrollPane2" pref="902" max="32767" attributes="0"/>
+                      <Component id="jScrollPane2" pref="930" max="32767" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                   </Group>
               </Group>
@@ -1588,6 +1588,17 @@
         </Property>
         <Property name="text" type="java.lang.String" value="unverschl&#xfc;sselt"/>
       </Properties>
+    </Component>
+    <Component class="javax.swing.JButton" name="cmdNewSmsWithEncryptionPassword">
+      <Properties>
+        <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+          <Image iconType="3" name="/icons16/sms_protocol.png"/>
+        </Property>
+        <Property name="toolTipText" type="java.lang.String" value="Passwort per SMS senden"/>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdNewSmsWithEncryptionPasswordActionPerformed"/>
+      </Events>
     </Component>
   </SubComponents>
 </Form>
