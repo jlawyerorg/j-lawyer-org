@@ -455,7 +455,7 @@
                   <Properties>
                     <Property name="selected" type="boolean" value="true"/>
                     <Property name="text" type="java.lang.String" value="nach Zuordnung l&#xf6;schen"/>
-                    <Property name="toolTipText" type="java.lang.String" value="Dokument nach &#xdc;bernahme in eine Akte aus dem Scaneingang l&#xf6;schen"/>
+                    <Property name="toolTipText" type="java.lang.String" value="E-Mail nach &#xdc;bernahme in eine Akte aus dem Posteingang l&#xf6;schen"/>
                   </Properties>
                   <Events>
                     <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="chkDeleteAfterActionActionPerformed"/>

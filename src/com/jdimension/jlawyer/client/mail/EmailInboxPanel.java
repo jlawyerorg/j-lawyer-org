@@ -1305,7 +1305,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
 
         chkDeleteAfterAction.setSelected(true);
         chkDeleteAfterAction.setText("nach Zuordnung löschen");
-        chkDeleteAfterAction.setToolTipText("Dokument nach Übernahme in eine Akte aus dem Scaneingang löschen");
+        chkDeleteAfterAction.setToolTipText("E-Mail nach Übernahme in eine Akte aus dem Posteingang löschen");
         chkDeleteAfterAction.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 chkDeleteAfterActionActionPerformed(evt);
