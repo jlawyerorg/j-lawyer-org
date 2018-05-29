@@ -670,19 +670,15 @@ import com.jdimension.jlawyer.client.editors.ThemeableEditor;
 import com.jdimension.jlawyer.client.editors.files.ArchiveFilePanel;
 import com.jdimension.jlawyer.client.editors.files.EditArchiveFileDetailsPanel;
 import com.jdimension.jlawyer.client.editors.files.ViewArchiveFileDetailsPanel;
-import com.jdimension.jlawyer.client.events.AllCaseTagsEvent;
 import com.jdimension.jlawyer.client.mail.SaveToCaseExecutor;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
-import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
+import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Color;
 import java.awt.Component;
-import java.util.ArrayList;
-import java.util.Collections;
-import javax.swing.DefaultComboBoxModel;
 import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
 
@@ -705,25 +701,7 @@ public class SaveToCasePanel extends javax.swing.JPanel {
     public SaveToCasePanel(String openedFromClassName) {
         initComponents();
         this.openedFromEditorClass=openedFromClassName;
-        
-        DefaultComboBoxModel dm=new DefaultComboBoxModel();
-            dm.addElement("");
-            ArrayList<String> allTags=new ArrayList<String>();
-            for(AppOptionGroupBean tag: ClientSettings.getInstance().getArchiveFileTagDtos()) {
-                //dm.addElement(tag.getValue());
-                allTags.add(tag.getValue());
-            }
-            Collections.sort(allTags);
-            for(String s: allTags) {
-                dm.addElement(s);
-            }
-            this.cmbCaseTag.setModel(dm);
-            ClientSettings settings=ClientSettings.getInstance();
-            String lastTag=settings.getConfiguration(ClientSettings.CONF_MAIL_LASTTAG, "");
-            if(allTags.contains(lastTag))
-                this.cmbCaseTag.setSelectedItem(lastTag);
-            else
-                this.cmbCaseTag.setSelectedItem("");
+            
     }
 
     public void setEntry(CaseForContactEntry entry, SaveToCaseExecutor executor) {
@@ -743,14 +721,14 @@ public class SaveToCasePanel extends javax.swing.JPanel {
             reason=reason.substring(0,45) + "...";
         
         
-        this.lblDescription.setText("<html><b>" + e.getFileNumber() + " " + name + "</b><br/>" + reason + "</html>");
+        this.lblDescription.setText("<html><b>" + StringUtils.nonEmpty(e.getFileNumber()) + " " + name + "</b><br/>" + StringUtils.nonEmpty(reason) + "</html>");
         //this.lblFileName.setToolTipText("<html>" + StringUtils.addHtmlLinebreaks(sh.getText(), 60) + "</html>");
         //this.lblDescription.setToolTipText(sh.getText());
         //this.lblDescription.setIcon(FileUtils.getInstance().getFileTypeIcon(sh.getFileName()));
         this.lblRole.setText(e.getRole());
         
         String contactCaption=java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/editors/addresses/CaseForContactEntryPanel").getString("role");
-        String tooltip="<html><b>" + e.getFileNumber() + " " + e.getName() + "</b><br/>" + e.getReason() + "<br/>"  + contactCaption + ": " + e.getRole() + "</html>";
+        String tooltip="<html><b>" + StringUtils.nonEmpty(e.getFileNumber()) + " " + e.getName() + "</b><br/>" + e.getReason() + "<br/>"  + contactCaption + ": " + e.getRole() + "</html>";
         this.lblDescription.setToolTipText(tooltip);
         
         if(e.isArchived()) {
@@ -785,8 +763,6 @@ public class SaveToCasePanel extends javax.swing.JPanel {
         lblArchived = new javax.swing.JLabel();
         cmdSaveFullMessage = new javax.swing.JButton();
         cmdSaveMessageWithoutAttachments = new javax.swing.JButton();
-        cmbCaseTag = new javax.swing.JComboBox<>();
-        jLabel1 = new javax.swing.JLabel();
         cmdSaveSeparate = new javax.swing.JButton();
 
         lblDescription.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder.png"))); // NOI18N
@@ -832,15 +808,6 @@ public class SaveToCasePanel extends javax.swing.JPanel {
             }
         });
 
-        cmbCaseTag.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmbCaseTagActionPerformed(evt);
-            }
-        });
-
-        jLabel1.setFont(new java.awt.Font("Dialog", 0, 12)); // NOI18N
-        jLabel1.setText("Zielakte markieren:");
-
         cmdSaveSeparate.setFont(new java.awt.Font("Dialog", 1, 8)); // NOI18N
         cmdSaveSeparate.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/filesave-separate.png"))); // NOI18N
         cmdSaveSeparate.setToolTipText("E-Mail und Anhänge werden beide separat in die Akte übernommen");
@@ -858,7 +825,6 @@ public class SaveToCasePanel extends javax.swing.JPanel {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(cmbCaseTag, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(lblDescription)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 17, Short.MAX_VALUE)
@@ -868,14 +834,13 @@ public class SaveToCasePanel extends javax.swing.JPanel {
                             .addGroup(layout.createSequentialGroup()
                                 .addGap(12, 12, 12)
                                 .addComponent(lblArchived))
-                            .addComponent(jLabel1)
                             .addGroup(layout.createSequentialGroup()
                                 .addComponent(cmdSaveFullMessage)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(cmdSaveMessageWithoutAttachments)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(cmdSaveSeparate)))
-                        .addGap(0, 0, Short.MAX_VALUE)))
+                        .addGap(0, 52, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -887,10 +852,6 @@ public class SaveToCasePanel extends javax.swing.JPanel {
                     .addComponent(lblRole))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(lblArchived)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jLabel1)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(cmbCaseTag, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(cmdSaveFullMessage)
@@ -956,7 +917,7 @@ public class SaveToCasePanel extends javax.swing.JPanel {
     }//GEN-LAST:event_lblDescriptionMouseClicked
 
     private void cmdSaveFullMessageActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveFullMessageActionPerformed
-        boolean saved=this.executor.saveToCase(this.e.getId(), true, false, this.cmbCaseTag.getSelectedItem().toString());
+        boolean saved=this.executor.saveToCase(this.e.getId(), true, false, ClientSettings.getInstance().getConfiguration(ClientSettings.CONF_MAIL_LASTTAG, ""));
         if(saved) {
             this.cmdSaveFullMessage.setEnabled(false);
             this.cmdSaveFullMessage.setBackground(Color.green.darker().darker());
@@ -966,7 +927,7 @@ public class SaveToCasePanel extends javax.swing.JPanel {
     }//GEN-LAST:event_cmdSaveFullMessageActionPerformed
 
     private void cmdSaveMessageWithoutAttachmentsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveMessageWithoutAttachmentsActionPerformed
-        boolean saved=this.executor.saveToCase(this.e.getId(), false, false, this.cmbCaseTag.getSelectedItem().toString());
+        boolean saved=this.executor.saveToCase(this.e.getId(), false, false, ClientSettings.getInstance().getConfiguration(ClientSettings.CONF_MAIL_LASTTAG, ""));
         if(saved) {
             this.cmdSaveMessageWithoutAttachments.setEnabled(false);
             this.cmdSaveMessageWithoutAttachments.setBackground(Color.green.darker().darker());
@@ -975,15 +936,8 @@ public class SaveToCasePanel extends javax.swing.JPanel {
         }
     }//GEN-LAST:event_cmdSaveMessageWithoutAttachmentsActionPerformed
 
-    private void cmbCaseTagActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbCaseTagActionPerformed
-        ClientSettings settings = ClientSettings.getInstance();
-
-        String lastTag = this.cmbCaseTag.getSelectedItem().toString();
-        settings.setConfiguration(ClientSettings.CONF_MAIL_LASTTAG, lastTag);
-    }//GEN-LAST:event_cmbCaseTagActionPerformed
-
     private void cmdSaveSeparateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveSeparateActionPerformed
-        boolean saved=this.executor.saveToCase(this.e.getId(), true, true, this.cmbCaseTag.getSelectedItem().toString());
+        boolean saved=this.executor.saveToCase(this.e.getId(), true, true, ClientSettings.getInstance().getConfiguration(ClientSettings.CONF_MAIL_LASTTAG, ""));
         if(saved) {
             this.cmdSaveSeparate.setEnabled(false);
             this.cmdSaveSeparate.setBackground(Color.green.darker().darker());
@@ -993,11 +947,9 @@ public class SaveToCasePanel extends javax.swing.JPanel {
     }//GEN-LAST:event_cmdSaveSeparateActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JComboBox<String> cmbCaseTag;
     private javax.swing.JButton cmdSaveFullMessage;
     private javax.swing.JButton cmdSaveMessageWithoutAttachments;
     private javax.swing.JButton cmdSaveSeparate;
-    private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel lblArchived;
     private javax.swing.JLabel lblDescription;
     private javax.swing.JLabel lblRole;

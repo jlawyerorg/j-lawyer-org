@@ -736,6 +736,10 @@ public class ClientSettings {
     public static final String CONF_SCANS_LASTTAG="client.scans.lasttag";
     public static final String CONF_SCANS_DELETEENABLED="client.scans.deleteenabled";
     
+    public static final String CONF_MAILS_TAGGINGENABLED="client.mails.taggingenabled";
+    public static final String CONF_MAILS_LASTTAG="client.mails.lasttag";
+    public static final String CONF_MAILS_DELETEENABLED="client.mails.deleteenabled";
+    
     public static final String CONF_CASE_LASTUPLOADDIR="client.case.lastuploaddir";
     
     public static final String CONF_MAIL_HTMLWHITELIST="client.mail.htmlwhitelist";
