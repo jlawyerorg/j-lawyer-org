@@ -666,7 +666,9 @@ package com.jdimension.jlawyer.client.mail;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.documents.SearchAndAssignDialog;
 import com.jdimension.jlawyer.client.editors.files.AddressBeanListCellRenderer;
+import com.jdimension.jlawyer.client.launcher.Launcher;
 import com.jdimension.jlawyer.client.launcher.LauncherFactory;
+import com.jdimension.jlawyer.client.launcher.ReadOnlyDocumentStore;
 import com.jdimension.jlawyer.client.processing.ProgressIndicator;
 import com.jdimension.jlawyer.client.processing.ProgressableAction;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
@@ -1158,6 +1160,11 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         });
         jToolBar1.add(cmdAttach);
 
+        lstAttachments.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                lstAttachmentsMouseClicked(evt);
+            }
+        });
         jScrollPane2.setViewportView(lstAttachments);
 
         cmdRecipients.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/find.png"))); // NOI18N
@@ -1841,6 +1848,27 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
             this.chkEncryption.setToolTipText("Dokumente werden ohne Schutz versandt");
         }
     }//GEN-LAST:event_chkEncryptionStateChanged
+
+    private void lstAttachmentsMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lstAttachmentsMouseClicked
+        if (evt.getClickCount() == 2) {
+            int idx = lstAttachments.getSelectedIndex();
+            if (idx >= 0) {
+                if (this.attachments.size() > idx) {
+                    try {
+                        File f = new File(this.attachments.get(idx));
+                        ReadOnlyDocumentStore store = new ReadOnlyDocumentStore("sendmaildialog-" + f.getName(), f.getName());
+                        byte[] content = FileUtils.readFile(new File(this.attachments.get(idx)));
+                        Launcher launcher = LauncherFactory.getLauncher(f.getName(), content, store);
+                        launcher.launch();
+                    } catch (Exception ex) {
+                        log.error(ex);
+                        ThreadUtils.showErrorDialog(this, "Fehler beim Öffnen der Datei: " + ex.getMessage(), "Fehler");
+
+                    }
+                }
+            }
+        }
+    }//GEN-LAST:event_lstAttachmentsMouseClicked
 
     /**
      * @param args the command line arguments
