@@ -678,6 +678,9 @@ import com.jdimension.jlawyer.client.events.ScannerStatusEvent;
 import com.jdimension.jlawyer.client.events.SystemStatusEvent;
 import com.jdimension.jlawyer.client.launcher.DocumentMonitorDialog;
 import com.jdimension.jlawyer.client.launcher.DocumentObserver;
+import com.jdimension.jlawyer.client.plugins.calculation.CalculationPlugin;
+import com.jdimension.jlawyer.client.plugins.calculation.CalculationPluginDialog;
+import com.jdimension.jlawyer.client.plugins.calculation.CalculationPluginUtil;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
@@ -691,11 +694,17 @@ import com.jdimension.jlawyer.server.modules.ModuleMetadata;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Timer;
 import java.util.TimerTask;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
+import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 import javax.swing.JSplitPane;
 import javax.swing.SwingUtilities;
 import javax.swing.tree.DefaultTreeModel;
@@ -783,6 +792,33 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         Timer timer = new Timer();
         TimerTask monitorStateTask = new MonitoringStateTimerTask();
         timer.schedule(monitorStateTask, 5500, 60000 * 10);
+        
+        ArrayList<CalculationPlugin> plugins=CalculationPluginUtil.loadLocalPlugins();
+        Collections.sort(plugins);
+        for(CalculationPlugin cp: plugins) {
+            JMenuItem mi=new JMenuItem();
+            mi.setText(cp.getName());
+            mi.setToolTipText(cp.getDescription());
+            mi.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    try {
+                        JPanel ui=cp.getUi();
+                        CalculationPluginDialog dlg=new CalculationPluginDialog(EditorsRegistry.getInstance().getMainWindow(), false, ui);
+                        dlg.setTitle("Plugin: " + cp.getName() + " " + cp.getVersion());
+                        dlg.setHeader(cp.getDescription());
+                        dlg.setFooter("Autor: " + cp.getAuthor() + " - zuletzt aktualisiert: " + cp.getUpdated());
+                        FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
+                        dlg.setVisible(true);
+                    } catch (Exception ex) {
+                        log.error("Error launching plugin UI", ex);
+                        JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Plugin kann nicht gestartet werden: " + ex.getMessage(), "Pluginfehler", JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+                
+            });
+            this.mnuCalculations.add(mi);
+        }
 
 //        try {
 //            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
@@ -973,6 +1009,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuBackupConfiguration = new javax.swing.JMenuItem();
         mnuAdminConsole = new javax.swing.JMenuItem();
         mnuServerMonitor = new javax.swing.JMenuItem();
+        mnuCalculations = new javax.swing.JMenu();
         mnuHelp = new javax.swing.JMenu();
         mnuDocumentMonitor = new javax.swing.JMenuItem();
         mnuOnlineHelp = new javax.swing.JMenuItem();
@@ -1387,6 +1424,9 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuOptions.add(mnuServerMonitor);
 
         jMenuBar1.add(mnuOptions);
+
+        mnuCalculations.setText("Berechnungen");
+        jMenuBar1.add(mnuCalculations);
 
         mnuHelp.setText(bundle.getString("menu.?")); // NOI18N
 
@@ -2081,6 +2121,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     private javax.swing.JMenuItem mnuBackupConfiguration;
     private javax.swing.JMenuItem mnuBankImport;
     private javax.swing.JMenuItem mnuBeaSettings;
+    private javax.swing.JMenu mnuCalculations;
     private javax.swing.JMenuItem mnuCustomLauncherOptions;
     private javax.swing.JMenuItem mnuDocumentMonitor;
     private javax.swing.JMenu mnuDocumentOptions;
