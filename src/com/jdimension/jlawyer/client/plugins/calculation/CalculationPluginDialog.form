@@ -29,7 +29,7 @@
                   <Component id="scrollMain" alignment="0" max="32767" attributes="0"/>
                   <Group type="102" alignment="0" attributes="0">
                       <Component id="lblDescription" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace min="0" pref="608" max="32767" attributes="0"/>
+                      <EmptySpace min="0" pref="824" max="32767" attributes="0"/>
                   </Group>
                   <Group type="102" alignment="1" attributes="0">
                       <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
@@ -46,7 +46,7 @@
               <EmptySpace max="-2" attributes="0"/>
               <Component id="lblDescription" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
-              <Component id="scrollMain" pref="418" max="32767" attributes="0"/>
+              <Component id="scrollMain" pref="623" max="32767" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="lblUpdated" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>

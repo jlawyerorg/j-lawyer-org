@@ -1322,14 +1322,16 @@ public class SplashThread implements Runnable {
         
         Hashtable<String, String> localCalcs = new Hashtable<String, String>();
         for (File c : calcDirFile.listFiles()) {
-            if (c.isDirectory()) {
-                for (File version : c.listFiles()) {
-                    if (version.isDirectory()) {
-                        localCalcs.put(c.getName(), version.getName());
-                        if (!remoteCalcs.contains(c.getName() + version.getName())) {
-                            FileUtils.deleteDirectory(version);
+            if (c.isFile()) {
+                if(c.getName().toLowerCase().endsWith("_meta.groovy")) {
+                    String plugName=c.getName().substring(0, c.getName().indexOf("_meta"));
+                    String plugVersion=CalculationPluginUtil.checkVersion(c);
+                    
+                        localCalcs.put(plugName, plugVersion);
+                        if (!remoteCalcs.contains(plugName + plugVersion)) {
+                            c.delete();
                         }
-                    }
+                    
                 }
             }
         }
@@ -1337,7 +1339,10 @@ public class SplashThread implements Runnable {
         this.updateProgress(false, calcPlugins.size() + 1, 1, "");
         int i=1;
         for (CalculationPlugin p: calcPlugins) {
-            p.download();
+            boolean forceDownload=false;
+            if(localCalcs.containsKey(p.getId()) && !(localCalcs.get(p.getId()).equals(p.getVersion())))
+                forceDownload=true;
+            p.download(forceDownload);
             i++;
             this.updateProgress(false, calcPlugins.size() + 1, i, "");
         }

@@ -663,6 +663,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.plugins.calculation;
 
+import com.jdimension.jlawyer.client.utils.VersionUtils;
 import groovy.lang.Binding;
 import groovy.util.GroovyScriptEngine;
 import java.io.File;
@@ -680,30 +681,29 @@ public class CalculationPluginUtil {
     private static ArrayList<CalculationPlugin> pluginList = null;
 
     public static String getLocalDirectory() {
-        return System.getProperty("user.home") + System.getProperty("file.separator") + ".j-lawyer-client" + System.getProperty("file.separator") + "calculations";
+        return System.getProperty("user.home") + System.getProperty("file.separator") + ".j-lawyer-client" + System.getProperty("file.separator") + "calculations" + File.separator + VersionUtils.getFullClientVersion();
     }
 
     public static synchronized ArrayList<CalculationPlugin> loadLocalPlugins() {
 
         if (pluginList == null) {
-            pluginList=new ArrayList<CalculationPlugin>();
+            pluginList = new ArrayList<CalculationPlugin>();
             String localDir = getLocalDirectory() + File.separator;
 
             File pluginDir = new File(localDir);
             pluginDir.mkdirs();
 
-            for (File name : pluginDir.listFiles()) {
-                if (name.isDirectory()) {
-                    for (File version : name.listFiles()) {
-                        if (version.isDirectory()) {
-                            for (File meta : version.listFiles()) {
+            for (File meta : pluginDir.listFiles()) {
+                
+                        
+                            
                                 if (meta.isFile() && meta.getName().toLowerCase().endsWith("_meta.groovy")) {
                                     try {
                                         CalculationPlugin p = new CalculationPlugin();
-                                        GroovyScriptEngine e = new GroovyScriptEngine(version.getAbsolutePath());
+                                        GroovyScriptEngine e = new GroovyScriptEngine(meta.getAbsolutePath());
                                         Binding bind = new Binding();
                                         e.run(meta.getName(), bind);
-                                        p.setId(name.getName());
+                                        p.setId(meta.getName().substring(0,meta.getName().toLowerCase().indexOf("_meta.groovy")));
                                         p.setName(bind.getVariable("name").toString());
                                         p.setDescription(bind.getVariable("description").toString());
                                         p.setVersion(bind.getVariable("version").toString());
@@ -711,18 +711,29 @@ public class CalculationPluginUtil {
                                         p.setAuthor(bind.getVariable("author").toString());
                                         p.setSupportedPlaceHolders(bind.getVariable("supportedPlaceHolders").toString());
                                         pluginList.add(p);
-                                        break;
                                     } catch (Throwable t) {
-                                        log.error("Skipping plugin in " + version.getAbsolutePath(), t);
+                                        log.error("Skipping plugin in " + meta.getAbsolutePath(), t);
                                     }
                                 }
-                            }
-                        }
-                    }
-                }
+                            
+                        
+                    
+                
             }
         }
         return pluginList;
+    }
+
+    public static String checkVersion(File metaFile) {
+        try {
+            GroovyScriptEngine e = new GroovyScriptEngine(metaFile.getAbsolutePath());
+            Binding bind = new Binding();
+            e.run(metaFile.getName(), bind);
+            return bind.getVariable("version").toString();
+        } catch (Throwable t) {
+            log.error("could not check version of " + metaFile.getAbsolutePath(), t);
+            return "unknown";
+        }
     }
 
 }

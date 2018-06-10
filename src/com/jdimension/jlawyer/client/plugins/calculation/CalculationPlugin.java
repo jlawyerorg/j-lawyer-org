@@ -696,15 +696,15 @@ public class CalculationPlugin implements Comparable {
     }
 
     public JPanel getUi() throws Exception {
-        GroovyScriptEngine e = new GroovyScriptEngine(CalculationPluginUtil.getLocalDirectory() + File.separator + this.id + File.separator + this.getVersion() + File.separator);
+        GroovyScriptEngine e = new GroovyScriptEngine(CalculationPluginUtil.getLocalDirectory() + File.separator);
         Binding bind = new Binding();
         e.run(getId() + "_ui.groovy", bind);
         return (JPanel)bind.getVariable("SCRIPTPANEL");
     }
 
-    public void download() throws Exception {
+    public void download(boolean force) throws Exception {
 
-        String localDir = CalculationPluginUtil.getLocalDirectory() + File.separator + this.id + File.separator + this.getVersion() + File.separator;
+        String localDir = CalculationPluginUtil.getLocalDirectory() + File.separator;
         new File(localDir).mkdirs();
 
         for (String f : this.files) {
@@ -712,7 +712,7 @@ public class CalculationPlugin implements Comparable {
             String localFileLocation = localDir + f;
             File localFile = new File(localFileLocation);
 
-            if (!localFile.exists()) {
+            if (!localFile.exists() || force) {
 
                 URL u = new URL(this.url + f);
                 URLConnection urlCon = u.openConnection();
