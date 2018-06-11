@@ -663,240 +663,98 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.plugins.calculation;
 
-import com.jdimension.jlawyer.client.utils.VersionUtils;
-import groovy.lang.Binding;
-import groovy.util.GroovyScriptEngine;
-import java.io.File;
-import java.io.FileWriter;
+import java.awt.Toolkit;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
+import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.URL;
-import java.net.URLConnection;
+import java.io.Reader;
+import java.io.StringBufferInputStream;
+import java.io.StringReader;
 import java.util.ArrayList;
-import javax.swing.JPanel;
 
 /**
  *
  * @author jens
  */
-public class CalculationPlugin implements Comparable {
+public class GenericCalculationCallback implements CalculationPluginCallback {
 
-    private String name = null;
-    private String id = null;
-    private String version = null;
-    private String url = null;
-    private String forVersion = null;
-    private String description = null;
-    private String author = null;
-    private String updated = null;
-    private String supportedPlaceHolders = null;
-    private ArrayList<String> files = new ArrayList<String>();
+    public GenericCalculationCallback() {
 
-    public CalculationPlugin() {
     }
 
-    public JPanel getUi() throws Exception {
-        GroovyScriptEngine e = new GroovyScriptEngine(CalculationPluginUtil.getLocalDirectory() + File.separator);
-        Binding bind = new Binding();
-        bind.setVariable("callback", new GenericCalculationCallback());
-        e.run(getId() + "_ui.groovy", bind);
-        return (JPanel)bind.getVariable("SCRIPTPANEL");
+    @Override
+    public void processResultToClipboard(Object r) {
+        System.out.println("received result: " + r.toString());
+
+        HtmlSelection stsel = new HtmlSelection(r.toString());
+        Clipboard system = Toolkit.getDefaultToolkit().getSystemClipboard();
+        system.setContents(stsel, null);
     }
 
-    public void download(boolean force) throws Exception {
+    private static class HtmlSelection implements Transferable {
 
-        String localDir = CalculationPluginUtil.getLocalDirectory() + File.separator;
-        new File(localDir).mkdirs();
+        private static ArrayList htmlFlavors = new ArrayList();
 
-        for (String f : this.files) {
+        static {
 
-            String localFileLocation = localDir + f;
-            File localFile = new File(localFileLocation);
+            try {
 
-            if (!localFile.exists() || force) {
+                htmlFlavors.add(new DataFlavor("text/html;class=java.lang.String"));
 
-                URL u = new URL(this.url + f);
-                URLConnection urlCon = u.openConnection();
-                urlCon.setRequestProperty("User-Agent", "j-lawyer Client v" + VersionUtils.getFullClientVersion());
-                urlCon.setConnectTimeout(5000);
-                urlCon.setReadTimeout(5000);
+                htmlFlavors.add(new DataFlavor("text/html;class=java.io.Reader"));
 
-                InputStream is = urlCon.getInputStream();
-                InputStreamReader reader = new InputStreamReader(is);
+                htmlFlavors.add(new DataFlavor("text/html;charset=unicode;class=java.io.InputStream"));
 
-                char[] buffer = new char[1024];
-                int len = 0;
-                StringBuffer sb = new StringBuffer();
-                while ((len = reader.read(buffer)) > -1) {
-                    sb.append(buffer, 0, len);
-                }
-                reader.close();
-                is.close();
-                String content = sb.toString();
+            } catch (ClassNotFoundException ex) {
 
-                FileWriter fw = new FileWriter(localFileLocation);
-                fw.write(content);
-                fw.close();
+                ex.printStackTrace();
+
             }
+
         }
 
-    }
+        private String html;
 
-    @Override
-    public String toString() {
-        return this.getName();
-    }
+        public HtmlSelection(String html) {
 
-    /**
-     * @return the name
-     */
-    public String getName() {
-        return name;
-    }
+            this.html = html;
 
-    /**
-     * @param name the name to set
-     */
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    /**
-     * @return the version
-     */
-    public String getVersion() {
-        return version;
-    }
-
-    /**
-     * @param version the version to set
-     */
-    public void setVersion(String version) {
-        this.version = version;
-    }
-
-    /**
-     * @return the forVersion
-     */
-    public String getForVersion() {
-        return forVersion;
-    }
-
-    /**
-     * @param forVersion the forVersion to set
-     */
-    public void setForVersion(String forVersion) {
-        this.forVersion = forVersion;
-    }
-
-    /**
-     * @return the files
-     */
-    public ArrayList<String> getFiles() {
-        return files;
-    }
-
-    /**
-     * @param files the files to set
-     */
-    public void setFiles(ArrayList<String> files) {
-        this.files = files;
-    }
-
-    /**
-     * @return the url
-     */
-    public String getUrl() {
-        return url;
-    }
-
-    /**
-     * @param url the url to set
-     */
-    public void setUrl(String url) {
-        this.url = url;
-        if (!this.url.endsWith("/")) {
-            this.url = this.url + "/";
         }
-    }
 
-    /**
-     * @return the description
-     */
-    public String getDescription() {
-        return description;
-    }
+        public DataFlavor[] getTransferDataFlavors() {
 
-    /**
-     * @param description the description to set
-     */
-    public void setDescription(String description) {
-        this.description = description;
-    }
+            return (DataFlavor[]) htmlFlavors.toArray(new DataFlavor[htmlFlavors.size()]);
 
-    /**
-     * @return the author
-     */
-    public String getAuthor() {
-        return author;
-    }
-
-    /**
-     * @param author the author to set
-     */
-    public void setAuthor(String author) {
-        this.author = author;
-    }
-
-    /**
-     * @return the updated
-     */
-    public String getUpdated() {
-        return updated;
-    }
-
-    /**
-     * @param updated the updated to set
-     */
-    public void setUpdated(String updated) {
-        this.updated = updated;
-    }
-
-    /**
-     * @return the supportedPlaceHolders
-     */
-    public String getSupportedPlaceHolders() {
-        return supportedPlaceHolders;
-    }
-
-    /**
-     * @param supportedPlaceHolders the supportedPlaceHolders to set
-     */
-    public void setSupportedPlaceHolders(String supportedPlaceHolders) {
-        this.supportedPlaceHolders = supportedPlaceHolders;
-    }
-
-    @Override
-    public int compareTo(Object o) {
-        if (o instanceof CalculationPlugin) {
-            return this.getName().compareTo(((CalculationPlugin) o).getName());
-        } else {
-            return -1;
         }
-    }
 
-    /**
-     * @return the id
-     */
-    public String getId() {
-        return id;
-    }
+        public boolean isDataFlavorSupported(DataFlavor flavor) {
 
-    /**
-     * @param id the id to set
-     */
-    public void setId(String id) {
-        this.id = id;
+            return htmlFlavors.contains(flavor);
+
+        }
+
+        public Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException {
+
+            if (String.class.equals(flavor.getRepresentationClass())) {
+
+                return html;
+
+            } else if (Reader.class.equals(flavor.getRepresentationClass())) {
+
+                return new StringReader(html);
+
+            } else if (InputStream.class.equals(flavor.getRepresentationClass())) {
+
+                return new StringBufferInputStream(html);
+
+            }
+
+            throw new UnsupportedFlavorException(flavor);
+
+        }
+
     }
 
 }
