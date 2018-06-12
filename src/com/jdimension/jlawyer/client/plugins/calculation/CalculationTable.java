@@ -663,105 +663,68 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.plugins.calculation;
 
-import java.awt.Toolkit;
-import java.awt.datatransfer.Clipboard;
-import java.awt.datatransfer.DataFlavor;
-import java.awt.datatransfer.Transferable;
-import java.awt.datatransfer.UnsupportedFlavorException;
-import java.io.InputStream;
-import java.io.Reader;
-import java.io.StringBufferInputStream;
-import java.io.StringReader;
 import java.util.ArrayList;
 
 /**
  *
  * @author jens
  */
-public class GenericCalculationCallback implements CalculationPluginCallback {
+public class CalculationTable {
+    
+    private ArrayList<ArrayList<String>> data=new ArrayList<ArrayList<String>>();
+    private ArrayList columnLabels=null;
 
-    public GenericCalculationCallback() {
-
+    public CalculationTable() {
     }
 
-    @Override
-    public void processResultToClipboard(Object r) {
-        System.out.println("received result: " + r.toString());
-
-        HtmlSelection stsel = new HtmlSelection(r.toString());
-        Clipboard system = Toolkit.getDefaultToolkit().getSystemClipboard();
-        system.setContents(stsel, null);
-    }
-
-    @Override
-    public void processResultToDocument(CalculationTable table) {
-        if(table!=null) {
-            System.out.println("received table with cols: " + table.getColumnLabels().size());
-        }
-    }
-
-    private static class HtmlSelection implements Transferable {
-
-        private static ArrayList htmlFlavors = new ArrayList();
-
-        static {
-
-            try {
-
-                htmlFlavors.add(new DataFlavor("text/html;class=java.lang.String"));
-
-                htmlFlavors.add(new DataFlavor("text/html;class=java.io.Reader"));
-
-                htmlFlavors.add(new DataFlavor("text/html;charset=unicode;class=java.io.InputStream"));
-
-            } catch (ClassNotFoundException ex) {
-
-                ex.printStackTrace();
-
+    /**
+     * @return the data
+     */
+    public String[][] getData() {
+        
+        int rows=data.size();
+        int cols=0;
+        if(rows>0)
+            cols=data.get(0).size();
+        
+        String[][] array=new String[rows][cols];
+        
+        for(int i=0;i<data.size();i++) {
+            ArrayList<String> row=data.get(i);
+            for(int j=0;j<row.size();j++) {
+                array[i][j]=row.get(j);
             }
-
         }
-
-        private String html;
-
-        public HtmlSelection(String html) {
-
-            this.html = html;
-
-        }
-
-        public DataFlavor[] getTransferDataFlavors() {
-
-            return (DataFlavor[]) htmlFlavors.toArray(new DataFlavor[htmlFlavors.size()]);
-
-        }
-
-        public boolean isDataFlavorSupported(DataFlavor flavor) {
-
-            return htmlFlavors.contains(flavor);
-
-        }
-
-        public Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException {
-
-            if (String.class.equals(flavor.getRepresentationClass())) {
-
-                return html;
-
-            } else if (Reader.class.equals(flavor.getRepresentationClass())) {
-
-                return new StringReader(html);
-
-            } else if (InputStream.class.equals(flavor.getRepresentationClass())) {
-
-                return new StringBufferInputStream(html);
-
-            }
-
-            throw new UnsupportedFlavorException(flavor);
-
-        }
-
+        
+        return array;
     }
 
+    /**
+     * @param data the data to set
+     */
+    public void addRow(ArrayList<String> cellValues) {
+        this.data.add(cellValues);
+    }
+
+    /**
+     * @return the columnLabels
+     */
+    public ArrayList getColumnLabels() {
+        return columnLabels;
+    }
+    
+    public String[] getColumnLabelsAsArray() {
+        return (String[])columnLabels.toArray(new String[0]);
+    }
+
+    /**
+     * @param columnLabels the columnLabels to set
+     */
+    public void setColumnLabels(ArrayList<String> columnLabels) {
+        this.columnLabels = columnLabels;
+    }
+    
+    
+    
+    
 }

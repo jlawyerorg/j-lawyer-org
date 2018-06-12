@@ -670,5 +670,6 @@ package com.jdimension.jlawyer.client.plugins.calculation;
 public interface CalculationPluginCallback {
     
     public void processResultToClipboard(Object r);
+    public void processResultToDocument(CalculationTable table);
     
 }
