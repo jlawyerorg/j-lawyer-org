@@ -700,7 +700,7 @@ public class CalculationTable {
     }
 
     /**
-     * @param data the data to set
+     * @param cellValues the data to set
      */
     public void addRow(ArrayList<String> cellValues) {
         this.data.add(cellValues);
