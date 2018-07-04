@@ -664,6 +664,7 @@
 package com.jdimension.jlawyer.client.mail;
 
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import com.jdimension.jlawyer.client.editors.addresses.ContactTypeColors;
 import com.jdimension.jlawyer.client.editors.documents.SearchAndAssignDialog;
 import com.jdimension.jlawyer.client.editors.files.AddressBeanListCellRenderer;
 import com.jdimension.jlawyer.client.launcher.Launcher;
@@ -684,6 +685,7 @@ import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.services.AddressServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.io.File;
@@ -926,7 +928,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         if (!this.contextClients.contains(ab)) {
             this.contextClients.add(ab);
             this.cmbClient.addItem(ab);
-            this.addRecipientCandidate(ab, "Mandant");
+            this.addRecipientCandidate(ab, "Mandant", ContactTypeColors.CLIENT);
         }
         this.contextClient = ab;
         this.cmbClient.setSelectedItem(ab);
@@ -940,7 +942,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         }
         if (!this.contextOpponents.contains(ab)) {
             this.contextOpponents.add(ab);
-            this.addRecipientCandidate(ab, "Gegner");
+            this.addRecipientCandidate(ab, "Gegner", ContactTypeColors.OPPONENT);
             this.cmbOpponent.addItem(ab);
         }
 
@@ -957,7 +959,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         if (!this.contextOppAttorneys.contains(ab)) {
             this.contextOppAttorneys.add(ab);
             this.cmbOpponentAtt.addItem(ab);
-            this.addRecipientCandidate(ab, "Dritte(r)");
+            this.addRecipientCandidate(ab, "Dritte(r)", ContactTypeColors.OTHER);
         }
         this.contextOppAttorney = ab;
         this.cmbOpponentAtt.setSelectedItem(ab);
@@ -1581,24 +1583,30 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         }
     }//GEN-LAST:event_cmdAttachActionPerformed
 
-    private void addRecipientCandidate(AddressBean ab, String suffix) {
+    private void addRecipientCandidate(AddressBean ab, String suffix, Color background) {
         if (ab.getEmail() != null && !("".equals(ab.getEmail()))) {
             JCheckBoxMenuItem mi = new JCheckBoxMenuItem();
             mi.setState(false);
             mi.setText(ab.toDisplayName() + " (" + suffix + ")");
             mi.addActionListener(new RecipientsActionListener(ab.getEmail(), this.txtTo));
+            mi.setBackground(background);
+            mi.setOpaque(true);
             this.popRecipients.add(mi);
 
             JCheckBoxMenuItem mi2 = new JCheckBoxMenuItem();
             mi2.setState(false);
             mi2.setText(ab.toDisplayName() + " (" + suffix + ")");
             mi2.addActionListener(new RecipientsActionListener(ab.getEmail(), this.txtCc));
+            mi2.setOpaque(true);
+            mi2.setBackground(background);
             this.popRecipientsCc.add(mi2);
 
             JCheckBoxMenuItem mi3 = new JCheckBoxMenuItem();
             mi3.setState(false);
             mi3.setText(ab.toDisplayName() + " (" + suffix + ")");
             mi3.addActionListener(new RecipientsActionListener(ab.getEmail(), this.txtBcc));
+            mi3.setBackground(background);
+            mi3.setOpaque(true);
             this.popRecipientsBcc.add(mi3);
 
         }

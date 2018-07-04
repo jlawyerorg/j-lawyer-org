@@ -668,6 +668,7 @@ import com.jdimension.jlawyer.client.bea.BeaLoginDialog;
 import com.jdimension.jlawyer.client.bea.IdentityPanel;
 import com.jdimension.jlawyer.client.bea.SendBeaMessageDialog;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import com.jdimension.jlawyer.client.editors.addresses.ContactTypeColors;
 import com.jdimension.jlawyer.client.mail.SendEmailDialog;
 import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
@@ -1017,11 +1018,11 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel {
 
     private void cmbRefTypeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbRefTypeActionPerformed
         if("Mandant".equalsIgnoreCase(cmbRefType.getSelectedItem().toString())) {
-            this.lblType.setBackground(new Color(153, 204, 0));
+            this.lblType.setBackground(ContactTypeColors.CLIENT);
         } else if ("Gegner".equalsIgnoreCase(cmbRefType.getSelectedItem().toString())) {
-            this.lblType.setBackground(new Color(255, 51, 0).brighter());
+            this.lblType.setBackground(ContactTypeColors.OPPONENT);
         }else if ("Dritte".equalsIgnoreCase(cmbRefType.getSelectedItem().toString())) {
-            this.lblType.setBackground(new Color(102, 204, 255));
+            this.lblType.setBackground(ContactTypeColors.OTHER);
         }
     }//GEN-LAST:event_cmbRefTypeActionPerformed
 
