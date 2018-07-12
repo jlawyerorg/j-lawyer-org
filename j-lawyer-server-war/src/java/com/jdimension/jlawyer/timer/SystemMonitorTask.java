@@ -709,6 +709,18 @@ public class SystemMonitorTask extends java.util.TimerTask {
 
     }
 
+    private boolean isEnabled(ServerSettingsBeanFacadeLocal settings, String key) {
+        ServerSettingsBean enabled = settings.find(key);
+        if (enabled == null) {
+            return true;
+        }
+
+        if ("off".equalsIgnoreCase(enabled.getSettingValue())) {
+            return false;
+        }
+        return true;
+    }
+
     @Override
     public void run() {
 
@@ -717,7 +729,7 @@ public class SystemMonitorTask extends java.util.TimerTask {
             ServerSettingsBeanFacadeLocal settings = (ServerSettingsBeanFacadeLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ServerSettingsBeanFacade!com.jdimension.jlawyer.persistence.ServerSettingsBeanFacadeLocal");
             //SystemManagementRemote sysMan= (SystemManagementRemote) ic.lookup("java:/j-lawyer-server/SystemManagement/remote");
             SingletonServiceLocal singleton = (SingletonServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/SingletonService!com.jdimension.jlawyer.services.SingletonServiceLocal");
-            
+
             this.cpuErrorLevel = getLimit(settings, "jlawyer.server.monitor.cpuerror", this.cpuErrorLevel);
             this.cpuWarnLevel = getLimit(settings, "jlawyer.server.monitor.cpuwarn", this.cpuWarnLevel);
             this.diskErrorLevel = getLimit(settings, "jlawyer.server.monitor.diskerror", this.diskErrorLevel);
@@ -727,48 +739,61 @@ public class SystemMonitorTask extends java.util.TimerTask {
             this.vmErrorLevel = getLimit(settings, "jlawyer.server.monitor.vmerror", this.vmErrorLevel);
             this.vmWarnLevel = getLimit(settings, "jlawyer.server.monitor.vmwarn", this.vmWarnLevel);
 
+            boolean cpuEnabled = this.isEnabled(settings, "jlawyer.server.monitor.enabled.cpu");
+            boolean ramEnabled = this.isEnabled(settings, "jlawyer.server.monitor.enabled.ram");
+            boolean diskEnabled = this.isEnabled(settings, "jlawyer.server.monitor.enabled.disk");
+            boolean javaEnabled = this.isEnabled(settings, "jlawyer.server.monitor.enabled.java");
+
             String status = "";
             StringBuffer mailBody = new StringBuffer();
             String hostName = ServerInformation.getHostName();
             mailBody.append("Server: ").append(hostName).append("\r\n\r\n");
 
             int aggregate = MonitoringConstants.LEVEL_NORMAL;
-            int disk = this.getDiskStatusLevel();
-            if (disk > aggregate) {
-                aggregate = disk;
-                status = this.getStatusString(aggregate, "Disk");
-            }
-            if (disk > MonitoringConstants.LEVEL_NORMAL) {
-                mailBody.append(this.getStatusString(disk, "Disk")).append("\r\n");
-            }
-
-            int cpu = this.getCPUStatusLevel(settings);
-            if (cpu > aggregate) {
-                aggregate = cpu;
-                status = this.getStatusString(aggregate, "CPU");
-            }
-            if (cpu > MonitoringConstants.LEVEL_NORMAL) {
-                mailBody.append(this.getStatusString(cpu, "CPU")).append("\r\n");
+            if (diskEnabled) {
+                int disk = this.getDiskStatusLevel();
+                if (disk > aggregate) {
+                    aggregate = disk;
+                    status = this.getStatusString(aggregate, "Disk");
+                }
+                if (disk > MonitoringConstants.LEVEL_NORMAL) {
+                    mailBody.append(this.getStatusString(disk, "Disk")).append("\r\n");
+                }
             }
 
-            int mem = this.getPhysicalMemStatusLevel();
-            if (mem > aggregate) {
-                aggregate = mem;
-                status = this.getStatusString(aggregate, "RAM");
+            if (cpuEnabled) {
+                int cpu = this.getCPUStatusLevel(settings);
+                if (cpu > aggregate) {
+                    aggregate = cpu;
+                    status = this.getStatusString(aggregate, "CPU");
+                }
+                if (cpu > MonitoringConstants.LEVEL_NORMAL) {
+                    mailBody.append(this.getStatusString(cpu, "CPU")).append("\r\n");
+                }
+            }
+
+            if (ramEnabled) {
+                int mem = this.getPhysicalMemStatusLevel();
+                if (mem > aggregate) {
+                    aggregate = mem;
+                    status = this.getStatusString(aggregate, "RAM");
 //                mailBody.append(status).append("\r\n");
-            }
-            if (mem > MonitoringConstants.LEVEL_NORMAL) {
-                mailBody.append(this.getStatusString(mem, "RAM")).append("\r\n");
+                }
+                if (mem > MonitoringConstants.LEVEL_NORMAL) {
+                    mailBody.append(this.getStatusString(mem, "RAM")).append("\r\n");
+                }
             }
 
-            int vm = this.getVMMemStatusLevel();
-            if (vm > aggregate) {
-                aggregate = vm;
-                status = this.getStatusString(aggregate, "VM-Speicher");
+            if (javaEnabled) {
+                int vm = this.getVMMemStatusLevel();
+                if (vm > aggregate) {
+                    aggregate = vm;
+                    status = this.getStatusString(aggregate, "VM-Speicher");
 //                mailBody.append(status).append("\r\n");
-            }
-            if (vm > MonitoringConstants.LEVEL_NORMAL) {
-                mailBody.append(this.getStatusString(vm, "VM-Speicher")).append("\r\n");
+                }
+                if (vm > MonitoringConstants.LEVEL_NORMAL) {
+                    mailBody.append(this.getStatusString(vm, "VM-Speicher")).append("\r\n");
+                }
             }
 
             boolean sendMail = false;
@@ -780,10 +805,12 @@ public class SystemMonitorTask extends java.util.TimerTask {
                 sb.setSettingValue("" + aggregate);
                 settings.create(sb);
             } else // only send mail when status changes
-            if (!("" + aggregate).equals(stLevel.getSettingValue())) {
-                sendMail = true;
-                stLevel.setSettingValue("" + aggregate);
-                settings.edit(stLevel);
+            {
+                if (!("" + aggregate).equals(stLevel.getSettingValue())) {
+                    sendMail = true;
+                    stLevel.setSettingValue("" + aggregate);
+                    settings.edit(stLevel);
+                }
             }
 
             ServerSettingsBean st = settings.find("jlawyer.server.monitor.laststatus");
@@ -985,7 +1012,7 @@ public class SystemMonitorTask extends java.util.TimerTask {
 
         ServerSettingsBean smtpHostS = settings.find("jlawyer.server.monitor.smtpserver");
         ServerSettingsBean smtpUserS = settings.find("jlawyer.server.monitor.smtpuser");
-        ServerSettingsBean smtpSenderName=settings.find("jlawyer.server.monitor.smtpsendername");
+        ServerSettingsBean smtpSenderName = settings.find("jlawyer.server.monitor.smtpsendername");
         ServerSettingsBean smtpPwdS = settings.find("jlawyer.server.monitor.smtppwd");
         ServerSettingsBean smtpToS = settings.find("jlawyer.server.monitor.smtpto");
         ServerSettingsBean smtpSslS = settings.find("jlawyer.server.monitor.smtpssl");
@@ -1042,7 +1069,7 @@ public class SystemMonitorTask extends java.util.TimerTask {
             bus.connect(smtpHost, smtpUser, smtpPwd);
 
             MimeMessage msg = new MimeMessage(session);
-            
+
             String senderName = "j-lawyer Server";
             if (smtpSenderName != null) {
                 String s = smtpSenderName.getSettingValue();
