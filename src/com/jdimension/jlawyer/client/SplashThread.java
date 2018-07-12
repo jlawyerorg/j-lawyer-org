@@ -917,6 +917,22 @@ public class SplashThread implements Runnable {
                         openBackupConfigurationDialog();
                     }
                 }
+                
+                if ("1".equals(serverSettings.getSetting(ServerSettings.SERVERCONF_REPLICATION_ISTARGET, "0"))) {
+                    StringBuffer dialogContent=new StringBuffer();
+                    dialogContent.append("<html>");
+                    dialogContent.append("<b>Diese Installation empf&auml;ngt momentan Daten einer anderen j-lawyer.BOX (Replikation).</b><br/>");
+                    dialogContent.append("Soll die Replikation deaktiviert werden?<b/><br/>");
+                    dialogContent.append("<ul>");
+                    dialogContent.append("<li>W&auml;hlen Sie 'Nein' wenn Sie nur lesend zugreifen möchten oder dies ein Zugriff zu Testzwecken ist (empfohlen)</li>");
+                    dialogContent.append("<li>W&auml;hlen Sie 'Ja' wenn diese Installation aktiv genutzt werden soll</li>");
+                    dialogContent.append("</ul>");
+                    dialogContent.append("</html>");
+                    int response = JOptionPane.showConfirmDialog(EditorsRegistry.getInstance().getMainWindow(), dialogContent.toString(), "j-lawyer.BOX Replikation", JOptionPane.YES_NO_OPTION);
+                    if (response == JOptionPane.YES_OPTION) {
+                        serverSettings.setSetting(ServerSettings.SERVERCONF_REPLICATION_ISTARGET, "0");
+                    }
+                }
             }
         });
     }

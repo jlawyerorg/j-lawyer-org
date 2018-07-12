@@ -732,6 +732,8 @@ public class ServerSettings {
     public static final String SERVERCONF_BACKUP_SYNCTARGET="jlawyer.server.backup.synctarget";
     public static final String SERVERCONF_BACKUP_EXPORTTARGET="jlawyer.server.backup.exporttarget";
     
+    public static final String SERVERCONF_REPLICATION_ISTARGET="jlawyer.server.replication.istarget";
+    
     public static final String SERVERCONF_MONITOR_CPUWARN="jlawyer.server.monitor.cpuwarn";
     public static final String SERVERCONF_MONITOR_CPUERROR="jlawyer.server.monitor.cpuerror";
     public static final String SERVERCONF_MONITOR_MEMWARN="jlawyer.server.monitor.memwarn";
