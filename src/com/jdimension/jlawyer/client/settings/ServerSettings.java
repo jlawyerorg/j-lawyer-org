@@ -748,6 +748,11 @@ public class ServerSettings {
     public static final String SERVERCONF_MONITOR_SMTPTO="jlawyer.server.monitor.smtpto";
     public static final String SERVERCONF_MONITOR_SMTPSSL="jlawyer.server.monitor.smtpssl";
     
+    public static final String SERVERCONF_MONITOR_ENABLED_CPU="jlawyer.server.monitor.enabled.cpu";
+    public static final String SERVERCONF_MONITOR_ENABLED_RAM="jlawyer.server.monitor.enabled.ram";
+    public static final String SERVERCONF_MONITOR_ENABLED_DISK="jlawyer.server.monitor.enabled.disk";
+    public static final String SERVERCONF_MONITOR_ENABLED_JAVA="jlawyer.server.monitor.enabled.java";
+    
     public static final String SERVERCONF_CASENUMBERING_PATTERN="jlawyer.server.numbering.pattern";
     public static final String SERVERCONF_CASENUMBERING_STARTFROM="jlawyer.server.numbering.startfrom";
     

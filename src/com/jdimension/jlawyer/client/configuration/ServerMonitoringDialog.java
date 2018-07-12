@@ -706,6 +706,10 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
                 this.cmbVMMemError.setEnabled(false);
                 this.cmbVMMemWarn.setEnabled(false);
                 this.chkWarnings.setEnabled(false);
+                this.chkMonitorCpu.setEnabled(false);
+                this.chkMonitorDisk.setEnabled(false);
+                this.chkMonitorJava.setEnabled(false);
+                this.chkMonitorRam.setEnabled(false);
                 this.txtPassword.setEnabled(false);
                 this.txtSmtp.setEnabled(false);
                 this.txtUser.setEnabled(false);
@@ -742,6 +746,31 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
                 this.chkWarnings.setSelected(false);
             else
                 this.chkWarnings.setSelected(true);
+            
+            String cpuEnabled=set.getSetting(set.SERVERCONF_MONITOR_ENABLED_CPU, "on");
+            if("off".equalsIgnoreCase(cpuEnabled))
+                this.chkMonitorCpu.setSelected(false);
+            else
+                this.chkMonitorCpu.setSelected(true);
+            
+            String ramEnabled=set.getSetting(set.SERVERCONF_MONITOR_ENABLED_RAM, "on");
+            if("off".equalsIgnoreCase(ramEnabled))
+                this.chkMonitorRam.setSelected(false);
+            else
+                this.chkMonitorRam.setSelected(true);
+            
+            String diskEnabled=set.getSetting(set.SERVERCONF_MONITOR_ENABLED_DISK, "on");
+            if("off".equalsIgnoreCase(diskEnabled))
+                this.chkMonitorDisk.setSelected(false);
+            else
+                this.chkMonitorDisk.setSelected(true);
+            
+            String javaEnabled=set.getSetting(set.SERVERCONF_MONITOR_ENABLED_JAVA, "on");
+            if("off".equalsIgnoreCase(javaEnabled))
+                this.chkMonitorJava.setSelected(false);
+            else
+                this.chkMonitorJava.setSelected(true);
+            
             this.txtPassword.setText(set.getSetting(set.SERVERCONF_MONITOR_SMTPPASSWORD, ""));
             this.txtSmtp.setText(set.getSetting(set.SERVERCONF_MONITOR_SMTPSERVER, ""));
             this.txtUser.setText(set.getSetting(set.SERVERCONF_MONITOR_SMTPUSER, ""));
@@ -852,6 +881,10 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
         jLabel16 = new javax.swing.JLabel();
         jLabel17 = new javax.swing.JLabel();
         jLabel18 = new javax.swing.JLabel();
+        chkMonitorCpu = new javax.swing.JCheckBox();
+        chkMonitorRam = new javax.swing.JCheckBox();
+        chkMonitorJava = new javax.swing.JCheckBox();
+        chkMonitorDisk = new javax.swing.JCheckBox();
         jPanel4 = new javax.swing.JPanel();
         chkWarnings = new javax.swing.JCheckBox();
         jLabel6 = new javax.swing.JLabel();
@@ -968,13 +1001,13 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
 
         jPanel3.setBorder(javax.swing.BorderFactory.createTitledBorder("Schwellwerte"));
 
-        jLabel9.setText("CPU:");
+        jLabel9.setText("CPU");
 
-        jLabel10.setText("RAM+Swap:");
+        jLabel10.setText("RAM+Swap");
 
-        jLabel11.setText("Java VM:");
+        jLabel11.setText("Java VM");
 
-        jLabel12.setText("Disk:");
+        jLabel12.setText("Disk");
 
         cmbVMMemWarn.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "50", "55", "60", "65", "70", "75", "80", "85", "90", "95" }));
 
@@ -1006,12 +1039,26 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
 
         jLabel18.setText("% Kapazitätsnutzung");
 
+        chkMonitorCpu.setText("überwachen:");
+
+        chkMonitorRam.setText("überwachen:");
+
+        chkMonitorJava.setText("überwachen:");
+
+        chkMonitorDisk.setText("überwachen:");
+
         javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);
         jPanel3Layout.setHorizontalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel3Layout.createSequentialGroup()
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel3Layout.createSequentialGroup()
                 .addContainerGap()
+                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(chkMonitorCpu)
+                    .addComponent(chkMonitorRam)
+                    .addComponent(chkMonitorJava)
+                    .addComponent(chkMonitorDisk))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jLabel11)
                     .addComponent(jLabel10)
@@ -1020,34 +1067,35 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel3Layout.createSequentialGroup()
-                        .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(cmbCpuWarn, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(jLabel13, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                        .addGap(18, 18, 18)
-                        .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(cmbCpuError, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(jLabel14, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jLabel15, javax.swing.GroupLayout.DEFAULT_SIZE, 353, Short.MAX_VALUE))
-                    .addGroup(jPanel3Layout.createSequentialGroup()
-                        .addComponent(cmbMemWarn, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(18, 18, 18)
-                        .addComponent(cmbMemError, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jLabel16, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addGroup(jPanel3Layout.createSequentialGroup()
                         .addComponent(cmbDiskWarn, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(18, 18, 18)
                         .addComponent(cmbDiskError, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jLabel18, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addComponent(jLabel18))
                     .addGroup(jPanel3Layout.createSequentialGroup()
-                        .addComponent(cmbVMMemWarn, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(cmbCpuWarn, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(jLabel13, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addGap(18, 18, 18)
-                        .addComponent(cmbVMMemError, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(cmbCpuError, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(jLabel14, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jLabel17, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-                .addContainerGap())
+                        .addComponent(jLabel15))
+                    .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                        .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel3Layout.createSequentialGroup()
+                            .addComponent(cmbVMMemWarn, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addGap(18, 18, 18)
+                            .addComponent(cmbVMMemError, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                            .addComponent(jLabel17, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel3Layout.createSequentialGroup()
+                            .addComponent(cmbMemWarn, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addGap(18, 18, 18)
+                            .addComponent(cmbMemError, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                            .addComponent(jLabel16))))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         jPanel3Layout.setVerticalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1060,25 +1108,29 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
                     .addComponent(jLabel9)
                     .addComponent(cmbCpuWarn, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(cmbCpuError, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel15))
+                    .addComponent(jLabel15)
+                    .addComponent(chkMonitorCpu))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel10)
                     .addComponent(cmbMemWarn, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(cmbMemError, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel16))
+                    .addComponent(jLabel16)
+                    .addComponent(chkMonitorRam))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel11)
                     .addComponent(cmbVMMemWarn, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(cmbVMMemError, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel17))
+                    .addComponent(jLabel17)
+                    .addComponent(chkMonitorJava))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel12)
                     .addComponent(cmbDiskWarn, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(cmbDiskError, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel18))
+                    .addComponent(jLabel18)
+                    .addComponent(chkMonitorDisk))
                 .addContainerGap())
         );
 
@@ -1197,7 +1249,7 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jTabbedPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 426, Short.MAX_VALUE)
+                .addComponent(jTabbedPane1)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(cmdCancel)
@@ -1226,6 +1278,26 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
             set.setSetting(set.SERVERCONF_MONITOR_NOTIFY, "on");
         else 
             set.setSetting(set.SERVERCONF_MONITOR_NOTIFY, "off");
+        
+        if(this.chkMonitorCpu.isSelected())
+            set.setSetting(set.SERVERCONF_MONITOR_ENABLED_CPU, "on");
+        else 
+            set.setSetting(set.SERVERCONF_MONITOR_ENABLED_CPU, "off");
+        
+        if(this.chkMonitorRam.isSelected())
+            set.setSetting(set.SERVERCONF_MONITOR_ENABLED_RAM, "on");
+        else 
+            set.setSetting(set.SERVERCONF_MONITOR_ENABLED_RAM, "off");
+        
+        if(this.chkMonitorDisk.isSelected())
+            set.setSetting(set.SERVERCONF_MONITOR_ENABLED_DISK, "on");
+        else 
+            set.setSetting(set.SERVERCONF_MONITOR_ENABLED_DISK, "off");
+        
+        if(this.chkMonitorJava.isSelected())
+            set.setSetting(set.SERVERCONF_MONITOR_ENABLED_JAVA, "on");
+        else 
+            set.setSetting(set.SERVERCONF_MONITOR_ENABLED_JAVA, "off");
         
         set.setSetting(set.SERVERCONF_MONITOR_SMTPPASSWORD, new String(this.txtPassword.getPassword()));
         set.setSetting(set.SERVERCONF_MONITOR_SMTPUSER, this.txtUser.getText());
@@ -1297,6 +1369,10 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.ButtonGroup backupMode;
+    private javax.swing.JCheckBox chkMonitorCpu;
+    private javax.swing.JCheckBox chkMonitorDisk;
+    private javax.swing.JCheckBox chkMonitorJava;
+    private javax.swing.JCheckBox chkMonitorRam;
     private javax.swing.JCheckBox chkSsl;
     private javax.swing.JCheckBox chkWarnings;
     private javax.swing.JComboBox cmbCpuError;
