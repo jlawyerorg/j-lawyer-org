@@ -664,8 +664,12 @@
 package com.jdimension.jlawyer.client;
 
 import com.jdimension.jlawyer.client.configuration.*;
+import com.jdimension.jlawyer.client.desktop.UpdateAddressTagsTask;
+import com.jdimension.jlawyer.client.desktop.UpdateArchiveFileTagsTask;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.ModuleTreeCellRenderer;
+import com.jdimension.jlawyer.client.editors.addresses.EditAddressPanel;
+import com.jdimension.jlawyer.client.editors.files.EditArchiveFilePanel;
 import com.jdimension.jlawyer.client.events.AutoUpdateEvent;
 import com.jdimension.jlawyer.client.events.BeaStatusEvent;
 import com.jdimension.jlawyer.client.events.DrebisStatusEvent;
@@ -1884,6 +1888,16 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
                 dlg.setOptionGroup(OptionConstants.OPTIONGROUP_ARCHIVEFILETAGS);
                 FrameUtils.centerDialog(dlg, this);
                 dlg.setVisible(true);
+                
+                try {
+                    Timer timer=new Timer();
+                    TimerTask tagsTask = new UpdateArchiveFileTagsTask(this, (EditArchiveFilePanel) EditorsRegistry.getInstance().getEditor(EditArchiveFilePanel.class.getName()));
+                    timer.schedule(tagsTask, 500);
+
+                } catch (Throwable t) {
+                    log.error("Could not set up timer task for tag updates", t);
+                }
+
             } else {
                 JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.adminrequired"), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.hint"), JOptionPane.INFORMATION_MESSAGE);
             }
@@ -1934,6 +1948,13 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
                 dlg.setOptionGroup(OptionConstants.OPTIONGROUP_ADDRESSTAGS);
                 FrameUtils.centerDialog(dlg, this);
                 dlg.setVisible(true);
+                try {
+                    Timer timer = new Timer();
+                    TimerTask tagsTask2 = new UpdateAddressTagsTask(this, (EditAddressPanel) EditorsRegistry.getInstance().getEditor(EditAddressPanel.class.getName()));
+                    timer.schedule(tagsTask2, 500);
+                } catch (Throwable t) {
+                    log.error("Could not set up timer task for tag updates", t);
+                }
             } else {
                 JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.adminrequired"), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.hint"), JOptionPane.INFORMATION_MESSAGE);
             }
