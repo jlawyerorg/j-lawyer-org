@@ -665,9 +665,14 @@ package com.jdimension.jlawyer.client.editors.documents.viewer;
 
 import com.jdimension.jlawyer.client.launcher.LauncherFactory;
 import com.jdimension.jlawyer.client.mail.MessageContainer;
+import com.jdimension.jlawyer.client.utils.FileUtils;
 import java.awt.Dimension;
 import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.io.OutputStream;
 import javax.mail.Flags.Flag;
 import javax.mail.internet.MimeMessage;
 import javax.swing.JComponent;
@@ -722,6 +727,28 @@ public class DocumentViewerFactory {
                 ep.showStatus("Vorschau kann nicht geladen werden.");
                 return ep;
             }
+//        } else if (fileName.toLowerCase().endsWith(".odt") || fileName.toLowerCase().endsWith(".ods")) {
+//            try {
+//                String tempPath=FileUtils.createTempFile(fileName, content);
+//                InputStream in = new FileInputStream(tempPath);
+//                OdfDocument document = OdfDocument.loadDocument(in);
+//
+//                PdfOptions options = PdfOptions.create();
+//
+//                File tempPdf=File.createTempFile("" + System.currentTimeMillis(), ".pdf");
+//                OutputStream out = new FileOutputStream(tempPdf);
+//                PdfConverter.getInstance().convert(document, out, options);
+//                
+//                byte[] pdfContent=FileUtils.readFile(tempPdf);
+//                FileUtils.cleanupTempFile(tempPath);
+//                FileUtils.cleanupTempFile(tempPdf.getPath());
+//                PdfImagePanel pdfP = new PdfImagePanel(pdfContent);
+//                pdfP.setSize(new Dimension(width, height));
+//                pdfP.showContent(pdfContent);
+//                return pdfP;
+//            } catch (Throwable t) {
+//                log.error("could not convert file to PDF: " + fileName, t);
+//            }
         } else if (LauncherFactory.supportedByLibreOffice(fileName)) {
             
             // double clicking the documents table will fire the mouse event twice - one with clickount=1, then with clickcount=2

@@ -663,9 +663,9 @@
  */
 package com.jdimension.jlawyer.client.bea;
 
-import com.lowagie.text.Font;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Font;
 import javax.swing.JTree;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeCellRenderer;
@@ -727,7 +727,7 @@ public class BeaFolderTreeCellRenderer extends DefaultTreeCellRenderer {
             if(unread>0) {
                 this.setFont(this.getFont().deriveFont(Font.BOLD));
             } else {
-                this.setFont(this.getFont().deriveFont(Font.NORMAL));
+                this.setFont(this.getFont().deriveFont(Font.PLAIN));
             }
             
             

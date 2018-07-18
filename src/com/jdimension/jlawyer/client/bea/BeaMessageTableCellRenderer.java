@@ -663,9 +663,9 @@
  */
 package com.jdimension.jlawyer.client.bea;
 
-import com.lowagie.text.Font;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Font;
 import javax.swing.JLabel;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -692,7 +692,7 @@ public class BeaMessageTableCellRenderer extends DefaultTableCellRenderer {
         //MessageContainer msgC= (MessageContainer)table.getValueAt(row, 0);
         
             returnRenderer=super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-            ((Component)returnRenderer).setFont(((Component)returnRenderer).getFont().deriveFont(Font.NORMAL));
+            ((Component)returnRenderer).setFont(((Component)returnRenderer).getFont().deriveFont(Font.PLAIN));
             ((JLabel)((Component)returnRenderer)).setForeground(Color.BLACK);
         
         try {
@@ -703,7 +703,7 @@ public class BeaMessageTableCellRenderer extends DefaultTableCellRenderer {
             else
                 ((JLabel)((Component)returnRenderer)).setIcon(null);
         } else {
-            ((Component)returnRenderer).setFont(((Component)returnRenderer).getFont().deriveFont(Font.NORMAL));
+            ((Component)returnRenderer).setFont(((Component)returnRenderer).getFont().deriveFont(Font.PLAIN));
             if(column==0)
                 ((JLabel)((Component)returnRenderer)).setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/mail_generic.png")));
             else

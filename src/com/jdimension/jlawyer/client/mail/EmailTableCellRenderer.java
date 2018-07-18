@@ -663,10 +663,9 @@
  */
 package com.jdimension.jlawyer.client.mail;
 
-import com.lowagie.text.Font;
 import java.awt.Color;
 import java.awt.Component;
-import javax.mail.Flags;
+import java.awt.Font;
 import javax.mail.Message;
 import javax.swing.JLabel;
 import javax.swing.JTable;
@@ -695,12 +694,12 @@ public class EmailTableCellRenderer extends DefaultTableCellRenderer {
         
         if(msg.isExpunged()) {
             returnRenderer=super.getTableCellRendererComponent(table, "Nachricht gelöscht", isSelected, hasFocus, row, column);
-            ((Component)returnRenderer).setFont(((Component)returnRenderer).getFont().deriveFont(Font.STRIKETHRU));
+            ((Component)returnRenderer).setFont(((Component)returnRenderer).getFont().deriveFont(Font.ITALIC));
             ((JLabel)((Component)returnRenderer)).setForeground(Color.RED);
             return (Component)returnRenderer;
         } else {
             returnRenderer=super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-            ((Component)returnRenderer).setFont(((Component)returnRenderer).getFont().deriveFont(Font.NORMAL));
+            ((Component)returnRenderer).setFont(((Component)returnRenderer).getFont().deriveFont(Font.PLAIN));
             ((JLabel)((Component)returnRenderer)).setForeground(Color.BLACK);
         }
         try {
@@ -711,7 +710,7 @@ public class EmailTableCellRenderer extends DefaultTableCellRenderer {
             else
                 ((JLabel)((Component)returnRenderer)).setIcon(null);
         } else {
-            ((Component)returnRenderer).setFont(((Component)returnRenderer).getFont().deriveFont(Font.NORMAL));
+            ((Component)returnRenderer).setFont(((Component)returnRenderer).getFont().deriveFont(Font.PLAIN));
             if(column==0)
                 ((JLabel)((Component)returnRenderer)).setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/mail_generic.png")));
             else
