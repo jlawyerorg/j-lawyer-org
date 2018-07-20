@@ -703,6 +703,8 @@ public class ArchiveFileDocumentsBean implements Serializable {
     @JoinColumn(name = "archiveFileKey", referencedColumnName = "id")
     @ManyToOne
     private ArchiveFileBean archiveFileKey;
+    @Column(name = "favorite")
+    private boolean favorite;
 
     public ArchiveFileDocumentsBean() {
     }
@@ -810,6 +812,20 @@ public class ArchiveFileDocumentsBean implements Serializable {
      */
     public void setSize(long size) {
         this.size = size;
+    }
+
+    /**
+     * @return the favorite
+     */
+    public boolean isFavorite() {
+        return favorite;
+    }
+
+    /**
+     * @param favorite the favorite to set
+     */
+    public void setFavorite(boolean favorite) {
+        this.favorite = favorite;
     }
     
 }
