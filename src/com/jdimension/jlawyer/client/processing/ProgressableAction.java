@@ -666,12 +666,15 @@ package com.jdimension.jlawyer.client.processing;
 import javax.swing.JDialog;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
+import org.jboss.logging.Logger;
 
 /**
  *
  * @author Kutschke
  */
 public abstract class ProgressableAction {
+    
+    private static final Logger log=Logger.getLogger(ProgressableAction.class.getName());
 
     private boolean infinite;
     protected ProgressIndicator indicator;
@@ -761,6 +764,8 @@ public abstract class ProgressableAction {
                 try {
                     success=execute();
                 } catch (Throwable t) {
+                    log.error(t);
+                    t.printStackTrace();
                     success=false;
                     error=t.getMessage();
                     

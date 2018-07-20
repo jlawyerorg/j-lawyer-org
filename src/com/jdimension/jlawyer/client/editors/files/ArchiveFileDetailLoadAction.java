@@ -667,10 +667,14 @@ import com.jdimension.jlawyer.comparator.DocumentsComparator;
 import com.jdimension.jlawyer.comparator.ReviewsComparator;
 import com.jdimension.jlawyer.client.configuration.UserTableCellRenderer;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import com.jdimension.jlawyer.client.launcher.CaseDocumentStore;
+import com.jdimension.jlawyer.client.launcher.Launcher;
+import com.jdimension.jlawyer.client.launcher.LauncherFactory;
 import com.jdimension.jlawyer.client.processing.ProgressIndicator;
 import com.jdimension.jlawyer.client.processing.ProgressableAction;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
+import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.persistence.*;
@@ -680,6 +684,8 @@ import com.jdimension.jlawyer.ui.tagging.ArchiveFileTagActionListener;
 import com.jdimension.jlawyer.ui.tagging.TagToggleButton;
 import java.awt.Component;
 import java.awt.GridLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -711,29 +717,31 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
     private JLabel lblArchivedSince;
     private boolean isArchived = false;
     private boolean readOnly = false;
-    private boolean beaEnabled=false;
+    private boolean beaEnabled = false;
     private String selectDocumentWithFileName;
+    private JPopupMenu popDocumentFavorites;
 
     private SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy HH:mm");
 
-    public ArchiveFileDetailLoadAction(ProgressIndicator i, ArchiveFilePanel owner, String archiveFileKey, ArchiveFileBean caseDto, JTable historyTarget, JTable docTarget, InvolvedPartiesPanel contactsForCasePanel, JTable tblReviews, JPanel tagPanel, boolean readOnly, boolean beaEnabled, String selectDocumentWithFileName, JLabel lblArchivedSince, boolean isArchived) {
+    public ArchiveFileDetailLoadAction(ProgressIndicator i, ArchiveFilePanel owner, String archiveFileKey, ArchiveFileBean caseDto, JTable historyTarget, JTable docTarget, InvolvedPartiesPanel contactsForCasePanel, JTable tblReviews, JPanel tagPanel, boolean readOnly, boolean beaEnabled, String selectDocumentWithFileName, JLabel lblArchivedSince, boolean isArchived, JPopupMenu popDocumentFavorites) {
         super(i, false);
         //this.table = table;
         //this.dlg = dlg;
 
+        this.popDocumentFavorites = popDocumentFavorites;
         this.archiveFileKey = archiveFileKey;
-        this.caseDto=caseDto;
+        this.caseDto = caseDto;
         this.owner = owner;
         this.historyTarget = historyTarget;
         this.docTarget = docTarget;
-        this.partiesTarget=partiesTarget;
-        this.contactsForCasePanel=contactsForCasePanel;
+        this.partiesTarget = partiesTarget;
+        this.contactsForCasePanel = contactsForCasePanel;
         this.tblReviews = tblReviews;
         this.tagPanel = tagPanel;
         this.lblArchivedSince = lblArchivedSince;
         this.isArchived = isArchived;
         this.readOnly = readOnly;
-        this.beaEnabled=beaEnabled;
+        this.beaEnabled = beaEnabled;
         this.selectDocumentWithFileName = selectDocumentWithFileName;
 
     }
@@ -755,8 +763,8 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
 
         ArchiveFileHistoryBean[] dtos = null;
         Collection documents = null;
-        List<AddressBean> addressesForCase=null;
-        List<ArchiveFileAddressesBean> involvementForCase=null;
+        List<AddressBean> addressesForCase = null;
+        List<ArchiveFileAddressesBean> involvementForCase = null;
         Collection clients = null;
         Collection opponents = null;
         Collection opponentAttorneys = null;
@@ -777,9 +785,9 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
             this.progress("Lade Akte: Mandanten...");
             clients = fileService.getClients(this.archiveFileKey);
 
-            addressesForCase=fileService.getAddressesForCase(archiveFileKey);
-            involvementForCase=fileService.getInvolvementDetailsForCase(archiveFileKey);
-            
+            addressesForCase = fileService.getAddressesForCase(archiveFileKey);
+            involvementForCase = fileService.getInvolvementDetailsForCase(archiveFileKey);
+
             this.progress("Lade Akte: Gegner...");
             opponents = fileService.getOpponents(this.archiveFileKey);
             this.progress("Lade Akte: Dritte...");
@@ -839,7 +847,7 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
         //ComponentUtils.autoSizeColumns(historyTarget);
         //ThreadUtils.setTableModel(this.historyTarget, model2, htrs);
         this.progress("Aktualisiere Dialog: Dokumente...");
-        String[] docHeader = new String[]{"Datum", "Name", "Diktatzeichen", "Größe"};
+        String[] docHeader = new String[]{"Datum", "", "Name", "Diktatzeichen", "Größe"};
         if (documents != null && documents.size() > 0) {
             ArchiveFileDocumentsTableModel docModel = new ArchiveFileDocumentsTableModel(docHeader, 0);
             this.docTarget.setModel(docModel);
@@ -848,16 +856,52 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
             DocumentsComparator docComparator = new DocumentsComparator();
             dtrs = new TableRowSorter(docModel);
             dtrs.setComparator(0, docComparator);
-            dtrs.setComparator(3, new DocumentsSizeComparator());
+            dtrs.setComparator(4, new DocumentsSizeComparator());
             this.docTarget.setRowSorter(dtrs);
 
             if (documents != null) {
                 for (Object dbO : documents) {
                     ArchiveFileDocumentsBean db = (ArchiveFileDocumentsBean) dbO;
                     //Object[] row=new Object[]{df.format(db.getCreationDate()), db.getName()};
-                    Object[] row = new Object[]{db, db.getName(), db.getDictateSign(), db.getSize()};
+                    Object[] row = new Object[]{db, db.isFavorite(), db.getName(), db.getDictateSign(), db.getSize()};
                     docModel.addRow(row);
+//                    if (db.isFavorite()) {
+//                        JMenuItem miFav = new JMenuItem();
+//                        FileUtils fu = FileUtils.getInstance();
+//                        Icon icon = fu.getFileTypeIcon(db.getName());
+//                        miFav.setText(db.getName());
+//                        miFav.setIcon(icon);
+//                        ActionListener al = new ActionListener() {
+//                            @Override
+//                            public void actionPerformed(ActionEvent e) {
+//                                ArchiveFileDocumentsBean value = db;
+//
+//                                if (value != null) {
+//
+//                                    ClientSettings settings = ClientSettings.getInstance();
+//                                    String tmpUrl = null;
+//                                    byte[] content = null;
+//                                    try {
+//                                        JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+//                                        content = locator.lookupArchiveFileServiceRemote().getDocumentContent(value.getId());
+//                                        //tmpUrl = appLauncher.createTempFile(value.getName(), content);
+//
+//                                        CaseDocumentStore store = new CaseDocumentStore(value.getId(), value.getName(), readOnly, value, caseDto);
+//                                        Launcher launcher = LauncherFactory.getLauncher(db.getName(), content, store);
+//                                        launcher.launch();
+//                                    } catch (Exception ex) {
+//                                        JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Laden des Dokuments: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+//                                        return;
+//                                    }
+//                                }
+//                            }
+//
+//                        };
+//                        miFav.addActionListener(al);
+//                        this.popDocumentFavorites.add(miFav);
+//                    }
                 }
+                ArchiveFilePanel.updateFavoriteDocuments(caseDto, readOnly, documents, popDocumentFavorites);
             }
             list = new ArrayList();
             list.add(new RowSorter.SortKey(0, SortOrder.DESCENDING));
@@ -868,39 +912,37 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
         //ThreadUtils.setTableModel(this.docTarget, docModel);
 
         this.progress("Aktualisiere Dialog: Mandanten...");
-        
+
         this.contactsForCasePanel.removeAll();
         GridLayout layout = new GridLayout(involvementForCase.size(), 1);
         this.contactsForCasePanel.setLayout(layout);
         int i = 0;
-        for (ArchiveFileAddressesBean afab: involvementForCase) {
-            AddressBean address=null;
-            for(AddressBean ab: addressesForCase ) {
-                        if(ab.getId().equals(afab.getAddressKey().getId())) {
-                            address=ab;
-                            break;
-                        }
-                    }
-            
-            
+        for (ArchiveFileAddressesBean afab : involvementForCase) {
+            AddressBean address = null;
+            for (AddressBean ab : addressesForCase) {
+                if (ab.getId().equals(afab.getAddressKey().getId())) {
+                    address = ab;
+                    break;
+                }
+            }
+
             InvolvedPartyEntryPanel ep = new InvolvedPartyEntryPanel(this.caseDto, this.owner, this.contactsForCasePanel, this.getClass().getName(), this.beaEnabled);
             ep.setEntry(address, afab);
             if (i % 2 == 0) {
                 ep.setBackground(ep.getBackground().brighter());
             }
-            
+
             ep.setAlignmentX(Component.LEFT_ALIGNMENT);
             this.contactsForCasePanel.add(ep);
             i++;
-            
 
         }
         layout.setRows(i);
 
         this.progress("Aktualisiere Dialog: Gegner...");
-        
+
         this.progress("Aktualisiere Dialog: Dritte...");
-        
+
         this.progress("Aktualisiere Dialog: Wiedervorlagen und Fristen...");
         String[] colNames3 = new String[]{"Datum", "Typ", "Grund", "erledigt", "verantwortlich"};
         ArchiveFileReviewReasonsTableModel model3 = new ArchiveFileReviewReasonsTableModel(colNames3, 0);

@@ -688,7 +688,7 @@ public class ArchiveFileDocumentsTableModel extends DefaultTableModel {
     
     @Override
             public Class getColumnClass(int column) {
-                if(column==3) {
+                if(column==4) {
                     if(this.getRowCount()>0 && this.getColumnCount()>(column+1)) {
                         return getValueAt(0, column).getClass();
                         //return super.getColumnClass(column);
