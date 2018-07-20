@@ -1749,6 +1749,10 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
     private byte[] getDocumentContentImpl(String id) throws Exception {
         ArchiveFileDocumentsBean db = this.archiveFileDocumentsFacade.find(id);
+        if(db==null) {
+            log.error("Document with id " + id + " does not exist");
+            throw new Exception("Dokument mit ID " + id + " existiert nicht!");
+        }
         String aId = db.getArchiveFileKey().getId();
 
         String localBaseDir = System.getProperty("jlawyer.server.basedirectory");
