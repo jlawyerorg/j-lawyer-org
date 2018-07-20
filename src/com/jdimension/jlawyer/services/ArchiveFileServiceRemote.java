@@ -768,6 +768,8 @@ public interface ArchiveFileServiceRemote {
     List<ArchiveFileBean> getTagged(String[] tagName, int limit);
 
     boolean setDocumentDate(String id, Date date) throws Exception;
+    
+    boolean setDocumentFavorite(String id, boolean favorite) throws Exception;
 
     Hashtable<String,ArrayList<String>> searchTagsEnhanced(String query, boolean withArchive, String[] tagName);
 
