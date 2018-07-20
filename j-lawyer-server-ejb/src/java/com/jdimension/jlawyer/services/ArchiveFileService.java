@@ -1500,6 +1500,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         } else {
             db.setSize(-1);
         }
+        db.setFavorite(false);
         this.archiveFileDocumentsFacade.create(db);
 
         ArchiveFileHistoryBean newHistEntry = new ArchiveFileHistoryBean();
@@ -2740,6 +2741,18 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
         return true;
     }
+    
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public boolean setDocumentFavorite(String id, boolean favorite) throws Exception {
+        ArchiveFileDocumentsBean db = this.archiveFileDocumentsFacade.find(id);
+        String aId = db.getArchiveFileKey().getId();
+
+        db.setFavorite(favorite);
+        this.archiveFileDocumentsFacade.edit(db);
+
+        return true;
+    }
 
     @Override
     @RolesAllowed({"readArchiveFileRole"})
@@ -2914,6 +2927,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         } else {
             db.setSize(-1);
         }
+        db.setFavorite(false);
         this.archiveFileDocumentsFacade.create(db);
 
         ArchiveFileHistoryBean newHistEntry = new ArchiveFileHistoryBean();

@@ -9,4 +9,6 @@ alter table ArchiveFileAddressesBean add `custom3` VARCHAR(250) BINARY;
 
 alter table AddressBean add `encryptionPwd` VARCHAR(30) BINARY;
 
+ alter table ArchiveFileDocumentsBean add `favorite` TINYINT default 0;
+
 commit;
