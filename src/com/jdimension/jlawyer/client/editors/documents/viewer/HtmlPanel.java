@@ -663,7 +663,11 @@
  */
 package com.jdimension.jlawyer.client.editors.documents.viewer;
 
+import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
+import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -671,13 +675,21 @@ import com.jdimension.jlawyer.client.utils.ThreadUtils;
  */
 public class HtmlPanel extends javax.swing.JPanel implements PreviewPanel {
 
+    private static final Logger log=Logger.getLogger(HtmlPanel.class.getName());
+    
+    private String id = null;
+    private boolean readOnly=true;
+
     /**
      * Creates new form PlaintextPanel
      */
-    public HtmlPanel() {
+    public HtmlPanel(String docId, boolean readOnly) {
         initComponents();
+        this.id = docId;
+        this.readOnly=readOnly;
         //ThreadUtils.updateEditorPane(this.edtContent, "");
         ThreadUtils.updateHtmlEditor(this.html, "");
+        ThreadUtils.enableComponent(cmdSave, !readOnly);
     }
 
     /**
@@ -691,25 +703,56 @@ public class HtmlPanel extends javax.swing.JPanel implements PreviewPanel {
 
         jScrollPane1 = new javax.swing.JScrollPane();
         html = new com.jdimension.jlawyer.client.mail.HtmlEditorPanel();
+        cmdSave = new javax.swing.JButton();
 
         html.setEnabled(false);
         html.setFocusable(false);
         jScrollPane1.setViewportView(html);
+
+        cmdSave.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/filesave.png"))); // NOI18N
+        cmdSave.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdSaveActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 589, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
+                .addComponent(cmdSave)
+                .addGap(0, 0, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 379, Short.MAX_VALUE)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addComponent(cmdSave)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 347, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
+    private void cmdSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveActionPerformed
+        if (this.id != null) {
+            ThreadUtils.enableComponent(cmdSave, false);
+            try {
+                ClientSettings settings = ClientSettings.getInstance();
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                locator.lookupArchiveFileServiceRemote().setDocumentContent(this.id, this.html.getText().getBytes());
+            } catch (Throwable t) {
+                log.error("Error saving document with id " + this.id, t);
+                ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Speichern: " + t.getMessage(), "Fehler");
+                
+            }
+            ThreadUtils.enableComponent(cmdSave, true);
+        }
+    }//GEN-LAST:event_cmdSaveActionPerformed
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton cmdSave;
     private com.jdimension.jlawyer.client.mail.HtmlEditorPanel html;
     private javax.swing.JScrollPane jScrollPane1;
     // End of variables declaration//GEN-END:variables
@@ -725,6 +768,5 @@ public class HtmlPanel extends javax.swing.JPanel implements PreviewPanel {
         //ThreadUtils.updateEditorPane(this.edtContent, new String(content));
         ThreadUtils.updateHtmlEditor(html, new String(content));
     }
-    
-    
+
 }

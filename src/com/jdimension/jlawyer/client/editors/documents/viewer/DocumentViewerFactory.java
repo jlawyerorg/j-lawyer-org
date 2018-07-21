@@ -686,7 +686,7 @@ public class DocumentViewerFactory {
 
     private static Logger log = Logger.getLogger(DocumentViewerFactory.class.getName());
 
-    public static JComponent getDocumentViewer(String fileName, String previewContent, byte[] content, int width, int height) {
+    public static JComponent getDocumentViewer(String id, String fileName, boolean readOnly, String previewContent, byte[] content, int width, int height) {
 
         if (fileName.toLowerCase().endsWith(".pdf")) {
            PdfImagePanel pdfP=new PdfImagePanel(content);
@@ -710,7 +710,7 @@ public class DocumentViewerFactory {
             ptp.showContent(previewContent.getBytes());
             return ptp;
         } else if (fileName.toLowerCase().endsWith(".html") || fileName.toLowerCase().endsWith(".htm")) {
-            HtmlPanel hp = new HtmlPanel();
+            HtmlPanel hp = new HtmlPanel(id, readOnly);
             hp.showContent(content);
             return hp;
         } else if (fileName.toLowerCase().endsWith(".eml")) {

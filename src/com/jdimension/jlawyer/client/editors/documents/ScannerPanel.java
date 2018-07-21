@@ -1240,7 +1240,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
                         byte[] data = is.getObservedFile(fFileName);
                         String previewText = is.getObservedFilePreview(fFileName);
                         
-                        JComponent preview = DocumentViewerFactory.getDocumentViewer(fFileName, previewText, data, pnlPreview.getWidth(), pnlPreview.getHeight());
+                        JComponent preview = DocumentViewerFactory.getDocumentViewer(null, fFileName, true, previewText, data, pnlPreview.getWidth(), pnlPreview.getHeight());
                         ThreadUtils.setVisible(pnlPreview, false);
                         ThreadUtils.remove(pnlPreview, loading);
                         ThreadUtils.setLayout(pnlPreview, new BorderLayout());

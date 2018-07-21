@@ -690,11 +690,13 @@ public class LoadDocumentPreviewThread implements Runnable {
     private String id = null;
     private JPanel pnlPreview = null;
     private String fileName = null;
+    private boolean readOnly=false;
 
-    public LoadDocumentPreviewThread(String docId, String fileName, JPanel pnlPreview) {
+    public LoadDocumentPreviewThread(String docId, String fileName, boolean readOnly, JPanel pnlPreview) {
         this.id = docId;
         this.pnlPreview = pnlPreview;
         this.fileName = fileName;
+        this.readOnly=readOnly;
     }
     
     public static boolean isRunning() {
@@ -725,7 +727,7 @@ public class LoadDocumentPreviewThread implements Runnable {
             String previewText = afs.getDocumentPreview(id);
             byte[] data = afs.getDocumentContent(id);
 
-            JComponent preview = DocumentViewerFactory.getDocumentViewer(fileName, previewText, data, this.pnlPreview.getWidth(), this.pnlPreview.getHeight());
+            JComponent preview = DocumentViewerFactory.getDocumentViewer(id, fileName, readOnly, previewText, data, this.pnlPreview.getWidth(), this.pnlPreview.getHeight());
             ThreadUtils.setVisible(pnlPreview, false);
             ThreadUtils.remove(pnlPreview, loading);
             ThreadUtils.setLayout(pnlPreview, new BorderLayout());

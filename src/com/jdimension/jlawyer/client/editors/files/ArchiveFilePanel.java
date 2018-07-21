@@ -3245,7 +3245,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 //                    byte[] data = is.getObservedFile(fileName);
 //                    String previewText=is.getObservedFilePreview(fileName);
 
-            JComponent preview = DocumentViewerFactory.getDocumentViewer("dummy.txt", newText, null, this.pnlPreview.getWidth(), this.pnlPreview.getHeight());
+            JComponent preview = DocumentViewerFactory.getDocumentViewer(null, "dummy.txt", true, newText, null, this.pnlPreview.getWidth(), this.pnlPreview.getHeight());
             this.pnlPreview.setVisible(false);
             this.pnlPreview.remove(loading);
             ThreadUtils.setLayout(pnlPreview, new BorderLayout());
@@ -3274,7 +3274,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             int row = this.tblDocuments.getSelectedRow();
             ArchiveFileDocumentsBean value = (ArchiveFileDocumentsBean) this.tblDocuments.getValueAt(row, 0);
 
-            new Thread(new LoadDocumentPreviewThread(value.getId(), value.getName(), this.pnlPreview)).start();
+            new Thread(new LoadDocumentPreviewThread(value.getId(), value.getName(), !this.cmdSave.isEnabled(), this.pnlPreview)).start();
 
 //                ClientSettings settings = ClientSettings.getInstance();
 //                try {

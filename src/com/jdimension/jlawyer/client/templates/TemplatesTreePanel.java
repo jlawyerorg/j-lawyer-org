@@ -1695,7 +1695,7 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
 //            } catch (Throwable t) {
 //            }
 
-            JComponent preview = DocumentViewerFactory.getDocumentViewer("dummy.txt", newText, null, this.pnlPreview.getWidth(), this.pnlPreview.getHeight());
+            JComponent preview = DocumentViewerFactory.getDocumentViewer(null, "dummy.txt", true, newText, null, this.pnlPreview.getWidth(), this.pnlPreview.getHeight());
             this.pnlPreview.setVisible(false);
 //            this.pnlPreview.remove(loading);
             ThreadUtils.setLayout(pnlPreview, new BorderLayout());
