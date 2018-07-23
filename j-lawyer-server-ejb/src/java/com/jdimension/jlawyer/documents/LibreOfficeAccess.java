@@ -672,6 +672,7 @@ import org.odftoolkit.simple.SpreadsheetDocument;
 import org.odftoolkit.simple.TextDocument;
 import org.odftoolkit.simple.common.navigation.TextNavigation;
 import org.odftoolkit.simple.common.navigation.TextSelection;
+import org.w3c.dom.Node;
 
 /**
  *
@@ -687,13 +688,19 @@ public class LibreOfficeAccess {
             TextDocument outputOdt;
             outputOdt = TextDocument.loadDocument(file);
 
+            ArrayList<Node> removalParents = new ArrayList<Node>();
+            ArrayList<Node> removalChildren = new ArrayList<Node>();
+
             Enumeration en = values.keys();
             while (en.hasMoreElements()) {
                 String key = (String) en.nextElement();
 
                 // if the placeholder is followed by one of these characters, do not append a space
+                //String[] trailingCharsRegex = new String[]{"\\.", ",", ";", ":", "!", "\\?", "'", "\"", " ", "\\n"};
+                //String[] trailingChars = new String[]{".", ",", ";", ":", "!", "?", "'", "\"", " ", "\n"};
                 String[] trailingCharsRegex = new String[]{"\\.", ",", ";", ":", "!", "\\?", "'", "\"", " "};
                 String[] trailingChars = new String[]{".", ",", ";", ":", "!", "?", "'", "\"", " "};
+
                 for (int i = 0; i < trailingCharsRegex.length; i++) {
                     String trailCharRegex = trailingCharsRegex[i];
                     String trailChar = trailingChars[i];
@@ -711,6 +718,7 @@ public class LibreOfficeAccess {
                         try {
                             TextSelection item = (TextSelection) search.nextSelection();
                             item.replaceWith(value);
+
                         } catch (Throwable t) {
                             log.error("Error replacing " + regExKey + " with " + value + " in " + file, t);
                         }
@@ -721,6 +729,8 @@ public class LibreOfficeAccess {
                 String value = (String) values.get(key);
                 if (value == null) {
                     value = "";
+                } else if ("".equals(value)) {
+                    // do not append space
                 } else {
                     // auto-append a space character
                     value = value + " ";
@@ -733,12 +743,28 @@ public class LibreOfficeAccess {
                     try {
                         TextSelection item = (TextSelection) search.nextSelection();
                         item.replaceWith(value);
+                        //item.getContainerElement().getTextContent();
+
+                        if (item.getElement().getTextContent().trim().length() == 0) {
+                            //item.getElement().getParentNode().removeChild(item.getElement());
+                            // remove lines that are empty after replacing placeholders with empty string
+                            removalParents.add(item.getElement().getParentNode());
+                            removalChildren.add(item.getElement());
+                        }
                     } catch (Throwable t) {
                         log.error("Error replacing " + regExKey + " with " + value + " in " + file, t);
                     }
 
                 }
 
+            }
+
+            for (int r = 0; r < removalParents.size(); r++) {
+                try {
+                    removalParents.get(r).removeChild(removalChildren.get(r));
+                } catch (Throwable t) {
+                    log.error("Error removing node from ODT - continuing...", t);
+                }
             }
 
 //        Iterator<Paragraph> it = outputOdt.getParagraphIterator();
