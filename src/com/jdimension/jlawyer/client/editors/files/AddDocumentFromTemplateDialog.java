@@ -1334,7 +1334,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog {
             ArchiveFileDocumentsTableModel m = (ArchiveFileDocumentsTableModel) this.targetTable.getModel();
             //SimpleDateFormat df=new SimpleDateFormat("dd.MM.yyyy, HH:mm", Locale.GERMAN);
             //m.addRow(new Object[] {df.format(db.getCreationDate()), db.getName()});
-            m.addRow(new Object[]{db, db.getName(), db.getDictateSign()});
+            m.addRow(new Object[]{db, false, db.getName(), db.getDictateSign()});
             ComponentUtils.autoSizeColumns(targetTable);
 
         } catch (Exception ex) {
