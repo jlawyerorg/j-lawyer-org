@@ -663,70 +663,85 @@
  */
 package com.jdimension.jlawyer.client.cli;
 
-import java.util.ArrayList;
+import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.settings.ServerSettings;
+import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import javax.swing.JTextArea;
 
 /**
  *
  * @author jens
  */
-public class CommandHandlerFactory {
-    
-    private static ArrayList<CommandHandler> handlerList=new ArrayList<CommandHandler>();
-    
-    static {
-        handlerList.add(new BoxSyncHandler(true));
-        handlerList.add(new HelpHandler(true));
-        handlerList.add(new ServerInfoHandler(true));
-        handlerList.add(new GetSettingHandler(true));
-        handlerList.add(new SetSettingHandler(true));
-        handlerList.add(new GetBindingsHandler(true));
-        handlerList.add(new SetBindingsHandler(true));
-        handlerList.add(new SysPropertiesHandler(true));
-        handlerList.add(new SetReferenceNumberHandler(true));
-        
+public class BoxSyncHandler extends CommandHandler {
+
+    public BoxSyncHandler(boolean info) {
+        super(info);
     }
-    
-    public static ArrayList<CommandHandler> getAllHandlers() {
-        return handlerList;
+
+    @Override
+    public String getDescription() {
+        return "manages synchronization status of a j-lawyer.BOX";
     }
-    
-    public static CommandHandler getHandler(String cmdWithParams, boolean info) {
-        
-        String command=getCommand(cmdWithParams);
-        for(CommandHandler ch: handlerList) {
-            if(ch.handlesCommand(command)) {
-                ch.setInfoEnalbed(info);
-                return ch;
+
+    @Override
+    public String getCommand() {
+        return "boxsync";
+    }
+
+    @Override
+    public boolean handleCommand(String[] params, JTextArea ta) {
+        ClientSettings settings = ClientSettings.getInstance();
+        try {
+
+            if (params.length != 1) {
+                handleHelp(ta);
+                return true;
             }
+
+            if("status".equalsIgnoreCase(params[0])) {
+                String status=ServerSettings.getInstance().getSetting("jlawyer.server.replication.istarget", "unknown");
+                if("0".equalsIgnoreCase(status)) {
+                    outLine("boxsync: synchronization status is 'ignoring incoming synchronizations'", ta);
+                } else if ("1".equalsIgnoreCase(status)) {
+                    outLine("boxsync: synchronization status is 'accepting incoming synchronizations'", ta);
+                } else {
+                    outLine("boxsync: synchronization status is unknown", ta);
+                }
+            }
+            
+            if("enable".equalsIgnoreCase(params[0])) {
+                ServerSettings.getInstance().setSetting("jlawyer.server.replication.istarget", "1");
+                outLine("boxsync: accepting synchronizations now", ta);
+            }
+            if("disable".equalsIgnoreCase(params[0])) {
+                ServerSettings.getInstance().setSetting("jlawyer.server.replication.istarget", "0");
+                outLine("boxsync: ignoring synchronizations now", ta);
+            }
+            
+            
+
+        } catch (Exception ex) {
+            outLineError(ex.getMessage(), ta);
         }
-        
-        return new CommandHandler(true);
-        
+
+        return true;
     }
-    
-    public static String getCommand(String cmdWithParams) {
-        int index=cmdWithParams.indexOf(' ');
-        if(index<0)
-            index=cmdWithParams.length();
-        
-        String command=cmdWithParams.substring(0, index);
-        return command;
+
+    @Override
+    public void handleHelp(JTextArea ta) {
+        outLine("boxsync enable|disable|status", ta);
+        outLine("  boxsync status - shows current status", ta);
+        outLine("  boxsync enable - allow syncs TO this j-lawyer.BOX", ta);
+        outLine("  boxsync disable - deny syncs TO this j-lawyer.BOX", ta);
     }
-    
-    public static boolean isHelpRequest(String[] params) {
-        if(params.length==1)
-            return "?".equals(params[0]);
+
+    @Override
+    public boolean handlesCommand(String cmd) {
+        if ("boxsync".equals(cmd)) {
+            return true;
+        }
+
         return false;
     }
-    
-    public static String[] getParams(String cmdWithParams) {
-        String command=getCommand(cmdWithParams);
-        cmdWithParams=cmdWithParams.substring(command.length());
-        if(cmdWithParams.startsWith(" "))
-            cmdWithParams=cmdWithParams.substring(1);
-        if(cmdWithParams.length()==0)
-            return new String[] {};
-        return cmdWithParams.split(" ");
-    }
-    
 }
