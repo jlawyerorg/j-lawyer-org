@@ -744,7 +744,7 @@ public class UploadDocumentsAction extends ProgressableAction {
                         SwingUtilities.invokeLater(new Runnable() {
                             public void run() {
                                 ArchiveFileDocumentsTableModel m = (ArchiveFileDocumentsTableModel) docTarget.getModel();
-                                m.addRow(new Object[]{doc, doc.getName(), "",dataSize});
+                                m.addRow(new Object[]{doc, false, doc.getName(), "",dataSize});
                             }
                         });
 
