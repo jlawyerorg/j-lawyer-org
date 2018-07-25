@@ -1407,6 +1407,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         documentsPopup = new javax.swing.JPopupMenu();
         mnuRemoveDocument = new javax.swing.JMenuItem();
         mnuOpenDocument = new javax.swing.JMenuItem();
+        mnuSaveDocumentsLocally = new javax.swing.JMenuItem();
         mnuOpenDocumentMicrosoftOffice = new javax.swing.JMenuItem();
         mnuDuplicateDocument = new javax.swing.JMenuItem();
         mnuDuplicateDocumentAsPdf = new javax.swing.JMenuItem();
@@ -1601,6 +1602,15 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
         });
         documentsPopup.add(mnuOpenDocument);
+
+        mnuSaveDocumentsLocally.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/filesave.png"))); // NOI18N
+        mnuSaveDocumentsLocally.setText("lokal speichern");
+        mnuSaveDocumentsLocally.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuSaveDocumentsLocallyActionPerformed(evt);
+            }
+        });
+        documentsPopup.add(mnuSaveDocumentsLocally);
 
         mnuOpenDocumentMicrosoftOffice.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/exec_wine.png"))); // NOI18N
         mnuOpenDocumentMicrosoftOffice.setText("öffnen (Microsoft Office)");
@@ -4606,6 +4616,30 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.popDocumentFavorites.show(this.cmdFavoriteDocuments, evt.getX(), evt.getY());
     }//GEN-LAST:event_cmdFavoriteDocumentsMousePressed
 
+    private void mnuSaveDocumentsLocallyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSaveDocumentsLocallyActionPerformed
+        try {
+            int[] selectedRows = this.tblDocuments.getSelectedRows();
+            if (selectedRows == null || selectedRows.length == 0) {
+                return;
+            }
+            DefaultTableModel tModel = (DefaultTableModel) this.tblDocuments.getModel();
+            ArrayList<ArchiveFileDocumentsBean> docs2local = new ArrayList<ArchiveFileDocumentsBean>();
+            for (int i = selectedRows.length - 1; i > -1; i--) {
+                ArchiveFileDocumentsBean doc = (ArchiveFileDocumentsBean) this.tblDocuments.getValueAt(selectedRows[i], 0);
+
+                docs2local.add(doc);
+            }
+
+            SaveDocumentsLocallyDialog localDlg = new SaveDocumentsLocallyDialog(EditorsRegistry.getInstance().getMainWindow(), true, docs2local);
+            FrameUtils.centerDialog(localDlg, EditorsRegistry.getInstance().getMainWindow());
+            localDlg.setVisible(true);
+
+        } catch (Exception ioe) {
+            log.error("Error saving documents locally", ioe);
+            JOptionPane.showMessageDialog(this, "Fehler beim Speichern der Dokumente: " + ioe.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+        }
+    }//GEN-LAST:event_mnuSaveDocumentsLocallyActionPerformed
+
     private AddressBean[] convertArray(Object[] in) {
         if (in != null) {
             AddressBean[] out = new AddressBean[in.length];
@@ -4973,6 +5007,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JMenuItem mnuRemoveReview;
     private javax.swing.JMenuItem mnuRenameDocument;
     private javax.swing.JMenuItem mnuSaveDocumentEncrypted;
+    private javax.swing.JMenuItem mnuSaveDocumentsLocally;
     private javax.swing.JMenuItem mnuSendBeaDocument;
     private javax.swing.JMenuItem mnuSendBeaDocumentPDF;
     private javax.swing.JMenuItem mnuSendDocument;
