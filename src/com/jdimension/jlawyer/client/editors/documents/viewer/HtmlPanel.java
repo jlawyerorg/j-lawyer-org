@@ -687,6 +687,7 @@ public class HtmlPanel extends javax.swing.JPanel implements PreviewPanel {
         initComponents();
         this.id = docId;
         this.readOnly=readOnly;
+        this.cmdSave.setEnabled(!readOnly);
         //ThreadUtils.updateEditorPane(this.edtContent, "");
         ThreadUtils.updateHtmlEditor(this.html, "");
         ThreadUtils.enableComponent(cmdSave, !readOnly);
