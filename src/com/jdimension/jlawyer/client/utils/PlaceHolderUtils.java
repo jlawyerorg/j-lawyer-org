@@ -950,7 +950,7 @@ public class PlaceHolderUtils extends PlaceHolders {
             if (placeHolders.containsKey(GEGNER_GEB)) {
                 placeHolders.put(GEGNER_GEB, val(opp.getBirthDate()));
             }
-            ArchiveFileAddressesBean involvement = getInvolvement(cl, involved, ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT);
+            ArchiveFileAddressesBean involvement = getInvolvement(opp, involved, ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT);
             if (involvement != null) {
                 if (placeHolders.containsKey(GEGNER_AKTE_KONTAKT)) {
                     placeHolders.put(GEGNER_AKTE_KONTAKT, val(involvement.getContact()));
@@ -1066,7 +1066,7 @@ public class PlaceHolderUtils extends PlaceHolders {
             if (placeHolders.containsKey(DRITTE_GEB)) {
                 placeHolders.put(DRITTE_GEB, val(oppAtt.getBirthDate()));
             }
-            ArchiveFileAddressesBean involvement = getInvolvement(cl, involved, ArchiveFileAddressesBean.REFERENCETYPE_OPPONENTATTORNEY);
+            ArchiveFileAddressesBean involvement = getInvolvement(oppAtt, involved, ArchiveFileAddressesBean.REFERENCETYPE_OPPONENTATTORNEY);
             if (involvement != null) {
                 if (placeHolders.containsKey(DRITTE_AKTE_KONTAKT)) {
                     placeHolders.put(DRITTE_AKTE_KONTAKT, val(involvement.getContact()));
