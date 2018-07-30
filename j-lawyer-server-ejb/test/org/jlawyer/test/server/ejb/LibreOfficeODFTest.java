@@ -853,6 +853,67 @@ public class LibreOfficeODFTest {
     }
     
     @Test
+    public void setReplaceEmptyLine2() {
+        try {
+            //Files.copy(new File("/home/jens/dev/projects/j-lawyer-server/j-lawyer-server-ejb/test/data/template.odt").toPath(), new File("/home/jens/dev/projects/j-lawyer-server/j-lawyer-server-ejb/test/data/template-run.odt").toPath(), StandardCopyOption.REPLACE_EXISTING);
+            //File f=new File("/home/jens/jenkins-home/workspace/j-lawyer-server/j-lawyer-server-ejb/test/data/template-run.odt");
+            File f=new File("test/data/j-lawyer-allgemeiner-Brief-Mandant-run.odt");
+            f.delete();
+            //copyFileUsingStream(new File("/home/jens/jenkins-home/workspace/j-lawyer-server/j-lawyer-server-ejb/test/data/template.odt"), new File("/home/jens/jenkins-home/workspace/j-lawyer-server/j-lawyer-server-ejb/test/data/template-run.odt"));
+            copyFileUsingStream(new File("test/data/j-lawyer-allgemeiner-Brief-Mandant.odt"), new File("test/data/j-lawyer-allgemeiner-Brief-Mandant-run.odt"));
+        } catch (Throwable t) {
+            t.printStackTrace();
+            Assert.fail();
+            
+        }
+
+        Hashtable ph = new Hashtable();
+        // replace with empty value
+        ph.put("{{MANDANT_NAME}}", "Kut");
+        ph.put("{{MANDANT_VORNAME}}", "Jens");
+        ph.put("{{MANDANT_STRASSE}}", "");
+        ph.put("{{MANDANT_PLZ}}", "01689");
+        
+        try {
+            //LibreOfficeAccess.setPlaceHolders("/home/jens/jenkins-home/workspace/j-lawyer-server/j-lawyer-server-ejb/test/data/template-run.odt", ph);
+            LibreOfficeAccess.setPlaceHolders("test/data/j-lawyer-allgemeiner-Brief-Mandant-run.odt", ph);
+//            int count=0;
+//            do {
+//                count=LibreOfficeAccess.setPlaceHoldersOnDedicatedLines("test/data/j-lawyer-allgemeiner-Brief-Mandant-run.odt", ph);
+//            } while(count>0);
+        } catch (Throwable t) {
+            System.out.println(t.getMessage());
+            Assert.fail();
+        }
+
+        String content="";
+        Tika tika = new Tika();
+        try {
+            //Reader r = tika.parse(new File("/home/jens/jenkins-home/workspace/j-lawyer-server/j-lawyer-server-ejb/test/data/template-run.odt"));
+            Reader r = tika.parse(new File("test/data/j-lawyer-allgemeiner-Brief-Mandant-run.odt"));
+            BufferedReader br = new BufferedReader(r);
+            StringWriter sw = new StringWriter();
+            BufferedWriter bw = new BufferedWriter(sw);
+            char[] buffer = new char[1024];
+            int bytesRead = -1;
+            while ((bytesRead = br.read(buffer)) > -1) {
+                bw.write(buffer, 0, bytesRead);
+            }
+            bw.close();
+            br.close();
+
+            content = sw.toString();
+            System.out.println(content);
+        } catch (Throwable t) {
+            System.out.println(t.getMessage());
+            Assert.fail();
+        }
+        
+        
+        
+    }
+    
+    @Test
     public void setPlaceHoldersODS() {
         try {
             //Files.copy(new File("/home/jens/dev/projects/j-lawyer-server/j-lawyer-server-ejb/test/data/template.odt").toPath(), new File("/home/jens/dev/projects/j-lawyer-server/j-lawyer-server-ejb/test/data/template-run.odt").toPath(), StandardCopyOption.REPLACE_EXISTING);

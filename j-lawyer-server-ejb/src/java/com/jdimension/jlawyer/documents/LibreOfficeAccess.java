@@ -668,6 +668,7 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Hashtable;
 import org.apache.log4j.Logger;
+import org.odftoolkit.odfdom.dom.element.text.TextLineBreakElement;
 import org.odftoolkit.simple.SpreadsheetDocument;
 import org.odftoolkit.simple.TextDocument;
 import org.odftoolkit.simple.common.navigation.TextNavigation;
@@ -742,8 +743,37 @@ public class LibreOfficeAccess {
 
                     try {
                         TextSelection item = (TextSelection) search.nextSelection();
+                        boolean containsn = item.getElement().getTextContent().contains("\n");
+                        boolean containsrn = item.getElement().getTextContent().contains("\r\n");
                         item.replaceWith(value);
-                        //item.getContainerElement().getTextContent();
+                        
+                        // remove empty chars and the line break until a line break occurs or a different character
+                        ArrayList<Node> removalElements = new ArrayList<Node>();
+                        ArrayList<Node> removalItems = new ArrayList<Node>();
+                        for (int itemIndex = 0; itemIndex < item.getElement().getLength(); itemIndex++) {
+                            if (item.getElement().item(itemIndex) instanceof TextLineBreakElement) {
+                                //item.getElement().removeChild(item.getElement().item(itemIndex));
+                                removalElements.add(item.getElement());
+                                removalItems.add(item.getElement().item(itemIndex));
+                                break;
+                            } else if ("".equals(item.getElement().item(itemIndex).getTextContent().trim())) {
+                                //item.getElement().removeChild(item.getElement().item(itemIndex));
+                                removalElements.add(item.getElement());
+                                removalItems.add(item.getElement().item(itemIndex));
+                                
+                            } else {
+                                break;
+                            }
+
+                        }
+
+                        for (int r = 0; r < removalElements.size(); r++) {
+                            try {
+                                removalElements.get(r).removeChild(removalItems.get(r));
+                            } catch (Throwable t) {
+                                log.error("Error removing node from ODT - continuing...", t);
+                            }
+                        }
 
                         if (item.getElement().getTextContent().trim().length() == 0) {
                             //item.getElement().getParentNode().removeChild(item.getElement());
