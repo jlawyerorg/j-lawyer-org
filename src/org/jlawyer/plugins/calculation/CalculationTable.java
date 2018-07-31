@@ -663,19 +663,27 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package org.jlawyer.plugins.calculation;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
 /**
  *
  * @author jens
  */
-public class CalculationTable {
+public class CalculationTable implements Serializable {
     
     private ArrayList<ArrayList<String>> data=new ArrayList<ArrayList<String>>();
     private ArrayList columnLabels=null;
 
     public CalculationTable() {
     }
+
+    @Override
+    public String toString() {
+        return "Tabelle " + getData().length + "x" + getData()[0].length;
+    }
+    
+    
 
     /**
      * @return the data
