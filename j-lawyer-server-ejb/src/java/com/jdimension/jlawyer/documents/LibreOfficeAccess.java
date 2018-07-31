@@ -665,14 +665,18 @@ package com.jdimension.jlawyer.documents;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Enumeration;
 import java.util.Hashtable;
+import java.util.List;
 import org.apache.log4j.Logger;
+import org.jlawyer.plugins.calculation.CalculationTable;
 import org.odftoolkit.odfdom.dom.element.text.TextLineBreakElement;
 import org.odftoolkit.simple.SpreadsheetDocument;
 import org.odftoolkit.simple.TextDocument;
 import org.odftoolkit.simple.common.navigation.TextNavigation;
 import org.odftoolkit.simple.common.navigation.TextSelection;
+import org.odftoolkit.simple.table.Table;
 import org.w3c.dom.Node;
 
 /**
@@ -695,22 +699,50 @@ public class LibreOfficeAccess {
             Enumeration en = values.keys();
             while (en.hasMoreElements()) {
                 String key = (String) en.nextElement();
+                if (values.get(key) == null) {
+                    values.put(key, "");
+                }
 
-                // if the placeholder is followed by one of these characters, do not append a space
-                //String[] trailingCharsRegex = new String[]{"\\.", ",", ";", ":", "!", "\\?", "'", "\"", " ", "\\n"};
-                //String[] trailingChars = new String[]{".", ",", ";", ":", "!", "?", "'", "\"", " ", "\n"};
-                String[] trailingCharsRegex = new String[]{"\\.", ",", ";", ":", "!", "\\?", "'", "\"", " "};
-                String[] trailingChars = new String[]{".", ",", ";", ":", "!", "?", "'", "\"", " "};
+                if (values.get(key) instanceof String) {
 
-                for (int i = 0; i < trailingCharsRegex.length; i++) {
-                    String trailCharRegex = trailingCharsRegex[i];
-                    String trailChar = trailingChars[i];
-                    String regExKey = "\\{\\{" + key.substring(2, key.length() - 2) + "\\}\\}" + trailCharRegex;
+                    // if the placeholder is followed by one of these characters, do not append a space
+                    //String[] trailingCharsRegex = new String[]{"\\.", ",", ";", ":", "!", "\\?", "'", "\"", " ", "\\n"};
+                    //String[] trailingChars = new String[]{".", ",", ";", ":", "!", "?", "'", "\"", " ", "\n"};
+                    String[] trailingCharsRegex = new String[]{"\\.", ",", ";", ":", "!", "\\?", "'", "\"", " "};
+                    String[] trailingChars = new String[]{".", ",", ";", ":", "!", "?", "'", "\"", " "};
+
+                    for (int i = 0; i < trailingCharsRegex.length; i++) {
+                        String trailCharRegex = trailingCharsRegex[i];
+                        String trailChar = trailingChars[i];
+                        String regExKey = "\\{\\{" + key.substring(2, key.length() - 2) + "\\}\\}" + trailCharRegex;
+
+                        String value = (String) values.get(key);
+                        value = value + trailChar;
+
+                        TextNavigation search = new TextNavigation(regExKey, outputOdt);
+
+                        while (search.hasNext()) {
+
+                            try {
+                                TextSelection item = (TextSelection) search.nextSelection();
+                                item.replaceWith(value);
+
+                            } catch (Throwable t) {
+                                log.error("Error replacing " + regExKey + " with " + value + " in " + file, t);
+                            }
+                        }
+                    }
+
+                    String regExKey = "\\{\\{" + key.substring(2, key.length() - 2) + "\\}\\}";
                     String value = (String) values.get(key);
                     if (value == null) {
                         value = "";
+                    } else if ("".equals(value)) {
+                        // do not append space
+                    } else {
+                        // auto-append a space character
+                        value = value + " ";
                     }
-                    value = value + trailChar;
 
                     TextNavigation search = new TextNavigation(regExKey, outputOdt);
 
@@ -718,75 +750,72 @@ public class LibreOfficeAccess {
 
                         try {
                             TextSelection item = (TextSelection) search.nextSelection();
+                            boolean containsn = item.getElement().getTextContent().contains("\n");
+                            boolean containsrn = item.getElement().getTextContent().contains("\r\n");
                             item.replaceWith(value);
 
+                            // remove empty chars and the line break until a line break occurs or a different character
+                            ArrayList<Node> removalElements = new ArrayList<Node>();
+                            ArrayList<Node> removalItems = new ArrayList<Node>();
+                            for (int itemIndex = 0; itemIndex < item.getElement().getLength(); itemIndex++) {
+                                if (item.getElement().item(itemIndex) instanceof TextLineBreakElement) {
+                                    //item.getElement().removeChild(item.getElement().item(itemIndex));
+                                    removalElements.add(item.getElement());
+                                    removalItems.add(item.getElement().item(itemIndex));
+                                    break;
+                                } else if ("".equals(item.getElement().item(itemIndex).getTextContent().trim())) {
+                                    //item.getElement().removeChild(item.getElement().item(itemIndex));
+                                    removalElements.add(item.getElement());
+                                    removalItems.add(item.getElement().item(itemIndex));
+
+                                } else {
+                                    break;
+                                }
+
+                            }
+
+                            for (int r = 0; r < removalElements.size(); r++) {
+                                try {
+                                    removalElements.get(r).removeChild(removalItems.get(r));
+                                } catch (Throwable t) {
+                                    log.error("Error removing node from ODT - continuing...", t);
+                                }
+                            }
+
+                            if (item.getElement().getTextContent().trim().length() == 0) {
+                                //item.getElement().getParentNode().removeChild(item.getElement());
+                                // remove lines that are empty after replacing placeholders with empty string
+                                removalParents.add(item.getElement().getParentNode());
+                                removalChildren.add(item.getElement());
+                            }
                         } catch (Throwable t) {
                             log.error("Error replacing " + regExKey + " with " + value + " in " + file, t);
                         }
+
                     }
-                }
 
-                String regExKey = "\\{\\{" + key.substring(2, key.length() - 2) + "\\}\\}";
-                String value = (String) values.get(key);
-                if (value == null) {
-                    value = "";
-                } else if ("".equals(value)) {
-                    // do not append space
-                } else {
-                    // auto-append a space character
-                    value = value + " ";
-                }
-
-                TextNavigation search = new TextNavigation(regExKey, outputOdt);
-
-                while (search.hasNext()) {
-
-                    try {
-                        TextSelection item = (TextSelection) search.nextSelection();
-                        boolean containsn = item.getElement().getTextContent().contains("\n");
-                        boolean containsrn = item.getElement().getTextContent().contains("\r\n");
-                        item.replaceWith(value);
-                        
-                        // remove empty chars and the line break until a line break occurs or a different character
-                        ArrayList<Node> removalElements = new ArrayList<Node>();
-                        ArrayList<Node> removalItems = new ArrayList<Node>();
-                        for (int itemIndex = 0; itemIndex < item.getElement().getLength(); itemIndex++) {
-                            if (item.getElement().item(itemIndex) instanceof TextLineBreakElement) {
-                                //item.getElement().removeChild(item.getElement().item(itemIndex));
-                                removalElements.add(item.getElement());
-                                removalItems.add(item.getElement().item(itemIndex));
-                                break;
-                            } else if ("".equals(item.getElement().item(itemIndex).getTextContent().trim())) {
-                                //item.getElement().removeChild(item.getElement().item(itemIndex));
-                                removalElements.add(item.getElement());
-                                removalItems.add(item.getElement().item(itemIndex));
+                } else if (values.get(key) instanceof CalculationTable) {
+                    List<Table> allTables = outputOdt.getTableList();
+                    CalculationTable tab=(CalculationTable)values.get(key);
+                    for (Table t : allTables) {
+                        if (t.getColumnCount() == 1 && t.getRowCount() == 1) {
+                            if (key.equals(t.getCellByPosition(0, 0).getStringValue())) {
+                                for (int i = 0; i < tab.getData()[0].length-1; i++) {
+                                    t.appendColumn();
+                                }
+                                for (int i = 0; i < tab.getData().length-1; i++) {
+                                    t.appendRow();
+                                }
+                                for(int i=0;i<tab.getData()[0].length;i++) {
+                                    for(int k=0;k<tab.getData().length;k++) {
+                                        t.getCellByPosition(i, k).setStringValue(tab.getData()[i][k]);
+                                    }
+                                }
                                 
-                            } else {
-                                break;
-                            }
-
-                        }
-
-                        for (int r = 0; r < removalElements.size(); r++) {
-                            try {
-                                removalElements.get(r).removeChild(removalItems.get(r));
-                            } catch (Throwable t) {
-                                log.error("Error removing node from ODT - continuing...", t);
                             }
                         }
-
-                        if (item.getElement().getTextContent().trim().length() == 0) {
-                            //item.getElement().getParentNode().removeChild(item.getElement());
-                            // remove lines that are empty after replacing placeholders with empty string
-                            removalParents.add(item.getElement().getParentNode());
-                            removalChildren.add(item.getElement());
-                        }
-                    } catch (Throwable t) {
-                        log.error("Error replacing " + regExKey + " with " + value + " in " + file, t);
                     }
-
                 }
-
             }
 
             for (int r = 0; r < removalParents.size(); r++) {
@@ -797,46 +826,11 @@ public class LibreOfficeAccess {
                 }
             }
 
-//        Iterator<Paragraph> it = outputOdt.getParagraphIterator();
-//        while (it.hasNext()) {
-//            Paragraph p = it.next();
-//            
-//            
-//            String content = p.getTextContent();
-//            //findPlaceHolders(content, resultList);
-//            content = replacePlaceHolders(content, values);
-//            p.setTextContent(content);
-//            //p.
-//        }
-//
-//        Iterator<List> it2 = outputOdt.getListIterator();
-//        while (it2.hasNext()) {
-//            List l = it2.next();
-//            for (ListItem li : l.getItems()) {
-//                String content = li.getTextContent();
-//                //findPlaceHolders(content, resultList);
-//                content = replacePlaceHolders(content, values);
-//                li.setTextContent(content);
-//            }
-//        }
-//
-//        java.util.List<Table> tableList = outputOdt.getTableList();
-//        for (Table t : tableList) {
-//            for (int c = 0; c < t.getColumnCount(); c++) {
-//                for (int r = 0; r < t.getRowCount(); r++) {
-//                    Cell curCell = t.getCellByPosition(c, r);
-//                    //curCell.setStringValue(replacePlaceHolders(curCell.getStringValue(), replaceStr, targetStr));
-//                    String content = curCell.getStringValue();
-//                    //findPlaceHolders(content, resultList);
-//                    content = replacePlaceHolders(content, values);
-//                    curCell.setStringValue(content);
-//                }
-//            }
-//        }
             outputOdt.save(new File(file));
             outputOdt.close();
 
-        } else if (file.toLowerCase().endsWith(".ods")) {
+        } else if (file.toLowerCase()
+                .endsWith(".ods")) {
             SpreadsheetDocument outputOds;
             outputOds = SpreadsheetDocument.loadDocument(file);
 
@@ -979,6 +973,17 @@ public class LibreOfficeAccess {
                     }
                 }
 
+            }
+
+            List<Table> allTables = outputOdt.getTableList();
+            for (String r : PlaceHolders.ALLTABLEPLACEHOLDERS) {
+                for (Table t : allTables) {
+                    if (t.getColumnCount() == 1 && t.getRowCount() == 1) {
+                        if (r.equals(t.getCellByPosition(0, 0).getStringValue())) {
+                            resultList.add(r);
+                        }
+                    }
+                }
             }
 
             outputOdt.close();
