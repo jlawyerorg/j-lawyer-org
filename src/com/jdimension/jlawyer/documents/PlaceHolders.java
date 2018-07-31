@@ -824,8 +824,12 @@ public class PlaceHolders {
     public static final String AKTE_EIGENE2 = "{{AKTE_EIGENE2}}";
     public static final String AKTE_EIGENE3 = "{{AKTE_EIGENE3}}";
     
+    public static final String TABELLE_1 = "{{TABELLE_1}}";
+    
     
     public static final ArrayList<String> ALLPLACEHOLDERS = new ArrayList<String>();
+    
+    public static final ArrayList<String> ALLTABLEPLACEHOLDERS = new ArrayList<String>();
     
     private static HashMap<String,String> ph2alias=new HashMap<String,String>();
     private static HashMap<String,String> alias2ph=new HashMap<String,String>();
@@ -979,6 +983,8 @@ public class PlaceHolders {
         ph2alias.put(DRITTE_BLZ, GEGNERVT_BLZ);
         ph2alias.put(DRITTE_KONTONR, GEGNERVT_KONTONR);
         ph2alias.put(DRITTE_RECHTSSCHUTZ, GEGNERVT_RECHTSSCHUTZ);
+        
+        ALLTABLEPLACEHOLDERS.add(TABELLE_1);
         
     }
     
