@@ -808,7 +808,7 @@ public class LibreOfficeAccess {
                                 }
                                 for(int i=0;i<tab.getData()[0].length;i++) {
                                     for(int k=0;k<tab.getData().length;k++) {
-                                        t.getCellByPosition(i, k).setStringValue(tab.getData()[i][k]);
+                                        t.getCellByPosition(i, k).setStringValue(tab.getData()[k][i]);
                                     }
                                 }
                                 
