@@ -686,13 +686,13 @@ import java.util.*;
 import javax.swing.DefaultListModel;
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
-import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableModel;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import org.apache.log4j.Logger;
 import org.jlawyer.data.tree.GenericNode;
+import org.jlawyer.plugins.calculation.CalculationTable;
 
 /**
  *
@@ -709,13 +709,21 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog {
     private boolean initializing = true;
     private JTable tblReviewReasons = null;
     private List<ArchiveFileAddressesBean> involved=null;
+    private CalculationTable calculationTable=null;
 
+    public AddDocumentFromTemplateDialog(java.awt.Frame parent, boolean modal, JTable targetTable, ArchiveFileBean aFile, List<ArchiveFileAddressesBean> involved, List<AddressBean> allCl, List<AddressBean> allOpp, List<AddressBean> allOppAtt, JTable tblReviewReasons) {
+        this(parent, modal, targetTable, aFile, involved, allCl, allOpp, allOppAtt, tblReviewReasons, null);
+    }
+    
     /**
      * Creates new form AddDocumentDialog
      */
-    public AddDocumentFromTemplateDialog(java.awt.Frame parent, boolean modal, JTable targetTable, ArchiveFileBean aFile, List<ArchiveFileAddressesBean> involved, List<AddressBean> allCl, List<AddressBean> allOpp, List<AddressBean> allOppAtt, JTable tblReviewReasons) {
+    public AddDocumentFromTemplateDialog(java.awt.Frame parent, boolean modal, JTable targetTable, ArchiveFileBean aFile, List<ArchiveFileAddressesBean> involved, List<AddressBean> allCl, List<AddressBean> allOpp, List<AddressBean> allOppAtt, JTable tblReviewReasons, CalculationTable calculationTable) {
         super(parent, modal);
         this.initializing = true;
+        
+        this.calculationTable=calculationTable;
+        
         this.targetTable = targetTable;
         this.tblReviewReasons = tblReviewReasons;
         this.aFile = aFile;
@@ -1562,7 +1570,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog {
                 for (String ph : placeHolders) {
                     ht.put(ph, "");
                 }
-                ht = PlaceHolderUtils.getPlaceHolderValues(ht, aFile, involved, cl, opp, oppAtt, this.cmbDictateSigns.getSelectedItem().toString());
+                ht = PlaceHolderUtils.getPlaceHolderValues(ht, aFile, involved, cl, opp, oppAtt, this.cmbDictateSigns.getSelectedItem().toString(), this.calculationTable);
 
                 Enumeration htEn = ht.keys();
                 while (htEn.hasMoreElements()) {

@@ -663,6 +663,16 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.plugins.calculation;
 
+import org.jlawyer.plugins.calculation.CalculationTable;
+import com.jdimension.jlawyer.client.configuration.PopulateOptionsEditor;
+import com.jdimension.jlawyer.client.desktop.DesktopPanel;
+import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import com.jdimension.jlawyer.client.editors.ThemeableEditor;
+import com.jdimension.jlawyer.client.editors.documents.SearchAndAssignDialog;
+import com.jdimension.jlawyer.client.editors.files.ArchiveFilePanel;
+import com.jdimension.jlawyer.client.editors.files.EditArchiveFileDetailsPanel;
+import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import java.awt.Component;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
@@ -673,12 +683,16 @@ import java.io.Reader;
 import java.io.StringBufferInputStream;
 import java.io.StringReader;
 import java.util.ArrayList;
+import javax.swing.JOptionPane;
+import org.apache.log4j.Logger;
 
 /**
  *
  * @author jens
  */
 public class GenericCalculationCallback implements CalculationPluginCallback {
+    
+    private static Logger log=Logger.getLogger(GenericCalculationCallback.class.getName());
 
     public GenericCalculationCallback() {
 
@@ -695,8 +709,35 @@ public class GenericCalculationCallback implements CalculationPluginCallback {
 
     @Override
     public void processResultToDocument(CalculationTable table) {
-        if(table!=null) {
+        if (table != null) {
             System.out.println("received table with cols: " + table.getColumnLabels().size());
+            SearchAndAssignDialog dlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true);
+            dlg.setVisible(true);
+            ArchiveFileBean sel = dlg.getSelection();
+            dlg.dispose();
+            
+            try {
+            Component editor = (Component)EditorsRegistry.getInstance().getEditor(EditArchiveFileDetailsPanel.class.getName());
+
+            if (editor instanceof ThemeableEditor) {
+                // inherit the background to newly created child editors
+                Object desktop=EditorsRegistry.getInstance().getEditor(DesktopPanel.class.getName());
+                if(desktop instanceof ThemeableEditor) {
+                    ((ThemeableEditor) editor).setBackgroundImage(((ThemeableEditor)desktop).getBackgroundImage());
+                }
+            }
+            if (editor instanceof PopulateOptionsEditor) {
+                ((PopulateOptionsEditor) editor).populateOptions();
+            }
+            ((ArchiveFilePanel) editor).setArchiveFileDTO(sel);
+            ((ArchiveFilePanel) editor).setOpenedFromEditorClass(this.getClass().getName());
+            EditorsRegistry.getInstance().setMainEditorsPaneView((Component) editor);
+            ((ArchiveFilePanel)editor).newDocumentDialog(table);
+
+        } catch (Exception ex) {
+            log.error("Error creating editor from class " + EditArchiveFileDetailsPanel.class.getName(), ex);
+            JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Laden des Editors: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+        }
         }
     }
 

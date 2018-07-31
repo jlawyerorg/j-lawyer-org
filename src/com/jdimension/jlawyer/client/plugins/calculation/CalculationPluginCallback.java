@@ -663,6 +663,8 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.plugins.calculation;
 
+import org.jlawyer.plugins.calculation.CalculationTable;
+
 /**
  *
  * @author jens

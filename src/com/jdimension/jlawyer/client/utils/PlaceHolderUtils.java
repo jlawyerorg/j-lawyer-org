@@ -674,6 +674,7 @@ import java.util.Date;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Locale;
+import org.jlawyer.plugins.calculation.CalculationTable;
 
 /**
  *
@@ -688,12 +689,17 @@ public class PlaceHolderUtils extends PlaceHolders {
 
     }
 
-    public static Hashtable getPlaceHolderValues(Hashtable placeHolders, ArchiveFileBean aFile, List<ArchiveFileAddressesBean> involved, AddressBean cl, AddressBean opp, AddressBean oppAtt, String dictateSign) {
+    public static Hashtable getPlaceHolderValues(Hashtable placeHolders, ArchiveFileBean aFile, List<ArchiveFileAddressesBean> involved, AddressBean cl, AddressBean opp, AddressBean oppAtt, String dictateSign, CalculationTable calculationTable) {
 
         NumberFormat currencyFormat = NumberFormat.getNumberInstance();
         currencyFormat.setMinimumFractionDigits(2);
         currencyFormat.setMaximumFractionDigits(2);
 
+        if (placeHolders.containsKey(TABELLE_1)) {
+            if(calculationTable!=null)
+                placeHolders.put(TABELLE_1, calculationTable);
+        }
+        
         if (placeHolders.containsKey(KURZDATUM)) {
             SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy", Locale.GERMAN);
             placeHolders.put(KURZDATUM, df.format(new Date()));

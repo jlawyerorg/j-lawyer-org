@@ -755,7 +755,6 @@ public class AddNoteDialog extends javax.swing.JDialog {
         this.cmbReviewAssignee.setModel(allUserModel);
         this.cmbReviewAssignee.setRenderer(new UserListCellRenderer());
         
-        
 
         ComponentUtils.restoreDialogSize(this);
         

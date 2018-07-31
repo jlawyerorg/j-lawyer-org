@@ -694,6 +694,7 @@ import com.jdimension.jlawyer.client.launcher.Launcher;
 import com.jdimension.jlawyer.client.launcher.LauncherFactory;
 import com.jdimension.jlawyer.client.launcher.ReadOnlyDocumentStore;
 import com.jdimension.jlawyer.client.mail.SendEmailDialog;
+import org.jlawyer.plugins.calculation.CalculationTable;
 import com.jdimension.jlawyer.client.print.ArchiveFileStub;
 import com.jdimension.jlawyer.client.print.PrintStubGenerator;
 import com.jdimension.jlawyer.client.processing.ProgressIndicator;
@@ -3142,8 +3143,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     }//GEN-LAST:event_cmdSaveActionPerformed
 
-    private void cmdNewDocumentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdNewDocumentActionPerformed
-
+    public void newDocumentDialog(CalculationTable table) {
+        this.newDocumentActionPerformedImpl(table);
+    }
+    
+    private void newDocumentActionPerformedImpl(CalculationTable table) {
 //        AddressBean cl = (AddressBean) this.lstClients.getSelectedValue();
 //        AddressBean opp = (AddressBean) this.lstOpponents.getSelectedValue();
 //        AddressBean oppAtt = (AddressBean) this.lstOpponentAttorneys.getSelectedValue();
@@ -3155,7 +3159,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         List<AddressBean> allOppAtt = this.pnlInvolvedParties.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_OPPONENTATTORNEY);
         List<ArchiveFileAddressesBean> involved = this.pnlInvolvedParties.getInvolvedParties();
 
-        AddDocumentFromTemplateDialog dlg = new AddDocumentFromTemplateDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.tblDocuments, this.dto, involved, allCl, allOpp, allOppAtt, this.tblReviewReasons);
+        AddDocumentFromTemplateDialog dlg = new AddDocumentFromTemplateDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.tblDocuments, this.dto, involved, allCl, allOpp, allOppAtt, this.tblReviewReasons, table);
         dlg.setTitle("Dokument hinzufügen");
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
@@ -3180,7 +3184,12 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 //        
 //        wiz.setSteps(steps);
 //        FrameUtils.centerDialog(wiz, EditorsRegistry.getInstance().getMainWindow());
-//        wiz.setVisible(true);
+//        wiz.setVisible(true);        
+    }
+    
+    private void cmdNewDocumentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdNewDocumentActionPerformed
+
+        this.newDocumentActionPerformedImpl(null);
 
     }//GEN-LAST:event_cmdNewDocumentActionPerformed
 
