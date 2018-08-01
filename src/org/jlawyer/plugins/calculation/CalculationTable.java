@@ -671,9 +671,15 @@ import java.util.ArrayList;
  * @author jens
  */
 public class CalculationTable implements Serializable {
-    
-    private ArrayList<ArrayList<String>> data=new ArrayList<ArrayList<String>>();
-    private ArrayList columnLabels=null;
+
+    public static final int ALIGNMENT_LEFT = 10;
+    public static final int ALIGNMENT_RIGHT = 20;
+    public static final int ALIGNMENT_CENTER = 30;
+
+    private ArrayList<ArrayList<String>> data = new ArrayList<ArrayList<String>>();
+    private ArrayList<String> columnLabels = new ArrayList<String>();
+
+    private ArrayList<Integer> columnAlignments = new ArrayList<Integer>();
 
     public CalculationTable() {
     }
@@ -682,28 +688,27 @@ public class CalculationTable implements Serializable {
     public String toString() {
         return "Tabelle " + getData().length + "x" + getData()[0].length;
     }
-    
-    
 
     /**
      * @return the data
      */
     public String[][] getData() {
-        
-        int rows=data.size();
-        int cols=0;
-        if(rows>0)
-            cols=data.get(0).size();
-        
-        String[][] array=new String[rows][cols];
-        
-        for(int i=0;i<data.size();i++) {
-            ArrayList<String> row=data.get(i);
-            for(int j=0;j<row.size();j++) {
-                array[i][j]=row.get(j);
+
+        int rows = data.size();
+        int cols = 0;
+        if (rows > 0) {
+            cols = data.get(0).size();
+        }
+
+        String[][] array = new String[rows][cols];
+
+        for (int i = 0; i < data.size(); i++) {
+            ArrayList<String> row = data.get(i);
+            for (int j = 0; j < row.size(); j++) {
+                array[i][j] = row.get(j);
             }
         }
-        
+
         return array;
     }
 
@@ -717,12 +722,29 @@ public class CalculationTable implements Serializable {
     /**
      * @return the columnLabels
      */
-    public ArrayList getColumnLabels() {
+    public ArrayList<String> getColumnLabels() {
         return columnLabels;
     }
-    
+
+    public int getAlignment(int columnIndex) {
+        if (this.columnAlignments.size() > columnIndex) {
+            return this.columnAlignments.get(columnIndex);
+        } else {
+            return ALIGNMENT_LEFT;
+        }
+    }
+
+    public void setAlignment(int columnIndex, int alignment) {
+        while (this.columnAlignments.size() < columnIndex) {
+            this.columnAlignments.add(ALIGNMENT_LEFT);
+        }
+
+        this.columnAlignments.set(columnIndex, alignment);
+
+    }
+
     public String[] getColumnLabelsAsArray() {
-        return (String[])columnLabels.toArray(new String[0]);
+        return (String[]) columnLabels.toArray(new String[0]);
     }
 
     /**
@@ -731,8 +753,5 @@ public class CalculationTable implements Serializable {
     public void setColumnLabels(ArrayList<String> columnLabels) {
         this.columnLabels = columnLabels;
     }
-    
-    
-    
-    
+
 }
