@@ -831,6 +831,11 @@ public class LibreOfficeAccess {
                                         t.getCellByPosition(i, k+firstDataRow).setStringValue(tab.getData()[k][i]);
                                         border.setColor(Color.WHITE);
                                         t.getCellByPosition(i, k+firstDataRow).setBorders(CellBordersType.NONE, border);
+                                        // set font to regular
+                                        Font f=t.getCellByPosition(i, k+firstDataRow).getFont();
+                                        f.setFontStyle(StyleTypeDefinitions.FontStyle.REGULAR);
+                                        t.getCellByPosition(i, k+firstDataRow).setFont(f);
+                                        // set alignment
                                         int alignment=tab.getAlignment(i);
                                         if(alignment==CalculationTable.ALIGNMENT_CENTER) {
                                             t.getCellByPosition(i, k+firstDataRow).setHorizontalAlignment(StyleTypeDefinitions.HorizontalAlignmentType.CENTER);
