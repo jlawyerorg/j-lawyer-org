@@ -677,6 +677,8 @@ import org.odftoolkit.simple.TextDocument;
 import org.odftoolkit.simple.common.navigation.TextNavigation;
 import org.odftoolkit.simple.common.navigation.TextSelection;
 import org.odftoolkit.simple.style.Border;
+import org.odftoolkit.simple.style.Font;
+import org.odftoolkit.simple.style.StyleTypeDefinitions;
 import org.odftoolkit.simple.style.StyleTypeDefinitions.CellBordersType;
 import org.odftoolkit.simple.style.StyleTypeDefinitions.SupportedLinearMeasure;
 import org.odftoolkit.simple.table.Table;
@@ -816,6 +818,12 @@ public class LibreOfficeAccess {
                                     t.appendRow();
                                     for(int i=0;i<tab.getColumnLabels().size();i++) {
                                         t.getCellByPosition(i, 0).setStringValue(tab.getColumnLabels().get(i));
+                                        border.setColor(Color.WHITE);
+                                        t.getCellByPosition(i, 0).setBorders(CellBordersType.NONE, border);
+                                        t.getCellByPosition(i, 0).setHorizontalAlignment(StyleTypeDefinitions.HorizontalAlignmentType.CENTER);
+                                        Font f=t.getCellByPosition(i, 0).getFont();
+                                        f.setFontStyle(StyleTypeDefinitions.FontStyle.BOLD);
+                                        t.getCellByPosition(i, 0).setFont(f);
                                     }
                                 }
                                 for(int i=0;i<tab.getData()[0].length;i++) {
@@ -823,6 +831,14 @@ public class LibreOfficeAccess {
                                         t.getCellByPosition(i, k+firstDataRow).setStringValue(tab.getData()[k][i]);
                                         border.setColor(Color.WHITE);
                                         t.getCellByPosition(i, k+firstDataRow).setBorders(CellBordersType.NONE, border);
+                                        int alignment=tab.getAlignment(i);
+                                        if(alignment==CalculationTable.ALIGNMENT_CENTER) {
+                                            t.getCellByPosition(i, k+firstDataRow).setHorizontalAlignment(StyleTypeDefinitions.HorizontalAlignmentType.CENTER);
+                                        } else if(alignment==CalculationTable.ALIGNMENT_RIGHT) {
+                                            t.getCellByPosition(i, k+firstDataRow).setHorizontalAlignment(StyleTypeDefinitions.HorizontalAlignmentType.RIGHT);
+                                        } else {
+                                            t.getCellByPosition(i, k+firstDataRow).setHorizontalAlignment(StyleTypeDefinitions.HorizontalAlignmentType.LEFT);
+                                        }
                                     }
                                 }
                                 
