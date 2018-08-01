@@ -671,8 +671,10 @@ import com.jdimension.jlawyer.client.editors.ThemeableEditor;
 import com.jdimension.jlawyer.client.editors.documents.SearchAndAssignDialog;
 import com.jdimension.jlawyer.client.editors.files.ArchiveFilePanel;
 import com.jdimension.jlawyer.client.editors.files.EditArchiveFileDetailsPanel;
+import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import java.awt.Component;
+import java.awt.Container;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
@@ -683,6 +685,7 @@ import java.io.Reader;
 import java.io.StringBufferInputStream;
 import java.io.StringReader;
 import java.util.ArrayList;
+import javax.swing.JDialog;
 import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
 
@@ -708,13 +711,23 @@ public class GenericCalculationCallback implements CalculationPluginCallback {
     }
 
     @Override
-    public void processResultToDocument(CalculationTable table) {
+    public void processResultToDocument(CalculationTable table, Container c) {
         if (table != null) {
+            
+            Container pluginDlg=FrameUtils.getDialogOfComponent(c);
+            if(pluginDlg!=null) {
+                pluginDlg.setVisible(false);
+                ((JDialog)pluginDlg).dispose();
+            }
+            
             System.out.println("received table with cols: " + table.getColumnLabels().size());
             SearchAndAssignDialog dlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true);
             dlg.setVisible(true);
             ArchiveFileBean sel = dlg.getSelection();
             dlg.dispose();
+   
+            if(sel==null)
+                return;
             
             try {
             Component editor = (Component)EditorsRegistry.getInstance().getEditor(EditArchiveFileDetailsPanel.class.getName());
@@ -730,7 +743,7 @@ public class GenericCalculationCallback implements CalculationPluginCallback {
                 ((PopulateOptionsEditor) editor).populateOptions();
             }
             ((ArchiveFilePanel) editor).setArchiveFileDTO(sel);
-            ((ArchiveFilePanel) editor).setOpenedFromEditorClass(this.getClass().getName());
+            ((ArchiveFilePanel) editor).setOpenedFromEditorClass(DesktopPanel.class.getName());
             EditorsRegistry.getInstance().setMainEditorsPaneView((Component) editor);
             ((ArchiveFilePanel)editor).newDocumentDialog(table);
 

@@ -663,6 +663,7 @@
  */
 package com.jdimension.jlawyer.client.utils;
 
+import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Point;
 import java.awt.Toolkit;
@@ -729,6 +730,14 @@ public class FrameUtils {
             p.setLocation(p.getX(), 0);
         
         dlg.setLocation(p);
+    }
+    
+    public static Container getDialogOfComponent(Container c) {
+        
+        while(!(c instanceof JDialog) && c.getParent()!=null) {
+            c=c.getParent();
+        }
+        return c;
     }
     
 }
