@@ -665,17 +665,20 @@ package com.jdimension.jlawyer.documents;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.List;
 import org.apache.log4j.Logger;
 import org.jlawyer.plugins.calculation.CalculationTable;
 import org.odftoolkit.odfdom.dom.element.text.TextLineBreakElement;
+import org.odftoolkit.odfdom.type.Color;
 import org.odftoolkit.simple.SpreadsheetDocument;
 import org.odftoolkit.simple.TextDocument;
 import org.odftoolkit.simple.common.navigation.TextNavigation;
 import org.odftoolkit.simple.common.navigation.TextSelection;
+import org.odftoolkit.simple.style.Border;
+import org.odftoolkit.simple.style.StyleTypeDefinitions.CellBordersType;
+import org.odftoolkit.simple.style.StyleTypeDefinitions.SupportedLinearMeasure;
 import org.odftoolkit.simple.table.Table;
 import org.w3c.dom.Node;
 
@@ -800,15 +803,26 @@ public class LibreOfficeAccess {
                     for (Table t : allTables) {
                         if (t.getColumnCount() == 1 && t.getRowCount() == 1) {
                             if (key.equals(t.getCellByPosition(0, 0).getStringValue())) {
+                                Border border = new Border(Color.WHITE, 1.0, SupportedLinearMeasure.PT);
                                 for (int i = 0; i < tab.getData()[0].length-1; i++) {
                                     t.appendColumn();
                                 }
                                 for (int i = 0; i < tab.getData().length-1; i++) {
                                     t.appendRow();
                                 }
+                                int firstDataRow=0;
+                                if(tab.getColumnLabels().size()>0) {
+                                    firstDataRow=1;
+                                    t.appendRow();
+                                    for(int i=0;i<tab.getColumnLabels().size();i++) {
+                                        t.getCellByPosition(i, 0).setStringValue(tab.getColumnLabels().get(i));
+                                    }
+                                }
                                 for(int i=0;i<tab.getData()[0].length;i++) {
                                     for(int k=0;k<tab.getData().length;k++) {
-                                        t.getCellByPosition(i, k).setStringValue(tab.getData()[k][i]);
+                                        t.getCellByPosition(i, k+firstDataRow).setStringValue(tab.getData()[k][i]);
+                                        border.setColor(Color.WHITE);
+                                        t.getCellByPosition(i, k+firstDataRow).setBorders(CellBordersType.NONE, border);
                                     }
                                 }
                                 
