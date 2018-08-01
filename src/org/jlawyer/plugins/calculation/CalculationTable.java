@@ -735,7 +735,7 @@ public class CalculationTable implements Serializable {
     }
 
     public void setAlignment(int columnIndex, int alignment) {
-        while (this.columnAlignments.size() < columnIndex) {
+        while (this.columnAlignments.size() <= columnIndex) {
             this.columnAlignments.add(ALIGNMENT_LEFT);
         }
 
