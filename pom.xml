@@ -11,7 +11,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <mainClass>org.jlawyer.backupmgr.BackupManagerLauncher</mainClass>
+        <mainClass>org.jlawyer.backupmgr.BackupManager</mainClass>
     </properties>
 
     <organization>

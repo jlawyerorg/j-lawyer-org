@@ -677,6 +677,7 @@ import java.util.zip.ZipInputStream;
 import net.lingala.zip4j.core.ZipFile;
 import net.lingala.zip4j.model.FileHeader;
 import net.lingala.zip4j.model.UnzipParameters;
+import org.jlawyer.backupmgr.BackupProgressCallback;
 
 /**
  *
@@ -688,7 +689,7 @@ public class RestoreExecutor {
     private String backupDirectory = null;
     private String dataDirectory = null;
     private String encryptionPassword = null;
-    private String filenameEncoding=null;
+    private String filenameEncoding = null;
 
     public RestoreExecutor(String dataDir, String backupDir, String encryptionPassword, String mysqlPassword) {
 
@@ -699,40 +700,45 @@ public class RestoreExecutor {
 
     }
 
-    public void validate() throws Exception {
-        this.validateEncoding();
-        this.validateBackupDirectory();
-        this.validateDataDirectory();
-        this.validateDatabaseConnection();
-        this.validateEncryption();
-        
-        
+    public void validate(BackupProgressCallback progress) throws Exception {
+        this.validateEncoding(progress);
+        this.validateBackupDirectory(progress);
+        this.validateDataDirectory(progress);
+        this.validateDatabaseConnection(progress);
+        this.validateEncryption(progress);
 
     }
-    
-    public void validateEncoding() throws Exception {
-        File metadataDir=new File(this.backupDirectory + File.separator + ".metadata");
-        if(!metadataDir.exists())
+
+    public void validateEncoding(BackupProgressCallback progress) throws Exception {
+        if (progress != null) {
+            progress.onProgress("Prüfe Kodierung...");
+        }
+        File metadataDir = new File(this.backupDirectory + File.separator + ".metadata");
+        if (!metadataDir.exists()) {
             throw new Exception("Datensicherungsinformationen (Metadaten) fehlen!");
-        
-        for(File meta: metadataDir.listFiles()) {
-            if(meta.isFile() && meta.getName().toLowerCase().startsWith("encoding.")) {
-                String metaName=meta.getName();
-                this.filenameEncoding=metaName.substring("encoding.".length(),metaName.length());
+        }
+
+        for (File meta : metadataDir.listFiles()) {
+            if (meta.isFile() && meta.getName().toLowerCase().startsWith("encoding.")) {
+                String metaName = meta.getName();
+                this.filenameEncoding = metaName.substring("encoding.".length(), metaName.length());
                 return;
             }
         }
-        if(this.filenameEncoding==null)
+        if (this.filenameEncoding == null) {
             throw new Exception("Datensicherungsinformationen (Metadaten) fehlen!");
-        
-        
+        }
+
     }
-    
+
     public String getFilenameEncoding() {
         return this.filenameEncoding;
     }
 
-    private void validateDatabaseConnection() throws Exception {
+    private void validateDatabaseConnection(BackupProgressCallback progress) throws Exception {
+        if (progress != null) {
+            progress.onProgress("Prüfe Datenbankverbindung...");
+        }
         Class.forName("com.mysql.jdbc.Driver");
         Connection mysql = DriverManager.getConnection("jdbc:mysql://localhost/jlawyerdb?user=root&useSSL=false&password=" + mysqlPassword);
         ResultSet rs = mysql.getMetaData().getCatalogs();
@@ -751,23 +757,48 @@ public class RestoreExecutor {
 
     }
 
-    private void validateEncryption() throws Exception {
-        
-        if(this.filenameEncoding==null)
+    private void validateEncryption(BackupProgressCallback progress) throws Exception {
+        if (progress != null) {
+            progress.onProgress("Prüfe Verschlüsselung...");
+        }
+        if (this.filenameEncoding == null) {
             throw new Exception("Unbekannte Dateinamen-Codierung!");
+        }
+
+        File dir=new File(this.backupDirectory + File.separator + "templates");
+        this.validateEncryptionForDirectory(dir, progress);
+        dir=new File(this.backupDirectory + File.separator + "mastertemplates");
+        this.validateEncryptionForDirectory(dir, progress);
+        dir=new File(this.backupDirectory + File.separator + "emailtemplates");
+        this.validateEncryptionForDirectory(dir, progress);
+        dir=new File(this.backupDirectory + File.separator + "faxqueue");
+        this.validateEncryptionForDirectory(dir, progress);
         
+        dir=new File(this.backupDirectory + File.separator + "archivefiles");
+        for(File child: dir.listFiles()) {
+            if(child.isDirectory())
+                this.validateEncryptionForDirectory(child, progress);
+        }
+        
+    }
+    
+    private void validateEncryptionForDirectory(File dir, BackupProgressCallback progress) throws Exception {
         if ("".equals(this.encryptionPassword) || this.encryptionPassword == null) {
             // no encryption
-            File templateDir = new File(this.backupDirectory + File.separator + "templates");
-            for (File zip : templateDir.listFiles()) {
+            for (File zip : dir.listFiles()) {
                 if (zip.isFile() && zip.getName().toLowerCase().endsWith(".zip")) {
+                    if (progress != null) {
+                        progress.onProgress("Nicht verschlüsselt: " + zip.getName());
+                    }
                     this.tryUnzip(zip, System.getProperty("java.io.tmpdir") + File.separator + System.currentTimeMillis());
                 }
             }
         } else {
             // with encryption
-            File templateDir = new File(this.backupDirectory + File.separator + "templates");
-            for (File zip : templateDir.listFiles()) {
+            for (File zip : dir.listFiles()) {
+                if (progress != null) {
+                    progress.onProgress("Prüfe Verschlüsselung: " + zip.getName());
+                }
                 if (zip.isFile() && zip.getName().toLowerCase().endsWith(".zip")) {
                     this.tryUnzipWithPassword(zip, System.getProperty("java.io.tmpdir") + File.separator + System.currentTimeMillis(), this.encryptionPassword);
                 }
@@ -853,8 +884,11 @@ public class RestoreExecutor {
         zis.close();
     }
 
-    private void validateBackupDirectory() throws Exception {
+    private void validateBackupDirectory(BackupProgressCallback progress) throws Exception {
         File dir = new File(this.backupDirectory);
+        if (progress != null) {
+            progress.onProgress("Prüfe Datensicherungsverzeichnis " + dir.getAbsolutePath());
+        }
         ArrayList<String> subDirs = new ArrayList<String>();
         if (!dir.exists()) {
             throw new Exception("Verzeichnis '" + this.backupDirectory + "' existiert nicht!");
@@ -887,8 +921,11 @@ public class RestoreExecutor {
         }
     }
 
-    private void validateDataDirectory() throws Exception {
+    private void validateDataDirectory(BackupProgressCallback progress) throws Exception {
         File dir = new File(this.dataDirectory);
+        if (progress != null) {
+            progress.onProgress("Prüfe Datenverzeichnis " + dir.getAbsolutePath());
+        }
         ArrayList<String> subDirs = new ArrayList<String>();
         if (!dir.exists()) {
             throw new Exception("Verzeichnis '" + this.dataDirectory + "' existiert nicht!");

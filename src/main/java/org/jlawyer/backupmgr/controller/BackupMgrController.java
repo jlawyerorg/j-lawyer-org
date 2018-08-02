@@ -19,6 +19,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.TextField;
 import javafx.stage.DirectoryChooser;
+import org.jlawyer.backupmgr.BackupProgressUiCallback;
 import org.jlawyer.backupmgr.impl.RestoreExecutor;
 
 /**
@@ -71,7 +72,7 @@ public class BackupMgrController implements Initializable {
     @FXML
     private void cmdRestoreClicked(ActionEvent event) {
         RestoreExecutor re = new RestoreExecutor(this.txtDataDir.getText(), this.txtBackupDir.getText(), this.txtEncryptionPwd.getText(), this.txtMysqlPwd.getText());
-        //this.prgRestore.set
+        BackupProgressUiCallback callback=new BackupProgressUiCallback(lblProgress);
 
         new Thread(new Runnable() {
             @Override
@@ -87,7 +88,7 @@ public class BackupMgrController implements Initializable {
 
                 boolean failed=false;
                 try {
-                    re.validate();
+                    re.validate(callback);
                 } catch (Exception ex) {
                     failed=true;
                     Platform.runLater(new Runnable() {

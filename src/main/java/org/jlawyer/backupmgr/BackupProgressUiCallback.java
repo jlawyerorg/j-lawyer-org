@@ -661,77 +661,43 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package org.jlawyer.test.backupmgr;
+package org.jlawyer.backupmgr;
 
-import java.io.IOException;
-import java.util.Properties;
-import org.jlawyer.backupmgr.BackupProgressConsoleCallback;
-import org.jlawyer.backupmgr.impl.RestoreExecutor;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import javafx.application.Platform;
+import javafx.scene.control.Label;
 
 /**
  *
  * @author jens
  */
-public class RestoreExecutorTest {
+public class BackupProgressUiCallback implements BackupProgressCallback {
 
-    private String mysqlPassword = null;
-    private String backupDirectory = null;
-    private String dataDirectory = null;
-    private String encryptionPassword = null;
+    private Label lblProgress = null;
 
-    public RestoreExecutorTest() {
+    public BackupProgressUiCallback(Label label) {
+        this.lblProgress = label;
     }
 
-    @BeforeClass
-    public static void setUpClass() {
+    @Override
+    public void onProgress(String message) {
+        Platform.runLater(new Runnable() {
+            @Override
+            public void run() {
+                lblProgress.setText(message);
+            }
+        });
     }
 
-    @AfterClass
-    public static void tearDownClass() {
-    }
+    @Override
+    public void onProgress(String message, int percentage) {
+        Platform.runLater(new Runnable() {
+            @Override
+            public void run() {
+                lblProgress.setText(message + ": " + percentage + "% ...");
+            }
 
-    @Before
-    public void setUp() {
-//        Properties p = new Properties();
-//        try {
-//            String propLocation="/test/test.properties";
-//            System.out.println("using properties from " + propLocation);
-//            p.load(Thread.currentThread().getContextClassLoader().getResourceAsStream(propLocation));
-//            
-//            this.mysqlPassword = p.getProperty("mysqlpwd");
-//            this.directory = p.getProperty("/tmp");
-//            this.encryptionPassword = p.getProperty("encryptionpwd");
-//        } catch (IOException ex) {
-//            ex.printStackTrace();
-//        }
-
-        this.mysqlPassword="sulibo64";
-        this.backupDirectory="/home/jens/dev/projects/backups/";
-        this.dataDirectory="/home/jens/dev/projects/j-lawyer-data/";
-        this.encryptionPassword="j-dimension";
-    }
-
-    @After
-    public void tearDown() {
-    }
-
-    @Test
-    public void testValidate() {
-        System.out.println("Using MySQL password " + this.mysqlPassword);
-        RestoreExecutor re = new RestoreExecutor(this.dataDirectory, this.backupDirectory, this.encryptionPassword, this.mysqlPassword);
-        BackupProgressConsoleCallback callback=new BackupProgressConsoleCallback();
-        try {
-            re.validate(callback);
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            Assert.fail(ex.getMessage());
         }
-
+        );
     }
+
 }
