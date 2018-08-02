@@ -663,6 +663,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package org.jlawyer.test.backupmgr;
 
+import java.io.FileReader;
 import java.io.IOException;
 import java.util.Properties;
 import org.jlawyer.backupmgr.BackupProgressConsoleCallback;
@@ -698,23 +699,21 @@ public class RestoreExecutorTest {
 
     @Before
     public void setUp() {
-//        Properties p = new Properties();
-//        try {
-//            String propLocation="/test/test.properties";
-//            System.out.println("using properties from " + propLocation);
-//            p.load(Thread.currentThread().getContextClassLoader().getResourceAsStream(propLocation));
-//            
-//            this.mysqlPassword = p.getProperty("mysqlpwd");
-//            this.directory = p.getProperty("/tmp");
-//            this.encryptionPassword = p.getProperty("encryptionpwd");
-//        } catch (IOException ex) {
-//            ex.printStackTrace();
-//        }
+        Properties p = new Properties();
+        try {
+            String propLocation="test/test.properties";
+            System.out.println("using properties from " + propLocation);
+            //p.load(Thread.currentThread().getContextClassLoader().getResourceAsStream(propLocation));
+            p.load(new FileReader("/home/jens/scripts/test.properties"));
+            
+            this.mysqlPassword = p.getProperty("mysqlpwd");
+            this.backupDirectory = p.getProperty("backupdirectory");
+            this.dataDirectory=p.getProperty("datadirectory");
+            this.encryptionPassword = p.getProperty("encryptionpwd");
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
 
-        this.mysqlPassword="sulibo64";
-        this.backupDirectory="/home/jens/dev/projects/backups/";
-        this.dataDirectory="/home/jens/dev/projects/j-lawyer-data/";
-        this.encryptionPassword="j-dimension";
     }
 
     @After
