@@ -85,7 +85,7 @@ public class BackupMgrController implements Initializable {
                         lblProgress.setText("Prüfe Datensicherung...");
                     }
                 });
-
+                System.out.println("validate");
                 boolean failed=false;
                 try {
                     re.validate(callback);
@@ -100,6 +100,7 @@ public class BackupMgrController implements Initializable {
                     });
 
                 }
+                System.out.println("validate: " + failed);
                 if(failed)
                     return;
 
@@ -115,6 +116,23 @@ public class BackupMgrController implements Initializable {
                 } catch (InterruptedException ex) {
                     Logger.getLogger(BackupMgrController.class.getName()).log(Level.SEVERE, null, ex);
                 }
+                
+                System.out.println("restore");
+                try {
+                    re.restore(callback);
+                } catch (Exception ex) {
+                    failed=true;
+                    Platform.runLater(new Runnable() {
+                        @Override
+                        public void run() {
+                            lblProgress.setText(ex.getMessage());
+                            cmdRestore.disableProperty().set(false);
+                        }
+                    });
+
+                }
+                if(failed)
+                    return;
 
                 Platform.runLater(new Runnable() {
                     @Override

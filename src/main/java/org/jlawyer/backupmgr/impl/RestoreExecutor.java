@@ -665,7 +665,9 @@ package org.jlawyer.backupmgr.impl;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -959,6 +961,74 @@ public class RestoreExecutor {
 
         if (dumpExists) {
             throw new Exception("Datenbanksicherung 'jlawyerdb-dump.sql' im Datenverzeichnis gefunden! Wurde aus Versehen das Backupverzeichnis gewählt?");
+        }
+    }
+    
+    public void restore(BackupProgressCallback progress) throws Exception {
+        this.clearDataDirectory(progress);
+
+    }
+    
+    private void clearDataDirectory(BackupProgressCallback progress) throws Exception {
+        
+        String data=this.dataDirectory;
+        if(!data.endsWith(File.separator))
+            data=data+File.separator;
+        
+        File delDir=new File(data + "archivefiles");
+        this.deleteRecursively(delDir, progress);
+        delDir.mkdirs();
+        
+        delDir=new File(data + "archivefiles-preview");
+        this.deleteRecursively(delDir, progress);
+        delDir.mkdirs();
+        
+        delDir=new File(data + "emailtemplates");
+        this.deleteRecursively(delDir, progress);
+        delDir.mkdirs();
+        
+        delDir=new File(data + "faxqueue");
+        this.deleteRecursively(delDir, progress);
+        delDir.mkdirs();
+        
+        delDir=new File(data + "mastertemplates");
+        this.deleteRecursively(delDir, progress);
+        delDir.mkdirs();
+        
+        delDir=new File(data + "searchindex");
+        this.deleteRecursively(delDir, progress);
+        delDir.mkdirs();
+        
+        delDir=new File(data + "templates");
+        this.deleteRecursively(delDir, progress);
+        delDir.mkdirs();
+    }
+    
+    private void deleteRecursively(File f, BackupProgressCallback progress) throws IOException {
+        if(!f.exists())
+            return;
+        if (f.isDirectory()) {
+            for (File c : f.listFiles()) {
+                delete(c, progress);
+            }
+        }
+        if(progress!=null)
+            progress.onProgress("Datenverzeichnis wird bereinigt: " + f.getName());
+        if (!f.delete()) {
+            throw new FileNotFoundException("Failed to delete file: " + f);
+        }
+    }
+    
+    private void delete(File f, BackupProgressCallback progress) throws IOException {
+        if (f.isDirectory()) {
+            for (File c : f.listFiles()) {
+                delete(c, progress);
+            }
+        }
+        if(progress!=null)
+            progress.onProgress("Datenverzeichnis wird bereinigt: " + f.getName());
+        if (!f.delete()) {
+            throw new FileNotFoundException("Failed to delete file: " + f);
         }
     }
 
