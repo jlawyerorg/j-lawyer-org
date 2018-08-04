@@ -666,11 +666,8 @@ package org.jlawyer.backupmgr;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
 import java.awt.HeadlessException;
-import java.net.URL;
-import javafx.application.Application;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Scene;
-import javafx.stage.Stage;
+import java.util.Scanner;
+import org.jlawyer.backupmgr.impl.RestoreExecutor;
 
 /**
  *
@@ -685,18 +682,62 @@ public class BackupManagerLauncher {
 
         if (isReallyHeadless()) {
             System.out.println("j-lawyer.org Backup Manager (ohne grafische Oberflaeche)");
-            // todo: launch as command line client
+            String dataDir="";
+            String backupDir="";
+            String encryptionPwd="";
+            String dbPwd="";
+            
+            Scanner scanner = new Scanner(System.in);
+            System.out.print("Verzeichnis mit der Datensicherung: ");
+            backupDir=scanner.next();
+            System.out.print("Datenverzeichnis der j-lawyer.org Serverinstallation: ");
+            dataDir=scanner.next();
+            System.out.print("Verschlüsselungspasswort: ");
+            encryptionPwd=scanner.next();
+            System.out.print("MySQL root-Passwort: ");
+            dbPwd=scanner.next();
+            
+            System.out.println("Es wird die Datensicherung von " + backupDir + " nach " + dataDir + " eingespielt.");
+            System.out.print("Fortfahren J/N: ");
+            String proceed=scanner.next();
+            if(!("j".equalsIgnoreCase(proceed)))
+                System.exit(0);
+            
+            RestoreExecutor re = new RestoreExecutor(dataDir, backupDir, encryptionPwd, dbPwd);
+            BackupProgressConsoleCallback callback = new BackupProgressConsoleCallback();
+            boolean failed = false;
+            try {
+                re.validate(callback);
+            } catch (Exception ex) {
+                failed = true;
+                System.out.println("Prüfung fehlgeschlagen: " + failed);
+
+            }
+            
+            if (failed) {
+                return;
+            }
+            try {
+                re.restore(callback);
+            } catch (Exception ex) {
+                failed = true;
+                System.out.println("Wiederherstellung fehlgeschlagen: " + failed);
+            }
+            if (failed) {
+                return;
+            }
+            System.out.println("Backup erfolgreich wiederhergestellt.");
         } else {
             System.out.println("j-lawyer.org Backup Manager (grafische Oberflaeche)");
             new Thread() {
-            @Override
-            public void run() {
-                javafx.application.Application.launch(BackupManager.class);
-            }
-        }.start();
+                @Override
+                public void run() {
+                    javafx.application.Application.launch(BackupManager.class);
+                }
+            }.start();
         }
-        
-       //launch(args);
+
+        //launch(args);
     }
 
     private static boolean isReallyHeadless() {
@@ -711,6 +752,5 @@ public class BackupManagerLauncher {
             return true;
         }
     }
-    
 
 }

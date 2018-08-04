@@ -663,11 +663,14 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package org.jlawyer.backupmgr.impl;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -707,6 +710,7 @@ public class RestoreExecutor {
         this.validateBackupDirectory(progress);
         this.validateDataDirectory(progress);
         this.validateDatabaseConnection(progress);
+        this.validateDatabaseBinaries(progress);
         this.validateEncryption(progress);
 
     }
@@ -758,6 +762,47 @@ public class RestoreExecutor {
         }
 
     }
+    
+    private void validateDatabaseBinaries(BackupProgressCallback progress) throws Exception {
+        if (progress != null) {
+            progress.onProgress("Prüfe Datenbankinstallation...");
+        }
+        
+        String osName = System.getProperty("os.name").toLowerCase();
+        String path = "";
+        if (osName.indexOf("win") > -1) {
+
+        } else if (osName.indexOf("linux") > -1) {
+
+        } else if (osName.startsWith("mac")) {
+            path = "/usr/local/mysql/bin/";
+        }
+
+        String[] cmd = null;
+            cmd = new String[]{
+                path + "mysql",
+                "--help"
+            };
+        
+        Runtime shell = Runtime.getRuntime();
+        Process process = null;
+        
+        
+
+            process = shell.exec(cmd);
+            //process.waitFor();
+
+            BufferedReader br = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            String line = null;
+
+            while ((line = br.readLine()) != null) {
+                //System.out.println(line);
+            }
+            br.close();
+
+        
+        
+    }
 
     private void validateEncryption(BackupProgressCallback progress) throws Exception {
         if (progress != null) {
@@ -792,7 +837,7 @@ public class RestoreExecutor {
                     if (progress != null) {
                         progress.onProgress("Nicht verschlüsselt: " + zip.getName());
                     }
-                    this.tryUnzip(zip, System.getProperty("java.io.tmpdir") + File.separator + System.currentTimeMillis());
+                    this.unzip(zip, System.getProperty("java.io.tmpdir") + File.separator + System.currentTimeMillis());
                 }
             }
         } else {
@@ -802,13 +847,13 @@ public class RestoreExecutor {
                     progress.onProgress("Prüfe Verschlüsselung: " + zip.getName());
                 }
                 if (zip.isFile() && zip.getName().toLowerCase().endsWith(".zip")) {
-                    this.tryUnzipWithPassword(zip, System.getProperty("java.io.tmpdir") + File.separator + System.currentTimeMillis(), this.encryptionPassword);
+                    this.unzipWithPassword(zip, System.getProperty("java.io.tmpdir") + File.separator + System.currentTimeMillis(), this.encryptionPassword);
                 }
             }
         }
     }
 
-    private void tryUnzipWithPassword(File source, String targetDir, String password) throws Exception {
+    private void unzipWithPassword(File source, String targetDir, String password) throws Exception {
 
         ZipFile zipFile = new ZipFile(source);
         if (zipFile.isEncrypted()) {
@@ -843,7 +888,7 @@ public class RestoreExecutor {
 
     }
 
-    private void tryUnzip(File source, String targetDir) throws Exception {
+    private void unzip(File source, String targetDir) throws Exception {
         File target = new File(targetDir);
         if (!target.exists()) {
             target.mkdirs();
@@ -966,7 +1011,70 @@ public class RestoreExecutor {
     
     public void restore(BackupProgressCallback progress) throws Exception {
         this.clearDataDirectory(progress);
+        this.restoreFiles(progress);
+        this.restoreDatabase(this.mysqlPassword, progress);
+    }
+    
+    private void restoreFiles(BackupProgressCallback progress) throws Exception {
+        File dir = new File(this.backupDirectory);
+        if (progress != null) {
+            progress.onProgress("Dateien wiederherstellen..." + dir.getAbsolutePath());
+        }
+        
+        String backup=this.backupDirectory;
+        if(!backup.endsWith(File.separator))
+            backup=backup+File.separator;
+        
+        String data=this.dataDirectory;
+        if(!data.endsWith(File.separator))
+            data=data+File.separator;
+        
+        // archivefiles, emailtemplates, faxqueue, mastertemplates, templates
+        this.restoreFromTo(backup + "templates", data + "templates", progress);
+        try {
+            // allowed to fail
+            this.restoreFromTo(backup + "mastertemplates", data + "mastertemplates", progress);
+        } catch (Throwable t) {
+            t.printStackTrace();
+        }
+        this.restoreFromTo(backup + "faxqueue", data + "faxqueue", progress);
+        this.restoreFromTo(backup + "emailtemplates", data + "emailtemplates", progress);
+        
+        dir=new File(backup + "archivefiles");
+        for(File child: dir.listFiles()) {
+            if(child.isDirectory())
+                this.restoreFromTo(child.getAbsolutePath(), data + "archivefiles" + File.separator + child.getName(), progress);
+        }
+        
 
+        
+    }
+    
+    private void restoreFromTo(String fromDir, String toDir, BackupProgressCallback progress) throws Exception {
+        File from=new File(fromDir);
+        File to=new File(toDir);
+        
+        if ("".equals(this.encryptionPassword) || this.encryptionPassword == null) {
+            // no encryption
+            for (File zip : from.listFiles()) {
+                if (zip.isFile() && zip.getName().toLowerCase().endsWith(".zip")) {
+                    if (progress != null) {
+                        progress.onProgress("Wiederherstellung: " + zip.getName());
+                    }
+                    this.unzip(zip, to + File.separator + System.currentTimeMillis());
+                }
+            }
+        } else {
+            // with encryption
+            for (File zip : from.listFiles()) {
+                if (progress != null) {
+                    progress.onProgress("Wiederherstellung: " + zip.getName());
+                }
+                if (zip.isFile() && zip.getName().toLowerCase().endsWith(".zip")) {
+                    this.unzipWithPassword(zip, toDir, this.encryptionPassword);
+                }
+            }
+        }
     }
     
     private void clearDataDirectory(BackupProgressCallback progress) throws Exception {
@@ -1030,6 +1138,67 @@ public class RestoreExecutor {
         if (!f.delete()) {
             throw new FileNotFoundException("Failed to delete file: " + f);
         }
+    }
+
+    private void restoreDatabase(String password, BackupProgressCallback progress) throws Exception {
+        if (progress != null) {
+            progress.onProgress("Wiederherstellung der Datenbank...");
+        }
+        
+        String backup=this.backupDirectory;
+        if(!backup.endsWith(File.separator))
+            backup=backup+File.separator;
+        
+        String osName = System.getProperty("os.name").toLowerCase();
+        String path = "";
+        if (osName.indexOf("win") > -1) {
+
+        } else if (osName.indexOf("linux") > -1) {
+
+        } else if (osName.startsWith("mac")) {
+            path = "/usr/local/mysql/bin/";
+        }
+
+        
+        String[] cmd = null;
+            cmd = new String[]{
+                path + "mysql",
+                "-u",
+                "root", 
+                "-p" + password,
+                "-e", 
+                //"\"drop database if exists jlawyerdb;create database jlawyerdb;use jlawyerdb;source " + backup + "jlawyerdb-dump.sql;commit;\""
+                "drop database if exists jlawyerdb;create database jlawyerdb;use jlawyerdb;source " + backup + "jlawyerdb-dump.sql;commit;"    
+                //"\"drop database if exists jlawyerdb;quit;\""    
+            };
+        
+        Runtime shell = Runtime.getRuntime();
+        Process process = null;
+        
+        
+
+            process = shell.exec(cmd);
+            
+            //process.waitFor();
+
+            BufferedReader br = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            String line = null;
+
+            while ((line = br.readLine()) != null) {
+                System.out.println(line);
+            }
+            br.close();
+            
+            br = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+            line = null;
+
+            while ((line = br.readLine()) != null) {
+                System.out.println(line);
+            }
+            br.close();
+            if(process.exitValue()!=0) {
+                throw new Exception("Datenbankwiederherstellung fehlgeschlagen!");
+            }
     }
 
 }
