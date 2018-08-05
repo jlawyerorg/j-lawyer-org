@@ -679,8 +679,18 @@ public class BackupManagerLauncher {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
+        
+        boolean cmdLineRequested=false;
+        if(args!=null) {
+            for(String a: args) {
+                if("-console".equalsIgnoreCase(a)) {
+                    cmdLineRequested=true;
+                    break;
+                }
+            }
+        }
 
-        if (isReallyHeadless()) {
+        if (isReallyHeadless() || cmdLineRequested) {
             System.out.println("j-lawyer.org Backup Manager (ohne grafische Oberflaeche)");
             String dataDir="";
             String backupDir="";

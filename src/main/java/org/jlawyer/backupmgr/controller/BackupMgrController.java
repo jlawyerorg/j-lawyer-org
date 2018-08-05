@@ -90,6 +90,7 @@ public class BackupMgrController implements Initializable {
                 try {
                     re.validate(callback);
                 } catch (Exception ex) {
+                    ex.printStackTrace();
                     failed=true;
                     Platform.runLater(new Runnable() {
                         @Override
@@ -121,6 +122,7 @@ public class BackupMgrController implements Initializable {
                 try {
                     re.restore(callback);
                 } catch (Exception ex) {
+                    ex.printStackTrace();
                     failed=true;
                     Platform.runLater(new Runnable() {
                         @Override
