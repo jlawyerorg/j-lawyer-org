@@ -726,7 +726,6 @@ public class ServerSettings {
     public static final String SERVERCONF_BACKUP_FRIDAY="jlawyer.server.backup.friday";
     public static final String SERVERCONF_BACKUP_SATURDAY="jlawyer.server.backup.saturday";
     public static final String SERVERCONF_BACKUP_SUNDAY="jlawyer.server.backup.sunday";
-    public static final String SERVERCONF_BACKUP_MAXBACKUPS="jlawyer.server.backup.maxbackups";
     public static final String SERVERCONF_BACKUP_ENCRYPTPWD="jlawyer.server.backup.encryptionpwd";
     
     public static final String SERVERCONF_BACKUP_SYNCTARGET="jlawyer.server.backup.synctarget";

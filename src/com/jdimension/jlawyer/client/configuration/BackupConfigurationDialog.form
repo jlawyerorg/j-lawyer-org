@@ -35,7 +35,7 @@
     </DimensionLayout>
     <DimensionLayout dim="1">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Component id="jTabbedPane1" alignment="0" pref="315" max="32767" attributes="0"/>
+          <Component id="jTabbedPane1" alignment="0" max="32767" attributes="0"/>
       </Group>
     </DimensionLayout>
   </Layout>
@@ -99,20 +99,11 @@
                               </Group>
                               <EmptySpace min="0" pref="173" max="32767" attributes="0"/>
                           </Group>
-                          <Group type="102" alignment="1" attributes="0">
-                              <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
-                              <Component id="cmdSave" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace max="-2" attributes="0"/>
-                              <Component id="cmdCancel" min="-2" max="-2" attributes="0"/>
-                          </Group>
                           <Group type="102" alignment="0" attributes="0">
                               <Group type="103" groupAlignment="0" attributes="0">
-                                  <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                                      <Component id="jLabel5" min="-2" max="-2" attributes="0"/>
-                                      <Component id="jLabel6" alignment="0" min="-2" max="-2" attributes="0"/>
-                                      <Component id="jLabel8" alignment="0" max="32767" attributes="0"/>
-                                      <Component id="lblMaxBackups" alignment="0" min="-2" max="-2" attributes="0"/>
-                                  </Group>
+                                  <Component id="jLabel5" min="-2" max="-2" attributes="0"/>
+                                  <Component id="jLabel6" alignment="0" min="-2" max="-2" attributes="0"/>
+                                  <Component id="jLabel8" alignment="0" min="-2" pref="195" max="-2" attributes="0"/>
                                   <Component id="jLabel13" alignment="0" min="-2" max="-2" attributes="0"/>
                               </Group>
                               <EmptySpace max="-2" attributes="0"/>
@@ -120,7 +111,6 @@
                                   <Component id="txtDbUser" max="32767" attributes="0"/>
                                   <Component id="txtDbPwd" max="32767" attributes="0"/>
                                   <Component id="txtDbPort" alignment="0" max="32767" attributes="0"/>
-                                  <Component id="cmbMaxBackups" alignment="0" max="32767" attributes="0"/>
                                   <Group type="102" alignment="0" attributes="0">
                                       <Component id="txtEncryptionPassword" max="32767" attributes="0"/>
                                       <EmptySpace max="-2" attributes="0"/>
@@ -130,6 +120,13 @@
                           </Group>
                       </Group>
                       <EmptySpace min="-2" pref="7" max="-2" attributes="0"/>
+                  </Group>
+                  <Group type="102" alignment="1" attributes="0">
+                      <EmptySpace max="32767" attributes="0"/>
+                      <Component id="cmdSave" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="cmdCancel" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -176,21 +173,16 @@
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="3" attributes="0">
-                          <Component id="cmbMaxBackups" alignment="3" min="-2" max="-2" attributes="0"/>
-                          <Component id="lblMaxBackups" alignment="3" min="-2" max="-2" attributes="0"/>
-                      </Group>
-                      <EmptySpace max="-2" attributes="0"/>
-                      <Group type="103" groupAlignment="3" attributes="0">
                           <Component id="txtEncryptionPassword" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="jLabel13" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="jLabel14" alignment="3" min="-2" max="-2" attributes="0"/>
                       </Group>
-                      <EmptySpace pref="24" max="32767" attributes="0"/>
+                      <EmptySpace type="separate" max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="3" attributes="0">
                           <Component id="cmdCancel" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="cmdSave" alignment="3" min="-2" max="-2" attributes="0"/>
                       </Group>
-                      <EmptySpace max="-2" attributes="0"/>
+                      <EmptySpace pref="62" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -382,31 +374,6 @@
                 </Property>
               </Properties>
             </Component>
-            <Component class="javax.swing.JComboBox" name="cmbMaxBackups">
-              <Properties>
-                <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
-                  <StringArray count="6">
-                    <StringItem index="0" value="2"/>
-                    <StringItem index="1" value="3"/>
-                    <StringItem index="2" value="5"/>
-                    <StringItem index="3" value="7"/>
-                    <StringItem index="4" value="10"/>
-                    <StringItem index="5" value="14"/>
-                  </StringArray>
-                </Property>
-                <Property name="selectedIndex" type="int" value="5"/>
-              </Properties>
-              <AuxValues>
-                <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;String&gt;"/>
-              </AuxValues>
-            </Component>
-            <Component class="javax.swing.JLabel" name="lblMaxBackups">
-              <Properties>
-                <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="com/jdimension/jlawyer/client/configuration/BackupConfigurationDialog.properties" key="label.maxbackups" replaceFormat="java.util.ResourceBundle.getBundle(&quot;{bundleNameSlashes}&quot;).getString(&quot;{key}&quot;)"/>
-                </Property>
-              </Properties>
-            </Component>
             <Component class="javax.swing.JPasswordField" name="txtEncryptionPassword">
               <Events>
                 <EventHandler event="keyReleased" listener="java.awt.event.KeyListener" parameters="java.awt.event.KeyEvent" handler="txtEncryptionPasswordKeyReleased"/>
@@ -458,7 +425,7 @@
                       <Component id="jLabel7" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="cmdAdHocBackup" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace pref="169" max="32767" attributes="0"/>
+                      <EmptySpace pref="183" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -502,7 +469,7 @@
                   <Group type="102" attributes="0">
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="jLabel9" alignment="0" pref="0" max="32767" attributes="0"/>
+                          <Component id="jLabel9" alignment="0" pref="600" max="32767" attributes="0"/>
                           <Group type="102" alignment="0" attributes="0">
                               <Component id="jLabel10" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
@@ -513,7 +480,7 @@
                               <Component id="cmdResetSync" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <Group type="102" alignment="1" attributes="0">
-                              <EmptySpace min="0" pref="339" max="32767" attributes="0"/>
+                              <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                               <Component id="cmdSaveSync" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="cmdCancel2" min="-2" max="-2" attributes="0"/>
@@ -535,12 +502,12 @@
                           <Component id="cmdGetExternalLocation" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="cmdResetSync" alignment="3" min="-2" max="-2" attributes="0"/>
                       </Group>
-                      <EmptySpace pref="81" max="32767" attributes="0"/>
+                      <EmptySpace type="separate" max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="3" attributes="0">
                           <Component id="cmdCancel2" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="cmdSaveSync" alignment="3" min="-2" max="-2" attributes="0"/>
                       </Group>
-                      <EmptySpace max="-2" attributes="0"/>
+                      <EmptySpace pref="89" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -623,19 +590,19 @@
           <Layout>
             <DimensionLayout dim="0">
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Group type="102" alignment="1" attributes="0">
+                  <Group type="102" attributes="0">
                       <EmptySpace max="-2" attributes="0"/>
-                      <Group type="103" groupAlignment="1" attributes="0">
-                          <Component id="jLabel11" pref="0" max="32767" attributes="0"/>
+                      <Group type="103" groupAlignment="0" attributes="0">
+                          <Component id="jLabel11" alignment="1" pref="0" max="32767" attributes="0"/>
                           <Group type="102" alignment="0" attributes="0">
                               <Component id="jLabel12" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
-                              <Component id="txtExportTarget" max="32767" attributes="0"/>
+                              <Component id="txtExportTarget" pref="341" max="32767" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="cmdResetExport" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <Group type="102" alignment="1" attributes="0">
-                              <EmptySpace min="0" pref="339" max="32767" attributes="0"/>
+                              <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                               <Component id="cmdSaveExport" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="cmdCancel3" min="-2" max="-2" attributes="0"/>
@@ -658,12 +625,12 @@
                           </Group>
                           <Component id="cmdResetExport" min="-2" max="-2" attributes="0"/>
                       </Group>
-                      <EmptySpace pref="146" max="32767" attributes="0"/>
+                      <EmptySpace type="separate" max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="3" attributes="0">
                           <Component id="cmdCancel3" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="cmdSaveExport" alignment="3" min="-2" max="-2" attributes="0"/>
                       </Group>
-                      <EmptySpace max="-2" attributes="0"/>
+                      <EmptySpace pref="154" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>

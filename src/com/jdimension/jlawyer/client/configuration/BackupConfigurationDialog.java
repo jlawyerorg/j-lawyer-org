@@ -710,9 +710,7 @@ public class BackupConfigurationDialog extends javax.swing.JDialog {
         this.txtDbPwd.setText(dbPwd);
         String dbPort = set.getSetting(set.SERVERCONF_BACKUP_DBPORT, "3306");
         this.txtDbPort.setText(dbPort);
-        String maxBackups = set.getSetting(set.SERVERCONF_BACKUP_MAXBACKUPS, "14");
-        this.cmbMaxBackups.setSelectedItem(maxBackups);
-
+        
         boolean mon = set.getSettingAsBoolean(set.SERVERCONF_BACKUP_MONDAY, false);
         this.chkMon.setSelected(mon);
         boolean tue = set.getSettingAsBoolean(set.SERVERCONF_BACKUP_TUESDAY, false);
@@ -770,8 +768,6 @@ public class BackupConfigurationDialog extends javax.swing.JDialog {
         jLabel6 = new javax.swing.JLabel();
         txtDbPort = new javax.swing.JTextField();
         jLabel8 = new javax.swing.JLabel();
-        cmbMaxBackups = new javax.swing.JComboBox<>();
-        lblMaxBackups = new javax.swing.JLabel();
         txtEncryptionPassword = new javax.swing.JPasswordField();
         jLabel13 = new javax.swing.JLabel();
         jLabel14 = new javax.swing.JLabel();
@@ -853,11 +849,6 @@ public class BackupConfigurationDialog extends javax.swing.JDialog {
 
         jLabel8.setText(bundle.getString("label.dbport")); // NOI18N
 
-        cmbMaxBackups.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "2", "3", "5", "7", "10", "14" }));
-        cmbMaxBackups.setSelectedIndex(5);
-
-        lblMaxBackups.setText(bundle.getString("label.maxbackups")); // NOI18N
-
         txtEncryptionPassword.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyReleased(java.awt.event.KeyEvent evt) {
                 txtEncryptionPasswordKeyReleased(evt);
@@ -908,30 +899,28 @@ public class BackupConfigurationDialog extends javax.swing.JDialog {
                                         .addComponent(chkSun))
                                     .addComponent(jLabel3))))
                         .addGap(0, 173, Short.MAX_VALUE))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                        .addGap(0, 0, Short.MAX_VALUE)
-                        .addComponent(cmdSave)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(cmdCancel))
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                                .addComponent(jLabel5)
-                                .addComponent(jLabel6)
-                                .addComponent(jLabel8, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addComponent(lblMaxBackups))
+                            .addComponent(jLabel5)
+                            .addComponent(jLabel6)
+                            .addComponent(jLabel8, javax.swing.GroupLayout.PREFERRED_SIZE, 195, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(jLabel13))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(txtDbUser)
                             .addComponent(txtDbPwd)
                             .addComponent(txtDbPort)
-                            .addComponent(cmbMaxBackups, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addGroup(jPanel1Layout.createSequentialGroup()
                                 .addComponent(txtEncryptionPassword)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(jLabel14)))))
                 .addGap(7, 7, 7))
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(cmdSave)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(cmdCancel)
+                .addContainerGap())
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -970,18 +959,14 @@ public class BackupConfigurationDialog extends javax.swing.JDialog {
                     .addComponent(jLabel8))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(cmbMaxBackups, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(lblMaxBackups))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(txtEncryptionPassword, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel13)
                     .addComponent(jLabel14))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 24, Short.MAX_VALUE)
+                .addGap(18, 18, 18)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(cmdCancel)
                     .addComponent(cmdSave))
-                .addContainerGap())
+                .addContainerGap(62, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("Automatisch sichern", jPanel1);
@@ -1016,7 +1001,7 @@ public class BackupConfigurationDialog extends javax.swing.JDialog {
                 .addComponent(jLabel7, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(cmdAdHocBackup)
-                .addContainerGap(169, Short.MAX_VALUE))
+                .addContainerGap(183, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("Jetzt sichern", jPanel3);
@@ -1066,7 +1051,7 @@ public class BackupConfigurationDialog extends javax.swing.JDialog {
             .addGroup(jPanel2Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel9, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+                    .addComponent(jLabel9, javax.swing.GroupLayout.DEFAULT_SIZE, 600, Short.MAX_VALUE)
                     .addGroup(jPanel2Layout.createSequentialGroup()
                         .addComponent(jLabel10)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -1076,7 +1061,7 @@ public class BackupConfigurationDialog extends javax.swing.JDialog {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cmdResetSync))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
-                        .addGap(0, 339, Short.MAX_VALUE)
+                        .addGap(0, 0, Short.MAX_VALUE)
                         .addComponent(cmdSaveSync)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cmdCancel2)))
@@ -1093,11 +1078,11 @@ public class BackupConfigurationDialog extends javax.swing.JDialog {
                     .addComponent(txtTarget, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(cmdGetExternalLocation)
                     .addComponent(cmdResetSync))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 81, Short.MAX_VALUE)
+                .addGap(18, 18, 18)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(cmdCancel2)
                     .addComponent(cmdSaveSync))
-                .addContainerGap())
+                .addContainerGap(89, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("Synchronisation", jPanel2);
@@ -1136,18 +1121,18 @@ public class BackupConfigurationDialog extends javax.swing.JDialog {
         jPanel4.setLayout(jPanel4Layout);
         jPanel4Layout.setHorizontalGroup(
             jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel4Layout.createSequentialGroup()
+            .addGroup(jPanel4Layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(jLabel11, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel4Layout.createSequentialGroup()
+                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jLabel11, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+                    .addGroup(jPanel4Layout.createSequentialGroup()
                         .addComponent(jLabel12)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(txtExportTarget)
+                        .addComponent(txtExportTarget, javax.swing.GroupLayout.DEFAULT_SIZE, 341, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cmdResetExport))
-                    .addGroup(jPanel4Layout.createSequentialGroup()
-                        .addGap(0, 339, Short.MAX_VALUE)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel4Layout.createSequentialGroup()
+                        .addGap(0, 0, Short.MAX_VALUE)
                         .addComponent(cmdSaveExport)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cmdCancel3)))
@@ -1164,11 +1149,11 @@ public class BackupConfigurationDialog extends javax.swing.JDialog {
                         .addComponent(jLabel12)
                         .addComponent(txtExportTarget, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addComponent(cmdResetExport))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 146, Short.MAX_VALUE)
+                .addGap(18, 18, 18)
                 .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(cmdCancel3)
                     .addComponent(cmdSaveExport))
-                .addContainerGap())
+                .addContainerGap(154, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("HTML-Export", jPanel4);
@@ -1181,7 +1166,7 @@ public class BackupConfigurationDialog extends javax.swing.JDialog {
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jTabbedPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 315, Short.MAX_VALUE)
+            .addComponent(jTabbedPane1)
         );
 
         pack();
@@ -1224,8 +1209,6 @@ public class BackupConfigurationDialog extends javax.swing.JDialog {
         set.setSetting(set.SERVERCONF_BACKUP_SATURDAY, "" + this.chkSat.isSelected());
         set.setSetting(set.SERVERCONF_BACKUP_SUNDAY, "" + this.chkSun.isSelected());
         
-        set.setSetting(set.SERVERCONF_BACKUP_MAXBACKUPS, "" + this.cmbMaxBackups.getSelectedItem().toString());
-
         this.setVisible(false);
         this.dispose();
     }//GEN-LAST:event_cmdSaveActionPerformed
@@ -1381,7 +1364,6 @@ public class BackupConfigurationDialog extends javax.swing.JDialog {
     private javax.swing.JCheckBox chkTue;
     private javax.swing.JCheckBox chkWed;
     private javax.swing.JComboBox cmbHour;
-    private javax.swing.JComboBox<String> cmbMaxBackups;
     private javax.swing.JButton cmdAdHocBackup;
     private javax.swing.JButton cmdCancel;
     private javax.swing.JButton cmdCancel2;
@@ -1411,7 +1393,6 @@ public class BackupConfigurationDialog extends javax.swing.JDialog {
     private javax.swing.JPanel jPanel3;
     private javax.swing.JPanel jPanel4;
     private javax.swing.JTabbedPane jTabbedPane1;
-    private javax.swing.JLabel lblMaxBackups;
     private javax.swing.JRadioButton optBackupOff;
     private javax.swing.JRadioButton optBackupOn;
     private javax.swing.JTextField txtDbPort;
