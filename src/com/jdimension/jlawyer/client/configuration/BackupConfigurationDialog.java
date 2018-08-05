@@ -1188,13 +1188,30 @@ public class BackupConfigurationDialog extends javax.swing.JDialog {
             return;
         }
         
+        
+        
         ServerSettings set = ServerSettings.getInstance();
         set.setSetting(set.SERVERCONF_BACKUP_DBPWD, this.txtDbPwd.getText());
         set.setSetting(set.SERVERCONF_BACKUP_DBUSER, this.txtDbUser.getText());
         set.setSetting(set.SERVERCONF_BACKUP_DBPORT, this.txtDbPort.getText());
         set.setSetting(set.SERVERCONF_BACKUP_HOUR, this.cmbHour.getSelectedItem().toString());
+        String oldEncryptionPassword=set.getSetting(set.SERVERCONF_BACKUP_ENCRYPTPWD, "");
         set.setSetting(set.SERVERCONF_BACKUP_ENCRYPTPWD, new String(this.txtEncryptionPassword.getPassword()));
 
+        if(!oldEncryptionPassword.equals(new String(this.txtEncryptionPassword.getPassword()))) {
+            // encryption password has changed, need to remove current backup
+            try {
+                ClientSettings settings = ClientSettings.getInstance();
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                SystemManagementRemote sys = locator.lookupSystemManagementRemote();
+                sys.clearCurrentBackup();
+                
+            } catch (Exception ex) {
+                log.error("error clearing backup directory", ex);
+                JOptionPane.showMessageDialog(this, "Fehler Bereinigen der alten Datensicherung: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+        
         if (this.optBackupOn.isSelected()) {
             set.setSetting(set.SERVERCONF_BACKUP_MODE, "on");
         } else {
