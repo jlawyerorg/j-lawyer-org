@@ -13,4 +13,6 @@ alter table ArchiveFileDocumentsBean add `favorite` TINYINT default 0;
 
 insert into ServerSettingsBean(settingKey, settingValue) values('jlawyer.server.database.version','01910') ON DUPLICATE KEY UPDATE settingValue     = '01910';
 
+delete from ServerSettingsBean where settingKey='jlawyer.server.backup.maxbackups';
+
 commit;

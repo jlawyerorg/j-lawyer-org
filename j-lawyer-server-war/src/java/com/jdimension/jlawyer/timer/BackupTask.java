@@ -723,7 +723,6 @@ public class BackupTask extends java.util.TimerTask {
         String syncLocation = "";
         boolean syncSuccess = true;
         boolean exportSuccess = true;
-        int maxBackups = 2;
         boolean exportEnabled = true;
         String exportLocation = "";
         String encryptionPassword = "";
@@ -767,17 +766,6 @@ public class BackupTask extends java.util.TimerTask {
             ServerSettingsBean dbPortB = settings.find("jlawyer.server.backup.dbport");
             if (dbPortB != null) {
                 dbPort = dbPortB.getSettingValue();
-            }
-
-            ServerSettingsBean maxBackupsSetting = settings.find("jlawyer.server.backup.maxbackups");
-            if (maxBackupsSetting != null) {
-                String maxBackupsString = maxBackupsSetting.getSettingValue();
-                try {
-                    maxBackups = Integer.parseInt(maxBackupsString);
-                } catch (Throwable t) {
-                    log.error("Error getting maximum number of backups to keep - setting is " + maxBackupsString);
-                    maxBackups = 14;
-                }
             }
 
             if (dbUser == null || "".equals(dbUser)) {
@@ -874,25 +862,6 @@ public class BackupTask extends java.util.TimerTask {
         // in this case, we use the first backup and skip this one
         if (skipTest.exists()) {
             return;
-        }
-
-        try {
-            File[] delFiles = backupDir.listFiles();
-            if (delFiles.length > (maxBackups - 1)) {
-                Arrays.sort(delFiles, new Comparator<File>() {
-
-                    public int compare(File f1, File f2) {
-                        return Long.valueOf(f2.lastModified()).compareTo(f1.lastModified());
-                    }
-                });
-
-                for (int i = (maxBackups - 1); i < delFiles.length; i++) {
-                    File delete = delFiles[i];
-                    delete.delete();
-                }
-            }
-        } catch (Throwable t) {
-            log.error(t);
         }
 
         String subject = "";
