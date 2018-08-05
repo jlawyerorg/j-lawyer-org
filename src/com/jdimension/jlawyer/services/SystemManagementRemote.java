@@ -699,6 +699,8 @@ public interface SystemManagementRemote {
     void removeOptionGroup(String id);
 
     boolean addFromMasterTemplate(String fileName, String basedOnFileName) throws Exception;
+    
+    public void clearCurrentBackup();
 
     //boolean deleteTemplate(String fileName) throws Exception;
     
