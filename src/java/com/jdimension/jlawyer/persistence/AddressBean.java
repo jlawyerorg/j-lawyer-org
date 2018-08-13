@@ -703,6 +703,9 @@ import javax.xml.bind.annotation.XmlTransient;
     @NamedQuery(name = "AddressBean.findByCreationDate", query = "SELECT a FROM AddressBean a WHERE a.creationDate = :creationDate"),
     @NamedQuery(name = "AddressBean.findByModificationDate", query = "SELECT a FROM AddressBean a WHERE a.modificationDate = :modificationDate")})
 public class AddressBean implements Serializable {
+
+    @OneToMany(mappedBy = "addressKey")
+    private List<CampaignAddress> campaignAddressesList;
     private static final long serialVersionUID = 1L;
     @Id
     @Basic(optional = false)
@@ -1298,6 +1301,15 @@ public class AddressBean implements Serializable {
      */
     public void setEncryptionPwd(String encryptionPwd) {
         this.encryptionPwd = encryptionPwd;
+    }
+
+    @XmlTransient
+    public List<CampaignAddress> getCampaignAddressesList() {
+        return campaignAddressesList;
+    }
+
+    public void setCampaignAddressesList(List<CampaignAddress> campaignAddressesList) {
+        this.campaignAddressesList = campaignAddressesList;
     }
     
 }

@@ -659,4 +659,105 @@ specific requirements.
 if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
-*/
+ */
+package com.jdimension.jlawyer.persistence;
+
+import java.io.Serializable;
+import java.util.List;
+import javax.persistence.Basic;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
+import javax.persistence.OneToMany;
+import javax.persistence.Table;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlTransient;
+
+/**
+ *
+ * @author jens
+ */
+@Entity
+@Table(name = "campaign")
+@XmlRootElement
+@NamedQueries({
+    @NamedQuery(name = "Campaign.findAll", query = "SELECT c FROM Campaign c"),
+    @NamedQuery(name = "Campaign.findById", query = "SELECT c FROM Campaign c WHERE c.id = :id"),
+    @NamedQuery(name = "Campaign.findByName", query = "SELECT c FROM Campaign c WHERE c.name = :name")})
+public class Campaign implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+    @Id
+    @Basic(optional = false)
+    @NotNull
+    @Size(min = 1, max = 50)
+    @Column(name = "id")
+    private String id;
+    @Size(max = 250)
+    @Column(name = "name")
+    private String name;
+    @OneToMany(mappedBy = "campaignKey")
+    private List<CampaignAddress> campaignAddressesList;
+
+    public Campaign() {
+    }
+
+    public Campaign(String id) {
+        this.id = id;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    @XmlTransient
+    public List<CampaignAddress> getCampaignAddressesList() {
+        return campaignAddressesList;
+    }
+
+    public void setCampaignAddressesList(List<CampaignAddress> campaignAddressesList) {
+        this.campaignAddressesList = campaignAddressesList;
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 0;
+        hash += (id != null ? id.hashCode() : 0);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        // TODO: Warning - this method won't work in the case the id fields are not set
+        if (!(object instanceof Campaign)) {
+            return false;
+        }
+        Campaign other = (Campaign) object;
+        if ((this.id == null && other.id != null) || (this.id != null && !this.id.equals(other.id))) {
+            return false;
+        }
+        return true;
+    }
+
+    @Override
+    public String toString() {
+        return getName();
+    }
+    
+}
