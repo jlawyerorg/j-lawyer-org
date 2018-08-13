@@ -663,9 +663,9 @@
  */
 package com.jdimension.jlawyer.persistence;
 
-import java.util.List;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 
 /**
@@ -674,6 +674,7 @@ import javax.persistence.PersistenceContext;
  */
 @Stateless
 public class CampaignFacade extends AbstractFacade<Campaign> implements CampaignFacadeLocal {
+
     @PersistenceContext(unitName = "j-lawyer-server-ejbPU")
     private EntityManager em;
 
@@ -688,8 +689,13 @@ public class CampaignFacade extends AbstractFacade<Campaign> implements Campaign
 
     @Override
     public Campaign findByName(String name) {
-        Campaign c=(Campaign)em.createNamedQuery("Campaign.findByName").setParameter("name", name).getSingleResult();
-        return c;
+        try {
+            Campaign c = (Campaign) em.createNamedQuery("Campaign.findByName").setParameter("name", name).getSingleResult();
+            return c;
+        } catch (NoResultException nre) {
+            return null;
+        }
+
     }
-    
+
 }
