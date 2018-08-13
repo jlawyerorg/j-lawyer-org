@@ -983,6 +983,12 @@ public class Main {
         bea.setIcon("bea16.png");
         bea.setFullName("beA-Posteingang");
         mail.addChildModule(bea);
+        ModuleMetadata massmail=new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.comm.massmail"));
+        massmail.setEditorClass("com.jdimension.jlawyer.client.massmail.MassMailPanel");
+        massmail.setBackgroundImage("emails.jpg");
+        massmail.setIcon("knewsticker.png");
+        massmail.setFullName("Serienschreiben");
+        mail.addChildModule(massmail);
         
         ModuleMetadata templates=new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.docs"));
         templates.setIcon("doctemplates_module.png");

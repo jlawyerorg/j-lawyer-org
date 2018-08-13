@@ -661,299 +661,309 @@
  * For more information on this, and how to apply and follow the GNU AGPL, see
  * <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.services;
+package com.jdimension.jlawyer.client.massmail;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Collections;
-import java.net.URL;
-import java.util.Properties;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
-import javax.ejb.EJBHome;
-import javax.ejb.EJBLocalHome;
-import javax.jms.ConnectionFactory;
-import javax.jms.Destination;
-import javax.jms.Topic;
-import javax.naming.InitialContext;
-import javax.naming.NamingException;
-import javax.rmi.PortableRemoteObject;
-import javax.sql.DataSource;
-import javax.mail.Session;
+import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import com.jdimension.jlawyer.client.voip.*;
+import com.jdimension.jlawyer.client.editors.ThemeableEditor;
+import com.jdimension.jlawyer.client.utils.ComponentUtils;
+import com.jdimension.jlawyer.persistence.Campaign;
+import com.jdimension.jlawyer.persistence.FaxQueueBean;
+import java.awt.Graphics;
+import java.awt.Image;
+import java.text.SimpleDateFormat;
+import java.util.List;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.JOptionPane;
+import javax.swing.table.DefaultTableModel;
+import org.apache.log4j.Logger;
 
 /**
  *
  * @author jens
- * @version
  */
-public class JLawyerServiceLocator {
+public class MassMailPanel extends javax.swing.JPanel implements ThemeableEditor {
 
-    private InitialContext ic;
-    private InitialContext icJms;
-    private Map cache;
-    private static JLawyerServiceLocator me = null;
+    private static final Logger log = Logger.getLogger(MassMailPanel.class.getName());
+    private Image backgroundImage = null;
+    private SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss");
 
-    private JLawyerServiceLocator(Properties lookupProps) throws NamingException {
-        ic = new InitialContext(lookupProps);
-        icJms=new InitialContext(lookupProps);
-        cache = Collections.synchronizedMap(new HashMap());
-    }
-    
-    public void forceNewLookupProperties(Properties lookupProps) throws NamingException {
-        ic = new InitialContext(lookupProps);
-        icJms = new InitialContext(lookupProps);
-        cache = Collections.synchronizedMap(new HashMap());
-    }
+    private CampaignController controller = new CampaignController();
 
-    public SecurityServiceRemote lookupSecurityServiceRemote() {
-        try {
-            //Context c = new InitialContext();
-
-            //return (SecurityServiceRemote) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/SecurityService!com.jdimension.jlawyer.services.SecurityServiceRemote");
-
-            //return (SecurityServiceRemote) ic.lookup("/j-lawyer-server/SecurityService/remote");
-            return (SecurityServiceRemote) ic.lookup("ejb:j-lawyer-server/j-lawyer-server-ejb//SecurityService!com.jdimension.jlawyer.services.SecurityServiceRemote");
-//            Object o=ic.lookup("java:ProxyFactory/j-lawyer-server/SecurityService/j-lawyer-server/SecurityService/remote");
-//            System.out.println(o.getClass().getName());
-//            System.out.println("" + (o instanceof SecurityServiceRemote));
-//            
-//            return (SecurityServiceRemote) ic.lookup("java:ProxyFactory/j-lawyer-server/SecurityService/j-lawyer-server/SecurityService/remote");
-            //return (SecurityServiceRemote) ic.lookup("java:ProxyFactory/j-lawyer-server/SecurityService/j-lawyer-server/SecurityService/remote-com.jdimension.jlawyer.services.SecurityServiceRemote");
-        } catch (NamingException ne) {
-            Logger.getLogger(JLawyerServiceLocator.class.getName()).log(Level.SEVERE, "exception caught", ne);
-            throw new RuntimeException(ne);
-        }
-    }
-
-    public AddressServiceRemote lookupAddressServiceRemote() {
-        try {
-            //Context c = new InitialContext();
-            //return (AddressServiceRemote) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/AddressService!com.jdimension.jlawyer.services.AddressServiceRemote");
-            return (AddressServiceRemote) ic.lookup("ejb:j-lawyer-server/j-lawyer-server-ejb//AddressService!com.jdimension.jlawyer.services.AddressServiceRemote");
-        } catch (NamingException ne) {
-            Logger.getLogger(JLawyerServiceLocator.class.getName()).log(Level.SEVERE, "exception caught", ne);
-            throw new RuntimeException(ne);
-        }
-    }
-    
-    public SingletonServiceRemote lookupSingletonServiceRemote() {
-        try {
-            //Context c = new InitialContext();
-            //return (AddressServiceRemote) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/AddressService!com.jdimension.jlawyer.services.AddressServiceRemote");
-            return (SingletonServiceRemote) ic.lookup("ejb:j-lawyer-server/j-lawyer-server-ejb//SingletonService!com.jdimension.jlawyer.services.SingletonServiceRemote");
-        } catch (NamingException ne) {
-            Logger.getLogger(JLawyerServiceLocator.class.getName()).log(Level.SEVERE, "exception caught", ne);
-            throw new RuntimeException(ne);
-        }
-    }
-
-    public ArchiveFileServiceRemote lookupArchiveFileServiceRemote() {
-        try {
-            //Context c = new InitialContext();
-            //return (ArchiveFileServiceRemote) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceRemote");
-            return (ArchiveFileServiceRemote) ic.lookup("ejb:j-lawyer-server/j-lawyer-server-ejb//ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceRemote");
-        } catch (NamingException ne) {
-            Logger.getLogger(JLawyerServiceLocator.class.getName()).log(Level.SEVERE, "exception caught", ne);
-            throw new RuntimeException(ne);
-        }
-    }
-    
-    public CustomerRelationsServiceRemote lookupCustomerRelationsServiceRemote() {
-        try {
-            //Context c = new InitialContext();
-            //return (ArchiveFileServiceRemote) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceRemote");
-            return (CustomerRelationsServiceRemote) ic.lookup("ejb:j-lawyer-server/j-lawyer-server-ejb//CustomerRelationsService!com.jdimension.jlawyer.services.CustomerRelationsServiceRemote");
-        } catch (NamingException ne) {
-            Logger.getLogger(JLawyerServiceLocator.class.getName()).log(Level.SEVERE, "exception caught", ne);
-            throw new RuntimeException(ne);
-        }
-    }
-    
-    public SearchServiceRemote lookupSearchServiceRemote() {
-        try {
-            //Context c = new InitialContext();
-            //return (ArchiveFileServiceRemote) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceRemote");
-            return (SearchServiceRemote) ic.lookup("ejb:j-lawyer-server/j-lawyer-server-ejb//SearchService!com.jdimension.jlawyer.services.SearchServiceRemote");
-        } catch (NamingException ne) {
-            Logger.getLogger(JLawyerServiceLocator.class.getName()).log(Level.SEVERE, "exception caught", ne);
-            throw new RuntimeException(ne);
-        }
-    }
-    
-    public CalendarServiceRemote lookupCalendarServiceRemote() {
-        try {
-            //Context c = new InitialContext();
-            //return (ArchiveFileServiceRemote) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceRemote");
-            return (CalendarServiceRemote) ic.lookup("ejb:j-lawyer-server/j-lawyer-server-ejb//CalendarService!com.jdimension.jlawyer.services.CalendarServiceRemote");
-            // before Wildfly return (CalendarServiceRemote) ic.lookup("java:/j-lawyer-server/CalendarService/remote");
-            
-        } catch (NamingException ne) {
-            Logger.getLogger(JLawyerServiceLocator.class.getName()).log(Level.SEVERE, "exception caught", ne);
-            throw new RuntimeException(ne);
-        }
-    }
-    
-    public IntegrationServiceRemote lookupIntegrationServiceRemote() {
-        try {
-            //Context c = new InitialContext();
-            //return (ArchiveFileServiceRemote) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceRemote");
-            return (IntegrationServiceRemote) ic.lookup("ejb:j-lawyer-server/j-lawyer-server-ejb//IntegrationService!com.jdimension.jlawyer.services.IntegrationServiceRemote");
-        } catch (NamingException ne) {
-            Logger.getLogger(JLawyerServiceLocator.class.getName()).log(Level.SEVERE, "exception caught", ne);
-            throw new RuntimeException(ne);
-        }
-    }
-
-    public SystemManagementRemote lookupSystemManagementRemote() {
-        try {
-            //Context c = new InitialContext();
-            //return (SystemManagementRemote) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/SystemManagement!com.jdimension.jlawyer.services.SystemManagementRemote");
-            return (SystemManagementRemote) ic.lookup("ejb:j-lawyer-server/j-lawyer-server-ejb//SystemManagement!com.jdimension.jlawyer.services.SystemManagementRemote");
-        } catch (NamingException ne) {
-            Logger.getLogger(JLawyerServiceLocator.class.getName()).log(Level.SEVERE, "exception caught", ne);
-            throw new RuntimeException(ne);
-        }
-    }
-    
-    public VoipServiceRemote lookupVoipServiceRemote() {
-        try {
-            //Context c = new InitialContext();
-            //return (SystemManagementRemote) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/SystemManagement!com.jdimension.jlawyer.services.SystemManagementRemote");
-            return (VoipServiceRemote) ic.lookup("ejb:j-lawyer-server/j-lawyer-server-ejb//VoipService!com.jdimension.jlawyer.services.VoipServiceRemote");
-        } catch (NamingException ne) {
-            Logger.getLogger(JLawyerServiceLocator.class.getName()).log(Level.SEVERE, "exception caught", ne);
-            throw new RuntimeException(ne);
-        }
-    }
-    
-    public DrebisServiceRemote lookupDrebisServiceRemote() {
-        try {
-            //Context c = new InitialContext();
-            //return (SystemManagementRemote) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/SystemManagement!com.jdimension.jlawyer.services.SystemManagementRemote");
-            return (DrebisServiceRemote) ic.lookup("ejb:j-lawyer-server/j-lawyer-server-ejb//DrebisService!com.jdimension.jlawyer.services.DrebisServiceRemote");
-        } catch (NamingException ne) {
-            Logger.getLogger(JLawyerServiceLocator.class.getName()).log(Level.SEVERE, "exception caught", ne);
-            throw new RuntimeException(ne);
-        }
-    }
-
-    public Topic lookupJMSTopic(String name) {
-        try {
-            Topic t = (Topic) icJms.lookup(name);
-            return t;
-        } catch (Exception e) {
-            Logger.getLogger(JLawyerServiceLocator.class.getName()).log(Level.SEVERE, "exception caught", e);
-            throw new RuntimeException(e);
-        }
-    }
-    
-    public ConnectionFactory lookupJMSConnectionFactory() {
-        try {
-            //ConnectionFactory cf = (ConnectionFactory) ic.lookup("java:/ConnectionFactory");
-            //ConnectionFactory cf = (ConnectionFactory) ic.lookup("java:jboss/exported/jms/RemoteConnectionFactory");
-            ConnectionFactory cf = (ConnectionFactory) icJms.lookup("java:/jms/RemoteConnectionFactory");
-            
-            return cf;
-        } catch (Exception e) {
-            Logger.getLogger(JLawyerServiceLocator.class.getName()).log(Level.SEVERE, "exception caught", e);
-            throw new RuntimeException(e);
-        }
-    }
-
-    public static synchronized JLawyerServiceLocator getInstance(Properties lookupProps) throws NamingException {
-        if (me == null) {
-            me = new JLawyerServiceLocator(lookupProps);
-        }
-        return me;
-    }
-
-    private Object lookup(String jndiName) throws NamingException {
-        Object cachedObj = cache.get(jndiName);
-        if (cachedObj == null) {
-            cachedObj = ic.lookup(jndiName);
-            cache.put(jndiName, cachedObj);
-        }
-        return cachedObj;
+    @Override
+    public Image getBackgroundImage() {
+        return this.backgroundImage;
     }
 
     /**
-     * will get the ejb Local home factory. If this ejb home factory has already
-     * been clients need to cast to the type of EJBHome they desire
-     *
-     * @return the EJB Home corresponding to the homeName
+     * Creates new form AddressPanel
      */
-    public EJBLocalHome getLocalHome(String jndiHomeName) throws NamingException {
-        return (EJBLocalHome) lookup(jndiHomeName);
+    public MassMailPanel() {
+
+        initComponents();
+
+        this.clearDetails();
+
+        this.tblQueue.setDefaultRenderer(Object.class, new FaxStatusTableRenderer());
+
+        try {
+            this.refreshList();
+        } catch (Exception ex) {
+            log.error(ex);
+            JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Serien können nicht geladen werden: " + ex.getMessage(), "Serien laden", JOptionPane.ERROR_MESSAGE);
+        }
+
+    }
+
+    private void clearDetails() {
+
+    }
+
+    private DefaultTableModel buildTable(List<FaxQueueBean> list) {
+        //DefaultTableModel tm = new DefaultTableModel(new String[]{"Gesendet", "von", "Absenderkennung", "an", "Empfängerkennung", "Datei", "aktueller Status", "Status vom", "Akte"}, 0);
+        DefaultTableModel tm = new DefaultTableModel(new String[]{"Gesendet", "von", "an", "Datei", "aktueller Status", "Akte"}, 0);
+        for (FaxQueueBean fb : list) {
+            String aFile = "";
+            if (fb.getArchiveFileKey() != null) {
+                aFile = fb.getArchiveFileKey().getFileNumber() + " " + fb.getArchiveFileKey().getName();
+            }
+            tm.addRow(new Object[]{fb, fb.getSentBy(), fb.getRemoteName(), fb.getPdfName(), fb.getLastStatus(), aFile});
+        }
+        ComponentUtils.autoSizeColumns(this.tblQueue);
+        return tm;
+    }
+
+    private void refreshList() throws Exception {
+        List<Campaign> campaigns = this.controller.listCampaigns();
+        ((DefaultComboBoxModel) this.cmbCampaign.getModel()).removeAllElements();
+        for (Campaign c : campaigns) {
+            ((DefaultComboBoxModel) this.cmbCampaign.getModel()).addElement(c);
+        }
+    }
+
+    public void setBackgroundImage(Image image) {
+        this.backgroundImage = image;
+        //this.jPanel1.setOpaque(false);
+
+    }
+
+    public void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        if (this.backgroundImage != null) {
+            g.drawImage(this.backgroundImage, 0, 0, this.getWidth(), this.getHeight(), this);
+        }
     }
 
     /**
-     * will get the ejb Remote home factory. If this ejb home factory has
-     * already been clients need to cast to the type of EJBHome they desire
-     *
-     * @return the EJB Home corresponding to the homeName
+     * This method is called from within the constructor to initialize the form.
+     * WARNING: Do NOT modify this code. The content of this method is always
+     * regenerated by the Form Editor.
      */
-    public EJBHome getRemoteHome(String jndiHomeName, Class className) throws NamingException {
-        Object objref = lookup(jndiHomeName);
-        return (EJBHome) PortableRemoteObject.narrow(objref, className);
-    }
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
+    private void initComponents() {
 
-    /**
-     * This method helps in obtaining the topic factory
-     *
-     * @return the factory for the factory to get topic connections from
-     */
-    public ConnectionFactory getConnectionFactory(String connFactoryName) throws NamingException {
-        return (ConnectionFactory) lookup(connFactoryName);
-    }
+        jLabel18 = new javax.swing.JLabel();
+        lblPanelTitle = new javax.swing.JLabel();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        tblQueue = new javax.swing.JTable();
+        jPanel2 = new javax.swing.JPanel();
+        cmdRefresh = new javax.swing.JButton();
+        cmbCampaign = new javax.swing.JComboBox<>();
+        jLabel1 = new javax.swing.JLabel();
+        cmdAddCampaign = new javax.swing.JButton();
+        cmdDeleteCampaign = new javax.swing.JButton();
+        lblFolder = new javax.swing.JLabel();
 
-    /**
-     * This method obtains the topc itself for a caller
-     *
-     * @return the Topic Destination to send messages to
-     */
-    public Destination getDestination(String destName) throws NamingException {
-        return (Destination) lookup(destName);
-    }
+        jLabel18.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/message_big.png"))); // NOI18N
 
-    /**
-     * This method obtains the datasource
-     *
-     * @return the DataSource corresponding to the name parameter
-     */
-    public DataSource getDataSource(String dataSourceName) throws NamingException {
-        return (DataSource) lookup(dataSourceName);
-    }
+        lblPanelTitle.setFont(new java.awt.Font("Dialog", 1, 24)); // NOI18N
+        lblPanelTitle.setForeground(new java.awt.Color(255, 255, 255));
+        lblPanelTitle.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/knewsticker.png"))); // NOI18N
+        lblPanelTitle.setText("Serienschreiben");
 
-    /**
-     * This method obtains the mail session
-     *
-     * @return the Session corresponding to the name parameter
-     */
-    public Session getSession(String sessionName) throws NamingException {
-        return (Session) lookup(sessionName);
-    }
+        tblQueue.setAutoCreateRowSorter(true);
+        tblQueue.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null}
+            },
+            new String [] {
+                "Title 1", "Title 2", "Title 3", "Title 4"
+            }
+        ));
+        tblQueue.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        tblQueue.getTableHeader().setReorderingAllowed(false);
+        tblQueue.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                tblQueueMouseClicked(evt);
+            }
+        });
+        jScrollPane1.setViewportView(tblQueue);
 
-    /**
-     * @return the URL value corresponding to the env entry name.
-     */
-    public URL getUrl(String envName) throws NamingException {
-        return (URL) lookup(envName);
-    }
+        jPanel2.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(255, 255, 255), 2, true));
+        jPanel2.setOpaque(false);
 
-    /**
-     * @return the boolean value corresponding to the env entry such as
-     * SEND_CONFIRMATION_MAIL property.
-     */
-    public boolean getBoolean(String envName) throws NamingException {
-        Boolean bool = (Boolean) lookup(envName);
-        return bool.booleanValue();
-    }
+        cmdRefresh.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/reload.png"))); // NOI18N
+        cmdRefresh.setToolTipText("Aktualisieren");
+        cmdRefresh.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdRefreshActionPerformed(evt);
+            }
+        });
 
-    /**
-     * @return the String value corresponding to the env entry name.
-     */
-    public String getString(String envName) throws NamingException {
-        return (String) lookup(envName);
-    }
+        org.jdesktop.layout.GroupLayout jPanel2Layout = new org.jdesktop.layout.GroupLayout(jPanel2);
+        jPanel2.setLayout(jPanel2Layout);
+        jPanel2Layout.setHorizontalGroup(
+            jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jPanel2Layout.createSequentialGroup()
+                .addContainerGap()
+                .add(cmdRefresh)
+                .addContainerGap())
+        );
+        jPanel2Layout.setVerticalGroup(
+            jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jPanel2Layout.createSequentialGroup()
+                .addContainerGap()
+                .add(cmdRefresh)
+                .addContainerGap())
+        );
+
+        cmbCampaign.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+        cmbCampaign.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmbCampaignActionPerformed(evt);
+            }
+        });
+
+        jLabel1.setText("Serie:");
+
+        cmdAddCampaign.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit_add.png"))); // NOI18N
+        cmdAddCampaign.setToolTipText("neues Serienschreiben");
+        cmdAddCampaign.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdAddCampaignActionPerformed(evt);
+            }
+        });
+
+        cmdDeleteCampaign.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editdelete.png"))); // NOI18N
+        cmdDeleteCampaign.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdDeleteCampaignActionPerformed(evt);
+            }
+        });
+
+        lblFolder.setText(" ");
+
+        org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(this);
+        this.setLayout(layout);
+        layout.setHorizontalGroup(
+            layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(layout.createSequentialGroup()
+                .addContainerGap()
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 894, Short.MAX_VALUE)
+                    .add(layout.createSequentialGroup()
+                        .add(jPanel2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .add(18, 18, 18)
+                        .add(jLabel18)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .add(layout.createSequentialGroup()
+                        .add(jLabel1)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            .add(layout.createSequentialGroup()
+                                .add(cmbCampaign, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(cmdDeleteCampaign)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(cmdAddCampaign)
+                                .add(0, 0, Short.MAX_VALUE))
+                            .add(lblFolder, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                .addContainerGap())
+        );
+        layout.setVerticalGroup(
+            layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(layout.createSequentialGroup()
+                .addContainerGap()
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(jLabel18)
+                    .add(lblPanelTitle)
+                    .add(jPanel2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(jLabel1)
+                    .add(cmbCampaign, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(cmdAddCampaign)
+                    .add(cmdDeleteCampaign))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(lblFolder)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 357, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+    }// </editor-fold>//GEN-END:initComponents
+
+    private void cmdRefreshActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRefreshActionPerformed
+        try {
+            this.refreshList();
+        } catch (Exception ex) {
+            log.error(ex);
+            JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Serien können nicht geladen werden: " + ex.getMessage(), "Serien laden", JOptionPane.ERROR_MESSAGE);
+        }
+    }//GEN-LAST:event_cmdRefreshActionPerformed
+
+    private void tblQueueMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblQueueMouseClicked
+
+
+    }//GEN-LAST:event_tblQueueMouseClicked
+
+    private void cmdAddCampaignActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdAddCampaignActionPerformed
+        Object newNameObject = JOptionPane.showInputDialog(this, "Name der Serie: ", "Neue Serie anlegen", JOptionPane.QUESTION_MESSAGE, null, null, "neue Serie");
+        if (newNameObject == null) {
+            return;
+        }
+        try {
+            Campaign c = this.controller.createCampaign(newNameObject.toString());
+            ((DefaultComboBoxModel) this.cmbCampaign.getModel()).addElement(c);
+        } catch (Exception ex) {
+            log.error(ex);
+            JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Serie konnte nicht erstellt werden: " + ex.getMessage(), "Serie erstellen", JOptionPane.ERROR_MESSAGE);
+        }
+    }//GEN-LAST:event_cmdAddCampaignActionPerformed
+
+    private void cmbCampaignActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbCampaignActionPerformed
+        Object selected = this.cmbCampaign.getSelectedItem();
+        if (selected != null) {
+            this.lblFolder.setText(this.controller.getCampaignFolder(selected.toString()));
+        }
+    }//GEN-LAST:event_cmbCampaignActionPerformed
+
+    private void cmdDeleteCampaignActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdDeleteCampaignActionPerformed
+        Object selected = this.cmbCampaign.getSelectedItem();
+        if (selected != null) {
+            try {
+                this.controller.deleteCampaign((Campaign)selected);
+                this.cmbCampaign.removeItem(selected);
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Serie konnte nicht gelöscht werden: " + ex.getMessage(), "Serie löschen", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }//GEN-LAST:event_cmdDeleteCampaignActionPerformed
+
+    // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JComboBox<String> cmbCampaign;
+    private javax.swing.JButton cmdAddCampaign;
+    private javax.swing.JButton cmdDeleteCampaign;
+    private javax.swing.JButton cmdRefresh;
+    private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel18;
+    private javax.swing.JPanel jPanel2;
+    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JLabel lblFolder;
+    protected javax.swing.JLabel lblPanelTitle;
+    private javax.swing.JTable tblQueue;
+    // End of variables declaration//GEN-END:variables
 }
