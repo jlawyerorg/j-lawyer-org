@@ -684,8 +684,8 @@ import javax.xml.bind.annotation.XmlRootElement;
 @Table(name = "campaign_addresses")
 @XmlRootElement
 @NamedQueries({
-    @NamedQuery(name = "CampaignAddresses.findAll", query = "SELECT c FROM CampaignAddresses c"),
-    @NamedQuery(name = "CampaignAddresses.findById", query = "SELECT c FROM CampaignAddresses c WHERE c.id = :id")})
+    @NamedQuery(name = "CampaignAddress.findAll", query = "SELECT c FROM CampaignAddress c"),
+    @NamedQuery(name = "CampaignAddress.findById", query = "SELECT c FROM CampaignAddress c WHERE c.id = :id")})
 public class CampaignAddress implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -755,7 +755,7 @@ public class CampaignAddress implements Serializable {
 
     @Override
     public String toString() {
-        return "com.jdimension.jlawyer.persistence.CampaignAddresses[ id=" + id + " ]";
+        return "com.jdimension.jlawyer.persistence.CampaignAddress[ id=" + id + " ]";
     }
     
 }
