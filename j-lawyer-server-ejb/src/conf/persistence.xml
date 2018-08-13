@@ -21,6 +21,8 @@
     <class>com.jdimension.jlawyer.persistence.ServerSettingsBean</class>
     <class>com.jdimension.jlawyer.persistence.FaxQueueBean</class>
     <class>com.jdimension.jlawyer.persistence.ArchiveFileTagsBean</class>
+    <class>com.jdimension.jlawyer.persistence.Campaign</class>
+    <class>com.jdimension.jlawyer.persistence.CampaignAddress</class>
     <exclude-unlisted-classes>true</exclude-unlisted-classes>
     <properties>
       <property name="hibernate.hbm2ddl.auto" value="update"/>
