@@ -685,6 +685,8 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlRootElement
 @NamedQueries({
     @NamedQuery(name = "CampaignAddress.findAll", query = "SELECT c FROM CampaignAddress c"),
+    @NamedQuery(name = "CampaignAddress.findByCampaignAndAddress", query = "SELECT c FROM CampaignAddress c WHERE c.campaignKey = :campaignKey AND c.addressKey = :addressKey"),
+    @NamedQuery(name = "CampaignAddress.findByCampaign", query = "SELECT c FROM CampaignAddress c WHERE c.campaignKey = :campaignKey"),
     @NamedQuery(name = "CampaignAddress.findById", query = "SELECT c FROM CampaignAddress c WHERE c.id = :id")})
 public class CampaignAddress implements Serializable {
 
