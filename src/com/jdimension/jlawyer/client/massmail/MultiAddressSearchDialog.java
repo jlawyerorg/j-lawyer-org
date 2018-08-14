@@ -664,84 +664,61 @@
 package com.jdimension.jlawyer.client.massmail;
 
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
-import com.jdimension.jlawyer.client.voip.*;
-import com.jdimension.jlawyer.client.editors.ThemeableEditor;
 import com.jdimension.jlawyer.client.editors.addresses.QuickAddressSearchRowIdentifier;
 import com.jdimension.jlawyer.client.editors.addresses.QuickAddressSearchTableModel;
+import com.jdimension.jlawyer.client.editors.addresses.QuickAddressSearchThread;
+import com.jdimension.jlawyer.client.editors.addresses.QuickCreateAddressDialog;
+import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
+import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.persistence.AddressBean;
-import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
-import com.jdimension.jlawyer.persistence.Campaign;
-import com.jdimension.jlawyer.persistence.FaxQueueBean;
-import java.awt.Graphics;
-import java.awt.Image;
-import java.text.SimpleDateFormat;
+import com.jdimension.jlawyer.ui.tagging.TagUtils;
+import java.awt.Rectangle;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import javax.swing.DefaultComboBoxModel;
-import javax.swing.JOptionPane;
-import javax.swing.table.DefaultTableModel;
+import javax.swing.AbstractAction;
+import javax.swing.JComponent;
+import javax.swing.KeyStroke;
 import org.apache.log4j.Logger;
 
 /**
  *
  * @author jens
  */
-public class MassMailPanel extends javax.swing.JPanel implements ThemeableEditor {
+public class MultiAddressSearchDialog extends javax.swing.JDialog {
 
-    private static final Logger log = Logger.getLogger(MassMailPanel.class.getName());
-    private Image backgroundImage = null;
-    private SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss");
-
-    private CampaignController controller = new CampaignController();
-
-    @Override
-    public Image getBackgroundImage() {
-        return this.backgroundImage;
-    }
+    private static final Logger log = Logger.getLogger(MultiAddressSearchDialog.class.getName());
+    private HashMap<AddressBean, String> resultAddresses = new HashMap<AddressBean, String>();
 
     /**
-     * Creates new form AddressPanel
+     * Creates new form AddAddressSearchDialog
      */
-    public MassMailPanel() {
-
+    public MultiAddressSearchDialog(java.awt.Frame parent, boolean modal, int targetReferenceType) {
+        super(parent, modal);
         initComponents();
 
-        this.clearDetails();
+        String[] colNames = new String[]{"Name", "Vorname", "Firma", "PLZ", "Ort", "Strasse", "Land", "Tags"};
+        QuickAddressSearchTableModel model = new QuickAddressSearchTableModel(colNames, 0);
+        this.tblResults.setModel(model);
+        ComponentUtils.autoSizeColumns(tblResults);
 
-        try {
-            this.refreshList();
-        } catch (Exception ex) {
-            log.error(ex);
-            JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Serien können nicht geladen werden: " + ex.getMessage(), "Serien laden", JOptionPane.ERROR_MESSAGE);
-        }
+        ClientSettings s = ClientSettings.getInstance();
+        List<String> tags = s.getAddressTagsInUse();
+        TagUtils.populateTags(tags, cmdTagFilter, popTagFilter);
 
-    }
+        this.tblResults.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "Enter");
+        this.tblResults.getActionMap().put("Enter", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent ae) {
+                useSelection();
+            }
+        });
 
-    private void clearDetails() {
-
-    }
-
-    private void refreshList() throws Exception {
-        List<Campaign> campaigns = this.controller.listCampaigns();
-        ((DefaultComboBoxModel) this.cmbCampaign.getModel()).removeAllElements();
-        for (Campaign c : campaigns) {
-            ((DefaultComboBoxModel) this.cmbCampaign.getModel()).addElement(c);
-        }
-    }
-
-    public void setBackgroundImage(Image image) {
-        this.backgroundImage = image;
-        //this.jPanel1.setOpaque(false);
-
-    }
-
-    public void paintComponent(Graphics g) {
-        super.paintComponent(g);
-        if (this.backgroundImage != null) {
-            g.drawImage(this.backgroundImage, 0, 0, this.getWidth(), this.getHeight(), this);
-        }
+        ComponentUtils.restoreDialogSize(this);
     }
 
     /**
@@ -752,27 +729,40 @@ public class MassMailPanel extends javax.swing.JPanel implements ThemeableEditor
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jLabel18 = new javax.swing.JLabel();
-        lblPanelTitle = new javax.swing.JLabel();
+        popTagFilter = new javax.swing.JPopupMenu();
+        jLabel1 = new javax.swing.JLabel();
+        txtSearchString = new javax.swing.JTextField();
+        cmdQuickSearch = new javax.swing.JButton();
         jScrollPane1 = new javax.swing.JScrollPane();
         tblResults = new javax.swing.JTable();
-        jPanel2 = new javax.swing.JPanel();
-        cmdRefresh = new javax.swing.JButton();
-        cmbCampaign = new javax.swing.JComboBox<>();
-        jLabel1 = new javax.swing.JLabel();
-        cmdAddCampaign = new javax.swing.JButton();
-        cmdDeleteCampaign = new javax.swing.JButton();
-        lblFolder = new javax.swing.JLabel();
-        cmdAddContacts = new javax.swing.JButton();
+        cmdCancel = new javax.swing.JButton();
+        cmdUseSelection = new javax.swing.JButton();
+        cmdAddNew = new javax.swing.JButton();
+        cmdTagFilter = new javax.swing.JButton();
 
-        jLabel18.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/message_big.png"))); // NOI18N
+        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        addComponentListener(new java.awt.event.ComponentAdapter() {
+            public void componentResized(java.awt.event.ComponentEvent evt) {
+                formComponentResized(evt);
+            }
+        });
 
-        lblPanelTitle.setFont(new java.awt.Font("Dialog", 1, 24)); // NOI18N
-        lblPanelTitle.setForeground(new java.awt.Color(255, 255, 255));
-        lblPanelTitle.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/knewsticker.png"))); // NOI18N
-        lblPanelTitle.setText("Serienschreiben");
+        jLabel1.setText("Suchanfrage:");
 
-        tblResults.setAutoCreateRowSorter(true);
+        txtSearchString.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyPressed(java.awt.event.KeyEvent evt) {
+                txtSearchStringKeyPressed(evt);
+            }
+        });
+
+        cmdQuickSearch.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/find.png"))); // NOI18N
+        cmdQuickSearch.setToolTipText("Suchen");
+        cmdQuickSearch.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdQuickSearchActionPerformed(evt);
+            }
+        });
+
         tblResults.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
                 {null, null, null, null},
@@ -784,7 +774,7 @@ public class MassMailPanel extends javax.swing.JPanel implements ThemeableEditor
                 "Title 1", "Title 2", "Title 3", "Title 4"
             }
         ));
-        tblResults.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        tblResults.setSelectionMode(javax.swing.ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         tblResults.getTableHeader().setReorderingAllowed(false);
         tblResults.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
@@ -793,96 +783,61 @@ public class MassMailPanel extends javax.swing.JPanel implements ThemeableEditor
         });
         jScrollPane1.setViewportView(tblResults);
 
-        jPanel2.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(255, 255, 255), 2, true));
-        jPanel2.setOpaque(false);
-
-        cmdRefresh.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/reload.png"))); // NOI18N
-        cmdRefresh.setToolTipText("Aktualisieren");
-        cmdRefresh.addActionListener(new java.awt.event.ActionListener() {
+        cmdCancel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png"))); // NOI18N
+        cmdCancel.setText("Schliessen");
+        cmdCancel.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdRefreshActionPerformed(evt);
+                cmdCancelActionPerformed(evt);
             }
         });
 
-        org.jdesktop.layout.GroupLayout jPanel2Layout = new org.jdesktop.layout.GroupLayout(jPanel2);
-        jPanel2.setLayout(jPanel2Layout);
-        jPanel2Layout.setHorizontalGroup(
-            jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(jPanel2Layout.createSequentialGroup()
-                .addContainerGap()
-                .add(cmdRefresh)
-                .addContainerGap())
-        );
-        jPanel2Layout.setVerticalGroup(
-            jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(jPanel2Layout.createSequentialGroup()
-                .addContainerGap()
-                .add(cmdRefresh)
-                .addContainerGap())
-        );
-
-        cmbCampaign.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
-        cmbCampaign.addActionListener(new java.awt.event.ActionListener() {
+        cmdUseSelection.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png"))); // NOI18N
+        cmdUseSelection.setText("Übernehmen");
+        cmdUseSelection.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmbCampaignActionPerformed(evt);
+                cmdUseSelectionActionPerformed(evt);
             }
         });
 
-        jLabel1.setText("Serie:");
-
-        cmdAddCampaign.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit_add.png"))); // NOI18N
-        cmdAddCampaign.setToolTipText("neues Serienschreiben");
-        cmdAddCampaign.addActionListener(new java.awt.event.ActionListener() {
+        cmdAddNew.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit_add.png"))); // NOI18N
+        cmdAddNew.setToolTipText("Schnellerfassung");
+        cmdAddNew.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdAddCampaignActionPerformed(evt);
+                cmdAddNewActionPerformed(evt);
             }
         });
 
-        cmdDeleteCampaign.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editdelete.png"))); // NOI18N
-        cmdDeleteCampaign.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdDeleteCampaignActionPerformed(evt);
+        cmdTagFilter.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/favorites.png"))); // NOI18N
+        cmdTagFilter.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                cmdTagFilterMousePressed(evt);
             }
         });
 
-        lblFolder.setText(" ");
-
-        cmdAddContacts.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/vcard.png"))); // NOI18N
-        cmdAddContacts.setToolTipText("Adressen hinzufügen");
-        cmdAddContacts.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdAddContactsActionPerformed(evt);
-            }
-        });
-
-        org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(this);
-        this.setLayout(layout);
+        org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
+        getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(layout.createSequentialGroup()
                 .addContainerGap()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 894, Short.MAX_VALUE)
-                    .add(layout.createSequentialGroup()
-                        .add(jPanel2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .add(18, 18, 18)
-                        .add(jLabel18)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .add(layout.createSequentialGroup()
+                    .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 717, Short.MAX_VALUE)
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
                         .add(jLabel1)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                            .add(layout.createSequentialGroup()
-                                .add(cmbCampaign, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                .add(cmdDeleteCampaign)
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                .add(cmdAddCampaign)
-                                .add(18, 18, 18)
-                                .add(cmdAddContacts)
-                                .add(0, 0, Short.MAX_VALUE))
-                            .add(lblFolder, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                        .add(txtSearchString)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(cmdQuickSearch)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                        .add(cmdTagFilter))
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
+                        .add(0, 0, Short.MAX_VALUE)
+                        .add(cmdUseSelection)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(cmdCancel))
+                    .add(layout.createSequentialGroup()
+                        .add(cmdAddNew)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -890,141 +845,136 @@ public class MassMailPanel extends javax.swing.JPanel implements ThemeableEditor
             .add(layout.createSequentialGroup()
                 .addContainerGap()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jLabel18)
-                    .add(lblPanelTitle)
-                    .add(jPanel2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                    .add(cmdQuickSearch)
+                    .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                        .add(jLabel1)
+                        .add(txtSearchString, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                    .add(cmdTagFilter))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
-                    .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                        .add(org.jdesktop.layout.GroupLayout.TRAILING, cmdAddCampaign)
-                        .add(cmdDeleteCampaign)
-                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                            .add(jLabel1)
-                            .add(cmbCampaign, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
-                    .add(cmdAddContacts))
+                .add(cmdAddNew)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(lblFolder)
+                .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 359, Short.MAX_VALUE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 357, Short.MAX_VALUE)
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(cmdCancel)
+                    .add(cmdUseSelection))
                 .addContainerGap())
         );
+
+        pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void cmdRefreshActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRefreshActionPerformed
-        try {
-            this.refreshList();
-        } catch (Exception ex) {
-            log.error(ex);
-            JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Serien können nicht geladen werden: " + ex.getMessage(), "Serien laden", JOptionPane.ERROR_MESSAGE);
-        }
-    }//GEN-LAST:event_cmdRefreshActionPerformed
-
     private void tblResultsMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblResultsMouseClicked
+        if (evt.getClickCount() == 2 && evt.getButton() == evt.BUTTON1) {
+            this.useSelection();
 
-
+        }
     }//GEN-LAST:event_tblResultsMouseClicked
 
-    private void cmdAddCampaignActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdAddCampaignActionPerformed
-        Object newNameObject = JOptionPane.showInputDialog(this, "Name der Serie: ", "Neue Serie anlegen", JOptionPane.QUESTION_MESSAGE, null, null, "neue Serie");
-        if (newNameObject == null) {
-            return;
+    private void cmdQuickSearchActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdQuickSearchActionPerformed
+// perform search here
+        EditorsRegistry.getInstance().updateStatus("Suche Adressen...");
+        ThreadUtils.setWaitCursor(this);
+
+        new Thread(new QuickAddressSearchThread(this, this.txtSearchString.getText(), TagUtils.getSelectedTags(popTagFilter), this.tblResults)).start();
+    }//GEN-LAST:event_cmdQuickSearchActionPerformed
+
+    private void useSelection() {
+        int[] rows = this.tblResults.getSelectedRows();
+        this.resultAddresses.clear();
+        for (int r : rows) {
+            QuickAddressSearchRowIdentifier id = (QuickAddressSearchRowIdentifier) this.tblResults.getValueAt(r, 0);
+
+            this.resultAddresses.put(id.getAddressDTO(), (String)this.tblResults.getValueAt(r, this.tblResults.getColumnCount()-1));
+
         }
-        try {
-            Campaign c = this.controller.createCampaign(newNameObject.toString());
-            ((DefaultComboBoxModel) this.cmbCampaign.getModel()).addElement(c);
-        } catch (Exception ex) {
-            log.error(ex);
-            JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Serie konnte nicht erstellt werden: " + ex.getMessage(), "Serie erstellen", JOptionPane.ERROR_MESSAGE);
+        this.setVisible(false);
+        this.dispose();
+    }
+
+    public HashMap<AddressBean, String> getResultAddress() {
+        return this.resultAddresses;
+    }
+
+    private void txtSearchStringKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtSearchStringKeyPressed
+        if (evt.getKeyCode() == evt.VK_ENTER) {
+            this.cmdQuickSearchActionPerformed(null);
         }
-    }//GEN-LAST:event_cmdAddCampaignActionPerformed
+    }//GEN-LAST:event_txtSearchStringKeyPressed
 
-    private void cmbCampaignActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbCampaignActionPerformed
-        String[] colNames = new String[]{"Name", "Vorname", "Firma", "PLZ", "Ort", "Strasse", "Land", "Tags"};
-        QuickAddressSearchTableModel model = new QuickAddressSearchTableModel(colNames, 0);
-        this.tblResults.setModel(model);
-        ComponentUtils.autoSizeColumns(tblResults);
+    private void formComponentResized(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentResized
+        ComponentUtils.storeDialogSize(this);
+    }//GEN-LAST:event_formComponentResized
 
-        Object selected = this.cmbCampaign.getSelectedItem();
-        if (selected != null) {
-            this.lblFolder.setText(this.controller.getCampaignFolder(selected.toString()));
+    private void cmdCancelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCancelActionPerformed
 
-            try {
-                List<AddressBean> addresses = this.controller.listAddressesForCampaign((Campaign) selected);
-                for(AddressBean a: addresses) {
-                    QuickAddressSearchRowIdentifier identifier = new QuickAddressSearchRowIdentifier(a);
-                    Object[] row = new Object[]{identifier, a.getFirstName(), a.getCompany(), a.getZipCode(), a.getCity(), a.getStreet(), a.getCountry(), ""};
-                    model.addRow(row);
+        this.setVisible(false);
+    }//GEN-LAST:event_cmdCancelActionPerformed
+
+    private void cmdUseSelectionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdUseSelectionActionPerformed
+        int row = this.tblResults.getSelectedRow();
+        if (row >= 0) {
+            this.useSelection();
+        }
+    }//GEN-LAST:event_cmdUseSelectionActionPerformed
+
+    private void cmdAddNewActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdAddNewActionPerformed
+        QuickCreateAddressDialog qca = new QuickCreateAddressDialog(this, true);
+        FrameUtils.centerDialog(qca, EditorsRegistry.getInstance().getMainWindow());
+        qca.setVisible(true);
+
+        AddressBean result = qca.getResult();
+        if (result != null) {
+            QuickAddressSearchTableModel model = (QuickAddressSearchTableModel) this.tblResults.getModel();
+            QuickAddressSearchRowIdentifier identifier = new QuickAddressSearchRowIdentifier(result);
+            Object[] row = new Object[]{identifier, result.getFirstName(), result.getCompany(), result.getZipCode(), result.getCity(), result.getStreet(), result.getCountry(), ""};
+            model.addRow(row);
+            int scrollToRow = getRowForObject(identifier);
+            if (scrollToRow > -1) {
+                this.tblResults.getSelectionModel().setSelectionInterval(scrollToRow, scrollToRow);
+                this.tblResults.scrollRectToVisible(new Rectangle(this.tblResults.getCellRect(scrollToRow, 0, true)));
+            }
+        }
+    }//GEN-LAST:event_cmdAddNewActionPerformed
+
+    private void cmdTagFilterMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdTagFilterMousePressed
+        this.popTagFilter.show(this.cmdTagFilter, evt.getX(), evt.getY());
+    }//GEN-LAST:event_cmdTagFilterMousePressed
+
+    private int getRowForObject(QuickAddressSearchRowIdentifier id) {
+        for (int i = 0; i < this.tblResults.getRowCount(); i++) {
+            Object value = this.tblResults.getValueAt(i, 0);
+            if (value instanceof QuickAddressSearchRowIdentifier) {
+                if (id.equals(value)) {
+                    return i;
                 }
-            } catch (Exception ex) {
-                log.error(ex);
-                JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Adressen können nicht ermittelt werden: " + ex.getMessage(), "Serie laden", JOptionPane.ERROR_MESSAGE);
-            }
-
-        }
-    }//GEN-LAST:event_cmbCampaignActionPerformed
-
-    private void cmdDeleteCampaignActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdDeleteCampaignActionPerformed
-        Object selected = this.cmbCampaign.getSelectedItem();
-        if (selected != null) {
-            try {
-                this.controller.deleteCampaign((Campaign) selected);
-                this.cmbCampaign.removeItem(selected);
-            } catch (Exception ex) {
-                JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Serie konnte nicht gelöscht werden: " + ex.getMessage(), "Serie löschen", JOptionPane.ERROR_MESSAGE);
             }
         }
-    }//GEN-LAST:event_cmdDeleteCampaignActionPerformed
 
-    private void cmdAddContactsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdAddContactsActionPerformed
-        if (this.cmbCampaign.getSelectedItem() != null) {
-            MultiAddressSearchDialog dlg = new MultiAddressSearchDialog(EditorsRegistry.getInstance().getMainWindow(), true, ArchiveFileAddressesBean.REFERENCETYPE_CLIENT);
-            dlg.setTitle("Adressen hinzufügen");
-            FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
-            dlg.setVisible(true);
-            HashMap<AddressBean, String> adrs = dlg.getResultAddress();
-            if (adrs == null) {
-                return;
+        return -1;
+    }
+
+    /**
+     * @param args the command line arguments
+     */
+    public static void main(String args[]) {
+        java.awt.EventQueue.invokeLater(new Runnable() {
+
+            public void run() {
+                new MultiAddressSearchDialog(new javax.swing.JFrame(), true, -1).setVisible(true);
             }
-            try {
-                for (AddressBean a : adrs.keySet()) {
-                    boolean alreadyInList = false;
-                    for (int i = 0; i < this.tblResults.getRowCount(); i++) {
-                        QuickAddressSearchRowIdentifier id = (QuickAddressSearchRowIdentifier) this.tblResults.getValueAt(i, 0);
-                        if (id.getAddressDTO().getId().equals(a.getId())) {
-                            alreadyInList = true;
-                            break;
-                        }
-                    }
-                    if (alreadyInList) {
-                        continue;
-                    }
-
-                    this.controller.addToCampaign(a, (Campaign) this.cmbCampaign.getSelectedItem());
-                    QuickAddressSearchTableModel model = (QuickAddressSearchTableModel) this.tblResults.getModel();
-                    QuickAddressSearchRowIdentifier identifier = new QuickAddressSearchRowIdentifier(a);
-                    Object[] row = new Object[]{identifier, a.getFirstName(), a.getCompany(), a.getZipCode(), a.getCity(), a.getStreet(), a.getCountry(), adrs.get(a)};
-                    model.addRow(row);
-
-                }
-            } catch (Exception ex) {
-                log.error(ex);
-                JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Addressen können nicht hinzugefügt werden: " + ex.getMessage(), "Adressen hinzufügen", JOptionPane.ERROR_MESSAGE);
-            }
-        }
-    }//GEN-LAST:event_cmdAddContactsActionPerformed
-
+        });
+    }
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JComboBox<String> cmbCampaign;
-    private javax.swing.JButton cmdAddCampaign;
-    private javax.swing.JButton cmdAddContacts;
-    private javax.swing.JButton cmdDeleteCampaign;
-    private javax.swing.JButton cmdRefresh;
+    private javax.swing.JButton cmdAddNew;
+    private javax.swing.JButton cmdCancel;
+    private javax.swing.JButton cmdQuickSearch;
+    private javax.swing.JButton cmdTagFilter;
+    private javax.swing.JButton cmdUseSelection;
     private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel18;
-    private javax.swing.JPanel jPanel2;
     private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JLabel lblFolder;
-    protected javax.swing.JLabel lblPanelTitle;
+    private javax.swing.JPopupMenu popTagFilter;
     private javax.swing.JTable tblResults;
+    private javax.swing.JTextField txtSearchString;
     // End of variables declaration//GEN-END:variables
 }

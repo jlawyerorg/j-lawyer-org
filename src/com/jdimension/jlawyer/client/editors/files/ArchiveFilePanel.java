@@ -2997,6 +2997,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         dlg.setVisible(true);
         AddressBean adrb = dlg.getResultAddress();
         ArchiveFileAddressesBean afab = dlg.getResultInvolvement();
+        if(afab==null)
+            return;
+        
         afab.setArchiveFileKey(dto);
         InvolvedPartyEntryPanel ipep = new InvolvedPartyEntryPanel(dto, this, this.pnlInvolvedParties, this.getClass().getName(), BeaAccess.isBeaEnabled());
         ipep.setEntry(adrb, afab);

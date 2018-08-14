@@ -665,6 +665,7 @@ package com.jdimension.jlawyer.client.massmail;
 
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.FileUtils;
+import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.Campaign;
 import com.jdimension.jlawyer.server.utils.ServerFileUtils;
 import com.jdimension.jlawyer.services.CustomerRelationsServiceRemote;
@@ -709,6 +710,18 @@ public class CampaignController {
 
         return campaigns;
     }
+    
+    public List<AddressBean> listAddressesForCampaign(Campaign c) throws Exception {
+        ClientSettings settings = ClientSettings.getInstance();
+        JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+        CustomerRelationsServiceRemote crm = locator.lookupCustomerRelationsServiceRemote();
+
+        List<AddressBean> addresses = crm.listAddressesForCampaign(c);
+
+        
+
+        return addresses;
+    }
 
     public String getCampaignFolder(String campaignName) {
         if (new File(this.campaignDir.getPath() + File.separator + campaignName).exists()) {
@@ -746,6 +759,13 @@ public class CampaignController {
         CustomerRelationsServiceRemote crm = locator.lookupCustomerRelationsServiceRemote();
         crm.removeCampaign(campaign);
 
+    }
+
+    void addToCampaign(AddressBean a, Campaign campaign) throws Exception {
+        ClientSettings settings = ClientSettings.getInstance();
+        JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+        CustomerRelationsServiceRemote crm = locator.lookupCustomerRelationsServiceRemote();
+        crm.addToCampaign(a, campaign);
     }
 
 }
