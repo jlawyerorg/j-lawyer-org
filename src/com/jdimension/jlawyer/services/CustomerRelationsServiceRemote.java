@@ -681,6 +681,7 @@ package com.jdimension.jlawyer.services;
 
 
 
+import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.Campaign;
 import java.util.List;
 import javax.ejb.Remote;
@@ -697,5 +698,11 @@ public interface CustomerRelationsServiceRemote {
     public Campaign createCampaign(Campaign campaign) throws Exception;
     
     public void removeCampaign(Campaign campaign);
+
+    public void addToCampaign(AddressBean a, Campaign campaign) throws Exception;
+    
+    public void removeFromCampaign(AddressBean a, Campaign campaign) throws Exception;
+    
+    public List<AddressBean> listAddressesForCampaign(Campaign campaign) throws Exception;
     
 }
