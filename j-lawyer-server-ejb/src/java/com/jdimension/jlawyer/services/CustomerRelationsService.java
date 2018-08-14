@@ -759,14 +759,14 @@ public class CustomerRelationsService implements CustomerRelationsServiceRemote,
 
     @Override
     public void removeFromCampaign(AddressBean a, Campaign campaign) throws Exception {
-        CampaignAddress ca=this.campaignAddressesFacade.findByCampaignAndAddress(campaign.getId(), a.getId());
+        CampaignAddress ca=this.campaignAddressesFacade.findByCampaignAndAddress(campaign, a);
         if(ca!=null)
             this.campaignAddressesFacade.remove(ca);
     }
 
     @Override
     public List<AddressBean> listAddressesForCampaign(Campaign campaign) throws Exception {
-        List<CampaignAddress> cas=this.campaignAddressesFacade.findByCampaign(campaign.getId());
+        List<CampaignAddress> cas=this.campaignAddressesFacade.findByCampaign(campaign);
         List<AddressBean> result=new ArrayList<AddressBean>();
         for(CampaignAddress ca: cas) {
             result.add(ca.getAddressKey());

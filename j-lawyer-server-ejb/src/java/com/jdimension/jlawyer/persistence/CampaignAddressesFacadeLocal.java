@@ -685,8 +685,8 @@ public interface CampaignAddressesFacadeLocal {
 
     int count();
     
-    CampaignAddress findByCampaignAndAddress(String campaignId, String addressId);
+    CampaignAddress findByCampaignAndAddress(Campaign campaign, AddressBean address);
     
-    List<CampaignAddress> findByCampaign(String campaignId);
+    List<CampaignAddress> findByCampaign(Campaign campaign);
     
 }

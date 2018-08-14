@@ -689,10 +689,10 @@ public class CampaignAddressesFacade extends AbstractFacade<CampaignAddress> imp
     }
     
     @Override
-    public CampaignAddress findByCampaignAndAddress(String campaignId, String addressId) {
+    public CampaignAddress findByCampaignAndAddress(Campaign campaign, AddressBean address) {
         
         try {
-            CampaignAddress ca=(CampaignAddress)em.createNamedQuery("CampaignAddress.findByCampaignAndAddress").setParameter("campaignKey", campaignId).setParameter("addressKey", addressId).getSingleResult();
+            CampaignAddress ca=(CampaignAddress)em.createNamedQuery("CampaignAddress.findByCampaignAndAddress").setParameter("campaignKey", campaign).setParameter("addressKey", address).getSingleResult();
             return ca;
         } catch (NoResultException nre) {
             return null;
@@ -700,9 +700,9 @@ public class CampaignAddressesFacade extends AbstractFacade<CampaignAddress> imp
     }
 
     @Override
-    public List<CampaignAddress> findByCampaign(String campaignId) {
+    public List<CampaignAddress> findByCampaign(Campaign campaign) {
         try {
-            List<CampaignAddress> cas=(List<CampaignAddress>)em.createNamedQuery("CampaignAddress.findByCampaign").setParameter("campaignKey", campaignId).getResultList();
+            List<CampaignAddress> cas=(List<CampaignAddress>)em.createNamedQuery("CampaignAddress.findByCampaign").setParameter("campaignKey", campaign).getResultList();
             return cas;
         } catch (NoResultException nre) {
             return new ArrayList<CampaignAddress>();
