@@ -663,8 +663,11 @@
  */
 package com.jdimension.jlawyer.persistence;
 
+import java.util.ArrayList;
+import java.util.List;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 
 /**
@@ -683,6 +686,27 @@ public class CampaignAddressesFacade extends AbstractFacade<CampaignAddress> imp
 
     public CampaignAddressesFacade() {
         super(CampaignAddress.class);
+    }
+    
+    @Override
+    public CampaignAddress findByCampaignAndAddress(String campaignId, String addressId) {
+        
+        try {
+            CampaignAddress ca=(CampaignAddress)em.createNamedQuery("CampaignAddress.findByCampaignAndAddress").setParameter("campaignKey", campaignId).setParameter("addressKey", addressId).getSingleResult();
+            return ca;
+        } catch (NoResultException nre) {
+            return null;
+        }
+    }
+
+    @Override
+    public List<CampaignAddress> findByCampaign(String campaignId) {
+        try {
+            List<CampaignAddress> cas=(List<CampaignAddress>)em.createNamedQuery("CampaignAddress.findByCampaign").setParameter("campaignKey", campaignId).getResultList();
+            return cas;
+        } catch (NoResultException nre) {
+            return new ArrayList<CampaignAddress>();
+        }
     }
     
 }

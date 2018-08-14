@@ -681,9 +681,13 @@ package com.jdimension.jlawyer.services;
 
 
 
+import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.Campaign;
+import com.jdimension.jlawyer.persistence.CampaignAddress;
+import com.jdimension.jlawyer.persistence.CampaignAddressesFacadeLocal;
 import com.jdimension.jlawyer.persistence.CampaignFacadeLocal;
 import com.jdimension.jlawyer.persistence.utils.StringGenerator;
+import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Resource;
 import javax.annotation.security.RolesAllowed;
@@ -708,6 +712,9 @@ public class CustomerRelationsService implements CustomerRelationsServiceRemote,
     
     @EJB
     private CampaignFacadeLocal campaignFacade;
+    
+    @EJB
+    private CampaignAddressesFacadeLocal campaignAddressesFacade;
 
     @Override
     @RolesAllowed({"readAddressRole"})
@@ -738,4 +745,32 @@ public class CustomerRelationsService implements CustomerRelationsServiceRemote,
 
     // Add business logic below. (Right-click in editor and choose
     // "Insert Code > Add Business Method")
+
+    @Override
+    public void addToCampaign(AddressBean a, Campaign campaign) throws Exception {
+        String id=new StringGenerator().getID().toString();
+        
+        CampaignAddress ca=new CampaignAddress();
+        ca.setId(id);
+        ca.setAddressKey(a);
+        ca.setCampaignKey(campaign);
+        this.campaignAddressesFacade.create(ca);
+    }
+
+    @Override
+    public void removeFromCampaign(AddressBean a, Campaign campaign) throws Exception {
+        CampaignAddress ca=this.campaignAddressesFacade.findByCampaignAndAddress(campaign.getId(), a.getId());
+        if(ca!=null)
+            this.campaignAddressesFacade.remove(ca);
+    }
+
+    @Override
+    public List<AddressBean> listAddressesForCampaign(Campaign campaign) throws Exception {
+        List<CampaignAddress> cas=this.campaignAddressesFacade.findByCampaign(campaign.getId());
+        List<AddressBean> result=new ArrayList<AddressBean>();
+        for(CampaignAddress ca: cas) {
+            result.add(ca.getAddressKey());
+        }
+        return result;
+    }
 }

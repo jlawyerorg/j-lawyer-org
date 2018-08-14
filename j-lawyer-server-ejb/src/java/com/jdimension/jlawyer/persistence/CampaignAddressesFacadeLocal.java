@@ -685,4 +685,8 @@ public interface CampaignAddressesFacadeLocal {
 
     int count();
     
+    CampaignAddress findByCampaignAndAddress(String campaignId, String addressId);
+    
+    List<CampaignAddress> findByCampaign(String campaignId);
+    
 }
