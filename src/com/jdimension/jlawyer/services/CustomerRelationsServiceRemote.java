@@ -683,8 +683,10 @@ package com.jdimension.jlawyer.services;
 
 import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.Campaign;
+import java.util.Hashtable;
 import java.util.List;
 import javax.ejb.Remote;
+import org.jlawyer.data.tree.GenericNode;
 
 /**
  *
@@ -704,5 +706,7 @@ public interface CustomerRelationsServiceRemote {
     public void removeFromCampaign(AddressBean a, Campaign campaign) throws Exception;
     
     public List<AddressBean> listAddressesForCampaign(Campaign campaign) throws Exception;
+    
+    public byte[] getDocumentForAddress(GenericNode templateFolder, String templateName, Hashtable placeHolderValues) throws Exception;
     
 }
