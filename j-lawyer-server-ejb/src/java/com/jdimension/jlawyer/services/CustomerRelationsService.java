@@ -688,6 +688,7 @@ import com.jdimension.jlawyer.persistence.CampaignAddress;
 import com.jdimension.jlawyer.persistence.CampaignAddressesFacadeLocal;
 import com.jdimension.jlawyer.persistence.CampaignFacadeLocal;
 import com.jdimension.jlawyer.persistence.utils.StringGenerator;
+import com.jdimension.jlawyer.server.utils.ServerFileUtils;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Hashtable;
@@ -817,6 +818,6 @@ public class CustomerRelationsService implements CustomerRelationsServiceRemote,
 
         LibreOfficeAccess.setPlaceHolders(dst, placeHolderValues);
 
-        return null;
+        return ServerFileUtils.readFile(new File(dst));
     }
 }
