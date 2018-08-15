@@ -681,13 +681,16 @@ package com.jdimension.jlawyer.services;
 
 
 
+import com.jdimension.jlawyer.documents.LibreOfficeAccess;
 import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.Campaign;
 import com.jdimension.jlawyer.persistence.CampaignAddress;
 import com.jdimension.jlawyer.persistence.CampaignAddressesFacadeLocal;
 import com.jdimension.jlawyer.persistence.CampaignFacadeLocal;
 import com.jdimension.jlawyer.persistence.utils.StringGenerator;
+import java.io.File;
 import java.util.ArrayList;
+import java.util.Hashtable;
 import java.util.List;
 import javax.annotation.Resource;
 import javax.annotation.security.RolesAllowed;
@@ -696,6 +699,8 @@ import javax.ejb.SessionContext;
 import javax.ejb.Stateless;
 import org.apache.log4j.Logger;
 import org.jboss.security.annotation.SecurityDomain;
+import org.jlawyer.data.tree.GenericNode;
+import org.jlawyer.data.tree.TreeNodeUtils;
 
 /**
  *
@@ -747,6 +752,7 @@ public class CustomerRelationsService implements CustomerRelationsServiceRemote,
     // "Insert Code > Add Business Method")
 
     @Override
+    @RolesAllowed({"readAddressRole"})
     public void addToCampaign(AddressBean a, Campaign campaign) throws Exception {
         String id=new StringGenerator().getID().toString();
         
@@ -758,6 +764,7 @@ public class CustomerRelationsService implements CustomerRelationsServiceRemote,
     }
 
     @Override
+    @RolesAllowed({"readAddressRole"})
     public void removeFromCampaign(AddressBean a, Campaign campaign) throws Exception {
         CampaignAddress ca=this.campaignAddressesFacade.findByCampaignAndAddress(campaign, a);
         if(ca!=null)
@@ -765,6 +772,7 @@ public class CustomerRelationsService implements CustomerRelationsServiceRemote,
     }
 
     @Override
+    @RolesAllowed({"readAddressRole"})
     public List<AddressBean> listAddressesForCampaign(Campaign campaign) throws Exception {
         List<CampaignAddress> cas=this.campaignAddressesFacade.findByCampaign(campaign);
         List<AddressBean> result=new ArrayList<AddressBean>();
@@ -772,5 +780,43 @@ public class CustomerRelationsService implements CustomerRelationsServiceRemote,
             result.add(ca.getAddressKey());
         }
         return result;
+    }
+    
+    @Override
+    @RolesAllowed({"readAddressRole"})
+    public byte[] getDocumentForAddress(GenericNode templateFolder, String templateName, Hashtable placeHolderValues) throws Exception {
+        StringGenerator idGen = new StringGenerator();
+        
+        String localBaseDir = System.getProperty("jlawyer.server.basedirectory");
+        localBaseDir = localBaseDir.trim();
+        if (!localBaseDir.endsWith(System.getProperty("file.separator"))) {
+            localBaseDir = localBaseDir + System.getProperty("file.separator");
+        }
+
+        String src = localBaseDir + "templates" + TreeNodeUtils.buildNodePath(templateFolder) + System.getProperty("file.separator") + templateName;
+        String dst = System.getProperty("java.io.tmpdir") + File.separator;
+
+        String ext = "";
+        try {
+            ext = templateName.substring(templateName.lastIndexOf('.'));
+        } catch (Throwable t) {
+            log.warn("Template without file extension: " + templateName);
+        }
+        String fileName = idGen + ext;
+
+        File dstDir = new File(dst);
+        dstDir.mkdirs();
+
+        dst = dst + fileName;
+
+        if (new File(dst).exists()) {
+            throw new Exception("Dokument " + fileName + " existiert bereits - bitte einen anderen Namen wählen!");
+        }
+
+        SystemManagement.copyFile(src, dst);
+
+        LibreOfficeAccess.setPlaceHolders(dst, placeHolderValues);
+
+        return null;
     }
 }
