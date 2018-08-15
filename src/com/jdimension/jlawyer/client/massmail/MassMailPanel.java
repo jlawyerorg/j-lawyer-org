@@ -664,19 +664,19 @@
 package com.jdimension.jlawyer.client.massmail;
 
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
-import com.jdimension.jlawyer.client.voip.*;
 import com.jdimension.jlawyer.client.editors.ThemeableEditor;
 import com.jdimension.jlawyer.client.editors.addresses.QuickAddressSearchRowIdentifier;
 import com.jdimension.jlawyer.client.editors.addresses.QuickAddressSearchTableModel;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
+import com.jdimension.jlawyer.client.utils.TableUtils;
 import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
 import com.jdimension.jlawyer.persistence.Campaign;
-import com.jdimension.jlawyer.persistence.FaxQueueBean;
 import java.awt.Graphics;
 import java.awt.Image;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import javax.swing.DefaultComboBoxModel;
@@ -752,6 +752,8 @@ public class MassMailPanel extends javax.swing.JPanel implements ThemeableEditor
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        popup = new javax.swing.JPopupMenu();
+        mnuRemoveFromCampaign = new javax.swing.JMenuItem();
         jLabel18 = new javax.swing.JLabel();
         lblPanelTitle = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
@@ -764,6 +766,16 @@ public class MassMailPanel extends javax.swing.JPanel implements ThemeableEditor
         cmdDeleteCampaign = new javax.swing.JButton();
         lblFolder = new javax.swing.JLabel();
         cmdAddContacts = new javax.swing.JButton();
+        cmdGenerateDocs = new javax.swing.JButton();
+
+        mnuRemoveFromCampaign.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editdelete.png"))); // NOI18N
+        mnuRemoveFromCampaign.setText("aus Serie entfernen");
+        mnuRemoveFromCampaign.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuRemoveFromCampaignActionPerformed(evt);
+            }
+        });
+        popup.add(mnuRemoveFromCampaign);
 
         jLabel18.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/message_big.png"))); // NOI18N
 
@@ -784,9 +796,15 @@ public class MassMailPanel extends javax.swing.JPanel implements ThemeableEditor
                 "Title 1", "Title 2", "Title 3", "Title 4"
             }
         ));
-        tblResults.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        tblResults.setSelectionMode(javax.swing.ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         tblResults.getTableHeader().setReorderingAllowed(false);
         tblResults.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                tblResultsMousePressed(evt);
+            }
+            public void mouseReleased(java.awt.event.MouseEvent evt) {
+                tblResultsMouseReleased(evt);
+            }
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 tblResultsMouseClicked(evt);
             }
@@ -848,10 +866,19 @@ public class MassMailPanel extends javax.swing.JPanel implements ThemeableEditor
         lblFolder.setText(" ");
 
         cmdAddContacts.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/vcard.png"))); // NOI18N
+        cmdAddContacts.setText("Empfänger hinzufügen");
         cmdAddContacts.setToolTipText("Adressen hinzufügen");
         cmdAddContacts.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmdAddContactsActionPerformed(evt);
+            }
+        });
+
+        cmdGenerateDocs.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editcopy.png"))); // NOI18N
+        cmdGenerateDocs.setText("Schreiben generieren");
+        cmdGenerateDocs.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdGenerateDocsActionPerformed(evt);
             }
         });
 
@@ -881,6 +908,8 @@ public class MassMailPanel extends javax.swing.JPanel implements ThemeableEditor
                                 .add(cmdAddCampaign)
                                 .add(18, 18, 18)
                                 .add(cmdAddContacts)
+                                .add(18, 18, 18)
+                                .add(cmdGenerateDocs)
                                 .add(0, 0, Short.MAX_VALUE))
                             .add(lblFolder, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
                 .addContainerGap())
@@ -901,7 +930,8 @@ public class MassMailPanel extends javax.swing.JPanel implements ThemeableEditor
                         .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                             .add(jLabel1)
                             .add(cmbCampaign, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
-                    .add(cmdAddContacts))
+                    .add(cmdAddContacts)
+                    .add(cmdGenerateDocs))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(lblFolder)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
@@ -920,7 +950,13 @@ public class MassMailPanel extends javax.swing.JPanel implements ThemeableEditor
     }//GEN-LAST:event_cmdRefreshActionPerformed
 
     private void tblResultsMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblResultsMouseClicked
+        int selected = this.tblResults.getSelectedRowCount();
 
+        if (evt.getClickCount() == 1 && evt.getButton() == evt.BUTTON1) {
+            //this.displayMessage();
+        } else if (evt.getClickCount() == 2 && evt.getButton() == evt.BUTTON1) {
+
+        }
 
     }//GEN-LAST:event_tblResultsMouseClicked
 
@@ -950,7 +986,7 @@ public class MassMailPanel extends javax.swing.JPanel implements ThemeableEditor
 
             try {
                 List<AddressBean> addresses = this.controller.listAddressesForCampaign((Campaign) selected);
-                for(AddressBean a: addresses) {
+                for (AddressBean a : addresses) {
                     QuickAddressSearchRowIdentifier identifier = new QuickAddressSearchRowIdentifier(a);
                     Object[] row = new Object[]{identifier, a.getFirstName(), a.getCompany(), a.getZipCode(), a.getCity(), a.getStreet(), a.getCountry(), ""};
                     model.addRow(row);
@@ -1013,11 +1049,58 @@ public class MassMailPanel extends javax.swing.JPanel implements ThemeableEditor
         }
     }//GEN-LAST:event_cmdAddContactsActionPerformed
 
+    private void mnuRemoveFromCampaignActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuRemoveFromCampaignActionPerformed
+        int[] selected = this.tblResults.getSelectedRows();
+        for (int i = selected.length - 1; i > -1; i--) {
+
+            QuickAddressSearchRowIdentifier ident = (QuickAddressSearchRowIdentifier) this.tblResults.getValueAt(selected[i], 0);
+            try {
+                this.controller.removeFromCampaign(ident.getAddressDTO(), (Campaign) this.cmbCampaign.getSelectedItem());
+                ((DefaultTableModel) this.tblResults.getModel()).removeRow(this.tblResults.convertRowIndexToModel(selected[i]));
+            } catch (Throwable ex) {
+                log.error(ex);
+                ex.printStackTrace();
+            }
+        }
+    }//GEN-LAST:event_mnuRemoveFromCampaignActionPerformed
+
+    private void tblResultsMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblResultsMousePressed
+        TableUtils.handleRowClick(tblResults, evt);
+        if (evt.isPopupTrigger()) {
+            this.mnuRemoveFromCampaign.setEnabled(false);
+            if (this.tblResults.getSelectedRowCount() > 0) {
+                this.mnuRemoveFromCampaign.setEnabled(true);
+            }
+            this.popup.show(this.tblResults, evt.getX(), evt.getY());
+        }
+    }//GEN-LAST:event_tblResultsMousePressed
+
+    private void tblResultsMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblResultsMouseReleased
+        if (evt.isPopupTrigger()) {
+            this.popup.show(this.tblResults, evt.getX(), evt.getY());
+        }
+    }//GEN-LAST:event_tblResultsMouseReleased
+
+    private void cmdGenerateDocsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdGenerateDocsActionPerformed
+        List<AddressBean> addresses = new ArrayList<AddressBean>();
+        for (int i = 0; i < this.tblResults.getRowCount(); i++) {
+            QuickAddressSearchRowIdentifier identifier = (QuickAddressSearchRowIdentifier) this.tblResults.getValueAt(i, 0);
+            addresses.add(identifier.getAddressDTO());
+        }
+        if (addresses.size() > 0) {
+            GenerateMassMailDocumentsDialog dlg = new GenerateMassMailDocumentsDialog((Campaign)this.cmbCampaign.getSelectedItem(), addresses, EditorsRegistry.getInstance().getMainWindow(), true);
+            dlg.setTitle("Serienschreiben generieren...");
+            FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
+            dlg.setVisible(true);
+        }
+    }//GEN-LAST:event_cmdGenerateDocsActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JComboBox<String> cmbCampaign;
     private javax.swing.JButton cmdAddCampaign;
     private javax.swing.JButton cmdAddContacts;
     private javax.swing.JButton cmdDeleteCampaign;
+    private javax.swing.JButton cmdGenerateDocs;
     private javax.swing.JButton cmdRefresh;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel18;
@@ -1025,6 +1108,8 @@ public class MassMailPanel extends javax.swing.JPanel implements ThemeableEditor
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JLabel lblFolder;
     protected javax.swing.JLabel lblPanelTitle;
+    private javax.swing.JMenuItem mnuRemoveFromCampaign;
+    private javax.swing.JPopupMenu popup;
     private javax.swing.JTable tblResults;
     // End of variables declaration//GEN-END:variables
 }

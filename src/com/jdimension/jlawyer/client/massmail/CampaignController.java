@@ -724,11 +724,30 @@ public class CampaignController {
     }
 
     public String getCampaignFolder(String campaignName) {
-        if (new File(this.campaignDir.getPath() + File.separator + campaignName).exists()) {
-            return this.campaignDir.getPath() + File.separator + campaignName;
-        } else {
-            return " ";
+        File cf=new File(this.campaignDir.getPath() + File.separator + campaignName);
+        if(!cf.exists())
+            cf.mkdirs();
+        return this.campaignDir.getPath() + File.separator + campaignName;
+        
+    }
+    
+    public void clearCampaignFolder(String campaignName) throws Exception {
+        String f=getCampaignFolder(campaignName);
+        File folder=new File(f);
+        if(!folder.exists())
+            folder.mkdirs();
+        
+        ServerFileUtils.getInstance().deleteRecursively(folder);
+       
+        if(!folder.exists())
+            folder.mkdirs();
+        
+        for(File file: folder.listFiles()) {
+            if(file.isFile())
+                file.delete();
         }
+        
+        
     }
 
     public Campaign createCampaign(String name) throws Exception {
@@ -766,6 +785,13 @@ public class CampaignController {
         JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
         CustomerRelationsServiceRemote crm = locator.lookupCustomerRelationsServiceRemote();
         crm.addToCampaign(a, campaign);
+    }
+    
+    void removeFromCampaign(AddressBean a, Campaign campaign) throws Exception {
+        ClientSettings settings = ClientSettings.getInstance();
+        JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+        CustomerRelationsServiceRemote crm = locator.lookupCustomerRelationsServiceRemote();
+        crm.removeFromCampaign(a, campaign);
     }
 
 }

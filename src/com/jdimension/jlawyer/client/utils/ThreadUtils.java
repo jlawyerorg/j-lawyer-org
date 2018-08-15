@@ -1045,6 +1045,16 @@ public class ThreadUtils {
         });
     }
     
+    public static void setText(final JButton button, final String s) {
+        SwingUtilities.invokeLater(
+                new Runnable() {
+
+            public void run() {
+                button.setText(s);
+            }
+        });
+    }
+    
     public static void setTextField(final JTextField tf, final String s) {
         SwingUtilities.invokeLater(
                 new Runnable() {
