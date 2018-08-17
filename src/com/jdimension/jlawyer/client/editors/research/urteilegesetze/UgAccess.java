@@ -756,8 +756,10 @@ public class UgAccess {
                                 log.error("unknown hit type: " + hit.get("type").toString());
                                 throw new Exception("Unbekannter Ergebnistyp: " + hit.get("type").toString());
                             }
-                            if(ugHit.getTitel()!=null)
-                                returnList.add(ugHit);
+                            if(ugHit.getTitel()==null) {
+                                ugHit.setTitel("(unbekannt)");
+                            }
+                            returnList.add(ugHit);
                         }
                     }
                 }

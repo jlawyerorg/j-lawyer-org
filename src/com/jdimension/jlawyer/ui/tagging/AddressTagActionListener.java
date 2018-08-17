@@ -698,7 +698,7 @@ public class AddressTagActionListener implements ActionListener {
             if(this.addressId==null) {
                 if(this.caller!=null) {
                     TagToggleButton tb=(TagToggleButton)ae.getSource();
-                    boolean saved=this.caller.confirmSave("Bevor Tags aktiviert werden können,\nmuß die Akte gespeichert werden.\n\nJetzt speichern?", tb.getText());
+                    boolean saved=this.caller.confirmSave("Bevor Tags aktiviert werden können,\nmuß die Adresse gespeichert werden.\n\nJetzt speichern?", tb.getText());
                     if(!saved) {
                         
                         tb.setSelected(false);
