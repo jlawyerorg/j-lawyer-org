@@ -757,7 +757,7 @@ public class UgAccess {
                                 throw new Exception("Unbekannter Ergebnistyp: " + hit.get("type").toString());
                             }
                             if(ugHit.getTitel()==null) {
-                                ugHit.setTitel("(unbekannt)");
+                                ugHit.setTitel("(leer)");
                             }
                             returnList.add(ugHit);
                         }
