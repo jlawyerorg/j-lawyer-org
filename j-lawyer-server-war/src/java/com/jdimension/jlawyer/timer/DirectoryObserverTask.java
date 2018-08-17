@@ -692,7 +692,7 @@ public class DirectoryObserverTask extends java.util.TimerTask {
         //Calendar now = Calendar.getInstance();
 
         ServerSettingsBean mode = null;
-        SingletonServiceLocal singleton=null;
+        SingletonServiceLocal singleton = null;
         try {
             InitialContext ic = new InitialContext();
             //ServerSettingsBeanFacadeLocal settings = (ServerSettingsBeanFacadeLocal) ic.lookup("j-lawyer-server/ServerSettingsBeanFacade/local");
@@ -715,24 +715,33 @@ public class DirectoryObserverTask extends java.util.TimerTask {
             log.info("directory observation is switched off");
             return;
         }
- 
+
         File scanDirectory = new File(scanDir);
-        if (!scanDirectory.exists() && scanDirectory.isDirectory()) {
-            log.error("observed directory does not exist / is not a directory");
+        if (!scanDirectory.exists()) {
+            log.error("observed directory does not exist");
+            return;
+        }
+
+        if (!scanDirectory.isDirectory()) {
+            log.error("observed directory is not a directory");
             return;
         }
 
         ArrayList<String> fileNames = new ArrayList<String>();
-        Hashtable<File,Date> fileObjects=new Hashtable<File,Date>();
+        Hashtable<File, Date> fileObjects = new Hashtable<File, Date>();
         File files[] = scanDirectory.listFiles();
-        for (File f : files) {
-            if (!f.isDirectory()) {
-                String name = f.getName();
-                fileNames.add(name);
-                fileObjects.put(f,new Date(f.lastModified()));
+        if (files != null) {
+            for (File f : files) {
+                if (!f.isDirectory()) {
+                    String name = f.getName();
+                    fileNames.add(name);
+                    fileObjects.put(f, new Date(f.lastModified()));
+                }
             }
+            Collections.sort(fileNames);
+        } else {
+            log.error("observed directory returns null for #listFiles");
         }
-        Collections.sort(fileNames);
 
         if (formerList != null) {
             if (!fileNames.equals(formerList)) {

@@ -693,29 +693,27 @@ import org.jboss.security.annotation.SecurityDomain;
  * @author jens
  */
 @Stateless
-@DeclareRoles(value={"readArchiveFileRole", "writeArchiveFileRole", "loginRole"})
-@SecurityDomain(value="j-lawyer-security")
+@DeclareRoles(value = {"readArchiveFileRole", "writeArchiveFileRole", "loginRole"})
+@SecurityDomain(value = "j-lawyer-security")
 public class IntegrationService implements IntegrationServiceRemote, IntegrationServiceLocal {
-    
+
     private static Logger log = Logger.getLogger(IntegrationService.class.getName());
-    
-    
+
     @EJB
     private ArchiveFileServiceRemote archiveFileService;
     @EJB
     private ServerSettingsBeanFacadeLocal settingsFacade;
 
-    
     @Override
-    @RolesAllowed(value={"readArchiveFileRole"})
+    @RolesAllowed(value = {"readArchiveFileRole"})
     public Hashtable<File, Date> getObservedDirectoryContent() {
-        
-        ServerSettingsBean obs=this.settingsFacade.find("jlawyer.server.observe.directory");
-        if(obs==null) {
+
+        ServerSettingsBean obs = this.settingsFacade.find("jlawyer.server.observe.directory");
+        if (obs == null) {
             log.info("directory observation is switched off");
             return new Hashtable();
         }
-        
+
         //String scanDir = System.getProperty("jlawyer.server.observe.directory");
         String scanDir = obs.getSettingValue();
         if (scanDir == null) {
@@ -724,38 +722,44 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
         }
 
         File scanDirectory = new File(scanDir);
-        if (!scanDirectory.exists() && scanDirectory.isDirectory()) {
-            log.error("observed directory does not exist / is not a directory");
+        if (!scanDirectory.exists()) {
+            log.error("observed directory does not exist");
+            return new Hashtable();
+        }
+
+        if (!scanDirectory.isDirectory()) {
+            log.error("observed directory is not a directory");
             return new Hashtable();
         }
 
         //ArrayList<String> fileNames = new ArrayList<String>();
-        Hashtable<File,Date> fileObjects=new Hashtable<File,Date>();
+        Hashtable<File, Date> fileObjects = new Hashtable<File, Date>();
         File files[] = scanDirectory.listFiles();
-        for (File f : files) {
-            if (!f.isDirectory()) {
-                String name = f.getName();
-                //fileNames.add(name);
-                fileObjects.put(f,new Date(f.lastModified()));
+        if (files != null) {
+            for (File f : files) {
+                if (!f.isDirectory()) {
+                    String name = f.getName();
+                    //fileNames.add(name);
+                    fileObjects.put(f, new Date(f.lastModified()));
+                }
             }
+        } else {
+            log.error("observed directory returns null for #listFiles");
         }
         return fileObjects;
     }
-    
-    
 
     // Add business logic below. (Right-click in editor and choose
     // "Insert Code > Add Business Method")
-
     @Override
-    @RolesAllowed(value={"readArchiveFileRole"})
+    @RolesAllowed(value = {"readArchiveFileRole"})
     public boolean removeObservedFile(String fileName) {
-        ServerSettingsBean obs=this.settingsFacade.find("jlawyer.server.observe.directory");
-        if(obs==null) {
+        ServerSettingsBean obs = this.settingsFacade.find("jlawyer.server.observe.directory");
+        if (obs == null) {
             log.info("directory observation is switched off");
             return false;
         }
-        
+
         //String scanDir = System.getProperty("jlawyer.server.observe.directory");
         String scanDir = obs.getSettingValue();
         if (scanDir == null) {
@@ -768,36 +772,36 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
             log.error("observed directory does not exist / is not a directory");
             return false;
         }
-        
+
         File files[] = scanDirectory.listFiles();
         for (File f : files) {
             if (!f.isDirectory()) {
                 String name = f.getName();
-                if(name.equals(fileName)) {
+                if (name.equals(fileName)) {
                     f.delete();
                     return true;
                 }
             }
         }
         return false;
-        
+
     }
 
     @Override
-    @RolesAllowed(value={"writeArchiveFileRole"})
+    @RolesAllowed(value = {"writeArchiveFileRole"})
     public boolean assignObservedFile(String fileName, String archiveFileId) throws Exception {
         return assignObservedFile(fileName, archiveFileId, fileName);
     }
 
     @Override
-    @RolesAllowed(value={"readArchiveFileRole"})
+    @RolesAllowed(value = {"readArchiveFileRole"})
     public byte[] getObservedFile(String fileName) throws Exception {
-        ServerSettingsBean obs=this.settingsFacade.find("jlawyer.server.observe.directory");
-        if(obs==null) {
+        ServerSettingsBean obs = this.settingsFacade.find("jlawyer.server.observe.directory");
+        if (obs == null) {
             log.error("directory observation is switched off");
             return null;
         }
-        
+
         //String scanDir = System.getProperty("jlawyer.server.observe.directory");
         String scanDir = obs.getSettingValue();
         if (scanDir == null) {
@@ -810,14 +814,14 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
             log.error("observed directory does not exist / is not a directory");
             return null;
         }
-        
+
         File files[] = scanDirectory.listFiles();
         for (File f : files) {
             if (!f.isDirectory()) {
                 String name = f.getName();
-                if(name.equals(fileName)) {
+                if (name.equals(fileName)) {
                     //f.delete();
-                    byte[] data=SystemManagement.readFile(f);
+                    byte[] data = SystemManagement.readFile(f);
                     return data;
                 }
             }
@@ -826,22 +830,22 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
     }
 
     @Override
-    @RolesAllowed(value={"writeArchiveFileRole"})
+    @RolesAllowed(value = {"writeArchiveFileRole"})
     public boolean assignObservedFile(String fileName, String archiveFileId, String renameTo) throws Exception {
-        ServerSettingsBean obs=this.settingsFacade.find("jlawyer.server.observe.directory");
-        if(obs==null) {
+        ServerSettingsBean obs = this.settingsFacade.find("jlawyer.server.observe.directory");
+        if (obs == null) {
             log.error("directory observation is switched off");
             return false;
         }
-        
+
         //String scanDir = System.getProperty("jlawyer.server.observe.directory");
         String scanDir = obs.getSettingValue();
         if (scanDir == null) {
             log.error("directory observation is switched off");
             return false;
         }
-        
-        if(renameTo==null || "".equalsIgnoreCase(renameTo)) {
+
+        if (renameTo == null || "".equalsIgnoreCase(renameTo)) {
             throw new Exception("Neuer Dateiname darf nicht leer sein!");
         }
 
@@ -850,14 +854,14 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
             log.error("observed directory does not exist / is not a directory");
             return false;
         }
-        
+
         File files[] = scanDirectory.listFiles();
         for (File f : files) {
             if (!f.isDirectory()) {
                 String name = f.getName();
-                if(name.equals(fileName)) {
+                if (name.equals(fileName)) {
                     //f.delete();
-                    byte[] data=SystemManagement.readFile(f);
+                    byte[] data = SystemManagement.readFile(f);
                     this.archiveFileService.addDocument(archiveFileId, renameTo, data, "");
                     return true;
                 }
@@ -867,20 +871,20 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
     }
 
     @Override
-    @RolesAllowed(value={"loginRole"})
+    @RolesAllowed(value = {"loginRole"})
     public Collection getAllEmailTemplateNames() {
         String localBaseDir = System.getProperty("jlawyer.server.basedirectory");
-        localBaseDir=localBaseDir.trim();
+        localBaseDir = localBaseDir.trim();
         if (!localBaseDir.endsWith(System.getProperty("file.separator"))) {
             localBaseDir = localBaseDir + System.getProperty("file.separator");
         }
-        
-        localBaseDir=localBaseDir + "emailtemplates" + System.getProperty("file.separator");
-        
-        File f=new File(localBaseDir);
-        File[] files=f.listFiles();
-        ArrayList list=new ArrayList();
-        for(File curFile:files) {
+
+        localBaseDir = localBaseDir + "emailtemplates" + System.getProperty("file.separator");
+
+        File f = new File(localBaseDir);
+        File[] files = f.listFiles();
+        ArrayList list = new ArrayList();
+        for (File curFile : files) {
             list.add(curFile.getName());
         }
         Collections.sort(list, String.CASE_INSENSITIVE_ORDER);
@@ -888,56 +892,57 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
     }
 
     @Override
-    @RolesAllowed(value={"loginRole"})
+    @RolesAllowed(value = {"loginRole"})
     public void saveEmailTemplate(EmailTemplate template, boolean replace) throws Exception {
         String localBaseDir = System.getProperty("jlawyer.server.basedirectory");
-        localBaseDir=localBaseDir.trim();
+        localBaseDir = localBaseDir.trim();
         if (!localBaseDir.endsWith(System.getProperty("file.separator"))) {
             localBaseDir = localBaseDir + System.getProperty("file.separator");
         }
-        
-        localBaseDir=localBaseDir + "emailtemplates" + System.getProperty("file.separator");
-        
-        File f=new File(localBaseDir + template.getFileName());
-        
-        if(f.exists() && !replace)
+
+        localBaseDir = localBaseDir + "emailtemplates" + System.getProperty("file.separator");
+
+        File f = new File(localBaseDir + template.getFileName());
+
+        if (f.exists() && !replace) {
             throw new Exception("Datei existiert bereits: " + template.getFileName());
-        
-        FileWriter fw=new FileWriter(f);
+        }
+
+        FileWriter fw = new FileWriter(f);
         fw.write(template.toXML());
         fw.close();
     }
 
     @Override
-    @RolesAllowed(value={"loginRole"})
-    public void deleteEmailTemplate(String fileName)  throws Exception {
+    @RolesAllowed(value = {"loginRole"})
+    public void deleteEmailTemplate(String fileName) throws Exception {
         String localBaseDir = System.getProperty("jlawyer.server.basedirectory");
-        localBaseDir=localBaseDir.trim();
+        localBaseDir = localBaseDir.trim();
         if (!localBaseDir.endsWith(System.getProperty("file.separator"))) {
             localBaseDir = localBaseDir + System.getProperty("file.separator");
         }
-        
-        localBaseDir=localBaseDir + "emailtemplates" + System.getProperty("file.separator");
-        
-        File f=new File(localBaseDir + fileName);
-        if(f.exists())
+
+        localBaseDir = localBaseDir + "emailtemplates" + System.getProperty("file.separator");
+
+        File f = new File(localBaseDir + fileName);
+        if (f.exists()) {
             f.delete();
-        
-        
+        }
+
     }
 
     @Override
-    @RolesAllowed(value={"loginRole"})
+    @RolesAllowed(value = {"loginRole"})
     public EmailTemplate getEmailTemplate(String fileName) throws Exception {
         String localBaseDir = System.getProperty("jlawyer.server.basedirectory");
-        localBaseDir=localBaseDir.trim();
+        localBaseDir = localBaseDir.trim();
         if (!localBaseDir.endsWith(System.getProperty("file.separator"))) {
             localBaseDir = localBaseDir + System.getProperty("file.separator");
         }
-        
-        localBaseDir=localBaseDir + "emailtemplates" + System.getProperty("file.separator");
-        
-        File f=new File(localBaseDir + fileName);
+
+        localBaseDir = localBaseDir + "emailtemplates" + System.getProperty("file.separator");
+
+        File f = new File(localBaseDir + fileName);
         if (f.exists()) {
             FileReader fr = new FileReader(f);
             char[] buffer = new char[1024];
@@ -947,7 +952,7 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
                 sb.append(buffer, 0, len);
             }
             fr.close();
-            EmailTemplate tpl=EmailTemplate.fromXML(sb.toString());
+            EmailTemplate tpl = EmailTemplate.fromXML(sb.toString());
             tpl.setFileName(fileName);
             return tpl;
         }
@@ -956,34 +961,34 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
 
     @Override
     public String getObservedFilePreview(String fileName) throws Exception {
-        byte[] data=this.getObservedFile(fileName);
-        if(data==null) {
+        byte[] data = this.getObservedFile(fileName);
+        if (data == null) {
             log.error("Error creating document preview - content data for file is null");
             return "";
         }
-        
-        Tika tika=new Tika();
+
+        Tika tika = new Tika();
         try {
-            Reader r=tika.parse(new ByteArrayInputStream(data));
-            BufferedReader br=new BufferedReader(r);
-            StringWriter sw=new StringWriter();
-            BufferedWriter bw=new BufferedWriter(sw);
-            char[] buffer=new char[1024];
-            int bytesRead=-1;
-            while((bytesRead=br.read(buffer))>-1) {
-                bw.write(buffer,0,bytesRead);
+            Reader r = tika.parse(new ByteArrayInputStream(data));
+            BufferedReader br = new BufferedReader(r);
+            StringWriter sw = new StringWriter();
+            BufferedWriter bw = new BufferedWriter(sw);
+            char[] buffer = new char[1024];
+            int bytesRead = -1;
+            while ((bytesRead = br.read(buffer)) > -1) {
+                bw.write(buffer, 0, bytesRead);
             }
             bw.close();
             br.close();
-            
+
             return sw.toString();
-            
+
         } catch (Throwable t) {
             log.error("Error creating document preview", t);
         }
-        
+
         return "";
-        
+
     }
 
     @Override
@@ -1007,5 +1012,5 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
         }
 
     }
-    
+
 }
