@@ -747,6 +747,7 @@ public class DirectoryObserverTask extends java.util.TimerTask {
                         } catch (Throwable t) {
 
                         }
+                        System.out.println("  " + size + " > " + f.length());
                         if (size != f.length()) {
                             // skip file - still copying...
                         } else {
