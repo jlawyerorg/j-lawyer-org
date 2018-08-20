@@ -733,12 +733,21 @@ public class DirectoryObserverTask extends java.util.TimerTask {
         if (files != null) {
             for (File f : files) {
                 if (!f.isDirectory()) {
+                    long lastMod=f.lastModified();
+                    long size=f.length();
                     if ((System.currentTimeMillis() - f.lastModified()) > 3000l) {
                         // file might still be copying - skip if last modified is less than 3s in the past
                         String name = f.getName();
                         fileNames.add(name);
                         fileObjects.put(f, new Date(f.lastModified()));
                     }
+                    try {
+                        Thread.sleep(300);
+                    } catch (Throwable t) {
+                        
+                    }
+                    System.out.println("lastmod " + lastMod + " > " + f.lastModified());
+                    System.out.println("length  " + size + " > " + f.length());
                 }
             }
             Collections.sort(fileNames);
