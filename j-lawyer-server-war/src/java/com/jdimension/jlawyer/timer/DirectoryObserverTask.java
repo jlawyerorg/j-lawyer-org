@@ -740,7 +740,7 @@ public class DirectoryObserverTask extends java.util.TimerTask {
                         fileNames.add(name);
                         fileObjects.put(f, new Date(f.lastModified()));
                     } else {
-                        System.out.println("newer than 3s: " + f.getName() + " = " + new Date(f.lastModified()).toString());
+                        
                         long size = f.length();
                         try {
                             Thread.sleep(250);
@@ -751,6 +751,7 @@ public class DirectoryObserverTask extends java.util.TimerTask {
                         if (size != f.length()) {
                             // skip file - still copying...
                         } else {
+                            System.out.println("newer than 3s: " + f.getName() + " = " + new Date(f.lastModified()).toString());
                             String name = f.getName();
                             fileNames.add(name);
                             fileObjects.put(f, new Date(f.lastModified()));
