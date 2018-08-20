@@ -734,7 +734,7 @@ public class DirectoryObserverTask extends java.util.TimerTask {
                 if (!f.isDirectory()) {
                     System.out.println(f.getName() + " = " + new Date(f.lastModified()).toString());
                     // file might still be copying - skip if last modified is less than 3s in the past
-                    if ((System.currentTimeMillis() - f.lastModified()) > 120000l) {
+                    if ((System.currentTimeMillis() - f.lastModified()) > 5000l) {
                         System.out.println("older than 3s: " + f.getName() + " = " + new Date(f.lastModified()).toString());
                         String name = f.getName();
                         fileNames.add(name);

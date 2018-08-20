@@ -738,6 +738,30 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
         if (files != null) {
             for (File f : files) {
                 if (!f.isDirectory()) {
+                    
+                    if ((System.currentTimeMillis() - f.lastModified()) > 5000l) {
+                        System.out.println("older than 3s: " + f.getName() + " = " + new Date(f.lastModified()).toString());
+                        String name = f.getName();
+                        fileObjects.put(f, new Date(f.lastModified()));
+                    } else {
+                        
+                        long size = f.length();
+                        try {
+                            Thread.sleep(250);
+                        } catch (Throwable t) {
+
+                        }
+                        System.out.println("  " + size + " > " + f.length());
+                        if (size != f.length()) {
+                            // skip file - still copying...
+                        } else {
+                            System.out.println("newer than 3s: " + f.getName() + " = " + new Date(f.lastModified()).toString());
+                            String name = f.getName();
+                            fileObjects.put(f, new Date(f.lastModified()));
+                        }
+
+                    }
+                    
                     String name = f.getName();
                     //fileNames.add(name);
                     fileObjects.put(f, new Date(f.lastModified()));
