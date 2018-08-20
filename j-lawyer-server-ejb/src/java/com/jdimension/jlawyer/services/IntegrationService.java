@@ -762,9 +762,8 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
 
                     }
                     
-                    String name = f.getName();
-                    //fileNames.add(name);
-                    fileObjects.put(f, new Date(f.lastModified()));
+//                    String name = f.getName();
+//                    fileObjects.put(f, new Date(f.lastModified()));
                 }
             }
         } else {
