@@ -807,7 +807,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     try {
-                        JPanel ui=cp.getUi();
+                        JPanel ui=cp.getUi(null, 0f);
                         CalculationPluginDialog dlg=new CalculationPluginDialog(EditorsRegistry.getInstance().getMainWindow(), false, ui);
                         dlg.setTitle("Plugin: " + cp.getName() + " " + cp.getVersion());
                         dlg.setHeader(cp.getDescription());

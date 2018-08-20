@@ -664,6 +664,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.client.plugins.calculation;
 
 import com.jdimension.jlawyer.client.utils.VersionUtils;
+import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import groovy.lang.Binding;
 import groovy.util.GroovyScriptEngine;
 import java.io.File;
@@ -699,6 +700,15 @@ public class CalculationPlugin implements Comparable {
         GroovyScriptEngine e = new GroovyScriptEngine(CalculationPluginUtil.getLocalDirectory() + File.separator);
         Binding bind = new Binding();
         bind.setVariable("callback", new GenericCalculationCallback());
+        e.run(getId() + "_ui.groovy", bind);
+        return (JPanel)bind.getVariable("SCRIPTPANEL");
+    }
+    
+    public JPanel getUi(ArchiveFileBean targetCase, float claimValue) throws Exception {
+        GroovyScriptEngine e = new GroovyScriptEngine(CalculationPluginUtil.getLocalDirectory() + File.separator);
+        Binding bind = new Binding();
+        bind.setVariable("callback", new GenericCalculationCallback(targetCase));
+        bind.setVariable("claimvalue", claimValue);
         e.run(getId() + "_ui.groovy", bind);
         return (JPanel)bind.getVariable("SCRIPTPANEL");
     }

@@ -694,11 +694,17 @@ import org.apache.log4j.Logger;
  * @author jens
  */
 public class GenericCalculationCallback implements CalculationPluginCallback {
-    
-    private static Logger log=Logger.getLogger(GenericCalculationCallback.class.getName());
+
+    private static Logger log = Logger.getLogger(GenericCalculationCallback.class.getName());
+
+    private ArchiveFileBean selectedCase = null;
 
     public GenericCalculationCallback() {
+        this.selectedCase = null;
+    }
 
+    public GenericCalculationCallback(ArchiveFileBean target) {
+        this.selectedCase = target;
     }
 
     @Override
@@ -713,44 +719,48 @@ public class GenericCalculationCallback implements CalculationPluginCallback {
     @Override
     public void processResultToDocument(CalculationTable table, Container c) {
         if (table != null) {
-            
-            Container pluginDlg=FrameUtils.getDialogOfComponent(c);
-            if(pluginDlg!=null) {
-                pluginDlg.setVisible(false);
-                ((JDialog)pluginDlg).dispose();
-            }
-            
-            System.out.println("received table with cols: " + table.getColumnLabels().size());
-            SearchAndAssignDialog dlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true);
-            dlg.setVisible(true);
-            ArchiveFileBean sel = dlg.getSelection();
-            dlg.dispose();
-   
-            if(sel==null)
-                return;
-            
-            try {
-            Component editor = (Component)EditorsRegistry.getInstance().getEditor(EditArchiveFileDetailsPanel.class.getName());
 
-            if (editor instanceof ThemeableEditor) {
-                // inherit the background to newly created child editors
-                Object desktop=EditorsRegistry.getInstance().getEditor(DesktopPanel.class.getName());
-                if(desktop instanceof ThemeableEditor) {
-                    ((ThemeableEditor) editor).setBackgroundImage(((ThemeableEditor)desktop).getBackgroundImage());
+            Container pluginDlg = FrameUtils.getDialogOfComponent(c);
+            if (pluginDlg != null) {
+                pluginDlg.setVisible(false);
+                ((JDialog) pluginDlg).dispose();
+            }
+
+            System.out.println("received table with cols: " + table.getColumnLabels().size());
+
+            if (this.selectedCase == null) {
+                SearchAndAssignDialog dlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true);
+                dlg.setVisible(true);
+                this.selectedCase = dlg.getSelection();
+                dlg.dispose();
+
+                if (this.selectedCase == null) {
+                    return;
                 }
             }
-            if (editor instanceof PopulateOptionsEditor) {
-                ((PopulateOptionsEditor) editor).populateOptions();
-            }
-            ((ArchiveFilePanel) editor).setArchiveFileDTO(sel);
-            ((ArchiveFilePanel) editor).setOpenedFromEditorClass(DesktopPanel.class.getName());
-            EditorsRegistry.getInstance().setMainEditorsPaneView((Component) editor);
-            ((ArchiveFilePanel)editor).newDocumentDialog(table);
 
-        } catch (Exception ex) {
-            log.error("Error creating editor from class " + EditArchiveFileDetailsPanel.class.getName(), ex);
-            JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Laden des Editors: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
-        }
+            try {
+                Component editor = (Component) EditorsRegistry.getInstance().getEditor(EditArchiveFileDetailsPanel.class.getName());
+
+                if (editor instanceof ThemeableEditor) {
+                    // inherit the background to newly created child editors
+                    Object desktop = EditorsRegistry.getInstance().getEditor(DesktopPanel.class.getName());
+                    if (desktop instanceof ThemeableEditor) {
+                        ((ThemeableEditor) editor).setBackgroundImage(((ThemeableEditor) desktop).getBackgroundImage());
+                    }
+                }
+                if (editor instanceof PopulateOptionsEditor) {
+                    ((PopulateOptionsEditor) editor).populateOptions();
+                }
+                ((ArchiveFilePanel) editor).setArchiveFileDTO(this.selectedCase);
+                ((ArchiveFilePanel) editor).setOpenedFromEditorClass(DesktopPanel.class.getName());
+                EditorsRegistry.getInstance().setMainEditorsPaneView((Component) editor);
+                ((ArchiveFilePanel) editor).newDocumentDialog(table);
+
+            } catch (Exception ex) {
+                log.error("Error creating editor from class " + EditArchiveFileDetailsPanel.class.getName(), ex);
+                JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Laden des Editors: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            }
         }
     }
 
