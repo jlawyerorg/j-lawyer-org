@@ -671,7 +671,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Hashtable;
-import javax.jms.*;
 import javax.naming.InitialContext;
 import org.apache.log4j.Logger;
 
@@ -733,21 +732,30 @@ public class DirectoryObserverTask extends java.util.TimerTask {
         if (files != null) {
             for (File f : files) {
                 if (!f.isDirectory()) {
-                    long lastMod=f.lastModified();
-                    long size=f.length();
+                    System.out.println(f.getName() + " = " + new Date(f.lastModified()).toString());
+                    // file might still be copying - skip if last modified is less than 3s in the past
                     if ((System.currentTimeMillis() - f.lastModified()) > 3000l) {
-                        // file might still be copying - skip if last modified is less than 3s in the past
+                        System.out.println("older than 3s: " + f.getName() + " = " + new Date(f.lastModified()).toString());
                         String name = f.getName();
                         fileNames.add(name);
                         fileObjects.put(f, new Date(f.lastModified()));
+                    } else {
+                        System.out.println("newer than 3s: " + f.getName() + " = " + new Date(f.lastModified()).toString());
+                        long size = f.length();
+                        try {
+                            Thread.sleep(250);
+                        } catch (Throwable t) {
+
+                        }
+                        if (size != f.length()) {
+                            // skip file - still copying...
+                        } else {
+                            String name = f.getName();
+                            fileNames.add(name);
+                            fileObjects.put(f, new Date(f.lastModified()));
+                        }
+
                     }
-                    try {
-                        Thread.sleep(300);
-                    } catch (Throwable t) {
-                        
-                    }
-                    System.out.println("lastmod " + lastMod + " > " + f.lastModified());
-                    System.out.println("length  " + size + " > " + f.length());
                 }
             }
             Collections.sort(fileNames);
