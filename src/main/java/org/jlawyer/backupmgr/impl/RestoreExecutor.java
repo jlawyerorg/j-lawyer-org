@@ -970,7 +970,7 @@ public class RestoreExecutor {
             if (f.isDirectory()) {
                 subDirs.add(f.getName());
             } else if (f.isFile()) {
-                if ("jlawyerdb-dump.sql".equals(f.getName())) {
+                if ("jlawyerdb-dump.sql.zip".equals(f.getName()) || "jlawyerdb-dump-encrypted.sql.zip".equals(f.getName())) {
                     dumpExists = true;
                 }
             }
@@ -1167,6 +1167,7 @@ public class RestoreExecutor {
             progress.onProgress("Wiederherstellung der Datenbank...");
         }
 
+        this.restoreFromTo(this.backupDirectory, this.backupDirectory, progress);
         String backup = this.backupDirectory;
         if (!backup.endsWith(File.separator)) {
             backup = backup + File.separator;
