@@ -732,25 +732,28 @@ public class IterativeBackupExecutor {
 
         File backupDir = new File(this.backupDirectory);
         backupDir.mkdirs();
-        
-        File metadataDir=new File(this.backupDirectory + File.separator + ".metadata");
-        if(!metadataDir.exists())
+
+        File metadataDir = new File(this.backupDirectory + File.separator + ".metadata");
+        if (!metadataDir.exists()) {
             metadataDir.mkdirs();
-        
-        // clear former metadata
-        for(File metaFile: metadataDir.listFiles()) {
-            if(metaFile.isFile())
-                metaFile.delete();
         }
-        
+
+        // clear former metadata
+        for (File metaFile : metadataDir.listFiles()) {
+            if (metaFile.isFile()) {
+                metaFile.delete();
+            }
+        }
+
         // store encoding, will be used by backup manager during restore
         File encodingFile = new File(this.backupDirectory + File.separator + ".metadata" + File.separator + "encoding." + Charset.defaultCharset());
         encodingFile.createNewFile();
-        
+
         // delete old zip files. the root never has a zip, except for when it is there from an old installation
-        for(File zip: backupDir.listFiles()) {
-            if(zip.isFile() && zip.getName().toLowerCase().endsWith(".zip"))
+        for (File zip : backupDir.listFiles()) {
+            if (zip.isFile() && zip.getName().toLowerCase().endsWith(".zip")) {
                 zip.delete();
+            }
         }
 
         File dumpFile = dumpDatabase(dbUser, dbPassword, dbPort, this.backupDirectory);
@@ -761,6 +764,19 @@ public class IterativeBackupExecutor {
         } else if (dumpFile.length() < 1500) {
             throw new Exception("Datenbank-Dump unvollständig!");
         }
+        // encrypt if needed
+        List<File> dumpFileList = new ArrayList<File>();
+        dumpFileList.add(dumpFile);
+        log.info("Creating zip file");
+        File targetDir = new File(this.backupDirectory);
+        targetDir.mkdirs();
+        String zipFileName = "jlawyerdb-dump" + encrypted + ".sql.zip";
+        if (encrypt) {
+            writeEncryptedZipFile(zipFileName, new File(this.backupDirectory), dumpFileList, targetDir, encryptionPassword, backupResult);
+        } else {
+            writeZipFile(zipFileName, new File(this.backupDirectory), dumpFileList, targetDir, backupResult);
+        }
+        dumpFile.delete();
 
         Date backupDate = new Date();
         ArrayList<String> errorList = new ArrayList<String>();
@@ -770,10 +786,10 @@ public class IterativeBackupExecutor {
 
                 getAllFiles(new File(this.dataDirectory + File.separator + fullBackupDir), fileList);
                 log.info("Creating zip file");
-                File targetDir = new File(this.backupDirectory + File.separator + fullBackupDir);
+                targetDir = new File(this.backupDirectory + File.separator + fullBackupDir);
                 targetDir.mkdirs();
                 this.clearDirectory(targetDir);
-                String zipFileName = df.format(backupDate) + "-" + fullBackupDir + encrypted + ".zip";
+                zipFileName = df.format(backupDate) + "-" + fullBackupDir + encrypted + ".zip";
                 if (encrypt) {
                     writeEncryptedZipFile(zipFileName, new File(this.dataDirectory + File.separator + fullBackupDir), fileList, targetDir, encryptionPassword, backupResult);
                 } else {
@@ -785,23 +801,23 @@ public class IterativeBackupExecutor {
 
                 // remove files in backup dir that are no longer in the source
                 File currentBackupDir = new File(this.backupDirectory + File.separator + itBackupDir);
-                if(currentBackupDir.exists()) {
-                for(File checkIfRemoved: currentBackupDir.listFiles()) {
-                    if(checkIfRemoved==null) {
-                        // backup dir does not exist - skip
-                        break;
-                    }
-                    if(checkIfRemoved.isDirectory()) {
-                        File test=new File(this.dataDirectory + File.separator + itBackupDir + File.separator + checkIfRemoved.getName());
-                        if(!test.exists()) {
-                            // remove
-                            this.clearDirectory(checkIfRemoved);
-                            checkIfRemoved.delete();
+                if (currentBackupDir.exists()) {
+                    for (File checkIfRemoved : currentBackupDir.listFiles()) {
+                        if (checkIfRemoved == null) {
+                            // backup dir does not exist - skip
+                            break;
+                        }
+                        if (checkIfRemoved.isDirectory()) {
+                            File test = new File(this.dataDirectory + File.separator + itBackupDir + File.separator + checkIfRemoved.getName());
+                            if (!test.exists()) {
+                                // remove
+                                this.clearDirectory(checkIfRemoved);
+                                checkIfRemoved.delete();
+                            }
                         }
                     }
                 }
-                }
-                
+
                 File dir = new File(this.dataDirectory + File.separator + itBackupDir);
                 File[] children = dir.listFiles();
                 for (File child : children) {
@@ -810,7 +826,7 @@ public class IterativeBackupExecutor {
 
                         log.info("Getting references to all files in: " + this.dataDirectory + File.separator + itBackupDir + File.separator + child.getName());
                         getAllFiles(new File(this.dataDirectory + File.separator + itBackupDir + File.separator + child.getName()), fileList);
-                        File targetDir = new File(this.backupDirectory + File.separator + itBackupDir + File.separator + child.getName());
+                        targetDir = new File(this.backupDirectory + File.separator + itBackupDir + File.separator + child.getName());
                         targetDir.mkdirs();
                         if (encrypt) {
                             // delete backups that are not encrypted
@@ -830,18 +846,18 @@ public class IterativeBackupExecutor {
                         boolean requiresUpdate = this.requiresUpdate(targetDir, fileList);
                         if (requiresUpdate) {
                             this.clearDirectory(targetDir);
-                            String zipFileName = child.getName() + encrypted + ".zip";
+                            zipFileName = child.getName() + encrypted + ".zip";
                             if (encrypt) {
                                 writeEncryptedZipFile(zipFileName, new File(this.dataDirectory + File.separator + itBackupDir + File.separator + child.getName()), fileList, targetDir, encryptionPassword, null);
                             } else {
                                 writeZipFile(zipFileName, new File(this.dataDirectory + File.separator + itBackupDir + File.separator + child.getName()), fileList, targetDir, null);
                             }
                         } else {
-                            for(File fsize: targetDir.listFiles()) {
+                            for (File fsize : targetDir.listFiles()) {
                                 // count the bytes of the backup
                                 backupResult.increaseFileSize(fsize.length());
                             }
-                            for(File fsize: new File(this.dataDirectory + File.separator + itBackupDir + File.separator + child.getName()).listFiles()) {
+                            for (File fsize : new File(this.dataDirectory + File.separator + itBackupDir + File.separator + child.getName()).listFiles()) {
                                 // and the number of files in the source
                                 backupResult.increaseFileCounter();
                             }
@@ -1045,12 +1061,11 @@ public class IterativeBackupExecutor {
 
         // Initiate ZipFile object with the path/name of the zip file.
         ZipFile zipFile = new ZipFile(backupDir.toString() + System.getProperty("file.separator") + fileName);
-        
-                // this did not work well, when unzipping on the same box with same encoding, special chars would still be messed up
+
+        // this did not work well, when unzipping on the same box with same encoding, special chars would still be messed up
 //        String fileNameEncoding = guessFileNameEncoding(fileList);
 //        log.info("guessed filename encoding " + fileNameEncoding);
 //        zipFile.setFileNameCharset(fileNameEncoding);
-
         for (File file : fileList) {
 
             if (!file.isDirectory()) { // we only zip files, not directories
@@ -1174,10 +1189,9 @@ public class IterativeBackupExecutor {
         if ((System.currentTimeMillis() - oldBackup.lastModified()) > 7 * 24 * 60 * 60 * 1000) {
             return true;
         }
-        
+
         // note: this does not respect documents that were deleted - the last modified date of the remaining files do not indicate that
         // there have been deletions - but this will be picked up with the forced backup each 7 days
-
         return false;
 
     }

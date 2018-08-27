@@ -732,7 +732,7 @@ public class BackupExecutorTest {
 //        String dataDir="/usr/local/j-lawyer-server/j-lawyer-data";
 //        String backupDir="/usr/local/j-lawyer-server/backups";
         String mysqlPwd=System.getenv("mysqlpwd");
-        mysqlPwd="sulibo64";
+        //mysqlPwd="gruetze";
         IterativeBackupExecutor ibe=new IterativeBackupExecutor(dataDir, backupDir, "root", mysqlPwd, "3306", "");
         
         try {
@@ -741,7 +741,7 @@ public class BackupExecutorTest {
             Assert.assertTrue(existsAndIsNewerThan(new File(backupDir + File.separator + "mastertemplates"), start));
             Assert.assertTrue(existsAndIsNewerThan(new File(backupDir + File.separator + "emailtemplates"), start));
             Assert.assertTrue(existsAndIsNewerThan(new File(backupDir + File.separator + "faxqueue"), start));
-            Assert.assertTrue(existsAndIsNewerThan(new File(backupDir + File.separator + "jlawyerdb-dump.sql"), start));
+            Assert.assertTrue(existsAndIsNewerThan(new File(backupDir + File.separator + "jlawyerdb-dump.sql.zip"), start));
             for(File f: new File(backupDir + File.separator + "archivefiles").listFiles()) {
                 if(f.isDirectory()) {
                     Assert.assertTrue(existsAndIsNewerThan(new File(backupDir + File.separator + "archivefiles" + File.separator + f.getName()), start));
@@ -776,7 +776,7 @@ public class BackupExecutorTest {
             Assert.assertTrue(existsAndIsNewerThan(new File(backupDir + File.separator + "mastertemplates"), start));
             Assert.assertTrue(existsAndIsNewerThan(new File(backupDir + File.separator + "emailtemplates"), start));
             Assert.assertTrue(existsAndIsNewerThan(new File(backupDir + File.separator + "faxqueue"), start));
-            Assert.assertTrue(existsAndIsNewerThan(new File(backupDir + File.separator + "jlawyerdb-dump.sql"), start));
+            Assert.assertTrue(existsAndIsNewerThan(new File(backupDir + File.separator + "jlawyerdb-dump-encrypted.sql.zip"), start));
             for(File f: new File(backupDir + File.separator + "archivefiles").listFiles()) {
                 if(f.isDirectory()) {
                     // files might not have been changed, so we do not necessarily see new zips 
