@@ -783,7 +783,9 @@ public class IterativeBackupExecutor {
         try {
             for (String fullBackupDir : fullBackupDirs) {
                 List<File> fileList = new ArrayList<File>();
-
+                
+                File checkAndCreate=new File(this.dataDirectory + File.separator + fullBackupDir);
+                checkAndCreate.mkdirs();
                 getAllFiles(new File(this.dataDirectory + File.separator + fullBackupDir), fileList);
                 log.info("Creating zip file");
                 targetDir = new File(this.backupDirectory + File.separator + fullBackupDir);
