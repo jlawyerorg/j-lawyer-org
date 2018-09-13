@@ -493,5 +493,7 @@ FOREIGN KEY (addressKey) REFERENCES AddressBean(id) ON DELETE CASCADE
 alter table campaign_addresses add index `IDX_CAMPAIGNADDRESSES_CAMPAIGNKEY` (campaignKey);
 alter table campaign_addresses add index `IDX_CAMPAIGNADDRESSES_ADDRESSKEY` (addressKey);
 
+alter table ArchiveFileBean MODIFY `reason` VARCHAR(250) BINARY;
+
 commit;
 
