@@ -856,7 +856,11 @@ public class HTMLExport {
             sb.append(toHtml4(h.getChangeDescription()));
             sb.append("</p></td></tr>");
         }
-        sContent = sContent.replaceAll("\\{\\{history\\}\\}", sb.toString());
+        try {
+            sContent = sContent.replaceAll("\\{\\{history\\}\\}", sb.toString());
+        } catch (Throwable t) {
+            log.error("failed to add history to export, replacement string was " + sb.toString(), t);
+        }
 
         ArrayList reviewsList = new ArrayList(reviews);
         Collections.sort(reviewsList, new ReviewsComparator());
