@@ -691,6 +691,9 @@ public class HtmlPanel extends javax.swing.JPanel implements PreviewPanel {
         //ThreadUtils.updateEditorPane(this.edtContent, "");
         ThreadUtils.updateHtmlEditor(this.html, "");
         ThreadUtils.enableComponent(cmdSave, !readOnly);
+        
+        ThreadUtils.enableComponent(this, !readOnly);
+        ThreadUtils.enableComponent(this.html, !readOnly);
     }
 
     /**
@@ -706,7 +709,6 @@ public class HtmlPanel extends javax.swing.JPanel implements PreviewPanel {
         html = new com.jdimension.jlawyer.client.mail.HtmlEditorPanel();
         cmdSave = new javax.swing.JButton();
 
-        html.setEnabled(false);
         html.setFocusable(false);
         jScrollPane1.setViewportView(html);
 

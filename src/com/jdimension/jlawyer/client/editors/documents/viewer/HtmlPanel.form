@@ -40,7 +40,6 @@
       <SubComponents>
         <Component class="com.jdimension.jlawyer.client.mail.HtmlEditorPanel" name="html">
           <Properties>
-            <Property name="enabled" type="boolean" value="false"/>
             <Property name="focusable" type="boolean" value="false"/>
           </Properties>
         </Component>
