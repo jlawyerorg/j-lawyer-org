@@ -704,8 +704,8 @@ public class TransientTimer {
             // start after 30s and run every 12s
             timer.schedule(new FaxQueueStatusTask(), 30000, 12000);
             
-            // start after 600s and run every 60mins
-            timer.schedule(new BackupSyncTask(), 600000, 1000*60*60);
+            // start after 600s and run every 3hrs
+            timer.schedule(new BackupSyncTask(), 600000, 1000*60*60*3);
             
         }
     }
