@@ -1079,7 +1079,7 @@ public class RestoreExecutor {
                     if (progress != null) {
                         progress.onProgress("Wiederherstellung: " + zip.getName());
                     }
-                    this.unzip(zip, to + File.separator + System.currentTimeMillis());
+                    this.unzip(zip, toDir);
                 }
             }
         } else {
