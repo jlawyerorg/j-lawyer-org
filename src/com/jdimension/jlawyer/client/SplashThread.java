@@ -717,15 +717,15 @@ import org.xml.sax.InputSource;
  * @author jens
  */
 public class SplashThread implements Runnable {
-    
+
     private static final Logger log = Logger.getLogger(SplashThread.class.getName());
-    
+
     private StartupSplashFrame splash = null;
     private ClientSettings settings = null;
     private JFrame owner = null;
 //    private static int addressCount=0;
 //    private static int archiveFileCount=0;
-    
+
     private int loadedMods = 0;
     private int numberOfMods = 0;
 
@@ -737,8 +737,10 @@ public class SplashThread implements Runnable {
         this.settings = settings;
         this.owner = owner;
     }
-    
+
     public void run() {
+        long start = System.currentTimeMillis();
+
         this.updateProgress(true, 1, 0, "");
         JLawyerServiceLocator locator = null;
         try {
@@ -750,14 +752,14 @@ public class SplashThread implements Runnable {
             ThreadUtils.showErrorDialog(this.owner, errorCaption + ": " + ex.getMessage(), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("msg.error"));
             return;
         }
-        
+
         ServerSettings serverSettings = ServerSettings.getInstance();
         if (serverSettings.hasSetting(serverSettings.PROFILE_COMPANYNAME)) {
             this.splash.setCompanyName(serverSettings.getSetting(serverSettings.PROFILE_COMPANYNAME, ""));
         }
-        
+
         this.splash.setUserInfo(UserSettings.getInstance().getCurrentUserBigIcon(), UserSettings.getInstance().getCurrentUser().getPrincipalId());
-        
+
         updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.option.0"), true);
         this.updateProgress(false, 7, 0, "");
         AppOptionGroupBean[] salutationDtos = null;
@@ -794,7 +796,7 @@ public class SplashThread implements Runnable {
             settings.setArchiveFileTagsInUse(tagsInUse);
             this.updateProgress(false, 9, 6, "");
             updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.option.6"), true);
-            
+
             List<AppUserBean> users = mgmt.getUsers();
             List<AppUserBean> lawyers = new ArrayList<AppUserBean>();
             List<AppUserBean> assistants = new ArrayList<AppUserBean>();
@@ -809,12 +811,12 @@ public class SplashThread implements Runnable {
             allUsers = users.toArray(new AppUserBean[0]);
             updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.option.7"), true);
             this.updateProgress(false, 9, 7, "");
-            
+
             this.updateProgress(false, 9, 8, "");
             updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.option.8"), true);
             afTagDtos = mgmt.getOptionGroup(OptionConstants.OPTIONGROUP_ARCHIVEFILETAGS);
             adrTagDtos = mgmt.getOptionGroup(OptionConstants.OPTIONGROUP_ADDRESSTAGS);
-            
+
             this.updateProgress(false, 9, 9, "");
             updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.option.9"), true);
             titles = mgmt.getOptionGroup(OptionConstants.OPTIONGROUP_TITLES);
@@ -836,7 +838,7 @@ public class SplashThread implements Runnable {
         UserSettings.getInstance().setAssistantUsers(assistUsers);
         UserSettings.getInstance().setAllUsers(allUsers);
         settings.setTitles(titles);
-        
+
         updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.loadingdesign"), true);
         this.countModules(settings.getRootModule());
         this.loadedMods = 0;
@@ -844,7 +846,7 @@ public class SplashThread implements Runnable {
         ThemeSettings theme = ThemeSettings.getInstance();
         ModuleMetadata rootModule = settings.getRootModule();
         this.loadTheme(theme, rootModule);
-        
+
         updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.printstubs"), true);
         try {
             this.compileReports();
@@ -854,55 +856,52 @@ public class SplashThread implements Runnable {
             return;
         }
         //updateStatus(".", true);
-        
+
         try {
             updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.help"), true);
             this.loadHelp();
         } catch (Throwable t) {
             log.error("Error loading tips of the day", t);
         }
-        
+
         try {
             updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.calculations"), true);
             this.loadCalculations();
         } catch (Throwable t) {
             log.error("Error loading calculations", t);
         }
-        
+
         updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.modules"), true);
         this.loadedMods = 0;
         this.updateProgress(false, this.numberOfMods, 0, "");
         this.preloadEditors(theme, rootModule);
         //updateStatus(".", true);
 
-//        try {
-//            updateStatus("Lade Hilfe...", true);
-//            this.loadHelp();
-//        } catch (Throwable t) {
-//            log.error("Error loading tips of the day", t);
-//        }
         updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.done"), true);
-        
+
         splash.setVisible(false);
         splash.dispose();
         splash = null;
-        
+
+        long end = System.currentTimeMillis();
+        log.info("client startup in " + (end - start) + "ms");
+
         SwingUtilities.invokeLater(
                 new Runnable() {
             public void run() {
                 //JKanzleiGUI gui=new JKanzleiGUI(SplashThread.addressCount, SplashThread.archiveFileCount);
                 JKanzleiGUI gui = new JKanzleiGUI();
-                
+
                 EditorsRegistry.getInstance().setMainWindow(gui);
-                
+
                 ClientSettings cs = ClientSettings.getInstance();
                 gui.setTitle(gui.getTitle() + " " + VersionUtils.getFullClientVersion() + " [" + UserSettings.getInstance().getCurrentUser().getPrincipalId() + "@" + cs.getConfiguration(ClientSettings.CONF_LASTSERVER, "localhost") + "]");
-                
+
                 gui.setVisible(true);
                 //gui.setDividerLocation(135);
-                
+
                 notifyEditorForStatus(ClientSettings.getInstance().getRootModule());
-                
+
                 ServerSettings serverSettings = ServerSettings.getInstance();
                 if (!serverSettings.hasSetting(serverSettings.PROFILE_COMPANYNAME) || !serverSettings.hasSetting(serverSettings.PROFILE_COMPANYSTREET) || !serverSettings.hasSetting(serverSettings.PROFILE_COMPANYZIP) || !serverSettings.hasSetting(serverSettings.PROFILE_COMPANYCITY)) {
                     int response = JOptionPane.showConfirmDialog(EditorsRegistry.getInstance().getMainWindow(), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("dlg.newprofile"), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("dlg.newprofile.title"), JOptionPane.YES_NO_OPTION);
@@ -910,16 +909,16 @@ public class SplashThread implements Runnable {
                         openProfileInformationDialog();
                     }
                 }
-                
+
                 if (!serverSettings.hasSetting(serverSettings.SERVERCONF_BACKUP_MODE)) {
                     int response = JOptionPane.showConfirmDialog(EditorsRegistry.getInstance().getMainWindow(), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("dlg.newbackup"), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("dlg.newbackup.title"), JOptionPane.YES_NO_OPTION);
                     if (response == JOptionPane.YES_OPTION) {
                         openBackupConfigurationDialog();
                     }
                 }
-                
+
                 if ("1".equals(serverSettings.getSetting(ServerSettings.SERVERCONF_REPLICATION_ISTARGET, "0"))) {
-                    StringBuffer dialogContent=new StringBuffer();
+                    StringBuffer dialogContent = new StringBuffer();
                     dialogContent.append("<html>");
                     dialogContent.append("<b>Diese Installation empf&auml;ngt momentan Daten einer anderen j-lawyer.BOX (Replikation).</b><br/>");
                     dialogContent.append("Soll die Replikation deaktiviert werden?<b/><br/>");
@@ -936,106 +935,117 @@ public class SplashThread implements Runnable {
             }
         });
     }
-    
+
     private void loadHelp() throws Exception {
         this.updateProgress(false, 1, 0, "");
-        
-        URL updateURL = new URL("https://www.j-lawyer.org/downloads/tip-list.xml");
-        URLConnection urlCon = updateURL.openConnection();
-        urlCon.setRequestProperty("User-Agent", "j-lawyer Client v" + VersionUtils.getFullClientVersion());
-        urlCon.setConnectTimeout(5000);
-        urlCon.setReadTimeout(5000);
-        
-        InputStream is = urlCon.getInputStream();
-        InputStreamReader reader = new InputStreamReader(is, "UTF-8");
-        
-        char[] buffer = new char[1024];
-        int len = 0;
-        StringBuffer sb = new StringBuffer();
-        while ((len = reader.read(buffer)) > -1) {
-            sb.append(buffer, 0, len);
-        }
-        reader.close();
-        is.close();
-        String updateContent = sb.toString();
-        
-        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-        DocumentBuilder remoteDb = dbf.newDocumentBuilder();
-        InputSource inSrc1 = new InputSource(new StringReader(updateContent));
-        inSrc1.setEncoding("UTF-8");
-        Document remoteDoc = remoteDb.parse(inSrc1);
-        
-        NodeList remoteList = remoteDoc.getElementsByTagName("tip-list");
-        String remoteVersion = remoteList.item(0).getAttributes().getNamedItem("version").getNodeValue();
-        String baseUrl = remoteList.item(0).getAttributes().getNamedItem("baseurl").getNodeValue();
-        if (!baseUrl.endsWith("/")) {
-            baseUrl = baseUrl + "/";
-        }
-        
-        remoteList = remoteDoc.getElementsByTagName("tip");
 
-        // load from server when not in cache or when version has been updated
-        boolean reload = false;
-        String tipDir = System.getProperty("user.home") + System.getProperty("file.separator") + ".j-lawyer-client" + System.getProperty("file.separator") + "tips";
-        File tipDirFile = new File(tipDir);
-        if (!tipDirFile.exists()) {
-            tipDirFile.mkdirs();
-        }
-        String tipList = tipDir + System.getProperty("file.separator") + "tip-list.xml";
-        File tipListFile = new File(tipList);
-        if (tipListFile.exists()) {
-            // check version
-            DocumentBuilder localDb = dbf.newDocumentBuilder();
-            InputSource inSrc = new InputSource(new FileReader(tipListFile));
-            inSrc.setEncoding("UTF-8");
-            Document localDoc = localDb.parse(inSrc);
-            
-            NodeList nl = localDoc.getElementsByTagName("tip-list");
-            String localVersion = nl.item(0).getAttributes().getNamedItem("version").getNodeValue();
-            
-            if (!localVersion.equalsIgnoreCase(remoteVersion)) {
-                reload = true;
-            }
-        } else {
-            reload = true;
-        }
-        
-        if (reload) {
-            // delete all including the tip-list.xml
-            File[] children = tipDirFile.listFiles();
-            for (File child : children) {
-                child.delete();
-            }
-        }
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    URL updateURL = new URL("https://www.j-lawyer.org/downloads/tip-list.xml");
+                    URLConnection urlCon = updateURL.openConnection();
+                    urlCon.setRequestProperty("User-Agent", "j-lawyer Client v" + VersionUtils.getFullClientVersion());
+                    urlCon.setConnectTimeout(5000);
+                    urlCon.setReadTimeout(5000);
 
-        // always write new tip-list.xml - it needs to be downloaded anyways!
-        FileWriter fw = new FileWriter(tipListFile);
-        fw.write(updateContent);
-        fw.close();
-        
-        if (reload) {
-            this.updateProgress(false, remoteList.getLength() + 1, 1, "");
-            // re-download all the tip html files
-            for (int i = 0; i < remoteList.getLength(); i++) {
-                this.updateProgress(false, remoteList.getLength() + 1, i + 1, "");
-                Node currentTip = remoteList.item(i);
-                String htmlName = currentTip.getAttributes().getNamedItem("file").getNodeValue();
-                this.download(baseUrl + htmlName, tipDir + System.getProperty("file.separator") + htmlName);
+                    InputStream is = urlCon.getInputStream();
+                    InputStreamReader reader = new InputStreamReader(is, "UTF-8");
+
+                    char[] buffer = new char[1024];
+                    int len = 0;
+                    StringBuffer sb = new StringBuffer();
+                    while ((len = reader.read(buffer)) > -1) {
+                        sb.append(buffer, 0, len);
+                    }
+                    reader.close();
+                    is.close();
+                    String updateContent = sb.toString();
+
+                    DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+                    DocumentBuilder remoteDb = dbf.newDocumentBuilder();
+                    InputSource inSrc1 = new InputSource(new StringReader(updateContent));
+                    inSrc1.setEncoding("UTF-8");
+                    Document remoteDoc = remoteDb.parse(inSrc1);
+
+                    NodeList remoteList = remoteDoc.getElementsByTagName("tip-list");
+                    String remoteVersion = remoteList.item(0).getAttributes().getNamedItem("version").getNodeValue();
+                    String baseUrl = remoteList.item(0).getAttributes().getNamedItem("baseurl").getNodeValue();
+                    if (!baseUrl.endsWith("/")) {
+                        baseUrl = baseUrl + "/";
+                    }
+
+                    remoteList = remoteDoc.getElementsByTagName("tip");
+
+                    // load from server when not in cache or when version has been updated
+                    boolean reload = false;
+                    String tipDir = System.getProperty("user.home") + System.getProperty("file.separator") + ".j-lawyer-client" + System.getProperty("file.separator") + "tips";
+                    File tipDirFile = new File(tipDir);
+                    if (!tipDirFile.exists()) {
+                        tipDirFile.mkdirs();
+                    }
+                    String tipList = tipDir + System.getProperty("file.separator") + "tip-list.xml";
+                    File tipListFile = new File(tipList);
+                    if (tipListFile.exists()) {
+                        // check version
+                        DocumentBuilder localDb = dbf.newDocumentBuilder();
+                        InputSource inSrc = new InputSource(new FileReader(tipListFile));
+                        inSrc.setEncoding("UTF-8");
+                        Document localDoc = localDb.parse(inSrc);
+
+                        NodeList nl = localDoc.getElementsByTagName("tip-list");
+                        String localVersion = nl.item(0).getAttributes().getNamedItem("version").getNodeValue();
+
+                        if (!localVersion.equalsIgnoreCase(remoteVersion)) {
+                            reload = true;
+                        }
+                    } else {
+                        reload = true;
+                    }
+
+                    if (reload) {
+                        // delete all including the tip-list.xml
+                        File[] children = tipDirFile.listFiles();
+                        for (File child : children) {
+                            child.delete();
+                        }
+                    }
+
+                    // always write new tip-list.xml - it needs to be downloaded anyways!
+                    FileWriter fw = new FileWriter(tipListFile);
+                    fw.write(updateContent);
+                    fw.close();
+
+                    if (reload) {
+                        //updateProgress(false, remoteList.getLength() + 1, 1, "");
+                        // re-download all the tip html files
+                        for (int i = 0; i < remoteList.getLength(); i++) {
+                            //updateProgress(false, remoteList.getLength() + 1, i + 1, "");
+                            Node currentTip = remoteList.item(i);
+                            String htmlName = currentTip.getAttributes().getNamedItem("file").getNodeValue();
+                            download(baseUrl + htmlName, tipDir + System.getProperty("file.separator") + htmlName);
+                        }
+                    }
+                } catch (Throwable t) {
+                    log.error("Error loading tip of the day", t);
+                    t.printStackTrace();
+                }
             }
-        }
-        
+
+        }).start();
+
     }
-    
+
     private void download(String url, String localFile) throws Exception {
         URL u = new URL(url);
         URLConnection urlCon = u.openConnection();
         urlCon.setRequestProperty("User-Agent", "j-lawyer Client v" + VersionUtils.getFullClientVersion());
         urlCon.setConnectTimeout(5000);
         urlCon.setReadTimeout(5000);
-        
+
         InputStream is = urlCon.getInputStream();
         InputStreamReader reader = new InputStreamReader(is);
-        
+
         char[] buffer = new char[1024];
         int len = 0;
         StringBuffer sb = new StringBuffer();
@@ -1045,12 +1055,12 @@ public class SplashThread implements Runnable {
         reader.close();
         is.close();
         String content = sb.toString();
-        
+
         FileWriter fw = new FileWriter(localFile);
         fw.write(content);
         fw.close();
     }
-    
+
     private void openProfileInformationDialog() {
         ClientSettings settings = ClientSettings.getInstance();
         try {
@@ -1070,7 +1080,7 @@ public class SplashThread implements Runnable {
             JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("msg.error.profiledialog"), new Object[]{ex.getMessage()}), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("msg.error"), JOptionPane.INFORMATION_MESSAGE);
         }
     }
-    
+
     private void openBackupConfigurationDialog() {
         ClientSettings settings = ClientSettings.getInstance();
         try {
@@ -1090,73 +1100,87 @@ public class SplashThread implements Runnable {
             JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("msg.error.backupdialog"), new Object[]{ex.getMessage()}), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("msg.error"), JOptionPane.INFORMATION_MESSAGE);
         }
     }
-    
+
     private void compileReports() throws Exception {
-        
+
         ClientSettings s = ClientSettings.getInstance();
-        
+
         updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.print.0"), true);
         this.updateProgress(false, 6, 0, "");
-        InputStream is4 = this.getClass().getClassLoader().getResourceAsStream("reports/reviews.jrxml");
-        FileOutputStream os4 = new FileOutputStream(s.getLocalReportsDirectory() + "reviews.jasper");        
-        
-        InputStream is6 = this.getClass().getClassLoader().getResourceAsStream("reports/reviews_detail.jrxml");
-        FileOutputStream os6 = new FileOutputStream(s.getLocalReportsDirectory() + "reviews_detail.jasper");        
-        
-        InputStream is5 = this.getClass().getClassLoader().getResourceAsStream("reports/archivefile.jrxml");
-        FileOutputStream os5 = new FileOutputStream(s.getLocalReportsDirectory() + "archivefile.jasper");        
-        
-        InputStream is7 = this.getClass().getClassLoader().getResourceAsStream("reports/archivefile_address_detail.jrxml");
-        FileOutputStream os7 = new FileOutputStream(s.getLocalReportsDirectory() + "archivefile_address_detail.jasper");        
-        
-        InputStream is8 = this.getClass().getClassLoader().getResourceAsStream("reports/archivefile_review_detail.jrxml");
-        FileOutputStream os8 = new FileOutputStream(s.getLocalReportsDirectory() + "archivefile_review_detail.jasper");        
-        
-        InputStream is9 = this.getClass().getClassLoader().getResourceAsStream("reports/archivefile_cost_detail.jrxml");
-        FileOutputStream os9 = new FileOutputStream(s.getLocalReportsDirectory() + "archivefile_cost_detail.jasper");
-        
-        updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.print.1"), true);
-        this.updateProgress(false, 6, 1, "");
-        JasperCompileManager.compileReportToStream(is4, os4);
-        updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.print.2"), true);
-        this.updateProgress(false, 6, 2, "");
-        JasperCompileManager.compileReportToStream(is5, os5);
-        updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.print.3"), true);
-        this.updateProgress(false, 6, 3, "");
-        JasperCompileManager.compileReportToStream(is6, os6);
-        updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.print.4"), true);
-        this.updateProgress(false, 6, 4, "");
-        JasperCompileManager.compileReportToStream(is7, os7);
-        updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.print.5"), true);
-        this.updateProgress(false, 6, 5, "");
-        JasperCompileManager.compileReportToStream(is8, os8);
-        updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.print.6"), true);
-        this.updateProgress(false, 6, 6, "");
-        JasperCompileManager.compileReportToStream(is9, os9);
-        
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+
+                    InputStream is4 = this.getClass().getClassLoader().getResourceAsStream("reports/reviews.jrxml");
+                    FileOutputStream os4 = new FileOutputStream(s.getLocalReportsDirectory() + "reviews.jasper");
+
+                    InputStream is6 = this.getClass().getClassLoader().getResourceAsStream("reports/reviews_detail.jrxml");
+                    FileOutputStream os6 = new FileOutputStream(s.getLocalReportsDirectory() + "reviews_detail.jasper");
+
+                    InputStream is5 = this.getClass().getClassLoader().getResourceAsStream("reports/archivefile.jrxml");
+                    FileOutputStream os5 = new FileOutputStream(s.getLocalReportsDirectory() + "archivefile.jasper");
+
+                    InputStream is7 = this.getClass().getClassLoader().getResourceAsStream("reports/archivefile_address_detail.jrxml");
+                    FileOutputStream os7 = new FileOutputStream(s.getLocalReportsDirectory() + "archivefile_address_detail.jasper");
+
+                    InputStream is8 = this.getClass().getClassLoader().getResourceAsStream("reports/archivefile_review_detail.jrxml");
+                    FileOutputStream os8 = new FileOutputStream(s.getLocalReportsDirectory() + "archivefile_review_detail.jasper");
+
+                    InputStream is9 = this.getClass().getClassLoader().getResourceAsStream("reports/archivefile_cost_detail.jrxml");
+                    FileOutputStream os9 = new FileOutputStream(s.getLocalReportsDirectory() + "archivefile_cost_detail.jasper");
+
+                    //updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.print.1"), true);
+                    //this.updateProgress(false, 6, 1, "");
+                    JasperCompileManager.compileReportToStream(is4, os4);
+                    //updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.print.2"), true);
+                    //this.updateProgress(false, 6, 2, "");
+                    JasperCompileManager.compileReportToStream(is5, os5);
+                    //updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.print.3"), true);
+                    //this.updateProgress(false, 6, 3, "");
+                    JasperCompileManager.compileReportToStream(is6, os6);
+                    //updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.print.4"), true);
+                    //this.updateProgress(false, 6, 4, "");
+                    JasperCompileManager.compileReportToStream(is7, os7);
+                    //updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.print.5"), true);
+                    //this.updateProgress(false, 6, 5, "");
+                    JasperCompileManager.compileReportToStream(is8, os8);
+                    //updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.print.6"), true);
+                    //this.updateProgress(false, 6, 6, "");
+                    JasperCompileManager.compileReportToStream(is9, os9);
+                } catch (Throwable t) {
+                    ThreadUtils.showErrorDialog(owner, "Fehler beim Generieren der Druckvorlagen", "Fehler");
+                    log.error("Error compiling reports", t);
+
+                }
+            }
+
+        }).start();
+
     }
-    
+
     private void countModules(ModuleMetadata module) {
         this.numberOfMods++;
         for (int i = 0; i < module.getChildCount(); i++) {
             this.countModules((ModuleMetadata) module.getChildAt(i));
         }
-        
+
     }
-    
+
     private void loadTheme(ThemeSettings theme, ModuleMetadata module) {
         this.loadedMods++;
-        
+
         this.updateStatus(java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.loadingdesign"), new Object[]{this.loadedMods, this.numberOfMods}), true);
         this.updateProgress(false, this.numberOfMods, this.loadedMods, "");
-        
+
         ClientSettings settings = ClientSettings.getInstance();
         String server = settings.getConfiguration(settings.CONF_LASTSERVER, "localhost");
         String port = settings.getConfiguration(settings.CONF_LASTHTTPPORT, "8080");
         String themeName = settings.getConfiguration(settings.CONF_THEME, "default");
         if (module.getBackgroundImage() != null) {
             //updateStatus("   Hintergrund " + module.getBackgroundImage() + "...", true);
-            
+
             try {
 
                 //Image image=javax.imageio.ImageIO.read(new java.net.URL("http://" + server + ":" + port + "/j-lawyer-server-war/themes/" + themeName + "/backgrounds/" + module.getBackgroundImage()));
@@ -1172,7 +1196,7 @@ public class SplashThread implements Runnable {
             try {
                 // loading themes from server
                 //Image image=javax.imageio.ImageIO.read(new java.net.URL("http://" + server + ":" + port + "/j-lawyer-server-war/themes/" + themeName + "/icons/" + module.getIcon()));
-                
+
                 ImageIcon image = new ImageIcon(getClass().getResource("/themes/" + themeName + "/modules16/" + module.getIcon()));
                 module.setIconAsImage(image.getImage());
             } catch (Exception ex) {
@@ -1185,14 +1209,14 @@ public class SplashThread implements Runnable {
         }
         //updateStatus(".", false);
     }
-    
+
     private void preloadEditors(ThemeSettings theme, ModuleMetadata module) {
         this.loadedMods++;
 
         //this.updateStatus(java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.loadingmodules"), new Object[] {this.loadedMods, this.numberOfMods, module.getFullName()}), true);
         this.updateStatus(java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.loadingmodules"), new Object[]{module.getFullName()}), true);
         this.updateProgress(false, this.numberOfMods, this.loadedMods, "");
-        
+
         String editorClass = ((ModuleMetadata) module).getEditorClass();
         if (editorClass != null) {
             Object editor = null;
@@ -1209,18 +1233,18 @@ public class SplashThread implements Runnable {
                         log.warn("Editor " + editorClass + " has a background image set but does not implement interface ThemeableEditor");
                     }
                 }
-                
+
             } catch (Exception ex) {
                 log.error("Error preloading editor from class " + editorClass, ex);
                 ThreadUtils.showErrorDialog(this.owner, java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("error.loadingeditor"), new Object[]{ex.getMessage()}), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("msg.error"));
             }
-            
+
         }
         for (int i = 0; i < module.getChildCount(); i++) {
             this.preloadEditors(theme, (ModuleMetadata) module.getChildAt(i));
         }
     }
-    
+
     private void notifyEditorForStatus(ModuleMetadata module) {
         String editorClass = ((ModuleMetadata) module).getEditorClass();
         if (editorClass != null) {
@@ -1228,11 +1252,11 @@ public class SplashThread implements Runnable {
             //updateStatus(".", false);
             try {
                 editor = EditorsRegistry.getInstance().getEditor(editorClass);
-                
+
                 if (editor instanceof StatusBarProvider) {
-                    
+
                     ((StatusBarProvider) editor).notifyStatusBarReady();
-                    
+
                 }
             } catch (Exception ex) {
                 log.error("Could not notify editor for status updates", ex);
@@ -1242,167 +1266,139 @@ public class SplashThread implements Runnable {
             this.notifyEditorForStatus((ModuleMetadata) module.getChildAt(i));
         }
     }
-    
+
     private void updateStatus(final String s, final boolean newLine) {
         SwingUtilities.invokeLater(
                 new Runnable() {
             public void run() {
                 if (splash != null) {
-                    
+
                     if (newLine) {
                         splash.addStatus(System.getProperty("line.separator"));
                     }
-                    
+
                     splash.addStatus(s);
                 }
             }
         });
     }
-    
+
     private void updateProgress(final boolean indeterminate, final int max, final int value, final String s) {
         SwingUtilities.invokeLater(
                 new Runnable() {
             public void run() {
                 if (splash != null) {
                     splash.setProgress(indeterminate, max, value, s);
-                    
+
                 }
             }
         });
     }
-    
+
     private void loadCalculations() throws Exception {
         this.updateProgress(false, 1, 0, "");
-        
-        URL updateURL = new URL("https://www.j-lawyer.org/downloads/j-lawyer-calculations.xml");
-        URLConnection urlCon = updateURL.openConnection();
-        urlCon.setRequestProperty("User-Agent", "j-lawyer Client v" + VersionUtils.getFullClientVersion());
-        urlCon.setConnectTimeout(5000);
-        urlCon.setReadTimeout(5000);
-        
-        InputStream is = urlCon.getInputStream();
-        InputStreamReader reader = new InputStreamReader(is, "UTF-8");
-        
-        char[] buffer = new char[1024];
-        int len = 0;
-        StringBuffer sb = new StringBuffer();
-        while ((len = reader.read(buffer)) > -1) {
-            sb.append(buffer, 0, len);
-        }
-        reader.close();
-        is.close();
-        String calculationsContent = sb.toString();
-        
-        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-        DocumentBuilder remoteDb = dbf.newDocumentBuilder();
-        InputSource inSrc1 = new InputSource(new StringReader(calculationsContent));
-        inSrc1.setEncoding("UTF-8");
-        Document remoteDoc = remoteDb.parse(inSrc1);
-        
-        NodeList remoteList = remoteDoc.getElementsByTagName("calculations");
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    URL updateURL = new URL("https://www.j-lawyer.org/downloads/j-lawyer-calculations.xml");
+                    URLConnection urlCon = updateURL.openConnection();
+                    urlCon.setRequestProperty("User-Agent", "j-lawyer Client v" + VersionUtils.getFullClientVersion());
+                    urlCon.setConnectTimeout(5000);
+                    urlCon.setReadTimeout(5000);
+
+                    InputStream is = urlCon.getInputStream();
+                    InputStreamReader reader = new InputStreamReader(is, "UTF-8");
+
+                    char[] buffer = new char[1024];
+                    int len = 0;
+                    StringBuffer sb = new StringBuffer();
+                    while ((len = reader.read(buffer)) > -1) {
+                        sb.append(buffer, 0, len);
+                    }
+                    reader.close();
+                    is.close();
+                    String calculationsContent = sb.toString();
+
+                    DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+                    DocumentBuilder remoteDb = dbf.newDocumentBuilder();
+                    InputSource inSrc1 = new InputSource(new StringReader(calculationsContent));
+                    inSrc1.setEncoding("UTF-8");
+                    Document remoteDoc = remoteDb.parse(inSrc1);
+
+                    NodeList remoteList = remoteDoc.getElementsByTagName("calculations");
 //        String remoteVersion = remoteList.item(0).getAttributes().getNamedItem("version").getNodeValue();
 //        String baseUrl = remoteList.item(0).getAttributes().getNamedItem("baseurl").getNodeValue();
 //        if(!baseUrl.endsWith("/"))
 //            baseUrl=baseUrl+"/";
-        
-        remoteList = remoteDoc.getElementsByTagName("calculation");
-        
-        System.out.println("test");
 
-        // load from server when not in cache or when version has been updated
-        String calcDir = CalculationPluginUtil.getLocalDirectory();
-        File calcDirFile = new File(calcDir);
-        if (!calcDirFile.exists()) {
-            calcDirFile.mkdirs();
-        }
-        
-        ArrayList<String> remoteCalcs = new ArrayList<String>();
-        ArrayList<CalculationPlugin> calcPlugins=new ArrayList<CalculationPlugin>();
-        for (int i = 0; i < remoteList.getLength(); i++) {
-            Node n = remoteList.item(i);
-            String forVersion = n.getAttributes().getNamedItem("for").getNodeValue();
-            if (VersionUtils.getFullClientVersion().equals(forVersion)) {
-                remoteCalcs.add(n.getAttributes().getNamedItem("name").getNodeValue() + n.getAttributes().getNamedItem("version").getNodeValue());
-                CalculationPlugin cp=new CalculationPlugin();
-                cp.setForVersion(n.getAttributes().getNamedItem("for").getNodeValue());
-                cp.setId(n.getAttributes().getNamedItem("name").getNodeValue());
-                cp.setVersion(n.getAttributes().getNamedItem("version").getNodeValue());
-                cp.setUrl(n.getAttributes().getNamedItem("url").getNodeValue());
-                String files=n.getAttributes().getNamedItem("files").getNodeValue();
-                for(String f: files.split(",")) {
-                    cp.getFiles().add(f);
-                }
-                calcPlugins.add(cp);
-            }
-        }
-        
-        Hashtable<String, String> localCalcs = new Hashtable<String, String>();
-        for (File c : calcDirFile.listFiles()) {
-            if (c.isFile()) {
-                if(c.getName().toLowerCase().endsWith("_meta.groovy")) {
-                    String plugName=c.getName().substring(0, c.getName().indexOf("_meta"));
-                    String plugVersion=CalculationPluginUtil.checkVersion(c);
-                    
-                        localCalcs.put(plugName, plugVersion);
-                        if (!remoteCalcs.contains(plugName + plugVersion)) {
-                            c.delete();
+                    remoteList = remoteDoc.getElementsByTagName("calculation");
+
+                    System.out.println("test");
+
+                    // load from server when not in cache or when version has been updated
+                    String calcDir = CalculationPluginUtil.getLocalDirectory();
+                    File calcDirFile = new File(calcDir);
+                    if (!calcDirFile.exists()) {
+                        calcDirFile.mkdirs();
+                    }
+
+                    ArrayList<String> remoteCalcs = new ArrayList<String>();
+                    ArrayList<CalculationPlugin> calcPlugins = new ArrayList<CalculationPlugin>();
+                    for (int i = 0; i < remoteList.getLength(); i++) {
+                        Node n = remoteList.item(i);
+                        String forVersion = n.getAttributes().getNamedItem("for").getNodeValue();
+                        if (VersionUtils.getFullClientVersion().equals(forVersion)) {
+                            remoteCalcs.add(n.getAttributes().getNamedItem("name").getNodeValue() + n.getAttributes().getNamedItem("version").getNodeValue());
+                            CalculationPlugin cp = new CalculationPlugin();
+                            cp.setForVersion(n.getAttributes().getNamedItem("for").getNodeValue());
+                            cp.setId(n.getAttributes().getNamedItem("name").getNodeValue());
+                            cp.setVersion(n.getAttributes().getNamedItem("version").getNodeValue());
+                            cp.setUrl(n.getAttributes().getNamedItem("url").getNodeValue());
+                            String files = n.getAttributes().getNamedItem("files").getNodeValue();
+                            for (String f : files.split(",")) {
+                                cp.getFiles().add(f);
+                            }
+                            calcPlugins.add(cp);
                         }
-                    
+                    }
+
+                    Hashtable<String, String> localCalcs = new Hashtable<String, String>();
+                    for (File c : calcDirFile.listFiles()) {
+                        if (c.isFile()) {
+                            if (c.getName().toLowerCase().endsWith("_meta.groovy")) {
+                                String plugName = c.getName().substring(0, c.getName().indexOf("_meta"));
+                                String plugVersion = CalculationPluginUtil.checkVersion(c);
+
+                                localCalcs.put(plugName, plugVersion);
+                                if (!remoteCalcs.contains(plugName + plugVersion)) {
+                                    c.delete();
+                                }
+
+                            }
+                        }
+                    }
+
+                    //this.updateProgress(false, calcPlugins.size() + 1, 1, "");
+                    int i = 1;
+                    for (CalculationPlugin p : calcPlugins) {
+                        boolean forceDownload = false;
+                        if (localCalcs.containsKey(p.getId()) && !(localCalcs.get(p.getId()).equals(p.getVersion()))) {
+                            forceDownload = true;
+                        }
+                        p.download(forceDownload);
+                        i++;
+                        //this.updateProgress(false, calcPlugins.size() + 1, i, "");
+                    }
+                } catch (Throwable t) {
+                    log.error("Error downloading calculation plugins", t);
+                    t.printStackTrace();
                 }
             }
-        }
-    
-        this.updateProgress(false, calcPlugins.size() + 1, 1, "");
-        int i=1;
-        for (CalculationPlugin p: calcPlugins) {
-            boolean forceDownload=false;
-            if(localCalcs.containsKey(p.getId()) && !(localCalcs.get(p.getId()).equals(p.getVersion())))
-                forceDownload=true;
-            p.download(forceDownload);
-            i++;
-            this.updateProgress(false, calcPlugins.size() + 1, i, "");
-        }
 
-//        String tipList=tipDir + System.getProperty("file.separator") + "tip-list.xml";
-//        File tipListFile=new File(tipList);
-//        if(tipListFile.exists()) {
-//            // check version
-//            DocumentBuilder localDb = dbf.newDocumentBuilder();
-//            InputSource inSrc=new InputSource(new FileReader(tipListFile));.getAttributes().getNamedItem("version").getNodeValue()
-//            inSrc.setEncoding("UTF-8");
-//            Document localDoc = localDb.parse(inSrc);
-//
-//            NodeList nl = localDoc.getElementsByTagName("tip-list");
-//            String localVersion = nl.item(0).getAttributes().getNamedItem("version").getNodeValue();
-//            
-//            if(!localVersion.equalsIgnoreCase(remoteVersion))
-//                reload=true;
-//        } else {
-//            reload = true;
-//        }
-//        
-//        if(reload) {
-//            // delete all including the tip-list.xml
-//            File[] children=tipDirFile.listFiles();
-//            for(File child: children)
-//                child.delete();
-//        }
-//        
-//        // always write new tip-list.xml - it needs to be downloaded anyways!
-//        FileWriter fw=new FileWriter(tipListFile);
-//        fw.write(updateContent);
-//        fw.close();
-//        
-//        if(reload) {
-//            this.updateProgress(false, remoteList.getLength()+1, 1, "");
-//            // re-download all the tip html files
-//            for(int i=0;i<remoteList.getLength();i++) {
-//                this.updateProgress(false, remoteList.getLength()+1, i+1, "");
-//                Node currentTip=remoteList.item(i);
-//                String htmlName = currentTip.getAttributes().getNamedItem("file").getNodeValue();
-//                this.download(baseUrl + htmlName, tipDir + System.getProperty("file.separator") + htmlName);
-//            }
-//        }
+        }).start();
+
     }
-    
+
 }

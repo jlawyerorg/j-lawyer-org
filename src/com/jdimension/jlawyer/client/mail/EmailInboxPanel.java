@@ -958,13 +958,29 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
 
         this.inboxFolder = new FolderContainer(folder);
         DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode(this.inboxFolder);
-        this.traverseFolders(new FolderContainer(folder), rootNode);
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                traverseFolders(inboxFolder, rootNode);
+                DefaultTreeModel tm = new DefaultTreeModel(rootNode);
+                treeFolders.setModel(tm);
+                JTreeUtils.expandAll(treeFolders);
+                treeFolders.setCellRenderer(renderer);
+                } catch (Throwable t) {
+                    log.error("Could not load folder");
+                    t.printStackTrace();
+                }
+            }
+            
+        }).start();
+        //this.traverseFolders(new FolderContainer(folder), rootNode);
 
-        DefaultTreeModel tm = new DefaultTreeModel(rootNode);
-        this.treeFolders.setModel(tm);
-        JTreeUtils.expandAll(this.treeFolders);
+        //DefaultTreeModel tm = new DefaultTreeModel(rootNode);
+        //this.treeFolders.setModel(tm);
+        //JTreeUtils.expandAll(this.treeFolders);
 
-        this.treeFolders.setCellRenderer(this.renderer);
+        //this.treeFolders.setCellRenderer(this.renderer);
 
     }
 

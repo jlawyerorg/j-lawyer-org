@@ -673,11 +673,11 @@ public class AllHistoryPanel extends HistoryPanel {
     
     public AllHistoryPanel() {
         super(null, "Historie");
-        try {
-            Thread.sleep(1010);
-        } catch (Throwable t) {
-            
-        }
+//        try {
+//            Thread.sleep(1010);
+//        } catch (Throwable t) {
+//            
+//        }
     }
     
 }

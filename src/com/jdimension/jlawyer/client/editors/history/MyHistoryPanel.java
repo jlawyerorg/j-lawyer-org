@@ -677,6 +677,7 @@ public class MyHistoryPanel extends HistoryPanel {
         super(UserSettings.getInstance().getCurrentUser().getPrincipalId(), "Meine Timeline");
         try {
             Thread.sleep(1010);
+            //Thread.sleep(600);
         } catch (Throwable t) {
             
         }

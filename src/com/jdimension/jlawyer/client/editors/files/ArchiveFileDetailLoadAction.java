@@ -765,9 +765,9 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
         Collection documents = null;
         List<AddressBean> addressesForCase = null;
         List<ArchiveFileAddressesBean> involvementForCase = null;
-        Collection clients = null;
-        Collection opponents = null;
-        Collection opponentAttorneys = null;
+        //Collection clients = null;
+        //Collection opponents = null;
+        //Collection opponentAttorneys = null;
         Collection reviews = null;
         Collection tags = null;
 
@@ -782,16 +782,16 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
             this.progress("Lade Akte: Historie...");
             fileService = locator.lookupArchiveFileServiceRemote();
             dtos = fileService.getHistoryForArchiveFile(this.archiveFileKey);
-            this.progress("Lade Akte: Mandanten...");
-            clients = fileService.getClients(this.archiveFileKey);
+            this.progress("Lade Akte: Beteiligte...");
+            //clients = fileService.getClients(this.archiveFileKey);
 
             addressesForCase = fileService.getAddressesForCase(archiveFileKey);
             involvementForCase = fileService.getInvolvementDetailsForCase(archiveFileKey);
 
-            this.progress("Lade Akte: Gegner...");
-            opponents = fileService.getOpponents(this.archiveFileKey);
-            this.progress("Lade Akte: Dritte...");
-            opponentAttorneys = fileService.getOpponentAttorneys(this.archiveFileKey);
+//            this.progress("Lade Akte: Gegner...");
+//            opponents = fileService.getOpponents(this.archiveFileKey);
+//            this.progress("Lade Akte: Dritte...");
+//            opponentAttorneys = fileService.getOpponentAttorneys(this.archiveFileKey);
             this.progress("Lade Akte: Wiedervorlagen und Fristen...");
             reviews = fileService.getReviews(this.archiveFileKey);
             this.progress("Lade Akte: Dokumente...");

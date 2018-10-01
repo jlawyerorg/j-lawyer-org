@@ -924,7 +924,7 @@
                   <Border info="null"/>
                 </Property>
                 <Property name="contentType" type="java.lang.String" value="text/html" noResource="true"/>
-                <Property name="text" type="java.lang.String" value="&lt;html&gt;   &lt;head&gt;    &lt;/head&gt;   &lt;body&gt;     &lt;p style=&quot;margin-top: 0&quot;&gt;  bla         &lt;/p&gt;   &lt;/body&gt; &lt;/html&gt; "/>
+                <Property name="text" type="java.lang.String" value="&lt;html&gt;   &lt;head&gt;    &lt;/head&gt;   &lt;body&gt;     &lt;p style=&quot;margin-top: 0&quot;&gt;  Tipps sind noch nicht vollst&amp;auml;ndig geladen...         &lt;/p&gt;   &lt;/body&gt; &lt;/html&gt; "/>
                 <Property name="opaque" type="boolean" value="false"/>
               </Properties>
             </Component>

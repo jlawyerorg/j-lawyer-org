@@ -1374,7 +1374,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         editTipOfDay.setEditable(false);
         editTipOfDay.setBorder(null);
         editTipOfDay.setContentType("text/html"); // NOI18N
-        editTipOfDay.setText("<html>   <head>    </head>   <body>     <p style=\"margin-top: 0\">  bla         </p>   </body> </html> ");
+        editTipOfDay.setText("<html>   <head>    </head>   <body>     <p style=\"margin-top: 0\">  Tipps sind noch nicht vollst&auml;ndig geladen...         </p>   </body> </html> ");
         editTipOfDay.setOpaque(false);
         jScrollPane2.setViewportView(editTipOfDay);
 
