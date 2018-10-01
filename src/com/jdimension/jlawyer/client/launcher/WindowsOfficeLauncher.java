@@ -766,14 +766,14 @@ public class WindowsOfficeLauncher extends OfficeLauncher {
 
                             if (exit != 0) {
                                 log.error("observer NOT closing due to exit code " + exit);
-                                throw new Exception("LibreOffice / OpenOffice nicht installiert!");
+                                throw new Exception("LibreOffice nicht installiert (Exitcode: " + exit + ")!");
                             } else {
                                 log.debug("observer status closed " + odoc.getName());
                                 odoc.setClosed(true);
                             }
                         } catch (Throwable ex) {
                             log.error("error starting soffice", ex);
-                            throw new Exception("LibreOffice / OpenOffice nicht installiert oder PATH nicht gesetzt: " + ex.getMessage());
+                            throw new Exception("LibreOffice nicht installiert oder PATH nicht gesetzt: " + ex.getMessage());
                         }
 
                     }
