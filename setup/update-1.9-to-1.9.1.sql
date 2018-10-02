@@ -1,6 +1,6 @@
 use jlawyerdb;
 
-alter table ArchiveFileAddressesBean add `reference` VARCHAR(50) BINARY;
+alter table ArchiveFileAddressesBean add `reference` VARCHAR(250) BINARY;
 # Sachbearbeiter
 alter table ArchiveFileAddressesBean add `contact` VARCHAR(250) BINARY;
 alter table ArchiveFileAddressesBean add `custom1` VARCHAR(250) BINARY;
