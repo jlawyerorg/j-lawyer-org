@@ -714,10 +714,10 @@ public class IterativeBackupTask extends java.util.TimerTask {
     public void run() {
 
         Date backupStart = new Date();
-        Date syncStart = null;
-        Date syncEnd = null;
-        Date exportStart = null;
-        Date exportEnd = null;
+        Date syncStart = new Date();
+        Date syncEnd = new Date();
+        Date exportStart = new Date();
+        Date exportEnd = new Date();
 
         String dbUser = "";
         String dbPassword = "";
