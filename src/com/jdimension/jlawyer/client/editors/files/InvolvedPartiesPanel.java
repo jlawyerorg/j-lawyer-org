@@ -726,7 +726,7 @@ public class InvolvedPartiesPanel extends javax.swing.JPanel {
         return parties;
     }
     
-    public List<ArchiveFileAddressesBean> getInvolvedParties() {
+    public ArrayList<ArchiveFileAddressesBean> getInvolvedParties() {
         ArrayList<ArchiveFileAddressesBean> parties=new ArrayList<ArchiveFileAddressesBean>();
         for(Component c: this.getComponents()) {
             if(c instanceof InvolvedPartyEntryPanel) {

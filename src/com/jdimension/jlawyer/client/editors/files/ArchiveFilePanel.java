@@ -3666,6 +3666,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         //dlg.setTo(ab.getEmail());
 
         dlg.setArchiveFile(dto);
+        dlg.setInvolvedInCase(this.pnlInvolvedParties.getInvolvedParties());
         for (AddressBean abean : this.pnlInvolvedParties.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_CLIENT)) {
             dlg.addToClient(abean);
         }
@@ -3704,6 +3705,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     private void mnuSendDocumentPDFActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSendDocumentPDFActionPerformed
         SendEmailDialog dlg = new SendEmailDialog(EditorsRegistry.getInstance().getMainWindow(), false);
+        dlg.setInvolvedInCase(this.pnlInvolvedParties.getInvolvedParties());
         //dlg.setTo(ab.getEmail());
 
         dlg.setArchiveFile(dto);
