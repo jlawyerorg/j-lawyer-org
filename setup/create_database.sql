@@ -1,3 +1,5 @@
+drop database if exists jlawyerdb;
+
 create database jlawyerdb;
 
 use jlawyerdb;
