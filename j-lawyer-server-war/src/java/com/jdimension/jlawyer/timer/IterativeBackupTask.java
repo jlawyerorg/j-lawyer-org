@@ -712,6 +712,8 @@ public class IterativeBackupTask extends java.util.TimerTask {
 
     @Override
     public void run() {
+        
+        log.info("backup task is starting");
 
         Date backupStart = new Date();
         Date syncStart = new Date();
@@ -736,6 +738,7 @@ public class IterativeBackupTask extends java.util.TimerTask {
             ServerSettingsBeanFacadeLocal settings = (ServerSettingsBeanFacadeLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ServerSettingsBeanFacade!com.jdimension.jlawyer.persistence.ServerSettingsBeanFacadeLocal");
             ServerSettingsBean mode = settings.find("jlawyer.server.backup.backupmode");
             if (!this.adHoc) {
+                log.info("backup mode: " + mode);
                 if (mode != null) {
                     if ("off".equalsIgnoreCase(mode.getSettingValue())) {
                         return;
@@ -751,8 +754,13 @@ public class IterativeBackupTask extends java.util.TimerTask {
                     if (encryptPwd.getSettingValue().length() > 0) {
                         encrypt = true;
                         encryptionPassword = encryptPwd.getSettingValue();
+                        log.info("encryption is enabled");
                     }
+                } else {
+                    log.info("encryption is disabled");
                 }
+            } else {
+                log.info("encryption is disabled");
             }
 
             ServerSettingsBean dbUserB = settings.find("jlawyer.server.backup.dbuser");
@@ -807,18 +815,25 @@ public class IterativeBackupTask extends java.util.TimerTask {
                 Calendar now = Calendar.getInstance();
                 int weekday = now.get(Calendar.DAY_OF_WEEK);
                 if (weekday == Calendar.MONDAY && mon == false) {
+                    log.info("backup disabled for this weekday");
                     return;
                 } else if (weekday == Calendar.TUESDAY && tue == false) {
+                    log.info("backup disabled for this weekday");
                     return;
                 } else if (weekday == Calendar.WEDNESDAY && wed == false) {
+                    log.info("backup disabled for this weekday");
                     return;
                 } else if (weekday == Calendar.THURSDAY && thu == false) {
+                    log.info("backup disabled for this weekday");
                     return;
                 } else if (weekday == Calendar.FRIDAY && fri == false) {
+                    log.info("backup disabled for this weekday");
                     return;
                 } else if (weekday == Calendar.SATURDAY && sat == false) {
+                    log.info("backup disabled for this weekday");
                     return;
                 } else if (weekday == Calendar.SUNDAY && sun == false) {
+                    log.info("backup disabled for this weekday");
                     return;
                 }
 
@@ -829,6 +844,7 @@ public class IterativeBackupTask extends java.util.TimerTask {
                     hourS = hourB.getSettingValue();
                 }
                 if (hour != Integer.parseInt(hourS)) {
+                    log.info("backup not scheduled for hour " + hour);
                     return;
                 }
             }
@@ -837,24 +853,29 @@ public class IterativeBackupTask extends java.util.TimerTask {
             log.error("Error getting ServerSettingsBean", t);
         }
 
+        log.info("getting directories...");
         File directoryToZip = new File(System.getProperty("jlawyer.server.basedirectory").trim());
         String backupDir = directoryToZip.getParentFile().getPath() + System.getProperty("file.separator") + "backups";
         String dataDir = directoryToZip.getParentFile().getPath() + System.getProperty("file.separator") + "j-lawyer-data";
 
         
+        log.info("initializing backup executor");
         IterativeBackupExecutor ibe = new IterativeBackupExecutor(dataDir, backupDir, dbUser, dbPassword, dbPort, encryptionPassword);
         String subject = "";
         StringBuffer body = new StringBuffer();
         BackupResult backupResult=null;
         try {
+            log.info("starting backup");
             backupResult=ibe.execute();
         } catch (Throwable t) {
+            log.error("backup executor failed", t);
             subject = "Fehlgeschlagen: ";
             body.append(t.getMessage()).append("\r\n\r\n");
         }
 
         File exportDir = null;
         if (exportLocation.length() > 0) {
+            log.info("initializing export directory");
             exportDir = new File(exportLocation);
             exportDir.mkdirs();
         }
