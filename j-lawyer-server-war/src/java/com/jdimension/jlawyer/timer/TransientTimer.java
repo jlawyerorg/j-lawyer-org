@@ -676,7 +676,9 @@ public class TransientTimer {
     private static Logger log = Logger.getLogger(TransientTimer.class.getName());
     private static TransientTimer instance=null;
     
-    private Timer timer=null;
+    private Timer timerBackup=null;
+    private Timer timerSync=null;
+    private Timer timerObserver=null;
     
     private TransientTimer() {
         
@@ -689,36 +691,53 @@ public class TransientTimer {
     }
     
     public void start() {
-        if(timer==null) {
-            timer=new Timer();
+        if(timerBackup==null) {
+            timerBackup=new Timer();
             
             // start after 5mins and run every 60mins
-            timer.schedule(new IterativeBackupTask(), 60000*5, 60000*60);
+            timerBackup.schedule(new IterativeBackupTask(), 60000*5, 60000*60);
             
-            // start after 20s and run every 12s
-            timer.schedule(new DirectoryObserverTask(), 20000, 12000);
             
-            // start after 25s and run every 10mins
-            timer.schedule(new SystemMonitorTask(), 25000, 60000*10);
-            
-            // start after 30s and run every 12s
-            timer.schedule(new FaxQueueStatusTask(), 30000, 12000);
+        }
+        
+        if(timerSync==null) {
+            timerSync=new Timer();
             
             // start after 600s and run every 3hrs
-            timer.schedule(new BackupSyncTask(), 600000, 1000*60*60*3);
+            timerSync.schedule(new BackupSyncTask(), 600000, 1000*60*60*3);
+            
+        }
+        
+        if(timerObserver==null) {
+            timerObserver=new Timer();
+            
+            // start after 20s and run every 12s
+            timerObserver.schedule(new DirectoryObserverTask(), 20000, 12000);
+            
+            // start after 25s and run every 10mins
+            timerObserver.schedule(new SystemMonitorTask(), 25000, 60000*10);
+            
+            // start after 30s and run every 12s
+            timerObserver.schedule(new FaxQueueStatusTask(), 30000, 12000);
             
         }
     }
     
     public void scheduleAdHocBackup() {
-        if(timer!=null) {
-            timer.schedule(new IterativeBackupTask(true), 3000);
+        if(timerBackup!=null) {
+            timerBackup.schedule(new IterativeBackupTask(true), 3000);
         }
     }
     
     public void stop() {
-        if(timer!=null)
-            timer.cancel();
+        if(timerBackup!=null)
+            timerBackup.cancel();
+        
+        if(timerSync!=null)
+            timerSync.cancel();
+        
+        if(timerObserver!=null)
+            timerObserver.cancel();
     }
     
 }
