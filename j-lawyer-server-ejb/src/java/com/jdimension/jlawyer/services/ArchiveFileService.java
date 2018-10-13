@@ -2984,6 +2984,21 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         }
         return addressList;
     }
+    
+    private String getSortString(ArchiveFileAddressesBean afab) {
+        // 1 for clients, 2 for opponents, 3 for others
+        String sortString = "1";
+        if (afab != null) {
+            if (afab.getReferenceType() == ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT) {
+                sortString = "2";
+            } else if (afab.getReferenceType() == ArchiveFileAddressesBean.REFERENCETYPE_OPPONENTATTORNEY) {
+                sortString = "3";
+            }
+
+            sortString = sortString + afab.getAddressKey().toDisplayName();
+        }
+        return sortString;
+    }
 
     @Override
     @RolesAllowed({"readArchiveFileRole"})
@@ -2992,18 +3007,27 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         List resultList = this.archiveFileAddressesFacade.findByArchiveFileKey(aFile);
         if (resultList != null) {
             if (resultList.size() > 0) {
-                Collections.sort(resultList, new Comparator() {
-                    @Override
-                    public int compare(Object o1, Object o2) {
-                        if (o1 != null && o2 != null) {
-                            if (o1 instanceof ArchiveFileAddressesBean && o2 instanceof ArchiveFileAddressesBean) {
-                                return ((ArchiveFileAddressesBean)o1).getReferenceTypeAsString().compareTo(((ArchiveFileAddressesBean)o2).getReferenceTypeAsString());
+                try {
+                    Collections.sort(resultList, new Comparator() {
+                        @Override
+                        public int compare(Object o1, Object o2) {
+                            if (o1 != null && o2 != null) {
+                                if (o1 instanceof ArchiveFileAddressesBean && o2 instanceof ArchiveFileAddressesBean) {
+                                    //return ((ArchiveFileAddressesBean) o1).getReferenceTypeAsString().compareTo(((ArchiveFileAddressesBean) o2).getReferenceTypeAsString());
+                                    return getSortString((ArchiveFileAddressesBean) o1).compareTo(getSortString((ArchiveFileAddressesBean) o2));
+                                    // sort by reference type, followed by display name
+                                    
+                                }
                             }
+                            return -1;
                         }
-                        return -1;
-                    }
 
-                });
+                    });
+                } catch (Throwable t) {
+                    // log, but do not fail
+                    // return unsorted
+                    log.error("Error sorting involvement details", t);
+                }
             }
         }
         return resultList;
