@@ -914,7 +914,8 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
         this.progress("Aktualisiere Dialog: Mandanten...");
 
         this.contactsForCasePanel.removeAll();
-        GridLayout layout = new GridLayout(involvementForCase.size(), 1);
+        //GridLayout layout = new GridLayout(involvementForCase.size(), 1);
+        BoxLayout layout=new javax.swing.BoxLayout(this.contactsForCasePanel, javax.swing.BoxLayout.Y_AXIS);
         this.contactsForCasePanel.setLayout(layout);
         int i = 0;
         for (ArchiveFileAddressesBean afab : involvementForCase) {
@@ -937,7 +938,7 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
             i++;
 
         }
-        layout.setRows(i);
+        //layout.setRows(i);
 
         this.progress("Aktualisiere Dialog: Gegner...");
 

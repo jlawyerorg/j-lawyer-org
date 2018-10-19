@@ -799,7 +799,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.initializing = true;
         initComponents();
 
-        GridLayout layout = new GridLayout(1, 1);
+        //GridLayout layout = new GridLayout(1, 1);
+        BoxLayout layout=new javax.swing.BoxLayout(this.pnlInvolvedParties, javax.swing.BoxLayout.Y_AXIS);
         this.pnlInvolvedParties.setLayout(layout);
 
         this.initializing = false;
@@ -3060,7 +3061,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         ipep.setEntry(adrb, afab);
         ipep.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        GridLayout layout = new GridLayout(this.pnlInvolvedParties.getComponentCount() + 1, 1);
+        //GridLayout layout = new GridLayout(this.pnlInvolvedParties.getComponentCount() + 1, 1);
+        BoxLayout layout=new javax.swing.BoxLayout(this.pnlInvolvedParties, javax.swing.BoxLayout.Y_AXIS);
         this.pnlInvolvedParties.setLayout(layout);
 
         this.pnlInvolvedParties.add(ipep);
