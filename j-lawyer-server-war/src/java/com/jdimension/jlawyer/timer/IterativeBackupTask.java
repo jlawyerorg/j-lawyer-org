@@ -694,7 +694,9 @@ import org.apache.tika.parser.txt.CharsetDetector;
  * @author jens
  */
 @javax.annotation.security.RunAs("readArchiveFileRole")
-public class IterativeBackupTask extends java.util.TimerTask {
+public class IterativeBackupTask extends java.util.TimerTask implements CancellationTask {
+    
+    private static boolean isRunning=false;
 
     private static Logger log = Logger.getLogger(IterativeBackupTask.class.getName());
     private static SimpleDateFormat dfMailDate = new SimpleDateFormat("dd.MM.yyyy");
@@ -714,6 +716,7 @@ public class IterativeBackupTask extends java.util.TimerTask {
     public void run() {
         
         log.info("backup task is starting");
+        isRunning=true;
 
         Date backupStart = new Date();
         Date syncStart = new Date();
@@ -741,9 +744,11 @@ public class IterativeBackupTask extends java.util.TimerTask {
                 log.info("backup mode: " + mode);
                 if (mode != null) {
                     if ("off".equalsIgnoreCase(mode.getSettingValue())) {
+                        isRunning=false;
                         return;
                     }
                 } else {
+                    isRunning=false;
                     return;
                 }
             }
@@ -780,6 +785,7 @@ public class IterativeBackupTask extends java.util.TimerTask {
 
             if (dbUser == null || "".equals(dbUser)) {
                 log.warn("missing backup configuration - skipping backup!");
+                isRunning=false;
                 return;
             }
 
@@ -816,24 +822,31 @@ public class IterativeBackupTask extends java.util.TimerTask {
                 int weekday = now.get(Calendar.DAY_OF_WEEK);
                 if (weekday == Calendar.MONDAY && mon == false) {
                     log.info("backup disabled for this weekday");
+                    isRunning=false;
                     return;
                 } else if (weekday == Calendar.TUESDAY && tue == false) {
                     log.info("backup disabled for this weekday");
+                    isRunning=false;
                     return;
                 } else if (weekday == Calendar.WEDNESDAY && wed == false) {
                     log.info("backup disabled for this weekday");
+                    isRunning=false;
                     return;
                 } else if (weekday == Calendar.THURSDAY && thu == false) {
                     log.info("backup disabled for this weekday");
+                    isRunning=false;
                     return;
                 } else if (weekday == Calendar.FRIDAY && fri == false) {
                     log.info("backup disabled for this weekday");
+                    isRunning=false;
                     return;
                 } else if (weekday == Calendar.SATURDAY && sat == false) {
                     log.info("backup disabled for this weekday");
+                    isRunning=false;
                     return;
                 } else if (weekday == Calendar.SUNDAY && sun == false) {
                     log.info("backup disabled for this weekday");
+                    isRunning=false;
                     return;
                 }
 
@@ -845,6 +858,7 @@ public class IterativeBackupTask extends java.util.TimerTask {
                 }
                 if (hour != Integer.parseInt(hourS)) {
                     log.info("backup not scheduled for hour " + hour);
+                    isRunning=false;
                     return;
                 }
             }
@@ -890,7 +904,7 @@ public class IterativeBackupTask extends java.util.TimerTask {
 
                 try {
                     VirtualFile vf = VirtualFile.getFile(syncLocation);
-                    FolderSync sync = new FolderSync(new File(backupDir), vf);
+                    FolderSync sync = new FolderSync(new File(backupDir), vf, null);
                     // we can be sure the file is written, so sync without lastmodified check
                     sync.synchronize(0);
                     vf.close();
@@ -998,6 +1012,7 @@ public class IterativeBackupTask extends java.util.TimerTask {
         } catch (Throwable t) {
             log.error("Could not send status mail", t);
         }
+        isRunning=false;
 
     }
 
@@ -1118,5 +1133,10 @@ public class IterativeBackupTask extends java.util.TimerTask {
      */
     public void setAdHoc(boolean adHoc) {
         this.adHoc = adHoc;
+    }
+
+    @Override
+    public boolean requestsCancellation() {
+        return isRunning;
     }
 }

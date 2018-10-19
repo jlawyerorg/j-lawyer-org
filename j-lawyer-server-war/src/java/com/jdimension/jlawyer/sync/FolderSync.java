@@ -664,6 +664,7 @@
 package com.jdimension.jlawyer.sync;
 
 import com.jdimension.jlawyer.storage.VirtualFile;
+import com.jdimension.jlawyer.timer.CancellationTask;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -679,10 +680,12 @@ public class FolderSync {
     
     private File from=null;
     private VirtualFile to=null;
+    private CancellationTask cancelWhenRunning=null;
     
-    public FolderSync(File from, VirtualFile target) {
+    public FolderSync(File from, VirtualFile target, CancellationTask cancelWhenRunning) {
         this.from=from;
         this.to=target;
+        this.cancelWhenRunning=cancelWhenRunning;
     }
     
     public void synchronize() throws Exception {
@@ -709,12 +712,24 @@ public class FolderSync {
             File[] sourceFiles=from.listFiles();
             ArrayList<String>sourceFileNames=new ArrayList<String>();
             for(File f: sourceFiles) {
+                if(this.cancelWhenRunning!=null) {
+                    if(this.cancelWhenRunning.requestsCancellation()) {
+                        log.warn("sync cancellation requested by other task");
+                        return;
+                    }
+                }
                 if(f.isFile())
                     sourceFileNames.add(f.getName());
             }
             
             // iterate over target files
             for(VirtualFile f: to.listFiles()) {
+                if(this.cancelWhenRunning!=null) {
+                    if(this.cancelWhenRunning.requestsCancellation()) {
+                        log.warn("sync cancellation requested by other task");
+                        return;
+                    }
+                }
                 if(f.isFile() && !sourceFileNames.contains(f.getName())) {
                     log.info("Deleting " + f.getName() + " from sync location");
                     f.delete();
@@ -735,6 +750,12 @@ public class FolderSync {
             
             // iterate over source files
             for(File f: from.listFiles()) {
+                if(this.cancelWhenRunning!=null) {
+                    if(this.cancelWhenRunning.requestsCancellation()) {
+                        log.warn("sync cancellation requested by other task");
+                        return;
+                    }
+                }
                 if(f.isFile()) {
                     if(!targetFileNames.contains(f.getName())) {
                         // only copy if not currently being written (last modified at least 3 mins ago)
@@ -747,6 +768,12 @@ public class FolderSync {
                         long fromLength=f.length();
                         long toLength=-1;
                         for(VirtualFile toFile: targetFiles) {
+                            if(this.cancelWhenRunning!=null) {
+                    if(this.cancelWhenRunning.requestsCancellation()) {
+                        log.warn("sync cancellation requested by other task");
+                        return;
+                    }
+                }
                             if(toFile.isFile() && toFile.getName().equals(f.getName())) {
                                 toLength=toFile.length();
                                 break;
@@ -778,6 +805,12 @@ public class FolderSync {
             
             // iterate over target files
             for(VirtualFile f: to.listFiles()) {
+                if(this.cancelWhenRunning!=null) {
+                    if(this.cancelWhenRunning.requestsCancellation()) {
+                        log.warn("sync cancellation requested by other task");
+                        return;
+                    }
+                }
                 if(f.isDirectory() && !sourceDirNames.contains(f.getName())) {
                     log.info("Deleting " + f.getName() + " from sync location");
                     f.delete();
@@ -798,6 +831,12 @@ public class FolderSync {
             
             // iterate over source files
             for(File f: from.listFiles()) {
+                if(this.cancelWhenRunning!=null) {
+                    if(this.cancelWhenRunning.requestsCancellation()) {
+                        log.warn("sync cancellation requested by other task");
+                        return;
+                    }
+                }
                 if(f.isDirectory()) {
                     
                     
@@ -805,7 +844,7 @@ public class FolderSync {
                         to.createDirectory(f.getName());
                     }
                     
-                    FolderSync fs=new FolderSync(f, VirtualFile.getFile(to.getLocation() + "/" + f.getName() + "/"));
+                    FolderSync fs=new FolderSync(f, VirtualFile.getFile(to.getLocation() + "/" + f.getName() + "/"), this.cancelWhenRunning);
                     fs.synchronize(ignoreNewerThanSeconds);
                 }
             }

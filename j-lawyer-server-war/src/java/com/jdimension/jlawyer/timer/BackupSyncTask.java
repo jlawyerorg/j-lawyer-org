@@ -692,54 +692,60 @@ import org.apache.log4j.Logger;
 public class BackupSyncTask extends java.util.TimerTask {
 
     private static Logger log = Logger.getLogger(BackupSyncTask.class.getName());
-    
-    public BackupSyncTask() {
-        
+
+    private CancellationTask cancellationTask = null;
+
+    public BackupSyncTask(CancellationTask cancelWhenRunning) {
+        this.cancellationTask = cancelWhenRunning;
 
     }
 
     @Override
     public void run() {
-        
-                    
-        
+
         try {
+            if (this.cancellationTask != null) {
+                if (this.cancellationTask.requestsCancellation()) {
+                    log.warn("sync cancellation requested by other task");
+                    return;
+                }
+            }
+
             InitialContext ic = new InitialContext();
             ServerSettingsBeanFacadeLocal settings = (ServerSettingsBeanFacadeLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ServerSettingsBeanFacade!com.jdimension.jlawyer.persistence.ServerSettingsBeanFacadeLocal");
             //SystemManagementRemote sysMan= (SystemManagementRemote) ic.lookup("java:/j-lawyer-server/SystemManagement/remote");
-            
+
             ServerSettingsBean syncSetting = settings.find("jlawyer.server.backup.synctarget");
-            String syncLocation="";
+            String syncLocation = "";
             if (syncSetting != null) {
                 syncLocation = syncSetting.getSettingValue();
-                if(syncLocation!=null)
-                    syncLocation=syncLocation.trim();
-                else
-                    syncLocation="";
+                if (syncLocation != null) {
+                    syncLocation = syncLocation.trim();
+                } else {
+                    syncLocation = "";
+                }
             }
-            
-            
+
             File baseDirectory = new File(System.getProperty("jlawyer.server.basedirectory").trim());
-        File backupDir = new File(baseDirectory.getParentFile().getPath() + System.getProperty("file.separator") + "backups");
-        backupDir.mkdirs();
-            
-            
-            if(syncLocation.length()>0) {
+            File backupDir = new File(baseDirectory.getParentFile().getPath() + System.getProperty("file.separator") + "backups");
+            backupDir.mkdirs();
+
+            if (syncLocation.length() > 0) {
                 log.info("Starting sync to " + syncLocation);
-                
+
                 try {
-                    VirtualFile vf=VirtualFile.getFile(syncLocation);
-                    FolderSync sync=new FolderSync(backupDir, vf);
+                    VirtualFile vf = VirtualFile.getFile(syncLocation);
+                    FolderSync sync = new FolderSync(backupDir, vf, this.cancellationTask);
                     sync.synchronize();
                     vf.close();
                 } catch (Throwable t) {
                     log.error("failed to sync: " + t.getMessage(), t);
-                    
+
                 }
-                
+
                 log.info("Sync finished");
             }
-                    
+
         } catch (Throwable ex) {
             log.error("Error syncing backups", ex);
         }

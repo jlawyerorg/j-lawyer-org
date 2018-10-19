@@ -691,11 +691,13 @@ public class TransientTimer {
     }
     
     public void start() {
+        
+        IterativeBackupTask ibt=new IterativeBackupTask();
         if(timerBackup==null) {
             timerBackup=new Timer();
             
             // start after 5mins and run every 60mins
-            timerBackup.schedule(new IterativeBackupTask(), 60000*5, 60000*60);
+            timerBackup.schedule(ibt, 60000*5, 60000*60);
             
             
         }
@@ -704,7 +706,7 @@ public class TransientTimer {
             timerSync=new Timer();
             
             // start after 600s and run every 3hrs
-            timerSync.schedule(new BackupSyncTask(), 600000, 1000*60*60*3);
+            timerSync.schedule(new BackupSyncTask(ibt), 600000, 1000*60*60*3);
             
         }
         
