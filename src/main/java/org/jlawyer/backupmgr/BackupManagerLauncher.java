@@ -707,6 +707,8 @@ public class BackupManagerLauncher {
             dataDir = scanner.next();
             System.out.print("Verschlüsselungspasswort: ");
             encryptionPwd = scanner.next();
+            if("***empty***".equals(encryptionPwd))
+                encryptionPwd="";
             System.out.print("MySQL root-Passwort: ");
             dbPwd = scanner.next();
 
