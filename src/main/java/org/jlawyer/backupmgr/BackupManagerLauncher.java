@@ -679,44 +679,49 @@ public class BackupManagerLauncher {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-        
-        boolean cmdLineRequested=false;
-        if(args!=null) {
-            for(String a: args) {
-                if("-console".equalsIgnoreCase(a)) {
-                    cmdLineRequested=true;
-                    break;
+
+        boolean cmdLineRequested = false;
+        boolean force = false;
+        if (args != null) {
+            for (String a : args) {
+                if ("-console".equalsIgnoreCase(a)) {
+                    cmdLineRequested = true;
+                }
+                if ("-force".equalsIgnoreCase(a)) {
+                    force = true;
                 }
             }
         }
 
         if (isReallyHeadless() || cmdLineRequested) {
             System.out.println("j-lawyer.org Backup Manager (ohne grafische Oberflaeche)");
-            String dataDir="";
-            String backupDir="";
-            String encryptionPwd="";
-            String dbPwd="";
-            
+            String dataDir = "";
+            String backupDir = "";
+            String encryptionPwd = "";
+            String dbPwd = "";
+
             Scanner scanner = new Scanner(System.in);
             System.out.print("Verzeichnis mit der Datensicherung: ");
-            backupDir=scanner.next();
+            backupDir = scanner.next();
             System.out.print("Datenverzeichnis der j-lawyer.org Serverinstallation: ");
-            dataDir=scanner.next();
+            dataDir = scanner.next();
             System.out.print("Verschlüsselungspasswort: ");
-            encryptionPwd=scanner.next();
+            encryptionPwd = scanner.next();
             System.out.print("MySQL root-Passwort: ");
-            dbPwd=scanner.next();
-            
+            dbPwd = scanner.next();
+
             System.out.println("Es wird die Datensicherung von " + backupDir + " nach " + dataDir + " eingespielt.");
-            System.out.print("Fortfahren J/N: ");
-            String proceed=scanner.next();
-            if(!("j".equalsIgnoreCase(proceed))) {
-                System.out.println(proceed + " - Abbruch");
-                System.exit(0);
-            } else {
-                System.out.println(proceed);
+            if (!force) {
+                System.out.print("Fortfahren J/N: ");
+                String proceed = scanner.next();
+                if (!("j".equalsIgnoreCase(proceed))) {
+                    System.out.println(proceed + " - Abbruch");
+                    System.exit(0);
+                } else {
+                    System.out.println(proceed);
+                }
             }
-            
+
             RestoreExecutor re = new RestoreExecutor(dataDir, backupDir, encryptionPwd, dbPwd);
             BackupProgressConsoleCallback callback = new BackupProgressConsoleCallback();
             boolean failed = false;
@@ -727,7 +732,7 @@ public class BackupManagerLauncher {
                 System.out.println("Prüfung fehlgeschlagen: " + failed);
 
             }
-            
+
             if (failed) {
                 return;
             }
