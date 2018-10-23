@@ -710,8 +710,12 @@ public class BackupManagerLauncher {
             System.out.println("Es wird die Datensicherung von " + backupDir + " nach " + dataDir + " eingespielt.");
             System.out.print("Fortfahren J/N: ");
             String proceed=scanner.next();
-            if(!("j".equalsIgnoreCase(proceed)))
+            if(!("j".equalsIgnoreCase(proceed))) {
+                System.out.println(proceed + " - Abbruch");
                 System.exit(0);
+            } else {
+                System.out.println(proceed);
+            }
             
             RestoreExecutor re = new RestoreExecutor(dataDir, backupDir, encryptionPwd, dbPwd);
             BackupProgressConsoleCallback callback = new BackupProgressConsoleCallback();
