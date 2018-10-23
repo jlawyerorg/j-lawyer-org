@@ -698,7 +698,7 @@ public class LoginDialog extends javax.swing.JFrame {
     private static final Logger log = Logger.getLogger(LoginDialog.class.getName());
     private StartupSplashFrame splash = null;
     private String initialStatus = null;
-    
+
     /**
      * Creates new form LoginDialog
      */
@@ -736,11 +736,11 @@ public class LoginDialog extends javax.swing.JFrame {
         this.txtPort.setText(settings.getConfiguration(settings.CONF_LASTPORT, "8080"));
         this.txtHttpPort.setText(settings.getConfiguration(settings.CONF_LASTHTTPPORT, "8080"));
         this.txtUser.setText(settings.getConfiguration(settings.CONF_LASTUSER, ""));
-        
-        BoxAccess box=new BoxAccess(this.txtBoxPassword.getText());
+
+        BoxAccess box = new BoxAccess(this.txtBoxPassword.getText());
         box.checkReachable(jTabbedPane1, 2, this.txtServer.getText());
-        
-        if(cmdHost != null && cmdPort != null && cmdHttpPort != null && cmdUser != null && cmdPassword != null) {
+
+        if (cmdHost != null && cmdPort != null && cmdHttpPort != null && cmdUser != null && cmdPassword != null) {
             this.txtServer.setText(cmdHost);
             this.txtPort.setText(cmdPort);
             this.txtHttpPort.setText(cmdHttpPort);
@@ -750,7 +750,6 @@ public class LoginDialog extends javax.swing.JFrame {
 
         }
 
-        
     }
 
     public void setFocusToPasswordField() {
@@ -796,6 +795,7 @@ public class LoginDialog extends javax.swing.JFrame {
         txtCurrentHost = new javax.swing.JTextField();
         jLabel8 = new javax.swing.JLabel();
         cmdBoxShutdown = new javax.swing.JButton();
+        cmdRestore = new javax.swing.JButton();
 
         jButton1.setText("jButton1");
 
@@ -850,7 +850,7 @@ public class LoginDialog extends javax.swing.JFrame {
                             .add(txtUser)
                             .add(pwPassword)))
                     .add(jPanel1Layout.createSequentialGroup()
-                        .add(0, 160, Short.MAX_VALUE)
+                        .add(0, 189, Short.MAX_VALUE)
                         .add(cmdLogin)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(cmdCancel)))
@@ -902,9 +902,9 @@ public class LoginDialog extends javax.swing.JFrame {
                     .add(jLabel5))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(txtPort, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 333, Short.MAX_VALUE)
-                    .add(txtServer, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 333, Short.MAX_VALUE)
-                    .add(txtHttpPort, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 333, Short.MAX_VALUE))
+                    .add(txtPort, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 362, Short.MAX_VALUE)
+                    .add(txtServer, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 362, Short.MAX_VALUE)
+                    .add(txtHttpPort, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 362, Short.MAX_VALUE))
                 .addContainerGap())
         );
         jPanel2Layout.setVerticalGroup(
@@ -986,6 +986,14 @@ public class LoginDialog extends javax.swing.JFrame {
             }
         });
 
+        cmdRestore.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/database.png"))); // NOI18N
+        cmdRestore.setToolTipText("j-lawyer.BOX mittels Datenrücksicherung resetten");
+        cmdRestore.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdRestoreActionPerformed(evt);
+            }
+        });
+
         org.jdesktop.layout.GroupLayout jPanel3Layout = new org.jdesktop.layout.GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);
         jPanel3Layout.setHorizontalGroup(
@@ -1007,12 +1015,14 @@ public class LoginDialog extends javax.swing.JFrame {
                         .add(cmdBoxShutdown)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(cmdMgmtConsole)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(cmdRestore)
                         .add(0, 0, Short.MAX_VALUE))
                     .add(txtBoxPassword)
                     .add(lblBoxOutput, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .add(jPanel3Layout.createSequentialGroup()
                         .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                            .add(txtCurrentHost, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 245, Short.MAX_VALUE)
+                            .add(txtCurrentHost)
                             .add(jPanel3Layout.createSequentialGroup()
                                 .add(jLabel7)
                                 .add(0, 0, Short.MAX_VALUE)))
@@ -1037,7 +1047,8 @@ public class LoginDialog extends javax.swing.JFrame {
                         .add(cmdBoxReboot))
                     .add(jLabel8)
                     .add(cmdMgmtConsole)
-                    .add(cmdBoxShutdown))
+                    .add(cmdBoxShutdown)
+                    .add(cmdRestore))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(boxProgress, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
@@ -1058,7 +1069,7 @@ public class LoginDialog extends javax.swing.JFrame {
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(jTabbedPane1)
+            .add(jTabbedPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 478, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -1077,39 +1088,35 @@ public class LoginDialog extends javax.swing.JFrame {
     private void cmdLoginActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdLoginActionPerformed
 
         ClientSettings settings = ClientSettings.getInstance();
-        
+
         Properties props = new Properties();
-            props.put("remote.connections", "default");
-            props.put("remote.connection.default.port", this.txtPort.getText());
-            props.put("remote.connection.default.host", this.txtServer.getText());
-            props.put("remote.connection.default.username", this.txtUser.getText());
-            props.put("remote.connection.default.password", this.pwPassword.getText());
-            props.put("remote.connection.default.connect.options.org.xnio.Options.SASL_POLICY_NOANONYMOUS", "false");
-            props.put("remote.connection.default.connect.options.org.xnio.Options.SASL_POLICY_NOPLAINTEXT", "false");
-            props.put("remote.connectionprovider.create.options.org.xnio.Options.SSL_ENABLED", "false");
-            
-            EJBClientConfiguration ejbClientConfiguration = new PropertiesBasedEJBClientConfiguration(props);
-            ContextSelector<EJBClientContext> contextSelector = new ConfigBasedEJBClientContextSelector(ejbClientConfiguration);
-            EJBClientContext.setSelector(contextSelector);
-            
-            Properties properties = new Properties();
-            properties.put(Context.URL_PKG_PREFIXES, "org.jboss.ejb.client.naming");
-            properties.put("jboss.naming.client.ejb.context", "true");
-        
-            
-            // begin: for JMS only
-            properties.put(Context.INITIAL_CONTEXT_FACTORY, "org.jboss.naming.remote.client.InitialContextFactory");
-            properties.put(Context.PROVIDER_URL, "http-remoting://" + this.txtServer.getText() +":" + this.txtPort.getText());
-            properties.put(Context.SECURITY_PRINCIPAL, this.txtUser.getText());
-            properties.put(Context.SECURITY_CREDENTIALS, this.pwPassword.getText());
-            properties.put("jboss.naming.client.connect.options.org.xnio.Options.SASL_POLICY_NOPLAINTEXT", "false");
-            properties.put("jboss.naming.client.connect.options.org.xnio.Options.SASL_POLICY_NOANONYMOUS", "false");
-            properties.put("jboss.naming.client.connect.options.org.xnio.Options.SSL_ENABLED", "false");
-            
-            
-            // end: for JMS only
-            
-            
+        props.put("remote.connections", "default");
+        props.put("remote.connection.default.port", this.txtPort.getText());
+        props.put("remote.connection.default.host", this.txtServer.getText());
+        props.put("remote.connection.default.username", this.txtUser.getText());
+        props.put("remote.connection.default.password", this.pwPassword.getText());
+        props.put("remote.connection.default.connect.options.org.xnio.Options.SASL_POLICY_NOANONYMOUS", "false");
+        props.put("remote.connection.default.connect.options.org.xnio.Options.SASL_POLICY_NOPLAINTEXT", "false");
+        props.put("remote.connectionprovider.create.options.org.xnio.Options.SSL_ENABLED", "false");
+
+        EJBClientConfiguration ejbClientConfiguration = new PropertiesBasedEJBClientConfiguration(props);
+        ContextSelector<EJBClientContext> contextSelector = new ConfigBasedEJBClientContextSelector(ejbClientConfiguration);
+        EJBClientContext.setSelector(contextSelector);
+
+        Properties properties = new Properties();
+        properties.put(Context.URL_PKG_PREFIXES, "org.jboss.ejb.client.naming");
+        properties.put("jboss.naming.client.ejb.context", "true");
+
+        // begin: for JMS only
+        properties.put(Context.INITIAL_CONTEXT_FACTORY, "org.jboss.naming.remote.client.InitialContextFactory");
+        properties.put(Context.PROVIDER_URL, "http-remoting://" + this.txtServer.getText() + ":" + this.txtPort.getText());
+        properties.put(Context.SECURITY_PRINCIPAL, this.txtUser.getText());
+        properties.put(Context.SECURITY_CREDENTIALS, this.pwPassword.getText());
+        properties.put("jboss.naming.client.connect.options.org.xnio.Options.SASL_POLICY_NOPLAINTEXT", "false");
+        properties.put("jboss.naming.client.connect.options.org.xnio.Options.SASL_POLICY_NOANONYMOUS", "false");
+        properties.put("jboss.naming.client.connect.options.org.xnio.Options.SSL_ENABLED", "false");
+
+        // end: for JMS only
 //        Properties properties = new Properties();
 //        properties.put("java.naming.factory.initial",
 //                "org.jnp.interfaces.NamingContextFactory");
@@ -1121,7 +1128,6 @@ public class LoginDialog extends javax.swing.JFrame {
 //        properties.put(InitialContext.SECURITY_CREDENTIALS, this.pwPassword.getText());
 //
 //        properties.setProperty("j2ee.clientName", "j-lawyer-client");
-
         settings.setLookupProperties(properties);
 
         //SecurityClientCallbackHandler callbackHandler = new SecurityClientCallbackHandler(this.txtUser.getText(), this.pwPassword.getText());
@@ -1134,7 +1140,6 @@ public class LoginDialog extends javax.swing.JFrame {
 //            JOptionPane.showMessageDialog(this, java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/LoginDialog").getString("msg.error.loginfailed"), new Object[]{loginEx.getMessage()}), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/LoginDialog").getString("msg.error"), JOptionPane.ERROR_MESSAGE);
 //            return;
 //        }
-
         // try connecting to see whether the loginContext.login succeeded
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
@@ -1156,7 +1161,7 @@ public class LoginDialog extends javax.swing.JFrame {
             this.pwPassword.setForeground(Color.RED);
             return;
         } catch (Exception ex) {
-            
+
             log.error("Error connecting to server", ex);
             JOptionPane.showMessageDialog(this, java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/LoginDialog").getString("msg.error.loginorconnectionfailed"), new Object[]{ex.getMessage()}), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/LoginDialog").getString("msg.error"), JOptionPane.ERROR_MESSAGE);
             return;
@@ -1199,18 +1204,18 @@ public class LoginDialog extends javax.swing.JFrame {
     }//GEN-LAST:event_cmdCancelActionPerformed
 
     private void cmdBoxCheckActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdBoxCheckActionPerformed
-        BoxAccess box=new BoxAccess(this.txtBoxPassword.getText());
-        
+        BoxAccess box = new BoxAccess(this.txtBoxPassword.getText());
+
         box.serviceCheck(lblBoxOutput, boxProgress, this.txtServer.getText());
     }//GEN-LAST:event_cmdBoxCheckActionPerformed
 
     private void cmdBoxServiceRestartActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdBoxServiceRestartActionPerformed
-        BoxAccess box=new BoxAccess(this.txtBoxPassword.getText());
+        BoxAccess box = new BoxAccess(this.txtBoxPassword.getText());
         box.serviceRestart(lblBoxOutput, boxProgress, this.txtServer.getText());
     }//GEN-LAST:event_cmdBoxServiceRestartActionPerformed
 
     private void cmdBoxRebootActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdBoxRebootActionPerformed
-        BoxAccess box=new BoxAccess(this.txtBoxPassword.getText());
+        BoxAccess box = new BoxAccess(this.txtBoxPassword.getText());
         box.boxReboot(lblBoxOutput, boxProgress, this.txtServer.getText());
     }//GEN-LAST:event_cmdBoxRebootActionPerformed
 
@@ -1219,14 +1224,34 @@ public class LoginDialog extends javax.swing.JFrame {
     }//GEN-LAST:event_cmdMgmtConsoleActionPerformed
 
     private void cmdScanNetworkActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdScanNetworkActionPerformed
-        BoxAccess box=new BoxAccess(this.txtBoxPassword.getText());
+        BoxAccess box = new BoxAccess(this.txtBoxPassword.getText());
         box.scanNetworkForBox(lblBoxOutput, this.txtCurrentHost, boxProgress);
     }//GEN-LAST:event_cmdScanNetworkActionPerformed
 
     private void cmdBoxShutdownActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdBoxShutdownActionPerformed
-        BoxAccess box=new BoxAccess(this.txtBoxPassword.getText());
+        BoxAccess box = new BoxAccess(this.txtBoxPassword.getText());
         box.boxReboot(lblBoxOutput, boxProgress, this.txtServer.getText());
     }//GEN-LAST:event_cmdBoxShutdownActionPerformed
+
+    private void cmdRestoreActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRestoreActionPerformed
+        int response = JOptionPane.showConfirmDialog(this, "Hierdurch werden alle Daten der Box gelöscht und eine Datensicherung im Backupverzeichnis der Box eingespielt. Fortfahren?", "Daten wiederherstellen", JOptionPane.YES_NO_OPTION);
+        if (response == JOptionPane.NO_OPTION) {
+            return;
+        }
+        Object dbPassword = JOptionPane.showInputDialog(this, "root-Passwort der MySQL-Datenbank: ", "Datenbankpasswort", JOptionPane.QUESTION_MESSAGE, null, null, "");
+        if (dbPassword == null || "".equals(dbPassword)) {
+            return;
+        }
+        
+        Object encPassword = JOptionPane.showInputDialog(this, "optional: Passwort mit welchem verschlüsselt wurde: ", "Verschlüsselungspasswort", JOptionPane.QUESTION_MESSAGE, null, null, "");
+        if (encPassword == null || "".equals(encPassword)) {
+            encPassword="***empty***";
+        }
+        
+        BoxAccess box = new BoxAccess(this.txtBoxPassword.getText());
+        box.restore(lblBoxOutput, boxProgress, this.txtServer.getText(), dbPassword.toString(), encPassword.toString());
+
+    }//GEN-LAST:event_cmdRestoreActionPerformed
 
     /**
      * @param args the command line arguments
@@ -1248,6 +1273,7 @@ public class LoginDialog extends javax.swing.JFrame {
     private javax.swing.JButton cmdCancel;
     private javax.swing.JButton cmdLogin;
     private javax.swing.JButton cmdMgmtConsole;
+    private javax.swing.JButton cmdRestore;
     private javax.swing.JButton cmdScanNetwork;
     private javax.swing.JButton jButton1;
     private javax.swing.JLabel jLabel1;

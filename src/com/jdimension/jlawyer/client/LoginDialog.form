@@ -35,7 +35,7 @@
   <Layout>
     <DimensionLayout dim="0">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Component id="jTabbedPane1" alignment="0" max="32767" attributes="0"/>
+          <Component id="jTabbedPane1" min="-2" pref="478" max="-2" attributes="0"/>
       </Group>
     </DimensionLayout>
     <DimensionLayout dim="1">
@@ -80,7 +80,7 @@
                               </Group>
                           </Group>
                           <Group type="102" alignment="1" attributes="0">
-                              <EmptySpace min="0" pref="160" max="32767" attributes="0"/>
+                              <EmptySpace min="0" pref="189" max="32767" attributes="0"/>
                               <Component id="cmdLogin" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="cmdCancel" min="-2" max="-2" attributes="0"/>
@@ -198,9 +198,9 @@
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="txtPort" pref="333" max="32767" attributes="0"/>
-                          <Component id="txtServer" alignment="0" pref="333" max="32767" attributes="0"/>
-                          <Component id="txtHttpPort" alignment="0" pref="333" max="32767" attributes="0"/>
+                          <Component id="txtPort" pref="362" max="32767" attributes="0"/>
+                          <Component id="txtServer" alignment="0" pref="362" max="32767" attributes="0"/>
+                          <Component id="txtHttpPort" alignment="0" pref="362" max="32767" attributes="0"/>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
                   </Group>
@@ -301,13 +301,15 @@
                               <Component id="cmdBoxShutdown" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="cmdMgmtConsole" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Component id="cmdRestore" min="-2" max="-2" attributes="0"/>
                               <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                           </Group>
                           <Component id="txtBoxPassword" max="32767" attributes="0"/>
                           <Component id="lblBoxOutput" alignment="0" max="32767" attributes="0"/>
                           <Group type="102" attributes="0">
                               <Group type="103" groupAlignment="0" attributes="0">
-                                  <Component id="txtCurrentHost" alignment="0" pref="245" max="32767" attributes="0"/>
+                                  <Component id="txtCurrentHost" alignment="0" max="32767" attributes="0"/>
                                   <Group type="102" attributes="0">
                                       <Component id="jLabel7" min="-2" max="-2" attributes="0"/>
                                       <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
@@ -342,6 +344,7 @@
                           <Component id="jLabel8" min="-2" max="-2" attributes="0"/>
                           <Component id="cmdMgmtConsole" min="-2" max="-2" attributes="0"/>
                           <Component id="cmdBoxShutdown" min="-2" max="-2" attributes="0"/>
+                          <Component id="cmdRestore" min="-2" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="boxProgress" min="-2" max="-2" attributes="0"/>
@@ -465,6 +468,17 @@
               </Properties>
               <Events>
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdBoxShutdownActionPerformed"/>
+              </Events>
+            </Component>
+            <Component class="javax.swing.JButton" name="cmdRestore">
+              <Properties>
+                <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                  <Image iconType="3" name="/icons/database.png"/>
+                </Property>
+                <Property name="toolTipText" type="java.lang.String" value="j-lawyer.BOX mittels Datenr&#xfc;cksicherung resetten"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdRestoreActionPerformed"/>
               </Events>
             </Component>
           </SubComponents>

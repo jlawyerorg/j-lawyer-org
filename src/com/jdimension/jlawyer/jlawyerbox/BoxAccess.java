@@ -669,6 +669,7 @@ import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.client.utils.VersionUtils;
 import java.awt.Color;
 import java.io.IOException;
+import java.io.StringBufferInputStream;
 import java.net.HttpURLConnection;
 import java.net.Inet4Address;
 import java.net.InetAddress;
@@ -829,6 +830,48 @@ public class BoxAccess {
         }).start();
     }
 
+    public void restore(final JLabel output, final JProgressBar progress, String lastSuccessFulHost, String dbPassword, String encryptionPassword) {
+        final String host = lastSuccessFulHost;
+        new Thread(new Runnable() {
+            public void run() {
+                try {
+                    ThreadUtils.setVisible(progress, true);
+                    Shell shell = new SSHByPassword(host, 22, "root", password);
+                    String stdout = new Shell.Plain(shell).exec("mysql -u root -p" + dbPassword + " -e \"select 1 from dual;\"");
+                    
+                    if (stdout.trim().toLowerCase().endsWith("\n1")) {
+                        ThreadUtils.setLabel(output, "Datenbankpasswort verifiziert");
+                        ThreadUtils.setLabelForeGround(output, Color.GREEN.darker().darker());
+                    } else {
+                        ThreadUtils.setLabel(output, "Datenbankpasswort ungültig!");
+                        ThreadUtils.setLabelForeGround(output, Color.RED.darker().darker());
+                    }
+                    
+                    //shell = new SSHByPassword(host, 22, "root", password);
+                    StringBufferInputStream params=new StringBufferInputStream("/usr/local/j-lawyer-server/samba/restore\n/usr/local/j-lawyer-server/j-lawyer-data\n" + encryptionPassword +"\n" + dbPassword + "\n-force\n\n");
+                    int returnCode=new Shell.Safe(shell).exec("/usr/local/j-lawyer-server/j-lawyer-backupmgr/backupmgr.sh", params, System.out, System.err);
+                    System.out.println("exit code: " + returnCode);
+                    if(returnCode!=0) {
+                        throw new Exception("Fehler - bitte restore.log in der Freigabe der Box prüfen");
+                    }
+                    
+                    ThreadUtils.setVisible(progress, false);
+                } catch (Throwable e) {
+                    String msg = e.getMessage();
+                    if (msg != null && msg.indexOf("Auth fail") > -1) {
+                        msg = "Falsches Passwort!";
+                    } else {
+                        msg= "Fehler - bitte restore.log in der Freigabe der Box prüfen - " + msg;
+                    }
+                    ThreadUtils.setLabel(output, msg);
+                    ThreadUtils.setToolTipText(output, msg);
+                    ThreadUtils.setLabelForeGround(output, Color.RED.darker().darker());
+                    ThreadUtils.setVisible(progress, false);
+                }
+            }
+        }).start();
+    }
+    
     public void serviceCheck(final JLabel output, final JProgressBar progress, String lastSuccessFulHost) {
 //        String testHost = this.getDefaultHostName();
 //        ThreadUtils.setLabel(output, "Verbinde zu " + testHost);
