@@ -729,7 +729,7 @@ public class BackupManagerLauncher {
                 re.validate(callback);
             } catch (Exception ex) {
                 failed = true;
-                System.out.println("Prüfung fehlgeschlagen: " + failed);
+                System.out.println("Prüfung fehlgeschlagen: " + ex.getMessage());
 
             }
 
@@ -740,7 +740,7 @@ public class BackupManagerLauncher {
                 re.restore(callback);
             } catch (Exception ex) {
                 failed = true;
-                System.out.println("Wiederherstellung fehlgeschlagen: " + failed);
+                System.out.println("Wiederherstellung fehlgeschlagen: " + ex.getMessage());
             }
             if (failed) {
                 return;
