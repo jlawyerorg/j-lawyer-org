@@ -734,7 +734,7 @@ public class BackupManagerLauncher {
             }
 
             if (failed) {
-                return;
+                System.exit(1);
             }
             try {
                 re.restore(callback);
@@ -743,7 +743,7 @@ public class BackupManagerLauncher {
                 System.out.println("Wiederherstellung fehlgeschlagen: " + ex.getMessage());
             }
             if (failed) {
-                return;
+                System.exit(1);
             }
             System.out.println("Backup erfolgreich wiederhergestellt.");
         } else {
