@@ -863,9 +863,9 @@ public class IterativeBackupExecutor {
                             this.clearDirectory(targetDir);
                             zipFileName = child.getName() + encrypted + ".zip";
                             if (encrypt) {
-                                writeEncryptedZipFile(zipFileName, new File(this.dataDirectory + File.separator + itBackupDir + File.separator + child.getName()), fileList, targetDir, encryptionPassword, null);
+                                writeEncryptedZipFile(zipFileName, new File(this.dataDirectory + File.separator + itBackupDir + File.separator + child.getName()), fileList, targetDir, encryptionPassword, backupResult);
                             } else {
-                                writeZipFile(zipFileName, new File(this.dataDirectory + File.separator + itBackupDir + File.separator + child.getName()), fileList, targetDir, null);
+                                writeZipFile(zipFileName, new File(this.dataDirectory + File.separator + itBackupDir + File.separator + child.getName()), fileList, targetDir, backupResult);
                             }
                         } else {
                             for (File fsize : targetDir.listFiles()) {
