@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<persistence version="2.0" xmlns="http://java.sun.com/xml/ns/persistence" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://java.sun.com/xml/ns/persistence http://java.sun.com/xml/ns/persistence/persistence_2_0.xsd">
+  <persistence-unit name="j-lawyer-server-ejbPU" transaction-type="JTA">
+    <provider>org.hibernate.ejb.HibernatePersistence</provider>
+    <jta-data-source>java:/jlawyerdb</jta-data-source>
+    <jar-file>../jlawyer-server-entities.jar</jar-file>
+    <jar-file>../jlawyer-server-ejb.jar</jar-file>
+    <!-- exclude-unlisted-classes>false</exclude-unlisted-classes -->
+    <class>com.jdimension.jlawyer.persistence.AddressBean</class>
+    <class>com.jdimension.jlawyer.persistence.AddressTagsBean</class>
+    <class>com.jdimension.jlawyer.persistence.AppOptionGroupBean</class>
+    <class>com.jdimension.jlawyer.persistence.AppRoleBean</class>
+    <class>com.jdimension.jlawyer.persistence.AppUserBean</class>
+    <class>com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean</class>
+    <class>com.jdimension.jlawyer.persistence.ArchiveFileBean</class>
+    <class>com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean</class>
+    <class>com.jdimension.jlawyer.persistence.ArchiveFileHistoryBean</class>
+    <class>com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean</class>
+    <class>com.jdimension.jlawyer.persistence.ArchiveFileTagsBean</class>
+    <class>com.jdimension.jlawyer.persistence.BankDataBean</class>
+    <class>com.jdimension.jlawyer.persistence.CityDataBean</class>
+    <class>com.jdimension.jlawyer.persistence.FaxQueueBean</class>
+    <class>com.jdimension.jlawyer.persistence.ServerSettingsBean</class>
+    <class>com.jdimension.jlawyer.persistence.Campaign</class>
+    <class>com.jdimension.jlawyer.persistence.CampaignAddress</class>
+    <exclude-unlisted-classes>true</exclude-unlisted-classes>
+    <properties>
+      <!-- changed from update to validate to avoid deployment during an update installer run to create columns that will be added by a sql script later in the process -->
+      <property name="hibernate.hbm2ddl.auto" value="validate"/>
+    </properties>
+  </persistence-unit>
+</persistence>

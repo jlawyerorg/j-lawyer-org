@@ -1,5 +1,5 @@
 language: java
 jdk:
   - oraclejdk8
-install: ant default
+install: ant -Dplatforms.JDK_1.7.home=/usr/lib/jvm/java-8-oracle default
 
