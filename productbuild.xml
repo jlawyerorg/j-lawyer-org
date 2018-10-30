@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="j-lawyer.org product build" default="all" basedir=".">
+    <target name="build-product">
+        <ant dir="../j-lawyer-drebis-stubs" antfile="build.xml" inheritAll="false">
+            <target name="test"/>
+            <target name="jar"/>
+        </ant>
+        <ant dir="../j-lawyer-fax" antfile="build.xml" inheritAll="false">
+            <target name="test"/>
+            <target name="jar"/>
+        </ant>
+        <ant dir="../j-lawyer-server-common" antfile="build.xml" inheritAll="false">
+            <property name="platforms.default_platform.home" value="/usr/lib/jvm/java-7-openjdk-amd64"/>
+            <target name="test"/>
+            <target name="jar"/>
+        </ant>
+        <ant dir="../j-lawyer-server-entities" antfile="build.xml" inheritAll="false">
+            <target name="dist"/>
+            
+        </ant>
+        <ant dir="../j-lawyer-server" antfile="build.xml" target="dist" inheritAll="false">
+            <!-- property name="platforms.default_platform.home" value="/usr/lib/jvm/java-7-openjdk-amd64"/-->
+        </ant>
+        <ant dir="../j-lawyer-client" antfile="build.xml" inheritAll="false">
+            <target name="test"/>
+            <target name="jar"/>
+        </ant>
+    </target>
+</project>

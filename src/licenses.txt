@@ -1,0 +1,52 @@
+j-lawyer utilizes the libraries and products listed below without modification.
+A copy of the licenses referred to below can be found in j-lawyer-client.jar (root directory).
+
+Apache Commons (by Apache Foundation) - Apache 2
+http://commons.apache.org/
+http://www.apache.org/licenses/
+
+Apache Commons Lang (by Apache Foundation) - Apache 2
+http://commons.apache.org/proper/commons-lang/
+http://www.apache.org/licenses/
+
+Apache Log4J (by Apache Foundation) - Apache 2
+http://logging.apache.org/log4j/2.x/
+http://logging.apache.org/log4j/2.x/license.html
+
+Apache Simple ODF (by Apache Foundation) - Apache 2
+http://incubator.apache.org/odftoolkit/simple/index.html
+http://incubator.apache.org/odftoolkit/license.html
+
+Crystal SVG (by Everaldo Cuelho) - LGPL
+http://kde-look.org/content/show.php?content=8341
+
+ez-vcard (by Mike Angstadt) - BSD 3-clause
+https://code.google.com/p/ez-vcard/
+http://opensource.org/licenses/BSD-3-Clause
+
+javasysmon (by ThoughtWorks, Inc) - BSD 2-clause
+https://github.com/jezhumble/javasysmon
+https://github.com/jezhumble/javasysmon/blob/master/LICENSE
+
+Jasper Reports (by Jaspersoft Corporation) - LGPL
+http://community.jaspersoft.com/
+http://community.jaspersoft.com/project/jasperreports-library
+
+JBoss (sponsored by Red Hat) - LGPL
+http://www.jboss.org/
+http://www.jboss.org/jbossas/downloads/
+
+JCalendar (by Kai Toedter) - LGPL
+http://www.toedter.com/en/jcalendar/
+
+JODA Time API (by Stephen Colebourne) - Apache 2
+http://joda-time.sourceforge.net/
+http://joda-time.sourceforge.net/license.html
+
+Jollyday - Apache 2
+http://jollyday.sourceforge.net/
+http://jollyday.sourceforge.net/license.html
+
+SwingX (by various authors, website names rbair, swinglabs, kleopatra, Alexander Potochkin, Karl Schaefer, rah003) - LGPL
+http://java.net/projects/swingx
+http://opensource.org/licenses/lgpl-2.1.php

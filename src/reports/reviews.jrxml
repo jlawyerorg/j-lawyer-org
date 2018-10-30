@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="demo" language="groovy" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20">
+	<property name="ireport.zoom" value="1.0"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<!-- parameter name="SUBREPORT_DIR" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA["C:\\MyData\\netbeansws\\ReportDemo\\src\\com\\visural\\report\\"]]></defaultValueExpression>
+	</parameter -->
+        <parameter name="SubReportDir" class="java.lang.String" isForPrompting="false"/>
+
+	<field name="reviews" class="java.util.List"/>
+        <field name="printDate" class="java.lang.String"/>
+        <field name="searchCriteria" class="java.lang.String"/>
+	<!-- field name="phones" class="java.util.List"/>
+	<field name="firstName" class="java.lang.String"/>
+	<field name="lastName" class="java.lang.String"/ -->
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<title>
+		<!-- band height="35" splitType="Stretch">
+			<staticText>
+				<reportElement x="0" y="0" width="204" height="34"/>
+				<textElement>
+					<font size="26" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Contact Report]]></text>
+			</staticText>
+		</band -->
+	</title>
+	<pageHeader>
+		<band height="17" splitType="Stretch"/>
+	</pageHeader>
+	<columnHeader>
+		<band height="21" splitType="Stretch"/>
+	</columnHeader>
+	<detail>
+		<band height="132" splitType="Stretch">
+			
+			<textField>
+				<reportElement x="0" y="20" width="500" height="20"/>
+				<textElement>
+					<font size="12" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA["Wiedervorlagen-Übersicht vom " + $F{printDate}]]></textFieldExpression>
+			</textField>
+                        <textField>
+				<reportElement x="0" y="40" width="500" height="20"/>
+				<textElement>
+					<font size="10" isBold="false"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA["Suchkriterien: " + $F{searchCriteria}]]></textFieldExpression>
+			</textField>
+			<!-- textField>
+				<reportElement x="104" y="0" width="277" height="20"/>
+				<textElement>
+					<font size="12"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{firstName}]]></textFieldExpression>
+			</textField -->
+			<!-- textField>
+				<reportElement x="104" y="20" width="277" height="20"/>
+				<textElement>
+					<font size="12"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{lastName}]]></textFieldExpression>
+			</textField -->
+			<subreport>
+				<reportElement x="4" y="80" width="551" height="46"/>
+				<dataSourceExpression><![CDATA[new net.sf.jasperreports.engine.data.JRBeanCollectionDataSource($F{reviews})]]></dataSourceExpression>
+				<!-- subreportExpression class="java.lang.String"><![CDATA[$P{SUBREPORT_DIR} + "demo_address.jasper"]]></subreportExpression -->
+                                <!-- subreportExpression class="java.lang.String"><![CDATA[$P{SUBREPORT_DIR} + "demo_address.jasper"]]></subreportExpression -->
+                                <subreportExpression class="java.lang.String"><![CDATA[$P{SubReportDir} + "reviews_detail.jasper"]]></subreportExpression>
+			</subreport>
+			<line>
+				<reportElement x="0" y="70" width="550" height="1"/>
+			</line>
+		</band>
+		<!-- band height="87">
+			<subreport>
+				<reportElement x="0" y="11" width="551" height="52"/>
+				<dataSourceExpression><![CDATA[new net.sf.jasperreports.engine.data.JRBeanCollectionDataSource($F{phones})]]></dataSourceExpression>
+				<subreportExpression class="java.lang.String"><![CDATA[$P{SUBREPORT_DIR} + "demo_phones.jasper"]]></subreportExpression>
+			</subreport>
+			<line>
+				<reportElement x="4" y="10" width="550" height="1"/>
+			</line>
+		</band -->
+	</detail>
+	<columnFooter>
+		<band height="19" splitType="Stretch"/>
+	</columnFooter>
+	<pageFooter>
+		<!-- band height="18" splitType="Stretch"/ -->
+                <band height="35" splitType="Stretch">
+			<staticText>
+				<reportElement x="0" y="0" width="204" height="34"/>
+				<textElement>
+					<font size="8" isBold="true"/>
+				</textElement>
+				<text><![CDATA[j-lawyer.org 2012 - 2018]]></text>
+			</staticText>
+		</band>
+	</pageFooter>
+	<summary>
+		<band height="14" splitType="Stretch"/>
+	</summary>
+</jasperReport>
