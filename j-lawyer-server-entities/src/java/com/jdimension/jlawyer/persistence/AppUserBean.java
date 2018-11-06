@@ -723,7 +723,7 @@ public class AppUserBean implements Serializable {
     @Column(name = "settings")
     private byte[] settings;
     
-    @Column(name = "beaCertificate")
+    @Column(name = "beaCertificate", columnDefinition = "MEDIUMBLOB")
     private byte[] beaCertificate;
     @Column(name = "beaCertificatePassword")
     private String beaCertificatePassword;
