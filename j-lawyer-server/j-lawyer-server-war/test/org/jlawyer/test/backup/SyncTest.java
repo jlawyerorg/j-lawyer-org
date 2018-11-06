@@ -715,7 +715,7 @@ public class SyncTest {
     public void testSync() {
         
         try {
-            FolderSync sync = new FolderSync(new File("/home/jens/dev/projects/backups/"), VirtualFile.getFile("sftp://" + this.ftpUser + ":" + this.ftpPassword +  "@www.j-lawyer.org/home/" + this.ftpHome + "/temp2/backups/"));
+            FolderSync sync = new FolderSync(new File("/home/jens/dev/projects/backups/"), VirtualFile.getFile("sftp://" + this.ftpUser + ":" + this.ftpPassword +  "@www.j-lawyer.org/home/" + this.ftpHome + "/temp2/backups/"), null);
             sync.synchronize();
         } catch (Throwable t) {
             t.printStackTrace();
