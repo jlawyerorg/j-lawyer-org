@@ -727,7 +727,7 @@ public class AppUserBean implements Serializable {
     private byte[] beaCertificate;
     @Column(name = "beaCertificatePassword")
     private String beaCertificatePassword;
-    @Column(name = "beaCertificateAutoLogin")
+    @Column(name = "beaCertificateAutoLogin", columnDefinition = "TINYINT")
     private boolean beaCertificateAutoLogin;
     
     public AppUserBean() {
