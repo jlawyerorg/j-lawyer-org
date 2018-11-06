@@ -703,7 +703,7 @@ public class ArchiveFileDocumentsBean implements Serializable {
     @JoinColumn(name = "archiveFileKey", referencedColumnName = "id")
     @ManyToOne
     private ArchiveFileBean archiveFileKey;
-    @Column(name = "favorite")
+    @Column(name = "favorite", columnDefinition = "TINYINT DEFAULT 0")
     private boolean favorite;
 
     public ArchiveFileDocumentsBean() {

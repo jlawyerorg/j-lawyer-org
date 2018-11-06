@@ -686,7 +686,7 @@ public class AppUserBean implements Serializable {
     private String principalId;
     @Column(name = "password")
     private String password;
-    @Column(name = "lawyer")
+    @Column(name = "lawyer", columnDefinition = "TINYINT")
     private boolean lawyer;
     @Column(name = "countryCode")
     private String countryCode;
@@ -713,11 +713,11 @@ public class AppUserBean implements Serializable {
     private String emailSenderName;
     @Column(name = "emailSignature")
     private String emailSignature;
-    @Column(name = "emailInSsl")
+    @Column(name = "emailInSsl", columnDefinition = "TINYINT")
     private boolean emailInSsl;
-    @Column(name = "emailOutSsl")
+    @Column(name = "emailOutSsl", columnDefinition = "TINYINT")
     private boolean emailOutSsl;
-    @Column(name = "emailStartTls")
+    @Column(name = "emailStartTls", columnDefinition = "TINYINT")
     private boolean emailStartTls;
     
     @Column(name = "settings")
