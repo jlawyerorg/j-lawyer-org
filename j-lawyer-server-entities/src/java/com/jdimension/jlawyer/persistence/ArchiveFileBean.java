@@ -704,7 +704,7 @@ public class ArchiveFileBean implements Serializable {
     @Column(name = "claimValue")
     private float claimValue;
     @Basic(optional = false)
-    @Column(name = "archived")
+    @Column(name = "archived", columnDefinition = "TINYINT NOT NULL")
     private short archived;
     @Column(name = "notice")
     private String notice;

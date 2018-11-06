@@ -702,7 +702,7 @@ public class ArchiveFileReviewsBean implements Serializable {
     @Temporal(TemporalType.TIMESTAMP)
     private Date reviewDate;
     @Basic(optional = false)
-    @Column(name = "done")
+    @Column(name = "done", columnDefinition = "TINYINT NOT NULL")
     private short done;
     @JoinColumn(name = "archiveFileKey", referencedColumnName = "id")
     @ManyToOne
