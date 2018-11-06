@@ -726,7 +726,7 @@ public class AddressBean implements Serializable {
     private String insuranceName;
     
     @Basic(optional = false)
-    @Column(name = "trafficLegalProtection")
+    @Column(name = "trafficLegalProtection", columnDefinition = "TINYINT NOT NULL")
     private short trafficLegalProtection;
     @Column(name = "trafficInsuranceNumber")
     private String trafficInsuranceNumber;
