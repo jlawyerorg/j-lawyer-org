@@ -698,7 +698,7 @@ public class ArchiveFileDocumentsBean implements Serializable {
     @Temporal(TemporalType.TIMESTAMP)
     private Date creationDate;
     @Lob
-    @Column(name = "content")
+    @Column(name = "content", columnDefinition = "MEDIUMBLOB")
     private byte[] content;
     @JoinColumn(name = "archiveFileKey", referencedColumnName = "id")
     @ManyToOne

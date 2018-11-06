@@ -720,7 +720,7 @@ public class AppUserBean implements Serializable {
     @Column(name = "emailStartTls", columnDefinition = "TINYINT")
     private boolean emailStartTls;
     
-    @Column(name = "settings")
+    @Column(name = "settings", columnDefinition = "MEDIUMBLOB")
     private byte[] settings;
     
     @Column(name = "beaCertificate", columnDefinition = "MEDIUMBLOB")
