@@ -2427,23 +2427,34 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
     }//GEN-LAST:event_cmdSendBeaActionPerformed
 
     private void chkEncryptionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkEncryptionActionPerformed
-        if (this.chkEncryption.isSelected()) {
+        
+            String defaultValue=null;
+            if(this.encryptionPwd==null) {
             PasswordGenerator passwordGenerator = new PasswordGenerator.PasswordGeneratorBuilder()
                     .useDigits(true)
                     .useLower(true)
                     .useUpper(true)
                     .build();
-            String password = passwordGenerator.generate(8);
-            Object newPwd = JOptionPane.showInputDialog(this, "neues Passwort: ", "Verschlüsselungspasswort anlegen", JOptionPane.QUESTION_MESSAGE, null, null, password);
+                defaultValue = passwordGenerator.generate(8);
+            } else {
+                defaultValue=this.encryptionPwd;
+            }
+            Object newPwd = JOptionPane.showInputDialog(this, "neues Passwort: ", "Verschlüsselungspasswort anlegen", JOptionPane.QUESTION_MESSAGE, null, null, defaultValue);
             if (newPwd == null) {
+                // do nothing - user cancelled
+                this.cmdNewSmsWithEncryptionPassword.setEnabled(this.chkEncryption!=null);
+                this.chkEncryption.setSelected(this.chkEncryption!=null);
+            } else if("".equalsIgnoreCase(newPwd.toString().trim())) {
+                // reset to "no encryption"
                 this.chkEncryption.setSelected(false);
                 this.cmdNewSmsWithEncryptionPassword.setEnabled(false);
-                return;
+                this.encryptionPwd=null;
+            } else {
+                this.chkEncryption.setSelected(true);
+                this.cmdNewSmsWithEncryptionPassword.setEnabled(true);
+                this.encryptionPwd = newPwd.toString();
             }
-            this.encryptionPwd = newPwd.toString();
-        } else {
-            this.encryptionPwd = null;
-        }
+        
     }//GEN-LAST:event_chkEncryptionActionPerformed
 
     private void chkEncryptionStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_chkEncryptionStateChanged
