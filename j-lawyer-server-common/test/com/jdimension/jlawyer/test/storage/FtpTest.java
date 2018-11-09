@@ -703,6 +703,7 @@ public class FtpTest {
         this.ftpHome=System.getenv("ftphome");
         this.ftpHost=System.getenv("ftphost");
         
+        
     }
     
     @After
