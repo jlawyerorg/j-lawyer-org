@@ -682,6 +682,7 @@ public class FtpTest {
     private String ftpUser=null;
     private String ftpPassword=null;
     private String ftpHome=null;
+    private String ftpHost=null;
     
     public FtpTest() {
     }
@@ -700,6 +701,7 @@ public class FtpTest {
         this.ftpPassword=System.getenv("ftppassword");
         this.ftpUser=System.getenv("ftpuser");
         this.ftpHome=System.getenv("ftphome");
+        this.ftpHost=System.getenv("ftphost");
         
     }
     
@@ -710,7 +712,7 @@ public class FtpTest {
      @Test
      public void testTraverse() {
         try {
-            VirtualFile vf=VirtualFile.getFile("ftp://" + this.ftpUser + ":" + this.ftpPassword +  "@hpgen8/home/" + this.ftpHome + "/temp2");
+            VirtualFile vf=VirtualFile.getFile("ftp://" + this.ftpUser + ":" + this.ftpPassword +  "@" + this.ftpHost + "/home/" + this.ftpHome + "/temp2");
             traverse(vf);
             vf.close();
         } catch (Exception ex) {
@@ -721,7 +723,7 @@ public class FtpTest {
      @Test
      public void testIsDirectory() {
         try {
-            VirtualFile vf=VirtualFile.getFile("ftp://" + this.ftpUser + ":" + this.ftpPassword +  "@hpgen8/home/" + this.ftpHome + "/temp2/");
+            VirtualFile vf=VirtualFile.getFile("ftp://" + this.ftpUser + ":" + this.ftpPassword +  "@" + this.ftpHost + "/home/" + this.ftpHome + "/temp2/");
             Assert.assertTrue(vf.isDirectory());
             Assert.assertFalse(vf.isFile());
             vf.close();
@@ -733,12 +735,12 @@ public class FtpTest {
      @Test
      public void testCreateDeleteDirectory() {
         try {
-            VirtualFile vf=VirtualFile.getFile("ftp://" + this.ftpUser + ":" + this.ftpPassword +  "@hpgen8/home/" + this.ftpHome + "/temp2/");
+            VirtualFile vf=VirtualFile.getFile("ftp://" + this.ftpUser + ":" + this.ftpPassword +  "@" + this.ftpHost + "/home/" + this.ftpHome + "/temp2/");
             
             String subDir=""+ System.currentTimeMillis();
             vf.createDirectory(subDir);
             
-            vf=VirtualFile.getFile("ftp://" + this.ftpUser + ":" + this.ftpPassword +  "@hpgen8/home/" + this.ftpHome + "/temp2/" + subDir + "/");
+            vf=VirtualFile.getFile("ftp://" + this.ftpUser + ":" + this.ftpPassword +  "@" + this.ftpHost + "/home/" + this.ftpHome + "/temp2/" + subDir + "/");
             vf.delete();
             
             
@@ -750,7 +752,7 @@ public class FtpTest {
      @Test
      public void testCopy() {
         try {
-            VirtualFile vf=VirtualFile.getFile("ftp://" + this.ftpUser + ":" + this.ftpPassword +  "@hpgen8/home/" + this.ftpHome + "/temp2/");
+            VirtualFile vf=VirtualFile.getFile("ftp://" + this.ftpUser + ":" + this.ftpPassword +  "@" + this.ftpHost + "/home/" + this.ftpHome + "/temp2/");
             
             File f=File.createTempFile("jlawyertest", ".txt");
             String name=f.getName();
@@ -776,7 +778,7 @@ public class FtpTest {
      @Test
      public void testDelete() {
         try {
-            VirtualFile vf=VirtualFile.getFile("ftp://" + this.ftpUser + ":" + this.ftpPassword +  "@hpgen8/home/" + this.ftpHome + "/temp2/");
+            VirtualFile vf=VirtualFile.getFile("ftp://" + this.ftpUser + ":" + this.ftpPassword +  "@" + this.ftpHost + "/home/" + this.ftpHome + "/temp2/");
             
             Collection<VirtualFile> c=vf.listFiles();
             for(VirtualFile v: c) {
@@ -796,7 +798,7 @@ public class FtpTest {
      @Test
      public void testIsFile() {
         try {
-            VirtualFile vf=VirtualFile.getFile("ftp://" + this.ftpUser + ":" + this.ftpPassword +  "@hpgen8/home/" + this.ftpHome + "/temp2/gugge.txt");
+            VirtualFile vf=VirtualFile.getFile("ftp://" + this.ftpUser + ":" + this.ftpPassword +  "@" + this.ftpHost + "/home/" + this.ftpHome + "/temp2/gugge.txt");
             Assert.assertTrue(vf.isFile());
             Assert.assertFalse(vf.isDirectory());
             vf.close();

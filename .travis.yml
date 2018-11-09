@@ -2,4 +2,4 @@ language: java
 jdk:
   - oraclejdk8
 # install: ant default
-script: ant -buildfile j-lawyer-fax/build.xml default && ant -Dj2ee.server.home=/home/travis -buildfile j-lawyer-server-entities/build.xml default
+script: ant -buildfile j-lawyer-fax/build.xml default && ant -Dj2ee.server.home=/home/travis -buildfile j-lawyer-server-entities/build.xml default && ant -buildfile j-lawyer-server-common/build.xml default
