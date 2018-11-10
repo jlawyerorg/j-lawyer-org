@@ -13,6 +13,7 @@ jdk:
 # install: ant default
 before_install:
   - sudo mysql -e "use mysql; update user set authentication_string=PASSWORD('travisci') where User='root'; update user set plugin='mysql_native_password';FLUSH PRIVILEGES;"
-  - sudo mysql_upgrade -u root -ptravisci
+  # - sudo mysql_upgrade -u root -ptravisci
   - sudo service mysql restart
+  - sudo mysql -u root -ptravisci -e "select 1 from dual;"
 script: ant -buildfile j-lawyer-fax/build.xml default && ant -Dj2ee.server.home=/home/travis -buildfile j-lawyer-server-entities/build.xml default && ant -buildfile j-lawyer-server-common/build.xml default && ant -buildfile j-lawyer-server-api/build.xml default && ant -Dj2ee.server.home=/home/travis -buildfile j-lawyer-server/build.xml default test && ant -buildfile j-lawyer-io-common/build.xml default && ant -buildfile j-lawyer-client/build.xml default && mvn -f j-lawyer-backupmgr/pom.xml clean package test
