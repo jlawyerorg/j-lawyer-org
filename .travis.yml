@@ -18,5 +18,6 @@ before_install:
   - sudo mysql -u root -ptravisci -e "select 1 from dual;"
   - mkdir /home/travis/j-lawyer-backup
   - mkdir /home/travis/j-lawyer-data
-  # - cd /home/travis/j-lawyer-backup && wget https://www.j-lawyer.org/downloads/travisci/backups/backups.tar.gz && tar -xvzf backups.tar.gz
+  - cd /home/travis/j-lawyer-backup && wget https://www.j-lawyer.org/downloads/travisci/backups/backups.tar.gz
+  # - tar -xvzf backups.tar.gz
 script: ant -buildfile j-lawyer-fax/build.xml default && ant -Dj2ee.server.home=/home/travis -buildfile j-lawyer-server-entities/build.xml default && ant -buildfile j-lawyer-server-common/build.xml default && ant -buildfile j-lawyer-server-api/build.xml default && ant -Dj2ee.server.home=/home/travis -buildfile j-lawyer-server/build.xml default test && ant -buildfile j-lawyer-io-common/build.xml default && ant -buildfile j-lawyer-client/build.xml default && mvn -f j-lawyer-backupmgr/pom.xml clean package test
