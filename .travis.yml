@@ -16,6 +16,7 @@ before_install:
   # - sudo mysql_upgrade -u root -ptravisci
   - sudo service mysql restart
   - sudo mysql -u root -ptravisci -e "select 1 from dual;"
+  - sudo mysql -u root -ptravisci -e "create database jlawyerdb;"
   - mkdir /home/travis/j-lawyer-backup
   - mkdir /home/travis/j-lawyer-data
   - mkdir /home/travis/j-lawyer-data/archivefiles
