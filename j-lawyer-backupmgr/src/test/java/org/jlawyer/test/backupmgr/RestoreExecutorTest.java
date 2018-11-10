@@ -714,6 +714,8 @@ public class RestoreExecutorTest {
             this.backupDirectory = System.getenv("backupdirectory");
             this.dataDirectory = System.getenv("datadirectory");
             this.encryptionPassword = System.getenv("encryptionpwd");
+            if(this.encryptionPassword!=null)
+                this.encryptionPassword=this.encryptionPassword.trim();
         } else {
             Properties p = new Properties();
             try {
