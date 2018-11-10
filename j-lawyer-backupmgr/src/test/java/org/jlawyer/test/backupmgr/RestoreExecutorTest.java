@@ -686,6 +686,8 @@ public class RestoreExecutorTest {
     private String dataDirectory = null;
     private String encryptionPassword = null;
 
+    private boolean runsontravis = false;
+
     public RestoreExecutorTest() {
     }
 
@@ -699,19 +701,34 @@ public class RestoreExecutorTest {
 
     @Before
     public void setUp() {
-        Properties p = new Properties();
-        try {
-            String propLocation="test/test.properties";
-            System.out.println("using properties from " + propLocation);
-            //p.load(Thread.currentThread().getContextClassLoader().getResourceAsStream(propLocation));
-            p.load(new FileReader("/home/jens/scripts/test.properties"));
-            
-            this.mysqlPassword = p.getProperty("mysqlpwd");
-            this.backupDirectory = p.getProperty("backupdirectory");
-            this.dataDirectory=p.getProperty("datadirectory");
-            this.encryptionPassword = p.getProperty("encryptionpwd");
-        } catch (IOException ex) {
-            ex.printStackTrace();
+
+        String rot = System.getenv("runsontravisci");
+        if (rot != null) {
+            if (rot.length() > 0) {
+                this.runsontravis = true;
+            }
+        }
+
+        if (runsontravis) {
+            this.mysqlPassword = System.getenv("mysqlpwd");
+            this.backupDirectory = System.getenv("backupdirectory");
+            this.dataDirectory = System.getenv("datadirectory");
+            this.encryptionPassword = System.getenv("encryptionpwd");
+        } else {
+            Properties p = new Properties();
+            try {
+                String propLocation = "test/test.properties";
+                System.out.println("using properties from " + propLocation);
+                //p.load(Thread.currentThread().getContextClassLoader().getResourceAsStream(propLocation));
+                p.load(new FileReader("/home/jens/scripts/test.properties"));
+
+                this.mysqlPassword = p.getProperty("mysqlpwd");
+                this.backupDirectory = p.getProperty("backupdirectory");
+                this.dataDirectory = p.getProperty("datadirectory");
+                this.encryptionPassword = p.getProperty("encryptionpwd");
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
         }
 
     }
@@ -724,7 +741,7 @@ public class RestoreExecutorTest {
     public void testValidate() {
         System.out.println("Using MySQL password " + this.mysqlPassword);
         RestoreExecutor re = new RestoreExecutor(this.dataDirectory, this.backupDirectory, this.encryptionPassword, this.mysqlPassword);
-        BackupProgressConsoleCallback callback=new BackupProgressConsoleCallback();
+        BackupProgressConsoleCallback callback = new BackupProgressConsoleCallback();
         try {
             re.validate(callback);
         } catch (Exception ex) {
