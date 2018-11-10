@@ -6,6 +6,7 @@ services: mysql
 #    packages:
 #      - mysql-server
 #      - mysql-client
+sudo: true
 language: java
 jdk:
   - oraclejdk8
