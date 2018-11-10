@@ -18,6 +18,10 @@ before_install:
   - sudo mysql -u root -ptravisci -e "select 1 from dual;"
   - mkdir /home/travis/j-lawyer-backup
   - mkdir /home/travis/j-lawyer-data
+  - mkdir /home/travis/j-lawyer-data/archivefiles
+  - mkdir /home/travis/j-lawyer-data/emailtemplates
+  - mkdir /home/travis/j-lawyer-data/templates
+  - mkdir /home/travis/j-lawyer-data/mastertemplates
   - cd /home/travis/j-lawyer-backup
   - sudo apt-get install wget
   - sudo apt-get install tar
