@@ -1,11 +1,11 @@
-# services: mysql
-addons:
-  apt:
-    sources:
-      - mysql-5.7-trusty
-    packages:
-      - mysql-server
-      - mysql-client
+services: mysql
+#addons:
+#  apt:
+#    sources:
+#      - mysql-5.7-trusty
+#    packages:
+#      - mysql-server
+#      - mysql-client
 language: java
 jdk:
   - oraclejdk8
