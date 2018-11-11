@@ -711,6 +711,8 @@ public class FtpTest {
         this.ftpUser = System.getenv("ftpuser");
         this.ftpHome = System.getenv("ftphome");
         this.ftpHost = System.getenv("ftphost");
+        
+        System.out.println("using host " + ftpHost);
 
     }
 
