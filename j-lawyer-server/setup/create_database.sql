@@ -497,5 +497,11 @@ alter table campaign_addresses add index `IDX_CAMPAIGNADDRESSES_ADDRESSKEY` (add
 
 alter table ArchiveFileBean MODIFY `reason` VARCHAR(250) BINARY;
 
+##############################################
+# introduced with change from 1.9.1 to 1.9.2
+##############################################
+
+insert into ServerSettingsBean(settingKey, settingValue) values('jlawyer.server.database.version','1.9.2.0') ON DUPLICATE KEY UPDATE settingValue     = '1.9.2.0';
+
 commit;
 
