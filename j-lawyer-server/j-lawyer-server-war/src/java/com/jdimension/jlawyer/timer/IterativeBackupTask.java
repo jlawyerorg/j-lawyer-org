@@ -741,8 +741,8 @@ public class IterativeBackupTask extends java.util.TimerTask implements Cancella
             ServerSettingsBeanFacadeLocal settings = (ServerSettingsBeanFacadeLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ServerSettingsBeanFacade!com.jdimension.jlawyer.persistence.ServerSettingsBeanFacadeLocal");
             ServerSettingsBean mode = settings.find("jlawyer.server.backup.backupmode");
             if (!this.adHoc) {
-                log.info("backup mode: " + mode);
                 if (mode != null) {
+                    log.info("backup mode: " + mode.getSettingValue());
                     if ("off".equalsIgnoreCase(mode.getSettingValue())) {
                         isRunning=false;
                         return;
