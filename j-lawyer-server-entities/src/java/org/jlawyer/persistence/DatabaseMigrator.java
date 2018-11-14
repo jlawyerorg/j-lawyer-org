@@ -696,13 +696,13 @@ public class DatabaseMigrator implements Integrator {
                 String currentDbVersion = this.getCurrentDatabaseVersion(con);
                 if ("01910".equals(currentDbVersion) || "01900".equals(currentDbVersion)) {
                     // migrate
-                    log.info("migrating to 1.9.2.0");
-                    this.executeUpdate("insert into ServerSettingsBean(settingKey, settingValue) values('jlawyer.server.database.version','1.9.2.0') ON DUPLICATE KEY UPDATE settingValue     = '1.9.2.0'", con);
+                    log.info("migrating to 1.10.0.0");
+                    this.executeUpdate("insert into ServerSettingsBean(settingKey, settingValue) values('jlawyer.server.database.version','1.10.0.0') ON DUPLICATE KEY UPDATE settingValue     = '1.10.0.0'", con);
 
                 }
 
                 currentDbVersion = this.getCurrentDatabaseVersion(con);
-                if ("1.9.2.0".equals(currentDbVersion)) {
+                if ("1.10.0.0".equals(currentDbVersion)) {
                     // migrate
                 }
 

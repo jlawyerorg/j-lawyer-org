@@ -1346,7 +1346,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
 
     @Override
     public String getServerVersion() {
-        return "1.9.2.0";
+        return "1.10.0.0";
     }
 
     @Override
