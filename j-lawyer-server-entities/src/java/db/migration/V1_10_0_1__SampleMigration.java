@@ -660,103 +660,32 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package org.jlawyer.persistence;
+package db.migration;
 
-import java.sql.Connection;
-import java.sql.ResultSet;
-import javax.naming.Context;
-import javax.naming.InitialContext;
-import javax.sql.DataSource;
-import org.apache.log4j.Logger;
-import org.flywaydb.core.Flyway;
-import org.hibernate.cfg.Configuration;
-import org.hibernate.engine.spi.SessionFactoryImplementor;
-import org.hibernate.integrator.spi.Integrator;
-import org.hibernate.metamodel.source.MetadataImplementor;
-import org.hibernate.service.spi.SessionFactoryServiceRegistry;
+import java.sql.PreparedStatement;
+import org.flywaydb.core.api.migration.BaseJavaMigration;
+import org.flywaydb.core.api.migration.Context;
+import org.jboss.logging.Logger;
 
 /**
  *
  * @author jens
  */
-public class DatabaseMigrator implements Integrator {
-
-    private static final Logger log = Logger.getLogger(DatabaseMigrator.class.getName());
-
-    private static final String lock = "lockObject";
-
-    @Override
-    public void integrate(Configuration c, SessionFactoryImplementor sfi, SessionFactoryServiceRegistry sfsr) {
-        synchronized (lock) {
-            System.out.println("Starting j-lawyer.org database migrations...");
-
-            try {
-                Context ctx = new InitialContext();
-                DataSource ds = (DataSource) ctx.lookup("java:/jlawyerdb");
-                //Connection con = ds.getConnection();
-
-                Flyway flyway = Flyway.configure().dataSource(ds).baselineVersion("1.9.1.0").baselineOnMigrate(true).load();
-                
-                flyway.migrate();
-
+public class V1_10_0_1__SampleMigration extends BaseJavaMigration {
+    
+    private static final Logger log=Logger.getLogger(V1_10_0_1__SampleMigration.class.getName());
+    
+    public void migrate(Context context) throws Exception {
+        
+        log.info("Running migration " + V1_10_0_1__SampleMigration.class.getName());
+        
+//        PreparedStatement statement =
+//            context.getConnection().prepareStatement("INSERT INTO test_user (name) VALUES ('Obelix')");
 //
-//                String currentDbVersion = this.getCurrentDatabaseVersion(con);
-//                if ("01910".equals(currentDbVersion) || "01900".equals(currentDbVersion)) {
-//                    // migrate
-//                    log.info("migrating to 1.10.0.0");
-//                    this.executeUpdate("insert into ServerSettingsBean(settingKey, settingValue) values('jlawyer.server.database.version','1.10.0.0') ON DUPLICATE KEY UPDATE settingValue     = '1.10.0.0'", con);
-//
-//                }
-//
-//                currentDbVersion = this.getCurrentDatabaseVersion(con);
-//                if ("1.10.0.0".equals(currentDbVersion)) {
-//                    // migrate
-//                }
-//
-//                con.close();
-            } catch (Throwable me) {
-                log.error("exception caught", me);
-            }
-        }
+//        try {
+//            statement.execute();
+//        } finally {
+//            statement.close();
+//        }
     }
-
-    private void executeUpdate(String sql, Connection dbCon) {
-        log.info("running database migration: " + sql);
-        try {
-            dbCon.createStatement().executeUpdate(sql);
-        } catch (Throwable t) {
-            log.error("failed: " + sql, t);
-        }
-    }
-
-    private String getCurrentDatabaseVersion(Connection dbCon) {
-        // select settingValue from ServerSettingsBean where settingKey = 'jlawyer.server.database.version'
-        String dbVersion = "unknown";
-        try {
-            ResultSet rs = dbCon.createStatement().executeQuery("select settingValue from ServerSettingsBean where settingKey = 'jlawyer.server.database.version'");
-            if (rs.next()) {
-
-                dbVersion = rs.getString(1);
-            }
-
-            rs.close();
-
-        } catch (Throwable t) {
-            log.error("Could not determine database schema version", t);
-
-        }
-        log.info("current database schema version: " + dbVersion);
-        return dbVersion;
-    }
-
-    @Override
-    public void integrate(MetadataImplementor mi, SessionFactoryImplementor sfi, SessionFactoryServiceRegistry sfsr) {
-
-    }
-
-    @Override
-    public void disintegrate(SessionFactoryImplementor sfi, SessionFactoryServiceRegistry sfsr) {
-
-    }
-
 }
