@@ -763,6 +763,8 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
                 if (selectedRow >= tblDirContent.getRowCount()) {
                     selectedRow = 0;
                 }
+                // call the sorter twice so we have a sort by date descending
+                sorter.toggleSortOrder(1);
                 sorter.toggleSortOrder(1);
                 
                 tblDirContent.changeSelection(selectedRow, 0, false, false);
