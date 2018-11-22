@@ -801,7 +801,7 @@ public class LoginDialog extends javax.swing.JFrame {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("j-lawyer.org Login");
-        setIconImage(new ImageIcon(getClass().getResource("/icons/folder.png")).getImage());
+        setIconImage(new ImageIcon(getClass().getResource("/icons/windowicon.png")).getImage());
         setResizable(false);
 
         cmdCancel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png"))); // NOI18N

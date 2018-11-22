@@ -663,6 +663,8 @@
  */
 package com.jdimension.jlawyer.client.editors.documents;
 
+import com.jdimension.jlawyer.client.desktop.DesktopPanel;
+import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.StatusBarProvider;
 import com.jdimension.jlawyer.client.editors.ThemeableEditor;
 import com.jdimension.jlawyer.client.editors.documents.viewer.DocumentViewerFactory;
@@ -737,6 +739,15 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
     @Override
     public void onEvent(Event e) {
         if (e instanceof ScannerStatusEvent) {
+            
+//            EditorsRegistry reg = EditorsRegistry.getInstance();
+//            if (reg.isEditorActive(DesktopPanel.class.getName()) && resultUI.getComponentCount() > 0) {
+//                if (!this.ignoreCurrentEditor) {
+//                    // do not refresh if desktop is active - this might interrupt user interactions
+//                    return;
+//                }
+//            }
+            
             int selectedRow = tblDirContent.getSelectedRow();
             Hashtable<File, Date> fileNames = ((ScannerStatusEvent) e).getFileNames();
             SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy, HH:mm", Locale.GERMAN);

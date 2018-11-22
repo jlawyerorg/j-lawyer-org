@@ -709,6 +709,7 @@ public class UserProfileDialog extends javax.swing.JDialog {
             "edit_user.png",
             "gadu.png",
             "identity.png",
+            "jlawyer.png",
             "katuberling.png",
             "ksmiletris.png",
             "kugardata.png",
@@ -727,6 +728,7 @@ public class UserProfileDialog extends javax.swing.JDialog {
             new ImageIcon(getClass().getResource("/avatar32/edit_user.png")),
             new ImageIcon(getClass().getResource("/avatar32/gadu.png")),
             new ImageIcon(getClass().getResource("/avatar32/identity.png")),
+            new ImageIcon(getClass().getResource("/avatar32/jlawyer.png")),
             new ImageIcon(getClass().getResource("/avatar32/katuberling.png")),
             new ImageIcon(getClass().getResource("/avatar32/ksmiletris.png")),
             new ImageIcon(getClass().getResource("/avatar32/kugardata.png")),
@@ -738,7 +740,8 @@ public class UserProfileDialog extends javax.swing.JDialog {
         this.cmbAvatar.setModel(new DefaultComboBoxModel(items));
         
         String currentIcon=UserSettings.getInstance().getSetting(UserSettings.USER_AVATAR, "identity.png");
-        this.cmbAvatar.setSelectedIndex(Arrays.binarySearch(names, currentIcon));
+        int selectedIndex=Arrays.binarySearch(names, currentIcon);
+        this.cmbAvatar.setSelectedIndex(Math.max(0, selectedIndex));
         
         
     }

@@ -1023,7 +1023,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         setDefaultCloseOperation(javax.swing.WindowConstants.DO_NOTHING_ON_CLOSE);
         java.util.ResourceBundle bundle = java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI"); // NOI18N
         setTitle(bundle.getString("title")); // NOI18N
-        setIconImage(new ImageIcon(getClass().getResource("/icons/folder.png")).getImage());
+        setIconImage(new ImageIcon(getClass().getResource("/icons/windowicon.png")).getImage());
         addComponentListener(new java.awt.event.ComponentAdapter() {
             public void componentResized(java.awt.event.ComponentEvent evt) {
                 formComponentResized(evt);
