@@ -738,6 +738,9 @@ public class EmailUtils {
     public static ArrayList<String> getAttachmentNames(Object partObject) throws Exception {
 
         ArrayList<String> attachmentNames = new ArrayList<String>();
+        
+        if(partObject==null)
+            return attachmentNames;
 
         if (partObject instanceof Multipart) {
             Multipart mp = (Multipart) partObject;
