@@ -1346,7 +1346,11 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
 
     @Override
     public String getServerVersion() {
-        return "1.10.0.0";
+        ServerSettingsBean srvVersion = this.settingsFacade.find("jlawyer.server.database.version");
+        if(srvVersion!=null)
+            return srvVersion.getSettingValue();
+        else 
+            return "unknown";
     }
 
     @Override
