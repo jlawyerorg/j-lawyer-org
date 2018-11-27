@@ -2832,7 +2832,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                     }
                     inClause = inClause.replaceFirst(",", "");
                     // without archive and with tag
-                    st = con.prepareStatement("select archiveFileKey, tagName from ArchiveFileTagsBean where archiveFileKey in (" + "select ArchiveFileBean.id from ArchiveFileBean, ArchiveFileTagsBean where (ucase(name) like ? or ucase(fileNumber) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ?) and archived=0 and (ArchiveFileTagsBean.tagName in (" + inClause + ") and ArchiveFileTagsBean.archiveFileKey=ArchiveFileBean.id)" + ")");
+                    st = con.prepareStatement("select archiveFileKey, tagName from ArchiveFileTagsBean where archiveFileKey in (" + "select ArchiveFileBean.id from ArchiveFileBean, ArchiveFileTagsBean where (ucase(name) like ? or ucase(fileNumber) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(subjectField) like ?) and archived=0 and (ArchiveFileTagsBean.tagName in (" + inClause + ") and ArchiveFileTagsBean.archiveFileKey=ArchiveFileBean.id)" + ")");
                     st.setString(1, wildCard);
                     st.setString(2, wildCard);
                     st.setString(3, wildCard);
