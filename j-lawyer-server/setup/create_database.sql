@@ -501,7 +501,9 @@ alter table ArchiveFileBean MODIFY `reason` VARCHAR(250) BINARY;
 # introduced with change from 1.9.1 to 1.10
 ##############################################
 
-insert into ServerSettingsBean(settingKey, settingValue) values('jlawyer.server.database.version','1.10.0.0') ON DUPLICATE KEY UPDATE settingValue     = '1.10.0.0';
+insert into ServerSettingsBean(settingKey, settingValue) values('jlawyer.server.database.version','1.10.0.2') ON DUPLICATE KEY UPDATE settingValue     = '1.10.0.2';
+
+alter table ArchiveFileBean add index `IDX_ARCHIVEFILEBEAN_SUBJECTFIELD` (subjectField);
 
 commit;
 
