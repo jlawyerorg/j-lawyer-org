@@ -729,16 +729,16 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     @EJB
     private ServerSettingsBeanFacadeLocal settingsFacade;
 
-    private static final String PS_SEARCHENHANCED_2 = "select id from ArchiveFileBean where ucase(name) like ? or ucase(fileNumber) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(subjectField) like ?";
-    //private static final String PS_SEARCHENHANCED_3 = "select ArchiveFileBean.id from ArchiveFileBean, ArchiveFileTagsBean where (ucase(name) like ? or ucase(fileNumber) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ?) and archived=0 and (ArchiveFileTagsBean.tagName=? and ArchiveFileTagsBean.archiveFileKey=ArchiveFileBean.id)";
-    private static final String PS_SEARCHENHANCED_4 = "select id from ArchiveFileBean where (ucase(name) like ? or ucase(fileNumber) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(subjectField) like ?) and archived=0";
+    private static final String PS_SEARCHENHANCED_2 = "select id from cases where ucase(name) like ? or ucase(fileNumber) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(subjectField) like ?";
+    //private static final String PS_SEARCHENHANCED_3 = "select ArchiveFileBean.id from cases, ArchiveFileTagsBean where (ucase(name) like ? or ucase(fileNumber) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ?) and archived=0 and (ArchiveFileTagsBean.tagName=? and ArchiveFileTagsBean.archiveFileKey=ArchiveFileBean.id)";
+    private static final String PS_SEARCHENHANCED_4 = "select id from cases where (ucase(name) like ? or ucase(fileNumber) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(subjectField) like ?) and archived=0";
 
     @Override
     @RolesAllowed({"loginRole"})
     public int getArchiveFileCount() {
         JDBCUtils utils = new JDBCUtils();
         try {
-            return utils.getRowCount("ArchiveFileBean");
+            return utils.getRowCount("cases");
         } catch (Exception ex) {
             throw new EJBException("Error getting number of archive files", ex);
         }
@@ -781,7 +781,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
             try {
                 con = utils.getConnection();
-                st = con.prepareStatement("select distinct (fileNumber) from ArchiveFileBean order by fileNumber asc");
+                st = con.prepareStatement("select distinct (fileNumber) from cases order by fileNumber asc");
 
                 rs = st.executeQuery();
                 while (rs.next()) {
@@ -838,7 +838,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             suffix = "/" + suffix.substring(2);
             try {
                 con = utils.getConnection();
-                st = con.prepareStatement("select id from ArchiveFileBean where fileNumber = ?");
+                st = con.prepareStatement("select id from cases where fileNumber = ?");
                 boolean found = true;
                 while (found) {
                     newKey = nf.format(index) + suffix;
@@ -886,7 +886,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 //
 //        try {
 //            con = utils.getConnection();
-//            st = con.prepareStatement("select id from ArchiveFileBean where fileNumber = ?");
+//            st = con.prepareStatement("select id from cases where fileNumber = ?");
 //            boolean found = true;
 //            while (found) {
 //                st.setString(1, prefix + nf.format(index));
@@ -936,7 +936,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         ArrayList<ArchiveFileBean> list = new ArrayList<ArchiveFileBean>();
         try {
             con = utils.getConnection();
-            st = con.prepareStatement("select id from ArchiveFileBean where ucase(name) like ? or ucase(fileNumber) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(subjectField) like ?");
+            st = con.prepareStatement("select id from cases where ucase(name) like ? or ucase(fileNumber) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(subjectField) like ?");
             String wildCard = "%" + StringUtils.germanToUpperCase(query) + "%";
             st.setString(1, wildCard);
             st.setString(2, wildCard);
@@ -1283,12 +1283,12 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 //st = con.prepareStatement("select distinct(archiveFileKey) from (select archiveFileKey, changeDate from ArchiveFileHistoryBean where principal = ? order by changeDate DESC limit 0,200) as t1 limit 0,?");
                 // leave out archived
                 //st = con.prepareStatement("select distinct(t1.archiveFileKey) from (select archiveFileKey, changeDate from ArchiveFileHistoryBean where principal = ? order by changeDate DESC limit 0,200) t1, ArchiveFileBean t2 where t1.archiveFileKey = t2.id and t2.archived=0 limit 0,?");
-                st = con.prepareStatement("select t1.archiveFileKey from (select archiveFileKey, max(changeDate) as changeDate from ArchiveFileHistoryBean where principal = ? group by archiveFileKey order by changeDate desc) t1, ArchiveFileBean t2 where t1.archiveFileKey = t2.id and t2.archived=0 order by changeDate DESC limit 0,?");
+                st = con.prepareStatement("select t1.archiveFileKey from (select archiveFileKey, max(changeDate) as changeDate from case_history where principal = ? group by archiveFileKey order by changeDate desc) t1, cases t2 where t1.archiveFileKey = t2.id and t2.archived=0 order by changeDate DESC limit 0,?");
             } else {
                 //st = con.prepareStatement("select distinct(archiveFileKey) from (select archiveFileKey, changeDate from ArchiveFileHistoryBean where principal != ? order by changeDate DESC limit 0,200) as t1 limit 0,?");
                 // leave out archived
                 //st = con.prepareStatement("select distinct(t1.archiveFileKey) from (select archiveFileKey, changeDate from ArchiveFileHistoryBean where principal != ? order by changeDate DESC limit 0,200) t1, ArchiveFileBean t2 where t1.archiveFileKey = t2.id and t2.archived=0 limit 0,?");
-                st = con.prepareStatement("select t1.archiveFileKey from (select archiveFileKey, max(changeDate) as changeDate from ArchiveFileHistoryBean where principal != ? group by archiveFileKey order by changeDate desc) t1, ArchiveFileBean t2 where t1.archiveFileKey = t2.id and t2.archived=0 order by changeDate DESC limit 0,?");
+                st = con.prepareStatement("select t1.archiveFileKey from (select archiveFileKey, max(changeDate) as changeDate from case_history where principal != ? group by archiveFileKey order by changeDate desc) t1, cases t2 where t1.archiveFileKey = t2.id and t2.archived=0 order by changeDate DESC limit 0,?");
             }
 
             st.setString(1, lastChangeUser);
@@ -1338,7 +1338,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         ArrayList<ArchiveFileReviewsBean> list = new ArrayList<ArchiveFileReviewsBean>();
         try {
             con = utils.getConnection();
-            st = con.prepareStatement("select id, archiveFileKey from ArchiveFileReviewsBean where done=0 order by reviewDate asc");
+            st = con.prepareStatement("select id, archiveFileKey from case_followups where done=0 order by reviewDate asc");
             rs = st.executeQuery();
 
             while (rs.next()) {
@@ -1575,7 +1575,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         int count = 0;
         try {
             con = utils.getConnection();
-            st = con.prepareStatement("select count(*) from ArchiveFileBean where archived=1");
+            st = con.prepareStatement("select count(*) from cases where archived=1");
 
             rs = st.executeQuery();
             if (rs.next()) {
@@ -1613,7 +1613,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     public int getDocumentCount() {
         JDBCUtils utils = new JDBCUtils();
         try {
-            return utils.getRowCount("ArchiveFileDocumentsBean");
+            return utils.getRowCount("case_documents");
         } catch (Exception ex) {
             throw new EJBException("Error getting number of archive files", ex);
         }
@@ -2040,7 +2040,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         ArrayList<String> list = new ArrayList<String>();
         try {
             con = utils.getConnection();
-            st = con.prepareStatement("select distinct(tagName) from ArchiveFileTagsBean order by tagName asc");
+            st = con.prepareStatement("select distinct(tagName) from case_tags order by tagName asc");
             rs = st.executeQuery();
 
             while (rs.next()) {
@@ -2105,7 +2105,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                     inClause = inClause.replaceFirst(",", "");
 
                     // with archive and tag
-                    st = con.prepareStatement("select distinct(ArchiveFileBean.id) from ArchiveFileBean, ArchiveFileTagsBean where (ucase(name) like ? or ucase(fileNumber) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(subjectField) like ?) and (ArchiveFileTagsBean.tagName in (" + inClause + ") and ArchiveFileTagsBean.archiveFileKey=ArchiveFileBean.id)");
+                    st = con.prepareStatement("select distinct(ArchiveFileBean.id) from cases, case_tags where (ucase(name) like ? or ucase(fileNumber) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(subjectField) like ?) and (case_tags.tagName in (" + inClause + ") and case_tags.archiveFileKey=cases.id)");
                     st.setString(1, wildCard);
                     st.setString(2, wildCard);
                     st.setString(3, wildCard);
@@ -2139,7 +2139,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                     inClause = inClause.replaceFirst(",", "");
 
                     // without archive and with tag
-                    st = con.prepareStatement("select distinct(ArchiveFileBean.id) from ArchiveFileBean, ArchiveFileTagsBean where (ucase(name) like ? or ucase(fileNumber) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(subjectField) like ?) and archived=0 and (ArchiveFileTagsBean.tagName in (" + inClause + ") and ArchiveFileTagsBean.archiveFileKey=ArchiveFileBean.id)");
+                    st = con.prepareStatement("select distinct(cases.id) from cases, case_tags where (ucase(name) like ? or ucase(fileNumber) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(subjectField) like ?) and archived=0 and (case_tags.tagName in (" + inClause + ") and case_tags.archiveFileKey=cases.id)");
                     st.setString(1, wildCard);
                     st.setString(2, wildCard);
                     st.setString(3, wildCard);
@@ -2244,25 +2244,25 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             con = utils.getConnection();
             if (status == ArchiveFileConstants.REVIEWSTATUS_ANY) {
                 if (type == ArchiveFileConstants.REVIEWTYPE_ANY) {
-                    st = con.prepareStatement("select id, archiveFileKey from ArchiveFileReviewsBean where reviewDate >= ? and reviewDate <= ? order by reviewDate asc limit ?");
+                    st = con.prepareStatement("select id, archiveFileKey from case_followups where reviewDate >= ? and reviewDate <= ? order by reviewDate asc limit ?");
                     st.setDate(1, new java.sql.Date(fromDate.getTime()));
                     st.setDate(2, new java.sql.Date(toDate.getTime()));
                     st.setInt(3, limit);
                 } else {
-                    st = con.prepareStatement("select id, archiveFileKey from ArchiveFileReviewsBean where reviewType=? and reviewDate >= ? and reviewDate <= ? order by reviewDate asc limit ?");
+                    st = con.prepareStatement("select id, archiveFileKey from case_followups where reviewType=? and reviewDate >= ? and reviewDate <= ? order by reviewDate asc limit ?");
                     st.setInt(1, type);
                     st.setDate(2, new java.sql.Date(fromDate.getTime()));
                     st.setDate(3, new java.sql.Date(toDate.getTime()));
                     st.setInt(4, limit);
                 }
             } else if (type == ArchiveFileConstants.REVIEWTYPE_ANY) {
-                st = con.prepareStatement("select id, archiveFileKey from ArchiveFileReviewsBean where done=? and reviewDate >= ? and reviewDate <= ? order by reviewDate asc limit ?");
+                st = con.prepareStatement("select id, archiveFileKey from case_followups where done=? and reviewDate >= ? and reviewDate <= ? order by reviewDate asc limit ?");
                 st.setInt(1, status);
                 st.setDate(2, new java.sql.Date(fromDate.getTime()));
                 st.setDate(3, new java.sql.Date(toDate.getTime()));
                 st.setInt(4, limit);
             } else {
-                st = con.prepareStatement("select id, archiveFileKey from ArchiveFileReviewsBean where reviewType=? and done=? and reviewDate >= ? and reviewDate <= ? order by reviewDate asc limit ?");
+                st = con.prepareStatement("select id, archiveFileKey from case_followups where reviewType=? and done=? and reviewDate >= ? and reviewDate <= ? order by reviewDate asc limit ?");
                 st.setInt(1, type);
                 st.setInt(2, status);
                 st.setDate(3, new java.sql.Date(fromDate.getTime()));
@@ -2319,9 +2319,9 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         try {
             con = utils.getConnection();
             if (principalId == null || "".equalsIgnoreCase(principalId)) {
-                st = con.prepareStatement("select min(changeDate) as minDate, max(changeDate) as maxDate from ArchiveFileHistoryBean");
+                st = con.prepareStatement("select min(changeDate) as minDate, max(changeDate) as maxDate from case_history");
             } else {
-                st = con.prepareStatement("select min(changeDate) as minDate, max(changeDate) as maxDate from ArchiveFileHistoryBean where principal = ?");
+                st = con.prepareStatement("select min(changeDate) as minDate, max(changeDate) as maxDate from case_history where principal = ?");
                 st.setString(1, principalId);
             }
             rs = st.executeQuery();
@@ -2391,7 +2391,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         try {
             con = utils.getConnection();
 
-            st = con.prepareStatement("select archiveFileKey from (SELECT archiveFileKey, MAX(changeDate) as maxChangeDate FROM ArchiveFileHistoryBean GROUP BY archiveFileKey order by maxChangeDate DESC) a1, ArchiveFileBean a2 where a1.archiveFileKey = a2.id and a2.archived=0 order by maxChangeDate DESC limit 0,?");
+            st = con.prepareStatement("select archiveFileKey from (SELECT archiveFileKey, MAX(changeDate) as maxChangeDate FROM case_history GROUP BY archiveFileKey order by maxChangeDate DESC) a1, cases a2 where a1.archiveFileKey = a2.id and a2.archived=0 order by maxChangeDate DESC limit 0,?");
 
             st.setInt(1, limit);
             rs = st.executeQuery();
@@ -2473,7 +2473,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         ArrayList<ArchiveFileBean> list = new ArrayList<ArchiveFileBean>();
         try {
             con = utils.getConnection();
-            st = con.prepareStatement("select id from ArchiveFileBean where archived=0 and id not in (select archiveFileKey from ArchiveFileReviewsBean where done=0) order by fileNumber asc");
+            st = con.prepareStatement("select id from cases where archived=0 and id not in (select archiveFileKey from case_followups where done=0) order by fileNumber asc");
             rs = st.executeQuery();
 
             while (rs.next()) {
@@ -2541,7 +2541,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         ArrayList<String> list = new ArrayList<String>();
         try {
             con = utils.getConnection();
-            st = con.prepareStatement("select id from ArchiveFileBean");
+            st = con.prepareStatement("select id from cases");
             rs = st.executeQuery();
 
             //ArchiveFileLocalHome home = this.lookupArchiveFileBean();
@@ -2588,7 +2588,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         ArrayList<String> list = new ArrayList<String>();
         try {
             con = utils.getConnection();
-            st = con.prepareStatement("SELECT max(changeDate) FROM ArchiveFileHistoryBean where archiveFileKey=?;");
+            st = con.prepareStatement("SELECT max(changeDate) FROM case_history where archiveFileKey=?;");
             st.setString(1, archiveFileKey);
             rs = st.executeQuery();
 
@@ -2685,7 +2685,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             }
             inClause = inClause.replaceFirst(",", "");
 
-            st = con.prepareStatement("select a1.archiveFileKey from (SELECT archiveFileKey, MAX(changeDate) as maxChangeDate FROM ArchiveFileHistoryBean GROUP BY archiveFileKey order by maxChangeDate DESC) a1, ArchiveFileBean a2, ArchiveFileTagsBean a3 where a1.archiveFileKey = a2.id and a2.archived=0 and a2.id = a3.archiveFileKey and a3.tagName in (" + inClause + ") order by maxChangeDate DESC limit 0,?");
+            st = con.prepareStatement("select a1.archiveFileKey from (SELECT archiveFileKey, MAX(changeDate) as maxChangeDate FROM case_history GROUP BY archiveFileKey order by maxChangeDate DESC) a1, cases a2, case_tags a3 where a1.archiveFileKey = a2.id and a2.archived=0 and a2.id = a3.archiveFileKey and a3.tagName in (" + inClause + ") order by maxChangeDate DESC limit 0,?");
 
             int index = 1;
             for (String t : tagName) {
@@ -2800,7 +2800,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                     inClause = inClause.replaceFirst(",", "");
 
                     // with archive and tag
-                    st = con.prepareStatement("select archiveFileKey, tagName from ArchiveFileTagsBean where archiveFileKey in (" + "select ArchiveFileBean.id from ArchiveFileBean, ArchiveFileTagsBean where (ucase(name) like ? or ucase(fileNumber) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(subjectField) like ?) and (ArchiveFileTagsBean.tagName in (" + inClause + ") and ArchiveFileTagsBean.archiveFileKey=ArchiveFileBean.id)" + ")");
+                    st = con.prepareStatement("select archiveFileKey, tagName from case_tags where archiveFileKey in (" + "select cases.id from cases, case_tags where (ucase(name) like ? or ucase(fileNumber) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(subjectField) like ?) and (case_tags.tagName in (" + inClause + ") and case_tags.archiveFileKey=cases.id)" + ")");
                     st.setString(1, wildCard);
                     st.setString(2, wildCard);
                     st.setString(3, wildCard);
@@ -2815,7 +2815,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                     }
                 } else {
                     // with archive but no tag
-                    st = con.prepareStatement("select archiveFileKey, tagName from ArchiveFileTagsBean where archiveFileKey in (" + PS_SEARCHENHANCED_2 + ")");
+                    st = con.prepareStatement("select archiveFileKey, tagName from case_tags where archiveFileKey in (" + PS_SEARCHENHANCED_2 + ")");
                     st.setString(1, wildCard);
                     st.setString(2, wildCard);
                     st.setString(3, wildCard);
@@ -2832,7 +2832,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                     }
                     inClause = inClause.replaceFirst(",", "");
                     // without archive and with tag
-                    st = con.prepareStatement("select archiveFileKey, tagName from ArchiveFileTagsBean where archiveFileKey in (" + "select ArchiveFileBean.id from ArchiveFileBean, ArchiveFileTagsBean where (ucase(name) like ? or ucase(fileNumber) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(subjectField) like ?) and archived=0 and (ArchiveFileTagsBean.tagName in (" + inClause + ") and ArchiveFileTagsBean.archiveFileKey=ArchiveFileBean.id)" + ")");
+                    st = con.prepareStatement("select archiveFileKey, tagName from case_tags where archiveFileKey in (" + "select cases.id from cases, case_tags where (ucase(name) like ? or ucase(fileNumber) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(subjectField) like ?) and archived=0 and (case_tags.tagName in (" + inClause + ") and case_tags.archiveFileKey=cases.id)" + ")");
                     st.setString(1, wildCard);
                     st.setString(2, wildCard);
                     st.setString(3, wildCard);
@@ -2847,7 +2847,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                     }
                 } else {
                     // without archive and no tag
-                    st = con.prepareStatement("select archiveFileKey, tagName from ArchiveFileTagsBean where archiveFileKey in (" + PS_SEARCHENHANCED_4 + ")");
+                    st = con.prepareStatement("select archiveFileKey, tagName from case_tags where archiveFileKey in (" + PS_SEARCHENHANCED_4 + ")");
                     st.setString(1, wildCard);
                     st.setString(2, wildCard);
                     st.setString(3, wildCard);

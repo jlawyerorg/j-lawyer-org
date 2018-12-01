@@ -674,7 +674,7 @@ import javax.xml.bind.annotation.XmlRootElement;
  * @author jens
  */
 @Entity
-@Table(name = "AddressTagsBean")
+@Table(name = "contact_tags")
 @XmlRootElement
 @NamedQueries({
     @NamedQuery(name = "AddressTagsBean.findAll", query = "SELECT a FROM AddressTagsBean a"),

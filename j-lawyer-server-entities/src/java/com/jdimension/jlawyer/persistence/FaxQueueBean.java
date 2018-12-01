@@ -673,7 +673,7 @@ import javax.xml.bind.annotation.XmlRootElement;
  * @author jens
  */
 @Entity
-@Table(name = "FaxQueueBean")
+@Table(name = "communication_fax")
 @XmlRootElement
 @NamedQueries({
     @NamedQuery(name = "FaxQueueBean.findAll", query = "SELECT f FROM FaxQueueBean f"),

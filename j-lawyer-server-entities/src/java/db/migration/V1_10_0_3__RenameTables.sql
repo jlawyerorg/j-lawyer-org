@@ -1,13 +1,3 @@
-use jlawyerdb;
-
-# Remember to put database migrations into class DatabaseMigrator, this SQL file
-# is for documentation mainly or for cases where the servers datasource does not
-# have enough privileges to perform schema changes.
-
-insert into ServerSettingsBean(settingKey, settingValue) values('jlawyer.server.database.version','1.10.0.3') ON DUPLICATE KEY UPDATE settingValue     = '1.10.0.3';
-
-alter table ArchiveFileBean add index `IDX_ARCHIVEFILEBEAN_SUBJECTFIELD` (subjectField);
-
 rename table AddressBean to contacts;
 rename table AddressTagsBean to contact_tags;
 
@@ -35,4 +25,5 @@ rename table FaxQueueBean to communication_fax;
 rename table campaign to campaigns;
 rename table campaign_addresses to campaign_contacts;
 
+insert into ServerSettingsBean(settingKey, settingValue) values('jlawyer.server.database.version','1.10.0.3') ON DUPLICATE KEY UPDATE settingValue     = '1.10.0.3';
 commit;

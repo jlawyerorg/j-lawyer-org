@@ -675,7 +675,7 @@ import javax.xml.bind.annotation.XmlTransient;
  * @author jens
  */
 @Entity
-@Table(name = "AddressBean")
+@Table(name = "contacts")
 @XmlRootElement
 @NamedQueries({
     @NamedQuery(name = "AddressBean.findAll", query = "SELECT a FROM AddressBean a"),

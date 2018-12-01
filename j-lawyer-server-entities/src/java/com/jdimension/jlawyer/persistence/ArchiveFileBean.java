@@ -675,7 +675,7 @@ import javax.xml.bind.annotation.XmlTransient;
  * @author jens
  */
 @Entity
-@Table(name = "ArchiveFileBean")
+@Table(name = "cases")
 @XmlRootElement
 @NamedQueries({
     @NamedQuery(name = "ArchiveFileBean.findAll", query = "SELECT a FROM ArchiveFileBean a"),

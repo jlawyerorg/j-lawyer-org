@@ -759,7 +759,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         ArrayList<BankDataBean> list = new ArrayList<BankDataBean>();
         try {
             con = utils.getConnection();
-            st = con.prepareStatement("select id, name, bankCode from BankDataBean where ucase(name) like ? or bankCode like ? order by bankCode, name");
+            st = con.prepareStatement("select id, name, bankCode from directory_banks where ucase(name) like ? or bankCode like ? order by bankCode, name");
             String wildCard1 = StringUtils.germanToUpperCase(query) + "%";
             String wildCard2 = "%" + wildCard1;
             st.setString(1, wildCard2);
@@ -810,7 +810,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         ArrayList<CityDataBean> list = new ArrayList<CityDataBean>();
         try {
             con = utils.getConnection();
-            st = con.prepareStatement("select id, city, zipCode from CityDataBean where ucase(city) like ? or zipCode like ? order by zipCode");
+            st = con.prepareStatement("select id, city, zipCode from directory_cities where ucase(city) like ? or zipCode like ? order by zipCode");
             String wildCard1 = StringUtils.germanToUpperCase(query) + "%";
             String wildCard2 = "%" + wildCard1;
             st.setString(1, wildCard2);
@@ -884,7 +884,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         try {
             con = utils.getConnection();
             st = con.createStatement();
-            st.execute("delete from BankDataBean");
+            st.execute("delete from directory_banks");
         } catch (SQLException sqle) {
             log.error("Error deleting bank data", sqle);
             throw new EJBException("Bankdaten konnten nicht gelöscht werden.", sqle);
@@ -930,7 +930,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         try {
             con = utils.getConnection();
             st = con.createStatement();
-            st.execute("delete from CityDataBean");
+            st.execute("delete from directory_cities");
         } catch (SQLException sqle) {
             log.error("Error deleting city data", sqle);
             throw new EJBException("Postleitzahldaten konnten nicht gelöscht werden.", sqle);

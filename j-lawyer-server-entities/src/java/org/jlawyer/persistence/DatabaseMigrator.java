@@ -733,7 +733,7 @@ public class DatabaseMigrator implements Integrator {
         // select settingValue from ServerSettingsBean where settingKey = 'jlawyer.server.database.version'
         String dbVersion = "unknown";
         try {
-            ResultSet rs = dbCon.createStatement().executeQuery("select settingValue from ServerSettingsBean where settingKey = 'jlawyer.server.database.version'");
+            ResultSet rs = dbCon.createStatement().executeQuery("select settingValue from server_settings where settingKey = 'jlawyer.server.database.version'");
             if (rs.next()) {
 
                 dbVersion = rs.getString(1);
