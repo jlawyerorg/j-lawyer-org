@@ -701,6 +701,7 @@ public class TaggingTest extends javax.swing.JFrame {
 
         tagToggleButton1 = new com.jdimension.jlawyer.ui.tagging.TagToggleButton();
         tagToggleButton2 = new com.jdimension.jlawyer.ui.tagging.TagToggleButton();
+        jScrollPane1 = new javax.swing.JScrollPane();
         tagPanel1 = new com.jdimension.jlawyer.ui.tagging.TagPanel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
@@ -719,6 +720,7 @@ public class TaggingTest extends javax.swing.JFrame {
         });
 
         tagPanel1.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
+        jScrollPane1.setViewportView(tagPanel1);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -732,7 +734,7 @@ public class TaggingTest extends javax.swing.JFrame {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(tagToggleButton2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(0, 142, Short.MAX_VALUE))
-                    .addComponent(tagPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(jScrollPane1))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -743,7 +745,7 @@ public class TaggingTest extends javax.swing.JFrame {
                     .addComponent(tagToggleButton1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(tagToggleButton2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(tagPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, 245, Short.MAX_VALUE)
+                .addComponent(jScrollPane1)
                 .addContainerGap())
         );
 
@@ -800,6 +802,7 @@ public class TaggingTest extends javax.swing.JFrame {
         });
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JScrollPane jScrollPane1;
     private com.jdimension.jlawyer.ui.tagging.TagPanel tagPanel1;
     private com.jdimension.jlawyer.ui.tagging.TagToggleButton tagToggleButton1;
     private com.jdimension.jlawyer.ui.tagging.TagToggleButton tagToggleButton2;
