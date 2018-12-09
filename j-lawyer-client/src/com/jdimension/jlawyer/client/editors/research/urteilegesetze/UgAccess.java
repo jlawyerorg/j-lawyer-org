@@ -733,6 +733,7 @@ public class UgAccess {
                         if (hitObject instanceof JsonObject) {
                             JsonObject hit = (JsonObject) hitObject;
                             UgHit ugHit=new UgHit();
+                            System.out.println("hit: " + hit);
                             if(hit.get("abkuerzung")!=null)
                                 ugHit.setAbkuerzung(hit.get("abkuerzung").toString());
                             if(hit.get("beschlussdatum")!=null)
@@ -741,6 +742,8 @@ public class UgAccess {
                                 ugHit.setTitel(hit.get("titel").toString());
                             if(hit.get("url")!=null)
                                 ugHit.setUrl(hit.get("url").toString());
+                            if(hit.get("kurzbeschreibung") != null)
+                                ugHit.setKurzbeschreibung(hit.get("kurzbeschreibung").toString());
                             if ("rechtsprechung".equalsIgnoreCase(hit.get("type").toString())) {
                                 // titel gericht abkuerzung type url aktenzeichen beschlussdatum
                                 ugHit.setType(UgHit.TYPE_RECHTSPRECHUNG);

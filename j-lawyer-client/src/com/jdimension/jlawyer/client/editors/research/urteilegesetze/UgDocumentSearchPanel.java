@@ -789,6 +789,8 @@ public class UgDocumentSearchPanel extends javax.swing.JPanel implements Themeab
 
         jLabel2.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/text_sub.png"))); // NOI18N
 
+        pnlResults.setBackground(new java.awt.Color(255, 255, 255));
+
         org.jdesktop.layout.GroupLayout pnlResultsLayout = new org.jdesktop.layout.GroupLayout(pnlResults);
         pnlResults.setLayout(pnlResultsLayout);
         pnlResultsLayout.setHorizontalGroup(

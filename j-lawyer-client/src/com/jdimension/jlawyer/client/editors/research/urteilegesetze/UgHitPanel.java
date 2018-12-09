@@ -684,7 +684,12 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Image;
 import java.text.DecimalFormat;
+import java.util.logging.Level;
 import javax.swing.JOptionPane;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.DefaultHighlighter;
+import javax.swing.text.Highlighter;
+import javax.swing.text.Highlighter.HighlightPainter;
 import org.apache.log4j.Logger;
 import org.jlawyer.search.SearchHit;
 
@@ -715,18 +720,28 @@ public class UgHitPanel extends javax.swing.JPanel {
         //this.lblScore.setText("<html>" + sh.getAktenzeichen() + "<br/>" + sh.getBeschlussDatum() + "</html>");
         if (sh.getType().equals(UgHit.TYPE_GESETZ)) {
             this.lblType.setBackground(Color.blue);
-            this.lblFileName.setText("<html><b>" + sh.getAbkuerzung() + "</b><br/>" + sh.getBeschlussDatum() + "</html>");
-            this.lblTypeDescription.setText("Gesetz");
-            this.lblTypeDescription.setForeground(Color.blue);
+            this.lblFileName.setText("<html><b>" + sh.getAbkuerzung() + " " + sh.getTitel() + "</b><br/>" + sh.getBeschlussDatum() + "</html>");
         } else {
             this.lblType.setBackground(Color.red);
             this.lblFileName.setText("<html><b>" + sh.getAktenzeichen() + " vom " + sh.getBeschlussDatum() + "</b><br/>Gericht: " + sh.getGericht() + "</html>");
-            this.lblTypeDescription.setText("Urteil");
-            this.lblTypeDescription.setForeground(Color.red);
         }
 
-        this.taDetails.setText(sh.getTitel());
-
+        this.taDetails.setText(sh.getKurzbeschreibung().replace("<em>", "").replace("</em>", ""));
+        String kurzbeschreibung = sh.getKurzbeschreibung();
+        if (kurzbeschreibung.contains("<em>")) {
+            try {
+                Highlighter highlighter = taDetails.getHighlighter();
+                HighlightPainter painter
+                        = new DefaultHighlighter.DefaultHighlightPainter(Color.YELLOW);
+                int positionStart = kurzbeschreibung.indexOf("<em>");
+                kurzbeschreibung = kurzbeschreibung.replace("<em>", "");
+                int positionEnd = kurzbeschreibung.indexOf("</em>");
+                kurzbeschreibung = kurzbeschreibung.replace("</em>", "");
+                highlighter.addHighlight(positionStart, positionEnd, painter);
+            } catch (BadLocationException ex) {
+                java.util.logging.Logger.getLogger(UgHitPanel.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
     }
 
     /**
@@ -739,14 +754,13 @@ public class UgHitPanel extends javax.swing.JPanel {
     private void initComponents() {
 
         lblFileName = new javax.swing.JLabel();
-        lblTypeDescription = new javax.swing.JLabel();
-        cmdLaunchBrowser = new javax.swing.JButton();
         lblType = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
         taDetails = new javax.swing.JTextArea();
 
+        setBackground(new java.awt.Color(255, 255, 255));
+
         lblFileName.setFont(new java.awt.Font("Dialog", 0, 12)); // NOI18N
-        lblFileName.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/webexport.png"))); // NOI18N
         lblFileName.setText("Treffertitel");
         lblFileName.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         lblFileName.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -761,29 +775,17 @@ public class UgHitPanel extends javax.swing.JPanel {
             }
         });
 
-        lblTypeDescription.setFont(new java.awt.Font("Dialog", 3, 12)); // NOI18N
-        lblTypeDescription.setForeground(new java.awt.Color(0, 0, 255));
-        lblTypeDescription.setText("Gesetz");
-
-        cmdLaunchBrowser.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/web.png"))); // NOI18N
-        cmdLaunchBrowser.setToolTipText("im Browser öffnen");
-        cmdLaunchBrowser.setBorder(new javax.swing.border.SoftBevelBorder(javax.swing.border.BevelBorder.RAISED));
-        cmdLaunchBrowser.setInheritsPopupMenu(true);
-        cmdLaunchBrowser.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdLaunchBrowserActionPerformed(evt);
-            }
-        });
-
         lblType.setBackground(new java.awt.Color(51, 0, 204));
         lblType.setForeground(new java.awt.Color(51, 0, 204));
         lblType.setText("  ");
         lblType.setOpaque(true);
 
         taDetails.setColumns(20);
+        taDetails.setFont(taDetails.getFont().deriveFont(taDetails.getFont().getSize()-2f));
         taDetails.setLineWrap(true);
         taDetails.setRows(5);
         taDetails.setWrapStyleWord(true);
+        taDetails.setBorder(null);
         jScrollPane1.setViewportView(taDetails);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
@@ -796,24 +798,16 @@ public class UgHitPanel extends javax.swing.JPanel {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(lblFileName)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 387, Short.MAX_VALUE)
-                        .addComponent(lblTypeDescription)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(cmdLaunchBrowser))
-                    .addComponent(jScrollPane1))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 544, Short.MAX_VALUE))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(lblFileName, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(lblTypeDescription))
-                        .addGap(12, 12, 12))
-                    .addComponent(cmdLaunchBrowser))
+                .addComponent(lblFileName, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGap(12, 12, 12)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 58, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
             .addComponent(lblType, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -828,21 +822,15 @@ public class UgHitPanel extends javax.swing.JPanel {
         this.lblFileName.setForeground(Color.BLACK);
     }//GEN-LAST:event_lblFileNameMouseExited
 
-    private void cmdLaunchBrowserActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdLaunchBrowserActionPerformed
-        DesktopUtils.openBrowser(this.hit.getUrl());
-    }//GEN-LAST:event_cmdLaunchBrowserActionPerformed
-
     private void lblFileNameMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblFileNameMouseClicked
 
         DesktopUtils.openBrowser(this.hit.getUrl());
 
     }//GEN-LAST:event_lblFileNameMouseClicked
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton cmdLaunchBrowser;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JLabel lblFileName;
     private javax.swing.JLabel lblType;
-    private javax.swing.JLabel lblTypeDescription;
     private javax.swing.JTextArea taDetails;
     // End of variables declaration//GEN-END:variables
 }
