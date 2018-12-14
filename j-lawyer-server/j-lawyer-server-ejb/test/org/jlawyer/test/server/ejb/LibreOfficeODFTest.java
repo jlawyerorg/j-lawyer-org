@@ -771,6 +771,7 @@ public class LibreOfficeODFTest {
             System.out.println(content);
         } catch (Throwable t) {
             System.out.println(t.getMessage());
+            t.printStackTrace();
             Assert.fail();
         }
         
@@ -836,6 +837,7 @@ public class LibreOfficeODFTest {
             System.out.println(content);
         } catch (Throwable t) {
             System.out.println(t.getMessage());
+            t.printStackTrace();
             Assert.fail();
         }
         
@@ -906,6 +908,7 @@ public class LibreOfficeODFTest {
             System.out.println(content);
         } catch (Throwable t) {
             System.out.println(t.getMessage());
+            t.printStackTrace();
             Assert.fail();
         }
         
@@ -938,6 +941,7 @@ public class LibreOfficeODFTest {
             LibreOfficeAccess.setPlaceHolders("test/data/template-run.ods", ph);
         } catch (Throwable t) {
             System.out.println(t.getMessage());
+            t.printStackTrace();
             Assert.fail();
         }
 

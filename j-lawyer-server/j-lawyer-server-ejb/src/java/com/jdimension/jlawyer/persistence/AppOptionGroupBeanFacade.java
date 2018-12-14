@@ -664,6 +664,7 @@
 package com.jdimension.jlawyer.persistence;
 
 import java.util.List;
+import javax.annotation.security.RolesAllowed;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
@@ -686,6 +687,7 @@ public class AppOptionGroupBeanFacade extends AbstractFacade<AppOptionGroupBean>
         super(AppOptionGroupBean.class);
     }
     
+    @RolesAllowed("loginRole")
     public AppOptionGroupBean[] findByOptionGroup(String optionGroup) {
         
         List results=em.createNamedQuery("AppOptionGroupBean.findByOptionGroup").setParameter("optionGroup", optionGroup).getResultList();

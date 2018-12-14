@@ -696,7 +696,7 @@ import javax.jms.ObjectMessage;
 import javax.jms.Session;
 import javax.naming.InitialContext;
 import org.apache.log4j.Logger;
-import org.jboss.security.annotation.SecurityDomain;
+import org.jboss.ejb3.annotation.SecurityDomain;
 import org.jlawyer.data.tree.GenericNode;
 import org.jlawyer.data.tree.TreeNodeUtils;
 import org.jlawyer.search.SearchIndexRequest;

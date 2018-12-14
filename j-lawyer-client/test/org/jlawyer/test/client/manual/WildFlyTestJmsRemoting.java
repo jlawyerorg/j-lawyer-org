@@ -663,20 +663,6 @@
  */
 package org.jlawyer.test.client.manual;
 
-
-import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
-import com.jdimension.jlawyer.services.IntegrationServiceRemote;
-import java.util.Hashtable;
-import java.util.Properties;
-import javax.jms.Topic;
-import javax.naming.Context;
-import javax.naming.InitialContext;
-import org.jboss.ejb.client.ContextSelector;
-import org.jboss.ejb.client.EJBClientConfiguration;
-import org.jboss.ejb.client.EJBClientContext;
-import org.jboss.ejb.client.PropertiesBasedEJBClientConfiguration;
-import org.jboss.ejb.client.remoting.ConfigBasedEJBClientContextSelector;
-
 /*
  * To change this license header, choose License Headers in Project Properties.
  * To change this template file, choose Tools | Templates
@@ -693,101 +679,43 @@ public class WildFlyTestJmsRemoting {
      */
     public static void main(String[] args) {
 
-        try {
-
-            /*
-            
-        final Hashtable jndiProperties = new Hashtable();
-        jndiProperties.put(Context.URL_PKG_PREFIXES, "org.jboss.ejb.client.naming");
-        jndiProperties.put(Context.INITIAL_CONTEXT_FACTORY, "org.jboss.naming.remote.client.InitialContextFactory");
-        jndiProperties.put(Context.PROVIDER_URL, "http-remoting://localhost:8080");
-        
-        //jndiProperties.put(Context.PROVIDER_URL, "remote://localhost:4447");
-        jndiProperties.put(Context.SECURITY_PRINCIPAL, "admin");
-        jndiProperties.put(Context.SECURITY_CREDENTIALS, "a");
-        
-        jndiProperties.put("jboss.naming.client.connect.options.org.xnio.Options.SASL_POLICY_NOANONYMOUS", "false");
-jndiProperties.put("jboss.naming.client.connect.options.org.xnio.Options.SASL_POLICY_NOPLAINTEXT", "false");
-jndiProperties.put("jboss.naming.client.ejb.context", "true");
-        
-        
-        final Context context = new InitialContext(jndiProperties);
-        
-        
-        
-        // The app name is the application name of the deployed EJBs. This is typically the ear name
-        // without the .ear suffix. However, the application name could be overridden in the application.xml of the
-        // EJB deployment on the server.
-        // Since we haven't deployed the application as a .ear, the app name for us will be an empty string
-        final String appName = "j-lawyer-server";
-        // This is the module name of the deployed EJBs on the server. This is typically the jar name of the
-        // EJB deployment, without the .jar suffix, but can be overridden via the ejb-jar.xml
-        // In this example, we have deployed the EJBs in a jboss-as-ejb-remote-app.jar, so the module name is
-        // jboss-as-ejb-remote-app
-        final String moduleName = "j-lawyer-server-ejb";
-        // AS7 allows each deployment to have an (optional) distinct name. We haven't specified a distinct name for
-        // our EJB deployment, so this is an empty string
-        final String distinctName = "";
-        // The EJB name which by default is the simple class name of the bean implementation class
-        final String beanName = "ArchiveFileServiceBean";
-        // the remote view fully qualified class name
-        final String viewClassName = ArchiveFileServiceRemote.class.getName();
-        // let's do the lookup (notice the ?stateful string as the last part of the jndi name for stateful bean lookup)
-        
-        //String lookupName="ejb:" + appName + "/" + moduleName + "/" + distinctName + "/" + beanName + "!" + viewClassName + "?stateful";
-        
-        // MyLogicRemote bean = (MyLogicRemote) ctx.lookup("ejb:MyAppName/server-0.0.1-SNAPSHOT/MyLogic!cannonical.path.to.MyLogicRemote") //ejb:application name/module name/bean name!cannonical path to bean remote interface  
-        //String lookupName="ejb:" + appName + "/" + moduleName + "/" + distinctName + "/" + beanName + "!" + viewClassName + "?stateful";
-        //String lookupName="ejb:" + appName + "/" + moduleName + "/" + distinctName + "/" + beanName + "!" + viewClassName;
-        
-        String lookupName="ejb:/j-lawyer-server/j-lawyer-server-ejb//ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceRemote";
-        //String lookupName2="ejb:/j-lawyer-server/j-lawyer-server-ejb//IntegrationService!com.jdimension.jlawyer.services.IntegrationServiceRemote";
-        //String lookupName2="java:jboss/exported/j-lawyer-server/j-lawyer-server-ejb/IntegrationService!com.jdimension.jlawyer.services.IntegrationServiceRemote";
-        String lookupName2="ejb:j-lawyer-server/j-lawyer-server-ejb//IntegrationService!com.jdimension.jlawyer.services.IntegrationServiceRemote";
-        
-        
-        System.out.println("looking up " + lookupName2);
-        
-        //ArchiveFileServiceRemote svc= (ArchiveFileServiceRemote) context.lookup(lookupName);
-        //System.out.println("count: " + svc.getArchiveFileCount());
-        
-        IntegrationServiceRemote svc2= (IntegrationServiceRemote) context.lookup(lookupName2);
-        svc2.getObservedDirectoryContent();
-             */
-            Properties props = new Properties();
-            props.put("remote.connections", "default");
-            props.put("remote.connection.default.port", "8080");
-            props.put("remote.connection.default.host", "localhost");
-            props.put("remote.connection.default.username", "admin");
-            props.put("remote.connection.default.password", "a");
-            props.put("remote.connection.default.connect.options.org.xnio.Options.SASL_POLICY_NOANONYMOUS", "false");
-            props.put("remote.connection.default.connect.options.org.xnio.Options.SASL_POLICY_NOPLAINTEXT", "false");
-            props.put("remote.connectionprovider.create.options.org.xnio.Options.SSL_ENABLED", "false");
-            
-            EJBClientConfiguration ejbClientConfiguration = new PropertiesBasedEJBClientConfiguration(props);
-            ContextSelector<EJBClientContext> contextSelector = new ConfigBasedEJBClientContextSelector(ejbClientConfiguration);
-            EJBClientContext.setSelector(contextSelector);
-
-            Properties properties = new Properties();
-//            properties.put(Context.URL_PKG_PREFIXES, "org.jboss.ejb.client.naming");
-//            properties.put("jboss.naming.client.ejb.context", "true");
-            properties.put(Context.INITIAL_CONTEXT_FACTORY, "org.jboss.naming.remote.client.InitialContextFactory");
-            properties.put(Context.PROVIDER_URL, "http-remoting://localhost:8080");
-            properties.put(Context.SECURITY_PRINCIPAL, "admin");
-            properties.put(Context.SECURITY_CREDENTIALS, "a");
-            properties.put("jboss.naming.client.connect.options.org.xnio.Options.SASL_POLICY_NOPLAINTEXT", "false");
-            properties.put("jboss.naming.client.connect.options.org.xnio.Options.SASL_POLICY_NOANONYMOUS", "false");
-            properties.put("jboss.naming.client.connect.options.org.xnio.Options.SSL_ENABLED", "false");
-            
-            Context context = new InitialContext(properties);
-            
-            
-            Topic t = (Topic) context.lookup("java:/topic/dirObserverTopic");
-            context.lookup("java:/jms/RemoteConnectionFactory");
-            
-        } catch (Throwable t) {
-            t.printStackTrace();
-        }
+//        try {
+//
+//          
+//            Properties props = new Properties();
+//            props.put("remote.connections", "default");
+//            props.put("remote.connection.default.port", "8080");
+//            props.put("remote.connection.default.host", "localhost");
+//            props.put("remote.connection.default.username", "admin");
+//            props.put("remote.connection.default.password", "a");
+//            props.put("remote.connection.default.connect.options.org.xnio.Options.SASL_POLICY_NOANONYMOUS", "false");
+//            props.put("remote.connection.default.connect.options.org.xnio.Options.SASL_POLICY_NOPLAINTEXT", "false");
+//            props.put("remote.connectionprovider.create.options.org.xnio.Options.SSL_ENABLED", "false");
+//            
+//            EJBClientConfiguration ejbClientConfiguration = new PropertiesBasedEJBClientConfiguration(props);
+//            ContextSelector<EJBClientContext> contextSelector = new ConfigBasedEJBClientContextSelector(ejbClientConfiguration);
+//            EJBClientContext.setSelector(contextSelector);
+//
+//            Properties properties = new Properties();
+////            properties.put(Context.URL_PKG_PREFIXES, "org.jboss.ejb.client.naming");
+////            properties.put("jboss.naming.client.ejb.context", "true");
+//            properties.put(Context.INITIAL_CONTEXT_FACTORY, "org.jboss.naming.remote.client.InitialContextFactory");
+//            properties.put(Context.PROVIDER_URL, "http-remoting://localhost:8080");
+//            properties.put(Context.SECURITY_PRINCIPAL, "admin");
+//            properties.put(Context.SECURITY_CREDENTIALS, "a");
+//            properties.put("jboss.naming.client.connect.options.org.xnio.Options.SASL_POLICY_NOPLAINTEXT", "false");
+//            properties.put("jboss.naming.client.connect.options.org.xnio.Options.SASL_POLICY_NOANONYMOUS", "false");
+//            properties.put("jboss.naming.client.connect.options.org.xnio.Options.SSL_ENABLED", "false");
+//            
+//            Context context = new InitialContext(properties);
+//            
+//            
+//            Topic t = (Topic) context.lookup("java:/topic/dirObserverTopic");
+//            context.lookup("java:/jms/RemoteConnectionFactory");
+//            
+//        } catch (Throwable t) {
+//            t.printStackTrace();
+//        }
     }
 
 }

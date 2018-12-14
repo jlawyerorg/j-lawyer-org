@@ -683,11 +683,11 @@ import javax.swing.JOptionPane;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import org.apache.log4j.Logger;
-import org.jboss.ejb.client.ContextSelector;
-import org.jboss.ejb.client.EJBClientConfiguration;
+//import org.jboss.ejb.client.ContextSelector;
+//import org.jboss.ejb.client.EJBClientConfiguration;
 import org.jboss.ejb.client.EJBClientContext;
-import org.jboss.ejb.client.PropertiesBasedEJBClientConfiguration;
-import org.jboss.ejb.client.remoting.ConfigBasedEJBClientContextSelector;
+//import org.jboss.ejb.client.PropertiesBasedEJBClientConfiguration;
+//import org.jboss.ejb.client.remoting.ConfigBasedEJBClientContextSelector;
 
 /**
  *
@@ -1089,26 +1089,27 @@ public class LoginDialog extends javax.swing.JFrame {
 
         ClientSettings settings = ClientSettings.getInstance();
 
-        Properties props = new Properties();
-        props.put("remote.connections", "default");
-        props.put("remote.connection.default.port", this.txtPort.getText());
-        props.put("remote.connection.default.host", this.txtServer.getText());
-        props.put("remote.connection.default.username", this.txtUser.getText());
-        props.put("remote.connection.default.password", this.pwPassword.getText());
-        props.put("remote.connection.default.connect.options.org.xnio.Options.SASL_POLICY_NOANONYMOUS", "false");
-        props.put("remote.connection.default.connect.options.org.xnio.Options.SASL_POLICY_NOPLAINTEXT", "false");
-        props.put("remote.connectionprovider.create.options.org.xnio.Options.SSL_ENABLED", "false");
-
-        EJBClientConfiguration ejbClientConfiguration = new PropertiesBasedEJBClientConfiguration(props);
-        ContextSelector<EJBClientContext> contextSelector = new ConfigBasedEJBClientContextSelector(ejbClientConfiguration);
-        EJBClientContext.setSelector(contextSelector);
+//        Properties props = new Properties();
+//        props.put("remote.connections", "default");
+//        props.put("remote.connection.default.port", this.txtPort.getText());
+//        props.put("remote.connection.default.host", this.txtServer.getText());
+//        props.put("remote.connection.default.username", this.txtUser.getText());
+//        props.put("remote.connection.default.password", this.pwPassword.getText());
+//        props.put("remote.connection.default.connect.options.org.xnio.Options.SASL_POLICY_NOANONYMOUS", "false");
+//        props.put("remote.connection.default.connect.options.org.xnio.Options.SASL_POLICY_NOPLAINTEXT", "false");
+//        props.put("remote.connectionprovider.create.options.org.xnio.Options.SSL_ENABLED", "false");
+//
+//        EJBClientConfiguration ejbClientConfiguration = new PropertiesBasedEJBClientConfiguration(props);
+//        ContextSelector<EJBClientContext> contextSelector = new ConfigBasedEJBClientContextSelector(ejbClientConfiguration);
+//        EJBClientContext.setSelector(contextSelector);
 
         Properties properties = new Properties();
-        properties.put(Context.URL_PKG_PREFIXES, "org.jboss.ejb.client.naming");
-        properties.put("jboss.naming.client.ejb.context", "true");
+        //properties.put(Context.URL_PKG_PREFIXES, "org.jboss.ejb.client.naming");
+        properties.put("jboss.naming.client.ejb.context", true);
 
         // begin: for JMS only
-        properties.put(Context.INITIAL_CONTEXT_FACTORY, "org.jboss.naming.remote.client.InitialContextFactory");
+        properties.put(Context.INITIAL_CONTEXT_FACTORY, "org.wildfly.naming.client.WildFlyInitialContextFactory");
+        //properties.put(Context.INITIAL_CONTEXT_FACTORY, "org.wildfly.naming.client.WildFlyInitialContextFactory");
         properties.put(Context.PROVIDER_URL, "http-remoting://" + this.txtServer.getText() + ":" + this.txtPort.getText());
         properties.put(Context.SECURITY_PRINCIPAL, this.txtUser.getText());
         properties.put(Context.SECURITY_CREDENTIALS, this.pwPassword.getText());
@@ -1116,6 +1117,14 @@ public class LoginDialog extends javax.swing.JFrame {
         properties.put("jboss.naming.client.connect.options.org.xnio.Options.SASL_POLICY_NOANONYMOUS", "false");
         properties.put("jboss.naming.client.connect.options.org.xnio.Options.SSL_ENABLED", "false");
 
+        
+//        properties = new Properties();
+//          properties.put(Context.URL_PKG_PREFIXES, "org.jboss.ejb.client.naming");
+//  properties.put(Context.INITIAL_CONTEXT_FACTORY, "org.wildfly.naming.client.WildFlyInitialContextFactory");
+//  properties.put(Context.PROVIDER_URL, "remote+http://" + this.txtServer.getText() + ":" + this.txtPort.getText());
+//  properties.put(Context.SECURITY_PRINCIPAL, this.txtUser.getText());
+//  properties.put(Context.SECURITY_CREDENTIALS, this.pwPassword.getText());
+        
         // end: for JMS only
 //        Properties properties = new Properties();
 //        properties.put("java.naming.factory.initial",
@@ -1156,10 +1165,10 @@ public class LoginDialog extends javax.swing.JFrame {
             //simple.remove();
         } catch (EJBAccessException ex) {
             log.error("Invalid user credentials", ex);
-            JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/LoginDialog").getString("msg.loginfailed"), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/LoginDialog").getString("msg.error"), JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/LoginDialog").getString("msg.loginfailed") + System.lineSeparator() +  ex.getMessage(), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/LoginDialog").getString("msg.error"), JOptionPane.ERROR_MESSAGE);
             this.txtUser.setForeground(Color.RED);
             this.pwPassword.setForeground(Color.RED);
-            return;
+            System.exit(1);
         } catch (Exception ex) {
 
             log.error("Error connecting to server", ex);

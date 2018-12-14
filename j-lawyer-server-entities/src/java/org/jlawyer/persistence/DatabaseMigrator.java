@@ -669,10 +669,10 @@ import javax.naming.InitialContext;
 import javax.sql.DataSource;
 import org.apache.log4j.Logger;
 import org.flywaydb.core.Flyway;
+import org.hibernate.boot.Metadata;
 import org.hibernate.cfg.Configuration;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.integrator.spi.Integrator;
-import org.hibernate.metamodel.source.MetadataImplementor;
 import org.hibernate.service.spi.SessionFactoryServiceRegistry;
 
 /**
@@ -684,41 +684,6 @@ public class DatabaseMigrator implements Integrator {
     private static final Logger log = Logger.getLogger(DatabaseMigrator.class.getName());
 
     private static final String lock = "lockObject";
-
-    @Override
-    public void integrate(Configuration c, SessionFactoryImplementor sfi, SessionFactoryServiceRegistry sfsr) {
-        synchronized (lock) {
-            System.out.println("Starting j-lawyer.org database migrations...");
-
-            try {
-                Context ctx = new InitialContext();
-                DataSource ds = (DataSource) ctx.lookup("java:/jlawyerdb");
-                //Connection con = ds.getConnection();
-
-                Flyway flyway = Flyway.configure().dataSource(ds).baselineVersion("1.9.1.0").baselineOnMigrate(true).load();
-                
-                flyway.migrate();
-
-//
-//                String currentDbVersion = this.getCurrentDatabaseVersion(con);
-//                if ("01910".equals(currentDbVersion) || "01900".equals(currentDbVersion)) {
-//                    // migrate
-//                    log.info("migrating to 1.10.0.0");
-//                    this.executeUpdate("insert into ServerSettingsBean(settingKey, settingValue) values('jlawyer.server.database.version','1.10.0.0') ON DUPLICATE KEY UPDATE settingValue     = '1.10.0.0'", con);
-//
-//                }
-//
-//                currentDbVersion = this.getCurrentDatabaseVersion(con);
-//                if ("1.10.0.0".equals(currentDbVersion)) {
-//                    // migrate
-//                }
-//
-//                con.close();
-            } catch (Throwable me) {
-                log.error("exception caught", me);
-            }
-        }
-    }
 
     private void executeUpdate(String sql, Connection dbCon) {
         log.info("running database migration: " + sql);
@@ -750,13 +715,43 @@ public class DatabaseMigrator implements Integrator {
     }
 
     @Override
-    public void integrate(MetadataImplementor mi, SessionFactoryImplementor sfi, SessionFactoryServiceRegistry sfsr) {
+    public void disintegrate(SessionFactoryImplementor sfi, SessionFactoryServiceRegistry sfsr) {
 
     }
 
     @Override
-    public void disintegrate(SessionFactoryImplementor sfi, SessionFactoryServiceRegistry sfsr) {
+    public void integrate(Metadata mtdt, SessionFactoryImplementor sfi, SessionFactoryServiceRegistry sfsr) {
+        synchronized (lock) {
+            System.out.println("Starting j-lawyer.org database migrations...");
 
+            try {
+                Context ctx = new InitialContext();
+                DataSource ds = (DataSource) ctx.lookup("java:/jlawyerdb");
+                //Connection con = ds.getConnection();
+
+                Flyway flyway = Flyway.configure().dataSource(ds).baselineVersion("1.9.1.0").baselineOnMigrate(true).load();
+                
+                flyway.migrate();
+
+//
+//                String currentDbVersion = this.getCurrentDatabaseVersion(con);
+//                if ("01910".equals(currentDbVersion) || "01900".equals(currentDbVersion)) {
+//                    // migrate
+//                    log.info("migrating to 1.10.0.0");
+//                    this.executeUpdate("insert into ServerSettingsBean(settingKey, settingValue) values('jlawyer.server.database.version','1.10.0.0') ON DUPLICATE KEY UPDATE settingValue     = '1.10.0.0'", con);
+//
+//                }
+//
+//                currentDbVersion = this.getCurrentDatabaseVersion(con);
+//                if ("1.10.0.0".equals(currentDbVersion)) {
+//                    // migrate
+//                }
+//
+//                con.close();
+            } catch (Throwable me) {
+                log.error("exception caught", me);
+            }
+        }
     }
 
 }

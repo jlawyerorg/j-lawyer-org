@@ -686,6 +686,7 @@ import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Properties;
+import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.Asynchronous;
 import javax.ejb.EJB;
@@ -709,7 +710,7 @@ import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathFactory;
 import org.apache.log4j.Logger;
 import org.apache.tika.Tika;
-import org.jboss.security.annotation.SecurityDomain;
+import org.jboss.ejb3.annotation.SecurityDomain;
 import org.jlawyer.data.tree.GenericNode;
 import org.jlawyer.data.tree.TreeNodeUtils;
 import org.w3c.dom.Document;
@@ -1345,6 +1346,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     }
 
     @Override
+    @PermitAll
     public String getServerVersion() {
         ServerSettingsBean srvVersion = this.settingsFacade.find("jlawyer.server.database.version");
         if(srvVersion!=null)

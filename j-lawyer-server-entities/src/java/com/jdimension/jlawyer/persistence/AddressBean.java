@@ -704,9 +704,11 @@ import javax.xml.bind.annotation.XmlTransient;
     @NamedQuery(name = "AddressBean.findByModificationDate", query = "SELECT a FROM AddressBean a WHERE a.modificationDate = :modificationDate")})
 public class AddressBean implements Serializable {
 
+    private static final long serialVersionUID = 1L;
+    
     @OneToMany(mappedBy = "addressKey")
     private List<CampaignAddress> campaignAddressesList;
-    private static final long serialVersionUID = 1L;
+    
     @Id
     @Basic(optional = false)
     @Column(name = "id")

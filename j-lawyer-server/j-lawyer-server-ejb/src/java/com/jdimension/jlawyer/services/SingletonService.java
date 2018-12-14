@@ -687,6 +687,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Hashtable;
+import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.Singleton;
 
@@ -712,6 +713,7 @@ public class SingletonService implements SingletonServiceRemote, SingletonServic
     }
 
     @Override
+    @PermitAll
     public void setSystemStatus(int status) {
         this.systemStatus=status;
     }
@@ -723,6 +725,7 @@ public class SingletonService implements SingletonServiceRemote, SingletonServic
     }
 
     @Override
+    @PermitAll
     public void setObservedFiles(Hashtable<File,Date> fileNames) {
         this.observedFileNames=fileNames;
     }

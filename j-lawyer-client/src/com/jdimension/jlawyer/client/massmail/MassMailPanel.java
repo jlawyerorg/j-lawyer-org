@@ -712,8 +712,9 @@ public class MassMailPanel extends javax.swing.JPanel implements ThemeableEditor
 
         try {
             this.refreshList();
-        } catch (Exception ex) {
+        } catch (Throwable ex) {
             log.error(ex);
+            ex.printStackTrace();
             JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Serien können nicht geladen werden: " + ex.getMessage(), "Serien laden", JOptionPane.ERROR_MESSAGE);
         }
 
@@ -723,7 +724,7 @@ public class MassMailPanel extends javax.swing.JPanel implements ThemeableEditor
 
     }
 
-    private void refreshList() throws Exception {
+    private void refreshList() throws Throwable {
         List<Campaign> campaigns = this.controller.listCampaigns();
         ((DefaultComboBoxModel) this.cmbCampaign.getModel()).removeAllElements();
         for (Campaign c : campaigns) {
@@ -943,7 +944,7 @@ public class MassMailPanel extends javax.swing.JPanel implements ThemeableEditor
     private void cmdRefreshActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRefreshActionPerformed
         try {
             this.refreshList();
-        } catch (Exception ex) {
+        } catch (Throwable ex) {
             log.error(ex);
             JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Serien können nicht geladen werden: " + ex.getMessage(), "Serien laden", JOptionPane.ERROR_MESSAGE);
         }
@@ -991,8 +992,9 @@ public class MassMailPanel extends javax.swing.JPanel implements ThemeableEditor
                     Object[] row = new Object[]{identifier, a.getFirstName(), a.getCompany(), a.getZipCode(), a.getCity(), a.getStreet(), a.getCountry(), ""};
                     model.addRow(row);
                 }
-            } catch (Exception ex) {
+            } catch (Throwable ex) {
                 log.error(ex);
+                ex.printStackTrace();
                 JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Adressen können nicht ermittelt werden: " + ex.getMessage(), "Serie laden", JOptionPane.ERROR_MESSAGE);
             }
 

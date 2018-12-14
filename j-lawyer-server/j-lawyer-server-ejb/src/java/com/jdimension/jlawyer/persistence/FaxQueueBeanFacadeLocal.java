@@ -664,6 +664,7 @@
 package com.jdimension.jlawyer.persistence;
 
 import java.util.List;
+import javax.annotation.security.RolesAllowed;
 import javax.ejb.Local;
 
 /**
@@ -681,6 +682,7 @@ public interface FaxQueueBeanFacadeLocal {
 
     FaxQueueBean find(Object id);
 
+    @RolesAllowed("loginRole")
     List<FaxQueueBean> findAll();
 
     List<FaxQueueBean> findRange(int[] range);

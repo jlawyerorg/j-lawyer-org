@@ -7,6 +7,8 @@
                     <path name="com/sun/management"/>
                 </paths>
             </system>
+            <module name="org.dom4j" export="true"/>
         </dependencies>
+        
     </deployment>
 </jboss-deployment-structure>
