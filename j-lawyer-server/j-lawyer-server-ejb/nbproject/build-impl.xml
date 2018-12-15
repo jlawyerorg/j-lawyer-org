@@ -845,8 +845,8 @@ exists or setup the property manually. For example like this:
         <copyfiles files="${reference.j-lawyer-server-entities.dist}" todir="${build.classes.dir}"/>
         <copyfiles files="${reference.j-lawyer-server-api.jar}" todir="${build.classes.dir}"/>
         <copyfiles files="${reference.j-lawyer-server-common.jar}" todir="${build.classes.dir}"/>
-        <copyfiles files="${file.reference.log4j-1.2.17.jar}" todir="${build.classes.dir}"/>
         <copyfiles files="${file.reference.joda-time-2.1.jar}" todir="${build.classes.dir}"/>
+        <copyfiles files="${file.reference.log4j-1.2.17.jar}" todir="${build.classes.dir}"/>
         <copyfiles files="${file.reference.jollyday-0.4.7.jar}" todir="${build.classes.dir}"/>
         <copyfiles files="${file.reference.j-lawyer-drebis-stubs.jar}" todir="${build.classes.dir}"/>
         <copyfiles files="${file.reference.lucene-analyzers-common-4.7.0.jar}" todir="${build.classes.dir}"/>
@@ -880,8 +880,8 @@ exists or setup the property manually. For example like this:
         <basename file="${reference.j-lawyer-server-entities.dist}" property="manifest.reference.j-lawyer-server-entities.dist"/>
         <basename file="${reference.j-lawyer-server-api.jar}" property="manifest.reference.j-lawyer-server-api.jar"/>
         <basename file="${reference.j-lawyer-server-common.jar}" property="manifest.reference.j-lawyer-server-common.jar"/>
-        <basename file="${file.reference.log4j-1.2.17.jar}" property="manifest.file.reference.log4j-1.2.17.jar"/>
         <basename file="${file.reference.joda-time-2.1.jar}" property="manifest.file.reference.joda-time-2.1.jar"/>
+        <basename file="${file.reference.log4j-1.2.17.jar}" property="manifest.file.reference.log4j-1.2.17.jar"/>
         <basename file="${file.reference.jollyday-0.4.7.jar}" property="manifest.file.reference.jollyday-0.4.7.jar"/>
         <basename file="${file.reference.j-lawyer-drebis-stubs.jar}" property="manifest.file.reference.j-lawyer-drebis-stubs.jar"/>
         <basename file="${file.reference.lucene-analyzers-common-4.7.0.jar}" property="manifest.file.reference.lucene-analyzers-common-4.7.0.jar"/>
@@ -915,8 +915,8 @@ exists or setup the property manually. For example like this:
             <attribute name="jar-1-Extension-Name" value="${manifest.reference.j-lawyer-server-entities.dist}"/>
             <attribute name="jar-2-Extension-Name" value="${manifest.reference.j-lawyer-server-api.jar}"/>
             <attribute name="jar-3-Extension-Name" value="${manifest.reference.j-lawyer-server-common.jar}"/>
-            <attribute name="jar-4-Extension-Name" value="${manifest.file.reference.log4j-1.2.17.jar}"/>
-            <attribute name="jar-5-Extension-Name" value="${manifest.file.reference.joda-time-2.1.jar}"/>
+            <attribute name="jar-4-Extension-Name" value="${manifest.file.reference.joda-time-2.1.jar}"/>
+            <attribute name="jar-5-Extension-Name" value="${manifest.file.reference.log4j-1.2.17.jar}"/>
             <attribute name="jar-6-Extension-Name" value="${manifest.file.reference.jollyday-0.4.7.jar}"/>
             <attribute name="jar-7-Extension-Name" value="${manifest.file.reference.j-lawyer-drebis-stubs.jar}"/>
             <attribute name="jar-8-Extension-Name" value="${manifest.file.reference.lucene-analyzers-common-4.7.0.jar}"/>
@@ -951,8 +951,8 @@ exists or setup the property manually. For example like this:
         <copyfiles files="${reference.j-lawyer-server-entities.dist}" todir="${dist.ear.dir}"/>
         <copyfiles files="${reference.j-lawyer-server-api.jar}" todir="${dist.ear.dir}/lib"/>
         <copyfiles files="${reference.j-lawyer-server-common.jar}" todir="${dist.ear.dir}/lib"/>
-        <copyfiles files="${file.reference.log4j-1.2.17.jar}" todir="${dist.ear.dir}/lib"/>
         <copyfiles files="${file.reference.joda-time-2.1.jar}" todir="${dist.ear.dir}/lib"/>
+        <copyfiles files="${file.reference.log4j-1.2.17.jar}" todir="${dist.ear.dir}/lib"/>
         <copyfiles files="${file.reference.jollyday-0.4.7.jar}" todir="${dist.ear.dir}/lib"/>
         <copyfiles files="${file.reference.j-lawyer-drebis-stubs.jar}" todir="${dist.ear.dir}/lib"/>
         <copyfiles files="${file.reference.lucene-analyzers-common-4.7.0.jar}" todir="${dist.ear.dir}/lib"/>
