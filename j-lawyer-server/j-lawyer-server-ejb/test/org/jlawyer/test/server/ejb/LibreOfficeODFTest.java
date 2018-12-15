@@ -705,6 +705,8 @@ public class LibreOfficeODFTest {
 
     @Before
     public void setUp() {
+        
+         //org.slf4j.helpers.Util.
 
     }
 
