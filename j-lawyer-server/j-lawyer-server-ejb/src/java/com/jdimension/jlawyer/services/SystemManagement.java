@@ -1348,11 +1348,48 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     @Override
     @PermitAll
     public String getServerVersion() {
-        ServerSettingsBean srvVersion = this.settingsFacade.find("jlawyer.server.database.version");
-        if(srvVersion!=null)
-            return srvVersion.getSettingValue();
-        else 
-            return "unknown";
+//        ServerSettingsBean srvVersion = this.settingsFacade.find("jlawyer.server.database.version");
+//        if(srvVersion!=null)
+//            return srvVersion.getSettingValue();
+//        else 
+//            return "unknown";
+
+        String version = "unknown";
+        JDBCUtils utils = new JDBCUtils();
+        Connection con = null;
+        ResultSet rs = null;
+        PreparedStatement st = null;
+        try {
+            con = utils.getConnection();
+            st = con.prepareStatement("SELECT version FROM flyway_schema_history where success =1 order by installed_rank desc limit 1");
+            rs = st.executeQuery();
+
+            if (rs.next()) {
+                version = rs.getString(1);
+
+            }
+        } catch (SQLException sqle) {
+            log.error("Error getting database / server version", sqle);
+        } finally {
+            try {
+                rs.close();
+            } catch (Throwable t) {
+                log.error(t);
+            }
+            try {
+                st.close();
+            } catch (Throwable t) {
+                log.error(t);
+            }
+            try {
+                con.close();
+            } catch (Throwable t) {
+                log.error(t);
+            }
+        }
+
+        return version;
+
     }
 
     @Override
