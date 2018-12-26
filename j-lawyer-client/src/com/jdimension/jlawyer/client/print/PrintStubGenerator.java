@@ -720,11 +720,11 @@ public class PrintStubGenerator {
             for (int i = 0; i < file.getArchiveFileAddressesBeanList().size(); i++) {
                 ArchiveFileAddressesBean ab = file.getArchiveFileAddressesBeanList().get(i);
                 if (ab.getReferenceType() == ArchiveFileAddressesBean.REFERENCETYPE_CLIENT) {
-                    s.getClients().add(getAddressDetail(ab.getAddressKey()));
+                    s.getClients().add(getAddressDetail(ab.getAddressKey(), ab));
                 } else if (ab.getReferenceType() == ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT) {
-                    s.getOpponents().add(getAddressDetail(ab.getAddressKey()));
+                    s.getOpponents().add(getAddressDetail(ab.getAddressKey(), ab));
                 } else if (ab.getReferenceType() == ArchiveFileAddressesBean.REFERENCETYPE_OPPONENTATTORNEY) {
-                    s.getOpponentAttorneys().add(getAddressDetail(ab.getAddressKey()));
+                    s.getOpponentAttorneys().add(getAddressDetail(ab.getAddressKey(), ab));
                 }
 
             }
@@ -764,7 +764,7 @@ public class PrintStubGenerator {
         return det;
     }
 
-    private static AddressDetail getAddressDetail(AddressBean b) {
+    private static AddressDetail getAddressDetail(AddressBean b, ArchiveFileAddressesBean roleInCase) {
         AddressDetail d = new AddressDetail();
         d.setCity(b.getCity());
         if(b.getCompany()!=null)
@@ -794,6 +794,10 @@ public class PrintStubGenerator {
         d.setStreet(b.getStreet());
         d.setWebsite(b.getWebsite());
         d.setZipCode(b.getZipCode());
+        
+        if(roleInCase!=null)
+            d.setReference(roleInCase.getReference());
+        
         return d;
     }
 }
