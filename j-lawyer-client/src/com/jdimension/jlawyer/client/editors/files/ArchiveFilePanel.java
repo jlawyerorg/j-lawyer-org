@@ -1117,6 +1117,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.mnuRemoveDocument.setEnabled(!readOnly);
         this.mnuDuplicateDocument.setEnabled(!readOnly);
         this.mnuDuplicateDocumentAsPdf.setEnabled(!readOnly);
+        this.mnuDuplicateDocumentAs.setEnabled(!readOnly);
 
         // this can be enabled even if current case is opened readonly
         //this.mnuCopyDocumentToOtherCase.setEnabled(!readOnly);
@@ -1456,6 +1457,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         mnuOpenDocumentMicrosoftOffice = new javax.swing.JMenuItem();
         mnuDuplicateDocument = new javax.swing.JMenuItem();
         mnuDuplicateDocumentAsPdf = new javax.swing.JMenuItem();
+        mnuDuplicateDocumentAs = new javax.swing.JMenuItem();
         mnuCopyDocumentToOtherCase = new javax.swing.JMenuItem();
         mnuRenameDocument = new javax.swing.JMenuItem();
         mnuSetDocumentDate = new javax.swing.JMenuItem();
@@ -1679,13 +1681,22 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         documentsPopup.add(mnuDuplicateDocument);
 
         mnuDuplicateDocumentAsPdf.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/pdf.png"))); // NOI18N
-        mnuDuplicateDocumentAsPdf.setText("als PDF ablegen");
+        mnuDuplicateDocumentAsPdf.setText("ablegen als PDF");
         mnuDuplicateDocumentAsPdf.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 mnuDuplicateDocumentAsPdfActionPerformed(evt);
             }
         });
         documentsPopup.add(mnuDuplicateDocumentAsPdf);
+
+        mnuDuplicateDocumentAs.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/filesave.png"))); // NOI18N
+        mnuDuplicateDocumentAs.setText("ablegen als ...");
+        mnuDuplicateDocumentAs.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuDuplicateDocumentAsActionPerformed(evt);
+            }
+        });
+        documentsPopup.add(mnuDuplicateDocumentAs);
 
         mnuCopyDocumentToOtherCase.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editcopy.png"))); // NOI18N
         mnuCopyDocumentToOtherCase.setText("in andere Akte kopieren");
@@ -1979,7 +1990,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                         .add(chkArchived)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(lblArchivedSince)
-                        .add(0, 420, Short.MAX_VALUE)))
+                        .add(0, 0, Short.MAX_VALUE)))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel12, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
@@ -2030,7 +2041,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 .addContainerGap()
                 .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jPanel2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 183, Short.MAX_VALUE)
+                .add(jPanel2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel3, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addContainerGap())
@@ -4724,6 +4735,69 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.popCalculations.show(this.cmdNewRvg, evt.getX(), evt.getY());
     }//GEN-LAST:event_cmdNewRvgMousePressed
 
+    private void mnuDuplicateDocumentAsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuDuplicateDocumentAsActionPerformed
+        if (LoadDocumentPreviewThread.isRunning()) {
+            JOptionPane.showMessageDialog(this, "Bitte warten Sie bis die Dokumentvorschau abgeschlossen ist.", "Hinweis", JOptionPane.PLAIN_MESSAGE);
+            return;
+        }
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
+            int[] selectedRows = this.tblDocuments.getSelectedRows();
+            DefaultTableModel tModel = (DefaultTableModel) this.tblDocuments.getModel();
+            
+            String[] list = FileConverter.OUTPUTTYPES.toArray(new String[0]);
+            JComboBox jcb = new JComboBox(list);
+            jcb.setEditable(false);
+            JOptionPane.showMessageDialog(null, jcb, "Zielformat", JOptionPane.QUESTION_MESSAGE);
+            Object response=jcb.getSelectedItem();
+            if(response==null)
+                return;
+            String targetFormat=response.toString();
+            
+            for (int i = selectedRows.length - 1; i > -1; i--) {
+                ArchiveFileDocumentsBean doc = (ArchiveFileDocumentsBean) this.tblDocuments.getValueAt(selectedRows[i], 0);
+                String currentExt = "";
+                for (String ext : LauncherFactory.OFFICEFILETYPES) {
+                    ext = ext.toLowerCase();
+                    if (doc.getName().toLowerCase().endsWith(ext)) {
+                        currentExt = ext;
+                    }
+                }
+
+                byte[] content = remote.getDocumentContent(doc.getId());
+                String newName = doc.getName().substring(0, doc.getName().length() - currentExt.length()) + "." + targetFormat;
+                newName = newName.replaceAll(" ", "-");
+                if (newName.length() == 0) {
+                    JOptionPane.showMessageDialog(this, "Dateiname darf nicht leer sein.", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
+                    return;
+                }
+
+                FileConverter conv = FileConverter.getInstance();
+                String tempPath = FileUtils.createTempFile(doc.getName(), content);
+                String tempTargetPath = conv.convertTo(tempPath, targetFormat);
+                byte[] targetContent = FileUtils.readFile(new File(tempTargetPath));
+                FileUtils.cleanupTempFile(tempPath);
+                FileUtils.cleanupTempFile(tempTargetPath);
+
+                ArchiveFileDocumentsBean newDoc = remote.addDocument(this.dto.getId(), newName, targetContent, doc.getDictateSign());
+
+                ArchiveFileDocumentsTableModel m = (ArchiveFileDocumentsTableModel) this.tblDocuments.getModel();
+                //m.addRow(new Object[]{df.format(doc.getCreationDate()), doc.getName()});
+                m.addRow(new Object[]{newDoc, newDoc.isFavorite(), newDoc.getName(), newDoc.getDictateSign(), new Long(targetContent.length)});
+
+                // we only support duplication of one document at a time
+                break;
+
+            }
+
+        } catch (Exception ioe) {
+            log.error("Error duplicating document", ioe);
+            JOptionPane.showMessageDialog(this, "Fehler beim Duplizieren des Dokuments: " + ioe.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+        }
+    }//GEN-LAST:event_mnuDuplicateDocumentAsActionPerformed
+
     private AddressBean[] convertArray(Object[] in) {
         if (in != null) {
             AddressBean[] out = new AddressBean[in.length];
@@ -5080,6 +5154,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JMenuItem mnuCoverage;
     private javax.swing.JMenuItem mnuDirectPrint;
     private javax.swing.JMenuItem mnuDuplicateDocument;
+    private javax.swing.JMenuItem mnuDuplicateDocumentAs;
     private javax.swing.JMenuItem mnuDuplicateDocumentAsPdf;
     private javax.swing.JMenuItem mnuDuplicateReview;
     private javax.swing.JMenuItem mnuEditReview;
