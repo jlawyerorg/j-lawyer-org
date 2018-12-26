@@ -6,6 +6,7 @@
 	<property name="ireport.y" value="0"/>
 	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="One Empty Record"/>
 	<field name="company" class="java.lang.String"/>
+        <field name="reference" class="java.lang.String"/>
 	<field name="name" class="java.lang.String"/>
 	<field name="firstName" class="java.lang.String"/>
 	<field name="street" class="java.lang.String"/>
@@ -23,12 +24,13 @@
 			<textField>
 				<reportElement x="0" y="0" width="480" height="14" isRemoveLineWhenBlank="true" >
 					<printWhenExpression><![CDATA[$F{company} != null &&
-$F{company}.trim().length()>0]]></printWhenExpression>
+$F{company}.trim().length()>0 && $F{reference} != null &&
+$F{reference}.trim().length()>0]]></printWhenExpression>
 				</reportElement>
 				<textElement>
 					<font size="10"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$F{company}]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$F{reference} + $F{company}]]></textFieldExpression>
 			</textField>
 			<textField isStretchWithOverflow="true">
 				<reportElement positionType="Float" x="0" y="14" width="480" height="14" isRemoveLineWhenBlank="true"/>
