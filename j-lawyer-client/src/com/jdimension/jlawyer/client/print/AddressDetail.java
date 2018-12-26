@@ -732,6 +732,8 @@ public class AddressDetail {
 
     public void setFirstName(String firstName) {
         this.firstName = firstName;
+        if(this.firstName==null)
+            this.firstName="";
     }
 
     public String getName() {
@@ -740,6 +742,8 @@ public class AddressDetail {
 
     public void setName(String name) {
         this.name = name;
+        if(this.name==null)
+            this.name="";
     }
 
     public String getPhone() {

@@ -33,14 +33,23 @@ $F{reference}.trim().length()>0]]></printWhenExpression>
 				<textFieldExpression><![CDATA[$F{reference} + $F{company}]]></textFieldExpression>
 			</textField>
 			<textField isStretchWithOverflow="true">
-				<reportElement positionType="Float" x="0" y="14" width="480" height="14" isRemoveLineWhenBlank="true"/>
+				<reportElement positionType="Float" x="0" y="14" width="480" height="14" isRemoveLineWhenBlank="true">
+                                    <printWhenExpression><![CDATA[($F{name} != null &&
+$F{name}.trim().length()>0) || ($F{firstName} != null &&
+$F{firstName}.trim().length()>0)]]></printWhenExpression>
+                                </reportElement>
 				<textElement>
 					<font size="10"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{name} + " " + $F{firstName}]]></textFieldExpression>
 			</textField>
 			<textField isStretchWithOverflow="true">
-				<reportElement positionType="Float" x="0" y="28" width="480" height="14" isRemoveLineWhenBlank="true"/>
+				<reportElement positionType="Float" x="0" y="28" width="480" height="14" isRemoveLineWhenBlank="true">
+                                    <printWhenExpression><![CDATA[($F{street} != null &&
+$F{street}.trim().length()>0) || ($F{city} != null &&
+$F{city}.trim().length()>0) || ($F{zipCode} != null &&
+$F{zipCode}.trim().length()>0)]]></printWhenExpression>
+                                </reportElement>
 				<textElement>
 					<font size="10"/>
 				</textElement>
