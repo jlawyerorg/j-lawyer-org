@@ -741,7 +741,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     private ServerSettingsBeanFacadeLocal settingsFacade;
 
     @Override
-    @RolesAllowed({"readOptionGroupRole"})
+    @RolesAllowed({"loginRole"})
     public AppOptionGroupBean[] getOptionGroup(String optionGroup) {
 
         return appOptionGroupBeanFacade.findByOptionGroup(optionGroup);

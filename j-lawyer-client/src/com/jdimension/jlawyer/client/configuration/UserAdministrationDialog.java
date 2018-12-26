@@ -779,7 +779,6 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         chkCreateFile = new javax.swing.JCheckBox();
         chkRemoveFile = new javax.swing.JCheckBox();
         jPanel4 = new javax.swing.JPanel();
-        chkReadOption = new javax.swing.JCheckBox();
         chkWriteOption = new javax.swing.JCheckBox();
         chkCreateOption = new javax.swing.JCheckBox();
         chkRemoveOption = new javax.swing.JCheckBox();
@@ -997,8 +996,6 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         jPanel4.setBorder(javax.swing.BorderFactory.createTitledBorder("Einstellungen"));
         jPanel4.setName(""); // NOI18N
 
-        chkReadOption.setText("einsehen");
-
         chkWriteOption.setText("ändern");
 
         chkCreateOption.setText("erstellen");
@@ -1012,22 +1009,20 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
             .add(jPanel4Layout.createSequentialGroup()
                 .addContainerGap()
                 .add(jPanel4Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(chkReadOption)
                     .add(chkWriteOption)
                     .add(chkCreateOption)
                     .add(chkRemoveOption))
-                .addContainerGap(179, Short.MAX_VALUE))
+                .addContainerGap(181, Short.MAX_VALUE))
         );
         jPanel4Layout.setVerticalGroup(
             jPanel4Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel4Layout.createSequentialGroup()
-                .add(chkReadOption)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(chkWriteOption)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(chkCreateOption)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(chkRemoveOption))
+                .add(chkRemoveOption)
+                .add(0, 23, Short.MAX_VALUE))
         );
 
         chkLawyer.setText("Nutzer ist Anwalt");
@@ -1828,15 +1823,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
             r4.setRoleGroup("Roles");
             result.add(r4);
         }
-
-        if (this.chkReadOption.isSelected()) {
-            AppRoleBean r5 = new AppRoleBean();
-            r5.setPrincipalId(principalId);
-            r5.setRole("readOptionGroupRole");
-            r5.setRoleGroup("Roles");
-            result.add(r5);
-        }
-
+        
         if (this.chkCreateFile.isSelected()) {
             AppRoleBean r6 = new AppRoleBean();
             r6.setPrincipalId(principalId);
@@ -1931,12 +1918,6 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         r4.setRoleGroup("Roles");
         result.add(r4);
 
-        AppRoleBean r5 = new AppRoleBean();
-        r5.setPrincipalId(principalId);
-        r5.setRole("readOptionGroupRole");
-        r5.setRoleGroup("Roles");
-        result.add(r5);
-
         AppRoleBean r6 = new AppRoleBean();
         r6.setPrincipalId(principalId);
         r6.setRole("createArchiveFileRole");
@@ -1968,7 +1949,6 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         this.chkLogin.setSelected(false);
         this.chkReadAddress.setSelected(false);
         this.chkReadFile.setSelected(false);
-        this.chkReadOption.setSelected(false);
         this.chkWriteAddress.setSelected(false);
         this.chkWriteFile.setSelected(false);
         this.chkWriteOption.setSelected(false);
@@ -1994,8 +1974,6 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 this.chkReadAddress.setSelected(true);
             } else if ("readArchiveFileRole".equals(rn)) {
                 this.chkReadFile.setSelected(true);
-            } else if ("readOptionGroupRole".equals(rn)) {
-                this.chkReadOption.setSelected(true);
             } else if ("writeAddressRole".equals(rn)) {
                 this.chkWriteAddress.setSelected(true);
             } else if ("writeArchiveFileRole".equals(rn)) {
@@ -2038,7 +2016,6 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
     private javax.swing.JCheckBox chkLogin;
     private javax.swing.JCheckBox chkReadAddress;
     private javax.swing.JCheckBox chkReadFile;
-    private javax.swing.JCheckBox chkReadOption;
     private javax.swing.JCheckBox chkRemoveAddress;
     private javax.swing.JCheckBox chkRemoveFile;
     private javax.swing.JCheckBox chkRemoveOption;
