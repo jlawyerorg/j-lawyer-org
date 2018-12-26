@@ -798,7 +798,7 @@ public class AddressDetail {
     }
 
     /**
-     * @param reference the reference to set
+     * @param ref the reference to set
      */
     public void setReference(String ref) {
         this.reference = ref;
