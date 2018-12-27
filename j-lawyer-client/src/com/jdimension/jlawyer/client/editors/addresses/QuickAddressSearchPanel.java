@@ -670,8 +670,11 @@ import com.jdimension.jlawyer.client.editors.ThemeableEditor;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
+import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.client.utils.TableUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
+import com.jdimension.jlawyer.persistence.AddressBean;
+import com.jdimension.jlawyer.persistence.AddressTagsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.services.AddressServiceRemote;
@@ -786,6 +789,7 @@ public class QuickAddressSearchPanel extends javax.swing.JPanel implements Theme
         popupAddressActions = new javax.swing.JPopupMenu();
         mnuOpenSelectedAddress = new javax.swing.JMenuItem();
         mnuDeleteSelectedAddresses = new javax.swing.JMenuItem();
+        mnuDuplicateSelectedAddress = new javax.swing.JMenuItem();
         popTagFilter = new javax.swing.JPopupMenu();
         jLabel1 = new javax.swing.JLabel();
         txtSearchString = new javax.swing.JTextField();
@@ -819,6 +823,16 @@ public class QuickAddressSearchPanel extends javax.swing.JPanel implements Theme
             }
         });
         popupAddressActions.add(mnuDeleteSelectedAddresses);
+
+        mnuDuplicateSelectedAddress.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editcopy.png"))); // NOI18N
+        mnuDuplicateSelectedAddress.setText("duplizieren");
+        mnuDuplicateSelectedAddress.setToolTipText("gewählte Adresse duplizieren");
+        mnuDuplicateSelectedAddress.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuDuplicateSelectedAddressActionPerformed(evt);
+            }
+        });
+        popupAddressActions.add(mnuDuplicateSelectedAddress);
 
         jLabel1.setText("Suchanfrage:");
 
@@ -1144,6 +1158,58 @@ public class QuickAddressSearchPanel extends javax.swing.JPanel implements Theme
         this.popTagFilter.show(this.cmdTagFilter, evt.getX(), evt.getY());
     }//GEN-LAST:event_cmdTagFilterMousePressed
 
+    private void mnuDuplicateSelectedAddressActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuDuplicateSelectedAddressActionPerformed
+        ThreadUtils.setWaitCursor(this, false);
+        int[] selectedIndices = this.tblResults.getSelectedRows();
+        Arrays.sort(selectedIndices);
+        ArrayList<String> ids = new ArrayList<String>();
+        for (int i = 0; i < selectedIndices.length; i++) {
+            QuickAddressSearchRowIdentifier id = (QuickAddressSearchRowIdentifier) this.tblResults.getValueAt(selectedIndices[i], 0);
+            ids.add(id.getAddressDTO().getId());
+        }
+
+        EditorsRegistry.getInstance().updateStatus("Dupliziere " + ids.size() + " Adresse(n)...", false);
+        ClientSettings settings = ClientSettings.getInstance();
+        try {
+            //InitialContext context = new InitialContext(settings.getLookupProperties());
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+
+            AddressServiceRemote addressService = locator.lookupAddressServiceRemote();
+            for (int i = ids.size() - 1; i > -1; i--) {
+                AddressBean source=addressService.getAddress(ids.get(i));
+                Collection<AddressTagsBean> sourceTags=addressService.getTags(ids.get(i));
+                String targetCompany=source.getCompany();
+                boolean markedAsCopy=false;
+                if(targetCompany!=null) {
+                    if(targetCompany.length()>0) {
+                        source.setCompany(source.getCompany() + " (Kopie)");
+                        markedAsCopy=true;
+                    }
+                }
+                if(!markedAsCopy) {
+                    String targetLastName=StringUtils.nonNull(source.getName());
+                    targetLastName=targetLastName + " (Kopie)";
+                    source.setName(targetLastName);
+                }
+                AddressBean target=addressService.createAddress(source);
+                for(AddressTagsBean atb: sourceTags) {
+                    addressService.setTag(target.getId(), atb, true);
+                }
+            }
+
+            //addressService.remove();
+            EditorsRegistry.getInstance().clearStatus(false);
+            this.cmdQuickSearchActionPerformed(null);
+        } catch (Exception ex) {
+            log.error("Error deleting address", ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim Löschen: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            EditorsRegistry.getInstance().clearStatus(false);
+            return;
+        } finally {
+            ThreadUtils.setDefaultCursor(this, false);
+        }
+    }//GEN-LAST:event_mnuDuplicateSelectedAddressActionPerformed
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton cmdExport;
@@ -1157,6 +1223,7 @@ public class QuickAddressSearchPanel extends javax.swing.JPanel implements Theme
     protected javax.swing.JLabel lblPanelTitle;
     private javax.swing.JLabel lblSummary;
     private javax.swing.JMenuItem mnuDeleteSelectedAddresses;
+    private javax.swing.JMenuItem mnuDuplicateSelectedAddress;
     private javax.swing.JMenuItem mnuOpenSelectedAddress;
     private javax.swing.JPopupMenu popTagFilter;
     private javax.swing.JPopupMenu popupAddressActions;

@@ -696,7 +696,7 @@ public interface AddressServiceRemote {
 
     void setTag(String addressId, AddressTagsBean tag, boolean active) throws Exception;
 
-    Collection getTags(String addressId);
+    Collection<AddressTagsBean> getTags(String addressId);
 
     List<String> searchTagsInUse();
 

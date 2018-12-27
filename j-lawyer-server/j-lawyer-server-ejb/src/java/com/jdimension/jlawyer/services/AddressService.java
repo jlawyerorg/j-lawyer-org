@@ -891,7 +891,7 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
     
     @Override
     @RolesAllowed({"readAddressRole"})
-    public Collection getTags(String addressId) {
+    public Collection<AddressTagsBean> getTags(String addressId) {
         AddressBean ab = this.addressFacade.find(addressId);
 
         List resultList = this.addressTagsFacade.findByAddressKey(ab);
