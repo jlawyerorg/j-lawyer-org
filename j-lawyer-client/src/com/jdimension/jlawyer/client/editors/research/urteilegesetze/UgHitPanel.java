@@ -755,7 +755,6 @@ public class UgHitPanel extends javax.swing.JPanel {
 
         lblFileName = new javax.swing.JLabel();
         lblType = new javax.swing.JLabel();
-        jScrollPane1 = new javax.swing.JScrollPane();
         taDetails = new javax.swing.JTextArea();
 
         setBackground(new java.awt.Color(255, 255, 255));
@@ -786,7 +785,6 @@ public class UgHitPanel extends javax.swing.JPanel {
         taDetails.setRows(5);
         taDetails.setWrapStyleWord(true);
         taDetails.setBorder(null);
-        jScrollPane1.setViewportView(taDetails);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -798,18 +796,17 @@ public class UgHitPanel extends javax.swing.JPanel {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(lblFileName)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 544, Short.MAX_VALUE))
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addComponent(taDetails))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(lblFileName, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addGap(12, 12, 12)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 58, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap())
+                .addComponent(lblFileName, javax.swing.GroupLayout.DEFAULT_SIZE, 17, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(taDetails, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
             .addComponent(lblType, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -828,7 +825,6 @@ public class UgHitPanel extends javax.swing.JPanel {
 
     }//GEN-LAST:event_lblFileNameMouseClicked
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JLabel lblFileName;
     private javax.swing.JLabel lblType;
     private javax.swing.JTextArea taDetails;

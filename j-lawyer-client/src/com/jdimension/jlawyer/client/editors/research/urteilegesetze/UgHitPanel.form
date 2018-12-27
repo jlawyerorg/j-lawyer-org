@@ -27,9 +27,9 @@
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" attributes="0">
                       <Component id="lblFileName" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace max="32767" attributes="0"/>
+                      <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                   </Group>
-                  <Component id="jScrollPane1" pref="544" max="32767" attributes="0"/>
+                  <Component id="taDetails" max="32767" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
           </Group>
@@ -37,14 +37,13 @@
     </DimensionLayout>
     <DimensionLayout dim="1">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Group type="102" alignment="0" attributes="0">
+          <Group type="102" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
-              <Component id="lblFileName" max="32767" attributes="0"/>
-              <EmptySpace min="-2" pref="12" max="-2" attributes="0"/>
-              <Component id="jScrollPane1" min="-2" pref="58" max="-2" attributes="0"/>
-              <EmptySpace min="-2" max="-2" attributes="0"/>
+              <Component id="lblFileName" pref="17" max="32767" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
+              <Component id="taDetails" min="-2" max="-2" attributes="0"/>
           </Group>
-          <Component id="lblType" alignment="0" max="32767" attributes="0"/>
+          <Component id="lblType" max="32767" attributes="0"/>
       </Group>
     </DimensionLayout>
   </Layout>
@@ -77,30 +76,21 @@
         <Property name="opaque" type="boolean" value="true"/>
       </Properties>
     </Component>
-    <Container class="javax.swing.JScrollPane" name="jScrollPane1">
-      <AuxValues>
-        <AuxValue name="autoScrollPane" type="java.lang.Boolean" value="true"/>
-      </AuxValues>
-
-      <Layout class="org.netbeans.modules.form.compat2.layouts.support.JScrollPaneSupportLayout"/>
-      <SubComponents>
-        <Component class="javax.swing.JTextArea" name="taDetails">
-          <Properties>
-            <Property name="columns" type="int" value="20"/>
-            <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
-              <FontInfo relative="true">
-                <Font component="taDetails" property="font" relativeSize="true" size="-2"/>
-              </FontInfo>
-            </Property>
-            <Property name="lineWrap" type="boolean" value="true"/>
-            <Property name="rows" type="int" value="5"/>
-            <Property name="wrapStyleWord" type="boolean" value="true"/>
-            <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
-              <Border info="null"/>
-            </Property>
-          </Properties>
-        </Component>
-      </SubComponents>
-    </Container>
+    <Component class="javax.swing.JTextArea" name="taDetails">
+      <Properties>
+        <Property name="columns" type="int" value="20"/>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
+          <FontInfo relative="true">
+            <Font component="taDetails" property="font" relativeSize="true" size="-2"/>
+          </FontInfo>
+        </Property>
+        <Property name="lineWrap" type="boolean" value="true"/>
+        <Property name="rows" type="int" value="5"/>
+        <Property name="wrapStyleWord" type="boolean" value="true"/>
+        <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
+          <Border info="null"/>
+        </Property>
+      </Properties>
+    </Component>
   </SubComponents>
 </Form>
