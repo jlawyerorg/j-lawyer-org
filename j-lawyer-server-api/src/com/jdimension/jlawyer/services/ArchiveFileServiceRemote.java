@@ -725,7 +725,7 @@ public interface ArchiveFileServiceRemote {
 
     byte[] getDocumentContent(String id) throws Exception;
 
-    Collection getArchiveFileAddressesForAddress(String adressId);
+    Collection<ArchiveFileAddressesBean> getArchiveFileAddressesForAddress(String adressId);
 
     boolean renameDocument(String id, String newName) throws Exception;
 
@@ -741,7 +741,7 @@ public interface ArchiveFileServiceRemote {
 
     void setTag(String archiveFileId, ArchiveFileTagsBean tag, boolean active) throws Exception;
 
-    Collection getTags(String archiveFileId);
+    Collection<ArchiveFileTagsBean> getTags(String archiveFileId);
 
     List<String> searchTagsInUse();
 

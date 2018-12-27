@@ -1805,7 +1805,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     }
 
     @Override
-    public Collection getArchiveFileAddressesForAddress(String adressId) {
+    public Collection<ArchiveFileAddressesBean> getArchiveFileAddressesForAddress(String adressId) {
 
         AddressBean ab = this.addressFacade.find(adressId);
         List<ArchiveFileAddressesBean> l = this.archiveFileAddressesFacade.findByAddressKey(ab);
@@ -2022,7 +2022,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
     @Override
     @RolesAllowed({"readArchiveFileRole"})
-    public Collection getTags(String archiveFileId) {
+    public Collection<ArchiveFileTagsBean> getTags(String archiveFileId) {
         ArchiveFileBean aFile = this.archiveFileFacade.find(archiveFileId);
 
         List resultList = this.archiveFileTagsFacade.findByArchiveFileKey(aFile);

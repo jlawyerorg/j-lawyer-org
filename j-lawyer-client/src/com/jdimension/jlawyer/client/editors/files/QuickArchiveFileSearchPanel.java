@@ -670,7 +670,9 @@ import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.TableUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
+import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileTagsBean;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.ui.tagging.TagUtils;
@@ -681,6 +683,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import javax.swing.AbstractAction;
 import javax.swing.JComponent;
@@ -772,6 +775,7 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
         popupArchiveFileActions = new javax.swing.JPopupMenu();
         mnuOpenSelectedArchiveFile = new javax.swing.JMenuItem();
         mnuDeleteSelectedArchiveFiles = new javax.swing.JMenuItem();
+        mnuDuplicateSelectedArchiveFiles = new javax.swing.JMenuItem();
         popTagFilter = new javax.swing.JPopupMenu();
         cmdTagFilter = new javax.swing.JButton();
         jLabel1 = new javax.swing.JLabel();
@@ -806,6 +810,16 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
             }
         });
         popupArchiveFileActions.add(mnuDeleteSelectedArchiveFiles);
+
+        mnuDuplicateSelectedArchiveFiles.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editcopy.png"))); // NOI18N
+        mnuDuplicateSelectedArchiveFiles.setText("duplizieren");
+        mnuDuplicateSelectedArchiveFiles.setToolTipText("gewählte Akten duplizieren");
+        mnuDuplicateSelectedArchiveFiles.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuDuplicateSelectedArchiveFilesActionPerformed(evt);
+            }
+        });
+        popupArchiveFileActions.add(mnuDuplicateSelectedArchiveFiles);
 
         cmdTagFilter.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/favorites.png"))); // NOI18N
         cmdTagFilter.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -1113,6 +1127,81 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
         this.popTagFilter.show(this.cmdTagFilter, evt.getX(), evt.getY());
     }//GEN-LAST:event_cmdTagFilterMousePressed
 
+    private void mnuDuplicateSelectedArchiveFilesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuDuplicateSelectedArchiveFilesActionPerformed
+        ThreadUtils.setWaitCursor(this, false);
+        int[] selectedIndices = this.tblResults.getSelectedRows();
+        Arrays.sort(selectedIndices);
+        ArrayList<String> ids = new ArrayList<String>();
+        for (int i = 0; i < selectedIndices.length; i++) {
+            QuickArchiveFileSearchRowIdentifier id = (QuickArchiveFileSearchRowIdentifier) this.tblResults.getValueAt(selectedIndices[i], 0);
+            ids.add(id.getArchiveFileDTO().getId());
+        }
+
+        EditorsRegistry.getInstance().updateStatus("Dupliziere " + ids.size() + " Akte(n)...", false);
+        ClientSettings settings = ClientSettings.getInstance();
+        try {
+            //InitialContext context = new InitialContext(settings.getLookupProperties());
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+
+            //Object object = locator.lookup("SystemManagementBean");
+            //ArchiveFileServiceRemoteHome home = (ArchiveFileServiceRemoteHome)locator.getRemoteHome("ejb/ArchiveFileServiceBean", ArchiveFileServiceRemoteHome.class);
+            ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
+            for (int i = ids.size() - 1; i > -1; i--) {
+                ArchiveFileBean source=fileService.getArchiveFile(ids.get(i));
+                source.setArchiveFileDocumentsBeanList(null);
+                source.setArchiveFileReviewsBeanList(null);
+                source.setArchiveFileHistoryBeanList(null);
+                source.setArchiveFileAddressesBeanList(null);
+                source.setName(source.getName() + " (Kopie)");
+                source.setArchivedBoolean(false);
+                source.setClaimNumber("");
+                source.setClaimValue(0f);
+               
+                ArchiveFileBean target=fileService.createArchiveFile(source);
+                
+                Collection<ArchiveFileAddressesBean> parties=fileService.getInvolvementDetailsForCase(ids.get(i));
+                for(ArchiveFileAddressesBean aab: parties) {
+                    ArchiveFileAddressesBean newAab=new ArchiveFileAddressesBean();
+                    newAab.setAddressKey(aab.getAddressKey());
+                    newAab.setArchiveFileKey(target);
+                    newAab.setContact(aab.getContact());
+                    newAab.setCustom1(aab.getCustom1());
+                    newAab.setCustom2(aab.getCustom2());
+                    newAab.setCustom3(aab.getCustom3());
+                    newAab.setReferenceType(aab.getReferenceType());
+                    if(aab.getReferenceType()==ArchiveFileAddressesBean.REFERENCETYPE_CLIENT) {
+                        target.addClient(newAab);
+                    } else if(aab.getReferenceType()==ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT) {
+                        target.addOpponent(newAab);
+                    } else if (aab.getReferenceType()==ArchiveFileAddressesBean.REFERENCETYPE_OPPONENTATTORNEY) {
+                        target.addOpponentAttorney(newAab);
+                    } 
+                }
+                
+                fileService.updateArchiveFile(target);
+                
+                Collection<ArchiveFileTagsBean> sourceTags=fileService.getTags(ids.get(i));
+                for(ArchiveFileTagsBean atb: sourceTags) {
+                    fileService.setTag(target.getId(), atb, true);
+                }
+                
+                
+                
+            }
+
+            //fileService.remove();
+            EditorsRegistry.getInstance().clearStatus(false);
+            this.cmdQuickSearchActionPerformed(null);
+        } catch (Exception ex) {
+            log.error("Error duplicating cases", ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim Duplizieren: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            EditorsRegistry.getInstance().clearStatus(false);
+            return;
+        } finally {
+            ThreadUtils.setDefaultCursor(this, false);
+        }
+    }//GEN-LAST:event_mnuDuplicateSelectedArchiveFilesActionPerformed
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JCheckBox chkIncludeArchive;
@@ -1127,6 +1216,7 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
     protected javax.swing.JLabel lblPanelTitle;
     private javax.swing.JLabel lblSummary;
     private javax.swing.JMenuItem mnuDeleteSelectedArchiveFiles;
+    private javax.swing.JMenuItem mnuDuplicateSelectedArchiveFiles;
     private javax.swing.JMenuItem mnuOpenSelectedArchiveFile;
     private javax.swing.JPopupMenu popTagFilter;
     private javax.swing.JPopupMenu popupArchiveFileActions;

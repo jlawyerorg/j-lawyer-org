@@ -1201,8 +1201,8 @@ public class QuickAddressSearchPanel extends javax.swing.JPanel implements Theme
             EditorsRegistry.getInstance().clearStatus(false);
             this.cmdQuickSearchActionPerformed(null);
         } catch (Exception ex) {
-            log.error("Error deleting address", ex);
-            JOptionPane.showMessageDialog(this, "Fehler beim Löschen: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            log.error("Error duplicating contacts", ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim Duplizieren: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
             EditorsRegistry.getInstance().clearStatus(false);
             return;
         } finally {
