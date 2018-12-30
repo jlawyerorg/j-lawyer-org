@@ -687,6 +687,7 @@ import java.text.DecimalFormat;
 import java.util.logging.Level;
 import javax.swing.JOptionPane;
 import javax.swing.text.BadLocationException;
+import javax.swing.text.DefaultCaret;
 import javax.swing.text.DefaultHighlighter;
 import javax.swing.text.Highlighter;
 import javax.swing.text.Highlighter.HighlightPainter;
@@ -726,16 +727,18 @@ public class UgHitPanel extends javax.swing.JPanel {
             this.lblFileName.setText("<html><b>" + sh.getAktenzeichen() + " vom " + sh.getBeschlussDatum() + "</b><br/>Gericht: " + sh.getGericht() + "</html>");
         }
 
-        this.taDetails.setText(sh.getKurzbeschreibung().replace("<em>", "").replace("</em>", ""));
+        DefaultCaret caret = (DefaultCaret)this.taDetails.getCaret();
+        caret.setUpdatePolicy(DefaultCaret.NEVER_UPDATE);
+        this.taDetails.setText(sh.getKurzbeschreibung().replace("<em>", "").replace("</em>", "").trim());
         String kurzbeschreibung = sh.getKurzbeschreibung();
         if (kurzbeschreibung.contains("<em>")) {
             try {
                 Highlighter highlighter = taDetails.getHighlighter();
                 HighlightPainter painter
                         = new DefaultHighlighter.DefaultHighlightPainter(Color.YELLOW);
-                int positionStart = kurzbeschreibung.indexOf("<em>");
+                int positionStart = kurzbeschreibung.trim().indexOf("<em>");
                 kurzbeschreibung = kurzbeschreibung.replace("<em>", "");
-                int positionEnd = kurzbeschreibung.indexOf("</em>");
+                int positionEnd = kurzbeschreibung.trim().indexOf("</em>");
                 kurzbeschreibung = kurzbeschreibung.replace("</em>", "");
                 highlighter.addHighlight(positionStart, positionEnd, painter);
             } catch (BadLocationException ex) {
@@ -756,6 +759,7 @@ public class UgHitPanel extends javax.swing.JPanel {
         lblFileName = new javax.swing.JLabel();
         lblType = new javax.swing.JLabel();
         taDetails = new javax.swing.JTextArea();
+        jSeparator1 = new javax.swing.JSeparator();
 
         setBackground(new java.awt.Color(255, 255, 255));
 
@@ -780,10 +784,11 @@ public class UgHitPanel extends javax.swing.JPanel {
         lblType.setOpaque(true);
 
         taDetails.setColumns(20);
-        taDetails.setFont(taDetails.getFont().deriveFont(taDetails.getFont().getSize()-2f));
+        taDetails.setFont(new java.awt.Font("Dialog", 0, 12)); // NOI18N
         taDetails.setLineWrap(true);
         taDetails.setRows(5);
         taDetails.setWrapStyleWord(true);
+        taDetails.setAutoscrolls(false);
         taDetails.setBorder(null);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
@@ -791,23 +796,31 @@ public class UgHitPanel extends javax.swing.JPanel {
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addComponent(lblType)
+                .addContainerGap()
+                .addComponent(jSeparator1))
+            .addGroup(layout.createSequentialGroup()
+                .addComponent(lblType, javax.swing.GroupLayout.PREFERRED_SIZE, 8, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(taDetails)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(lblFileName)
-                        .addGap(0, 0, Short.MAX_VALUE))
-                    .addComponent(taDetails))
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(lblFileName, javax.swing.GroupLayout.DEFAULT_SIZE, 17, Short.MAX_VALUE)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addContainerGap()
+                        .addComponent(lblFileName, javax.swing.GroupLayout.DEFAULT_SIZE, 33, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(taDetails, javax.swing.GroupLayout.PREFERRED_SIZE, 42, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(lblType, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(taDetails, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-            .addComponent(lblType, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -825,6 +838,7 @@ public class UgHitPanel extends javax.swing.JPanel {
 
     }//GEN-LAST:event_lblFileNameMouseClicked
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JSeparator jSeparator1;
     private javax.swing.JLabel lblFileName;
     private javax.swing.JLabel lblType;
     private javax.swing.JTextArea taDetails;

@@ -699,6 +699,7 @@ public class UgDocumentSearchPanel extends javax.swing.JPanel implements Themeab
      */
     public UgDocumentSearchPanel() {
         initComponents();
+        this.scrollResults.getVerticalScrollBar().setUnitIncrement(16);
         String[] colNames = new String[]{"Suchergebnisse"};
         DefaultTableModel model = new DefaultTableModel(colNames, 0);
         
