@@ -756,7 +756,6 @@ public class UgDocumentSearchPanel extends javax.swing.JPanel implements Themeab
         txtSearchString = new javax.swing.JTextField();
         cmdQuickSearch = new javax.swing.JButton();
         lblPanelTitle = new javax.swing.JLabel();
-        jLabel2 = new javax.swing.JLabel();
         scrollResults = new javax.swing.JScrollPane();
         pnlResults = new javax.swing.JPanel();
         lblResultCount = new javax.swing.JLabel();
@@ -776,7 +775,7 @@ public class UgDocumentSearchPanel extends javax.swing.JPanel implements Themeab
             }
         });
 
-        cmdQuickSearch.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/find.png"))); // NOI18N
+        cmdQuickSearch.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/search.png"))); // NOI18N
         cmdQuickSearch.setToolTipText("Suchen");
         cmdQuickSearch.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -787,8 +786,6 @@ public class UgDocumentSearchPanel extends javax.swing.JPanel implements Themeab
         lblPanelTitle.setFont(new java.awt.Font("Dialog", 1, 24)); // NOI18N
         lblPanelTitle.setForeground(new java.awt.Color(255, 255, 255));
         lblPanelTitle.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/urteile-gesetze.png"))); // NOI18N
-
-        jLabel2.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/text_sub.png"))); // NOI18N
 
         pnlResults.setBackground(new java.awt.Color(255, 255, 255));
 
@@ -881,8 +878,6 @@ public class UgDocumentSearchPanel extends javax.swing.JPanel implements Themeab
                                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                                 .add(rdTypeUrteile))))
                     .add(layout.createSequentialGroup()
-                        .add(jLabel2)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(lblPanelTitle)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .add(jLabel4)
@@ -898,7 +893,6 @@ public class UgDocumentSearchPanel extends javax.swing.JPanel implements Themeab
             .add(layout.createSequentialGroup()
                 .addContainerGap()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jLabel2)
                     .add(lblPanelTitle)
                     .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                         .add(jLabel4)
@@ -1031,7 +1025,6 @@ public class UgDocumentSearchPanel extends javax.swing.JPanel implements Themeab
     private javax.swing.ButtonGroup btGrpSearchTypes;
     private javax.swing.JButton cmdQuickSearch;
     private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel lblGotoOnlineResults;
     protected javax.swing.JLabel lblPanelTitle;
