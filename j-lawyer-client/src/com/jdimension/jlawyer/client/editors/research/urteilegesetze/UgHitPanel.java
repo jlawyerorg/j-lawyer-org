@@ -684,7 +684,7 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Image;
 import java.text.DecimalFormat;
-import java.util.logging.Level;
+//import java.util.logging.Level;
 import javax.swing.JOptionPane;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.DefaultCaret;
@@ -742,7 +742,8 @@ public class UgHitPanel extends javax.swing.JPanel {
                 kurzbeschreibung = kurzbeschreibung.replace("</em>", "");
                 highlighter.addHighlight(positionStart, positionEnd, painter);
             } catch (BadLocationException ex) {
-                java.util.logging.Logger.getLogger(UgHitPanel.class.getName()).log(Level.SEVERE, null, ex);
+                log.error(ex);
+                //java.util.logging.Logger.getLogger(UgHitPanel.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
     }
