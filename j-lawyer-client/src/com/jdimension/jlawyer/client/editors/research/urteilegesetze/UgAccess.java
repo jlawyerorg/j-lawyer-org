@@ -733,7 +733,7 @@ public class UgAccess {
                         if (hitObject instanceof JsonObject) {
                             JsonObject hit = (JsonObject) hitObject;
                             UgHit ugHit=new UgHit();
-                            System.out.println("hit: " + hit);
+                            //System.out.println("hit: " + hit);
                             if(hit.get("abkuerzung")!=null)
                                 ugHit.setAbkuerzung(hit.get("abkuerzung").toString());
                             if(hit.get("beschlussdatum")!=null)
