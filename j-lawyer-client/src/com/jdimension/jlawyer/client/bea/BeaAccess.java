@@ -826,6 +826,10 @@ public class BeaAccess {
         return this.wrapper.getMessage(messageId, safeId, includeAttachments);
     }
     
+    public static Message getMessageFromExport(MessageExport export) throws BeaWrapperException {
+        return BeaWrapper.getMessageFromExport(export);
+    }
+    
     public Collection<MessageJournalEntry> getMessageJournal(String messageId) throws BeaWrapperException {
         return this.wrapper.getMessageJournal(messageId);
     }
@@ -840,6 +844,10 @@ public class BeaAccess {
     
     public MessageExport exportMessage(String messageId, String safeId) throws BeaWrapperException {
         return this.wrapper.exportMessage(messageId, safeId);
+    }
+    
+    public MessageExport exportMessage(Message msg) throws BeaWrapperException {
+        return this.wrapper.exportMessage(msg);
     }
     
     public void sendMessage(Message msg, String senderSafeId, ArrayList<String> recipientSafeIds) throws BeaWrapperException {

@@ -717,8 +717,8 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
      */
     public BeaMessageContentUI() {
         initComponents();
-        
-        this.jScrollPane1.setPreferredSize(new Dimension((int)this.jScrollPane1.getSize().getWidth(), (int)this.jScrollPane1.getSize().getHeight()));
+
+        this.jScrollPane1.setPreferredSize(new Dimension((int) this.jScrollPane1.getSize().getWidth(), (int) this.jScrollPane1.getSize().getHeight()));
 
         this.lblSentDate.setText(" ");
 
@@ -726,7 +726,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
 
         this.editBody.setEditorKit(new StyledEditorKit());
         this.editBody.addHyperlinkListener(this);
-        
+
         DefaultTableModel tm = new DefaultTableModel(new String[]{"Benutzer (Ereignis)", "Benutzername (Ereignis)", "Dateiname des Anhangs", "Ereignis", "Zeitpunkt"}, 0);
         this.tblJournal.setModel(tm);
         TableRowSorter<TableModel> sorter = new TableRowSorter<TableModel>(tm);
@@ -760,7 +760,6 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
 //            return this.editBody.getText();
 //        else
 //            return "";
-
 //        try {
 //            return this.editBody.getDocument().getText(0, editBody.getDocument().getLength());
 //        } catch (Throwable t) {
@@ -771,16 +770,16 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
     public String getContentType() {
         return this.editBody.getContentType();
     }
-    
+
     public void setErrorMessage(String errorMessage) {
         this.editBody.setText(errorMessage);
     }
 
-    public void setMessage(org.jlawyer.bea.model.Message msg, Collection<MessageJournalEntry> journalEntries) {
+    public void setMessage(org.jlawyer.bea.model.Message msg) {
 
         this.msgContainer = msg;
         try {
-            
+
             if (msg == null) {
                 return;
             }
@@ -788,7 +787,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
             System.out.println("TODO: set message read");
 //            if (!(msgC.isRead()))
 //                msgC.setRead(true);
-            
+
             System.out.println("TODO: load with progressindicator");
             if (false) {
                 // messages above 1.5MB are loaded with progress bar
@@ -801,11 +800,9 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
 //                lea.start();
                 return;
             } else {
-                BeaMessageContentUI.setMessageImpl(this, msg, journalEntries, this.lblSubject, this.lblSentDate, this.lblTo, this.lblFrom, this.editBody, this.lstAttachments, false, this.tblJournal);
+                BeaMessageContentUI.setMessageImpl(this, msg, this.lblSubject, this.lblSentDate, this.lblTo, this.lblFrom, this.editBody, this.lstAttachments, false, this.tblJournal);
             }
 
-
-            
         } catch (Exception ex) {
             log.error("Error getting contents of IMAP message", ex);
             JOptionPane.showMessageDialog(this, "Fehler Öffnen der Nachricht: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
@@ -813,10 +810,9 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
         }
     }
 
-    public static void setMessageImpl(BeaMessageContentUI contentUI, Message msg, Collection<MessageJournalEntry> journalEntries, JLabel lblSubject, JLabel lblSentDate, JLabel lblTo, JLabel lblFrom, JEditorPane editBody, JList lstAttachments, boolean edt, JTable journalTable) throws Exception {
+    public static void setMessageImpl(BeaMessageContentUI contentUI, Message msg, JLabel lblSubject, JLabel lblSentDate, JLabel lblTo, JLabel lblFrom, JEditorPane editBody, JList lstAttachments, boolean edt, JTable journalTable) throws Exception {
         // we copy the message to avoid the "Unable to load BODYSTRUCTURE" issue
 
-                
         AppUserBean cu = UserSettings.getInstance().getCurrentUser();
 //        if (EmailUtils.isReceiptRequested(msg)) {
 //            int response = JOptionPane.showConfirmDialog(contentUI, "Der Absender hat eine Lesebestätigung angefordert - jetzt senden?", "Lesebestätigung", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
@@ -825,14 +821,13 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
 //            }
 //        }
 
-
         lblSentDate.setText(df.format(msg.getReceptionTime()));
         lblSubject.setText(msg.getSubject());
         lblSubject.setToolTipText(lblSubject.getText());
         lblFrom.setText(msg.getSenderName());
 
         String to = "";
-        if (msg.getRecipients().size()>0) {
+        if (msg.getRecipients().size() > 0) {
             to = msg.getRecipients().get(0).getName();
             for (int i = 1; i < msg.getRecipients().size(); i++) {
                 to = to + ", " + msg.getRecipients().get(i).getName();
@@ -850,13 +845,12 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
 //        }
 //        lblCC.setText(cc);
 //        lblCC.setToolTipText(cc);
-
         ((DefaultListModel) lstAttachments.getModel()).removeAllElements();
-            ArrayList<Attachment> attachments = msg.getAttachments();
-            for (Attachment a : attachments) {
-                ((DefaultListModel) lstAttachments.getModel()).addElement(a);
-            }
-        
+        ArrayList<Attachment> attachments = msg.getAttachments();
+        for (Attachment a : attachments) {
+            ((DefaultListModel) lstAttachments.getModel()).addElement(a);
+        }
+
 //
 //        if (copiedMsg.isMimeType("multipart/*")) {
 //            String html = recursiveFindPart(copiedMsg.getContent(), "text/html");
@@ -1008,17 +1002,18 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
 //            //this.editBody.setText(msg.getContent().toString());
 //        }
 //        editBody.setCaretPosition(0);
-        
         editBody.setText(msg.getBody());
-        
+
         DefaultTableModel tm = new DefaultTableModel(new String[]{"Benutzer (Ereignis)", "Benutzername (Ereignis)", "Dateiname des Anhangs", "Ereignis", "Zeitpunkt"}, 0);
         journalTable.setModel(tm);
         TableRowSorter<TableModel> sorter = new TableRowSorter<TableModel>(tm);
         sorter.setComparator(4, new DescendingDateTimeStringComparator());
         journalTable.setRowSorter(sorter);
-        for(MessageJournalEntry e: journalEntries) {
-            ((DefaultTableModel)journalTable.getModel()).addRow(new Object[] {e.getFromSurnameFirstname(), e.getFromUsername(), e.getAttachmentReference(), e.getEventType(), df.format(e.getTimestamp())});
-        
+        if (msg.getJournal() != null) {
+            for (MessageJournalEntry e : msg.getJournal()) {
+                ((DefaultTableModel) journalTable.getModel()).addRow(new Object[]{e.getFromSurnameFirstname(), e.getFromUsername(), e.getAttachmentReference(), e.getEventType(), df.format(e.getTimestamp())});
+
+            }
         }
 
     }
@@ -1283,7 +1278,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
 
     private void lstAttachmentsMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lstAttachmentsMouseReleased
         if (evt.isPopupTrigger() && evt.getComponent().isEnabled()) {
-            
+
             if (this.lstAttachments.getSelectedValuesList().size() == 0) {
                 int index = lstAttachments.locationToIndex(evt.getPoint());
                 if (index >= 0) {
@@ -1299,10 +1294,10 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
     private void lstAttachmentsMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lstAttachmentsMouseClicked
         if (evt.getClickCount() == 2 && this.lstAttachments.getSelectedValue() != null) {
             try {
-                byte[] data = ((Attachment)this.lstAttachments.getSelectedValue()).getContent();
+                byte[] data = ((Attachment) this.lstAttachments.getSelectedValue()).getContent();
                 //String tmpFile = FileUtils.createTempFile(this.lstAttachments.getSelectedValue().toString(), data);
-                ReadOnlyDocumentStore store=new ReadOnlyDocumentStore("mailattachment-" + this.lstAttachments.getSelectedValue().toString(), this.lstAttachments.getSelectedValue().toString());
-                Launcher launcher=LauncherFactory.getLauncher(this.lstAttachments.getSelectedValue().toString(), data, store);
+                ReadOnlyDocumentStore store = new ReadOnlyDocumentStore("mailattachment-" + this.lstAttachments.getSelectedValue().toString(), this.lstAttachments.getSelectedValue().toString());
+                Launcher launcher = LauncherFactory.getLauncher(this.lstAttachments.getSelectedValue().toString(), data, store);
                 launcher.launch();
             } catch (Exception ex) {
                 log.error("Error opening attachment", ex);
@@ -1327,7 +1322,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
 
             for (Object selected : this.lstAttachments.getSelectedValuesList()) {
 
-                byte[] data = ((Attachment)selected).getContent();
+                byte[] data = ((Attachment) selected).getContent();
                 String userHome = System.getProperty("user.home");
                 if (!userHome.endsWith(File.separator)) {
                     userHome = userHome + File.separator;
@@ -1377,7 +1372,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
 
                 for (Object selected : this.lstAttachments.getSelectedValuesList()) {
 
-                    byte[] data = ((Attachment)selected).getContent();
+                    byte[] data = ((Attachment) selected).getContent();
 
                     String newName = FileUtils.getNewFileName(selected.toString(), true);
                     if (newName == null) {
@@ -1396,7 +1391,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
     }//GEN-LAST:event_mnuSearchSaveActionPerformed
 
     private void editBodyMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_editBodyMouseClicked
-        
+
     }//GEN-LAST:event_editBodyMouseClicked
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JEditorPane editBody;
@@ -1430,7 +1425,6 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
             if (he.getURL() == null) {
                 return;
             }
-
 
             String url = he.getURL().toString();
             if (url.toLowerCase().startsWith("mailto:")) {

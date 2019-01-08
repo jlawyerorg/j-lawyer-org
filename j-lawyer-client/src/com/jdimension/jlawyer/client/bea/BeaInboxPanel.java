@@ -1592,7 +1592,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements BeaLoginCallbac
 
                 org.jlawyer.bea.model.Message msg = (org.jlawyer.bea.model.Message) this.tblMails.getValueAt(this.tblMails.getSelectedRow(), 0);
                 BeaAccess bea=BeaAccess.getInstance();
-                MessageExport export=bea.exportMessage(msg.getId(), msg.getSenderSafeId());
+                MessageExport export=bea.exportMessage(msg);
                 
                 SearchAndAssignDialog dlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true);
                 dlg.setVisible(true);
@@ -1602,35 +1602,30 @@ public class BeaInboxPanel extends javax.swing.JPanel implements BeaLoginCallbac
 
                 if (sel != null) {
 
-                    String newName = msg.getSubject();
-                    if (newName == null) {
-                        newName = "";
-                    }
-                    newName = newName + ".eml";
                     java.util.Date receivedPrefix = msg.getReceptionTime();
                     if (receivedPrefix == null) {
                         receivedPrefix = new java.util.Date();
                     }
-                    newName = FileUtils.getNewFileName(newName, true, receivedPrefix);
+                    String newName = FileUtils.getNewFileName(export.getFileName(), true, receivedPrefix);
                     if (newName == null) {
                         return;
                     }
 
                     if (newName.trim().length() == 0) {
-                        newName = "E-Mail";
+                        newName = "beA-Nachricht";
                     }
 
-                    if (!newName.toLowerCase().endsWith(".eml")) {
-                        newName = newName + ".eml";
+                    if (!newName.toLowerCase().endsWith(".bea")) {
+                        newName = newName + ".bea";
                     }
 
-                    afs.addDocument(sel.getId(), newName, null, "");
+                    afs.addDocument(sel.getId(), newName, export.getContent(), "");
 
                 }
 
             } catch (Exception ex) {
                 log.error(ex);
-                ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Speichern der Email: " + ex.getMessage(), "Fehler");
+                ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Speichern der beA-Nachricht: " + ex.getMessage(), "Fehler");
             }
         }
     }//GEN-LAST:event_mnuSearchSaveActionPerformed
@@ -1875,18 +1870,9 @@ public class BeaInboxPanel extends javax.swing.JPanel implements BeaLoginCallbac
         //MessageContainer msgC = (MessageContainer) this.tblMails.getValueAt(this.tblMails.getSelectedRow(), 0);
         org.jlawyer.bea.model.Message msg = (org.jlawyer.bea.model.Message) this.tblMails.getValueAt(selectionIndex, 0);
         
-        Collection<MessageJournalEntry> journal=new ArrayList<MessageJournalEntry>();
-        try {
-            BeaAccess bea = BeaAccess.getInstance();
-            journal=bea.getMessageJournal(msg.getId());
-            
-        } catch (Throwable ex) {
-            log.error("unable to retrieve message journal for message " + msg.getId(), ex);
-        }
-
         // aktiv bis 03.03.2015
         //MessageContainer msgC = (MessageContainer) this.tblMails.getModel().getValueAt(this.tblMails.convertRowIndexToModel(selectionIndex), 0);
-        this.beaMessageContentUI.setMessage(msg, journal);
+        this.beaMessageContentUI.setMessage(msg);
         //Message msg = msgC.getMessage();
 
 //        String subject = msg.getSubject();
