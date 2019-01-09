@@ -1298,9 +1298,9 @@ public class SplashThread implements Runnable {
     private void loadCalculations() throws Exception {
         this.updateProgress(false, 1, 0, "");
 
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
+//        new Thread(new Runnable() {
+//            @Override
+//            public void run() {
                 try {
                     URL updateURL = new URL("https://www.j-lawyer.org/downloads/j-lawyer-calculations.xml");
                     URLConnection urlCon = updateURL.openConnection();
@@ -1356,6 +1356,7 @@ public class SplashThread implements Runnable {
                             cp.setId(n.getAttributes().getNamedItem("name").getNodeValue());
                             cp.setVersion(n.getAttributes().getNamedItem("version").getNodeValue());
                             cp.setUrl(n.getAttributes().getNamedItem("url").getNodeValue());
+                            cp.setName(n.getAttributes().getNamedItem("name").getNodeValue());
                             String files = n.getAttributes().getNamedItem("files").getNodeValue();
                             for (String f : files.split(",")) {
                                 cp.getFiles().add(f);
@@ -1387,6 +1388,7 @@ public class SplashThread implements Runnable {
                         if (localCalcs.containsKey(p.getId()) && !(localCalcs.get(p.getId()).equals(p.getVersion()))) {
                             forceDownload = true;
                         }
+                        updateStatus("Plugin: neue Version für " + p.getName(), true);
                         p.download(forceDownload);
                         i++;
                         //this.updateProgress(false, calcPlugins.size() + 1, i, "");
@@ -1395,9 +1397,9 @@ public class SplashThread implements Runnable {
                     log.error("Error downloading calculation plugins", t);
                     t.printStackTrace();
                 }
-            }
-
-        }).start();
+//            }
+//
+//        }).start();
 
     }
 
