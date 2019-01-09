@@ -803,9 +803,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         //this.tagPanel.setPreferredSize(new Dimension(this.getWidth()-100, this.tagPanel.getHeight()));
         this.tagPanel.setLayout(new WrapLayout());
-        
+
         //GridLayout layout = new GridLayout(1, 1);
-        BoxLayout layout=new javax.swing.BoxLayout(this.pnlInvolvedParties, javax.swing.BoxLayout.Y_AXIS);
+        BoxLayout layout = new javax.swing.BoxLayout(this.pnlInvolvedParties, javax.swing.BoxLayout.Y_AXIS);
         this.pnlInvolvedParties.setLayout(layout);
 
         this.initializing = false;
@@ -3082,7 +3082,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         ipep.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         //GridLayout layout = new GridLayout(this.pnlInvolvedParties.getComponentCount() + 1, 1);
-        BoxLayout layout=new javax.swing.BoxLayout(this.pnlInvolvedParties, javax.swing.BoxLayout.Y_AXIS);
+        BoxLayout layout = new javax.swing.BoxLayout(this.pnlInvolvedParties, javax.swing.BoxLayout.Y_AXIS);
         this.pnlInvolvedParties.setLayout(layout);
 
         this.pnlInvolvedParties.add(ipep);
@@ -3228,16 +3228,43 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     }
 
     private void newDocumentActionPerformedImpl(CalculationTable table) {
-//        AddressBean cl = (AddressBean) this.lstClients.getSelectedValue();
-//        AddressBean opp = (AddressBean) this.lstOpponents.getSelectedValue();
-//        AddressBean oppAtt = (AddressBean) this.lstOpponentAttorneys.getSelectedValue();
-//        Object[] allCl = ComponentUtils.getAllListElements(this.lstClients);
-//        Object[] allOpp = ComponentUtils.getAllListElements(this.lstOpponents);
-//        Object[] allOppAtt = ComponentUtils.getAllListElements(this.lstOpponentAttorneys);
-        List<AddressBean> allCl = this.pnlInvolvedParties.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_CLIENT);
-        List<AddressBean> allOpp = this.pnlInvolvedParties.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT);
-        List<AddressBean> allOppAtt = this.pnlInvolvedParties.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_OPPONENTATTORNEY);
-        List<ArchiveFileAddressesBean> involved = this.pnlInvolvedParties.getInvolvedParties();
+
+        List<AddressBean> allCl=new ArrayList<AddressBean>();;
+        List<AddressBean> allOpp=new ArrayList<AddressBean>();;
+        List<AddressBean> allOppAtt=new ArrayList<AddressBean>();;
+        List<ArchiveFileAddressesBean> involved=new ArrayList<ArchiveFileAddressesBean>();
+
+        if (table == null) {
+            // not called from a plugin
+            allCl = this.pnlInvolvedParties.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_CLIENT);
+            allOpp = this.pnlInvolvedParties.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT);
+            allOppAtt = this.pnlInvolvedParties.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_OPPONENTATTORNEY);
+            involved = this.pnlInvolvedParties.getInvolvedParties();
+
+        } else {
+            // when called from a plugin, the plugin loads the case async, and the parties might not be fully loaded when calling the AddDocument dialog
+            ClientSettings settings = null;
+            List<AddressBean> addressesForCase = null;
+            //List<ArchiveFileAddressesBean> involvementForCase = null;
+            try {
+                settings = ClientSettings.getInstance();
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
+                addressesForCase = fileService.getAddressesForCase(this.dto.getId());
+                involved = fileService.getInvolvementDetailsForCase(this.dto.getId());
+                for(ArchiveFileAddressesBean aab: involved) {
+                    if(aab.getReferenceType()==ArchiveFileAddressesBean.REFERENCETYPE_CLIENT) {
+                        allCl.add(aab.getAddressKey());
+                    } else if(aab.getReferenceType()==ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT) {
+                        allOpp.add(aab.getAddressKey());
+                    } else if(aab.getReferenceType()==ArchiveFileAddressesBean.REFERENCETYPE_OPPONENTATTORNEY) {
+                        allOppAtt.add(aab.getAddressKey());
+                    }
+                }
+            } catch (Throwable t) {
+                log.error("Error loading parties", t);
+            }
+        }
 
         AddDocumentFromTemplateDialog dlg = new AddDocumentFromTemplateDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.tblDocuments, this.dto, involved, allCl, allOpp, allOppAtt, this.tblReviewReasons, table);
         dlg.setTitle("Dokument hinzufügen");
@@ -3265,6 +3292,14 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 //        wiz.setSteps(steps);
 //        FrameUtils.centerDialog(wiz, EditorsRegistry.getInstance().getMainWindow());
 //        wiz.setVisible(true);        
+    }
+    
+    private AddressBean getAddressById(List<AddressBean> list, String id) {
+        for(AddressBean a: list) {
+            if(a.getId().equals(id))
+                return a;
+        }
+        return null;
     }
 
     private void cmdNewDocumentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdNewDocumentActionPerformed
@@ -4746,16 +4781,17 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
             int[] selectedRows = this.tblDocuments.getSelectedRows();
             DefaultTableModel tModel = (DefaultTableModel) this.tblDocuments.getModel();
-            
+
             String[] list = FileConverter.OUTPUTTYPES.toArray(new String[0]);
             JComboBox jcb = new JComboBox(list);
             jcb.setEditable(false);
             JOptionPane.showMessageDialog(null, jcb, "Zielformat", JOptionPane.QUESTION_MESSAGE);
-            Object response=jcb.getSelectedItem();
-            if(response==null)
+            Object response = jcb.getSelectedItem();
+            if (response == null) {
                 return;
-            String targetFormat=response.toString();
-            
+            }
+            String targetFormat = response.toString();
+
             for (int i = selectedRows.length - 1; i > -1; i--) {
                 ArchiveFileDocumentsBean doc = (ArchiveFileDocumentsBean) this.tblDocuments.getValueAt(selectedRows[i], 0);
                 String currentExt = "";
