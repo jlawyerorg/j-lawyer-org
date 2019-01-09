@@ -698,7 +698,10 @@ public class ViewBeaDialog extends javax.swing.JDialog {
     }
 
     public void setMessage(Message msg) {
-        this.content.setMessage(msg);
+        if(this.odoc!=null)
+            this.content.setMessage(msg, this.odoc.getStore().getDocumentIdentifier());
+        else
+            this.content.setMessage(msg, null);
         this.msg = msg;
     }
 

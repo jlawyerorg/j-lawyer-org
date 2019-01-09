@@ -751,12 +751,12 @@ public class DocumentViewerFactory {
 //            }
         } else if (fileName.toLowerCase().endsWith(".bea")) {
             try {
-                BeaPanel bp = new BeaPanel();
+                BeaPanel bp = new BeaPanel(id);
                 bp.showContent(content);
                 return bp;
             } catch (Throwable t) {
                 log.error(t);
-                BeaPanel bp = new BeaPanel();
+                BeaPanel bp = new BeaPanel(null);
                 bp.showStatus("Vorschau kann nicht geladen werden.");
                 return bp;
             }

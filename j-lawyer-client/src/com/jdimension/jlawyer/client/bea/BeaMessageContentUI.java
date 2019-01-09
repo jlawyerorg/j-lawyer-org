@@ -698,6 +698,7 @@ import javax.swing.text.StyledEditorKit;
 import org.apache.log4j.Logger;
 import org.jlawyer.bea.model.Attachment;
 import org.jlawyer.bea.model.Message;
+import org.jlawyer.bea.model.MessageExport;
 import org.jlawyer.bea.model.MessageJournalEntry;
 
 /**
@@ -711,6 +712,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
     private static String HTML_WARNING = "<html><font color=\"red\">HTML-Inhalte werden zum Schutz vor Spam erst auf Knopfdruck im Kopfbereich dieser E-Mail oder nach Doppelklick auf diese Warnung angezeigt.<br/>Der Absender dieser E-Mail wird dann permanent als vertrauensw&uuml;rdig eingestuft.</font></html>";
     private Message msgContainer = null;
     private String cachedHtml = null;
+    private String documentId = null;
 
     /**
      * Creates new form MailContentUI
@@ -775,9 +777,10 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
         this.editBody.setText(errorMessage);
     }
 
-    public void setMessage(org.jlawyer.bea.model.Message msg) {
+    public void setMessage(org.jlawyer.bea.model.Message msg, String documentId) {
 
         this.msgContainer = msg;
+        this.documentId = documentId;
         try {
 
             if (msg == null) {
@@ -1077,6 +1080,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
         jPanel4 = new javax.swing.JPanel();
         jScrollPane3 = new javax.swing.JScrollPane();
         tblJournal = new javax.swing.JTable();
+        cmdRefreshJournal = new javax.swing.JButton();
 
         mnuSave.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/filesave.png"))); // NOI18N
         mnuSave.setText("Speichern");
@@ -1245,20 +1249,34 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
         ));
         jScrollPane3.setViewportView(tblJournal);
 
+        cmdRefreshJournal.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/reload.png"))); // NOI18N
+        cmdRefreshJournal.setToolTipText("Nachrichtenjournal erneut aus dem Postfach laden");
+        cmdRefreshJournal.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdRefreshJournalActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
         jPanel4.setLayout(jPanel4Layout);
         jPanel4Layout.setHorizontalGroup(
             jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel4Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 816, Short.MAX_VALUE)
+                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 816, Short.MAX_VALUE)
+                    .addGroup(jPanel4Layout.createSequentialGroup()
+                        .addComponent(cmdRefreshJournal)
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         jPanel4Layout.setVerticalGroup(
             jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel4Layout.createSequentialGroup()
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel4Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 440, Short.MAX_VALUE)
+                .addComponent(cmdRefreshJournal)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 408, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -1393,7 +1411,41 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
     private void editBodyMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_editBodyMouseClicked
 
     }//GEN-LAST:event_editBodyMouseClicked
+
+    private void cmdRefreshJournalActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRefreshJournalActionPerformed
+        try {
+
+            if (!BeaAccess.hasInstance()) {
+                BeaLoginDialog loginPanel = new BeaLoginDialog(EditorsRegistry.getInstance().getMainWindow(), true, null);
+                loginPanel.setVisible(true);
+                if (!BeaAccess.hasInstance()) {
+                    ThreadUtils.showErrorDialog(this, "beA-Login fehlgeschlagen", "Fehler");
+                    return;
+                }
+            }
+            BeaAccess bea = BeaAccess.getInstance();
+            ArrayList<MessageJournalEntry> journal = bea.getMessageJournal(this.msgContainer.getId());
+            this.msgContainer.setJournal(journal);
+            if (this.documentId != null) {
+                MessageExport mex = BeaAccess.exportMessage(msgContainer);
+                try {
+                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
+                    locator.lookupArchiveFileServiceRemote().setDocumentContent(this.documentId, mex.getContent());
+                    //tmpUrl = appLauncher.createTempFile(value.getName(), content);
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(this, "Fehler beim Speichern der beA-Nachricht: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+            }
+            this.setMessage(this.msgContainer, this.documentId);
+
+        } catch (Throwable t) {
+            ThreadUtils.showErrorDialog(this, "Fehler beim Laden des Journals: " + t.getMessage(), "Fehler");
+        }
+    }//GEN-LAST:event_cmdRefreshJournalActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton cmdRefreshJournal;
     private javax.swing.JEditorPane editBody;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;

@@ -1872,7 +1872,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements BeaLoginCallbac
         
         // aktiv bis 03.03.2015
         //MessageContainer msgC = (MessageContainer) this.tblMails.getModel().getValueAt(this.tblMails.convertRowIndexToModel(selectionIndex), 0);
-        this.beaMessageContentUI.setMessage(msg);
+        this.beaMessageContentUI.setMessage(msg, null);
         //Message msg = msgC.getMessage();
 
 //        String subject = msg.getSubject();

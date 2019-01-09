@@ -830,7 +830,7 @@ public class BeaAccess {
         return BeaWrapper.getMessageFromExport(export);
     }
     
-    public Collection<MessageJournalEntry> getMessageJournal(String messageId) throws BeaWrapperException {
+    public ArrayList<MessageJournalEntry> getMessageJournal(String messageId) throws BeaWrapperException {
         return this.wrapper.getMessageJournal(messageId);
     }
     
@@ -846,8 +846,8 @@ public class BeaAccess {
         return this.wrapper.exportMessage(messageId, safeId);
     }
     
-    public MessageExport exportMessage(Message msg) throws BeaWrapperException {
-        return this.wrapper.exportMessage(msg);
+    public static MessageExport exportMessage(Message msg) throws BeaWrapperException {
+        return BeaWrapper.exportMessage(msg);
     }
     
     public void sendMessage(Message msg, String senderSafeId, ArrayList<String> recipientSafeIds) throws BeaWrapperException {

@@ -678,16 +678,18 @@ public class BeaPanel extends javax.swing.JPanel implements PreviewPanel {
 
     private static final Logger log=Logger.getLogger(BeaPanel.class.getName());
     
+    private String documentId=null;
+    
     /**
      * Creates new form PlaintextPanel
      */
-    public BeaPanel() {
+    public BeaPanel(String documentId) {
         initComponents();
-
+        this.documentId=documentId;
     }
 
     public void setMessage(Message msg) {
-        this.content.setMessage(msg);
+        this.content.setMessage(msg, this.documentId);
 
     }
 
