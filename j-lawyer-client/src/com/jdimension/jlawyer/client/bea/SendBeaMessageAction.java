@@ -739,6 +739,8 @@ public class SendBeaMessageAction extends ProgressableAction {
             org.jlawyer.bea.model.Message msg=new org.jlawyer.bea.model.Message();
             msg.setSubject(subject);
             msg.setBody(body);
+            if(this.archiveFile!=null)
+                msg.setReferenceNumber(this.archiveFile.getFileNumber());
             
             ArrayList<String> recipients=new ArrayList<String>();
             while(this.to.hasMoreElements()) {

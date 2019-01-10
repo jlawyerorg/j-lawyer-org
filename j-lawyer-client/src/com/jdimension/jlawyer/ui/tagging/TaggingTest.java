@@ -687,6 +687,12 @@ public class TaggingTest extends javax.swing.JFrame {
         this.tagPanel1.add(new TagToggleButton("text blalb"));
         this.tagPanel1.add(new TagToggleButton("text blalb"));
         this.tagPanel1.add(new TagToggleButton("text blalb"));
+        
+        TagToggleButton ttb=new TagToggleButton("customStyle");
+        ttb.setFont(ttb.getFont().deriveFont(10f));
+        ttb.setSize(ttb.getWidth(), ttb.getHeight()-18);
+        this.tagPanel1.add(ttb);
+        
         this.tagPanel1.repaint();
     }
 
@@ -745,7 +751,7 @@ public class TaggingTest extends javax.swing.JFrame {
                     .addComponent(tagToggleButton1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(tagToggleButton2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 120, Short.MAX_VALUE)
                 .addContainerGap())
         );
 

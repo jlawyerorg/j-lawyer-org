@@ -2748,7 +2748,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
     protected javax.swing.JTextField txtBankAccount;
     protected javax.swing.JTextField txtBankCode;
     protected javax.swing.JTextField txtBankName;
-    private javax.swing.JTextField txtBeaSafeId;
+    protected javax.swing.JTextField txtBeaSafeId;
     protected javax.swing.JTextField txtBirthDate;
     protected javax.swing.JTextField txtCity;
     protected javax.swing.JTextField txtCompany;

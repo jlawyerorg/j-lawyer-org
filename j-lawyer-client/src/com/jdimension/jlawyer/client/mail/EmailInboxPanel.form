@@ -476,9 +476,6 @@
                       <StringArray count="0"/>
                     </Property>
                   </Properties>
-                  <BindingProperties>
-                    <BindingProperty name="enabled" source="chkCaseTagging" sourcePath="${selected}" target="cmbCaseTag" targetPath="enabled" updateStrategy="0" immediately="false"/>
-                  </BindingProperties>
                   <Events>
                     <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmbCaseTagActionPerformed"/>
                   </Events>

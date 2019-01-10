@@ -537,8 +537,9 @@ alter table ArchiveFileBean MODIFY `reason` VARCHAR(250) BINARY;
 -- rename table campaign_addresses to campaign_contacts;
 
 -- delete from security_roles where role='readOptionGroupRole';
--- insert into ServerSettingsBean(settingKey, settingValue) values('jlawyer.server.database.version','1.10.0.4') ON DUPLICATE KEY UPDATE settingValue     = '1.10.0.4';
+-- insert into ServerSettingsBean(settingKey, settingValue) values('jlawyer.server.database.version','1.10.0.5') ON DUPLICATE KEY UPDATE settingValue     = '1.10.0.5';
 
+-- alter table contacts add index `IDX_BEASAFEID` (beaSafeId);
 
 commit;
 

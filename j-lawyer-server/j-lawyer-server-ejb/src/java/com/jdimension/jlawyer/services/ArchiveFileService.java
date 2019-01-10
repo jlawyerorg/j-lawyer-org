@@ -2105,7 +2105,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                     inClause = inClause.replaceFirst(",", "");
 
                     // with archive and tag
-                    st = con.prepareStatement("select distinct(ArchiveFileBean.id) from cases, case_tags where (ucase(name) like ? or ucase(fileNumber) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(subjectField) like ?) and (case_tags.tagName in (" + inClause + ") and case_tags.archiveFileKey=cases.id)");
+                    st = con.prepareStatement("select distinct(cases.id) from cases, case_tags where (ucase(name) like ? or ucase(fileNumber) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(subjectField) like ?) and (case_tags.tagName in (" + inClause + ") and case_tags.archiveFileKey=cases.id)");
                     st.setString(1, wildCard);
                     st.setString(2, wildCard);
                     st.setString(3, wildCard);

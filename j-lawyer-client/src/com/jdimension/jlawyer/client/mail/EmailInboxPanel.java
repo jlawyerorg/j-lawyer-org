@@ -1979,7 +1979,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
     }//GEN-LAST:event_tblMailsKeyReleased
 
     private void mnuSearchSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSearchSaveActionPerformed
-        this.saveToCase(null, true, false, null);
+        this.saveToCase(null, true, false);
     }//GEN-LAST:event_mnuSearchSaveActionPerformed
 
     private void tblMailsMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblMailsMouseReleased
@@ -2168,7 +2168,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
     }//GEN-LAST:event_mnuOpenInExternalMailerActionPerformed
 
     private void mnuSearchSaveNoAttachmentsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSearchSaveNoAttachmentsActionPerformed
-        this.saveToCase(null, false, false, null);
+        this.saveToCase(null, false, false);
     }//GEN-LAST:event_mnuSearchSaveNoAttachmentsActionPerformed
 
     private void cmbDownloadMailsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbDownloadMailsActionPerformed
@@ -2595,7 +2595,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
     }
 
     @Override
-    public boolean saveToCase(String caseId, boolean withAttachments, boolean separateAttachments, String caseTag) {
+    public boolean saveToCase(String caseId, boolean withAttachments, boolean separateAttachments) {
         if (this.tblMails.getSelectedRowCount() == 1) {
             ClientSettings settings = ClientSettings.getInstance();
             try {
@@ -2691,6 +2691,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
 
                     String temp = ClientSettings.getInstance().getConfiguration(ClientSettings.CONF_MAILS_TAGGINGENABLED, "false");
                     if ("true".equalsIgnoreCase(temp)) {
+                        String caseTag=ClientSettings.getInstance().getConfiguration(ClientSettings.CONF_MAIL_LASTTAG, "");
                         if (caseTag != null && !"".equalsIgnoreCase(caseTag)) {
                             afs.setTag(caseId, new ArchiveFileTagsBean(null, caseTag), true);
                         }

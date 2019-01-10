@@ -669,6 +669,6 @@ package com.jdimension.jlawyer.client.mail;
  */
 public interface SaveToCaseExecutor {
     
-    public boolean saveToCase(String caseId, boolean withAttachments, boolean separateAttachments, String caseTag);
+    public boolean saveToCase(String caseId, boolean withAttachments, boolean separateAttachments);
     
 }
