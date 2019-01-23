@@ -876,6 +876,10 @@ public class SaveToCasePanel extends javax.swing.JPanel {
     }//GEN-LAST:event_lblDescriptionMouseExited
 
     private void lblDescriptionMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblDescriptionMouseClicked
+        
+        if(this.e==null || this.e.getId()==null)
+            return;
+        
         try {
             Object editor=null;
             if(UserSettings.getInstance().isCurrentUserInRole(UserSettings.ROLE_WRITECASE)) {
