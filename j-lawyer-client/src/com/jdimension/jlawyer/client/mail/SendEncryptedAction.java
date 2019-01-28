@@ -828,7 +828,7 @@ public class SendEncryptedAction extends ProgressableAction {
 //                msg.setRecipients(Message.RecipientType.CC, cc);
 //                msg.setRecipients(Message.RecipientType.BCC, bcc);
 
-                msg.setSubject(subject);
+                msg.setSubject(MimeUtility.encodeText(subject, "utf-8", "B"));
                 msg.setSentDate(new Date());
                 //msg.setText(this.taBody.getText());
 

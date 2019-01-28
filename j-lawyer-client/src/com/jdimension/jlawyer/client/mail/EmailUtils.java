@@ -1083,7 +1083,7 @@ public class EmailUtils {
 
             msg.setRecipients(Message.RecipientType.TO, to);
 
-            msg.setSubject("Gelesen: " + subject);
+            msg.setSubject(MimeUtility.encodeText("Gelesen: " + subject, "utf-8", "B"));
             msg.setSentDate(new Date());
             //msg.setText(this.taBody.getText());
 
