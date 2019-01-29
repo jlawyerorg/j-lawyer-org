@@ -838,6 +838,10 @@ public class BeaAccess {
         return this.wrapper.moveMessageToTrash(messageId);
     }
     
+    public boolean moveMessageToFolder(String messageId, long folderId) throws BeaWrapperException {
+        return this.wrapper.moveMessageToFolder(messageId, folderId);
+    }
+    
     public boolean deleteMessage(String messageId) throws BeaWrapperException {
         return this.wrapper.deleteMessage(messageId);
     }

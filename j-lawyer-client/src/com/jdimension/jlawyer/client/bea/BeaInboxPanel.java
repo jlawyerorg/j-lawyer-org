@@ -728,6 +728,7 @@ import javax.swing.tree.TreePath;
 import org.apache.log4j.Logger;
 import org.jlawyer.bea.BeaWrapperException;
 import org.jlawyer.bea.model.Attachment;
+import org.jlawyer.bea.model.Folder;
 import org.jlawyer.bea.model.Identity;
 import org.jlawyer.bea.model.MessageExport;
 import org.jlawyer.bea.model.MessageHeader;
@@ -1994,35 +1995,6 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
 
     }
 
-//    public int getInboxUnread() {
-//        DefaultTreeModel dm = (DefaultTreeModel) this.treeFolders.getModel();
-//        DefaultMutableTreeNode root = (DefaultMutableTreeNode) dm.getRoot();
-//        Object uo = root.getUserObject();
-//        if (uo instanceof FolderContainer) {
-//            FolderContainer fc = (FolderContainer) uo;
-//            Folder f = fc.getFolder();
-//            try {
-//                if (!f.isOpen()) {
-//                    f.open(Folder.READ_WRITE);
-//                }
-//                int unread = f.getUnreadMessageCount();
-//
-//                try {
-//                    //f.close(true);
-//                    EmailUtils.closeIfIMAP(f);
-//                } catch (Throwable t) {
-//                    log.error(t);
-//                }
-//
-//                return unread;
-//            } catch (Exception ex) {
-//                log.error(ex);
-//            }
-//        }
-//
-//        return 0;
-//    }
-
     @Override
     public void dragEnter(DropTargetDragEvent dtde) {
 //        Point p=dtde.getLocation();
@@ -2048,73 +2020,66 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
     @Override
     public void drop(DropTargetDropEvent dtde) {
 
-//        int scrollToRow = -1;
-//        try {
-//            // Ok, get the dropped object and try to figure out what it is
-//            Transferable tr = dtde.getTransferable();
-//            Object transferred = tr.getTransferData(DataFlavor.stringFlavor);
-//            dtde.acceptDrop(DnDConstants.ACTION_MOVE);
-//            int[] selectedRows = (int[]) transferred;
-//
-//            Point p = dtde.getLocation();
-//            DefaultMutableTreeNode current = (DefaultMutableTreeNode) this.treeFolders.getClosestPathForLocation(p.x, p.y).getLastPathComponent();
-//            FolderContainer target = (FolderContainer) current.getUserObject();
-//            Folder targetFolder = target.getFolder();
-//            if (!targetFolder.isOpen()) {
-//                targetFolder.open(Folder.READ_WRITE);
-//            }
-//
-//            Message[] copyMsg = new Message[selectedRows.length];
-//            for (int i = selectedRows.length - 1; i > -1; i--) {
-//                int sel = selectedRows[i];
-//                MessageContainer msgC = (MessageContainer) this.tblMails.getValueAt(sel, 0);
-//                copyMsg[i] = msgC.getMessage();
-//            }
-//            Folder origin = copyMsg[0].getFolder();
-//            if (!origin.isOpen()) {
-//                origin.open(Folder.READ_WRITE);
-//            }
-//            origin.copyMessages(copyMsg, targetFolder);
-//            origin.setFlags(copyMsg,
-//                    new Flags(Flags.Flag.DELETED),
-//                    true);
-//
-//            scrollToRow = tblMails.getSelectedRow();
-//            for (int i = selectedRows.length - 1; i > -1; i--) {
-//            
-//                try {
-//
-//                    int sel = selectedRows[i];
-//
-//                    ((DefaultTableModel) this.tblMails.getModel()).removeRow(this.tblMails.convertRowIndexToModel(sel));
-//
-//                } catch (Throwable t) {
-//                    log.error("unable to move mail, skipping...", t);
-//                }
-//            }
-//
-//            ((DefaultTreeModel) this.treeFolders.getModel()).nodeStructureChanged(current);
-//            dtde.dropComplete(true);
-//
-//            try {
-//                EmailUtils.closeIfIMAP(targetFolder);
-//            } catch (Throwable t) {
-//                log.error(t);
-//            }
-//
-//            int sortCol = -1;
-//            List<? extends SortKey> sortKeys = this.tblMails.getRowSorter().getSortKeys();
-//            if (sortKeys != null) {
-//                if (sortKeys.size() > 0) {
-//                    sortCol = sortKeys.get(0).getColumn();
-//                }
-//            }
-//            this.treeFoldersValueChangedImpl(new TreeSelectionEvent(this.tblMails, this.treeFolders.getSelectionPath(), false, null, null), sortCol, scrollToRow);
-//
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//            dtde.rejectDrop();
-//        }
+        int scrollToRow = -1;
+        try {
+            // Ok, get the dropped object and try to figure out what it is
+            Transferable tr = dtde.getTransferable();
+            Object transferred = tr.getTransferData(DataFlavor.stringFlavor);
+            dtde.acceptDrop(DnDConstants.ACTION_MOVE);
+            int[] selectedRows = (int[]) transferred;
+
+            Point p = dtde.getLocation();
+            DefaultMutableTreeNode current = (DefaultMutableTreeNode) this.treeFolders.getClosestPathForLocation(p.x, p.y).getLastPathComponent();
+            Folder target = (Folder) current.getUserObject();
+            
+            Message[] copyMsg = new Message[selectedRows.length];
+            for (int i = selectedRows.length - 1; i > -1; i--) {
+                int sel = selectedRows[i];
+                copyMsg[i] = (Message)this.tblMails.getValueAt(sel, 0);
+            }
+            
+            try {
+                BeaAccess bea=BeaAccess.getInstance();
+                for(Message m: copyMsg) {
+                    boolean moved=bea.moveMessageToFolder(m.getId(), target.getId());
+                }
+            } catch (Throwable ex) {
+                log.error(ex);
+                ex.printStackTrace();
+            }
+            
+
+
+            scrollToRow = tblMails.getSelectedRow();
+            for (int i = selectedRows.length - 1; i > -1; i--) {
+            
+                try {
+
+                    int sel = selectedRows[i];
+
+                    ((DefaultTableModel) this.tblMails.getModel()).removeRow(this.tblMails.convertRowIndexToModel(sel));
+
+                } catch (Throwable t) {
+                    log.error("unable to move beA message, skipping...", t);
+                }
+            }
+
+            ((DefaultTreeModel) this.treeFolders.getModel()).nodeStructureChanged(current);
+            dtde.dropComplete(true);
+
+            int sortCol = -1;
+            List<? extends SortKey> sortKeys = this.tblMails.getRowSorter().getSortKeys();
+            if (sortKeys != null) {
+                if (sortKeys.size() > 0) {
+                    sortCol = sortKeys.get(0).getColumn();
+                }
+            }
+            this.treeFoldersValueChangedImpl(new TreeSelectionEvent(this.tblMails, this.treeFolders.getSelectionPath(), false, null, null), sortCol, scrollToRow);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            dtde.rejectDrop();
+        }
     }
 
     @Override
