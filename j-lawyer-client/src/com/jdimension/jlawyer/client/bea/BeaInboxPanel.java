@@ -712,6 +712,7 @@ import java.util.Comparator;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Properties;
+import java.util.Timer;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.DropMode;
 import javax.swing.JOptionPane;
@@ -1987,29 +1988,9 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
 
     @Override
     public void notifyStatusBarReady() {
-//        Object root = this.treeFolders.getModel().getRoot();
-//        try {
-//            if (root instanceof DefaultMutableTreeNode) {
-//                Object userObject = ((DefaultMutableTreeNode) root).getUserObject();
-//                if (userObject instanceof FolderContainer) {
-//                    Folder f = ((FolderContainer) userObject).getFolder();
-//                    if (!f.isOpen()) {
-//                        f.open(Folder.READ_WRITE);
-//                    }
-//                    int unread = f.getUnreadMessageCount();
-//                    //EditorsRegistry.getInstance().updateMailStatus(unread);
-//                    try {
-//                        //f.close(true);
-//                        EmailUtils.closeIfIMAP(f);
-//                    } catch (Throwable t) {
-//                        log.error(t);
-//                    }
-//                }
-//
-//            }
-//        } catch (Exception ex) {
-//            log.error(ex);
-//        }
+        
+        Timer t=new Timer();
+        t.schedule(new BeaCheckTimerTask(), 5500);
 
     }
 
