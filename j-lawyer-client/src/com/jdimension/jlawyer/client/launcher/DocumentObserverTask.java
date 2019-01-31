@@ -680,6 +680,10 @@ public class DocumentObserverTask extends TimerTask {
     public DocumentObserverTask() {
 
     }
+    
+    public static int getDefaultInterval() {
+        return 5000;
+    }
 
     public void run() {
         try {

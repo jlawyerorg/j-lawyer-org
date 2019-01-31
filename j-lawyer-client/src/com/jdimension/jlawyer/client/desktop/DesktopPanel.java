@@ -799,7 +799,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         timer.schedule(taggedTask, 1000, 33000);
 
         TimerTask docObserverTask = new DocumentObserverTask();
-        timer.schedule(docObserverTask, 5000, 1000 * 5);
+        timer.schedule(docObserverTask, 5000, DocumentObserverTask.getDefaultInterval());
         
         TimerTask beaCheckTask=new BeaCheckTimerTask();
         // perform every 9,75mins - to keep session alive

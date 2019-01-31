@@ -671,34 +671,67 @@ import org.apache.log4j.Logger;
  * @author jens
  */
 public class ObservedOfficeDocument extends ObservedDocument {
-    
-    private static final Logger log=Logger.getLogger(ObservedOfficeDocument.class.getName());
-    
-    private long lastLocked=-1;
-    private String lockFile=null;
-    
+
+    private static final Logger log = Logger.getLogger(ObservedOfficeDocument.class.getName());
+
+    private long lastLocked = -1;
+    private long unlockTime = -1;
+    private String lockFile = null;
+
     public ObservedOfficeDocument(String path, ObservedDocumentStore store, Launcher l) {
         super(path, store, l);
-        this.lockFile=path.substring(0, path.lastIndexOf(System.getProperty("file.separator")) + 1) + ".~lock." + path.substring(path.lastIndexOf(System.getProperty("file.separator")) + 1, path.length()) + "#";
+        this.lockFile = path.substring(0, path.lastIndexOf(System.getProperty("file.separator")) + 1) + ".~lock." + path.substring(path.lastIndexOf(System.getProperty("file.separator")) + 1, path.length()) + "#";
     }
 
     @Override
     public boolean isClosed() {
-        File lock=new File(this.lockFile);
-        if(lock.exists()) {
-            if(this.lastLocked==-1)
+        File lock = new File(this.lockFile);
+        if (lock.exists()) {
+            if(this.unlockTime>0) {
+                log.debug("file re-received lock: " + this.path);
+            }
+            this.unlockTime=-1;
+            if (this.lastLocked == -1) {
                 log.debug("file received lock: " + this.path);
-            this.lastLocked=System.currentTimeMillis();
+            }
+            this.lastLocked = System.currentTimeMillis();
             this.setStatus(STATUS_OPENLOCKED);
             return false;
         } else {
-            if(this.lastLocked>0)
-                return true;
+            if (this.lastLocked > 0) {
+                log.debug("file lost its lock: " + this.path);
+                if (log.isDebugEnabled()) {
+                    try {
+                        File directory = lock.getParentFile();
+                        if (directory.isDirectory()) {
+                            for (File f : directory.listFiles()) {
+                                log.debug("  file in document directory: " + f.getName());
+                            }
+                        }
+                    } catch (Throwable t) {
+                        log.debug("Debugging error: " + t.getMessage()); 
+                    }
+                }
+                if (this.unlockTime < 0) {
+                    this.unlockTime = System.currentTimeMillis();
+                }
+                long unlockedForDuration = System.currentTimeMillis() - this.unlockTime;
+
+                // temporary loss of lock?
+                if (unlockedForDuration > (2l * DocumentObserverTask.getDefaultInterval())) {
+                    log.debug("file without lock for " + unlockedForDuration + " - considering closed: " + this.path);
+                    return true;
+                } else {
+                    log.debug("file without lock for " + unlockedForDuration + " - considering still open: " + this.path);
+                    return false;
+                }
+            } else {
+                log.debug("file not locked yet: " + this.path + " considering document as NOT closed");
+                return false;
+            }
         }
-        return super.isClosed();
-        
+        //return super.isClosed();
+
     }
 
-    
-    
 }
