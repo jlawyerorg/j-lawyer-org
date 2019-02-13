@@ -825,8 +825,8 @@ public class TaggedTimerTask extends java.util.TimerTask {
                     split.setDividerLocation(0.5d);
 
                     resultUI.removeAll();
-                    //GridLayout layout = new GridLayout(l1.size() + l2.size(), 1);
-                    GridLayout layout = new GridLayout(l1.size(), 1);
+                    //GridLayout layout = new GridLayout(l1.size(), 1);
+                    BoxLayout layout=new BoxLayout(resultUI, BoxLayout.Y_AXIS);
                     resultUI.setLayout(layout);
                     int i = 0;
                     //ArrayList containedIds = new ArrayList();
@@ -855,7 +855,7 @@ public class TaggedTimerTask extends java.util.TimerTask {
                         resultUI.add(ep);
                         i++;
                         if (i == 25) {
-                            layout.setRows(i);
+                            //layout.setRows(i);
                             return;
                         }
                         //    containedIds.add(lce.getId());
@@ -885,7 +885,7 @@ public class TaggedTimerTask extends java.util.TimerTask {
 //                                containedIds.add(lce.getId());
 //                            }
 //                        }
-                    layout.setRows(i);
+                    //layout.setRows(i);
                     split.setDividerLocation(0.5d);
 
 //                        SwingUtilities.invokeLater(

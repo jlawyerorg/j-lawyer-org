@@ -697,6 +697,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Timer;
 import java.util.TimerTask;
+import javax.swing.BoxLayout;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import org.apache.log4j.Logger;
@@ -786,6 +787,8 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         TimerTask systemStateTask = new SystemStateTimerTask(this, this.lblAddressCount, this.lblArchiveFileCount, this.lblArchiveFileArchivedCount, this.lblDocumentCount, this.lblVoipBalance);
         timer.schedule(systemStateTask, 5000, 600000);
 
+        BoxLayout boxLayout=new BoxLayout(this.pnlLastChanged, BoxLayout.Y_AXIS);
+        this.pnlLastChanged.setLayout(boxLayout);
         TimerTask lastChangedTask = new LastChangedTimerTask(this, this.pnlLastChanged, this.jSplitPane1);
         timer.schedule(lastChangedTask, 1000, 29000);
 
@@ -795,6 +798,8 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         TimerTask revDueTask = new ReviewsDueTimerTask(this, this.pnlRevDue, this.jSplitPane1);
         timer.schedule(revDueTask, 1000, 31000);
 
+        BoxLayout boxLayout2=new BoxLayout(this.pnlTagged, BoxLayout.Y_AXIS);
+        this.pnlTagged.setLayout(boxLayout2);
         TimerTask taggedTask = new TaggedTimerTask(this, this.pnlTagged, this.jSplitPane2, this.popTagFilter, "DesktopPanel()");
         timer.schedule(taggedTask, 1000, 33000);
 
