@@ -730,7 +730,9 @@ public class DocumentObserver {
             if (doc instanceof ObservedMicrosoftOfficeDocument) {
                 // do nothing, no warning in this case. winword.exe process might never end, therefore all documents are still considered open. if they were saved then they are already stored back into the archive file
             } else {
-                unsaved=unsaved+1;
+                if(!doc.isReadOnly()) {
+                    unsaved=unsaved+1;
+                }
             }
         }
         return unsaved>0;
