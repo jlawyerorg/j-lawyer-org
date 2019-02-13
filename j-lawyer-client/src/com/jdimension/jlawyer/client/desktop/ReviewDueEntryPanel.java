@@ -910,11 +910,11 @@ public class ReviewDueEntryPanel extends javax.swing.JPanel {
                     .addComponent(lblDescription, javax.swing.GroupLayout.DEFAULT_SIZE, 499, Short.MAX_VALUE))
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addGap(18, 18, 18)
-                        .addComponent(cmdPostpone))
+                        .addGap(41, 41, 41)
+                        .addComponent(lblResponsible))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(lblResponsible)))
+                        .addComponent(cmdPostpone)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(

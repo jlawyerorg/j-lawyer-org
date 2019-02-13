@@ -941,7 +941,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
             }
         });
 
-        jSplitPane1.setBorder(new javax.swing.border.LineBorder(java.awt.Color.white, 1, true));
+        jSplitPane1.setBorder(null);
         jSplitPane1.setDividerLocation(600);
         jSplitPane1.setOpaque(false);
 
@@ -984,7 +984,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
             .add(jPanel2Layout.createSequentialGroup()
                 .addContainerGap()
                 .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 822, Short.MAX_VALUE)
+                    .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 970, Short.MAX_VALUE)
                     .add(jPanel2Layout.createSequentialGroup()
                         .add(cmdRefreshRevDue)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
@@ -1002,7 +1002,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
                     .add(chkOnlyMyReviews)
                     .add(cmdRefreshRevDue))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 453, Short.MAX_VALUE)
+                .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 534, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -1037,7 +1037,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
             .add(pnlLastChangedLayout.createSequentialGroup()
                 .addContainerGap()
                 .add(jLabel7)
-                .addContainerGap(310, Short.MAX_VALUE))
+                .addContainerGap(311, Short.MAX_VALUE))
         );
 
         jScrollPane3.setViewportView(pnlLastChanged);
@@ -1082,7 +1082,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
                     .add(chkOnlyMyCases)
                     .add(cmdRefreshLastChanged))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jScrollPane3, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 267, Short.MAX_VALUE)
+                .add(jScrollPane3)
                 .addContainerGap())
         );
 
@@ -1175,7 +1175,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
                         .add(chkOnlyMyTagged))
                     .add(cmdTagFilter))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jScrollPane4, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 42, Short.MAX_VALUE)
+                .add(jScrollPane4, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 125, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -1341,28 +1341,28 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
             systemInformationWidgetLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(systemInformationWidgetLayout.createSequentialGroup()
                 .addContainerGap()
-                .add(lblArchiveFileCount)
-                .add(18, 18, 18)
-                .add(lblArchiveFileArchivedCount)
-                .add(18, 18, 18)
-                .add(lblAddressCount)
-                .add(18, 18, 18)
-                .add(lblDocumentCount)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .add(lblVoipBalance)
-                .addContainerGap())
-        );
-        systemInformationWidgetLayout.setVerticalGroup(
-            systemInformationWidgetLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(org.jdesktop.layout.GroupLayout.TRAILING, systemInformationWidgetLayout.createSequentialGroup()
-                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .add(systemInformationWidgetLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                .add(systemInformationWidgetLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(lblArchiveFileCount)
                     .add(lblArchiveFileArchivedCount)
                     .add(lblAddressCount)
                     .add(lblDocumentCount)
                     .add(lblVoipBalance))
-                .addContainerGap())
+                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+        systemInformationWidgetLayout.setVerticalGroup(
+            systemInformationWidgetLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(org.jdesktop.layout.GroupLayout.TRAILING, systemInformationWidgetLayout.createSequentialGroup()
+                .addContainerGap()
+                .add(lblArchiveFileCount)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(lblArchiveFileArchivedCount)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(lblAddressCount)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(lblDocumentCount)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                .add(lblVoipBalance)
+                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         desktopWidgetPanel1.setBorder(new javax.swing.border.LineBorder(java.awt.Color.white, 1, true));
@@ -1394,7 +1394,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
             .add(desktopWidgetPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                 .add(desktopWidgetPanel1Layout.createSequentialGroup()
                     .addContainerGap()
-                    .add(jScrollPane2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 1050, Short.MAX_VALUE)
+                    .add(jScrollPane2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 1051, Short.MAX_VALUE)
                     .addContainerGap()))
         );
         desktopWidgetPanel1Layout.setVerticalGroup(
@@ -1460,7 +1460,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
             .add(layout.createSequentialGroup()
                 .addContainerGap()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jSplitPane1)
+                    .add(jSplitPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 1603, Short.MAX_VALUE)
                     .add(layout.createSequentialGroup()
                         .add(calendarWidget, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
@@ -1468,8 +1468,9 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(desktopWidgetPanel1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(desktopWidgetPanel2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                    .add(systemInformationWidget, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .add(systemInformationWidget, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(desktopWidgetPanel2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -1480,11 +1481,10 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
                     .add(messagesWidget, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .add(desktopWidgetPanel1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .add(desktopWidgetPanel2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .add(calendarWidget, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .add(calendarWidget, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(systemInformationWidget, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jSplitPane1)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(systemInformationWidget, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .add(jSplitPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 590, Short.MAX_VALUE)
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents

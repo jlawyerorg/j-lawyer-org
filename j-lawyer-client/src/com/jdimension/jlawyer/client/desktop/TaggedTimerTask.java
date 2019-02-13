@@ -683,6 +683,7 @@ import java.util.Collections;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.TimerTask;
+import java.util.logging.Level;
 import javax.swing.*;
 import org.apache.log4j.Logger;
 
@@ -862,40 +863,8 @@ public class TaggedTimerTask extends java.util.TimerTask {
                         //}
                     }
 
-//                        for (ArchiveFileBean aFile : l2) {
-//                            LastChangedEntryPanel ep = new LastChangedEntryPanel();
-//                            if (i % 2 == 0) {
-//                                ep.setBackground(ep.getBackground().brighter());
-//                            }
-//                            LastChangedEntry lce = new LastChangedEntry();
-//                            lce.setFileNumber(aFile.getFileNumber());
-//                            lce.setId(aFile.getId());
-//                            lce.setLastChangedBy(aFile.getLawyer());
-//                            lce.setName(aFile.getName());
-//                            lce.setReason(aFile.getReason());
-//                            ep.setEntry(lce);
-//
-//                            if (!containedIds.contains(lce.getId())) {
-//                                resultUI.add(ep);
-//                                i++;
-//                                if (i == 25) {
-//                                    layout.setRows(i);
-//                                    return;
-//                                }
-//                                containedIds.add(lce.getId());
-//                            }
-//                        }
-                    //layout.setRows(i);
                     split.setDividerLocation(0.5d);
 
-//                        SwingUtilities.invokeLater(
-//                                new Runnable() {
-//                                    public void run() {
-//                                        split.setDividerLocation(0.5d);
-//                                    }
-//
-//                                }
-//                        );
                 }
             });
         } catch (Throwable t) {
