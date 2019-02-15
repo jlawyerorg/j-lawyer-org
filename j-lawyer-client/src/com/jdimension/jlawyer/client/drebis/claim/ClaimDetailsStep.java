@@ -1044,7 +1044,8 @@ public class ClaimDetailsStep extends javax.swing.JPanel implements WizardStepIn
 
     private void cmdClaimDateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdClaimDateActionPerformed
         MultiCalDialog dlg = new MultiCalDialog(this.txtClaimDate, EditorsRegistry.getInstance().getMainWindow(), true);
-        dlg.setLocation(this.getX() + this.cmdClaimDate.getX(), this.getY() + this.cmdClaimDate.getY());
+        //dlg.setLocation(this.getX() + this.cmdClaimDate.getX(), this.getY() + this.cmdClaimDate.getY());
+        FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
     }//GEN-LAST:event_cmdClaimDateActionPerformed
 

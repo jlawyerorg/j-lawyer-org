@@ -672,6 +672,7 @@ import com.jdimension.jlawyer.client.editors.files.EditArchiveFileDetailsPanel;
 import com.jdimension.jlawyer.client.editors.files.ViewArchiveFileDetailsPanel;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
+import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
@@ -1038,7 +1039,8 @@ public class ReviewDueEntryPanel extends javax.swing.JPanel {
     private void cmdPostponeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdPostponeActionPerformed
         JTextField hiddenField=new JTextField();
         MultiCalDialog dlg = new MultiCalDialog(hiddenField, EditorsRegistry.getInstance().getMainWindow(), true);
-        dlg.setLocation(this.getX() + this.cmdPostpone.getX(), this.getY() + this.cmdPostpone.getY());
+        //dlg.setLocation(this.getX() + this.cmdPostpone.getX(), this.getY() + this.cmdPostpone.getY());
+        FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
         Date d = null;
         try {

@@ -3566,7 +3566,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private void cmdShowReviewSelectorActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdShowReviewSelectorActionPerformed
         
         MultiCalDialog dlg = new MultiCalDialog(this.txtReviewDateField, EditorsRegistry.getInstance().getMainWindow(), true);
-        dlg.setLocation(this.getX() + this.cmdShowReviewSelector.getX(), this.getY() + this.cmdShowReviewSelector.getY());
+        //dlg.setLocation(this.getX() + this.cmdShowReviewSelector.getX(), this.getY() + this.cmdShowReviewSelector.getY());
+        FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
     }//GEN-LAST:event_cmdShowReviewSelectorActionPerformed
 
@@ -4128,7 +4129,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     private void cmdShowHistorySelectorActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdShowHistorySelectorActionPerformed
         MultiCalDialog dlg = new MultiCalDialog(this.txtHistoryDate, EditorsRegistry.getInstance().getMainWindow(), true);
-        dlg.setLocation(this.getX() + this.cmdShowHistorySelector.getX(), this.getY() + this.cmdShowHistorySelector.getY());
+        //dlg.setLocation(this.getX() + this.cmdShowHistorySelector.getX(), this.getY() + this.cmdShowHistorySelector.getY());
+        FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
     }//GEN-LAST:event_cmdShowHistorySelectorActionPerformed
 
@@ -4364,7 +4366,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private void mnuPostponeReviewActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuPostponeReviewActionPerformed
         JTextField hiddenField = new JTextField();
         MultiCalDialog dlg = new MultiCalDialog(hiddenField, EditorsRegistry.getInstance().getMainWindow(), true);
-        dlg.setLocation(this.getX() + this.mnuPostponeReview.getX(), this.getY() + this.mnuPostponeReview.getY());
+        //dlg.setLocation(this.getX() + this.mnuPostponeReview.getX(), this.getY() + this.mnuPostponeReview.getY());
+        FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
         Date d = null;
         try {

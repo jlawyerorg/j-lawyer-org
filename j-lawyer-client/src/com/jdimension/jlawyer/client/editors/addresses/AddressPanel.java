@@ -2520,7 +2520,8 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
     private void cmdSelectBirthdayActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSelectBirthdayActionPerformed
 
         MultiCalDialog dlg = new MultiCalDialog(this.txtBirthDate, EditorsRegistry.getInstance().getMainWindow(), true);
-        dlg.setLocation(this.getX() + this.cmdSelectBirthday.getX(), this.getY() + this.cmdSelectBirthday.getY());
+        //dlg.setLocation(this.getX() + this.cmdSelectBirthday.getX(), this.getY() + this.cmdSelectBirthday.getY());
+        FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
     }//GEN-LAST:event_cmdSelectBirthdayActionPerformed
 
