@@ -844,11 +844,11 @@ public class ViewEmailDialog extends javax.swing.JDialog {
             String contentType = this.content.getContentType();
             dlg.setContentType(contentType);
             if (contentType.toLowerCase().startsWith("text/html")) {
-                dlg.setBody(EmailUtils.getQuotedBody(EmailUtils.Html2Text(this.content.getBody()), "text/plain", decodedTo), "text/plain");
+                dlg.setBody(EmailUtils.getQuotedBody(EmailUtils.Html2Text(this.content.getBody()), "text/plain", decodedTo, m.getSentDate()), "text/plain");
             } else {
-                dlg.setBody(EmailUtils.getQuotedBody(this.content.getBody(), "text/plain", decodedTo), "text/plain");
+                dlg.setBody(EmailUtils.getQuotedBody(this.content.getBody(), "text/plain", decodedTo, m.getSentDate()), "text/plain");
             }
-            dlg.setBody(EmailUtils.getQuotedBody(this.content.getBody(), "text/html", decodedTo), "text/html");
+            dlg.setBody(EmailUtils.getQuotedBody(this.content.getBody(), "text/html", decodedTo, m.getSentDate()), "text/html");
 
         } catch (MessagingException ex) {
             log.error(ex);
@@ -921,11 +921,11 @@ public class ViewEmailDialog extends javax.swing.JDialog {
             String contentType = this.content.getContentType();
             dlg.setContentType(contentType);
             if (contentType.toLowerCase().startsWith("text/html")) {
-                dlg.setBody(EmailUtils.getQuotedBody(EmailUtils.Html2Text(this.content.getBody()), "text/plain", decodedTo), "text/plain");
+                dlg.setBody(EmailUtils.getQuotedBody(EmailUtils.Html2Text(this.content.getBody()), "text/plain", decodedTo, m.getSentDate()), "text/plain");
             } else {
-                dlg.setBody(EmailUtils.getQuotedBody(this.content.getBody(), "text/plain", decodedTo), "text/plain");
+                dlg.setBody(EmailUtils.getQuotedBody(this.content.getBody(), "text/plain", decodedTo, m.getSentDate()), "text/plain");
             }
-            dlg.setBody(EmailUtils.getQuotedBody(this.content.getBody(), "text/html", decodedTo), "text/html");
+            dlg.setBody(EmailUtils.getQuotedBody(this.content.getBody(), "text/html", decodedTo, m.getSentDate()), "text/html");
 
         } catch (MessagingException ex) {
             log.error(ex);
@@ -970,11 +970,11 @@ public class ViewEmailDialog extends javax.swing.JDialog {
             String contentType = this.content.getContentType();
             dlg.setContentType(contentType);
             if (contentType.toLowerCase().startsWith("text/html")) {
-                dlg.setBody(EmailUtils.getQuotedBody(EmailUtils.Html2Text(this.content.getBody()), "text/plain", decodedFrom), "text/plain");
+                dlg.setBody(EmailUtils.getQuotedBody(EmailUtils.Html2Text(this.content.getBody()), "text/plain", decodedFrom, m.getSentDate()), "text/plain");
             } else {
-                dlg.setBody(EmailUtils.getQuotedBody(this.content.getBody(), "text/plain", decodedFrom), "text/plain");
+                dlg.setBody(EmailUtils.getQuotedBody(this.content.getBody(), "text/plain", decodedFrom, m.getSentDate()), "text/plain");
             }
-            dlg.setBody(EmailUtils.getQuotedBody(this.content.getBody(), "text/html", decodedFrom), "text/html");
+            dlg.setBody(EmailUtils.getQuotedBody(this.content.getBody(), "text/html", decodedFrom, m.getSentDate()), "text/html");
             
             try {
                 // try forwarding attachments

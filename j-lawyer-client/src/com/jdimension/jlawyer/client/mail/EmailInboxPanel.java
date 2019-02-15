@@ -1958,11 +1958,11 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
             String contentType = this.mailContentUI.getContentType();
             dlg.setContentType(contentType);
             if (contentType.toLowerCase().startsWith("text/html")) {
-                dlg.setBody(EmailUtils.getQuotedBody(EmailUtils.Html2Text(this.mailContentUI.getBody()), "text/plain", decodedTo), "text/plain");
+                dlg.setBody(EmailUtils.getQuotedBody(EmailUtils.Html2Text(this.mailContentUI.getBody()), "text/plain", decodedTo, m.getSentDate()), "text/plain");
             } else {
-                dlg.setBody(EmailUtils.getQuotedBody(this.mailContentUI.getBody(), "text/plain", decodedTo), "text/plain");
+                dlg.setBody(EmailUtils.getQuotedBody(this.mailContentUI.getBody(), "text/plain", decodedTo, m.getSentDate()), "text/plain");
             }
-            dlg.setBody(EmailUtils.getQuotedBody(this.mailContentUI.getBody(), "text/html", decodedTo), "text/html");
+            dlg.setBody(EmailUtils.getQuotedBody(this.mailContentUI.getBody(), "text/html", decodedTo, m.getSentDate()), "text/html");
 
         } catch (MessagingException ex) {
             log.error(ex);
@@ -2017,11 +2017,11 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
             String contentType = this.mailContentUI.getContentType();
             dlg.setContentType(contentType);
             if (contentType.toLowerCase().startsWith("text/html")) {
-                dlg.setBody(EmailUtils.getQuotedBody(EmailUtils.Html2Text(this.mailContentUI.getBody()), "text/plain", decodedFrom), "text/plain");
+                dlg.setBody(EmailUtils.getQuotedBody(EmailUtils.Html2Text(this.mailContentUI.getBody()), "text/plain", decodedFrom, m.getSentDate()), "text/plain");
             } else {
-                dlg.setBody(EmailUtils.getQuotedBody(this.mailContentUI.getBody(), "text/plain", decodedFrom), "text/plain");
+                dlg.setBody(EmailUtils.getQuotedBody(this.mailContentUI.getBody(), "text/plain", decodedFrom, m.getSentDate()), "text/plain");
             }
-            dlg.setBody(EmailUtils.getQuotedBody(this.mailContentUI.getBody(), "text/html", decodedFrom), "text/html");
+            dlg.setBody(EmailUtils.getQuotedBody(this.mailContentUI.getBody(), "text/html", decodedFrom, m.getSentDate()), "text/html");
 
             try {
                 // try forwarding attachments
@@ -2116,11 +2116,11 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
             String contentType = this.mailContentUI.getContentType();
             dlg.setContentType(contentType);
             if (contentType.toLowerCase().startsWith("text/html")) {
-                dlg.setBody(EmailUtils.getQuotedBody(EmailUtils.Html2Text(this.mailContentUI.getBody()), "text/plain", decodedTo), "text/plain");
+                dlg.setBody(EmailUtils.getQuotedBody(EmailUtils.Html2Text(this.mailContentUI.getBody()), "text/plain", decodedTo, origM.getSentDate()), "text/plain");
             } else {
-                dlg.setBody(EmailUtils.getQuotedBody(this.mailContentUI.getBody(), "text/plain", decodedTo), "text/plain");
+                dlg.setBody(EmailUtils.getQuotedBody(this.mailContentUI.getBody(), "text/plain", decodedTo, origM.getSentDate()), "text/plain");
             }
-            dlg.setBody(EmailUtils.getQuotedBody(this.mailContentUI.getBody(), "text/html", decodedTo), "text/html");
+            dlg.setBody(EmailUtils.getQuotedBody(this.mailContentUI.getBody(), "text/html", decodedTo, origM.getSentDate()), "text/html");
 
         } catch (MessagingException ex) {
             log.error(ex);

@@ -971,15 +971,26 @@ public class EmailUtils {
         }
     }
 
-    public static String getQuotedBody(String body, String contentType, String decodedTo) {
+    public static String getQuotedBody(String body, String contentType, String decodedTo, Date date) {
         if (contentType.toLowerCase().startsWith("text/html")) {
             decodedTo = decodedTo.replaceAll("<", "&lt;");
             decodedTo = decodedTo.replaceAll(">", "&gt;");
             decodedTo = decodedTo.replaceAll("\"", "&quot;");
-            return "<br/><br/>*** " + decodedTo + " schrieb: ***<br/><br/><div><blockquote style=\"border-left: #ccc 2px solid; margin: 0px 0px 0px 0.8ex; padding-left: 1ex\"><br/><br/>" + body + "<br/><br/></blockquote></div>";
+            if(date!=null) {
+                SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy HH:mm");
+                return "<br/><br/>*** " + decodedTo + " schrieb am " + df.format(date) + ": ***<br/><br/><div><blockquote style=\"border-left: #ccc 2px solid; margin: 0px 0px 0px 0.8ex; padding-left: 1ex\"><br/><br/>" + body + "<br/><br/></blockquote></div>";
+            } else {
+                return "<br/><br/>*** " + decodedTo + " schrieb: ***<br/><br/><div><blockquote style=\"border-left: #ccc 2px solid; margin: 0px 0px 0px 0.8ex; padding-left: 1ex\"><br/><br/>" + body + "<br/><br/></blockquote></div>";
+            }
         } else {
             // plain text
-            return System.getProperty("line.separator") + System.getProperty("line.separator") + "*** " + decodedTo + " schrieb: ***" + System.getProperty("line.separator") + System.getProperty("line.separator") + body;
+            if(date!=null) {
+                SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy HH:mm");
+                return System.getProperty("line.separator") + System.getProperty("line.separator") + "*** " + decodedTo + " schrieb am " + df.format(date) + ": ***" + System.getProperty("line.separator") + System.getProperty("line.separator") + body;
+            } else {
+                return System.getProperty("line.separator") + System.getProperty("line.separator") + "*** " + decodedTo + " schrieb: ***" + System.getProperty("line.separator") + System.getProperty("line.separator") + body;
+            }
+            
         }
     }
 
