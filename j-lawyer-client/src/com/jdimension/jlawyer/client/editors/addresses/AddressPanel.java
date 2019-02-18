@@ -678,6 +678,8 @@ import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.SaveableEditor;
 import com.jdimension.jlawyer.client.editors.ThemeableEditor;
 import com.jdimension.jlawyer.client.encryption.PasswordGenerator;
+import com.jdimension.jlawyer.client.events.ContactUpdatedEvent;
+import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.mail.SendEmailDialog;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.ServerSettings;
@@ -2975,6 +2977,8 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
                 addressService.createAddress(this.dto);
             } else {
                 addressService.updateAddress(this.dto);
+                EventBroker eb=EventBroker.getInstance();
+                eb.publishEvent(new ContactUpdatedEvent(this.dto));
             }
             this.lblHeaderInfo.setText(this.dto.toDisplayName());
             //addressService.remove();

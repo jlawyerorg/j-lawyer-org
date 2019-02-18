@@ -681,6 +681,7 @@ public abstract class Event {
     public static final Integer TYPE_DREBISSTATUS=90;
     public static final Integer TYPE_ALLCASETAGS=100;
     public static final Integer TYPE_DOCUMENTADDED=110;
+    public static final Integer TYPE_CONTACTUPDATED=120;
     
     
     private Integer type=TYPE_DEFAULT;
