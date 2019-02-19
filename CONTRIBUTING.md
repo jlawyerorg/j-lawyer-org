@@ -30,4 +30,4 @@ We do not have one yet, and never missed one so far :-)   Contact us if you want
 
 ## License
 
-This project is licensed under the AGPLv3 License - see the [LICENSE.md](LICENSE.md) file for details.
+This project is licensed under the AGPLv3 License - see the [LICENSE](LICENSE) file for details.
