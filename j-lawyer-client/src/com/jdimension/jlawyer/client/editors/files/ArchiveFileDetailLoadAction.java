@@ -757,6 +757,13 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
     }
 
     @Override
+    public String getErrorMessageAndHints(String rootCause) {
+        return "Laden der Akte fehlgeschlagen. Bitte Akte neu laden OHNE zu speichern!" + System.lineSeparator() + "Ursache: " + rootCause;
+    }
+    
+    
+
+    @Override
     public boolean execute() throws Exception {
 
         this.progress("Lade Akte...");
