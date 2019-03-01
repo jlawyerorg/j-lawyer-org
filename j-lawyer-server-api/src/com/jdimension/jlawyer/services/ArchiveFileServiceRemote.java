@@ -781,4 +781,6 @@ public interface ArchiveFileServiceRemote {
 
     boolean udpateFileNumber(String from, String to) throws Exception;
 
+    boolean doesDocumentExist(String id);
+
 }

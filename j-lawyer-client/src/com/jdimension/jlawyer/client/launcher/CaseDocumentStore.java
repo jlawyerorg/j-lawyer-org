@@ -679,83 +679,92 @@ import org.apache.log4j.Logger;
  * @author jens
  */
 public class CaseDocumentStore extends ObservedDocumentStore {
-    
+
     private static final Logger log = Logger.getLogger(CaseDocumentStore.class.getName());
-    
+
     private ArchiveFileDocumentsBean doc = null;
     private ArchiveFileBean af = null;
-    
+
     public CaseDocumentStore(String documentIdentifier, String fileName, boolean readOnly, ArchiveFileDocumentsBean doc, ArchiveFileBean af) {
         super(documentIdentifier, fileName, readOnly);
         this.doc = doc;
         this.af = af;
     }
-    
+
     public ArchiveFileBean getCase() {
         return this.af;
     }
-    
+
     @Override
     public void documentChanged(String path) {
         if (!this.isReadOnly()) {
             try {
-                
+
                 byte[] newContent = FileUtils.readFile(new File(path));
                 ClientSettings settings = ClientSettings.getInstance();
-                
+
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                 ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
                 ArchiveFileBean caseForDoc = afs.getArchiveFile(af.getId());
                 if (caseForDoc != null) {
-                    
-                    afs.setDocumentContent(doc.getId(), newContent);
+                    boolean docStillExists = afs.doesDocumentExist(doc.getId());
+                    if (docStillExists) {
+                        afs.setDocumentContent(doc.getId(), newContent);
+                    } else {
+                        log.warn("Document " + doc.getId() + " " + doc.getName() + " does no longer exist!");
+                    }
                 } else {
                     log.warn("Case " + af.getId() + " for document " + doc.getName() + " does no longer exist!");
                 }
-                
+
             } catch (Exception ex) {
                 ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Speichern des Dokuments: " + ex.getMessage(), "Fehler");
                 return;
             }
         }
     }
-    
+
     @Override
     public void documentClosed(String path) {
-        
+
         if (!this.isReadOnly()) {
             try {
                 File newFile = new File(path);
                 long newFileLength = newFile.length();
                 ClientSettings settings = ClientSettings.getInstance();
-                
+
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                 ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
-                byte[] currentContent = afs.getDocumentContent(doc.getId());
-                
-                if (currentContent == null) {
-                    currentContent = new byte[0];
+                boolean docStillExists = afs.doesDocumentExist(doc.getId());
+                if (docStillExists) {
+                    byte[] currentContent = afs.getDocumentContent(doc.getId());
+
+                    if (currentContent == null) {
+                        currentContent = new byte[0];
+                    }
+
+                    if (currentContent.length != newFileLength) {
+                        log.debug("safety measure: document closed but unsaved changes have been detected for " + doc.getName() + " - saving now");
+                        this.documentChanged(path);
+                    }
+                } else {
+                    log.warn("Document " + doc.getId() + " " + doc.getName() + " does no longer exist!");
                 }
-                
-                if (currentContent.length != newFileLength) {
-                    log.debug("safety measure: document closed but unsaved changes have been detected for " + doc.getName() + " - saving now");
-                    this.documentChanged(path);
-                }
-                
+
             } catch (Exception ex) {
                 ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Speichern des Dokuments: " + ex.getMessage(), "Fehler");
                 return;
             }
         }
-        
+
         File f = new File(path);
         f.deleteOnExit();
-        
+
         String dir = path.substring(0, path.lastIndexOf(System.getProperty("file.separator")));
         File remDir = new File(dir);
         remDir.deleteOnExit();
     }
-    
+
     @Override
     public String getType() {
         String caseDescription = "";
@@ -769,5 +778,5 @@ public class CaseDocumentStore extends ObservedDocumentStore {
         }
         return "Case Document Store" + " @ " + caseDescription;
     }
-    
+
 }

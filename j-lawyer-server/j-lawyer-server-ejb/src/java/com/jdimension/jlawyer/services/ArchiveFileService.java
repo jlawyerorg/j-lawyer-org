@@ -3063,4 +3063,34 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         return true;
     }
 
+    @Override
+    @RolesAllowed({"loginRole"})
+    public boolean doesDocumentExist(String id) {
+        ArchiveFileDocumentsBean db = this.archiveFileDocumentsFacade.find(id);
+        if(db==null) {
+            return false;
+        }
+        String aId = db.getArchiveFileKey().getId();
+
+        String localBaseDir = System.getProperty("jlawyer.server.basedirectory");
+        localBaseDir = localBaseDir.trim();
+        if (!localBaseDir.endsWith(System.getProperty("file.separator"))) {
+            localBaseDir = localBaseDir + System.getProperty("file.separator");
+        }
+
+        String dst = localBaseDir + "archivefiles" + System.getProperty("file.separator") + aId + System.getProperty("file.separator");
+
+        File dstDir = new File(dst);
+        dstDir.mkdirs();
+
+        dst = dst + db.getName();
+
+        File dstFile = new File(dst);
+
+        if (!(dstFile.exists())) {
+            return false;
+        }
+        return true;
+    }
+
 }

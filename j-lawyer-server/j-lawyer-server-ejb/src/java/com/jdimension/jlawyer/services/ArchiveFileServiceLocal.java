@@ -718,5 +718,7 @@ public interface ArchiveFileServiceLocal {
     byte[] getDocumentContentUnrestricted(String id) throws Exception;
 
     Collection<ArchiveFileReviewsBean> getAllOpenReviewsUnrestricted();
+
+    boolean doesDocumentExist(String id);
     
 }
