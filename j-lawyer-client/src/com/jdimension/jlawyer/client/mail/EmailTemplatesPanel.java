@@ -1133,7 +1133,14 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
                 //EditorsRegistry.getInstance().updateStatus("Adresse wird gespeichert...");
                 try {
                     JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                    locator.lookupIntegrationServiceRemote().deleteEmailTemplate(this.lstMailTemplates.getSelectedValue().toString());
+                    List selectedValues=this.lstMailTemplates.getSelectedValuesList();
+                    if(selectedValues!=null) {
+                        for(Object selectedValue: selectedValues) {
+                            locator.lookupIntegrationServiceRemote().deleteEmailTemplate(selectedValue.toString());
+                        }
+                        
+                    }
+                    
                 } catch (Exception ex) {
                     JOptionPane.showMessageDialog(this, "Fehler beim Löschen der Vorlage: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
                 }
