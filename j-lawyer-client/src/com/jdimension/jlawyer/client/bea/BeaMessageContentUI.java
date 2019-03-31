@@ -723,6 +723,8 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
         this.jScrollPane1.setPreferredSize(new Dimension((int) this.jScrollPane1.getSize().getWidth(), (int) this.jScrollPane1.getSize().getHeight()));
 
         this.lblSentDate.setText(" ");
+        this.lblCaseNumber.setText(" ");
+        this.lblReferenceJustice.setText(" ");
 
         this.lstAttachments.setModel(new DefaultListModel());
 
@@ -803,7 +805,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
 //                lea.start();
                 return;
             } else {
-                BeaMessageContentUI.setMessageImpl(this, msg, this.lblSubject, this.lblSentDate, this.lblTo, this.lblFrom, this.editBody, this.lstAttachments, false, this.tblJournal);
+                BeaMessageContentUI.setMessageImpl(this, msg, this.lblSubject, this.lblSentDate, this.lblTo, this.lblFrom, this.lblCaseNumber, this.lblReferenceJustice, this.editBody, this.lstAttachments, false, this.tblJournal, this.lblEeb);
             }
 
         } catch (Exception ex) {
@@ -813,7 +815,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
         }
     }
 
-    public static void setMessageImpl(BeaMessageContentUI contentUI, Message msg, JLabel lblSubject, JLabel lblSentDate, JLabel lblTo, JLabel lblFrom, JEditorPane editBody, JList lstAttachments, boolean edt, JTable journalTable) throws Exception {
+    public static void setMessageImpl(BeaMessageContentUI contentUI, Message msg, JLabel lblSubject, JLabel lblSentDate, JLabel lblTo, JLabel lblFrom, JLabel lblCaseNumber, JLabel lblReferenceJustice, JEditorPane editBody, JList lstAttachments, boolean edt, JTable journalTable, JLabel lblEeb) throws Exception {
         // we copy the message to avoid the "Unable to load BODYSTRUCTURE" issue
 
         AppUserBean cu = UserSettings.getInstance().getCurrentUser();
@@ -828,6 +830,15 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
         lblSubject.setText(msg.getSubject());
         lblSubject.setToolTipText(lblSubject.getText());
         lblFrom.setText(msg.getSenderName());
+        lblCaseNumber.setText(msg.getReferenceNumber());
+        lblReferenceJustice.setText(msg.getReferenceJustice());
+        if(msg.isEebRequested()) {
+            lblEeb.setEnabled(true);
+            lblEeb.setToolTipText("Es wurde ein eEB angefordert!");
+        } else {
+            lblEeb.setEnabled(false);
+            lblEeb.setToolTipText("Es wurde kein eEB angefordert.");
+        }
 
         String to = "";
         if (msg.getRecipients().size() > 0) {
@@ -1078,6 +1089,11 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
         jLabel7 = new javax.swing.JLabel();
         jScrollPane2 = new javax.swing.JScrollPane();
         lstAttachments = new javax.swing.JList();
+        jLabel4 = new javax.swing.JLabel();
+        lblCaseNumber = new javax.swing.JLabel();
+        jLabel6 = new javax.swing.JLabel();
+        lblReferenceJustice = new javax.swing.JLabel();
+        lblEeb = new javax.swing.JLabel();
         jPanel4 = new javax.swing.JPanel();
         jScrollPane3 = new javax.swing.JScrollPane();
         tblJournal = new javax.swing.JTable();
@@ -1220,6 +1236,18 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
 
         jSplitPane1.setRightComponent(jPanel2);
 
+        jLabel4.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder.png"))); // NOI18N
+        jLabel4.setText("Aktenzeichen:");
+
+        lblCaseNumber.setText("<AZ>");
+
+        jLabel6.setText("Justiz:");
+
+        lblReferenceJustice.setText("<AZ Justiz>");
+
+        lblEeb.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/lassists.png"))); // NOI18N
+        lblEeb.setEnabled(false);
+
         javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);
         jPanel3Layout.setHorizontalGroup(
@@ -1227,17 +1255,34 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
             .addGroup(jPanel3Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jSplitPane1)
                     .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jSplitPane1))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel3Layout.createSequentialGroup()
+                        .addComponent(jLabel4)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(lblCaseNumber)
+                        .addGap(18, 18, 18)
+                        .addComponent(jLabel6)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(lblReferenceJustice)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(lblEeb)))
                 .addContainerGap())
         );
         jPanel3Layout.setVerticalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel3Layout.createSequentialGroup()
                 .addContainerGap()
+                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel4)
+                    .addComponent(lblCaseNumber)
+                    .addComponent(jLabel6)
+                    .addComponent(lblReferenceJustice)
+                    .addComponent(lblEeb))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jSplitPane1)
+                .addComponent(jSplitPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 348, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -1283,7 +1328,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
                 .addContainerGap()
                 .addComponent(cmdRefreshJournal)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 408, Short.MAX_VALUE)
+                .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 415, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -1457,6 +1502,8 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
+    private javax.swing.JLabel jLabel4;
+    private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel7;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
@@ -1467,7 +1514,10 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
     private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JSplitPane jSplitPane1;
     private javax.swing.JTabbedPane jTabbedPane1;
+    private javax.swing.JLabel lblCaseNumber;
+    private javax.swing.JLabel lblEeb;
     private javax.swing.JLabel lblFrom;
+    private javax.swing.JLabel lblReferenceJustice;
     private javax.swing.JLabel lblSentDate;
     private javax.swing.JLabel lblSubject;
     private javax.swing.JLabel lblTo;

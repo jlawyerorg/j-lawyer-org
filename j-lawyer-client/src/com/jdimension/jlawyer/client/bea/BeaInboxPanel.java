@@ -780,10 +780,10 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
         DefaultTreeModel dtm=new DefaultTreeModel(rootNode);
         this.treeFolders.setModel(dtm);
 
-        DefaultTableModel tm = new DefaultTableModel(new String[]{"Betreff", "Absender", "Empfänger", "Gesendet", "Az", "Az (Justiz)", "dringend", "vertraulich", "prüfen"}, 0);
+        DefaultTableModel tm = new DefaultTableModel(new String[]{"eEB", "dringend", "vertraulich", "prüfen", "Betreff", "Absender", "Empfänger", "Gesendet", "Az", "Az (Justiz)"}, 0);
         this.tblMails.setModel(tm);
         TableRowSorter<TableModel> sorter = new TableRowSorter<TableModel>(tm);
-        sorter.setComparator(3, new DescendingDateTimeStringComparator());
+        sorter.setComparator(7, new DescendingDateTimeStringComparator());
         this.tblMails.setRowSorter(sorter);
 
         this.renderer = new BeaFolderTreeCellRenderer();
@@ -1283,7 +1283,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
 
     private void cmdRefreshActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRefreshActionPerformed
         try {
-            this.refreshFolders(true);
+            this.reset();
         } catch (Exception ex) {
             log.error(ex);
             ex.printStackTrace();
@@ -1315,7 +1315,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
 
             //EditorsRegistry.getInstance().updateStatus("Öffne Ordner " + folder.getName(), true);
             try {
-                DefaultTableModel tm = new DefaultTableModel(new String[]{"Betreff", "Absender", "Empfänger", "Gesendet", "Az", "Az (Justiz)", "dringend", "vertraulich", "prüfen"}, 0) {
+                DefaultTableModel tm = new DefaultTableModel(new String[]{"eEB", "dringend", "vertraulich", "prüfen", "Betreff", "Absender", "Empfänger", "Gesendet", "Az", "Az (Justiz)"}, 0) {
 
                     @Override
                     public boolean isCellEditable(int row, int column) {
@@ -1325,7 +1325,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                 };
                 this.tblMails.setModel(tm);
                 TableRowSorter<TableModel> sorter = new TableRowSorter<TableModel>(tm);
-                sorter.setComparator(3, new DescendingDateTimeStringComparator());
+                sorter.setComparator(7, new DescendingDateTimeStringComparator());
                 this.tblMails.setRowSorter(sorter);
                 this.tblMails.setDefaultRenderer(Object.class, new BeaMessageTableCellRenderer());
 
@@ -1379,7 +1379,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                 return;
             }
 
-            Message msgC = (Message) this.tblMails.getValueAt(this.tblMails.getSelectedRow(), 0);
+            Message msgC = (Message) this.tblMails.getValueAt(this.tblMails.getSelectedRow(), 4);
 
             ViewBeaDialog view = new ViewBeaDialog(EditorsRegistry.getInstance().getMainWindow(), false, null);
             view.setMessage(msgC);
@@ -1506,9 +1506,9 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
     private void mnuMarkReadActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuMarkReadActionPerformed
         int[] selected = this.tblMails.getSelectedRows();
         for (int sel : selected) {
-            Message msgC = (Message) this.tblMails.getValueAt(sel, 0);
+            Message msgC = (Message) this.tblMails.getValueAt(sel, 4);
                 msgC.setRead(true);
-                this.tblMails.setValueAt(msgC, sel, 0);
+                this.tblMails.setValueAt(msgC, sel, 4);
             
         }
     }//GEN-LAST:event_mnuMarkReadActionPerformed
@@ -1516,10 +1516,10 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
     private void mnuMarkUnreadActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuMarkUnreadActionPerformed
         int[] selected = this.tblMails.getSelectedRows();
         for (int sel : selected) {
-            Message msgC = (Message) this.tblMails.getValueAt(sel, 0);
+            Message msgC = (Message) this.tblMails.getValueAt(sel, 4);
             
                 msgC.setRead(false);
-                this.tblMails.setValueAt(msgC, sel, 0);
+                this.tblMails.setValueAt(msgC, sel, 4);
             
         }
     }//GEN-LAST:event_mnuMarkUnreadActionPerformed
@@ -1539,7 +1539,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
         scrollToRow = tblMails.getSelectedRow();
         for (int i = selected.length - 1; i > -1; i--) {
 
-            org.jlawyer.bea.model.Message m = (org.jlawyer.bea.model.Message) this.tblMails.getValueAt(selected[i], 0);
+            org.jlawyer.bea.model.Message m = (org.jlawyer.bea.model.Message) this.tblMails.getValueAt(selected[i], 4);
             try {
                 BeaAccess bea=BeaAccess.getInstance();
                 boolean moved=bea.moveMessageToTrash(m.getId());
@@ -1592,7 +1592,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
             }
             // change: only expunge in LoadFolderAction before loading messages
             //tf.expunge();
-            this.tblMails.setModel(new DefaultTableModel(new String[]{"Betreff", "Absender", "Empfänger", "Gesendet", "Az", "Az (Justiz)", "dringend", "vertraulich", "prüfen"}, 0));
+            this.tblMails.setModel(new DefaultTableModel(new String[]{"eEB", "dringend", "vertraulich", "prüfen", "Betreff", "Absender", "Empfänger", "Gesendet", "Az", "Az (Justiz)", "dringend", "vertraulich", "prüfen"}, 0));
 
             if(failed>0) {
                 JOptionPane.showMessageDialog(this, "" + failed + " Vorgänge fehlgeschlagen, letzte Meldung: " + lastFailure, "Fehler", JOptionPane.ERROR_MESSAGE);
@@ -1618,7 +1618,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
 
         int[] selected = this.tblMails.getSelectedRows();
 
-        org.jlawyer.bea.model.Message m = (org.jlawyer.bea.model.Message) this.tblMails.getValueAt(selected[0], 0);
+        org.jlawyer.bea.model.Message m = (org.jlawyer.bea.model.Message) this.tblMails.getValueAt(selected[0], 4);
         try {
             String senderSafeId=m.getSenderSafeId();
             BeaAccess bea=BeaAccess.getInstance();
@@ -1711,7 +1711,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
 
         int[] selected = this.tblMails.getSelectedRows();
 
-        Message m = (Message) this.tblMails.getValueAt(selected[0], 0);
+        Message m = (Message) this.tblMails.getValueAt(selected[0], 4);
        
             String fromSafeId = m.getSenderSafeId();
 
@@ -1738,7 +1738,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
 
         int[] selected = this.tblMails.getSelectedRows();
 
-        org.jlawyer.bea.model.Message m = (org.jlawyer.bea.model.Message) this.tblMails.getValueAt(selected[0], 0);
+        org.jlawyer.bea.model.Message m = (org.jlawyer.bea.model.Message) this.tblMails.getValueAt(selected[0], 4);
         try {
             
             try {
@@ -1855,7 +1855,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
         int selectionIndex = this.tblMails.getSelectedRow();
 
         //MessageContainer msgC = (MessageContainer) this.tblMails.getValueAt(this.tblMails.getSelectedRow(), 0);
-        org.jlawyer.bea.model.Message msg = (org.jlawyer.bea.model.Message) this.tblMails.getValueAt(selectionIndex, 0);
+        org.jlawyer.bea.model.Message msg = (org.jlawyer.bea.model.Message) this.tblMails.getValueAt(selectionIndex, 4);
         
         // aktiv bis 03.03.2015
         //MessageContainer msgC = (MessageContainer) this.tblMails.getModel().getValueAt(this.tblMails.convertRowIndexToModel(selectionIndex), 0);
@@ -1979,7 +1979,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
 
         }
         
-        this.tblMails.setValueAt(msg, selectionIndex, 0);
+        this.tblMails.setValueAt(msg, selectionIndex, 4);
         for (int i = 1; i < this.tblMails.getColumnCount(); i++) {
             //this.tblMails.setValueAt(this.tblMails.getValueAt(this.tblMails.getSelectedRow(), i), this.tblMails.getSelectedRow(), i);
             this.tblMails.setValueAt(this.tblMails.getValueAt(selectionIndex, i), selectionIndex, i);
@@ -2035,7 +2035,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
             Message[] copyMsg = new Message[selectedRows.length];
             for (int i = selectedRows.length - 1; i > -1; i--) {
                 int sel = selectedRows[i];
-                copyMsg[i] = (Message)this.tblMails.getValueAt(sel, 0);
+                copyMsg[i] = (Message)this.tblMails.getValueAt(sel, 4);
             }
             
             try {
@@ -2104,7 +2104,18 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
 
     @Override
     public void reset() {
-        if (!BeaAccess.hasInstance()) {
+        
+        boolean needsReset=!BeaAccess.hasInstance();
+        if(!needsReset) {
+            try {
+                needsReset=!BeaAccess.getInstance().isLoggedIn();
+            } catch (Throwable t) {
+                log.error(t);
+                needsReset=true;
+            }
+        }
+        
+        if (needsReset) {
             BeaLoginDialog loginPanel = new BeaLoginDialog(EditorsRegistry.getInstance().getMainWindow(), true, null);
             loginPanel.setVisible(true);
             if(!BeaAccess.hasInstance())
@@ -2182,7 +2193,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                 ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
 
-                Message m = (Message) this.tblMails.getValueAt(this.tblMails.getSelectedRow(), 0);
+                Message m = (Message) this.tblMails.getValueAt(this.tblMails.getSelectedRow(), 4);
                 MessageExport export=null;
                 byte[] data = null;
 

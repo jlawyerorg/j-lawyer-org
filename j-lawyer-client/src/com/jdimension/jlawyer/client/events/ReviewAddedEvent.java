@@ -661,89 +661,46 @@
  * For more information on this, and how to apply and follow the GNU AGPL, see
  * <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.client.bea;
+package com.jdimension.jlawyer.client.events;
 
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Font;
-import javax.swing.JLabel;
-import javax.swing.JTable;
-import javax.swing.table.DefaultTableCellRenderer;
-import org.apache.log4j.Logger;
-import org.jlawyer.bea.model.Message;
+import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 
 /**
  *
  * @author jens
  */
-public class BeaMessageTableCellRenderer extends DefaultTableCellRenderer {
+public class ReviewAddedEvent extends Event {
+
+    private ArchiveFileReviewsBean review;
     
-    private static final Logger log = Logger.getLogger(BeaMessageTableCellRenderer.class.getName());
-    
-    @Override
-    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, 
-                                                  boolean hasFocus, int row, int column) {
+    public ReviewAddedEvent(ArchiveFileReviewsBean newRev) {
+        super(Event.TYPE_REVIEWADDED);
+        this.review=newRev;
         
-        org.jlawyer.bea.model.Message msg= (Message)table.getValueAt(row, 4);
-        
-        Object returnRenderer=null;
-        //Object returnRenderer=super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-        
-        //MessageContainer msgC= (MessageContainer)table.getValueAt(row, 0);
-        
-            returnRenderer=super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-            ((Component)returnRenderer).setFont(((Component)returnRenderer).getFont().deriveFont(Font.PLAIN));
-            ((JLabel)((Component)returnRenderer)).setForeground(Color.BLACK);
-            ((JLabel)((Component)returnRenderer)).setToolTipText("");
-            ((JLabel)((Component)returnRenderer)).setIcon(null);
-            if(column<4) {
-                ((JLabel)((Component)returnRenderer)).setText("");
-                ((JLabel)((Component)returnRenderer)).setHorizontalAlignment(JLabel.RIGHT);
-            }
-            
-            
-        try {
-        if(!msg.isRead()) {
-            ((Component)returnRenderer).setFont(((Component)returnRenderer).getFont().deriveFont(Font.BOLD));
-            if(column==4)
-                ((JLabel)((Component)returnRenderer)).setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/mail_new3.png")));
-        } else {
-            if(column==4)
-                ((JLabel)((Component)returnRenderer)).setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/mail_generic.png")));
-        }
-        
-        if(msg.isEebRequested()) {
-            if(column==0) {
-                ((JLabel)((Component)returnRenderer)).setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/lassists.png")));
-                ((JLabel)((Component)returnRenderer)).setToolTipText("eEB angefordert");
-            }
-        }
-        
-        if(msg.isUrgent()) {
-            if(column==1) {
-                ((JLabel)((Component)returnRenderer)).setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/cnruninstall.png")));
-                ((JLabel)((Component)returnRenderer)).setToolTipText("dringend!");
-            }
-        }
-        
-        if(msg.isConfidential()) {
-            if(column==2) {
-                ((JLabel)((Component)returnRenderer)).setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/file_locked.png")));
-                ((JLabel)((Component)returnRenderer)).setToolTipText("vertraulich");
-            }
-        }
-        
-        if(msg.isCheckRequired()) {
-            if(column==3) {
-                ((JLabel)((Component)returnRenderer)).setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/icq_occupied.png")));
-                ((JLabel)((Component)returnRenderer)).setToolTipText("prüfen!");
-            }
-        }
-        
-        } catch (Exception ex) {
-            log.error(ex);
-            ex.printStackTrace();
-        } 
-        return (Component)returnRenderer;
     }
+
+    
+
+    @Override
+    public boolean isUiUpdateTrigger() {
+        return true;
+    }
+
+    /**
+     * @return the document
+     */
+    public ArchiveFileReviewsBean getReview() {
+        return review;
+    }
+
+    /**
+     * @param document the document to set
+     */
+    public void setReview(ArchiveFileReviewsBean review) {
+        this.review = review;
+    }
+
+    
+
 }

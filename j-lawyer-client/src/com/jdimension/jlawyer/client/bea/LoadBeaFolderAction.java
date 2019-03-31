@@ -809,9 +809,9 @@ public class LoadBeaFolderAction extends ProgressableAction {
 //                            }
                             //((DefaultTableModel) table.getModel()).addRow(new Object[]{new MessageContainer(msg, msg.getSubject(), msg.isSet(Flags.Flag.SEEN)), from, toString2, df.format(msg.getSentDate())});
                             if(msg.getReceptionTime()!=null)
-                                ((DefaultTableModel) table.getModel()).addRow(new Object[]{msg, msg.getSenderName(), toString, df.format(msg.getReceptionTime()), msg.getReferenceNumber(), msg.getReferenceJustice(), new Boolean(msg.isUrgent()), new Boolean(msg.isConfidential()), new Boolean(msg.isCheckRequired())});
+                                ((DefaultTableModel) table.getModel()).addRow(new Object[]{new Boolean(msg.isEebRequested()), new Boolean(msg.isUrgent()), new Boolean(msg.isConfidential()), new Boolean(msg.isCheckRequired()), msg, msg.getSenderName(), toString, df.format(msg.getReceptionTime()), msg.getReferenceNumber(), msg.getReferenceJustice()});
                             else
-                                ((DefaultTableModel) table.getModel()).addRow(new Object[]{msg, msg.getSenderName(), toString, null, msg.getReferenceNumber(), msg.getReferenceJustice(), new Boolean(msg.isUrgent()), new Boolean(msg.isConfidential()), new Boolean(msg.isCheckRequired())});
+                                ((DefaultTableModel) table.getModel()).addRow(new Object[]{new Boolean(msg.isEebRequested()), new Boolean(msg.isUrgent()), new Boolean(msg.isConfidential()), new Boolean(msg.isCheckRequired()), msg, msg.getSenderName(), toString, null, msg.getReferenceNumber(), msg.getReferenceJustice()});
                             if (scrollToRow > 0) {
                                 if (currentIndex == (indexMax)) {
                                     if (table.getRowCount() > scrollToRow) {

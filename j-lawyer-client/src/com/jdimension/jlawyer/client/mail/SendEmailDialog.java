@@ -663,10 +663,17 @@
  */
 package com.jdimension.jlawyer.client.mail;
 
+import com.jdimension.jlawyer.client.components.MultiCalDialog;
+import com.jdimension.jlawyer.client.configuration.OptionGroupListCellRenderer;
+import com.jdimension.jlawyer.client.configuration.UserListCellRenderer;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.addresses.ContactTypeColors;
 import com.jdimension.jlawyer.client.editors.documents.SearchAndAssignDialog;
 import com.jdimension.jlawyer.client.editors.files.AddressBeanListCellRenderer;
+import com.jdimension.jlawyer.client.editors.files.OptionsComboBoxModel;
+import com.jdimension.jlawyer.client.events.DocumentAddedEvent;
+import com.jdimension.jlawyer.client.events.EventBroker;
+import com.jdimension.jlawyer.client.events.ReviewAddedEvent;
 import com.jdimension.jlawyer.client.launcher.Launcher;
 import com.jdimension.jlawyer.client.launcher.LauncherFactory;
 import com.jdimension.jlawyer.client.launcher.ReadOnlyDocumentStore;
@@ -678,20 +685,26 @@ import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.PlaceHolderUtils;
+import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.email.EmailTemplate;
 import com.jdimension.jlawyer.persistence.AddressBean;
+import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
 import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 import com.jdimension.jlawyer.services.AddressServiceRemote;
+import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.io.File;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.Hashtable;
 import java.util.List;
 import javax.swing.*;
@@ -716,8 +729,8 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
     private String contextDictateSign = null;
     private TextEditorPanel tp;
     private HtmlEditorPanel hp;
-    
-    private ArrayList<ArchiveFileAddressesBean> caseInvolvements=null;
+
+    private ArrayList<ArchiveFileAddressesBean> caseInvolvements = null;
 
     /**
      * Creates new form SendEmailDialog
@@ -878,11 +891,35 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                 }
             }
         });
+        
+        this.cmbReviewReason.setRenderer(new OptionGroupListCellRenderer());
+        AppOptionGroupBean[] reviewReasons = settings.getReviewReasonDtos();
+        String[] reviewReasonItems = new String[reviewReasons.length + 1];
+        reviewReasonItems[0] = "";
+        for (int i = 0; i < reviewReasons.length; i++) {
+            AppOptionGroupBean aogb = (AppOptionGroupBean) reviewReasons[i];
+            reviewReasonItems[i + 1] = aogb.getValue();
+            //reviewReasonItems[i+1]=reviewReasons[i];
+        }
+        StringUtils.sortIgnoreCase(reviewReasonItems);
+        OptionsComboBoxModel reviewReasonModel = new OptionsComboBoxModel(reviewReasonItems);
+        this.cmbReviewReason.setModel(reviewReasonModel);
+
+        AppUserBean[] allUsers = UserSettings.getInstance().getAllUsers();
+        Object[] allUserItems = new Object[allUsers.length + 1];
+        allUserItems[0] = "";
+        for (int i = 0; i < allUsers.length; i++) {
+            AppUserBean aub = (AppUserBean) allUsers[i];
+            allUserItems[i + 1] = aub.getPrincipalId();
+        }
+        OptionsComboBoxModel allUserModel = new OptionsComboBoxModel(allUserItems);
+        this.cmbReviewAssignee.setModel(allUserModel);
+        this.cmbReviewAssignee.setRenderer(new UserListCellRenderer());
 
     }
-    
+
     public void setInvolvedInCase(ArrayList<ArchiveFileAddressesBean> involved) {
-        this.caseInvolvements=involved;
+        this.caseInvolvements = involved;
     }
 
     @Override
@@ -1027,7 +1064,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         this.contextDictateSign = dictateSign;
         this.attachments.add(tempUrl);
         ((DefaultListModel) this.lstAttachments.getModel()).addElement(new File(tempUrl).getName());
-        if(!tempUrl.toLowerCase().endsWith(".pdf")) {
+        if (!tempUrl.toLowerCase().endsWith(".pdf")) {
             this.chkEncryption.setSelected(false);
             this.chkEncryption.setEnabled(false);
             this.lblEncryption.setText("Verschlüsselung nur für PDF");
@@ -1054,6 +1091,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         popRecipientsBcc = new javax.swing.JPopupMenu();
         mnuSearchRecipientBcc = new javax.swing.JMenuItem();
         jSeparator3 = new javax.swing.JPopupMenu.Separator();
+        btGroupReviews = new javax.swing.ButtonGroup();
         jLabel1 = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
         jLabel3 = new javax.swing.JLabel();
@@ -1089,6 +1127,16 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         chkSaveAsDocument = new javax.swing.JCheckBox();
         cmdRecipientsCc = new javax.swing.JButton();
         cmdRecipientsBcc = new javax.swing.JButton();
+        jPanel4 = new javax.swing.JPanel();
+        cmbReviewReason = new javax.swing.JComboBox();
+        jLabel12 = new javax.swing.JLabel();
+        jLabel10 = new javax.swing.JLabel();
+        radioReviewTypeFollowUp = new javax.swing.JRadioButton();
+        radioReviewTypeRespite = new javax.swing.JRadioButton();
+        cmdShowReviewSelector = new javax.swing.JButton();
+        txtReviewDateField = new javax.swing.JTextField();
+        cmbReviewAssignee = new javax.swing.JComboBox();
+        radioReviewTypeNone = new javax.swing.JRadioButton();
 
         mnuSearchRecipient.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/find.png"))); // NOI18N
         mnuSearchRecipient.setText("suchen");
@@ -1395,6 +1443,109 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
             }
         });
 
+        jPanel4.setBorder(javax.swing.BorderFactory.createTitledBorder("Wiedervorlage / Frist"));
+
+        cmbReviewReason.setEditable(true);
+        cmbReviewReason.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+        cmbReviewReason.setEnabled(false);
+
+        jLabel12.setText("verantwortlich:");
+        jLabel12.setEnabled(false);
+
+        jLabel10.setText("Datum:");
+        jLabel10.setEnabled(false);
+
+        btGroupReviews.add(radioReviewTypeFollowUp);
+        radioReviewTypeFollowUp.setText("Wiedervorlage");
+        radioReviewTypeFollowUp.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                radioReviewTypeFollowUpActionPerformed(evt);
+            }
+        });
+
+        btGroupReviews.add(radioReviewTypeRespite);
+        radioReviewTypeRespite.setText("Frist");
+        radioReviewTypeRespite.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                radioReviewTypeRespiteActionPerformed(evt);
+            }
+        });
+
+        cmdShowReviewSelector.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/schedule.png"))); // NOI18N
+        cmdShowReviewSelector.setEnabled(false);
+        cmdShowReviewSelector.setMargin(new java.awt.Insets(2, 4, 2, 4));
+        cmdShowReviewSelector.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdShowReviewSelectorActionPerformed(evt);
+            }
+        });
+
+        txtReviewDateField.setEditable(false);
+        txtReviewDateField.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
+        txtReviewDateField.setEnabled(false);
+
+        cmbReviewAssignee.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+        cmbReviewAssignee.setEnabled(false);
+
+        btGroupReviews.add(radioReviewTypeNone);
+        radioReviewTypeNone.setSelected(true);
+        radioReviewTypeNone.setText("keine");
+        radioReviewTypeNone.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                radioReviewTypeNoneActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
+        jPanel4.setLayout(jPanel4Layout);
+        jPanel4Layout.setHorizontalGroup(
+            jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel4Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(cmbReviewReason, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(jPanel4Layout.createSequentialGroup()
+                        .addComponent(radioReviewTypeNone)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(radioReviewTypeFollowUp)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(radioReviewTypeRespite)
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addGroup(jPanel4Layout.createSequentialGroup()
+                        .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabel12)
+                            .addComponent(jLabel10))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(cmbReviewAssignee, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addGroup(jPanel4Layout.createSequentialGroup()
+                                .addComponent(txtReviewDateField, javax.swing.GroupLayout.PREFERRED_SIZE, 135, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(cmdShowReviewSelector)
+                                .addGap(0, 0, Short.MAX_VALUE)))))
+                .addContainerGap())
+        );
+        jPanel4Layout.setVerticalGroup(
+            jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel4Layout.createSequentialGroup()
+                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(radioReviewTypeFollowUp)
+                    .addComponent(radioReviewTypeRespite)
+                    .addComponent(radioReviewTypeNone))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(cmbReviewReason, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(7, 7, 7)
+                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(cmbReviewAssignee, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel12))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(txtReviewDateField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(jLabel10))
+                    .addComponent(cmdShowReviewSelector)))
+        );
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -1412,7 +1563,8 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                             .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                            .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(jPanel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jLabel1)
@@ -1475,8 +1627,10 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-                .addContainerGap())
+                        .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addContainerGap())))
         );
 
         pack();
@@ -1498,8 +1652,8 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         ArrayList<String> mails = EmailUtils.getAllMailAddressesFromString(this.txtTo.getText());
         mails.addAll(EmailUtils.getAllMailAddressesFromString(this.txtCc.getText()));
         mails.addAll(EmailUtils.getAllMailAddressesFromString(this.txtBcc.getText()));
-        ProgressableAction a = null;
-        if (this.chkSaveAsDocument.isSelected()) {
+        
+        if (this.chkSaveAsDocument.isSelected() || !(this.radioReviewTypeNone.isSelected())) {
             if (this.contextArchiveFile == null) {
                 SearchAndAssignDialog saDlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true);
                 saDlg.setVisible(true);
@@ -1508,6 +1662,10 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                 saDlg.dispose();
 
             }
+        }
+        
+        ProgressableAction a = null;
+        if (this.chkSaveAsDocument.isSelected()) {
 
             if (this.chkEncryption.isSelected()) {
                 int crypto = 0;
@@ -1527,6 +1685,9 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
             } else {
                 a = new SendAction(dlg, this, this.attachments, this.cu, this.chkReadReceipt.isSelected(), this.txtTo.getText(), this.txtCc.getText(), this.txtBcc.getText(), this.txtSubject.getText(), ed.getText(), contentType, this.contextArchiveFile);
             }
+
+            
+
         } else if (this.chkEncryption.isSelected()) {
             int crypto = 0;
             try {
@@ -1546,6 +1707,51 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
             a = new SendAction(dlg, this, this.attachments, this.cu, this.chkReadReceipt.isSelected(), this.txtTo.getText(), this.txtCc.getText(), this.txtBcc.getText(), this.txtSubject.getText(), ed.getText(), contentType);
         }
         a.start();
+        
+        
+        if (!(this.radioReviewTypeNone.isSelected()) && this.contextArchiveFile!=null) {
+                if (this.txtReviewDateField.getText().length() != 10) {
+                    JOptionPane.showMessageDialog(this, "Wiedervorlagedatum ungültig", "E-Mail senden", JOptionPane.INFORMATION_MESSAGE);
+                    return;
+                }
+                Date d = null;
+                try {
+                    SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
+                    d = df.parse(this.txtReviewDateField.getText());
+                } catch (Throwable t) {
+                    JOptionPane.showMessageDialog(this, "Wiedervorlagedatum ungültig", "E-Mail senden", JOptionPane.INFORMATION_MESSAGE);
+                    return;
+                }
+
+                ArchiveFileReviewsBean reviewDto = new ArchiveFileReviewsBean();
+                reviewDto.setReviewType(reviewDto.REVIEWTYPE_FOLLOWUP);
+                if (this.radioReviewTypeRespite.isSelected()) {
+                    reviewDto.setReviewType(reviewDto.REVIEWTYPE_RESPITE);
+                }
+                reviewDto.setDoneBoolean(false);
+                reviewDto.setReviewDate(d);
+                reviewDto.setAssignee(this.cmbReviewAssignee.getSelectedItem().toString());
+                reviewDto.setReviewReason(this.cmbReviewReason.getModel().getSelectedItem().toString());
+
+                EditorsRegistry.getInstance().updateStatus("Wiedervorlage/Frist wird gespeichert...");
+                try {
+                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                    ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
+
+                    reviewDto = fileService.addReview(this.contextArchiveFile.getId(), reviewDto);
+                    EditorsRegistry.getInstance().updateStatus("Wiedervorlage/Frist gespeichert.", 5000);
+
+                } catch (Exception ex) {
+                    log.error("Error adding review", ex);
+                    JOptionPane.showMessageDialog(this, "Fehler beim Speichern der Wiedervorlage: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+                    EditorsRegistry.getInstance().clearStatus();
+                    return;
+                }
+                
+                EventBroker eb=EventBroker.getInstance();
+                eb.publishEvent(new ReviewAddedEvent(reviewDto));
+
+            }
 
 
     }//GEN-LAST:event_cmdSendActionPerformed
@@ -1560,8 +1766,9 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
             if (found.length > 1) {
                 throw new Exception(m + " ist mehreren Kontakten zugeordnet - Verschlüsselung nicht möglich!");
             }
-            if(found.length==0)
+            if (found.length == 0) {
                 continue;
+            }
             if (found[0].supportsCrypto()) {
                 cryptoSupported++;
             }
@@ -1642,7 +1849,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                 for (String ph : placeHolderNames) {
                     ht.put(ph, "");
                 }
-                
+
                 Hashtable<String, String> htValues = PlaceHolderUtils.getPlaceHolderValues(ht, this.contextArchiveFile, this.caseInvolvements, this.contextClient, this.contextOpponent, this.contextOppAttorney, this.contextDictateSign, null);
                 this.txtSubject.setText(EmailTemplateAccess.replacePlaceHolders(tpl.getSubject(), htValues));
 
@@ -1886,6 +2093,40 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         }
     }//GEN-LAST:event_lstAttachmentsMouseClicked
 
+    private void radioReviewTypeFollowUpActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_radioReviewTypeFollowUpActionPerformed
+        this.enableReviewElements(true);
+    }//GEN-LAST:event_radioReviewTypeFollowUpActionPerformed
+
+    private void radioReviewTypeRespiteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_radioReviewTypeRespiteActionPerformed
+        this.enableReviewElements(true);
+    }//GEN-LAST:event_radioReviewTypeRespiteActionPerformed
+
+    private void cmdShowReviewSelectorActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdShowReviewSelectorActionPerformed
+
+        MultiCalDialog dlg = new MultiCalDialog(this.txtReviewDateField, EditorsRegistry.getInstance().getMainWindow(), true);
+        //dlg.setLocation(this.getX() + this.cmdShowReviewSelector.getX(), this.getY() + this.cmdShowReviewSelector.getY());
+        FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
+        dlg.setVisible(true);
+    }//GEN-LAST:event_cmdShowReviewSelectorActionPerformed
+
+    private void radioReviewTypeNoneActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_radioReviewTypeNoneActionPerformed
+        this.enableReviewElements(false);
+    }//GEN-LAST:event_radioReviewTypeNoneActionPerformed
+
+    private void enableReviewElements(boolean enable) {
+        this.cmbReviewAssignee.setEnabled(enable);
+        this.cmbReviewReason.setEnabled(enable);
+        this.txtReviewDateField.setEnabled(enable);
+        this.cmdShowReviewSelector.setEnabled(enable);
+        this.jLabel10.setEnabled(enable);
+        this.jLabel12.setEnabled(enable);
+        if (!enable) {
+            this.cmbReviewAssignee.setSelectedIndex(0);
+            this.cmbReviewReason.setSelectedIndex(0);
+            this.txtReviewDateField.setText(null);
+        }
+    }
+
     /**
      * @param args the command line arguments
      */
@@ -1936,6 +2177,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         });
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.ButtonGroup btGroupReviews;
     private javax.swing.ButtonGroup buttonGroupTextHtml;
     private javax.swing.JToggleButton chkEncryption;
     private javax.swing.JCheckBox chkReadReceipt;
@@ -1943,15 +2185,20 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
     private javax.swing.JComboBox cmbClient;
     private javax.swing.JComboBox cmbOpponent;
     private javax.swing.JComboBox cmbOpponentAtt;
+    private javax.swing.JComboBox cmbReviewAssignee;
+    private javax.swing.JComboBox cmbReviewReason;
     private javax.swing.JComboBox cmbTemplates;
     private javax.swing.JButton cmdAttach;
     private javax.swing.JButton cmdRecipients;
     private javax.swing.JButton cmdRecipientsBcc;
     private javax.swing.JButton cmdRecipientsCc;
     private javax.swing.JButton cmdSend;
+    private javax.swing.JButton cmdShowReviewSelector;
     private javax.swing.JPanel contentPanel;
     private javax.swing.JRadioButton html;
     private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel10;
+    private javax.swing.JLabel jLabel12;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
@@ -1962,6 +2209,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
     private javax.swing.JLabel jLabel9;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
+    private javax.swing.JPanel jPanel4;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JPopupMenu.Separator jSeparator1;
     private javax.swing.JPopupMenu.Separator jSeparator2;
@@ -1976,9 +2224,13 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
     private javax.swing.JPopupMenu popRecipients;
     private javax.swing.JPopupMenu popRecipientsBcc;
     private javax.swing.JPopupMenu popRecipientsCc;
+    private javax.swing.JRadioButton radioReviewTypeFollowUp;
+    private javax.swing.JRadioButton radioReviewTypeNone;
+    private javax.swing.JRadioButton radioReviewTypeRespite;
     private javax.swing.JRadioButton text;
     private javax.swing.JTextField txtBcc;
     private javax.swing.JTextField txtCc;
+    private javax.swing.JTextField txtReviewDateField;
     private javax.swing.JTextField txtSubject;
     private javax.swing.JTextField txtTo;
     // End of variables declaration//GEN-END:variables
