@@ -688,14 +688,14 @@ public class ReviewAddedEvent extends Event {
     }
 
     /**
-     * @return the document
+     * @return the review
      */
     public ArchiveFileReviewsBean getReview() {
         return review;
     }
 
     /**
-     * @param document the document to set
+     * @param review the review to set
      */
     public void setReview(ArchiveFileReviewsBean review) {
         this.review = review;
