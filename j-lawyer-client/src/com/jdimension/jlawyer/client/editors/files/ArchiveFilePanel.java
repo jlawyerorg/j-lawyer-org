@@ -4690,6 +4690,15 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 }
 
                 PDFEncryptionDialog encDlg = new PDFEncryptionDialog(EditorsRegistry.getInstance().getMainWindow(), true, tmpUrl);
+                for (AddressBean abean : this.pnlInvolvedParties.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_CLIENT)) {
+                    encDlg.addRecipient(abean);
+                }
+                for (AddressBean abean : this.pnlInvolvedParties.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT)) {
+                    encDlg.addRecipient(abean);
+                }
+                for (AddressBean abean : this.pnlInvolvedParties.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_OPPONENTATTORNEY)) {
+                    encDlg.addRecipient(abean);
+                }
                 FrameUtils.centerDialog(encDlg, EditorsRegistry.getInstance().getMainWindow());
                 encDlg.setVisible(true);
 

@@ -668,7 +668,9 @@ import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
+import com.jdimension.jlawyer.persistence.AddressBean;
 import java.io.File;
+import java.util.ArrayList;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
@@ -679,35 +681,38 @@ import org.apache.log4j.Logger;
  */
 public class PDFEncryptionDialog extends javax.swing.JDialog {
 
-    private static final Logger log=Logger.getLogger(PDFEncryptionDialog.class.getName());
-    private String pdfSourceFile=null;
-    
+    private static final Logger log = Logger.getLogger(PDFEncryptionDialog.class.getName());
+    private String pdfSourceFile = null;
+
+    private ArrayList<AddressBean> recipientList = new ArrayList<AddressBean>();
+
     /**
      * Creates new form CitySearchDialog
      */
     public PDFEncryptionDialog(java.awt.Frame parent, boolean modal, String pdfSourceFile) {
         super(parent, modal);
-        this.pdfSourceFile=pdfSourceFile;
+        this.pdfSourceFile = pdfSourceFile;
         initComponents();
-        
+        this.cmbRecipient.removeAllItems();
+
         ClientSettings settings = ClientSettings.getInstance();
         String lastDir = settings.getConfiguration("client.archivefiles.encryptedpdf.lastdir", System.getProperty("user.home"));
         if (!lastDir.endsWith(File.separator)) {
             lastDir = lastDir + File.separator;
         }
-        
+
         if (!(new File(lastDir).exists())) {
             lastDir = System.getProperty("user.home");
             if (!lastDir.endsWith(File.separator)) {
                 lastDir = lastDir + File.separator;
             }
         }
-        
+
         this.txtLastDir.setText(lastDir);
-        
-        String lastPwd = settings.getConfiguration("client.archivefiles.encryptedpdf.lastpwd", "");
-        this.txtPassword.setText(lastPwd);
-        
+
+//        String lastPwd = settings.getConfiguration("client.archivefiles.encryptedpdf.lastpwd", "");
+//        this.txtPassword.setText(lastPwd);
+
     }
 
     /**
@@ -726,6 +731,8 @@ public class PDFEncryptionDialog extends javax.swing.JDialog {
         jLabel2 = new javax.swing.JLabel();
         cmdGeneratePassword = new javax.swing.JButton();
         cmdEncrypt = new javax.swing.JButton();
+        jLabel3 = new javax.swing.JLabel();
+        cmbRecipient = new javax.swing.JComboBox<>();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Dokument verschlüsseln");
@@ -774,6 +781,15 @@ public class PDFEncryptionDialog extends javax.swing.JDialog {
             }
         });
 
+        jLabel3.setText("Empfänger:");
+
+        cmbRecipient.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+        cmbRecipient.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmbRecipientActionPerformed(evt);
+            }
+        });
+
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -782,17 +798,22 @@ public class PDFEncryptionDialog extends javax.swing.JDialog {
                 .addContainerGap()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
+                        .add(jLabel2)
+                        .add(52, 52, 52)
+                        .add(txtPassword)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(cmdGeneratePassword))
+                    .add(layout.createSequentialGroup()
                         .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                             .add(jLabel1)
-                            .add(jLabel2))
+                            .add(jLabel3))
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                            .add(txtPassword)
-                            .add(txtLastDir, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 374, Short.MAX_VALUE))
+                            .add(txtLastDir, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 374, Short.MAX_VALUE)
+                            .add(cmbRecipient, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                            .add(cmdBrowse)
-                            .add(org.jdesktop.layout.GroupLayout.TRAILING, cmdGeneratePassword)))
+                        .add(cmdBrowse)
+                        .add(1, 1, 1))
                     .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
                         .add(0, 0, Short.MAX_VALUE)
                         .add(cmdCancel)
@@ -808,16 +829,21 @@ public class PDFEncryptionDialog extends javax.swing.JDialog {
                     .add(jLabel1)
                     .add(cmdBrowse)
                     .add(txtLastDir, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(jLabel3)
+                    .add(cmbRecipient, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(txtPassword, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(jLabel2)
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                        .add(jLabel2)
+                        .add(txtPassword, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                     .add(cmdGeneratePassword))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .add(18, 18, 18)
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(cmdCancel)
-                    .add(cmdEncrypt))
-                .addContainerGap())
+                    .add(cmdEncrypt)
+                    .add(cmdCancel))
+                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         pack();
@@ -842,33 +868,33 @@ public class PDFEncryptionDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_formComponentResized
 
     private void cmdEncryptActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdEncryptActionPerformed
-        
-        if(this.txtPassword.getText().trim().length()<5) {
+
+        if (this.txtPassword.getText().trim().length() < 5) {
             JOptionPane.showMessageDialog(this, "Password zu kurz oder leer!", "Warnung", JOptionPane.WARNING_MESSAGE);
             return;
         }
-        
+
         try {
             ClientSettings.getInstance().setConfiguration("client.archivefiles.encryptedpdf.lastdir", this.txtLastDir.getText());
-            ClientSettings.getInstance().setConfiguration("client.archivefiles.encryptedpdf.lastpwd", this.txtPassword.getText());
+            //ClientSettings.getInstance().setConfiguration("client.archivefiles.encryptedpdf.lastpwd", this.txtPassword.getText());
             PDFEncryptor.encryptPdf(this.pdfSourceFile, this.txtLastDir.getText(), this.txtPassword.getText());
             cmdEncrypt.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png")));
             this.cmdCancel.setEnabled(false);
-            
+
             try {
                 Thread.sleep(2000);
             } catch (Throwable t) {
-                
+
             }
-            
+
             this.setVisible(false);
             this.dispose();
         } catch (Throwable t) {
             log.error("error during pdf encryption", t);
             JOptionPane.showMessageDialog(this, "Password zu kurz oder leer!", "Warnung", JOptionPane.WARNING_MESSAGE);
         }
-        
-        
+
+
     }//GEN-LAST:event_cmdEncryptActionPerformed
 
     private void cmdGeneratePasswordActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdGeneratePasswordActionPerformed
@@ -880,6 +906,25 @@ public class PDFEncryptionDialog extends javax.swing.JDialog {
         String password = passwordGenerator.generate(8);
         this.txtPassword.setText(password);
     }//GEN-LAST:event_cmdGeneratePasswordActionPerformed
+
+    public void addRecipient(AddressBean recipient) {
+        this.cmbRecipient.addItem(recipient.toDisplayName());
+        this.recipientList.add(recipient);
+    }
+
+    private void cmbRecipientActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbRecipientActionPerformed
+        
+        if(this.recipientList.size()==0)
+            return;
+        
+        if (this.cmbRecipient.getSelectedIndex() > -1) {
+
+            this.txtPassword.setText(this.recipientList.get(this.cmbRecipient.getSelectedIndex()).getEncryptionPwd());
+
+        } else {
+            this.txtPassword.setText("");
+        }
+    }//GEN-LAST:event_cmbRecipientActionPerformed
 
     /**
      * @param args the command line arguments
@@ -893,14 +938,16 @@ public class PDFEncryptionDialog extends javax.swing.JDialog {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JComboBox<String> cmbRecipient;
     private javax.swing.JButton cmdBrowse;
     private javax.swing.JButton cmdCancel;
     private javax.swing.JButton cmdEncrypt;
     private javax.swing.JButton cmdGeneratePassword;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel jLabel3;
     private javax.swing.JTextField txtLastDir;
     private javax.swing.JTextField txtPassword;
     // End of variables declaration//GEN-END:variables
-    
+
 }
