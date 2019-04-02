@@ -784,9 +784,9 @@ public class SipgateInstance {
                 try {
                     long waitTime = (interval * 1000) - ((interval * 1000) - (current - lastCall.longValue()));
                     if (waitTime < 1) {
-                        waitTime = 1;
+                        waitTime = 500;
                     }
-                    Thread.sleep(current);
+                    Thread.sleep(waitTime);
                 } catch (Throwable t) {
 //                    log.error(t);
                 }
