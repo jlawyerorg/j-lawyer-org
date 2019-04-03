@@ -666,12 +666,15 @@ package com.jdimension.jlawyer.fax;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
+import org.apache.log4j.Logger;
 
 /**
  *
  * @author jens
  */
 public class SipgateInstance {
+    
+    private static final Logger log = Logger.getLogger(SipgateInstance.class.getName());
 
     private SipgateAPI api = null;
     private static SipgateInstance instance = null;
@@ -782,10 +785,14 @@ public class SipgateInstance {
             long current = System.currentTimeMillis();
             if (interval > ((current - lastCall.longValue()) / 1000)) {
                 try {
-                    long waitTime = (interval * 1000) - ((interval * 1000) - (current - lastCall.longValue()));
-                    if (waitTime < 1) {
-                        waitTime = 500;
-                    }
+                    long waitTime = ((interval * 1000) - (current - lastCall.longValue()));
+                    if(waitTime<1000l)
+                        waitTime=1000l;
+                    if(waitTime>3500l)
+                        waitTime=3500l;
+                   
+                    log.info("delaying GetSessionStatus by " + waitTime + "ms");
+                    
                     Thread.sleep(waitTime);
                 } catch (Throwable t) {
 //                    log.error(t);
