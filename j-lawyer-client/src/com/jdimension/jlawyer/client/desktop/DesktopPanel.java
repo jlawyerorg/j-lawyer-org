@@ -819,6 +819,9 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
 
             TimerTask tagsTask2 = new UpdateAddressTagsTask(this, (EditAddressPanel) EditorsRegistry.getInstance().getEditor(EditAddressPanel.class.getName()));
             timer.schedule(tagsTask2, 5500, 60000);
+            
+            TimerTask tagsTask3 = new UpdateDocumentTagsTask(this, (EditArchiveFilePanel) EditorsRegistry.getInstance().getEditor(EditArchiveFilePanel.class.getName()));
+            timer.schedule(tagsTask3, 6500, 60000);
         } catch (Throwable t) {
             log.error("Could not set up timer task for automatic tag updates", t);
         }

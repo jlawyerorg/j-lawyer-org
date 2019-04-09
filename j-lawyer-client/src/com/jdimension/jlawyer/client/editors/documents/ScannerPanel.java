@@ -670,6 +670,7 @@ import com.jdimension.jlawyer.client.editors.ThemeableEditor;
 import com.jdimension.jlawyer.client.editors.documents.viewer.DocumentViewerFactory;
 import com.jdimension.jlawyer.client.editors.files.DateTimeStringComparator;
 import com.jdimension.jlawyer.client.events.AllCaseTagsEvent;
+import com.jdimension.jlawyer.client.events.AllDocumentTagsEvent;
 import com.jdimension.jlawyer.client.events.Event;
 import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.events.EventConsumer;
@@ -802,6 +803,25 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
                 this.cmbCaseTag.setSelectedItem(lastTag);
             else
                 this.cmbCaseTag.setSelectedItem("");
+        } else if (e instanceof AllDocumentTagsEvent) {
+            DefaultComboBoxModel dm=new DefaultComboBoxModel();
+            dm.addElement("");
+            ArrayList<String> allTags=new ArrayList<String>();
+            for(AppOptionGroupBean tag: ((AllDocumentTagsEvent) e).getTagDtos()) {
+                //dm.addElement(tag.getValue());
+                allTags.add(tag.getValue());
+            }
+            Collections.sort(allTags);
+            for(String s: allTags) {
+                dm.addElement(s);
+            }
+            this.cmbDocumentTag.setModel(dm);
+            ClientSettings settings=ClientSettings.getInstance();
+            String lastTag=settings.getConfiguration(ClientSettings.CONF_SCANS_LASTDOCUMENTTAG, "");
+            if(allTags.contains(lastTag))
+                this.cmbDocumentTag.setSelectedItem(lastTag);
+            else
+                this.cmbDocumentTag.setSelectedItem("");
         }
     }
     
@@ -827,6 +847,13 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
             this.chkCaseTagging.setSelected(true);
         }
         
+        temp = settings.getConfiguration(ClientSettings.CONF_SCANS_DOCUMENTTAGGINGENABLED, "false");
+        taggingEnabled = false;
+        if ("true".equalsIgnoreCase(temp)) {
+            taggingEnabled = true;
+            this.chkDocumentTagging.setSelected(true);
+        }
+        
         temp = settings.getConfiguration(ClientSettings.CONF_SCANS_DELETEENABLED, "false");
         boolean deleteEnabled = true;
         if ("false".equalsIgnoreCase(temp)) {
@@ -839,6 +866,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
         EventBroker eb = EventBroker.getInstance();
         eb.subscribeConsumer(this, Event.TYPE_SCANNERSTATUS);
         eb.subscribeConsumer(this, Event.TYPE_ALLCASETAGS);
+        eb.subscribeConsumer(this, Event.TYPE_ALLDOCUMENTTAGS);
         
         DefaultTableCellRenderer r = new DefaultTableCellRenderer() {
             public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
@@ -930,7 +958,6 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
      */
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
-        bindingGroup = new org.jdesktop.beansbinding.BindingGroup();
 
         jLabel18 = new javax.swing.JLabel();
         lblPanelTitle = new javax.swing.JLabel();
@@ -947,6 +974,8 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
         chkCaseTagging = new javax.swing.JCheckBox();
         cmbCaseTag = new javax.swing.JComboBox<>();
         chkDeleteAfterAction = new javax.swing.JCheckBox();
+        chkDocumentTagging = new javax.swing.JCheckBox();
+        cmbDocumentTag = new javax.swing.JComboBox<>();
 
         jLabel18.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder_documents_big.png"))); // NOI18N
 
@@ -1043,9 +1072,6 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
             }
         });
 
-        org.jdesktop.beansbinding.Binding binding = org.jdesktop.beansbinding.Bindings.createAutoBinding(org.jdesktop.beansbinding.AutoBinding.UpdateStrategy.READ_WRITE, chkCaseTagging, org.jdesktop.beansbinding.ELProperty.create("${selected}"), cmbCaseTag, org.jdesktop.beansbinding.BeanProperty.create("enabled"));
-        bindingGroup.addBinding(binding);
-
         cmbCaseTag.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmbCaseTagActionPerformed(evt);
@@ -1061,6 +1087,20 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
             }
         });
 
+        chkDocumentTagging.setText("Zieldokument markieren:");
+        chkDocumentTagging.setActionCommand("Zielakte markieren:");
+        chkDocumentTagging.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                chkDocumentTaggingActionPerformed(evt);
+            }
+        });
+
+        cmbDocumentTag.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmbDocumentTagActionPerformed(evt);
+            }
+        });
+
         org.jdesktop.layout.GroupLayout jPanel2Layout = new org.jdesktop.layout.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
@@ -1073,6 +1113,10 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
                 .add(chkCaseTagging)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(cmbCaseTag, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                .add(chkDocumentTagging)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(cmbDocumentTag, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         jPanel2Layout.setVerticalGroup(
@@ -1082,7 +1126,10 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
                 .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(chkCaseTagging)
                     .add(cmbCaseTag, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(chkDeleteAfterAction))
+                    .add(chkDeleteAfterAction)
+                    .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                        .add(chkDocumentTagging)
+                        .add(cmbDocumentTag, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 633, Short.MAX_VALUE))
         );
@@ -1117,8 +1164,6 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
                 .add(splitMain, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 715, Short.MAX_VALUE)
                 .addContainerGap())
         );
-
-        bindingGroup.bind();
     }// </editor-fold>//GEN-END:initComponents
 
     private void cmdRefreshActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRefreshActionPerformed
@@ -1347,6 +1392,11 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
                         a.setCaseTag(this.cmbCaseTag.getSelectedItem().toString());
                     }
                 }
+                if (this.chkDocumentTagging.isSelected()) {
+                    if (!"".equals(this.cmbDocumentTag.getSelectedItem().toString())) {
+                        a.setDocumentTag(this.cmbDocumentTag.getSelectedItem().toString());
+                    }
+                }
                 a.execute();
 
                 // select first row in table, but only when delete is enabled
@@ -1387,10 +1437,26 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
         settings.setConfiguration(ClientSettings.CONF_SCANS_DELETEENABLED, "" + delete);
     }//GEN-LAST:event_chkDeleteAfterActionActionPerformed
 
+    private void chkDocumentTaggingActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkDocumentTaggingActionPerformed
+        ClientSettings settings = ClientSettings.getInstance();
+
+        boolean tagging = this.chkDocumentTagging.isSelected();
+        settings.setConfiguration(ClientSettings.CONF_SCANS_DOCUMENTTAGGINGENABLED, "" + tagging);
+    }//GEN-LAST:event_chkDocumentTaggingActionPerformed
+
+    private void cmbDocumentTagActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbDocumentTagActionPerformed
+        ClientSettings settings = ClientSettings.getInstance();
+
+        String lastTag = this.cmbDocumentTag.getSelectedItem().toString();
+        settings.setConfiguration(ClientSettings.CONF_SCANS_LASTDOCUMENTTAG, lastTag);
+    }//GEN-LAST:event_cmbDocumentTagActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JCheckBox chkCaseTagging;
     private javax.swing.JCheckBox chkDeleteAfterAction;
+    private javax.swing.JCheckBox chkDocumentTagging;
     private javax.swing.JComboBox<String> cmbCaseTag;
+    private javax.swing.JComboBox<String> cmbDocumentTag;
     private javax.swing.JButton cmdRefresh;
     private javax.swing.JLabel jLabel18;
     private javax.swing.JPanel jPanel1;
@@ -1403,6 +1469,5 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
     private javax.swing.JSplitPane splitTop;
     private javax.swing.JTable tblActions;
     private javax.swing.JTable tblDirContent;
-    private org.jdesktop.beansbinding.BindingGroup bindingGroup;
     // End of variables declaration//GEN-END:variables
 }

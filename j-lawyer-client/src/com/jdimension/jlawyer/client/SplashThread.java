@@ -769,6 +769,7 @@ public class SplashThread implements Runnable {
         AppOptionGroupBean[] subjectFieldDtos = null;
         AppOptionGroupBean[] afTagDtos = null;
         AppOptionGroupBean[] adrTagDtos = null;
+        AppOptionGroupBean[] docTagDtos = null;
         AppOptionGroupBean[] titles = null;
         AppUserBean[] lawyerUsers = null;
         AppUserBean[] assistUsers = null;
@@ -816,6 +817,7 @@ public class SplashThread implements Runnable {
             updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.option.8"), true);
             afTagDtos = mgmt.getOptionGroup(OptionConstants.OPTIONGROUP_ARCHIVEFILETAGS);
             adrTagDtos = mgmt.getOptionGroup(OptionConstants.OPTIONGROUP_ADDRESSTAGS);
+            docTagDtos = mgmt.getOptionGroup(OptionConstants.OPTIONGROUP_DOCUMENTTAGS);
 
             this.updateProgress(false, 9, 9, "");
             updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.option.9"), true);
@@ -834,6 +836,7 @@ public class SplashThread implements Runnable {
         settings.setSubjectFieldDtos(subjectFieldDtos);
         settings.setArchiveFileTagDtos(afTagDtos);
         settings.setAddressTagDtos(adrTagDtos);
+        settings.setDocumentTagDtos(docTagDtos);
         UserSettings.getInstance().setLawyerUsers(lawyerUsers);
         UserSettings.getInstance().setAssistantUsers(assistUsers);
         UserSettings.getInstance().setAllUsers(allUsers);

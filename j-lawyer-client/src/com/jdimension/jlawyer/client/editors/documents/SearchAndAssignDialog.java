@@ -705,7 +705,9 @@ public class SearchAndAssignDialog extends javax.swing.JDialog {
 
         ClientSettings s = ClientSettings.getInstance();
         List<String> tags = s.getArchiveFileTagsInUse();
+        List<String> documentTags = s.getDocumentTagsInUse();
         TagUtils.populateTags(tags, cmdTagFilter, popTagFilter);
+        TagUtils.populateTags(documentTags, cmdDocumentTagFilter, popDocumentTagFilter);
 
         ComponentUtils.restoreDialogSize(this);
 
@@ -741,6 +743,7 @@ public class SearchAndAssignDialog extends javax.swing.JDialog {
     private void initComponents() {
 
         popTagFilter = new javax.swing.JPopupMenu();
+        popDocumentTagFilter = new javax.swing.JPopupMenu();
         jLabel1 = new javax.swing.JLabel();
         txtSearchString = new javax.swing.JTextField();
         cmdQuickSearch = new javax.swing.JButton();
@@ -749,6 +752,7 @@ public class SearchAndAssignDialog extends javax.swing.JDialog {
         cmdCancel = new javax.swing.JButton();
         cmdUseSelection = new javax.swing.JButton();
         cmdTagFilter = new javax.swing.JButton();
+        cmdDocumentTagFilter = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Akte suchen");
@@ -821,6 +825,13 @@ public class SearchAndAssignDialog extends javax.swing.JDialog {
             }
         });
 
+        cmdDocumentTagFilter.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/favorites.png"))); // NOI18N
+        cmdDocumentTagFilter.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                cmdDocumentTagFilterMousePressed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -835,7 +846,9 @@ public class SearchAndAssignDialog extends javax.swing.JDialog {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cmdQuickSearch)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(cmdTagFilter))
+                        .addComponent(cmdTagFilter)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdDocumentTagFilter))
                     .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 672, Short.MAX_VALUE)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addGap(0, 0, Short.MAX_VALUE)
@@ -853,7 +866,8 @@ public class SearchAndAssignDialog extends javax.swing.JDialog {
                     .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                         .addComponent(jLabel1)
                         .addComponent(txtSearchString, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(cmdTagFilter))
+                    .addComponent(cmdTagFilter)
+                    .addComponent(cmdDocumentTagFilter))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 179, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -877,7 +891,7 @@ public class SearchAndAssignDialog extends javax.swing.JDialog {
         ThreadUtils.setWaitCursor(this);
         EditorsRegistry.getInstance().updateStatus("Suche Akten...");
         
-        new Thread(new QuickArchiveFileSearchThread(this, this.txtSearchString.getText(), true, TagUtils.getSelectedTags(popTagFilter), this.tblResults)).start();
+        new Thread(new QuickArchiveFileSearchThread(this, this.txtSearchString.getText(), true, TagUtils.getSelectedTags(popTagFilter), TagUtils.getSelectedTags(popDocumentTagFilter), this.tblResults)).start();
 
     }//GEN-LAST:event_cmdQuickSearchActionPerformed
 
@@ -912,6 +926,10 @@ public class SearchAndAssignDialog extends javax.swing.JDialog {
     private void cmdTagFilterMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdTagFilterMousePressed
         this.popTagFilter.show(this.cmdTagFilter, evt.getX(), evt.getY());
     }//GEN-LAST:event_cmdTagFilterMousePressed
+
+    private void cmdDocumentTagFilterMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdDocumentTagFilterMousePressed
+        this.popDocumentTagFilter.show(this.cmdDocumentTagFilter, evt.getX(), evt.getY());
+    }//GEN-LAST:event_cmdDocumentTagFilterMousePressed
 
     /**
      * @param args the command line arguments
@@ -964,11 +982,13 @@ public class SearchAndAssignDialog extends javax.swing.JDialog {
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton cmdCancel;
+    private javax.swing.JButton cmdDocumentTagFilter;
     private javax.swing.JButton cmdQuickSearch;
     private javax.swing.JButton cmdTagFilter;
     private javax.swing.JButton cmdUseSelection;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JPopupMenu popDocumentTagFilter;
     private javax.swing.JPopupMenu popTagFilter;
     private javax.swing.JTable tblResults;
     private javax.swing.JTextField txtSearchString;

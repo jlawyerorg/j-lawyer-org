@@ -740,12 +740,18 @@ public interface ArchiveFileServiceRemote {
     ArchiveFileHistoryBean addHistory(String archiveFileId, ArchiveFileHistoryBean history);
 
     void setTag(String archiveFileId, ArchiveFileTagsBean tag, boolean active) throws Exception;
+    
+    void setDocumentTag(String documentId, DocumentTagsBean tag, boolean active) throws Exception;
 
     Collection<ArchiveFileTagsBean> getTags(String archiveFileId);
+    
+    Collection<DocumentTagsBean> getDocumentTags(String documentId);
 
     List<String> searchTagsInUse();
+    
+    List<String> searchDocumentTagsInUse();
 
-    ArchiveFileBean[] searchEnhanced(String query, boolean withArchive, String[] tagName);
+    ArchiveFileBean[] searchEnhanced(String query, boolean withArchive, String[] tagName, String[] documentTagName);
 
     String getDocumentPreview(String id) throws Exception;
 
@@ -771,7 +777,7 @@ public interface ArchiveFileServiceRemote {
     
     boolean setDocumentFavorite(String id, boolean favorite) throws Exception;
 
-    Hashtable<String,ArrayList<String>> searchTagsEnhanced(String query, boolean withArchive, String[] tagName);
+    Hashtable<String,ArrayList<String>> searchTagsEnhanced(String query, boolean withArchive, String[] tagName, String[] documentTagName);
 
     ArchiveFileDocumentsBean addDocumentFromTemplate(String archiveFileId, String fileName, GenericNode templateFolder, String templateName, Hashtable placeHolderValues, String dictateSign) throws Exception;
 

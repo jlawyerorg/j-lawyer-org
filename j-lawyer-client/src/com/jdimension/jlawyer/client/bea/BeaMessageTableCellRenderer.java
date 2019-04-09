@@ -694,11 +694,13 @@ public class BeaMessageTableCellRenderer extends DefaultTableCellRenderer {
             returnRenderer=super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
             ((Component)returnRenderer).setFont(((Component)returnRenderer).getFont().deriveFont(Font.PLAIN));
             ((JLabel)((Component)returnRenderer)).setForeground(Color.BLACK);
-            ((JLabel)((Component)returnRenderer)).setToolTipText("");
+            ((JLabel)((Component)returnRenderer)).setToolTipText(null);
             ((JLabel)((Component)returnRenderer)).setIcon(null);
             if(column<4) {
                 ((JLabel)((Component)returnRenderer)).setText("");
-                ((JLabel)((Component)returnRenderer)).setHorizontalAlignment(JLabel.RIGHT);
+                ((JLabel)((Component)returnRenderer)).setHorizontalAlignment(JLabel.CENTER);
+            } else {
+                ((JLabel)((Component)returnRenderer)).setHorizontalAlignment(JLabel.LEFT);
             }
             
             

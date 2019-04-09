@@ -682,6 +682,7 @@ public abstract class ScanAction {
     protected JTable actionsTable=null;
     protected JTable filesTable=null;
     private String caseTag=null;
+    private String documentTag=null;
     
     public ScanAction(JTable actionsTable, JTable filesTable) {
         this.actionsTable=actionsTable;
@@ -755,6 +756,20 @@ public abstract class ScanAction {
      */
     public void setCaseTag(String caseTag) {
         this.caseTag = caseTag;
+    }
+
+    /**
+     * @return the documentTag
+     */
+    public String getDocumentTag() {
+        return documentTag;
+    }
+
+    /**
+     * @param documentTag the documentTag to set
+     */
+    public void setDocumentTag(String documentTag) {
+        this.documentTag = documentTag;
     }
     
 }

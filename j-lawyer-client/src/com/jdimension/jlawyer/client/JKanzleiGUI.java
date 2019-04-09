@@ -666,6 +666,7 @@ package com.jdimension.jlawyer.client;
 import com.jdimension.jlawyer.client.configuration.*;
 import com.jdimension.jlawyer.client.desktop.UpdateAddressTagsTask;
 import com.jdimension.jlawyer.client.desktop.UpdateArchiveFileTagsTask;
+import com.jdimension.jlawyer.client.desktop.UpdateDocumentTagsTask;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.ModuleTreeCellRenderer;
 import com.jdimension.jlawyer.client.editors.addresses.EditAddressPanel;
@@ -993,6 +994,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuArchiveFileOptionsReviewReasons = new javax.swing.JMenuItem();
         mnuArchiveFileOptionsSubjectFields = new javax.swing.JMenuItem();
         mnuArchiveFileTags = new javax.swing.JMenuItem();
+        mnuDocumentTags = new javax.swing.JMenuItem();
         mnuArchiveFileCustomFields = new javax.swing.JMenuItem();
         mnuArchiveFileCustomFieldsInvolvements = new javax.swing.JMenuItem();
         mnuArchiveFileOptionsCaseNumbering = new javax.swing.JMenuItem();
@@ -1265,13 +1267,22 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuArchiveFileOptions.add(mnuArchiveFileOptionsSubjectFields);
 
         mnuArchiveFileTags.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/favorites.png"))); // NOI18N
-        mnuArchiveFileTags.setText(bundle.getString("menu.settings.cases.tags")); // NOI18N
+        mnuArchiveFileTags.setText("Akten-Tags");
         mnuArchiveFileTags.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 mnuArchiveFileTagsActionPerformed(evt);
             }
         });
         mnuArchiveFileOptions.add(mnuArchiveFileTags);
+
+        mnuDocumentTags.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/favorites.png"))); // NOI18N
+        mnuDocumentTags.setText("Dokumenten-Tags");
+        mnuDocumentTags.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuDocumentTagsActionPerformed(evt);
+            }
+        });
+        mnuArchiveFileOptions.add(mnuDocumentTags);
 
         mnuArchiveFileCustomFields.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/kate.png"))); // NOI18N
         mnuArchiveFileCustomFields.setText(bundle.getString("menu.settings.cases.customfields")); // NOI18N
@@ -2096,6 +2107,36 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         }
     }//GEN-LAST:event_mnuArchiveFileCustomFieldsInvolvementsActionPerformed
 
+    private void mnuDocumentTagsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuDocumentTagsActionPerformed
+        ClientSettings settings = ClientSettings.getInstance();
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            boolean currentlyAdmin = locator.lookupSecurityServiceRemote().isAdmin();
+            if (currentlyAdmin) {
+                OptionGroupConfigurationDialog dlg = new OptionGroupConfigurationDialog(this, true);
+                dlg.setTitle("Dokumenten-Tags");
+                dlg.setOptionGroup(OptionConstants.OPTIONGROUP_DOCUMENTTAGS);
+                FrameUtils.centerDialog(dlg, this);
+                dlg.setVisible(true);
+                
+                try {
+                    Timer timer=new Timer();
+                    TimerTask tagsTask = new UpdateDocumentTagsTask(this, (EditArchiveFilePanel) EditorsRegistry.getInstance().getEditor(EditArchiveFilePanel.class.getName()));
+                    timer.schedule(tagsTask, 500);
+
+                } catch (Throwable t) {
+                    log.error("Could not set up timer task for tag updates", t);
+                }
+
+            } else {
+                JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.adminrequired"), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.hint"), JOptionPane.INFORMATION_MESSAGE);
+            }
+        } catch (Exception ex) {
+            log.error(ex);
+            JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("error.launchsettings") + ex.getMessage(), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.error"), JOptionPane.INFORMATION_MESSAGE);
+        }
+    }//GEN-LAST:event_mnuDocumentTagsActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -2146,6 +2187,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     private javax.swing.JMenuItem mnuCustomLauncherOptions;
     private javax.swing.JMenuItem mnuDocumentMonitor;
     private javax.swing.JMenu mnuDocumentOptions;
+    private javax.swing.JMenuItem mnuDocumentTags;
     private javax.swing.JMenuItem mnuDrebisSettings;
     private javax.swing.JMenuItem mnuExit;
     private javax.swing.JMenu mnuFile;

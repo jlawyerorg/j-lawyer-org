@@ -717,6 +717,7 @@ import com.jdimension.jlawyer.services.AddressServiceRemote;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.ui.tagging.ArchiveFileTagActionListener;
+import com.jdimension.jlawyer.ui.tagging.DocumentTagActionListener;
 import com.jdimension.jlawyer.ui.tagging.TagToggleButton;
 import com.jdimension.jlawyer.ui.tagging.WrapLayout;
 import java.awt.BorderLayout;
@@ -804,6 +805,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         //this.tagPanel.setPreferredSize(new Dimension(this.getWidth()-100, this.tagPanel.getHeight()));
         this.tagPanel.setLayout(new WrapLayout());
+        this.documentTagPanel.setLayout(new WrapLayout());
 
         //GridLayout layout = new GridLayout(1, 1);
         BoxLayout layout = new javax.swing.BoxLayout(this.pnlInvolvedParties, javax.swing.BoxLayout.Y_AXIS);
@@ -1031,6 +1033,65 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         if (!evt.getValueIsAdjusting()) {
             this.updateDocumentPreview();
         }
+        
+        try {
+            if (this.tblDocuments.getSelectedRows().length == 1) {
+                this.documentTagPanel.removeAll();
+                this.documentTagPanel.revalidate();
+                ArchiveFileDocumentsBean value = null;
+                for (int row : this.tblDocuments.getSelectedRows()) {
+                    value = (ArchiveFileDocumentsBean) this.tblDocuments.getValueAt(row, 0);
+
+                    if (value == null) {
+                        return;
+                    }
+                }
+
+                ClientSettings settings = ClientSettings.getInstance();
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
+                Collection<DocumentTagsBean> tags = remote.getDocumentTags(value.getId());
+
+                ArrayList<String> activeTags = new ArrayList<String>();
+                this.documentTagPanel.removeAll();
+                this.documentTagPanel.revalidate();
+                ArrayList<String> sortedTags = new ArrayList<String>();
+                for (Object t : tags) {
+                    DocumentTagsBean tag = (DocumentTagsBean) t;
+                    activeTags.add(tag.getTagName());
+                    sortedTags.add(tag.getTagName());
+                }
+
+                AppOptionGroupBean[] tagOptions = settings.getDocumentTagDtos();
+                for (AppOptionGroupBean aog : tagOptions) {
+
+                    if (!sortedTags.contains(aog.getValue())) {
+                        sortedTags.add(aog.getValue());
+                    }
+                }
+
+                StringUtils.sortIgnoreCase(sortedTags);
+
+                for (String tagString : sortedTags) {
+                    TagToggleButton tb = new TagToggleButton(tagString);
+                    if (activeTags.contains(tagString)) {
+                        tb.setSelected(true);
+                    } else {
+                        tb.setSelected(false);
+                    }
+                    tb.setEnabled(this.cmdSave.isEnabled());
+                    tb.addActionListener(new DocumentTagActionListener(value.getId(), remote, this));
+                    //ThreadUtils.addComponent(documentTagPanel, tb);
+                    this.documentTagPanel.add(tb);
+                }
+                this.documentTagPanel.revalidate();
+            } else {
+                this.documentTagPanel.removeAll();
+                this.documentTagPanel.revalidate();
+            }
+        } catch (Throwable t) {
+            log.error(t);
+        }
 
     }
 
@@ -1164,6 +1225,10 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             c.setEnabled(!readOnly);
         }
 
+        for (Component c : this.documentTagPanel.getComponents()) {
+            c.setEnabled(!readOnly);
+        }
+
         this.txtCustom1.setEnabled(!readOnly);
         this.txtCustom2.setEnabled(!readOnly);
         this.taCustom3.setEnabled(!readOnly);
@@ -1234,7 +1299,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         ProgressIndicator pi = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
         pi.setShowCancelButton(false);
-        ArchiveFileDetailLoadAction a = new ArchiveFileDetailLoadAction(pi, this, dto.getId(), this.dto, this.tblHistory, this.tblDocuments, this.pnlInvolvedParties, this.tblReviewReasons, this.tagPanel, !this.cmdSave.isEnabled(), BeaAccess.isBeaEnabled(), selectDocumentWithFileName, this.lblArchivedSince, dto.getArchivedBoolean(), this.popDocumentFavorites);
+        ArchiveFileDetailLoadAction a = new ArchiveFileDetailLoadAction(pi, this, dto.getId(), this.dto, this.tblHistory, this.tblDocuments, this.pnlInvolvedParties, this.tblReviewReasons, this.tagPanel, this.documentTagPanel, !this.cmdSave.isEnabled(), BeaAccess.isBeaEnabled(), selectDocumentWithFileName, this.lblArchivedSince, dto.getArchivedBoolean(), this.popDocumentFavorites);
 
         a.start();
 
@@ -1315,6 +1380,26 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
 
         ThreadUtils.repaintComponent(tagPanel);
+
+        this.documentTagPanel.removeAll();
+        ArrayList<String> sortedDocumentTags = new ArrayList<String>();
+        AppOptionGroupBean[] documentTagOptions = ClientSettings.getInstance().getDocumentTagDtos();
+        for (AppOptionGroupBean aog : documentTagOptions) {
+            if (!sortedDocumentTags.contains(aog.getValue())) {
+                sortedDocumentTags.add(aog.getValue());
+            }
+        }
+        StringUtils.sortIgnoreCase(sortedDocumentTags);
+
+        for (String tagString : sortedDocumentTags) {
+            TagToggleButton tb = new TagToggleButton(tagString);
+            tb.setSelected(false);
+            tb.setEnabled(this.cmdSave.isEnabled());
+            tb.addActionListener(new ArchiveFileTagActionListener(null, null, this));
+            ThreadUtils.addComponent(documentTagPanel, tb);
+        }
+
+        ThreadUtils.repaintComponent(documentTagPanel);
 
     }
 
@@ -1527,6 +1612,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         lblDocumentHits = new javax.swing.JLabel();
         cmdClearSearch = new javax.swing.JButton();
         cmdAddNote = new javax.swing.JButton();
+        jPanel4 = new javax.swing.JPanel();
+        jScrollPane2 = new javax.swing.JScrollPane();
+        documentTagPanel = new javax.swing.JPanel();
         tabClaims = new javax.swing.JPanel();
         jPanel8 = new javax.swing.JPanel();
         jLabel4 = new javax.swing.JLabel();
@@ -1856,7 +1944,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
         });
 
-        jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder("Tags"));
+        jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder("Akten-Tags"));
         jPanel2.setLayout(new java.awt.BorderLayout());
 
         jScrollPane1.setBorder(null);
@@ -2201,15 +2289,35 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
         });
 
+        jPanel4.setBorder(javax.swing.BorderFactory.createTitledBorder("Dokument-Tags"));
+        jPanel4.setLayout(new java.awt.BorderLayout());
+
+        jScrollPane2.setBorder(null);
+
+        org.jdesktop.layout.GroupLayout documentTagPanelLayout = new org.jdesktop.layout.GroupLayout(documentTagPanel);
+        documentTagPanel.setLayout(documentTagPanelLayout);
+        documentTagPanelLayout.setHorizontalGroup(
+            documentTagPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(0, 0, Short.MAX_VALUE)
+        );
+        documentTagPanelLayout.setVerticalGroup(
+            documentTagPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(0, 0, Short.MAX_VALUE)
+        );
+
+        jScrollPane2.setViewportView(documentTagPanel);
+
+        jPanel4.add(jScrollPane2, java.awt.BorderLayout.CENTER);
+
         org.jdesktop.layout.GroupLayout jPanel7Layout = new org.jdesktop.layout.GroupLayout(jPanel7);
         jPanel7.setLayout(jPanel7Layout);
         jPanel7Layout.setHorizontalGroup(
             jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel7Layout.createSequentialGroup()
+            .add(jPanel7Layout.createSequentialGroup()
                 .addContainerGap()
-                .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
-                    .add(splitDocuments, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 911, Short.MAX_VALUE)
-                    .add(jPanel7Layout.createSequentialGroup()
+                .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, splitDocuments, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 911, Short.MAX_VALUE)
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel7Layout.createSequentialGroup()
                         .add(jLabel15)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(txtSearchDocumentNames, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 300, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
@@ -2222,7 +2330,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(cmdUploadDocument)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(cmdAddNote)))
+                        .add(cmdAddNote))
+                    .add(jPanel4, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
         jPanel7Layout.setVerticalGroup(
@@ -2238,9 +2347,13 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                         .add(cmdClearSearch)
                         .add(cmdAddNote)))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(splitDocuments, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 568, Short.MAX_VALUE)
+                .add(splitDocuments, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 401, Short.MAX_VALUE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel4, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 161, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
+
+        jPanel4.getAccessibleContext().setAccessibleName("Dokument-Tags");
 
         org.jdesktop.layout.GroupLayout tabDocumentsLayout = new org.jdesktop.layout.GroupLayout(tabDocuments);
         tabDocuments.setLayout(tabDocumentsLayout);
@@ -3358,6 +3471,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             evt.consume();
             //this.updateDocumentPreview();
         }
+
+        
+
     }//GEN-LAST:event_tblDocumentsMouseClicked
 
     private void clearDocumentPreview(String newText) {
@@ -5184,6 +5300,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JButton cmdShowReviewSelector;
     protected javax.swing.JButton cmdToEditMode;
     private javax.swing.JButton cmdUploadDocument;
+    private javax.swing.JPanel documentTagPanel;
     private javax.swing.JPopupMenu documentsPopup;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
@@ -5207,10 +5324,12 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JPanel jPanel13;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
+    private javax.swing.JPanel jPanel4;
     private javax.swing.JPanel jPanel7;
     private javax.swing.JPanel jPanel8;
     private javax.swing.JPanel jPanel9;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane4;
     private javax.swing.JScrollPane jScrollPane6;
     private javax.swing.JScrollPane jScrollPane7;

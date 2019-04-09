@@ -693,16 +693,18 @@ public class QuickArchiveFileSearchThread implements Runnable {
     private JTable target;
     private boolean withArchive;
     private String[] tag;
+    private String[] documentTag;
 
     /**
      * Creates a new instance of QuickArchiveFileSearchThread
      */
-    public QuickArchiveFileSearchThread(Component owner, String query, boolean withArchive, String[] tag, JTable target) {
+    public QuickArchiveFileSearchThread(Component owner, String query, boolean withArchive, String[] tag, String[] documentTag, JTable target) {
         this.query = query;
         this.owner = owner;
         this.target = target;
         this.withArchive = withArchive;
         this.tag = tag;
+        this.documentTag=documentTag;
     }
 
     public void run() {
@@ -714,8 +716,8 @@ public class QuickArchiveFileSearchThread implements Runnable {
 
             //ArchiveFileServiceRemoteHome home = (ArchiveFileServiceRemoteHome)locator.getRemoteHome("ejb/ArchiveFileServiceBean", ArchiveFileServiceRemoteHome.class);
             ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
-            dtos = fileService.searchEnhanced(query, withArchive, tag);
-            tags = fileService.searchTagsEnhanced(query, withArchive, tag);
+            dtos = fileService.searchEnhanced(query, withArchive, tag, documentTag);
+            tags = fileService.searchTagsEnhanced(query, withArchive, tag, documentTag);
             //fileService.remove();
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);

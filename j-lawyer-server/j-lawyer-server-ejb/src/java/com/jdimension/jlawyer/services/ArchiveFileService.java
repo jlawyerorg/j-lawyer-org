@@ -721,6 +721,8 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     @EJB
     private ArchiveFileTagsBeanFacadeLocal archiveFileTagsFacade;
     @EJB
+    private DocumentTagsBeanFacadeLocal documentTagsFacade;
+    @EJB
     private ArchiveFileDocumentsBeanFacadeLocal archiveFileDocumentsFacade;
     @EJB
     private ArchiveFileHistoryBeanFacadeLocal archiveFileHistoryFacade;
@@ -2001,17 +2003,52 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 tag.setId(tagId);
                 tag.setArchiveFileKey(aFile);
                 this.archiveFileTagsFacade.create(tag);
-                historyText = "Tag gesetzt: " + tag.getTagName();
+                historyText = "Akten-Tag gesetzt: " + tag.getTagName();
             }
         } else if (check.size() > 0) {
             ArchiveFileTagsBean remove = (ArchiveFileTagsBean) check.get(0);
             this.archiveFileTagsFacade.remove(remove);
-            historyText = "Tag entfernt: " + tag.getTagName();
+            historyText = "Akten-Tag entfernt: " + tag.getTagName();
         }
 
         ArchiveFileHistoryBean newHistEntry = new ArchiveFileHistoryBean();
         newHistEntry.setId(idGen.getID().toString());
         newHistEntry.setArchiveFileKey(aFile);
+        newHistEntry.setChangeDate(new Date());
+        newHistEntry.setChangeDescription(historyText);
+        newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
+        this.archiveFileHistoryFacade.create(newHistEntry);
+
+        return;
+    }
+    
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public void setDocumentTag(String documentId, DocumentTagsBean tag, boolean active) throws Exception {
+
+        ArchiveFileDocumentsBean aFile = this.archiveFileDocumentsFacade.find(documentId);
+        List check = this.documentTagsFacade.findByDocumentKeyAndTagName(aFile, tag.getTagName());
+        StringGenerator idGen = new StringGenerator();
+        String historyText = "";
+
+        if (active) {
+            if (check.size() == 0) {
+
+                String tagId = idGen.getID().toString();
+                tag.setId(tagId);
+                tag.setArchiveFileKey(aFile);
+                this.documentTagsFacade.create(tag);
+                historyText = "Dokument-Tag gesetzt an " + aFile.getName() + ": " + tag.getTagName();
+            }
+        } else if (check.size() > 0) {
+            DocumentTagsBean remove = (DocumentTagsBean) check.get(0);
+            this.documentTagsFacade.remove(remove);
+            historyText = "Dokument-Tag entfernt von " + aFile.getName() + ": " + tag.getTagName();
+        }
+
+        ArchiveFileHistoryBean newHistEntry = new ArchiveFileHistoryBean();
+        newHistEntry.setId(idGen.getID().toString());
+        newHistEntry.setArchiveFileKey(aFile.getArchiveFileKey());
         newHistEntry.setChangeDate(new Date());
         newHistEntry.setChangeDescription(historyText);
         newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
@@ -2026,6 +2063,15 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         ArchiveFileBean aFile = this.archiveFileFacade.find(archiveFileId);
 
         List resultList = this.archiveFileTagsFacade.findByArchiveFileKey(aFile);
+        return resultList;
+    }
+    
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public Collection<DocumentTagsBean> getDocumentTags(String documentId) {
+        ArchiveFileDocumentsBean aFile = this.archiveFileDocumentsFacade.find(documentId);
+
+        List resultList = this.documentTagsFacade.findByDocumentKey(aFile);
         return resultList;
     }
 
@@ -2070,10 +2116,52 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
         return list;
     }
+    
+    @Override
+    @RolesAllowed({"loginRole"})
+    public List<String> searchDocumentTagsInUse() {
+
+        JDBCUtils utils = new JDBCUtils();
+        Connection con = null;
+        ResultSet rs = null;
+        PreparedStatement st = null;
+        ArrayList<String> list = new ArrayList<String>();
+        try {
+            con = utils.getConnection();
+            st = con.prepareStatement("select distinct(tagName) from document_tags order by tagName asc");
+            rs = st.executeQuery();
+
+            while (rs.next()) {
+                String t = rs.getString(1);
+                list.add(t);
+            }
+        } catch (SQLException sqle) {
+            log.error("Error finding tags in use", sqle);
+            throw new EJBException("Aktuelle genutzte Tags konnten nicht gefunden werden.", sqle);
+        } finally {
+            try {
+                rs.close();
+            } catch (Throwable t) {
+                log.error(t);
+            }
+            try {
+                st.close();
+            } catch (Throwable t) {
+                log.error(t);
+            }
+            try {
+                con.close();
+            } catch (Throwable t) {
+                log.error(t);
+            }
+        }
+
+        return list;
+    }
 
     @Override
     @RolesAllowed({"readArchiveFileRole"})
-    public ArchiveFileBean[] searchEnhanced(String query, boolean withArchive, String[] tagName) {
+    public ArchiveFileBean[] searchEnhanced(String query, boolean withArchive, String[] tagName, String[] documentTagNames) {
         JDBCUtils utils = new JDBCUtils();
         Connection con = null;
         ResultSet rs = null;
@@ -2085,6 +2173,16 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 withTag = false;
             } else {
                 withTag = true;
+            }
+
+        }
+        
+        boolean withDocumentTag = false;
+        if (documentTagNames != null && documentTagNames.length > 0) {
+            if (documentTagNames.length == 1 && "".equals(documentTagNames[0])) {
+                withDocumentTag = false;
+            } else {
+                withDocumentTag = true;
             }
 
         }
@@ -2768,7 +2866,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
     @Override
     @RolesAllowed({"readArchiveFileRole"})
-    public Hashtable<String, ArrayList<String>> searchTagsEnhanced(String query, boolean withArchive, String[] tagNames) {
+    public Hashtable<String, ArrayList<String>> searchTagsEnhanced(String query, boolean withArchive, String[] tagNames, String[] documentTagNames) {
         JDBCUtils utils = new JDBCUtils();
         Connection con = null;
         ResultSet rs = null;
@@ -2780,6 +2878,16 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 withTag = false;
             } else {
                 withTag = true;
+            }
+
+        }
+        
+        boolean withDocumentTag = false;
+        if (documentTagNames != null && documentTagNames.length > 0) {
+            if (documentTagNames.length == 1 && "".equals(documentTagNames[0])) {
+                withDocumentTag = false;
+            } else {
+                withDocumentTag = true;
             }
 
         }

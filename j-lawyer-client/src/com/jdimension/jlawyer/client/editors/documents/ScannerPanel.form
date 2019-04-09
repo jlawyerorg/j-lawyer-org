@@ -197,6 +197,10 @@
                       <Component id="chkCaseTagging" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="cmbCaseTag" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                      <Component id="chkDocumentTagging" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="cmbDocumentTag" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="32767" attributes="0"/>
                   </Group>
               </Group>
@@ -209,6 +213,10 @@
                           <Component id="chkCaseTagging" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="cmbCaseTag" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="chkDeleteAfterAction" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Group type="103" alignment="3" groupAlignment="3" attributes="0">
+                              <Component id="chkDocumentTagging" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="cmbDocumentTag" alignment="3" min="-2" max="-2" attributes="0"/>
+                          </Group>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="jScrollPane1" pref="633" max="32767" attributes="0"/>
@@ -259,9 +267,6 @@
                   <StringArray count="0"/>
                 </Property>
               </Properties>
-              <BindingProperties>
-                <BindingProperty name="enabled" source="chkCaseTagging" sourcePath="${selected}" target="cmbCaseTag" targetPath="enabled" updateStrategy="0" immediately="false"/>
-              </BindingProperties>
               <Events>
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmbCaseTagActionPerformed"/>
               </Events>
@@ -278,6 +283,28 @@
               <Events>
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="chkDeleteAfterActionActionPerformed"/>
               </Events>
+            </Component>
+            <Component class="javax.swing.JCheckBox" name="chkDocumentTagging">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="Zieldokument markieren:"/>
+                <Property name="actionCommand" type="java.lang.String" value="Zielakte markieren:"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="chkDocumentTaggingActionPerformed"/>
+              </Events>
+            </Component>
+            <Component class="javax.swing.JComboBox" name="cmbDocumentTag">
+              <Properties>
+                <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
+                  <StringArray count="0"/>
+                </Property>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmbDocumentTagActionPerformed"/>
+              </Events>
+              <AuxValues>
+                <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;String&gt;"/>
+              </AuxValues>
             </Component>
           </SubComponents>
         </Container>

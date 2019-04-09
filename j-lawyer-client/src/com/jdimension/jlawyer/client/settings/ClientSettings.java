@@ -733,7 +733,9 @@ public class ClientSettings {
     public static final String CONF_DESKTOP_LASTFILTERTAG="client.desktop.lastfiltertag";
     
     public static final String CONF_SCANS_TAGGINGENABLED="client.scans.taggingenabled";
+    public static final String CONF_SCANS_DOCUMENTTAGGINGENABLED="client.scans.documenttaggingenabled";
     public static final String CONF_SCANS_LASTTAG="client.scans.lasttag";
+    public static final String CONF_SCANS_LASTDOCUMENTTAG="client.scans.lastdocumenttag";
     public static final String CONF_SCANS_DELETEENABLED="client.scans.deleteenabled";
     
     public static final String CONF_MAILS_TAGGINGENABLED="client.mails.taggingenabled";
@@ -772,10 +774,12 @@ public class ClientSettings {
     private AppOptionGroupBean[] subjectFieldDtos=null;
     private AppOptionGroupBean[] afTagDtos=null;
     private AppOptionGroupBean[] adrTagDtos=null;
+    private AppOptionGroupBean[] docTagDtos=null;
     private AppOptionGroupBean[] titles=null;
     
     private List<String>afTagsInUse=new ArrayList<String>();
     private List<String>adrTagsInUse=new ArrayList<String>();
+    private List<String>docTagsInUse=new ArrayList<String>();
     
     private ArrayList<InsuranceInfo> insurances=new ArrayList<InsuranceInfo>();
     private ArrayList<InsuranceInfo> motorInsurances=new ArrayList<InsuranceInfo>();
@@ -974,6 +978,22 @@ public class ClientSettings {
     
     public void setArchiveFileTagsInUse(List<String> tags) {
         this.afTagsInUse = tags;
+    }
+    
+    public AppOptionGroupBean[] getDocumentTagDtos() {
+        return docTagDtos;
+    }
+    
+    public List<String> getDocumentTagsInUse() {
+        return this.docTagsInUse;
+    }
+
+    public void setDocumentTagDtos(AppOptionGroupBean[] docDtos) {
+        this.docTagDtos = docDtos;
+    }
+    
+    public void setDocumentTagsInUse(List<String> tags) {
+        this.docTagsInUse = tags;
     }
     
     /**

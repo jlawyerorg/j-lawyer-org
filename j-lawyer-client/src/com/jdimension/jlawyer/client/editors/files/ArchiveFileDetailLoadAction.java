@@ -714,6 +714,7 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
     private InvolvedPartiesPanel contactsForCasePanel;
     private JTable tblReviews;
     private JPanel tagPanel;
+    private JPanel documentTagPanel;
     private JLabel lblArchivedSince;
     private boolean isArchived = false;
     private boolean readOnly = false;
@@ -723,7 +724,7 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
 
     private SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy HH:mm");
 
-    public ArchiveFileDetailLoadAction(ProgressIndicator i, ArchiveFilePanel owner, String archiveFileKey, ArchiveFileBean caseDto, JTable historyTarget, JTable docTarget, InvolvedPartiesPanel contactsForCasePanel, JTable tblReviews, JPanel tagPanel, boolean readOnly, boolean beaEnabled, String selectDocumentWithFileName, JLabel lblArchivedSince, boolean isArchived, JPopupMenu popDocumentFavorites) {
+    public ArchiveFileDetailLoadAction(ProgressIndicator i, ArchiveFilePanel owner, String archiveFileKey, ArchiveFileBean caseDto, JTable historyTarget, JTable docTarget, InvolvedPartiesPanel contactsForCasePanel, JTable tblReviews, JPanel tagPanel, JPanel documentTagPanel, boolean readOnly, boolean beaEnabled, String selectDocumentWithFileName, JLabel lblArchivedSince, boolean isArchived, JPopupMenu popDocumentFavorites) {
         super(i, false);
         //this.table = table;
         //this.dlg = dlg;
@@ -738,6 +739,7 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
         this.contactsForCasePanel = contactsForCasePanel;
         this.tblReviews = tblReviews;
         this.tagPanel = tagPanel;
+        this.documentTagPanel = documentTagPanel;
         this.lblArchivedSince = lblArchivedSince;
         this.isArchived = isArchived;
         this.readOnly = readOnly;
@@ -779,6 +781,7 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
         Collection tags = null;
 
         this.tagPanel.removeAll();
+        this.documentTagPanel.removeAll();
 
         ArchiveFileServiceRemote fileService = null;
         ClientSettings settings = null;
@@ -981,6 +984,7 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
         this.progress("Aktualisiere Dialog: Tags...");
         ArrayList<String> activeTags = new ArrayList<String>();
         this.tagPanel.removeAll();
+        this.documentTagPanel.removeAll();
         ArrayList<String> sortedTags = new ArrayList<String>();
         for (Object t : tags) {
             ArchiveFileTagsBean tag = (ArchiveFileTagsBean) t;
