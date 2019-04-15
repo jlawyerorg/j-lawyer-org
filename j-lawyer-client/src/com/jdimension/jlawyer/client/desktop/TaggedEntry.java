@@ -672,12 +672,14 @@ import java.util.ArrayList;
  */
 public class TaggedEntry {
     
-    private String id=null;
+    private String caseId=null;
+    private String documentId=null;
     private String name=null;
     private String fileNumber=null;
     private String reason=null;
     private String lastChangedBy=null;
     private ArrayList<String> tags=null;
+    private String documentName=null;
     
     
     public TaggedEntry() {
@@ -741,17 +743,17 @@ public class TaggedEntry {
     }
 
     /**
-     * @return the id
+     * @return the caseId
      */
-    public String getId() {
-        return id;
+    public String getCaseId() {
+        return caseId;
     }
 
     /**
-     * @param id the id to set
+     * @param id the caseId to set
      */
-    public void setId(String id) {
-        this.id = id;
+    public void setCaseId(String id) {
+        this.caseId = id;
     }
 
     /**
@@ -766,6 +768,34 @@ public class TaggedEntry {
      */
     public void setTags(ArrayList<String> tags) {
         this.tags = tags;
+    }
+
+    /**
+     * @return the documentName
+     */
+    public String getDocumentName() {
+        return documentName;
+    }
+
+    /**
+     * @param documentName the documentName to set
+     */
+    public void setDocumentName(String documentName) {
+        this.documentName = documentName;
+    }
+
+    /**
+     * @return the documentId
+     */
+    public String getDocumentId() {
+        return documentId;
+    }
+
+    /**
+     * @param documentId the documentId to set
+     */
+    public void setDocumentId(String documentId) {
+        this.documentId = documentId;
     }
     
 }

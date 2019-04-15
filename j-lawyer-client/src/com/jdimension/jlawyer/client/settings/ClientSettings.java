@@ -731,6 +731,7 @@ public class ClientSettings {
     public static final String CONF_DESKTOP_ONLYMYREVIEWS="client.desktop.onlymyreviews";
     public static final String CONF_DESKTOP_ONLYMYTAGGED="client.desktop.onlymytagged";
     public static final String CONF_DESKTOP_LASTFILTERTAG="client.desktop.lastfiltertag";
+    public static final String CONF_DESKTOP_LASTFILTERDOCUMENTTAG="client.desktop.lastfilterdocumenttag";
     
     public static final String CONF_SCANS_TAGGINGENABLED="client.scans.taggingenabled";
     public static final String CONF_SCANS_DOCUMENTTAGGINGENABLED="client.scans.documenttaggingenabled";

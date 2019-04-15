@@ -771,7 +771,7 @@ public interface ArchiveFileServiceRemote {
 
     byte[] exportCaseToHtml(String caseId) throws Exception;
 
-    List<ArchiveFileBean> getTagged(String[] tagName, int limit);
+    List<ArchiveFileBean> getTagged(String[] tagName, String[] docTagName, int limit);
 
     boolean setDocumentDate(String id, Date date) throws Exception;
     
@@ -788,5 +788,7 @@ public interface ArchiveFileServiceRemote {
     boolean udpateFileNumber(String from, String to) throws Exception;
 
     boolean doesDocumentExist(String id);
+
+    List<ArchiveFileDocumentsBean> getTaggedDocuments(java.lang.String[] docTagName, int limit);
 
 }

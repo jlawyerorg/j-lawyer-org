@@ -769,7 +769,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
             this.chkOnlyMyTagged.setSelected(true);
         }
 
-        temp = settings.getConfiguration(ClientSettings.CONF_DESKTOP_LASTFILTERTAG, "");
+        //temp = settings.getConfiguration(ClientSettings.CONF_DESKTOP_LASTFILTERTAG, "");
 
         this.initializing = false;
 
@@ -783,45 +783,55 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         b.subscribeConsumer(this, Event.TYPE_BEASTATUS);
         b.subscribeConsumer(this, Event.TYPE_DREBISSTATUS);
 
-        Timer timer = new Timer();
+        Timer timer1 = new Timer();
         TimerTask systemStateTask = new SystemStateTimerTask(this, this.lblAddressCount, this.lblArchiveFileCount, this.lblArchiveFileArchivedCount, this.lblDocumentCount, this.lblVoipBalance);
-        timer.schedule(systemStateTask, 5000, 600000);
+        timer1.schedule(systemStateTask, 5000, 600000);
 
         BoxLayout boxLayout=new BoxLayout(this.pnlLastChanged, BoxLayout.Y_AXIS);
         this.pnlLastChanged.setLayout(boxLayout);
+        Timer timer2 = new Timer();
         TimerTask lastChangedTask = new LastChangedTimerTask(this, this.pnlLastChanged, this.jSplitPane1);
-        timer.schedule(lastChangedTask, 1000, 29000);
+        timer2.schedule(lastChangedTask, 1000, 29000);
 
+        Timer timer3 = new Timer();
         TimerTask autoUpdateTask = new AutoUpdateTimerTask(this);
-        timer.schedule(autoUpdateTask, 60000, 24 * 60 * 60 * 1000);
+        timer3.schedule(autoUpdateTask, 20000, 24 * 60 * 60 * 1000);
 
+        Timer timer4 = new Timer();
         TimerTask revDueTask = new ReviewsDueTimerTask(this, this.pnlRevDue, this.jSplitPane1);
-        timer.schedule(revDueTask, 1000, 31000);
+        timer4.schedule(revDueTask, 1000, 31000);
 
         BoxLayout boxLayout2=new BoxLayout(this.pnlTagged, BoxLayout.Y_AXIS);
         this.pnlTagged.setLayout(boxLayout2);
-        TimerTask taggedTask = new TaggedTimerTask(this, this.pnlTagged, this.jSplitPane2, this.popTagFilter, "DesktopPanel()");
-        timer.schedule(taggedTask, 1000, 33000);
+        Timer timer5 = new Timer();
+        TimerTask taggedTask = new TaggedTimerTask(this, this.pnlTagged, this.jSplitPane2, this.cmdTagFilter, this.cmdDocumentTagFilter, this.popTagFilter, this.popDocumentTagFilter);
+        timer5.schedule(taggedTask, 1000, 33000);
 
+        Timer timer6 = new Timer();
         TimerTask docObserverTask = new DocumentObserverTask();
-        timer.schedule(docObserverTask, 5000, DocumentObserverTask.getDefaultInterval());
+        timer6.schedule(docObserverTask, 5000, DocumentObserverTask.getDefaultInterval());
         
+        Timer timer7 = new Timer();
         TimerTask beaCheckTask=new BeaCheckTimerTask();
         // perform every 9,75mins - to keep session alive
-        timer.schedule(beaCheckTask, 1500,585000);
+        timer7.schedule(beaCheckTask, 2500,585000);
         
+        Timer timer8 = new Timer();
         TimerTask drebisCheckTask=new DrebisCheckTimerTask();
-        timer.schedule(drebisCheckTask, 3500,1000*60*60);
+        timer8.schedule(drebisCheckTask, 3500,1000*60*60);
         
         try {
+            Timer timer9 = new Timer();
             TimerTask tagsTask = new UpdateArchiveFileTagsTask(this, (EditArchiveFilePanel) EditorsRegistry.getInstance().getEditor(EditArchiveFilePanel.class.getName()));
-            timer.schedule(tagsTask, 4500, 60000);
+            timer9.schedule(tagsTask, 4500, 60000);
 
+            Timer timer10 = new Timer();
             TimerTask tagsTask2 = new UpdateAddressTagsTask(this, (EditAddressPanel) EditorsRegistry.getInstance().getEditor(EditAddressPanel.class.getName()));
-            timer.schedule(tagsTask2, 5500, 60000);
+            timer10.schedule(tagsTask2, 5500, 60000);
             
+            Timer timer11 = new Timer();
             TimerTask tagsTask3 = new UpdateDocumentTagsTask(this, (EditArchiveFilePanel) EditorsRegistry.getInstance().getEditor(EditArchiveFilePanel.class.getName()));
-            timer.schedule(tagsTask3, 6500, 60000);
+            timer11.schedule(tagsTask3, 4500, 60000);
         } catch (Throwable t) {
             log.error("Could not set up timer task for automatic tag updates", t);
         }
@@ -881,6 +891,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
     private void initComponents() {
 
         popTagFilter = new javax.swing.JPopupMenu();
+        popDocumentTagFilter = new javax.swing.JPopupMenu();
         jSplitPane1 = new javax.swing.JSplitPane();
         jPanel2 = new javax.swing.JPanel();
         jLabel6 = new javax.swing.JLabel();
@@ -905,6 +916,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         chkOnlyMyTagged = new javax.swing.JCheckBox();
         cmdRefreshTagged = new javax.swing.JButton();
         cmdTagFilter = new javax.swing.JButton();
+        cmdDocumentTagFilter = new javax.swing.JButton();
         calendarWidget = new com.jdimension.jlawyer.client.desktop.DesktopWidgetPanel();
         lblDay = new javax.swing.JLabel();
         lblMonth = new javax.swing.JLabel();
@@ -1005,7 +1017,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
                     .add(chkOnlyMyReviews)
                     .add(cmdRefreshRevDue))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 534, Short.MAX_VALUE)
+                .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 276, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -1085,7 +1097,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
                     .add(chkOnlyMyCases)
                     .add(cmdRefreshLastChanged))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jScrollPane3)
+                .add(jScrollPane3, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 161, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -1149,6 +1161,18 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
             }
         });
 
+        cmdDocumentTagFilter.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/favorites.png"))); // NOI18N
+        cmdDocumentTagFilter.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                cmdDocumentTagFilterMousePressed(evt);
+            }
+        });
+        cmdDocumentTagFilter.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdDocumentTagFilterActionPerformed(evt);
+            }
+        });
+
         org.jdesktop.layout.GroupLayout jPanel3Layout = new org.jdesktop.layout.GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);
         jPanel3Layout.setHorizontalGroup(
@@ -1160,10 +1184,12 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
                         .add(cmdRefreshTagged)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(jLabel9)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 209, Short.MAX_VALUE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 157, Short.MAX_VALUE)
                         .add(chkOnlyMyTagged)
-                        .add(18, 18, 18)
-                        .add(cmdTagFilter))
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                        .add(cmdTagFilter)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(cmdDocumentTagFilter))
                     .add(jScrollPane4))
                 .addContainerGap())
         );
@@ -1176,9 +1202,10 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
                         .add(jLabel9)
                         .add(cmdRefreshTagged)
                         .add(chkOnlyMyTagged))
-                    .add(cmdTagFilter))
+                    .add(cmdTagFilter)
+                    .add(cmdDocumentTagFilter))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jScrollPane4, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 125, Short.MAX_VALUE)
+                .add(jScrollPane4, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 47, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -1487,7 +1514,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
                     .add(calendarWidget, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .add(systemInformationWidget, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jSplitPane1)
+                .add(jSplitPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 332, Short.MAX_VALUE)
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -1579,14 +1606,14 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         boolean onlyMyTagged = this.chkOnlyMyTagged.isSelected();
         settings.setConfiguration(ClientSettings.CONF_DESKTOP_ONLYMYTAGGED, "" + onlyMyTagged);
 
-        TimerTask taggedTask = new TaggedTimerTask(this, this.pnlTagged, this.jSplitPane2, this.popTagFilter, true, "chkOnlyMyTaggedActionPerformed");
+        TimerTask taggedTask = new TaggedTimerTask(this, this.pnlTagged, this.jSplitPane2, this.cmdTagFilter, this.cmdDocumentTagFilter, this.popTagFilter, this.popDocumentTagFilter, true);
         new Timer().schedule(taggedTask, 500);
     }//GEN-LAST:event_chkOnlyMyTaggedActionPerformed
 
     private void cmdRefreshTaggedActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRefreshTaggedActionPerformed
 
         Timer timer = new Timer();
-        TimerTask taggedTask = new TaggedTimerTask(this, this.pnlTagged, this.jSplitPane2, this.popTagFilter, true, "cmdRefreshTaggedActionPerformed");
+        TimerTask taggedTask = new TaggedTimerTask(this, this.pnlTagged, this.jSplitPane2, this.cmdTagFilter, this.cmdDocumentTagFilter, this.popTagFilter, this.popDocumentTagFilter, true);
         timer.schedule(taggedTask, 10);
     }//GEN-LAST:event_cmdRefreshTaggedActionPerformed
 
@@ -1598,12 +1625,21 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         this.popTagFilter.show(this.cmdTagFilter, evt.getX(), evt.getY());
     }//GEN-LAST:event_cmdTagFilterMousePressed
 
+    private void cmdDocumentTagFilterMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdDocumentTagFilterMousePressed
+        this.popDocumentTagFilter.show(this.cmdDocumentTagFilter, evt.getX(), evt.getY());
+    }//GEN-LAST:event_cmdDocumentTagFilterMousePressed
+
+    private void cmdDocumentTagFilterActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdDocumentTagFilterActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_cmdDocumentTagFilterActionPerformed
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private com.jdimension.jlawyer.client.desktop.DesktopWidgetPanel calendarWidget;
     private javax.swing.JCheckBox chkOnlyMyCases;
     private javax.swing.JCheckBox chkOnlyMyReviews;
     private javax.swing.JCheckBox chkOnlyMyTagged;
+    private javax.swing.JButton cmdDocumentTagFilter;
     private javax.swing.JButton cmdRefreshLastChanged;
     private javax.swing.JButton cmdRefreshRevDue;
     private javax.swing.JButton cmdRefreshTagged;
@@ -1648,6 +1684,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
     private javax.swing.JPanel pnlLastChanged;
     private javax.swing.JPanel pnlRevDue;
     private javax.swing.JPanel pnlTagged;
+    private javax.swing.JPopupMenu popDocumentTagFilter;
     private javax.swing.JPopupMenu popTagFilter;
     private com.jdimension.jlawyer.client.desktop.DesktopWidgetPanel systemInformationWidget;
     // End of variables declaration//GEN-END:variables

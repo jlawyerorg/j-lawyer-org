@@ -1509,7 +1509,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     public void selectDocument(String fileName) {
         for (int i = 0; i < this.tblDocuments.getRowCount(); i++) {
-            Object value = this.tblDocuments.getValueAt(i, 1);
+            Object value = this.tblDocuments.getValueAt(i, 2);
             if (value instanceof String) {
                 if (value.toString().equals(fileName)) {
                     this.tblDocuments.setRowSelectionInterval(i, i);

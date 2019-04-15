@@ -679,6 +679,7 @@ import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 import com.jdimension.jlawyer.server.constants.ArchiveFileConstants;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import com.jdimension.jlawyer.ui.tagging.TagUtils;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Font;
@@ -821,16 +822,25 @@ public class ReviewDueEntryPanel extends javax.swing.JPanel {
         
         this.lblTags.setText("");
         if(e.getTags()!=null) {
-            StringBuffer sb=new StringBuffer();
-            sb.append("<html>");
-            for(String t: e.getTags()) {
-                //sb.append(t).append(", ");
-                sb.append(t).append("<br/>");
+//            StringBuffer sb=new StringBuffer();
+//            sb.append("<html>");
+//            for(String t: e.getTags()) {
+//                //sb.append(t).append(", ");
+//                sb.append(t).append("<br/>");
+//            }
+//            sb.append("</html>");
+//            String tagString=sb.toString();
+//            
+//            this.lblTags.setText(tagString);
+
+            String tagList=TagUtils.getTagList(e.getTags());
+            String shortenedTagList=tagList;
+            if (shortenedTagList.length() > 105) {
+                shortenedTagList = shortenedTagList.substring(0, 105) + "...";
             }
-            sb.append("</html>");
-            String tagString=sb.toString();
             
-            this.lblTags.setText(tagString);
+            this.lblTags.setText(shortenedTagList);
+            this.lblTags.setToolTipText(tagList);
         }
         
     }

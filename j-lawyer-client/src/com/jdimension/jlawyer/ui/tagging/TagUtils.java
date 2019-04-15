@@ -689,6 +689,23 @@ public class TagUtils {
     
     private static final Logger log=Logger.getLogger(TagUtils.class.getName());
     
+    public static String getTagList(ArrayList<String> tags) {
+        
+            StringBuffer sb = new StringBuffer();
+            
+            Collections.sort(tags);
+            for (String t : tags) {
+                sb.append(t);
+                sb.append(", ");
+            }
+            String returnValue = sb.toString();
+            if (returnValue.endsWith(", ")) {
+                returnValue = returnValue.substring(0, returnValue.length() - 2);
+            }
+            return returnValue;
+        
+    }
+    
     public static String getTagList(String id, Hashtable<String, ArrayList<String>> tags) {
         if (tags.containsKey(id)) {
             StringBuffer sb = new StringBuffer();
