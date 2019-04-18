@@ -725,7 +725,7 @@ public class TagUtils {
         }
     }
     
-    public static void populateTags(List<String> tags, JButton cmdTagFilter, JPopupMenu popTagFilter) {
+    public static void populateTags(List<String> tags, JButton cmdTagFilter, JPopupMenu popTagFilter, TagSelectedAction action) {
         ActionListener al=new ActionListener() {
                         @Override
                         public void actionPerformed(ActionEvent e) {
@@ -743,6 +743,9 @@ public class TagUtils {
                                 cmdTagFilter.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/favorites.png")));
                             }
                                 
+                            if(action!=null) {
+                                action.execute();
+                            }
                             
                         }
                         

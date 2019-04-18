@@ -734,11 +734,11 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
     }
 
     public void populateTags(List<String> tags) {
-        TagUtils.populateTags(tags, cmdTagFilter, popTagFilter);
+        TagUtils.populateTags(tags, cmdTagFilter, popTagFilter, null);
     }
     
     public void populateDocumentTags(List<String> tags) {
-        TagUtils.populateTags(tags, cmdDocumentTagFilter, popDocumentTagFilter);
+        TagUtils.populateTags(tags, cmdDocumentTagFilter, popDocumentTagFilter, null);
     }
 
     public void clearInputs() {

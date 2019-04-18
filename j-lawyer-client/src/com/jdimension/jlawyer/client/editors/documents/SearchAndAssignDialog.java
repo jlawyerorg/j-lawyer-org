@@ -706,8 +706,8 @@ public class SearchAndAssignDialog extends javax.swing.JDialog {
         ClientSettings s = ClientSettings.getInstance();
         List<String> tags = s.getArchiveFileTagsInUse();
         List<String> documentTags = s.getDocumentTagsInUse();
-        TagUtils.populateTags(tags, cmdTagFilter, popTagFilter);
-        TagUtils.populateTags(documentTags, cmdDocumentTagFilter, popDocumentTagFilter);
+        TagUtils.populateTags(tags, cmdTagFilter, popTagFilter, null);
+        TagUtils.populateTags(documentTags, cmdDocumentTagFilter, popDocumentTagFilter, null);
 
         ComponentUtils.restoreDialogSize(this);
 

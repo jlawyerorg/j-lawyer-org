@@ -3376,4 +3376,57 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         return returnList;
     }
 
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public Hashtable<String, ArrayList<String>> getDocumentTagsForCase(String caseId) {
+        JDBCUtils utils = new JDBCUtils();
+        Connection con = null;
+        ResultSet rs = null;
+        PreparedStatement st = null;
+        Hashtable<String, ArrayList<String>> returnList = new Hashtable<String, ArrayList<String>>();
+
+        try {
+            con = utils.getConnection();
+            st = con.prepareStatement("select docs.id, tags.tagName from case_documents docs, document_tags tags where docs.archiveFileKey=? and docs.id=tags.documentKey and docs.id in (select documentKey from document_tags)");
+
+            st.setString(1, caseId);
+            rs = st.executeQuery();
+            while (rs.next()) {
+                String id = rs.getString(1);
+                ArrayList<String> tags=null;
+                if(returnList.containsKey(id)) {
+                    tags=returnList.get(id);
+                } else {
+                    tags=new ArrayList<String>();
+                    returnList.put(id, tags);
+                }
+                
+                tags.add(rs.getString(2));
+            }
+
+            try {
+                rs.close();
+            } catch (Exception ex) {
+                log.error(ex);
+            }
+
+        } catch (SQLException sqle) {
+            log.error("Error getting documents tags", sqle);
+            throw new EJBException("Markierte Dokumente konnten nicht ermittelt werden.", sqle);
+        } finally {
+            try {
+                st.close();
+            } catch (Throwable t) {
+                log.error(t);
+            }
+            try {
+                con.close();
+            } catch (Throwable t) {
+                log.error(t);
+            }
+        }
+
+        return returnList;
+    }
+
 }

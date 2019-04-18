@@ -671,6 +671,7 @@ import com.jdimension.jlawyer.client.editors.addresses.ContactTypeColors;
 import com.jdimension.jlawyer.client.editors.documents.SearchAndAssignDialog;
 import com.jdimension.jlawyer.client.editors.files.AddressBeanListCellRenderer;
 import com.jdimension.jlawyer.client.editors.files.OptionsComboBoxModel;
+import com.jdimension.jlawyer.client.events.AllDocumentTagsEvent;
 import com.jdimension.jlawyer.client.events.DocumentAddedEvent;
 import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.events.ReviewAddedEvent;
@@ -704,6 +705,7 @@ import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.Hashtable;
 import java.util.List;
@@ -891,7 +893,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                 }
             }
         });
-        
+
         this.cmbReviewReason.setRenderer(new OptionGroupListCellRenderer());
         AppOptionGroupBean[] reviewReasons = settings.getReviewReasonDtos();
         String[] reviewReasonItems = new String[reviewReasons.length + 1];
@@ -915,6 +917,34 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         OptionsComboBoxModel allUserModel = new OptionsComboBoxModel(allUserItems);
         this.cmbReviewAssignee.setModel(allUserModel);
         this.cmbReviewAssignee.setRenderer(new UserListCellRenderer());
+
+        
+        DefaultComboBoxModel dm = new DefaultComboBoxModel();
+        dm.addElement("");
+        ArrayList<String> allTags = new ArrayList<String>();
+        for (AppOptionGroupBean tag : settings.getDocumentTagDtos()) {
+            //dm.addElement(tag.getValue());
+            allTags.add(tag.getValue());
+        }
+        Collections.sort(allTags);
+        for (String s : allTags) {
+            dm.addElement(s);
+        }
+        this.cmbDocumentTag.setModel(dm);
+        
+        String lastTag = settings.getConfiguration(ClientSettings.CONF_MAILSEND_LASTDOCUMENTTAG, "");
+        if (allTags.contains(lastTag)) {
+            this.cmbDocumentTag.setSelectedItem(lastTag);
+        } else {
+            this.cmbDocumentTag.setSelectedItem("");
+        }
+        
+        String temp = settings.getConfiguration(ClientSettings.CONF_MAILSEND_DOCUMENTTAGGINGENABLED, "false");
+        boolean doctaggingEnabled = false;
+        if ("true".equalsIgnoreCase(temp)) {
+            doctaggingEnabled = true;
+            this.chkDocumentTagging.setSelected(true);
+        }
 
     }
 
@@ -1125,6 +1155,8 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         chkEncryption = new javax.swing.JToggleButton();
         lblEncryption = new javax.swing.JLabel();
         chkSaveAsDocument = new javax.swing.JCheckBox();
+        chkDocumentTagging = new javax.swing.JCheckBox();
+        cmbDocumentTag = new javax.swing.JComboBox<>();
         cmdRecipientsCc = new javax.swing.JButton();
         cmdRecipientsBcc = new javax.swing.JButton();
         jPanel4 = new javax.swing.JPanel();
@@ -1390,6 +1422,20 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         chkSaveAsDocument.setSelected(true);
         chkSaveAsDocument.setText("als Dokument speichern");
 
+        chkDocumentTagging.setText("markieren:");
+        chkDocumentTagging.setActionCommand("Zielakte markieren:");
+        chkDocumentTagging.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                chkDocumentTaggingActionPerformed(evt);
+            }
+        });
+
+        cmbDocumentTag.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmbDocumentTagActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
@@ -1408,8 +1454,12 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                                 .addComponent(text)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(html))
-                            .addComponent(chkReadReceipt))
-                        .addGap(0, 80, Short.MAX_VALUE)))
+                            .addComponent(chkReadReceipt)
+                            .addGroup(jPanel2Layout.createSequentialGroup()
+                                .addComponent(chkDocumentTagging)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(cmbDocumentTag, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         jPanel2Layout.setVerticalGroup(
@@ -1423,10 +1473,14 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(chkSaveAsDocument)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(chkDocumentTagging)
+                    .addComponent(cmbDocumentTag, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addComponent(chkEncryption)
                     .addComponent(lblEncryption, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
         );
 
         cmdRecipientsCc.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/find.png"))); // NOI18N
@@ -1522,7 +1576,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                                 .addComponent(txtReviewDateField, javax.swing.GroupLayout.PREFERRED_SIZE, 135, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(cmdShowReviewSelector)
-                                .addGap(0, 0, Short.MAX_VALUE)))))
+                                .addGap(0, 10, Short.MAX_VALUE)))))
                 .addContainerGap())
         );
         jPanel4Layout.setVerticalGroup(
@@ -1630,7 +1684,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                         .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addContainerGap())))
+                        .addContainerGap(24, Short.MAX_VALUE))))
         );
 
         pack();
@@ -1652,7 +1706,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         ArrayList<String> mails = EmailUtils.getAllMailAddressesFromString(this.txtTo.getText());
         mails.addAll(EmailUtils.getAllMailAddressesFromString(this.txtCc.getText()));
         mails.addAll(EmailUtils.getAllMailAddressesFromString(this.txtBcc.getText()));
-        
+
         if (this.chkSaveAsDocument.isSelected() || !(this.radioReviewTypeNone.isSelected())) {
             if (this.contextArchiveFile == null) {
                 SearchAndAssignDialog saDlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true);
@@ -1664,6 +1718,16 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
             }
         }
         
+        String createDocumentTag=null;
+        if(this.chkDocumentTagging.isSelected()) {
+            Object selectedTag=this.cmbDocumentTag.getSelectedItem();
+            if(selectedTag!=null) {
+                if(!"".equals(selectedTag.toString())) {
+                    createDocumentTag=selectedTag.toString();
+                }
+            }
+        }
+
         ProgressableAction a = null;
         if (this.chkSaveAsDocument.isSelected()) {
 
@@ -1681,12 +1745,10 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                         return;
                     }
                 }
-                a = new SendEncryptedAction(dlg, this, this.attachments, this.cu, this.chkReadReceipt.isSelected(), this.txtTo.getText(), this.txtCc.getText(), this.txtBcc.getText(), this.txtSubject.getText(), ed.getText(), contentType, this.contextArchiveFile);
+                a = new SendEncryptedAction(dlg, this, this.attachments, this.cu, this.chkReadReceipt.isSelected(), this.txtTo.getText(), this.txtCc.getText(), this.txtBcc.getText(), this.txtSubject.getText(), ed.getText(), contentType, this.contextArchiveFile, createDocumentTag);
             } else {
-                a = new SendAction(dlg, this, this.attachments, this.cu, this.chkReadReceipt.isSelected(), this.txtTo.getText(), this.txtCc.getText(), this.txtBcc.getText(), this.txtSubject.getText(), ed.getText(), contentType, this.contextArchiveFile);
+                a = new SendAction(dlg, this, this.attachments, this.cu, this.chkReadReceipt.isSelected(), this.txtTo.getText(), this.txtCc.getText(), this.txtBcc.getText(), this.txtSubject.getText(), ed.getText(), contentType, this.contextArchiveFile, createDocumentTag);
             }
-
-            
 
         } else if (this.chkEncryption.isSelected()) {
             int crypto = 0;
@@ -1702,56 +1764,55 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                     return;
                 }
             }
-            a = new SendEncryptedAction(dlg, this, this.attachments, this.cu, this.chkReadReceipt.isSelected(), this.txtTo.getText(), this.txtCc.getText(), this.txtBcc.getText(), this.txtSubject.getText(), ed.getText(), contentType);
+            a = new SendEncryptedAction(dlg, this, this.attachments, this.cu, this.chkReadReceipt.isSelected(), this.txtTo.getText(), this.txtCc.getText(), this.txtBcc.getText(), this.txtSubject.getText(), ed.getText(), contentType, createDocumentTag);
         } else {
-            a = new SendAction(dlg, this, this.attachments, this.cu, this.chkReadReceipt.isSelected(), this.txtTo.getText(), this.txtCc.getText(), this.txtBcc.getText(), this.txtSubject.getText(), ed.getText(), contentType);
+            a = new SendAction(dlg, this, this.attachments, this.cu, this.chkReadReceipt.isSelected(), this.txtTo.getText(), this.txtCc.getText(), this.txtBcc.getText(), this.txtSubject.getText(), ed.getText(), contentType, createDocumentTag);
         }
         a.start();
-        
-        
-        if (!(this.radioReviewTypeNone.isSelected()) && this.contextArchiveFile!=null) {
-                if (this.txtReviewDateField.getText().length() != 10) {
-                    JOptionPane.showMessageDialog(this, "Wiedervorlagedatum ungültig", "E-Mail senden", JOptionPane.INFORMATION_MESSAGE);
-                    return;
-                }
-                Date d = null;
-                try {
-                    SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
-                    d = df.parse(this.txtReviewDateField.getText());
-                } catch (Throwable t) {
-                    JOptionPane.showMessageDialog(this, "Wiedervorlagedatum ungültig", "E-Mail senden", JOptionPane.INFORMATION_MESSAGE);
-                    return;
-                }
 
-                ArchiveFileReviewsBean reviewDto = new ArchiveFileReviewsBean();
-                reviewDto.setReviewType(reviewDto.REVIEWTYPE_FOLLOWUP);
-                if (this.radioReviewTypeRespite.isSelected()) {
-                    reviewDto.setReviewType(reviewDto.REVIEWTYPE_RESPITE);
-                }
-                reviewDto.setDoneBoolean(false);
-                reviewDto.setReviewDate(d);
-                reviewDto.setAssignee(this.cmbReviewAssignee.getSelectedItem().toString());
-                reviewDto.setReviewReason(this.cmbReviewReason.getModel().getSelectedItem().toString());
-
-                EditorsRegistry.getInstance().updateStatus("Wiedervorlage/Frist wird gespeichert...");
-                try {
-                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                    ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
-
-                    reviewDto = fileService.addReview(this.contextArchiveFile.getId(), reviewDto);
-                    EditorsRegistry.getInstance().updateStatus("Wiedervorlage/Frist gespeichert.", 5000);
-
-                } catch (Exception ex) {
-                    log.error("Error adding review", ex);
-                    JOptionPane.showMessageDialog(this, "Fehler beim Speichern der Wiedervorlage: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
-                    EditorsRegistry.getInstance().clearStatus();
-                    return;
-                }
-                
-                EventBroker eb=EventBroker.getInstance();
-                eb.publishEvent(new ReviewAddedEvent(reviewDto));
-
+        if (!(this.radioReviewTypeNone.isSelected()) && this.contextArchiveFile != null) {
+            if (this.txtReviewDateField.getText().length() != 10) {
+                JOptionPane.showMessageDialog(this, "Wiedervorlagedatum ungültig", "E-Mail senden", JOptionPane.INFORMATION_MESSAGE);
+                return;
             }
+            Date d = null;
+            try {
+                SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
+                d = df.parse(this.txtReviewDateField.getText());
+            } catch (Throwable t) {
+                JOptionPane.showMessageDialog(this, "Wiedervorlagedatum ungültig", "E-Mail senden", JOptionPane.INFORMATION_MESSAGE);
+                return;
+            }
+
+            ArchiveFileReviewsBean reviewDto = new ArchiveFileReviewsBean();
+            reviewDto.setReviewType(reviewDto.REVIEWTYPE_FOLLOWUP);
+            if (this.radioReviewTypeRespite.isSelected()) {
+                reviewDto.setReviewType(reviewDto.REVIEWTYPE_RESPITE);
+            }
+            reviewDto.setDoneBoolean(false);
+            reviewDto.setReviewDate(d);
+            reviewDto.setAssignee(this.cmbReviewAssignee.getSelectedItem().toString());
+            reviewDto.setReviewReason(this.cmbReviewReason.getModel().getSelectedItem().toString());
+
+            EditorsRegistry.getInstance().updateStatus("Wiedervorlage/Frist wird gespeichert...");
+            try {
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
+
+                reviewDto = fileService.addReview(this.contextArchiveFile.getId(), reviewDto);
+                EditorsRegistry.getInstance().updateStatus("Wiedervorlage/Frist gespeichert.", 5000);
+
+            } catch (Exception ex) {
+                log.error("Error adding review", ex);
+                JOptionPane.showMessageDialog(this, "Fehler beim Speichern der Wiedervorlage: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+                EditorsRegistry.getInstance().clearStatus();
+                return;
+            }
+
+            EventBroker eb = EventBroker.getInstance();
+            eb.publishEvent(new ReviewAddedEvent(reviewDto));
+
+        }
 
 
     }//GEN-LAST:event_cmdSendActionPerformed
@@ -2113,6 +2174,20 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         this.enableReviewElements(false);
     }//GEN-LAST:event_radioReviewTypeNoneActionPerformed
 
+    private void chkDocumentTaggingActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkDocumentTaggingActionPerformed
+        ClientSettings settings = ClientSettings.getInstance();
+
+        boolean tagging = this.chkDocumentTagging.isSelected();
+        settings.setConfiguration(ClientSettings.CONF_MAILSEND_DOCUMENTTAGGINGENABLED, "" + tagging);
+    }//GEN-LAST:event_chkDocumentTaggingActionPerformed
+
+    private void cmbDocumentTagActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbDocumentTagActionPerformed
+        ClientSettings settings = ClientSettings.getInstance();
+
+        String lastTag = this.cmbDocumentTag.getSelectedItem().toString();
+        settings.setConfiguration(ClientSettings.CONF_MAILSEND_LASTDOCUMENTTAG, lastTag);
+    }//GEN-LAST:event_cmbDocumentTagActionPerformed
+
     private void enableReviewElements(boolean enable) {
         this.cmbReviewAssignee.setEnabled(enable);
         this.cmbReviewReason.setEnabled(enable);
@@ -2179,10 +2254,12 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.ButtonGroup btGroupReviews;
     private javax.swing.ButtonGroup buttonGroupTextHtml;
+    private javax.swing.JCheckBox chkDocumentTagging;
     private javax.swing.JToggleButton chkEncryption;
     private javax.swing.JCheckBox chkReadReceipt;
     private javax.swing.JCheckBox chkSaveAsDocument;
     private javax.swing.JComboBox cmbClient;
+    private javax.swing.JComboBox<String> cmbDocumentTag;
     private javax.swing.JComboBox cmbOpponent;
     private javax.swing.JComboBox cmbOpponentAtt;
     private javax.swing.JComboBox cmbReviewAssignee;

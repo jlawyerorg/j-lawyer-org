@@ -859,4 +859,13 @@ public class ComponentUtils {
         }
         return list.toArray(new String[list.size()]);
     }
+    
+    public static void unSelectMenuItems(JPopupMenu pop) {
+        for (MenuElement me : pop.getSubElements()) {
+            if (me.getComponent() instanceof JCheckBoxMenuItem) {
+                JCheckBoxMenuItem mi = ((JCheckBoxMenuItem) me.getComponent());
+                mi.setSelected(false);
+            }
+        }
+    }
 }

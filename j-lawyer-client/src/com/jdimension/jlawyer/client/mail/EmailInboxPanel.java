@@ -670,6 +670,7 @@ import com.jdimension.jlawyer.client.editors.addresses.CaseForContactEntry;
 import com.jdimension.jlawyer.client.editors.documents.SearchAndAssignDialog;
 import com.jdimension.jlawyer.client.editors.files.DescendingDateTimeStringComparator;
 import com.jdimension.jlawyer.client.events.AllCaseTagsEvent;
+import com.jdimension.jlawyer.client.events.AllDocumentTagsEvent;
 import com.jdimension.jlawyer.client.events.EmailStatusEvent;
 import com.jdimension.jlawyer.client.events.Event;
 import com.jdimension.jlawyer.client.events.EventBroker;
@@ -689,7 +690,9 @@ import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
 import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileTagsBean;
+import com.jdimension.jlawyer.persistence.DocumentTagsBean;
 import com.jdimension.jlawyer.services.AddressServiceRemote;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
@@ -785,9 +788,17 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
             deleteEnabled = false;
             this.chkDeleteAfterAction.setSelected(false);
         }
+        
+        temp = cs.getConfiguration(ClientSettings.CONF_MAILS_DOCUMENTTAGGINGENABLED, "false");
+        boolean doctaggingEnabled = false;
+        if ("true".equalsIgnoreCase(temp)) {
+            doctaggingEnabled = true;
+            this.chkDocumentTagging.setSelected(true);
+        }
 
         EventBroker eb = EventBroker.getInstance();
         eb.subscribeConsumer(this, Event.TYPE_ALLCASETAGS);
+        eb.subscribeConsumer(this, Event.TYPE_ALLDOCUMENTTAGS);
 
         DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode("Email-Postfach");
         DefaultTreeModel dtm = new DefaultTreeModel(rootNode);
@@ -904,6 +915,25 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
             } else {
                 this.cmbCaseTag.setSelectedItem("");
             }
+        } else if (e instanceof AllDocumentTagsEvent) {
+            DefaultComboBoxModel dm=new DefaultComboBoxModel();
+            dm.addElement("");
+            ArrayList<String> allTags=new ArrayList<String>();
+            for(AppOptionGroupBean tag: ((AllDocumentTagsEvent) e).getTagDtos()) {
+                //dm.addElement(tag.getValue());
+                allTags.add(tag.getValue());
+            }
+            Collections.sort(allTags);
+            for(String s: allTags) {
+                dm.addElement(s);
+            }
+            this.cmbDocumentTag.setModel(dm);
+            ClientSettings settings=ClientSettings.getInstance();
+            String lastTag=settings.getConfiguration(ClientSettings.CONF_MAIL_LASTDOCUMENTTAG, "");
+            if(allTags.contains(lastTag))
+                this.cmbDocumentTag.setSelectedItem(lastTag);
+            else
+                this.cmbDocumentTag.setSelectedItem("");
         }
     }
 
@@ -1052,7 +1082,6 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
      */
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
-        bindingGroup = new org.jdesktop.beansbinding.BindingGroup();
 
         popFolders = new javax.swing.JPopupMenu();
         mnuNewFolder = new javax.swing.JMenuItem();
@@ -1088,6 +1117,8 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         chkDeleteAfterAction = new javax.swing.JCheckBox();
         chkCaseTagging = new javax.swing.JCheckBox();
         cmbCaseTag = new javax.swing.JComboBox<>();
+        chkDocumentTagging = new javax.swing.JCheckBox();
+        cmbDocumentTag = new javax.swing.JComboBox<>();
         jPanel1 = new javax.swing.JPanel();
         cmdRefresh = new javax.swing.JButton();
         cmbDownloadMails = new javax.swing.JComboBox<>();
@@ -1336,12 +1367,23 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
             }
         });
 
-        org.jdesktop.beansbinding.Binding binding = org.jdesktop.beansbinding.Bindings.createAutoBinding(org.jdesktop.beansbinding.AutoBinding.UpdateStrategy.READ_WRITE, chkCaseTagging, org.jdesktop.beansbinding.ELProperty.create("${selected}"), cmbCaseTag, org.jdesktop.beansbinding.BeanProperty.create("enabled"));
-        bindingGroup.addBinding(binding);
-
         cmbCaseTag.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmbCaseTagActionPerformed(evt);
+            }
+        });
+
+        chkDocumentTagging.setText("Zieldokument markieren:");
+        chkDocumentTagging.setActionCommand("Zielakte markieren:");
+        chkDocumentTagging.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                chkDocumentTaggingActionPerformed(evt);
+            }
+        });
+
+        cmbDocumentTag.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmbDocumentTagActionPerformed(evt);
             }
         });
 
@@ -1349,13 +1391,17 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
             jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(jSplitPane3, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 647, Short.MAX_VALUE)
+            .add(jSplitPane3, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 783, Short.MAX_VALUE)
             .add(jPanel2Layout.createSequentialGroup()
                 .add(chkDeleteAfterAction)
                 .add(18, 18, 18)
                 .add(chkCaseTagging)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(cmbCaseTag, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                .add(chkDocumentTagging)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(cmbDocumentTag, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .add(0, 0, Short.MAX_VALUE))
         );
         jPanel2Layout.setVerticalGroup(
@@ -1364,7 +1410,10 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                 .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(chkCaseTagging)
                     .add(cmbCaseTag, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(chkDeleteAfterAction))
+                    .add(chkDeleteAfterAction)
+                    .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                        .add(chkDocumentTagging)
+                        .add(cmbDocumentTag, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jSplitPane3, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 296, Short.MAX_VALUE))
         );
@@ -1444,8 +1493,6 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                 .add(jSplitPane2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 459, Short.MAX_VALUE)
                 .addContainerGap())
         );
-
-        bindingGroup.bind();
     }// </editor-fold>//GEN-END:initComponents
 
     private void cmdRefreshActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRefreshActionPerformed
@@ -2211,6 +2258,20 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         settings.setConfiguration(ClientSettings.CONF_MAIL_LASTTAG, lastTag);
     }//GEN-LAST:event_cmbCaseTagActionPerformed
 
+    private void chkDocumentTaggingActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkDocumentTaggingActionPerformed
+        ClientSettings settings = ClientSettings.getInstance();
+
+        boolean tagging = this.chkDocumentTagging.isSelected();
+        settings.setConfiguration(ClientSettings.CONF_MAILS_DOCUMENTTAGGINGENABLED, "" + tagging);
+    }//GEN-LAST:event_chkDocumentTaggingActionPerformed
+
+    private void cmbDocumentTagActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbDocumentTagActionPerformed
+        ClientSettings settings = ClientSettings.getInstance();
+
+        String lastTag = this.cmbDocumentTag.getSelectedItem().toString();
+        settings.setConfiguration(ClientSettings.CONF_MAIL_LASTDOCUMENTTAG, lastTag);
+    }//GEN-LAST:event_cmbDocumentTagActionPerformed
+
     private void displayMessage() {
 
         if (this.tblMails.getSelectedRow() < 0 || this.tblMails.getSelectedRows().length > 1) {
@@ -2687,13 +2748,21 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                         newName = newName + ".eml";
                     }
 
-                    afs.addDocument(caseId, newName, data, "");
+                    ArchiveFileDocumentsBean newlyAddedDocument=afs.addDocument(caseId, newName, data, "");
 
                     String temp = ClientSettings.getInstance().getConfiguration(ClientSettings.CONF_MAILS_TAGGINGENABLED, "false");
                     if ("true".equalsIgnoreCase(temp)) {
                         String caseTag=ClientSettings.getInstance().getConfiguration(ClientSettings.CONF_MAIL_LASTTAG, "");
                         if (caseTag != null && !"".equalsIgnoreCase(caseTag)) {
                             afs.setTag(caseId, new ArchiveFileTagsBean(null, caseTag), true);
+                        }
+                    }
+                    
+                    temp = ClientSettings.getInstance().getConfiguration(ClientSettings.CONF_MAILS_DOCUMENTTAGGINGENABLED, "false");
+                    if ("true".equalsIgnoreCase(temp)) {
+                        String docTag=ClientSettings.getInstance().getConfiguration(ClientSettings.CONF_MAIL_LASTDOCUMENTTAG, "");
+                        if (docTag != null && !"".equalsIgnoreCase(docTag)) {
+                            afs.setDocumentTag(newlyAddedDocument.getId(), new DocumentTagsBean(newlyAddedDocument.getId(), docTag), true);
                         }
                     }
                     
@@ -2776,7 +2845,9 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JCheckBox chkCaseTagging;
     private javax.swing.JCheckBox chkDeleteAfterAction;
+    private javax.swing.JCheckBox chkDocumentTagging;
     private javax.swing.JComboBox<String> cmbCaseTag;
+    private javax.swing.JComboBox<String> cmbDocumentTag;
     private javax.swing.JComboBox<String> cmbDownloadMails;
     private javax.swing.JButton cmdDelete;
     private javax.swing.JButton cmdForward;
@@ -2811,6 +2882,5 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
     private javax.swing.JPopupMenu popFolders;
     private javax.swing.JTable tblMails;
     private javax.swing.JTree treeFolders;
-    private org.jdesktop.beansbinding.BindingGroup bindingGroup;
     // End of variables declaration//GEN-END:variables
 }

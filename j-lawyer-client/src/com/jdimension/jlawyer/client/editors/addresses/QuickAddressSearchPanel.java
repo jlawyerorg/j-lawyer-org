@@ -748,7 +748,7 @@ public class QuickAddressSearchPanel extends javax.swing.JPanel implements Theme
 
     public void populateTags(List<String> tags) {
 
-        TagUtils.populateTags(tags, cmdTagFilter, popTagFilter);
+        TagUtils.populateTags(tags, cmdTagFilter, popTagFilter, null);
         
     }
 

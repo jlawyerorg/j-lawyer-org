@@ -676,6 +676,7 @@ import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileHistoryBean;
+import com.jdimension.jlawyer.persistence.DocumentTagsBean;
 import com.jdimension.jlawyer.services.AddressServiceRemote;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
@@ -711,8 +712,9 @@ public class SendEncryptedAction extends ProgressableAction {
     private String contentType = "text/plain";
     private ArchiveFileBean archiveFile = null;
     private ArrayList<String> mails=null;
+    private String documentTag=null;
 
-    public SendEncryptedAction(ProgressIndicator i, JDialog cleanAfter, ArrayList<String> attachments, AppUserBean cu, boolean readReceipt, String to, String cc, String bcc, String subject, String body, String contentType) {
+    public SendEncryptedAction(ProgressIndicator i, JDialog cleanAfter, ArrayList<String> attachments, AppUserBean cu, boolean readReceipt, String to, String cc, String bcc, String subject, String body, String contentType, String documentTag) {
         super(i, false, cleanAfter);
         this.attachments = attachments;
         this.cu = cu;
@@ -723,14 +725,15 @@ public class SendEncryptedAction extends ProgressableAction {
         this.subject = subject;
         this.body = body;
         this.contentType = contentType;
+        this.documentTag=documentTag;
         
         this.mails = EmailUtils.getAllMailAddressesFromString(this.to);
             mails.addAll(EmailUtils.getAllMailAddressesFromString(this.cc));
             mails.addAll(EmailUtils.getAllMailAddressesFromString(this.bcc));
     }
 
-    public SendEncryptedAction(ProgressIndicator i, JDialog cleanAfter, ArrayList<String> attachments, AppUserBean cu, boolean readReceipt, String to, String cc, String bcc, String subject, String body, String contentType, ArchiveFileBean af) {
-        this(i, cleanAfter, attachments, cu, readReceipt, to, cc, bcc, subject, body, contentType);
+    public SendEncryptedAction(ProgressIndicator i, JDialog cleanAfter, ArrayList<String> attachments, AppUserBean cu, boolean readReceipt, String to, String cc, String bcc, String subject, String body, String contentType, ArchiveFileBean af, String documentTag) {
+        this(i, cleanAfter, attachments, cu, readReceipt, to, cc, bcc, subject, body, contentType, documentTag);
         this.archiveFile = af;
     }
 
@@ -892,6 +895,10 @@ public class SendEncryptedAction extends ProgressableAction {
                             }
 
                             ArchiveFileDocumentsBean newDoc = afs.addDocument(this.archiveFile.getId(), newName, data, "");
+                            
+                            if(this.documentTag!=null && !("".equals(this.documentTag))) {
+                                afs.setDocumentTag(newDoc.getId(), new DocumentTagsBean(newDoc.getId(), this.documentTag), true);
+                            }
 
                             ArchiveFileHistoryBean historyDto = new ArchiveFileHistoryBean();
                             historyDto.setChangeDate(new Date());

@@ -791,4 +791,6 @@ public interface ArchiveFileServiceRemote {
 
     List<ArchiveFileDocumentsBean> getTaggedDocuments(java.lang.String[] docTagName, int limit);
 
+    Hashtable<String, ArrayList<String>> getDocumentTagsForCase(String caseId);
+
 }

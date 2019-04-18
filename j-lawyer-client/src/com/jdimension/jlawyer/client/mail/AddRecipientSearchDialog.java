@@ -710,7 +710,7 @@ public class AddRecipientSearchDialog extends javax.swing.JDialog {
 
         ClientSettings s = ClientSettings.getInstance();
         List<String> tags = s.getAddressTagsInUse();
-        TagUtils.populateTags(tags, cmdTagFilter, popTagFilter);
+        TagUtils.populateTags(tags, cmdTagFilter, popTagFilter, null);
 
         ComponentUtils.restoreDialogSize(this);
 
