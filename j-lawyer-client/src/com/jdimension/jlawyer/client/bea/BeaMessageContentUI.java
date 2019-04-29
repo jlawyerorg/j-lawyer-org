@@ -678,6 +678,7 @@ import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -700,6 +701,9 @@ import org.jlawyer.bea.model.Attachment;
 import org.jlawyer.bea.model.Message;
 import org.jlawyer.bea.model.MessageExport;
 import org.jlawyer.bea.model.MessageJournalEntry;
+import org.jlawyer.bea.model.PostBox;
+import org.jlawyer.bea.model.ProcessCard;
+import org.jlawyer.bea.model.ProcessCardEntry;
 
 /**
  *
@@ -736,6 +740,10 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
         TableRowSorter<TableModel> sorter = new TableRowSorter<TableModel>(tm);
         sorter.setComparator(4, new DescendingDateTimeStringComparator());
         this.tblJournal.setRowSorter(sorter);
+        
+        DefaultTableModel tm2 = new DefaultTableModel(new String[]{"Code", "Text"}, 0);
+        this.tblProcessCard.setModel(tm2);
+        
     }
 
     public void clear() {
@@ -805,7 +813,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
 //                lea.start();
                 return;
             } else {
-                BeaMessageContentUI.setMessageImpl(this, msg, this.lblSubject, this.lblSentDate, this.lblTo, this.lblFrom, this.lblCaseNumber, this.lblReferenceJustice, this.editBody, this.lstAttachments, false, this.tblJournal, this.lblEeb);
+                BeaMessageContentUI.setMessageImpl(this, msg, this.lblSubject, this.lblSentDate, this.lblTo, this.lblFrom, this.lblCaseNumber, this.lblReferenceJustice, this.editBody, this.lstAttachments, false, this.tblJournal, this.tblProcessCard, this.lblEeb, this.jTabbedPane1);
             }
 
         } catch (Exception ex) {
@@ -815,7 +823,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
         }
     }
 
-    public static void setMessageImpl(BeaMessageContentUI contentUI, Message msg, JLabel lblSubject, JLabel lblSentDate, JLabel lblTo, JLabel lblFrom, JLabel lblCaseNumber, JLabel lblReferenceJustice, JEditorPane editBody, JList lstAttachments, boolean edt, JTable journalTable, JLabel lblEeb) throws Exception {
+    public static void setMessageImpl(BeaMessageContentUI contentUI, Message msg, JLabel lblSubject, JLabel lblSentDate, JLabel lblTo, JLabel lblFrom, JLabel lblCaseNumber, JLabel lblReferenceJustice, JEditorPane editBody, JList lstAttachments, boolean edt, JTable journalTable, JTable processCardTable, JLabel lblEeb, JTabbedPane tabs) throws Exception {
         // we copy the message to avoid the "Unable to load BODYSTRUCTURE" issue
 
         AppUserBean cu = UserSettings.getInstance().getCurrentUser();
@@ -1029,6 +1037,19 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
 
             }
         }
+        
+        DefaultTableModel tm2 = new DefaultTableModel(new String[]{"Code", "Text"}, 0);
+        processCardTable.setModel(tm2);
+        tabs.setIconAt(2, null);
+        if(msg.getProcessCard()!=null) {
+            if(msg.getProcessCard().getEntries().size()>0) {
+                tabs.setIconAt(2, new javax.swing.ImageIcon(BeaMessageContentUI.class.getResource("/icons/messagebox_warning.png")));
+            }
+            for (ProcessCardEntry e : msg.getProcessCard().getEntries()) {
+                ((DefaultTableModel) processCardTable.getModel()).addRow(new Object[]{e.getCode(), e.getText()});
+
+            }
+        }
 
     }
 
@@ -1098,6 +1119,10 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
         jScrollPane3 = new javax.swing.JScrollPane();
         tblJournal = new javax.swing.JTable();
         cmdRefreshJournal = new javax.swing.JButton();
+        jPanel5 = new javax.swing.JPanel();
+        jScrollPane4 = new javax.swing.JScrollPane();
+        tblProcessCard = new javax.swing.JTable();
+        cmdRefreshProcessCard = new javax.swing.JButton();
 
         mnuSave.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/filesave.png"))); // NOI18N
         mnuSave.setText("Speichern");
@@ -1334,6 +1359,52 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
 
         jTabbedPane1.addTab("Journal", jPanel4);
 
+        tblProcessCard.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null}
+            },
+            new String [] {
+                "Title 1", "Title 2", "Title 3", "Title 4"
+            }
+        ));
+        jScrollPane4.setViewportView(tblProcessCard);
+
+        cmdRefreshProcessCard.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/reload.png"))); // NOI18N
+        cmdRefreshProcessCard.setToolTipText("Nachrichtenjournal erneut aus dem Postfach laden");
+        cmdRefreshProcessCard.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdRefreshProcessCardActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout jPanel5Layout = new javax.swing.GroupLayout(jPanel5);
+        jPanel5.setLayout(jPanel5Layout);
+        jPanel5Layout.setHorizontalGroup(
+            jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel5Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jScrollPane4, javax.swing.GroupLayout.DEFAULT_SIZE, 816, Short.MAX_VALUE)
+                    .addGroup(jPanel5Layout.createSequentialGroup()
+                        .addComponent(cmdRefreshProcessCard)
+                        .addGap(0, 0, Short.MAX_VALUE)))
+                .addContainerGap())
+        );
+        jPanel5Layout.setVerticalGroup(
+            jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel5Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(cmdRefreshProcessCard)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane4, javax.swing.GroupLayout.DEFAULT_SIZE, 415, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+
+        jTabbedPane1.addTab("EGVP-Laufzettel  ", jPanel5);
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -1496,8 +1567,52 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
         }
     }//GEN-LAST:event_cmdRefreshJournalActionPerformed
 
+    private void cmdRefreshProcessCardActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRefreshProcessCardActionPerformed
+        try {
+
+            if (!BeaAccess.hasInstance()) {
+                BeaLoginDialog loginPanel = new BeaLoginDialog(EditorsRegistry.getInstance().getMainWindow(), true, null);
+                loginPanel.setVisible(true);
+                if (!BeaAccess.hasInstance()) {
+                    ThreadUtils.showErrorDialog(this, "beA-Login fehlgeschlagen", "Fehler");
+                    return;
+                }
+            }
+            BeaAccess bea = BeaAccess.getInstance();
+            Collection<PostBox> inboxes = BeaAccess.getInstance().getPostBoxes();
+            for (PostBox pb : inboxes) {
+                if (msgContainer.getSenderSafeId().equals(pb.getSafeId())) {
+                    ProcessCard pc = BeaAccess.getInstance().getProcessCards(msgContainer.getSenderSafeId(), Long.parseLong(msgContainer.getId()));
+                    // only replace if not empty! process cards cannot be downloaded after the message has been moved to the SENT folder
+                    if(pc!=null) {
+                        if(pc.getEntries().size()>0) {
+                            msgContainer.setProcessCard(pc);
+                        }
+                    }
+                    
+                }
+            }
+            if (this.documentId != null) {
+                MessageExport mex = BeaAccess.exportMessage(msgContainer);
+                try {
+                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
+                    locator.lookupArchiveFileServiceRemote().setDocumentContent(this.documentId, mex.getContent());
+                    //tmpUrl = appLauncher.createTempFile(value.getName(), content);
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(this, "Fehler beim Speichern der beA-Nachricht: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+            }
+            this.setMessage(this.msgContainer, this.documentId);
+
+        } catch (Throwable t) {
+            ThreadUtils.showErrorDialog(this, "Fehler beim Laden des Journals: " + t.getMessage(), "Fehler");
+        }
+    }//GEN-LAST:event_cmdRefreshProcessCardActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton cmdRefreshJournal;
+    private javax.swing.JButton cmdRefreshProcessCard;
     private javax.swing.JEditorPane editBody;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
@@ -1509,9 +1624,11 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
     private javax.swing.JPanel jPanel4;
+    private javax.swing.JPanel jPanel5;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;
+    private javax.swing.JScrollPane jScrollPane4;
     private javax.swing.JSplitPane jSplitPane1;
     private javax.swing.JTabbedPane jTabbedPane1;
     private javax.swing.JLabel lblCaseNumber;
@@ -1527,6 +1644,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
     private javax.swing.JMenuItem mnuSearchSave;
     private javax.swing.JPopupMenu popAttachments;
     private javax.swing.JTable tblJournal;
+    private javax.swing.JTable tblProcessCard;
     // End of variables declaration//GEN-END:variables
 
     @Override

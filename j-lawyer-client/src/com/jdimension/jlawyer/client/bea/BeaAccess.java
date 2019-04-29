@@ -679,6 +679,7 @@ import org.jlawyer.bea.model.MessageExport;
 import org.jlawyer.bea.model.MessageHeader;
 import org.jlawyer.bea.model.MessageJournalEntry;
 import org.jlawyer.bea.model.PostBox;
+import org.jlawyer.bea.model.ProcessCard;
 
 /**
  *
@@ -864,6 +865,10 @@ public class BeaAccess {
     
     public Collection<Identity> searchIdentity(String firstName, String surName, String userName, String city, String zipCode) throws BeaWrapperException {
         return this.wrapper.searchIdentity(firstName, surName, userName, city, zipCode);
+    }
+    
+    public ProcessCard getProcessCards(String postBoxSafeId, long messageId)  throws BeaWrapperException {
+        return this.wrapper.getProcessCards(postBoxSafeId, messageId);
     }
 
 }
