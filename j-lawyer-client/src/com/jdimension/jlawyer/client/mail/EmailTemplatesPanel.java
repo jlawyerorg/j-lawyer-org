@@ -844,7 +844,7 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
         lblPanelTitle.setFont(new java.awt.Font("Dialog", 1, 24)); // NOI18N
         lblPanelTitle.setForeground(new java.awt.Color(255, 255, 255));
         lblPanelTitle.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/moc_src_big.png"))); // NOI18N
-        lblPanelTitle.setText("E-Mail - Vorlagen");
+        lblPanelTitle.setText("E-Mail- und beA- Vorlagen");
 
         jPanel3.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(255, 255, 255), 2, true));
         jPanel3.setOpaque(false);
@@ -881,7 +881,7 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
             }
         });
 
-        jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder("E-Mail - Vorlage"));
+        jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder("E-Mail- / beA-Vorlage"));
 
         jLabel1.setText("Betreff:");
 

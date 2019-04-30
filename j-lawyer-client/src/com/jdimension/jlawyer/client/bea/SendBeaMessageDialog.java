@@ -799,9 +799,16 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
             this.cmbTemplates.removeAllItems();
             this.cmbTemplates.addItem("");
             for (Object t : templates) {
-                this.cmbTemplates.addItem(t.toString());
+                EmailTemplate etpl=locator.lookupIntegrationServiceRemote().getEmailTemplate(t.toString());
+                if(etpl!=null) {
+                    if(etpl.isText()) {
+                        this.cmbTemplates.addItem(t.toString());
+                    }
+                }
+                
             }
-            this.cmbTemplates.setSelectedIndex(0);
+            if(this.cmbTemplates.getItemCount()>0)
+                this.cmbTemplates.setSelectedIndex(0);
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Fehler beim Erstellen der Vorlage: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
         }

@@ -137,7 +137,6 @@
                       </Group>
                   </Group>
               </Group>
-              <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="1" attributes="0">
                   <Component id="jToolBar1" min="-2" max="-2" attributes="0"/>
                   <Component id="chkSaveAsDocument" min="-2" max="-2" attributes="0"/>
