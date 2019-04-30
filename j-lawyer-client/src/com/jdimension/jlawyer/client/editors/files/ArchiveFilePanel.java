@@ -5450,9 +5450,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         float claimValueFloat = 0f;
         try {
             //claimValueFloat = Float.parseFloat(this.txtClaimValue.getText());
-            claimValueFloat = ((Double) this.currencyFormat.parse(this.txtClaimValue.getText())).floatValue();
+            Number n=this.currencyFormat.parse(this.txtClaimValue.getText());
+            claimValueFloat=n.floatValue();
+            //claimValueFloat = ((Double) this.currencyFormat.parse(this.txtClaimValue.getText())).floatValue();
 
-        } catch (Exception ex) {
+        } catch (Throwable ex) {
             if (this.txtClaimValue.getText() == null || "".equals(this.txtClaimValue.getText().trim())) {
                 claimValueFloat = 0f;
             }
