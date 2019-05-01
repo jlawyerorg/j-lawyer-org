@@ -667,13 +667,16 @@ import com.jdimension.jlawyer.client.processing.ProgressIndicator;
 import com.jdimension.jlawyer.client.processing.ProgressableAction;
 import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import javax.swing.JDialog;
 import javax.swing.JOptionPane;
+import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
 import org.jlawyer.bea.BeaWrapperException;
+import org.jlawyer.bea.model.Attachment;
 import org.jlawyer.bea.model.Identity;
 
 /**
@@ -754,7 +757,14 @@ public class SendBeaMessageAction extends ProgressableAction {
             
             String senderSafeId=this.fromSafeId;
             
-            
+            for(String url: this.attachments) {
+                Attachment att=new Attachment();
+                File f=new File(url);
+                att.setFileName(f.getName());
+                att.setContent(FileUtils.readFileToByteArray(f));
+                msg.getAttachments().add(att);
+            }
+             
             this.progress("Sende...");
             bea.sendMessage(msg, senderSafeId, recipients);
             

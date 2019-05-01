@@ -663,11 +663,23 @@
  */
 package com.jdimension.jlawyer.client.bea;
 
+import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.launcher.ObservedDocument;
+import com.jdimension.jlawyer.client.mail.EmailUtils;
+import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
+import com.jdimension.jlawyer.client.utils.FileUtils;
+import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import java.io.File;
+import java.util.ArrayList;
+import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
+import org.jlawyer.bea.model.Attachment;
+import org.jlawyer.bea.model.Identity;
 import org.jlawyer.bea.model.Message;
+import org.jlawyer.bea.model.Recipient;
 
 /**
  *
@@ -798,219 +810,156 @@ public class ViewBeaDialog extends javax.swing.JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void cmdReplyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdReplyActionPerformed
-//        SendEmailDialog dlg = new SendEmailDialog(EditorsRegistry.getInstance().getMainWindow(), false);
-//        dlg.setArchiveFile(this.contextArchiveFile);
-//
-//        MessageContainer msgC = this.msgContainer;
-//        try {
-//            Message m = msgC.getMessage();
-//            Address[] replyTos = m.getReplyTo();
-//            Address to = null;
-//            if (replyTos != null) {
-//                if (replyTos.length > 0) {
-//                    to = replyTos[0];
-//                }
-//            }
-//            if (to == null) {
-//                to = m.getFrom()[0];
-//            }
-//            try {
-//                dlg.setTo(MimeUtility.decodeText(to.toString()));
-//            } catch (Throwable t) {
-//                log.error(t);
-//                dlg.setTo(to.toString());
-//            }
-//
-//            String subject = m.getSubject();
-//            if (subject == null) {
-//                subject = "";
-//            }
-//            if (!subject.startsWith("Re: ")) {
-//                subject = "Re: " + subject;
-//            }
-//            dlg.setSubject(subject);
-//
-//            String decodedTo = to.toString();
-//            try {
-//                decodedTo = MimeUtility.decodeText(to.toString());
-//            } catch (Throwable t) {
-//                log.error(t);
-//            }
-//            //dlg.setBody(System.getProperty("line.separator") + System.getProperty("line.separator") + "*** " + decodedTo + " schrieb: ***" + System.getProperty("line.separator") + System.getProperty("line.separator") + this.content.getBody());
-//            String contentType = this.content.getContentType();
-//            dlg.setContentType(contentType);
-//            if (contentType.toLowerCase().startsWith("text/html")) {
-//                dlg.setBody(EmailUtils.getQuotedBody(EmailUtils.Html2Text(this.content.getBody()), "text/plain", decodedTo), "text/plain");
-//            } else {
-//                dlg.setBody(EmailUtils.getQuotedBody(this.content.getBody(), "text/plain", decodedTo), "text/plain");
-//            }
-//            dlg.setBody(EmailUtils.getQuotedBody(this.content.getBody(), "text/html", decodedTo), "text/html");
-//
-//        } catch (MessagingException ex) {
-//            log.error(ex);
-//        }
-//
-//        FrameUtils.centerDialog(dlg, null);
-//        dlg.setVisible(true);
-//
-//        if (this.odoc != null) {
-//            this.odoc.setClosed(true);
-//        }
-//        this.setVisible(false);
-//        this.dispose();
+        
+        if (!BeaAccess.hasInstance()) {
+            BeaLoginDialog loginPanel = new BeaLoginDialog(EditorsRegistry.getInstance().getMainWindow(), true, null);
+            loginPanel.setVisible(true);
+            if (!BeaAccess.hasInstance()) {
+                return;
+            }
+        }
+        
+        SendBeaMessageDialog dlg = new SendBeaMessageDialog(EditorsRegistry.getInstance().getMainWindow(), false);
+        dlg.setArchiveFile(this.contextArchiveFile);
+
+        Message msgC = this.msg;
+        try {
+            String replyToSafeId = msgC.getSenderSafeId();
+            Identity replyToIdentity=BeaAccess.getInstance().getIdentity(replyToSafeId);
+            try {
+                dlg.setTo(replyToIdentity);
+            } catch (Throwable t) {
+                log.error(t);
+                JOptionPane.showMessageDialog(this, "Fehler beim Ermitteln der Daten zu Safe-ID " + replyToSafeId + ": " + t.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            String subject = msgC.getSubject();
+            if (subject == null) {
+                subject = "";
+            }
+            if (!subject.startsWith("Re: ")) {
+                subject = "Re: " + subject;
+            }
+            dlg.setSubject(subject);
+            dlg.setBody(EmailUtils.getQuotedBody(this.content.getBody(), "text/plain", msgC.getSenderName(), msgC.getReceptionTime()));
+
+        } catch (Throwable ex) {
+            log.error(ex);
+        }
+
+        FrameUtils.centerDialog(dlg, null);
+        dlg.setVisible(true);
+
+        if (this.odoc != null) {
+            this.odoc.setClosed(true);
+        }
+        this.setVisible(false);
+        this.dispose();
     }//GEN-LAST:event_cmdReplyActionPerformed
 
     private void cmdReplyAllActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdReplyAllActionPerformed
-//        SendEmailDialog dlg = new SendEmailDialog(EditorsRegistry.getInstance().getMainWindow(), false);
-//        dlg.setArchiveFile(this.contextArchiveFile);
-//
-//        MessageContainer msgC = this.msgContainer;
-//        try {
-//            Message origM = msgC.getMessage();
-//            Message m = origM.reply(true);
-//
-//            try {
-//                Address[] to = m.getRecipients(RecipientType.TO);
-//                String toString = "";
-//                for (Address a : to) {
-//                    toString = toString + MimeUtility.decodeText(a.toString()) + ", ";
-//                }
-//                Address[] cc = m.getRecipients(RecipientType.CC);
-//                String ccString = "";
-//                if (cc != null) {
-//                    for (Address a : cc) {
-//                        ccString = ccString + MimeUtility.decodeText(a.toString()) + ", ";
-//                    }
-//                }
-//                Address[] bcc = m.getRecipients(RecipientType.BCC);
-//                String bccString = "";
-//                if (bcc != null) {
-//                    for (Address a : bcc) {
-//                        bccString = bccString + MimeUtility.decodeText(a.toString()) + ", ";
-//                    }
-//                }
-//                dlg.setTo(toString);
-//                dlg.setCC(ccString);
-//                dlg.setBCC(bccString);
-//
-//            } catch (Throwable t) {
-//                log.error(t);
-//                dlg.setTo(m.getRecipients(RecipientType.TO)[0].toString());
-//            }
-//
-//            String subject = m.getSubject();
-//            if (subject == null) {
-//                subject = "";
-//            }
-//            if (!subject.startsWith("Re: ")) {
-//                subject = "Re: " + subject;
-//            }
-//            dlg.setSubject(subject);
-//
-//            String decodedTo = origM.getFrom()[0].toString();
-//            try {
-//                decodedTo = MimeUtility.decodeText(origM.getFrom()[0].toString());
-//            } catch (Throwable t) {
-//                log.error(t);
-//            }
-//            //dlg.setBody(System.getProperty("line.separator") + System.getProperty("line.separator") + "*** " + decodedTo + " schrieb: ***" + System.getProperty("line.separator") + System.getProperty("line.separator") + this.content.getBody());
-//            String contentType = this.content.getContentType();
-//            dlg.setContentType(contentType);
-//            if (contentType.toLowerCase().startsWith("text/html")) {
-//                dlg.setBody(EmailUtils.getQuotedBody(EmailUtils.Html2Text(this.content.getBody()), "text/plain", decodedTo), "text/plain");
-//            } else {
-//                dlg.setBody(EmailUtils.getQuotedBody(this.content.getBody(), "text/plain", decodedTo), "text/plain");
-//            }
-//            dlg.setBody(EmailUtils.getQuotedBody(this.content.getBody(), "text/html", decodedTo), "text/html");
-//
-//        } catch (MessagingException ex) {
-//            log.error(ex);
-//        }
-//
-//        FrameUtils.centerDialog(dlg, null);
-//        dlg.setVisible(true);
-//
-//        if (this.odoc != null) {
-//            this.odoc.setClosed(true);
-//        }
-//        this.setVisible(false);
-//        this.dispose();
-//
+if (!BeaAccess.hasInstance()) {
+            BeaLoginDialog loginPanel = new BeaLoginDialog(EditorsRegistry.getInstance().getMainWindow(), true, null);
+            loginPanel.setVisible(true);
+            if (!BeaAccess.hasInstance()) {
+                return;
+            }
+        }
+        
+        SendBeaMessageDialog dlg = new SendBeaMessageDialog(EditorsRegistry.getInstance().getMainWindow(), false);
+        dlg.setArchiveFile(this.contextArchiveFile);
+
+        Message msgC = this.msg;
+        try {
+            String replyToSafeId = msgC.getSenderSafeId();
+            Identity replyToIdentity=BeaAccess.getInstance().getIdentity(replyToSafeId);
+            try {
+                dlg.setTo(replyToIdentity);
+            } catch (Throwable t) {
+                log.error(t);
+                JOptionPane.showMessageDialog(this, "Fehler beim Ermitteln der Daten zu Safe-ID " + replyToSafeId + ": " + t.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            
+            ArrayList<Recipient> recipients=msgC.getRecipients();
+            for(Recipient rec: recipients) {
+                String s=rec.getSafeId();
+                Identity i=BeaAccess.getInstance().getIdentity(s);
+                dlg.addTo(i);
+            }
+
+            String subject = msgC.getSubject();
+            if (subject == null) {
+                subject = "";
+            }
+            if (!subject.startsWith("Re: ")) {
+                subject = "Re: " + subject;
+            }
+            dlg.setSubject(subject);
+            dlg.setBody(EmailUtils.getQuotedBody(this.content.getBody(), "text/plain", msgC.getSenderName(), msgC.getReceptionTime()));
+
+        } catch (Throwable ex) {
+            log.error(ex);
+        }
+
+        FrameUtils.centerDialog(dlg, null);
+        dlg.setVisible(true);
+
+        if (this.odoc != null) {
+            this.odoc.setClosed(true);
+        }
+        this.setVisible(false);
+        this.dispose();
     }//GEN-LAST:event_cmdReplyAllActionPerformed
 
     private void cmdForwardActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdForwardActionPerformed
-//        SendEmailDialog dlg = new SendEmailDialog(EditorsRegistry.getInstance().getMainWindow(), false);
-//        dlg.setArchiveFile(this.contextArchiveFile);
-//
-//        MessageContainer msgC = this.msgContainer;
-//        try {
-//            Message m = msgC.getMessage();
-//            Address from = m.getFrom()[0];
-//
-//            String subject = m.getSubject();
-//            if (subject == null) {
-//                subject = "";
-//            }
-//            if (!subject.startsWith("Fw: ")) {
-//                subject = "Fw: " + subject;
-//            }
-//            dlg.setSubject(subject);
-//
-//            String decodedFrom = from.toString();
-//            try {
-//                decodedFrom = MimeUtility.decodeText(from.toString());
-//            } catch (Throwable t) {
-//                log.error(t);
-//            }
-//            //dlg.setBody(System.getProperty("line.separator") + System.getProperty("line.separator") + "*** " + decodedFrom + " schrieb: ***" + System.getProperty("line.separator") + System.getProperty("line.separator") + this.content.getBody());
-//            String contentType = this.content.getContentType();
-//            dlg.setContentType(contentType);
-//            if (contentType.toLowerCase().startsWith("text/html")) {
-//                dlg.setBody(EmailUtils.getQuotedBody(EmailUtils.Html2Text(this.content.getBody()), "text/plain", decodedFrom), "text/plain");
-//            } else {
-//                dlg.setBody(EmailUtils.getQuotedBody(this.content.getBody(), "text/plain", decodedFrom), "text/plain");
-//            }
-//            dlg.setBody(EmailUtils.getQuotedBody(this.content.getBody(), "text/html", decodedFrom), "text/html");
-//            
-//            try {
-//                // try forwarding attachments
-//                if(m.getFolder()!=null) {
-//                    if(!m.getFolder().isOpen()) {
-//                        m.getFolder().open(Folder.READ_WRITE);
-//                    }
-//                }
-//                ArrayList<String> attachmentNames=EmailUtils.getAttachmentNames(m.getContent());
-//                for(String attName: attachmentNames) {
-//                    byte[] data=EmailUtils.getAttachmentBytes(attName, msgC);
-//                    if(data!=null) {
-//                        String attachmentUrl=FileUtils.createTempFile(attName, data);
-//                        new File(attachmentUrl).deleteOnExit();
-//                        dlg.addAttachment(attachmentUrl, "");
-//                    }
-//                }
-//                
-//                if(m.getFolder()!=null) {
-//                    if(m.getFolder().isOpen()) {
-//                        EmailUtils.closeIfIMAP(m.getFolder());
-//                    }
-//                }
-//                
-//            } catch (Throwable t) {
-//                log.error("Error forwarding attachments", t);
-//            }
-//
-//        } catch (MessagingException ex) {
-//            log.error(ex);
-//        }
-//
-//        FrameUtils.centerDialog(dlg, null);
-//        dlg.setVisible(true);
-//
-//        if (this.odoc != null) {
-//            this.odoc.setClosed(true);
-//        }
-//        this.setVisible(false);
-//        this.dispose();
+
+        if (!BeaAccess.hasInstance()) {
+            BeaLoginDialog loginPanel = new BeaLoginDialog(EditorsRegistry.getInstance().getMainWindow(), true, null);
+            loginPanel.setVisible(true);
+            if (!BeaAccess.hasInstance()) {
+                return;
+            }
+        }
+        
+        SendBeaMessageDialog dlg = new SendBeaMessageDialog(EditorsRegistry.getInstance().getMainWindow(), false);
+        dlg.setArchiveFile(this.contextArchiveFile);
+
+        Message msgC = this.msg;
+        try {
+            
+            String subject = msgC.getSubject();
+            if (subject == null) {
+                subject = "";
+            }
+            if (!subject.startsWith("Re: ")) {
+                subject = "Fw: " + subject;
+            }
+            dlg.setSubject(subject);
+            dlg.setBody(EmailUtils.getQuotedBody(this.content.getBody(), "text/plain", msgC.getSenderName(), msgC.getReceptionTime()));
+            
+            for(Attachment att: msgC.getAttachments()) {
+                byte[] data=att.getContent();
+                    if(data!=null) {
+                        String attachmentUrl=FileUtils.createTempFile(att.getFileName(), data);
+                        new File(attachmentUrl).deleteOnExit();
+                        dlg.addAttachment(attachmentUrl, "");
+                    }
+            }
+
+        } catch (Throwable ex) {
+            log.error(ex);
+        }
+
+        FrameUtils.centerDialog(dlg, null);
+        dlg.setVisible(true);
+
+        if (this.odoc != null) {
+            this.odoc.setClosed(true);
+        }
+        this.setVisible(false);
+        this.dispose();
 
     }//GEN-LAST:event_cmdForwardActionPerformed
 

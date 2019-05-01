@@ -787,7 +787,13 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
             this.chkSaveAsDocument.setSelected(false);
         }
 
-        this.lblFrom.setText(cu.getEmailSenderName() + "<" + cu.getEmailAddress() + ">");
+        String fromIdentity=cu.getPrincipalId();
+        if(this.cmbFrom.getSelectedItem()!=null) {
+            Identity i=(Identity)this.cmbFrom.getSelectedItem();
+            fromIdentity=i.toString();
+        }
+        
+        this.lblFrom.setText(cu.getEmailSenderName() + "<" + fromIdentity + ">");
         this.tp.setText(EmailUtils.Html2Text(cu.getEmailSignature()));
         this.lstAttachments.setModel(new DefaultListModel());
         this.lstTo.setModel(new DefaultListModel());
