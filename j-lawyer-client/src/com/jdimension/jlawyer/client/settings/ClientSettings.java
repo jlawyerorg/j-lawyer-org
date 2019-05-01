@@ -750,6 +750,11 @@ public class ClientSettings {
     public static final String CONF_BEA_TAGGINGENABLED="client.bea.taggingenabled";
     public static final String CONF_BEA_LASTTAG="client.bea.lasttag";
     
+    public static final String CONF_BEASEND_DOCUMENTTAGGINGENABLED="client.beasend.documenttaggingenabled";
+    public static final String CONF_BEASEND_LASTDOCUMENTTAG="client.beasend.lastdocumenttag";
+    
+    public static final String CONF_BEA_SAVETOARCHIVEFILE="client.bea.savetoarchivefile";
+    
     public static final String CONF_CASE_LASTUPLOADDIR="client.case.lastuploaddir";
     
     public static final String CONF_MAIL_HTMLWHITELIST="client.mail.htmlwhitelist";

@@ -855,8 +855,8 @@ public class BeaAccess {
         return BeaWrapper.exportMessage(msg);
     }
     
-    public void sendMessage(Message msg, String senderSafeId, ArrayList<String> recipientSafeIds) throws BeaWrapperException {
-        this.wrapper.sendMessage(msg, senderSafeId, recipientSafeIds);
+    public long sendMessage(Message msg, String senderSafeId, ArrayList<String> recipientSafeIds) throws BeaWrapperException {
+        return this.wrapper.sendMessage(msg, senderSafeId, recipientSafeIds);
     }
     
     public boolean isMessageReadByIdentity(String messageId, String safeId) throws BeaWrapperException {

@@ -663,13 +663,23 @@
  */
 package com.jdimension.jlawyer.client.bea;
 
+import com.jdimension.jlawyer.client.events.DocumentAddedEvent;
+import com.jdimension.jlawyer.client.events.EventBroker;
+import com.jdimension.jlawyer.client.launcher.LauncherFactory;
 import com.jdimension.jlawyer.client.processing.ProgressIndicator;
 import com.jdimension.jlawyer.client.processing.ProgressableAction;
+import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileHistoryBean;
+import com.jdimension.jlawyer.persistence.DocumentTagsBean;
+import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
+import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Enumeration;
 import javax.swing.JDialog;
 import javax.swing.JOptionPane;
@@ -678,6 +688,8 @@ import org.apache.log4j.Logger;
 import org.jlawyer.bea.BeaWrapperException;
 import org.jlawyer.bea.model.Attachment;
 import org.jlawyer.bea.model.Identity;
+import org.jlawyer.bea.model.Message;
+import org.jlawyer.bea.model.MessageExport;
 
 /**
  *
@@ -695,11 +707,12 @@ public class SendBeaMessageAction extends ProgressableAction {
     private String bcc = "";
     private String subject = "";
     private String body = "";
-    private String fromSafeId="";
+    private String fromSafeId = "";
     private String contentType = "text/plain";
     private ArchiveFileBean archiveFile = null;
+    private String documentTag = null;
 
-    public SendBeaMessageAction(ProgressIndicator i, JDialog cleanAfter, String fromSafeId, ArrayList<String> attachments, AppUserBean cu, boolean readReceipt, Enumeration to, String subject, String body) {
+    public SendBeaMessageAction(ProgressIndicator i, JDialog cleanAfter, String fromSafeId, ArrayList<String> attachments, AppUserBean cu, boolean readReceipt, Enumeration to, String subject, String body, String documentTag) {
         super(i, false, cleanAfter);
         this.attachments = attachments;
         this.cu = cu;
@@ -710,11 +723,12 @@ public class SendBeaMessageAction extends ProgressableAction {
         this.subject = subject;
         this.body = body;
         this.contentType = contentType;
-        this.fromSafeId=fromSafeId;
+        this.fromSafeId = fromSafeId;
+        this.documentTag = documentTag;
     }
 
-    public SendBeaMessageAction(ProgressIndicator i, JDialog cleanAfter, String fromSafeId, ArrayList<String> attachments, AppUserBean cu, boolean readReceipt, Enumeration to, String subject, String body, ArchiveFileBean af) {
-        this(i, cleanAfter, fromSafeId, attachments, cu, readReceipt, to, subject, body);
+    public SendBeaMessageAction(ProgressIndicator i, JDialog cleanAfter, String fromSafeId, ArrayList<String> attachments, AppUserBean cu, boolean readReceipt, Enumeration to, String subject, String body, ArchiveFileBean af, String documentTag) {
+        this(i, cleanAfter, fromSafeId, attachments, cu, readReceipt, to, subject, body, documentTag);
         this.archiveFile = af;
     }
 
@@ -732,145 +746,119 @@ public class SendBeaMessageAction extends ProgressableAction {
     public boolean execute() throws Exception {
 
         this.progress("Verbinde...");
-        BeaAccess bea=BeaAccess.getInstance();
+        BeaAccess bea = BeaAccess.getInstance();
+        long sentId = -1;
+        Message msg = new Message();
+        StringBuffer recipientsText = new StringBuffer();
 
-        
-            
-            try {
-                this.progress("Erstelle Nachricht...");
-            
-            org.jlawyer.bea.model.Message msg=new org.jlawyer.bea.model.Message();
+        try {
+            this.progress("Erstelle Nachricht...");
+
             msg.setSubject(subject);
             msg.setBody(body);
-            
-            if(this.archiveFile!=null)
+
+            if (this.archiveFile != null) {
                 msg.setReferenceNumber(this.archiveFile.getFileNumber());
-            
-            ArrayList<String> recipients=new ArrayList<String>();
-            while(this.to.hasMoreElements()) {
-                Object o=this.to.nextElement();
-                if(o instanceof Identity) {
-                    String safeId=((Identity)o).getSafeId();
+            }
+
+            ArrayList<String> recipients = new ArrayList<String>();
+            while (this.to.hasMoreElements()) {
+                Object o = this.to.nextElement();
+                if (o instanceof Identity) {
+                    String safeId = ((Identity) o).getSafeId();
                     recipients.add(safeId);
+                    recipientsText.append(((Identity) o).toString());
+                    recipientsText.append("  ");
                 }
             }
-            
-            String senderSafeId=this.fromSafeId;
-            
-            for(String url: this.attachments) {
-                Attachment att=new Attachment();
-                File f=new File(url);
+
+            String senderSafeId = this.fromSafeId;
+
+            for (String url : this.attachments) {
+                Attachment att = new Attachment();
+                File f = new File(url);
                 att.setFileName(f.getName());
                 att.setContent(FileUtils.readFileToByteArray(f));
                 msg.getAttachments().add(att);
             }
-             
+
             this.progress("Sende...");
-            bea.sendMessage(msg, senderSafeId, recipients);
-            
+            sentId = bea.sendMessage(msg, senderSafeId, recipients);
+            System.out.println("sent message " + sentId);
+
         } catch (BeaWrapperException ex) {
             log.error(ex);
             JOptionPane.showMessageDialog(this.indicator, "Nachricht kann nicht gesendet werden: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
         }
-            
-            System.out.println("TODO: gesendete bea in akte speichern");
-            
-//
-//
-//            Throwable storeException = null;
-//            try {
-//                if (this.archiveFile != null) {
-//
-//                    ClientSettings settings = ClientSettings.getInstance();
-//                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-//                    ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
-//
-//                    this.progress("Speichern in Akte " + this.archiveFile.getFileNumber());
-//                    ByteArrayOutputStream bOut = new ByteArrayOutputStream();
-//                    msg.writeTo(bOut);
-//                    bOut.close();
-//                    byte[] data = bOut.toByteArray();
-//
-//                    String newName = msg.getSubject().replaceAll("[:\\\\/*?|<> \"]", "_");
-//                    newName = newName + ".eml";
-//                    java.util.Date sentPrefix = new Date();
-//                    newName = FileUtils.getNewFileName(newName, true, sentPrefix, this.indicator);
-//
-//                    if (newName != null) {
-//                        if (newName.trim().length() == 0) {
-//                            newName = "E-Mail";
-//                        }
-//
-//                        if (!newName.toLowerCase().endsWith(".eml")) {
-//                            newName = newName + ".eml";
-//                        }
-//
-//                        afs.addDocument(this.archiveFile.getId(), newName, data, "");
-//
-//                        ArchiveFileHistoryBean historyDto = new ArchiveFileHistoryBean();
-//                        historyDto.setChangeDate(new Date());
-//                        historyDto.setChangeDescription("E-Mail gesendet an " + to + ": " + msg.getSubject());
-//                        afs.addHistory(this.archiveFile.getId(), historyDto);
-//                    }
-//
-//
-//
-//                } else {
-//                    this.progress("Überspringe Speichern in Akte...");
-//                }
-//            } catch (Throwable t) {
-//                log.error("Could not save message to archive file", t);
-//                storeException = t;
-//            }
-//
-//            bus.close();
-//
-//
-//            this.progress("Suche Ordner 'Gesendet'...");
-//            Store store = session.getStore(cu.getEmailInType());
-//            store.connect(cu.getEmailInServer(), cu.getEmailInUser(), cu.getEmailInPwd());
-//
-//            Folder folder = store.getFolder(FolderContainer.INBOX);
-//            if (!folder.isOpen()) {
-//                folder.open(Folder.READ_WRITE);
-//            }
-//
-//            Folder sent = EmailUtils.getSentFolder(folder);
-//            if (sent != null) {
-//                this.progress("Kopiere Nachricht in 'Gesendet'...");
-//                sent.open(Folder.READ_WRITE);
-//                msg.setFlag(Flags.Flag.SEEN, true);
-//                sent.appendMessages(new Message[]{msg});
-//
-//            }
-//            
-//            try {
-//                EmailUtils.closeIfIMAP(folder);
-//                //folder.close(true);
-//            } catch (Throwable t) {
-//                log.error(t);
-//            }
-//
-//            store.close();
-//
-//            for (String url : this.attachments) {
-//                File f = new File(url);
-//                if (f.exists()) {
-//                    LauncherFactory.cleanupTempFile(url);
-//                }
-//            }
-//
-//            if (storeException != null) {
-//                throw new Exception("Fehler beim Speichern: " + storeException.getMessage());
-//            }
-//
-//
-//
-//        } catch (Exception mex) {
-//            log.error(mex);
-//            throw new Exception("Fehler beim Senden: " + mex.getMessage());
-//        }
+
+        System.out.println("TODO: gesendete bea in akte speichern");
+
+        Throwable storeException = null;
+        try {
+            if (this.archiveFile != null) {
+
+                ClientSettings settings = ClientSettings.getInstance();
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
+
+                this.progress("Speichern in Akte " + this.archiveFile.getFileNumber());
+
+                Message msgEx = bea.getMessage("" + sentId, fromSafeId);
+                MessageExport mex = bea.exportMessage(msgEx);
+
+                java.util.Date receivedPrefix = msg.getReceptionTime();
+                if (receivedPrefix == null) {
+                    receivedPrefix = new java.util.Date();
+                }
+                String newName = com.jdimension.jlawyer.client.utils.FileUtils.getNewFileName(mex.getFileName(), true, receivedPrefix);
+                if (newName == null) {
+                    return false;
+                }
+
+                if (newName.trim().length() == 0) {
+                    newName = "beA-Nachricht";
+                }
+
+                if (!newName.toLowerCase().endsWith(".bea")) {
+                    newName = newName + ".bea";
+                }
+
+                ArchiveFileDocumentsBean newDoc = afs.addDocument(this.archiveFile.getId(), newName, mex.getContent(), "");
+
+                if (this.documentTag != null && !("".equals(this.documentTag))) {
+                    afs.setDocumentTag(newDoc.getId(), new DocumentTagsBean(newDoc.getId(), this.documentTag), true);
+                }
+
+                ArchiveFileHistoryBean historyDto = new ArchiveFileHistoryBean();
+                historyDto.setChangeDate(new Date());
+                historyDto.setChangeDescription("beA-Nachricht gesendet an " + recipientsText.toString() + ": " + msg.getSubject());
+                afs.addHistory(this.archiveFile.getId(), historyDto);
+
+                EventBroker eb = EventBroker.getInstance();
+                eb.publishEvent(new DocumentAddedEvent(newDoc));
+
+            } else {
+                this.progress("Überspringe Speichern in Akte...");
+            }
+
+        } catch (Throwable t) {
+            log.error("Could not save message to archive file", t);
+            storeException = t;
+        }
+
+        for (String url : this.attachments) {
+            File f = new File(url);
+            if (f.exists()) {
+                LauncherFactory.cleanupTempFile(url);
+            }
+        }
+
+        if (storeException != null) {
+            throw new Exception("Fehler beim Speichern: " + storeException.getMessage());
+        }
+
         return true;
 
     }
+
 }
