@@ -664,6 +664,7 @@
 package com.jdimension.jlawyer.ui.tagging;
 
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileTagsBean;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
@@ -780,6 +781,35 @@ public class TagUtils {
                 }
                 
             }
+    }
+    
+    public static String getDocumentTagsOverviewAsHtml(Hashtable<String, ArrayList<String>> docTags) {
+        StringBuffer sb=new StringBuffer();
+        //sb.append("<html>");
+        //sb.append("<font color=\"blue\">");
+        if(docTags!=null) {
+            Hashtable<String, Integer> activeTags=new Hashtable<String, Integer>();
+            ArrayList<String> sortedTags=new ArrayList<String>();
+            for(ArrayList<String> dTags: docTags.values()) {
+                for(String t: dTags) {
+                    if(!sortedTags.contains(t))
+                        sortedTags.add(t);
+                    if(activeTags.containsKey(t))
+                        activeTags.put(t, activeTags.get(t)+1);
+                    else
+                        activeTags.put(t, 1);
+                }
+            }
+            StringUtils.sortIgnoreCase(sortedTags);
+            for(String dTag: sortedTags) {
+                sb.append(dTag);
+                //sb.append(" (" + activeTags.get(dTag) + ")&nbsp;&nbsp;&nbsp;");
+                sb.append(" (" + activeTags.get(dTag) + ")   ");
+            }
+        }
+        //sb.append("</font>");
+        //sb.append("</html>");
+        return sb.toString();
     }
     
     public static String[] getSelectedTags(JPopupMenu popup) {

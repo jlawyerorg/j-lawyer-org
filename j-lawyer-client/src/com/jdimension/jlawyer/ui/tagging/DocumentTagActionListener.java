@@ -704,6 +704,8 @@ public class DocumentTagActionListener implements ActionListener {
             DocumentTagsBean tagBean=new DocumentTagsBean();
             tagBean.setTagName(tb.getText());
             this.fileService.setDocumentTag(this.documentId, tagBean , active);
+            
+            this.caller.updateDocumentTagsOverview();
 
         } catch (Throwable t) {
             log.error("Error setting tag", t);
