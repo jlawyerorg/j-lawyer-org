@@ -686,7 +686,12 @@ public class EmailTableCellRenderer extends DefaultTableCellRenderer {
 
         if(row>=table.getRowCount() || column >= table.getColumnCount()) {
             log.warn("invalid row or column parameters: " + row + ", " + column + "; actual: " + table.getRowCount() + ", " + table.getColumnCount());
-            return super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            try {
+                return super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            } catch (Throwable t) {
+                log.error(t);
+                return new JLabel("Fehler");
+            }
         }
         
         
