@@ -907,19 +907,19 @@ public class SplashThread implements Runnable {
             log.error("error loading help / plugins / reports", t);
         }
 
-        pool = Executors.newFixedThreadPool(3);
+        //pool = Executors.newFixedThreadPool(3);
         updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.modules"), true);
         this.loadedMods = 0;
         this.updateProgress(false, this.numberOfMods, 0, "");
-        this.preloadEditors(theme, rootModule, pool);
+        this.preloadEditors(theme, rootModule);
         //updateStatus(".", true);
-        pool.shutdown();
-        try {
-            pool.awaitTermination(60, TimeUnit.SECONDS);
-        } catch (Throwable t) {
-            t.printStackTrace();
-            log.error("Error preloading editors", t);
-        }
+        //pool.shutdown();
+//        try {
+//            pool.awaitTermination(60, TimeUnit.SECONDS);
+//        } catch (Throwable t) {
+//            t.printStackTrace();
+//            log.error("Error preloading editors", t);
+//        }
 
         updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.done"), true);
 
@@ -1254,45 +1254,79 @@ public class SplashThread implements Runnable {
         //updateStatus(".", false);
     }
 
-    private void preloadEditors(ThemeSettings theme, ModuleMetadata module, ExecutorService pool) {
+    private void preloadEditors(ThemeSettings theme, ModuleMetadata module) {
 
-        Runnable r = new Runnable() {
-            public void run() {
-                //this.updateStatus(java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.loadingmodules"), new Object[] {this.loadedMods, this.numberOfMods, module.getFullName()}), true);
-                updateStatus(java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.loadingmodules"), new Object[]{module.getFullName()}), true);
+//        Runnable r = new Runnable() {
+//            public void run() {
+//                //this.updateStatus(java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.loadingmodules"), new Object[] {this.loadedMods, this.numberOfMods, module.getFullName()}), true);
+//                updateStatus(java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.loadingmodules"), new Object[]{module.getFullName()}), true);
+//
+//                String editorClass = ((ModuleMetadata) module).getEditorClass();
+//                if (editorClass != null) {
+//                    Object editor = null;
+//                    //updateStatus(".", false);
+//                    try {
+//                        editor = EditorsRegistry.getInstance().getEditor(editorClass);
+//                        if (module.getBackgroundImage() != null) {
+//                            if (editor instanceof ThemeableEditor) {
+//                                Image image = theme.getBackground(module);
+//                                if (image != null) {
+//                                    ((ThemeableEditor) editor).setBackgroundImage(image);
+//                                }
+//                            } else {
+//                                log.warn("Editor " + editorClass + " has a background image set but does not implement interface ThemeableEditor");
+//                            }
+//                        }
+//
+//                    } catch (Exception ex) {
+//                        log.error("Error preloading editor from class " + editorClass, ex);
+//                        ThreadUtils.showErrorDialog(owner, java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("error.loadingeditor"), new Object[]{ex.getMessage()}), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("msg.error"));
+//                    }
+//
+//                }
+//                loadedMods++;
+//                updateProgress(false, numberOfMods, loadedMods, "");
+//            }
+//        };
+//        pool.execute(r);
+//
+//        for (int i = 0; i < module.getChildCount(); i++) {
+//            this.preloadEditors(theme, (ModuleMetadata) module.getChildAt(i), pool);
+//        }
 
-                String editorClass = ((ModuleMetadata) module).getEditorClass();
-                if (editorClass != null) {
-                    Object editor = null;
-                    //updateStatus(".", false);
-                    try {
-                        editor = EditorsRegistry.getInstance().getEditor(editorClass);
-                        if (module.getBackgroundImage() != null) {
-                            if (editor instanceof ThemeableEditor) {
-                                Image image = theme.getBackground(module);
-                                if (image != null) {
-                                    ((ThemeableEditor) editor).setBackgroundImage(image);
-                                }
-                            } else {
-                                log.warn("Editor " + editorClass + " has a background image set but does not implement interface ThemeableEditor");
-                            }
+        this.loadedMods++;
+
+        //this.updateStatus(java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.loadingmodules"), new Object[] {this.loadedMods, this.numberOfMods, module.getFullName()}), true);
+        this.updateStatus(java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.loadingmodules"), new Object[]{module.getFullName()}), true);
+        this.updateProgress(false, this.numberOfMods, this.loadedMods, "");
+
+        String editorClass = ((ModuleMetadata) module).getEditorClass();
+        if (editorClass != null) {
+            Object editor = null;
+            //updateStatus(".", false);
+            try {
+                editor = EditorsRegistry.getInstance().getEditor(editorClass);
+                if (module.getBackgroundImage() != null) {
+                    if (editor instanceof ThemeableEditor) {
+                        Image image = theme.getBackground(module);
+                        if (image != null) {
+                            ((ThemeableEditor) editor).setBackgroundImage(image);
                         }
-
-                    } catch (Exception ex) {
-                        log.error("Error preloading editor from class " + editorClass, ex);
-                        ThreadUtils.showErrorDialog(owner, java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("error.loadingeditor"), new Object[]{ex.getMessage()}), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("msg.error"));
+                    } else {
+                        log.warn("Editor " + editorClass + " has a background image set but does not implement interface ThemeableEditor");
                     }
-
                 }
-                loadedMods++;
-                updateProgress(false, numberOfMods, loadedMods, "");
-            }
-        };
-        pool.execute(r);
 
-        for (int i = 0; i < module.getChildCount(); i++) {
-            this.preloadEditors(theme, (ModuleMetadata) module.getChildAt(i), pool);
+            } catch (Exception ex) {
+                log.error("Error preloading editor from class " + editorClass, ex);
+                ThreadUtils.showErrorDialog(this.owner, java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("error.loadingeditor"), new Object[]{ex.getMessage()}), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("msg.error"));
+            }
+
         }
+        for (int i = 0; i < module.getChildCount(); i++) {
+            this.preloadEditors(theme, (ModuleMetadata) module.getChildAt(i));
+        }
+
     }
 
     private void notifyEditorForStatus(ModuleMetadata module) {
