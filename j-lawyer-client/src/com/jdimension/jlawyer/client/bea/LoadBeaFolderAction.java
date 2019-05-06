@@ -706,7 +706,7 @@ public class LoadBeaFolderAction extends ProgressableAction {
         this.scrollToRow = scrollToRow;
         
         BeaAccess bea=BeaAccess.getInstance();
-        headers=new ArrayList(bea.getFolderOverview(f));
+        headers=bea.getFolderOverview(f);
         this.max=headers.size();
     }
 

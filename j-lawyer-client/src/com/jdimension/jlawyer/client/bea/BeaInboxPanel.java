@@ -813,7 +813,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
 
         this.treeFolders.setDropMode(DropMode.ON);
 
-        //Runtime.getRuntime().addShutdownHook(new Thread(new BeaObjectsCleanUp(this.store)));
+        Runtime.getRuntime().addShutdownHook(new Thread(new BeaObjectsCleanUp()));
         DropTarget dt = new DropTarget(this.treeFolders, this);
 
         this.dragSource = new DragSource();
