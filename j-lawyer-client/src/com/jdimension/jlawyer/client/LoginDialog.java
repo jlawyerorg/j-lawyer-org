@@ -883,6 +883,11 @@ public class LoginDialog extends javax.swing.JFrame {
         jLabel2.setText(bundle.getString("label.port.jndi")); // NOI18N
 
         txtServer.setText("localhost");
+        txtServer.addFocusListener(new java.awt.event.FocusAdapter() {
+            public void focusLost(java.awt.event.FocusEvent evt) {
+                txtServerFocusLost(evt);
+            }
+        });
 
         txtPort.setText("8080");
 
@@ -1261,6 +1266,10 @@ public class LoginDialog extends javax.swing.JFrame {
         box.restore(lblBoxOutput, boxProgress, this.txtServer.getText(), dbPassword.toString(), encPassword.toString());
 
     }//GEN-LAST:event_cmdRestoreActionPerformed
+
+    private void txtServerFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtServerFocusLost
+        txtServer.setText(txtServer.getText().trim());
+    }//GEN-LAST:event_txtServerFocusLost
 
     /**
      * @param args the command line arguments
