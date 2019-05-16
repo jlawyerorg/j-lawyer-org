@@ -692,8 +692,9 @@ public class MultiCalDialog extends javax.swing.JDialog {
      * Creates new form MultiCalDialog
      */
     public MultiCalDialog(JTextField target, java.awt.Frame parent, boolean modal) {
-        
-        super(parent, modal);
+        // last param is required so that the dialog inherits some graphics settings from its parent
+        // otherwise, it might e.g. be opened on a different screen in a multi monitor setup
+        super(parent, "", modal, parent.getGraphicsConfiguration());
         this.initializing=true;
         this.target=target;
         initComponents();        
