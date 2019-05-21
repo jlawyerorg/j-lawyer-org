@@ -703,12 +703,9 @@ public class SendBeaMessageAction extends ProgressableAction {
     private AppUserBean cu = null;
     private boolean readReceipt = false;
     private Enumeration to = null;
-    private String cc = "";
-    private String bcc = "";
     private String subject = "";
     private String body = "";
     private String fromSafeId = "";
-    private String contentType = "text/plain";
     private ArchiveFileBean archiveFile = null;
     private String documentTag = null;
 
@@ -718,13 +715,11 @@ public class SendBeaMessageAction extends ProgressableAction {
         this.cu = cu;
         this.readReceipt = readReceipt;
         this.to = to;
-        this.cc = cc;
-        this.bcc = bcc;
         this.subject = subject;
         this.body = body;
-        this.contentType = contentType;
         this.fromSafeId = fromSafeId;
         this.documentTag = documentTag;
+        this.readReceipt=readReceipt;
     }
 
     public SendBeaMessageAction(ProgressIndicator i, JDialog cleanAfter, String fromSafeId, ArrayList<String> attachments, AppUserBean cu, boolean readReceipt, Enumeration to, String subject, String body, ArchiveFileBean af, String documentTag) {
@@ -781,6 +776,11 @@ public class SendBeaMessageAction extends ProgressableAction {
                 att.setContent(FileUtils.readFileToByteArray(f));
                 msg.getAttachments().add(att);
             }
+            
+            if(this.readReceipt)
+                msg.setEebRequested(true);
+            else
+                msg.setEebRequested(false);
 
             this.progress("Sende...");
             sentId = bea.sendMessage(msg, senderSafeId, recipients);

@@ -390,8 +390,8 @@
               <SubComponents>
                 <Component class="javax.swing.JCheckBox" name="chkCaseTagging">
                   <Properties>
+                    <Property name="text" type="java.lang.String" value="Akte markieren:"/>
                     <Property name="actionCommand" type="java.lang.String" value="Zielakte markieren:"/>
-                    <Property name="label" type="java.lang.String" value="Zielakte markieren:"/>
                   </Properties>
                   <Events>
                     <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="chkCaseTaggingActionPerformed"/>

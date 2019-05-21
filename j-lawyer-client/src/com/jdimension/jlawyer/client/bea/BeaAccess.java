@@ -666,17 +666,17 @@ package com.jdimension.jlawyer.client.bea;
 import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.server.utils.ServerFileUtils;
 import java.io.File;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Hashtable;
 import org.apache.log4j.Logger;
 import org.ehcache.Cache;
-import org.ehcache.CacheManager;
 import org.ehcache.PersistentCacheManager;
 import org.ehcache.config.builders.CacheConfigurationBuilder;
 import org.ehcache.config.builders.CacheManagerBuilder;
+import org.ehcache.config.builders.ExpiryPolicyBuilder;
 import org.ehcache.config.builders.ResourcePoolsBuilder;
-import org.ehcache.config.units.EntryUnit;
 import org.ehcache.config.units.MemoryUnit;
 import org.jlawyer.bea.BeaWrapper;
 import org.jlawyer.bea.BeaWrapperException;
@@ -785,7 +785,7 @@ public class BeaAccess {
                                         .heap(50, MemoryUnit.MB)
                                         //.offheap(1, MemoryUnit.MB)
                                         .disk(250, MemoryUnit.MB, true)
-                        ));
+                        ).withExpiry(ExpiryPolicyBuilder.timeToLiveExpiration(Duration.ofSeconds(60*60*2))));
         } catch (Throwable t) {
             t.printStackTrace();
         }
@@ -797,7 +797,8 @@ public class BeaAccess {
                                         .heap(100, MemoryUnit.MB)
                                         //.offheap(1, MemoryUnit.MB)
                                         .disk(250, MemoryUnit.MB, true)
-                        ));
+                        ).withExpiry(ExpiryPolicyBuilder.timeToLiveExpiration(Duration.ofSeconds(300))));
+
         } catch (Throwable t) {
             t.printStackTrace();
         }
