@@ -1914,7 +1914,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                     nap.setSenderName(msg.getSenderName());
                     actionPanelEntries.add(nap);
                 }
-
+                
                 // empt case reference - will trigger a search
                 SaveToCasePanel sp = new SaveToCasePanel(this.getClass().getName());
                 sp.setBackground(sp.getBackground().brighter());
@@ -1928,6 +1928,12 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                 cce.setArchived(false);
                 sp.setEntry(cce, this);
                 actionPanelEntries.add(sp);
+                
+                if(msg.isEebRequested()) {
+                    BeaEebReplyPanel berp=new BeaEebReplyPanel(this.getClass().getName());
+                    //berp.setBackground(new Color(153, 204, 255));
+                    actionPanelEntries.add(berp);
+                }
 
                 for (AddressBean h : hits) {
                     NavigateToAddressPanel ap = new NavigateToAddressPanel(this.getClass().getName());
@@ -1994,9 +2000,9 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                     }
 
                 }
-
+                
             }
-
+            
             this.pnlActionsChild.setLayout(new GridLayout(actionPanelEntries.size(), 1));
             for (Component o : actionPanelEntries) {
                 this.pnlActionsChild.add(o);
