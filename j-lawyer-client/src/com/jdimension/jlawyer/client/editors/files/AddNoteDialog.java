@@ -1032,25 +1032,6 @@ public class AddNoteDialog extends javax.swing.JDialog {
 
         ClientSettings settings = ClientSettings.getInstance();
 
-        EditorsRegistry.getInstance().updateStatus("Erstelle Dokument...");
-        try {
-            //InitialContext context = new InitialContext(settings.getLookupProperties());
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            
-            ArchiveFileDocumentsBean db = locator.lookupArchiveFileServiceRemote().addDocument(this.aFile.getId(), FileUtils.sanitizeFileName(fileName), this.htmlEditorPanel1.getText().getBytes(), "");
-            ArchiveFileDocumentsTableModel m = (ArchiveFileDocumentsTableModel) this.targetTable.getModel();
-            //SimpleDateFormat df=new SimpleDateFormat("dd.MM.yyyy, HH:mm", Locale.GERMAN);
-            //m.addRow(new Object[] {df.format(db.getCreationDate()), db.getName()});
-            m.addRow(new Object[]{db, false, db.getName(), db.getDictateSign()});
-            ComponentUtils.autoSizeColumns(targetTable);
-
-        } catch (Exception ex) {
-            log.error("Error adding note", ex);
-            JOptionPane.showMessageDialog(this, "Fehler beim Hinzufügen der Notiz: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
-            EditorsRegistry.getInstance().clearStatus();
-            return;
-        }
-        
         if (!(this.radioReviewTypeNone.isSelected())) {
             if(this.txtReviewDateField.getText().length() != 10) {
                 JOptionPane.showMessageDialog(this, "Wiedervorlagedatum ungültig", "Dokument erstellen", JOptionPane.INFORMATION_MESSAGE);
@@ -1101,6 +1082,27 @@ public class AddNoteDialog extends javax.swing.JDialog {
             ComponentUtils.autoSizeColumns(tblReviewReasons);
 
         }
+        
+        EditorsRegistry.getInstance().updateStatus("Erstelle Dokument...");
+        try {
+            //InitialContext context = new InitialContext(settings.getLookupProperties());
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            
+            ArchiveFileDocumentsBean db = locator.lookupArchiveFileServiceRemote().addDocument(this.aFile.getId(), FileUtils.sanitizeFileName(fileName), this.htmlEditorPanel1.getText().getBytes(), "");
+            ArchiveFileDocumentsTableModel m = (ArchiveFileDocumentsTableModel) this.targetTable.getModel();
+            //SimpleDateFormat df=new SimpleDateFormat("dd.MM.yyyy, HH:mm", Locale.GERMAN);
+            //m.addRow(new Object[] {df.format(db.getCreationDate()), db.getName()});
+            m.addRow(new Object[]{db, false, db.getName(), db.getDictateSign()});
+            ComponentUtils.autoSizeColumns(targetTable);
+
+        } catch (Exception ex) {
+            log.error("Error adding note", ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim Hinzufügen der Notiz: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            EditorsRegistry.getInstance().clearStatus();
+            return;
+        }
+        
+        
         
         EditorsRegistry.getInstance().clearStatus();
         this.setVisible(false);
