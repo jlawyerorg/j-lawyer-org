@@ -711,8 +711,8 @@ public class ServerSettings {
     public static final String SERVERCONF_DREBISTECHPWD="jlawyer.server.drebis.techpwd";
     
     
-    public static final String SERVERCONF_BEAMODE="jlawyer.server.bea.drebismode";
-    public static final String SERVERCONF_BEAENDPOINT="jlawyer.server.bea.drebisendpoint";
+    public static final String SERVERCONF_BEAMODE="jlawyer.server.bea.beamode";
+    public static final String SERVERCONF_BEAENDPOINT="jlawyer.server.bea.beaendpoint";
     
     public static final String SERVERCONF_BACKUP_MODE="jlawyer.server.backup.backupmode";
     public static final String SERVERCONF_BACKUP_DBUSER="jlawyer.server.backup.dbuser";

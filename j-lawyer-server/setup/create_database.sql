@@ -543,7 +543,7 @@ alter table ArchiveFileBean MODIFY `reason` VARCHAR(250) BINARY;
 
 
 
--- insert into ServerSettingsBean(settingKey, settingValue) values('jlawyer.server.database.version','1.10.0.5') ON DUPLICATE KEY UPDATE settingValue     = '1.10.0.6';
+-- insert into ServerSettingsBean(settingKey, settingValue) values('jlawyer.server.database.version','1.10.0.6') ON DUPLICATE KEY UPDATE settingValue     = '1.10.0.6';
 
 -- CREATE TABLE document_tags (
 -- `id` VARCHAR(250) BINARY NOT NULL, 
@@ -559,7 +559,8 @@ alter table ArchiveFileBean MODIFY `reason` VARCHAR(250) BINARY;
 -- alter table document_tags add index `IDX_DOCUMENTKEY_TAGNAME` (documentKey, tagName);
 -- alter table document_tags add unique index `IDX_DOCUMENTKEY_TAGNAME_UQ` (documentKey, tagName);
 
-
+insert into ServerSettingsBean(settingKey, settingValue) values('jlawyer.server.bea.beaendpoint','https://ksw.bea-brak.de') ON DUPLICATE KEY UPDATE settingValue     = 'https://ksw.bea-brak.de';
+insert into ServerSettingsBean(settingKey, settingValue) values('jlawyer.server.database.version','1.10.0.7') ON DUPLICATE KEY UPDATE settingValue     = '1.10.0.7';
 
 
 commit;

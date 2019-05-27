@@ -685,7 +685,7 @@ public class BeaConfigurationDialog extends javax.swing.JDialog {
         if("off".equalsIgnoreCase(mode))
             this.optBeaOff.setSelected(true);
         
-        String endpoint=set.getSetting(set.SERVERCONF_BEAENDPOINT, "https://schulung-ksw.bea-brak.de");
+        String endpoint=set.getSetting(set.SERVERCONF_BEAENDPOINT, "https://ksw.bea-brak.de");
         this.txtEndpoint.setText(endpoint);
         
     }

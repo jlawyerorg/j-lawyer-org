@@ -697,6 +697,8 @@ public class BeaAccess {
 
     private static final Logger log=Logger.getLogger(BeaAccess.class.getName());
     
+
+    
     private BeaWrapper wrapper = null;
 
     private static BeaAccess instance = null;

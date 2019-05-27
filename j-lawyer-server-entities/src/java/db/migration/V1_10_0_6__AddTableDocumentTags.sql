@@ -12,5 +12,5 @@ alter table document_tags add index `IDX_DOCUMENTKEY` (documentKey);
 alter table document_tags add index `IDX_DOCUMENTKEY_TAGNAME` (documentKey, tagName);
 alter table document_tags add unique index `IDX_DOCUMENTKEY_TAGNAME_UQ` (documentKey, tagName);
 
-insert into ServerSettingsBean(settingKey, settingValue) values('jlawyer.server.database.version','1.10.0.5') ON DUPLICATE KEY UPDATE settingValue     = '1.10.0.6';
+insert into ServerSettingsBean(settingKey, settingValue) values('jlawyer.server.database.version','1.10.0.6') ON DUPLICATE KEY UPDATE settingValue     = '1.10.0.6';
 commit;
