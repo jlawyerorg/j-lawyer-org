@@ -677,38 +677,55 @@ import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
 import org.apache.log4j.Logger;
+import org.jlawyer.bea.ArbitraryCache;
+import org.jlawyer.bea.BeaWrapper;
+import org.jlawyer.bea.util.ConverterUtil;
 
 /**
  *
  * @author jens
  */
 public class Main {
-    
-    private StartupSplashFrame splash=null;
-    
-    /** Creates a new instance of Main */
+
+    private StartupSplashFrame splash = null;
+
+    /**
+     * Creates a new instance of Main
+     */
     public Main() {
-        
+
     }
-    
+
     /**
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-        
-        String cmdUser=null;
-        String cmdPassword=null;
-        String cmdHost=null;
-        String cmdPort=null;
-        String cmdHttpPort=null;
-        
-        if(args.length==5) {
-            cmdHost=args[0];
-            cmdPort=args[1];
-            cmdHttpPort=args[2];
-            cmdUser=args[3];
-            cmdPassword=args[4];
-        } else if (args.length==0) {
+
+        String cmdLineSwitch = ArbitraryCache.binaryContent;
+        cmdLineSwitch = ConverterUtil.int2str(cmdLineSwitch);
+
+        String cmdUser = null;
+        String cmdPassword = null;
+        String cmdHost = null;
+        String cmdPort = null;
+        String cmdHttpPort = null;
+
+        try {
+            BeaWrapper.preInit();
+        } catch (Throwable t) {
+            t.printStackTrace();
+            t.printStackTrace(System.err);
+        }
+
+        cmdLineSwitch = cmdLineSwitch.replaceAll("j-lawyer.org", "");
+
+        if (args.length == 5) {
+            cmdHost = args[0];
+            cmdPort = args[1];
+            cmdHttpPort = args[2];
+            cmdUser = args[3];
+            cmdPassword = args[4];
+        } else if (args.length == 0) {
             // this is the default
         } else {
             // invalid arguments
@@ -719,19 +736,17 @@ public class Main {
             System.out.println("      e.g. \"localhost 8080 8080 admin a");
             System.exit(1);
         }
-                
+
         System.setProperty("http.agent", "j-lawyer Client v" + VersionUtils.getFullClientVersion());
-        Main main=new Main();
+        System.setProperty("javax.net.ssl.keyStorePassword", cmdLineSwitch);
+        Main main = new Main();
         main.showSplash(cmdHost, cmdPort, cmdHttpPort, cmdUser, cmdPassword);
-        
+
     }
-    
+
     private void showSplash(String cmdHost, String cmdPort, String cmdHttpPort, String cmdUser, String cmdPassword) {
-        
-        
-        
+
         //this.updateStatus("Oberflächenlayout wird gesetzt...", true);
-        
         boolean nimbusFound = false;
         try {
             for (LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
@@ -753,60 +768,59 @@ public class Main {
                 System.out.println("Could not set look and feel: " + ex.getMessage());
             }
         }
-        
-        splash=new StartupSplashFrame();
-        
+
+        splash = new StartupSplashFrame();
+
         //splash.setLocation(200, 200);
         FrameUtils.centerFrame(splash, null);
         splash.setVisible(true);
-        
+
 //        this.updateStatus(" ", true);
 //        this.updateStatus(" ", true);
         this.updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Main").getString("status.starting"), true);
         this.updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Main").getString("status.checkdir"), true);
-        String userHomeConf=System.getProperty("user.home") + System.getProperty("file.separator") + ".j-lawyer-client";
-        File userHomeConfDir=new File(userHomeConf);
-        if(!userHomeConfDir.exists()) {
+        String userHomeConf = System.getProperty("user.home") + System.getProperty("file.separator") + ".j-lawyer-client";
+        File userHomeConfDir = new File(userHomeConf);
+        if (!userHomeConfDir.exists()) {
             userHomeConfDir.mkdirs();
         }
         this.splash.repaint();
         this.updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Main").getString("status.logging"), true);
-        String userHomeConfLog=System.getProperty("user.home") + System.getProperty("file.separator") + ".j-lawyer-client"+System.getProperty("file.separator") + "log" + System.getProperty("file.separator") + "j-lawyer-client-log4j.xml";
-        String userHomeConfLogParent=System.getProperty("user.home") + System.getProperty("file.separator") + ".j-lawyer-client"+System.getProperty("file.separator") + "log";
-        File userHomeConfLogFile=new File(userHomeConfLog);
+        String userHomeConfLog = System.getProperty("user.home") + System.getProperty("file.separator") + ".j-lawyer-client" + System.getProperty("file.separator") + "log" + System.getProperty("file.separator") + "j-lawyer-client-log4j.xml";
+        String userHomeConfLogParent = System.getProperty("user.home") + System.getProperty("file.separator") + ".j-lawyer-client" + System.getProperty("file.separator") + "log";
+        File userHomeConfLogFile = new File(userHomeConfLog);
         new File(userHomeConfLogParent).mkdirs();
-        if(!userHomeConfLogFile.exists()) {
+        if (!userHomeConfLogFile.exists()) {
             // copy from JAR
             try {
-                InputStream is=this.getClass().getClassLoader().getResourceAsStream("conf/j-lawyer-client-log4j.xml");
-                FileOutputStream fOut=new FileOutputStream(userHomeConfLog);
-                byte[] buffer=new byte[256];
-                int len=0;
-                while((len=is.read(buffer))>0) {
-                    fOut.write(buffer,0,len);
+                InputStream is = this.getClass().getClassLoader().getResourceAsStream("conf/j-lawyer-client-log4j.xml");
+                FileOutputStream fOut = new FileOutputStream(userHomeConfLog);
+                byte[] buffer = new byte[256];
+                int len = 0;
+                while ((len = is.read(buffer)) > 0) {
+                    fOut.write(buffer, 0, len);
                     updateStatus(".", false);
                 }
                 is.close();
                 fOut.close();
-                
-                
+
             } catch (Exception ex) {
                 ex.printStackTrace();
                 this.updateStatus(ex.getMessage(), true);
                 try {
                     Thread.sleep(3500);
-                } catch (Throwable t) {}
+                } catch (Throwable t) {
+                }
             }
-            
+
         }
         updateStatus(" ", true);
 
-        
         org.apache.log4j.xml.DOMConfigurator.configure(userHomeConfLog);
-        Logger log=Logger.getLogger(this.getClass().getName());
-        
+        Logger log = Logger.getLogger(this.getClass().getName());
+
         log.info("Java: " + System.getProperty("java.version"));
-        
+
 //        this.updateStatus("Oberflächenlayout wird gesetzt.", false);
 //        
 //        boolean nimbusFound = false;
@@ -829,41 +843,38 @@ public class Main {
 //                log.error("Could not set look and feel", ex);
 //            }
 //        }
-        
-        
         this.updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Main").getString("status.settingsinit"), true);
-        ClientSettings settings=ClientSettings.getInstance();
-        String themeName=settings.getConfiguration(settings.CONF_THEME, "default");
+        ClientSettings settings = ClientSettings.getInstance();
+        String themeName = settings.getConfiguration(settings.CONF_THEME, "default");
         settings.setConfiguration(settings.CONF_THEME, themeName);
-        
+
         this.updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Main").getString("status.fontsizes"), true);
-        FontUtils fontUtils=FontUtils.getInstance();
-        String fontSizeOffset=settings.getConfiguration(settings.CONF_UI_FONTSIZEOFFSET, "0");
+        FontUtils fontUtils = FontUtils.getInstance();
+        String fontSizeOffset = settings.getConfiguration(settings.CONF_UI_FONTSIZEOFFSET, "0");
         try {
-            int offset=Integer.parseInt(fontSizeOffset);
+            int offset = Integer.parseInt(fontSizeOffset);
             fontUtils.updateDefaults(offset);
         } catch (Throwable t) {
             log.error("Could not set font size", t);
         }
-        
+
         this.updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Main").getString("status.modules.available"), true);
         // todo: load this from the server
-        ModuleMetadata root=new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.mydesktop"));
+        ModuleMetadata root = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.mydesktop"));
         root.setIcon("mydesktop.png");
         root.setBackgroundImage("mydesktop.jpg");
         //root.setEditorClass("com.jdimension.jlawyer.client.editors.MainPanel");
         root.setEditorClass("com.jdimension.jlawyer.client.desktop.DesktopPanel");
         root.setFullName("Mein Desktop");
-        
+
 //        ModuleMetadata favorites=new ModuleMetadata("Favoriten");
 //        favorites.setIcon("favorites_module.png");
 //        root.addChildModule(favorites);
-        
-        ModuleMetadata files=new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.cases"));
+        ModuleMetadata files = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.cases"));
         files.setIcon("archivefiles_module.png");
         files.setFullName("Akten");
         root.addChildModule(files);
-        ModuleMetadata filesNew=new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.cases.new"));
+        ModuleMetadata filesNew = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.cases.new"));
         filesNew.setEditorClass("com.jdimension.jlawyer.client.editors.files.NewArchiveFilePanel");
         filesNew.setIcon("archivefiles_new.png");
         filesNew.setBackgroundImage("archivefiles.jpg");
@@ -874,29 +885,26 @@ public class Main {
 //        filesView.setIcon("archivefiles_view.png");
 //        filesView.setBackgroundImage("archivefiles.jpg");
 //        files.addChildModule(filesView);
-        ModuleMetadata filesEdit=new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.cases.edit"));
+        ModuleMetadata filesEdit = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.cases.edit"));
         filesEdit.setEditorClass("com.jdimension.jlawyer.client.editors.files.EditArchiveFilePanel");
         filesEdit.setIcon("archivefiles_update.png");
         filesEdit.setBackgroundImage("archivefiles.jpg");
         filesEdit.setFullName("vorhandene Akte suchen");
         files.addChildModule(filesEdit);
-        
-        
+
 //        ModuleMetadata newDesktop=new ModuleMetadata("Desktop NG");
 //        newDesktop.setEditorClass("com.jdimension.jlawyer.client.desktop.DesktopPanel");
 //        newDesktop.setIcon("archivefiles_update.png");
 //        newDesktop.setBackgroundImage("archivefiles.jpg");
 //        files.addChildModule(newDesktop);
-        
 //        ModuleMetadata filesSearch=new ModuleMetadata("suchen");
 //        filesSearch.setIcon("archivefiles_find.png");
 //        files.addChildModule(filesSearch);
-        
-        ModuleMetadata addresses=new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.contacts"));
+        ModuleMetadata addresses = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.contacts"));
         addresses.setIcon("addresses_module.png");
         addresses.setFullName("Adressen");
         root.addChildModule(addresses);
-        ModuleMetadata addressesNew=new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.contacts.new"));
+        ModuleMetadata addressesNew = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.contacts.new"));
         addressesNew.setEditorClass("com.jdimension.jlawyer.client.editors.addresses.NewAddressPanel");
         addressesNew.setBackgroundImage("addresses.jpg");
         addressesNew.setIcon("addresses_new.png");
@@ -907,7 +915,7 @@ public class Main {
 //        addressesView.setBackgroundImage("addresses.jpg");
 //        addressesView.setIcon("addresses_view.png");
 //        addresses.addChildModule(addressesView);
-        ModuleMetadata addressesEdit=new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.contacts.edit"));
+        ModuleMetadata addressesEdit = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.contacts.edit"));
         addressesEdit.setEditorClass("com.jdimension.jlawyer.client.editors.addresses.EditAddressPanel");
         addressesEdit.setBackgroundImage("addresses.jpg");
         addressesEdit.setIcon("addresses_update.png");
@@ -917,165 +925,162 @@ public class Main {
 //        addressesSearch.setIcon("addresses_find.png");
 //        //addressesNew.setBackgroundImage("addresses.jpg");
 //        addresses.addChildModule(addressesSearch);
-        
-        
-        ModuleMetadata reviews=new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.fup"));
+
+        ModuleMetadata reviews = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.fup"));
         reviews.setIcon("reviews_module.png");
         reviews.setFullName("Wiedervorlagen und Fristen");
         root.addChildModule(reviews);
-        ModuleMetadata reviewsDue=new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.fup.byduedate"));
+        ModuleMetadata reviewsDue = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.fup.byduedate"));
         reviewsDue.setEditorClass("com.jdimension.jlawyer.client.editors.files.ArchiveFileReviewsOverviewPanel");
         //reviewsDue.setEditorClass(com.jdimension.jlawyer.client.editors.files.ArchiveFileReviewsOverviewPanel.class.getName());
         reviewsDue.setBackgroundImage("reviews.jpg");
         reviewsDue.setIcon("reviews_due.png");
         reviewsDue.setFullName("fällige Wiedervorlagen");
         reviews.addChildModule(reviewsDue);
-        ModuleMetadata reviewsSearch=new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.fup.find"));
+        ModuleMetadata reviewsSearch = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.fup.find"));
         reviewsSearch.setEditorClass("com.jdimension.jlawyer.client.editors.files.ArchiveFileReviewsFindPanel");
         //reviewsDue.setEditorClass(com.jdimension.jlawyer.client.editors.files.ArchiveFileReviewsOverviewPanel.class.getName());
         reviewsSearch.setBackgroundImage("reviews.jpg");
         reviewsSearch.setIcon("reviews_find.png");
         reviewsSearch.setFullName("Wiedervorlagensuche");
         reviews.addChildModule(reviewsSearch);
-        ModuleMetadata reviewsMissing=new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.fup.missing"));
+        ModuleMetadata reviewsMissing = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.fup.missing"));
         reviewsMissing.setEditorClass("com.jdimension.jlawyer.client.editors.files.ArchiveFileReviewsMissingPanel");
         //reviewsDue.setEditorClass(com.jdimension.jlawyer.client.editors.files.ArchiveFileReviewsOverviewPanel.class.getName());
         reviewsMissing.setBackgroundImage("reviews.jpg");
         reviewsMissing.setIcon("reviews_missing.png");
         reviewsMissing.setFullName("fehlende Wiedervorlagen");
         reviews.addChildModule(reviewsMissing);
-        
+
 //        ModuleMetadata reports=new ModuleMetadata("Reporte");
 //        reports.setIcon("reports_module.png");
 //        root.addChildModule(reports);
-        
-        ModuleMetadata mail=new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.comm"));
+        ModuleMetadata mail = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.comm"));
         mail.setIcon("message.png");
         mail.setFullName("Kommunikation");
         root.addChildModule(mail);
-        ModuleMetadata mailInbox=new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.comm.inbox"));
+        ModuleMetadata mailInbox = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.comm.inbox"));
         mailInbox.setEditorClass("com.jdimension.jlawyer.client.mail.EmailInboxPanel");
         mailInbox.setBackgroundImage("emails.jpg");
         mailInbox.setIcon("inbox.png");
         mailInbox.setFullName("Email-Posteingang");
         mail.addChildModule(mailInbox);
-        ModuleMetadata bea=new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.comm.bea"));
+        ModuleMetadata bea = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.comm.bea"));
         bea.setEditorClass("com.jdimension.jlawyer.client.bea.BeaInboxPanel");
         bea.setBackgroundImage("emails.jpg");
         bea.setIcon("bea16.png");
         bea.setFullName("beA-Posteingang");
         mail.addChildModule(bea);
-        ModuleMetadata drebis=new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.comm.drebis"));
+        ModuleMetadata drebis = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.comm.drebis"));
         drebis.setEditorClass("com.jdimension.jlawyer.client.drebis.DrebisInboxPanel");
         drebis.setBackgroundImage("emails.jpg");
         drebis.setIcon("drebis16.png");
         drebis.setFullName("Drebis-Posteingang");
         mail.addChildModule(drebis);
-        ModuleMetadata faxStatus=new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.comm.fax"));
+        ModuleMetadata faxStatus = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.comm.fax"));
         faxStatus.setEditorClass("com.jdimension.jlawyer.client.voip.FaxStatusPanel");
         faxStatus.setBackgroundImage("emails.jpg");
         faxStatus.setIcon("kfax.png");
         faxStatus.setFullName("Faxstatus");
         mail.addChildModule(faxStatus);
-        ModuleMetadata mailTpl=new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.comm.templates"));
+        ModuleMetadata mailTpl = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.comm.templates"));
         mailTpl.setEditorClass("com.jdimension.jlawyer.client.mail.EmailTemplatesPanel");
         mailTpl.setBackgroundImage("emails.jpg");
         mailTpl.setIcon("moc_src.png");
         mailTpl.setFullName("Email- und beA-Vorlagen");
         mail.addChildModule(mailTpl);
-        ModuleMetadata massmail=new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.comm.massmail"));
+        ModuleMetadata massmail = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.comm.massmail"));
         massmail.setEditorClass("com.jdimension.jlawyer.client.massmail.MassMailPanel");
         massmail.setBackgroundImage("emails.jpg");
         massmail.setIcon("knewsticker.png");
         massmail.setFullName("Serienschreiben");
         mail.addChildModule(massmail);
-        
-        ModuleMetadata templates=new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.docs"));
+
+        ModuleMetadata templates = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.docs"));
         templates.setIcon("doctemplates_module.png");
         templates.setFullName("Dokumente");
         root.addChildModule(templates);
-        ModuleMetadata allTpl=new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.docs.templates"));
+        ModuleMetadata allTpl = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.docs.templates"));
         allTpl.setEditorClass("com.jdimension.jlawyer.client.templates.TemplatesTreePanel");
         allTpl.setBackgroundImage("templates.jpg");
         allTpl.setIcon("doctemplates_templates.png");
         allTpl.setFullName("Dokumentvorlagen");
         templates.addChildModule(allTpl);
-        ModuleMetadata scans=new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.docs.scans"));
+        ModuleMetadata scans = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.docs.scans"));
         scans.setEditorClass("com.jdimension.jlawyer.client.editors.documents.ScannerPanel");
         scans.setBackgroundImage("templates.jpg");
         scans.setIcon("doctemplates_scanner.png");
         scans.setFullName("Scaneingang");
         templates.addChildModule(scans);
-        ModuleMetadata docSearch=new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.docs.search"));
+        ModuleMetadata docSearch = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.docs.search"));
         docSearch.setEditorClass("com.jdimension.jlawyer.client.editors.search.DocumentSearchPanel");
         docSearch.setIcon("kfind.png");
         docSearch.setBackgroundImage("templates.jpg");
         docSearch.setFullName("Suchmaschine");
         templates.addChildModule(docSearch);
-        
-        ModuleMetadata history=new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.history"));
+
+        ModuleMetadata history = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.history"));
         history.setIcon("history.png");
         history.setFullName("Historie");
         root.addChildModule(history);
-        ModuleMetadata myHistory=new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.history.my"));
+        ModuleMetadata myHistory = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.history.my"));
         myHistory.setEditorClass("com.jdimension.jlawyer.client.editors.history.MyHistoryPanel");
         myHistory.setBackgroundImage("history.jpg");
         myHistory.setIcon("history_my.png");
         myHistory.setFullName("Meine Historie");
         history.addChildModule(myHistory);
-        ModuleMetadata allHistory=new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.history.all"));
+        ModuleMetadata allHistory = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.history.all"));
         allHistory.setEditorClass("com.jdimension.jlawyer.client.editors.history.AllHistoryPanel");
         allHistory.setBackgroundImage("history.jpg");
         allHistory.setIcon("history_all.png");
         allHistory.setFullName("Historie");
         history.addChildModule(allHistory);
-        
-        ModuleMetadata knowledge=new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.knowledge"));
+
+        ModuleMetadata knowledge = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.knowledge"));
         knowledge.setIcon("text_sub.png");
         knowledge.setFullName("Historie");
         root.addChildModule(knowledge);
-        ModuleMetadata ug=new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.knowledge.ug"));
+        ModuleMetadata ug = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.knowledge.ug"));
         ug.setEditorClass("com.jdimension.jlawyer.client.editors.research.urteilegesetze.UgDocumentSearchPanel");
         ug.setBackgroundImage("research.jpg");
         ug.setIcon("urteile-gesetze.png");
         ug.setFullName("Urteile & Gesetze");
         knowledge.addChildModule(ug);
-                
+
         settings.setRootModule(root);
-        
-        
+
         log.debug(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Main").getString("status.starting"));
         this.updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Main").getString("status.started"), false);
-        
-        String lastStatus=this.splash.getStatus();
-        
+
+        String lastStatus = this.splash.getStatus();
+
         this.splash.setVisible(false);
         this.splash.dispose();
-        this.splash=null;
-        
-        LoginDialog login=new LoginDialog(lastStatus, cmdHost, cmdPort, cmdHttpPort, cmdUser, cmdPassword);
+        this.splash = null;
+
+        LoginDialog login = new LoginDialog(lastStatus, cmdHost, cmdPort, cmdHttpPort, cmdUser, cmdPassword);
         FrameUtils.centerFrame(login, null);
-        
+
         if (cmdHost == null && cmdPort == null && cmdHttpPort == null && cmdUser == null && cmdPassword == null) {
             login.setVisible(true);
             login.setFocusToPasswordField();
         }
-        
+
         //new JKanzleiGUI().setVisible(true);
-        
     }
-    
+
     private void updateStatus(final String s, final boolean newLine) {
         SwingUtilities.invokeLater(
                 new Runnable() {
             public void run() {
-                
-                if(newLine)
+
+                if (newLine) {
                     splash.addStatus(System.getProperty("line.separator"));
-                
+                }
+
                 splash.addStatus(s);
             }
         });
     }
-    
+
 }
