@@ -713,6 +713,7 @@ import java.util.Hashtable;
 import java.util.List;
 import java.util.Properties;
 import java.util.Timer;
+import java.util.TimerTask;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.DropMode;
 import javax.swing.JOptionPane;
@@ -2181,7 +2182,26 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
         //BeaLoginPanel loginPanel=new BeaLoginPanel(this, true);
         this.needsReset = false;
         try {
-            this.refreshFolders(true);
+            Timer t=new Timer();
+            TimerTask tt=new TimerTask() {
+                @Override
+                public void run() {
+                    SwingUtilities.invokeLater(new Runnable() {
+                        @Override
+                        public void run() {
+                            try {
+                                refreshFolders(true);
+                            } catch (Throwable t) {
+                                t.printStackTrace();
+                            }
+                        }
+                        
+                    });
+                }
+                
+            };
+            t.schedule(tt, 100);
+            //this.refreshFolders(true);
         } catch (Throwable t) {
             log.error(t);
             JOptionPane.showMessageDialog(this, "Fehler beim Laden der beA - Ordner: " + t.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
