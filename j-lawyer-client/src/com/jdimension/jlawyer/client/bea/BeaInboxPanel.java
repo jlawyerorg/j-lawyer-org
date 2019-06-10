@@ -743,7 +743,7 @@ import org.jlawyer.bea.model.Recipient;
  *
  * @author jens
  */
-public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecutor, BeaLoginCallback, ThemeableEditor, StatusBarProvider, ResetOnDisplayEditor, DropTargetListener, DragGestureListener, EventConsumer {
+public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecutor, EebExecutor, BeaLoginCallback, ThemeableEditor, StatusBarProvider, ResetOnDisplayEditor, DropTargetListener, DragGestureListener, EventConsumer {
 
     private static final Logger log = Logger.getLogger(BeaInboxPanel.class.getName());
     private static SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy, HH:mm");
@@ -1915,7 +1915,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                     nap.setSenderName(msg.getSenderName());
                     actionPanelEntries.add(nap);
                 }
-                
+
                 // empt case reference - will trigger a search
                 SaveToCasePanel sp = new SaveToCasePanel(this.getClass().getName());
                 sp.setBackground(sp.getBackground().brighter());
@@ -1929,10 +1929,20 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                 cce.setArchived(false);
                 sp.setEntry(cce, this);
                 actionPanelEntries.add(sp);
-                
-                if(msg.isEebRequested()) {
-                    BeaEebReplyPanel berp=new BeaEebReplyPanel(this.getClass().getName());
+
+                if (msg.isEebRequested()) {
+                    // sen eEB
+                    BeaEebReplyPanel berp = new BeaEebReplyPanel(this.getClass().getName());
                     //berp.setBackground(new Color(153, 204, 255));
+                    berp.setEntry(null, this);
+                    berp.enableButtons(true);
+                    actionPanelEntries.add(berp);
+                } else if (msg.hasAttachment("xjustiz_nachricht.xml")) {
+                    // received eEB 
+                    BeaEebReplyPanel berp = new BeaEebReplyPanel(this.getClass().getName());
+                    //berp.setBackground(new Color(153, 204, 255));
+                    berp.setEntry(null, this);
+                    berp.enableButtons(false);
                     actionPanelEntries.add(berp);
                 }
 
@@ -2001,9 +2011,9 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                     }
 
                 }
-                
+
             }
-            
+
             this.pnlActionsChild.setLayout(new GridLayout(actionPanelEntries.size(), 1));
             for (Component o : actionPanelEntries) {
                 this.pnlActionsChild.add(o);
@@ -2012,7 +2022,8 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
             this.jSplitPane1.setDividerLocation(0.8f);
 
         } catch (Throwable t) {
-
+            log.error(t);
+            t.printStackTrace();
         }
 
         this.tblMails.setValueAt(msg, selectionIndex, 4);
@@ -2182,8 +2193,8 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
         //BeaLoginPanel loginPanel=new BeaLoginPanel(this, true);
         this.needsReset = false;
         try {
-            Timer t=new Timer();
-            TimerTask tt=new TimerTask() {
+            Timer t = new Timer();
+            TimerTask tt = new TimerTask() {
                 @Override
                 public void run() {
                     SwingUtilities.invokeLater(new Runnable() {
@@ -2195,10 +2206,10 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                                 t.printStackTrace();
                             }
                         }
-                        
+
                     });
                 }
-                
+
             };
             t.schedule(tt, 100);
             //this.refreshFolders(true);
@@ -2339,6 +2350,79 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
             } catch (Exception ex) {
                 log.error(ex);
                 ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Speichern der beA-Nachricht: " + ex.getMessage(), "Fehler");
+            }
+        }
+        return false;
+    }
+
+    @Override
+    public boolean confirmEeb() {
+        if (this.tblMails.getSelectedRowCount() == 1) {
+            ClientSettings settings = ClientSettings.getInstance();
+            try {
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
+
+                Message m = (Message) this.tblMails.getValueAt(this.tblMails.getSelectedRow(), 4);
+                Collection<PostBox> inboxes=BeaAccess.getInstance().getPostBoxes();
+                String senderSafeId=null;
+                for(PostBox inbox: inboxes) {
+                    for(Recipient r: m.getRecipients()) {
+                        if(r.getSafeId().equals(inbox.getSafeId())) {
+                            senderSafeId=r.getSafeId();
+                            break;
+                        }
+                    }
+                    if(senderSafeId!=null)
+                        break;
+                }
+                if(senderSafeId==null) {
+                    ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Absender-Postfach für eEB kann nicht ermittelt werden.", "Fehler");
+                    return false;
+                }
+                ArrayList<String> recipients=new ArrayList<String> ();
+                recipients.add(senderSafeId);
+                long sentMessageId=BeaAccess.getInstance().sendEebConfirmation(m, senderSafeId, recipients);
+
+                return true;
+
+            } catch (Exception ex) {
+                log.error(ex);
+                ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Senden der eEB-Bestätigung: " + ex.getMessage(), "Fehler");
+            }
+        }
+        return false;
+    }
+
+    @Override
+    public boolean denyEeb() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public boolean displayEeb() {
+        if (this.tblMails.getSelectedRowCount() == 1) {
+            ClientSettings settings = ClientSettings.getInstance();
+            try {
+                
+                Message m = (Message) this.tblMails.getValueAt(this.tblMails.getSelectedRow(), 4);
+                for (Attachment att : m.getAttachments()) {
+                    if (att.getFileName().equalsIgnoreCase("xjustiz_nachricht.xml")) {
+                        String xjustiz=new String(att.getContent());
+                        String html=BeaAccess.getEebAsHtml(xjustiz);
+                        System.out.println(html);
+                        BeaEebDisplayDialog dlg=new BeaEebDisplayDialog(EditorsRegistry.getInstance().getMainWindow(), true);
+                        dlg.setHtml(html);
+                        FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
+                        dlg.setVisible(true);
+                    }
+                }
+                
+                return true;
+
+            } catch (Exception ex) {
+                log.error(ex);
+                ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Senden der eEB-Bestätigung: " + ex.getMessage(), "Fehler");
             }
         }
         return false;

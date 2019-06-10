@@ -26,9 +26,9 @@
               <Group type="103" groupAlignment="0" attributes="0">
                   <Component id="lblDescription" min="-2" max="-2" attributes="0"/>
                   <Group type="102" alignment="0" attributes="0">
-                      <Component id="cmdSaveFullMessage" min="-2" max="-2" attributes="0"/>
+                      <Component id="cmdEebConfirm" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
-                      <Component id="cmdSaveMessageWithoutAttachments" min="-2" max="-2" attributes="0"/>
+                      <Component id="cmdEebDeny" min="-2" max="-2" attributes="0"/>
                   </Group>
               </Group>
               <EmptySpace max="32767" attributes="0"/>
@@ -42,8 +42,8 @@
               <Component id="lblDescription" min="-2" max="-2" attributes="0"/>
               <EmptySpace type="unrelated" max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Component id="cmdSaveFullMessage" min="-2" max="-2" attributes="0"/>
-                  <Component id="cmdSaveMessageWithoutAttachments" min="-2" max="-2" attributes="0"/>
+                  <Component id="cmdEebConfirm" min="-2" max="-2" attributes="0"/>
+                  <Component id="cmdEebDeny" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace max="32767" attributes="0"/>
           </Group>
@@ -68,7 +68,7 @@
         <EventHandler event="mouseEntered" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="lblDescriptionMouseEntered"/>
       </Events>
     </Component>
-    <Component class="javax.swing.JButton" name="cmdSaveFullMessage">
+    <Component class="javax.swing.JButton" name="cmdEebConfirm">
       <Properties>
         <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
           <Font name="Dialog" size="8" style="1"/>
@@ -82,10 +82,10 @@
         </Property>
       </Properties>
       <Events>
-        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdSaveFullMessageActionPerformed"/>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdEebConfirmActionPerformed"/>
       </Events>
     </Component>
-    <Component class="javax.swing.JButton" name="cmdSaveMessageWithoutAttachments">
+    <Component class="javax.swing.JButton" name="cmdEebDeny">
       <Properties>
         <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
           <Font name="Dialog" size="8" style="1"/>
@@ -99,7 +99,7 @@
         </Property>
       </Properties>
       <Events>
-        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdSaveMessageWithoutAttachmentsActionPerformed"/>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdEebDenyActionPerformed"/>
       </Events>
     </Component>
   </SubComponents>

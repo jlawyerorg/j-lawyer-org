@@ -936,6 +936,10 @@ public class BeaAccess {
             this.folderOverviewCache.remove(folderId);
         return success;
     }
+    
+    public static String getEebAsHtml(String xmlXjustiz) throws BeaWrapperException {
+        return BeaWrapper.getEebAsHtml(xmlXjustiz);
+    }
 
     public Message getMessage(String messageId, String safeId) throws BeaWrapperException {
         if(!this.messageCache.containsKey(messageId)) {
@@ -995,6 +999,11 @@ public class BeaAccess {
         // todo: need to only remove folder overview for sent folder
         this.folderOverviewCache.clear();
         return this.wrapper.sendMessage(msg, senderSafeId, recipientSafeIds);
+    }
+    
+    public long sendEebConfirmation(Message incomingMessage, String senderSafeId, ArrayList<String> recipientSafeIds) throws BeaWrapperException {
+        this.folderOverviewCache.clear();
+        return this.wrapper.sendEebConfirmation(incomingMessage, senderSafeId, recipientSafeIds);
     }
 
     public boolean isMessageReadByIdentity(String messageId, String safeId) throws BeaWrapperException {

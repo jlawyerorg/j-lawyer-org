@@ -694,7 +694,7 @@ public class BeaEebReplyPanel extends javax.swing.JPanel {
     private static final Logger log = Logger.getLogger(BeaEebReplyPanel.class.getName());
     //DecimalFormat df = new DecimalFormat("0.00%");
     private CaseForContactEntry e = null;
-    private SaveToCaseExecutor executor=null;
+    private EebExecutor executor=null;
     
     private String openedFromEditorClass=null;
     
@@ -706,49 +706,39 @@ public class BeaEebReplyPanel extends javax.swing.JPanel {
         this.openedFromEditorClass=openedFromClassName;
             
     }
+    
+    public void enableButtons(boolean enabled) {
+        this.cmdEebConfirm.setEnabled(enabled);
+        this.cmdEebDeny.setEnabled(enabled);
+    }
 
-    public void setEntry(CaseForContactEntry entry, SaveToCaseExecutor executor) {
+    public void setEntry(CaseForContactEntry entry, EebExecutor executor) {
         this.e = entry;
         this.executor=executor;
+        
+        this.lblDescription.setText("<html><b>eEB abgeben / zur&uuml;ckweisen</b><br/>zum Anzeigen hier klicken</html>");
+        
         //this.lblFileName.setText(sh.getFileName() + " in " + sh.getArchiveFileNumber() + " " + sh.getArchiveFileName());
-        String name=e.getName();
-        if(name==null)
-            name="";
-        if(name.length()>25)
-            name=name.substring(0,25) + "...";
+//        String name=e.getName();
+//        if(name==null)
+//            name="";
+//        if(name.length()>25)
+//            name=name.substring(0,25) + "...";
+//        
+//        String reason=e.getReason();
+//        if(reason==null)
+//            reason="";
+//        if(reason.length()>45)
+//            reason=reason.substring(0,45) + "...";
+//        
+//        
+//        this.lblDescription.setText("<html><b>" + StringUtils.nonEmpty(e.getFileNumber()) + " " + name + "</b><br/>" + StringUtils.nonEmpty(reason) + "</html>");
+//        
+//        String contactCaption=java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/editors/addresses/CaseForContactEntryPanel").getString("role");
+//        String tooltip="<html><b>" + StringUtils.nonEmpty(e.getFileNumber()) + " " + e.getName() + "</b><br/>" + e.getReason() + "<br/>"  + contactCaption + ": " + e.getRole() + "</html>";
+//        this.lblDescription.setToolTipText(tooltip);
         
-        String reason=e.getReason();
-        if(reason==null)
-            reason="";
-        if(reason.length()>45)
-            reason=reason.substring(0,45) + "...";
         
-        
-        this.lblDescription.setText("<html><b>" + StringUtils.nonEmpty(e.getFileNumber()) + " " + name + "</b><br/>" + StringUtils.nonEmpty(reason) + "</html>");
-        //this.lblFileName.setToolTipText("<html>" + StringUtils.addHtmlLinebreaks(sh.getText(), 60) + "</html>");
-        //this.lblDescription.setToolTipText(sh.getText());
-        //this.lblDescription.setIcon(FileUtils.getInstance().getFileTypeIcon(sh.getFileName()));
-        //this.lblRole.setText(e.getRole());
-        
-        String contactCaption=java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/editors/addresses/CaseForContactEntryPanel").getString("role");
-        String tooltip="<html><b>" + StringUtils.nonEmpty(e.getFileNumber()) + " " + e.getName() + "</b><br/>" + e.getReason() + "<br/>"  + contactCaption + ": " + e.getRole() + "</html>";
-        this.lblDescription.setToolTipText(tooltip);
-        
-        if(e.isArchived()) {
-            this.lblDescription.setForeground(Color.GRAY);
-            //this.lblArchived.setText("archiviert");
-        } else {
-            this.lblDescription.setForeground(Color.BLACK);
-            //this.lblArchived.setText("");
-        }
-        
-//        if (sh.getScore() >= 0.50f) {
-//            this.lblChangedBy.setForeground(Color.green);
-//        } else if (sh.getScore() > 0.20f && sh.getScore() < 0.50f) {
-//            this.lblChangedBy.setForeground(Color.orange);
-//        } else {
-//            this.lblChangedBy.setForeground(Color.red);
-//        }
 
     }
 
@@ -762,8 +752,8 @@ public class BeaEebReplyPanel extends javax.swing.JPanel {
     private void initComponents() {
 
         lblDescription = new javax.swing.JLabel();
-        cmdSaveFullMessage = new javax.swing.JButton();
-        cmdSaveMessageWithoutAttachments = new javax.swing.JButton();
+        cmdEebConfirm = new javax.swing.JButton();
+        cmdEebDeny = new javax.swing.JButton();
 
         setBackground(new java.awt.Color(255, 153, 0));
 
@@ -783,23 +773,23 @@ public class BeaEebReplyPanel extends javax.swing.JPanel {
             }
         });
 
-        cmdSaveFullMessage.setFont(new java.awt.Font("Dialog", 1, 8)); // NOI18N
-        cmdSaveFullMessage.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png"))); // NOI18N
-        cmdSaveFullMessage.setToolTipText("eEB abgeben");
-        cmdSaveFullMessage.setMargin(new java.awt.Insets(0, 0, 0, 0));
-        cmdSaveFullMessage.addActionListener(new java.awt.event.ActionListener() {
+        cmdEebConfirm.setFont(new java.awt.Font("Dialog", 1, 8)); // NOI18N
+        cmdEebConfirm.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png"))); // NOI18N
+        cmdEebConfirm.setToolTipText("eEB abgeben");
+        cmdEebConfirm.setMargin(new java.awt.Insets(0, 0, 0, 0));
+        cmdEebConfirm.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdSaveFullMessageActionPerformed(evt);
+                cmdEebConfirmActionPerformed(evt);
             }
         });
 
-        cmdSaveMessageWithoutAttachments.setFont(new java.awt.Font("Dialog", 1, 8)); // NOI18N
-        cmdSaveMessageWithoutAttachments.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png"))); // NOI18N
-        cmdSaveMessageWithoutAttachments.setToolTipText("eEB zurückweisen");
-        cmdSaveMessageWithoutAttachments.setMargin(new java.awt.Insets(0, 0, 0, 0));
-        cmdSaveMessageWithoutAttachments.addActionListener(new java.awt.event.ActionListener() {
+        cmdEebDeny.setFont(new java.awt.Font("Dialog", 1, 8)); // NOI18N
+        cmdEebDeny.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png"))); // NOI18N
+        cmdEebDeny.setToolTipText("eEB zurückweisen");
+        cmdEebDeny.setMargin(new java.awt.Insets(0, 0, 0, 0));
+        cmdEebDeny.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdSaveMessageWithoutAttachmentsActionPerformed(evt);
+                cmdEebDenyActionPerformed(evt);
             }
         });
 
@@ -812,9 +802,9 @@ public class BeaEebReplyPanel extends javax.swing.JPanel {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(lblDescription)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(cmdSaveFullMessage)
+                        .addComponent(cmdEebConfirm)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(cmdSaveMessageWithoutAttachments)))
+                        .addComponent(cmdEebDeny)))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
@@ -824,8 +814,8 @@ public class BeaEebReplyPanel extends javax.swing.JPanel {
                 .addComponent(lblDescription)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(cmdSaveFullMessage)
-                    .addComponent(cmdSaveMessageWithoutAttachments))
+                    .addComponent(cmdEebConfirm)
+                    .addComponent(cmdEebDeny))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -835,83 +825,46 @@ public class BeaEebReplyPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_lblDescriptionMouseEntered
 
     private void lblDescriptionMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblDescriptionMouseExited
-        if(e.isArchived()) {
-            this.lblDescription.setForeground(Color.GRAY);
-        } else {
             this.lblDescription.setForeground(Color.BLACK);
-        }
+        
     }//GEN-LAST:event_lblDescriptionMouseExited
 
     private void lblDescriptionMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblDescriptionMouseClicked
         
-        if(this.e==null || this.e.getId()==null)
-            return;
+//        if(this.e==null || this.e.getId()==null)
+//            return;
         
         try {
-            Object editor=null;
-            if(UserSettings.getInstance().isCurrentUserInRole(UserSettings.ROLE_WRITECASE)) {
-                editor = EditorsRegistry.getInstance().getEditor(EditArchiveFileDetailsPanel.class.getName());
-            } else {
-                editor = EditorsRegistry.getInstance().getEditor(ViewArchiveFileDetailsPanel.class.getName());
-            }
-            Object opener = EditorsRegistry.getInstance().getEditor(this.openedFromEditorClass);
-            
-            if (editor instanceof ThemeableEditor && opener instanceof ThemeableEditor) {
-                // inherit the background to newly created child editors
-                ((ThemeableEditor) editor).setBackgroundImage(((ThemeableEditor) opener).getBackgroundImage());
-            }
-
-            if (editor instanceof PopulateOptionsEditor) {
-                ((PopulateOptionsEditor) editor).populateOptions();
-            }
-
-            ArchiveFileBean aFile = null;
-            try {
-                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
-                ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
-                
-                aFile = fileService.getArchiveFile(this.e.getId());
-            } catch (Exception ex) {
-                log.error("Error loading archive file from server", ex);
-                JOptionPane.showMessageDialog(this, java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/editors/addresses/CaseForContactEntryPanel").getString("error.loadingcase"), new Object[] {ex.getMessage()}), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/editors/addresses/CaseForContactEntryPanel").getString("dialog.error"), JOptionPane.ERROR_MESSAGE);
-            }
-
-            if (aFile == null) {
-                return;
-            }
-
-            ((ArchiveFilePanel) editor).setArchiveFileDTO(aFile);
-            ((ArchiveFilePanel) editor).setOpenedFromEditorClass(this.openedFromEditorClass);
-            EditorsRegistry.getInstance().setMainEditorsPaneView((Component) editor);
+            this.executor.displayEeb();
         } catch (Exception ex) {
             log.error("Error creating editor from class " + this.getClass().getName(), ex);
             JOptionPane.showMessageDialog(this, java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/editors/addresses/CaseForContactEntryPanel").getString("error.loadingeditor"), new Object[] {ex.getMessage()}), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/editors/addresses/CaseForContactEntryPanel").getString("dialog.error"), JOptionPane.ERROR_MESSAGE);
         }
     }//GEN-LAST:event_lblDescriptionMouseClicked
 
-    private void cmdSaveFullMessageActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveFullMessageActionPerformed
-        boolean saved=this.executor.saveToCase(this.e.getId(), true, false);
-        if(saved) {
-            this.cmdSaveFullMessage.setEnabled(false);
-            this.cmdSaveFullMessage.setBackground(Color.green.darker().darker());
+    private void cmdEebConfirmActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdEebConfirmActionPerformed
+        boolean confirmed=this.executor.confirmEeb();
+        if(confirmed) {
+            this.cmdEebConfirm.setEnabled(false);
+            this.cmdEebConfirm.setBackground(Color.green.darker().darker());
         } else {
-            this.cmdSaveFullMessage.setBackground(Color.red.darker().darker());
+            this.cmdEebConfirm.setBackground(Color.red.darker().darker());
         }
-    }//GEN-LAST:event_cmdSaveFullMessageActionPerformed
+    }//GEN-LAST:event_cmdEebConfirmActionPerformed
 
-    private void cmdSaveMessageWithoutAttachmentsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveMessageWithoutAttachmentsActionPerformed
-        boolean saved=this.executor.saveToCase(this.e.getId(), false, false);
-        if(saved) {
-            this.cmdSaveMessageWithoutAttachments.setEnabled(false);
-            this.cmdSaveMessageWithoutAttachments.setBackground(Color.green.darker().darker());
+    private void cmdEebDenyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdEebDenyActionPerformed
+        boolean denied=this.executor.denyEeb();
+        if(denied) {
+            this.cmdEebDeny.setEnabled(false);
+            this.cmdEebDeny.setBackground(Color.green.darker().darker());
         } else {
-            this.cmdSaveMessageWithoutAttachments.setBackground(Color.red.darker().darker());
+            this.cmdEebDeny.setBackground(Color.red.darker().darker());
         }
-    }//GEN-LAST:event_cmdSaveMessageWithoutAttachmentsActionPerformed
+    }//GEN-LAST:event_cmdEebDenyActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton cmdSaveFullMessage;
-    private javax.swing.JButton cmdSaveMessageWithoutAttachments;
+    private javax.swing.JButton cmdEebConfirm;
+    private javax.swing.JButton cmdEebDeny;
     private javax.swing.JLabel lblDescription;
     // End of variables declaration//GEN-END:variables
 }
