@@ -711,6 +711,13 @@ public class LauncherFactory {
 
         // first check for internal launchers
         String lowerFileName = fileName.toLowerCase();
+        
+        if(lowerFileName.equalsIgnoreCase("xjustiz_nachricht.xml")) {
+            XjustizLauncher xjl = new XjustizLauncher(url, store);
+            xjl.setContent(new String(content));
+            return xjl;
+        }
+        
         if (lowerFileName.endsWith(".eml") && !(store.getDocumentIdentifier().startsWith("externalmaillaunch-"))) {
             return new EMLInternalLauncher(url, store);
         }

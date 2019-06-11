@@ -1436,9 +1436,10 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
         if (evt.getClickCount() == 2 && this.lstAttachments.getSelectedValue() != null) {
             try {
                 byte[] data = ((Attachment) this.lstAttachments.getSelectedValue()).getContent();
+                String fileName=((Attachment) this.lstAttachments.getSelectedValue()).getFileName();
                 //String tmpFile = FileUtils.createTempFile(this.lstAttachments.getSelectedValue().toString(), data);
-                ReadOnlyDocumentStore store = new ReadOnlyDocumentStore("mailattachment-" + this.lstAttachments.getSelectedValue().toString(), this.lstAttachments.getSelectedValue().toString());
-                Launcher launcher = LauncherFactory.getLauncher(this.lstAttachments.getSelectedValue().toString(), data, store);
+                ReadOnlyDocumentStore store = new ReadOnlyDocumentStore("mailattachment-" + fileName, fileName);
+                Launcher launcher = LauncherFactory.getLauncher(fileName, data, store);
                 launcher.launch();
             } catch (Exception ex) {
                 log.error("Error opening attachment", ex);

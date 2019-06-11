@@ -2364,25 +2364,26 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                 ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
 
                 Message m = (Message) this.tblMails.getValueAt(this.tblMails.getSelectedRow(), 4);
-                Collection<PostBox> inboxes=BeaAccess.getInstance().getPostBoxes();
-                String senderSafeId=null;
-                for(PostBox inbox: inboxes) {
-                    for(Recipient r: m.getRecipients()) {
-                        if(r.getSafeId().equals(inbox.getSafeId())) {
-                            senderSafeId=r.getSafeId();
+                Collection<PostBox> inboxes = BeaAccess.getInstance().getPostBoxes();
+                String senderSafeId = null;
+                for (PostBox inbox : inboxes) {
+                    for (Recipient r : m.getRecipients()) {
+                        if (r.getSafeId().equals(inbox.getSafeId())) {
+                            senderSafeId = r.getSafeId();
                             break;
                         }
                     }
-                    if(senderSafeId!=null)
+                    if (senderSafeId != null) {
                         break;
+                    }
                 }
-                if(senderSafeId==null) {
+                if (senderSafeId == null) {
                     ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Absender-Postfach für eEB kann nicht ermittelt werden.", "Fehler");
                     return false;
                 }
-                ArrayList<String> recipients=new ArrayList<String> ();
+                ArrayList<String> recipients = new ArrayList<String>();
                 recipients.add(senderSafeId);
-                long sentMessageId=BeaAccess.getInstance().sendEebConfirmation(m, senderSafeId, recipients);
+                long sentMessageId = BeaAccess.getInstance().sendEebConfirmation(m, senderSafeId, recipients);
 
                 return true;
 
@@ -2395,8 +2396,48 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
     }
 
     @Override
-    public boolean denyEeb() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public boolean rejectEeb() {
+        if (this.tblMails.getSelectedRowCount() == 1) {
+            ClientSettings settings = ClientSettings.getInstance();
+            try {
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
+
+                Message m = (Message) this.tblMails.getValueAt(this.tblMails.getSelectedRow(), 4);
+                Collection<PostBox> inboxes = BeaAccess.getInstance().getPostBoxes();
+                String senderSafeId = null;
+                for (PostBox inbox : inboxes) {
+                    for (Recipient r : m.getRecipients()) {
+                        if (r.getSafeId().equals(inbox.getSafeId())) {
+                            senderSafeId = r.getSafeId();
+                            break;
+                        }
+                    }
+                    if (senderSafeId != null) {
+                        break;
+                    }
+                }
+                if (senderSafeId == null) {
+                    ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Absender-Postfach für eEB kann nicht ermittelt werden.", "Fehler");
+                    return false;
+                }
+                ArrayList<String> recipients = new ArrayList<String>();
+                recipients.add(senderSafeId);
+                String comment="";
+                Object commentObject = JOptionPane.showInputDialog(this, "Erläuterung bzgl. Ihrer Zurückweisung (optional): ", "eEB zurückweisen", JOptionPane.QUESTION_MESSAGE, null, null, "");
+                if (commentObject != null) {
+                    comment=commentObject.toString();
+                }
+                long sentMessageId = BeaAccess.getInstance().sendEebRejection(m, senderSafeId, recipients, comment);
+
+                return true;
+
+            } catch (Exception ex) {
+                log.error(ex);
+                ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Senden der eEB-Zurückweisung: " + ex.getMessage(), "Fehler");
+            }
+        }
+        return false;
     }
 
     @Override
@@ -2404,20 +2445,20 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
         if (this.tblMails.getSelectedRowCount() == 1) {
             ClientSettings settings = ClientSettings.getInstance();
             try {
-                
+
                 Message m = (Message) this.tblMails.getValueAt(this.tblMails.getSelectedRow(), 4);
                 for (Attachment att : m.getAttachments()) {
                     if (att.getFileName().equalsIgnoreCase("xjustiz_nachricht.xml")) {
-                        String xjustiz=new String(att.getContent());
-                        String html=BeaAccess.getEebAsHtml(xjustiz);
+                        String xjustiz = new String(att.getContent());
+                        String html = BeaAccess.getEebAsHtml(xjustiz);
                         System.out.println(html);
-                        BeaEebDisplayDialog dlg=new BeaEebDisplayDialog(EditorsRegistry.getInstance().getMainWindow(), true);
+                        BeaEebDisplayDialog dlg = new BeaEebDisplayDialog(EditorsRegistry.getInstance().getMainWindow(), true);
                         dlg.setHtml(html);
                         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
                         dlg.setVisible(true);
                     }
                 }
-                
+
                 return true;
 
             } catch (Exception ex) {

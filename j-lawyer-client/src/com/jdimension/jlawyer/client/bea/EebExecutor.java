@@ -671,8 +671,8 @@ public interface EebExecutor {
     
     public boolean confirmEeb();
     
-    public boolean displayEeb();
+    public boolean rejectEeb();
     
-    public boolean denyEeb();
+    public boolean displayEeb();
     
 }

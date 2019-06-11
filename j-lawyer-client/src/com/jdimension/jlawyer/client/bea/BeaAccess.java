@@ -1005,6 +1005,11 @@ public class BeaAccess {
         this.folderOverviewCache.clear();
         return this.wrapper.sendEebConfirmation(incomingMessage, senderSafeId, recipientSafeIds);
     }
+    
+    public long sendEebRejection(Message incomingMessage, String senderSafeId, ArrayList<String> recipientSafeIds, String comment) throws BeaWrapperException {
+        this.folderOverviewCache.clear();
+        return this.wrapper.sendEebRejection(incomingMessage, senderSafeId, recipientSafeIds, comment);
+    }
 
     public boolean isMessageReadByIdentity(String messageId, String safeId) throws BeaWrapperException {
         return this.wrapper.isMessageReadByIdentity(messageId, safeId);
