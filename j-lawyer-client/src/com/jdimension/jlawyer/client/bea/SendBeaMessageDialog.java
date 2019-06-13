@@ -1046,10 +1046,10 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
         jLabel7 = new javax.swing.JLabel();
         contentPanel = new javax.swing.JPanel();
         jPanel2 = new javax.swing.JPanel();
-        text = new javax.swing.JRadioButton();
-        html = new javax.swing.JRadioButton();
+        rdNoSignature = new javax.swing.JRadioButton();
+        rdMessageSignature = new javax.swing.JRadioButton();
         chkReadReceipt = new javax.swing.JCheckBox();
-        signAll = new javax.swing.JRadioButton();
+        rdAllSignature = new javax.swing.JRadioButton();
         chkSaveAsDocument = new javax.swing.JCheckBox();
         cmbFrom = new javax.swing.JComboBox<>();
         jScrollPane3 = new javax.swing.JScrollPane();
@@ -1240,30 +1240,32 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
 
         jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder("Optionen"));
 
-        buttonGroupTextHtml.add(text);
-        text.setSelected(true);
-        text.setText("nicht signieren");
-        text.addActionListener(new java.awt.event.ActionListener() {
+        buttonGroupTextHtml.add(rdNoSignature);
+        rdNoSignature.setSelected(true);
+        rdNoSignature.setText("nicht signieren");
+        rdNoSignature.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                textActionPerformed(evt);
+                rdNoSignatureActionPerformed(evt);
             }
         });
 
-        buttonGroupTextHtml.add(html);
-        html.setText("Nachricht signieren");
-        html.addActionListener(new java.awt.event.ActionListener() {
+        buttonGroupTextHtml.add(rdMessageSignature);
+        rdMessageSignature.setText("Nachricht signieren");
+        rdMessageSignature.setEnabled(false);
+        rdMessageSignature.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                htmlActionPerformed(evt);
+                rdMessageSignatureActionPerformed(evt);
             }
         });
 
         chkReadReceipt.setText("Zustellung gegen Empfangsbekenntnis");
 
-        buttonGroupTextHtml.add(signAll);
-        signAll.setText("Nachricht und Anhänge signieren");
-        signAll.addActionListener(new java.awt.event.ActionListener() {
+        buttonGroupTextHtml.add(rdAllSignature);
+        rdAllSignature.setText("Nachricht und Anhänge signieren");
+        rdAllSignature.setEnabled(false);
+        rdAllSignature.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                signAllActionPerformed(evt);
+                rdAllSignatureActionPerformed(evt);
             }
         });
 
@@ -1274,20 +1276,20 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
             .addGroup(jPanel2Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(text)
+                    .addComponent(rdNoSignature)
                     .addComponent(chkReadReceipt)
-                    .addComponent(signAll)
-                    .addComponent(html))
+                    .addComponent(rdAllSignature)
+                    .addComponent(rdMessageSignature))
                 .addContainerGap(164, Short.MAX_VALUE))
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel2Layout.createSequentialGroup()
-                .addComponent(text)
+                .addComponent(rdNoSignature)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(html)
+                .addComponent(rdMessageSignature)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(signAll)
+                .addComponent(rdAllSignature)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(chkReadReceipt)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
@@ -1676,8 +1678,8 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
                 //this.taBody.setText(EmailTemplateAccess.replacePlaceHolders(tpl.getBody(), htValues) + System.getProperty("line.separator") + System.getProperty("line.separator") + this.cu.getEmailSignature());
 
                 this.tp.setText(EmailTemplateAccess.replacePlaceHolders(tpl.getBody(), htValues) + System.getProperty("line.separator") + System.getProperty("line.separator") + EmailUtils.Html2Text(this.cu.getEmailSignature()));
-                this.text.setSelected(true);
-                this.textActionPerformed(null);
+                //this.rdNoSignature.setSelected(true);
+                //this.textActionPerformed(null);
 
 //                this.tp.setText(EmailTemplateAccess.replacePlaceHolders(tpl.getBody(), htValues) + System.getProperty("line.separator") + System.getProperty("line.separator") + this.cu.getEmailSignature());
 //                this.hp.setText(EmailTemplateAccess.replacePlaceHolders(tpl.getBody(), htValues) + System.getProperty("line.separator") + System.getProperty("line.separator") + this.cu.getEmailSignature());
@@ -1702,29 +1704,29 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
         this.cmbTemplatesActionPerformed(null);
     }//GEN-LAST:event_cmbOpponentAttItemStateChanged
 
-    private void textActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_textActionPerformed
-        if (this.text.isSelected()) {
-            this.contentPanel.remove(0);
-            this.contentPanel.add(tp);
-            tp.setBounds(0, 0, this.contentPanel.getWidth(), this.contentPanel.getHeight());
-            SwingUtilities.updateComponentTreeUI(tp);
+    private void rdNoSignatureActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rdNoSignatureActionPerformed
+//        if (this.rdNoSignature.isSelected()) {
+//            this.contentPanel.remove(0);
+//            this.contentPanel.add(tp);
+//            tp.setBounds(0, 0, this.contentPanel.getWidth(), this.contentPanel.getHeight());
+//            SwingUtilities.updateComponentTreeUI(tp);
+//
+//        }
+    }//GEN-LAST:event_rdNoSignatureActionPerformed
 
-        }
-    }//GEN-LAST:event_textActionPerformed
-
-    private void htmlActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_htmlActionPerformed
-        if (this.html.isSelected()) {
-            this.contentPanel.remove(0);
-
-            //hp.setSize(this.contentPanel.getWidth(), this.contentPanel.getHeight());
-            tp.setBounds(0, 0, this.contentPanel.getWidth(), this.contentPanel.getHeight());
-            //tp.setSize(this.contentPanel.getWidth(), this.contentPanel.getHeight());
-            //this.contentPanel.repaint();
-            //hp.repaint();
-            SwingUtilities.updateComponentTreeUI(tp);
-
-        }
-    }//GEN-LAST:event_htmlActionPerformed
+    private void rdMessageSignatureActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rdMessageSignatureActionPerformed
+//        if (this.rdMessageSignature.isSelected()) {
+//            this.contentPanel.remove(0);
+//
+//            //hp.setSize(this.contentPanel.getWidth(), this.contentPanel.getHeight());
+//            tp.setBounds(0, 0, this.contentPanel.getWidth(), this.contentPanel.getHeight());
+//            //tp.setSize(this.contentPanel.getWidth(), this.contentPanel.getHeight());
+//            //this.contentPanel.repaint();
+//            //hp.repaint();
+//            SwingUtilities.updateComponentTreeUI(tp);
+//
+//        }
+    }//GEN-LAST:event_rdMessageSignatureActionPerformed
 
     private void contentPanelComponentResized(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_contentPanelComponentResized
         //Component c=contentPanel.getComponent(0);
@@ -1746,9 +1748,9 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
         ComponentUtils.storeDialogSize(this);
     }//GEN-LAST:event_formComponentResized
 
-    private void signAllActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_signAllActionPerformed
+    private void rdAllSignatureActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rdAllSignatureActionPerformed
         // TODO add your handling code here:
-    }//GEN-LAST:event_signAllActionPerformed
+    }//GEN-LAST:event_rdAllSignatureActionPerformed
 
     private void mnuSearchRecipientInBeaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSearchRecipientInBeaActionPerformed
         BeaIdentitySearchDialog dlg = new BeaIdentitySearchDialog(EditorsRegistry.getInstance().getMainWindow(), true, null, null, null, null, null, null);
@@ -1866,7 +1868,6 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
     private javax.swing.JButton cmdSend;
     private javax.swing.JButton cmdShowReviewSelector;
     private javax.swing.JPanel contentPanel;
-    private javax.swing.JRadioButton html;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel12;
@@ -1892,8 +1893,9 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
     private javax.swing.JRadioButton radioReviewTypeFollowUp;
     private javax.swing.JRadioButton radioReviewTypeNone;
     private javax.swing.JRadioButton radioReviewTypeRespite;
-    private javax.swing.JRadioButton signAll;
-    private javax.swing.JRadioButton text;
+    private javax.swing.JRadioButton rdAllSignature;
+    private javax.swing.JRadioButton rdMessageSignature;
+    private javax.swing.JRadioButton rdNoSignature;
     private javax.swing.JTextField txtReviewDateField;
     private javax.swing.JTextField txtSubject;
     // End of variables declaration//GEN-END:variables
