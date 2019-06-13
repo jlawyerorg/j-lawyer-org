@@ -693,7 +693,6 @@ public class BeaEebReplyPanel extends javax.swing.JPanel {
 
     private static final Logger log = Logger.getLogger(BeaEebReplyPanel.class.getName());
     //DecimalFormat df = new DecimalFormat("0.00%");
-    private CaseForContactEntry e = null;
     private EebExecutor executor=null;
     
     private String openedFromEditorClass=null;
@@ -712,8 +711,7 @@ public class BeaEebReplyPanel extends javax.swing.JPanel {
         this.cmdEebDeny.setEnabled(enabled);
     }
 
-    public void setEntry(CaseForContactEntry entry, EebExecutor executor) {
-        this.e = entry;
+    public void setEntry(EebExecutor executor) {
         this.executor=executor;
         
         this.lblDescription.setText("<html><b>eEB abgeben / zur&uuml;ckweisen</b><br/>zum Anzeigen hier klicken</html>");
