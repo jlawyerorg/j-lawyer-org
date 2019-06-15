@@ -700,8 +700,8 @@ public class ArchiveFileServiceTest {
     // TODO add test methods here.
     // The methods must be annotated with annotation @Test. For example:
     //
-    @Test
-    public void hello() {
+//    @Test
+//    public void hello() {
         
         
 //        ArchiveFileService svc=new ArchiveFileService();
@@ -719,6 +719,6 @@ public class ArchiveFileServiceTest {
 //            ex.printStackTrace();
 //            Assert.fail(ex.getMessage());
 //        }
-    }
+//    }
 
 }
