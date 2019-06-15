@@ -941,7 +941,7 @@ public class BeaAccess {
         return BeaWrapper.getEebAsHtml(xmlXjustiz);
     }
 
-    public Message getMessage(String messageId, String safeId) throws BeaWrapperException {
+    public synchronized Message getMessage(String messageId, String safeId) throws BeaWrapperException {
         if(!this.messageCache.containsKey(messageId)) {
             Message m=this.wrapper.getMessage(messageId, safeId);
             this.messageCache.put(messageId, m);
@@ -949,7 +949,7 @@ public class BeaAccess {
         return this.messageCache.get(messageId);
     }
 
-    public Message getMessage(String messageId, String safeId, boolean includeAttachments) throws BeaWrapperException {
+    public synchronized Message getMessage(String messageId, String safeId, boolean includeAttachments) throws BeaWrapperException {
         if(!this.messageCache.containsKey(messageId)) {
             Message m=this.wrapper.getMessage(messageId, safeId, includeAttachments);
             this.messageCache.put(messageId, m);

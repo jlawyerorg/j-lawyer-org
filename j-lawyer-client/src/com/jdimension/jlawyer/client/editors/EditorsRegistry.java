@@ -809,7 +809,7 @@ public class EditorsRegistry {
     }
 
     public void updateStatus(String text) {
-        this.updateStatus(text, false);
+        this.updateStatus(text, true);
     }
 
     public void clearStatus() {

@@ -854,10 +854,12 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
     public void refreshFolders(boolean showErrorDialogOnFailure) throws Exception {
 
         BeaAccess bea = BeaAccess.getInstance();
-
+        EditorsRegistry.getInstance().updateStatus("beA-Postfächer werden geladen...");
         DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode("beA-Postfächer");
         Collection<PostBox> inboxes = bea.getPostBoxes();
+        Hashtable<String, Folder> inboxFolders = new Hashtable<String, Folder>();
         for (PostBox pb : inboxes) {
+            EditorsRegistry.getInstance().updateStatus("Lade beA-Postfach" + pb.getSafeId() + "...");
             Identity identity = bea.getIdentity(pb.getSafeId());
             DefaultMutableTreeNode pbNode = new DefaultMutableTreeNode(identity);
             rootNode.add(pbNode);
@@ -865,8 +867,11 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
             Hashtable folderTable = new Hashtable();
             Hashtable nodeTable = new Hashtable();
             for (org.jlawyer.bea.model.Folder f : folders) {
+                // collect all inbox folders for later
+                if (f.getType().equals(Folder.TYPE_INBOX)) {
+                    inboxFolders.put(pb.getSafeId(), f);
+                }
                 folderTable.put(f.getId(), f);
-                System.out.println(f.getName());
                 nodeTable.put(f.getId(), new DefaultMutableTreeNode(f));
 //                for (Object key : folderTable.keySet()) {
 //                    DefaultMutableTreeNode currentNode = (DefaultMutableTreeNode) nodeTable.get(key);
@@ -901,6 +906,38 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
         JTreeUtils.expandAll(this.treeFolders);
 
         this.treeFolders.setCellRenderer(this.renderer);
+
+        // pre-load INBOX folder
+        try {
+            Timer t = new Timer();
+            TimerTask tt = new TimerTask() {
+                @Override
+                public void run() {
+                    try {
+                        for (String safeId : inboxFolders.keySet()) {
+                            Folder inbox = inboxFolders.get(safeId);
+                            if (inbox != null) {
+                                ArrayList<MessageHeader> messages = BeaAccess.getInstance().getFolderOverview(inbox);
+                                for (MessageHeader mh : messages) {
+                                    EditorsRegistry.getInstance().updateStatus("beA-Nachricht wird geladen: " + StringUtils.nonNull(mh.getSubject()));
+                                    BeaAccess.getInstance().getMessage(mh.getId(), safeId);
+                                }
+                            }
+                        }
+                    } catch (Throwable t) {
+                        log.error(t);
+                    }
+                    EditorsRegistry.getInstance().clearStatus();
+                }
+
+            };
+            t.schedule(tt, 300);
+
+        } catch (Throwable t) {
+            log.error(t);
+            EditorsRegistry.getInstance().clearStatus();
+        }
+        EditorsRegistry.getInstance().clearStatus();
 
     }
 
@@ -1934,14 +1971,14 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                     // sen eEB
                     BeaEebReplyPanel berp = new BeaEebReplyPanel(this.getClass().getName());
                     //berp.setBackground(new Color(153, 204, 255));
-                    berp.setEntry(null, this);
+                    berp.setEntry(this);
                     berp.enableButtons(true);
                     actionPanelEntries.add(berp);
                 } else if (msg.hasAttachment("xjustiz_nachricht.xml")) {
                     // received eEB 
                     BeaEebReplyPanel berp = new BeaEebReplyPanel(this.getClass().getName());
                     //berp.setBackground(new Color(153, 204, 255));
-                    berp.setEntry(null, this);
+                    berp.setEntry(this);
                     berp.enableButtons(false);
                     actionPanelEntries.add(berp);
                 }
@@ -2423,10 +2460,10 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                 }
                 ArrayList<String> recipients = new ArrayList<String>();
                 recipients.add(senderSafeId);
-                String comment="";
+                String comment = "";
                 Object commentObject = JOptionPane.showInputDialog(this, "Erläuterung bzgl. Ihrer Zurückweisung (optional): ", "eEB zurückweisen", JOptionPane.QUESTION_MESSAGE, null, null, "");
                 if (commentObject != null) {
-                    comment=commentObject.toString();
+                    comment = commentObject.toString();
                 }
                 long sentMessageId = BeaAccess.getInstance().sendEebRejection(m, senderSafeId, recipients, comment);
 

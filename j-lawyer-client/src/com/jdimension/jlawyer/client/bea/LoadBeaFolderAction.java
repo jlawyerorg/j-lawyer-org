@@ -667,6 +667,7 @@ import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.processing.ProgressIndicator;
 import com.jdimension.jlawyer.client.processing.ProgressableAction;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
+import com.jdimension.jlawyer.client.utils.StringUtils;
 import java.awt.Rectangle;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -774,10 +775,11 @@ public class LoadBeaFolderAction extends ProgressableAction {
                 // this.progress("Lade Nachrichten " + (i + 1) + "/" + this.getMax());
                 this.progress("Lade Nachrichten... " + (i + 1));
 
-                EditorsRegistry.getInstance().updateStatus("Lade Nachricht " + (i + 1), true);
+                
                 //System.out.println("*****************************************************************************");
                 //System.out.println("MESSAGE " + (i + 1) + ":");
                 MessageHeader msgh = headers.get(i);
+                EditorsRegistry.getInstance().updateStatus("Lade Nachricht " + StringUtils.nonNull(msgh.getSubject()), true);
                 final Message msg=bea.getMessage(msgh.getId(), msgh.getPostBoxSafeId());
                 
                 String to = "";
@@ -866,7 +868,7 @@ public class LoadBeaFolderAction extends ProgressableAction {
 
         } catch (Exception ex) {
             log.error(ex);
-            ex.printStackTrace();
+            EditorsRegistry.getInstance().clearStatus();
             return false;
         }
         return true;
