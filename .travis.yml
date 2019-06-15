@@ -9,7 +9,7 @@ services: mysql
 sudo: true
 language: java
 jdk:
-  - oraclejdk8
+  - openjdk11
 # install: ant default
 before_install:
   - sudo mysql -e "use mysql; update user set password=PASSWORD('travisci') where User='root'; update user set plugin='mysql_native_password';commit;FLUSH PRIVILEGES;"
