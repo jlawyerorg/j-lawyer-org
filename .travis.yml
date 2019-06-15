@@ -27,6 +27,7 @@ before_install:
   - cd /home/travis/j-lawyer-backup
   - sudo apt-get install wget
   - sudo apt-get install tar
+  - sudo apt-get install ant
   - wget https://www.j-lawyer.org/downloads/travisci/backups/backups.tar.gz
   - tar -m -xvzf backups.tar.gz
   - cd /home/travis/build/jlawyerorg/j-lawyer-org
