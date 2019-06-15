@@ -8,7 +8,7 @@ services: mysql
 #      - mysql-client
 sudo: true
 language: java
-install: ant deps
+# install: ant deps
 jdk:
   - openjdk11
 # install: ant default
