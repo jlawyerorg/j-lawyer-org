@@ -691,7 +691,7 @@ public class BeaIdentitySearchThread implements Runnable {
     private JTable target;
     private JLabel errors;
     
-    /** Creates a new instance of QuickEmailSearchThread */
+    /** Creates a new instance of BeaIdentitySearchThread */
     public BeaIdentitySearchThread(Component owner, String firstName, String name, String userName, String city, String zipCode, JTable target, JLabel errors) {
         this.qFirstName=firstName;
         this.qName=name;

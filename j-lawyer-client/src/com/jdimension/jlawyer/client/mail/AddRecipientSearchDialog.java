@@ -704,7 +704,7 @@ public class AddRecipientSearchDialog extends javax.swing.JDialog {
         this.nextFocus=nextFocus;
         this.to = to;
         initComponents();
-        String[] colNames = new String[]{"Name", "Vorname", "Firma", "PLZ", "Ort", "E-Mail"};
+        String[] colNames = new String[]{"Name", "Vorname", "Firma", "PLZ", "Ort", "E-Mail", "SafeID"};
         QuickAddressSearchTableModel model = new QuickAddressSearchTableModel(colNames, 0);
         this.tblResults.setModel(model);
 
