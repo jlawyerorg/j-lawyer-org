@@ -3023,7 +3023,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
     }
 
     @Override
-    public void loginFailure() {
+    public void loginFailure(String msg) {
         //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 

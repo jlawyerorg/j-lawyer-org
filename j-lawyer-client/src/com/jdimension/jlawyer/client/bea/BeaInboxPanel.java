@@ -714,6 +714,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.logging.Level;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.DropMode;
 import javax.swing.JOptionPane;
@@ -777,20 +778,19 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
         EventBroker eb = EventBroker.getInstance();
         eb.subscribeConsumer(this, Event.TYPE_ALLCASETAGS);
 
-        DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode("beA-Postfächer");
-        DefaultTreeModel dtm = new DefaultTreeModel(rootNode);
-        this.treeFolders.setModel(dtm);
+        this.emptyView();
+        
+        this.treeFolders.setDropMode(DropMode.ON);
 
-//        DefaultTableModel tm = new DefaultTableModel(new String[]{"eEB", "dringend", "vertraulich", "prüfen", "Betreff", "Absender", "Empfänger", "Gesendet", "Az", "Az (Justiz)"}, 0);
-        DefaultTableModel tm = new DefaultTableModel(new String[]{"", "", "", "", "Betreff", "Absender", "Empfänger", "Gesendet", "Az", "Az (Justiz)"}, 0);
-        this.tblMails.setModel(tm);
-        TableRowSorter<TableModel> sorter = new TableRowSorter<TableModel>(tm);
-        sorter.setComparator(7, new DescendingDateTimeStringComparator());
-        this.tblMails.setRowSorter(sorter);
+        Runtime.getRuntime().addShutdownHook(new Thread(new BeaObjectsCleanUp()));
+        DropTarget dt = new DropTarget(this.treeFolders, this);
 
-        this.renderer = new BeaFolderTreeCellRenderer();
-        this.renderer.setLeafIcon(renderer.getClosedIcon());
-        this.treeFolders.setCellRenderer(renderer);
+        this.dragSource = new DragSource();
+        DragGestureRecognizer dgr
+                = dragSource.createDefaultDragGestureRecognizer(
+                        this.tblMails,
+                        DnDConstants.ACTION_MOVE,
+                        this);
 
         AppUserBean cu = UserSettings.getInstance().getCurrentUser();
 
@@ -812,19 +812,24 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
             log.error(ex);
         }
 
-        this.treeFolders.setDropMode(DropMode.ON);
-
-        Runtime.getRuntime().addShutdownHook(new Thread(new BeaObjectsCleanUp()));
-        DropTarget dt = new DropTarget(this.treeFolders, this);
-
-        this.dragSource = new DragSource();
-        DragGestureRecognizer dgr
-                = dragSource.createDefaultDragGestureRecognizer(
-                        this.tblMails,
-                        DnDConstants.ACTION_MOVE,
-                        this);
-
         this.initializing = false;
+    }
+    
+    private void emptyView() {
+        DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode("beA-Postfächer");
+        DefaultTreeModel dtm = new DefaultTreeModel(rootNode);
+        this.treeFolders.setModel(dtm);
+
+//        DefaultTableModel tm = new DefaultTableModel(new String[]{"eEB", "dringend", "vertraulich", "prüfen", "Betreff", "Absender", "Empfänger", "Gesendet", "Az", "Az (Justiz)"}, 0);
+        DefaultTableModel tm = new DefaultTableModel(new String[]{"", "", "", "", "Betreff", "Absender", "Empfänger", "Gesendet", "Az", "Az (Justiz)"}, 0);
+        this.tblMails.setModel(tm);
+        TableRowSorter<TableModel> sorter = new TableRowSorter<TableModel>(tm);
+        sorter.setComparator(7, new DescendingDateTimeStringComparator());
+        this.tblMails.setRowSorter(sorter);
+
+        this.renderer = new BeaFolderTreeCellRenderer();
+        this.renderer.setLeafIcon(renderer.getClosedIcon());
+        this.treeFolders.setCellRenderer(renderer);
     }
 
 //    private final void initWithCard() throws BeaWrapperException {
@@ -996,6 +1001,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
         beaMessageContentUI = new com.jdimension.jlawyer.client.bea.BeaMessageContentUI();
         jPanel1 = new javax.swing.JPanel();
         cmdRefresh = new javax.swing.JButton();
+        cmdLogout = new javax.swing.JButton();
 
         mnuNewFolder.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit_add.png"))); // NOI18N
         mnuNewFolder.setText("neuer Ordner");
@@ -1239,7 +1245,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(cmbCaseTag, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .add(0, 0, Short.MAX_VALUE))
-                    .add(jSplitPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 848, Short.MAX_VALUE))
+                    .add(jSplitPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 864, Short.MAX_VALUE))
                 .addContainerGap())
         );
         jPanel2Layout.setVerticalGroup(
@@ -1249,7 +1255,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                     .add(cmbCaseTag, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(chkCaseTagging))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jSplitPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 211, Short.MAX_VALUE))
+                .add(jSplitPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 259, Short.MAX_VALUE))
         );
 
         splitterFolderDetails.setRightComponent(jPanel2);
@@ -1267,6 +1273,14 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
             }
         });
 
+        cmdLogout.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/logout.png"))); // NOI18N
+        cmdLogout.setToolTipText("Ausloggen, bspw. um mit einem anderen Sicherheitstoken neu anzumelden");
+        cmdLogout.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdLogoutActionPerformed(evt);
+            }
+        });
+
         org.jdesktop.layout.GroupLayout jPanel1Layout = new org.jdesktop.layout.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
@@ -1274,13 +1288,17 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
             .add(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
                 .add(cmdRefresh)
-                .addContainerGap())
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(cmdLogout)
+                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
-                .add(cmdRefresh)
+                .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
+                    .add(cmdLogout)
+                    .add(cmdRefresh))
                 .addContainerGap())
         );
 
@@ -1294,7 +1312,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                     .add(mainSplitter)
                     .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
                         .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .add(18, 18, 18)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(jLabel18)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
@@ -1312,7 +1330,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jToolBar1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(mainSplitter, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 359, Short.MAX_VALUE)
+                .add(mainSplitter, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 375, Short.MAX_VALUE)
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -1899,6 +1917,15 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
         settings.setConfiguration(ClientSettings.CONF_BEA_LASTTAG, lastTag);
     }//GEN-LAST:event_cmbCaseTagActionPerformed
 
+    private void cmdLogoutActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdLogoutActionPerformed
+        try {
+            BeaAccess.getInstance().logout();
+            this.emptyView();
+        } catch (BeaWrapperException ex) {
+            log.error("beA logout failed", ex);
+        }
+    }//GEN-LAST:event_cmdLogoutActionPerformed
+
     private void displayMessage() {
 
         if (this.tblMails.getSelectedRow() < 0 || this.tblMails.getSelectedRows().length > 1) {
@@ -2106,6 +2133,10 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
 
         int scrollToRow = -1;
         try {
+            
+            DefaultMutableTreeNode tn = (DefaultMutableTreeNode) this.treeFolders.getSelectionPath().getLastPathComponent();
+            org.jlawyer.bea.model.Folder source = (org.jlawyer.bea.model.Folder) tn.getUserObject();
+            
             // Ok, get the dropped object and try to figure out what it is
             Transferable tr = dtde.getTransferable();
             Object transferred = tr.getTransferData(DataFlavor.stringFlavor);
@@ -2125,11 +2156,13 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
             try {
                 BeaAccess bea = BeaAccess.getInstance();
                 for (Message m : copyMsg) {
-                    boolean moved = bea.moveMessageToFolder(m.getId(), target.getId());
+                    boolean moved = bea.moveMessageToFolder(m.getId(), source.getId(), target.getId());
                 }
             } catch (Throwable ex) {
                 log.error(ex);
-                ex.printStackTrace();
+                JOptionPane.showMessageDialog(this, "Fehler beim Verschieben der beA-Nachricht: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+                //dtde.rejectDrop();
+                return;
             }
 
             scrollToRow = tblMails.getSelectedRow();
@@ -2159,7 +2192,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
             this.treeFoldersValueChangedImpl(new TreeSelectionEvent(this.tblMails, this.treeFolders.getSelectionPath(), false, null, null), sortCol, scrollToRow);
 
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error(e);
             dtde.rejectDrop();
         }
     }
@@ -2198,13 +2231,13 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
         }
 
         if (needsReset) {
-            BeaLoginDialog loginPanel = new BeaLoginDialog(EditorsRegistry.getInstance().getMainWindow(), true, null);
+            BeaLoginDialog loginPanel = new BeaLoginDialog(EditorsRegistry.getInstance().getMainWindow(), true, this);
             loginPanel.setVisible(true);
             if (!BeaAccess.hasInstance()) {
                 return;
             }
         }
-        this.loginSuccess();
+        //this.loginSuccess();
 //        BeaLoginDialog loginPanel=new BeaLoginDialog(EditorsRegistry.getInstance().getMainWindow(), true, this);
 //        loginPanel.setVisible(true);
 //        //loginPanel.setBackgroundImage(this.getBackgroundImage());
@@ -2258,8 +2291,8 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
     }
 
     @Override
-    public void loginFailure() {
-        JOptionPane.showMessageDialog(this, "beA-Login fehlgeschlagen", "Fehler", JOptionPane.ERROR_MESSAGE);
+    public void loginFailure(String msg) {
+        ThreadUtils.showErrorDialog(this, "beA-Login fehlgeschlagen: " + msg, "Fehler");
     }
 
     @Override
@@ -2533,6 +2566,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
     private javax.swing.JComboBox<String> cmbCaseTag;
     private javax.swing.JButton cmdDelete;
     private javax.swing.JButton cmdForward;
+    private javax.swing.JButton cmdLogout;
     private javax.swing.JButton cmdNew;
     private javax.swing.JButton cmdRefresh;
     private javax.swing.JButton cmdReply;

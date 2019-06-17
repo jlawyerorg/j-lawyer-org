@@ -671,6 +671,6 @@ public interface BeaLoginCallback {
     
     public void loginSuccess();
     
-    public void loginFailure();
+    public void loginFailure(String msg);
     
 }

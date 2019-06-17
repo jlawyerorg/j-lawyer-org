@@ -963,23 +963,23 @@ public class BeaLoginDialog extends javax.swing.JDialog {
                     @Override
                     public void run() {
                         try {
-                        lblCertLogin.setText("Verbinde zum beA... einloggen...");
-                        
-                        AppUserBean cu = UserSettings.getInstance().getCurrentUser();
-        BeaAccess bea = BeaAccess.getInstance(cu.getBeaCertificate(), cu.getBeaCertificatePassword());
-        bea.login();
+                            lblCertLogin.setText("Verbinde zum beA... einloggen...");
+
+                            AppUserBean cu = UserSettings.getInstance().getCurrentUser();
+                            BeaAccess bea = BeaAccess.getInstance(cu.getBeaCertificate(), cu.getBeaCertificatePassword());
+                            bea.login();
                             //beain.initWithCertificate();
-                        lblCertLogin.setText("Verbinde zum beA... laden...");
-                        if(callback!=null) {
-                            callback.loginSuccess();
-                        }
-                        //beain.refreshFolders(true);
-                        lblCertLogin.setText("Verbinde zum beA... fertig.");
+                            lblCertLogin.setText("Verbinde zum beA... laden...");
+                            if (callback != null) {
+                                callback.loginSuccess();
+                            }
+                            //beain.refreshFolders(true);
+                            lblCertLogin.setText("Verbinde zum beA... fertig.");
                         } catch (Throwable t) {
                             log.error(t);
-                         if(callback!=null) {
-                            callback.loginFailure();
-                        }   
+                            if (callback != null) {
+                                callback.loginFailure(t.getMessage());
+                            }
                         }
                         setVisible(false);
                         dispose();
@@ -1002,42 +1002,43 @@ public class BeaLoginDialog extends javax.swing.JDialog {
 //        if(editor instanceof BeaInboxPanel) {
 //            BeaInboxPanel beain=(BeaInboxPanel)editor;
             try {
-                this.lblCardLogin.setText("Verbinde zum beA...");
-                
-                setVisible(false);
+            this.lblCardLogin.setText("Verbinde zum beA...");
+
+            setVisible(false);
 //                SwingUtilities.invokeLater(new Runnable() {
 //                    @Override
 //                    public void run() {
-                        try {
-                        //lblCardLogin.setText("Verbinde zum beA... Karten-PIN...");
-                        BeaAccess bea = BeaAccess.getInstance();
-                        bea.login();    
-                        //beain.initWithCard();
-                        if(callback!=null) {
-                            callback.loginSuccess();
-                        }
-                        
-                        //lblCardLogin.setText("Verbinde zum beA... laden...");
-                        //beain.refreshFolders(true);
-                        //lblCardLogin.setText("Verbinde zum beA... fertig.");
-                        } catch (Throwable t) {
-                            if(callback!=null) {
-                            callback.loginFailure();
-                        }   
-                        }
-                        
-                        dispose();
+            try {
+                //lblCardLogin.setText("Verbinde zum beA... Karten-PIN...");
+                BeaAccess bea = BeaAccess.getInstance();
+                bea.login();
+                //beain.initWithCard();
+                if (callback != null) {
+                    callback.loginSuccess();
+                }
+
+                //lblCardLogin.setText("Verbinde zum beA... laden...");
+                //beain.refreshFolders(true);
+                //lblCardLogin.setText("Verbinde zum beA... fertig.");
+            } catch (Throwable t) {
+                log.error(t);
+                if (callback != null) {
+                    callback.loginFailure(t.getMessage());
+                }
+            }
+
+            dispose();
 //                    }
 //                });
             //beain.initWithCertificate();
             //beain.refreshFolders(true);
             //this.prgCertLogin.setIndeterminate(false);
-            } catch (Exception ex) {
-                setVisible(true);
-                this.lblCardLogin.setText("Verbinde zum beA... fehlgeschlagen: " + ex.getMessage());
-                log.error(ex);
-                ThreadUtils.showErrorDialog(this, "Fehler beim beA-Login: " + ex.getMessage(), "Fehler");
-            }
+        } catch (Exception ex) {
+            setVisible(true);
+            this.lblCardLogin.setText("Verbinde zum beA... fehlgeschlagen: " + ex.getMessage());
+            log.error(ex);
+            ThreadUtils.showErrorDialog(this, "Fehler beim beA-Login: " + ex.getMessage(), "Fehler");
+        }
         //}
     }//GEN-LAST:event_cmdCardLoginActionPerformed
 

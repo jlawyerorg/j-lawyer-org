@@ -888,6 +888,8 @@ public class BeaAccess {
         
         // close cache manager
         cacheManager.close();
+        
+        instance=null;
     }
 
     public Collection<Folder> getFolderStructure(String safeId) throws BeaWrapperException {
@@ -971,10 +973,12 @@ public class BeaAccess {
         return this.wrapper.moveMessageToTrash(messageId);
     }
 
-    public boolean moveMessageToFolder(String messageId, long folderId) throws BeaWrapperException {
-        boolean success= this.wrapper.moveMessageToFolder(messageId, folderId);
-        if(this.folderOverviewCache.containsKey(folderId))
-            this.folderOverviewCache.remove(folderId);
+    public boolean moveMessageToFolder(String messageId, long sourceFolderId, long targetFolderId) throws BeaWrapperException {
+        boolean success= this.wrapper.moveMessageToFolder(messageId, targetFolderId);
+        if(this.folderOverviewCache.containsKey(targetFolderId))
+            this.folderOverviewCache.remove(targetFolderId);
+        if(this.folderOverviewCache.containsKey(sourceFolderId))
+            this.folderOverviewCache.remove(sourceFolderId);
         return success;
     }
 
@@ -983,6 +987,7 @@ public class BeaAccess {
         if(this.messageCache.containsKey(messageId)) {
             this.messageCache.remove(messageId);
         }
+        this.folderOverviewCache.clear();
         
         return success;
     }
