@@ -1349,6 +1349,9 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
     }//GEN-LAST:event_treeFoldersValueChanged
 
     private void treeFoldersValueChangedImpl(javax.swing.event.TreeSelectionEvent evt, int sortCol, int scrollToRow) {
+        if(!BeaAccess.hasInstance())
+            return;
+        
         this.beaMessageContentUI.clear();
         this.pnlActionsChild.removeAll();
         this.cmdDelete.setEnabled(false);
@@ -2293,6 +2296,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
     @Override
     public void loginFailure(String msg) {
         ThreadUtils.showErrorDialog(this, "beA-Login fehlgeschlagen: " + msg, "Fehler");
+        this.cmdRefresh.setEnabled(true);
     }
 
     @Override
