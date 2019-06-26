@@ -748,7 +748,9 @@ public class ClientSettings {
     public static final String CONF_MAILSEND_LASTDOCUMENTTAG="client.mailsend.lastdocumenttag";
     
     public static final String CONF_BEA_TAGGINGENABLED="client.bea.taggingenabled";
+    public static final String CONF_BEA_DOCUMENTTAGGINGENABLED="client.bea.documenttaggingenabled";
     public static final String CONF_BEA_LASTTAG="client.bea.lasttag";
+    public static final String CONF_BEA_LASTDOCUMENTTAG="client.bea.lastdocumenttag";
     
     public static final String CONF_BEASEND_DOCUMENTTAGGINGENABLED="client.beasend.documenttaggingenabled";
     public static final String CONF_BEASEND_LASTDOCUMENTTAG="client.beasend.lastdocumenttag";
@@ -771,7 +773,6 @@ public class ClientSettings {
     
     private static final Logger log=Logger.getLogger(ClientSettings.class.getName());
     private static ClientSettings instance=null;
-    
     
     
     private ModuleMetadata rootModule=null;

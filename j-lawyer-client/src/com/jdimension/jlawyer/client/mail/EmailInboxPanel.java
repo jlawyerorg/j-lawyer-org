@@ -790,9 +790,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         }
         
         temp = cs.getConfiguration(ClientSettings.CONF_MAILS_DOCUMENTTAGGINGENABLED, "false");
-        boolean doctaggingEnabled = false;
         if ("true".equalsIgnoreCase(temp)) {
-            doctaggingEnabled = true;
             this.chkDocumentTagging.setSelected(true);
         }
 

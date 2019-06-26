@@ -672,6 +672,7 @@ import com.jdimension.jlawyer.client.editors.addresses.CaseForContactEntry;
 import com.jdimension.jlawyer.client.editors.documents.SearchAndAssignDialog;
 import com.jdimension.jlawyer.client.editors.files.DescendingDateTimeStringComparator;
 import com.jdimension.jlawyer.client.events.AllCaseTagsEvent;
+import com.jdimension.jlawyer.client.events.AllDocumentTagsEvent;
 import com.jdimension.jlawyer.client.events.Event;
 import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.events.EventConsumer;
@@ -690,7 +691,9 @@ import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
 import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileTagsBean;
+import com.jdimension.jlawyer.persistence.DocumentTagsBean;
 import com.jdimension.jlawyer.services.AddressServiceRemote;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
@@ -774,9 +777,15 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
             taggingEnabled = true;
             this.chkCaseTagging.setSelected(true);
         }
+        
+        temp = cs.getConfiguration(ClientSettings.CONF_BEA_DOCUMENTTAGGINGENABLED, "false");
+        if ("true".equalsIgnoreCase(temp)) {
+            this.chkDocumentTagging.setSelected(true);
+        }
 
         EventBroker eb = EventBroker.getInstance();
         eb.subscribeConsumer(this, Event.TYPE_ALLCASETAGS);
+        eb.subscribeConsumer(this, Event.TYPE_ALLDOCUMENTTAGS);
 
         this.emptyView();
         
@@ -999,6 +1008,8 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
         pnlActions = new javax.swing.JPanel();
         pnlActionsChild = new javax.swing.JPanel();
         beaMessageContentUI = new com.jdimension.jlawyer.client.bea.BeaMessageContentUI();
+        chkDocumentTagging = new javax.swing.JCheckBox();
+        cmbDocumentTag = new javax.swing.JComboBox<>();
         jPanel1 = new javax.swing.JPanel();
         cmdRefresh = new javax.swing.JButton();
         cmdLogout = new javax.swing.JButton();
@@ -1234,6 +1245,20 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
         jSplitPane1.setRightComponent(jScrollPane4);
         jSplitPane1.setLeftComponent(beaMessageContentUI);
 
+        chkDocumentTagging.setText("Dokument markieren:");
+        chkDocumentTagging.setActionCommand("Zielakte markieren:");
+        chkDocumentTagging.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                chkDocumentTaggingActionPerformed(evt);
+            }
+        });
+
+        cmbDocumentTag.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmbDocumentTagActionPerformed(evt);
+            }
+        });
+
         org.jdesktop.layout.GroupLayout jPanel2Layout = new org.jdesktop.layout.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
@@ -1244,6 +1269,10 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                         .add(chkCaseTagging)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(cmbCaseTag, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .add(18, 18, 18)
+                        .add(chkDocumentTagging)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(cmbDocumentTag, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .add(0, 0, Short.MAX_VALUE))
                     .add(jSplitPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 864, Short.MAX_VALUE))
                 .addContainerGap())
@@ -1253,9 +1282,11 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
             .add(jPanel2Layout.createSequentialGroup()
                 .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(cmbCaseTag, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(chkCaseTagging))
+                    .add(chkCaseTagging)
+                    .add(cmbDocumentTag, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(chkDocumentTagging))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jSplitPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 259, Short.MAX_VALUE))
+                .add(jSplitPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 233, Short.MAX_VALUE))
         );
 
         splitterFolderDetails.setRightComponent(jPanel2);
@@ -1929,6 +1960,20 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
         }
     }//GEN-LAST:event_cmdLogoutActionPerformed
 
+    private void chkDocumentTaggingActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkDocumentTaggingActionPerformed
+        ClientSettings settings = ClientSettings.getInstance();
+
+        boolean tagging = this.chkDocumentTagging.isSelected();
+        settings.setConfiguration(ClientSettings.CONF_BEA_DOCUMENTTAGGINGENABLED, "" + tagging);
+    }//GEN-LAST:event_chkDocumentTaggingActionPerformed
+
+    private void cmbDocumentTagActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbDocumentTagActionPerformed
+        ClientSettings settings = ClientSettings.getInstance();
+
+        String lastTag = this.cmbDocumentTag.getSelectedItem().toString();
+        settings.setConfiguration(ClientSettings.CONF_BEA_LASTDOCUMENTTAG, lastTag);
+    }//GEN-LAST:event_cmbDocumentTagActionPerformed
+
     private void displayMessage() {
 
         if (this.tblMails.getSelectedRow() < 0 || this.tblMails.getSelectedRows().length > 1) {
@@ -2321,6 +2366,25 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
             } else {
                 this.cmbCaseTag.setSelectedItem("");
             }
+        } else if (e instanceof AllDocumentTagsEvent) {
+            DefaultComboBoxModel dm=new DefaultComboBoxModel();
+            dm.addElement("");
+            ArrayList<String> allTags=new ArrayList<String>();
+            for(AppOptionGroupBean tag: ((AllDocumentTagsEvent) e).getTagDtos()) {
+                //dm.addElement(tag.getValue());
+                allTags.add(tag.getValue());
+            }
+            Collections.sort(allTags);
+            for(String s: allTags) {
+                dm.addElement(s);
+            }
+            this.cmbDocumentTag.setModel(dm);
+            ClientSettings settings=ClientSettings.getInstance();
+            String lastTag=settings.getConfiguration(ClientSettings.CONF_BEA_LASTDOCUMENTTAG, "");
+            if(allTags.contains(lastTag))
+                this.cmbDocumentTag.setSelectedItem(lastTag);
+            else
+                this.cmbDocumentTag.setSelectedItem("");
         }
     }
 
@@ -2376,13 +2440,20 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                         newName = newName + ".bea";
                     }
 
-                    afs.addDocument(caseId, newName, export.getContent(), "");
+                    ArchiveFileDocumentsBean newlyAddedDocument=afs.addDocument(caseId, newName, export.getContent(), "");
 
                     String temp = ClientSettings.getInstance().getConfiguration(ClientSettings.CONF_BEA_TAGGINGENABLED, "false");
                     if ("true".equalsIgnoreCase(temp)) {
                         String caseTag = ClientSettings.getInstance().getConfiguration(ClientSettings.CONF_BEA_LASTTAG, "");
                         if (caseTag != null && !"".equalsIgnoreCase(caseTag)) {
                             afs.setTag(caseId, new ArchiveFileTagsBean(null, caseTag), true);
+                        }
+                    }
+                    temp = ClientSettings.getInstance().getConfiguration(ClientSettings.CONF_BEA_DOCUMENTTAGGINGENABLED, "false");
+                    if ("true".equalsIgnoreCase(temp)) {
+                        String docTag=ClientSettings.getInstance().getConfiguration(ClientSettings.CONF_BEA_LASTDOCUMENTTAG, "");
+                        if (docTag != null && !"".equalsIgnoreCase(docTag)) {
+                            afs.setDocumentTag(newlyAddedDocument.getId(), new DocumentTagsBean(newlyAddedDocument.getId(), docTag), true);
                         }
                     }
 
@@ -2567,7 +2638,9 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private com.jdimension.jlawyer.client.bea.BeaMessageContentUI beaMessageContentUI;
     private javax.swing.JCheckBox chkCaseTagging;
+    private javax.swing.JCheckBox chkDocumentTagging;
     private javax.swing.JComboBox<String> cmbCaseTag;
+    private javax.swing.JComboBox<String> cmbDocumentTag;
     private javax.swing.JButton cmdDelete;
     private javax.swing.JButton cmdForward;
     private javax.swing.JButton cmdLogout;
