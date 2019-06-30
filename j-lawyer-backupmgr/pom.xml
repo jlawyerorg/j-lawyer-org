@@ -4,7 +4,7 @@
 
     <groupId>org.jlawyer</groupId>
     <artifactId>j-lawyer-backupmgr</artifactId>
-    <version>1.9.1</version>
+    <version>1.10.0</version>
     <packaging>jar</packaging>
 
     <name>j-lawyer-backupmgr</name>
