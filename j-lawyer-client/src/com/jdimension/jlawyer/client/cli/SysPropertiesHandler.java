@@ -697,7 +697,8 @@ public class SysPropertiesHandler extends CommandHandler {
         ArrayList<String> keyList=new ArrayList<String>();
         while(e.hasMoreElements()) {
             String key=e.nextElement().toString();
-            keyList.add(key);
+            if(!(key.indexOf("ssl")>-1))
+                keyList.add(key);
             
         }
         Collections.sort(keyList);
