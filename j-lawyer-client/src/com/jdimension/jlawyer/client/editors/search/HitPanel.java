@@ -862,7 +862,7 @@ public class HitPanel extends javax.swing.JPanel {
             ReadOnlyDocumentStore store=new ReadOnlyDocumentStore("hitpanel-" + hit.getFileName(), hit.getFileName());
                 
             Launcher launcher=LauncherFactory.getLauncher(hit.getFileName(), content, store);
-            launcher.launch();
+            launcher.launch(false);
 //            if (appLauncher.internallyLaunchable(tmpUrl)) {
 //                String afId=hit.getArchiveFileId();
 //                ArchiveFileBean contextArchiveFile=locator.lookupArchiveFileServiceRemote().getArchiveFile(afId);
