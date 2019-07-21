@@ -1070,7 +1070,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
                                 CaseDocumentStore store = new CaseDocumentStore(value.getId(), value.getName(), readOnly, value, caseDto);
                                 Launcher launcher = LauncherFactory.getLauncher(db.getName(), content, store);
-                                launcher.launch();
+                                launcher.launch(false);
                             } catch (Exception ex) {
                                 JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Laden des Dokuments: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
                                 return;
@@ -3445,7 +3445,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
                     CaseDocumentStore store = new CaseDocumentStore(value.getId(), value.getName(), readOnly, value, dto);
                     Launcher launcher = LauncherFactory.getLauncher(value.getName(), content, store);
-                    launcher.launch();
+                    int response = JOptionPane.NO_OPTION;
+                    if (launcher.isDocumentOpen(value.getId())) {
+                        response = JOptionPane.showConfirmDialog(EditorsRegistry.getInstance().getMainWindow(), "Dokument " + value.getName() + " ist bereits geöffnet. Trotzdem fortfahren?", "Dokument öffnen", JOptionPane.YES_NO_OPTION);
+                    }
+                    launcher.launch(response==JOptionPane.YES_OPTION);
 
                 }
             }
@@ -3920,7 +3924,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 try {
                     ReadOnlyDocumentStore store = new ReadOnlyDocumentStore("externalmaillaunch-" + value.getName(), value.getName());
                     Launcher launcher = LauncherFactory.getLauncher(value.getName(), content, store);
-                    launcher.launch();
+                    launcher.launch(false);
 
                 } catch (Exception ex) {
                     JOptionPane.showMessageDialog(this, "Fehler beim Öffnen des Dokuments: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
@@ -4658,7 +4662,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
                 CaseDocumentStore store = new CaseDocumentStore(value.getId(), value.getName(), readOnly, value, dto);
                 Launcher launcher = LauncherFactory.getMicrosoftOfficeLauncher(value.getName(), content, store);
-                launcher.launch();
+                launcher.launch(false);
 
             }
         } catch (Exception ex) {

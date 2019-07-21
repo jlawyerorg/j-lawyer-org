@@ -1437,7 +1437,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
                 //String tmpFile = FileUtils.createTempFile(this.lstAttachments.getSelectedValue().toString(), data);
                 ReadOnlyDocumentStore store=new ReadOnlyDocumentStore("mailattachment-" + this.lstAttachments.getSelectedValue().toString(), this.lstAttachments.getSelectedValue().toString());
                 Launcher launcher=LauncherFactory.getLauncher(this.lstAttachments.getSelectedValue().toString(), data, store);
-                launcher.launch();
+                launcher.launch(false);
             } catch (Exception ex) {
                 log.error("Error opening attachment", ex);
                 JOptionPane.showMessageDialog(this, "Fehler Öffnen des Anhangs: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);

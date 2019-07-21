@@ -702,7 +702,7 @@ public class XjustizLauncher extends InternalLauncher {
     }
 
     @Override
-    public void launch() throws Exception {
+    public void launch(boolean autoCloseExistingDocument) throws Exception {
 
         try {
             

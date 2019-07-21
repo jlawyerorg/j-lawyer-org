@@ -2143,7 +2143,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                         ReadOnlyDocumentStore store = new ReadOnlyDocumentStore("sendmaildialog-" + f.getName(), f.getName());
                         byte[] content = FileUtils.readFile(new File(this.attachments.get(idx)));
                         Launcher launcher = LauncherFactory.getLauncher(f.getName(), content, store);
-                        launcher.launch();
+                        launcher.launch(false);
                     } catch (Exception ex) {
                         log.error(ex);
                         ThreadUtils.showErrorDialog(this, "Fehler beim Öffnen der Datei: " + ex.getMessage(), "Fehler");

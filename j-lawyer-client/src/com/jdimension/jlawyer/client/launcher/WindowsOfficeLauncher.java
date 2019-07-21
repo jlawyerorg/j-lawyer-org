@@ -687,12 +687,9 @@ public class WindowsOfficeLauncher extends OfficeLauncher {
     }
 
     @Override
-    public void launch() throws Exception {
+    public void launch(boolean autoCloseExistingDocument) throws Exception {
 
-        if (isDocumentOpen(store.getDocumentIdentifier())) {
-            log.debug("Dokument " + store.getFileName() + "ist bereits geöffnet");
-            throw new Exception("Dokument " + store.getFileName() + "ist bereits geöffnet");
-        }
+        this.autoCloseOpenDocument(autoCloseExistingDocument);
 
         final Launcher thisLauncher = this;
 

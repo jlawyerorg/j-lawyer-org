@@ -746,6 +746,25 @@ public class DocumentObserver {
         }
         return false;
     }
+    
+    public ObservedDocument getDocumentById(String docId) {
+        for (ObservedDocument doc : docs) {
+            if (doc.getStore().getDocumentIdentifier().equals(docId)) {
+                return doc;
+            }
+        }
+        return null;
+    }
+    
+    public int countOpenDocumentsWithExtension(String extension) {
+        int count=0;
+        for (ObservedDocument doc : docs) {
+            if (isDocumentOpen(doc.getStore().getDocumentIdentifier()) && doc.getName().toLowerCase().endsWith("." + extension)) {
+                count=count+1;
+            }
+        }
+        return count;
+    }
 
     public synchronized void observe() {
 

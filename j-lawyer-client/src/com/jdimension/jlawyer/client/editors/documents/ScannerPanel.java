@@ -1371,7 +1371,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
                     byte[] data = is.getObservedFile(fileName);
                     ReadOnlyDocumentStore store = new ReadOnlyDocumentStore("scannerpanel-" + fileName, fileName);
                     Launcher launcher = LauncherFactory.getLauncher(fileName, data, store);
-                    launcher.launch();
+                    launcher.launch(false);
                 } catch (Exception ex) {
                     log.error(ex);
                     ThreadUtils.showErrorDialog(this, "Fehler beim Öffnen der Datei: " + ex.getMessage(), "Fehler");

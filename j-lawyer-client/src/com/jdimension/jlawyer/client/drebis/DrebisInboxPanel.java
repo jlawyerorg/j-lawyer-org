@@ -1193,7 +1193,7 @@ public class DrebisInboxPanel extends javax.swing.JPanel implements ThemeableEdi
                 //String tmpFile = al.createTempFile(da.getName() + "." + da.getSuffix(), data);
                 ReadOnlyDocumentStore store=new ReadOnlyDocumentStore("drebis-attachment-" + da.getName() + "." + da.getSuffix(), da.getName() + "." + da.getSuffix());
                 Launcher launcher=LauncherFactory.getLauncher(da.getName() + "." + da.getSuffix(), data, store);
-                launcher.launch();
+                launcher.launch(false);
                 
             } catch (Exception ex) {
                 log.error("Error opening attachment", ex);

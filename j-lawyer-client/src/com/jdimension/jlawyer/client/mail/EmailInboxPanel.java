@@ -2200,7 +2200,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                 //String tmpFile = FileUtils.createTempFile(newName, data);
                 ReadOnlyDocumentStore store = new ReadOnlyDocumentStore("externalmaillaunch-" + newName, newName);
                 Launcher launcher = LauncherFactory.getLauncher(newName, data, store);
-                launcher.launch();
+                launcher.launch(true);
 
                 if (closed) {
                     EmailUtils.closeIfIMAP(f);

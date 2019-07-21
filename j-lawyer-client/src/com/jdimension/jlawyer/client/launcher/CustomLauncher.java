@@ -687,11 +687,10 @@ public class CustomLauncher extends Launcher {
     }
 
     @Override
-    public void launch() throws Exception {
+    public void launch(boolean autoCloseExistingDocument) throws Exception {
 
-if(isDocumentOpen(store.getDocumentIdentifier()))
-            throw new Exception("Dokument " + store.getDocumentIdentifier() + " ist bereits geöffnet");
-
+        this.autoCloseOpenDocument(autoCloseExistingDocument);
+            
         final Launcher thisLauncher = this;
 
         new Thread(new Runnable() {
@@ -700,15 +699,12 @@ if(isDocumentOpen(store.getDocumentIdentifier()))
 
                 try {
 
-                    ObservedOfficeDocument odoc=null;
-                    
-                        odoc = new ObservedOfficeDocument(url, store, thisLauncher);
-                        DocumentObserver observer = DocumentObserver.getInstance();
-                        odoc.setStatus(ObservedDocument.STATUS_LAUNCHING);
-                        observer.addDocument(odoc);
-                    
+                    ObservedCustomDocument odoc = null;
 
-
+                    odoc = new ObservedCustomDocument(url, store, thisLauncher);
+                    DocumentObserver observer = DocumentObserver.getInstance();
+                    odoc.setStatus(ObservedDocument.STATUS_LAUNCHING);
+                    observer.addDocument(odoc);
 
                     String extension = "?";
                     try {
@@ -727,7 +723,6 @@ if(isDocumentOpen(store.getDocumentIdentifier()))
 
                         // doing this before split causes issues when url contains spaces!
                         //params=params.replace("DATEINAME", url);
-
                         String[] paramArray = params.split(" ");
                         execParams.add(executable);
                         for (String s : paramArray) {
@@ -738,19 +733,26 @@ if(isDocumentOpen(store.getDocumentIdentifier()))
 
                         ProcessBuilder pb = new ProcessBuilder(execParams);
                         pb.redirectErrorStream(true);
-                        
-                            odoc.setStatus(ObservedDocument.STATUS_OPEN);
+
+                        odoc.setStatus(ObservedDocument.STATUS_OPEN);
                         Process process = pb.start();
                         BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
                         String line;
                         while ((line = reader.readLine()) != null) {
                             log.info("customlauncher " + extension + ": " + line);
                         }
-                        
+
                         process.waitFor();
-                        
-                                odoc.setClosed(true);
-                        
+
+                        // many applications - mainly under Windows - "share" the same process (MDI applications)
+                        // only set document closed if all documents of that type are closed
+                        int openDocs=observer.countOpenDocumentsWithExtension(extension);
+                        if(openDocs<=1) {
+                            odoc.setClosed(true);
+                        } else {
+                            log.debug("There are " + openDocs + " open documents with extension " + extension + "; therefore leaving document " + odoc.getName() + " open because it might have just opened in an already existing process.");
+                        }
+
                     } catch (Throwable t) {
                         log.error("error in custom launcher for " + extension, t);
                         t.printStackTrace();
@@ -766,7 +768,7 @@ if(isDocumentOpen(store.getDocumentIdentifier()))
                 }
             }
         }).start();
-        
+
     }
 
     @Override

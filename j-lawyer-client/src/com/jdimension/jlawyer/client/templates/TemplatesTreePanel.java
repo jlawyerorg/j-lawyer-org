@@ -1361,7 +1361,7 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
         try {
             TemplateDocumentStore store = new TemplateDocumentStore(folder, "templates-" + this.lstTemplates.getSelectedValue().toString(), this.lstTemplates.getSelectedValue().toString(), false);
             Launcher launcher = LauncherFactory.getLauncher(this.lstTemplates.getSelectedValue().toString(), content, store);
-            launcher.launch();
+            launcher.launch(false);
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Fehler beim Öffnen des Dokuments: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
         }
