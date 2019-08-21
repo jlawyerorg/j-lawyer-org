@@ -817,6 +817,10 @@ public class AutoUpdateTimerTask extends java.util.TimerTask {
             nl = doc.getElementsByTagName("urlhelp");
             String urlHelp = nl.item(0).getTextContent();
             settings.setUrlHelp(urlHelp);
+            
+            nl = doc.getElementsByTagName("bea-enabled-versions");
+            String beaEnabledVersions = nl.item(0).getTextContent();
+            set.setSetting(ServerSettings.SERVERCONF_BEAENABLEDVERSIONS, beaEnabledVersions);
 
         } catch (Throwable t) {
             log.error("Error checking for updates on j-lawyer.org", t);
