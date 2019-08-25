@@ -780,13 +780,13 @@ public class LoadBeaFolderAction extends ProgressableAction {
                 //System.out.println("MESSAGE " + (i + 1) + ":");
                 MessageHeader msgh = headers.get(i);
                 EditorsRegistry.getInstance().updateStatus("Lade Nachricht " + StringUtils.nonNull(msgh.getSubject()), true);
-                final Message msg=bea.getMessage(msgh.getId(), msgh.getPostBoxSafeId());
+                //final Message msg=bea.getMessage(msgh.getId(), msgh.getPostBoxSafeId());
                 
                 String to = "";
-                if (msg.getRecipients().size() > 0) {
-                    to = msg.getRecipients().get(0).getName();
-                    for (int j = 1; j < msg.getRecipients().size(); j++) {
-                        to = to + ", " + msg.getRecipients().get(j).getName();
+                if (msgh.getRecipients().size() > 0) {
+                    to = msgh.getRecipients().get(0).getName();
+                    for (int j = 1; j < msgh.getRecipients().size(); j++) {
+                        to = to + ", " + msgh.getRecipients().get(j).getName();
                     }
                 }
                 final String toString=to;
@@ -810,10 +810,10 @@ public class LoadBeaFolderAction extends ProgressableAction {
 //                                msg.getFolder().open(Folder.READ_WRITE);
 //                            }
                             //((DefaultTableModel) table.getModel()).addRow(new Object[]{new MessageContainer(msg, msg.getSubject(), msg.isSet(Flags.Flag.SEEN)), from, toString2, df.format(msg.getSentDate())});
-                            if(msg.getReceptionTime()!=null)
-                                ((DefaultTableModel) table.getModel()).addRow(new Object[]{new Boolean(msg.isEebRequested()), new Boolean(msg.isUrgent()), new Boolean(msg.isConfidential()), new Boolean(msg.isCheckRequired()), msg, msg.getSenderName(), toString, df.format(msg.getReceptionTime()), msg.getReferenceNumber(), msg.getReferenceJustice()});
+                            if(msgh.getReceptionTime()!=null)
+                                ((DefaultTableModel) table.getModel()).addRow(new Object[]{new Boolean(msgh.isEebRequested()), new Boolean(msgh.isUrgent()), new Boolean(msgh.isConfidential()), new Boolean(msgh.isCheckRequired()), msgh, msgh.getSender(), toString, df.format(msgh.getReceptionTime()), msgh.getReferenceNumber(), msgh.getReferenceJustice()});
                             else
-                                ((DefaultTableModel) table.getModel()).addRow(new Object[]{new Boolean(msg.isEebRequested()), new Boolean(msg.isUrgent()), new Boolean(msg.isConfidential()), new Boolean(msg.isCheckRequired()), msg, msg.getSenderName(), toString, null, msg.getReferenceNumber(), msg.getReferenceJustice()});
+                                ((DefaultTableModel) table.getModel()).addRow(new Object[]{new Boolean(msgh.isEebRequested()), new Boolean(msgh.isUrgent()), new Boolean(msgh.isConfidential()), new Boolean(msgh.isCheckRequired()), msgh, msgh.getSender(), toString, null, msgh.getReferenceNumber(), msgh.getReferenceJustice()});
                             if (scrollToRow > 0) {
                                 if (currentIndex == (indexMax)) {
                                     if (table.getRowCount() > scrollToRow) {

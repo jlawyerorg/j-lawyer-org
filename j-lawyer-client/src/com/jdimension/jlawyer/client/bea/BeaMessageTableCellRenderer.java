@@ -671,6 +671,7 @@ import javax.swing.JTable;
 import javax.swing.table.DefaultTableCellRenderer;
 import org.apache.log4j.Logger;
 import org.jlawyer.bea.model.Message;
+import org.jlawyer.bea.model.MessageHeader;
 
 /**
  *
@@ -684,7 +685,7 @@ public class BeaMessageTableCellRenderer extends DefaultTableCellRenderer {
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, 
                                                   boolean hasFocus, int row, int column) {
         
-        org.jlawyer.bea.model.Message msg= (Message)table.getValueAt(row, 4);
+        org.jlawyer.bea.model.MessageHeader msgh= (MessageHeader)table.getValueAt(row, 4);
         
         Object returnRenderer=null;
         //Object returnRenderer=super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
@@ -705,7 +706,7 @@ public class BeaMessageTableCellRenderer extends DefaultTableCellRenderer {
             
             
         try {
-        if(!msg.isRead()) {
+        if(!msgh.isRead()) {
             ((Component)returnRenderer).setFont(((Component)returnRenderer).getFont().deriveFont(Font.BOLD));
             if(column==4)
                 ((JLabel)((Component)returnRenderer)).setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/mail_new3.png")));
@@ -714,28 +715,28 @@ public class BeaMessageTableCellRenderer extends DefaultTableCellRenderer {
                 ((JLabel)((Component)returnRenderer)).setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/mail_generic.png")));
         }
         
-        if(msg.isEebRequested()) {
+        if(msgh.isEebRequested()) {
             if(column==0) {
                 ((JLabel)((Component)returnRenderer)).setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/lassists.png")));
                 ((JLabel)((Component)returnRenderer)).setToolTipText("eEB angefordert");
             }
         }
         
-        if(msg.isUrgent()) {
+        if(msgh.isUrgent()) {
             if(column==1) {
                 ((JLabel)((Component)returnRenderer)).setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/cnruninstall.png")));
                 ((JLabel)((Component)returnRenderer)).setToolTipText("dringend!");
             }
         }
         
-        if(msg.isConfidential()) {
+        if(msgh.isConfidential()) {
             if(column==2) {
                 ((JLabel)((Component)returnRenderer)).setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/file_locked.png")));
                 ((JLabel)((Component)returnRenderer)).setToolTipText("vertraulich");
             }
         }
         
-        if(msg.isCheckRequired()) {
+        if(msgh.isCheckRequired()) {
             if(column==3) {
                 ((JLabel)((Component)returnRenderer)).setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/icq_occupied.png")));
                 ((JLabel)((Component)returnRenderer)).setToolTipText("prüfen!");
