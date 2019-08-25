@@ -1262,11 +1262,11 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
         jSplitPane1.setRightComponent(jPanel2);
 
         jLabel4.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder.png"))); // NOI18N
-        jLabel4.setText("Aktenzeichen:");
+        jLabel4.setText("Aktenzeichen Absender:");
 
         lblCaseNumber.setText("<AZ>");
 
-        jLabel6.setText("Justiz:");
+        jLabel6.setText("Empfänger:");
 
         lblReferenceJustice.setText("<AZ Justiz>");
 

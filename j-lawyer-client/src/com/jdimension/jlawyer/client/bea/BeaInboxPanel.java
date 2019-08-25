@@ -830,7 +830,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
         this.treeFolders.setModel(dtm);
 
 //        DefaultTableModel tm = new DefaultTableModel(new String[]{"eEB", "dringend", "vertraulich", "prüfen", "Betreff", "Absender", "Empfänger", "Gesendet", "Az", "Az (Justiz)"}, 0);
-        DefaultTableModel tm = new DefaultTableModel(new String[]{"", "", "", "", "Betreff", "Absender", "Empfänger", "Gesendet", "Az", "Az (Justiz)"}, 0);
+        DefaultTableModel tm = new DefaultTableModel(new String[]{"", "", "", "", "Betreff", "Absender", "Empfänger", "Gesendet", "Az Absender", "Az Empfänger"}, 0);
         this.tblMails.setModel(tm);
         TableRowSorter<TableModel> sorter = new TableRowSorter<TableModel>(tm);
         sorter.setComparator(7, new DescendingDateTimeStringComparator());
@@ -1412,7 +1412,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
 //                    }
 //                };
 
-                DefaultTableModel tm = new DefaultTableModel(new String[]{"", "", "", "", "Betreff", "Absender", "Empfänger", "Gesendet", "Az", "Az (Justiz)"}, 0) {
+                DefaultTableModel tm = new DefaultTableModel(new String[]{"", "", "", "", "Betreff", "Absender", "Empfänger", "Gesendet", "Az Absender", "Az Empfänger"}, 0) {
 
                     @Override
                     public boolean isCellEditable(int row, int column) {
@@ -1712,7 +1712,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
             // change: only expunge in LoadFolderAction before loading messages
             //tf.expunge();
 //            this.tblMails.setModel(new DefaultTableModel(new String[]{"eEB", "dringend", "vertraulich", "prüfen", "Betreff", "Absender", "Empfänger", "Gesendet", "Az", "Az (Justiz)", "dringend", "vertraulich", "prüfen"}, 0));
-            this.tblMails.setModel(new DefaultTableModel(new String[]{"", "", "", "", "Betreff", "Absender", "Empfänger", "Gesendet", "Az", "Az (Justiz)"}, 0));
+            this.tblMails.setModel(new DefaultTableModel(new String[]{"", "", "", "", "Betreff", "Absender", "Empfänger", "Gesendet", "Az Absender", "Az Empfänger"}, 0));
 
             if (failed > 0) {
                 JOptionPane.showMessageDialog(this, "" + failed + " Vorgänge fehlgeschlagen, letzte Meldung: " + lastFailure, "Fehler", JOptionPane.ERROR_MESSAGE);

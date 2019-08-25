@@ -338,7 +338,7 @@
                 <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
                   <Image iconType="3" name="/icons/folder.png"/>
                 </Property>
-                <Property name="text" type="java.lang.String" value="Aktenzeichen:"/>
+                <Property name="text" type="java.lang.String" value="Aktenzeichen Absender:"/>
               </Properties>
             </Component>
             <Component class="javax.swing.JLabel" name="lblCaseNumber">
@@ -348,7 +348,7 @@
             </Component>
             <Component class="javax.swing.JLabel" name="jLabel6">
               <Properties>
-                <Property name="text" type="java.lang.String" value="Justiz:"/>
+                <Property name="text" type="java.lang.String" value="Empf&#xe4;nger:"/>
               </Properties>
             </Component>
             <Component class="javax.swing.JLabel" name="lblReferenceJustice">
