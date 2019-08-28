@@ -688,6 +688,7 @@ import org.apache.log4j.Logger;
 import org.jlawyer.bea.BeaWrapperException;
 import org.jlawyer.bea.model.Attachment;
 import org.jlawyer.bea.model.Identity;
+import org.jlawyer.bea.model.LegalAuthority;
 import org.jlawyer.bea.model.Message;
 import org.jlawyer.bea.model.MessageExport;
 
@@ -702,6 +703,7 @@ public class SendBeaMessageAction extends ProgressableAction {
     private ArrayList<String> attachments = null;
     private AppUserBean cu = null;
     private boolean readReceipt = false;
+    private LegalAuthority authority=null;
     private Enumeration to = null;
     private String subject = "";
     private String body = "";
@@ -709,7 +711,7 @@ public class SendBeaMessageAction extends ProgressableAction {
     private ArchiveFileBean archiveFile = null;
     private String documentTag = null;
 
-    public SendBeaMessageAction(ProgressIndicator i, JDialog cleanAfter, String fromSafeId, ArrayList<String> attachments, AppUserBean cu, boolean readReceipt, Enumeration to, String subject, String body, String documentTag) {
+    public SendBeaMessageAction(ProgressIndicator i, JDialog cleanAfter, String fromSafeId, ArrayList<String> attachments, AppUserBean cu, boolean readReceipt, LegalAuthority authority, Enumeration to, String subject, String body, String documentTag) {
         super(i, false, cleanAfter);
         this.attachments = attachments;
         this.cu = cu;
@@ -720,10 +722,11 @@ public class SendBeaMessageAction extends ProgressableAction {
         this.fromSafeId = fromSafeId;
         this.documentTag = documentTag;
         this.readReceipt=readReceipt;
+        this.authority=authority;
     }
 
-    public SendBeaMessageAction(ProgressIndicator i, JDialog cleanAfter, String fromSafeId, ArrayList<String> attachments, AppUserBean cu, boolean readReceipt, Enumeration to, String subject, String body, ArchiveFileBean af, String documentTag) {
-        this(i, cleanAfter, fromSafeId, attachments, cu, readReceipt, to, subject, body, documentTag);
+    public SendBeaMessageAction(ProgressIndicator i, JDialog cleanAfter, String fromSafeId, ArrayList<String> attachments, AppUserBean cu, boolean readReceipt, LegalAuthority authority, Enumeration to, String subject, String body, ArchiveFileBean af, String documentTag) {
+        this(i, cleanAfter, fromSafeId, attachments, cu, readReceipt, authority, to, subject, body, documentTag);
         this.archiveFile = af;
     }
 
@@ -783,7 +786,7 @@ public class SendBeaMessageAction extends ProgressableAction {
                 msg.setEebRequested(false);
 
             this.progress("Sende...");
-            sentId = bea.sendMessage(msg, senderSafeId, recipients);
+            sentId = bea.sendMessage(msg, senderSafeId, recipients, this.authority);
             System.out.println("sent message " + sentId);
 
         } catch (BeaWrapperException ex) {

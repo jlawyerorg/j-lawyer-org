@@ -683,6 +683,7 @@ import org.jlawyer.bea.BeaWrapper;
 import org.jlawyer.bea.BeaWrapperException;
 import org.jlawyer.bea.model.Folder;
 import org.jlawyer.bea.model.Identity;
+import org.jlawyer.bea.model.LegalAuthority;
 import org.jlawyer.bea.model.Message;
 import org.jlawyer.bea.model.MessageExport;
 import org.jlawyer.bea.model.MessageHeader;
@@ -1031,11 +1032,11 @@ public class BeaAccess {
         return BeaWrapper.exportMessage(msg);
     }
 
-    public long sendMessage(Message msg, String senderSafeId, ArrayList<String> recipientSafeIds) throws BeaWrapperException {
+    public long sendMessage(Message msg, String senderSafeId, ArrayList<String> recipientSafeIds, LegalAuthority authority) throws BeaWrapperException {
         this.checkValidBeaClient();
         // todo: need to only remove folder overview for sent folder
         this.folderOverviewCache.clear();
-        return this.wrapper.sendMessage(msg, senderSafeId, recipientSafeIds);
+        return this.wrapper.sendMessage(msg, senderSafeId, recipientSafeIds, authority);
     }
     
     public long sendEebConfirmation(Message incomingMessage, String senderSafeId, ArrayList<String> recipientSafeIds) throws BeaWrapperException {

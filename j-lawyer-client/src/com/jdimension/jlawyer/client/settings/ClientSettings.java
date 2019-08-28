@@ -755,6 +755,8 @@ public class ClientSettings {
     public static final String CONF_BEASEND_DOCUMENTTAGGINGENABLED="client.beasend.documenttaggingenabled";
     public static final String CONF_BEASEND_LASTDOCUMENTTAG="client.beasend.lastdocumenttag";
     
+    public static final String CONF_BEASEND_LASTLEGALAUTHORITY="client.beasend.lastlegalauthority";
+    
     public static final String CONF_BEA_SAVETOARCHIVEFILE="client.bea.savetoarchivefile";
     
     public static final String CONF_CASE_LASTUPLOADDIR="client.case.lastuploaddir";

@@ -485,6 +485,10 @@
           <Properties>
             <Property name="text" type="java.lang.String" value="Zustellung gegen Empfangsbekenntnis"/>
           </Properties>
+          <Events>
+            <EventHandler event="stateChanged" listener="javax.swing.event.ChangeListener" parameters="javax.swing.event.ChangeEvent" handler="chkReadReceiptStateChanged"/>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="chkReadReceiptActionPerformed"/>
+          </Events>
         </Component>
         <Component class="javax.swing.JRadioButton" name="rdAllSignature">
           <Properties>

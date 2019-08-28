@@ -702,6 +702,7 @@ import java.util.List;
 import javax.swing.*;
 import org.apache.log4j.Logger;
 import org.jlawyer.bea.model.Identity;
+import org.jlawyer.bea.model.LegalAuthority;
 import org.jlawyer.bea.model.PostBox;
 
 /**
@@ -722,6 +723,8 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
     private ArrayList<AddressBean> contextOppAttorneys = new ArrayList<AddressBean>();
     private String contextDictateSign = null;
     private TextEditorPanel tp;
+    
+    private LegalAuthority authority=null;
 
     /**
      * Creates new form SendEmailDialog
@@ -788,12 +791,12 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
             this.chkSaveAsDocument.setSelected(false);
         }
 
-        String fromIdentity=cu.getPrincipalId();
-        if(this.cmbFrom.getSelectedItem()!=null) {
-            Identity i=(Identity)this.cmbFrom.getSelectedItem();
-            fromIdentity=i.toString();
+        String fromIdentity = cu.getPrincipalId();
+        if (this.cmbFrom.getSelectedItem() != null) {
+            Identity i = (Identity) this.cmbFrom.getSelectedItem();
+            fromIdentity = i.toString();
         }
-        
+
         this.lblFrom.setText(cu.getPrincipalId() + "<" + fromIdentity + ">");
         this.tp.setText(EmailUtils.Html2Text(cu.getEmailSignature()));
         this.lstAttachments.setModel(new DefaultListModel());
@@ -806,20 +809,21 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
             this.cmbTemplates.removeAllItems();
             this.cmbTemplates.addItem("");
             for (Object t : templates) {
-                EmailTemplate etpl=locator.lookupIntegrationServiceRemote().getEmailTemplate(t.toString());
-                if(etpl!=null) {
-                    if(etpl.isText()) {
+                EmailTemplate etpl = locator.lookupIntegrationServiceRemote().getEmailTemplate(t.toString());
+                if (etpl != null) {
+                    if (etpl.isText()) {
                         this.cmbTemplates.addItem(t.toString());
                     }
                 }
-                
+
             }
-            if(this.cmbTemplates.getItemCount()>0)
+            if (this.cmbTemplates.getItemCount() > 0) {
                 this.cmbTemplates.setSelectedIndex(0);
+            }
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Fehler beim Erstellen der Vorlage: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
         }
-        
+
         this.cmbReviewReason.setRenderer(new OptionGroupListCellRenderer());
         AppOptionGroupBean[] reviewReasons = settings.getReviewReasonDtos();
         String[] reviewReasonItems = new String[reviewReasons.length + 1];
@@ -843,8 +847,7 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
         OptionsComboBoxModel allUserModel = new OptionsComboBoxModel(allUserItems);
         this.cmbReviewAssignee.setModel(allUserModel);
         this.cmbReviewAssignee.setRenderer(new UserListCellRenderer());
-        
-        
+
         DefaultComboBoxModel dm = new DefaultComboBoxModel();
         dm.addElement("");
         ArrayList<String> allTags = new ArrayList<String>();
@@ -857,14 +860,14 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
             dm.addElement(s);
         }
         this.cmbDocumentTag.setModel(dm);
-        
+
         String lastTag = settings.getConfiguration(ClientSettings.CONF_BEASEND_LASTDOCUMENTTAG, "");
         if (allTags.contains(lastTag)) {
             this.cmbDocumentTag.setSelectedItem(lastTag);
         } else {
             this.cmbDocumentTag.setSelectedItem("");
         }
-        
+
         String temp = settings.getConfiguration(ClientSettings.CONF_BEASEND_DOCUMENTTAGGINGENABLED, "false");
         boolean doctaggingEnabled = false;
         if ("true".equalsIgnoreCase(temp)) {
@@ -902,11 +905,11 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
     }
 
     public void addAllToClient(List<AddressBean> list) {
-        for(AddressBean o: list) {
+        for (AddressBean o : list) {
             this.addToClient(o);
         }
     }
-    
+
     public void addToClient(AddressBean ab) {
         if (ab == null) {
             return;
@@ -923,11 +926,11 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
     }
 
     public void addAllToOpponent(List<AddressBean> list) {
-        for(AddressBean o: list) {
+        for (AddressBean o : list) {
             this.addToOpponent(o);
         }
     }
-    
+
     public void addToOpponent(AddressBean ab) {
         if (ab == null) {
             return;
@@ -945,11 +948,11 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
     }
 
     public void addAllToOpponentAttorney(List<AddressBean> list) {
-        for(AddressBean o: list) {
+        for (AddressBean o : list) {
             this.addToOpponentAttorney(o);
         }
     }
-    
+
     public void addToOpponentAttorney(AddressBean ab) {
         if (ab == null) {
             return;
@@ -1259,6 +1262,16 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
         });
 
         chkReadReceipt.setText("Zustellung gegen Empfangsbekenntnis");
+        chkReadReceipt.addChangeListener(new javax.swing.event.ChangeListener() {
+            public void stateChanged(javax.swing.event.ChangeEvent evt) {
+                chkReadReceiptStateChanged(evt);
+            }
+        });
+        chkReadReceipt.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                chkReadReceiptActionPerformed(evt);
+            }
+        });
 
         buttonGroupTextHtml.add(rdAllSignature);
         rdAllSignature.setText("Nachricht und Anhänge signieren");
@@ -1515,12 +1528,17 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
             settings.setConfiguration(settings.CONF_BEA_SAVETOARCHIVEFILE, "0");
         }
         
-        String createDocumentTag=null;
-        if(this.chkDocumentTagging.isSelected()) {
-            Object selectedTag=this.cmbDocumentTag.getSelectedItem();
-            if(selectedTag!=null) {
-                if(!"".equals(selectedTag.toString())) {
-                    createDocumentTag=selectedTag.toString();
+        if(this.chkReadReceipt.isSelected() && this.authority==null) {
+            JOptionPane.showMessageDialog(this, "Versand mit eEB", "Für den Versand mit eEB muss eine Justizbehörde ausgewählt sein!", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        String createDocumentTag = null;
+        if (this.chkDocumentTagging.isSelected()) {
+            Object selectedTag = this.cmbDocumentTag.getSelectedItem();
+            if (selectedTag != null) {
+                if (!"".equals(selectedTag.toString())) {
+                    createDocumentTag = selectedTag.toString();
                 }
             }
         }
@@ -1531,7 +1549,7 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
         String contentType = ed.getContentType();
         String fromSafeId = ((Identity) this.cmbFrom.getSelectedItem()).getSafeId();
         SendBeaMessageAction a = null;
-        
+
         if (this.chkSaveAsDocument.isSelected() || !(this.radioReviewTypeNone.isSelected())) {
             if (this.contextArchiveFile == null) {
                 SearchAndAssignDialog saDlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true);
@@ -1542,58 +1560,58 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
 
             }
         }
-        
+
         if (this.chkSaveAsDocument.isSelected()) {
-            a = new SendBeaMessageAction(dlg, this, fromSafeId, this.attachments, this.cu, this.chkReadReceipt.isSelected(), ((DefaultListModel) this.lstTo.getModel()).elements(), this.txtSubject.getText(), ed.getText(), this.contextArchiveFile, createDocumentTag);
+            a = new SendBeaMessageAction(dlg, this, fromSafeId, this.attachments, this.cu, this.chkReadReceipt.isSelected(), this.authority, ((DefaultListModel) this.lstTo.getModel()).elements(), this.txtSubject.getText(), ed.getText(), this.contextArchiveFile, createDocumentTag);
         } else {
-            a = new SendBeaMessageAction(dlg, this, fromSafeId, this.attachments, this.cu, this.chkReadReceipt.isSelected(), ((DefaultListModel) this.lstTo.getModel()).elements(), this.txtSubject.getText(), ed.getText(), createDocumentTag);
+            a = new SendBeaMessageAction(dlg, this, fromSafeId, this.attachments, this.cu, this.chkReadReceipt.isSelected(), this.authority, ((DefaultListModel) this.lstTo.getModel()).elements(), this.txtSubject.getText(), ed.getText(), createDocumentTag);
         }
         a.start();
 
-        if (!(this.radioReviewTypeNone.isSelected()) && this.contextArchiveFile!=null) {
-                if (this.txtReviewDateField.getText().length() != 10) {
-                    JOptionPane.showMessageDialog(this, "Wiedervorlagedatum ungültig", "beA-Nachricht senden", JOptionPane.INFORMATION_MESSAGE);
-                    return;
-                }
-                Date d = null;
-                try {
-                    SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
-                    d = df.parse(this.txtReviewDateField.getText());
-                } catch (Throwable t) {
-                    JOptionPane.showMessageDialog(this, "Wiedervorlagedatum ungültig", "beA-Nachricht senden", JOptionPane.INFORMATION_MESSAGE);
-                    return;
-                }
-
-                ArchiveFileReviewsBean reviewDto = new ArchiveFileReviewsBean();
-                reviewDto.setReviewType(reviewDto.REVIEWTYPE_FOLLOWUP);
-                if (this.radioReviewTypeRespite.isSelected()) {
-                    reviewDto.setReviewType(reviewDto.REVIEWTYPE_RESPITE);
-                }
-                reviewDto.setDoneBoolean(false);
-                reviewDto.setReviewDate(d);
-                reviewDto.setAssignee(this.cmbReviewAssignee.getSelectedItem().toString());
-                reviewDto.setReviewReason(this.cmbReviewReason.getModel().getSelectedItem().toString());
-
-                EditorsRegistry.getInstance().updateStatus("Wiedervorlage/Frist wird gespeichert...");
-                try {
-                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                    ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
-
-                    reviewDto = fileService.addReview(this.contextArchiveFile.getId(), reviewDto);
-                    EditorsRegistry.getInstance().updateStatus("Wiedervorlage/Frist gespeichert.", 5000);
-
-                } catch (Exception ex) {
-                    log.error("Error adding review", ex);
-                    JOptionPane.showMessageDialog(this, "Fehler beim Speichern der Wiedervorlage: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
-                    EditorsRegistry.getInstance().clearStatus();
-                    return;
-                }
-                
-                EventBroker eb=EventBroker.getInstance();
-                eb.publishEvent(new ReviewAddedEvent(reviewDto));
-
+        if (!(this.radioReviewTypeNone.isSelected()) && this.contextArchiveFile != null) {
+            if (this.txtReviewDateField.getText().length() != 10) {
+                JOptionPane.showMessageDialog(this, "Wiedervorlagedatum ungültig", "beA-Nachricht senden", JOptionPane.INFORMATION_MESSAGE);
+                return;
             }
-        
+            Date d = null;
+            try {
+                SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
+                d = df.parse(this.txtReviewDateField.getText());
+            } catch (Throwable t) {
+                JOptionPane.showMessageDialog(this, "Wiedervorlagedatum ungültig", "beA-Nachricht senden", JOptionPane.INFORMATION_MESSAGE);
+                return;
+            }
+
+            ArchiveFileReviewsBean reviewDto = new ArchiveFileReviewsBean();
+            reviewDto.setReviewType(reviewDto.REVIEWTYPE_FOLLOWUP);
+            if (this.radioReviewTypeRespite.isSelected()) {
+                reviewDto.setReviewType(reviewDto.REVIEWTYPE_RESPITE);
+            }
+            reviewDto.setDoneBoolean(false);
+            reviewDto.setReviewDate(d);
+            reviewDto.setAssignee(this.cmbReviewAssignee.getSelectedItem().toString());
+            reviewDto.setReviewReason(this.cmbReviewReason.getModel().getSelectedItem().toString());
+
+            EditorsRegistry.getInstance().updateStatus("Wiedervorlage/Frist wird gespeichert...");
+            try {
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
+
+                reviewDto = fileService.addReview(this.contextArchiveFile.getId(), reviewDto);
+                EditorsRegistry.getInstance().updateStatus("Wiedervorlage/Frist gespeichert.", 5000);
+
+            } catch (Exception ex) {
+                log.error("Error adding review", ex);
+                JOptionPane.showMessageDialog(this, "Fehler beim Speichern der Wiedervorlage: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+                EditorsRegistry.getInstance().clearStatus();
+                return;
+            }
+
+            EventBroker eb = EventBroker.getInstance();
+            eb.publishEvent(new ReviewAddedEvent(reviewDto));
+
+        }
+
 
     }//GEN-LAST:event_cmdSendActionPerformed
 
@@ -1610,7 +1628,7 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
             this.txtReviewDateField.setText(null);
         }
     }
-    
+
     private void cmdAttachActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdAttachActionPerformed
         JFileChooser chooser = new JFileChooser();
         chooser.setMultiSelectionEnabled(true);
@@ -1754,15 +1772,16 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
 
     private void mnuSearchRecipientInBeaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSearchRecipientInBeaActionPerformed
         BeaIdentitySearchDialog dlg = new BeaIdentitySearchDialog(EditorsRegistry.getInstance().getMainWindow(), true, null, null, null, null, null, null);
-            //dlg.setSize(ip.getPreferredSize());
-            FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
-            dlg.setVisible(true);
-            Identity i = dlg.getSelection();
-            if(i!=null) {
-                DefaultListModel model = (DefaultListModel) this.lstTo.getModel();
-                if(!model.contains(i))
-                    model.addElement(i);
+        //dlg.setSize(ip.getPreferredSize());
+        FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
+        dlg.setVisible(true);
+        Identity i = dlg.getSelection();
+        if (i != null) {
+            DefaultListModel model = (DefaultListModel) this.lstTo.getModel();
+            if (!model.contains(i)) {
+                model.addElement(i);
             }
+        }
     }//GEN-LAST:event_mnuSearchRecipientInBeaActionPerformed
 
     private void radioReviewTypeFollowUpActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_radioReviewTypeFollowUpActionPerformed
@@ -1798,6 +1817,21 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
         String lastTag = this.cmbDocumentTag.getSelectedItem().toString();
         settings.setConfiguration(ClientSettings.CONF_BEASEND_LASTDOCUMENTTAG, lastTag);
     }//GEN-LAST:event_cmbDocumentTagActionPerformed
+
+    private void chkReadReceiptStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_chkReadReceiptStateChanged
+
+    }//GEN-LAST:event_chkReadReceiptStateChanged
+
+    private void chkReadReceiptActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkReadReceiptActionPerformed
+        if (this.chkReadReceipt.isSelected()) {
+            SelectLegalAuthorityDialog dlg = new SelectLegalAuthorityDialog(EditorsRegistry.getInstance().getMainWindow(), true);
+            FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
+            dlg.setVisible(true);
+            this.authority=dlg.getSelectedAuthority();
+        } else {
+            this.authority=null;
+        }
+    }//GEN-LAST:event_chkReadReceiptActionPerformed
 
     /**
      * @param args the command line arguments
