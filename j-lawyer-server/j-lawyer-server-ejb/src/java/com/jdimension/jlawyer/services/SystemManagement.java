@@ -1467,7 +1467,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     public String getServerInterfacesBoundTo() throws Exception {
         File data = new File(System.getProperty("jlawyer.server.basedirectory"));
         File jlawyer = data.getParentFile();
-        File wildFlyConf = new File(jlawyer.getAbsolutePath() + File.separator + "wildfly-9.0.2.Final" + File.separator + "standalone" + File.separator + "configuration" + File.separator + "standalone-full.xml");
+        File wildFlyConf = new File(jlawyer.getAbsolutePath() + File.separator + "wildfly" + File.separator + "standalone" + File.separator + "configuration" + File.separator + "standalone-full.xml");
         Document dom;
         // Make an  instance of the DocumentBuilderFactory
         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
@@ -1512,7 +1512,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     public boolean setServerInterfaceBindings(String ip) throws Exception {
         File data = new File(System.getProperty("jlawyer.server.basedirectory"));
         File jlawyer = data.getParentFile();
-        File wildFlyConf = new File(jlawyer.getAbsolutePath() + File.separator + "wildfly-9.0.2.Final" + File.separator + "standalone" + File.separator + "configuration" + File.separator + "standalone-full.xml");
+        File wildFlyConf = new File(jlawyer.getAbsolutePath() + File.separator + "wildfly" + File.separator + "standalone" + File.separator + "configuration" + File.separator + "standalone-full.xml");
 
         if (!wildFlyConf.exists()) {
             throw new Exception("server configuration not found: " + wildFlyConf.getAbsolutePath());
