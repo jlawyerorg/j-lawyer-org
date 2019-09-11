@@ -716,5 +716,8 @@ public class VersionUtilsTest {
          Assert.assertTrue(VersionUtils.isCompatible("1.9.1.0", "1.9.1.0"));
          Assert.assertTrue(VersionUtils.isCompatible("1.9.1.0", "1.9.1.1"));
          
+         Assert.assertTrue(VersionUtils.isCompatible("1.10.0.7", "1.10.0.8"));
+         Assert.assertFalse(VersionUtils.isCompatible("1.10.0.7", "1.10.1.8"));
+         
      }
 }

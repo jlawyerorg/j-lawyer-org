@@ -696,10 +696,12 @@ import org.apache.log4j.Logger;
 public class TaggedTimerTask extends java.util.TimerTask {
 
     private static final Logger log = Logger.getLogger(TaggedTimerTask.class.getName());
+    private static boolean running=false;
     private Component owner;
     private JPanel resultUI;
     private JSplitPane split;
     private boolean ignoreCurrentEditor = false;
+    private boolean rebuildPopup = true;
     private JPopupMenu popTags = null;
     private JPopupMenu popDocumentTags = null;
     private JButton tagMenu = null;
@@ -708,16 +710,21 @@ public class TaggedTimerTask extends java.util.TimerTask {
     /**
      * Creates a new instance of SystemStateTimerTask
      */
-    public TaggedTimerTask(Component owner, JPanel resultPanel, JSplitPane split, JButton tagMenu, JButton tagDocumentMenu, JPopupMenu popTags, JPopupMenu popDocumentTags, boolean ignoreCurrentEditor) {
+    public TaggedTimerTask(Component owner, JPanel resultPanel, JSplitPane split, JButton tagMenu, JButton tagDocumentMenu, JPopupMenu popTags, JPopupMenu popDocumentTags, boolean ignoreCurrentEditor, boolean rebuildPopup) {
         super();
         this.owner = owner;
         this.resultUI = resultPanel;
         this.split = split;
         this.ignoreCurrentEditor = ignoreCurrentEditor;
+        this.rebuildPopup = rebuildPopup;
         this.popTags = popTags;
         this.popDocumentTags = popDocumentTags;
         this.tagMenu = tagMenu;
         this.tagDocumentMenu = tagDocumentMenu;
+    }
+    
+    public TaggedTimerTask(Component owner, JPanel resultPanel, JSplitPane split, JButton tagMenu, JButton tagDocumentMenu, JPopupMenu popTags, JPopupMenu popDocumentTags, boolean ignoreCurrentEditor) {
+        this(owner, resultPanel, split, tagMenu, tagDocumentMenu, popTags, popDocumentTags, false, true);
     }
 
     public TaggedTimerTask(Component owner, JPanel resultPanel, JSplitPane split, JButton tagMenu, JButton tagDocumentMenu, JPopupMenu popTags, JPopupMenu popDocumentTags) {
@@ -761,6 +768,8 @@ public class TaggedTimerTask extends java.util.TimerTask {
                     @Override
                     public void actionPerformed(ActionEvent e) {
                         boolean selected = false;
+                        System.out.println("source: " + ((JCheckBoxMenuItem)e.getSource()).getText() +((JCheckBoxMenuItem)e.getSource()).isSelected());
+                        System.out.println("10");
                         ArrayList<String> al = new ArrayList<String>();
                         for (MenuElement me : popup.getSubElements()) {
                             JCheckBoxMenuItem mi = ((JCheckBoxMenuItem) me.getComponent());
@@ -776,9 +785,11 @@ public class TaggedTimerTask extends java.util.TimerTask {
                             button.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/favorites.png")));
                         }
 
+                        System.out.println("60: " + al);
                         ClientSettings.getInstance().setConfigurationArray(clientSettingsKey, al.toArray(new String[al.size()]));
-                        TimerTask taggedTask = new TaggedTimerTask(EditorsRegistry.getInstance().getMainWindow(), resultUI, split, tagMenu, tagDocumentMenu, popTags, popDocumentTags, true);
-                        new java.util.Timer().schedule(taggedTask, 10);
+                        TimerTask taggedTask = new TaggedTimerTask(EditorsRegistry.getInstance().getMainWindow(), resultUI, split, tagMenu, tagDocumentMenu, popTags, popDocumentTags, true, false);
+                        new java.util.Timer().schedule(taggedTask, 1000);
+                        
                     }
 
                 });
@@ -788,6 +799,11 @@ public class TaggedTimerTask extends java.util.TimerTask {
     }
 
     public void run() {
+        
+        if(running==true)
+            return;
+        
+        running=true;
 
         List<ArchiveFileBean> myNewList = new ArrayList<ArchiveFileBean>();
         List<ArchiveFileBean> filteredList = new ArrayList<ArchiveFileBean>();
@@ -805,13 +821,16 @@ public class TaggedTimerTask extends java.util.TimerTask {
 
             String[] lastFilterTags = settings.getConfigurationArray(ClientSettings.CONF_DESKTOP_LASTFILTERTAG, new String[]{""});
             List<String> tagsInUse = settings.getArchiveFileTagsInUse();
-            this.buildPopup(this.tagMenu, this.popTags, tagsInUse, lastFilterTags, settings.CONF_DESKTOP_LASTFILTERTAG);
+            if(this.rebuildPopup && !(this.popTags.isVisible()))
+                this.buildPopup(this.tagMenu, this.popTags, tagsInUse, lastFilterTags, settings.CONF_DESKTOP_LASTFILTERTAG);
 
             String[] lastFilterDocumentTags = settings.getConfigurationArray(ClientSettings.CONF_DESKTOP_LASTFILTERDOCUMENTTAG, new String[]{""});
             tagsInUse = settings.getDocumentTagsInUse();
-            this.buildPopup(this.tagDocumentMenu, this.popDocumentTags, tagsInUse, lastFilterDocumentTags, settings.CONF_DESKTOP_LASTFILTERDOCUMENTTAG);
+            if(this.rebuildPopup && !(this.popDocumentTags.isVisible()))
+                this.buildPopup(this.tagDocumentMenu, this.popDocumentTags, tagsInUse, lastFilterDocumentTags, settings.CONF_DESKTOP_LASTFILTERDOCUMENTTAG);
 
             if (lastFilterTags.length == 0 && lastFilterDocumentTags.length == 0) {
+                running=false;
                 return;
             }
 
@@ -819,6 +838,7 @@ public class TaggedTimerTask extends java.util.TimerTask {
             if (reg.isEditorActive(DesktopPanel.class.getName()) && resultUI.getComponentCount() > 0) {
                 if (!this.ignoreCurrentEditor) {
                     // do not refresh if desktop is active - this might interrupt user interactions
+                    running=false;
                     return;
                 }
             }
@@ -857,11 +877,13 @@ public class TaggedTimerTask extends java.util.TimerTask {
                 Collection<DocumentTagsBean> xTags = fileService.getDocumentTags(a.getId());
                 documentTags.put(a.getId(), (List<DocumentTagsBean>) xTags);
             }
+            running=false;
 
         } catch (Throwable ex) {
             log.error("Error connecting to server", ex);
             //JOptionPane.showMessageDialog(this.owner, "Verbindungsfehler: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
             ThreadUtils.showErrorDialog(this.owner, java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/TaggedTimerTask").getString("msg.connectionerror"), new Object[]{ex.getMessage()}), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/TaggedTimerTask").getString("msg.error"));
+            running=false;
             return;
         }
 
@@ -951,8 +973,10 @@ public class TaggedTimerTask extends java.util.TimerTask {
 
                 }
             });
+            running=false;
         } catch (Throwable t) {
             log.error(t);
+            running=false;
         }
 
     }
