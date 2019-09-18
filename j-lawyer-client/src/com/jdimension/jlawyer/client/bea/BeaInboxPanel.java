@@ -1434,7 +1434,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
 
             } catch (Exception ex) {
                 log.error("Error getting contents of folder", ex);
-                JOptionPane.showMessageDialog(this, "Fehler Öffnen des beA - Ordners: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Fehler beim Öffnen des beA - Ordners: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
                 EditorsRegistry.getInstance().clearStatus();
             }
         } else if (selNode.getUserObject() != null && selNode.getUserObject() instanceof org.jlawyer.bea.model.Identity) {

@@ -687,7 +687,7 @@ public class VersionUtils {
     }
 
     public static String getBuild() {
-        return "9";
+        return "11";
     }
 
     public static String getFullClientVersion() {
