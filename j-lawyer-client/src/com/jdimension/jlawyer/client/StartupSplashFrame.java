@@ -730,7 +730,6 @@ public class StartupSplashFrame extends javax.swing.JFrame {
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         java.util.ResourceBundle bundle = java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/StartupSplashFrame"); // NOI18N
         setTitle(bundle.getString("title.clientlaunching")); // NOI18N
-        setAlwaysOnTop(true);
         setBackground(new java.awt.Color(204, 204, 204));
         setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
         setForeground(new java.awt.Color(0, 0, 0));
