@@ -1050,7 +1050,6 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
         contentPanel = new javax.swing.JPanel();
         jPanel2 = new javax.swing.JPanel();
         rdNoSignature = new javax.swing.JRadioButton();
-        rdMessageSignature = new javax.swing.JRadioButton();
         chkReadReceipt = new javax.swing.JCheckBox();
         rdAllSignature = new javax.swing.JRadioButton();
         chkSaveAsDocument = new javax.swing.JCheckBox();
@@ -1238,7 +1237,7 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
         );
         contentPanelLayout.setVerticalGroup(
             contentPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 0, Short.MAX_VALUE)
+            .addGap(0, 180, Short.MAX_VALUE)
         );
 
         jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder("Optionen"));
@@ -1249,15 +1248,6 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
         rdNoSignature.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 rdNoSignatureActionPerformed(evt);
-            }
-        });
-
-        buttonGroupTextHtml.add(rdMessageSignature);
-        rdMessageSignature.setText("Nachricht signieren");
-        rdMessageSignature.setEnabled(false);
-        rdMessageSignature.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                rdMessageSignatureActionPerformed(evt);
             }
         });
 
@@ -1291,16 +1281,13 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(rdNoSignature)
                     .addComponent(chkReadReceipt)
-                    .addComponent(rdAllSignature)
-                    .addComponent(rdMessageSignature))
+                    .addComponent(rdAllSignature))
                 .addContainerGap(164, Short.MAX_VALUE))
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel2Layout.createSequentialGroup()
                 .addComponent(rdNoSignature)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(rdMessageSignature)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(rdAllSignature)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
@@ -1502,18 +1489,18 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
                             .addComponent(cmbDocumentTag, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addComponent(chkSaveAsDocument)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(0, 0, Short.MAX_VALUE))
+                        .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(contentPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 37, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                        .addComponent(contentPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(18, 18, 18)
+                        .addComponent(jScrollPane2)))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         pack();
@@ -1732,20 +1719,6 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
 //        }
     }//GEN-LAST:event_rdNoSignatureActionPerformed
 
-    private void rdMessageSignatureActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rdMessageSignatureActionPerformed
-//        if (this.rdMessageSignature.isSelected()) {
-//            this.contentPanel.remove(0);
-//
-//            //hp.setSize(this.contentPanel.getWidth(), this.contentPanel.getHeight());
-//            tp.setBounds(0, 0, this.contentPanel.getWidth(), this.contentPanel.getHeight());
-//            //tp.setSize(this.contentPanel.getWidth(), this.contentPanel.getHeight());
-//            //this.contentPanel.repaint();
-//            //hp.repaint();
-//            SwingUtilities.updateComponentTreeUI(tp);
-//
-//        }
-    }//GEN-LAST:event_rdMessageSignatureActionPerformed
-
     private void contentPanelComponentResized(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_contentPanelComponentResized
         //Component c=contentPanel.getComponent(0);
         tp.setBounds(0, 0, this.contentPanel.getWidth(), this.contentPanel.getHeight());
@@ -1928,7 +1901,6 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
     private javax.swing.JRadioButton radioReviewTypeNone;
     private javax.swing.JRadioButton radioReviewTypeRespite;
     private javax.swing.JRadioButton rdAllSignature;
-    private javax.swing.JRadioButton rdMessageSignature;
     private javax.swing.JRadioButton rdNoSignature;
     private javax.swing.JTextField txtReviewDateField;
     private javax.swing.JTextField txtSubject;
