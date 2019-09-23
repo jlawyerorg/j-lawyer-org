@@ -687,17 +687,19 @@ public class BeaIdentitySearchThread implements Runnable {
     private String qUserName;
     private String qCity;
     private String qZipCode;
+    private String qOfficeName;
     private Component owner;
     private JTable target;
     private JLabel errors;
     
     /** Creates a new instance of BeaIdentitySearchThread */
-    public BeaIdentitySearchThread(Component owner, String firstName, String name, String userName, String city, String zipCode, JTable target, JLabel errors) {
+    public BeaIdentitySearchThread(Component owner, String firstName, String name, String userName, String city, String zipCode, String officeName, JTable target, JLabel errors) {
         this.qFirstName=firstName;
         this.qName=name;
         this.qUserName=userName;
         this.qCity=city;
         this.qZipCode=zipCode;
+        this.qOfficeName=officeName;
         this.owner=owner;
         this.target=target;
         this.errors=errors;
@@ -707,7 +709,7 @@ public class BeaIdentitySearchThread implements Runnable {
         Collection<Identity> dtos=null;
         try {
             BeaAccess bea=BeaAccess.getInstance();
-            dtos=bea.searchIdentity(qFirstName, qName, qUserName, qCity, qZipCode);
+            dtos=bea.searchIdentity(qFirstName, qName, qUserName, qCity, qZipCode, qOfficeName);
             //addressService.remove();
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);
@@ -719,10 +721,10 @@ public class BeaIdentitySearchThread implements Runnable {
             return;
         }
         
-        String[] colNames=new String[] {"Name", "Vorname", "Nutzername", "PLZ", "Ort", "Strasse", "Typ"};
+        String[] colNames=new String[] {"Name", "Vorname", "Nutzername", "PLZ", "Ort", "Strasse", "Typ", "Kanzleiname"};
         QuickAddressSearchTableModel model=new QuickAddressSearchTableModel(colNames, 0);
         for(Identity i: dtos) {
-            Object[] row=new Object[]{new BeaIdentitySearchRowIdentifier(i), i.getFirstName(), i.getUserName(), i.getZipCode(), i.getCity(), StringUtils.nonEmpty(i.getStreet()) + " " + StringUtils.nonEmpty(i.getStreetNumber()), i.getType()};
+            Object[] row=new Object[]{new BeaIdentitySearchRowIdentifier(i), i.getFirstName(), i.getUserName(), i.getZipCode(), i.getCity(), StringUtils.nonEmpty(i.getStreet()) + " " + StringUtils.nonEmpty(i.getStreetNumber()), i.getType(), StringUtils.nonEmpty(i.getOfficeName())};
             model.addRow(row);
         }
         if(dtos.size()>0) {

@@ -761,12 +761,12 @@ public class ImportCourtsFromBeaThread implements Runnable {
                 try {
                     String zip = String.format("%02d", i);
                     ThreadUtils.updateProgressBar(this.target, "Suche: PLZ " + zip + "*", ((i * 10) - 1), totalCount, false);
-                    result = bea.searchIdentity(null, "*gericht*", null, null, zip + "*");
+                    result = bea.searchIdentity(null, "*gericht*", null, null, zip + "*", null);
                     // there is a search limit of 100. use three-digit search in case of limit reached to download all identities.
                     if (result.size() > 99) {
                         result = new ArrayList<Identity>();
                         for (int k = 0; k < 10; k++) {
-                            result.addAll(bea.searchIdentity(null, "*gericht*", null, null, zip + k + "*"));
+                            result.addAll(bea.searchIdentity(null, "*gericht*", null, null, zip + k + "*", null));
                         }
                     }
 
