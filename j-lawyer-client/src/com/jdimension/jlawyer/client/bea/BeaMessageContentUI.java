@@ -834,7 +834,12 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
 //            }
 //        }
 
-        lblSentDate.setText(df.format(msg.getReceptionTime()));
+        if(msg.getReceptionTime()==null) {
+            log.warn("beA mesage " + msg.getId() + " - " + msg.getSubject() + " does not have a reception time yet!");
+            lblSentDate.setText("");
+        } else {
+            lblSentDate.setText(df.format(msg.getReceptionTime()));
+        }
         lblSubject.setText(msg.getSubject());
         lblSubject.setToolTipText(lblSubject.getText());
         lblFrom.setText(msg.getSenderName());
