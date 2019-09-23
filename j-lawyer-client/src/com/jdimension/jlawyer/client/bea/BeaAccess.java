@@ -670,6 +670,7 @@ import java.io.File;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.Hashtable;
 import org.apache.log4j.Logger;
 import org.ehcache.Cache;
@@ -1039,10 +1040,10 @@ public class BeaAccess {
         return this.wrapper.sendMessage(msg, senderSafeId, recipientSafeIds, authority);
     }
     
-    public long sendEebConfirmation(Message incomingMessage, String senderSafeId, ArrayList<String> recipientSafeIds) throws BeaWrapperException {
+    public long sendEebConfirmation(Message incomingMessage, String senderSafeId, ArrayList<String> recipientSafeIds, Date abgabeDate) throws BeaWrapperException {
         this.checkValidBeaClient();
         this.folderOverviewCache.clear();
-        return this.wrapper.sendEebConfirmation(incomingMessage, senderSafeId, recipientSafeIds);
+        return this.wrapper.sendEebConfirmation(incomingMessage, senderSafeId, recipientSafeIds, abgabeDate);
     }
     
     public long sendEebRejection(Message incomingMessage, String senderSafeId, ArrayList<String> recipientSafeIds, String comment) throws BeaWrapperException {

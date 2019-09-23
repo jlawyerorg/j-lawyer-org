@@ -663,6 +663,7 @@
  */
 package com.jdimension.jlawyer.client.bea;
 
+import com.jdimension.jlawyer.client.components.MultiCalDialog;
 import com.jdimension.jlawyer.client.mail.*;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.ResetOnDisplayEditor;
@@ -712,6 +713,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Properties;
@@ -721,6 +723,7 @@ import java.util.logging.Level;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.DropMode;
 import javax.swing.JOptionPane;
+import javax.swing.JTextField;
 import javax.swing.RowSorter.SortKey;
 import javax.swing.SwingUtilities;
 import javax.swing.event.TreeSelectionEvent;
@@ -2532,6 +2535,22 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
         if (this.tblMails.getSelectedRowCount() == 1) {
             ClientSettings settings = ClientSettings.getInstance();
             try {
+                
+                JTextField hiddenField = new JTextField();
+                MultiCalDialog dlg = new MultiCalDialog(hiddenField, EditorsRegistry.getInstance().getMainWindow(), true);
+//                dlg.setUndecorated(false);
+//                dlg.setTitle("eEB-Abgabedatum wählen:");
+                FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
+                dlg.setVisible(true);
+                Date abgabeDate = null;
+                try {
+                    SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
+                    abgabeDate = df.parse(hiddenField.getText());
+                } catch (Throwable t) {
+                    JOptionPane.showMessageDialog(this, "Abgabedatum ungültig", "eEB abgeben", JOptionPane.WARNING_MESSAGE);
+                    return false;
+                }
+                
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                 ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
 
@@ -2556,7 +2575,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                 ArrayList<String> recipients = new ArrayList<String>();
                 recipients.add(senderSafeId);
                 Message m=BeaAccess.getInstance().getMessage(mh.getId(), BeaAccess.getInstance().getLoggedInSafeId());
-                long sentMessageId = BeaAccess.getInstance().sendEebConfirmation(m, senderSafeId, recipients);
+                long sentMessageId = BeaAccess.getInstance().sendEebConfirmation(m, senderSafeId, recipients, abgabeDate);
 
                 return true;
 
