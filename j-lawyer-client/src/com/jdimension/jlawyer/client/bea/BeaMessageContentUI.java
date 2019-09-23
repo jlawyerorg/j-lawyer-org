@@ -817,8 +817,8 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
             }
 
         } catch (Exception ex) {
-            log.error("Error getting contents of IMAP message", ex);
-            JOptionPane.showMessageDialog(this, "Fehler Öffnen der Nachricht: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            log.error("Error getting contents of beA message", ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim Öffnen der Nachricht: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
             //EditorsRegistry.getInstance().clearStatus();
         }
     }
