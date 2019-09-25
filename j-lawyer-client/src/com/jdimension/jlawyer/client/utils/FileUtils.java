@@ -674,6 +674,8 @@ import java.util.Hashtable;
 import javax.swing.Icon;
 import javax.swing.JDialog;
 import javax.swing.JOptionPane;
+import javax.swing.JRootPane;
+import javax.swing.WindowConstants;
 import javax.swing.filechooser.FileSystemView;
 import org.apache.log4j.Logger;
 
@@ -850,6 +852,8 @@ public class FileUtils extends ServerFileUtils {
         p.setFilename(dtPrefix + currentFileName);
         JOptionPane pane = new JOptionPane(p, JOptionPane.QUESTION_MESSAGE);
         JDialog dialog = pane.createDialog(parent, title);
+        //dialog.getRootPane().setWindowDecorationStyle(JRootPane.PLAIN_DIALOG);
+        dialog.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
         dialog.setVisible(true);
         if (p.getFilename() != null) {
 
