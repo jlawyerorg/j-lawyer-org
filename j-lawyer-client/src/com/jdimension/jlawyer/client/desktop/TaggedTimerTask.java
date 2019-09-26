@@ -724,7 +724,7 @@ public class TaggedTimerTask extends java.util.TimerTask {
     }
     
     public TaggedTimerTask(Component owner, JPanel resultPanel, JSplitPane split, JButton tagMenu, JButton tagDocumentMenu, JPopupMenu popTags, JPopupMenu popDocumentTags, boolean ignoreCurrentEditor) {
-        this(owner, resultPanel, split, tagMenu, tagDocumentMenu, popTags, popDocumentTags, false, true);
+        this(owner, resultPanel, split, tagMenu, tagDocumentMenu, popTags, popDocumentTags, ignoreCurrentEditor, true);
     }
 
     public TaggedTimerTask(Component owner, JPanel resultPanel, JSplitPane split, JButton tagMenu, JButton tagDocumentMenu, JPopupMenu popTags, JPopupMenu popDocumentTags) {
