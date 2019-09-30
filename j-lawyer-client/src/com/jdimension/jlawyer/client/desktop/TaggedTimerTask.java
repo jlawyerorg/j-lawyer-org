@@ -710,12 +710,12 @@ public class TaggedTimerTask extends java.util.TimerTask {
     /**
      * Creates a new instance of SystemStateTimerTask
      */
-    public TaggedTimerTask(Component owner, JPanel resultPanel, JSplitPane split, JButton tagMenu, JButton tagDocumentMenu, JPopupMenu popTags, JPopupMenu popDocumentTags, boolean ignoreCurrentEditor, boolean rebuildPopup) {
+    public TaggedTimerTask(Component owner, JPanel resultPanel, JSplitPane split, JButton tagMenu, JButton tagDocumentMenu, JPopupMenu popTags, JPopupMenu popDocumentTags, boolean ignoreCurrentEditorParam, boolean rebuildPopup) {
         super();
         this.owner = owner;
         this.resultUI = resultPanel;
         this.split = split;
-        this.ignoreCurrentEditor = ignoreCurrentEditor;
+        this.ignoreCurrentEditor = ignoreCurrentEditorParam;
         this.rebuildPopup = rebuildPopup;
         this.popTags = popTags;
         this.popDocumentTags = popDocumentTags;
@@ -723,8 +723,8 @@ public class TaggedTimerTask extends java.util.TimerTask {
         this.tagDocumentMenu = tagDocumentMenu;
     }
     
-    public TaggedTimerTask(Component owner, JPanel resultPanel, JSplitPane split, JButton tagMenu, JButton tagDocumentMenu, JPopupMenu popTags, JPopupMenu popDocumentTags, boolean ignoreCurrentEditor) {
-        this(owner, resultPanel, split, tagMenu, tagDocumentMenu, popTags, popDocumentTags, ignoreCurrentEditor, true);
+    public TaggedTimerTask(Component owner, JPanel resultPanel, JSplitPane split, JButton tagMenu, JButton tagDocumentMenu, JPopupMenu popTags, JPopupMenu popDocumentTags, boolean ignoreCurrentEditorParam) {
+        this(owner, resultPanel, split, tagMenu, tagDocumentMenu, popTags, popDocumentTags, ignoreCurrentEditorParam, true);
     }
 
     public TaggedTimerTask(Component owner, JPanel resultPanel, JSplitPane split, JButton tagMenu, JButton tagDocumentMenu, JPopupMenu popTags, JPopupMenu popDocumentTags) {
@@ -877,7 +877,7 @@ public class TaggedTimerTask extends java.util.TimerTask {
                 Collection<DocumentTagsBean> xTags = fileService.getDocumentTags(a.getId());
                 documentTags.put(a.getId(), (List<DocumentTagsBean>) xTags);
             }
-            running=false;
+            //running=false;
 
         } catch (Throwable ex) {
             log.error("Error connecting to server", ex);
@@ -891,7 +891,7 @@ public class TaggedTimerTask extends java.util.TimerTask {
             final List<ArchiveFileBean> l1 = myNewList;
             final List<ArchiveFileDocumentsBean> l2 = myNewDocumentList;
             //final List<ArchiveFileBean> l2 = othersNewList;
-            SwingUtilities.invokeLater(
+            SwingUtilities.invokeAndWait(
                     new Runnable() {
                 public void run() {
 
@@ -929,6 +929,7 @@ public class TaggedTimerTask extends java.util.TimerTask {
                         i++;
                         if (i == 25) {
                             //layout.setRows(i);
+                            running=false;
                             return;
                         }
                         //    containedIds.add(lce.getId());
@@ -963,6 +964,7 @@ public class TaggedTimerTask extends java.util.TimerTask {
                         i++;
                         if (i == 25) {
                             //layout.setRows(i);
+                            running=false;
                             return;
                         }
                         //    containedIds.add(lce.getId());
