@@ -1516,7 +1516,7 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
         }
         
         if(this.chkReadReceipt.isSelected() && this.authority==null) {
-            JOptionPane.showMessageDialog(this, "Versand mit eEB", "Für den Versand mit eEB muss eine Justizbehörde ausgewählt sein!", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Für den Versand mit eEB muss eine Justizbehörde ausgewählt sein!", "Versand mit eEB", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
