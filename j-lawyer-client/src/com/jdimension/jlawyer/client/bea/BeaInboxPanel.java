@@ -2572,9 +2572,10 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                     ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Absender-Postfach für eEB kann nicht ermittelt werden.", "Fehler");
                     return false;
                 }
-                ArrayList<String> recipients = new ArrayList<String>();
-                recipients.add(senderSafeId);
                 Message m=BeaAccess.getInstance().getMessage(mh.getId(), BeaAccess.getInstance().getLoggedInSafeId());
+                ArrayList<String> recipients = new ArrayList<String>();
+                recipients.add(m.getSenderSafeId());
+                
                 long sentMessageId = BeaAccess.getInstance().sendEebConfirmation(m, senderSafeId, recipients, abgabeDate);
 
                 return true;
@@ -2613,14 +2614,15 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                     ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Absender-Postfach für eEB kann nicht ermittelt werden.", "Fehler");
                     return false;
                 }
-                ArrayList<String> recipients = new ArrayList<String>();
-                recipients.add(senderSafeId);
                 String comment = "";
                 Object commentObject = JOptionPane.showInputDialog(this, "Erläuterung bzgl. Ihrer Zurückweisung (optional): ", "eEB zurückweisen", JOptionPane.QUESTION_MESSAGE, null, null, "");
                 if (commentObject != null) {
                     comment = commentObject.toString();
                 }
                 Message m=BeaAccess.getInstance().getMessage(mh.getId(), BeaAccess.getInstance().getLoggedInSafeId());
+                ArrayList<String> recipients = new ArrayList<String>();
+                recipients.add(m.getSenderSafeId());
+                
                 long sentMessageId = BeaAccess.getInstance().sendEebRejection(m, senderSafeId, recipients, comment);
 
                 return true;
