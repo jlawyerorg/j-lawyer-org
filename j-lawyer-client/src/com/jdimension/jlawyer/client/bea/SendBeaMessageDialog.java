@@ -1049,9 +1049,9 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
         jLabel7 = new javax.swing.JLabel();
         contentPanel = new javax.swing.JPanel();
         jPanel2 = new javax.swing.JPanel();
-        rdNoSignature = new javax.swing.JRadioButton();
-        chkReadReceipt = new javax.swing.JCheckBox();
-        rdAllSignature = new javax.swing.JRadioButton();
+        rdXjustiz = new javax.swing.JRadioButton();
+        chkSignMessage = new javax.swing.JCheckBox();
+        rdXjustizEeb = new javax.swing.JRadioButton();
         chkSaveAsDocument = new javax.swing.JCheckBox();
         cmbFrom = new javax.swing.JComboBox<>();
         jScrollPane3 = new javax.swing.JScrollPane();
@@ -1242,33 +1242,33 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
 
         jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder("Optionen"));
 
-        buttonGroupTextHtml.add(rdNoSignature);
-        rdNoSignature.setSelected(true);
-        rdNoSignature.setText("nicht signieren");
-        rdNoSignature.addActionListener(new java.awt.event.ActionListener() {
+        buttonGroupTextHtml.add(rdXjustiz);
+        rdXjustiz.setSelected(true);
+        rdXjustiz.setText("Strukturdatensatz erzeugen");
+        rdXjustiz.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                rdNoSignatureActionPerformed(evt);
+                rdXjustizActionPerformed(evt);
             }
         });
 
-        chkReadReceipt.setText("Zustellung gegen Empfangsbekenntnis");
-        chkReadReceipt.addChangeListener(new javax.swing.event.ChangeListener() {
+        chkSignMessage.setText("signieren");
+        chkSignMessage.setEnabled(false);
+        chkSignMessage.addChangeListener(new javax.swing.event.ChangeListener() {
             public void stateChanged(javax.swing.event.ChangeEvent evt) {
-                chkReadReceiptStateChanged(evt);
+                chkSignMessageStateChanged(evt);
             }
         });
-        chkReadReceipt.addActionListener(new java.awt.event.ActionListener() {
+        chkSignMessage.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                chkReadReceiptActionPerformed(evt);
+                chkSignMessageActionPerformed(evt);
             }
         });
 
-        buttonGroupTextHtml.add(rdAllSignature);
-        rdAllSignature.setText("Nachricht und Anhänge signieren");
-        rdAllSignature.setEnabled(false);
-        rdAllSignature.addActionListener(new java.awt.event.ActionListener() {
+        buttonGroupTextHtml.add(rdXjustizEeb);
+        rdXjustizEeb.setText("Zustellung gegen Empfangsbekenntnis");
+        rdXjustizEeb.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                rdAllSignatureActionPerformed(evt);
+                rdXjustizEebActionPerformed(evt);
             }
         });
 
@@ -1279,19 +1279,19 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
             .addGroup(jPanel2Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(rdNoSignature)
-                    .addComponent(chkReadReceipt)
-                    .addComponent(rdAllSignature))
+                    .addComponent(rdXjustiz)
+                    .addComponent(chkSignMessage)
+                    .addComponent(rdXjustizEeb))
                 .addContainerGap(164, Short.MAX_VALUE))
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel2Layout.createSequentialGroup()
-                .addComponent(rdNoSignature)
+                .addComponent(rdXjustiz)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(rdAllSignature)
+                .addComponent(rdXjustizEeb)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(chkReadReceipt)
+                .addComponent(chkSignMessage)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
@@ -1515,9 +1515,10 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
             settings.setConfiguration(settings.CONF_BEA_SAVETOARCHIVEFILE, "0");
         }
         
-        if(this.chkReadReceipt.isSelected() && this.authority==null) {
-            JOptionPane.showMessageDialog(this, "Für den Versand mit eEB muss eine Justizbehörde ausgewählt sein!", "Versand mit eEB", JOptionPane.WARNING_MESSAGE);
-            return;
+        if(this.authority==null) {
+            //JOptionPane.showMessageDialog(this, "Für den Versand mit eEB muss eine Justizbehörde ausgewählt sein!", "Versand mit eEB", JOptionPane.WARNING_MESSAGE);
+            //return;
+            this.rdXjustizActionPerformed(null);
         }
 
         String createDocumentTag = null;
@@ -1549,9 +1550,9 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
         }
 
         if (this.chkSaveAsDocument.isSelected()) {
-            a = new SendBeaMessageAction(dlg, this, fromSafeId, this.attachments, this.cu, this.chkReadReceipt.isSelected(), this.authority, ((DefaultListModel) this.lstTo.getModel()).elements(), this.txtSubject.getText(), ed.getText(), this.contextArchiveFile, createDocumentTag);
+            a = new SendBeaMessageAction(dlg, this, fromSafeId, this.attachments, this.cu, this.rdXjustizEeb.isSelected(), this.authority, ((DefaultListModel) this.lstTo.getModel()).elements(), this.txtSubject.getText(), ed.getText(), this.contextArchiveFile, createDocumentTag);
         } else {
-            a = new SendBeaMessageAction(dlg, this, fromSafeId, this.attachments, this.cu, this.chkReadReceipt.isSelected(), this.authority, ((DefaultListModel) this.lstTo.getModel()).elements(), this.txtSubject.getText(), ed.getText(), createDocumentTag);
+            a = new SendBeaMessageAction(dlg, this, fromSafeId, this.attachments, this.cu, this.rdXjustizEeb.isSelected(), this.authority, ((DefaultListModel) this.lstTo.getModel()).elements(), this.txtSubject.getText(), ed.getText(), createDocumentTag);
         }
         a.start();
 
@@ -1709,15 +1710,14 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
         this.cmbTemplatesActionPerformed(null);
     }//GEN-LAST:event_cmbOpponentAttItemStateChanged
 
-    private void rdNoSignatureActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rdNoSignatureActionPerformed
-//        if (this.rdNoSignature.isSelected()) {
-//            this.contentPanel.remove(0);
-//            this.contentPanel.add(tp);
-//            tp.setBounds(0, 0, this.contentPanel.getWidth(), this.contentPanel.getHeight());
-//            SwingUtilities.updateComponentTreeUI(tp);
-//
-//        }
-    }//GEN-LAST:event_rdNoSignatureActionPerformed
+    private void rdXjustizActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rdXjustizActionPerformed
+        if (this.rdXjustiz.isSelected() && this.authority==null) {
+            SelectLegalAuthorityDialog dlg = new SelectLegalAuthorityDialog(EditorsRegistry.getInstance().getMainWindow(), true);
+            FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
+            dlg.setVisible(true);
+            this.authority=dlg.getSelectedAuthority();
+        }
+    }//GEN-LAST:event_rdXjustizActionPerformed
 
     private void contentPanelComponentResized(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_contentPanelComponentResized
         //Component c=contentPanel.getComponent(0);
@@ -1739,9 +1739,14 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
         ComponentUtils.storeDialogSize(this);
     }//GEN-LAST:event_formComponentResized
 
-    private void rdAllSignatureActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rdAllSignatureActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_rdAllSignatureActionPerformed
+    private void rdXjustizEebActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rdXjustizEebActionPerformed
+        if (this.rdXjustizEeb.isSelected() && this.authority==null) {
+            SelectLegalAuthorityDialog dlg = new SelectLegalAuthorityDialog(EditorsRegistry.getInstance().getMainWindow(), true);
+            FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
+            dlg.setVisible(true);
+            this.authority=dlg.getSelectedAuthority();
+        }
+    }//GEN-LAST:event_rdXjustizEebActionPerformed
 
     private void mnuSearchRecipientInBeaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSearchRecipientInBeaActionPerformed
         BeaIdentitySearchDialog dlg = new BeaIdentitySearchDialog(EditorsRegistry.getInstance().getMainWindow(), true, null, null, null, null, null, null);
@@ -1791,20 +1796,13 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
         settings.setConfiguration(ClientSettings.CONF_BEASEND_LASTDOCUMENTTAG, lastTag);
     }//GEN-LAST:event_cmbDocumentTagActionPerformed
 
-    private void chkReadReceiptStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_chkReadReceiptStateChanged
+    private void chkSignMessageStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_chkSignMessageStateChanged
 
-    }//GEN-LAST:event_chkReadReceiptStateChanged
+    }//GEN-LAST:event_chkSignMessageStateChanged
 
-    private void chkReadReceiptActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkReadReceiptActionPerformed
-        if (this.chkReadReceipt.isSelected()) {
-            SelectLegalAuthorityDialog dlg = new SelectLegalAuthorityDialog(EditorsRegistry.getInstance().getMainWindow(), true);
-            FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
-            dlg.setVisible(true);
-            this.authority=dlg.getSelectedAuthority();
-        } else {
-            this.authority=null;
-        }
-    }//GEN-LAST:event_chkReadReceiptActionPerformed
+    private void chkSignMessageActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkSignMessageActionPerformed
+        
+    }//GEN-LAST:event_chkSignMessageActionPerformed
 
     /**
      * @param args the command line arguments
@@ -1860,8 +1858,8 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
     private javax.swing.ButtonGroup btGroupReviews;
     private javax.swing.ButtonGroup buttonGroupTextHtml;
     private javax.swing.JCheckBox chkDocumentTagging;
-    private javax.swing.JCheckBox chkReadReceipt;
     private javax.swing.JCheckBox chkSaveAsDocument;
+    private javax.swing.JCheckBox chkSignMessage;
     private javax.swing.JComboBox cmbClient;
     private javax.swing.JComboBox<String> cmbDocumentTag;
     private javax.swing.JComboBox<String> cmbFrom;
@@ -1900,8 +1898,8 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
     private javax.swing.JRadioButton radioReviewTypeFollowUp;
     private javax.swing.JRadioButton radioReviewTypeNone;
     private javax.swing.JRadioButton radioReviewTypeRespite;
-    private javax.swing.JRadioButton rdAllSignature;
-    private javax.swing.JRadioButton rdNoSignature;
+    private javax.swing.JRadioButton rdXjustiz;
+    private javax.swing.JRadioButton rdXjustizEeb;
     private javax.swing.JTextField txtReviewDateField;
     private javax.swing.JTextField txtSubject;
     // End of variables declaration//GEN-END:variables

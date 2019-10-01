@@ -432,9 +432,9 @@
               <Group type="102" attributes="0">
                   <EmptySpace max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="0" attributes="0">
-                      <Component id="rdNoSignature" alignment="0" min="-2" max="-2" attributes="0"/>
-                      <Component id="chkReadReceipt" alignment="0" min="-2" max="-2" attributes="0"/>
-                      <Component id="rdAllSignature" alignment="0" min="-2" max="-2" attributes="0"/>
+                      <Component id="rdXjustiz" alignment="0" min="-2" max="-2" attributes="0"/>
+                      <Component id="chkSignMessage" alignment="0" min="-2" max="-2" attributes="0"/>
+                      <Component id="rdXjustizEeb" alignment="0" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <EmptySpace pref="164" max="32767" attributes="0"/>
               </Group>
@@ -443,48 +443,48 @@
         <DimensionLayout dim="1">
           <Group type="103" groupAlignment="0" attributes="0">
               <Group type="102" alignment="0" attributes="0">
-                  <Component id="rdNoSignature" min="-2" max="-2" attributes="0"/>
+                  <Component id="rdXjustiz" min="-2" max="-2" attributes="0"/>
                   <EmptySpace max="-2" attributes="0"/>
-                  <Component id="rdAllSignature" min="-2" max="-2" attributes="0"/>
+                  <Component id="rdXjustizEeb" min="-2" max="-2" attributes="0"/>
                   <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                  <Component id="chkReadReceipt" min="-2" max="-2" attributes="0"/>
+                  <Component id="chkSignMessage" min="-2" max="-2" attributes="0"/>
                   <EmptySpace max="32767" attributes="0"/>
               </Group>
           </Group>
         </DimensionLayout>
       </Layout>
       <SubComponents>
-        <Component class="javax.swing.JRadioButton" name="rdNoSignature">
+        <Component class="javax.swing.JRadioButton" name="rdXjustiz">
           <Properties>
             <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
               <ComponentRef name="buttonGroupTextHtml"/>
             </Property>
             <Property name="selected" type="boolean" value="true"/>
-            <Property name="text" type="java.lang.String" value="nicht signieren"/>
+            <Property name="text" type="java.lang.String" value="Strukturdatensatz erzeugen"/>
           </Properties>
           <Events>
-            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="rdNoSignatureActionPerformed"/>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="rdXjustizActionPerformed"/>
           </Events>
         </Component>
-        <Component class="javax.swing.JCheckBox" name="chkReadReceipt">
+        <Component class="javax.swing.JCheckBox" name="chkSignMessage">
           <Properties>
-            <Property name="text" type="java.lang.String" value="Zustellung gegen Empfangsbekenntnis"/>
+            <Property name="text" type="java.lang.String" value="signieren"/>
+            <Property name="enabled" type="boolean" value="false"/>
           </Properties>
           <Events>
-            <EventHandler event="stateChanged" listener="javax.swing.event.ChangeListener" parameters="javax.swing.event.ChangeEvent" handler="chkReadReceiptStateChanged"/>
-            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="chkReadReceiptActionPerformed"/>
+            <EventHandler event="stateChanged" listener="javax.swing.event.ChangeListener" parameters="javax.swing.event.ChangeEvent" handler="chkSignMessageStateChanged"/>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="chkSignMessageActionPerformed"/>
           </Events>
         </Component>
-        <Component class="javax.swing.JRadioButton" name="rdAllSignature">
+        <Component class="javax.swing.JRadioButton" name="rdXjustizEeb">
           <Properties>
             <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
               <ComponentRef name="buttonGroupTextHtml"/>
             </Property>
-            <Property name="text" type="java.lang.String" value="Nachricht und Anh&#xe4;nge signieren"/>
-            <Property name="enabled" type="boolean" value="false"/>
+            <Property name="text" type="java.lang.String" value="Zustellung gegen Empfangsbekenntnis"/>
           </Properties>
           <Events>
-            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="rdAllSignatureActionPerformed"/>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="rdXjustizEebActionPerformed"/>
           </Events>
         </Component>
       </SubComponents>

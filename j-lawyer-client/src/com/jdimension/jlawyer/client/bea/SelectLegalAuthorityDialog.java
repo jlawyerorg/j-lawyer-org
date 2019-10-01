@@ -717,6 +717,7 @@ public class SelectLegalAuthorityDialog extends javax.swing.JDialog {
         lstAuthorities = new javax.swing.JList<>();
         cmdOK = new javax.swing.JButton();
         cmdCancel = new javax.swing.JButton();
+        cmdUnknown = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Justizbehörde auswählen");
@@ -755,6 +756,14 @@ public class SelectLegalAuthorityDialog extends javax.swing.JDialog {
             }
         });
 
+        cmdUnknown.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/help_index.png"))); // NOI18N
+        cmdUnknown.setText("Unbekannt");
+        cmdUnknown.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdUnknownActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -765,8 +774,10 @@ public class SelectLegalAuthorityDialog extends javax.swing.JDialog {
                     .addComponent(jScrollPane1)
                     .addComponent(txtSearch)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addGap(0, 115, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(cmdCancel)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdUnknown)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cmdOK)))
                 .addContainerGap())
@@ -781,7 +792,8 @@ public class SelectLegalAuthorityDialog extends javax.swing.JDialog {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(cmdOK)
-                    .addComponent(cmdCancel))
+                    .addComponent(cmdCancel)
+                    .addComponent(cmdUnknown))
                 .addContainerGap())
         );
 
@@ -822,6 +834,13 @@ public class SelectLegalAuthorityDialog extends javax.swing.JDialog {
         this.setVisible(false);
         this.dispose();
     }//GEN-LAST:event_cmdCancelActionPerformed
+
+    private void cmdUnknownActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdUnknownActionPerformed
+        //ClientSettings.getInstance().setConfiguration(ClientSettings.CONF_BEASEND_LASTLEGALAUTHORITY, this.lstAuthorities.getSelectedValue());
+        this.selectedAuthority=LegalAuthorities.getDefaultAuthority();
+        this.setVisible(false);
+        this.dispose();
+    }//GEN-LAST:event_cmdUnknownActionPerformed
 
     /**
      * @param args the command line arguments
@@ -868,6 +887,7 @@ public class SelectLegalAuthorityDialog extends javax.swing.JDialog {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton cmdCancel;
     private javax.swing.JButton cmdOK;
+    private javax.swing.JButton cmdUnknown;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JList<String> lstAuthorities;
     private javax.swing.JTextField txtSearch;
