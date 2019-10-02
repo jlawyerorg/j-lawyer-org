@@ -703,18 +703,23 @@ public class BeaEebReplyPanel extends javax.swing.JPanel {
     public BeaEebReplyPanel(String openedFromClassName) {
         initComponents();
         this.openedFromEditorClass=openedFromClassName;
-            
+        this.lblDescription.setText("<html><b>eEB abgeben / zur&uuml;ckweisen</b><br/>zum Anzeigen hier klicken</html>");
     }
     
     public void enableButtons(boolean enabled) {
         this.cmdEebConfirm.setEnabled(enabled);
         this.cmdEebDeny.setEnabled(enabled);
+        if(enabled) {
+            this.lblDescription.setText("<html><b>eEB abgeben / zur&uuml;ckweisen</b><br/>zum Anzeigen hier klicken</html>");
+        } else {
+            this.lblDescription.setText("<html><b>eEB / Strukturdatensatz</b><br/>zum Anzeigen hier klicken</html>");
+        }
     }
 
     public void setEntry(EebExecutor executor) {
         this.executor=executor;
         
-        this.lblDescription.setText("<html><b>eEB abgeben / zur&uuml;ckweisen</b><br/>zum Anzeigen hier klicken</html>");
+        
         
         //this.lblFileName.setText(sh.getFileName() + " in " + sh.getArchiveFileNumber() + " " + sh.getArchiveFileName());
 //        String name=e.getName();
