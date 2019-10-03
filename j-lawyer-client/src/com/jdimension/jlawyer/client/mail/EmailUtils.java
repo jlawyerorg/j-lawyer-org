@@ -964,10 +964,12 @@ public class EmailUtils {
     public static void closeIfIMAP(Folder f) {
         try {
             if (isIMAP(f)) {
-                f.close(true);
+                if(f.isOpen()) {
+                    f.close(true);
+                }
             }
         } catch (Throwable t) {
-            log.error("Unable to close folder", t);
+            log.warn("Unable to close folder", t);
         }
     }
 
