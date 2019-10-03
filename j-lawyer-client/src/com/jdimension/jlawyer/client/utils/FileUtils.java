@@ -767,6 +767,9 @@ public class FileUtils extends ServerFileUtils {
         name = name.replaceAll("'", "");
         name = name.replaceAll(":", " ");
         name = name.replaceAll(";", " ");
+        name = name.replaceAll(">", "");
+        name = name.replaceAll("<", "");
+        name = name.replaceAll("|", "_");
         return name.trim();
     }
 
