@@ -641,10 +641,12 @@
                                   <Group type="103" groupAlignment="0" attributes="0">
                                       <Component id="txtRecipient" max="32767" attributes="0"/>
                                       <Component id="txtUser" max="32767" attributes="0"/>
-                                      <Component id="txtPassword" alignment="0" pref="430" max="32767" attributes="0"/>
+                                      <Component id="txtPassword" alignment="0" max="32767" attributes="0"/>
                                       <Group type="102" alignment="0" attributes="0">
-                                          <Component id="txtSmtp" max="32767" attributes="0"/>
+                                          <Component id="txtSmtp" min="-2" pref="289" max="-2" attributes="0"/>
                                           <EmptySpace max="-2" attributes="0"/>
+                                          <Component id="chkEmailStartTls" min="-2" max="-2" attributes="0"/>
+                                          <EmptySpace min="-2" pref="2" max="-2" attributes="0"/>
                                           <Component id="chkSsl" min="-2" max="-2" attributes="0"/>
                                       </Group>
                                       <Component id="txtSenderName" alignment="0" max="32767" attributes="0"/>
@@ -664,6 +666,7 @@
                               <Component id="jLabel6" alignment="3" min="-2" max="-2" attributes="0"/>
                               <Component id="txtSmtp" alignment="3" min="-2" max="-2" attributes="0"/>
                               <Component id="chkSsl" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="chkEmailStartTls" alignment="3" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="3" attributes="0">
@@ -734,6 +737,11 @@
                 <Component class="javax.swing.JLabel" name="jLabel20">
                   <Properties>
                     <Property name="text" type="java.lang.String" value="Absendername:"/>
+                  </Properties>
+                </Component>
+                <Component class="javax.swing.JCheckBox" name="chkEmailStartTls">
+                  <Properties>
+                    <Property name="text" type="java.lang.String" value="StartTLS"/>
                   </Properties>
                 </Component>
               </SubComponents>

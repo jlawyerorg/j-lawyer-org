@@ -716,6 +716,7 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
                 this.txtSenderName.setEnabled(false);
                 this.txtRecipient.setEnabled(false);
                 this.chkSsl.setEnabled(false);
+                this.chkEmailStartTls.setEnabled(false);
             }
         } catch (Exception ex) {
             log.error(ex);
@@ -782,6 +783,12 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
                 this.chkSsl.setSelected(true);
             else
                 this.chkSsl.setSelected(false);
+            
+            String startTls=set.getSetting(set.SERVERCONF_MONITOR_SMTPSTARTTLS, "false");
+            if("true".equalsIgnoreCase(startTls))
+                this.chkEmailStartTls.setSelected(true);
+            else
+                this.chkEmailStartTls.setSelected(false);
         }
         
         try {
@@ -898,6 +905,7 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
         chkSsl = new javax.swing.JCheckBox();
         txtSenderName = new javax.swing.JTextField();
         jLabel20 = new javax.swing.JLabel();
+        chkEmailStartTls = new javax.swing.JCheckBox();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Servermonitoring");
@@ -1150,6 +1158,8 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
 
         jLabel20.setText("Absendername:");
 
+        chkEmailStartTls.setText("StartTLS");
+
         javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
         jPanel4.setLayout(jPanel4Layout);
         jPanel4Layout.setHorizontalGroup(
@@ -1171,10 +1181,12 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
                         .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(txtRecipient)
                             .addComponent(txtUser)
-                            .addComponent(txtPassword, javax.swing.GroupLayout.DEFAULT_SIZE, 430, Short.MAX_VALUE)
+                            .addComponent(txtPassword)
                             .addGroup(jPanel4Layout.createSequentialGroup()
-                                .addComponent(txtSmtp)
+                                .addComponent(txtSmtp, javax.swing.GroupLayout.PREFERRED_SIZE, 289, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(chkEmailStartTls)
+                                .addGap(2, 2, 2)
                                 .addComponent(chkSsl))
                             .addComponent(txtSenderName))))
                 .addContainerGap())
@@ -1187,7 +1199,8 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
                 .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel6)
                     .addComponent(txtSmtp, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(chkSsl))
+                    .addComponent(chkSsl)
+                    .addComponent(chkEmailStartTls))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel7)
@@ -1309,6 +1322,11 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
             ssl="true";
         set.setSetting(set.SERVERCONF_MONITOR_SMTPSSL, ssl);
         
+        String startTls="false";
+        if(this.chkEmailStartTls.isSelected())
+            startTls="true";
+        set.setSetting(set.SERVERCONF_MONITOR_SMTPSTARTTLS, startTls);
+        
         this.setVisible(false);
         this.dispose();
     }//GEN-LAST:event_cmdSaveActionPerformed
@@ -1369,6 +1387,7 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.ButtonGroup backupMode;
+    private javax.swing.JCheckBox chkEmailStartTls;
     private javax.swing.JCheckBox chkMonitorCpu;
     private javax.swing.JCheckBox chkMonitorDisk;
     private javax.swing.JCheckBox chkMonitorJava;

@@ -1248,6 +1248,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         ServerSettingsBean smtpPwdS = this.settingsFacade.find("jlawyer.server.monitor.smtppwd");
         ServerSettingsBean smtpToS = this.settingsFacade.find("jlawyer.server.monitor.smtpto");
         ServerSettingsBean smtpSslS = this.settingsFacade.find("jlawyer.server.monitor.smtpssl");
+        ServerSettingsBean smtpStartTlsS = this.settingsFacade.find("jlawyer.server.monitor.smtpstarttls");
 
         if (smtpHostS == null || smtpUserS == null || smtpPwdS == null || smtpToS == null) {
             log.error("incomplete configuration for sending status mails");
@@ -1271,6 +1272,14 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         if (smtpSsl == null) {
             smtpSsl = "false";
         }
+        
+        String smtpStartTls = "false";
+        if (smtpStartTlsS != null) {
+            smtpStartTls = smtpStartTlsS.getSettingValue();
+        }
+        if (smtpStartTls == null) {
+            smtpStartTls = "false";
+        }
 
         Properties props = new Properties();
 //        props.put("mail.smtp.host", smtpHost);
@@ -1282,7 +1291,11 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         if ("true".equalsIgnoreCase(smtpSsl)) {
             props.put("mail.smtp.ssl.enable", "true");
         }
-
+        
+        if ("true".equalsIgnoreCase(smtpStartTls)) {
+            props.put("mail.smtp.starttls.enable", "true");
+        }
+        
         props.put("mail.smtp.host", smtpHost);
         props.put("mail.smtp.user", smtpUser);
         props.put("mail.smtp.auth", true);
