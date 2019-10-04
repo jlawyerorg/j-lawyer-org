@@ -1643,7 +1643,8 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         } else {
             boolean deleted = dbFile.delete();
             if (!deleted) {
-                throw new Exception("Dokument " + dst + " konnte nicht gelöscht werden!");
+                // could not delete document, but still let's continue with removal
+                log.error("Dokument " + dst + " konnte nicht gelöscht werden!");
             }
         }
 
