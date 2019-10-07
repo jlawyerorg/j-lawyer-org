@@ -23,9 +23,9 @@
 		<band height="86" splitType="Stretch">
 			<textField>
 				<reportElement x="0" y="0" width="480" height="14" isRemoveLineWhenBlank="true" >
-					<printWhenExpression><![CDATA[$F{company} != null &&
-$F{company}.trim().length()>0 && $F{reference} != null &&
-$F{reference}.trim().length()>0]]></printWhenExpression>
+					<printWhenExpression><![CDATA[($F{company} != null &&
+$F{company}.trim().length()>0) || ($F{reference} != null &&
+$F{reference}.trim().length()>0)]]></printWhenExpression>
 				</reportElement>
 				<textElement>
 					<font size="10"/>
