@@ -813,7 +813,7 @@ public class SendBeaMessageAction extends ProgressableAction {
                 if (receivedPrefix == null) {
                     receivedPrefix = new java.util.Date();
                 }
-                String newName = com.jdimension.jlawyer.client.utils.FileUtils.getNewFileName(mex.getFileName(), true, receivedPrefix);
+                String newName = com.jdimension.jlawyer.client.utils.FileUtils.getNewFileName(mex.getFileName(), true, receivedPrefix, this.indicator);
                 if (newName == null) {
                     return false;
                 }

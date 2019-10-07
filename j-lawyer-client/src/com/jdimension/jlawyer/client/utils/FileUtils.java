@@ -746,6 +746,12 @@ public class FileUtils extends ServerFileUtils {
         return getNewFileName(currentFileName, datetimePrefix, d, EditorsRegistry.getInstance().getMainWindow(), "Datei umbenennen");
 
     }
+    
+    public static String getNewFileName(String currentFileName, boolean datetimePrefix, java.util.Date d, Component parent) {
+
+        return getNewFileName(currentFileName, datetimePrefix, d, parent, "Datei umbenennen");
+
+    }
 
     public static String sanitizeFileName(String fileName) {
         String name = fileName;
