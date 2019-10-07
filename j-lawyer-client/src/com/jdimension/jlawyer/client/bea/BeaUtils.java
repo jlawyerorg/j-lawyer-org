@@ -712,5 +712,12 @@ public class BeaUtils {
 
         return false;
     }
+    
+    public static String getQuotedBody(String body, String to) {
+        
+            // plain text
+            return System.getProperty("line.separator") + System.getProperty("line.separator") + "*** " + to + " schrieb: ***" + System.getProperty("line.separator") + System.getProperty("line.separator") + body;
+        
+    }
 
 }

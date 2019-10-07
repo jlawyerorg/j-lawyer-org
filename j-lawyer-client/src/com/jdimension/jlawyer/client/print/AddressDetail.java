@@ -681,6 +681,7 @@ public class AddressDetail {
     private String fax;
     private String email;
     private String website;
+    private String reference;
     
     public AddressDetail() {
     }
@@ -731,6 +732,8 @@ public class AddressDetail {
 
     public void setFirstName(String firstName) {
         this.firstName = firstName;
+        if(this.firstName==null)
+            this.firstName="";
     }
 
     public String getName() {
@@ -739,6 +742,8 @@ public class AddressDetail {
 
     public void setName(String name) {
         this.name = name;
+        if(this.name==null)
+            this.name="";
     }
 
     public String getPhone() {
@@ -787,6 +792,24 @@ public class AddressDetail {
      */
     public void setMobile(String mobile) {
         this.mobile = mobile;
+    }
+
+    /**
+     * @return the reference
+     */
+    public String getReference() {
+        return reference;
+    }
+
+    /**
+     * @param ref the reference to set
+     */
+    public void setReference(String ref) {
+        this.reference = ref;
+        if(reference!=null) {
+            if(reference.length()>0)
+                this.reference=this.reference + " ";
+        }
     }
 
     

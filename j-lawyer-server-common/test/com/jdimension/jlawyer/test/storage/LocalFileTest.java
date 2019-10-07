@@ -678,123 +678,134 @@ import org.junit.Test;
  * @author jens
  */
 public class LocalFileTest {
-    
+
     public LocalFileTest() {
     }
-    
+
     @BeforeClass
     public static void setUpClass() {
     }
-    
+
     @AfterClass
     public static void tearDownClass() {
     }
-    
+
     @Before
     public void setUp() {
+        try {
+            File f = new File("/tmp/jlawyertest");
+            f.mkdirs();
+            File tf = new File("/tmp/jlawyertest/jlawyertest.txt");
+            tf.createNewFile();
+        } catch (Throwable t) {
+            t.printStackTrace();
+        }
     }
-    
+
     @After
     public void tearDown() {
     }
 
-     @Test
-     public void testTraverse() {
+    @Test
+    public void testTraverse() {
         try {
-            VirtualFile vf=VirtualFile.getFile("file:///var/lib/jenkins/jlawyertest/");
+            VirtualFile vf = VirtualFile.getFile("file:///tmp/jlawyertest/");
             traverse(vf);
         } catch (Exception ex) {
             Assert.fail(ex.getMessage());
         }
-     }
-     
-     @Test
-     public void testIsDirectory() {
+    }
+
+    @Test
+    public void testIsDirectory() {
         try {
-            VirtualFile vf=VirtualFile.getFile("file://tmp/");
+            VirtualFile vf = VirtualFile.getFile("file://tmp/");
             Assert.assertTrue(vf.isDirectory());
             Assert.assertFalse(vf.isFile());
         } catch (Exception ex) {
             Assert.fail(ex.getMessage());
         }
-     }
-     
-     @Test
-     public void testCreateDeleteDirectory() {
+    }
+
+    @Test
+    public void testCreateDeleteDirectory() {
         try {
-            VirtualFile vf=VirtualFile.getFile("file:///tmp/");
-            
-            String subDir=""+ System.currentTimeMillis();
+            VirtualFile vf = VirtualFile.getFile("file:///tmp/");
+
+            String subDir = "" + System.currentTimeMillis();
             vf.createDirectory(subDir);
-            
-            vf=VirtualFile.getFile("file:///tmp/" + subDir + "/");
+
+            vf = VirtualFile.getFile("file:///tmp/" + subDir + "/");
             vf.delete();
-            
-            
+
         } catch (Exception ex) {
             Assert.fail(ex.getMessage());
         }
-     }
-     
-     @Test
-     public void testCopy() {
+    }
+
+    @Test
+    public void testCopy() {
         try {
-            VirtualFile vf=VirtualFile.getFile("file:///var/lib/jenkins/jlawyertest/");
-            
-            File f=File.createTempFile("jlawyertest", ".txt");
-            String name=f.getName();
+            VirtualFile vf = VirtualFile.getFile("file:///tmp/jlawyertest/");
+
+            File f = File.createTempFile("jlawyertest2", ".txt");
+            String name = f.getName();
             vf.copyLocalFile(f);
-            Collection<VirtualFile> c=vf.listFiles();
-            for(VirtualFile v: c) {
-                if(v.getName().equals(name))
+            Collection<VirtualFile> c = vf.listFiles();
+            for (VirtualFile v : c) {
+                if (v.getName().equals(name)) {
                     return;
-                    
+                }
+
             }
             Assert.fail();
-            
+
         } catch (Exception ex) {
             Assert.fail(ex.getMessage());
         }
-     }
-     
-     @Test
-     public void testDelete() {
+    }
+
+    @Test
+    public void testDelete() {
         try {
-            VirtualFile vf=VirtualFile.getFile("file:///var/lib/jenkins/jlawyertest/");
-            
-            Collection<VirtualFile> c=vf.listFiles();
-            for(VirtualFile v: c) {
-                if(v.getName().indexOf("jlawyertest")>-1)
+            VirtualFile vf = VirtualFile.getFile("file:///tmp/jlawyertest/");
+
+            Collection<VirtualFile> c = vf.listFiles();
+            for (VirtualFile v : c) {
+                if (v.getName().indexOf("jlawyertest") > -1) {
                     v.delete();
-                    
+                }
+
             }
-            
-            
+
         } catch (Exception ex) {
             Assert.fail(ex.getMessage());
         }
-     }
-     
-     @Test
-     public void testIsFile() {
+    }
+
+    @Test
+    public void testIsFile() {
         try {
-            VirtualFile vf=VirtualFile.getFile("file:///var/lib/jenkins/jlawyertest/gugge.txt");
+            File tf = new File("/tmp/gugge.txt");
+            tf.createNewFile();
+            VirtualFile vf = VirtualFile.getFile("file:///tmp/gugge.txt");
             Assert.assertTrue(vf.isFile());
             Assert.assertFalse(vf.isDirectory());
-            
+
         } catch (Exception ex) {
             Assert.fail(ex.getMessage());
         }
-     }
-     
-     private void traverse(VirtualFile vf) throws Exception {
-         System.out.println(vf.getCanonicalName());
-         if(vf.isDirectory()) {
-             Collection<VirtualFile> list=vf.listFiles();
-             for(VirtualFile v: list) {
-                 if(v.isReadable())
+    }
+
+    private void traverse(VirtualFile vf) throws Exception {
+        System.out.println(vf.getCanonicalName());
+        if (vf.isDirectory()) {
+            Collection<VirtualFile> list = vf.listFiles();
+            for (VirtualFile v : list) {
+                if (v.isReadable()) {
                     traverse(v);
-             }
-         }
-     }
+                }
+            }
+        }
+    }
 }

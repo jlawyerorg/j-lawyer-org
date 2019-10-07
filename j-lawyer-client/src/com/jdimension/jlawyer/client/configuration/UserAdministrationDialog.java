@@ -699,8 +699,8 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
     private String optionGroup = null;
 
     private ArrayList<CalendarRegion> countries = null;
-    
-    private byte[] currentCertificate=null;
+
+    private byte[] currentCertificate = null;
 
     /**
      * Creates new form OptionGroupConfigurationDialog
@@ -779,7 +779,6 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         chkCreateFile = new javax.swing.JCheckBox();
         chkRemoveFile = new javax.swing.JCheckBox();
         jPanel4 = new javax.swing.JPanel();
-        chkReadOption = new javax.swing.JCheckBox();
         chkWriteOption = new javax.swing.JCheckBox();
         chkCreateOption = new javax.swing.JCheckBox();
         chkRemoveOption = new javax.swing.JCheckBox();
@@ -997,8 +996,6 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         jPanel4.setBorder(javax.swing.BorderFactory.createTitledBorder("Einstellungen"));
         jPanel4.setName(""); // NOI18N
 
-        chkReadOption.setText("einsehen");
-
         chkWriteOption.setText("ändern");
 
         chkCreateOption.setText("erstellen");
@@ -1012,22 +1009,20 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
             .add(jPanel4Layout.createSequentialGroup()
                 .addContainerGap()
                 .add(jPanel4Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(chkReadOption)
                     .add(chkWriteOption)
                     .add(chkCreateOption)
                     .add(chkRemoveOption))
-                .addContainerGap(179, Short.MAX_VALUE))
+                .addContainerGap(181, Short.MAX_VALUE))
         );
         jPanel4Layout.setVerticalGroup(
             jPanel4Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel4Layout.createSequentialGroup()
-                .add(chkReadOption)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(chkWriteOption)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(chkCreateOption)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(chkRemoveOption))
+                .add(chkRemoveOption)
+                .add(0, 23, Short.MAX_VALUE))
         );
 
         chkLawyer.setText("Nutzer ist Anwalt");
@@ -1403,6 +1398,12 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
 
     private void mnuDeleteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuDeleteActionPerformed
         if (this.lstUsers.getSelectedValues().length > 0) {
+
+            int response = JOptionPane.showConfirmDialog(this, "Wenn Nutzer noch in Aktenhistorien vermerkt sind, ist statt eines Löschens ein Entzug des Loginrechts sinnvoller (d.h. der Nutzer wird deaktiviert).\r\nSoll der Nutzer wirklich gelöscht werden?", "Nutzer löschen", JOptionPane.YES_NO_OPTION);
+            if (response == JOptionPane.NO_OPTION) {
+                return;
+            }
+
             ClientSettings settings = ClientSettings.getInstance();
             try {
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
@@ -1438,14 +1439,12 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         if (this.txtUser.getText().length() < 4) {
             valid = false;
         }
-        
+
         if (!valid) {
             JOptionPane.showMessageDialog(this, "Nutzername und Passwort dürfen nicht leer, Nutzername nicht kürzer als 4 Zeichen sein.", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
             return;
         }
-        
-        
-        
+
         ClientSettings settings = ClientSettings.getInstance();
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
@@ -1455,7 +1454,6 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
             AppUserBean u = new AppUserBean();
             u.setPassword(this.txtPassword.getText());
             u.setPrincipalId(this.txtUser.getText());
-            
 
             AppUserBean newUser = mgmt.createUser(u, this.getInitialRolesForUser(u.getPrincipalId()));
             newUser.setLawyer(true);
@@ -1544,8 +1542,8 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 this.chkEmailInSsl.setSelected(u.isEmailInSsl());
                 this.chkEmailOutSsl.setSelected(u.isEmailOutSsl());
                 this.chkEmailStartTls.setSelected(u.isEmailStartTls());
-                
-                if(u.isBeaCertificateAutoLogin()) {
+
+                if (u.isBeaCertificateAutoLogin()) {
                     this.rdAutoLogin.setSelected(true);
                     this.rdManualLogin.setSelected(false);
                 } else {
@@ -1553,15 +1551,15 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                     this.rdManualLogin.setSelected(true);
                 }
                 this.pwdBeaCertificatePassword.setText(u.getBeaCertificatePassword());
-                this.currentCertificate=u.getBeaCertificate();
-                
-                if(u.getBeaCertificate()==null) {
+                this.currentCertificate = u.getBeaCertificate();
+
+                if (u.getBeaCertificate() == null) {
                     this.taBeaCertificate.setText("kein Zertifikat hinterlegt");
                 } else {
                     this.taBeaCertificate.setText("");
-                    Hashtable ht=BeaAccess.getCertificateInformation(u.getBeaCertificate(), u.getBeaCertificatePassword());
-                    for(Object key: ht.keySet()) {
-                        this.taBeaCertificate.setText(this.taBeaCertificate.getText() + key.toString() + ": "+ ht.get(key).toString() + System.getProperty("line.separator"));
+                    Hashtable ht = BeaAccess.getCertificateInformation(u.getBeaCertificate(), u.getBeaCertificatePassword());
+                    for (Object key : ht.keySet()) {
+                        this.taBeaCertificate.setText(this.taBeaCertificate.getText() + key.toString() + ": " + ht.get(key).toString() + System.getProperty("line.separator"));
                     }
                 }
 
@@ -1582,25 +1580,24 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         if (this.txtPassword.getText().length() == 0) {
             return;
         }
-        
-        boolean valid=true;
-        if (this.currentCertificate!=null && ("".equals(this.pwdBeaCertificatePassword.getText().trim()) || "".equals(this.pwdBeaCertificatePassword.getText().trim()))) {
+
+        boolean valid = true;
+        if (this.currentCertificate != null && ("".equals(this.pwdBeaCertificatePassword.getText().trim()) || "".equals(this.pwdBeaCertificatePassword.getText().trim()))) {
             valid = false;
         }
 
-        if (this.currentCertificate!=null && this.pwdBeaCertificatePassword.getText().length() == 0) {
+        if (this.currentCertificate != null && this.pwdBeaCertificatePassword.getText().length() == 0) {
             valid = false;
         }
 
-        if (this.currentCertificate!=null && this.pwdBeaCertificatePassword.getText().length() < 4) {
+        if (this.currentCertificate != null && this.pwdBeaCertificatePassword.getText().length() < 4) {
             valid = false;
         }
-        
+
         if (!valid) {
             JOptionPane.showMessageDialog(this, "beA-Zertifikatpasswort darf nicht leer und nicht kürzer als 4 Zeichen sein.", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
             return;
         }
-        
 
         ClientSettings settings = ClientSettings.getInstance();
         try {
@@ -1653,7 +1650,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 u.setEmailInSsl(this.chkEmailInSsl.isSelected());
                 u.setEmailOutSsl(this.chkEmailOutSsl.isSelected());
                 u.setEmailStartTls(this.chkEmailStartTls.isSelected());
-                
+
                 u.setBeaCertificate(this.currentCertificate);
                 u.setBeaCertificatePassword(this.pwdBeaCertificatePassword.getText().trim());
                 u.setBeaCertificateAutoLogin(this.rdAutoLogin.isSelected());
@@ -1743,26 +1740,26 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
 
             try {
                 String url = chooser.getSelectedFile().getCanonicalPath();
-                File f=new File(url);
-                byte[] content=FileUtils.readFile(f);
-                
+                File f = new File(url);
+                byte[] content = FileUtils.readFile(f);
+
                 Object certPwd = JOptionPane.showInputDialog(this, "Zertifikatpasswort: ", "beA Softwarezertifikat", JOptionPane.QUESTION_MESSAGE, null, null, "");
-        if (certPwd == null) {
-            return;
-        }
-        
-            this.currentCertificate=content;
-            
-            Hashtable ht=BeaAccess.getCertificateInformation(content, certPwd.toString());
-            StringBuffer sb=new StringBuffer();
-            Enumeration keys=ht.keys();
-            while(keys.hasMoreElements()) {
-                Object k=keys.nextElement();
-                Object v=ht.get(k);
-                sb.append(k.toString()).append(": ").append(v.toString()).append(System.getProperty("line.separator"));
-            }
-            this.taBeaCertificate.setText(sb.toString());
-            this.pwdBeaCertificatePassword.setText(certPwd.toString());
+                if (certPwd == null) {
+                    return;
+                }
+
+                this.currentCertificate = content;
+
+                Hashtable ht = BeaAccess.getCertificateInformation(content, certPwd.toString());
+                StringBuffer sb = new StringBuffer();
+                Enumeration keys = ht.keys();
+                while (keys.hasMoreElements()) {
+                    Object k = keys.nextElement();
+                    Object v = ht.get(k);
+                    sb.append(k.toString()).append(": ").append(v.toString()).append(System.getProperty("line.separator"));
+                }
+                this.taBeaCertificate.setText(sb.toString());
+                this.pwdBeaCertificatePassword.setText(certPwd.toString());
 
             } catch (Exception ex) {
                 JOptionPane.showMessageDialog(this, "Zertifikat kann nicht geladen werden", "beA-Zertifikat", JOptionPane.ERROR_MESSAGE);
@@ -1771,7 +1768,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_cmdSelectCertificateActionPerformed
 
     private void cmdRemoveCertificateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRemoveCertificateActionPerformed
-        this.currentCertificate=null;
+        this.currentCertificate = null;
         this.taBeaCertificate.setText("");
         this.pwdBeaCertificatePassword.setText("");
     }//GEN-LAST:event_cmdRemoveCertificateActionPerformed
@@ -1826,15 +1823,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
             r4.setRoleGroup("Roles");
             result.add(r4);
         }
-
-        if (this.chkReadOption.isSelected()) {
-            AppRoleBean r5 = new AppRoleBean();
-            r5.setPrincipalId(principalId);
-            r5.setRole("readOptionGroupRole");
-            r5.setRoleGroup("Roles");
-            result.add(r5);
-        }
-
+        
         if (this.chkCreateFile.isSelected()) {
             AppRoleBean r6 = new AppRoleBean();
             r6.setPrincipalId(principalId);
@@ -1929,12 +1918,6 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         r4.setRoleGroup("Roles");
         result.add(r4);
 
-        AppRoleBean r5 = new AppRoleBean();
-        r5.setPrincipalId(principalId);
-        r5.setRole("readOptionGroupRole");
-        r5.setRoleGroup("Roles");
-        result.add(r5);
-
         AppRoleBean r6 = new AppRoleBean();
         r6.setPrincipalId(principalId);
         r6.setRole("createArchiveFileRole");
@@ -1966,7 +1949,6 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         this.chkLogin.setSelected(false);
         this.chkReadAddress.setSelected(false);
         this.chkReadFile.setSelected(false);
-        this.chkReadOption.setSelected(false);
         this.chkWriteAddress.setSelected(false);
         this.chkWriteFile.setSelected(false);
         this.chkWriteOption.setSelected(false);
@@ -1992,8 +1974,6 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 this.chkReadAddress.setSelected(true);
             } else if ("readArchiveFileRole".equals(rn)) {
                 this.chkReadFile.setSelected(true);
-            } else if ("readOptionGroupRole".equals(rn)) {
-                this.chkReadOption.setSelected(true);
             } else if ("writeAddressRole".equals(rn)) {
                 this.chkWriteAddress.setSelected(true);
             } else if ("writeArchiveFileRole".equals(rn)) {
@@ -2036,7 +2016,6 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
     private javax.swing.JCheckBox chkLogin;
     private javax.swing.JCheckBox chkReadAddress;
     private javax.swing.JCheckBox chkReadFile;
-    private javax.swing.JCheckBox chkReadOption;
     private javax.swing.JCheckBox chkRemoveAddress;
     private javax.swing.JCheckBox chkRemoveFile;
     private javax.swing.JCheckBox chkRemoveOption;

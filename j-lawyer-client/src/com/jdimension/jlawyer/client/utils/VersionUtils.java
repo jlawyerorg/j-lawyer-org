@@ -679,22 +679,37 @@ public class VersionUtils {
     private static final Logger log = Logger.getLogger(VersionUtils.class.getName());
 
     public static String getClientVersion() {
-        return "1.9";
+        return "1.10";
     }
-    
+
     public static String getPatchLevel() {
-        return "1";
+        return "0";
     }
-    
+
+    public static String getBuild() {
+        return "12";
+    }
+
     public static String getFullClientVersion() {
-        return getClientVersion() + "." + getPatchLevel();
+        return getClientVersion() + "." + getPatchLevel() + "." + getBuild();
     }
-    
+
     public static boolean isCompatible(String serverVersion, String clientVersion) {
-        if(serverVersion==null)
+        int serverRevs = serverVersion.length() - serverVersion.replace(".", "").length();
+        if (serverRevs == 3) {
+            serverVersion = serverVersion.substring(0, serverVersion.lastIndexOf('.'));
+        }
+        int clientRevs = clientVersion.length() - clientVersion.replace(".", "").length();
+        if (clientRevs == 3) {
+            clientVersion = clientVersion.substring(0, clientVersion.lastIndexOf('.'));
+        }
+
+        if (serverVersion == null) {
             return false;
-        if(clientVersion==null)
+        }
+        if (clientVersion == null) {
             return false;
+        }
         return clientVersion.startsWith(serverVersion);
     }
 
@@ -707,7 +722,6 @@ public class VersionUtils {
         } catch (Exception ex) {
             log.error(ex);
         }
-
 
 //        ClientSettings settings = ClientSettings.getInstance();
 //        String server = settings.getConfiguration(settings.CONF_LASTSERVER, "localhost");
@@ -736,7 +750,6 @@ public class VersionUtils {
 //        } catch (Exception ex) {
 //            log.error(ex);
 //        }
-
         return "unbekannt";
     }
 }

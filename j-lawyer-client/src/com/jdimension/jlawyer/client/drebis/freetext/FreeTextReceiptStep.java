@@ -839,7 +839,7 @@ public class FreeTextReceiptStep extends javax.swing.JPanel implements WizardSte
                 //String tmpFile = al.createTempFile(attachment.getName() + "." + attachment.getSuffix(), data);
                 ReadOnlyDocumentStore store=new ReadOnlyDocumentStore("freetextreceipt-" + attachment.getName() + "." + attachment.getSuffix(), attachment.getName() + "." + attachment.getSuffix());
                 Launcher launcher=LauncherFactory.getLauncher(attachment.getName() + "." + attachment.getSuffix(), data, store);
-                launcher.launch();
+                launcher.launch(false);
                 //new File(tmpFile).deleteOnExit();
             } catch (Exception ex) {
                 log.error("Error opening attachment", ex);

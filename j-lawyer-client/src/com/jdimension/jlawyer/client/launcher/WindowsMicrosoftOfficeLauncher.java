@@ -686,7 +686,7 @@ public class WindowsMicrosoftOfficeLauncher extends OfficeLauncher {
     }
 
     @Override
-    public void launch() throws Exception {
+    public void launch(boolean autoCloseExistingDocument) throws Exception {
 
         
         // winword.exe does not reliably close, so we allow opening the same document

@@ -678,21 +678,19 @@ import org.apache.log4j.Logger;
  * @author jens
  */
 public class MacOfficeLauncher extends OfficeLauncher {
-    
+
     private static final Logger log = Logger.getLogger(MacOfficeLauncher.class.getName());
     private static String loBinary = "/Applications/LibreOffice.app/Contents/MacOS/soffice";
     private static String oooBinary = "soffice";
-    
+
     public MacOfficeLauncher(String url, ObservedDocumentStore store) {
         super(url, store);
     }
 
     @Override
-    public void launch() throws Exception {
-            if (isDocumentOpen(store.getDocumentIdentifier())) {
-                throw new Exception("Dokument " + store.getFileName() + " ist bereits geöffnet");
-            }
-        
+    public void launch(boolean autoCloseExistingDocument) throws Exception {
+        this.autoCloseOpenDocument(autoCloseExistingDocument);
+
         final Launcher thisLauncher = this;
 
         new Thread(new Runnable() {
@@ -701,13 +699,13 @@ public class MacOfficeLauncher extends OfficeLauncher {
 
                 try {
 
-                        ObservedOfficeDocument odoc = new ObservedOfficeDocument(url, store, thisLauncher);
-                        DocumentObserver observer = DocumentObserver.getInstance();
-                        odoc.setStatus(ObservedDocument.STATUS_LAUNCHING);
-                        observer.addDocument(odoc);
-                    
-                    ServerSettings settings=ServerSettings.getInstance();
-                int waitForTime=settings.getSettingAsInt(ServerSettings.SERVERCONF_DOCUMENTS_WAITFOR_MAC, 4000);
+                    ObservedOfficeDocument odoc = new ObservedOfficeDocument(url, store, thisLauncher);
+                    DocumentObserver observer = DocumentObserver.getInstance();
+                    odoc.setStatus(ObservedDocument.STATUS_LAUNCHING);
+                    observer.addDocument(odoc);
+
+                    ServerSettings settings = ServerSettings.getInstance();
+                    int waitForTime = settings.getSettingAsInt(ServerSettings.SERVERCONF_DOCUMENTS_WAITFOR_MAC, 4000);
 
                     Process p = null;
                     boolean libreOffice = false;
@@ -727,10 +725,9 @@ public class MacOfficeLauncher extends OfficeLauncher {
 
                     if (libreOffice) {
 
-                        
-                            odoc.setStatus(ObservedDocument.STATUS_OPEN);
-                        
-                        if (waitForTime>0) {
+                        odoc.setStatus(ObservedDocument.STATUS_OPEN);
+
+                        if (waitForTime > 0) {
                             try {
                                 Thread.sleep(waitForTime);
                             } catch (Throwable t) {
@@ -743,9 +740,9 @@ public class MacOfficeLauncher extends OfficeLauncher {
                         log.debug("exit code: " + exit);
                         if (exit == 0) {
                             libreOffice = true;
-                            
-                                odoc.setClosed(true);
-                            
+
+                            odoc.setClosed(true);
+
                         } else {
                             libreOffice = false;
                         }
@@ -763,8 +760,8 @@ public class MacOfficeLauncher extends OfficeLauncher {
                             } else {
                                 p = Runtime.getRuntime().exec(new String[]{oooBinary, url});
                             }
-                            
-                                odoc.setStatus(ObservedDocument.STATUS_OPEN);
+
+                            odoc.setStatus(ObservedDocument.STATUS_OPEN);
                             log.debug("waitFor");
                             exit = p.waitFor();
                             log.debug("exit code: " + exit);
@@ -795,12 +792,10 @@ public class MacOfficeLauncher extends OfficeLauncher {
             }
         }).start();
     }
-    
-    
+
     @Override
     public String getType() {
         return "LibreOffice Mac Launcher";
     }
-    
-    
+
 }

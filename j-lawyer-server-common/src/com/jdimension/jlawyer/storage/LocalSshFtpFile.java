@@ -702,6 +702,7 @@ public class LocalSshFtpFile extends VirtualFile {
         if (location.toLowerCase().startsWith("sftp://")) {
             SftpFileSystemConfigBuilder.getInstance().setUserDirIsRoot(opts, false);
             SftpFileSystemConfigBuilder.getInstance().setStrictHostKeyChecking(opts, "no");
+            SftpFileSystemConfigBuilder.getInstance().setTimeout(opts, 60000);
         }
 
         this.fo = fsManager.resolveFile(location, opts);

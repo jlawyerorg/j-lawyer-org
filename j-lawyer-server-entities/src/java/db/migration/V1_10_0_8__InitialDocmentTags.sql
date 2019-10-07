@@ -1,0 +1,30 @@
+
+insert into server_options (id, optionGroup, value) values ('1.10.0.8-1', 'document.tags', 'aMdt zK mBuwV');
+insert into server_options (id, optionGroup, value) values ('1.10.0.8-2', 'document.tags', 'aMdt zK');
+insert into server_options (id, optionGroup, value) values ('1.10.0.8-3', 'document.tags', 'aMdt zK StN');
+insert into server_options (id, optionGroup, value) values ('1.10.0.8-4', 'document.tags', 'drucken');
+insert into server_options (id, optionGroup, value) values ('1.10.0.8-5', 'document.tags', 'ENTWURF');
+insert into server_options (id, optionGroup, value) values ('1.10.0.8-6', 'document.tags', 'Frist notieren');
+insert into server_options (id, optionGroup, value) values ('1.10.0.8-7', 'document.tags', 'korr.');
+insert into server_options (id, optionGroup, value) values ('1.10.0.8-8', 'document.tags', 'korr. > ausf.');
+insert into server_options (id, optionGroup, value) values ('1.10.0.8-9', 'document.tags', 'Posteingang');
+insert into server_options (id, optionGroup, value) values ('1.10.0.8-10', 'document.tags', 'Priorität Mitarbeiter 1');
+insert into server_options (id, optionGroup, value) values ('1.10.0.8-11', 'document.tags', 'Priorität Mitarbeiter 2');
+insert into server_options (id, optionGroup, value) values ('1.10.0.8-12', 'document.tags', 'Priorität Mitarbeiter 3');
+insert into server_options (id, optionGroup, value) values ('1.10.0.8-13', 'document.tags', 'Priorität RA 1');
+insert into server_options (id, optionGroup, value) values ('1.10.0.8-14', 'document.tags', 'Priorität RA 2');
+insert into server_options (id, optionGroup, value) values ('1.10.0.8-15', 'document.tags', 'ToDo Mitarbeiter 1');
+insert into server_options (id, optionGroup, value) values ('1.10.0.8-16', 'document.tags', 'ToDo Mitarbeiter 2');
+insert into server_options (id, optionGroup, value) values ('1.10.0.8-17', 'document.tags', 'ToDo Mitarbeiter 3');
+insert into server_options (id, optionGroup, value) values ('1.10.0.8-18', 'document.tags', 'ToDo RA 1');
+insert into server_options (id, optionGroup, value) values ('1.10.0.8-19', 'document.tags', 'ToDo RA 2');
+insert into server_options (id, optionGroup, value) values ('1.10.0.8-20', 'document.tags', 'versenden');
+insert into server_options (id, optionGroup, value) values ('1.10.0.8-21', 'document.tags', 'versenden als Fax');
+insert into server_options (id, optionGroup, value) values ('1.10.0.8-22', 'document.tags', 'versenden als Fax vorab');
+insert into server_options (id, optionGroup, value) values ('1.10.0.8-23', 'document.tags', 'versenden als eMail');
+insert into server_options (id, optionGroup, value) values ('1.10.0.8-24', 'document.tags', 'versenden als eMail vorab');
+insert into server_options (id, optionGroup, value) values ('1.10.0.8-25', 'document.tags', 'versenden via beA');
+insert into server_options (id, optionGroup, value) values ('1.10.0.8-26', 'document.tags', 'zdA [Handakte]');
+
+insert into ServerSettingsBean(settingKey, settingValue) values('jlawyer.server.database.version','1.10.0.8') ON DUPLICATE KEY UPDATE settingValue     = '1.10.0.8';
+commit;

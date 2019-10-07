@@ -681,6 +681,7 @@ public class UgHit {
     private String url;
     private String aktenzeichen;
     private String beschlussDatum;
+    private String kurzbeschreibung;
     
     public UgHit() {
         
@@ -782,6 +783,20 @@ public class UgHit {
      */
     public void setBeschlussDatum(String beschlussDatum) {
         this.beschlussDatum = beschlussDatum;
+    }
+
+    /**
+     * @param kurzbeschreibung the kurzbeschreibung to set
+     */
+    public void setKurzbeschreibung(String kurzbeschreibung) {
+        this.kurzbeschreibung = kurzbeschreibung;
+    }
+
+    /**
+     * @return the kurzbeschreibung
+     */
+    public String getKurzbeschreibung() {
+        return kurzbeschreibung;
     }
     
 }

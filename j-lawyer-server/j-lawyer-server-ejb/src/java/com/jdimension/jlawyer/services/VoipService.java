@@ -896,10 +896,11 @@ public class VoipService implements VoipServiceRemote, VoipServiceLocal {
                 continue;
             
             FaxQueueBean fb = this.faxFacade.find(id);
-            String qFile = fb.getPdfQueueFile();
             if (fb != null) {
+                String qFile = fb.getPdfQueueFile();
                 if (!SipUtils.isFinalStatus(fb.getLastStatus())) {
-                    throw new SipgateException("Fax " + id + " wird noch verarbeitet - Status kann nicht gelöscht werden!");
+                    log.warn("Requested to delete fax queue entry in status " + fb.getLastStatus() + ", which is not a final status");
+                    //throw new SipgateException("Fax " + id + " wird noch verarbeitet (Status: " + fb.getLastStatus() + ") - Status kann nicht gelöscht werden!");
                 }
                 this.faxFacade.remove(fb);
                 removed = true;

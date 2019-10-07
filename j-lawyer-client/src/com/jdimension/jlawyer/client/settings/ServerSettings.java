@@ -711,8 +711,9 @@ public class ServerSettings {
     public static final String SERVERCONF_DREBISTECHPWD="jlawyer.server.drebis.techpwd";
     
     
-    public static final String SERVERCONF_BEAMODE="jlawyer.server.bea.drebismode";
-    public static final String SERVERCONF_BEAENDPOINT="jlawyer.server.bea.drebisendpoint";
+    public static final String SERVERCONF_BEAMODE="jlawyer.server.bea.beamode";
+    public static final String SERVERCONF_BEAENDPOINT="jlawyer.server.bea.beaendpoint";
+    public static final String SERVERCONF_BEAENABLEDVERSIONS="jlawyer.global.bea.enabledversions";
     
     public static final String SERVERCONF_BACKUP_MODE="jlawyer.server.backup.backupmode";
     public static final String SERVERCONF_BACKUP_DBUSER="jlawyer.server.backup.dbuser";
@@ -748,6 +749,7 @@ public class ServerSettings {
     public static final String SERVERCONF_MONITOR_SMTPSENDERNAME="jlawyer.server.monitor.smtpsendername";
     public static final String SERVERCONF_MONITOR_SMTPTO="jlawyer.server.monitor.smtpto";
     public static final String SERVERCONF_MONITOR_SMTPSSL="jlawyer.server.monitor.smtpssl";
+    public static final String SERVERCONF_MONITOR_SMTPSTARTTLS="jlawyer.server.monitor.smtpstarttls";
     
     public static final String SERVERCONF_MONITOR_ENABLED_CPU="jlawyer.server.monitor.enabled.cpu";
     public static final String SERVERCONF_MONITOR_ENABLED_RAM="jlawyer.server.monitor.enabled.ram";

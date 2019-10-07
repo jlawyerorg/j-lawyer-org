@@ -668,7 +668,9 @@ import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileTagsBean;
+import com.jdimension.jlawyer.persistence.DocumentTagsBean;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Component;
@@ -683,6 +685,7 @@ import java.util.Collections;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.TimerTask;
+import java.util.logging.Level;
 import javax.swing.*;
 import org.apache.log4j.Logger;
 
@@ -693,36 +696,124 @@ import org.apache.log4j.Logger;
 public class TaggedTimerTask extends java.util.TimerTask {
 
     private static final Logger log = Logger.getLogger(TaggedTimerTask.class.getName());
+    private static boolean running=false;
     private Component owner;
     private JPanel resultUI;
     private JSplitPane split;
     private boolean ignoreCurrentEditor = false;
-    private JPopupMenu popTags=null;
-    private String source = null;
+    private boolean rebuildPopup = true;
+    private JPopupMenu popTags = null;
+    private JPopupMenu popDocumentTags = null;
+    private JButton tagMenu = null;
+    private JButton tagDocumentMenu = null;
 
     /**
      * Creates a new instance of SystemStateTimerTask
      */
-    public TaggedTimerTask(Component owner, JPanel resultPanel, JSplitPane split, JPopupMenu popTags, boolean ignoreCurrentEditor, String source) {
+    public TaggedTimerTask(Component owner, JPanel resultPanel, JSplitPane split, JButton tagMenu, JButton tagDocumentMenu, JPopupMenu popTags, JPopupMenu popDocumentTags, boolean ignoreCurrentEditorParam, boolean rebuildPopup) {
         super();
         this.owner = owner;
         this.resultUI = resultPanel;
         this.split = split;
-        this.ignoreCurrentEditor = ignoreCurrentEditor;
-        this.popTags=popTags;
-        this.source = source;
+        this.ignoreCurrentEditor = ignoreCurrentEditorParam;
+        this.rebuildPopup = rebuildPopup;
+        this.popTags = popTags;
+        this.popDocumentTags = popDocumentTags;
+        this.tagMenu = tagMenu;
+        this.tagDocumentMenu = tagDocumentMenu;
+    }
+    
+    public TaggedTimerTask(Component owner, JPanel resultPanel, JSplitPane split, JButton tagMenu, JButton tagDocumentMenu, JPopupMenu popTags, JPopupMenu popDocumentTags, boolean ignoreCurrentEditorParam) {
+        this(owner, resultPanel, split, tagMenu, tagDocumentMenu, popTags, popDocumentTags, ignoreCurrentEditorParam, true);
     }
 
-    public TaggedTimerTask(Component owner, JPanel resultPanel, JSplitPane split, JPopupMenu popTags, String source) {
-        this(owner, resultPanel, split, popTags, false, source);
+    public TaggedTimerTask(Component owner, JPanel resultPanel, JSplitPane split, JButton tagMenu, JButton tagDocumentMenu, JPopupMenu popTags, JPopupMenu popDocumentTags) {
+        this(owner, resultPanel, split, tagMenu, tagDocumentMenu, popTags, popDocumentTags, false);
+    }
+
+    private void buildPopup(JButton button, JPopupMenu popup, List<String> tagsInUse, String[] lastFilterTags, String clientSettingsKey) {
+        // update combobox with tags that are currently in use, but only if there was an actual change
+        List<String> currentComboItems = new ArrayList<String>();
+        MenuElement[] elements = popup.getSubElements();
+        for (MenuElement e : elements) {
+            currentComboItems.add(((JCheckBoxMenuItem) e.getComponent()).getText());
+            //this.popTags.add(new JCheckBoxMenuItem(currentModel.getElementAt(i).toString()));
+
+        }
+        Collections.sort(currentComboItems);
+        if (tagsInUse == null) {
+            tagsInUse = new ArrayList<String>();
+        }
+        if (!tagsInUse.equals(currentComboItems)) {
+
+            popup.removeAll();
+            boolean hasSelection = false;
+            for (String t : tagsInUse) {
+                JCheckBoxMenuItem mi = new JCheckBoxMenuItem(t);
+                if (Arrays.binarySearch(lastFilterTags, t) > -1) {
+                    mi.setSelected(true);
+                    hasSelection = true;
+                } else {
+                    mi.setSelected(false);
+                }
+                popup.add(mi);
+            }
+            if (hasSelection) {
+                button.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/favorites-green.png")));
+            } else {
+                button.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/favorites.png")));
+            }
+            for (MenuElement me : popup.getSubElements()) {
+                ((JCheckBoxMenuItem) me.getComponent()).addActionListener(new ActionListener() {
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        boolean selected = false;
+                        System.out.println("source: " + ((JCheckBoxMenuItem)e.getSource()).getText() +((JCheckBoxMenuItem)e.getSource()).isSelected());
+                        System.out.println("10");
+                        ArrayList<String> al = new ArrayList<String>();
+                        for (MenuElement me : popup.getSubElements()) {
+                            JCheckBoxMenuItem mi = ((JCheckBoxMenuItem) me.getComponent());
+                            if (mi.isSelected()) {
+                                al.add(mi.getText());
+                                selected = true;
+                            }
+                        }
+
+                        if (selected) {
+                            button.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/favorites-green.png")));
+                        } else {
+                            button.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/favorites.png")));
+                        }
+
+                        System.out.println("60: " + al);
+                        ClientSettings.getInstance().setConfigurationArray(clientSettingsKey, al.toArray(new String[al.size()]));
+                        TimerTask taggedTask = new TaggedTimerTask(EditorsRegistry.getInstance().getMainWindow(), resultUI, split, tagMenu, tagDocumentMenu, popTags, popDocumentTags, true, false);
+                        new java.util.Timer().schedule(taggedTask, 1000);
+                        
+                    }
+
+                });
+            }
+
+        }
     }
 
     public void run() {
+        
+        if(running==true)
+            return;
+        
+        running=true;
 
         List<ArchiveFileBean> myNewList = new ArrayList<ArchiveFileBean>();
         List<ArchiveFileBean> filteredList = new ArrayList<ArchiveFileBean>();
         Hashtable<String, List<ArchiveFileTagsBean>> tags = new Hashtable<String, List<ArchiveFileTagsBean>>();
-        //List<ArchiveFileBean> othersNewList = new ArrayList<ArchiveFileBean>();
+        
+        List<ArchiveFileDocumentsBean> myNewDocumentList = new ArrayList<ArchiveFileDocumentsBean>();
+        List<ArchiveFileDocumentsBean> filteredDocumentList = new ArrayList<ArchiveFileDocumentsBean>();
+        Hashtable<String, List<DocumentTagsBean>> documentTags = new Hashtable<String, List<DocumentTagsBean>>();
+        
+        
         try {
             //System.out.println("TaggedTimerTask#run @ " + System.currentTimeMillis() + " from " + source);
             ClientSettings settings = ClientSettings.getInstance();
@@ -730,52 +821,16 @@ public class TaggedTimerTask extends java.util.TimerTask {
 
             String[] lastFilterTags = settings.getConfigurationArray(ClientSettings.CONF_DESKTOP_LASTFILTERTAG, new String[]{""});
             List<String> tagsInUse = settings.getArchiveFileTagsInUse();
+            if(this.rebuildPopup && !(this.popTags.isVisible()))
+                this.buildPopup(this.tagMenu, this.popTags, tagsInUse, lastFilterTags, settings.CONF_DESKTOP_LASTFILTERTAG);
 
-            // update combobox with tags that are currently in use, but only if there was an actual change
-            List<String> currentComboItems = new ArrayList<String>();
-            MenuElement[] elements=this.popTags.getSubElements();
-            for (MenuElement e: elements) {
-                currentComboItems.add(((JCheckBoxMenuItem)e.getComponent()).getText());
-                //this.popTags.add(new JCheckBoxMenuItem(currentModel.getElementAt(i).toString()));
-                
-            }
-            Collections.sort(currentComboItems);
-            if (!tagsInUse.equals(currentComboItems)) {
-                if (tagsInUse == null) {
-                    tagsInUse = new ArrayList<String>();
-                }
-                
-                this.popTags.removeAll();
-                for(String t: tagsInUse) {
-                    JCheckBoxMenuItem mi=new JCheckBoxMenuItem(t);
-                    if(Arrays.binarySearch(lastFilterTags, t)>-1) {
-                        mi.setSelected(true);
-                    } else {
-                        mi.setSelected(false);
-                    }
-                    this.popTags.add(mi);
-                }
-                for(MenuElement me: this.popTags.getSubElements()) {
-                    ((JCheckBoxMenuItem)me.getComponent()).addActionListener(new ActionListener() {
-                        @Override
-                        public void actionPerformed(ActionEvent e) {
-                            ArrayList<String> al=new ArrayList<String>();
-                            for(MenuElement me: popTags.getSubElements()) {
-                                JCheckBoxMenuItem mi=((JCheckBoxMenuItem)me.getComponent());
-                                if(mi.isSelected())
-                                    al.add(mi.getText());
-                            }
-                            settings.setConfigurationArray(settings.CONF_DESKTOP_LASTFILTERTAG, al.toArray(new String[al.size()]));
-                            TimerTask taggedTask = new TaggedTimerTask(EditorsRegistry.getInstance().getMainWindow(), resultUI, split, popTags, true, "cmbTagFilterItemStateChanged");
-                            new java.util.Timer().schedule(taggedTask, 10);
-                        }
-                        
-                    });
-                }
-                
-            }
+            String[] lastFilterDocumentTags = settings.getConfigurationArray(ClientSettings.CONF_DESKTOP_LASTFILTERDOCUMENTTAG, new String[]{""});
+            tagsInUse = settings.getDocumentTagsInUse();
+            if(this.rebuildPopup && !(this.popDocumentTags.isVisible()))
+                this.buildPopup(this.tagDocumentMenu, this.popDocumentTags, tagsInUse, lastFilterDocumentTags, settings.CONF_DESKTOP_LASTFILTERDOCUMENTTAG);
 
-            if (lastFilterTags.length==0) {
+            if (lastFilterTags.length == 0 && lastFilterDocumentTags.length == 0) {
+                running=false;
                 return;
             }
 
@@ -783,14 +838,14 @@ public class TaggedTimerTask extends java.util.TimerTask {
             if (reg.isEditorActive(DesktopPanel.class.getName()) && resultUI.getComponentCount() > 0) {
                 if (!this.ignoreCurrentEditor) {
                     // do not refresh if desktop is active - this might interrupt user interactions
+                    running=false;
                     return;
                 }
             }
 
             ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
 
-            myNewList = fileService.getTagged(lastFilterTags, 50);
-
+            myNewList = fileService.getTagged(lastFilterTags, null, 50);
             String temp = settings.getConfiguration(ClientSettings.CONF_DESKTOP_ONLYMYTAGGED, "false");
             if ("true".equalsIgnoreCase(temp)) {
                 String principalId = UserSettings.getInstance().getCurrentUser().getPrincipalId();
@@ -802,31 +857,49 @@ public class TaggedTimerTask extends java.util.TimerTask {
                 }
                 myNewList = filteredList;
             }
-
             for (ArchiveFileBean a : myNewList) {
                 Collection<ArchiveFileTagsBean> xTags = fileService.getTags(a.getId());
                 tags.put(a.getId(), (List<ArchiveFileTagsBean>) xTags);
             }
+            
+            myNewDocumentList=fileService.getTaggedDocuments(lastFilterDocumentTags, 50);
+            if ("true".equalsIgnoreCase(temp)) {
+                String principalId = UserSettings.getInstance().getCurrentUser().getPrincipalId();
+                for (ArchiveFileDocumentsBean x : myNewDocumentList) {
+                    if (principalId.equalsIgnoreCase(x.getArchiveFileKey().getLawyer()) || principalId.equalsIgnoreCase(x.getArchiveFileKey().getAssistant())) {
+                        filteredDocumentList.add(x);
+
+                    }
+                }
+                myNewDocumentList = filteredDocumentList;
+            }
+            for (ArchiveFileDocumentsBean a : myNewDocumentList) {
+                Collection<DocumentTagsBean> xTags = fileService.getDocumentTags(a.getId());
+                documentTags.put(a.getId(), (List<DocumentTagsBean>) xTags);
+            }
+            //running=false;
 
         } catch (Throwable ex) {
             log.error("Error connecting to server", ex);
             //JOptionPane.showMessageDialog(this.owner, "Verbindungsfehler: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
             ThreadUtils.showErrorDialog(this.owner, java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/TaggedTimerTask").getString("msg.connectionerror"), new Object[]{ex.getMessage()}), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/TaggedTimerTask").getString("msg.error"));
+            running=false;
             return;
         }
 
         try {
             final List<ArchiveFileBean> l1 = myNewList;
+            final List<ArchiveFileDocumentsBean> l2 = myNewDocumentList;
             //final List<ArchiveFileBean> l2 = othersNewList;
-            SwingUtilities.invokeLater(
+            SwingUtilities.invokeAndWait(
                     new Runnable() {
                 public void run() {
 
                     split.setDividerLocation(0.5d);
 
                     resultUI.removeAll();
-                    //GridLayout layout = new GridLayout(l1.size() + l2.size(), 1);
-                    GridLayout layout = new GridLayout(l1.size(), 1);
+                    //GridLayout layout = new GridLayout(l1.size(), 1);
+                    BoxLayout layout = new BoxLayout(resultUI, BoxLayout.Y_AXIS);
                     resultUI.setLayout(layout);
                     int i = 0;
                     //ArrayList containedIds = new ArrayList();
@@ -837,7 +910,7 @@ public class TaggedTimerTask extends java.util.TimerTask {
                         }
                         TaggedEntry lce = new TaggedEntry();
                         lce.setFileNumber(aFile.getFileNumber());
-                        lce.setId(aFile.getId());
+                        lce.setCaseId(aFile.getId());
                         lce.setLastChangedBy(aFile.getLawyer());
                         lce.setName(aFile.getName());
                         lce.setReason(aFile.getReason());
@@ -855,51 +928,57 @@ public class TaggedTimerTask extends java.util.TimerTask {
                         resultUI.add(ep);
                         i++;
                         if (i == 25) {
-                            layout.setRows(i);
+                            //layout.setRows(i);
+                            running=false;
+                            return;
+                        }
+                        //    containedIds.add(lce.getId());
+                        //}
+                    }
+                    
+                    for (ArchiveFileDocumentsBean aDoc : l2) {
+                        TaggedEntryPanel ep = new TaggedEntryPanel();
+                        if (i % 2 == 0) {
+                            ep.setBackground(ep.getBackground().brighter());
+                        }
+                        TaggedEntry lce = new TaggedEntry();
+                        lce.setFileNumber(aDoc.getArchiveFileKey().getFileNumber());
+                        lce.setCaseId(aDoc.getArchiveFileKey().getId());
+                        lce.setDocumentId(aDoc.getId());
+                        lce.setDocumentName(aDoc.getName());
+                        lce.setLastChangedBy(aDoc.getArchiveFileKey().getLawyer());
+                        lce.setName(aDoc.getArchiveFileKey().getName());
+                        lce.setReason(aDoc.getArchiveFileKey().getReason());
+                        if (documentTags.get(aDoc.getId()) != null) {
+                            ArrayList<String> xTags = new ArrayList<String>();
+                            for (DocumentTagsBean dtb : documentTags.get(aDoc.getId())) {
+                                xTags.add(dtb.getTagName());
+                            }
+                            Collections.sort(xTags);
+                            lce.setTags(xTags);
+                        }
+                        ep.setEntry(lce);
+
+                        //if (!containedIds.contains(lce.getId())) {
+                        resultUI.add(ep);
+                        i++;
+                        if (i == 25) {
+                            //layout.setRows(i);
+                            running=false;
                             return;
                         }
                         //    containedIds.add(lce.getId());
                         //}
                     }
 
-//                        for (ArchiveFileBean aFile : l2) {
-//                            LastChangedEntryPanel ep = new LastChangedEntryPanel();
-//                            if (i % 2 == 0) {
-//                                ep.setBackground(ep.getBackground().brighter());
-//                            }
-//                            LastChangedEntry lce = new LastChangedEntry();
-//                            lce.setFileNumber(aFile.getFileNumber());
-//                            lce.setId(aFile.getId());
-//                            lce.setLastChangedBy(aFile.getLawyer());
-//                            lce.setName(aFile.getName());
-//                            lce.setReason(aFile.getReason());
-//                            ep.setEntry(lce);
-//
-//                            if (!containedIds.contains(lce.getId())) {
-//                                resultUI.add(ep);
-//                                i++;
-//                                if (i == 25) {
-//                                    layout.setRows(i);
-//                                    return;
-//                                }
-//                                containedIds.add(lce.getId());
-//                            }
-//                        }
-                    layout.setRows(i);
                     split.setDividerLocation(0.5d);
 
-//                        SwingUtilities.invokeLater(
-//                                new Runnable() {
-//                                    public void run() {
-//                                        split.setDividerLocation(0.5d);
-//                                    }
-//
-//                                }
-//                        );
                 }
             });
+            running=false;
         } catch (Throwable t) {
             log.error(t);
+            running=false;
         }
 
     }

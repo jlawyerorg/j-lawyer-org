@@ -667,6 +667,7 @@ import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.processing.ProgressIndicator;
 import com.jdimension.jlawyer.client.processing.ProgressableAction;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
+import com.jdimension.jlawyer.client.utils.StringUtils;
 import java.awt.Rectangle;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -706,7 +707,7 @@ public class LoadBeaFolderAction extends ProgressableAction {
         this.scrollToRow = scrollToRow;
         
         BeaAccess bea=BeaAccess.getInstance();
-        headers=new ArrayList(bea.getFolderOverview(f));
+        headers=bea.getFolderOverview(f);
         this.max=headers.size();
     }
 
@@ -774,17 +775,18 @@ public class LoadBeaFolderAction extends ProgressableAction {
                 // this.progress("Lade Nachrichten " + (i + 1) + "/" + this.getMax());
                 this.progress("Lade Nachrichten... " + (i + 1));
 
-                EditorsRegistry.getInstance().updateStatus("Lade Nachricht " + (i + 1), true);
+                
                 //System.out.println("*****************************************************************************");
                 //System.out.println("MESSAGE " + (i + 1) + ":");
                 MessageHeader msgh = headers.get(i);
-                final Message msg=bea.getMessage(msgh.getId(), msgh.getPostBoxSafeId());
+                EditorsRegistry.getInstance().updateStatus("Lade Nachricht " + StringUtils.nonNull(msgh.getSubject()), true);
+                //final Message msg=bea.getMessage(msgh.getId(), msgh.getPostBoxSafeId());
                 
                 String to = "";
-                if (msg.getRecipients().size() > 0) {
-                    to = msg.getRecipients().get(0).getName();
-                    for (int j = 1; j < msg.getRecipients().size(); j++) {
-                        to = to + ", " + msg.getRecipients().get(j).getName();
+                if (msgh.getRecipients().size() > 0) {
+                    to = msgh.getRecipients().get(0).getName();
+                    for (int j = 1; j < msgh.getRecipients().size(); j++) {
+                        to = to + ", " + msgh.getRecipients().get(j).getName();
                     }
                 }
                 final String toString=to;
@@ -808,10 +810,16 @@ public class LoadBeaFolderAction extends ProgressableAction {
 //                                msg.getFolder().open(Folder.READ_WRITE);
 //                            }
                             //((DefaultTableModel) table.getModel()).addRow(new Object[]{new MessageContainer(msg, msg.getSubject(), msg.isSet(Flags.Flag.SEEN)), from, toString2, df.format(msg.getSentDate())});
-                            if(msg.getReceptionTime()!=null)
-                                ((DefaultTableModel) table.getModel()).addRow(new Object[]{msg, msg.getSenderName(), toString, df.format(msg.getReceptionTime()), msg.getReferenceNumber(), msg.getReferenceJustice(), new Boolean(msg.isUrgent()), new Boolean(msg.isConfidential()), new Boolean(msg.isCheckRequired())});
-                            else
-                                ((DefaultTableModel) table.getModel()).addRow(new Object[]{msg, msg.getSenderName(), toString, null, msg.getReferenceNumber(), msg.getReferenceJustice(), new Boolean(msg.isUrgent()), new Boolean(msg.isConfidential()), new Boolean(msg.isCheckRequired())});
+                            if(msgh.getReceptionTime()!=null) {
+                                ((DefaultTableModel) table.getModel()).addRow(new Object[]{new Boolean(msgh.isUrgent()), new Boolean(msgh.isConfidential()), new Boolean(msgh.isCheckRequired()), msgh, msgh.getSender(), toString, df.format(msgh.getReceptionTime()), msgh.getReferenceNumber(), msgh.getReferenceJustice()});
+                            } else {
+                                if(msgh.getSentTime()!=null) {
+                                    ((DefaultTableModel) table.getModel()).addRow(new Object[]{new Boolean(msgh.isUrgent()), new Boolean(msgh.isConfidential()), new Boolean(msgh.isCheckRequired()), msgh, msgh.getSender(), toString, df.format(msgh.getSentTime()), msgh.getReferenceNumber(), msgh.getReferenceJustice()});
+                                } else {
+                                    ((DefaultTableModel) table.getModel()).addRow(new Object[]{new Boolean(msgh.isUrgent()), new Boolean(msgh.isConfidential()), new Boolean(msgh.isCheckRequired()), msgh, msgh.getSender(), toString, null, msgh.getReferenceNumber(), msgh.getReferenceJustice()});
+                                }
+                            
+                            }
                             if (scrollToRow > 0) {
                                 if (currentIndex == (indexMax)) {
                                     if (table.getRowCount() > scrollToRow) {
@@ -866,7 +874,7 @@ public class LoadBeaFolderAction extends ProgressableAction {
 
         } catch (Exception ex) {
             log.error(ex);
-            ex.printStackTrace();
+            EditorsRegistry.getInstance().clearStatus();
             return false;
         }
         return true;

@@ -663,6 +663,7 @@
  */
 package com.jdimension.jlawyer.persistence;
 
+import javax.annotation.security.PermitAll;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
@@ -672,6 +673,7 @@ import javax.persistence.PersistenceContext;
  * @author jens
  */
 @Stateless
+@PermitAll
 public class FaxQueueBeanFacade extends AbstractFacade<FaxQueueBean> implements FaxQueueBeanFacadeLocal {
     @PersistenceContext(unitName = "j-lawyer-server-ejbPU")
     private EntityManager em;

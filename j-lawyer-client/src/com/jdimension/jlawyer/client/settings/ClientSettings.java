@@ -731,14 +731,33 @@ public class ClientSettings {
     public static final String CONF_DESKTOP_ONLYMYREVIEWS="client.desktop.onlymyreviews";
     public static final String CONF_DESKTOP_ONLYMYTAGGED="client.desktop.onlymytagged";
     public static final String CONF_DESKTOP_LASTFILTERTAG="client.desktop.lastfiltertag";
+    public static final String CONF_DESKTOP_LASTFILTERDOCUMENTTAG="client.desktop.lastfilterdocumenttag";
     
     public static final String CONF_SCANS_TAGGINGENABLED="client.scans.taggingenabled";
+    public static final String CONF_SCANS_DOCUMENTTAGGINGENABLED="client.scans.documenttaggingenabled";
     public static final String CONF_SCANS_LASTTAG="client.scans.lasttag";
+    public static final String CONF_SCANS_LASTDOCUMENTTAG="client.scans.lastdocumenttag";
     public static final String CONF_SCANS_DELETEENABLED="client.scans.deleteenabled";
     
     public static final String CONF_MAILS_TAGGINGENABLED="client.mails.taggingenabled";
+    public static final String CONF_MAILS_DOCUMENTTAGGINGENABLED="client.mails.documenttaggingenabled";
     public static final String CONF_MAILS_LASTTAG="client.mails.lasttag";
     public static final String CONF_MAILS_DELETEENABLED="client.mails.deleteenabled";
+    
+    public static final String CONF_MAILSEND_DOCUMENTTAGGINGENABLED="client.mailsend.documenttaggingenabled";
+    public static final String CONF_MAILSEND_LASTDOCUMENTTAG="client.mailsend.lastdocumenttag";
+    
+    public static final String CONF_BEA_TAGGINGENABLED="client.bea.taggingenabled";
+    public static final String CONF_BEA_DOCUMENTTAGGINGENABLED="client.bea.documenttaggingenabled";
+    public static final String CONF_BEA_LASTTAG="client.bea.lasttag";
+    public static final String CONF_BEA_LASTDOCUMENTTAG="client.bea.lastdocumenttag";
+    
+    public static final String CONF_BEASEND_DOCUMENTTAGGINGENABLED="client.beasend.documenttaggingenabled";
+    public static final String CONF_BEASEND_LASTDOCUMENTTAG="client.beasend.lastdocumenttag";
+    
+    public static final String CONF_BEASEND_LASTLEGALAUTHORITY="client.beasend.lastlegalauthority";
+    
+    public static final String CONF_BEA_SAVETOARCHIVEFILE="client.bea.savetoarchivefile";
     
     public static final String CONF_CASE_LASTUPLOADDIR="client.case.lastuploaddir";
     
@@ -746,6 +765,7 @@ public class ClientSettings {
     public static final String CONF_MAIL_SAVETOARCHIVEFILE="client.mail.savetoarchivefile";
     public static final String CONF_MAIL_DOWNLOADRESTRICTION="client.mail.downloadrestriction";
     public static final String CONF_MAIL_LASTTAG="client.mail.lasttag";
+    public static final String CONF_MAIL_LASTDOCUMENTTAG="client.mail.lastdocumenttag";
     
     public static final String CONF_VOIP_LASTSIPFAX="client.voip.lastsipfax";
     public static final String CONF_VOIP_LASTSIPSMS="client.voip.lastsipsms";
@@ -755,7 +775,6 @@ public class ClientSettings {
     
     private static final Logger log=Logger.getLogger(ClientSettings.class.getName());
     private static ClientSettings instance=null;
-    
     
     
     private ModuleMetadata rootModule=null;
@@ -769,10 +788,12 @@ public class ClientSettings {
     private AppOptionGroupBean[] subjectFieldDtos=null;
     private AppOptionGroupBean[] afTagDtos=null;
     private AppOptionGroupBean[] adrTagDtos=null;
+    private AppOptionGroupBean[] docTagDtos=null;
     private AppOptionGroupBean[] titles=null;
     
     private List<String>afTagsInUse=new ArrayList<String>();
     private List<String>adrTagsInUse=new ArrayList<String>();
+    private List<String>docTagsInUse=new ArrayList<String>();
     
     private ArrayList<InsuranceInfo> insurances=new ArrayList<InsuranceInfo>();
     private ArrayList<InsuranceInfo> motorInsurances=new ArrayList<InsuranceInfo>();
@@ -971,6 +992,22 @@ public class ClientSettings {
     
     public void setArchiveFileTagsInUse(List<String> tags) {
         this.afTagsInUse = tags;
+    }
+    
+    public AppOptionGroupBean[] getDocumentTagDtos() {
+        return docTagDtos;
+    }
+    
+    public List<String> getDocumentTagsInUse() {
+        return this.docTagsInUse;
+    }
+
+    public void setDocumentTagDtos(AppOptionGroupBean[] docDtos) {
+        this.docTagDtos = docDtos;
+    }
+    
+    public void setDocumentTagsInUse(List<String> tags) {
+        this.docTagsInUse = tags;
     }
     
     /**

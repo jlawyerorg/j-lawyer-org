@@ -665,29 +665,33 @@ package com.jdimension.jlawyer.client.launcher;
 
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
+import org.apache.log4j.Logger;
 
 /**
  *
  * @author jens
  */
 public abstract class Launcher {
-    
+
+    private static final Logger log = Logger.getLogger(Launcher.class.getName());
+
     protected String url;
-    protected ObservedDocumentStore store=null;
-    
+    protected ObservedDocumentStore store = null;
+
     public Launcher(String url, ObservedDocumentStore store) {
-        this.url=url;
-        this.store=store;
+        this.url = url;
+        this.store = store;
     }
-    
-    public abstract void launch() throws Exception;
+
+    public abstract void launch(boolean autoCloseExistingDocument) throws Exception;
+
     public abstract String getType();
-    
+
     public boolean isDocumentOpen(String documentIdentifier) {
-        DocumentObserver observer=DocumentObserver.getInstance();
+        DocumentObserver observer = DocumentObserver.getInstance();
         return observer.isDocumentOpen(documentIdentifier);
     }
-    
+
     protected String getExtension(String url) {
         int index = url.lastIndexOf('.');
         if (index > -1 && index < url.length()) {
@@ -695,7 +699,7 @@ public abstract class Launcher {
         }
         return "url-with-no-extension";
     }
-    
+
     /**
      * @return the url
      */
@@ -710,4 +714,31 @@ public abstract class Launcher {
         this.url = url;
     }
 
+    protected void autoCloseOpenDocument(boolean autoCloseExistingDocument) throws Exception {
+        if (isDocumentOpen(store.getDocumentIdentifier())) {
+            if (autoCloseExistingDocument) {
+                ObservedDocument doc = DocumentObserver.getInstance().getDocumentById(store.getDocumentIdentifier());
+                if (doc != null) {
+                    doc.setClosed(true);
+                    int timeWaited = 0;
+                    while (isDocumentOpen(store.getDocumentIdentifier())) {
+                        try {
+                            Thread.sleep(500);
+                            timeWaited = timeWaited + 500;
+                        } catch (Throwable t) {
+                            log.error("Error waiting for document to close: " + doc.getName());
+                        }
+                        if (timeWaited > 10000) {
+                            log.warn("Document not auto-closed after 10s: " + doc.getName());
+                            break;
+                        }
+                    }
+                }
+            } else {
+                log.debug("Dokument " + store.getFileName() + "ist bereits geöffnet");
+                throw new Exception("Dokument " + store.getFileName() + " ist bereits geöffnet");
+            }
+        }
+
+    }
 }

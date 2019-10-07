@@ -961,7 +961,7 @@ public class CustomLauncherOptionsDialog extends javax.swing.JDialog {
                 byte[] content=FileUtils.readFile(f);
                 ReadOnlyDocumentStore store=new ReadOnlyDocumentStore("launchertest-" + f.getName(), f.getName());
                 Launcher launcher=LauncherFactory.getLauncher(new File(url).getName(), content, store);
-                launcher.launch();
+                launcher.launch(false);
 
 
             } catch (Exception ex) {

@@ -687,6 +687,8 @@ import org.apache.log4j.Logger;
  * @author jens
  */
 public class SaveToCasePanel extends javax.swing.JPanel {
+    
+    //public static String 
 
     private static final Logger log = Logger.getLogger(SaveToCasePanel.class.getName());
     //DecimalFormat df = new DecimalFormat("0.00%");
@@ -874,6 +876,10 @@ public class SaveToCasePanel extends javax.swing.JPanel {
     }//GEN-LAST:event_lblDescriptionMouseExited
 
     private void lblDescriptionMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblDescriptionMouseClicked
+        
+        if(this.e==null || this.e.getId()==null)
+            return;
+        
         try {
             Object editor=null;
             if(UserSettings.getInstance().isCurrentUserInRole(UserSettings.ROLE_WRITECASE)) {
@@ -917,7 +923,7 @@ public class SaveToCasePanel extends javax.swing.JPanel {
     }//GEN-LAST:event_lblDescriptionMouseClicked
 
     private void cmdSaveFullMessageActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveFullMessageActionPerformed
-        boolean saved=this.executor.saveToCase(this.e.getId(), true, false, ClientSettings.getInstance().getConfiguration(ClientSettings.CONF_MAIL_LASTTAG, ""));
+        boolean saved=this.executor.saveToCase(this.e.getId(), true, false);
         if(saved) {
             this.cmdSaveFullMessage.setEnabled(false);
             this.cmdSaveFullMessage.setBackground(Color.green.darker().darker());
@@ -927,7 +933,7 @@ public class SaveToCasePanel extends javax.swing.JPanel {
     }//GEN-LAST:event_cmdSaveFullMessageActionPerformed
 
     private void cmdSaveMessageWithoutAttachmentsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveMessageWithoutAttachmentsActionPerformed
-        boolean saved=this.executor.saveToCase(this.e.getId(), false, false, ClientSettings.getInstance().getConfiguration(ClientSettings.CONF_MAIL_LASTTAG, ""));
+        boolean saved=this.executor.saveToCase(this.e.getId(), false, false);
         if(saved) {
             this.cmdSaveMessageWithoutAttachments.setEnabled(false);
             this.cmdSaveMessageWithoutAttachments.setBackground(Color.green.darker().darker());
@@ -937,7 +943,7 @@ public class SaveToCasePanel extends javax.swing.JPanel {
     }//GEN-LAST:event_cmdSaveMessageWithoutAttachmentsActionPerformed
 
     private void cmdSaveSeparateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveSeparateActionPerformed
-        boolean saved=this.executor.saveToCase(this.e.getId(), true, true, ClientSettings.getInstance().getConfiguration(ClientSettings.CONF_MAIL_LASTTAG, ""));
+        boolean saved=this.executor.saveToCase(this.e.getId(), true, true);
         if(saved) {
             this.cmdSaveSeparate.setEnabled(false);
             this.cmdSaveSeparate.setBackground(Color.green.darker().darker());

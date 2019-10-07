@@ -1,3 +1,4 @@
+**/.DS_Store
 /j-lawyer-client/nbproject/private/
 /j-lawyer-fax/nbproject/private/
 /j-lawyer-io-common/nbproject/private/
@@ -17,3 +18,16 @@
 /j-lawyer-server-common/build/
 /j-lawyer-server-api/dist/
 /j-lawyer-client/build/
+/j-lawyer-backupmgr/target/
+/j-lawyer-server/j-lawyer-server-ejb/build/
+/j-lawyer-server/build/
+/j-lawyer-server/j-lawyer-server-ejb/dist/
+/j-lawyer-io-common/build/
+/j-lawyer-server/j-lawyer-server-io/build/
+/j-lawyer-server/j-lawyer-server-io/dist/
+/j-lawyer-io-common/dist/
+/j-lawyer-server/dist/
+/j-lawyer-server/j-lawyer-server-war/dist/
+/j-lawyer-server/j-lawyer-server-war/build/
+/j-lawyer-client/dist/
+/mybuild.sh

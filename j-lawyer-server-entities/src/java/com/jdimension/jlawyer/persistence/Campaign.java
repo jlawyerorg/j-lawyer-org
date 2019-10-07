@@ -682,7 +682,7 @@ import javax.xml.bind.annotation.XmlTransient;
  * @author jens
  */
 @Entity
-@Table(name = "campaign")
+@Table(name = "campaigns")
 @XmlRootElement
 @NamedQueries({
     @NamedQuery(name = "Campaign.findAll", query = "SELECT c FROM Campaign c"),

@@ -674,6 +674,7 @@ import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileHistoryBean;
+import com.jdimension.jlawyer.persistence.DocumentTagsBean;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.io.ByteArrayOutputStream;
@@ -707,8 +708,9 @@ public class SendAction extends ProgressableAction {
     private String body = "";
     private String contentType = "text/plain";
     private ArchiveFileBean archiveFile = null;
+    private String documentTag = null;
 
-    public SendAction(ProgressIndicator i, JDialog cleanAfter, ArrayList<String> attachments, AppUserBean cu, boolean readReceipt, String to, String cc, String bcc, String subject, String body, String contentType) {
+    public SendAction(ProgressIndicator i, JDialog cleanAfter, ArrayList<String> attachments, AppUserBean cu, boolean readReceipt, String to, String cc, String bcc, String subject, String body, String contentType, String documentTag) {
         super(i, false, cleanAfter);
         this.attachments = attachments;
         this.cu = cu;
@@ -719,10 +721,11 @@ public class SendAction extends ProgressableAction {
         this.subject = subject;
         this.body = body;
         this.contentType = contentType;
+        this.documentTag = documentTag;
     }
 
-    public SendAction(ProgressIndicator i, JDialog cleanAfter, ArrayList<String> attachments, AppUserBean cu, boolean readReceipt, String to, String cc, String bcc, String subject, String body, String contentType, ArchiveFileBean af) {
-        this(i, cleanAfter, attachments, cu, readReceipt, to, cc, bcc, subject, body, contentType);
+    public SendAction(ProgressIndicator i, JDialog cleanAfter, ArrayList<String> attachments, AppUserBean cu, boolean readReceipt, String to, String cc, String bcc, String subject, String body, String contentType, ArchiveFileBean af, String documentTag) {
+        this(i, cleanAfter, attachments, cu, readReceipt, to, cc, bcc, subject, body, contentType, documentTag);
         this.archiveFile = af;
     }
 
@@ -754,7 +757,7 @@ public class SendAction extends ProgressableAction {
         props.put("mail.smtp.auth", true);
         props.put("mail.smtps.host", cu.getEmailOutServer());
         //props.put("mail.smtps.port", "25");
-        if(cu.isEmailStartTls()) {
+        if (cu.isEmailStartTls()) {
             props.put("mail.smtp.starttls.enable", "true");
         }
         props.put("mail.smtps.user", cu.getEmailOutUser());
@@ -776,10 +779,7 @@ public class SendAction extends ProgressableAction {
             }
         };
 
-
         Session session = Session.getInstance(props, auth);
-
-
 
         try {
             Transport bus = session.getTransport("smtp");
@@ -803,10 +803,9 @@ public class SendAction extends ProgressableAction {
             msg.setRecipients(Message.RecipientType.CC, cc);
             msg.setRecipients(Message.RecipientType.BCC, bcc);
 
-            msg.setSubject(subject);
+            msg.setSubject(MimeUtility.encodeText(subject, "utf-8", "B"));
             msg.setSentDate(new Date());
             //msg.setText(this.taBody.getText());
-
 
             Multipart multiPart = new MimeMultipart();
 
@@ -815,18 +814,17 @@ public class SendAction extends ProgressableAction {
             messageText.setContent(body, this.contentType + "; charset=UTF-8");
             multiPart.addBodyPart(messageText);
 
-            String attachmentNames="";
+            String attachmentNames = "";
             for (String url : this.attachments) {
                 MimeBodyPart att = new MimeBodyPart();
                 FileDataSource attFile = new FileDataSource(url);
                 att.setDataHandler(new DataHandler(attFile));
                 att.setFileName(attFile.getName());
-                attachmentNames=attachmentNames + attFile.getName() + " ";
+                attachmentNames = attachmentNames + attFile.getName() + " ";
                 multiPart.addBodyPart(att);
             }
 
             msg.setContent(multiPart);
-
 
             this.progress("Sende...");
             //Transport.send(msg);
@@ -848,14 +846,14 @@ public class SendAction extends ProgressableAction {
                     byte[] data = bOut.toByteArray();
 
                     String newName = msg.getSubject();
-                    if(attachmentNames.trim().length()>0) {
-                        newName=attachmentNames.trim() + " per E-Mail"; 
+                    if (attachmentNames.trim().length() > 0) {
+                        newName = attachmentNames.trim() + " per E-Mail";
                     }
-                    if(newName.length()>250) {
-                        newName=newName.substring(0,249);
+                    if (newName.length() > 230) {
+                        newName = newName.substring(0, 229);
                     }
                     newName = newName + ".eml";
-                    newName=FileUtils.sanitizeFileName(newName);
+                    newName = FileUtils.sanitizeFileName(newName);
                     java.util.Date sentPrefix = new Date();
                     newName = FileUtils.getNewFileName(newName, true, sentPrefix, this.indicator, "Datei umbenennen");
 
@@ -868,18 +866,20 @@ public class SendAction extends ProgressableAction {
                             newName = newName + ".eml";
                         }
 
-                        ArchiveFileDocumentsBean newDoc=afs.addDocument(this.archiveFile.getId(), newName, data, "");
+                        ArchiveFileDocumentsBean newDoc = afs.addDocument(this.archiveFile.getId(), newName, data, "");
+
+                        if (this.documentTag != null && !("".equals(this.documentTag))) {
+                            afs.setDocumentTag(newDoc.getId(), new DocumentTagsBean(newDoc.getId(), this.documentTag), true);
+                        }
 
                         ArchiveFileHistoryBean historyDto = new ArchiveFileHistoryBean();
                         historyDto.setChangeDate(new Date());
                         historyDto.setChangeDescription("E-Mail gesendet an " + to + ": " + msg.getSubject());
                         afs.addHistory(this.archiveFile.getId(), historyDto);
-                        
-                        EventBroker eb=EventBroker.getInstance();
+
+                        EventBroker eb = EventBroker.getInstance();
                         eb.publishEvent(new DocumentAddedEvent(newDoc));
                     }
-
-
 
                 } else {
                     this.progress("Überspringe Speichern in Akte...");
@@ -890,7 +890,6 @@ public class SendAction extends ProgressableAction {
             }
 
             bus.close();
-
 
             this.progress("Suche Ordner 'Gesendet'...");
             Store store = session.getStore(cu.getEmailInType());
@@ -909,7 +908,7 @@ public class SendAction extends ProgressableAction {
                 sent.appendMessages(new Message[]{msg});
 
             }
-            
+
             try {
                 EmailUtils.closeIfIMAP(folder);
                 //folder.close(true);
@@ -929,7 +928,6 @@ public class SendAction extends ProgressableAction {
             if (storeException != null) {
                 throw new Exception("Fehler beim Speichern: " + storeException.getMessage());
             }
-
 
         } catch (Exception mex) {
             log.error(mex);

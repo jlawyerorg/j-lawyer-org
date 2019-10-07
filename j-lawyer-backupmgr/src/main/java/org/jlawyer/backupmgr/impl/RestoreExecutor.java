@@ -1216,6 +1216,11 @@ public class RestoreExecutor {
             System.out.println(line);
         }
         br.close();
+        try {
+            process.waitFor();
+        } catch (Throwable t) {
+            t.printStackTrace();
+        }
         if (process.exitValue() != 0) {
             throw new Exception("Datenbankwiederherstellung fehlgeschlagen!");
         }

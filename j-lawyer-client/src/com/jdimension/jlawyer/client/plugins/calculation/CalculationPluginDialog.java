@@ -677,6 +677,7 @@ public class CalculationPluginDialog extends javax.swing.JDialog {
     public CalculationPluginDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
+        this.scrollMain.getVerticalScrollBar().setUnitIncrement(16);
     }
     
     /**

@@ -670,7 +670,9 @@ import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.TableUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
+import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileTagsBean;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.ui.tagging.TagUtils;
@@ -681,6 +683,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import javax.swing.AbstractAction;
 import javax.swing.JComponent;
@@ -731,7 +734,11 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
     }
 
     public void populateTags(List<String> tags) {
-        TagUtils.populateTags(tags, cmdTagFilter, popTagFilter);
+        TagUtils.populateTags(tags, cmdTagFilter, popTagFilter, null);
+    }
+    
+    public void populateDocumentTags(List<String> tags) {
+        TagUtils.populateTags(tags, cmdDocumentTagFilter, popDocumentTagFilter, null);
     }
 
     public void clearInputs() {
@@ -772,7 +779,9 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
         popupArchiveFileActions = new javax.swing.JPopupMenu();
         mnuOpenSelectedArchiveFile = new javax.swing.JMenuItem();
         mnuDeleteSelectedArchiveFiles = new javax.swing.JMenuItem();
+        mnuDuplicateSelectedArchiveFiles = new javax.swing.JMenuItem();
         popTagFilter = new javax.swing.JPopupMenu();
+        popDocumentTagFilter = new javax.swing.JPopupMenu();
         cmdTagFilter = new javax.swing.JButton();
         jLabel1 = new javax.swing.JLabel();
         txtSearchString = new javax.swing.JTextField();
@@ -786,6 +795,7 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
         chkIncludeArchive = new javax.swing.JCheckBox();
         jPanel1 = new javax.swing.JPanel();
         cmdExport = new javax.swing.JButton();
+        cmdDocumentTagFilter = new javax.swing.JButton();
 
         mnuOpenSelectedArchiveFile.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder.png"))); // NOI18N
         mnuOpenSelectedArchiveFile.setText("öffnen");
@@ -806,6 +816,16 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
             }
         });
         popupArchiveFileActions.add(mnuDeleteSelectedArchiveFiles);
+
+        mnuDuplicateSelectedArchiveFiles.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editcopy.png"))); // NOI18N
+        mnuDuplicateSelectedArchiveFiles.setText("duplizieren");
+        mnuDuplicateSelectedArchiveFiles.setToolTipText("gewählte Akten duplizieren");
+        mnuDuplicateSelectedArchiveFiles.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuDuplicateSelectedArchiveFilesActionPerformed(evt);
+            }
+        });
+        popupArchiveFileActions.add(mnuDuplicateSelectedArchiveFiles);
 
         cmdTagFilter.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/favorites.png"))); // NOI18N
         cmdTagFilter.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -897,6 +917,18 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
                 .addContainerGap())
         );
 
+        cmdDocumentTagFilter.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/favorites.png"))); // NOI18N
+        cmdDocumentTagFilter.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                cmdDocumentTagFilterMousePressed(evt);
+            }
+        });
+        cmdDocumentTagFilter.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdDocumentTagFilterActionPerformed(evt);
+            }
+        });
+
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -904,7 +936,7 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
             .add(layout.createSequentialGroup()
                 .addContainerGap()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 670, Short.MAX_VALUE)
+                    .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 819, Short.MAX_VALUE)
                     .add(layout.createSequentialGroup()
                         .add(jLabel1)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
@@ -913,8 +945,10 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
                         .add(cmdQuickSearch)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(chkIncludeArchive)
-                        .add(18, 18, 18)
-                        .add(cmdTagFilter))
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                        .add(cmdTagFilter)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(cmdDocumentTagFilter))
                     .add(jScrollPane2)
                     .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
                         .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
@@ -939,7 +973,8 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
                         .add(jLabel1)
                         .add(txtSearchString, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                     .add(cmdTagFilter)
-                    .add(chkIncludeArchive))
+                    .add(chkIncludeArchive)
+                    .add(cmdDocumentTagFilter))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 243, Short.MAX_VALUE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
@@ -1077,7 +1112,7 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
         ThreadUtils.setWaitCursor(this);
         EditorsRegistry.getInstance().updateStatus("Suche Akten...");
         
-        new Thread(new QuickArchiveFileSearchThread(this, this.txtSearchString.getText(), this.chkIncludeArchive.isSelected(), TagUtils.getSelectedTags(this.popTagFilter), this.tblResults)).start();
+        new Thread(new QuickArchiveFileSearchThread(this, this.txtSearchString.getText(), this.chkIncludeArchive.isSelected(), TagUtils.getSelectedTags(this.popTagFilter), TagUtils.getSelectedTags(this.popDocumentTagFilter), this.tblResults)).start();
 
     }//GEN-LAST:event_cmdQuickSearchActionPerformed
 
@@ -1113,9 +1148,93 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
         this.popTagFilter.show(this.cmdTagFilter, evt.getX(), evt.getY());
     }//GEN-LAST:event_cmdTagFilterMousePressed
 
+    private void mnuDuplicateSelectedArchiveFilesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuDuplicateSelectedArchiveFilesActionPerformed
+        ThreadUtils.setWaitCursor(this, false);
+        int[] selectedIndices = this.tblResults.getSelectedRows();
+        Arrays.sort(selectedIndices);
+        ArrayList<String> ids = new ArrayList<String>();
+        for (int i = 0; i < selectedIndices.length; i++) {
+            QuickArchiveFileSearchRowIdentifier id = (QuickArchiveFileSearchRowIdentifier) this.tblResults.getValueAt(selectedIndices[i], 0);
+            ids.add(id.getArchiveFileDTO().getId());
+        }
+
+        EditorsRegistry.getInstance().updateStatus("Dupliziere " + ids.size() + " Akte(n)...", false);
+        ClientSettings settings = ClientSettings.getInstance();
+        try {
+            //InitialContext context = new InitialContext(settings.getLookupProperties());
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+
+            //Object object = locator.lookup("SystemManagementBean");
+            //ArchiveFileServiceRemoteHome home = (ArchiveFileServiceRemoteHome)locator.getRemoteHome("ejb/ArchiveFileServiceBean", ArchiveFileServiceRemoteHome.class);
+            ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
+            for (int i = ids.size() - 1; i > -1; i--) {
+                ArchiveFileBean source=fileService.getArchiveFile(ids.get(i));
+                source.setArchiveFileDocumentsBeanList(null);
+                source.setArchiveFileReviewsBeanList(null);
+                source.setArchiveFileHistoryBeanList(null);
+                source.setArchiveFileAddressesBeanList(null);
+                source.setName(source.getName() + " (Kopie)");
+                source.setArchivedBoolean(false);
+                source.setClaimNumber("");
+                source.setClaimValue(0f);
+               
+                ArchiveFileBean target=fileService.createArchiveFile(source);
+                
+                Collection<ArchiveFileAddressesBean> parties=fileService.getInvolvementDetailsForCase(ids.get(i));
+                for(ArchiveFileAddressesBean aab: parties) {
+                    ArchiveFileAddressesBean newAab=new ArchiveFileAddressesBean();
+                    newAab.setAddressKey(aab.getAddressKey());
+                    newAab.setArchiveFileKey(target);
+                    newAab.setContact(aab.getContact());
+                    newAab.setCustom1(aab.getCustom1());
+                    newAab.setCustom2(aab.getCustom2());
+                    newAab.setCustom3(aab.getCustom3());
+                    newAab.setReferenceType(aab.getReferenceType());
+                    if(aab.getReferenceType()==ArchiveFileAddressesBean.REFERENCETYPE_CLIENT) {
+                        target.addClient(newAab);
+                    } else if(aab.getReferenceType()==ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT) {
+                        target.addOpponent(newAab);
+                    } else if (aab.getReferenceType()==ArchiveFileAddressesBean.REFERENCETYPE_OPPONENTATTORNEY) {
+                        target.addOpponentAttorney(newAab);
+                    } 
+                }
+                
+                fileService.updateArchiveFile(target);
+                
+                Collection<ArchiveFileTagsBean> sourceTags=fileService.getTags(ids.get(i));
+                for(ArchiveFileTagsBean atb: sourceTags) {
+                    fileService.setTag(target.getId(), atb, true);
+                }
+                
+                
+                
+            }
+
+            //fileService.remove();
+            EditorsRegistry.getInstance().clearStatus(false);
+            this.cmdQuickSearchActionPerformed(null);
+        } catch (Exception ex) {
+            log.error("Error duplicating cases", ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim Duplizieren: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            EditorsRegistry.getInstance().clearStatus(false);
+            return;
+        } finally {
+            ThreadUtils.setDefaultCursor(this, false);
+        }
+    }//GEN-LAST:event_mnuDuplicateSelectedArchiveFilesActionPerformed
+
+    private void cmdDocumentTagFilterMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdDocumentTagFilterMousePressed
+        this.popDocumentTagFilter.show(this.cmdDocumentTagFilter, evt.getX(), evt.getY());
+    }//GEN-LAST:event_cmdDocumentTagFilterMousePressed
+
+    private void cmdDocumentTagFilterActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdDocumentTagFilterActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_cmdDocumentTagFilterActionPerformed
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JCheckBox chkIncludeArchive;
+    private javax.swing.JButton cmdDocumentTagFilter;
     private javax.swing.JButton cmdExport;
     private javax.swing.JButton cmdQuickSearch;
     private javax.swing.JButton cmdTagFilter;
@@ -1127,7 +1246,9 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
     protected javax.swing.JLabel lblPanelTitle;
     private javax.swing.JLabel lblSummary;
     private javax.swing.JMenuItem mnuDeleteSelectedArchiveFiles;
+    private javax.swing.JMenuItem mnuDuplicateSelectedArchiveFiles;
     private javax.swing.JMenuItem mnuOpenSelectedArchiveFile;
+    private javax.swing.JPopupMenu popDocumentTagFilter;
     private javax.swing.JPopupMenu popTagFilter;
     private javax.swing.JPopupMenu popupArchiveFileActions;
     private javax.swing.JTable tblResults;

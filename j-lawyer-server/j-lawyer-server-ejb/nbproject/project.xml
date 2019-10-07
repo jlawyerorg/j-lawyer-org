@@ -7,12 +7,10 @@
             <minimum-ant-version>1.6.5</minimum-ant-version>
             <included-library dirs="100">reference.j-lawyer-server-entities.dist</included-library>
             <included-library dirs="200">reference.j-lawyer-server-api.jar</included-library>
-            <included-library dirs="200">file.reference.log4j.jar</included-library>
             <included-library dirs="200">reference.j-lawyer-server-common.jar</included-library>
-            <included-library dirs="200">file.reference.mysql-connector-java-5.1.37-bin.jar</included-library>
             <included-library dirs="200">file.reference.joda-time-2.1.jar</included-library>
+            <included-library dirs="200">file.reference.log4j-1.2.17.jar</included-library>
             <included-library dirs="200">file.reference.jollyday-0.4.7.jar</included-library>
-            <included-library dirs="200">file.reference.tika-app-1.5.jar</included-library>
             <included-library dirs="200">file.reference.j-lawyer-drebis-stubs.jar</included-library>
             <included-library dirs="200">file.reference.lucene-analyzers-common-4.7.0.jar</included-library>
             <included-library dirs="200">file.reference.lucene-core-4.7.0.jar</included-library>
@@ -39,6 +37,7 @@
             <included-library dirs="200">file.reference.simple-odf-0.8.2-incubating.jar</included-library>
             <included-library dirs="200">file.reference.xslt-runner-1.2.4-incubating.jar</included-library>
             <included-library dirs="200">file.reference.xslt-runner-task-1.2.4-incubating.jar</included-library>
+            <included-library dirs="200">file.reference.tika-app-1.5.jar</included-library>
             <source-roots>
                 <root id="src.dir"/>
             </source-roots>

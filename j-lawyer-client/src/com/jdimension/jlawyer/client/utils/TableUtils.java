@@ -737,7 +737,7 @@ public class TableUtils {
 
         ReadOnlyDocumentStore store = new ReadOnlyDocumentStore("jtableexport-" + fileName, fileName);
         Launcher launcher = LauncherFactory.getLauncher(fileName, excelStr.toString().getBytes(), store);
-        launcher.launch();
+        launcher.launch(false);
 
     }
 

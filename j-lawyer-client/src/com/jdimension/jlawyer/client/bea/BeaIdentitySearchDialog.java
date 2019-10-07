@@ -759,6 +759,8 @@ public class BeaIdentitySearchDialog extends javax.swing.JDialog {
         txtZipCode = new javax.swing.JTextField();
         txtName = new javax.swing.JTextField();
         lblError = new javax.swing.JLabel();
+        jLabel6 = new javax.swing.JLabel();
+        txtOfficeName = new javax.swing.JTextField();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("beA-Teilnehmer suchen");
@@ -837,6 +839,14 @@ public class BeaIdentitySearchDialog extends javax.swing.JDialog {
 
         lblError.setText(" ");
 
+        jLabel6.setText("Kanzleiname:");
+
+        txtOfficeName.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyPressed(java.awt.event.KeyEvent evt) {
+                txtOfficeNameKeyPressed(evt);
+            }
+        });
+
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -850,19 +860,30 @@ public class BeaIdentitySearchDialog extends javax.swing.JDialog {
                             .add(jLabel3)
                             .add(jLabel2)
                             .add(jLabel4)
-                            .add(jLabel5)
-                            .add(jLabel1))
+                            .add(jLabel5))
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                             .add(layout.createSequentialGroup()
                                 .add(lblError)
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .add(cmdQuickSearch))
-                            .add(txtFirstname)
-                            .add(txtUserName)
-                            .add(txtCity)
-                            .add(txtZipCode)
-                            .add(txtName))))
+                                .add(0, 0, Short.MAX_VALUE))
+                            .add(layout.createSequentialGroup()
+                                .add(10, 10, 10)
+                                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                                    .add(org.jdesktop.layout.GroupLayout.TRAILING, txtZipCode)
+                                    .add(org.jdesktop.layout.GroupLayout.TRAILING, txtCity)
+                                    .add(org.jdesktop.layout.GroupLayout.TRAILING, txtUserName)
+                                    .add(txtName)))))
+                    .add(layout.createSequentialGroup()
+                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            .add(jLabel6)
+                            .add(jLabel1))
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            .add(org.jdesktop.layout.GroupLayout.TRAILING, txtFirstname)
+                            .add(txtOfficeName)))
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
+                        .add(0, 0, Short.MAX_VALUE)
+                        .add(cmdQuickSearch)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -870,30 +891,34 @@ public class BeaIdentitySearchDialog extends javax.swing.JDialog {
             .add(layout.createSequentialGroup()
                 .addContainerGap()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(jLabel1)
-                    .add(txtFirstname, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                    .add(jLabel6)
+                    .add(txtOfficeName, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(jLabel2)
-                    .add(txtName, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                    .add(txtFirstname, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(jLabel1))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(jLabel3)
-                    .add(txtUserName, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                    .add(txtName, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(jLabel2))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(jLabel4)
-                    .add(txtCity, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                    .add(txtUserName, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(jLabel3))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(jLabel5)
-                    .add(txtZipCode, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                    .add(txtCity, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(jLabel4))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
-                    .add(cmdQuickSearch)
-                    .add(lblError))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 257, Short.MAX_VALUE)
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(txtZipCode, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(jLabel5))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(cmdQuickSearch)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .add(lblError)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jScrollPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 285, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
 
@@ -946,7 +971,7 @@ public class BeaIdentitySearchDialog extends javax.swing.JDialog {
         EditorsRegistry.getInstance().updateStatus("Suche beA-Teilnehmer...");
         ThreadUtils.setWaitCursor(this);
         
-        new Thread(new BeaIdentitySearchThread(this, this.txtFirstname.getText().trim(), this.txtName.getText().trim(), this.txtUserName.getText().trim(), this.txtCity.getText().trim(), this.txtZipCode.getText().trim(), this.tblResults, this.lblError)).start();
+        new Thread(new BeaIdentitySearchThread(this, this.txtFirstname.getText().trim(), this.txtName.getText().trim(), this.txtUserName.getText().trim(), this.txtCity.getText().trim(), this.txtZipCode.getText().trim(), this.txtOfficeName.getText().trim(), this.tblResults, this.lblError)).start();
     }//GEN-LAST:event_cmdQuickSearchActionPerformed
 
     private void txtFirstnameKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtFirstnameKeyPressed
@@ -992,6 +1017,12 @@ public class BeaIdentitySearchDialog extends javax.swing.JDialog {
         }
     }//GEN-LAST:event_txtZipCodeKeyPressed
 
+    private void txtOfficeNameKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtOfficeNameKeyPressed
+        if (evt.getKeyCode() == evt.VK_ENTER) {
+            this.cmdQuickSearchActionPerformed(null);
+        }
+    }//GEN-LAST:event_txtOfficeNameKeyPressed
+
     /**
      * @param args the command line arguments
      */
@@ -1011,12 +1042,14 @@ public class BeaIdentitySearchDialog extends javax.swing.JDialog {
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
+    private javax.swing.JLabel jLabel6;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JLabel lblError;
     private javax.swing.JTable tblResults;
     private javax.swing.JTextField txtCity;
     private javax.swing.JTextField txtFirstname;
     private javax.swing.JTextField txtName;
+    private javax.swing.JTextField txtOfficeName;
     private javax.swing.JTextField txtUserName;
     private javax.swing.JTextField txtZipCode;
     // End of variables declaration//GEN-END:variables

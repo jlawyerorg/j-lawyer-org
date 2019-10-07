@@ -685,13 +685,9 @@ public class LinuxOfficeLauncher extends OfficeLauncher {
     }
 
     @Override
-    public void launch() throws Exception {
+    public void launch(boolean autoCloseExistingDocument) throws Exception {
 
-        
-            if (isDocumentOpen(store.getDocumentIdentifier())) {
-                throw new Exception("Dokument " + store.getFileName() + " ist bereits geöffnet");
-            }
-        
+        this.autoCloseOpenDocument(autoCloseExistingDocument);
 
         final Launcher thisLauncher = this;
 
@@ -701,11 +697,10 @@ public class LinuxOfficeLauncher extends OfficeLauncher {
 
                 try {
 
-
-                        ObservedOfficeDocument odoc = new ObservedOfficeDocument(url, store, thisLauncher);
-                        DocumentObserver observer = DocumentObserver.getInstance();
-                        odoc.setStatus(ObservedDocument.STATUS_LAUNCHING);
-                        observer.addDocument(odoc);
+                    ObservedOfficeDocument odoc = new ObservedOfficeDocument(url, store, thisLauncher);
+                    DocumentObserver observer = DocumentObserver.getInstance();
+                    odoc.setStatus(ObservedDocument.STATUS_LAUNCHING);
+                    observer.addDocument(odoc);
 
                     Process p = null;
                     boolean libreOffice = false;
@@ -725,8 +720,9 @@ public class LinuxOfficeLauncher extends OfficeLauncher {
 
                     if (libreOffice) {
 
-                        if(odoc!=null)
+                        if (odoc != null) {
                             odoc.setStatus(ObservedDocument.STATUS_OPEN);
+                        }
 
                         log.debug("waitFor");
                         int exit = p.waitFor();
@@ -753,8 +749,8 @@ public class LinuxOfficeLauncher extends OfficeLauncher {
                             } else {
                                 p = Runtime.getRuntime().exec(new String[]{oooBinary, url});
                             }
-                            
-                                odoc.setStatus(ObservedDocument.STATUS_OPEN);
+
+                            odoc.setStatus(ObservedDocument.STATUS_OPEN);
                             log.debug("waitFor");
                             exit = p.waitFor();
                             log.debug("exit code: " + exit);

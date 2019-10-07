@@ -673,6 +673,7 @@ import com.jdimension.jlawyer.sip.SipUtils;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import javax.annotation.security.RunAs;
 import javax.jms.*;
 import javax.naming.InitialContext;
 import org.apache.log4j.Logger;
@@ -681,6 +682,7 @@ import org.apache.log4j.Logger;
  *
  * @author jens
  */
+@RunAs("loginRole")
 public class FaxQueueStatusTask extends java.util.TimerTask {
 
     private static Logger log = Logger.getLogger(FaxQueueStatusTask.class.getName());

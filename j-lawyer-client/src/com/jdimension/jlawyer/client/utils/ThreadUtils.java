@@ -674,12 +674,15 @@ import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
+import org.apache.log4j.Logger;
 
 /**
  *
  * @author jens
  */
 public class ThreadUtils {
+    
+    private static final Logger log=Logger.getLogger(ThreadUtils.class.getName());
 
     public static void showErrorDialog(final Component owner, final String msg, final String title) {
         SwingUtilities.invokeLater(
@@ -845,13 +848,21 @@ public class ThreadUtils {
     }
 
     public static void updateLabel(final JLabel label, final String text) {
-        SwingUtilities.invokeLater(
-                new Runnable() {
 
-            public void run() {
-                label.setText(text);
-            }
-        });
+        if (label == null) {
+            log.warn("Label to be updated is null", new Exception());
+        } else {
+            SwingUtilities.invokeLater(
+                    new Runnable() {
+
+                public void run() {
+
+                    label.setText(text);
+
+                }
+            });
+        }
+
     }
 
     public static void updateLabelIcon(final JLabel label, final ImageIcon icon) {

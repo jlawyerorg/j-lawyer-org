@@ -730,7 +730,9 @@ public class DocumentObserver {
             if (doc instanceof ObservedMicrosoftOfficeDocument) {
                 // do nothing, no warning in this case. winword.exe process might never end, therefore all documents are still considered open. if they were saved then they are already stored back into the archive file
             } else {
-                unsaved=unsaved+1;
+                if(!doc.isReadOnly()) {
+                    unsaved=unsaved+1;
+                }
             }
         }
         return unsaved>0;
@@ -743,6 +745,25 @@ public class DocumentObserver {
             }
         }
         return false;
+    }
+    
+    public ObservedDocument getDocumentById(String docId) {
+        for (ObservedDocument doc : docs) {
+            if (doc.getStore().getDocumentIdentifier().equals(docId)) {
+                return doc;
+            }
+        }
+        return null;
+    }
+    
+    public int countOpenDocumentsWithExtension(String extension) {
+        int count=0;
+        for (ObservedDocument doc : docs) {
+            if (isDocumentOpen(doc.getStore().getDocumentIdentifier()) && doc.getName().toLowerCase().endsWith("." + extension)) {
+                count=count+1;
+            }
+        }
+        return count;
     }
 
     public synchronized void observe() {

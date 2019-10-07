@@ -6,6 +6,7 @@
             <name>j-lawyer-server-entities</name>
             <minimum-ant-version>1.6.5</minimum-ant-version>
             <included-library dirs="200">file.reference.j-lawyer-server-common.jar</included-library>
+            <included-library dirs="200">file.reference.flyway-core-5.2.1.jar</included-library>
             <source-roots>
                 <root id="src.dir"/>
             </source-roots>

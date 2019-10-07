@@ -672,12 +672,14 @@ import com.jdimension.jlawyer.client.editors.files.EditArchiveFileDetailsPanel;
 import com.jdimension.jlawyer.client.editors.files.ViewArchiveFileDetailsPanel;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
+import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 import com.jdimension.jlawyer.server.constants.ArchiveFileConstants;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import com.jdimension.jlawyer.ui.tagging.TagUtils;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Font;
@@ -820,16 +822,25 @@ public class ReviewDueEntryPanel extends javax.swing.JPanel {
         
         this.lblTags.setText("");
         if(e.getTags()!=null) {
-            StringBuffer sb=new StringBuffer();
-            sb.append("<html>");
-            for(String t: e.getTags()) {
-                //sb.append(t).append(", ");
-                sb.append(t).append("<br/>");
+//            StringBuffer sb=new StringBuffer();
+//            sb.append("<html>");
+//            for(String t: e.getTags()) {
+//                //sb.append(t).append(", ");
+//                sb.append(t).append("<br/>");
+//            }
+//            sb.append("</html>");
+//            String tagString=sb.toString();
+//            
+//            this.lblTags.setText(tagString);
+
+            String tagList=TagUtils.getTagList(e.getTags());
+            String shortenedTagList=tagList;
+            if (shortenedTagList.length() > 105) {
+                shortenedTagList = shortenedTagList.substring(0, 105) + "...";
             }
-            sb.append("</html>");
-            String tagString=sb.toString();
             
-            this.lblTags.setText(tagString);
+            this.lblTags.setText(shortenedTagList);
+            this.lblTags.setToolTipText(tagList);
         }
         
     }
@@ -858,14 +869,14 @@ public class ReviewDueEntryPanel extends javax.swing.JPanel {
 
         chkDescription.setText(" ");
         chkDescription.setToolTipText("als erledigt markieren");
-        chkDescription.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                chkDescriptionMouseClicked(evt);
-            }
-        });
         chkDescription.addChangeListener(new javax.swing.event.ChangeListener() {
             public void stateChanged(javax.swing.event.ChangeEvent evt) {
                 chkDescriptionStateChanged(evt);
+            }
+        });
+        chkDescription.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                chkDescriptionMouseClicked(evt);
             }
         });
 
@@ -900,35 +911,40 @@ public class ReviewDueEntryPanel extends javax.swing.JPanel {
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGap(6, 6, 6)
-                .addComponent(lblIcon)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(chkDescription)
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(lblIcon)
+                    .addComponent(chkDescription))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(lblTags, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(lblDescription, javax.swing.GroupLayout.DEFAULT_SIZE, 499, Short.MAX_VALUE))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(lblDescription, javax.swing.GroupLayout.DEFAULT_SIZE, 266, Short.MAX_VALUE)
+                        .addGap(41, 41, 41)
+                        .addComponent(lblResponsible))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(lblResponsible)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(cmdPostpone))
-                    .addComponent(lblTags, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addComponent(cmdPostpone)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(lblIcon, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(chkDescription, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(lblDescription, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(cmdPostpone, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addGap(4, 4, 4)
-                        .addComponent(lblResponsible)))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(lblTags)
+                        .addComponent(cmdPostpone)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(lblResponsible))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(chkDescription)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(lblIcon, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(lblDescription)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(lblTags)))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -1033,7 +1049,8 @@ public class ReviewDueEntryPanel extends javax.swing.JPanel {
     private void cmdPostponeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdPostponeActionPerformed
         JTextField hiddenField=new JTextField();
         MultiCalDialog dlg = new MultiCalDialog(hiddenField, EditorsRegistry.getInstance().getMainWindow(), true);
-        dlg.setLocation(this.getX() + this.cmdPostpone.getX(), this.getY() + this.cmdPostpone.getY());
+        //dlg.setLocation(this.getX() + this.cmdPostpone.getX(), this.getY() + this.cmdPostpone.getY());
+        FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
         Date d = null;
         try {

@@ -749,6 +749,17 @@ public class DocumentViewerFactory {
 //            } catch (Throwable t) {
 //                log.error("could not convert file to PDF: " + fileName, t);
 //            }
+        } else if (fileName.toLowerCase().endsWith(".bea")) {
+            try {
+                BeaPanel bp = new BeaPanel(id);
+                bp.showContent(content);
+                return bp;
+            } catch (Throwable t) {
+                log.error(t);
+                BeaPanel bp = new BeaPanel(null);
+                bp.showStatus("Vorschau kann nicht geladen werden.");
+                return bp;
+            }
         } else if (LauncherFactory.supportedByLibreOffice(fileName)) {
             
             // double clicking the documents table will fire the mouse event twice - one with clickount=1, then with clickcount=2

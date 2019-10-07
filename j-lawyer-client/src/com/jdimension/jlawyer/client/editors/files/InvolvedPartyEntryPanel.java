@@ -669,6 +669,10 @@ import com.jdimension.jlawyer.client.bea.IdentityPanel;
 import com.jdimension.jlawyer.client.bea.SendBeaMessageDialog;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.addresses.ContactTypeColors;
+import com.jdimension.jlawyer.client.events.ContactUpdatedEvent;
+import com.jdimension.jlawyer.client.events.Event;
+import com.jdimension.jlawyer.client.events.EventBroker;
+import com.jdimension.jlawyer.client.events.EventConsumer;
 import com.jdimension.jlawyer.client.mail.SendEmailDialog;
 import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
@@ -694,7 +698,7 @@ import org.jlawyer.bea.model.Identity;
  *
  * @author jens
  */
-public class InvolvedPartyEntryPanel extends javax.swing.JPanel {
+public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements EventConsumer {
 
     private static final Logger log = Logger.getLogger(InvolvedPartyEntryPanel.class.getName());
     //DecimalFormat df = new DecimalFormat("0.00%");
@@ -722,6 +726,9 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel {
         this.lblCustom1.setText(sset.getSetting(sset.DATA_CUSTOMFIELD_ARCHIVEFILE_INVOLVED_PREFIX + "1", "Eigenes Feld 1"));
         this.lblCustom2.setText(sset.getSetting(sset.DATA_CUSTOMFIELD_ARCHIVEFILE_INVOLVED_PREFIX + "2", "Eigenes Feld 2"));
         this.lblCustom3.setText(sset.getSetting(sset.DATA_CUSTOMFIELD_ARCHIVEFILE_INVOLVED_PREFIX + "3", "Eigenes Feld 3"));
+        
+        EventBroker b = EventBroker.getInstance();
+        b.subscribeConsumer(this, Event.TYPE_CONTACTUPDATED);
             
     }
     
@@ -1273,4 +1280,19 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel {
     private javax.swing.JTextField txtCustom3;
     private javax.swing.JTextField txtReference;
     // End of variables declaration//GEN-END:variables
+
+    @Override
+    public void onEvent(Event e) {
+        if (e instanceof ContactUpdatedEvent) {
+            if (this.a != null) {
+                // can be null in subclass of ArchiveFilePanel
+                if (this.a.getId() != null) {
+                    AddressBean eventAddress = ((ContactUpdatedEvent) e).getAddress();
+                    if (this.a.getId().equals(eventAddress.getId())) {
+                        this.setEntry(eventAddress, this.afa);
+                    }
+                }
+            }
+        }
+    }
 }

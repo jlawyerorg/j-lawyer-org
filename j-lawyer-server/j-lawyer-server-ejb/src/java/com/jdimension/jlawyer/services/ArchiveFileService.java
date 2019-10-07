@@ -696,7 +696,7 @@ import javax.jms.ObjectMessage;
 import javax.jms.Session;
 import javax.naming.InitialContext;
 import org.apache.log4j.Logger;
-import org.jboss.security.annotation.SecurityDomain;
+import org.jboss.ejb3.annotation.SecurityDomain;
 import org.jlawyer.data.tree.GenericNode;
 import org.jlawyer.data.tree.TreeNodeUtils;
 import org.jlawyer.search.SearchIndexRequest;
@@ -721,6 +721,8 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     @EJB
     private ArchiveFileTagsBeanFacadeLocal archiveFileTagsFacade;
     @EJB
+    private DocumentTagsBeanFacadeLocal documentTagsFacade;
+    @EJB
     private ArchiveFileDocumentsBeanFacadeLocal archiveFileDocumentsFacade;
     @EJB
     private ArchiveFileHistoryBeanFacadeLocal archiveFileHistoryFacade;
@@ -729,16 +731,16 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     @EJB
     private ServerSettingsBeanFacadeLocal settingsFacade;
 
-    private static final String PS_SEARCHENHANCED_2 = "select id from ArchiveFileBean where ucase(name) like ? or ucase(fileNumber) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ?";
-    //private static final String PS_SEARCHENHANCED_3 = "select ArchiveFileBean.id from ArchiveFileBean, ArchiveFileTagsBean where (ucase(name) like ? or ucase(fileNumber) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ?) and archived=0 and (ArchiveFileTagsBean.tagName=? and ArchiveFileTagsBean.archiveFileKey=ArchiveFileBean.id)";
-    private static final String PS_SEARCHENHANCED_4 = "select id from ArchiveFileBean where (ucase(name) like ? or ucase(fileNumber) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ?) and archived=0";
+    private static final String PS_SEARCHENHANCED_2 = "select id from cases where ucase(name) like ? or ucase(fileNumber) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(subjectField) like ?";
+    //private static final String PS_SEARCHENHANCED_3 = "select ArchiveFileBean.id from cases, ArchiveFileTagsBean where (ucase(name) like ? or ucase(fileNumber) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ?) and archived=0 and (ArchiveFileTagsBean.tagName=? and ArchiveFileTagsBean.archiveFileKey=ArchiveFileBean.id)";
+    private static final String PS_SEARCHENHANCED_4 = "select id from cases where (ucase(name) like ? or ucase(fileNumber) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(subjectField) like ?) and archived=0";
 
     @Override
     @RolesAllowed({"loginRole"})
     public int getArchiveFileCount() {
         JDBCUtils utils = new JDBCUtils();
         try {
-            return utils.getRowCount("ArchiveFileBean");
+            return utils.getRowCount("cases");
         } catch (Exception ex) {
             throw new EJBException("Error getting number of archive files", ex);
         }
@@ -781,7 +783,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
             try {
                 con = utils.getConnection();
-                st = con.prepareStatement("select distinct (fileNumber) from ArchiveFileBean order by fileNumber asc");
+                st = con.prepareStatement("select distinct (fileNumber) from cases order by fileNumber asc");
 
                 rs = st.executeQuery();
                 while (rs.next()) {
@@ -838,7 +840,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             suffix = "/" + suffix.substring(2);
             try {
                 con = utils.getConnection();
-                st = con.prepareStatement("select id from ArchiveFileBean where fileNumber = ?");
+                st = con.prepareStatement("select id from cases where fileNumber = ?");
                 boolean found = true;
                 while (found) {
                     newKey = nf.format(index) + suffix;
@@ -886,7 +888,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 //
 //        try {
 //            con = utils.getConnection();
-//            st = con.prepareStatement("select id from ArchiveFileBean where fileNumber = ?");
+//            st = con.prepareStatement("select id from cases where fileNumber = ?");
 //            boolean found = true;
 //            while (found) {
 //                st.setString(1, prefix + nf.format(index));
@@ -936,7 +938,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         ArrayList<ArchiveFileBean> list = new ArrayList<ArchiveFileBean>();
         try {
             con = utils.getConnection();
-            st = con.prepareStatement("select id from ArchiveFileBean where ucase(name) like ? or ucase(fileNumber) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ?");
+            st = con.prepareStatement("select id from cases where ucase(name) like ? or ucase(fileNumber) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(subjectField) like ?");
             String wildCard = "%" + StringUtils.germanToUpperCase(query) + "%";
             st.setString(1, wildCard);
             st.setString(2, wildCard);
@@ -944,6 +946,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             st.setString(4, wildCard);
             st.setString(5, wildCard);
             st.setString(6, wildCard);
+            st.setString(7, wildCard);
             rs = st.executeQuery();
 
             //ArchiveFileLocalHome home = this.lookupArchiveFileBean();
@@ -1282,12 +1285,12 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 //st = con.prepareStatement("select distinct(archiveFileKey) from (select archiveFileKey, changeDate from ArchiveFileHistoryBean where principal = ? order by changeDate DESC limit 0,200) as t1 limit 0,?");
                 // leave out archived
                 //st = con.prepareStatement("select distinct(t1.archiveFileKey) from (select archiveFileKey, changeDate from ArchiveFileHistoryBean where principal = ? order by changeDate DESC limit 0,200) t1, ArchiveFileBean t2 where t1.archiveFileKey = t2.id and t2.archived=0 limit 0,?");
-                st = con.prepareStatement("select t1.archiveFileKey from (select archiveFileKey, max(changeDate) as changeDate from ArchiveFileHistoryBean where principal = ? group by archiveFileKey order by changeDate desc) t1, ArchiveFileBean t2 where t1.archiveFileKey = t2.id and t2.archived=0 order by changeDate DESC limit 0,?");
+                st = con.prepareStatement("select t1.archiveFileKey from (select archiveFileKey, max(changeDate) as changeDate from case_history where principal = ? group by archiveFileKey order by changeDate desc) t1, cases t2 where t1.archiveFileKey = t2.id and t2.archived=0 order by changeDate DESC limit 0,?");
             } else {
                 //st = con.prepareStatement("select distinct(archiveFileKey) from (select archiveFileKey, changeDate from ArchiveFileHistoryBean where principal != ? order by changeDate DESC limit 0,200) as t1 limit 0,?");
                 // leave out archived
                 //st = con.prepareStatement("select distinct(t1.archiveFileKey) from (select archiveFileKey, changeDate from ArchiveFileHistoryBean where principal != ? order by changeDate DESC limit 0,200) t1, ArchiveFileBean t2 where t1.archiveFileKey = t2.id and t2.archived=0 limit 0,?");
-                st = con.prepareStatement("select t1.archiveFileKey from (select archiveFileKey, max(changeDate) as changeDate from ArchiveFileHistoryBean where principal != ? group by archiveFileKey order by changeDate desc) t1, ArchiveFileBean t2 where t1.archiveFileKey = t2.id and t2.archived=0 order by changeDate DESC limit 0,?");
+                st = con.prepareStatement("select t1.archiveFileKey from (select archiveFileKey, max(changeDate) as changeDate from case_history where principal != ? group by archiveFileKey order by changeDate desc) t1, cases t2 where t1.archiveFileKey = t2.id and t2.archived=0 order by changeDate DESC limit 0,?");
             }
 
             st.setString(1, lastChangeUser);
@@ -1337,7 +1340,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         ArrayList<ArchiveFileReviewsBean> list = new ArrayList<ArchiveFileReviewsBean>();
         try {
             con = utils.getConnection();
-            st = con.prepareStatement("select id, archiveFileKey from ArchiveFileReviewsBean where done=0 order by reviewDate asc");
+            st = con.prepareStatement("select id, archiveFileKey from case_followups where done=0 order by reviewDate asc");
             rs = st.executeQuery();
 
             while (rs.next()) {
@@ -1574,7 +1577,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         int count = 0;
         try {
             con = utils.getConnection();
-            st = con.prepareStatement("select count(*) from ArchiveFileBean where archived=1");
+            st = con.prepareStatement("select count(*) from cases where archived=1");
 
             rs = st.executeQuery();
             if (rs.next()) {
@@ -1612,7 +1615,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     public int getDocumentCount() {
         JDBCUtils utils = new JDBCUtils();
         try {
-            return utils.getRowCount("ArchiveFileDocumentsBean");
+            return utils.getRowCount("case_documents");
         } catch (Exception ex) {
             throw new EJBException("Error getting number of archive files", ex);
         }
@@ -1640,10 +1643,11 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         } else {
             boolean deleted = dbFile.delete();
             if (!deleted) {
-                throw new Exception("Dokument " + dst + " konnte nicht gelöscht werden!");
+                // could not delete document, but still let's continue with removal
+                log.error("Dokument " + dst + " konnte nicht gelöscht werden!");
             }
         }
-        
+
         try {
             PreviewGenerator pg = new PreviewGenerator(this.archiveFileDocumentsFacade);
             pg.deletePreview(aFile.getId(), db.getName());
@@ -1749,7 +1753,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
     private byte[] getDocumentContentImpl(String id) throws Exception {
         ArchiveFileDocumentsBean db = this.archiveFileDocumentsFacade.find(id);
-        if(db==null) {
+        if (db == null) {
             log.error("Document with id " + id + " does not exist");
             throw new Exception("Dokument mit ID " + id + " existiert nicht!");
         }
@@ -1804,7 +1808,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     }
 
     @Override
-    public Collection getArchiveFileAddressesForAddress(String adressId) {
+    public Collection<ArchiveFileAddressesBean> getArchiveFileAddressesForAddress(String adressId) {
 
         AddressBean ab = this.addressFacade.find(adressId);
         List<ArchiveFileAddressesBean> l = this.archiveFileAddressesFacade.findByAddressKey(ab);
@@ -1918,9 +1922,10 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         newHistEntry.setId(idGen.getID().toString());
         newHistEntry.setArchiveFileKey(aFile);
         newHistEntry.setChangeDate(new Date());
-        String status="offen";
-        if(review.getDoneBoolean())
-            status="erledigt";
+        String status = "offen";
+        if (review.getDoneBoolean()) {
+            status = "erledigt";
+        }
         newHistEntry.setChangeDescription(review.getReviewTypeName() + " geändert: " + review.getReviewReason() + " (" + review.toString() + ", " + status + ")");
         newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
         this.archiveFileHistoryFacade.create(newHistEntry);
@@ -2000,12 +2005,12 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 tag.setId(tagId);
                 tag.setArchiveFileKey(aFile);
                 this.archiveFileTagsFacade.create(tag);
-                historyText = "Tag gesetzt: " + tag.getTagName();
+                historyText = "Akten-Tag gesetzt: " + tag.getTagName();
             }
         } else if (check.size() > 0) {
             ArchiveFileTagsBean remove = (ArchiveFileTagsBean) check.get(0);
             this.archiveFileTagsFacade.remove(remove);
-            historyText = "Tag entfernt: " + tag.getTagName();
+            historyText = "Akten-Tag entfernt: " + tag.getTagName();
         }
 
         ArchiveFileHistoryBean newHistEntry = new ArchiveFileHistoryBean();
@@ -2020,11 +2025,55 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     }
 
     @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public void setDocumentTag(String documentId, DocumentTagsBean tag, boolean active) throws Exception {
+
+        ArchiveFileDocumentsBean aFile = this.archiveFileDocumentsFacade.find(documentId);
+        List check = this.documentTagsFacade.findByDocumentKeyAndTagName(aFile, tag.getTagName());
+        StringGenerator idGen = new StringGenerator();
+        String historyText = "";
+
+        if (active) {
+            if (check.size() == 0) {
+
+                String tagId = idGen.getID().toString();
+                tag.setId(tagId);
+                tag.setArchiveFileKey(aFile);
+                this.documentTagsFacade.create(tag);
+                historyText = "Dokument-Tag gesetzt an " + aFile.getName() + ": " + tag.getTagName();
+            }
+        } else if (check.size() > 0) {
+            DocumentTagsBean remove = (DocumentTagsBean) check.get(0);
+            this.documentTagsFacade.remove(remove);
+            historyText = "Dokument-Tag entfernt von " + aFile.getName() + ": " + tag.getTagName();
+        }
+
+        ArchiveFileHistoryBean newHistEntry = new ArchiveFileHistoryBean();
+        newHistEntry.setId(idGen.getID().toString());
+        newHistEntry.setArchiveFileKey(aFile.getArchiveFileKey());
+        newHistEntry.setChangeDate(new Date());
+        newHistEntry.setChangeDescription(historyText);
+        newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
+        this.archiveFileHistoryFacade.create(newHistEntry);
+
+        return;
+    }
+
+    @Override
     @RolesAllowed({"readArchiveFileRole"})
-    public Collection getTags(String archiveFileId) {
+    public Collection<ArchiveFileTagsBean> getTags(String archiveFileId) {
         ArchiveFileBean aFile = this.archiveFileFacade.find(archiveFileId);
 
         List resultList = this.archiveFileTagsFacade.findByArchiveFileKey(aFile);
+        return resultList;
+    }
+
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public Collection<DocumentTagsBean> getDocumentTags(String documentId) {
+        ArchiveFileDocumentsBean aFile = this.archiveFileDocumentsFacade.find(documentId);
+
+        List resultList = this.documentTagsFacade.findByDocumentKey(aFile);
         return resultList;
     }
 
@@ -2039,7 +2088,49 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         ArrayList<String> list = new ArrayList<String>();
         try {
             con = utils.getConnection();
-            st = con.prepareStatement("select distinct(tagName) from ArchiveFileTagsBean order by tagName asc");
+            st = con.prepareStatement("select distinct(tagName) from case_tags order by tagName asc");
+            rs = st.executeQuery();
+
+            while (rs.next()) {
+                String t = rs.getString(1);
+                list.add(t);
+            }
+        } catch (SQLException sqle) {
+            log.error("Error finding tags in use", sqle);
+            throw new EJBException("Aktuelle genutzte Tags konnten nicht gefunden werden.", sqle);
+        } finally {
+            try {
+                rs.close();
+            } catch (Throwable t) {
+                log.error(t);
+            }
+            try {
+                st.close();
+            } catch (Throwable t) {
+                log.error(t);
+            }
+            try {
+                con.close();
+            } catch (Throwable t) {
+                log.error(t);
+            }
+        }
+
+        return list;
+    }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public List<String> searchDocumentTagsInUse() {
+
+        JDBCUtils utils = new JDBCUtils();
+        Connection con = null;
+        ResultSet rs = null;
+        PreparedStatement st = null;
+        ArrayList<String> list = new ArrayList<String>();
+        try {
+            con = utils.getConnection();
+            st = con.prepareStatement("select distinct(tagName) from document_tags order by tagName asc");
             rs = st.executeQuery();
 
             while (rs.next()) {
@@ -2072,7 +2163,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
     @Override
     @RolesAllowed({"readArchiveFileRole"})
-    public ArchiveFileBean[] searchEnhanced(String query, boolean withArchive, String[] tagName) {
+    public ArchiveFileBean[] searchEnhanced(String query, boolean withArchive, String[] tagName, String[] documentTagNames) {
         JDBCUtils utils = new JDBCUtils();
         Connection con = null;
         ResultSet rs = null;
@@ -2088,6 +2179,26 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
         }
 
+        boolean withDocumentTag = false;
+        if (documentTagNames != null && documentTagNames.length > 0) {
+            if (documentTagNames.length == 1 && "".equals(documentTagNames[0])) {
+                withDocumentTag = false;
+            } else {
+                withDocumentTag = true;
+            }
+
+        }
+
+        if (withTag || withDocumentTag) {
+            if (tagName == null || tagName.length == 0) {
+                tagName = new String[]{"some-non-existing-string"};
+            }
+
+            if (documentTagNames == null || documentTagNames.length == 0) {
+                documentTagNames = new String[]{"some-non-existing-string"};
+            }
+        }
+
         ArrayList<ArchiveFileBean> list = new ArrayList<ArchiveFileBean>();
         try {
             con = utils.getConnection();
@@ -2095,24 +2206,50 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
             if (withArchive) {
                 // with archive
-                if (withTag) {
+                if (withTag || withDocumentTag) {
 
-                    String inClause = "";
-                    for (String t : tagName) {
-                        inClause = inClause + ",?";
+                    String inClauseCase = "?";
+                    if (withTag) {
+                        inClauseCase = "";
+                        for (String t : tagName) {
+                            inClauseCase = inClauseCase + ",?";
+                        }
                     }
-                    inClause = inClause.replaceFirst(",", "");
+                    String inClauseDoc = "?";
+                    if (withDocumentTag) {
+                        inClauseDoc = "";
+                        for (String t : documentTagNames) {
+                            inClauseDoc = inClauseDoc + ",?";
+                        }
+                    }
+                    inClauseCase = inClauseCase.replaceFirst(",", "");
+                    inClauseDoc = inClauseDoc.replaceFirst(",", "");
 
                     // with archive and tag
-                    st = con.prepareStatement("select ArchiveFileBean.id from ArchiveFileBean, ArchiveFileTagsBean where (ucase(name) like ? or ucase(fileNumber) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ?) and (ArchiveFileTagsBean.tagName in (" + inClause + ") and ArchiveFileTagsBean.archiveFileKey=ArchiveFileBean.id)");
+                    //st = con.prepareStatement("select distinct(cases.id) from cases, case_tags, case_documents, document_tags where (ucase(cases.name) like ? or ucase(fileNumber) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(subjectField) like ?) and ((case_tags.tagName in (" + inClauseCase + ") and case_tags.archiveFileKey=cases.id) or (document_tags.tagName in (" + inClauseDoc + ") and document_tags.documentKey=case_documents.id and case_documents.archiveFileKey=cases.id))");
+                    st = con.prepareStatement("select distinct(cases.id) from cases \n"
+                            + "left join case_tags on case_tags.archiveFileKey=cases.id \n"
+                            + "left join case_documents on case_documents.archiveFileKey=cases.id \n"
+                            + "left join document_tags on document_tags.documentKey=case_documents.id\n"
+                            + "where (ucase(cases.name) like ? or ucase(fileNumber) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(subjectField) like ?)\n"
+                            + " and (\n"
+                            + "    (case_tags.tagName in (" + inClauseCase + ")) or \n"
+                            + "    (document_tags.tagName in (" + inClauseDoc + "))\n"
+                            + "    )");
+
                     st.setString(1, wildCard);
                     st.setString(2, wildCard);
                     st.setString(3, wildCard);
                     st.setString(4, wildCard);
                     st.setString(5, wildCard);
                     st.setString(6, wildCard);
-                    int index = 7;
+                    st.setString(7, wildCard);
+                    int index = 8;
                     for (String t : tagName) {
+                        st.setString(index, t);
+                        index = index + 1;
+                    }
+                    for (String t : documentTagNames) {
                         st.setString(index, t);
                         index = index + 1;
                     }
@@ -2125,39 +2262,66 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                     st.setString(4, wildCard);
                     st.setString(5, wildCard);
                     st.setString(6, wildCard);
+                    st.setString(7, wildCard);
                 }
             } else // without archive
-             if (withTag) {
+            if (withTag || withDocumentTag) {
 
-                    String inClause = "";
+                String inClauseCase = "?";
+                if (withTag) {
+                    inClauseCase = "";
                     for (String t : tagName) {
-                        inClause = inClause + ",?";
+                        inClauseCase = inClauseCase + ",?";
                     }
-                    inClause = inClause.replaceFirst(",", "");
-
-                    // without archive and with tag
-                    st = con.prepareStatement("select ArchiveFileBean.id from ArchiveFileBean, ArchiveFileTagsBean where (ucase(name) like ? or ucase(fileNumber) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ?) and archived=0 and (ArchiveFileTagsBean.tagName in (" + inClause + ") and ArchiveFileTagsBean.archiveFileKey=ArchiveFileBean.id)");
-                    st.setString(1, wildCard);
-                    st.setString(2, wildCard);
-                    st.setString(3, wildCard);
-                    st.setString(4, wildCard);
-                    st.setString(5, wildCard);
-                    st.setString(6, wildCard);
-                    int index = 7;
-                    for (String t : tagName) {
-                        st.setString(index, t);
-                        index = index + 1;
-                    }
-                } else {
-                    // without archive and no tag
-                    st = con.prepareStatement(PS_SEARCHENHANCED_4);
-                    st.setString(1, wildCard);
-                    st.setString(2, wildCard);
-                    st.setString(3, wildCard);
-                    st.setString(4, wildCard);
-                    st.setString(5, wildCard);
-                    st.setString(6, wildCard);
                 }
+                String inClauseDoc = "?";
+                if (withDocumentTag) {
+                    inClauseDoc = "";
+                    for (String t : documentTagNames) {
+                        inClauseDoc = inClauseDoc + ",?";
+                    }
+                }
+                inClauseCase = inClauseCase.replaceFirst(",", "");
+                inClauseDoc = inClauseDoc.replaceFirst(",", "");
+
+                // without archive and with tag
+                //st = con.prepareStatement("select distinct(cases.id) from cases, case_tags, case_documents, document_tags where (ucase(cases.name) like ? or ucase(fileNumber) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(subjectField) like ?) and archived=0 and ((case_tags.tagName in (" + inClauseCase + ") and case_tags.archiveFileKey=cases.id) or (document_tags.tagName in (" + inClauseDoc + ") and document_tags.documentKey=case_documents.id and case_documents.archiveFileKey=cases.id))");
+                st = con.prepareStatement("select distinct(cases.id) from cases \n"
+                        + "left join case_tags on case_tags.archiveFileKey=cases.id \n"
+                        + "left join case_documents on case_documents.archiveFileKey=cases.id \n"
+                        + "left join document_tags on document_tags.documentKey=case_documents.id\n"
+                        + "where cases.archived=0 and (ucase(cases.name) like ? or ucase(fileNumber) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(subjectField) like ?)\n"
+                        + " and (\n"
+                        + "    (case_tags.tagName in (" + inClauseCase + ")) or \n"
+                        + "    (document_tags.tagName in (" + inClauseDoc + "))\n"
+                        + "    )");
+                st.setString(1, wildCard);
+                st.setString(2, wildCard);
+                st.setString(3, wildCard);
+                st.setString(4, wildCard);
+                st.setString(5, wildCard);
+                st.setString(6, wildCard);
+                st.setString(7, wildCard);
+                int index = 8;
+                for (String t : tagName) {
+                    st.setString(index, t);
+                    index = index + 1;
+                }
+                for (String t : documentTagNames) {
+                    st.setString(index, t);
+                    index = index + 1;
+                }
+            } else {
+                // without archive and no tag
+                st = con.prepareStatement(PS_SEARCHENHANCED_4);
+                st.setString(1, wildCard);
+                st.setString(2, wildCard);
+                st.setString(3, wildCard);
+                st.setString(4, wildCard);
+                st.setString(5, wildCard);
+                st.setString(6, wildCard);
+                st.setString(7, wildCard);
+            }
 
             rs = st.executeQuery();
 
@@ -2239,25 +2403,25 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             con = utils.getConnection();
             if (status == ArchiveFileConstants.REVIEWSTATUS_ANY) {
                 if (type == ArchiveFileConstants.REVIEWTYPE_ANY) {
-                    st = con.prepareStatement("select id, archiveFileKey from ArchiveFileReviewsBean where reviewDate >= ? and reviewDate <= ? order by reviewDate asc limit ?");
+                    st = con.prepareStatement("select id, archiveFileKey from case_followups where reviewDate >= ? and reviewDate <= ? order by reviewDate asc limit ?");
                     st.setDate(1, new java.sql.Date(fromDate.getTime()));
                     st.setDate(2, new java.sql.Date(toDate.getTime()));
                     st.setInt(3, limit);
                 } else {
-                    st = con.prepareStatement("select id, archiveFileKey from ArchiveFileReviewsBean where reviewType=? and reviewDate >= ? and reviewDate <= ? order by reviewDate asc limit ?");
+                    st = con.prepareStatement("select id, archiveFileKey from case_followups where reviewType=? and reviewDate >= ? and reviewDate <= ? order by reviewDate asc limit ?");
                     st.setInt(1, type);
                     st.setDate(2, new java.sql.Date(fromDate.getTime()));
                     st.setDate(3, new java.sql.Date(toDate.getTime()));
                     st.setInt(4, limit);
                 }
             } else if (type == ArchiveFileConstants.REVIEWTYPE_ANY) {
-                st = con.prepareStatement("select id, archiveFileKey from ArchiveFileReviewsBean where done=? and reviewDate >= ? and reviewDate <= ? order by reviewDate asc limit ?");
+                st = con.prepareStatement("select id, archiveFileKey from case_followups where done=? and reviewDate >= ? and reviewDate <= ? order by reviewDate asc limit ?");
                 st.setInt(1, status);
                 st.setDate(2, new java.sql.Date(fromDate.getTime()));
                 st.setDate(3, new java.sql.Date(toDate.getTime()));
                 st.setInt(4, limit);
             } else {
-                st = con.prepareStatement("select id, archiveFileKey from ArchiveFileReviewsBean where reviewType=? and done=? and reviewDate >= ? and reviewDate <= ? order by reviewDate asc limit ?");
+                st = con.prepareStatement("select id, archiveFileKey from case_followups where reviewType=? and done=? and reviewDate >= ? and reviewDate <= ? order by reviewDate asc limit ?");
                 st.setInt(1, type);
                 st.setInt(2, status);
                 st.setDate(3, new java.sql.Date(fromDate.getTime()));
@@ -2314,9 +2478,9 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         try {
             con = utils.getConnection();
             if (principalId == null || "".equalsIgnoreCase(principalId)) {
-                st = con.prepareStatement("select min(changeDate) as minDate, max(changeDate) as maxDate from ArchiveFileHistoryBean");
+                st = con.prepareStatement("select min(changeDate) as minDate, max(changeDate) as maxDate from case_history");
             } else {
-                st = con.prepareStatement("select min(changeDate) as minDate, max(changeDate) as maxDate from ArchiveFileHistoryBean where principal = ?");
+                st = con.prepareStatement("select min(changeDate) as minDate, max(changeDate) as maxDate from case_history where principal = ?");
                 st.setString(1, principalId);
             }
             rs = st.executeQuery();
@@ -2386,7 +2550,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         try {
             con = utils.getConnection();
 
-            st = con.prepareStatement("select archiveFileKey from (SELECT archiveFileKey, MAX(changeDate) as maxChangeDate FROM ArchiveFileHistoryBean GROUP BY archiveFileKey order by maxChangeDate DESC) a1, ArchiveFileBean a2 where a1.archiveFileKey = a2.id and a2.archived=0 order by maxChangeDate DESC limit 0,?");
+            st = con.prepareStatement("select archiveFileKey from (SELECT archiveFileKey, MAX(changeDate) as maxChangeDate FROM case_history GROUP BY archiveFileKey order by maxChangeDate DESC) a1, cases a2 where a1.archiveFileKey = a2.id and a2.archived=0 order by maxChangeDate DESC limit 0,?");
 
             st.setInt(1, limit);
             rs = st.executeQuery();
@@ -2468,7 +2632,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         ArrayList<ArchiveFileBean> list = new ArrayList<ArchiveFileBean>();
         try {
             con = utils.getConnection();
-            st = con.prepareStatement("select id from ArchiveFileBean where archived=0 and id not in (select archiveFileKey from ArchiveFileReviewsBean where done=0) order by fileNumber asc");
+            st = con.prepareStatement("select id from cases where archived=0 and id not in (select archiveFileKey from case_followups where done=0) order by fileNumber asc");
             rs = st.executeQuery();
 
             while (rs.next()) {
@@ -2536,7 +2700,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         ArrayList<String> list = new ArrayList<String>();
         try {
             con = utils.getConnection();
-            st = con.prepareStatement("select id from ArchiveFileBean");
+            st = con.prepareStatement("select id from cases");
             rs = st.executeQuery();
 
             //ArchiveFileLocalHome home = this.lookupArchiveFileBean();
@@ -2583,7 +2747,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         ArrayList<String> list = new ArrayList<String>();
         try {
             con = utils.getConnection();
-            st = con.prepareStatement("SELECT max(changeDate) FROM ArchiveFileHistoryBean where archiveFileKey=?;");
+            st = con.prepareStatement("SELECT max(changeDate) FROM case_history where archiveFileKey=?;");
             st.setString(1, archiveFileKey);
             rs = st.executeQuery();
 
@@ -2664,36 +2828,91 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
     @Override
     @RolesAllowed({"readArchiveFileRole"})
-    public List<ArchiveFileBean> getTagged(String[] tagName, int limit) {
+    public List<ArchiveFileBean> getTagged(String[] tagName, String[] docTagName, int limit) {
         JDBCUtils utils = new JDBCUtils();
         Connection con = null;
         ResultSet rs = null;
         PreparedStatement st = null;
         List<ArchiveFileBean> returnList = new ArrayList<ArchiveFileBean>();
 
+        if (tagName == null || tagName.length == 0) {
+            tagName = new String[]{"some-non-existing-string"};
+        }
+
+        if (docTagName == null || docTagName.length == 0) {
+            docTagName = new String[]{"some-non-existing-string"};
+        }
+
         try {
             con = utils.getConnection();
 
-            String inClause = "";
-            for (String t : tagName) {
-                inClause = inClause + ",?";
+            String inClauseCase = "";
+            boolean empty = true;
+            if (tagName != null && tagName.length > 0) {
+                empty = false;
+                for (String t : tagName) {
+                    inClauseCase = inClauseCase + ",?";
+                }
             }
-            inClause = inClause.replaceFirst(",", "");
 
-            st = con.prepareStatement("select a1.archiveFileKey from (SELECT archiveFileKey, MAX(changeDate) as maxChangeDate FROM ArchiveFileHistoryBean GROUP BY archiveFileKey order by maxChangeDate DESC) a1, ArchiveFileBean a2, ArchiveFileTagsBean a3 where a1.archiveFileKey = a2.id and a2.archived=0 and a2.id = a3.archiveFileKey and a3.tagName in (" + inClause + ") order by maxChangeDate DESC limit 0,?");
+            String inClauseDoc = "";
+            if (docTagName != null && docTagName.length > 0) {
+                empty = false;
+                for (String t : docTagName) {
+                    inClauseDoc = inClauseDoc + ",?";
+                }
+            }
+            if (empty) {
+                return new ArrayList<ArchiveFileBean>();
+            }
+
+            inClauseCase = inClauseCase.replaceFirst(",", "");
+            inClauseDoc = inClauseDoc.replaceFirst(",", "");
+
+//            st = con.prepareStatement("select distinct(allkeys.archiveFileKey) from (select a1.archiveFileKey from \n"
+//                    + "    (SELECT archiveFileKey, MAX(changeDate) as maxChangeDate \n"
+//                    + "    FROM case_history \n"
+//                    + "    GROUP BY archiveFileKey \n"
+//                    + "    order by maxChangeDate DESC) a1, cases a2, case_tags a3, document_tags a4, case_documents a5 \n"
+//                    + "    where a1.archiveFileKey = a2.id and a2.archived=0 and ((a2.id = a3.archiveFileKey and a3.tagName in (" + inClauseCase + ")) or ((a4.tagName in (" + inClauseDoc + ") and a4.documentKey=a5.id and a5.archiveFileKey=a2.id))) order by maxChangeDate DESC) allkeys limit 0,?");
+            st = con.prepareStatement("select distinct(allkeys.archiveFileKey) from (\n"
+                    + "    select a1.archiveFileKey from      (\n"
+                    + "        SELECT archiveFileKey, MAX(changeDate) as maxChangeDate      \n"
+                    + "        FROM case_history      \n"
+                    + "        GROUP BY archiveFileKey      \n"
+                    + "        order by maxChangeDate DESC) a1\n"
+                    + "    left join cases a2 on a1.archiveFileKey = a2.id\n"
+                    + "    left join case_tags a3 on a2.id = a3.archiveFileKey\n"
+                    + "    left join case_documents a5 on a5.archiveFileKey=a2.id \n"
+                    + "    left join document_tags a4 on a4.documentKey=a5.id \n"
+                    + "    \n"
+                    + "    where a2.archived=0 and (\n"
+                    + "            (a3.tagName in (" + inClauseCase + ")) or (\n"
+                    + "            (a4.tagName in (" + inClauseDoc + "))\n"
+                    + "            \n"
+                    + "        )) order by maxChangeDate DESC) allkeys limit 0,?");
 
             int index = 1;
-            for (String t : tagName) {
-                st.setString(index, t);
-                index = index + 1;
+            if (tagName != null && tagName.length > 0) {
+                for (String t : tagName) {
+                    st.setString(index, t);
+                    index = index + 1;
+                }
             }
+            if (docTagName != null && docTagName.length > 0) {
+                for (String t : docTagName) {
+                    st.setString(index, t);
+                    index = index + 1;
+                }
+            }
+
             st.setInt(index, limit);
             rs = st.executeQuery();
-            ArrayList<String> keyCache=new ArrayList<String>();
+            ArrayList<String> keyCache = new ArrayList<String>();
             while (rs.next()) {
                 String id = rs.getString(1);
                 // there might be duplicate cases in the result set
-                if(!keyCache.contains(id)) {
+                if (!keyCache.contains(id)) {
                     keyCache.add(id);
                     returnList.add(this.archiveFileFacade.find(id));
                 }
@@ -2748,7 +2967,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
         return true;
     }
-    
+
     @Override
     @RolesAllowed({"writeArchiveFileRole"})
     public boolean setDocumentFavorite(String id, boolean favorite) throws Exception {
@@ -2763,7 +2982,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
     @Override
     @RolesAllowed({"readArchiveFileRole"})
-    public Hashtable<String, ArrayList<String>> searchTagsEnhanced(String query, boolean withArchive, String[] tagNames) {
+    public Hashtable<String, ArrayList<String>> searchTagsEnhanced(String query, boolean withArchive, String[] tagNames, String[] documentTagNames) {
         JDBCUtils utils = new JDBCUtils();
         Connection con = null;
         ResultSet rs = null;
@@ -2779,6 +2998,26 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
         }
 
+        boolean withDocumentTag = false;
+        if (documentTagNames != null && documentTagNames.length > 0) {
+            if (documentTagNames.length == 1 && "".equals(documentTagNames[0])) {
+                withDocumentTag = false;
+            } else {
+                withDocumentTag = true;
+            }
+
+        }
+
+        if (withTag || withDocumentTag) {
+            if (tagNames == null || tagNames.length == 0) {
+                tagNames = new String[]{"some-non-existing-string"};
+            }
+
+            if (documentTagNames == null || documentTagNames.length == 0) {
+                documentTagNames = new String[]{"some-non-existing-string"};
+            }
+        }
+
         Hashtable<String, ArrayList<String>> list = new Hashtable<String, ArrayList<String>>();
         try {
             con = utils.getConnection();
@@ -2786,67 +3025,103 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
             if (withArchive) {
                 // with archive
-                if (withTag) {
+                if (withTag || withDocumentTag) {
 
-                    String inClause = "";
-                    for (String t : tagNames) {
-                        inClause = inClause + ",?";
+                    String inClauseCase = "?";
+                    if (withTag) {
+                        inClauseCase = "";
+                        for (String t : tagNames) {
+                            inClauseCase = inClauseCase + ",?";
+                        }
                     }
-                    inClause = inClause.replaceFirst(",", "");
+                    String inClauseDoc = "?";
+                    if (withDocumentTag) {
+                        inClauseDoc = "";
+                        for (String t : documentTagNames) {
+                            inClauseDoc = inClauseDoc + ",?";
+                        }
+                    }
+                    inClauseCase = inClauseCase.replaceFirst(",", "");
+                    inClauseDoc = inClauseDoc.replaceFirst(",", "");
 
                     // with archive and tag
-                    st = con.prepareStatement("select archiveFileKey, tagName from ArchiveFileTagsBean where archiveFileKey in (" + "select ArchiveFileBean.id from ArchiveFileBean, ArchiveFileTagsBean where (ucase(name) like ? or ucase(fileNumber) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ?) and (ArchiveFileTagsBean.tagName in (" + inClause + ") and ArchiveFileTagsBean.archiveFileKey=ArchiveFileBean.id)" + ")");
+                    st = con.prepareStatement("select distinct case_tags.archiveFileKey, case_tags.tagName, document_tags.tagName from case_tags, case_documents, document_tags where case_tags.archiveFileKey in (" + "select cases.id from cases, case_tags where (ucase(cases.name) like ? or ucase(fileNumber) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(subjectField) like ?) and ((case_tags.tagName in (" + inClauseCase + ") and case_tags.archiveFileKey=cases.id) or (document_tags.tagName in (" + inClauseDoc + ") and document_tags.documentKey=case_documents.id and case_documents.archiveFileKey=cases.id)))");
                     st.setString(1, wildCard);
                     st.setString(2, wildCard);
                     st.setString(3, wildCard);
                     st.setString(4, wildCard);
                     st.setString(5, wildCard);
                     st.setString(6, wildCard);
-                    int index = 7;
+                    st.setString(7, wildCard);
+                    int index = 8;
+
                     for (String t : tagNames) {
+                        st.setString(index, t);
+                        index = index + 1;
+                    }
+                    for (String t : documentTagNames) {
                         st.setString(index, t);
                         index = index + 1;
                     }
                 } else {
                     // with archive but no tag
-                    st = con.prepareStatement("select archiveFileKey, tagName from ArchiveFileTagsBean where archiveFileKey in (" + PS_SEARCHENHANCED_2 + ")");
+                    st = con.prepareStatement("select archiveFileKey, tagName, tagName from case_tags where archiveFileKey in (" + PS_SEARCHENHANCED_2 + ")");
                     st.setString(1, wildCard);
                     st.setString(2, wildCard);
                     st.setString(3, wildCard);
                     st.setString(4, wildCard);
                     st.setString(5, wildCard);
                     st.setString(6, wildCard);
+                    st.setString(7, wildCard);
                 }
             } else // without archive
-             if (withTag) {
-                    String inClause = "";
+            if (withTag || withDocumentTag) {
+                String inClauseCase = "?";
+                if (withTag) {
+                    inClauseCase = "";
                     for (String t : tagNames) {
-                        inClause = inClause + ",?";
+                        inClauseCase = inClauseCase + ",?";
                     }
-                    inClause = inClause.replaceFirst(",", "");
-                    // without archive and with tag
-                    st = con.prepareStatement("select archiveFileKey, tagName from ArchiveFileTagsBean where archiveFileKey in (" + "select ArchiveFileBean.id from ArchiveFileBean, ArchiveFileTagsBean where (ucase(name) like ? or ucase(fileNumber) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ?) and archived=0 and (ArchiveFileTagsBean.tagName in (" + inClause + ") and ArchiveFileTagsBean.archiveFileKey=ArchiveFileBean.id)" + ")");
-                    st.setString(1, wildCard);
-                    st.setString(2, wildCard);
-                    st.setString(3, wildCard);
-                    st.setString(4, wildCard);
-                    st.setString(5, wildCard);
-                    st.setString(6, wildCard);
-                    int index = 7;
-                    for (String t : tagNames) {
-                        st.setString(index, t);
-                        index = index + 1;
-                    }
-                } else {
-                    // without archive and no tag
-                    st = con.prepareStatement("select archiveFileKey, tagName from ArchiveFileTagsBean where archiveFileKey in (" + PS_SEARCHENHANCED_4 + ")");
-                    st.setString(1, wildCard);
-                    st.setString(2, wildCard);
-                    st.setString(3, wildCard);
-                    st.setString(4, wildCard);
-                    st.setString(5, wildCard);
-                    st.setString(6, wildCard);
                 }
+                String inClauseDoc = "?";
+                if (withDocumentTag) {
+                    inClauseDoc = "";
+                    for (String t : documentTagNames) {
+                        inClauseDoc = inClauseDoc + ",?";
+                    }
+                }
+                inClauseCase = inClauseCase.replaceFirst(",", "");
+                inClauseDoc = inClauseDoc.replaceFirst(",", "");
+                // without archive and with tag
+                st = con.prepareStatement("select distinct case_tags.archiveFileKey, case_tags.tagName, document_tags.tagName from case_tags, case_documents, document_tags where case_tags.archiveFileKey in (" + "select cases.id from cases, case_tags where (ucase(cases.name) like ? or ucase(fileNumber) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(subjectField) like ?) and archived=0 and ((case_tags.tagName in (" + inClauseCase + ") and case_tags.archiveFileKey=cases.id) or (document_tags.tagName in (" + inClauseDoc + ") and document_tags.documentKey=case_documents.id and case_documents.archiveFileKey=cases.id)))");
+                st.setString(1, wildCard);
+                st.setString(2, wildCard);
+                st.setString(3, wildCard);
+                st.setString(4, wildCard);
+                st.setString(5, wildCard);
+                st.setString(6, wildCard);
+                st.setString(7, wildCard);
+                int index = 8;
+
+                for (String t : tagNames) {
+                    st.setString(index, t);
+                    index = index + 1;
+                }
+                for (String t : documentTagNames) {
+                    st.setString(index, t);
+                    index = index + 1;
+                }
+            } else {
+                // without archive and no tag
+                st = con.prepareStatement("select archiveFileKey, tagName, tagName from case_tags where archiveFileKey in (" + PS_SEARCHENHANCED_4 + ")");
+                st.setString(1, wildCard);
+                st.setString(2, wildCard);
+                st.setString(3, wildCard);
+                st.setString(4, wildCard);
+                st.setString(5, wildCard);
+                st.setString(6, wildCard);
+                st.setString(7, wildCard);
+            }
 
             rs = st.executeQuery();
 
@@ -2857,7 +3132,15 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                     list.put(id, new ArrayList<String>());
                 }
                 ArrayList<String> tagList = list.get(id);
-                tagList.add(tagName);
+                if (!tagList.contains(tagName)) {
+                    tagList.add(tagName);
+                }
+
+                String docTagName = rs.getString(3);
+                if (!tagList.contains(docTagName)) {
+                    tagList.add(docTagName);
+                }
+
             }
         } catch (SQLException sqle) {
             log.error("Error finding archive files", sqle);
@@ -2984,7 +3267,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         }
         return addressList;
     }
-    
+
     private String getSortString(ArchiveFileAddressesBean afab) {
         // 1 for clients, 2 for opponents, 3 for others
         String sortString = "1";
@@ -3016,7 +3299,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                                     //return ((ArchiveFileAddressesBean) o1).getReferenceTypeAsString().compareTo(((ArchiveFileAddressesBean) o2).getReferenceTypeAsString());
                                     return getSortString((ArchiveFileAddressesBean) o1).compareTo(getSortString((ArchiveFileAddressesBean) o2));
                                     // sort by reference type, followed by display name
-                                    
+
                                 }
                             }
                             return -1;
@@ -3036,12 +3319,13 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     @Override
     @RolesAllowed({"adminRole"})
     public boolean udpateFileNumber(String from, String to) throws Exception {
-        ArchiveFileBean afb=this.getArchiveFileByFileNumber(from);
-        if(afb==null)
+        ArchiveFileBean afb = this.getArchiveFileByFileNumber(from);
+        if (afb == null) {
             return false;
+        }
         afb.setFileNumber(to);
         this.archiveFileFacade.edit(afb);
-        
+
         StringGenerator idGen = new StringGenerator();
         ArchiveFileHistoryBean newHistEntry = new ArchiveFileHistoryBean();
         newHistEntry.setId(idGen.getID().toString());
@@ -3050,8 +3334,160 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         newHistEntry.setChangeDescription("Aktenzeichen geändert: " + from + " --> " + to);
         newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
         this.archiveFileHistoryFacade.create(newHistEntry);
-        
+
         return true;
+    }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public boolean doesDocumentExist(String id) {
+        ArchiveFileDocumentsBean db = this.archiveFileDocumentsFacade.find(id);
+        if (db == null) {
+            return false;
+        }
+        String aId = db.getArchiveFileKey().getId();
+
+        String localBaseDir = System.getProperty("jlawyer.server.basedirectory");
+        localBaseDir = localBaseDir.trim();
+        if (!localBaseDir.endsWith(System.getProperty("file.separator"))) {
+            localBaseDir = localBaseDir + System.getProperty("file.separator");
+        }
+
+        String dst = localBaseDir + "archivefiles" + System.getProperty("file.separator") + aId + System.getProperty("file.separator");
+
+        File dstDir = new File(dst);
+        dstDir.mkdirs();
+
+        dst = dst + db.getName();
+
+        File dstFile = new File(dst);
+
+        if (!(dstFile.exists())) {
+            return false;
+        }
+        return true;
+    }
+
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public List<ArchiveFileDocumentsBean> getTaggedDocuments(java.lang.String[] docTagName, int limit) {
+        JDBCUtils utils = new JDBCUtils();
+        Connection con = null;
+        ResultSet rs = null;
+        PreparedStatement st = null;
+        List<ArchiveFileDocumentsBean> returnList = new ArrayList<ArchiveFileDocumentsBean>();
+
+        try {
+            con = utils.getConnection();
+
+            String inClause = "";
+            for (String t : docTagName) {
+                inClause = inClause + ",?";
+            }
+            inClause = inClause.replaceFirst(",", "");
+
+            st = con.prepareStatement("select distinct(docid) from (select a5.id as docid from "
+                    + "    (SELECT archiveFileKey, MAX(changeDate) as maxChangeDate "
+                    + "    FROM case_history "
+                    + "    GROUP BY archiveFileKey "
+                    + "    order by maxChangeDate DESC) a1, cases a2, document_tags a4, case_documents a5 "
+                    + "    where a1.archiveFileKey = a2.id and a2.archived=0 and (((a4.tagName in (" + inClause + ") and a4.documentKey=a5.id and a5.archiveFileKey=a2.id))) order by maxChangeDate DESC) allkeys limit 0,?");
+
+            int index = 1;
+
+            for (String t : docTagName) {
+                st.setString(index, t);
+                index = index + 1;
+            }
+
+            st.setInt(index, limit);
+            rs = st.executeQuery();
+            ArrayList<String> keyCache = new ArrayList<String>();
+            while (rs.next()) {
+                String id = rs.getString(1);
+                // there might be duplicate cases in the result set
+                if (!keyCache.contains(id)) {
+                    keyCache.add(id);
+                    returnList.add(this.archiveFileDocumentsFacade.find(id));
+                }
+            }
+
+            try {
+                rs.close();
+            } catch (Exception ex) {
+                log.error(ex);
+            }
+
+        } catch (SQLException sqle) {
+            log.error("Error getting documents by specific tag", sqle);
+            throw new EJBException("Markierte Dokumente konnten nicht ermittelt werden.", sqle);
+        } finally {
+            try {
+                st.close();
+            } catch (Throwable t) {
+                log.error(t);
+            }
+            try {
+                con.close();
+            } catch (Throwable t) {
+                log.error(t);
+            }
+        }
+
+        return returnList;
+    }
+
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public Hashtable<String, ArrayList<String>> getDocumentTagsForCase(String caseId) {
+        JDBCUtils utils = new JDBCUtils();
+        Connection con = null;
+        ResultSet rs = null;
+        PreparedStatement st = null;
+        Hashtable<String, ArrayList<String>> returnList = new Hashtable<String, ArrayList<String>>();
+
+        try {
+            con = utils.getConnection();
+            st = con.prepareStatement("select docs.id, tags.tagName from case_documents docs, document_tags tags where docs.archiveFileKey=? and docs.id=tags.documentKey and docs.id in (select documentKey from document_tags)");
+
+            st.setString(1, caseId);
+            rs = st.executeQuery();
+            while (rs.next()) {
+                String id = rs.getString(1);
+                ArrayList<String> tags = null;
+                if (returnList.containsKey(id)) {
+                    tags = returnList.get(id);
+                } else {
+                    tags = new ArrayList<String>();
+                    returnList.put(id, tags);
+                }
+
+                tags.add(rs.getString(2));
+            }
+
+            try {
+                rs.close();
+            } catch (Exception ex) {
+                log.error(ex);
+            }
+
+        } catch (SQLException sqle) {
+            log.error("Error getting documents tags", sqle);
+            throw new EJBException("Markierte Dokumente konnten nicht ermittelt werden.", sqle);
+        } finally {
+            try {
+                st.close();
+            } catch (Throwable t) {
+                log.error(t);
+            }
+            try {
+                con.close();
+            } catch (Throwable t) {
+                log.error(t);
+            }
+        }
+
+        return returnList;
     }
 
 }

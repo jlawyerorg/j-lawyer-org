@@ -675,7 +675,9 @@ public interface OptionConstants {
     public static final String OPTIONGROUP_REVIEWREASONS="archiveFile.reviewReason";
     public static final String OPTIONGROUP_SUBJECTFIELDS="archiveFile.subjectField";
     public static final String OPTIONGROUP_ARCHIVEFILETAGS="archiveFile.tags";
+    public static final String OPTIONGROUP_DOCUMENTTAGS="document.tags";
     public static final String OPTIONGROUP_ADDRESSTAGS="address.tags";
     
     public static final String OPTIONGROUP_TITLES="address.title";
+    
 }

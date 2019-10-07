@@ -664,6 +664,7 @@
 package com.jdimension.jlawyer.ui.tagging;
 
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileTagsBean;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
@@ -689,6 +690,23 @@ public class TagUtils {
     
     private static final Logger log=Logger.getLogger(TagUtils.class.getName());
     
+    public static String getTagList(ArrayList<String> tags) {
+        
+            StringBuffer sb = new StringBuffer();
+            
+            Collections.sort(tags);
+            for (String t : tags) {
+                sb.append(t);
+                sb.append(", ");
+            }
+            String returnValue = sb.toString();
+            if (returnValue.endsWith(", ")) {
+                returnValue = returnValue.substring(0, returnValue.length() - 2);
+            }
+            return returnValue;
+        
+    }
+    
     public static String getTagList(String id, Hashtable<String, ArrayList<String>> tags) {
         if (tags.containsKey(id)) {
             StringBuffer sb = new StringBuffer();
@@ -708,7 +726,7 @@ public class TagUtils {
         }
     }
     
-    public static void populateTags(List<String> tags, JButton cmdTagFilter, JPopupMenu popTagFilter) {
+    public static void populateTags(List<String> tags, JButton cmdTagFilter, JPopupMenu popTagFilter, TagSelectedAction action) {
         ActionListener al=new ActionListener() {
                         @Override
                         public void actionPerformed(ActionEvent e) {
@@ -726,6 +744,9 @@ public class TagUtils {
                                 cmdTagFilter.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/favorites.png")));
                             }
                                 
+                            if(action!=null) {
+                                action.execute();
+                            }
                             
                         }
                         
@@ -760,6 +781,35 @@ public class TagUtils {
                 }
                 
             }
+    }
+    
+    public static String getDocumentTagsOverviewAsHtml(Hashtable<String, ArrayList<String>> docTags) {
+        StringBuffer sb=new StringBuffer();
+        //sb.append("<html>");
+        //sb.append("<font color=\"blue\">");
+        if(docTags!=null) {
+            Hashtable<String, Integer> activeTags=new Hashtable<String, Integer>();
+            ArrayList<String> sortedTags=new ArrayList<String>();
+            for(ArrayList<String> dTags: docTags.values()) {
+                for(String t: dTags) {
+                    if(!sortedTags.contains(t))
+                        sortedTags.add(t);
+                    if(activeTags.containsKey(t))
+                        activeTags.put(t, activeTags.get(t)+1);
+                    else
+                        activeTags.put(t, 1);
+                }
+            }
+            StringUtils.sortIgnoreCase(sortedTags);
+            for(String dTag: sortedTags) {
+                sb.append(dTag);
+                //sb.append(" (" + activeTags.get(dTag) + ")&nbsp;&nbsp;&nbsp;");
+                sb.append(" (" + activeTags.get(dTag) + ")   ");
+            }
+        }
+        //sb.append("</font>");
+        //sb.append("</html>");
+        return sb.toString();
     }
     
     public static String[] getSelectedTags(JPopupMenu popup) {

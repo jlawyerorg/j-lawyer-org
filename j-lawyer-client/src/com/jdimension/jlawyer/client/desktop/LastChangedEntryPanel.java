@@ -675,6 +675,7 @@ import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import com.jdimension.jlawyer.ui.tagging.TagUtils;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Image;
@@ -701,47 +702,61 @@ public class LastChangedEntryPanel extends javax.swing.JPanel {
     public void setEntry(LastChangedEntry entry) {
         this.e = entry;
         //this.lblFileName.setText(sh.getFileName() + " in " + sh.getArchiveFileNumber() + " " + sh.getArchiveFileName());
-        String name=e.getName();
-        if(name==null)
-            name="";
-        if(name.length()>45)
-            name=name.substring(0,45) + "...";
-        
-        String reason=e.getReason();
-        if(reason==null)
-            reason="";
-        if(reason.length()>45)
-            reason=reason.substring(0,45) + "...";
-        
-        if(reason!=null && !("".equals(reason))) {
-        this.lblDescription.setText("<html><b>" + e.getFileNumber() + " " + name + "</b><br/>" + reason + "</html>");
+        String name = e.getName();
+        if (name == null) {
+            name = "";
+        }
+        if (name.length() > 45) {
+            name = name.substring(0, 45) + "...";
+        }
+
+        String reason = e.getReason();
+        if (reason == null) {
+            reason = "";
+        }
+        if (reason.length() > 45) {
+            reason = reason.substring(0, 45) + "...";
+        }
+
+        if (reason != null && !("".equals(reason))) {
+            this.lblDescription.setText("<html><b>" + e.getFileNumber() + " " + name + "</b><br/>" + reason + "</html>");
         } else {
-            this.lblDescription.setText("<html><b>" + e.getFileNumber() + " " + name + "</b><br/>---</html>");
+            this.lblDescription.setText("<html><b>" + e.getFileNumber() + " " + name + "</b></html>");
         }
         //this.lblFileName.setToolTipText("<html>" + StringUtils.addHtmlLinebreaks(sh.getText(), 60) + "</html>");
         //this.lblDescription.setToolTipText(sh.getText());
         //this.lblDescription.setIcon(FileUtils.getInstance().getFileTypeIcon(sh.getFileName()));
         this.lblChangedBy.setText(e.getLastChangedBy());
-        if(e.getLastChangedBy()!=null && !("".equals(e.getLastChangedBy())))
+        if (e.getLastChangedBy() != null && !("".equals(e.getLastChangedBy()))) {
             this.lblChangedBy.setIcon(UserSettings.getInstance().getUserSmallIcon(e.getLastChangedBy()));
-        
-        String lawyerCaption=java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/LastChangedEntryPanel").getString("attorney");
-        String tooltip="<html><b>" + e.getFileNumber() + " " + StringUtils.nonNull(e.getName()) + "</b><br/>" + StringUtils.nonNull(e.getReason()) + "<br/>"  + StringUtils.nonNull(lawyerCaption) + ": " + StringUtils.nonNull(e.getLastChangedBy()) + "</html>";
-        this.lblDescription.setToolTipText(tooltip);
-        
-        this.lblTags.setText("");
-        if(e.getTags()!=null) {
-            StringBuffer sb=new StringBuffer();
-            sb.append("<html>");
-            for(String t: e.getTags()) {
-                //sb.append(t).append(", ");
-                sb.append(t).append("<br/>");
-            }
-            sb.append("</html>");
-            String tagString=sb.toString();
-            this.lblTags.setText(tagString);
         }
-        
+
+        String lawyerCaption = java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/LastChangedEntryPanel").getString("attorney");
+        String tooltip = "<html><b>" + e.getFileNumber() + " " + StringUtils.nonNull(e.getName()) + "</b><br/>" + StringUtils.nonNull(e.getReason()) + "<br/>" + StringUtils.nonNull(lawyerCaption) + ": " + StringUtils.nonNull(e.getLastChangedBy()) + "</html>";
+        this.lblDescription.setToolTipText(tooltip);
+
+        this.lblTags.setText("");
+        if (e.getTags() != null) {
+//            StringBuffer sb=new StringBuffer();
+//            sb.append("<html>");
+//            for(String t: e.getTags()) {
+//                //sb.append(t).append(", ");
+//                sb.append(t).append("<br/>");
+//            }
+//            sb.append("</html>");
+//            String tagString=sb.toString();
+//            this.lblTags.setText(tagString);
+
+            String tagList = TagUtils.getTagList(e.getTags());
+            String shortenedTagList = tagList;
+            if (shortenedTagList.length() > 105) {
+                shortenedTagList = shortenedTagList.substring(0, 105) + "...";
+            }
+
+            this.lblTags.setText(shortenedTagList);
+            this.lblTags.setToolTipText(tagList);
+        }
+
 //        if (sh.getScore() >= 0.50f) {
 //            this.lblChangedBy.setForeground(Color.green);
 //        } else if (sh.getScore() > 0.20f && sh.getScore() < 0.50f) {
@@ -749,7 +764,6 @@ public class LastChangedEntryPanel extends javax.swing.JPanel {
 //        } else {
 //            this.lblChangedBy.setForeground(Color.red);
 //        }
-
     }
 
     /**
@@ -832,15 +846,15 @@ public class LastChangedEntryPanel extends javax.swing.JPanel {
 
     private void lblDescriptionMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblDescriptionMouseClicked
         try {
-            Object editor=null;
-            if(UserSettings.getInstance().isCurrentUserInRole(UserSettings.ROLE_WRITECASE)) {
+            Object editor = null;
+            if (UserSettings.getInstance().isCurrentUserInRole(UserSettings.ROLE_WRITECASE)) {
                 editor = EditorsRegistry.getInstance().getEditor(EditArchiveFileDetailsPanel.class.getName());
             } else {
                 editor = EditorsRegistry.getInstance().getEditor(ViewArchiveFileDetailsPanel.class.getName());
             }
             Object desktop = EditorsRegistry.getInstance().getEditor(DesktopPanel.class.getName());
-            Image bgi=((DesktopPanel)desktop).getBackgroundImage();
-            
+            Image bgi = ((DesktopPanel) desktop).getBackgroundImage();
+
             if (editor instanceof ThemeableEditor) {
                 // inherit the background to newly created child editors
                 ((ThemeableEditor) editor).setBackgroundImage(bgi);
@@ -854,11 +868,11 @@ public class LastChangedEntryPanel extends javax.swing.JPanel {
             try {
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
                 ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
-                
+
                 aFile = fileService.getArchiveFile(this.e.getId());
             } catch (Exception ex) {
                 log.error("Error loading archive file from server", ex);
-                JOptionPane.showMessageDialog(this, java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/LastChangedEntryPanel").getString("error.loadingcase"), new Object[] {ex.getMessage()}), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/LastChangedEntryPanel").getString("dialog.error"), JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/LastChangedEntryPanel").getString("error.loadingcase"), new Object[]{ex.getMessage()}), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/LastChangedEntryPanel").getString("dialog.error"), JOptionPane.ERROR_MESSAGE);
             }
 
             if (aFile == null) {
@@ -870,7 +884,7 @@ public class LastChangedEntryPanel extends javax.swing.JPanel {
             EditorsRegistry.getInstance().setMainEditorsPaneView((Component) editor);
         } catch (Exception ex) {
             log.error("Error creating editor from class " + this.getClass().getName(), ex);
-            JOptionPane.showMessageDialog(this, java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/LastChangedEntryPanel").getString("error.loadingeditor"), new Object[] {ex.getMessage()}), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/LastChangedEntryPanel").getString("dialog.error"), JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/LastChangedEntryPanel").getString("error.loadingeditor"), new Object[]{ex.getMessage()}), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/LastChangedEntryPanel").getString("dialog.error"), JOptionPane.ERROR_MESSAGE);
         }
     }//GEN-LAST:event_lblDescriptionMouseClicked
 

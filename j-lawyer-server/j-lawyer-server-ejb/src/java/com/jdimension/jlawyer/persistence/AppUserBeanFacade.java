@@ -664,6 +664,8 @@
 package com.jdimension.jlawyer.persistence;
 
 import java.util.List;
+import javax.annotation.security.PermitAll;
+import javax.annotation.security.RolesAllowed;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
@@ -687,11 +689,20 @@ public class AppUserBeanFacade extends AbstractFacade<AppUserBean> implements Ap
     }
 
     @Override
+    @RolesAllowed("loginRole")
     public AppUserBean findByPrincipalId(String principalId) {
         AppUserBean u=(AppUserBean)em.createNamedQuery("AppUserBean.findByPrincipalId").setParameter("principalId", principalId).getSingleResult();
         
         
         return u;
     }
+
+    @Override
+    @RolesAllowed("loginRole")
+    public List<AppUserBean> findAll() {
+        return super.findAll(); //To change body of generated methods, choose Tools | Templates.
+    }
+    
+    
     
 }

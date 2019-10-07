@@ -911,7 +911,7 @@ public class LoadFolderAction extends ProgressableAction {
             }).start();
             
 
-        } catch (Exception ex) {
+        } catch (Throwable ex) {
             log.error(ex);
             ex.printStackTrace();
             return false;

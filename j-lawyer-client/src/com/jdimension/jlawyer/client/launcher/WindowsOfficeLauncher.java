@@ -677,23 +677,19 @@ import org.apache.log4j.Logger;
  * @author jens
  */
 public class WindowsOfficeLauncher extends OfficeLauncher {
-    
+
     private static final Logger log = Logger.getLogger(WindowsOfficeLauncher.class.getName());
     private static String loBinary = "libreoffice.exe";
     private static String oooBinary = "soffice.exe";
-    
+
     public WindowsOfficeLauncher(String url, ObservedDocumentStore store) {
         super(url, store);
     }
 
     @Override
-    public void launch() throws Exception {
-        
-            if (isDocumentOpen(store.getDocumentIdentifier())) {
-                log.debug("Dokument " + store.getFileName() + "ist bereits geöffnet");
-                throw new Exception("Dokument " + store.getFileName() + "ist bereits geöffnet");
-            }
-        
+    public void launch(boolean autoCloseExistingDocument) throws Exception {
+
+        this.autoCloseOpenDocument(autoCloseExistingDocument);
 
         final Launcher thisLauncher = this;
 
@@ -703,13 +699,12 @@ public class WindowsOfficeLauncher extends OfficeLauncher {
 
                 try {
 
-                    
-                        ObservedOfficeDocument odoc = new ObservedOfficeDocument(url, store, thisLauncher);
-                        DocumentObserver observer = DocumentObserver.getInstance();
-                        log.debug("observer status launching " + odoc.getName());
-                        odoc.setStatus(ObservedDocument.STATUS_LAUNCHING);
-                        observer.addDocument(odoc);
-                    
+                    ObservedOfficeDocument odoc = new ObservedOfficeDocument(url, store, thisLauncher);
+                    DocumentObserver observer = DocumentObserver.getInstance();
+                    log.debug("observer status launching " + odoc.getName());
+                    odoc.setStatus(ObservedDocument.STATUS_LAUNCHING);
+                    observer.addDocument(odoc);
+
                     Process p = null;
                     boolean libreOffice = false;
                     try {
@@ -730,16 +725,21 @@ public class WindowsOfficeLauncher extends OfficeLauncher {
                     if (libreOffice) {
 
                         log.debug("observer status open " + odoc.getName());
-                            odoc.setStatus(ObservedDocument.STATUS_OPEN);
+                        odoc.setStatus(ObservedDocument.STATUS_OPEN);
 
                         log.debug("waitFor");
                         int exit = p.waitFor();
                         log.debug("exit code: " + exit);
                         if (exit == 0) {
                             libreOffice = true;
-                            log.debug("observer status closed " + odoc.getName());
+                            if (odoc.getOpenDuration() > DocumentObserverTask.getDefaultInterval()) {
+                                log.debug("LO process exited after " + odoc.getOpenDuration() + " - closing document");
+                                log.debug("observer status closed " + odoc.getName());
                                 odoc.setClosed(true);
-                            
+                            } else {
+                                log.debug("LO process exited after " + odoc.getOpenDuration() + " - leaving document open!");
+                            }
+
                         } else {
                             log.error("observer NOT closing due to exit code " + exit);
                             libreOffice = false;
@@ -759,7 +759,7 @@ public class WindowsOfficeLauncher extends OfficeLauncher {
                                 p = Runtime.getRuntime().exec(new String[]{oooBinary, url});
                             }
                             log.debug("using " + oooBinary + " for " + odoc.getName());
-                                odoc.setStatus(ObservedDocument.STATUS_OPEN);
+                            odoc.setStatus(ObservedDocument.STATUS_OPEN);
                             log.debug("waitFor");
                             exit = p.waitFor();
                             log.debug("exit code: " + exit);
@@ -768,8 +768,13 @@ public class WindowsOfficeLauncher extends OfficeLauncher {
                                 log.error("observer NOT closing due to exit code " + exit);
                                 throw new Exception("LibreOffice nicht installiert (Exitcode: " + exit + ")!");
                             } else {
-                                log.debug("observer status closed " + odoc.getName());
-                                odoc.setClosed(true);
+                                if (odoc.getOpenDuration() > DocumentObserverTask.getDefaultInterval()) {
+                                    log.debug("LO process exited after " + odoc.getOpenDuration() + " - closing document");
+                                    log.debug("observer status closed " + odoc.getName());
+                                    odoc.setClosed(true);
+                                } else {
+                                    log.debug("LO process exited after " + odoc.getOpenDuration() + " - leaving document open!");
+                                }
                             }
                         } catch (Throwable ex) {
                             log.error("error starting soffice", ex);
@@ -792,12 +797,10 @@ public class WindowsOfficeLauncher extends OfficeLauncher {
             }
         }).start();
     }
-    
-    
+
     @Override
     public String getType() {
         return "LibreOffice Windows Launcher";
     }
-    
-    
+
 }

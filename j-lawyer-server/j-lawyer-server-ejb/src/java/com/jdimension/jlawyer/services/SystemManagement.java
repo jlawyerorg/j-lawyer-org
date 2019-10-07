@@ -686,6 +686,7 @@ import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Properties;
+import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.Asynchronous;
 import javax.ejb.EJB;
@@ -709,7 +710,7 @@ import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathFactory;
 import org.apache.log4j.Logger;
 import org.apache.tika.Tika;
-import org.jboss.security.annotation.SecurityDomain;
+import org.jboss.ejb3.annotation.SecurityDomain;
 import org.jlawyer.data.tree.GenericNode;
 import org.jlawyer.data.tree.TreeNodeUtils;
 import org.w3c.dom.Document;
@@ -740,7 +741,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     private ServerSettingsBeanFacadeLocal settingsFacade;
 
     @Override
-    @RolesAllowed({"readOptionGroupRole"})
+    @RolesAllowed({"loginRole"})
     public AppOptionGroupBean[] getOptionGroup(String optionGroup) {
 
         return appOptionGroupBeanFacade.findByOptionGroup(optionGroup);
@@ -759,7 +760,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         ArrayList<BankDataBean> list = new ArrayList<BankDataBean>();
         try {
             con = utils.getConnection();
-            st = con.prepareStatement("select id, name, bankCode from BankDataBean where ucase(name) like ? or bankCode like ? order by bankCode, name");
+            st = con.prepareStatement("select id, name, bankCode from directory_banks where ucase(name) like ? or bankCode like ? order by bankCode, name");
             String wildCard1 = StringUtils.germanToUpperCase(query) + "%";
             String wildCard2 = "%" + wildCard1;
             st.setString(1, wildCard2);
@@ -810,7 +811,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         ArrayList<CityDataBean> list = new ArrayList<CityDataBean>();
         try {
             con = utils.getConnection();
-            st = con.prepareStatement("select id, city, zipCode from CityDataBean where ucase(city) like ? or zipCode like ? order by zipCode");
+            st = con.prepareStatement("select id, city, zipCode from directory_cities where ucase(city) like ? or zipCode like ? order by zipCode");
             String wildCard1 = StringUtils.germanToUpperCase(query) + "%";
             String wildCard2 = "%" + wildCard1;
             st.setString(1, wildCard2);
@@ -884,7 +885,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         try {
             con = utils.getConnection();
             st = con.createStatement();
-            st.execute("delete from BankDataBean");
+            st.execute("delete from directory_banks");
         } catch (SQLException sqle) {
             log.error("Error deleting bank data", sqle);
             throw new EJBException("Bankdaten konnten nicht gelöscht werden.", sqle);
@@ -930,7 +931,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         try {
             con = utils.getConnection();
             st = con.createStatement();
-            st.execute("delete from CityDataBean");
+            st.execute("delete from directory_cities");
         } catch (SQLException sqle) {
             log.error("Error deleting city data", sqle);
             throw new EJBException("Postleitzahldaten konnten nicht gelöscht werden.", sqle);
@@ -1247,6 +1248,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         ServerSettingsBean smtpPwdS = this.settingsFacade.find("jlawyer.server.monitor.smtppwd");
         ServerSettingsBean smtpToS = this.settingsFacade.find("jlawyer.server.monitor.smtpto");
         ServerSettingsBean smtpSslS = this.settingsFacade.find("jlawyer.server.monitor.smtpssl");
+        ServerSettingsBean smtpStartTlsS = this.settingsFacade.find("jlawyer.server.monitor.smtpstarttls");
 
         if (smtpHostS == null || smtpUserS == null || smtpPwdS == null || smtpToS == null) {
             log.error("incomplete configuration for sending status mails");
@@ -1270,6 +1272,14 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         if (smtpSsl == null) {
             smtpSsl = "false";
         }
+        
+        String smtpStartTls = "false";
+        if (smtpStartTlsS != null) {
+            smtpStartTls = smtpStartTlsS.getSettingValue();
+        }
+        if (smtpStartTls == null) {
+            smtpStartTls = "false";
+        }
 
         Properties props = new Properties();
 //        props.put("mail.smtp.host", smtpHost);
@@ -1281,7 +1291,11 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         if ("true".equalsIgnoreCase(smtpSsl)) {
             props.put("mail.smtp.ssl.enable", "true");
         }
-
+        
+        if ("true".equalsIgnoreCase(smtpStartTls)) {
+            props.put("mail.smtp.starttls.enable", "true");
+        }
+        
         props.put("mail.smtp.host", smtpHost);
         props.put("mail.smtp.user", smtpUser);
         props.put("mail.smtp.auth", true);
@@ -1345,8 +1359,50 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     }
 
     @Override
+    @PermitAll
     public String getServerVersion() {
-        return "1.9";
+//        ServerSettingsBean srvVersion = this.settingsFacade.find("jlawyer.server.database.version");
+//        if(srvVersion!=null)
+//            return srvVersion.getSettingValue();
+//        else 
+//            return "unknown";
+
+        String version = "unknown";
+        JDBCUtils utils = new JDBCUtils();
+        Connection con = null;
+        ResultSet rs = null;
+        PreparedStatement st = null;
+        try {
+            con = utils.getConnection();
+            st = con.prepareStatement("SELECT version FROM flyway_schema_history where success =1 order by installed_rank desc limit 1");
+            rs = st.executeQuery();
+
+            if (rs.next()) {
+                version = rs.getString(1);
+
+            }
+        } catch (SQLException sqle) {
+            log.error("Error getting database / server version", sqle);
+        } finally {
+            try {
+                rs.close();
+            } catch (Throwable t) {
+                log.error(t);
+            }
+            try {
+                st.close();
+            } catch (Throwable t) {
+                log.error(t);
+            }
+            try {
+                con.close();
+            } catch (Throwable t) {
+                log.error(t);
+            }
+        }
+
+        return version;
+
     }
 
     @Override
@@ -1424,7 +1480,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     public String getServerInterfacesBoundTo() throws Exception {
         File data = new File(System.getProperty("jlawyer.server.basedirectory"));
         File jlawyer = data.getParentFile();
-        File wildFlyConf = new File(jlawyer.getAbsolutePath() + File.separator + "wildfly-9.0.2.Final" + File.separator + "standalone" + File.separator + "configuration" + File.separator + "standalone-full.xml");
+        File wildFlyConf = new File(jlawyer.getAbsolutePath() + File.separator + "wildfly" + File.separator + "standalone" + File.separator + "configuration" + File.separator + "standalone-full.xml");
         Document dom;
         // Make an  instance of the DocumentBuilderFactory
         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
@@ -1469,7 +1525,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     public boolean setServerInterfaceBindings(String ip) throws Exception {
         File data = new File(System.getProperty("jlawyer.server.basedirectory"));
         File jlawyer = data.getParentFile();
-        File wildFlyConf = new File(jlawyer.getAbsolutePath() + File.separator + "wildfly-9.0.2.Final" + File.separator + "standalone" + File.separator + "configuration" + File.separator + "standalone-full.xml");
+        File wildFlyConf = new File(jlawyer.getAbsolutePath() + File.separator + "wildfly" + File.separator + "standalone" + File.separator + "configuration" + File.separator + "standalone-full.xml");
 
         if (!wildFlyConf.exists()) {
             throw new Exception("server configuration not found: " + wildFlyConf.getAbsolutePath());

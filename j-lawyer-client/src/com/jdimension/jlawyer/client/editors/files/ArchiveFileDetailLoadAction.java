@@ -682,6 +682,7 @@ import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.ui.tagging.ArchiveFileTagActionListener;
 import com.jdimension.jlawyer.ui.tagging.TagToggleButton;
+import com.jdimension.jlawyer.ui.tagging.TagUtils;
 import java.awt.Component;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
@@ -691,6 +692,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.Hashtable;
 import java.util.List;
 import java.util.Locale;
 import javax.swing.*;
@@ -714,21 +716,24 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
     private InvolvedPartiesPanel contactsForCasePanel;
     private JTable tblReviews;
     private JPanel tagPanel;
+    private JPanel documentTagPanel;
     private JLabel lblArchivedSince;
     private boolean isArchived = false;
     private boolean readOnly = false;
     private boolean beaEnabled = false;
     private String selectDocumentWithFileName;
     private JPopupMenu popDocumentFavorites;
+    private JTextArea documentTagsOverview;
 
     private SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy HH:mm");
 
-    public ArchiveFileDetailLoadAction(ProgressIndicator i, ArchiveFilePanel owner, String archiveFileKey, ArchiveFileBean caseDto, JTable historyTarget, JTable docTarget, InvolvedPartiesPanel contactsForCasePanel, JTable tblReviews, JPanel tagPanel, boolean readOnly, boolean beaEnabled, String selectDocumentWithFileName, JLabel lblArchivedSince, boolean isArchived, JPopupMenu popDocumentFavorites) {
+    public ArchiveFileDetailLoadAction(ProgressIndicator i, ArchiveFilePanel owner, String archiveFileKey, ArchiveFileBean caseDto, JTable historyTarget, JTable docTarget, InvolvedPartiesPanel contactsForCasePanel, JTable tblReviews, JPanel tagPanel, JPanel documentTagPanel, boolean readOnly, boolean beaEnabled, String selectDocumentWithFileName, JLabel lblArchivedSince, boolean isArchived, JPopupMenu popDocumentFavorites, JTextArea lblDocumentTags) {
         super(i, false);
         //this.table = table;
         //this.dlg = dlg;
 
         this.popDocumentFavorites = popDocumentFavorites;
+        this.documentTagsOverview=lblDocumentTags;
         this.archiveFileKey = archiveFileKey;
         this.caseDto = caseDto;
         this.owner = owner;
@@ -738,6 +743,7 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
         this.contactsForCasePanel = contactsForCasePanel;
         this.tblReviews = tblReviews;
         this.tagPanel = tagPanel;
+        this.documentTagPanel = documentTagPanel;
         this.lblArchivedSince = lblArchivedSince;
         this.isArchived = isArchived;
         this.readOnly = readOnly;
@@ -757,6 +763,13 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
     }
 
     @Override
+    public String getErrorMessageAndHints(String rootCause) {
+        return "Laden der Akte fehlgeschlagen. Bitte Akte neu laden OHNE zu speichern!" + System.lineSeparator() + "Ursache: " + rootCause;
+    }
+    
+    
+
+    @Override
     public boolean execute() throws Exception {
 
         this.progress("Lade Akte...");
@@ -772,6 +785,7 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
         Collection tags = null;
 
         this.tagPanel.removeAll();
+        this.documentTagPanel.removeAll();
 
         ArchiveFileServiceRemote fileService = null;
         ClientSettings settings = null;
@@ -974,6 +988,7 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
         this.progress("Aktualisiere Dialog: Tags...");
         ArrayList<String> activeTags = new ArrayList<String>();
         this.tagPanel.removeAll();
+        this.documentTagPanel.removeAll();
         ArrayList<String> sortedTags = new ArrayList<String>();
         for (Object t : tags) {
             ArchiveFileTagsBean tag = (ArchiveFileTagsBean) t;
@@ -1018,6 +1033,11 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
 
         ThreadUtils.repaintComponent(tagPanel);
         //ThreadUtils.setTableModel(this.tblReviews, model3, rtrs, false);
+        
+//        Hashtable<String, ArrayList<String>> docTags=fileService.getDocumentTagsForCase(this.archiveFileKey);
+//        String docTagsHtml=TagUtils.getDocumentTagsOverviewAsHtml(docTags);
+//        this.documentTagsOverview.setText(docTagsHtml);
+        this.owner.updateDocumentTagsOverview();
 
         this.progress("Aktualisiere Dialog: Dokumentselektion...");
         if (this.selectDocumentWithFileName != null) {

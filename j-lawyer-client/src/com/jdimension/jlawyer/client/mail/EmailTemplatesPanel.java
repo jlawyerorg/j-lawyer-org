@@ -725,7 +725,12 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
         
         this.refreshList();
 
-
+        if(this.jSplitPane1.getWidth()>200) {
+            this.jSplitPane1.setDividerLocation(0.8d);
+        } else {
+            this.jSplitPane1.setDividerLocation(Math.max(this.jSplitPane1.getWidth()-280, 600));
+        }
+        
 
     }
 
@@ -782,6 +787,9 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
         cmdDelete = new javax.swing.JButton();
         jLabel18 = new javax.swing.JLabel();
         lblPanelTitle = new javax.swing.JLabel();
+        jPanel3 = new javax.swing.JPanel();
+        cmdRefresh = new javax.swing.JButton();
+        jSplitPane1 = new javax.swing.JSplitPane();
         jPanel1 = new javax.swing.JPanel();
         jLabel1 = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
@@ -794,8 +802,6 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
         jScrollPane3 = new javax.swing.JScrollPane();
         lstPlaceHolders = new javax.swing.JList();
         cmbPlaceHolderTarget = new javax.swing.JComboBox();
-        jPanel3 = new javax.swing.JPanel();
-        cmdRefresh = new javax.swing.JButton();
 
         cmdSave.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/filesave.png"))); // NOI18N
         cmdSave.setText("Speichern");
@@ -838,9 +844,44 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
         lblPanelTitle.setFont(new java.awt.Font("Dialog", 1, 24)); // NOI18N
         lblPanelTitle.setForeground(new java.awt.Color(255, 255, 255));
         lblPanelTitle.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/moc_src_big.png"))); // NOI18N
-        lblPanelTitle.setText("E-Mail - Vorlagen");
+        lblPanelTitle.setText("E-Mail- und beA- Vorlagen");
 
-        jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder("E-Mail - Vorlage"));
+        jPanel3.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(255, 255, 255), 2, true));
+        jPanel3.setOpaque(false);
+
+        cmdRefresh.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/reload.png"))); // NOI18N
+        cmdRefresh.setToolTipText("Aktualisieren");
+        cmdRefresh.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdRefreshActionPerformed(evt);
+            }
+        });
+
+        org.jdesktop.layout.GroupLayout jPanel3Layout = new org.jdesktop.layout.GroupLayout(jPanel3);
+        jPanel3.setLayout(jPanel3Layout);
+        jPanel3Layout.setHorizontalGroup(
+            jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jPanel3Layout.createSequentialGroup()
+                .addContainerGap()
+                .add(cmdRefresh)
+                .addContainerGap())
+        );
+        jPanel3Layout.setVerticalGroup(
+            jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jPanel3Layout.createSequentialGroup()
+                .addContainerGap()
+                .add(cmdRefresh)
+                .addContainerGap())
+        );
+
+        jSplitPane1.setDividerLocation(600);
+        jSplitPane1.addComponentListener(new java.awt.event.ComponentAdapter() {
+            public void componentResized(java.awt.event.ComponentEvent evt) {
+                jSplitPane1ComponentResized(evt);
+            }
+        });
+
+        jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder("E-Mail- / beA-Vorlage"));
 
         jLabel1.setText("Betreff:");
 
@@ -889,7 +930,7 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
                             .add(jLabel3))
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                            .add(cmbFormat, 0, 539, Short.MAX_VALUE)
+                            .add(cmbFormat, 0, 1, Short.MAX_VALUE)
                             .add(contentPanel, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
                 .addContainerGap())
         );
@@ -907,12 +948,14 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
                 .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(jPanel1Layout.createSequentialGroup()
                         .add(jLabel3)
-                        .add(0, 64, Short.MAX_VALUE))
+                        .add(0, 62, Short.MAX_VALUE))
                     .add(jPanel1Layout.createSequentialGroup()
                         .add(1, 1, 1)
                         .add(contentPanel, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                 .addContainerGap())
         );
+
+        jSplitPane1.setLeftComponent(jPanel1);
 
         jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder("Platzhalter"));
 
@@ -938,13 +981,12 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
         jPanel2Layout.setHorizontalGroup(
             jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel2Layout.createSequentialGroup()
-                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
-                    .add(jPanel2Layout.createSequentialGroup()
-                        .add(cmdAddPlaceHolder)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(cmbPlaceHolderTarget, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 158, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                    .add(jScrollPane3, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 158, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap()
+                .add(cmdAddPlaceHolder)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(jScrollPane3)
+                    .add(cmbPlaceHolderTarget, 0, 193, Short.MAX_VALUE))
                 .addContainerGap())
         );
         jPanel2Layout.setVerticalGroup(
@@ -958,33 +1000,7 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
                 .addContainerGap())
         );
 
-        jPanel3.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(255, 255, 255), 2, true));
-        jPanel3.setOpaque(false);
-
-        cmdRefresh.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/reload.png"))); // NOI18N
-        cmdRefresh.setToolTipText("Aktualisieren");
-        cmdRefresh.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdRefreshActionPerformed(evt);
-            }
-        });
-
-        org.jdesktop.layout.GroupLayout jPanel3Layout = new org.jdesktop.layout.GroupLayout(jPanel3);
-        jPanel3.setLayout(jPanel3Layout);
-        jPanel3Layout.setHorizontalGroup(
-            jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(jPanel3Layout.createSequentialGroup()
-                .addContainerGap()
-                .add(cmdRefresh)
-                .addContainerGap())
-        );
-        jPanel3Layout.setVerticalGroup(
-            jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(jPanel3Layout.createSequentialGroup()
-                .addContainerGap()
-                .add(cmdRefresh)
-                .addContainerGap())
-        );
+        jSplitPane1.setRightComponent(jPanel2);
 
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(this);
         this.setLayout(layout);
@@ -995,9 +1011,11 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(org.jdesktop.layout.GroupLayout.TRAILING, jScrollPane1)
                     .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
-                        .add(jPanel1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .add(jPanel3, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .add(18, 18, 18)
+                        .add(jLabel18)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(jPanel2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                        .add(lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                     .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
                         .add(0, 0, Short.MAX_VALUE)
                         .add(cmdNew)
@@ -1005,12 +1023,7 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
                         .add(cmdSave)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(cmdDelete))
-                    .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
-                        .add(jPanel3, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .add(18, 18, 18)
-                        .add(jLabel18)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                    .add(jSplitPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 894, Short.MAX_VALUE))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -1029,9 +1042,7 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
                     .add(cmdNew)
                     .add(cmdDelete))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jPanel1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .add(jPanel2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .add(jSplitPane1)
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -1122,7 +1133,14 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
                 //EditorsRegistry.getInstance().updateStatus("Adresse wird gespeichert...");
                 try {
                     JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                    locator.lookupIntegrationServiceRemote().deleteEmailTemplate(this.lstMailTemplates.getSelectedValue().toString());
+                    List selectedValues=this.lstMailTemplates.getSelectedValuesList();
+                    if(selectedValues!=null) {
+                        for(Object selectedValue: selectedValues) {
+                            locator.lookupIntegrationServiceRemote().deleteEmailTemplate(selectedValue.toString());
+                        }
+                        
+                    }
+                    
                 } catch (Exception ex) {
                     JOptionPane.showMessageDialog(this, "Fehler beim Löschen der Vorlage: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
                 }
@@ -1193,6 +1211,10 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
         }
     }//GEN-LAST:event_cmbFormatItemStateChanged
 
+    private void jSplitPane1ComponentResized(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_jSplitPane1ComponentResized
+        this.jSplitPane1.setDividerLocation(0.8d);
+    }//GEN-LAST:event_jSplitPane1ComponentResized
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JComboBox cmbFormat;
     private javax.swing.JComboBox cmbPlaceHolderTarget;
@@ -1211,6 +1233,7 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
     private javax.swing.JPanel jPanel3;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane3;
+    private javax.swing.JSplitPane jSplitPane1;
     protected javax.swing.JLabel lblPanelTitle;
     private javax.swing.JList lstMailTemplates;
     private javax.swing.JList lstPlaceHolders;

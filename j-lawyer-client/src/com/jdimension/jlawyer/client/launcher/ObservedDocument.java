@@ -701,6 +701,10 @@ public class ObservedDocument {
         this.store=store;
     }
     
+    public long getOpenDuration() {
+        return System.currentTimeMillis()-this.opened;
+    }
+    
     public boolean isReadOnly() {
         return store.isReadOnly();
     }

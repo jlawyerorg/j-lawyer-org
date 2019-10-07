@@ -663,6 +663,7 @@
  */
 package com.jdimension.jlawyer.client.processing;
 
+import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import javax.swing.JDialog;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
@@ -731,6 +732,10 @@ public abstract class ProgressableAction {
     public abstract int getMax();
 
     public abstract int getMin();
+    
+    public String getErrorMessageAndHints(String rootCause) {
+        return rootCause;
+    }
 
     public void start() {
 
@@ -776,7 +781,8 @@ public abstract class ProgressableAction {
                 SwingUtilities.invokeLater(new Thread(new Runnable() {
                     public void run() {
                         if(!succeeded) {
-                            JOptionPane.showMessageDialog(indicator, errorS, "Fehler", JOptionPane.ERROR_MESSAGE);
+                            String displayedError=getErrorMessageAndHints(errorS);
+                            JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), displayedError, "Fehler", JOptionPane.ERROR_MESSAGE);
 
                         }
                         indicator.setVisible(false);

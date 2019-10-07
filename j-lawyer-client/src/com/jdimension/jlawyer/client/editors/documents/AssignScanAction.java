@@ -666,9 +666,12 @@ package com.jdimension.jlawyer.client.editors.documents;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
+import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileTagsBean;
+import com.jdimension.jlawyer.persistence.DocumentTagsBean;
 import com.jdimension.jlawyer.services.IntegrationServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import java.util.Collection;
 import javax.swing.JTable;
 import org.apache.log4j.Logger;
 
@@ -692,19 +695,35 @@ public class AssignScanAction extends DeleteScanAction {
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
-            String newName=this.getNewFileName(this.fileName);
-            if(newName==null)
+            String newName = this.getNewFileName(this.fileName);
+            if (newName == null) {
                 return;
-            
+            }
+
             IntegrationServiceRemote is = locator.lookupIntegrationServiceRemote();
             boolean added = is.assignObservedFile(this.fileName, this.archiveFileId, newName);
-            
-            if(this.getCaseTag()!=null)
+
+            if (this.getCaseTag() != null) {
                 locator.lookupArchiveFileServiceRemote().setTag(archiveFileId, new ArchiveFileTagsBean(null, this.getCaseTag()), true);
-            
-            if(added)
+            }
+
+            if (this.getDocumentTag() != null) {
+                Collection docs = locator.lookupArchiveFileServiceRemote().getDocuments(archiveFileId);
+                for (Object d : docs) {
+                    if (d instanceof ArchiveFileDocumentsBean) {
+                        ArchiveFileDocumentsBean doc = (ArchiveFileDocumentsBean) d;
+                        if (newName.equals(doc.getName())) {
+                            locator.lookupArchiveFileServiceRemote().setDocumentTag(doc.getId(), new DocumentTagsBean(null, this.getDocumentTag()), true);
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (added) {
                 super.execute();
-            
+            }
+
 //            if (removed) {
 //                String[] colNames = new String[]{"Aktion", "Akte", ""};
 //                DefaultTableModel model = new DefaultTableModel(colNames, 0);
@@ -714,14 +733,10 @@ public class AssignScanAction extends DeleteScanAction {
 //                filesModel.removeRow(filesTable.convertRowIndexToModel(filesTable.getSelectedRow()));
 //                EditorsRegistry.getInstance().updateScanStatus(filesModel.getRowCount());
 //            }
-
-            
-
         } catch (Exception ex) {
             log.error(ex);
             ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Löschen des Scans: " + ex.getMessage(), "Fehler");
         }
-        
-        
+
     }
 }

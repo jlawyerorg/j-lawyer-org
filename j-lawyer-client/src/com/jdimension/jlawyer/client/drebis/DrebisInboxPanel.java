@@ -883,9 +883,6 @@ public class DrebisInboxPanel extends javax.swing.JPanel implements ThemeableEdi
 
         jLabel18 = new javax.swing.JLabel();
         lblPanelTitle = new javax.swing.JLabel();
-        jToolBar1 = new javax.swing.JToolBar();
-        cmdNew = new javax.swing.JButton();
-        cmdReply = new javax.swing.JButton();
         jPanel2 = new javax.swing.JPanel();
         cmdRefresh = new javax.swing.JButton();
         jSplitPane1 = new javax.swing.JSplitPane();
@@ -912,34 +909,6 @@ public class DrebisInboxPanel extends javax.swing.JPanel implements ThemeableEdi
         lblPanelTitle.setForeground(new java.awt.Color(255, 255, 255));
         lblPanelTitle.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/drebis32.png"))); // NOI18N
         lblPanelTitle.setText("- Nachrichten");
-
-        jToolBar1.setFloatable(false);
-        jToolBar1.setRollover(true);
-
-        cmdNew.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/mail_new3.png"))); // NOI18N
-        cmdNew.setToolTipText("neue E-Mail schreiben");
-        cmdNew.setFocusable(false);
-        cmdNew.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        cmdNew.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        cmdNew.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdNewActionPerformed(evt);
-            }
-        });
-        jToolBar1.add(cmdNew);
-
-        cmdReply.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/mail_reply.png"))); // NOI18N
-        cmdReply.setToolTipText("Beantworten");
-        cmdReply.setEnabled(false);
-        cmdReply.setFocusable(false);
-        cmdReply.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        cmdReply.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        cmdReply.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdReplyActionPerformed(evt);
-            }
-        });
-        jToolBar1.add(cmdReply);
 
         jPanel2.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(255, 255, 255), 2, true));
         jPanel2.setOpaque(false);
@@ -969,6 +938,7 @@ public class DrebisInboxPanel extends javax.swing.JPanel implements ThemeableEdi
                 .addContainerGap())
         );
 
+        jSplitPane1.setDividerLocation(100);
         jSplitPane1.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
 
         tblHeaders.setAutoCreateRowSorter(true);
@@ -1138,7 +1108,7 @@ public class DrebisInboxPanel extends javax.swing.JPanel implements ThemeableEdi
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(jLabel4)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(jScrollPane2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 203, Short.MAX_VALUE))
+                        .add(jScrollPane2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 512, Short.MAX_VALUE))
                     .add(jScrollPane3, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                 .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
@@ -1157,14 +1127,11 @@ public class DrebisInboxPanel extends javax.swing.JPanel implements ThemeableEdi
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(layout.createSequentialGroup()
                         .addContainerGap()
-                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                            .add(layout.createSequentialGroup()
-                                .add(jPanel2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                                .add(18, 18, 18)
-                                .add(jLabel18)
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                .add(lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                            .add(jToolBar1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                        .add(jPanel2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .add(18, 18, 18)
+                        .add(jLabel18)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                     .add(jSplitPane1))
                 .addContainerGap())
         );
@@ -1177,80 +1144,13 @@ public class DrebisInboxPanel extends javax.swing.JPanel implements ThemeableEdi
                     .add(lblPanelTitle)
                     .add(jPanel2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jToolBar1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 25, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jSplitPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 772, Short.MAX_VALUE))
+                .add(jSplitPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 803, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
     private void cmdRefreshActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRefreshActionPerformed
         this.refreshList();
     }//GEN-LAST:event_cmdRefreshActionPerformed
-
-    private void cmdNewActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdNewActionPerformed
-//        SendEmailDialog dlg = new SendEmailDialog(EditorsRegistry.getInstance().getMainWindow(), false);
-//        FrameUtils.centerDialog(dlg, null);
-//        dlg.setVisible(true);
-    }//GEN-LAST:event_cmdNewActionPerformed
-
-    private void cmdReplyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdReplyActionPerformed
-//        SendEmailDialog dlg = new SendEmailDialog(EditorsRegistry.getInstance().getMainWindow(), false);
-//
-//        int[] selected = this.tblMails.getSelectedRows();
-//
-//
-//        MessageContainer msgC = (MessageContainer) this.tblMails.getValueAt(selected[0], 0);
-//        try {
-//            Message m = msgC.getMessage();
-//            Address[] replyTos = m.getReplyTo();
-//            Address to = null;
-//            if (replyTos != null) {
-//                if (replyTos.length > 0) {
-//                    to = replyTos[0];
-//                }
-//            }
-//            if (to == null) {
-//                to = m.getFrom()[0];
-//            }
-//            try {
-//                dlg.setTo(MimeUtility.decodeText(to.toString()));
-//            } catch (Throwable t) {
-//                log.error(t);
-//                dlg.setTo(to.toString());
-//            }
-//
-//            String subject = m.getSubject();
-//            if (subject == null) {
-//                subject = "";
-//            }
-//            if (!subject.startsWith("Re: ")) {
-//                subject = "Re: " + subject;
-//            }
-//            dlg.setSubject(subject);
-//
-//            String decodedTo = to.toString();
-//            try {
-//                decodedTo = MimeUtility.decodeText(to.toString());
-//            } catch (Throwable t) {
-//                log.error(t);
-//            }
-//            String contentType = this.mailContentUI.getContentType();
-//            dlg.setContentType(contentType);
-//            if (contentType.toLowerCase().startsWith("text/html")) {
-//                dlg.setBody(EmailUtils.getQuotedBody(EmailUtils.Html2Text(this.mailContentUI.getBody()), "text/plain", decodedTo), "text/plain");
-//            } else {
-//                dlg.setBody(EmailUtils.getQuotedBody(this.mailContentUI.getBody(), "text/plain", decodedTo), "text/plain");
-//            }
-//            dlg.setBody(EmailUtils.getQuotedBody(this.mailContentUI.getBody(), "text/html", decodedTo), "text/html");
-//
-//
-//        } catch (MessagingException ex) {
-//            log.error(ex);
-//        }
-//
-//        FrameUtils.centerDialog(dlg, null);
-//        dlg.setVisible(true);
-    }//GEN-LAST:event_cmdReplyActionPerformed
 
     private void tblHeadersMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblHeadersMouseClicked
         
@@ -1293,7 +1193,7 @@ public class DrebisInboxPanel extends javax.swing.JPanel implements ThemeableEdi
                 //String tmpFile = al.createTempFile(da.getName() + "." + da.getSuffix(), data);
                 ReadOnlyDocumentStore store=new ReadOnlyDocumentStore("drebis-attachment-" + da.getName() + "." + da.getSuffix(), da.getName() + "." + da.getSuffix());
                 Launcher launcher=LauncherFactory.getLauncher(da.getName() + "." + da.getSuffix(), data, store);
-                launcher.launch();
+                launcher.launch(false);
                 
             } catch (Exception ex) {
                 log.error("Error opening attachment", ex);
@@ -1394,9 +1294,7 @@ public class DrebisInboxPanel extends javax.swing.JPanel implements ThemeableEdi
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton cmdConfirm;
-    private javax.swing.JButton cmdNew;
     private javax.swing.JButton cmdRefresh;
-    private javax.swing.JButton cmdReply;
     private javax.swing.JButton cmdSaveConfirm;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel18;
@@ -1409,7 +1307,6 @@ public class DrebisInboxPanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JSplitPane jSplitPane1;
-    private javax.swing.JToolBar jToolBar1;
     protected javax.swing.JLabel lblPanelTitle;
     private javax.swing.JTable tblAttachments;
     private javax.swing.JTable tblHeaders;

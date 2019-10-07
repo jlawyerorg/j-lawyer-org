@@ -844,12 +844,10 @@ exists or setup the property manually. For example like this:
     <target if="is.jars.in.ejbjar" name="-library-inclusion-in-archive-by-user">
         <copyfiles files="${reference.j-lawyer-server-entities.dist}" todir="${build.classes.dir}"/>
         <copyfiles files="${reference.j-lawyer-server-api.jar}" todir="${build.classes.dir}"/>
-        <copyfiles files="${file.reference.log4j.jar}" todir="${build.classes.dir}"/>
         <copyfiles files="${reference.j-lawyer-server-common.jar}" todir="${build.classes.dir}"/>
-        <copyfiles files="${file.reference.mysql-connector-java-5.1.37-bin.jar}" todir="${build.classes.dir}"/>
         <copyfiles files="${file.reference.joda-time-2.1.jar}" todir="${build.classes.dir}"/>
+        <copyfiles files="${file.reference.log4j-1.2.17.jar}" todir="${build.classes.dir}"/>
         <copyfiles files="${file.reference.jollyday-0.4.7.jar}" todir="${build.classes.dir}"/>
-        <copyfiles files="${file.reference.tika-app-1.5.jar}" todir="${build.classes.dir}"/>
         <copyfiles files="${file.reference.j-lawyer-drebis-stubs.jar}" todir="${build.classes.dir}"/>
         <copyfiles files="${file.reference.lucene-analyzers-common-4.7.0.jar}" todir="${build.classes.dir}"/>
         <copyfiles files="${file.reference.lucene-core-4.7.0.jar}" todir="${build.classes.dir}"/>
@@ -876,16 +874,15 @@ exists or setup the property manually. For example like this:
         <copyfiles files="${file.reference.simple-odf-0.8.2-incubating.jar}" todir="${build.classes.dir}"/>
         <copyfiles files="${file.reference.xslt-runner-1.2.4-incubating.jar}" todir="${build.classes.dir}"/>
         <copyfiles files="${file.reference.xslt-runner-task-1.2.4-incubating.jar}" todir="${build.classes.dir}"/>
+        <copyfiles files="${file.reference.tika-app-1.5.jar}" todir="${build.classes.dir}"/>
     </target>
     <target if="is.server.weblogic" name="-library-inclusion-in-archive-weblogic">
         <basename file="${reference.j-lawyer-server-entities.dist}" property="manifest.reference.j-lawyer-server-entities.dist"/>
         <basename file="${reference.j-lawyer-server-api.jar}" property="manifest.reference.j-lawyer-server-api.jar"/>
-        <basename file="${file.reference.log4j.jar}" property="manifest.file.reference.log4j.jar"/>
         <basename file="${reference.j-lawyer-server-common.jar}" property="manifest.reference.j-lawyer-server-common.jar"/>
-        <basename file="${file.reference.mysql-connector-java-5.1.37-bin.jar}" property="manifest.file.reference.mysql-connector-java-5.1.37-bin.jar"/>
         <basename file="${file.reference.joda-time-2.1.jar}" property="manifest.file.reference.joda-time-2.1.jar"/>
+        <basename file="${file.reference.log4j-1.2.17.jar}" property="manifest.file.reference.log4j-1.2.17.jar"/>
         <basename file="${file.reference.jollyday-0.4.7.jar}" property="manifest.file.reference.jollyday-0.4.7.jar"/>
-        <basename file="${file.reference.tika-app-1.5.jar}" property="manifest.file.reference.tika-app-1.5.jar"/>
         <basename file="${file.reference.j-lawyer-drebis-stubs.jar}" property="manifest.file.reference.j-lawyer-drebis-stubs.jar"/>
         <basename file="${file.reference.lucene-analyzers-common-4.7.0.jar}" property="manifest.file.reference.lucene-analyzers-common-4.7.0.jar"/>
         <basename file="${file.reference.lucene-core-4.7.0.jar}" property="manifest.file.reference.lucene-core-4.7.0.jar"/>
@@ -912,53 +909,51 @@ exists or setup the property manually. For example like this:
         <basename file="${file.reference.simple-odf-0.8.2-incubating.jar}" property="manifest.file.reference.simple-odf-0.8.2-incubating.jar"/>
         <basename file="${file.reference.xslt-runner-1.2.4-incubating.jar}" property="manifest.file.reference.xslt-runner-1.2.4-incubating.jar"/>
         <basename file="${file.reference.xslt-runner-task-1.2.4-incubating.jar}" property="manifest.file.reference.xslt-runner-task-1.2.4-incubating.jar"/>
+        <basename file="${file.reference.tika-app-1.5.jar}" property="manifest.file.reference.tika-app-1.5.jar"/>
         <manifest file="${build.ear.classes.dir}/META-INF/MANIFEST.MF" mode="update">
-            <attribute name="Extension-List" value="jar-1 jar-2 jar-3 jar-4 jar-5 jar-6 jar-7 jar-8 jar-9 jar-10 jar-11 jar-12 jar-13 jar-14 jar-15 jar-16 jar-17 jar-18 jar-19 jar-20 jar-21 jar-22 jar-23 jar-24 jar-25 jar-26 jar-27 jar-28 jar-29 jar-30 jar-31 jar-32 jar-33 jar-34 "/>
+            <attribute name="Extension-List" value="jar-1 jar-2 jar-3 jar-4 jar-5 jar-6 jar-7 jar-8 jar-9 jar-10 jar-11 jar-12 jar-13 jar-14 jar-15 jar-16 jar-17 jar-18 jar-19 jar-20 jar-21 jar-22 jar-23 jar-24 jar-25 jar-26 jar-27 jar-28 jar-29 jar-30 jar-31 jar-32 jar-33 "/>
             <attribute name="jar-1-Extension-Name" value="${manifest.reference.j-lawyer-server-entities.dist}"/>
             <attribute name="jar-2-Extension-Name" value="${manifest.reference.j-lawyer-server-api.jar}"/>
-            <attribute name="jar-3-Extension-Name" value="${manifest.file.reference.log4j.jar}"/>
-            <attribute name="jar-4-Extension-Name" value="${manifest.reference.j-lawyer-server-common.jar}"/>
-            <attribute name="jar-5-Extension-Name" value="${manifest.file.reference.mysql-connector-java-5.1.37-bin.jar}"/>
-            <attribute name="jar-6-Extension-Name" value="${manifest.file.reference.joda-time-2.1.jar}"/>
-            <attribute name="jar-7-Extension-Name" value="${manifest.file.reference.jollyday-0.4.7.jar}"/>
-            <attribute name="jar-8-Extension-Name" value="${manifest.file.reference.tika-app-1.5.jar}"/>
-            <attribute name="jar-9-Extension-Name" value="${manifest.file.reference.j-lawyer-drebis-stubs.jar}"/>
-            <attribute name="jar-10-Extension-Name" value="${manifest.file.reference.lucene-analyzers-common-4.7.0.jar}"/>
-            <attribute name="jar-11-Extension-Name" value="${manifest.file.reference.lucene-core-4.7.0.jar}"/>
-            <attribute name="jar-12-Extension-Name" value="${manifest.file.reference.lucene-queryparser-4.7.0.jar}"/>
-            <attribute name="jar-13-Extension-Name" value="${manifest.file.reference.lucene-highlighter-4.7.0.jar}"/>
-            <attribute name="jar-14-Extension-Name" value="${manifest.file.reference.lucene-memory-4.7.0.jar}"/>
-            <attribute name="jar-15-Extension-Name" value="${manifest.file.reference.lucene-queries-4.7.0.jar}"/>
-            <attribute name="jar-16-Extension-Name" value="${manifest.file.reference.java-rdfa-0.4.2.jar}"/>
-            <attribute name="jar-17-Extension-Name" value="${manifest.file.reference.jena-core-2.7.4.jar}"/>
-            <attribute name="jar-18-Extension-Name" value="${manifest.file.reference.jena-iri-0.9.4.jar}"/>
-            <attribute name="jar-19-Extension-Name" value="${manifest.file.reference.commons-validator-1.4.0.jar}"/>
-            <attribute name="jar-20-Extension-Name" value="${manifest.reference.j-lawyer-fax.jar}"/>
-            <attribute name="jar-21-Extension-Name" value="${manifest.file.reference.xmlrpc-client-3.1.3.jar}"/>
-            <attribute name="jar-22-Extension-Name" value="${manifest.file.reference.xmlrpc-common-3.1.3.jar}"/>
-            <attribute name="jar-23-Extension-Name" value="${manifest.file.reference.xmlrpc-server-3.1.3.jar}"/>
-            <attribute name="jar-24-Extension-Name" value="${manifest.file.reference.ws-commons-util-1.0.2.jar}"/>
-            <attribute name="jar-25-Extension-Name" value="${manifest.file.reference.commons-lang3-3.5.jar}"/>
-            <attribute name="jar-26-Extension-Name" value="${manifest.file.reference.commons-logging-1.2.jar}"/>
-            <attribute name="jar-27-Extension-Name" value="${manifest.file.reference.commons-net-3.5.jar}"/>
-            <attribute name="jar-28-Extension-Name" value="${manifest.file.reference.commons-vfs2-2.1.jar}"/>
-            <attribute name="jar-29-Extension-Name" value="${manifest.file.reference.jcifs-1.3.18.jar}"/>
-            <attribute name="jar-30-Extension-Name" value="${manifest.file.reference.jsch-0.1.54.jar}"/>
-            <attribute name="jar-31-Extension-Name" value="${manifest.file.reference.odfdom-java-0.8.11-incubating.jar}"/>
-            <attribute name="jar-32-Extension-Name" value="${manifest.file.reference.simple-odf-0.8.2-incubating.jar}"/>
-            <attribute name="jar-33-Extension-Name" value="${manifest.file.reference.xslt-runner-1.2.4-incubating.jar}"/>
-            <attribute name="jar-34-Extension-Name" value="${manifest.file.reference.xslt-runner-task-1.2.4-incubating.jar}"/>
+            <attribute name="jar-3-Extension-Name" value="${manifest.reference.j-lawyer-server-common.jar}"/>
+            <attribute name="jar-4-Extension-Name" value="${manifest.file.reference.joda-time-2.1.jar}"/>
+            <attribute name="jar-5-Extension-Name" value="${manifest.file.reference.log4j-1.2.17.jar}"/>
+            <attribute name="jar-6-Extension-Name" value="${manifest.file.reference.jollyday-0.4.7.jar}"/>
+            <attribute name="jar-7-Extension-Name" value="${manifest.file.reference.j-lawyer-drebis-stubs.jar}"/>
+            <attribute name="jar-8-Extension-Name" value="${manifest.file.reference.lucene-analyzers-common-4.7.0.jar}"/>
+            <attribute name="jar-9-Extension-Name" value="${manifest.file.reference.lucene-core-4.7.0.jar}"/>
+            <attribute name="jar-10-Extension-Name" value="${manifest.file.reference.lucene-queryparser-4.7.0.jar}"/>
+            <attribute name="jar-11-Extension-Name" value="${manifest.file.reference.lucene-highlighter-4.7.0.jar}"/>
+            <attribute name="jar-12-Extension-Name" value="${manifest.file.reference.lucene-memory-4.7.0.jar}"/>
+            <attribute name="jar-13-Extension-Name" value="${manifest.file.reference.lucene-queries-4.7.0.jar}"/>
+            <attribute name="jar-14-Extension-Name" value="${manifest.file.reference.java-rdfa-0.4.2.jar}"/>
+            <attribute name="jar-15-Extension-Name" value="${manifest.file.reference.jena-core-2.7.4.jar}"/>
+            <attribute name="jar-16-Extension-Name" value="${manifest.file.reference.jena-iri-0.9.4.jar}"/>
+            <attribute name="jar-17-Extension-Name" value="${manifest.file.reference.commons-validator-1.4.0.jar}"/>
+            <attribute name="jar-18-Extension-Name" value="${manifest.reference.j-lawyer-fax.jar}"/>
+            <attribute name="jar-19-Extension-Name" value="${manifest.file.reference.xmlrpc-client-3.1.3.jar}"/>
+            <attribute name="jar-20-Extension-Name" value="${manifest.file.reference.xmlrpc-common-3.1.3.jar}"/>
+            <attribute name="jar-21-Extension-Name" value="${manifest.file.reference.xmlrpc-server-3.1.3.jar}"/>
+            <attribute name="jar-22-Extension-Name" value="${manifest.file.reference.ws-commons-util-1.0.2.jar}"/>
+            <attribute name="jar-23-Extension-Name" value="${manifest.file.reference.commons-lang3-3.5.jar}"/>
+            <attribute name="jar-24-Extension-Name" value="${manifest.file.reference.commons-logging-1.2.jar}"/>
+            <attribute name="jar-25-Extension-Name" value="${manifest.file.reference.commons-net-3.5.jar}"/>
+            <attribute name="jar-26-Extension-Name" value="${manifest.file.reference.commons-vfs2-2.1.jar}"/>
+            <attribute name="jar-27-Extension-Name" value="${manifest.file.reference.jcifs-1.3.18.jar}"/>
+            <attribute name="jar-28-Extension-Name" value="${manifest.file.reference.jsch-0.1.54.jar}"/>
+            <attribute name="jar-29-Extension-Name" value="${manifest.file.reference.odfdom-java-0.8.11-incubating.jar}"/>
+            <attribute name="jar-30-Extension-Name" value="${manifest.file.reference.simple-odf-0.8.2-incubating.jar}"/>
+            <attribute name="jar-31-Extension-Name" value="${manifest.file.reference.xslt-runner-1.2.4-incubating.jar}"/>
+            <attribute name="jar-32-Extension-Name" value="${manifest.file.reference.xslt-runner-task-1.2.4-incubating.jar}"/>
+            <attribute name="jar-33-Extension-Name" value="${manifest.file.reference.tika-app-1.5.jar}"/>
         </manifest>
     </target>
     <target depends="compile" name="library-inclusion-in-manifest">
         <copyfiles files="${reference.j-lawyer-server-entities.dist}" todir="${dist.ear.dir}"/>
         <copyfiles files="${reference.j-lawyer-server-api.jar}" todir="${dist.ear.dir}/lib"/>
-        <copyfiles files="${file.reference.log4j.jar}" todir="${dist.ear.dir}/lib"/>
         <copyfiles files="${reference.j-lawyer-server-common.jar}" todir="${dist.ear.dir}/lib"/>
-        <copyfiles files="${file.reference.mysql-connector-java-5.1.37-bin.jar}" todir="${dist.ear.dir}/lib"/>
         <copyfiles files="${file.reference.joda-time-2.1.jar}" todir="${dist.ear.dir}/lib"/>
+        <copyfiles files="${file.reference.log4j-1.2.17.jar}" todir="${dist.ear.dir}/lib"/>
         <copyfiles files="${file.reference.jollyday-0.4.7.jar}" todir="${dist.ear.dir}/lib"/>
-        <copyfiles files="${file.reference.tika-app-1.5.jar}" todir="${dist.ear.dir}/lib"/>
         <copyfiles files="${file.reference.j-lawyer-drebis-stubs.jar}" todir="${dist.ear.dir}/lib"/>
         <copyfiles files="${file.reference.lucene-analyzers-common-4.7.0.jar}" todir="${dist.ear.dir}/lib"/>
         <copyfiles files="${file.reference.lucene-core-4.7.0.jar}" todir="${dist.ear.dir}/lib"/>
@@ -985,6 +980,7 @@ exists or setup the property manually. For example like this:
         <copyfiles files="${file.reference.simple-odf-0.8.2-incubating.jar}" todir="${dist.ear.dir}/lib"/>
         <copyfiles files="${file.reference.xslt-runner-1.2.4-incubating.jar}" todir="${dist.ear.dir}/lib"/>
         <copyfiles files="${file.reference.xslt-runner-task-1.2.4-incubating.jar}" todir="${dist.ear.dir}/lib"/>
+        <copyfiles files="${file.reference.tika-app-1.5.jar}" todir="${dist.ear.dir}/lib"/>
         <manifest file="${build.ear.classes.dir}/META-INF/MANIFEST.MF" mode="update"/>
     </target>
     <target name="-copy-meta-inf">

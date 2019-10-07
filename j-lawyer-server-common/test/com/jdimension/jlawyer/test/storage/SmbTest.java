@@ -678,123 +678,153 @@ import org.junit.Test;
  * @author jens
  */
 public class SmbTest {
-    
+
+    private boolean runsontravis = false;
+
     public SmbTest() {
     }
-    
+
     @BeforeClass
     public static void setUpClass() {
     }
-    
+
     @AfterClass
     public static void tearDownClass() {
     }
-    
+
     @Before
     public void setUp() {
+        String rot = System.getenv("runsontravisci");
+        if (rot != null) {
+            if (rot.length() > 0) {
+                this.runsontravis = true;
+            }
+        }
     }
-    
+
     @After
     public void tearDown() {
     }
 
-     @Test
-     public void testTraverse() {
+    @Test
+    public void testTraverse() {
+        if (runsontravis) {
+            return;
+        }
         try {
-            VirtualFile vf=VirtualFile.getFile("smb://j-lawyer-box/j-lawyer-share/");
+            VirtualFile vf = VirtualFile.getFile("smb://j-lawyer-box/j-lawyer-share/");
             traverse(vf);
         } catch (Exception ex) {
             Assert.fail(ex.getMessage());
         }
-     }
-     
-     @Test
-     public void testIsDirectory() {
+    }
+
+    @Test
+    public void testIsDirectory() {
+        if (runsontravis) {
+            return;
+        }
         try {
-            VirtualFile vf=VirtualFile.getFile("smb://j-lawyer-box/j-lawyer-share/");
+            VirtualFile vf = VirtualFile.getFile("smb://j-lawyer-box/j-lawyer-share/");
             Assert.assertTrue(vf.isDirectory());
             Assert.assertFalse(vf.isFile());
         } catch (Exception ex) {
             Assert.fail(ex.getMessage());
         }
-     }
-     
-     @Test
-     public void testCopy() {
+    }
+
+    @Test
+    public void testCopy() {
+        if (runsontravis) {
+            return;
+        }
         try {
-            VirtualFile vf=VirtualFile.getFile("smb://j-lawyer-box/j-lawyer-share/daten/");
-            
-            File f=File.createTempFile("jlawyertest", ".txt");
-            String name=f.getName();
+            VirtualFile vf = VirtualFile.getFile("smb://j-lawyer-box/j-lawyer-share/daten/");
+
+            File f = File.createTempFile("jlawyertest", ".txt");
+            String name = f.getName();
             vf.copyLocalFile(f);
-            Collection<VirtualFile> c=vf.listFiles();
-            for(VirtualFile v: c) {
-                if(v.getName().equals(name))
+            Collection<VirtualFile> c = vf.listFiles();
+            for (VirtualFile v : c) {
+                if (v.getName().equals(name)) {
                     return;
-                    
+                }
+
             }
             Assert.fail();
-            
+
         } catch (Exception ex) {
             Assert.fail(ex.getMessage());
         }
-     }
-     
-     @Test
-     public void testCreateDeleteDirectory() {
+    }
+
+    @Test
+    public void testCreateDeleteDirectory() {
+        if (runsontravis) {
+            return;
+        }
         try {
-            VirtualFile vf=VirtualFile.getFile("smb://j-lawyer-box/j-lawyer-share/daten/temp/unittest/");
-            
-            String subDir=""+ System.currentTimeMillis();
+            VirtualFile vf = VirtualFile.getFile("smb://j-lawyer-box/j-lawyer-share/daten/temp/unittest/");
+
+            String subDir = "" + System.currentTimeMillis();
             vf.createDirectory(subDir);
-            
-            vf=VirtualFile.getFile("smb://j-lawyer-box/j-lawyer-share/daten/temp/unittest/" + subDir + "/");
+
+            vf = VirtualFile.getFile("smb://j-lawyer-box/j-lawyer-share/daten/temp/unittest/" + subDir + "/");
             vf.delete();
-            
-            
+
         } catch (Exception ex) {
             Assert.fail(ex.getMessage());
         }
-     }
-     
-     @Test
-     public void testDelete() {
+    }
+
+    @Test
+    public void testDelete() {
+        if (runsontravis) {
+            return;
+        }
         try {
-            VirtualFile vf=VirtualFile.getFile("smb://j-lawyer-box/j-lawyer-share/daten/");
-            
-            Collection<VirtualFile> c=vf.listFiles();
-            for(VirtualFile v: c) {
-                if(v.getName().indexOf("jlawyertest")>-1)
+            VirtualFile vf = VirtualFile.getFile("smb://j-lawyer-box/j-lawyer-share/daten/");
+
+            Collection<VirtualFile> c = vf.listFiles();
+            for (VirtualFile v : c) {
+                if (v.getName().indexOf("jlawyertest") > -1) {
                     v.delete();
-                    
+                }
+
             }
-            
-            
+
         } catch (Exception ex) {
             Assert.fail(ex.getMessage());
         }
-     }
-     
-     @Test
-     public void testIsFile() {
+    }
+
+    @Test
+    public void testIsFile() {
+        if (runsontravis) {
+            return;
+        }
         try {
-            VirtualFile vf=VirtualFile.getFile("smb://j-lawyer-box/j-lawyer-share/j-lawyer-client/putty.exe");
+            VirtualFile vf = VirtualFile.getFile("smb://j-lawyer-box/j-lawyer-share/j-lawyer-client/putty.exe");
             Assert.assertTrue(vf.isFile());
             Assert.assertFalse(vf.isDirectory());
-            
+
         } catch (Exception ex) {
             Assert.fail(ex.getMessage());
         }
-     }
-     
-     private void traverse(VirtualFile vf) throws Exception {
-         System.out.println(vf.getCanonicalName());
-         if(vf.isDirectory()) {
-             Collection<VirtualFile> list=vf.listFiles();
-             for(VirtualFile v: list) {
-                 if(v.isReadable())
+    }
+
+    private void traverse(VirtualFile vf) throws Exception {
+        if (runsontravis) {
+            return;
+        }
+        System.out.println(vf.getCanonicalName());
+        if (vf.isDirectory()) {
+            Collection<VirtualFile> list = vf.listFiles();
+            for (VirtualFile v : list) {
+                if (v.isReadable()) {
                     traverse(v);
-             }
-         }
-     }
+                }
+            }
+        }
+    }
 }

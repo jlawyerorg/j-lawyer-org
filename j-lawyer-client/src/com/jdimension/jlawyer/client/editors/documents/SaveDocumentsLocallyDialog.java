@@ -725,7 +725,7 @@ public class SaveDocumentsLocallyDialog extends javax.swing.JDialog {
         cmdSave = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
-        setTitle("Dokument verschlüsseln");
+        setTitle("Dokument lokal speichern");
         addComponentListener(new java.awt.event.ComponentAdapter() {
             public void componentResized(java.awt.event.ComponentEvent evt) {
                 formComponentResized(evt);

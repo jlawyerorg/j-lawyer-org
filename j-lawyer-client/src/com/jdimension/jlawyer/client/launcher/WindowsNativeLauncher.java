@@ -686,7 +686,7 @@ public class WindowsNativeLauncher extends NativeLauncher {
     }
 
     @Override
-    public void launch() throws Exception {
+    public void launch(boolean autoCloseExistingDocument) throws Exception {
 
         if (isDocumentOpen(store.getDocumentIdentifier())) {
             throw new Exception("Dokument " + store.getFileName() + " ist bereits geöffnet");

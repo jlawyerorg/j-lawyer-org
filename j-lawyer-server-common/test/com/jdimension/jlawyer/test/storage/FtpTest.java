@@ -678,143 +678,178 @@ import org.junit.Test;
  * @author jens
  */
 public class FtpTest {
-    
-    private String ftpUser=null;
-    private String ftpPassword=null;
-    private String ftpHome=null;
-    
+
+    private boolean runsontravis = false;
+
+    private String ftpUser = null;
+    private String ftpPassword = null;
+    private String ftpHome = null;
+    private String ftpHost = null;
+
     public FtpTest() {
     }
-    
+
     @BeforeClass
     public static void setUpClass() {
     }
-    
+
     @AfterClass
     public static void tearDownClass() {
     }
-    
+
     @Before
     public void setUp() {
+
+        String rot = System.getenv("runsontravisci");
+        if (rot != null) {
+            if (rot.length() > 0) {
+                this.runsontravis = true;
+            }
+        }
+
+        this.ftpPassword = System.getenv("ftppassword");
+        this.ftpUser = System.getenv("ftpuser");
+        this.ftpHome = System.getenv("ftphome");
+        this.ftpHost = System.getenv("ftphost");
         
-        this.ftpPassword=System.getenv("ftppassword");
-        this.ftpUser=System.getenv("ftpuser");
-        this.ftpHome=System.getenv("ftphome");
-        
+        System.out.println("using host " + ftpHost);
+
     }
-    
+
     @After
     public void tearDown() {
     }
 
-     @Test
-     public void testTraverse() {
+    @Test
+    public void testTraverse() {
+        if (runsontravis) {
+            return;
+        }
         try {
-            VirtualFile vf=VirtualFile.getFile("ftp://" + this.ftpUser + ":" + this.ftpPassword +  "@hpgen8/home/" + this.ftpHome + "/temp2");
+            VirtualFile vf = VirtualFile.getFile("ftp://" + this.ftpUser + ":" + this.ftpPassword + "@" + this.ftpHost + "/temp2");
+            System.out.println("traversing " + vf.getLocation());
             traverse(vf);
             vf.close();
         } catch (Exception ex) {
             Assert.fail(ex.getMessage());
         }
-     }
-     
-     @Test
-     public void testIsDirectory() {
+    }
+
+    @Test
+    public void testIsDirectory() {
+        if (runsontravis) {
+            return;
+        }
         try {
-            VirtualFile vf=VirtualFile.getFile("ftp://" + this.ftpUser + ":" + this.ftpPassword +  "@hpgen8/home/" + this.ftpHome + "/temp2/");
+            VirtualFile vf = VirtualFile.getFile("ftp://" + this.ftpUser + ":" + this.ftpPassword + "@" + this.ftpHost + "/temp2/");
             Assert.assertTrue(vf.isDirectory());
             Assert.assertFalse(vf.isFile());
             vf.close();
         } catch (Exception ex) {
             Assert.fail(ex.getMessage());
         }
-     }
-     
-     @Test
-     public void testCreateDeleteDirectory() {
+    }
+
+    @Test
+    public void testCreateDeleteDirectory() {
+        if (runsontravis) {
+            return;
+        }
         try {
-            VirtualFile vf=VirtualFile.getFile("ftp://" + this.ftpUser + ":" + this.ftpPassword +  "@hpgen8/home/" + this.ftpHome + "/temp2/");
-            
-            String subDir=""+ System.currentTimeMillis();
+            VirtualFile vf = VirtualFile.getFile("ftp://" + this.ftpUser + ":" + this.ftpPassword + "@" + this.ftpHost + "/temp2/");
+
+            String subDir = "" + System.currentTimeMillis();
             vf.createDirectory(subDir);
-            
-            vf=VirtualFile.getFile("ftp://" + this.ftpUser + ":" + this.ftpPassword +  "@hpgen8/home/" + this.ftpHome + "/temp2/" + subDir + "/");
+
+            vf = VirtualFile.getFile("ftp://" + this.ftpUser + ":" + this.ftpPassword + "@" + this.ftpHost + "/temp2/" + subDir + "/");
             vf.delete();
-            
-            
+
         } catch (Exception ex) {
             Assert.fail(ex.getMessage());
         }
-     }
-     
-     @Test
-     public void testCopy() {
+    }
+
+    @Test
+    public void testCopy() {
+        if (runsontravis) {
+            return;
+        }
         try {
-            VirtualFile vf=VirtualFile.getFile("ftp://" + this.ftpUser + ":" + this.ftpPassword +  "@hpgen8/home/" + this.ftpHome + "/temp2/");
-            
-            File f=File.createTempFile("jlawyertest", ".txt");
-            String name=f.getName();
+            VirtualFile vf = VirtualFile.getFile("ftp://" + this.ftpUser + ":" + this.ftpPassword + "@" + this.ftpHost + "/temp2/");
+
+            File f = File.createTempFile("jlawyertest", ".txt");
+            String name = f.getName();
             vf.copyLocalFile(f);
-            Collection<VirtualFile> c=vf.listFiles();
-            for(VirtualFile v: c) {
-                if(v.getName().equals(name)) {
+            Collection<VirtualFile> c = vf.listFiles();
+            for (VirtualFile v : c) {
+                if (v.getName().equals(name)) {
                     v.close();
                     return;
-                } else { 
+                } else {
                     v.close();
                 }
-                    
+
             }
             vf.close();
             Assert.fail();
-            
+
         } catch (Exception ex) {
             Assert.fail(ex.getMessage());
         }
-     }
-     
-     @Test
-     public void testDelete() {
+    }
+
+    @Test
+    public void testDelete() {
+        if (runsontravis) {
+            return;
+        }
         try {
-            VirtualFile vf=VirtualFile.getFile("ftp://" + this.ftpUser + ":" + this.ftpPassword +  "@hpgen8/home/" + this.ftpHome + "/temp2/");
-            
-            Collection<VirtualFile> c=vf.listFiles();
-            for(VirtualFile v: c) {
-                if(v.getName().indexOf("jlawyertest")>-1)
+            VirtualFile vf = VirtualFile.getFile("ftp://" + this.ftpUser + ":" + this.ftpPassword + "@" + this.ftpHost + "/temp2/");
+
+            Collection<VirtualFile> c = vf.listFiles();
+            for (VirtualFile v : c) {
+                if (v.getName().indexOf("jlawyertest") > -1) {
                     v.delete();
+                }
                 v.close();
-                    
+
             }
             vf.close();
-            
-            
+
         } catch (Exception ex) {
             Assert.fail(ex.getMessage());
         }
-     }
-     
-     @Test
-     public void testIsFile() {
+    }
+
+    @Test
+    public void testIsFile() {
+        if (runsontravis) {
+            return;
+        }
         try {
-            VirtualFile vf=VirtualFile.getFile("ftp://" + this.ftpUser + ":" + this.ftpPassword +  "@hpgen8/home/" + this.ftpHome + "/temp2/gugge.txt");
+            VirtualFile vf = VirtualFile.getFile("ftp://" + this.ftpUser + ":" + this.ftpPassword + "@" + this.ftpHost + "/temp2/gugge.txt");
             Assert.assertTrue(vf.isFile());
             Assert.assertFalse(vf.isDirectory());
             vf.close();
-            
+
         } catch (Exception ex) {
             Assert.fail(ex.getMessage());
         }
-     }
-     
-     private void traverse(VirtualFile vf) throws Exception {
-         System.out.println(vf.getCanonicalName());
-         if(vf.isDirectory()) {
-             Collection<VirtualFile> list=vf.listFiles();
-             for(VirtualFile v: list) {
-                 if(v.isReadable())
+    }
+
+    private void traverse(VirtualFile vf) throws Exception {
+        if (runsontravis) {
+            return;
+        }
+        System.out.println(vf.getCanonicalName());
+        if (vf.isDirectory()) {
+            Collection<VirtualFile> list = vf.listFiles();
+            for (VirtualFile v : list) {
+                if (v.isReadable()) {
                     traverse(v);
-             }
-         }
-         vf.close();
-     }
+                }
+            }
+        }
+        vf.close();
+    }
 }

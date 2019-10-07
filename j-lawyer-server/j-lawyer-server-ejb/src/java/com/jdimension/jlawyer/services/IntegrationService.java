@@ -686,7 +686,7 @@ import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import org.apache.log4j.Logger;
 import org.apache.tika.Tika;
-import org.jboss.security.annotation.SecurityDomain;
+import org.jboss.ejb3.annotation.SecurityDomain;
 
 /**
  *

@@ -683,6 +683,7 @@ public class CreateNewAddressPanel extends javax.swing.JPanel {
 
     private static final Logger log = Logger.getLogger(CreateNewAddressPanel.class.getName());
     private String email=null;
+    private String beaSafeId=null;
     private String senderName=null;
     private String editorClass=null;
     
@@ -792,6 +793,7 @@ public class CreateNewAddressPanel extends javax.swing.JPanel {
             
             ((NewAddressPanel) editor).setCompany(this.senderName);
             ((NewAddressPanel) editor).setEmail(this.email);
+            ((NewAddressPanel) editor).setBeaSafeId(this.beaSafeId);
             //((NewAddressPanel) editor).enableBackButton();
         } catch (Exception ex) {
             log.error("Error creating editor from class " + this.getClass().getName(), ex);
@@ -815,6 +817,7 @@ public class CreateNewAddressPanel extends javax.swing.JPanel {
             
             ((NewAddressPanel) editor).setName(this.senderName);
             ((NewAddressPanel) editor).setEmail(this.email);
+            ((NewAddressPanel) editor).setBeaSafeId(this.beaSafeId);
             //((NewAddressPanel) editor).enableBackButton();
         } catch (Exception ex) {
             log.error("Error creating editor from class " + this.getClass().getName(), ex);
@@ -829,4 +832,18 @@ public class CreateNewAddressPanel extends javax.swing.JPanel {
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel lblAddress;
     // End of variables declaration//GEN-END:variables
+
+    /**
+     * @return the beaSafeId
+     */
+    public String getBeaSafeId() {
+        return beaSafeId;
+    }
+
+    /**
+     * @param beaSafeId the beaSafeId to set
+     */
+    public void setBeaSafeId(String beaSafeId) {
+        this.beaSafeId = beaSafeId;
+    }
 }

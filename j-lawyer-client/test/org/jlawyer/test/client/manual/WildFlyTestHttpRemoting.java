@@ -663,18 +663,18 @@
  */
 package org.jlawyer.test.client.manual;
 
-
-import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.IntegrationServiceRemote;
-import java.util.Hashtable;
 import java.util.Properties;
+import java.util.concurrent.Callable;
 import javax.naming.Context;
 import javax.naming.InitialContext;
-import org.jboss.ejb.client.ContextSelector;
-import org.jboss.ejb.client.EJBClientConfiguration;
-import org.jboss.ejb.client.EJBClientContext;
-import org.jboss.ejb.client.PropertiesBasedEJBClientConfiguration;
-import org.jboss.ejb.client.remoting.ConfigBasedEJBClientContextSelector;
+//import org.jboss.ejb.client.ContextSelector;
+//import org.jboss.ejb.client.EJBClientConfiguration;
+import org.wildfly.security.auth.client.AuthenticationConfiguration;
+import org.wildfly.security.auth.client.AuthenticationContext;
+import org.wildfly.security.auth.client.MatchRule;
+//import org.jboss.ejb.client.PropertiesBasedEJBClientConfiguration;
+//import org.jboss.ejb.client.remoting.ConfigBasedEJBClientContextSelector;
 
 /*
  * To change this license header, choose License Headers in Project Properties.
@@ -753,30 +753,93 @@ jndiProperties.put("jboss.naming.client.ejb.context", "true");
         IntegrationServiceRemote svc2= (IntegrationServiceRemote) context.lookup(lookupName2);
         svc2.getObservedDirectoryContent();
              */
-            Properties props = new Properties();
-            props.put("remote.connections", "default");
-            props.put("remote.connection.default.port", "8080");
-            props.put("remote.connection.default.host", "localhost");
-            props.put("remote.connection.default.username", "admin");
-            props.put("remote.connection.default.password", "a");
-            props.put("remote.connection.default.connect.options.org.xnio.Options.SASL_POLICY_NOANONYMOUS", "false");
-            props.put("remote.connection.default.connect.options.org.xnio.Options.SASL_POLICY_NOPLAINTEXT", "false");
-            props.put("remote.connectionprovider.create.options.org.xnio.Options.SSL_ENABLED", "false");
-            
-            EJBClientConfiguration ejbClientConfiguration = new PropertiesBasedEJBClientConfiguration(props);
-            ContextSelector<EJBClientContext> contextSelector = new ConfigBasedEJBClientContextSelector(ejbClientConfiguration);
-            EJBClientContext.setSelector(contextSelector);
+//            Properties props = new Properties();
+//            props.put("remote.connections", "default");
+//            props.put("remote.connection.default.port", "8080");
+//            props.put("remote.connection.default.host", "localhost");
+//            props.put("remote.connection.default.username", "admin");
+//            props.put("remote.connection.default.password", "a");
+//            props.put("remote.connection.default.connect.options.org.xnio.Options.SASL_POLICY_NOANONYMOUS", "false");
+//            props.put("remote.connection.default.connect.options.org.xnio.Options.SASL_POLICY_NOPLAINTEXT", "false");
+//            props.put("remote.connectionprovider.create.options.org.xnio.Options.SSL_ENABLED", "false");
+//
+////            EJBClientConfiguration ejbClientConfiguration = new PropertiesBasedEJBClientConfiguration(props);
+////            ContextSelector<EJBClientContext> contextSelector = new ConfigBasedEJBClientContextSelector(ejbClientConfiguration);
+////            EJBClientContext.setSelector(contextSelector);
+//            Properties properties = new Properties();
+//            //properties.put(Context.URL_PKG_PREFIXES, "org.jboss.ejb.client.naming");
+//            properties.put(Context.INITIAL_CONTEXT_FACTORY, "org.wildfly.naming.client.WildFlyInitialContextFactory");
+//            properties.put(Context.PROVIDER_URL, "http-remoting://localhost:8080");
+//            properties.put(Context.SECURITY_PRINCIPAL, "admin");
+//            properties.put(Context.SECURITY_CREDENTIALS, "a");
+////            props.put("remote.connection.default.username", "admin");
+////            props.put("remote.connection.default.password", "a");
+//            //properties.put("jboss.naming.client.ejb.context", "true");
+//            Context context = new InitialContext(properties);
+//            //IntegrationServiceRemote svc2= (IntegrationServiceRemote)context.lookup("ejb:j-lawyer-server/j-lawyer-server-ejb//IntegrationService!com.jdimension.jlawyer.services.IntegrationServiceRemote");
+//            //IntegrationServiceRemote svc2= (IntegrationServiceRemote)context.lookup("java:/IntegrationService");
+//            IntegrationServiceRemote svc2 = (IntegrationServiceRemote) context.lookup("ejb:/j-lawyer-server/j-lawyer-server-ejb/IntegrationService!com.jdimension.jlawyer.services.IntegrationServiceRemote");
+//
+//            System.out.println("" + svc2.toString());
+//            //Object o=svc2.getObservedDirectoryContent();
+//            //System.out.println(o.toString());
+//            svc2.getAllEmailTemplateNames();
+//// create your authentication configuration
+//            AuthenticationConfiguration ejbConfig = AuthenticationConfiguration.empty().useName("admin").usePassword("a");
+//
+//// create your authentication context
+//            AuthenticationContext context = AuthenticationContext.empty().with(MatchRule.ALL.matchHost("localhost"), ejbConfig);
+//
+//// create a callable that invokes an EJB
+//            Callable<Void> callable = () -> {
+//
+//                // create an InitialContext
+//                Properties properties = new Properties();
+//                properties.put(Context.INITIAL_CONTEXT_FACTORY, "org.wildfly.naming.client.WildFlyInitialContextFactory");
+//                properties.put(Context.PROVIDER_URL, "remote+http://localhost:8080");
+//                InitialContext context2 = new InitialContext(properties);
+//
+//                // look up an EJB and invoke one of its methods (same as before)
+//                //RemoteCalculator statelessRemoteCalculator = (RemoteCalculator) context2.lookup(
+//                //    "ejb:/ejb-remote-server-side//CalculatorBean!" + RemoteCalculator.class.getName());
+//                IntegrationServiceRemote svc2 = (IntegrationServiceRemote) context2.lookup("ejb:/j-lawyer-server/j-lawyer-server-ejb/IntegrationService!com.jdimension.jlawyer.services.IntegrationServiceRemote");
+//                svc2.getAllEmailTemplateNames();
+//
+//                return null;
+//            };
+//
+//// use your authentication context to run your callable
+//            context.runCallable(callable);
+//            AuthenticationConfiguration ejbConfig = AuthenticationConfiguration.empty().useName("admin").usePassword("a");
+//
+//// create your authentication context
+//            AuthenticationContext context = AuthenticationContext.empty().with(MatchRule.ALL.matchHost("localhost"), ejbConfig);
+//
+//// create a callable that invokes an EJB
+//            Callable<Void> callable = () -> {
 
-            Properties properties = new Properties();
-            properties.put(Context.URL_PKG_PREFIXES, "org.jboss.ejb.client.naming");
-            properties.put("jboss.naming.client.ejb.context", "true");
-            Context context = new InitialContext(properties);
-            IntegrationServiceRemote svc2= (IntegrationServiceRemote)context.lookup("ejb:j-lawyer-server/j-lawyer-server-ejb//IntegrationService!com.jdimension.jlawyer.services.IntegrationServiceRemote");
-            
-            System.out.println("" + svc2.toString());
-            Object o=svc2.getObservedDirectoryContent();
-            System.out.println(o.toString());
-
+                final Properties env = new Properties();
+                //env.put(Context.INITIAL_CONTEXT_FACTORY, "org.jboss.naming.remote.client.InitialContextFactory");
+                env.put(Context.INITIAL_CONTEXT_FACTORY, "org.wildfly.naming.client.WildFlyInitialContextFactory");
+                env.put(Context.PROVIDER_URL, "http-remoting://localhost:8080");
+                //env.put(Context.PROVIDER_URL, "remote+http://localhost:8080");
+                env.put("jboss.naming.client.connect.options.org.xnio.Options.SASL_POLICY_NOPLAINTEXT", "false");
+                env.put(Context.SECURITY_PRINCIPAL, "admin");
+                env.put(Context.SECURITY_CREDENTIALS, "a");
+// the property below is required ONLY if there is no ejb client configuration loaded (such as a
+// jboss-ejb-client.properties in the class path) and the context will be used to lookup EJBs
+                env.put("jboss.naming.client.ejb.context", true);
+                InitialContext remoteContext = new InitialContext(env);
+//RemoteCalculator ejb = (RemoteCalculator) remoteContext.lookup("wildfly-http-remoting-ejb/CalculatorBean!"
+//                + RemoteCalculator.class.getName());
+                IntegrationServiceRemote svc2 = (IntegrationServiceRemote) remoteContext.lookup("j-lawyer-server/j-lawyer-server-ejb/IntegrationService!com.jdimension.jlawyer.services.IntegrationServiceRemote");
+                svc2.getAllEmailTemplateNames();
+                //return null;
+                return;
+//            };
+//
+//// use your authentication context to run your callable
+//            context.runCallable(callable);
         } catch (Throwable t) {
             t.printStackTrace();
         }

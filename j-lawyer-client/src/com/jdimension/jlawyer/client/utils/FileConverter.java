@@ -677,6 +677,7 @@ public class FileConverter {
     private static final Logger log = Logger.getLogger(FileConverter.class.getName());
 
     public static final List<String> INPUTTYPES = Arrays.asList(".xml", ".html", ".doc", ".docx", ".odt", ".txt", ".rtf", ".sdw", ".eps", ".gif", ".jpg", ".odd", ".png", ".tiff", ".bmp", ".csv", ".xls", ".xlsx", ".ods", ".sdc", ".odp", ".ppt", ".pptx", ".sda");
+    public static final List<String> OUTPUTTYPES = Arrays.asList("bmp", "csv", "doc", "docx", "jpg", "odp", "ods", "odt", "pdf", "png", "ppt", "pptx", "rtf", "tiff", "txt", "xls", "xlsx");
 
     
     public static FileConverter getInstance() {
@@ -700,6 +701,10 @@ public class FileConverter {
         return null;
     }
     
+    public String convertTo(String file, String targetFileExtension) throws Exception {
+        return null;
+    }
+    
     protected boolean validateInputFormat(String url) {
         String lUrl=url.toLowerCase();
         for(String s: INPUTTYPES) {
@@ -715,6 +720,51 @@ public class FileConverter {
     public static class WindowsFileConverter extends FileConverter {
 
         private WindowsFileConverter() {
+        }
+        
+        @Override
+        public String convertTo(String url, String targetFileExtension) throws Exception {
+            if(!this.validateInputFormat(url))
+                throw new Exception ("Format nicht unterstützt: " + new File(url).getName());
+           
+            if(targetFileExtension==null)
+                throw new Exception("Es muss ein Zielformat angegeben werden");
+            
+            targetFileExtension=targetFileExtension.toLowerCase();
+            targetFileExtension=targetFileExtension.replaceAll("\\.", "");
+            
+            if(!OUTPUTTYPES.contains(targetFileExtension)) {
+                throw new Exception("Konvertierung nach " + targetFileExtension + " ist nicht verfügbar!");
+            }
+            
+            String tempPath=url.substring(0, url.length()-new File(url).getName().length());
+            
+            // String clientLocation=System.getProperty("client.location");
+            String clientLocation=System.getenv("JLAWYERCLIENTHOME");
+            if(clientLocation==null) {
+                log.error("JLAWYERCLIENTHOME environment variable not set - document conversion not possible");
+                throw new Exception ("Umgebungsvariable JLAWYERCLIENTHOME nicht gesetzt - Dokumentkonvertierung nicht möglich.");
+            }
+                
+            if(!clientLocation.endsWith(File.separator))
+                clientLocation=clientLocation + File.separator;
+            
+            Process p = Runtime.getRuntime().exec(new String[]{"python.exe", clientLocation + "unoconv-master\\unoconv", "-f", targetFileExtension, url});
+            int exit = p.waitFor();
+            if (exit != 0) {
+                log.error("Conversion failed with exit code " + exit + ", command line was 'python.exe " + clientLocation + "unoconv-master\\unoconv -f " + targetFileExtension + " " + url);
+                throw new Exception ("Konvertierung fehlgeschlagen: " + exit);
+            }
+            
+            File org=new File(url);
+            String orgName=org.getName();
+            String path=url.substring(0, url.indexOf(orgName));
+            String newPath=path + orgName.substring(0, orgName.lastIndexOf('.')) + "." + targetFileExtension;
+            if(!(new File(newPath).exists()))
+                throw new Exception ("Konvertierung kann nur durchgeführt werden wenn kein soffice.exe/soffice.bin läuft!");
+            
+            return newPath;
+            
         }
 
         @Override
@@ -761,6 +811,35 @@ public class FileConverter {
         }
 
         @Override
+        public String convertTo(String url, String targetFileExtension) throws Exception {
+            if(!this.validateInputFormat(url))
+                throw new Exception ("Format nicht unterstützt: " + new File(url).getName());
+            
+            if(targetFileExtension==null)
+                throw new Exception("Es muss ein Zielformat angegeben werden");
+            
+            targetFileExtension=targetFileExtension.toLowerCase();
+            
+            targetFileExtension=targetFileExtension.replaceAll("\\.", "");
+            
+            if(!OUTPUTTYPES.contains(targetFileExtension)) {
+                throw new Exception("Konvertierung nach " + targetFileExtension + " ist nicht verfügbar!");
+            }
+            
+            Process p = Runtime.getRuntime().exec(new String[]{"unoconv", "-f", targetFileExtension, url});
+            int exit = p.waitFor();
+            if (exit != 0) {
+                throw new Exception ("Konvertierung nach " + targetFileExtension + " fehlgeschlagen: " + exit);
+            }
+            
+            File org=new File(url);
+            String orgName=org.getName();
+            String path=url.substring(0, url.indexOf(orgName));
+            return path + orgName.substring(0, orgName.lastIndexOf('.')) + "." + targetFileExtension;
+          
+        }
+        
+        @Override
         public String convertToPDF(String url) throws Exception {
             
             if(!this.validateInputFormat(url))
@@ -783,6 +862,35 @@ public class FileConverter {
     public static class MacFileConverter extends FileConverter {
 
         private MacFileConverter() {
+        }
+        
+        @Override
+        public String convertTo(String url, String targetFileExtension) throws Exception {
+            if(!this.validateInputFormat(url))
+                throw new Exception ("Format nicht unterstützt: " + new File(url).getName());
+            
+            if(targetFileExtension==null)
+                throw new Exception("Es muss ein Zielformat angegeben werden");
+            
+            targetFileExtension=targetFileExtension.toLowerCase();
+            
+            targetFileExtension=targetFileExtension.replaceAll("\\.", "");
+            
+            if(!OUTPUTTYPES.contains(targetFileExtension)) {
+                throw new Exception("Konvertierung nach " + targetFileExtension + " ist nicht verfügbar!");
+            }
+            
+            Process p = Runtime.getRuntime().exec(new String[]{"/Applications/LibreOffice.app/Contents/MacOS/python", "unoconv-master/unoconv", "-f", targetFileExtension, url});
+            int exit = p.waitFor();
+            if (exit != 0) {
+                throw new Exception ("Konvertierung nach " + targetFileExtension + " fehlgeschlagen: " + exit);
+            }
+            
+            File org=new File(url);
+            String orgName=org.getName();
+            String path=url.substring(0, url.indexOf(orgName));
+            return path + orgName.substring(0, orgName.lastIndexOf('.')) + "." + targetFileExtension;
+          
         }
 
         @Override

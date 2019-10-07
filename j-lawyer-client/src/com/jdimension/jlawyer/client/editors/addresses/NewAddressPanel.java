@@ -692,6 +692,10 @@ public class NewAddressPanel extends AddressPanel implements ResetOnDisplayEdito
         this.txtEmail.setText(email);
     }
     
+    public void setBeaSafeId(String safeId) {
+        this.txtBeaSafeId.setText(safeId);
+    }
+    
     public void enableBackButton() {
         this.cmdBackToSearch.setEnabled(true);
     }
@@ -724,6 +728,9 @@ public class NewAddressPanel extends AddressPanel implements ResetOnDisplayEdito
             return true;
         }
         if (!StringUtils.isEmpty(this.txtEmail.getText())) {
+            return true;
+        }
+        if (!StringUtils.isEmpty(this.txtBeaSafeId.getText())) {
             return true;
         }
         if (!StringUtils.isEmpty(this.txtFax.getText())) {

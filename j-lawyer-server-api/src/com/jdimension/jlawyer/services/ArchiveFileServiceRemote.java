@@ -725,7 +725,7 @@ public interface ArchiveFileServiceRemote {
 
     byte[] getDocumentContent(String id) throws Exception;
 
-    Collection getArchiveFileAddressesForAddress(String adressId);
+    Collection<ArchiveFileAddressesBean> getArchiveFileAddressesForAddress(String adressId);
 
     boolean renameDocument(String id, String newName) throws Exception;
 
@@ -740,12 +740,18 @@ public interface ArchiveFileServiceRemote {
     ArchiveFileHistoryBean addHistory(String archiveFileId, ArchiveFileHistoryBean history);
 
     void setTag(String archiveFileId, ArchiveFileTagsBean tag, boolean active) throws Exception;
+    
+    void setDocumentTag(String documentId, DocumentTagsBean tag, boolean active) throws Exception;
 
-    Collection getTags(String archiveFileId);
+    Collection<ArchiveFileTagsBean> getTags(String archiveFileId);
+    
+    Collection<DocumentTagsBean> getDocumentTags(String documentId);
 
     List<String> searchTagsInUse();
+    
+    List<String> searchDocumentTagsInUse();
 
-    ArchiveFileBean[] searchEnhanced(String query, boolean withArchive, String[] tagName);
+    ArchiveFileBean[] searchEnhanced(String query, boolean withArchive, String[] tagName, String[] documentTagName);
 
     String getDocumentPreview(String id) throws Exception;
 
@@ -765,13 +771,13 @@ public interface ArchiveFileServiceRemote {
 
     byte[] exportCaseToHtml(String caseId) throws Exception;
 
-    List<ArchiveFileBean> getTagged(String[] tagName, int limit);
+    List<ArchiveFileBean> getTagged(String[] tagName, String[] docTagName, int limit);
 
     boolean setDocumentDate(String id, Date date) throws Exception;
     
     boolean setDocumentFavorite(String id, boolean favorite) throws Exception;
 
-    Hashtable<String,ArrayList<String>> searchTagsEnhanced(String query, boolean withArchive, String[] tagName);
+    Hashtable<String,ArrayList<String>> searchTagsEnhanced(String query, boolean withArchive, String[] tagName, String[] documentTagName);
 
     ArchiveFileDocumentsBean addDocumentFromTemplate(String archiveFileId, String fileName, GenericNode templateFolder, String templateName, Hashtable placeHolderValues, String dictateSign) throws Exception;
 
@@ -780,5 +786,11 @@ public interface ArchiveFileServiceRemote {
     List<ArchiveFileAddressesBean> getInvolvementDetailsForCase(String archiveFileKey);
 
     boolean udpateFileNumber(String from, String to) throws Exception;
+
+    boolean doesDocumentExist(String id);
+
+    List<ArchiveFileDocumentsBean> getTaggedDocuments(java.lang.String[] docTagName, int limit);
+
+    Hashtable<String, ArrayList<String>> getDocumentTagsForCase(String caseId);
 
 }
