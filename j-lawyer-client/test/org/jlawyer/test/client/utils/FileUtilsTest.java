@@ -714,6 +714,8 @@ public class FileUtilsTest {
          Assert.assertFalse(FileUtils.sanitizeFileName("\\/#&%$§{}[]:;.txt").indexOf(';')>-1);
          
          System.out.println(FileUtils.sanitizeFileName("\\/#&%$§{}[]:;.txt"));
+         
+         System.out.println(FileUtils.sanitizeFileName("2019-09-05_Notiz umbenannt.html"));
      
      }
      
