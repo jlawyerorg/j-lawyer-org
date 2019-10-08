@@ -955,15 +955,17 @@ public class MultiCalDialog extends javax.swing.JDialog {
 //        selectDate(c1, c1Cal);
     }//GEN-LAST:event_c1MousePressed
 
-//    private void selectDate(JCalendar cal) {
-//        cal.getCalendar().set(Calendar.HOUR_OF_DAY, 0);
-//        cal.getCalendar().set(Calendar.MINUTE, 0);
-//        cal.getCalendar().set(Calendar.SECOND, 0);
-//        Date d=cal.getDate();
-//        SimpleDateFormat df=new SimpleDateFormat("dd.MM.yyyy");
-//        this.target.setText(df.format(d));
-//        this.cmdCancelActionPerformed(null);
-//    }
+    public void setMaxDate(Date d) {
+        this.c1.setMaxSelectableDate(d);
+        this.c2.setMaxSelectableDate(d);
+        this.c3.setMaxSelectableDate(d);
+    }
+    
+    public void setMinDate(Date d) {
+        this.c1.setMinSelectableDate(d);
+        this.c2.setMinSelectableDate(d);
+        this.c3.setMinSelectableDate(d);
+    }
     
      private void selectDate(JDayChooser cal, Calendar c) {
          c.set(Calendar.DAY_OF_MONTH, cal.getDay());

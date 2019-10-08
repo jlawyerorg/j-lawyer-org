@@ -706,6 +706,7 @@ import java.awt.datatransfer.Transferable;
 import java.awt.dnd.*;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -2544,6 +2545,12 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
 
                 JTextField hiddenField = new JTextField();
                 MultiCalDialog dlg = new MultiCalDialog(hiddenField, EditorsRegistry.getInstance().getMainWindow(), true);
+                Calendar c=Calendar.getInstance();
+                c.add(Calendar.DAY_OF_MONTH, 1);
+                dlg.setMaxDate(c.getTime());
+                Calendar c2=Calendar.getInstance();
+                c2.add(Calendar.MONTH, -2);
+                dlg.setMinDate(c2.getTime());
 //                dlg.setUndecorated(false);
 //                dlg.setTitle("eEB-Abgabedatum wählen:");
                 FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
