@@ -1174,6 +1174,13 @@ public class BackupConfigurationDialog extends javax.swing.JDialog {
 
     private void cmdSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveActionPerformed
         
+        if(this.optBackupOn.isSelected() && this.txtDbPwd.getText().length()==0) {
+            int response = JOptionPane.showConfirmDialog(this, "Es wurde ein leeres Datenbankpasswort vergeben - trotzdem fortfahren?", "Leeres Datenbankpasswort", JOptionPane.YES_NO_OPTION);
+            if (response == JOptionPane.NO_OPTION) {
+                return;
+            }
+        }
+        
         boolean valid=true;
         try {
             int portTest=Integer.parseInt(this.txtDbPort.getText());
