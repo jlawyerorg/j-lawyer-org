@@ -720,4 +720,23 @@ public class VersionUtilsTest {
          Assert.assertFalse(VersionUtils.isCompatible("1.10.0.7", "1.10.1.8"));
          
      }
+     
+     @Test
+     public void testVersionGreaterAs() {
+         String v1="1.10.0.13";
+         String v2="1.9.1";
+         Assert.assertTrue(VersionUtils.isVersionGreater(v1, v2));
+         
+         v1="1.10";
+         v2="1.9.1";
+         Assert.assertTrue(VersionUtils.isVersionGreater(v1, v2));
+         
+         v1="1.10";
+         v2="1.9.99";
+         Assert.assertTrue(VersionUtils.isVersionGreater(v1, v2));
+         
+         v1="1.10";
+         v2="1.9.8.13";
+         Assert.assertTrue(VersionUtils.isVersionGreater(v1, v2));
+     }
 }

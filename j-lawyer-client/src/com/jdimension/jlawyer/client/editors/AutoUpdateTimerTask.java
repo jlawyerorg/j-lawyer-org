@@ -796,8 +796,8 @@ public class AutoUpdateTimerTask extends java.util.TimerTask {
             nl = doc.getElementsByTagName("news-summary");
             String newsSummary = nl.item(0).getTextContent();
 
-            if (!VersionUtils.getFullClientVersion().equals(version)) {
-
+            //if (!VersionUtils.getFullClientVersion().equals(version)) {
+            if(VersionUtils.isVersionGreater(version, VersionUtils.getFullClientVersion())) {
                 EventBroker b = EventBroker.getInstance();
                 b.publishEvent(new AutoUpdateEvent(version, published, changelog));
             }

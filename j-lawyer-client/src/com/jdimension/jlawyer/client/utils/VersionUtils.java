@@ -689,6 +689,54 @@ public class VersionUtils {
     public static String getBuild() {
         return "13";
     }
+    
+    public static boolean isVersionGreater(String referenceVersion, String compareToVersion) {
+        long ref=getVersionAsLong(referenceVersion);
+        long comp=getVersionAsLong(compareToVersion);
+        
+        return (ref>comp);
+    }
+    
+    private static long getVersionAsLong(String v) {
+        String major="0";
+        String minor="0";
+        String patch="0";
+        String build="0";
+        
+        if(v.indexOf(".")>-1) {
+            major=v.substring(0, v.indexOf("."));
+            v=v.substring(v.indexOf(".")+1, v.length());
+        } else if (v.length()>0) {
+            major=v;
+        }
+        
+        if(v.indexOf(".")>-1) {
+            minor=v.substring(0, v.indexOf("."));
+            v=v.substring(v.indexOf(".")+1, v.length());
+        } else if (v.length()>0) {
+            minor=v;
+        }
+        
+        if(v.indexOf(".")>-1) {
+            patch=v.substring(0, v.indexOf("."));
+            v=v.substring(v.indexOf(".")+1, v.length());
+        } else if (v.length()>0) {
+            patch=v;
+        }
+        
+        if(v.indexOf(".")>-1) {
+            build=v.substring(0, v.indexOf("."));
+            v=v.substring(v.indexOf("."), v.length()-1);
+        } else if (v.length()>0) {
+            build=v;
+        }
+        
+        try {
+            return Long.parseLong(major)*1000000 + Long.parseLong(minor)*10000 + Long.parseLong(patch)*100 + Long.parseLong(build);
+        } catch (Exception ex) {
+            return 1;
+        }
+    }
 
     public static String getFullClientVersion() {
         return getClientVersion() + "." + getPatchLevel() + "." + getBuild();
@@ -723,33 +771,6 @@ public class VersionUtils {
             log.error(ex);
         }
 
-//        ClientSettings settings = ClientSettings.getInstance();
-//        String server = settings.getConfiguration(settings.CONF_LASTSERVER, "localhost");
-//        String port = settings.getConfiguration(settings.CONF_LASTHTTPPORT, "8080");
-//        String themeName = settings.getConfiguration(settings.CONF_THEME, "default");
-//
-//        try {
-//
-//            URL url = new java.net.URL("http://" + server + ":" + port + "/j-lawyer-server-war/versioninfo.txt");
-//            Object content = url.openConnection().getContent();
-//            if (content instanceof InputStream) {
-//                InputStream is = (InputStream) content;
-//                InputStreamReader isr = new InputStreamReader(is);
-//                int data = isr.read();
-//                StringBuffer sb=new StringBuffer();
-//                while (data != -1) {
-//                    char theChar = (char) data;
-//                    sb.append(theChar);
-//                    data = isr.read();
-//                }
-//                isr.close();
-//                is.close();
-//                return sb.toString();
-//
-//            }
-//        } catch (Exception ex) {
-//            log.error(ex);
-//        }
         return "unbekannt";
     }
 }
