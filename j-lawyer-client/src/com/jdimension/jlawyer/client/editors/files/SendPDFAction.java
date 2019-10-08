@@ -746,7 +746,7 @@ public class SendPDFAction extends ProgressableAction {
 
         } catch (Exception ioe) {
             log.error("Error converting documents", ioe);
-            JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Konvertieren der Dokumente: " + ioe.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this.indicator, "Fehler beim Konvertieren der Dokumente: " + ioe.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
         }
 
 
