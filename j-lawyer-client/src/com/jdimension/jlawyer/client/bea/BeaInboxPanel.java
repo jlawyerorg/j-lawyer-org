@@ -731,6 +731,7 @@ import javax.swing.tree.TreePath;
 import org.apache.log4j.Logger;
 import org.jlawyer.bea.BeaWrapperException;
 import org.jlawyer.bea.model.Attachment;
+import org.jlawyer.bea.model.EebLists;
 import org.jlawyer.bea.model.Folder;
 import org.jlawyer.bea.model.Identity;
 import org.jlawyer.bea.model.MessageExport;
@@ -2628,15 +2629,24 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                     return false;
                 }
                 String comment = "";
-                Object commentObject = JOptionPane.showInputDialog(this, "Erläuterung bzgl. Ihrer Zurückweisung (optional): ", "eEB zurückweisen", JOptionPane.QUESTION_MESSAGE, null, null, "");
-                if (commentObject != null) {
-                    comment = commentObject.toString();
+                String code = EebLists.getDefaultRejectionReason().getCode();
+                EebRejectDialog dlg = new EebRejectDialog(EditorsRegistry.getInstance().getMainWindow(), true);
+                FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
+                dlg.setVisible(true);
+                if(dlg.getRejectionCode()==null) {
+                    // user decided to cancel
+                    return false;
                 }
+                code=dlg.getRejectionCode();
+                if (dlg.getRejectionComment() != null) {
+                    comment = dlg.getRejectionComment();
+                }
+
                 Message m = BeaAccess.getInstance().getMessage(mh.getId(), BeaAccess.getInstance().getLoggedInSafeId());
                 ArrayList<String> recipients = new ArrayList<String>();
                 recipients.add(m.getSenderSafeId());
 
-                long sentMessageId = BeaAccess.getInstance().sendEebRejection(m, senderSafeId, recipients, comment);
+                long sentMessageId = BeaAccess.getInstance().sendEebRejection(m, senderSafeId, recipients, code, comment);
 
                 return true;
 

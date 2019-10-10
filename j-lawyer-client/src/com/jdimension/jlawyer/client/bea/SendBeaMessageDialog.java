@@ -702,7 +702,7 @@ import java.util.List;
 import javax.swing.*;
 import org.apache.log4j.Logger;
 import org.jlawyer.bea.model.Identity;
-import org.jlawyer.bea.model.LegalAuthority;
+import org.jlawyer.bea.model.BeaListItem;
 import org.jlawyer.bea.model.PostBox;
 
 /**
@@ -724,7 +724,7 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
     private String contextDictateSign = null;
     private TextEditorPanel tp;
     
-    private LegalAuthority authority=null;
+    private BeaListItem authority=null;
 
     /**
      * Creates new form SendEmailDialog

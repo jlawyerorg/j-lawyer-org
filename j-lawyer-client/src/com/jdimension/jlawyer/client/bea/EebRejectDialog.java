@@ -671,36 +671,32 @@ import java.util.List;
 import javax.swing.DefaultListModel;
 import org.jlawyer.bea.model.LegalAuthorities;
 import org.jlawyer.bea.model.BeaListItem;
+import org.jlawyer.bea.model.EebLists;
 
 /**
  *
  * @author jens
  */
-public class SelectLegalAuthorityDialog extends javax.swing.JDialog {
+public class EebRejectDialog extends javax.swing.JDialog {
     
-    private BeaListItem selectedAuthority=null;
+    private String rejectionCode=null;
+    private String rejectionComment=null;
     
     private Hashtable<String,BeaListItem> authorities=new Hashtable<String,BeaListItem>();
 
     /**
      * Creates new form SelectLegalAuthorityDialog
      */
-    public SelectLegalAuthorityDialog(java.awt.Frame parent, boolean modal) {
+    public EebRejectDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
         
-        DefaultListModel lm=new DefaultListModel();
-        List<BeaListItem> auths=LegalAuthorities.getAuthorities();
-        for(BeaListItem la: auths) {
-            lm.addElement(la.getName());
-            authorities.put(la.getName(), la);
+        List<BeaListItem> rejects=EebLists.getRejectionReasons();
+        this.cmbReason.removeAllItems();
+        for(BeaListItem li: rejects) {
+            this.cmbReason.addItem(li.getName());
         }
-        this.lstAuthorities.setModel(lm);
-        this.cmdOK.setEnabled(true);
-        
-        String la=ClientSettings.getInstance().getConfiguration(ClientSettings.CONF_BEASEND_LASTLEGALAUTHORITY, "");
-        this.txtSearch.setText(la);
-        this.txtSearchKeyReleased(null);
+
     }
 
     /**
@@ -712,33 +708,15 @@ public class SelectLegalAuthorityDialog extends javax.swing.JDialog {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        txtSearch = new javax.swing.JTextField();
-        jScrollPane1 = new javax.swing.JScrollPane();
-        lstAuthorities = new javax.swing.JList<>();
         cmdOK = new javax.swing.JButton();
         cmdCancel = new javax.swing.JButton();
-        cmdUnknown = new javax.swing.JButton();
+        jScrollPane2 = new javax.swing.JScrollPane();
+        taComment = new javax.swing.JTextArea();
+        cmbReason = new javax.swing.JComboBox<>();
+        jLabel1 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
-        setTitle("Justizbehörde auswählen");
-
-        txtSearch.addKeyListener(new java.awt.event.KeyAdapter() {
-            public void keyReleased(java.awt.event.KeyEvent evt) {
-                txtSearchKeyReleased(evt);
-            }
-        });
-
-        lstAuthorities.setModel(new javax.swing.AbstractListModel<String>() {
-            String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" };
-            public int getSize() { return strings.length; }
-            public String getElementAt(int i) { return strings[i]; }
-        });
-        lstAuthorities.addListSelectionListener(new javax.swing.event.ListSelectionListener() {
-            public void valueChanged(javax.swing.event.ListSelectionEvent evt) {
-                lstAuthoritiesValueChanged(evt);
-            }
-        });
-        jScrollPane1.setViewportView(lstAuthorities);
+        setTitle("eEB-Anforderung ablehnen");
 
         cmdOK.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png"))); // NOI18N
         cmdOK.setText("Übernehmen");
@@ -756,13 +734,13 @@ public class SelectLegalAuthorityDialog extends javax.swing.JDialog {
             }
         });
 
-        cmdUnknown.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/help_index.png"))); // NOI18N
-        cmdUnknown.setText("Unbekannt");
-        cmdUnknown.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdUnknownActionPerformed(evt);
-            }
-        });
+        taComment.setColumns(20);
+        taComment.setRows(5);
+        jScrollPane2.setViewportView(taComment);
+
+        cmbReason.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+
+        jLabel1.setText("Erläuterung:");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -771,29 +749,31 @@ public class SelectLegalAuthorityDialog extends javax.swing.JDialog {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane1)
-                    .addComponent(txtSearch)
+                    .addComponent(jScrollPane2, javax.swing.GroupLayout.Alignment.TRAILING)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(cmdCancel)
+                        .addGap(0, 138, Short.MAX_VALUE)
+                        .addComponent(cmdOK)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(cmdUnknown)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(cmdOK)))
+                        .addComponent(cmdCancel))
+                    .addComponent(cmbReason, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jLabel1)
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(txtSearch, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(cmbReason, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jLabel1)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 255, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(cmdOK)
                     .addComponent(cmdCancel)
-                    .addComponent(cmdUnknown))
+                    .addComponent(cmdOK))
                 .addContainerGap())
         );
 
@@ -801,46 +781,21 @@ public class SelectLegalAuthorityDialog extends javax.swing.JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void cmdOKActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdOKActionPerformed
-        ClientSettings.getInstance().setConfiguration(ClientSettings.CONF_BEASEND_LASTLEGALAUTHORITY, this.lstAuthorities.getSelectedValue());
-        this.selectedAuthority=this.authorities.get(this.lstAuthorities.getSelectedValue());
+        this.rejectionComment=this.taComment.getText();
+        BeaListItem rejectItem=EebLists.getRejectionReasonByName(this.cmbReason.getSelectedItem().toString());
+        this.rejectionCode=null;
+        if(rejectItem!=null)
+            this.rejectionCode=rejectItem.getCode();
         this.setVisible(false);
         this.dispose();
     }//GEN-LAST:event_cmdOKActionPerformed
 
-    private void txtSearchKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtSearchKeyReleased
-        this.cmdOK.setEnabled(false);
-        DefaultListModel lm=new DefaultListModel();
-        List<BeaListItem> auths=LegalAuthorities.getAuthorities();
-        for(BeaListItem la: auths) {
-            if(la.getName().toLowerCase().indexOf(txtSearch.getText().toLowerCase())>-1)
-                lm.addElement(la.getName());
-        }
-        this.lstAuthorities.setModel(lm);
-        if(lm.getSize()==1) {
-            this.lstAuthorities.setSelectedIndex(0);
-        }
-        
-    }//GEN-LAST:event_txtSearchKeyReleased
-
-    private void lstAuthoritiesValueChanged(javax.swing.event.ListSelectionEvent evt) {//GEN-FIRST:event_lstAuthoritiesValueChanged
-        if(this.lstAuthorities.getSelectedIndices().length==1)
-            this.cmdOK.setEnabled(true);
-        else
-            this.cmdOK.setEnabled(false);
-    }//GEN-LAST:event_lstAuthoritiesValueChanged
-
     private void cmdCancelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCancelActionPerformed
-        this.selectedAuthority=null;
+        this.rejectionCode=null;
+        this.rejectionComment=null;
         this.setVisible(false);
         this.dispose();
     }//GEN-LAST:event_cmdCancelActionPerformed
-
-    private void cmdUnknownActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdUnknownActionPerformed
-        //ClientSettings.getInstance().setConfiguration(ClientSettings.CONF_BEASEND_LASTLEGALAUTHORITY, this.lstAuthorities.getSelectedValue());
-        this.selectedAuthority=LegalAuthorities.getDefaultAuthority();
-        this.setVisible(false);
-        this.dispose();
-    }//GEN-LAST:event_cmdUnknownActionPerformed
 
     /**
      * @param args the command line arguments
@@ -859,20 +814,21 @@ public class SelectLegalAuthorityDialog extends javax.swing.JDialog {
                 }
             }
         } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(SelectLegalAuthorityDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(EebRejectDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(SelectLegalAuthorityDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(EebRejectDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(SelectLegalAuthorityDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(EebRejectDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(SelectLegalAuthorityDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(EebRejectDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
+        //</editor-fold>
         //</editor-fold>
 
         /* Create and display the dialog */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                SelectLegalAuthorityDialog dialog = new SelectLegalAuthorityDialog(new javax.swing.JFrame(), true);
+                EebRejectDialog dialog = new EebRejectDialog(new javax.swing.JFrame(), true);
                 dialog.addWindowListener(new java.awt.event.WindowAdapter() {
                     @Override
                     public void windowClosing(java.awt.event.WindowEvent e) {
@@ -885,18 +841,19 @@ public class SelectLegalAuthorityDialog extends javax.swing.JDialog {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JComboBox<String> cmbReason;
     private javax.swing.JButton cmdCancel;
     private javax.swing.JButton cmdOK;
-    private javax.swing.JButton cmdUnknown;
-    private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JList<String> lstAuthorities;
-    private javax.swing.JTextField txtSearch;
+    private javax.swing.JLabel jLabel1;
+    private javax.swing.JScrollPane jScrollPane2;
+    private javax.swing.JTextArea taComment;
     // End of variables declaration//GEN-END:variables
 
-    /**
-     * @return the selectedAuthority
-     */
-    public BeaListItem getSelectedAuthority() {
-        return selectedAuthority;
+    public String getRejectionCode() {
+        return this.rejectionCode;
+    }
+    
+    public String getRejectionComment() {
+        return this.rejectionComment;
     }
 }

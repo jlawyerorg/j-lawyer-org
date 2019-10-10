@@ -684,7 +684,7 @@ import org.jlawyer.bea.BeaWrapper;
 import org.jlawyer.bea.BeaWrapperException;
 import org.jlawyer.bea.model.Folder;
 import org.jlawyer.bea.model.Identity;
-import org.jlawyer.bea.model.LegalAuthority;
+import org.jlawyer.bea.model.BeaListItem;
 import org.jlawyer.bea.model.Message;
 import org.jlawyer.bea.model.MessageExport;
 import org.jlawyer.bea.model.MessageHeader;
@@ -1033,7 +1033,7 @@ public class BeaAccess {
         return BeaWrapper.exportMessage(msg);
     }
 
-    public long sendMessage(Message msg, String senderSafeId, ArrayList<String> recipientSafeIds, LegalAuthority authority) throws BeaWrapperException {
+    public long sendMessage(Message msg, String senderSafeId, ArrayList<String> recipientSafeIds, BeaListItem authority) throws BeaWrapperException {
         this.checkValidBeaClient();
         // todo: need to only remove folder overview for sent folder
         this.folderOverviewCache.clear();
@@ -1046,10 +1046,10 @@ public class BeaAccess {
         return this.wrapper.sendEebConfirmation(incomingMessage, senderSafeId, recipientSafeIds, abgabeDate);
     }
     
-    public long sendEebRejection(Message incomingMessage, String senderSafeId, ArrayList<String> recipientSafeIds, String comment) throws BeaWrapperException {
+    public long sendEebRejection(Message incomingMessage, String senderSafeId, ArrayList<String> recipientSafeIds, String code, String comment) throws BeaWrapperException {
         this.checkValidBeaClient();
         this.folderOverviewCache.clear();
-        return this.wrapper.sendEebRejection(incomingMessage, senderSafeId, recipientSafeIds, comment);
+        return this.wrapper.sendEebRejection(incomingMessage, senderSafeId, recipientSafeIds, code, comment);
     }
 
     public boolean isMessageReadByIdentity(String messageId, String safeId) throws BeaWrapperException {
