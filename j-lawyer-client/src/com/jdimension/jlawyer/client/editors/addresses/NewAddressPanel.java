@@ -688,12 +688,48 @@ public class NewAddressPanel extends AddressPanel implements ResetOnDisplayEdito
         this.txtName.setText(name);
     }
     
+    public void setFirstName (String name) {
+        this.txtFirstName.setText(name);
+    }
+    
     public void setEmail(String email) {
         this.txtEmail.setText(email);
     }
     
     public void setBeaSafeId(String safeId) {
         this.txtBeaSafeId.setText(safeId);
+    }
+    
+    public void setStreet(String street) {
+        this.txtStreet.setText(street);
+    }
+    
+    public void setZipCode(String zip) {
+        this.txtZipCode.setText(zip);
+    }
+    
+    public void setCountry(String country) {
+        this.txtCountry.setText(country);
+    }
+    
+    public void setCity(String city) {
+        this.txtCity.setText(city);
+    }
+    
+    public void setPhone(String phone) {
+        this.txtPhone.setText(phone);
+    }
+    
+    public void setFax(String fax) {
+        this.txtFax.setText(fax);
+    }
+    
+    public void setMobile(String mobile) {
+        this.txtMobile.setText(mobile);
+    }
+    
+    public void setTitle(String title) {
+        this.cmbTitle.setSelectedItem(title);
     }
     
     public void enableBackButton() {

@@ -663,17 +663,20 @@
  */
 package com.jdimension.jlawyer.client.mail.sidebar;
 
+import com.jdimension.jlawyer.client.bea.BeaAccess;
 import com.jdimension.jlawyer.client.configuration.PopulateOptionsEditor;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.addresses.AddressPanel;
 import com.jdimension.jlawyer.client.editors.addresses.NewAddressPanel;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.services.AddressServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Component;
 import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
+import org.jlawyer.bea.model.Identity;
 
 /**
  *
@@ -682,17 +685,17 @@ import org.apache.log4j.Logger;
 public class CreateNewAddressPanel extends javax.swing.JPanel {
 
     private static final Logger log = Logger.getLogger(CreateNewAddressPanel.class.getName());
-    private String email=null;
-    private String beaSafeId=null;
-    private String senderName=null;
-    private String editorClass=null;
-    
+    private String email = null;
+    private String beaSafeId = null;
+    private String senderName = null;
+    private String editorClass = null;
+
     /**
      * Creates new form HitPanel
      */
     public CreateNewAddressPanel(String editorClassName) {
         initComponents();
-        this.editorClass=editorClassName;
+        this.editorClass = editorClassName;
     }
 
     /**
@@ -772,28 +775,30 @@ public class CreateNewAddressPanel extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     public void setEmail(String email) {
-        this.email=email;
+        this.email = email;
     }
-    
+
     public void setSenderName(String name) {
-        this.senderName=name;
+        this.senderName = name;
     }
-    
+
     private void cmdSaveCompanyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveCompanyActionPerformed
         try {
             Object editor = EditorsRegistry.getInstance().getEditor(NewAddressPanel.class.getName());
-            
+
             if (editor instanceof PopulateOptionsEditor) {
                 ((PopulateOptionsEditor) editor).populateOptions();
             }
 
-            
             ((NewAddressPanel) editor).setOpenedFromEditorClass(this.editorClass);
             EditorsRegistry.getInstance().setMainEditorsPaneView((Component) editor);
-            
+
             ((NewAddressPanel) editor).setCompany(this.senderName);
             ((NewAddressPanel) editor).setEmail(this.email);
             ((NewAddressPanel) editor).setBeaSafeId(this.beaSafeId);
+            if (this.beaSafeId != null) {
+                this.loadFromBea(editor, beaSafeId);
+            }
             //((NewAddressPanel) editor).enableBackButton();
         } catch (Exception ex) {
             log.error("Error creating editor from class " + this.getClass().getName(), ex);
@@ -801,23 +806,42 @@ public class CreateNewAddressPanel extends javax.swing.JPanel {
         }
     }//GEN-LAST:event_cmdSaveCompanyActionPerformed
 
-    
-    
+    private void loadFromBea(Object editor, String beaSafeId) throws Exception {
+        if (beaSafeId != null) {
+            BeaAccess bea = BeaAccess.getInstance();
+            Identity i = bea.getIdentity(beaSafeId);
+            ((NewAddressPanel) editor).setCity(i.getCity());
+            ((NewAddressPanel) editor).setCountry(i.getCountry());
+            ((NewAddressPanel) editor).setEmail(i.getEmail());
+            ((NewAddressPanel) editor).setFax(i.getFax());
+            ((NewAddressPanel) editor).setFirstName(i.getFirstName());
+            ((NewAddressPanel) editor).setMobile(i.getMobile());
+            ((NewAddressPanel) editor).setCompany(i.getOrganization());
+            ((NewAddressPanel) editor).setPhone(i.getPhone());
+            ((NewAddressPanel) editor).setStreet((StringUtils.nonEmpty(i.getStreet()) + " " + StringUtils.nonEmpty(i.getStreetNumber())).trim());
+            ((NewAddressPanel) editor).setName(i.getSurName());
+            ((NewAddressPanel) editor).setTitle(i.getTitle());
+            ((NewAddressPanel) editor).setZipCode(i.getZipCode());
+        }
+    }
+
     private void cmdSavePersonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSavePersonActionPerformed
         try {
             Object editor = EditorsRegistry.getInstance().getEditor(NewAddressPanel.class.getName());
-            
+
             if (editor instanceof PopulateOptionsEditor) {
                 ((PopulateOptionsEditor) editor).populateOptions();
             }
 
-            
             ((NewAddressPanel) editor).setOpenedFromEditorClass(this.editorClass);
             EditorsRegistry.getInstance().setMainEditorsPaneView((Component) editor);
-            
+
             ((NewAddressPanel) editor).setName(this.senderName);
             ((NewAddressPanel) editor).setEmail(this.email);
             ((NewAddressPanel) editor).setBeaSafeId(this.beaSafeId);
+            if (this.beaSafeId != null) {
+                this.loadFromBea(editor, beaSafeId);
+            }
             //((NewAddressPanel) editor).enableBackButton();
         } catch (Exception ex) {
             log.error("Error creating editor from class " + this.getClass().getName(), ex);
