@@ -1411,14 +1411,26 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
 //                    }
 //                };
 
-                DefaultTableModel tm = new DefaultTableModel(new String[]{"", "", "", "Betreff", "Absender", "Empfänger", "Gesendet", "Az Absender", "Az Empfänger"}, 0) {
+                DefaultTableModel tm = null;
+                if (folder.getType() == Folder.TYPE_TRASH) {
+                    tm = new DefaultTableModel(new String[]{"", "", "", "Betreff", "Absender", "Empfänger", "Gesendet", "Az Absender", "Az Empfänger", "permant gelöscht" }, 0) {
 
-                    @Override
-                    public boolean isCellEditable(int row, int column) {
-                        //all cells false
-                        return false;
-                    }
-                };
+                        @Override
+                        public boolean isCellEditable(int row, int column) {
+                            //all cells false
+                            return false;
+                        }
+                    };
+                } else {
+                    tm = new DefaultTableModel(new String[]{"", "", "", "Betreff", "Absender", "Empfänger", "Gesendet", "Az Absender", "Az Empfänger"}, 0) {
+
+                        @Override
+                        public boolean isCellEditable(int row, int column) {
+                            //all cells false
+                            return false;
+                        }
+                    };
+                }
 
                 this.tblMails.setModel(tm);
                 TableRowSorter<TableModel> sorter = new TableRowSorter<TableModel>(tm);
