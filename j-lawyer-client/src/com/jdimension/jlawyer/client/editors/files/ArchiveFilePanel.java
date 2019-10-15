@@ -1186,6 +1186,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.documentCellRenderer.setDocumentHits(documentHits);
         lblDocumentHits.setText(" ");
         this.popDocumentFavorites.removeAll();
+        
+        this.radioReviewTypeFollowUp.setSelected(true);
 
         this.pnlInvolvedParties.removeAll();
 
@@ -1265,6 +1267,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     public void reset() {
         this.clearInputs();
+        
     }
 
     public void clearInputs() {
@@ -1355,6 +1358,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
 
         ThreadUtils.repaintComponent(documentTagPanel);
+        
+        this.radioReviewTypeFollowUp.setSelected(true);
 
     }
 
@@ -2550,25 +2555,24 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                     .add(org.jdesktop.layout.GroupLayout.LEADING, tblReviewReasonsPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 911, Short.MAX_VALUE)
                     .add(cmbReviewReason, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .add(jPanel9Layout.createSequentialGroup()
-                        .add(jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
-                            .add(jPanel9Layout.createSequentialGroup()
-                                .add(jLabel12)
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                .add(cmbReviewAssignee, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                            .add(jPanel9Layout.createSequentialGroup()
-                                .add(jLabel7)
-                                .add(69, 69, 69)
-                                .add(jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
-                                    .add(txtReviewDateField)
-                                    .add(cmdNewReview, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                .add(cmdShowReviewSelector)
-                                .add(0, 0, Short.MAX_VALUE)))
-                        .add(18, 18, 18)
-                        .add(radioReviewTypeFollowUp)
+                        .add(jLabel7)
+                        .add(69, 69, 69)
+                        .add(jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
+                            .add(txtReviewDateField)
+                            .add(cmdNewReview, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(radioReviewTypeRespite)
-                        .add(153, 153, 153)))
+                        .add(cmdShowReviewSelector)
+                        .add(0, 620, Short.MAX_VALUE))
+                    .add(org.jdesktop.layout.GroupLayout.LEADING, jPanel9Layout.createSequentialGroup()
+                        .add(jLabel12)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            .add(jPanel9Layout.createSequentialGroup()
+                                .add(radioReviewTypeFollowUp)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(radioReviewTypeRespite)
+                                .add(0, 0, Short.MAX_VALUE))
+                            .add(cmbReviewAssignee, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
                 .addContainerGap())
         );
         jPanel9Layout.setVerticalGroup(
@@ -2577,11 +2581,13 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 .add(cmbReviewReason, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                 .add(jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(radioReviewTypeFollowUp)
-                    .add(radioReviewTypeRespite)
                     .add(cmbReviewAssignee, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(jLabel12))
-                .add(13, 13, 13)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                .add(jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(radioReviewTypeFollowUp)
+                    .add(radioReviewTypeRespite))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(jPanel9Layout.createSequentialGroup()
                         .add(jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
@@ -2591,7 +2597,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                         .add(cmdNewReview))
                     .add(cmdShowReviewSelector))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                .add(tblReviewReasonsPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 464, Short.MAX_VALUE)
+                .add(tblReviewReasonsPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 444, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -3162,8 +3168,10 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             this.chkArchived.setSelected(false);
             this.lblArchivedSince.setText("");
             this.cmbReviewAssignee.setSelectedIndex(0);
+            this.radioReviewTypeFollowUp.setSelected(true);
         } else {
             JOptionPane.showMessageDialog(this, "Es muss ein Datum angegeben werden.", "Fehler", JOptionPane.ERROR_MESSAGE);
+            
         }
     }//GEN-LAST:event_cmdNewReviewActionPerformed
 
