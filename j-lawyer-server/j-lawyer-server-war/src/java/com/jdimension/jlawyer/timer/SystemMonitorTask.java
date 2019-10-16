@@ -754,10 +754,10 @@ public class SystemMonitorTask extends java.util.TimerTask {
                 int disk = this.getDiskStatusLevel();
                 if (disk > aggregate) {
                     aggregate = disk;
-                    status = this.getStatusString(aggregate, "Disk");
+                    status = this.getStatusString(aggregate, "Disk", null);
                 }
                 if (disk > MonitoringConstants.LEVEL_NORMAL) {
-                    mailBody.append(this.getStatusString(disk, "Disk")).append("\r\n");
+                    mailBody.append(this.getStatusString(disk, "Disk", "Ggf. nicht mehr benoetigte Daten loeschen und Papierkorb leeren.")).append("\r\n");
                 }
             }
 
@@ -765,10 +765,10 @@ public class SystemMonitorTask extends java.util.TimerTask {
                 int cpu = this.getCPUStatusLevel(settings);
                 if (cpu > aggregate) {
                     aggregate = cpu;
-                    status = this.getStatusString(aggregate, "CPU");
+                    status = this.getStatusString(aggregate, "CPU", null);
                 }
                 if (cpu > MonitoringConstants.LEVEL_NORMAL) {
-                    mailBody.append(this.getStatusString(cpu, "CPU")).append("\r\n");
+                    mailBody.append(this.getStatusString(cpu, "CPU", null)).append("\r\n");
                 }
             }
 
@@ -776,11 +776,11 @@ public class SystemMonitorTask extends java.util.TimerTask {
                 int mem = this.getPhysicalMemStatusLevel();
                 if (mem > aggregate) {
                     aggregate = mem;
-                    status = this.getStatusString(aggregate, "RAM");
+                    status = this.getStatusString(aggregate, "RAM", null);
 //                mailBody.append(status).append("\r\n");
                 }
                 if (mem > MonitoringConstants.LEVEL_NORMAL) {
-                    mailBody.append(this.getStatusString(mem, "RAM")).append("\r\n");
+                    mailBody.append(this.getStatusString(mem, "RAM", null)).append("\r\n");
                 }
             }
 
@@ -788,11 +788,11 @@ public class SystemMonitorTask extends java.util.TimerTask {
                 int vm = this.getVMMemStatusLevel();
                 if (vm > aggregate) {
                     aggregate = vm;
-                    status = this.getStatusString(aggregate, "VM-Speicher");
+                    status = this.getStatusString(aggregate, "VM-Speicher", null);
 //                mailBody.append(status).append("\r\n");
                 }
                 if (vm > MonitoringConstants.LEVEL_NORMAL) {
-                    mailBody.append(this.getStatusString(vm, "VM-Speicher")).append("\r\n");
+                    mailBody.append(this.getStatusString(vm, "VM-Speicher", "Ggf. den j-lawyer.org Serverdienst durchstarten (stoppen und neu starten).")).append("\r\n");
                 }
             }
 
@@ -981,7 +981,7 @@ public class SystemMonitorTask extends java.util.TimerTask {
         return defaultValue;
     }
 
-    private String getStatusString(int level, String subject) {
+    private String getStatusString(int level, String subject, String solutionHint) {
         if (level == MonitoringConstants.LEVEL_NORMAL) {
             return "";
         }
@@ -997,6 +997,10 @@ public class SystemMonitorTask extends java.util.TimerTask {
             sb.append("Warn");
         }
         sb.append("-Limit erreicht.");
+        if(solutionHint!=null) {
+            sb.append(" \r\n\r\n");
+            sb.append(solutionHint);
+        }
         return sb.toString();
     }
 
