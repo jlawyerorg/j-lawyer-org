@@ -683,8 +683,6 @@ import com.jdimension.jlawyer.client.events.ScannerStatusEvent;
 import com.jdimension.jlawyer.client.launcher.DocumentObserverTask;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
-import com.jdimension.jlawyer.client.tipofday.TipData;
-import com.jdimension.jlawyer.client.tipofday.TipOfDayAccess;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.FaxQueueBean;
@@ -727,22 +725,16 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         initComponents();
         //this.frmMyAppointments.setVisible(false);
         Date now = new Date();
-        SimpleDateFormat dfWeekday = new SimpleDateFormat("EEEE");
-        this.lblWeekday.setText(dfWeekday.format(now));
-        SimpleDateFormat dfMonth = new SimpleDateFormat("MMMM");
-        this.lblMonth.setText(dfMonth.format(now));
+        //SimpleDateFormat dfWeekday = new SimpleDateFormat("EEEE");
+        SimpleDateFormat dfWeekday = new SimpleDateFormat("EEE");
+        //this.lblWeekday.setText("(" + dfWeekday.format(now) + ")");
+        //SimpleDateFormat dfMonth = new SimpleDateFormat("MMMM");
+        SimpleDateFormat dfMonth = new SimpleDateFormat("MMM");
+        //this.lblMonth.setText(dfMonth.format(now));
         SimpleDateFormat dfDay = new SimpleDateFormat("dd");
-        this.lblDay.setText(dfDay.format(now));
+        //this.lblDay.setText(dfDay.format(now) + ".");
+        this.lblDay.setText(dfWeekday.format(now) + " " + dfDay.format(now) + ". " + dfMonth.format(now));
 
-        TipOfDayAccess tipAcc = new TipOfDayAccess();
-        try {
-            tipAcc.loadLocalTips();
-            ArrayList<TipData> tips = tipAcc.getRandomTips(1);
-            this.editTipOfDay.setText(tips.get(0).getHtml());
-
-        } catch (Throwable t) {
-            log.error("Error loading tips from local cache", t);
-        }
         this.jSplitPane1.setDividerLocation(0.5d);
 
         ClientSettings settings = ClientSettings.getInstance();
@@ -919,8 +911,6 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         cmdDocumentTagFilter = new javax.swing.JButton();
         calendarWidget = new com.jdimension.jlawyer.client.desktop.DesktopWidgetPanel();
         lblDay = new javax.swing.JLabel();
-        lblMonth = new javax.swing.JLabel();
-        lblWeekday = new javax.swing.JLabel();
         messagesWidget = new com.jdimension.jlawyer.client.desktop.DesktopWidgetPanel();
         lblUnreadMail = new javax.swing.JLabel();
         lblUnreadBea = new javax.swing.JLabel();
@@ -935,10 +925,6 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         lblAddressCount = new javax.swing.JLabel();
         lblDocumentCount = new javax.swing.JLabel();
         lblVoipBalance = new javax.swing.JLabel();
-        desktopWidgetPanel1 = new com.jdimension.jlawyer.client.desktop.DesktopWidgetPanel();
-        jLabel1 = new javax.swing.JLabel();
-        jScrollPane2 = new javax.swing.JScrollPane();
-        editTipOfDay = new javax.swing.JEditorPane();
         desktopWidgetPanel2 = new com.jdimension.jlawyer.client.desktop.DesktopWidgetPanel();
         lblUserIcon = new javax.swing.JLabel();
         lblUserName = new javax.swing.JLabel();
@@ -999,7 +985,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
             .add(jPanel2Layout.createSequentialGroup()
                 .addContainerGap()
                 .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 486, Short.MAX_VALUE)
+                    .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 554, Short.MAX_VALUE)
                     .add(jPanel2Layout.createSequentialGroup()
                         .add(cmdRefreshRevDue)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
@@ -1017,7 +1003,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
                     .add(chkOnlyMyReviews)
                     .add(cmdRefreshRevDue))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 276, Short.MAX_VALUE)
+                .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 346, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -1097,7 +1083,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
                     .add(chkOnlyMyCases)
                     .add(cmdRefreshLastChanged))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jScrollPane3, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 161, Short.MAX_VALUE)
+                .add(jScrollPane3, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 123, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -1205,7 +1191,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
                     .add(cmdTagFilter)
                     .add(cmdDocumentTagFilter))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jScrollPane4, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 47, Short.MAX_VALUE)
+                .add(jScrollPane4, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 155, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -1213,48 +1199,31 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
 
         jSplitPane1.setLeftComponent(jSplitPane2);
 
-        calendarWidget.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(255, 255, 255), 1, true));
-
-        lblDay.setFont(new java.awt.Font("Dialog", 1, 48)); // NOI18N
-        lblDay.setForeground(new java.awt.Color(204, 0, 0));
+        lblDay.setFont(new java.awt.Font("Dialog", 1, 18)); // NOI18N
+        lblDay.setForeground(new java.awt.Color(255, 255, 255));
         lblDay.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         lblDay.setText("28");
-
-        lblMonth.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
-        lblMonth.setForeground(java.awt.Color.white);
-        lblMonth.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        lblMonth.setText("Oktober");
-
-        lblWeekday.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
-        lblWeekday.setForeground(java.awt.Color.white);
-        lblWeekday.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        lblWeekday.setText("Donnerstag");
 
         org.jdesktop.layout.GroupLayout calendarWidgetLayout = new org.jdesktop.layout.GroupLayout(calendarWidget);
         calendarWidget.setLayout(calendarWidgetLayout);
         calendarWidgetLayout.setHorizontalGroup(
             calendarWidgetLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(calendarWidgetLayout.createSequentialGroup()
-                .addContainerGap()
-                .add(calendarWidgetLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(lblMonth, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .add(lblDay, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .add(lblWeekday, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap())
+            .add(0, 0, Short.MAX_VALUE)
+            .add(calendarWidgetLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                .add(calendarWidgetLayout.createSequentialGroup()
+                    .addContainerGap()
+                    .add(lblDay, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 540, Short.MAX_VALUE)
+                    .addContainerGap()))
         );
         calendarWidgetLayout.setVerticalGroup(
             calendarWidgetLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(org.jdesktop.layout.GroupLayout.TRAILING, calendarWidgetLayout.createSequentialGroup()
-                .addContainerGap()
-                .add(lblMonth)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(lblDay)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(lblWeekday)
-                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .add(0, 0, Short.MAX_VALUE)
+            .add(calendarWidgetLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                .add(calendarWidgetLayout.createSequentialGroup()
+                    .addContainerGap()
+                    .add(lblDay, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 20, Short.MAX_VALUE)
+                    .addContainerGap()))
         );
-
-        messagesWidget.setBorder(new javax.swing.border.LineBorder(java.awt.Color.white, 1, true));
 
         lblUnreadMail.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
         lblUnreadMail.setForeground(java.awt.Color.white);
@@ -1306,43 +1275,34 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         messagesWidgetLayout.setHorizontalGroup(
             messagesWidgetLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(messagesWidgetLayout.createSequentialGroup()
-                .addContainerGap()
-                .add(messagesWidgetLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(messagesWidgetLayout.createSequentialGroup()
-                        .add(messagesWidgetLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
-                            .add(org.jdesktop.layout.GroupLayout.LEADING, lblScans, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .add(org.jdesktop.layout.GroupLayout.LEADING, lblUnreadMail, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(messagesWidgetLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                            .add(lblUnreadBea)
-                            .add(lblFaxStatus)))
-                    .add(lblUnreadDrebis, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 64, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(messagesWidgetLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
-                        .add(org.jdesktop.layout.GroupLayout.LEADING, lblUpdateStatus, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .add(org.jdesktop.layout.GroupLayout.LEADING, lblNewsStatus, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                .add(lblUnreadMail)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(lblScans)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(lblFaxStatus)
+                .add(18, 18, 18)
+                .add(lblUnreadDrebis, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 64, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .add(18, 18, 18)
+                .add(lblUnreadBea)
+                .add(18, 18, 18)
+                .add(lblUpdateStatus)
+                .add(18, 18, 18)
+                .add(lblNewsStatus)
                 .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         messagesWidgetLayout.setVerticalGroup(
             messagesWidgetLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(messagesWidgetLayout.createSequentialGroup()
-                .addContainerGap()
                 .add(messagesWidgetLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(lblUnreadMail)
-                    .add(lblUnreadBea))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(messagesWidgetLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(lblScans)
-                    .add(lblFaxStatus))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(lblUnreadDrebis)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(lblUpdateStatus)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .add(lblNewsStatus)
-                .add(18, 18, 18))
+                    .add(lblFaxStatus)
+                    .add(lblUnreadDrebis)
+                    .add(lblUnreadBea)
+                    .add(lblUpdateStatus)
+                    .add(lblNewsStatus))
+                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
-
-        systemInformationWidget.setBorder(new javax.swing.border.LineBorder(java.awt.Color.white, 1, true));
 
         lblArchiveFileCount.setForeground(java.awt.Color.white);
         lblArchiveFileCount.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder.png"))); // NOI18N
@@ -1370,77 +1330,28 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         systemInformationWidgetLayout.setHorizontalGroup(
             systemInformationWidgetLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(systemInformationWidgetLayout.createSequentialGroup()
-                .addContainerGap()
-                .add(systemInformationWidgetLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(lblArchiveFileCount)
-                    .add(lblArchiveFileArchivedCount)
-                    .add(lblAddressCount)
-                    .add(lblDocumentCount)
-                    .add(lblVoipBalance))
+                .add(lblArchiveFileCount)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(lblArchiveFileArchivedCount)
+                .add(18, 18, 18)
+                .add(lblAddressCount)
+                .add(18, 18, 18)
+                .add(lblDocumentCount)
+                .add(18, 18, 18)
+                .add(lblVoipBalance)
                 .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         systemInformationWidgetLayout.setVerticalGroup(
             systemInformationWidgetLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(org.jdesktop.layout.GroupLayout.TRAILING, systemInformationWidgetLayout.createSequentialGroup()
-                .addContainerGap()
-                .add(lblArchiveFileCount)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(lblArchiveFileArchivedCount)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(lblAddressCount)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(lblDocumentCount)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                .add(lblVoipBalance)
-                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .add(systemInformationWidgetLayout.createSequentialGroup()
+                .add(0, 0, Short.MAX_VALUE)
+                .add(systemInformationWidgetLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(lblArchiveFileCount)
+                    .add(lblArchiveFileArchivedCount)
+                    .add(lblAddressCount)
+                    .add(lblDocumentCount)
+                    .add(lblVoipBalance)))
         );
-
-        desktopWidgetPanel1.setBorder(new javax.swing.border.LineBorder(java.awt.Color.white, 1, true));
-
-        jLabel1.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
-        jLabel1.setForeground(java.awt.Color.white);
-        jLabel1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/ktip.png"))); // NOI18N
-        jLabel1.setText(bundle.getString("label.tipofday")); // NOI18N
-
-        jScrollPane2.setBorder(null);
-        jScrollPane2.setHorizontalScrollBar(null);
-        jScrollPane2.setOpaque(false);
-
-        editTipOfDay.setEditable(false);
-        editTipOfDay.setBorder(null);
-        editTipOfDay.setContentType("text/html"); // NOI18N
-        editTipOfDay.setText("<html>   <head>    </head>   <body>     <p style=\"margin-top: 0\">  Tipps sind noch nicht vollst&auml;ndig geladen...         </p>   </body> </html> ");
-        editTipOfDay.setOpaque(false);
-        jScrollPane2.setViewportView(editTipOfDay);
-
-        org.jdesktop.layout.GroupLayout desktopWidgetPanel1Layout = new org.jdesktop.layout.GroupLayout(desktopWidgetPanel1);
-        desktopWidgetPanel1.setLayout(desktopWidgetPanel1Layout);
-        desktopWidgetPanel1Layout.setHorizontalGroup(
-            desktopWidgetPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(org.jdesktop.layout.GroupLayout.TRAILING, desktopWidgetPanel1Layout.createSequentialGroup()
-                .addContainerGap()
-                .add(jLabel1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addContainerGap())
-            .add(desktopWidgetPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                .add(desktopWidgetPanel1Layout.createSequentialGroup()
-                    .addContainerGap()
-                    .add(jScrollPane2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 487, Short.MAX_VALUE)
-                    .addContainerGap()))
-        );
-        desktopWidgetPanel1Layout.setVerticalGroup(
-            desktopWidgetPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(desktopWidgetPanel1Layout.createSequentialGroup()
-                .addContainerGap()
-                .add(jLabel1)
-                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-            .add(desktopWidgetPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                .add(org.jdesktop.layout.GroupLayout.TRAILING, desktopWidgetPanel1Layout.createSequentialGroup()
-                    .add(38, 38, 38)
-                    .add(jScrollPane2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 85, Short.MAX_VALUE)
-                    .addContainerGap()))
-        );
-
-        desktopWidgetPanel2.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(255, 255, 255), 1, true));
 
         lblUserIcon.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         lblUserIcon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/avatar32/identity.png"))); // NOI18N
@@ -1467,20 +1378,18 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         desktopWidgetPanel2Layout.setHorizontalGroup(
             desktopWidgetPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(desktopWidgetPanel2Layout.createSequentialGroup()
-                .addContainerGap()
-                .add(desktopWidgetPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(lblUserIcon, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .add(lblUserName, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap())
+                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .add(lblUserName)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(lblUserIcon))
         );
         desktopWidgetPanel2Layout.setVerticalGroup(
             desktopWidgetPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(desktopWidgetPanel2Layout.createSequentialGroup()
-                .addContainerGap()
-                .add(lblUserIcon, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(lblUserName)
-                .addContainerGap())
+                .add(desktopWidgetPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
+                    .add(lblUserIcon, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(lblUserName, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(14, Short.MAX_VALUE))
         );
 
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(this);
@@ -1490,17 +1399,14 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
             .add(layout.createSequentialGroup()
                 .addContainerGap()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jSplitPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 971, Short.MAX_VALUE)
                     .add(layout.createSequentialGroup()
-                        .add(calendarWidget, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(messagesWidget, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(desktopWidgetPanel1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .add(calendarWidget, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(systemInformationWidget, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(desktopWidgetPanel2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
+                        .add(desktopWidgetPanel2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                    .add(jSplitPane1)
+                    .add(systemInformationWidget, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -1508,13 +1414,13 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
             .add(layout.createSequentialGroup()
                 .addContainerGap()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
-                    .add(messagesWidget, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .add(desktopWidgetPanel1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(messagesWidget, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(desktopWidgetPanel2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .add(calendarWidget, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .add(systemInformationWidget, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .add(calendarWidget, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jSplitPane1)
+                .add(jSplitPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 402, Short.MAX_VALUE)
+                .add(4, 4, 4)
+                .add(systemInformationWidget, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -1644,10 +1550,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
     private javax.swing.JButton cmdRefreshRevDue;
     private javax.swing.JButton cmdRefreshTagged;
     private javax.swing.JButton cmdTagFilter;
-    private com.jdimension.jlawyer.client.desktop.DesktopWidgetPanel desktopWidgetPanel1;
     private com.jdimension.jlawyer.client.desktop.DesktopWidgetPanel desktopWidgetPanel2;
-    private javax.swing.JEditorPane editTipOfDay;
-    private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
@@ -1658,7 +1561,6 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
     private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JScrollPane jScrollPane4;
     private javax.swing.JSplitPane jSplitPane1;
@@ -1669,7 +1571,6 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
     private javax.swing.JLabel lblDay;
     private javax.swing.JLabel lblDocumentCount;
     private javax.swing.JLabel lblFaxStatus;
-    private javax.swing.JLabel lblMonth;
     private javax.swing.JLabel lblNewsStatus;
     private javax.swing.JLabel lblScans;
     private javax.swing.JLabel lblUnreadBea;
@@ -1679,7 +1580,6 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
     private javax.swing.JLabel lblUserIcon;
     private javax.swing.JLabel lblUserName;
     private javax.swing.JLabel lblVoipBalance;
-    private javax.swing.JLabel lblWeekday;
     private com.jdimension.jlawyer.client.desktop.DesktopWidgetPanel messagesWidget;
     private javax.swing.JPanel pnlLastChanged;
     private javax.swing.JPanel pnlRevDue;
