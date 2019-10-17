@@ -813,8 +813,18 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
         }
 
         try {
-            this.initWithCertificate();
-            this.refreshFolders(false);
+            new Thread(new Runnable() {
+                public void run() {
+                    try {
+                        initWithCertificate();
+                        refreshFolders(false);
+                    } catch (Exception ex) {
+                        log.error(ex);
+                    }
+                    initializing = false;
+                }
+            }).start();
+
         } catch (Exception ex) {
             log.error(ex);
         }
@@ -854,10 +864,30 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
         AppUserBean cu = UserSettings.getInstance().getCurrentUser();
         BeaAccess bea = BeaAccess.getInstance(cu.getBeaCertificate(), cu.getBeaCertificatePassword());
         bea.login();
-        this.treeFolders.setEnabled(true);
-        this.cmdNew.setEnabled(true);
-        this.cmdRefresh.setEnabled(true);
+        if (!SwingUtilities.isEventDispatchThread()) {
+            try {
+                SwingUtilities.invokeAndWait(new Runnable() {
+                    @Override
+                    public void run() {
+                        treeFolders.setEnabled(true);
+                        cmdNew.setEnabled(true);
+                        cmdRefresh.setEnabled(true);
+                    }
+
+                });
+            } catch (Exception ex) {
+                this.treeFolders.setEnabled(true);
+                this.cmdNew.setEnabled(true);
+                this.cmdRefresh.setEnabled(true);
+            }
+        } else {
+            this.treeFolders.setEnabled(true);
+            this.cmdNew.setEnabled(true);
+            this.cmdRefresh.setEnabled(true);
+
+        }
         this.initializing = false;
+
         //BeaLoginPanel loginPanel=new BeaLoginPanel(this, true);
         this.needsReset = false;
         return;
@@ -913,11 +943,27 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
         }
 
         //this.traverseFolders(rootNode);
-        DefaultTreeModel tm = new DefaultTreeModel(rootNode);
-        this.treeFolders.setModel(tm);
-        JTreeUtils.expandAll(this.treeFolders);
+        if (!SwingUtilities.isEventDispatchThread()) {
+            SwingUtilities.invokeAndWait(new Runnable() {
+                @Override
+                public void run() {
+                    DefaultTreeModel tm = new DefaultTreeModel(rootNode);
+                    treeFolders.setModel(tm);
+                    JTreeUtils.expandAll(treeFolders);
 
-        this.treeFolders.setCellRenderer(this.renderer);
+                    treeFolders.setCellRenderer(renderer);
+
+                }
+
+            });
+        } else {
+            DefaultTreeModel tm = new DefaultTreeModel(rootNode);
+            this.treeFolders.setModel(tm);
+            JTreeUtils.expandAll(this.treeFolders);
+
+            this.treeFolders.setCellRenderer(this.renderer);
+
+        }
 
         // pre-load INBOX folder
         try {
@@ -1413,7 +1459,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
 
                 DefaultTableModel tm = null;
                 if (folder.getType() == Folder.TYPE_TRASH) {
-                    tm = new DefaultTableModel(new String[]{"", "", "", "Betreff", "Absender", "Empfänger", "Gesendet", "Az Absender", "Az Empfänger", "permant gelöscht" }, 0) {
+                    tm = new DefaultTableModel(new String[]{"", "", "", "Betreff", "Absender", "Empfänger", "Gesendet", "Az Absender", "Az Empfänger", "permant gelöscht"}, 0) {
 
                         @Override
                         public boolean isCellEditable(int row, int column) {
@@ -2558,10 +2604,10 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
 
                 JTextField hiddenField = new JTextField();
                 MultiCalDialog dlg = new MultiCalDialog(hiddenField, EditorsRegistry.getInstance().getMainWindow(), true);
-                Calendar c=Calendar.getInstance();
+                Calendar c = Calendar.getInstance();
                 c.add(Calendar.DAY_OF_MONTH, 1);
                 dlg.setMaxDate(c.getTime());
-                Calendar c2=Calendar.getInstance();
+                Calendar c2 = Calendar.getInstance();
                 c2.add(Calendar.MONTH, -2);
                 dlg.setMinDate(c2.getTime());
 //                dlg.setUndecorated(false);
@@ -2645,11 +2691,11 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                 EebRejectDialog dlg = new EebRejectDialog(EditorsRegistry.getInstance().getMainWindow(), true);
                 FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
                 dlg.setVisible(true);
-                if(dlg.getRejectionCode()==null) {
+                if (dlg.getRejectionCode() == null) {
                     // user decided to cancel
                     return false;
                 }
-                code=dlg.getRejectionCode();
+                code = dlg.getRejectionCode();
                 if (dlg.getRejectionComment() != null) {
                     comment = dlg.getRejectionComment();
                 }
