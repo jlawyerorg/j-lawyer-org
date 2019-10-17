@@ -689,13 +689,13 @@ public class CaseNumberingConfigurationDialog extends javax.swing.JDialog {
         
         ServerSettings set=ServerSettings.getInstance();
         String pattern=set.getSetting(ServerSettings.SERVERCONF_CASENUMBERING_PATTERN, "nnnnn/YY");
-        if("nnnnn/YY".equalsIgnoreCase(pattern))
+        if("nnnnn/YY".equals(pattern))
             this.opt_nnnnnYY.setSelected(true);
-        else if("CCCCC".equalsIgnoreCase(pattern))
+        else if("CCCCC".equals(pattern))
             this.opt_CCCCC.setSelected(true);
-        else if("NNNNN/YYYY".equalsIgnoreCase(pattern))
+        else if("NNNNN/YYYY".equals(pattern))
             this.opt_NNNNNYYYY.setSelected(true);
-        else if("YYMMDD/RRRRR".equalsIgnoreCase(pattern))
+        else if("YYMMDD/RRRRR".equals(pattern))
             this.opt_YYMMDDRRRRR.setSelected(true);
         else {
             this.txtCustom.setText(pattern);
