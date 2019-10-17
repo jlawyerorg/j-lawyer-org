@@ -897,7 +897,18 @@ public class SplashThread implements Runnable {
         updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.modules"), true);
         this.loadedMods = 0;
         this.updateProgress(false, this.numberOfMods, 0, "");
-        this.preloadEditors(theme, rootModule);
+//        try {
+//            SwingUtilities.invokeAndWait(new Runnable() {
+//                @Override
+//                public void run() {
+        preloadEditors(theme, rootModule);
+//                }
+//
+//            });
+//        } catch (Exception ex) {
+//
+//        }
+        //this.preloadEditors(theme, rootModule);
         //updateStatus(".", true);
         //pool.shutdown();
 //        try {
@@ -1142,44 +1153,6 @@ public class SplashThread implements Runnable {
 
     private void preloadEditors(ThemeSettings theme, ModuleMetadata module) {
 
-//        Runnable r = new Runnable() {
-//            public void run() {
-//                //this.updateStatus(java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.loadingmodules"), new Object[] {this.loadedMods, this.numberOfMods, module.getFullName()}), true);
-//                updateStatus(java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.loadingmodules"), new Object[]{module.getFullName()}), true);
-//
-//                String editorClass = ((ModuleMetadata) module).getEditorClass();
-//                if (editorClass != null) {
-//                    Object editor = null;
-//                    //updateStatus(".", false);
-//                    try {
-//                        editor = EditorsRegistry.getInstance().getEditor(editorClass);
-//                        if (module.getBackgroundImage() != null) {
-//                            if (editor instanceof ThemeableEditor) {
-//                                Image image = theme.getBackground(module);
-//                                if (image != null) {
-//                                    ((ThemeableEditor) editor).setBackgroundImage(image);
-//                                }
-//                            } else {
-//                                log.warn("Editor " + editorClass + " has a background image set but does not implement interface ThemeableEditor");
-//                            }
-//                        }
-//
-//                    } catch (Exception ex) {
-//                        log.error("Error preloading editor from class " + editorClass, ex);
-//                        ThreadUtils.showErrorDialog(owner, java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("error.loadingeditor"), new Object[]{ex.getMessage()}), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("msg.error"));
-//                    }
-//
-//                }
-//                loadedMods++;
-//                updateProgress(false, numberOfMods, loadedMods, "");
-//            }
-//        };
-//        pool.execute(r);
-//
-//        for (int i = 0; i < module.getChildCount(); i++) {
-//            this.preloadEditors(theme, (ModuleMetadata) module.getChildAt(i), pool);
-//        }
-
         this.loadedMods++;
 
         //this.updateStatus(java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.loadingmodules"), new Object[] {this.loadedMods, this.numberOfMods, module.getFullName()}), true);
@@ -1188,18 +1161,44 @@ public class SplashThread implements Runnable {
 
         String editorClass = ((ModuleMetadata) module).getEditorClass();
         if (editorClass != null) {
-            Object editor = null;
+            //Object editor = null;
             //updateStatus(".", false);
             try {
-                editor = EditorsRegistry.getInstance().getEditor(editorClass);
-                if (module.getBackgroundImage() != null) {
-                    if (editor instanceof ThemeableEditor) {
-                        Image image = theme.getBackground(module);
-                        if (image != null) {
-                            ((ThemeableEditor) editor).setBackgroundImage(image);
+                if (!SwingUtilities.isEventDispatchThread()) {
+                    SwingUtilities.invokeAndWait(new Runnable() {
+                        @Override
+                        public void run() {
+                            try {
+                                Object editor = EditorsRegistry.getInstance().getEditor(editorClass);
+                                if (module.getBackgroundImage() != null) {
+                                    if (editor instanceof ThemeableEditor) {
+                                        Image image = theme.getBackground(module);
+                                        if (image != null) {
+                                            ((ThemeableEditor) editor).setBackgroundImage(image);
+                                        }
+                                    } else {
+                                        log.warn("Editor " + editorClass + " has a background image set but does not implement interface ThemeableEditor");
+                                    }
+                                }
+                            } catch (Exception ex) {
+                                log.error("Fehler beim Laden des Moduls " + editorClass, ex);
+                                ThreadUtils.showErrorDialog(owner, "Fehler beim Laden des Moduls " + editorClass + ": " + ex.getMessage(), "Fehler");
+                            }
                         }
-                    } else {
-                        log.warn("Editor " + editorClass + " has a background image set but does not implement interface ThemeableEditor");
+
+                    });
+
+                } else {
+                    Object editor = EditorsRegistry.getInstance().getEditor(editorClass);
+                    if (module.getBackgroundImage() != null) {
+                        if (editor instanceof ThemeableEditor) {
+                            Image image = theme.getBackground(module);
+                            if (image != null) {
+                                ((ThemeableEditor) editor).setBackgroundImage(image);
+                            }
+                        } else {
+                            log.warn("Editor " + editorClass + " has a background image set but does not implement interface ThemeableEditor");
+                        }
                     }
                 }
 
@@ -1238,31 +1237,55 @@ public class SplashThread implements Runnable {
     }
 
     private void updateStatus(final String s, final boolean newLine) {
-        SwingUtilities.invokeLater(
-                new Runnable() {
-            public void run() {
-                if (splash != null) {
+        if (!SwingUtilities.isEventDispatchThread()) {
+            SwingUtilities.invokeLater(
+                    new Runnable() {
+                public void run() {
+                    if (splash != null) {
 
-                    if (newLine) {
-                        splash.addStatus(System.getProperty("line.separator"));
+                        if (newLine) {
+                            splash.addStatus(System.getProperty("line.separator"));
+                        }
+
+                        splash.addStatus(s);
+                        //splash.revalidate();
+                        //splash.repaint();
                     }
-
-                    splash.addStatus(s);
                 }
+            });
+        } else {
+            if (splash != null) {
+
+                if (newLine) {
+                    splash.addStatus(System.getProperty("line.separator"));
+                }
+
+                splash.addStatus(s);
+                //splash.revalidate();
+                //splash.repaint();
             }
-        });
+        }
     }
 
     private void updateProgress(final boolean indeterminate, final int max, final int value, final String s) {
-        SwingUtilities.invokeLater(
-                new Runnable() {
-            public void run() {
-                if (splash != null) {
-                    splash.setProgress(indeterminate, max, value, s);
-
+        if (!SwingUtilities.isEventDispatchThread()) {
+            SwingUtilities.invokeLater(
+                    new Runnable() {
+                public void run() {
+                    if (splash != null) {
+                        splash.setProgress(indeterminate, max, value, s);
+                        //splash.revalidate();
+                        //splash.repaint();
+                    }
                 }
+            });
+        } else {
+            if (splash != null) {
+                splash.setProgress(indeterminate, max, value, s);
+                //splash.revalidate();
+                //splash.repaint();
             }
-        });
+        }
     }
 
     private void loadCalculations() throws Exception {
