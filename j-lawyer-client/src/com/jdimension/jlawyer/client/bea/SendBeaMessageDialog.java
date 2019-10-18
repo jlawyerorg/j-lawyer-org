@@ -673,7 +673,9 @@ import com.jdimension.jlawyer.client.editors.files.AddressBeanListCellRenderer;
 import com.jdimension.jlawyer.client.editors.files.OptionsComboBoxModel;
 import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.events.ReviewAddedEvent;
+import com.jdimension.jlawyer.client.launcher.Launcher;
 import com.jdimension.jlawyer.client.launcher.LauncherFactory;
+import com.jdimension.jlawyer.client.launcher.ReadOnlyDocumentStore;
 import com.jdimension.jlawyer.client.processing.ProgressIndicator;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
@@ -1131,6 +1133,11 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
         });
         jToolBar1.add(cmdAttach);
 
+        lstAttachments.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                lstAttachmentsMouseClicked(evt);
+            }
+        });
         jScrollPane2.setViewportView(lstAttachments);
 
         cmdRecipients.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/find.png"))); // NOI18N
@@ -1803,6 +1810,32 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
     private void chkSignMessageActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkSignMessageActionPerformed
         
     }//GEN-LAST:event_chkSignMessageActionPerformed
+
+    private void lstAttachmentsMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lstAttachmentsMouseClicked
+        if (evt.getClickCount() == 2 && this.lstAttachments.getSelectedValue() != null) {
+            try {
+                String requestedAttachmentUrl=null;
+                for(String url: this.attachments) {
+                    if(new File(url).getName().equals(this.lstAttachments.getSelectedValue())) {
+                        // found the relevant attachment
+                        requestedAttachmentUrl=url;
+                    }
+                }
+                if(requestedAttachmentUrl==null)
+                    return;
+                byte[] data = FileUtils.readFile(new File(requestedAttachmentUrl));
+                //String tmpFile = FileUtils.createTempFile(this.lstAttachments.getSelectedValue().toString(), data);
+                ReadOnlyDocumentStore store=new ReadOnlyDocumentStore("mailattachment-" + this.lstAttachments.getSelectedValue().toString(), this.lstAttachments.getSelectedValue().toString());
+                Launcher launcher=LauncherFactory.getLauncher(this.lstAttachments.getSelectedValue().toString(), data, store);
+                launcher.launch(false);
+            } catch (Exception ex) {
+                log.error("Error opening attachment", ex);
+                JOptionPane.showMessageDialog(this, "Fehler Öffnen des Anhangs: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+
+            }
+
+        }
+    }//GEN-LAST:event_lstAttachmentsMouseClicked
 
     /**
      * @param args the command line arguments
