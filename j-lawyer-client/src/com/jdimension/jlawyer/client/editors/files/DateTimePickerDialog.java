@@ -717,6 +717,7 @@ public class DateTimePickerDialog extends javax.swing.JDialog {
         cmdClose = new javax.swing.JButton();
         cmdOk = new javax.swing.JButton();
         spinDateTime = new javax.swing.JSpinner();
+        cmdNow = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Zeitpunkt wählen...");
@@ -730,7 +731,7 @@ public class DateTimePickerDialog extends javax.swing.JDialog {
         });
 
         cmdOk.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png"))); // NOI18N
-        cmdOk.setText("Übernehmen");
+        cmdOk.setText("Gewählte Zeit");
         java.util.ResourceBundle bundle = java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/editors/ShowURLDialog"); // NOI18N
         cmdOk.setToolTipText(bundle.getString("button.copy.tooltip")); // NOI18N
         cmdOk.addActionListener(new java.awt.event.ActionListener() {
@@ -742,6 +743,15 @@ public class DateTimePickerDialog extends javax.swing.JDialog {
         spinDateTime.setModel(new javax.swing.SpinnerDateModel());
         spinDateTime.setEditor(new javax.swing.JSpinner.DateEditor(spinDateTime, "dd.MM.yyyy HH:mm"));
 
+        cmdNow.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png"))); // NOI18N
+        cmdNow.setText("Aktuelle Zeit");
+        cmdNow.setToolTipText(bundle.getString("button.copy.tooltip")); // NOI18N
+        cmdNow.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdNowActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -749,12 +759,16 @@ public class DateTimePickerDialog extends javax.swing.JDialog {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(spinDateTime, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGroup(layout.createSequentialGroup()
+                        .addComponent(spinDateTime, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(cmdOk)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(cmdClose)))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addComponent(cmdNow)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdClose))))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -764,7 +778,8 @@ public class DateTimePickerDialog extends javax.swing.JDialog {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(cmdOk)
-                    .addComponent(cmdClose))
+                    .addComponent(cmdClose)
+                    .addComponent(cmdNow))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
@@ -777,14 +792,23 @@ public class DateTimePickerDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_cmdCloseActionPerformed
 
     private void cmdOkActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdOkActionPerformed
-        //SimpleDateFormat df=new SimpleDateFormat("dd.MM.yyyy HH:mm");
+        
+        this.confirmWithDate((Date) this.spinDateTime.getValue());
+
+    }//GEN-LAST:event_cmdOkActionPerformed
+
+    private void cmdNowActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdNowActionPerformed
+        this.confirmWithDate(new Date());
+    }//GEN-LAST:event_cmdNowActionPerformed
+
+    private void confirmWithDate(Date d) {
         try {
-            this.date = (Date) this.spinDateTime.getValue();
+            this.date = d;
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
-            remote.setDocumentDate(doc.getId(), (Date) this.spinDateTime.getValue());
-            doc.setCreationDate((Date) this.spinDateTime.getValue());
+            remote.setDocumentDate(doc.getId(), d);
+            doc.setCreationDate(d);
             table.setValueAt(doc, row, 0);
             table.repaint();
 
@@ -794,10 +818,8 @@ public class DateTimePickerDialog extends javax.swing.JDialog {
             //reuse existing date
             JOptionPane.showMessageDialog(this, "Ungültiges Datumsformat!", "Fehler", JOptionPane.ERROR_MESSAGE);
         }
-
-
-    }//GEN-LAST:event_cmdOkActionPerformed
-
+    }
+    
     /**
      * @param args the command line arguments
      */
@@ -843,6 +865,7 @@ public class DateTimePickerDialog extends javax.swing.JDialog {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton cmdClose;
+    private javax.swing.JButton cmdNow;
     private javax.swing.JButton cmdOk;
     private javax.swing.JSpinner spinDateTime;
     // End of variables declaration//GEN-END:variables
