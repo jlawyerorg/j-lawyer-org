@@ -1736,6 +1736,11 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         ArrayList<String> mails = EmailUtils.getAllMailAddressesFromString(this.txtTo.getText());
         mails.addAll(EmailUtils.getAllMailAddressesFromString(this.txtCc.getText()));
         mails.addAll(EmailUtils.getAllMailAddressesFromString(this.txtBcc.getText()));
+        
+        if(mails.size()==0) {
+            ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Liste der Empfänger kann nicht leer sein.", "Fehler");
+            return;
+        }
 
         if (this.chkSaveAsDocument.isSelected() || !(this.radioReviewTypeNone.isSelected())) {
             if (this.contextArchiveFile == null) {
