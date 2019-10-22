@@ -692,6 +692,7 @@ public class ServerSettings {
     public static final String PROFILE_COMPANYWWW="profile.company.www";
     
     public static final String PROFILE_COMPANYTAXID="profile.company.taxid";
+    public static final String PROFILE_COMPANYUSTID="profile.company.ustid";
     public static final String PROFILE_COMPANYBANK="profile.company.bank";
     public static final String PROFILE_COMPANYBANKCODE="profile.company.bankcode";
     public static final String PROFILE_COMPANYACCOUNTNO="profile.company.accountno";

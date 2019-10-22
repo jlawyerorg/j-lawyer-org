@@ -691,6 +691,7 @@ public class ProfileDialog extends javax.swing.JDialog {
         this.txtZip.setText(set.getSetting(set.PROFILE_COMPANYZIP, ""));
         
         this.txtTaxId.setText(set.getSetting(set.PROFILE_COMPANYTAXID, ""));
+        this.txtUstId.setText(set.getSetting(set.PROFILE_COMPANYUSTID, ""));
         this.txtBank.setText(set.getSetting(set.PROFILE_COMPANYBANK, ""));
         this.txtBankCode.setText(set.getSetting(set.PROFILE_COMPANYBANKCODE, ""));
         this.txtAccountId.setText(set.getSetting(set.PROFILE_COMPANYACCOUNTNO, ""));
@@ -742,6 +743,8 @@ public class ProfileDialog extends javax.swing.JDialog {
         jLabel14 = new javax.swing.JLabel();
         txtBank = new javax.swing.JTextField();
         jLabel15 = new javax.swing.JLabel();
+        jLabel16 = new javax.swing.JLabel();
+        txtUstId = new javax.swing.JTextField();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         java.util.ResourceBundle bundle = java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/configuration/ProfileDialog"); // NOI18N
@@ -801,6 +804,8 @@ public class ProfileDialog extends javax.swing.JDialog {
 
         jLabel15.setText(bundle.getString("bank")); // NOI18N
 
+        jLabel16.setText("USt-IdNr.:");
+
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
@@ -841,13 +846,15 @@ public class ProfileDialog extends javax.swing.JDialog {
                             .addComponent(jLabel12, javax.swing.GroupLayout.PREFERRED_SIZE, 78, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(jLabel13)
                             .addComponent(jLabel14)
-                            .addComponent(jLabel15))
+                            .addComponent(jLabel15)
+                            .addComponent(jLabel16))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                             .addComponent(txtAccountId, javax.swing.GroupLayout.Alignment.TRAILING)
                             .addComponent(txtBankCode)
                             .addComponent(txtBank, javax.swing.GroupLayout.DEFAULT_SIZE, 309, Short.MAX_VALUE)
-                            .addComponent(txtTaxId, javax.swing.GroupLayout.Alignment.TRAILING))))
+                            .addComponent(txtTaxId, javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(txtUstId))))
                 .addContainerGap())
         );
         jPanel1Layout.setVerticalGroup(
@@ -904,6 +911,10 @@ public class ProfileDialog extends javax.swing.JDialog {
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel12)
                     .addComponent(txtTaxId, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel16)
+                    .addComponent(txtUstId, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(txtBankCode, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -964,6 +975,7 @@ public class ProfileDialog extends javax.swing.JDialog {
         set.setSetting(set.PROFILE_COMPANYZIP, this.txtZip.getText());
         
         set.setSetting(set.PROFILE_COMPANYTAXID, this.txtTaxId.getText());
+        set.setSetting(set.PROFILE_COMPANYUSTID, this.txtUstId.getText());
         set.setSetting(set.PROFILE_COMPANYBANK, this.txtBank.getText());
         set.setSetting(set.PROFILE_COMPANYBANKCODE, this.txtBankCode.getText());
         set.setSetting(set.PROFILE_COMPANYACCOUNTNO, this.txtAccountId.getText());
@@ -1036,6 +1048,7 @@ public class ProfileDialog extends javax.swing.JDialog {
     private javax.swing.JLabel jLabel13;
     private javax.swing.JLabel jLabel14;
     private javax.swing.JLabel jLabel15;
+    private javax.swing.JLabel jLabel16;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
@@ -1060,6 +1073,7 @@ public class ProfileDialog extends javax.swing.JDialog {
     private javax.swing.JTextField txtStreet;
     private javax.swing.JTextField txtStreet2;
     private javax.swing.JTextField txtTaxId;
+    private javax.swing.JTextField txtUstId;
     private javax.swing.JTextField txtWWW;
     private javax.swing.JTextField txtZip;
     // End of variables declaration//GEN-END:variables
