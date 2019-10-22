@@ -742,6 +742,9 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
 
         this.lblCC.setText(" ");
         this.lblCC.setToolTipText(null);
+        
+        this.lblBCC.setText(" ");
+        this.lblBCC.setToolTipText(null);
 
         this.editBody.setContentType("text/plain");
 
@@ -807,11 +810,11 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
                 dlg.setInfinite(true);
                 DecimalFormat df = new DecimalFormat("###0.00");
                 dlg.progress("Lade Email... (" + df.format(msg.getSize() / 1024 / 1024) + "MB)");
-                LoadEmailAction lea = new LoadEmailAction(dlg, this, msg, this.lblSubject, this.lblSentDate, this.lblTo, this.lblCC, this.lblFrom, this.editBody, this.lstAttachments, this.cmdShowHtml);
+                LoadEmailAction lea = new LoadEmailAction(dlg, this, msg, this.lblSubject, this.lblSentDate, this.lblTo, this.lblCC, this.lblBCC, this.lblFrom, this.editBody, this.lstAttachments, this.cmdShowHtml);
                 lea.start();
                 return;
             } else {
-                MailContentUI.setMessageImpl(this, msg, this.lblSubject, this.lblSentDate, this.lblTo, this.lblCC, this.lblFrom, this.editBody, this.lstAttachments, this.cmdShowHtml, false);
+                MailContentUI.setMessageImpl(this, msg, this.lblSubject, this.lblSentDate, this.lblTo, this.lblCC, this.lblBCC, this.lblFrom, this.editBody, this.lstAttachments, this.cmdShowHtml, false);
             }
 
 
@@ -833,7 +836,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
         }
     }
 
-    public static void setMessageImpl(MailContentUI contentUI, Message msg, JLabel lblSubject, JLabel lblSentDate, JLabel lblTo, JLabel lblCC, JLabel lblFrom, JEditorPane editBody, JList lstAttachments, JButton cmdShowHtml, boolean edt) throws Exception {
+    public static void setMessageImpl(MailContentUI contentUI, Message msg, JLabel lblSubject, JLabel lblSentDate, JLabel lblTo, JLabel lblCC, JLabel lblBCC, JLabel lblFrom, JEditorPane editBody, JList lstAttachments, JButton cmdShowHtml, boolean edt) throws Exception {
         // we copy the message to avoid the "Unable to load BODYSTRUCTURE" issue
 
         boolean closed=false;
@@ -925,6 +928,16 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
         lblCC.setText(cc);
         lblCC.setToolTipText(cc);
 
+        String bcc = "";
+        if (copiedMsg.getRecipients(RecipientType.BCC) != null && copiedMsg.getRecipients(RecipientType.BCC).length > 0) {
+            bcc = copiedMsg.getRecipients(RecipientType.BCC)[0].toString();
+            for (int i = 1; i < copiedMsg.getRecipients(RecipientType.BCC).length; i++) {
+                bcc = bcc + ", " + copiedMsg.getRecipients(RecipientType.BCC)[i].toString();
+            }
+        }
+        lblBCC.setText(bcc);
+        lblBCC.setToolTipText(bcc);
+        
         ((DefaultListModel) lstAttachments.getModel()).removeAllElements();
         if (copiedMsg.isMimeType("multipart/*")) {
             ArrayList<String> attachments = EmailUtils.getAttachmentNames(copiedMsg.getContent());
@@ -1222,6 +1235,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
         mnuSave = new javax.swing.JMenu();
         mnuSearchSave = new javax.swing.JMenuItem();
         mnuSaveAsFile = new javax.swing.JMenuItem();
+        jLabel5 = new javax.swing.JLabel();
         jPanel1 = new javax.swing.JPanel();
         jLabel1 = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
@@ -1233,6 +1247,8 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
         jLabel4 = new javax.swing.JLabel();
         lblCC = new javax.swing.JLabel();
         cmdShowHtml = new javax.swing.JButton();
+        jLabel6 = new javax.swing.JLabel();
+        lblBCC = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
         editBody = new javax.swing.JEditorPane();
         jPanel2 = new javax.swing.JPanel();
@@ -1263,6 +1279,8 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
 
         popAttachments.add(mnuSave);
 
+        jLabel5.setText("CC:");
+
         jPanel1.setBorder(new javax.swing.border.LineBorder(java.awt.SystemColor.controlDkShadow, 1, true));
 
         jLabel1.setText("Betreff:");
@@ -1292,6 +1310,10 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
             }
         });
 
+        jLabel6.setText("BCC:");
+
+        lblBCC.setText(" ");
+
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
@@ -1301,21 +1323,22 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
                     .addComponent(jLabel1)
                     .addComponent(jLabel2)
                     .addComponent(jLabel3)
-                    .addComponent(jLabel4))
+                    .addComponent(jLabel4)
+                    .addComponent(jLabel6))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addComponent(lblSubject, javax.swing.GroupLayout.PREFERRED_SIZE, 450, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(lblSentDate, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addComponent(lblSentDate, javax.swing.GroupLayout.DEFAULT_SIZE, 86, Short.MAX_VALUE))
                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(lblFrom, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 450, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel1Layout.createSequentialGroup()
-                                .addComponent(lblCC, javax.swing.GroupLayout.PREFERRED_SIZE, 450, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(cmdShowHtml))
-                            .addComponent(lblTo, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 450, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                            .addComponent(lblCC, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(lblFrom, javax.swing.GroupLayout.DEFAULT_SIZE, 450, Short.MAX_VALUE)
+                            .addComponent(lblTo, javax.swing.GroupLayout.DEFAULT_SIZE, 450, Short.MAX_VALUE)
+                            .addComponent(lblBCC, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(cmdShowHtml)
                         .addContainerGap())))
         );
         jPanel1Layout.setVerticalGroup(
@@ -1336,9 +1359,14 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(cmdShowHtml)
-                    .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(jLabel4)
-                        .addComponent(lblCC)))
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(jLabel4)
+                            .addComponent(lblCC))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(jLabel6)
+                            .addComponent(lblBCC))))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
@@ -1409,7 +1437,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
             .addGroup(layout.createSequentialGroup()
                 .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 194, Short.MAX_VALUE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 230, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
@@ -1553,11 +1581,14 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
+    private javax.swing.JLabel jLabel5;
+    private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel7;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
+    private javax.swing.JLabel lblBCC;
     private javax.swing.JLabel lblCC;
     private javax.swing.JLabel lblFrom;
     private javax.swing.JLabel lblSentDate;
