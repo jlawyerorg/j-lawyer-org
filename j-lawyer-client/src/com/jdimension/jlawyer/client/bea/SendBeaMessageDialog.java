@@ -715,7 +715,7 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
 
     private static final Logger log = Logger.getLogger(SendBeaMessageDialog.class.getName());
     private AppUserBean cu = null;
-    private ArrayList<String> attachments = new ArrayList<String>();
+    private Hashtable<String,String> attachments = new Hashtable<String,String>();
     private ArchiveFileBean contextArchiveFile = null;
     private AddressBean contextClient = null;
     private ArrayList<AddressBean> contextClients = new ArrayList<AddressBean>();
@@ -883,7 +883,7 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
 
     @Override
     public void dispose() {
-        for (String url : this.attachments) {
+        for (String url : this.attachments.values()) {
             File f = new File(url);
             if (f.exists()) {
                 try {
@@ -1009,7 +1009,7 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
     @Override
     public void addAttachment(String tempUrl, String dictateSign) {
         this.contextDictateSign = dictateSign;
-        this.attachments.add(tempUrl);
+        this.attachments.put(new File(tempUrl).getName(), tempUrl);
         ((DefaultListModel) this.lstAttachments.getModel()).addElement(new File(tempUrl).getName());
 
     }
@@ -1029,6 +1029,10 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
         jSeparator1 = new javax.swing.JPopupMenu.Separator();
         buttonGroupTextHtml = new javax.swing.ButtonGroup();
         btGroupReviews = new javax.swing.ButtonGroup();
+        popAttachments = new javax.swing.JPopupMenu();
+        mnuRemoveAttachment = new javax.swing.JMenuItem();
+        popRecipientList = new javax.swing.JPopupMenu();
+        mnuRemoveRecipient = new javax.swing.JMenuItem();
         jLabel1 = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
         jLabel3 = new javax.swing.JLabel();
@@ -1090,6 +1094,24 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
         popRecipients.add(mnuSearchRecipientInBea);
         popRecipients.add(jSeparator1);
 
+        mnuRemoveAttachment.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png"))); // NOI18N
+        mnuRemoveAttachment.setText("entfernen");
+        mnuRemoveAttachment.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuRemoveAttachmentActionPerformed(evt);
+            }
+        });
+        popAttachments.add(mnuRemoveAttachment);
+
+        mnuRemoveRecipient.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png"))); // NOI18N
+        mnuRemoveRecipient.setText("entfernen");
+        mnuRemoveRecipient.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuRemoveRecipientActionPerformed(evt);
+            }
+        });
+        popRecipientList.add(mnuRemoveRecipient);
+
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("neue beA-Nachricht");
         addComponentListener(new java.awt.event.ComponentAdapter() {
@@ -1134,6 +1156,9 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
         jToolBar1.add(cmdAttach);
 
         lstAttachments.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                lstAttachmentsMousePressed(evt);
+            }
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 lstAttachmentsMouseClicked(evt);
             }
@@ -1307,6 +1332,11 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
 
         cmbFrom.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
 
+        lstTo.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                lstToMousePressed(evt);
+            }
+        });
         jScrollPane3.setViewportView(lstTo);
 
         jPanel4.setBorder(javax.swing.BorderFactory.createTitledBorder("Wiedervorlage / Frist"));
@@ -1557,9 +1587,9 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
         }
 
         if (this.chkSaveAsDocument.isSelected()) {
-            a = new SendBeaMessageAction(dlg, this, fromSafeId, this.attachments, this.cu, this.rdXjustizEeb.isSelected(), this.authority, ((DefaultListModel) this.lstTo.getModel()).elements(), this.txtSubject.getText(), ed.getText(), this.contextArchiveFile, createDocumentTag);
+            a = new SendBeaMessageAction(dlg, this, fromSafeId, new ArrayList(this.attachments.values()), this.cu, this.rdXjustizEeb.isSelected(), this.authority, ((DefaultListModel) this.lstTo.getModel()).elements(), this.txtSubject.getText(), ed.getText(), this.contextArchiveFile, createDocumentTag);
         } else {
-            a = new SendBeaMessageAction(dlg, this, fromSafeId, this.attachments, this.cu, this.rdXjustizEeb.isSelected(), this.authority, ((DefaultListModel) this.lstTo.getModel()).elements(), this.txtSubject.getText(), ed.getText(), createDocumentTag);
+            a = new SendBeaMessageAction(dlg, this, fromSafeId, new ArrayList(this.attachments.values()), this.cu, this.rdXjustizEeb.isSelected(), this.authority, ((DefaultListModel) this.lstTo.getModel()).elements(), this.txtSubject.getText(), ed.getText(), createDocumentTag);
         }
         a.start();
 
@@ -1815,7 +1845,7 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
         if (evt.getClickCount() == 2 && this.lstAttachments.getSelectedValue() != null) {
             try {
                 String requestedAttachmentUrl=null;
-                for(String url: this.attachments) {
+                for(String url: this.attachments.values()) {
                     if(new File(url).getName().equals(this.lstAttachments.getSelectedValue())) {
                         // found the relevant attachment
                         requestedAttachmentUrl=url;
@@ -1836,6 +1866,40 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
 
         }
     }//GEN-LAST:event_lstAttachmentsMouseClicked
+
+    private void mnuRemoveAttachmentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuRemoveAttachmentActionPerformed
+        if(this.lstAttachments.getSelectedValues().length>0) {
+            for(Object o: this.lstAttachments.getSelectedValues()) {
+                ((DefaultListModel)this.lstAttachments.getModel()).removeElement(o);
+                this.attachments.remove(o);
+            }
+            
+        }
+    }//GEN-LAST:event_mnuRemoveAttachmentActionPerformed
+
+    private void lstAttachmentsMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lstAttachmentsMousePressed
+        if(evt.getModifiers()==evt.BUTTON2_MASK || evt.getModifiers()==evt.BUTTON2_DOWN_MASK || evt.getModifiers()==evt.BUTTON3_MASK || evt.getModifiers()==evt.BUTTON3_DOWN_MASK) {
+            if(this.lstAttachments.getSelectedValues().length>0)
+                this.popAttachments.show(this.lstAttachments, evt.getX(), evt.getY());
+        }
+    }//GEN-LAST:event_lstAttachmentsMousePressed
+
+    private void mnuRemoveRecipientActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuRemoveRecipientActionPerformed
+        if(this.lstTo.getSelectedValues().length>0) {
+            for(Object o: this.lstTo.getSelectedValues()) {
+                ((DefaultListModel)this.lstTo.getModel()).removeElement(o);
+                
+            }
+            
+        }
+    }//GEN-LAST:event_mnuRemoveRecipientActionPerformed
+
+    private void lstToMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lstToMousePressed
+        if(evt.getModifiers()==evt.BUTTON2_MASK || evt.getModifiers()==evt.BUTTON2_DOWN_MASK || evt.getModifiers()==evt.BUTTON3_MASK || evt.getModifiers()==evt.BUTTON3_DOWN_MASK) {
+            if(this.lstTo.getSelectedValues().length>0)
+                this.popRecipientList.show(this.lstTo, evt.getX(), evt.getY());
+        }
+    }//GEN-LAST:event_lstToMousePressed
 
     /**
      * @param args the command line arguments
@@ -1925,8 +1989,12 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
     private javax.swing.JLabel lblFrom;
     private javax.swing.JList lstAttachments;
     private javax.swing.JList lstTo;
+    private javax.swing.JMenuItem mnuRemoveAttachment;
+    private javax.swing.JMenuItem mnuRemoveRecipient;
     private javax.swing.JMenuItem mnuSearchRecipient;
     private javax.swing.JMenuItem mnuSearchRecipientInBea;
+    private javax.swing.JPopupMenu popAttachments;
+    private javax.swing.JPopupMenu popRecipientList;
     private javax.swing.JPopupMenu popRecipients;
     private javax.swing.JRadioButton radioReviewTypeFollowUp;
     private javax.swing.JRadioButton radioReviewTypeNone;

@@ -720,7 +720,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
 
     private static final Logger log = Logger.getLogger(SendEmailDialog.class.getName());
     private AppUserBean cu = null;
-    private ArrayList<String> attachments = new ArrayList<String>();
+    private Hashtable<String,String> attachments = new Hashtable<String,String>();
     private ArchiveFileBean contextArchiveFile = null;
     private AddressBean contextClient = null;
     private ArrayList<AddressBean> contextClients = new ArrayList<AddressBean>();
@@ -954,7 +954,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
 
     @Override
     public void dispose() {
-        for (String url : this.attachments) {
+        for (String url : this.attachments.values()) {
             File f = new File(url);
             if (f.exists()) {
                 try {
@@ -1092,7 +1092,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
     @Override
     public void addAttachment(String tempUrl, String dictateSign) {
         this.contextDictateSign = dictateSign;
-        this.attachments.add(tempUrl);
+        this.attachments.put(new File(tempUrl).getName(), tempUrl);
         ((DefaultListModel) this.lstAttachments.getModel()).addElement(new File(tempUrl).getName());
         if (!tempUrl.toLowerCase().endsWith(".pdf")) {
             this.chkEncryption.setSelected(false);
@@ -1122,6 +1122,8 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         mnuSearchRecipientBcc = new javax.swing.JMenuItem();
         jSeparator3 = new javax.swing.JPopupMenu.Separator();
         btGroupReviews = new javax.swing.ButtonGroup();
+        popAttachments = new javax.swing.JPopupMenu();
+        mnuRemoveAttachment = new javax.swing.JMenuItem();
         jLabel1 = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
         jLabel3 = new javax.swing.JLabel();
@@ -1201,6 +1203,15 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         });
         popRecipientsBcc.add(mnuSearchRecipientBcc);
         popRecipientsBcc.add(jSeparator3);
+
+        mnuRemoveAttachment.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png"))); // NOI18N
+        mnuRemoveAttachment.setText("entfernen");
+        mnuRemoveAttachment.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuRemoveAttachmentActionPerformed(evt);
+            }
+        });
+        popAttachments.add(mnuRemoveAttachment);
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("neue E-Mail");
@@ -1617,6 +1628,9 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         );
 
         lstAttachments.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                lstAttachmentsMousePressed(evt);
+            }
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 lstAttachmentsMouseClicked(evt);
             }
@@ -1688,20 +1702,23 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                     .addComponent(jLabel1)
                     .addComponent(lblFrom))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel2)
-                    .addComponent(txtTo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(cmdRecipients))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(cmdRecipients)
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(jLabel2)
+                        .addComponent(txtTo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(txtCc, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel8)
-                    .addComponent(cmdRecipientsCc))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(cmdRecipientsCc, javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(txtCc, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(jLabel8)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(txtBcc, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel9)
-                    .addComponent(cmdRecipientsBcc))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(cmdRecipientsBcc)
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(txtBcc, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(jLabel9)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel3)
@@ -1780,9 +1797,9 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                         return;
                     }
                 }
-                a = new SendEncryptedAction(dlg, this, this.attachments, this.cu, this.chkReadReceipt.isSelected(), this.txtTo.getText(), this.txtCc.getText(), this.txtBcc.getText(), this.txtSubject.getText(), ed.getText(), contentType, this.contextArchiveFile, createDocumentTag);
+                a = new SendEncryptedAction(dlg, this, new ArrayList(this.attachments.values()), this.cu, this.chkReadReceipt.isSelected(), this.txtTo.getText(), this.txtCc.getText(), this.txtBcc.getText(), this.txtSubject.getText(), ed.getText(), contentType, this.contextArchiveFile, createDocumentTag);
             } else {
-                a = new SendAction(dlg, this, this.attachments, this.cu, this.chkReadReceipt.isSelected(), this.txtTo.getText(), this.txtCc.getText(), this.txtBcc.getText(), this.txtSubject.getText(), ed.getText(), contentType, this.contextArchiveFile, createDocumentTag);
+                a = new SendAction(dlg, this, new ArrayList(this.attachments.values()), this.cu, this.chkReadReceipt.isSelected(), this.txtTo.getText(), this.txtCc.getText(), this.txtBcc.getText(), this.txtSubject.getText(), ed.getText(), contentType, this.contextArchiveFile, createDocumentTag);
             }
 
         } else if (this.chkEncryption.isSelected()) {
@@ -1799,9 +1816,9 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                     return;
                 }
             }
-            a = new SendEncryptedAction(dlg, this, this.attachments, this.cu, this.chkReadReceipt.isSelected(), this.txtTo.getText(), this.txtCc.getText(), this.txtBcc.getText(), this.txtSubject.getText(), ed.getText(), contentType, createDocumentTag);
+            a = new SendEncryptedAction(dlg, this, new ArrayList(this.attachments.values()), this.cu, this.chkReadReceipt.isSelected(), this.txtTo.getText(), this.txtCc.getText(), this.txtBcc.getText(), this.txtSubject.getText(), ed.getText(), contentType, createDocumentTag);
         } else {
-            a = new SendAction(dlg, this, this.attachments, this.cu, this.chkReadReceipt.isSelected(), this.txtTo.getText(), this.txtCc.getText(), this.txtBcc.getText(), this.txtSubject.getText(), ed.getText(), contentType, createDocumentTag);
+            a = new SendAction(dlg, this, new ArrayList(this.attachments.values()), this.cu, this.chkReadReceipt.isSelected(), this.txtTo.getText(), this.txtCc.getText(), this.txtBcc.getText(), this.txtSubject.getText(), ed.getText(), contentType, createDocumentTag);
         }
         a.start();
 
@@ -2223,6 +2240,23 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         settings.setConfiguration(ClientSettings.CONF_MAILSEND_LASTDOCUMENTTAG, lastTag);
     }//GEN-LAST:event_cmbDocumentTagActionPerformed
 
+    private void lstAttachmentsMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lstAttachmentsMousePressed
+        if(evt.getModifiers()==evt.BUTTON2_MASK || evt.getModifiers()==evt.BUTTON2_DOWN_MASK || evt.getModifiers()==evt.BUTTON3_MASK || evt.getModifiers()==evt.BUTTON3_DOWN_MASK) {
+            if(this.lstAttachments.getSelectedValues().length>0)
+                this.popAttachments.show(this.lstAttachments, evt.getX(), evt.getY());
+        }
+    }//GEN-LAST:event_lstAttachmentsMousePressed
+
+    private void mnuRemoveAttachmentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuRemoveAttachmentActionPerformed
+        if(this.lstAttachments.getSelectedValues().length>0) {
+            for(Object o: this.lstAttachments.getSelectedValues()) {
+                ((DefaultListModel)this.lstAttachments.getModel()).removeElement(o);
+                this.attachments.remove(o);
+            }
+            
+        }
+    }//GEN-LAST:event_mnuRemoveAttachmentActionPerformed
+
     private void enableReviewElements(boolean enable) {
         this.cmbReviewAssignee.setEnabled(enable);
         this.cmbReviewReason.setEnabled(enable);
@@ -2332,9 +2366,11 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
     private javax.swing.JLabel lblEncryption;
     private javax.swing.JLabel lblFrom;
     private javax.swing.JList lstAttachments;
+    private javax.swing.JMenuItem mnuRemoveAttachment;
     private javax.swing.JMenuItem mnuSearchRecipient;
     private javax.swing.JMenuItem mnuSearchRecipientBcc;
     private javax.swing.JMenuItem mnuSearchRecipientCc;
+    private javax.swing.JPopupMenu popAttachments;
     private javax.swing.JPopupMenu popRecipients;
     private javax.swing.JPopupMenu popRecipientsBcc;
     private javax.swing.JPopupMenu popRecipientsCc;
