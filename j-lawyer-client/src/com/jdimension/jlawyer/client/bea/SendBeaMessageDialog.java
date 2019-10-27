@@ -683,6 +683,7 @@ import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.PlaceHolderUtils;
+import com.jdimension.jlawyer.client.utils.SelectAttachmentDialog;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.email.EmailTemplate;
 import com.jdimension.jlawyer.persistence.AddressBean;
@@ -1655,24 +1656,47 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
     }
 
     private void cmdAttachActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdAttachActionPerformed
-        JFileChooser chooser = new JFileChooser();
-        chooser.setMultiSelectionEnabled(true);
-        int returnVal = chooser.showOpenDialog(this);
-        if (returnVal == JFileChooser.APPROVE_OPTION) {
-            try {
-                //this.txtImportFile.setText(chooser.getSelectedFile().getCanonicalPath());
-                File[] files = chooser.getSelectedFiles();
-                for (File f : files) {
-                    byte[] data = FileUtils.readFile(f);
-                    String tmpUrl = FileUtils.createTempFile(f.getName(), data);
-                    this.addAttachment(tmpUrl, null);
-                }
-
-            } catch (Exception ioe) {
-                log.error("Error attaching document", ioe);
-                JOptionPane.showMessageDialog(this, "Fehler beim Laden der Datei: " + ioe.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
-            }
+//        JFileChooser chooser = new JFileChooser();
+//        chooser.setMultiSelectionEnabled(true);
+//        int returnVal = chooser.showOpenDialog(this);
+//        if (returnVal == JFileChooser.APPROVE_OPTION) {
+//            try {
+//                //this.txtImportFile.setText(chooser.getSelectedFile().getCanonicalPath());
+//                File[] files = chooser.getSelectedFiles();
+//                for (File f : files) {
+//                    byte[] data = FileUtils.readFile(f);
+//                    String tmpUrl = FileUtils.createTempFile(f.getName(), data);
+//                    this.addAttachment(tmpUrl, null);
+//                }
+//
+//            } catch (Exception ioe) {
+//                log.error("Error attaching document", ioe);
+//                JOptionPane.showMessageDialog(this, "Fehler beim Laden der Datei: " + ioe.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+//            }
+//        }
+        
+        String caseId = null;
+        if (this.contextArchiveFile != null) {
+            caseId = this.contextArchiveFile.getId();
         }
+        SelectAttachmentDialog sad = new SelectAttachmentDialog(this, true, caseId);
+        FrameUtils.centerDialog(sad, EditorsRegistry.getInstance().getMainWindow());
+        sad.setVisible(true);
+
+        try {
+            //this.txtImportFile.setText(chooser.getSelectedFile().getCanonicalPath());
+            File[] files = sad.getSelectedFiles();
+            for (File f : files) {
+                byte[] data = FileUtils.readFile(f);
+                String tmpUrl = FileUtils.createTempFile(f.getName(), data);
+                this.addAttachment(tmpUrl, null);
+            }
+
+        } catch (Exception ioe) {
+            log.error("Error attaching document", ioe);
+            JOptionPane.showMessageDialog(this, "Fehler beim Laden der Datei: " + ioe.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+        }
+        
     }//GEN-LAST:event_cmdAttachActionPerformed
 
     private void addRecipientCandidate(AddressBean ab, String suffix) {

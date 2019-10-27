@@ -686,6 +686,7 @@ import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.PlaceHolderUtils;
+import com.jdimension.jlawyer.client.utils.SelectAttachmentDialog;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.email.EmailTemplate;
@@ -720,7 +721,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
 
     private static final Logger log = Logger.getLogger(SendEmailDialog.class.getName());
     private AppUserBean cu = null;
-    private Hashtable<String,String> attachments = new Hashtable<String,String>();
+    private Hashtable<String, String> attachments = new Hashtable<String, String>();
     private ArchiveFileBean contextArchiveFile = null;
     private AddressBean contextClient = null;
     private ArrayList<AddressBean> contextClients = new ArrayList<AddressBean>();
@@ -918,7 +919,6 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         this.cmbReviewAssignee.setModel(allUserModel);
         this.cmbReviewAssignee.setRenderer(new UserListCellRenderer());
 
-        
         DefaultComboBoxModel dm = new DefaultComboBoxModel();
         dm.addElement("");
         ArrayList<String> allTags = new ArrayList<String>();
@@ -931,14 +931,14 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
             dm.addElement(s);
         }
         this.cmbDocumentTag.setModel(dm);
-        
+
         String lastTag = settings.getConfiguration(ClientSettings.CONF_MAILSEND_LASTDOCUMENTTAG, "");
         if (allTags.contains(lastTag)) {
             this.cmbDocumentTag.setSelectedItem(lastTag);
         } else {
             this.cmbDocumentTag.setSelectedItem("");
         }
-        
+
         String temp = settings.getConfiguration(ClientSettings.CONF_MAILSEND_DOCUMENTTAGGINGENABLED, "false");
         boolean doctaggingEnabled = false;
         if ("true".equalsIgnoreCase(temp)) {
@@ -1753,8 +1753,8 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         ArrayList<String> mails = EmailUtils.getAllMailAddressesFromString(this.txtTo.getText());
         mails.addAll(EmailUtils.getAllMailAddressesFromString(this.txtCc.getText()));
         mails.addAll(EmailUtils.getAllMailAddressesFromString(this.txtBcc.getText()));
-        
-        if(mails.size()==0) {
+
+        if (mails.size() == 0) {
             ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Liste der Empfänger kann nicht leer sein.", "Fehler");
             return;
         }
@@ -1769,13 +1769,13 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
 
             }
         }
-        
-        String createDocumentTag=null;
-        if(this.chkDocumentTagging.isSelected()) {
-            Object selectedTag=this.cmbDocumentTag.getSelectedItem();
-            if(selectedTag!=null) {
-                if(!"".equals(selectedTag.toString())) {
-                    createDocumentTag=selectedTag.toString();
+
+        String createDocumentTag = null;
+        if (this.chkDocumentTagging.isSelected()) {
+            Object selectedTag = this.cmbDocumentTag.getSelectedItem();
+            if (selectedTag != null) {
+                if (!"".equals(selectedTag.toString())) {
+                    createDocumentTag = selectedTag.toString();
                 }
             }
         }
@@ -1890,24 +1890,47 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
     }
 
     private void cmdAttachActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdAttachActionPerformed
-        JFileChooser chooser = new JFileChooser();
-        chooser.setMultiSelectionEnabled(true);
-        int returnVal = chooser.showOpenDialog(this);
-        if (returnVal == JFileChooser.APPROVE_OPTION) {
-            try {
-                //this.txtImportFile.setText(chooser.getSelectedFile().getCanonicalPath());
-                File[] files = chooser.getSelectedFiles();
-                for (File f : files) {
-                    byte[] data = FileUtils.readFile(f);
-                    String tmpUrl = FileUtils.createTempFile(f.getName(), data);
-                    this.addAttachment(tmpUrl, null);
-                }
+//        JFileChooser chooser = new JFileChooser();
+//        chooser.setMultiSelectionEnabled(true);
+//        int returnVal = chooser.showOpenDialog(this);
+//        if (returnVal == JFileChooser.APPROVE_OPTION) {
+//            try {
+//                //this.txtImportFile.setText(chooser.getSelectedFile().getCanonicalPath());
+//                File[] files = chooser.getSelectedFiles();
+//                for (File f : files) {
+//                    byte[] data = FileUtils.readFile(f);
+//                    String tmpUrl = FileUtils.createTempFile(f.getName(), data);
+//                    this.addAttachment(tmpUrl, null);
+//                }
+//
+//            } catch (Exception ioe) {
+//                log.error("Error attaching document", ioe);
+//                JOptionPane.showMessageDialog(this, "Fehler beim Laden der Datei: " + ioe.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+//            }
+//        }
 
-            } catch (Exception ioe) {
-                log.error("Error attaching document", ioe);
-                JOptionPane.showMessageDialog(this, "Fehler beim Laden der Datei: " + ioe.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
-            }
+        String caseId = null;
+        if (this.contextArchiveFile != null) {
+            caseId = this.contextArchiveFile.getId();
         }
+        SelectAttachmentDialog sad = new SelectAttachmentDialog(this, true, caseId);
+        FrameUtils.centerDialog(sad, EditorsRegistry.getInstance().getMainWindow());
+        sad.setVisible(true);
+
+        try {
+            //this.txtImportFile.setText(chooser.getSelectedFile().getCanonicalPath());
+            File[] files = sad.getSelectedFiles();
+            for (File f : files) {
+                byte[] data = FileUtils.readFile(f);
+                String tmpUrl = FileUtils.createTempFile(f.getName(), data);
+                this.addAttachment(tmpUrl, null);
+            }
+
+        } catch (Exception ioe) {
+            log.error("Error attaching document", ioe);
+            JOptionPane.showMessageDialog(this, "Fehler beim Laden der Datei: " + ioe.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+        }
+
     }//GEN-LAST:event_cmdAttachActionPerformed
 
     private void addRecipientCandidate(AddressBean ab, String suffix, Color background) {
@@ -2191,9 +2214,9 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
             if (idx >= 0) {
                 if (this.attachments.size() > idx) {
                     try {
-                        File f = new File(this.attachments.get(idx));
+                        File f = new File(this.attachments.get(this.lstAttachments.getModel().getElementAt(idx)));
                         ReadOnlyDocumentStore store = new ReadOnlyDocumentStore("sendmaildialog-" + f.getName(), f.getName());
-                        byte[] content = FileUtils.readFile(new File(this.attachments.get(idx)));
+                        byte[] content = FileUtils.readFile(f);
                         Launcher launcher = LauncherFactory.getLauncher(f.getName(), content, store);
                         launcher.launch(false);
                     } catch (Exception ex) {
@@ -2241,19 +2264,20 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
     }//GEN-LAST:event_cmbDocumentTagActionPerformed
 
     private void lstAttachmentsMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lstAttachmentsMousePressed
-        if(evt.getModifiers()==evt.BUTTON2_MASK || evt.getModifiers()==evt.BUTTON2_DOWN_MASK || evt.getModifiers()==evt.BUTTON3_MASK || evt.getModifiers()==evt.BUTTON3_DOWN_MASK) {
-            if(this.lstAttachments.getSelectedValues().length>0)
+        if (evt.getModifiers() == evt.BUTTON2_MASK || evt.getModifiers() == evt.BUTTON2_DOWN_MASK || evt.getModifiers() == evt.BUTTON3_MASK || evt.getModifiers() == evt.BUTTON3_DOWN_MASK) {
+            if (this.lstAttachments.getSelectedValues().length > 0) {
                 this.popAttachments.show(this.lstAttachments, evt.getX(), evt.getY());
+            }
         }
     }//GEN-LAST:event_lstAttachmentsMousePressed
 
     private void mnuRemoveAttachmentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuRemoveAttachmentActionPerformed
-        if(this.lstAttachments.getSelectedValues().length>0) {
-            for(Object o: this.lstAttachments.getSelectedValues()) {
-                ((DefaultListModel)this.lstAttachments.getModel()).removeElement(o);
+        if (this.lstAttachments.getSelectedValues().length > 0) {
+            for (Object o : this.lstAttachments.getSelectedValues()) {
+                ((DefaultListModel) this.lstAttachments.getModel()).removeElement(o);
                 this.attachments.remove(o);
             }
-            
+
         }
     }//GEN-LAST:event_mnuRemoveAttachmentActionPerformed
 
