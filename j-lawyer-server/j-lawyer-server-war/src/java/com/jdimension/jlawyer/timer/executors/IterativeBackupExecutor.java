@@ -916,6 +916,8 @@ public class IterativeBackupExecutor {
 
         String osName = System.getProperty("os.name").toLowerCase();
         String path = "";
+        String backupFilePath=backupDir + System.getProperty("file.separator") + "jlawyerdb-dump.sql";
+        
         if (osName.indexOf("win") > -1) {
 
         } else if (osName.indexOf("linux") > -1) {
@@ -931,6 +933,8 @@ public class IterativeBackupExecutor {
                 "-P",
                 port,
                 "-u" + user,
+                "-r",
+                backupFilePath,
                 "jlawyerdb"
             };
         } else {
@@ -940,54 +944,31 @@ public class IterativeBackupExecutor {
                 port,
                 "-u" + user,
                 "-p" + password,
+                "-r",
+                backupFilePath,
                 "jlawyerdb"
             };
         }
 
         Runtime shell = Runtime.getRuntime();
         Process process = null;
-        Writer fileWriter = null;
 
-        File f = new File(backupDir + System.getProperty("file.separator") + "jlawyerdb-dump.sql");
+        File f = new File(backupFilePath);
         try {
 
             if (f.exists()) {
                 f.delete();
             }
 
-            fileWriter = new FileWriter(f);
             process = shell.exec(cmd);
-            //process.waitFor();
+            process.waitFor();
 
-            BufferedReader br = new BufferedReader(new InputStreamReader(process.getInputStream()));
-            String line = null;
-
-            while ((line = br.readLine()) != null) {
-                fileWriter.write(line);
-                fileWriter.write(System.getProperty("line.separator"));
-            }
             f.setLastModified(System.currentTimeMillis());
-            br.close();
-
-        } catch (IOException ex) {
+            
+        } catch (Exception ex) {
             //res = false;
             log.error(ex);
-            if (fileWriter != null) {
-                try {
-                    fileWriter.close();
-
-                } catch (IOException e) {
-                }
-            }
-
-        } finally {
-            if (fileWriter != null) {
-                try {
-                    fileWriter.close();
-
-                } catch (IOException ex) {
-                }
-            }
+            
         }
         return f;
     }
