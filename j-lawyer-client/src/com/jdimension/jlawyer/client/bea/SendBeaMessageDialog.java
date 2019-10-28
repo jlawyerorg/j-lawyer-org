@@ -1546,6 +1546,12 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
 
     private void cmdSendActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSendActionPerformed
 
+        if(this.attachments.size()==0 && this.rdXjustizEeb.isSelected()) {
+            JOptionPane.showMessageDialog(this, "Ein eEB kann nur für Nachrichten angefordert werden die mindestens einen Anhang enthalten.", "beA-Nachricht mit eEB senden", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+        
+        
         ClientSettings settings = ClientSettings.getInstance();
         if (this.chkSaveAsDocument.isSelected()) {
             settings.setConfiguration(settings.CONF_BEA_SAVETOARCHIVEFILE, "1");
