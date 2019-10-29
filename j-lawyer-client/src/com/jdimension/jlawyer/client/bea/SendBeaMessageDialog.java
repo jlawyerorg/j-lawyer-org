@@ -689,6 +689,7 @@ import com.jdimension.jlawyer.email.EmailTemplate;
 import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
 import com.jdimension.jlawyer.persistence.AppUserBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
@@ -728,6 +729,8 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
     private TextEditorPanel tp;
     
     private BeaListItem authority=null;
+    
+    private ArrayList<ArchiveFileAddressesBean> caseInvolvements = null;
 
     /**
      * Creates new form SendEmailDialog
@@ -880,6 +883,10 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
 
         ComponentUtils.restoreDialogSize(this);
 
+    }
+    
+    public void setInvolvedInCase(ArrayList<ArchiveFileAddressesBean> involved) {
+        this.caseInvolvements = involved;
     }
 
     @Override
@@ -1739,7 +1746,7 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
                 for (String ph : placeHolderNames) {
                     ht.put(ph, "");
                 }
-                Hashtable<String, String> htValues = PlaceHolderUtils.getPlaceHolderValues(ht, this.contextArchiveFile, null, this.contextClient, this.contextOpponent, this.contextOppAttorney, this.contextDictateSign, null);
+                Hashtable<String, String> htValues = PlaceHolderUtils.getPlaceHolderValues(ht, this.contextArchiveFile, this.caseInvolvements, this.contextClient, this.contextOpponent, this.contextOppAttorney, this.contextDictateSign, null);
                 this.txtSubject.setText(EmailTemplateAccess.replacePlaceHolders(tpl.getSubject(), htValues));
 
                 placeHolderNames = EmailTemplateAccess.getPlaceHoldersInTemplate(tpl.getBody());
@@ -1747,7 +1754,7 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
                 for (String ph : placeHolderNames) {
                     ht.put(ph, "");
                 }
-                htValues = PlaceHolderUtils.getPlaceHolderValues(ht, this.contextArchiveFile, null, this.contextClient, this.contextOpponent, this.contextOppAttorney, this.contextDictateSign, null);
+                htValues = PlaceHolderUtils.getPlaceHolderValues(ht, this.contextArchiveFile, this.caseInvolvements, this.contextClient, this.contextOpponent, this.contextOppAttorney, this.contextDictateSign, null);
                 //this.taBody.setText(EmailTemplateAccess.replacePlaceHolders(tpl.getBody(), htValues) + System.getProperty("line.separator") + System.getProperty("line.separator") + this.cu.getEmailSignature());
 
                 this.tp.setText(EmailTemplateAccess.replacePlaceHolders(tpl.getBody(), htValues) + System.getProperty("line.separator") + System.getProperty("line.separator") + EmailUtils.Html2Text(this.cu.getEmailSignature()));
