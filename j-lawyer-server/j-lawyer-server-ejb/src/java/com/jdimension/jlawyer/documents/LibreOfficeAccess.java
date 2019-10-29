@@ -671,6 +671,7 @@ import java.util.List;
 import org.apache.log4j.Logger;
 import org.jlawyer.plugins.calculation.CalculationTable;
 import org.odftoolkit.odfdom.dom.element.text.TextLineBreakElement;
+import org.odftoolkit.odfdom.dom.element.text.TextTabElement;
 import org.odftoolkit.odfdom.type.Color;
 import org.odftoolkit.simple.SpreadsheetDocument;
 import org.odftoolkit.simple.TextDocument;
@@ -768,6 +769,9 @@ public class LibreOfficeAccess {
                                     removalElements.add(item.getElement());
                                     removalItems.add(item.getElement().item(itemIndex));
                                     break;
+                                } else if(item.getElement().item(itemIndex) instanceof TextTabElement) {
+                                    // tabs can be use for formatting - do not remove them
+                                    
                                 } else if ("".equals(item.getElement().item(itemIndex).getTextContent().trim())) {
                                     //item.getElement().removeChild(item.getElement().item(itemIndex));
                                     removalElements.add(item.getElement());
