@@ -879,8 +879,20 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
 //            log.debug(buffer.length);
 //        }
         
+        // try two times, i've seen sporadic FolderClosedException
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        msg.writeTo(bos);
+        try {
+            msg.writeTo(bos);
+        } catch (FolderClosedException fce) {
+            closed = false;
+            if (msg.getFolder() != null) {
+                closed = !msg.getFolder().isOpen();
+            }
+            if (closed) {
+                msg.getFolder().open(Folder.READ_WRITE);
+            }
+            msg.writeTo(bos);
+        }
         bos.close();
         SharedByteArrayInputStream bis =new SharedByteArrayInputStream(bos.toByteArray());
         //ByteArrayInputStream bis =new ByteArrayInputStream(bos.toByteArray());
