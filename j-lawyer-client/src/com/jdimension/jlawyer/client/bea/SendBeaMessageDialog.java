@@ -927,7 +927,8 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
         if (!this.contextClients.contains(ab)) {
             this.contextClients.add(ab);
             this.cmbClient.addItem(ab);
-            this.addRecipientCandidate(ab, "Mandant");
+            if(!StringUtils.isEmpty(ab.getBeaSafeId()))
+                this.addRecipientCandidate(ab, "Mandant");
         }
         this.contextClient = ab;
         this.cmbClient.setSelectedItem(ab);
@@ -947,7 +948,8 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
         }
         if (!this.contextOpponents.contains(ab)) {
             this.contextOpponents.add(ab);
-            this.addRecipientCandidate(ab, "Gegner");
+            if(!StringUtils.isEmpty(ab.getBeaSafeId()))
+                this.addRecipientCandidate(ab, "Gegner");
             this.cmbOpponent.addItem(ab);
         }
 
@@ -970,7 +972,8 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
         if (!this.contextOppAttorneys.contains(ab)) {
             this.contextOppAttorneys.add(ab);
             this.cmbOpponentAtt.addItem(ab);
-            this.addRecipientCandidate(ab, "Dritte(r)");
+            if(!StringUtils.isEmpty(ab.getBeaSafeId()))
+                this.addRecipientCandidate(ab, "Dritte(r)");
         }
         this.contextOppAttorney = ab;
         this.cmbOpponentAtt.setSelectedItem(ab);

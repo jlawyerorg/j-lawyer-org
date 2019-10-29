@@ -4565,22 +4565,20 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         //dlg.setTo(ab.getEmail());
 
         dlg.setArchiveFile(dto);
+        dlg.setInvolvedInCase(this.pnlInvolvedParties.getInvolvedParties());
         for (AddressBean abean : this.pnlInvolvedParties.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_CLIENT)) {
-            if (!StringUtils.isEmpty(abean.getBeaSafeId())) {
                 dlg.addToClient(abean);
-            }
+            
         }
         //dlg.addRecipientCandidates(convertArray(list));
         for (AddressBean abean : this.pnlInvolvedParties.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT)) {
-            if (!StringUtils.isEmpty(abean.getBeaSafeId())) {
                 dlg.addToOpponent(abean);
-            }
+            
         }
         //dlg.addRecipientCandidates(convertArray(list));
         for (AddressBean abean : this.pnlInvolvedParties.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_OPPONENTATTORNEY)) {
-            if (!StringUtils.isEmpty(abean.getBeaSafeId())) {
                 dlg.addToOpponentAttorney(abean);
-            }
+            
         }
 
         try {
@@ -4619,22 +4617,20 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         //dlg.setTo(ab.getEmail());
 
         dlg.setArchiveFile(dto);
+        dlg.setInvolvedInCase(this.pnlInvolvedParties.getInvolvedParties());
         for (AddressBean abean : this.pnlInvolvedParties.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_CLIENT)) {
-            if (!StringUtils.isEmpty(abean.getBeaSafeId())) {
                 dlg.addToClient(abean);
-            }
+            
         }
         //dlg.addRecipientCandidates(convertArray(list));
         for (AddressBean abean : this.pnlInvolvedParties.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT)) {
-            if (!StringUtils.isEmpty(abean.getBeaSafeId())) {
                 dlg.addToOpponent(abean);
-            }
+            
         }
         //dlg.addRecipientCandidates(convertArray(list));
         for (AddressBean abean : this.pnlInvolvedParties.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_OPPONENTATTORNEY)) {
-            if (!StringUtils.isEmpty(abean.getBeaSafeId())) {
                 dlg.addToOpponentAttorney(abean);
-            }
+            
         }
         //dlg.addRecipientCandidates(convertArray(list));
 
