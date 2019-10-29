@@ -1420,7 +1420,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
     }//GEN-LAST:event_cmdRefreshActionPerformed
 
     private void treeFoldersValueChanged(javax.swing.event.TreeSelectionEvent evt) {//GEN-FIRST:event_treeFoldersValueChanged
-        this.treeFoldersValueChangedImpl(evt, 7, -1);
+        this.treeFoldersValueChangedImpl(evt, 6, -1);
     }//GEN-LAST:event_treeFoldersValueChanged
 
     private void treeFoldersValueChangedImpl(javax.swing.event.TreeSelectionEvent evt, int sortCol, int scrollToRow) {
