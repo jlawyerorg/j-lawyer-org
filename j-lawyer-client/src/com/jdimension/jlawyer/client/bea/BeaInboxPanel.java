@@ -2673,27 +2673,6 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
             ClientSettings settings = ClientSettings.getInstance();
             try {
 
-                JTextField hiddenField = new JTextField();
-                MultiCalDialog dlg = new MultiCalDialog(hiddenField, EditorsRegistry.getInstance().getMainWindow(), true);
-                Calendar c = Calendar.getInstance();
-                c.add(Calendar.DAY_OF_MONTH, 1);
-                dlg.setMaxDate(c.getTime());
-                Calendar c2 = Calendar.getInstance();
-                c2.add(Calendar.MONTH, -2);
-                dlg.setMinDate(c2.getTime());
-//                dlg.setUndecorated(false);
-//                dlg.setTitle("eEB-Abgabedatum wählen:");
-                FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
-                dlg.setVisible(true);
-                Date abgabeDate = null;
-                try {
-                    SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
-                    abgabeDate = df.parse(hiddenField.getText());
-                } catch (Throwable t) {
-                    JOptionPane.showMessageDialog(this, "Abgabedatum ungültig", "eEB abgeben", JOptionPane.WARNING_MESSAGE);
-                    return false;
-                }
-
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                 ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
 
@@ -2715,6 +2694,47 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                     ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Absender-Postfach für eEB kann nicht ermittelt werden.", "Fehler");
                     return false;
                 }
+                
+                for(PostBox inbox : inboxes) {
+                    // prevent sendingn eEBs for SENT messages (where i am the recipient)
+                    if(mh.getSender()!=null) {
+                        
+                        String senderName="";
+                        try {
+                            Identity senderIdent=BeaAccess.getInstance().getIdentity(inbox.getSafeId());
+                            senderName=senderIdent.getUserName();
+                        } catch (Throwable t) {
+                            log.error(t);
+                        }
+                        
+                        if(mh.getSender().equals(inbox.getSafeId()) || mh.getSender().equals(senderName)) {
+                            ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Ein eEB kann nicht für selbst verschickte Nachrichten abgegeben werden.", "Fehler");
+                            return false;
+                        }
+                    }
+                }
+                
+                JTextField hiddenField = new JTextField();
+                MultiCalDialog dlg = new MultiCalDialog(hiddenField, EditorsRegistry.getInstance().getMainWindow(), true);
+                Calendar c = Calendar.getInstance();
+                c.add(Calendar.DAY_OF_MONTH, 1);
+                dlg.setMaxDate(c.getTime());
+                Calendar c2 = Calendar.getInstance();
+                c2.add(Calendar.MONTH, -2);
+                dlg.setMinDate(c2.getTime());
+//                dlg.setUndecorated(false);
+//                dlg.setTitle("eEB-Abgabedatum wählen:");
+                FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
+                dlg.setVisible(true);
+                Date abgabeDate = null;
+                try {
+                    SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
+                    abgabeDate = df.parse(hiddenField.getText());
+                } catch (Throwable t) {
+                    JOptionPane.showMessageDialog(this, "Abgabedatum ungültig", "eEB abgeben", JOptionPane.WARNING_MESSAGE);
+                    return false;
+                }
+                
                 Message m = BeaAccess.getInstance().getMessage(mh.getId(), BeaAccess.getInstance().getLoggedInSafeId());
                 ArrayList<String> recipients = new ArrayList<String>();
                 recipients.add(m.getSenderSafeId());
@@ -2757,6 +2777,26 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                     ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Absender-Postfach für eEB kann nicht ermittelt werden.", "Fehler");
                     return false;
                 }
+                
+                for(PostBox inbox : inboxes) {
+                    // prevent sendingn eEBs for SENT messages (where i am the recipient)
+                    if(mh.getSender()!=null) {
+                        
+                        String senderName="";
+                        try {
+                            Identity senderIdent=BeaAccess.getInstance().getIdentity(inbox.getSafeId());
+                            senderName=senderIdent.getUserName();
+                        } catch (Throwable t) {
+                            log.error(t);
+                        }
+                        
+                        if(mh.getSender().equals(inbox.getSafeId()) || mh.getSender().equals(senderName)) {
+                            ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Ein eEB kann nicht für selbst verschickte Nachrichten verweigert werden.", "Fehler");
+                            return false;
+                        }
+                    }
+                }
+                
                 String comment = "";
                 String code = EebLists.getDefaultRejectionReason().getCode();
                 EebRejectDialog dlg = new EebRejectDialog(EditorsRegistry.getInstance().getMainWindow(), true);
