@@ -1002,6 +1002,13 @@ public class BeaAccess {
         this.folderOverviewCache.clear();
         return this.wrapper.moveMessageToTrash(messageId);
     }
+    
+    public boolean restoreMessageFromTrash(String messageId) throws BeaWrapperException {
+        this.checkValidBeaClient();
+        // todo: need to only remove folder overview for trash and originating folder
+        this.folderOverviewCache.clear();
+        return this.wrapper.restoreMessageFromTrash(messageId);
+    }
 
     public boolean moveMessageToFolder(String messageId, long sourceFolderId, long targetFolderId) throws BeaWrapperException {
         this.checkValidBeaClient();

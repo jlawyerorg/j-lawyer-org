@@ -1029,6 +1029,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
         mnuMarkUnread = new javax.swing.JMenuItem();
         mnuSearchSave = new javax.swing.JMenuItem();
         mnuSearchSaveNoAttachments = new javax.swing.JMenuItem();
+        mnuRestoreFromTrash = new javax.swing.JMenuItem();
         jMenuItem1 = new javax.swing.JMenuItem();
         jLabel18 = new javax.swing.JLabel();
         lblPanelTitle = new javax.swing.JLabel();
@@ -1120,6 +1121,16 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
             }
         });
         popEmailList.add(mnuSearchSaveNoAttachments);
+
+        mnuRestoreFromTrash.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/undo.png"))); // NOI18N
+        mnuRestoreFromTrash.setText("wiederherstellen");
+        mnuRestoreFromTrash.setActionCommand("");
+        mnuRestoreFromTrash.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuRestoreFromTrashActionPerformed(evt);
+            }
+        });
+        popEmailList.add(mnuRestoreFromTrash);
 
         jMenuItem1.setText("jMenuItem1");
 
@@ -1676,6 +1687,13 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
     private void tblMailsMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblMailsMousePressed
         TableUtils.handleRowClick(tblMails, evt);
         if (evt.isPopupTrigger()) {
+            DefaultMutableTreeNode tn = (DefaultMutableTreeNode) this.treeFolders.getSelectionPath().getLastPathComponent();
+            org.jlawyer.bea.model.Folder tf = (org.jlawyer.bea.model.Folder) tn.getUserObject();
+            if (tf.getType().equals(tf.TYPE_TRASH)) {
+                this.mnuRestoreFromTrash.setEnabled(true);
+            } else {
+                this.mnuRestoreFromTrash.setEnabled(false);
+            }
             this.popEmailList.show(this.tblMails, evt.getX(), evt.getY());
         }
     }//GEN-LAST:event_tblMailsMousePressed
@@ -1891,6 +1909,13 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
 
     private void tblMailsMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblMailsMouseReleased
         if (evt.isPopupTrigger()) {
+            DefaultMutableTreeNode tn = (DefaultMutableTreeNode) this.treeFolders.getSelectionPath().getLastPathComponent();
+            org.jlawyer.bea.model.Folder tf = (org.jlawyer.bea.model.Folder) tn.getUserObject();
+            if (tf.getType().equals(tf.TYPE_TRASH)) {
+                this.mnuRestoreFromTrash.setEnabled(true);
+            } else {
+                this.mnuRestoreFromTrash.setEnabled(false);
+            }
             this.popEmailList.show(this.tblMails, evt.getX(), evt.getY());
         }
     }//GEN-LAST:event_tblMailsMouseReleased
@@ -2058,6 +2083,52 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
         String lastTag = this.cmbDocumentTag.getSelectedItem().toString();
         settings.setConfiguration(ClientSettings.CONF_BEA_LASTDOCUMENTTAG, lastTag);
     }//GEN-LAST:event_cmbDocumentTagActionPerformed
+
+    private void mnuRestoreFromTrashActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuRestoreFromTrashActionPerformed
+        int[] selected = this.tblMails.getSelectedRows();
+        int scrollToRow = -1;
+//        if (!(selected.length > 0)) {
+//            return;
+//
+//        }
+
+        scrollToRow = tblMails.getSelectedRow();
+        for (int i = selected.length - 1; i > -1; i--) {
+
+            org.jlawyer.bea.model.MessageHeader mh = (org.jlawyer.bea.model.MessageHeader) this.tblMails.getValueAt(selected[i], 3);
+            try {
+                BeaAccess bea = BeaAccess.getInstance();
+
+                DefaultMutableTreeNode tn = (DefaultMutableTreeNode) this.treeFolders.getSelectionPath().getLastPathComponent();
+                org.jlawyer.bea.model.Folder tf = (org.jlawyer.bea.model.Folder) tn.getUserObject();
+                if (tf.getType().equals(tf.TYPE_TRASH)) {
+                    boolean restored = bea.restoreMessageFromTrash(mh.getId());
+                    if (restored) {
+                        ((DefaultTableModel) this.tblMails.getModel()).removeRow(this.tblMails.convertRowIndexToModel(selected[i]));
+                    }
+                } else {
+                    return;
+                }
+
+            } catch (Throwable ex) {
+                log.error(ex);
+                ex.printStackTrace();
+            }
+        }
+
+        this.beaMessageContentUI.clear();
+        this.pnlActionsChild.removeAll();
+
+        int sortCol = -1;
+        List<? extends SortKey> sortKeys = this.tblMails.getRowSorter().getSortKeys();
+        if (sortKeys != null) {
+            if (sortKeys.size() > 0) {
+                sortCol = sortKeys.get(0).getColumn();
+            }
+        }
+        this.treeFoldersValueChangedImpl(new TreeSelectionEvent(this.tblMails, this.treeFolders.getSelectionPath(), false, null, null), sortCol, scrollToRow);
+
+    }//GEN-LAST:event_mnuRestoreFromTrashActionPerformed
 
     private void displayMessage() {
 
@@ -2795,6 +2866,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
     private javax.swing.JMenuItem mnuMarkUnread;
     private javax.swing.JMenuItem mnuNewFolder;
     private javax.swing.JMenuItem mnuRemoveFolder;
+    private javax.swing.JMenuItem mnuRestoreFromTrash;
     private javax.swing.JMenuItem mnuSearchSave;
     private javax.swing.JMenuItem mnuSearchSaveNoAttachments;
     private javax.swing.JPanel pnlActions;
