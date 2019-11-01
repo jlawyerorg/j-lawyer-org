@@ -698,10 +698,10 @@ public class FileNumberComparator implements Comparator {
             if(s2==null)
                 return 1;
             
-            if (s1.matches("\\d{5}/\\d{2}") && s2.matches("\\d{5}/\\d{2}")) {
+            if (s1.matches("\\d{3,5}/\\d{2,4}") && s2.matches("\\d{3,5}/\\d{2,4}")) {
                 // in case of default file number schema
-                String year1 = s1.substring(6);
-                String year2 = s2.substring(6);
+                String year1 = s1.substring(s1.indexOf("/")+1);
+                String year2 = s2.substring(s2.indexOf("/")+1);
 
                 Integer y1 = Integer.parseInt(year1);
                 Integer y2 = Integer.parseInt(year2);
@@ -727,8 +727,8 @@ public class FileNumberComparator implements Comparator {
                     return 1;
                 }
 
-                String index1 = s1.substring(0, 5);
-                String index2 = s2.substring(0, 5);
+                String index1 = s1.substring(0, s1.indexOf("/"));
+                String index2 = s2.substring(0, s2.indexOf("/"));
 
                 Integer in1 = Integer.parseInt(index1);
                 Integer in2 = Integer.parseInt(index2);

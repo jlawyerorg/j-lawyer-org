@@ -741,8 +741,9 @@ public class QuickArchiveFileSearchThread implements Runnable {
             ThreadUtils.setTableModel(this.target, model, 0, 0);
             ThreadUtils.requestFocus(target);
 
-            DocumentsComparator docComparator = new DocumentsComparator();
+            //DocumentsComparator docComparator = new DocumentsComparator();
             TableRowSorter dtrs = new TableRowSorter(model);
+            dtrs.setComparator(0, new FileNumberComparator());
             target.setRowSorter(dtrs);
             ArrayList list = new ArrayList();
             list.add(new RowSorter.SortKey(0, SortOrder.ASCENDING));
