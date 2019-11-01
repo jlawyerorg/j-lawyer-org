@@ -663,6 +663,7 @@
  */
 package com.jdimension.jlawyer.client.editors.files;
 
+import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import java.util.Comparator;
 import org.apache.log4j.Logger;
 
@@ -687,7 +688,12 @@ public class FileNumberComparator implements Comparator {
                 QuickArchiveFileSearchRowIdentifier i2 = (QuickArchiveFileSearchRowIdentifier) t1;
                 s1 = i1.getArchiveFileDTO().getFileNumber();
                 s2 = i2.getArchiveFileDTO().getFileNumber();
-            } else {
+            } else if (t instanceof ArchiveFileBean) {
+                ArchiveFileBean i1=(ArchiveFileBean)t;
+                ArchiveFileBean i2=(ArchiveFileBean)t1;
+                s1=i1.getFileNumber();
+                s2=i2.getFileNumber();
+            }else {
                 s1 = t.toString();
                 s2 = t1.toString();
             }

@@ -672,6 +672,7 @@ import com.jdimension.jlawyer.client.editors.ThemeableEditor;
 import com.jdimension.jlawyer.client.editors.addresses.CaseForContactEntry;
 import com.jdimension.jlawyer.client.editors.documents.SearchAndAssignDialog;
 import com.jdimension.jlawyer.client.editors.files.DescendingDateTimeStringComparator;
+import com.jdimension.jlawyer.client.editors.files.FileNumberComparator;
 import com.jdimension.jlawyer.client.events.AllCaseTagsEvent;
 import com.jdimension.jlawyer.client.events.AllDocumentTagsEvent;
 import com.jdimension.jlawyer.client.events.Event;
@@ -2245,7 +2246,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                                 if (aFile1.getArchivedBoolean()) {
                                     // both archived
                                     // sort by changed date
-                                    return aFile1.getFileNumber().compareTo(aFile2.getFileNumber());
+                                    return new FileNumberComparator().compare(aFile1, aFile2)*-1;
                                 } else {
                                     // only 2 is archived
                                     return -1;
@@ -2256,7 +2257,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                             } else {
                                 // both are non-archived
                                 // sort by changed date
-                                return aFile1.getFileNumber().compareTo(aFile2.getFileNumber());
+                                return new FileNumberComparator().compare(aFile1, aFile2)*-1;
                             }
 
                         }
