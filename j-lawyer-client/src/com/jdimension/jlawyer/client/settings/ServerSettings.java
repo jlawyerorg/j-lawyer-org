@@ -697,6 +697,10 @@ public class ServerSettings {
     public static final String PROFILE_COMPANYBANKCODE="profile.company.bankcode";
     public static final String PROFILE_COMPANYACCOUNTNO="profile.company.accountno";
     
+    public static final String PROFILE_COMPANYBANK_AK="profile.company.ak.bank";
+    public static final String PROFILE_COMPANYBANKCODE_AK="profile.company.ak.bankcode";
+    public static final String PROFILE_COMPANYACCOUNTNO_AK="profile.company.ak.accountno";
+    
     public static final String SERVERCONF_VOIPMODE="jlawyer.server.voip.voipmode";
     public static final String SERVERCONF_VOIPUSER="jlawyer.server.voip.voipuser";
     public static final String SERVERCONF_VOIPPWD="jlawyer.server.voip.voippwd";

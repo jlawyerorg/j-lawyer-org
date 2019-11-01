@@ -689,6 +689,10 @@ public class PlaceHolders {
     public static final String PROFIL_KONTONR = "{{PROFIL_KONTONR}}";
     public static final String PROFIL_BLZ = "{{PROFIL_BLZ}}";
     
+    public static final String PROFIL_BANK_AK = "{{PROFIL_BANK_AK}}";
+    public static final String PROFIL_KONTONR_AK = "{{PROFIL_KONTONR_AK}}";
+    public static final String PROFIL_BLZ_AK = "{{PROFIL_BLZ_AK}}";
+    
     public static final String KURZDATUM = "{{KURZDATUM}}";
     public static final String LANGDATUM = "{{LANGDATUM}}";
     public static final String MANDANT_NAME = "{{MANDANT_NAME}}";
@@ -854,7 +858,10 @@ public class PlaceHolders {
         ALLPLACEHOLDERS.add(PROFIL_BANK);
         ALLPLACEHOLDERS.add(PROFIL_KONTONR);
         ALLPLACEHOLDERS.add(PROFIL_BLZ);
-
+        ALLPLACEHOLDERS.add(PROFIL_BANK_AK);
+        ALLPLACEHOLDERS.add(PROFIL_KONTONR_AK);
+        ALLPLACEHOLDERS.add(PROFIL_BLZ_AK);
+        
         ALLPLACEHOLDERS.add(KURZDATUM);
         ALLPLACEHOLDERS.add(LANGDATUM);
         ALLPLACEHOLDERS.add(MANDANT_NAME);

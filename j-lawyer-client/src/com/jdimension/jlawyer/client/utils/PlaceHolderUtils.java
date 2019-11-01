@@ -764,6 +764,16 @@ public class PlaceHolderUtils extends PlaceHolders {
         if (placeHolders.containsKey(PROFIL_KONTONR)) {
             placeHolders.put(PROFIL_KONTONR, set.getSetting(set.PROFILE_COMPANYACCOUNTNO, ""));
         }
+        if (placeHolders.containsKey(PROFIL_BANK_AK)) {
+            placeHolders.put(PROFIL_BANK_AK, set.getSetting(set.PROFILE_COMPANYBANK_AK, ""));
+        }
+        if (placeHolders.containsKey(PROFIL_BLZ_AK)) {
+            placeHolders.put(PROFIL_BLZ_AK, set.getSetting(set.PROFILE_COMPANYBANKCODE_AK, ""));
+        }
+        if (placeHolders.containsKey(PROFIL_KONTONR_AK)) {
+            placeHolders.put(PROFIL_KONTONR_AK, set.getSetting(set.PROFILE_COMPANYACCOUNTNO_AK, ""));
+        }
+        
 
         // client information
         if (cl != null) {
