@@ -725,7 +725,7 @@ public class QuickAddressSearchPanel extends javax.swing.JPanel implements Theme
         } else {
             this.detailsEditorClass = ViewAddressDetailsPanel.class.getName();
         }
-        String[] colNames = new String[]{"Name", "Vorname", "Firma", "PLZ", "Ort", "Strasse", "Land", "Tags"};
+        String[] colNames = new String[]{"Name", "Vorname", "Firma", "PLZ", "Ort", "Strasse", "Land", "Etiketten"};
         QuickAddressSearchTableModel model = new QuickAddressSearchTableModel(colNames, 0);
         this.tblResults.setModel(model);
 
@@ -754,7 +754,7 @@ public class QuickAddressSearchPanel extends javax.swing.JPanel implements Theme
 
     public void clearInputs() {
         this.txtSearchString.setText("");
-        String[] colNames = new String[]{"Name", "Vorname", "Firma", "PLZ", "Ort", "Strasse", "Land", "Tags"};
+        String[] colNames = new String[]{"Name", "Vorname", "Firma", "PLZ", "Ort", "Strasse", "Land", "Etiketten"};
         QuickAddressSearchTableModel model = new QuickAddressSearchTableModel(colNames, 0);
         this.tblResults.setModel(model);
     }

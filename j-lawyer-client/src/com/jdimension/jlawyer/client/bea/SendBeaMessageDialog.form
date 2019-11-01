@@ -742,7 +742,7 @@
     </Container>
     <Component class="javax.swing.JCheckBox" name="chkDocumentTagging">
       <Properties>
-        <Property name="text" type="java.lang.String" value="markieren:"/>
+        <Property name="text" type="java.lang.String" value="Etikett:"/>
         <Property name="actionCommand" type="java.lang.String" value="Zielakte markieren:"/>
       </Properties>
       <Events>

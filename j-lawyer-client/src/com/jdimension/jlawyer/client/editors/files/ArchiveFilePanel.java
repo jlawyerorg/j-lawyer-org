@@ -1908,7 +1908,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
         });
 
-        jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder("Akten-Tags"));
+        jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder("Akten-Etiketten"));
         jPanel2.setLayout(new java.awt.BorderLayout());
 
         jScrollPane1.setBorder(null);
@@ -2253,7 +2253,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
         });
 
-        jPanel4.setBorder(javax.swing.BorderFactory.createTitledBorder("Dokument-Tags"));
+        jPanel4.setBorder(javax.swing.BorderFactory.createTitledBorder("Dokument-Etiketten"));
         jPanel4.setLayout(new java.awt.BorderLayout());
 
         jScrollPane2.setBorder(null);
@@ -4839,7 +4839,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             this.documentCellRenderer.setRenderTags(allTags);
         } catch (Exception ioe) {
             log.error("Error loading document tags", ioe);
-            JOptionPane.showMessageDialog(this, "Fehler beim Laden der Dokumenttags: " + ioe.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Fehler beim Laden der Dokumentetiketten: " + ioe.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
         }
         
         this.documentHits.clear();

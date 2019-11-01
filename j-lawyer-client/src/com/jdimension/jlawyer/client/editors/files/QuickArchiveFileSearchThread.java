@@ -726,7 +726,7 @@ public class QuickArchiveFileSearchThread implements Runnable {
             return;
         }
 
-        String[] colNames = new String[]{"Aktenzeichen", "Kurzrubrum", "wegen", "archiviert", "Anwalt", "Tags"};
+        String[] colNames = new String[]{"Aktenzeichen", "Kurzrubrum", "wegen", "archiviert", "Anwalt", "Etiketten"};
         QuickArchiveFileSearchTableModel model = new QuickArchiveFileSearchTableModel(colNames, 0);
 
 //        TableRowSorter<TableModel> sorter = new TableRowSorter<TableModel>(model);

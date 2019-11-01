@@ -721,7 +721,7 @@ public class AddAddressSearchDialog extends javax.swing.JDialog {
             this.cmbRefType.setSelectedItem("Dritte");
         }
 
-        String[] colNames = new String[]{"Name", "Vorname", "Firma", "PLZ", "Ort", "Strasse", "Land", "Tags"};
+        String[] colNames = new String[]{"Name", "Vorname", "Firma", "PLZ", "Ort", "Strasse", "Land", "Etiketten"};
         QuickAddressSearchTableModel model = new QuickAddressSearchTableModel(colNames, 0);
         this.tblResults.setModel(model);
         ComponentUtils.autoSizeColumns(tblResults);

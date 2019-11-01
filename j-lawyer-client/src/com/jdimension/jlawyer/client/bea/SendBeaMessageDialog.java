@@ -1453,7 +1453,7 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
                     .addComponent(cmdShowReviewSelector)))
         );
 
-        chkDocumentTagging.setText("markieren:");
+        chkDocumentTagging.setText("Etikett:");
         chkDocumentTagging.setActionCommand("Zielakte markieren:");
         chkDocumentTagging.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {

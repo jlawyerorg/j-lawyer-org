@@ -1064,7 +1064,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
         });
         jScrollPane1.setViewportView(tblActions);
 
-        chkCaseTagging.setText("Akte markieren:");
+        chkCaseTagging.setText("Aktenetikett:");
         chkCaseTagging.setActionCommand("Zielakte markieren:");
         chkCaseTagging.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -1087,7 +1087,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
             }
         });
 
-        chkDocumentTagging.setText("Dokument markieren:");
+        chkDocumentTagging.setText("Dokumentetikett:");
         chkDocumentTagging.setActionCommand("Zielakte markieren:");
         chkDocumentTagging.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {

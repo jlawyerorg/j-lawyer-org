@@ -1277,7 +1277,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuArchiveFileOptions.add(mnuArchiveFileOptionsSubjectFields);
 
         mnuArchiveFileTags.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/favorites.png"))); // NOI18N
-        mnuArchiveFileTags.setText("Akten-Tags");
+        mnuArchiveFileTags.setText("Akten-Etiketten");
         mnuArchiveFileTags.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 mnuArchiveFileTagsActionPerformed(evt);
@@ -1286,7 +1286,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuArchiveFileOptions.add(mnuArchiveFileTags);
 
         mnuDocumentTags.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/favorites.png"))); // NOI18N
-        mnuDocumentTags.setText("Dokumenten-Tags");
+        mnuDocumentTags.setText("Dokumenten-Etiketten");
         mnuDocumentTags.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 mnuDocumentTagsActionPerformed(evt);
@@ -2124,7 +2124,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             boolean currentlyAdmin = locator.lookupSecurityServiceRemote().isAdmin();
             if (currentlyAdmin) {
                 OptionGroupConfigurationDialog dlg = new OptionGroupConfigurationDialog(this, true);
-                dlg.setTitle("Dokumenten-Tags");
+                dlg.setTitle("Dokumenten-Etiketten");
                 dlg.setOptionGroup(OptionConstants.OPTIONGROUP_DOCUMENTTAGS);
                 FrameUtils.centerDialog(dlg, this);
                 dlg.setVisible(true);

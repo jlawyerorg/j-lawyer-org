@@ -1919,7 +1919,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
 
         jTabbedPane1.addTab("Textbausteine", new javax.swing.ImageIcon(getClass().getResource("/icons/folder_documents.png")), jPanel9); // NOI18N
 
-        jPanel14.setBorder(javax.swing.BorderFactory.createTitledBorder("Tags"));
+        jPanel14.setBorder(javax.swing.BorderFactory.createTitledBorder("Etiketten"));
 
         jScrollPane3.setBorder(null);
 
@@ -1960,7 +1960,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
                     .addContainerGap()))
         );
 
-        jTabbedPane1.addTab("Tags", new javax.swing.ImageIcon(getClass().getResource("/icons16/favorites.png")), jPanel13); // NOI18N
+        jTabbedPane1.addTab("Etiketten", new javax.swing.ImageIcon(getClass().getResource("/icons16/favorites.png")), jPanel13); // NOI18N
 
         jPanel15.setName(""); // NOI18N
 

@@ -716,7 +716,7 @@ public class QuickAddressSearchThread implements Runnable {
             return;
         }
         
-        String[] colNames=new String[] {"Name", "Vorname", "Firma", "PLZ", "Ort", "Strasse", "Land", "Tags"};
+        String[] colNames=new String[] {"Name", "Vorname", "Firma", "PLZ", "Ort", "Strasse", "Land", "Etiketten"};
         QuickAddressSearchTableModel model=new QuickAddressSearchTableModel(colNames, 0);
         for(int i=0;i<dtos.length;i++) {
             Object[] row=new Object[]{new QuickAddressSearchRowIdentifier(dtos[i]), dtos[i].getFirstName(), dtos[i].getCompany(), dtos[i].getZipCode(), dtos[i].getCity(), dtos[i].getStreet(), dtos[i].getCountry(), TagUtils.getTagList(dtos[i].getId(), tags)};

@@ -1358,7 +1358,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
             }
         });
 
-        chkCaseTagging.setText("Akte markieren:");
+        chkCaseTagging.setText("Aktenetikett:");
         chkCaseTagging.setActionCommand("Zielakte markieren:");
         chkCaseTagging.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -1372,7 +1372,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
             }
         });
 
-        chkDocumentTagging.setText("Dokument markieren:");
+        chkDocumentTagging.setText("Dokumentetikett:");
         chkDocumentTagging.setActionCommand("Zielakte markieren:");
         chkDocumentTagging.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {

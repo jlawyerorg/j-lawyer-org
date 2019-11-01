@@ -1267,7 +1267,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
 
         splitterFolderDetails.setLeftComponent(jScrollPane3);
 
-        chkCaseTagging.setText("Akte markieren:");
+        chkCaseTagging.setText("Aktenetikett:");
         chkCaseTagging.setActionCommand("Zielakte markieren:");
         chkCaseTagging.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -1301,7 +1301,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
         jSplitPane1.setRightComponent(jScrollPane4);
         jSplitPane1.setLeftComponent(beaMessageContentUI);
 
-        chkDocumentTagging.setText("Dokument markieren:");
+        chkDocumentTagging.setText("Dokumentetikett:");
         chkDocumentTagging.setActionCommand("Zielakte markieren:");
         chkDocumentTagging.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {

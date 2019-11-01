@@ -1341,7 +1341,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         chkSaveAsDocument.setSelected(true);
         chkSaveAsDocument.setText("als Dokument speichern");
 
-        chkDocumentTagging.setText("markieren:");
+        chkDocumentTagging.setText("Etikett:");
         chkDocumentTagging.setActionCommand("Zielakte markieren:");
         chkDocumentTagging.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
