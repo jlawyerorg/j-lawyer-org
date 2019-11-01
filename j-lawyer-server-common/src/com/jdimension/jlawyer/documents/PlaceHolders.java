@@ -698,6 +698,7 @@ public class PlaceHolders {
     public static final String MANDANT_NAME = "{{MANDANT_NAME}}";
     public static final String MANDANT_VORNAME = "{{MANDANT_VORNAME}}";
     public static final String MANDANT_FIRMA = "{{MANDANT_FIRMA}}";
+    public static final String MANDANT_ABTLG = "{{MANDANT_ABTLG}}";
     public static final String MANDANT_TITEL = "{{MANDANT_TITEL}}";
     public static final String MANDANT_ANREDE = "{{MANDANT_ANREDE}}";
     public static final String MANDANT_NACHTEXT = "{{MANDANT_NACHTEXT}}";
@@ -728,6 +729,7 @@ public class PlaceHolders {
     public static final String GEGNER_NAME = "{{GEGNER_NAME}}";
     public static final String GEGNER_VORNAME = "{{GEGNER_VORNAME}}";
     public static final String GEGNER_FIRMA = "{{GEGNER_FIRMA}}";
+    public static final String GEGNER_ABTLG = "{{GEGNER_ABTLG}}";
     public static final String GEGNER_TITEL = "{{GEGNER_TITEL}}";
     public static final String GEGNER_ANREDE = "{{GEGNER_ANREDE}}";
     public static final String GEGNER_NACHTEXT = "{{GEGNER_NACHTEXT}}";
@@ -782,6 +784,7 @@ public class PlaceHolders {
     public static final String DRITTE_NAME = "{{DRITTE_NAME}}";
     public static final String DRITTE_VORNAME = "{{DRITTE_VORNAME}}";
     public static final String DRITTE_FIRMA = "{{DRITTE_FIRMA}}";
+    public static final String DRITTE_ABTLG = "{{DRITTE_ABTLG}}";
     public static final String DRITTE_TITEL = "{{DRITTE_TITEL}}";
     public static final String DRITTE_ANREDE = "{{DRITTE_ANREDE}}";
     public static final String DRITTE_NACHTEXT = "{{DRITTE_NACHTEXT}}";
@@ -867,6 +870,7 @@ public class PlaceHolders {
         ALLPLACEHOLDERS.add(MANDANT_NAME);
         ALLPLACEHOLDERS.add(MANDANT_VORNAME);
         ALLPLACEHOLDERS.add(MANDANT_FIRMA);
+        ALLPLACEHOLDERS.add(MANDANT_ABTLG);
         ALLPLACEHOLDERS.add(MANDANT_TITEL);
         ALLPLACEHOLDERS.add(MANDANT_ANREDE);
         ALLPLACEHOLDERS.add(MANDANT_NACHTEXT);
@@ -897,6 +901,7 @@ public class PlaceHolders {
         ALLPLACEHOLDERS.add(GEGNER_NAME);
         ALLPLACEHOLDERS.add(GEGNER_VORNAME);
         ALLPLACEHOLDERS.add(GEGNER_FIRMA);
+        ALLPLACEHOLDERS.add(GEGNER_ABTLG);
         ALLPLACEHOLDERS.add(GEGNER_TITEL);
         ALLPLACEHOLDERS.add(GEGNER_ANREDE);
         ALLPLACEHOLDERS.add(GEGNER_NACHTEXT);
@@ -928,6 +933,7 @@ public class PlaceHolders {
         ALLPLACEHOLDERS.add(DRITTE_NAME);
         ALLPLACEHOLDERS.add(DRITTE_VORNAME);
         ALLPLACEHOLDERS.add(DRITTE_FIRMA);
+        ALLPLACEHOLDERS.add(DRITTE_ABTLG);
         ALLPLACEHOLDERS.add(DRITTE_TITEL);
         ALLPLACEHOLDERS.add(DRITTE_ANREDE);
         ALLPLACEHOLDERS.add(DRITTE_NACHTEXT);

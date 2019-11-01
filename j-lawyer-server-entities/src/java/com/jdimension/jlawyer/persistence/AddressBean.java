@@ -719,6 +719,8 @@ public class AddressBean implements Serializable {
     private String name;
     @Column(name = "company")
     private String company;
+    @Column(name = "department")
+    private String department;
     @Basic(optional = false)
     @Column(name = "legalProtection", columnDefinition = "TINYINT NOT NULL")
     private short legalProtection;
@@ -1312,6 +1314,20 @@ public class AddressBean implements Serializable {
 
     public void setCampaignAddressesList(List<CampaignAddress> campaignAddressesList) {
         this.campaignAddressesList = campaignAddressesList;
+    }
+
+    /**
+     * @return the department
+     */
+    public String getDepartment() {
+        return department;
+    }
+
+    /**
+     * @param department the department to set
+     */
+    public void setDepartment(String department) {
+        this.department = department;
     }
     
 }

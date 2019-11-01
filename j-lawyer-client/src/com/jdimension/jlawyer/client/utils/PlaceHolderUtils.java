@@ -786,6 +786,9 @@ public class PlaceHolderUtils extends PlaceHolders {
             if (placeHolders.containsKey(MANDANT_FIRMA)) {
                 placeHolders.put(MANDANT_FIRMA, val(cl.getCompany()));
             }
+            if (placeHolders.containsKey(MANDANT_ABTLG)) {
+                placeHolders.put(MANDANT_ABTLG, val(cl.getDepartment()));
+            }
             if (placeHolders.containsKey(MANDANT_TITEL)) {
                 placeHolders.put(MANDANT_TITEL, val(cl.getTitle()));
             }
@@ -903,6 +906,9 @@ public class PlaceHolderUtils extends PlaceHolders {
             if (placeHolders.containsKey(GEGNER_FIRMA)) {
                 placeHolders.put(GEGNER_FIRMA, val(opp.getCompany()));
             }
+            if (placeHolders.containsKey(GEGNER_ABTLG)) {
+                placeHolders.put(GEGNER_ABTLG, val(opp.getDepartment()));
+            }
             if (placeHolders.containsKey(GEGNER_TITEL)) {
                 placeHolders.put(GEGNER_TITEL, val(opp.getTitle()));
             }
@@ -1018,6 +1024,9 @@ public class PlaceHolderUtils extends PlaceHolders {
             }
             if (placeHolders.containsKey(DRITTE_FIRMA)) {
                 placeHolders.put(DRITTE_FIRMA, val(oppAtt.getCompany()));
+            }
+            if (placeHolders.containsKey(DRITTE_ABTLG)) {
+                placeHolders.put(DRITTE_ABTLG, val(oppAtt.getDepartment()));
             }
             if (placeHolders.containsKey(DRITTE_TITEL)) {
                 placeHolders.put(DRITTE_TITEL, val(oppAtt.getTitle()));
