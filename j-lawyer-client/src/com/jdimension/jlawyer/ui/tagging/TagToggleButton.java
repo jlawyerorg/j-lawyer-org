@@ -741,10 +741,13 @@ public class TagToggleButton extends JToggleButton {
             this.gpUnselected=new   GradientPaint(0,   0,   Color.lightGray,   0, getHeight(), Color.white);
         
         
+        
         ButtonModel buttonModel = getModel();
         Graphics2D gd = (Graphics2D) g.create();
         gd.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         //gd.setPaint(new GradientPaint(0, 0, Color.white, 0, getHeight(), new Color(0, 0, 0, 0)));
+        Paint defaultPaint=gd.getPaint();
+        
         gd.setPaint(gpUnselected);
         
         //gd.setPaint(new GradientPaint(0, 0, new Color(0, 0, 0, 0), 0, getHeight(), Color.white));
@@ -781,7 +784,39 @@ public class TagToggleButton extends JToggleButton {
 //            }
         }
 
-        gd.fillRoundRect(0, 0, getWidth(), getHeight(), 10, 10);
+        //gd.fillRoundRect(0, 0, getWidth(), getHeight(), 10, 10);
+        Polygon plgn=new Polygon();
+        plgn.addPoint(0, 0);
+        plgn.addPoint(getWidth()-10, 0);
+        plgn.addPoint(getWidth(), getHeight()/2);
+        plgn.addPoint(getWidth()-10, getHeight());
+        plgn.addPoint(0, getHeight());
+        gd.fillPolygon(plgn);
+        
+        gd.setPaint(defaultPaint);
+        if(buttonModel.isSelected())
+            gd.setColor(Color.WHITE);
+        else
+            gd.setColor(Color.GRAY);
+        gd.fillOval(getWidth()-10, getHeight()/2-3, 5, 5);
+        
+        
+        
+        gd.setColor(Color.BLACK);
+        Polygon l1=new Polygon();
+//        l1.addPoint(getWidth()-10+3, getHeight()/2+1);
+//        l1.addPoint(getWidth(), getHeight()+1);
+//        l1.addPoint(getWidth()-10+5, getHeight()/2-1);
+//        l1.addPoint(getWidth(), getHeight()+4);
+        
+        l1.addPoint(getWidth()-10+2, getHeight()/2+1);
+        l1.addPoint(getWidth(), 1);
+        l1.addPoint(getWidth()-10+5, getHeight()/2+3);
+        l1.addPoint(getWidth(), 5);
+        
+        gd.fillPolygon(l1);
+
+        //gd.fill
         gd.dispose();
         super.paintComponent(g);
     }
