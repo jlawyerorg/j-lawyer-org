@@ -369,6 +369,38 @@
         <Property name="useNullLayout" type="boolean" value="true"/>
       </Layout>
     </Container>
+    <Container class="javax.swing.JPopupMenu" name="drebisPopup">
+
+      <Layout class="org.netbeans.modules.form.compat2.layouts.DesignAbsoluteLayout">
+        <Property name="useNullLayout" type="boolean" value="true"/>
+      </Layout>
+      <SubComponents>
+        <MenuItem class="javax.swing.JMenuItem" name="mnuSendMessage">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="Freitext-Nachricht"/>
+          </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuSendMessageActionPerformed"/>
+          </Events>
+        </MenuItem>
+        <MenuItem class="javax.swing.JMenuItem" name="mnuSendCoverage">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="Deckungsanfrage senden"/>
+          </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuSendCoverageActionPerformed"/>
+          </Events>
+        </MenuItem>
+        <MenuItem class="javax.swing.JMenuItem" name="mnuSendMotorCoverage">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="Kfz-Schadenmeldung"/>
+          </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuSendMotorCoverageActionPerformed"/>
+          </Events>
+        </MenuItem>
+      </SubComponents>
+    </Container>
   </NonVisualComponents>
   <AuxValues>
     <AuxValue name="FormSettings_autoResourcing" type="java.lang.Integer" value="0"/>
@@ -954,12 +986,12 @@
                               <Group type="102" alignment="1" attributes="0">
                                   <Component id="jLabel15" min="-2" max="-2" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
-                                  <Component id="txtSearchDocumentNames" min="-2" pref="300" max="-2" attributes="0"/>
+                                  <Component id="txtSearchDocumentNames" min="-2" pref="272" max="-2" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
                                   <Component id="cmdDocumentTagFilter" min="-2" max="-2" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
                                   <Component id="cmdClearSearch" min="-2" max="-2" attributes="0"/>
-                                  <EmptySpace min="-2" pref="71" max="-2" attributes="0"/>
+                                  <EmptySpace max="-2" attributes="0"/>
                                   <Component id="lblDocumentHits" min="-2" max="-2" attributes="0"/>
                                   <EmptySpace max="32767" attributes="0"/>
                                   <Component id="cmdNewDocument" min="-2" max="-2" attributes="0"/>
@@ -967,6 +999,8 @@
                                   <Component id="cmdUploadDocument" min="-2" max="-2" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
                                   <Component id="cmdAddNote" min="-2" max="-2" attributes="0"/>
+                                  <EmptySpace max="-2" attributes="0"/>
+                                  <Component id="cmdDrebis" min="-2" max="-2" attributes="0"/>
                               </Group>
                               <Component id="jPanel4" alignment="0" max="32767" attributes="0"/>
                               <Component id="jScrollPane5" alignment="1" max="32767" attributes="0"/>
@@ -987,6 +1021,7 @@
                                   <Component id="lblDocumentHits" alignment="3" min="-2" max="-2" attributes="0"/>
                                   <Component id="cmdClearSearch" alignment="3" min="-2" max="-2" attributes="0"/>
                                   <Component id="cmdAddNote" alignment="3" min="-2" max="-2" attributes="0"/>
+                                  <Component id="cmdDrebis" alignment="3" min="-2" max="-2" attributes="0"/>
                               </Group>
                               <Component id="cmdDocumentTagFilter" min="-2" max="-2" attributes="0"/>
                           </Group>
@@ -1226,6 +1261,17 @@
                     </Component>
                   </SubComponents>
                 </Container>
+                <Component class="javax.swing.JButton" name="cmdDrebis">
+                  <Properties>
+                    <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                      <Image iconType="3" name="/icons16/drebis16.png"/>
+                    </Property>
+                  </Properties>
+                  <Events>
+                    <EventHandler event="mousePressed" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="cmdDrebisMousePressed"/>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdDrebisActionPerformed"/>
+                  </Events>
+                </Component>
               </SubComponents>
             </Container>
           </SubComponents>
@@ -1233,8 +1279,8 @@
         <Container class="javax.swing.JPanel" name="tabClaims">
           <Constraints>
             <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout" value="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout$JTabbedPaneConstraintsDescription">
-              <JTabbedPaneConstraints tabName="Sch&#xe4;den">
-                <Property name="tabTitle" type="java.lang.String" value="Sch&#xe4;den"/>
+              <JTabbedPaneConstraints tabName="Berechnung">
+                <Property name="tabTitle" type="java.lang.String" value="Berechnung"/>
                 <Property name="tabIcon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
                   <Image iconType="3" name="/icons/money.png"/>
                 </Property>
@@ -1277,37 +1323,25 @@
                   <Group type="103" groupAlignment="0" attributes="0">
                       <Group type="102" attributes="0">
                           <EmptySpace max="-2" attributes="0"/>
-                          <Group type="103" groupAlignment="0" attributes="0">
-                              <Group type="102" alignment="1" attributes="0">
+                          <Group type="103" groupAlignment="1" attributes="0">
+                              <Group type="102" attributes="0">
                                   <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
-                                  <Component id="cmdSendMessage" min="-2" max="-2" attributes="0"/>
-                                  <EmptySpace max="-2" attributes="0"/>
-                                  <Component id="cmdCoverage" min="-2" max="-2" attributes="0"/>
-                                  <EmptySpace max="-2" attributes="0"/>
-                                  <Component id="cmdMotorCoverage" min="-2" max="-2" attributes="0"/>
+                                  <Component id="cmdNewRvg" min="-2" max="-2" attributes="0"/>
                               </Group>
-                              <Group type="102" alignment="1" attributes="0">
-                                  <Group type="103" groupAlignment="1" attributes="0">
-                                      <Group type="102" attributes="0">
-                                          <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
-                                          <Component id="cmdNewRvg" min="-2" max="-2" attributes="0"/>
-                                      </Group>
-                                      <Group type="102" attributes="0">
-                                          <Group type="103" groupAlignment="0" attributes="0">
-                                              <Component id="jLabel4" alignment="0" min="-2" max="-2" attributes="0"/>
-                                              <Component id="jLabel5" alignment="0" min="-2" max="-2" attributes="0"/>
-                                          </Group>
-                                          <EmptySpace max="-2" attributes="0"/>
-                                          <Group type="103" groupAlignment="0" attributes="0">
-                                              <Component id="txtClaimNumber" pref="727" max="32767" attributes="0"/>
-                                              <Component id="txtClaimValue" alignment="0" pref="727" max="32767" attributes="0"/>
-                                          </Group>
-                                      </Group>
+                              <Group type="102" attributes="0">
+                                  <Group type="103" groupAlignment="0" attributes="0">
+                                      <Component id="jLabel4" alignment="0" min="-2" max="-2" attributes="0"/>
+                                      <Component id="jLabel5" alignment="0" min="-2" max="-2" attributes="0"/>
                                   </Group>
                                   <EmptySpace max="-2" attributes="0"/>
-                                  <Component id="jLabel6" min="-2" max="-2" attributes="0"/>
+                                  <Group type="103" groupAlignment="0" attributes="0">
+                                      <Component id="txtClaimNumber" pref="727" max="32767" attributes="0"/>
+                                      <Component id="txtClaimValue" alignment="0" pref="727" max="32767" attributes="0"/>
+                                  </Group>
                               </Group>
                           </Group>
+                          <EmptySpace max="-2" attributes="0"/>
+                          <Component id="jLabel6" min="-2" max="-2" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
                       </Group>
                   </Group>
@@ -1327,13 +1361,7 @@
                           </Group>
                           <EmptySpace max="-2" attributes="0"/>
                           <Component id="cmdNewRvg" min="-2" max="-2" attributes="0"/>
-                          <EmptySpace pref="499" max="32767" attributes="0"/>
-                          <Group type="103" groupAlignment="3" attributes="0">
-                              <Component id="cmdMotorCoverage" alignment="3" min="-2" max="-2" attributes="0"/>
-                              <Component id="cmdCoverage" alignment="3" min="-2" max="-2" attributes="0"/>
-                              <Component id="cmdSendMessage" alignment="3" min="-2" max="-2" attributes="0"/>
-                          </Group>
-                          <EmptySpace max="-2" attributes="0"/>
+                          <EmptySpace pref="537" max="32767" attributes="0"/>
                       </Group>
                   </Group>
                 </DimensionLayout>
@@ -1363,39 +1391,6 @@
                   <Properties>
                     <Property name="text" type="java.lang.String" value="EUR"/>
                   </Properties>
-                </Component>
-                <Component class="javax.swing.JButton" name="cmdMotorCoverage">
-                  <Properties>
-                    <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-                      <Image iconType="3" name="/icons16/drebis16.png"/>
-                    </Property>
-                    <Property name="text" type="java.lang.String" value="Kfz-Schadenmeldung"/>
-                  </Properties>
-                  <Events>
-                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdMotorCoverageActionPerformed"/>
-                  </Events>
-                </Component>
-                <Component class="javax.swing.JButton" name="cmdCoverage">
-                  <Properties>
-                    <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-                      <Image iconType="3" name="/icons16/drebis16.png"/>
-                    </Property>
-                    <Property name="text" type="java.lang.String" value="Deckungsanfrage"/>
-                  </Properties>
-                  <Events>
-                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdCoverageActionPerformed"/>
-                  </Events>
-                </Component>
-                <Component class="javax.swing.JButton" name="cmdSendMessage">
-                  <Properties>
-                    <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-                      <Image iconType="3" name="/icons16/drebis16.png"/>
-                    </Property>
-                    <Property name="text" type="java.lang.String" value="Freitext-Nachricht"/>
-                  </Properties>
-                  <Events>
-                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdSendMessageActionPerformed"/>
-                  </Events>
                 </Component>
                 <Component class="javax.swing.JButton" name="cmdNewRvg">
                   <Properties>
