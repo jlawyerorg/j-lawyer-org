@@ -739,7 +739,7 @@ public class LocalSshFtpFile extends VirtualFile {
 
     @Override
     public void delete() throws Exception {
-        this.fo.delete();
+        this.fo.deleteAll();
     }
 
     @Override
