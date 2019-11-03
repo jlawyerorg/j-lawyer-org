@@ -661,18 +661,152 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.client.plugins.calculation;
+package org.jlawyer.plugins.calculation;
 
-import java.awt.Container;
-import org.jlawyer.plugins.calculation.GenericCalculationTable;
+import java.io.Serializable;
+import java.util.ArrayList;
 
 /**
  *
  * @author jens
  */
-public interface CalculationPluginCallback {
+public class StyledCalculationTable2 extends GenericCalculationTable implements Serializable {
+
+    private ArrayList<ArrayList<Cell>> headers = new ArrayList<ArrayList<Cell>>();
+    private ArrayList<ArrayList<Cell>> data = new ArrayList<ArrayList<Cell>>();
+
+    public StyledCalculationTable2() {
+    }
+
+    public void addHeaders(String... labels) {
+
+        ArrayList<Cell> row = new ArrayList<Cell>();
+        for (String l : labels) {
+            row.add(new HeaderCell(l));
+        }
+        headers.add(row);
+
+    }
+
+    public int addRow(ArrayList<String> values) {
+        ArrayList<Cell> row = new ArrayList<Cell>();
+        for (String v : values) {
+            row.add(new Cell(v));
+        }
+        data.add(row);
+        return data.size()-1;
+    }
     
-    public void processResultToClipboard(Object r);
-    public void processResultToDocument(GenericCalculationTable table, Container container);
+    public int addRow(String... values) {
+
+        ArrayList<Cell> row = new ArrayList<Cell>();
+        for (String v : values) {
+            row.add(new Cell(v));
+        }
+        data.add(row);
+        return data.size()-1;
+    }
+
+    @Override
+    public String toString() {
+        return "Tabelle " + data.size() + "x" + data.get(0).size();
+    }
+
+    public int getRowCount() {
+        return this.data.size();
+    }
     
+    public int getHeaderRowCount() {
+        return this.headers.size();
+    }
+
+    public int getColumnCount() {
+        if (this.data.size() > 0) {
+            return this.data.get(0).size();
+        } else {
+            return 0;
+        }
+    }
+    
+    public String getValueAt(int row, int column) {
+        if(this.data.size()>row) {
+            if(this.data.get(row).size()>column) {
+                return this.data.get(row).get(column).getValue();
+            }
+        }
+        return "ungueltige Zellposition";
+    }
+    
+    public String getHeaderValueAt(int row, int column) {
+        if(this.headers.size()>row) {
+            if(this.headers.get(row).size()>column) {
+                return this.headers.get(row).get(column).getValue();
+            }
+        }
+        return "ungueltige Zellposition";
+    }
+    
+    public Cell getCellAt(int row, int column) {
+        if(this.data.size()>=row) {
+            if(this.data.get(row).size()>=column) {
+                return this.data.get(row).get(column);
+            }
+        }
+        return new Cell();
+    }
+    
+    public Cell getHeaderCellAt(int row, int column) {
+        if(this.headers.size()>=row) {
+            if(this.headers.get(row).size()>=column) {
+                return this.headers.get(row).get(column);
+            }
+        }
+        return new Cell();
+    }
+    
+    public Cell getHeaderAt(int row, int column) {
+        if(this.headers.size()>=row) {
+            if(this.headers.get(row).size()>=column) {
+                return this.headers.get(row).get(column);
+            }
+        }
+        return new Cell();
+    }
+    
+    public void setAlignment(int columnIndex, int alignment) {
+        for(int i=0;i<this.data.size();i++) {
+            if(this.data.get(i).size()>=columnIndex) {
+                this.data.get(i).get(columnIndex).setAlignment(alignment);
+            }
+        }
+
+    }
+    
+    public void setRowBold(int rowIndex, boolean bold) {
+        if(this.data.size()>rowIndex) {
+            ArrayList<Cell> row=this.data.get(rowIndex);
+            for(Cell c: row) {
+                c.setBold(bold);
+            }
+        }
+    }
+    
+    public void setRowItalic(int rowIndex, boolean bold) {
+        if(this.data.size()>rowIndex) {
+            ArrayList<Cell> row=this.data.get(rowIndex);
+            for(Cell c: row) {
+                c.setItalic(bold);
+            }
+        }
+    }
+    
+    public void setHeaderAlignment(int columnIndex, int alignment) {
+        for(int i=0;i<this.headers.size();i++) {
+            if(this.headers.get(i).size()>=columnIndex) {
+                this.headers.get(i).get(columnIndex).setAlignment(alignment);
+            }
+        }
+
+    }
+ 
 }

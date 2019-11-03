@@ -663,6 +663,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package org.jlawyer.plugins.calculation;
 
+import java.awt.Color;
 import java.io.Serializable;
 import java.util.ArrayList;
 
@@ -670,88 +671,138 @@ import java.util.ArrayList;
  *
  * @author jens
  */
-public class StyledCalculationTable implements Serializable {
+public class StyledCalculationTable extends GenericCalculationTable implements Serializable {
 
-    public static final int ALIGNMENT_LEFT = 10;
-    public static final int ALIGNMENT_RIGHT = 20;
-    public static final int ALIGNMENT_CENTER = 30;
-
-    private ArrayList<ArrayList<String>> data = new ArrayList<ArrayList<String>>();
-    private ArrayList<String> columnLabels = new ArrayList<String>();
-
-    private ArrayList<Integer> columnAlignments = new ArrayList<Integer>();
+    private ArrayList<ArrayList<Cell>> data = new ArrayList<ArrayList<Cell>>();
 
     public StyledCalculationTable() {
     }
 
-    @Override
-    public String toString() {
-        return "Tabelle " + getData().length + "x" + getData()[0].length;
+    public void addHeaders(String... labels) {
+
+        ArrayList<Cell> row = new ArrayList<Cell>();
+        for (String l : labels) {
+            row.add(new HeaderCell(l));
+        }
+        data.add(row);
+
     }
 
-    /**
-     * @return the data
-     */
-    public String[][] getData() {
-
-        int rows = data.size();
-        int cols = 0;
-        if (rows > 0) {
-            cols = data.get(0).size();
+    public int addRow(ArrayList<String> values) {
+        ArrayList<Cell> row = new ArrayList<Cell>();
+        for (String v : values) {
+            row.add(new Cell(v));
         }
+        data.add(row);
+        return data.size()-1;
+    }
+    
+    public int addRow(String... values) {
 
-        String[][] array = new String[rows][cols];
+        ArrayList<Cell> row = new ArrayList<Cell>();
+        for (String v : values) {
+            row.add(new Cell(v));
+        }
+        data.add(row);
+        return data.size()-1;
+    }
 
-        for (int i = 0; i < data.size(); i++) {
-            ArrayList<String> row = data.get(i);
-            for (int j = 0; j < row.size(); j++) {
-                array[i][j] = row.get(j);
+    @Override
+    public String toString() {
+        return "Tabelle " + data.size() + "x" + data.get(0).size();
+    }
+
+    public int getRowCount() {
+        return this.data.size();
+    }
+    
+    public int getColumnCount() {
+        if (this.data.size() > 0) {
+            return this.data.get(0).size();
+        } else {
+            return 0;
+        }
+    }
+    
+    public String getValueAt(int row, int column) {
+        if(this.data.size()>row) {
+            if(this.data.get(row).size()>column) {
+                return this.data.get(row).get(column).getValue();
+            }
+        }
+        return "ungueltige Zellposition";
+    }
+    
+    public Cell getCellAt(int row, int column) {
+        if(this.data.size()>=row) {
+            if(this.data.get(row).size()>=column) {
+                return this.data.get(row).get(column);
+            }
+        }
+        return new Cell();
+    }
+    
+    public void setColumnAlignment(int columnIndex, int alignment) {
+        for(int i=0;i<this.data.size();i++) {
+            if(this.data.get(i).size()>=columnIndex) {
+                this.data.get(i).get(columnIndex).setAlignment(alignment);
             }
         }
 
-        return array;
     }
-
-    /**
-     * @param cellValues the data to set
-     */
-    public void addRow(ArrayList<String> cellValues) {
-        this.data.add(cellValues);
-    }
-
-    /**
-     * @return the columnLabels
-     */
-    public ArrayList<String> getColumnLabels() {
-        return columnLabels;
-    }
-
-    public int getAlignment(int columnIndex) {
-        if (this.columnAlignments.size() > columnIndex) {
-            return this.columnAlignments.get(columnIndex);
-        } else {
-            return ALIGNMENT_LEFT;
+    
+    public void setRowBold(int rowIndex, boolean bold) {
+        if(this.data.size()>rowIndex) {
+            ArrayList<Cell> row=this.data.get(rowIndex);
+            for(Cell c: row) {
+                c.setBold(bold);
+            }
         }
     }
-
-    public void setAlignment(int columnIndex, int alignment) {
-        while (this.columnAlignments.size() <= columnIndex) {
-            this.columnAlignments.add(ALIGNMENT_LEFT);
+    
+    public void setRowUnderline(int rowIndex, boolean underline) {
+        if(this.data.size()>rowIndex) {
+            ArrayList<Cell> row=this.data.get(rowIndex);
+            for(Cell c: row) {
+                c.setUnderline(underline);
+            }
         }
-
-        this.columnAlignments.set(columnIndex, alignment);
-
     }
-
-    public String[] getColumnLabelsAsArray() {
-        return (String[]) columnLabels.toArray(new String[0]);
+    
+    public void setRowItalic(int rowIndex, boolean bold) {
+        if(this.data.size()>rowIndex) {
+            ArrayList<Cell> row=this.data.get(rowIndex);
+            for(Cell c: row) {
+                c.setItalic(bold);
+            }
+        }
     }
-
-    /**
-     * @param columnLabels the columnLabels to set
-     */
-    public void setColumnLabels(ArrayList<String> columnLabels) {
-        this.columnLabels = columnLabels;
+    
+    public void setRowForeGround(int rowIndex, Color color) {
+        if(this.data.size()>rowIndex) {
+            ArrayList<Cell> row=this.data.get(rowIndex);
+            for(Cell c: row) {
+                c.setForeGround(color);
+            }
+        }
     }
-
+    
+    public void setRowBackGround(int rowIndex, Color color) {
+        if(this.data.size()>rowIndex) {
+            ArrayList<Cell> row=this.data.get(rowIndex);
+            for(Cell c: row) {
+                c.setBackGround(color);
+            }
+        }
+    }
+    
+    public void setRowFontSize(int rowIndex, int size) {
+        if(this.data.size()>rowIndex) {
+            ArrayList<Cell> row=this.data.get(rowIndex);
+            for(Cell c: row) {
+                c.setFontSize(size);
+            }
+        }
+    }
+    
 }

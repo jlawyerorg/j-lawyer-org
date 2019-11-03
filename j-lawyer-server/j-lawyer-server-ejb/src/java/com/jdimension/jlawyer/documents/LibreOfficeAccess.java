@@ -670,6 +670,7 @@ import java.util.Hashtable;
 import java.util.List;
 import org.apache.log4j.Logger;
 import org.jlawyer.plugins.calculation.CalculationTable;
+import org.jlawyer.plugins.calculation.Cell;
 import org.jlawyer.plugins.calculation.StyledCalculationTable;
 import org.odftoolkit.odfdom.dom.element.text.TextLineBreakElement;
 import org.odftoolkit.odfdom.dom.element.text.TextTabElement;
@@ -682,6 +683,7 @@ import org.odftoolkit.simple.style.Border;
 import org.odftoolkit.simple.style.Font;
 import org.odftoolkit.simple.style.StyleTypeDefinitions;
 import org.odftoolkit.simple.style.StyleTypeDefinitions.CellBordersType;
+import org.odftoolkit.simple.style.StyleTypeDefinitions.FontStyle;
 import org.odftoolkit.simple.style.StyleTypeDefinitions.SupportedLinearMeasure;
 import org.odftoolkit.simple.table.Table;
 import org.w3c.dom.Node;
@@ -857,50 +859,66 @@ public class LibreOfficeAccess {
                     }
                 } else if (values.get(key) instanceof StyledCalculationTable) {
                     List<Table> allTables = outputOdt.getTableList();
-                    CalculationTable tab=(CalculationTable)values.get(key);
+                    StyledCalculationTable tab=(StyledCalculationTable)values.get(key);
                     for (Table t : allTables) {
                         if (t.getColumnCount() == 1 && t.getRowCount() == 1) {
                             if (key.equals(t.getCellByPosition(0, 0).getStringValue())) {
                                 Border border = new Border(Color.RED, 1.0, SupportedLinearMeasure.PT);
-                                for (int i = 0; i < tab.getData()[0].length-1; i++) {
+                                for (int i = 0; i < tab.getColumnCount()-1; i++) {
                                     t.appendColumn();
+                                    t.getColumnByIndex(i).setUseOptimalWidth(true);
                                 }
-                                for (int i = 0; i < tab.getData().length-1; i++) {
+                                for (int i = 0; i < tab.getRowCount()-1; i++) {
                                     t.appendRow();
                                 }
-                                int firstDataRow=0;
-                                if(tab.getColumnLabels().size()>0) {
-                                    firstDataRow=1;
-                                    t.appendRow();
-                                    for(int i=0;i<tab.getColumnLabels().size();i++) {
-                                        t.getCellByPosition(i, 0).setStringValue(tab.getColumnLabels().get(i));
+                                
+                                for(int i=0;i<tab.getColumnCount();i++) {
+                                    for(int k=0;k<tab.getRowCount();k++) {
+                                        t.getCellByPosition(i, k).setStringValue(tab.getValueAt(k, i));
                                         border.setColor(Color.WHITE);
-                                        t.getCellByPosition(i, 0).setBorders(CellBordersType.NONE, border);
-                                        t.getCellByPosition(i, 0).setHorizontalAlignment(StyleTypeDefinitions.HorizontalAlignmentType.CENTER);
-                                        Font f=t.getCellByPosition(i, 0).getFont();
-                                        f.setFontStyle(StyleTypeDefinitions.FontStyle.BOLD);
-                                        t.getCellByPosition(i, 0).setFont(f);
-                                    }
-                                }
-                                for(int i=0;i<tab.getData()[0].length;i++) {
-                                    for(int k=0;k<tab.getData().length;k++) {
-                                        t.getCellByPosition(i, k+firstDataRow).setStringValue(tab.getData()[k][i]);
-                                        border.setColor(Color.WHITE);
-                                        t.getCellByPosition(i, k+firstDataRow).setBorders(CellBordersType.NONE, border);
+                                        t.getCellByPosition(i, k).setBorders(CellBordersType.NONE, border);
                                         // set font to regular
-                                        Font f=t.getCellByPosition(i, k+firstDataRow).getFont();
-                                        f.setFontStyle(StyleTypeDefinitions.FontStyle.REGULAR);
-                                        t.getCellByPosition(i, k+firstDataRow).setFont(f);
-                                        // set alignment
-                                        int alignment=tab.getAlignment(i);
-                                        if(alignment==CalculationTable.ALIGNMENT_CENTER) {
-                                            t.getCellByPosition(i, k+firstDataRow).setHorizontalAlignment(StyleTypeDefinitions.HorizontalAlignmentType.CENTER);
-                                        } else if(alignment==CalculationTable.ALIGNMENT_RIGHT) {
-                                            t.getCellByPosition(i, k+firstDataRow).setHorizontalAlignment(StyleTypeDefinitions.HorizontalAlignmentType.RIGHT);
+                                        Font f=t.getCellByPosition(i, k).getFont();
+                                        Cell c=tab.getCellAt(k, i);
+                                        if(c.isBold()) {
+                                            if(c.isItalic()) {
+                                                f.setFontStyle(StyleTypeDefinitions.FontStyle.BOLDITALIC);
+                                            } else {
+                                                f.setFontStyle(StyleTypeDefinitions.FontStyle.BOLD);
+                                            }
                                         } else {
-                                            t.getCellByPosition(i, k+firstDataRow).setHorizontalAlignment(StyleTypeDefinitions.HorizontalAlignmentType.LEFT);
+                                            if(c.isItalic()) {
+                                                f.setFontStyle(StyleTypeDefinitions.FontStyle.ITALIC);
+                                            } else {
+                                                f.setFontStyle(StyleTypeDefinitions.FontStyle.REGULAR);
+                                            }
+                                        }
+                                        if(c.isUnderline()) {
+                                            f.setTextLinePosition(StyleTypeDefinitions.TextLinePosition.UNDER);
+                                        } else {
+                                            f.setTextLinePosition(StyleTypeDefinitions.TextLinePosition.REGULAR);
+                                        }
+                                        if(c.getFontSize()>0) {
+                                            f.setSize(c.getFontSize());
+                                        }
+                                        f.setColor(new org.odftoolkit.odfdom.type.Color(c.getForeGround()));
+                                        t.getCellByPosition(i, k).setFont(f);
+                                        t.getCellByPosition(i, k).setCellBackgroundColor(new org.odftoolkit.odfdom.type.Color(c.getBackGround()));
+                                        // set alignment
+                                        Cell cell=tab.getCellAt(k, i);
+                                        int alignment=cell.getAlignment();
+                                        if(alignment==Cell.ALIGNMENT_CENTER) {
+                                            t.getCellByPosition(i, k).setHorizontalAlignment(StyleTypeDefinitions.HorizontalAlignmentType.CENTER);
+                                        } else if(alignment==Cell.ALIGNMENT_RIGHT) {
+                                            t.getCellByPosition(i, k).setHorizontalAlignment(StyleTypeDefinitions.HorizontalAlignmentType.RIGHT);
+                                        } else {
+                                            t.getCellByPosition(i, k).setHorizontalAlignment(StyleTypeDefinitions.HorizontalAlignmentType.LEFT);
                                         }
                                     }
+                                }
+                                
+                                for(int i=0;i<t.getColumnCount();i++) {
+                                    t.getColumnByIndex(i).setUseOptimalWidth(true);
                                 }
                                 
                             }
@@ -1000,6 +1018,11 @@ public class LibreOfficeAccess {
             outputOds.close();
         }
 
+    }
+    
+    private static Font newFontInstance(Font f) {
+        Font newFont=new Font(f.getFamilyName(),f.getFontStyle(),f.getSize());
+        return newFont;
     }
 
     public static java.util.List<String> getPlaceHolders(String file) throws Exception {

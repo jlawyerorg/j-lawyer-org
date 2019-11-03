@@ -770,6 +770,8 @@ import net.sf.jasperreports.view.JRViewer;
 import org.apache.log4j.Logger;
 import org.jlawyer.bea.model.Identity;
 import org.jlawyer.data.tree.GenericNode;
+import org.jlawyer.plugins.calculation.GenericCalculationTable;
+import org.jlawyer.plugins.calculation.StyledCalculationTable;
 
 /**
  *
@@ -3344,11 +3346,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     }//GEN-LAST:event_cmdSaveActionPerformed
 
-    public void newDocumentDialog(CalculationTable table) {
+    public void newDocumentDialog(GenericCalculationTable table) {
         this.newDocumentActionPerformedImpl(table);
     }
-
-    private void newDocumentActionPerformedImpl(CalculationTable table) {
+   
+    private void newDocumentActionPerformedImpl(GenericCalculationTable table) {
 
         List<AddressBean> allCl = new ArrayList<AddressBean>();;
         List<AddressBean> allOpp = new ArrayList<AddressBean>();;
@@ -3413,6 +3415,52 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 //        wiz.setSteps(steps);
 //        FrameUtils.centerDialog(wiz, EditorsRegistry.getInstance().getMainWindow());
 //        wiz.setVisible(true);        
+    }
+    
+    private void newDocumentActionPerformedImpl(StyledCalculationTable table) {
+
+        List<AddressBean> allCl = new ArrayList<AddressBean>();;
+        List<AddressBean> allOpp = new ArrayList<AddressBean>();;
+        List<AddressBean> allOppAtt = new ArrayList<AddressBean>();;
+        List<ArchiveFileAddressesBean> involved = new ArrayList<ArchiveFileAddressesBean>();
+
+        if (table == null) {
+            // not called from a plugin
+            allCl = this.pnlInvolvedParties.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_CLIENT);
+            allOpp = this.pnlInvolvedParties.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT);
+            allOppAtt = this.pnlInvolvedParties.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_OPPONENTATTORNEY);
+            involved = this.pnlInvolvedParties.getInvolvedParties();
+
+        } else {
+            // when called from a plugin, the plugin loads the case async, and the parties might not be fully loaded when calling the AddDocument dialog
+            ClientSettings settings = null;
+            List<AddressBean> addressesForCase = null;
+            //List<ArchiveFileAddressesBean> involvementForCase = null;
+            try {
+                settings = ClientSettings.getInstance();
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
+                addressesForCase = fileService.getAddressesForCase(this.dto.getId());
+                involved = fileService.getInvolvementDetailsForCase(this.dto.getId());
+                for (ArchiveFileAddressesBean aab : involved) {
+                    if (aab.getReferenceType() == ArchiveFileAddressesBean.REFERENCETYPE_CLIENT) {
+                        allCl.add(aab.getAddressKey());
+                    } else if (aab.getReferenceType() == ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT) {
+                        allOpp.add(aab.getAddressKey());
+                    } else if (aab.getReferenceType() == ArchiveFileAddressesBean.REFERENCETYPE_OPPONENTATTORNEY) {
+                        allOppAtt.add(aab.getAddressKey());
+                    }
+                }
+            } catch (Throwable t) {
+                log.error("Error loading parties", t);
+            }
+        }
+
+        AddDocumentFromTemplateDialog dlg = new AddDocumentFromTemplateDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.tblDocuments, this.dto, involved, allCl, allOpp, allOppAtt, this.tblReviewReasons, table);
+        dlg.setTitle("Dokument hinzufügen");
+        FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
+        dlg.setVisible(true);
+
     }
 
     private AddressBean getAddressById(List<AddressBean> list, String id) {

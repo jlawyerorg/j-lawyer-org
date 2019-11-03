@@ -694,6 +694,7 @@ import javax.swing.tree.TreePath;
 import org.apache.log4j.Logger;
 import org.jlawyer.data.tree.GenericNode;
 import org.jlawyer.plugins.calculation.CalculationTable;
+import org.jlawyer.plugins.calculation.GenericCalculationTable;
 
 /**
  *
@@ -710,7 +711,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog {
     private boolean initializing = true;
     private JTable tblReviewReasons = null;
     private List<ArchiveFileAddressesBean> involved=null;
-    private CalculationTable calculationTable=null;
+    private GenericCalculationTable calculationTable=null;
 
     public AddDocumentFromTemplateDialog(java.awt.Frame parent, boolean modal, JTable targetTable, ArchiveFileBean aFile, List<ArchiveFileAddressesBean> involved, List<AddressBean> allCl, List<AddressBean> allOpp, List<AddressBean> allOppAtt, JTable tblReviewReasons) {
         this(parent, modal, targetTable, aFile, involved, allCl, allOpp, allOppAtt, tblReviewReasons, null);
@@ -719,7 +720,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog {
     /**
      * Creates new form AddDocumentDialog
      */
-    public AddDocumentFromTemplateDialog(java.awt.Frame parent, boolean modal, JTable targetTable, ArchiveFileBean aFile, List<ArchiveFileAddressesBean> involved, List<AddressBean> allCl, List<AddressBean> allOpp, List<AddressBean> allOppAtt, JTable tblReviewReasons, CalculationTable calculationTable) {
+    public AddDocumentFromTemplateDialog(java.awt.Frame parent, boolean modal, JTable targetTable, ArchiveFileBean aFile, List<ArchiveFileAddressesBean> involved, List<AddressBean> allCl, List<AddressBean> allOpp, List<AddressBean> allOppAtt, JTable tblReviewReasons, GenericCalculationTable calculationTable) {
         super(parent, modal);
         this.initializing = true;
         
