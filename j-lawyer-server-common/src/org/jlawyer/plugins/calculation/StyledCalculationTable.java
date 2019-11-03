@@ -666,6 +666,7 @@ package org.jlawyer.plugins.calculation;
 import java.awt.Color;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Hashtable;
 
 /**
  *
@@ -674,8 +675,22 @@ import java.util.ArrayList;
 public class StyledCalculationTable extends GenericCalculationTable implements Serializable {
 
     private ArrayList<ArrayList<Cell>> data = new ArrayList<ArrayList<Cell>>();
-
+    private boolean lineBorder=false;
+    private Color borderColor=Color.BLACK;
+    private Hashtable<Integer,Integer> columnWidths=new Hashtable<Integer, Integer>();
+    
     public StyledCalculationTable() {
+    }
+    
+    public void setColumnWidth(int columnIndex, int milliMeter) {
+        this.columnWidths.put(columnIndex, milliMeter);
+    }
+    
+    public int getColumnWidth(int columnIndex) {
+        if(columnWidths.containsKey(columnIndex))
+            return columnWidths.get(columnIndex);
+        else
+            return -1;
     }
 
     public void addHeaders(String... labels) {
@@ -803,6 +818,84 @@ public class StyledCalculationTable extends GenericCalculationTable implements S
                 c.setFontSize(size);
             }
         }
+    }
+
+    /**
+     * @return the lineBorder
+     */
+    public boolean isLineBorder() {
+        return lineBorder;
+    }
+
+    /**
+     * @param lineBorder the lineBorder to set
+     */
+    public void setLineBorder(boolean lineBorder) {
+        this.lineBorder = lineBorder;
+    }
+
+    /**
+     * @return the borderColor
+     */
+    public Color getBorderColor() {
+        return borderColor;
+    }
+
+    /**
+     * @param borderColor the borderColor to set
+     */
+    public void setBorderColor(Color borderColor) {
+        this.borderColor = borderColor;
+    }
+    
+    public String toHtml() {
+        StringBuffer sb=new StringBuffer();
+        if(this.isLineBorder()) {
+            sb.append("<html><table border=\"1\" cellspacing=\"0\" width=\"85%\">");
+        } else {
+            sb.append("<html><table border=\"0\" width=\"85%\">");
+        }
+        
+        for(int i=0;i<this.data.size();i++) {
+            sb.append("<tr>");
+            for(int k=0;k<this.data.get(i).size();k++) {
+                Cell c=this.data.get(i).get(k);
+                String bgColor=String.format("#%02x%02x%02x", c.getBackGround().getRed(), c.getBackGround().getGreen(), c.getBackGround().getBlue());
+                if(c.getAlignment()==Cell.ALIGNMENT_CENTER) {
+                    sb.append("<td align=\"center\" bgcolor=\"").append(bgColor).append("\">");
+                } else if(c.getAlignment()==Cell.ALIGNMENT_RIGHT) {
+                    sb.append("<td align=\"right\" bgcolor=\"").append(bgColor).append("\">");
+                } else {
+                    sb.append("<td align=\"left\" bgcolor=\"").append(bgColor).append("\">");
+                }
+                sb.append("<font color=\""). append(String.format("#%02x%02x%02x", c.getForeGround().getRed(), c.getForeGround().getGreen(), c.getForeGround().getBlue())).append("\">");
+                if(c.isBold())
+                    sb.append("<b>");
+                if(c.isItalic())
+                    sb.append("<i>");
+                if(c.isUnderline())
+                    sb.append("<u>");
+                if("".equals(c.getValue().trim())) {
+                    sb.append("&nbsp;");
+                } else {
+                    sb.append(c.getValue());
+                }
+                if(c.isUnderline())
+                    sb.append("<u>");
+                if(c.isItalic())
+                    sb.append("<i>");
+                if(c.isBold())
+                    sb.append("<b>");
+                
+                
+                sb.append("</font>");
+                sb.append("</td>");
+            }
+            sb.append("</tr>");
+        }
+        
+        sb.append("</table></html>");
+        return sb.toString();
     }
     
 }

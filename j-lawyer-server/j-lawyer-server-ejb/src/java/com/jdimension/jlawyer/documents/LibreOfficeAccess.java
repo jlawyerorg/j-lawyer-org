@@ -863,10 +863,14 @@ public class LibreOfficeAccess {
                     for (Table t : allTables) {
                         if (t.getColumnCount() == 1 && t.getRowCount() == 1) {
                             if (key.equals(t.getCellByPosition(0, 0).getStringValue())) {
-                                Border border = new Border(Color.RED, 1.0, SupportedLinearMeasure.PT);
+                                Border border = new Border(Color.BLACK, 0.05, SupportedLinearMeasure.PT);
+                                border.setColor(new org.odftoolkit.odfdom.type.Color(tab.getBorderColor()));
                                 for (int i = 0; i < tab.getColumnCount()-1; i++) {
                                     t.appendColumn();
                                     t.getColumnByIndex(i).setUseOptimalWidth(true);
+                                    if(tab.getColumnWidth(i)>-1) {
+                                        t.getColumnByIndex(i).setWidth(tab.getColumnWidth(i));
+                                    }
                                 }
                                 for (int i = 0; i < tab.getRowCount()-1; i++) {
                                     t.appendRow();
@@ -875,8 +879,14 @@ public class LibreOfficeAccess {
                                 for(int i=0;i<tab.getColumnCount();i++) {
                                     for(int k=0;k<tab.getRowCount();k++) {
                                         t.getCellByPosition(i, k).setStringValue(tab.getValueAt(k, i));
-                                        border.setColor(Color.WHITE);
-                                        t.getCellByPosition(i, k).setBorders(CellBordersType.NONE, border);
+                                        if(tab.isLineBorder()) {
+                                            Border b = new Border(Color.BLACK, 0.05, SupportedLinearMeasure.PT);
+                                            b.setColor(new org.odftoolkit.odfdom.type.Color(tab.getBorderColor()));
+                                            t.getCellByPosition(i, k).setBorders(CellBordersType.ALL_FOUR, b);
+                                        } else {
+                                            t.getCellByPosition(i, k).setBorders(CellBordersType.NONE, border);
+                                        }
+                                        
                                         // set font to regular
                                         Font f=t.getCellByPosition(i, k).getFont();
                                         Cell c=tab.getCellAt(k, i);
