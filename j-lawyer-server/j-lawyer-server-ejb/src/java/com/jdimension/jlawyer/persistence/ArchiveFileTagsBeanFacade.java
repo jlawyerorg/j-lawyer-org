@@ -699,4 +699,10 @@ public class ArchiveFileTagsBeanFacade extends AbstractFacade<ArchiveFileTagsBea
         return list;
     }
     
+    @Override
+    public List<ArchiveFileTagsBean> findByTagName(String tagName) {
+        List<ArchiveFileTagsBean> list = getEntityManager().createQuery("from ArchiveFileTagsBean where tagName = ?1").setParameter(1, tagName).getResultList();
+        return list;
+    }
+    
 }

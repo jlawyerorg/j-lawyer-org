@@ -661,256 +661,32 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package org.jlawyer.plugins.calculation;
+package com.jdimension.jlawyer.client.configuration;
 
-import java.awt.Color;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Hashtable;
+import java.awt.Component;
 
 /**
  *
  * @author jens
  */
-public class StyledCalculationTable extends GenericCalculationTable implements Serializable {
+public abstract class OptionGroupRenameHandler {
+    
+    protected Component parent=null;
+    
+    public abstract void renameOptionGroup(String fromName, String toName);
 
-    private ArrayList<ArrayList<Cell>> data = new ArrayList<ArrayList<Cell>>();
-    private boolean lineBorder=false;
-    private Color borderColor=Color.BLACK;
-    private Hashtable<Integer,Integer> columnWidths=new Hashtable<Integer, Integer>();
-    private String fontFamily="";
-    
-    public StyledCalculationTable() {
-    }
-    
-    public void setColumnWidth(int columnIndex, int milliMeter) {
-        this.columnWidths.put(columnIndex, milliMeter);
-    }
-    
-    public int getColumnWidth(int columnIndex) {
-        if(columnWidths.containsKey(columnIndex))
-            return columnWidths.get(columnIndex);
-        else
-            return -1;
-    }
-
-    public void addHeaders(String... labels) {
-
-        ArrayList<Cell> row = new ArrayList<Cell>();
-        for (String l : labels) {
-            row.add(new HeaderCell(l));
-        }
-        data.add(row);
-
-    }
-
-    public int addRow(ArrayList<String> values) {
-        ArrayList<Cell> row = new ArrayList<Cell>();
-        for (String v : values) {
-            row.add(new Cell(v));
-        }
-        data.add(row);
-        return data.size()-1;
-    }
-    
-    public int addRow(String... values) {
-
-        ArrayList<Cell> row = new ArrayList<Cell>();
-        for (String v : values) {
-            row.add(new Cell(v));
-        }
-        data.add(row);
-        return data.size()-1;
-    }
-
-    @Override
-    public String toString() {
-        return "Tabelle " + data.size() + "x" + data.get(0).size();
-    }
-
-    public int getRowCount() {
-        return this.data.size();
-    }
-    
-    public int getColumnCount() {
-        if (this.data.size() > 0) {
-            return this.data.get(0).size();
-        } else {
-            return 0;
-        }
-    }
-    
-    public String getValueAt(int row, int column) {
-        if(this.data.size()>row) {
-            if(this.data.get(row).size()>column) {
-                return this.data.get(row).get(column).getValue();
-            }
-        }
-        return "ungueltige Zellposition";
-    }
-    
-    public Cell getCellAt(int row, int column) {
-        if(this.data.size()>=row) {
-            if(this.data.get(row).size()>=column) {
-                return this.data.get(row).get(column);
-            }
-        }
-        return new Cell();
-    }
-    
-    public void setColumnAlignment(int columnIndex, int alignment) {
-        for(int i=0;i<this.data.size();i++) {
-            if(this.data.get(i).size()>=columnIndex) {
-                this.data.get(i).get(columnIndex).setAlignment(alignment);
-            }
-        }
-
-    }
-    
-    public void setRowBold(int rowIndex, boolean bold) {
-        if(this.data.size()>rowIndex) {
-            ArrayList<Cell> row=this.data.get(rowIndex);
-            for(Cell c: row) {
-                c.setBold(bold);
-            }
-        }
-    }
-    
-    public void setRowUnderline(int rowIndex, boolean underline) {
-        if(this.data.size()>rowIndex) {
-            ArrayList<Cell> row=this.data.get(rowIndex);
-            for(Cell c: row) {
-                c.setUnderline(underline);
-            }
-        }
-    }
-    
-    public void setRowItalic(int rowIndex, boolean bold) {
-        if(this.data.size()>rowIndex) {
-            ArrayList<Cell> row=this.data.get(rowIndex);
-            for(Cell c: row) {
-                c.setItalic(bold);
-            }
-        }
-    }
-    
-    public void setRowForeGround(int rowIndex, Color color) {
-        if(this.data.size()>rowIndex) {
-            ArrayList<Cell> row=this.data.get(rowIndex);
-            for(Cell c: row) {
-                c.setForeGround(color);
-            }
-        }
-    }
-    
-    public void setRowBackGround(int rowIndex, Color color) {
-        if(this.data.size()>rowIndex) {
-            ArrayList<Cell> row=this.data.get(rowIndex);
-            for(Cell c: row) {
-                c.setBackGround(color);
-            }
-        }
-    }
-    
-    public void setRowFontSize(int rowIndex, int size) {
-        if(this.data.size()>rowIndex) {
-            ArrayList<Cell> row=this.data.get(rowIndex);
-            for(Cell c: row) {
-                c.setFontSize(size);
-            }
-        }
+    /**
+     * @return the parent
+     */
+    public Component getParent() {
+        return parent;
     }
 
     /**
-     * @return the lineBorder
+     * @param parent the parent to set
      */
-    public boolean isLineBorder() {
-        return lineBorder;
-    }
-
-    /**
-     * @param lineBorder the lineBorder to set
-     */
-    public void setLineBorder(boolean lineBorder) {
-        this.lineBorder = lineBorder;
-    }
-
-    /**
-     * @return the borderColor
-     */
-    public Color getBorderColor() {
-        return borderColor;
-    }
-
-    /**
-     * @param borderColor the borderColor to set
-     */
-    public void setBorderColor(Color borderColor) {
-        this.borderColor = borderColor;
-    }
-    
-    public String toHtml() {
-        StringBuffer sb=new StringBuffer();
-        if(this.isLineBorder()) {
-            sb.append("<html><table border=\"1\" cellspacing=\"0\" width=\"85%\">");
-        } else {
-            sb.append("<html><table border=\"0\" width=\"85%\">");
-        }
-        
-        for(int i=0;i<this.data.size();i++) {
-            sb.append("<tr>");
-            for(int k=0;k<this.data.get(i).size();k++) {
-                Cell c=this.data.get(i).get(k);
-                String bgColor=String.format("#%02x%02x%02x", c.getBackGround().getRed(), c.getBackGround().getGreen(), c.getBackGround().getBlue());
-                if(c.getAlignment()==Cell.ALIGNMENT_CENTER) {
-                    sb.append("<td align=\"center\" bgcolor=\"").append(bgColor).append("\">");
-                } else if(c.getAlignment()==Cell.ALIGNMENT_RIGHT) {
-                    sb.append("<td align=\"right\" bgcolor=\"").append(bgColor).append("\">");
-                } else {
-                    sb.append("<td align=\"left\" bgcolor=\"").append(bgColor).append("\">");
-                }
-                sb.append("<font color=\""). append(String.format("#%02x%02x%02x", c.getForeGround().getRed(), c.getForeGround().getGreen(), c.getForeGround().getBlue())).append("\">");
-                if(c.isBold())
-                    sb.append("<b>");
-                if(c.isItalic())
-                    sb.append("<i>");
-                if(c.isUnderline())
-                    sb.append("<u>");
-                if("".equals(c.getValue().trim())) {
-                    sb.append("&nbsp;");
-                } else {
-                    sb.append(c.getValue());
-                }
-                if(c.isUnderline())
-                    sb.append("<u>");
-                if(c.isItalic())
-                    sb.append("<i>");
-                if(c.isBold())
-                    sb.append("<b>");
-                
-                
-                sb.append("</font>");
-                sb.append("</td>");
-            }
-            sb.append("</tr>");
-        }
-        
-        sb.append("</table></html>");
-        return sb.toString();
-    }
-
-    /**
-     * @return the fontFamily
-     */
-    public String getFontFamily() {
-        return fontFamily;
-    }
-
-    /**
-     * @param fontFamily the fontFamily to set
-     */
-    public void setFontFamily(String fontFamily) {
-        this.fontFamily = fontFamily;
+    public void setParent(Component parent) {
+        this.parent = parent;
     }
     
 }

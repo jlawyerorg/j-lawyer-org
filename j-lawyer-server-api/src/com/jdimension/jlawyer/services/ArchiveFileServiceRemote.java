@@ -793,4 +793,8 @@ public interface ArchiveFileServiceRemote {
 
     Hashtable<String, ArrayList<String>> getDocumentTagsForCase(String caseId);
 
+    void renameTag(String fromName, String toName) throws Exception;
+
+    void renameDocumentTag(String fromName, String toName) throws Exception;
+
 }

@@ -1904,7 +1904,8 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             boolean currentlyAdmin = locator.lookupSecurityServiceRemote().isAdmin();
             if (currentlyAdmin) {
-                OptionGroupConfigurationDialog dlg = new OptionGroupConfigurationDialog(this, true);
+                OptionGroupCaseTagRename ren=new OptionGroupCaseTagRename();
+                OptionGroupConfigurationDialog dlg = new OptionGroupConfigurationDialog(this, ren, true);
                 dlg.setTitle(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("dialog.title.casetags"));
                 dlg.setOptionGroup(OptionConstants.OPTIONGROUP_ARCHIVEFILETAGS);
                 FrameUtils.centerDialog(dlg, this);
@@ -1964,7 +1965,8 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             boolean currentlyAdmin = locator.lookupSecurityServiceRemote().isAdmin();
             if (currentlyAdmin) {
-                OptionGroupConfigurationDialog dlg = new OptionGroupConfigurationDialog(this, true);
+                OptionGroupAddressTagRename ren=new OptionGroupAddressTagRename();
+                OptionGroupConfigurationDialog dlg = new OptionGroupConfigurationDialog(this, ren, true);
                 dlg.setTitle(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("dialog.title.addresstags"));
                 dlg.setOptionGroup(OptionConstants.OPTIONGROUP_ADDRESSTAGS);
                 FrameUtils.centerDialog(dlg, this);
@@ -2123,7 +2125,8 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             boolean currentlyAdmin = locator.lookupSecurityServiceRemote().isAdmin();
             if (currentlyAdmin) {
-                OptionGroupConfigurationDialog dlg = new OptionGroupConfigurationDialog(this, true);
+                OptionGroupCaseDocumentTagRename ren= new OptionGroupCaseDocumentTagRename();
+                OptionGroupConfigurationDialog dlg = new OptionGroupConfigurationDialog(this, ren, true);
                 dlg.setTitle("Dokumenten-Etiketten");
                 dlg.setOptionGroup(OptionConstants.OPTIONGROUP_DOCUMENTTAGS);
                 FrameUtils.centerDialog(dlg, this);

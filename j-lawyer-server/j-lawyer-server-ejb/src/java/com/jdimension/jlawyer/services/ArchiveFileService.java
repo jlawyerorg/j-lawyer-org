@@ -2005,12 +2005,12 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 tag.setId(tagId);
                 tag.setArchiveFileKey(aFile);
                 this.archiveFileTagsFacade.create(tag);
-                historyText = "Akten-Tag gesetzt: " + tag.getTagName();
+                historyText = "Akten-Etikett gesetzt: " + tag.getTagName();
             }
         } else if (check.size() > 0) {
             ArchiveFileTagsBean remove = (ArchiveFileTagsBean) check.get(0);
             this.archiveFileTagsFacade.remove(remove);
-            historyText = "Akten-Tag entfernt: " + tag.getTagName();
+            historyText = "Akten-Etikett entfernt: " + tag.getTagName();
         }
 
         ArchiveFileHistoryBean newHistEntry = new ArchiveFileHistoryBean();
@@ -2040,12 +2040,12 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 tag.setId(tagId);
                 tag.setArchiveFileKey(aFile);
                 this.documentTagsFacade.create(tag);
-                historyText = "Dokument-Tag gesetzt an " + aFile.getName() + ": " + tag.getTagName();
+                historyText = "Dokument-Etikett gesetzt an " + aFile.getName() + ": " + tag.getTagName();
             }
         } else if (check.size() > 0) {
             DocumentTagsBean remove = (DocumentTagsBean) check.get(0);
             this.documentTagsFacade.remove(remove);
-            historyText = "Dokument-Tag entfernt von " + aFile.getName() + ": " + tag.getTagName();
+            historyText = "Dokument-Etikett entfernt von " + aFile.getName() + ": " + tag.getTagName();
         }
 
         ArchiveFileHistoryBean newHistEntry = new ArchiveFileHistoryBean();
@@ -2097,7 +2097,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             }
         } catch (SQLException sqle) {
             log.error("Error finding tags in use", sqle);
-            throw new EJBException("Aktuelle genutzte Tags konnten nicht gefunden werden.", sqle);
+            throw new EJBException("Aktuelle genutzte Etiketten konnten nicht gefunden werden.", sqle);
         } finally {
             try {
                 rs.close();
@@ -2139,7 +2139,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             }
         } catch (SQLException sqle) {
             log.error("Error finding tags in use", sqle);
-            throw new EJBException("Aktuelle genutzte Tags konnten nicht gefunden werden.", sqle);
+            throw new EJBException("Aktuelle genutzte Etiketten konnten nicht gefunden werden.", sqle);
         } finally {
             try {
                 rs.close();
@@ -3490,6 +3490,48 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         }
 
         return returnList;
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public void renameTag(String fromName, String toName) throws Exception {
+        
+        StringGenerator idGen = new StringGenerator();
+
+        List<ArchiveFileTagsBean> tags = this.archiveFileTagsFacade.findByTagName(fromName);
+        for (ArchiveFileTagsBean t : tags) {
+            t.setTagName(toName);
+            this.archiveFileTagsFacade.edit(t);
+
+            ArchiveFileHistoryBean newHistEntry = new ArchiveFileHistoryBean();
+            newHistEntry.setId(idGen.getID().toString());
+            newHistEntry.setArchiveFileKey(t.getArchiveFileKey());
+            newHistEntry.setChangeDate(new Date());
+            newHistEntry.setChangeDescription("Etikett geändert: " + fromName + " -> " + toName);
+            newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
+            this.archiveFileHistoryFacade.create(newHistEntry);
+        }
+        
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public void renameDocumentTag(String fromName, String toName) throws Exception {
+        StringGenerator idGen = new StringGenerator();
+
+        List<DocumentTagsBean> tags = this.documentTagsFacade.findByTagName(fromName);
+        for (DocumentTagsBean t : tags) {
+            t.setTagName(toName);
+            this.documentTagsFacade.edit(t);
+
+            ArchiveFileHistoryBean newHistEntry = new ArchiveFileHistoryBean();
+            newHistEntry.setId(idGen.getID().toString());
+            newHistEntry.setArchiveFileKey(t.getDocumentKey().getArchiveFileKey());
+            newHistEntry.setChangeDate(new Date());
+            newHistEntry.setChangeDescription("Etikett für Dokument " + t.getDocumentKey().getName() + " geändert: " + fromName + " -> " + toName);
+            newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
+            this.archiveFileHistoryFacade.create(newHistEntry);
+        }
     }
 
 }

@@ -703,5 +703,7 @@ public interface AddressServiceRemote {
     AddressBean[] searchEnhanced(String query, String[] tagName);
 
     Hashtable<String,ArrayList<String>> searchTagsEnhanced(String query, String[] tagName);
+
+    void renameTag(String fromName, String toName) throws Exception;
     
 }

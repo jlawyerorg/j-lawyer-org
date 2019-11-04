@@ -866,14 +866,25 @@ public class LibreOfficeAccess {
                                 Border border = new Border(Color.BLACK, 0.05, SupportedLinearMeasure.PT);
                                 border.setColor(new org.odftoolkit.odfdom.type.Color(tab.getBorderColor()));
                                 for (int i = 0; i < tab.getColumnCount()-1; i++) {
+                                //for (int i = 0; i < tab.getColumnCount(); i++) {
                                     t.appendColumn();
-                                    t.getColumnByIndex(i).setUseOptimalWidth(true);
-                                    if(tab.getColumnWidth(i)>-1) {
-                                        t.getColumnByIndex(i).setWidth(tab.getColumnWidth(i));
-                                    }
+                                    //t.getColumnByIndex(i).setUseOptimalWidth(true);
+//                                    if(tab.getColumnWidth(i)>-1) {
+//                                        t.getColumnByIndex(i).setWidth(tab.getColumnWidth(i));
+//                                    }
                                 }
                                 for (int i = 0; i < tab.getRowCount()-1; i++) {
+                                //for (int i = 0; i < tab.getRowCount(); i++) {
                                     t.appendRow();
+                                }
+                                
+                                
+                                for (int i = 0; i < tab.getColumnCount(); i++) {
+                                    if(tab.getColumnWidth(i)>-1) {
+                                        t.getColumnByIndex(i).setWidth(tab.getColumnWidth(i));
+                                    } else {
+                                        t.getColumnByIndex(i).setUseOptimalWidth(true);
+                                    }
                                 }
                                 
                                 for(int i=0;i<tab.getColumnCount();i++) {
@@ -890,6 +901,9 @@ public class LibreOfficeAccess {
                                         // set font to regular
                                         Font f=t.getCellByPosition(i, k).getFont();
                                         Cell c=tab.getCellAt(k, i);
+                                        if(!("".equals(tab.getFontFamily()))) {
+                                            f.setFamilyName(tab.getFontFamily());
+                                        }
                                         if(c.isBold()) {
                                             if(c.isItalic()) {
                                                 f.setFontStyle(StyleTypeDefinitions.FontStyle.BOLDITALIC);
