@@ -1015,6 +1015,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                     this.documentTagPanel.add(tb);
                 }
                 this.documentTagPanel.revalidate();
+                this.documentTagPanel.repaint();
             } else {
                 this.documentTagPanel.removeAll();
                 this.documentTagPanel.revalidate();
