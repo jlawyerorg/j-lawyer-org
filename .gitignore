@@ -31,3 +31,5 @@
 /j-lawyer-server/j-lawyer-server-war/build/
 /j-lawyer-client/dist/
 /mybuild.sh
+/j-lawyer-server/j-lawyer-server-ejb/test/data/template-run.docx
+/j-lawyer-server/j-lawyer-server-ejb/test/data/textfield-run.docx

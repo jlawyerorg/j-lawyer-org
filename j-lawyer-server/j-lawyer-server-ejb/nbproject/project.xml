@@ -37,7 +37,22 @@
             <included-library dirs="200">file.reference.simple-odf-0.8.2-incubating.jar</included-library>
             <included-library dirs="200">file.reference.xslt-runner-1.2.4-incubating.jar</included-library>
             <included-library dirs="200">file.reference.xslt-runner-task-1.2.4-incubating.jar</included-library>
-            <included-library dirs="200">file.reference.tika-app-1.5.jar</included-library>
+            <included-library dirs="200">file.reference.activation-1.1.1.jar</included-library>
+            <included-library dirs="200">file.reference.tika-app-1.22.jar</included-library>
+            <included-library dirs="200">file.reference.commons-codec-1.13.jar</included-library>
+            <included-library dirs="200">file.reference.commons-collections4-4.4.jar</included-library>
+            <included-library dirs="200">file.reference.commons-compress-1.19.jar</included-library>
+            <included-library dirs="200">file.reference.commons-math3-3.6.1.jar</included-library>
+            <included-library dirs="200">file.reference.jaxb-api-2.3.1.jar</included-library>
+            <included-library dirs="200">file.reference.jaxb-core-2.3.0.1.jar</included-library>
+            <included-library dirs="200">file.reference.jaxb-impl-2.3.2.jar</included-library>
+            <included-library dirs="200">file.reference.poi-4.1.1.jar</included-library>
+            <included-library dirs="200">file.reference.poi-excelant-4.1.1.jar</included-library>
+            <included-library dirs="200">file.reference.poi-ooxml-4.1.1.jar</included-library>
+            <included-library dirs="200">file.reference.poi-ooxml-schemas-4.1.1.jar</included-library>
+            <included-library dirs="200">file.reference.poi-scratchpad-4.1.1.jar</included-library>
+            <included-library dirs="200">file.reference.curvesapi-1.06.jar</included-library>
+            <included-library dirs="200">file.reference.xmlbeans-3.1.0.jar</included-library>
             <source-roots>
                 <root id="src.dir"/>
             </source-roots>
