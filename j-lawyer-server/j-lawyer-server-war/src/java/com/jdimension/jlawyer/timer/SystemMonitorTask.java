@@ -1084,7 +1084,7 @@ public class SystemMonitorTask extends java.util.TimerTask {
                 }
             }
 
-            msg.setFrom(new InternetAddress(smtpUser, "j-lawyer Server"));
+            msg.setFrom(new InternetAddress(smtpUser, senderName));
 
             msg.setRecipients(javax.mail.Message.RecipientType.TO, smtpTo);
             msg.setSubject(subject);
