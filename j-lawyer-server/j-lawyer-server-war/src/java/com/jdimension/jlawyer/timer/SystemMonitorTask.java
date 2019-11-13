@@ -738,6 +738,19 @@ public class SystemMonitorTask extends java.util.TimerTask {
             this.memWarnLevel = getLimit(settings, "jlawyer.server.monitor.memwarn", this.memWarnLevel);
             this.vmErrorLevel = getLimit(settings, "jlawyer.server.monitor.vmerror", this.vmErrorLevel);
             this.vmWarnLevel = getLimit(settings, "jlawyer.server.monitor.vmwarn", this.vmWarnLevel);
+            String vmIssuesInSequenceString = "0";
+            int vmIssuesInSequence = 0;
+          ServerSettingsBean vmSeq = settings.find("jlawyer.server.monitor.vm.issuessequence");
+            if (vmSeq != null) {
+                try {
+                    vmIssuesInSequenceString = vmSeq.getSettingValue();
+                    if (vmIssuesInSequenceString != null) {
+                        vmIssuesInSequence = Integer.parseInt(vmIssuesInSequenceString);
+                    }
+                } catch (Throwable t) {
+                    log.error("Value jlawyer.server.monitor.vm.issuessequence is not a valid integer: " + vmIssuesInSequenceString);
+                }
+            }
 
             boolean cpuEnabled = this.isEnabled(settings, "jlawyer.server.monitor.enabled.cpu");
             boolean ramEnabled = this.isEnabled(settings, "jlawyer.server.monitor.enabled.ram");
@@ -786,12 +799,31 @@ public class SystemMonitorTask extends java.util.TimerTask {
 
             if (javaEnabled) {
                 int vm = this.getVMMemStatusLevel();
-                if (vm > aggregate) {
+                if (vm > MonitoringConstants.LEVEL_NORMAL) {
+                    // in case of warning or error, increase the issues sequence
+                    vmIssuesInSequence = vmIssuesInSequence + 1;
+                } else {
+                    // in case of normal, reset issues sequence to 0
+                    vmIssuesInSequence = 0;
+                    vm = MonitoringConstants.LEVEL_NORMAL;
+                }
+                ServerSettingsBean st = settings.find("jlawyer.server.monitor.vm.issuessequence");
+                if (st == null) {
+                    // first status ever
+                    ServerSettingsBean sb = new ServerSettingsBean("jlawyer.server.monitor.vm.issuessequence");
+                    sb.setSettingValue(""+vmIssuesInSequence);
+                    settings.create(sb);
+                } else if (!(""+vmIssuesInSequence).equals(st.getSettingValue())) {
+                    st.setSettingValue(""+vmIssuesInSequence);
+                    settings.edit(st);
+                }
+                if (vm > aggregate && vmIssuesInSequence >= 3) {
+                    // vm is in warning or error state, and has been in a sequence of three checks
                     aggregate = vm;
                     status = this.getStatusString(aggregate, "VM-Speicher", null);
-//                mailBody.append(status).append("\r\n");
+
                 }
-                if (vm > MonitoringConstants.LEVEL_NORMAL) {
+                if (vm > MonitoringConstants.LEVEL_NORMAL && vmIssuesInSequence >= 3) {
                     mailBody.append(this.getStatusString(vm, "VM-Speicher", "Ggf. den j-lawyer.org Serverdienst durchstarten (stoppen und neu starten).")).append("\r\n");
                 }
             }
@@ -997,7 +1029,7 @@ public class SystemMonitorTask extends java.util.TimerTask {
             sb.append("Warn");
         }
         sb.append("-Limit erreicht.");
-        if(solutionHint!=null) {
+        if (solutionHint != null) {
             sb.append(" \r\n\r\n");
             sb.append(solutionHint);
         }
