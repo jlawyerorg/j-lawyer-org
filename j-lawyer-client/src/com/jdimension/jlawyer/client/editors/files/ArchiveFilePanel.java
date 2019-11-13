@@ -4507,6 +4507,17 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                     JOptionPane.showMessageDialog(this, "Dateiname darf nicht leer sein.", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
                     return;
                 }
+                
+                boolean documentExists=remote.doesDocumentExist(this.dto.getId(), newName);
+                while(documentExists) {
+                    
+                    newName = FileUtils.getNewFileName(doc.getName(), false, new Date(), this, "neuer Name für PDF-Dokument");
+                    if(newName==null || "".equals(newName)) {
+                        return;
+                    }
+                    documentExists=remote.doesDocumentExist(this.dto.getId(), newName);
+                    
+                }
 
                 FileConverter conv = FileConverter.getInstance();
                 String tempPath = FileUtils.createTempFile(doc.getName(), content);

@@ -3342,6 +3342,23 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
     @Override
     @RolesAllowed({"loginRole"})
+    public boolean doesDocumentExist(String caseId, String documentName) {
+        ArchiveFileBean aFile = this.archiveFileFacade.find(caseId);
+
+        List resultList = this.archiveFileDocumentsFacade.findByArchiveFileKey(aFile);
+        for (Object d : resultList) {
+            if (d instanceof ArchiveFileDocumentsBean) {
+                ArchiveFileDocumentsBean doc = (ArchiveFileDocumentsBean) d;
+                if (doc.getName().equalsIgnoreCase(documentName)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+    
+    @Override
+    @RolesAllowed({"loginRole"})
     public boolean doesDocumentExist(String id) {
         ArchiveFileDocumentsBean db = this.archiveFileDocumentsFacade.find(id);
         if (db == null) {

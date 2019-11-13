@@ -787,6 +787,8 @@ public interface ArchiveFileServiceRemote {
 
     boolean udpateFileNumber(String from, String to) throws Exception;
 
+    boolean doesDocumentExist(String caseId, String documentName);
+    
     boolean doesDocumentExist(String id);
 
     List<ArchiveFileDocumentsBean> getTaggedDocuments(java.lang.String[] docTagName, int limit);
