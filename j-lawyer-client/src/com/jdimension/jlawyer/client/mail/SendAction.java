@@ -750,13 +750,23 @@ public class SendAction extends ProgressableAction {
             protocol = "smtps";
             props.put("mail.smtp.ssl.enable", "true");
         }
+        
+        if(cu.getEmailOutPort()!=null && !("".equalsIgnoreCase(cu.getEmailOutPort()))) {
+            try {
+                int testInt=Integer.parseInt(cu.getEmailOutPort());
+                props.put("mail.smtp.port", cu.getEmailOutPort());
+                props.put("mail.smtps.port", cu.getEmailOutPort());
+            } catch (Throwable t) {
+                log.error("Invalid SMTP port: " + cu.getEmailOutPort());
+            }
+        }
 
         props.put("mail.smtp.host", cu.getEmailOutServer());
-        //props.put("mail.smtp.port", "25");
+        //props.put("mail.smtp.port", "587");
         props.put("mail.smtp.user", cu.getEmailOutUser());
         props.put("mail.smtp.auth", true);
         props.put("mail.smtps.host", cu.getEmailOutServer());
-        //props.put("mail.smtps.port", "25");
+        //props.put("mail.smtps.port", "587");
         if (cu.isEmailStartTls()) {
             props.put("mail.smtp.starttls.enable", "true");
         }

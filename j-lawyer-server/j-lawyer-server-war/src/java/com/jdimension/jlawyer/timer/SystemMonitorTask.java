@@ -1047,6 +1047,7 @@ public class SystemMonitorTask extends java.util.TimerTask {
         }
 
         ServerSettingsBean smtpHostS = settings.find("jlawyer.server.monitor.smtpserver");
+        ServerSettingsBean smtpHostP = settings.find("jlawyer.server.monitor.smtpport");
         ServerSettingsBean smtpUserS = settings.find("jlawyer.server.monitor.smtpuser");
         ServerSettingsBean smtpSenderName = settings.find("jlawyer.server.monitor.smtpsendername");
         ServerSettingsBean smtpPwdS = settings.find("jlawyer.server.monitor.smtppwd");
@@ -1079,6 +1080,19 @@ public class SystemMonitorTask extends java.util.TimerTask {
         Properties props = new Properties();
         if ("true".equalsIgnoreCase(smtpSsl)) {
             props.put("mail.smtp.ssl.enable", "true");
+        }
+        
+        if (smtpHostP != null) {
+            String p=smtpHostP.getSettingValue();
+            if (p != null && !("".equalsIgnoreCase(p))) {
+                try {
+                    int testInt = Integer.parseInt(p);
+                    props.put("mail.smtp.port", p);
+                    props.put("mail.smtps.port", p);
+                } catch (Throwable t) {
+                    log.error("Invalid SMTP port: " + p);
+                }
+            }
         }
 
         props.put("mail.smtp.host", smtpHost);

@@ -1243,6 +1243,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         }
 
         ServerSettingsBean smtpHostS = this.settingsFacade.find("jlawyer.server.monitor.smtpserver");
+        ServerSettingsBean smtpHostP = this.settingsFacade.find("jlawyer.server.monitor.smtpport");
         ServerSettingsBean smtpUserS = this.settingsFacade.find("jlawyer.server.monitor.smtpuser");
         ServerSettingsBean smtpSenderName = this.settingsFacade.find("jlawyer.server.monitor.smtpsendername");
         ServerSettingsBean smtpPwdS = this.settingsFacade.find("jlawyer.server.monitor.smtppwd");
@@ -1272,7 +1273,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         if (smtpSsl == null) {
             smtpSsl = "false";
         }
-        
+
         String smtpStartTls = "false";
         if (smtpStartTlsS != null) {
             smtpStartTls = smtpStartTlsS.getSettingValue();
@@ -1291,11 +1292,24 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         if ("true".equalsIgnoreCase(smtpSsl)) {
             props.put("mail.smtp.ssl.enable", "true");
         }
-        
+
         if ("true".equalsIgnoreCase(smtpStartTls)) {
             props.put("mail.smtp.starttls.enable", "true");
         }
-        
+
+        if (smtpHostP != null) {
+            String p=smtpHostP.getSettingValue();
+            if (p != null && !("".equalsIgnoreCase(p))) {
+                try {
+                    int testInt = Integer.parseInt(p);
+                    props.put("mail.smtp.port", p);
+                    props.put("mail.smtps.port", p);
+                } catch (Throwable t) {
+                    log.error("Invalid SMTP port: " + p);
+                }
+            }
+        }
+
         props.put("mail.smtp.host", smtpHost);
         props.put("mail.smtp.user", smtpUser);
         props.put("mail.smtp.auth", true);

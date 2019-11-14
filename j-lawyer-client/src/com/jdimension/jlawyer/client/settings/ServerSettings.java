@@ -749,6 +749,7 @@ public class ServerSettings {
     public static final String SERVERCONF_MONITOR_VMERROR="jlawyer.server.monitor.vmerror";
     public static final String SERVERCONF_MONITOR_NOTIFY="jlawyer.server.monitor.notify";
     public static final String SERVERCONF_MONITOR_SMTPSERVER="jlawyer.server.monitor.smtpserver";
+    public static final String SERVERCONF_MONITOR_SMTPPORT="jlawyer.server.monitor.smtpport";
     public static final String SERVERCONF_MONITOR_SMTPUSER="jlawyer.server.monitor.smtpuser";
     public static final String SERVERCONF_MONITOR_SMTPPASSWORD="jlawyer.server.monitor.smtppwd";
     public static final String SERVERCONF_MONITOR_SMTPSENDERNAME="jlawyer.server.monitor.smtpsendername";
