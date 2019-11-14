@@ -710,8 +710,11 @@ public class SendBeaMessageAction extends ProgressableAction {
     private String fromSafeId = "";
     private ArchiveFileBean archiveFile = null;
     private String documentTag = null;
+    
+    private String azSender=null;
+    private String azRecipient=null;
 
-    public SendBeaMessageAction(ProgressIndicator i, JDialog cleanAfter, String fromSafeId, ArrayList<String> attachments, AppUserBean cu, boolean readReceipt, BeaListItem authority, Enumeration to, String subject, String body, String documentTag) {
+    public SendBeaMessageAction(ProgressIndicator i, JDialog cleanAfter, String fromSafeId, ArrayList<String> attachments, AppUserBean cu, boolean readReceipt, BeaListItem authority, Enumeration to, String subject, String body, String documentTag, String azSender, String azRecipient) {
         super(i, false, cleanAfter);
         this.attachments = attachments;
         this.cu = cu;
@@ -723,10 +726,12 @@ public class SendBeaMessageAction extends ProgressableAction {
         this.documentTag = documentTag;
         this.readReceipt=readReceipt;
         this.authority=authority;
+        this.azSender=azSender;
+        this.azRecipient=azRecipient;
     }
 
-    public SendBeaMessageAction(ProgressIndicator i, JDialog cleanAfter, String fromSafeId, ArrayList<String> attachments, AppUserBean cu, boolean readReceipt, BeaListItem authority, Enumeration to, String subject, String body, ArchiveFileBean af, String documentTag) {
-        this(i, cleanAfter, fromSafeId, attachments, cu, readReceipt, authority, to, subject, body, documentTag);
+    public SendBeaMessageAction(ProgressIndicator i, JDialog cleanAfter, String fromSafeId, ArrayList<String> attachments, AppUserBean cu, boolean readReceipt, BeaListItem authority, Enumeration to, String subject, String body, ArchiveFileBean af, String documentTag, String azSender, String azRecipient) {
+        this(i, cleanAfter, fromSafeId, attachments, cu, readReceipt, authority, to, subject, body, documentTag, azSender, azRecipient);
         this.archiveFile = af;
     }
 
@@ -754,6 +759,11 @@ public class SendBeaMessageAction extends ProgressableAction {
 
             msg.setSubject(subject);
             msg.setBody(body);
+            if(this.azSender!=null && !("".equals(this.azSender)))
+            msg.setReferenceNumber(this.azSender);
+            
+            if(this.azRecipient!=null && !("".equals(this.azRecipient)))
+            msg.setReferenceJustice(this.azRecipient);
 
             if (this.archiveFile != null) {
                 msg.setReferenceNumber(this.archiveFile.getFileNumber());

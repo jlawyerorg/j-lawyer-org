@@ -1828,6 +1828,12 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
         org.jlawyer.bea.model.MessageHeader mh = (org.jlawyer.bea.model.MessageHeader) this.tblMails.getValueAt(selected[0], 3);
         try {
             Message m = BeaAccess.getInstance().getMessage(mh.getId(), BeaAccess.getInstance().getLoggedInSafeId());
+
+            String azSender = m.getReferenceNumber();
+            String azRecipient = m.getReferenceJustice();
+            dlg.setAzRecipient(azSender);
+            dlg.setAzSender(azRecipient);
+
             String senderSafeId = m.getSenderSafeId();
             BeaAccess bea = BeaAccess.getInstance();
             Identity sender = bea.getIdentity(senderSafeId);
@@ -1931,6 +1937,11 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
             Message m = BeaAccess.getInstance().getMessage(mh.getId(), BeaAccess.getInstance().getLoggedInSafeId());
             String fromSafeId = m.getSenderSafeId();
 
+            String azSender = m.getReferenceNumber();
+            String azRecipient = m.getReferenceJustice();
+            dlg.setAzRecipient(azRecipient);
+            dlg.setAzSender(azSender);
+
             String subject = m.getSubject();
             if (subject == null) {
                 subject = "";
@@ -1963,6 +1974,11 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                 BeaAccess bea = BeaAccess.getInstance();
                 m = bea.getMessage(mh.getId(), bea.getLoggedInSafeId());
                 ArrayList<Recipient> to = m.getRecipients();
+
+                String azSender = m.getReferenceNumber();
+                String azRecipient = m.getReferenceJustice();
+                dlg.setAzRecipient(azSender);
+                dlg.setAzSender(azRecipient);
 
                 for (Recipient r : to) {
                     dlg.addTo(bea.getIdentity(r.getSafeId()));
@@ -2246,7 +2262,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                                 if (aFile1.getArchivedBoolean()) {
                                     // both archived
                                     // sort by changed date
-                                    return new FileNumberComparator().compare(aFile1, aFile2)*-1;
+                                    return new FileNumberComparator().compare(aFile1, aFile2) * -1;
                                 } else {
                                     // only 2 is archived
                                     return -1;
@@ -2257,7 +2273,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                             } else {
                                 // both are non-archived
                                 // sort by changed date
-                                return new FileNumberComparator().compare(aFile1, aFile2)*-1;
+                                return new FileNumberComparator().compare(aFile1, aFile2) * -1;
                             }
 
                         }
@@ -2695,26 +2711,26 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                     ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Absender-Postfach für eEB kann nicht ermittelt werden.", "Fehler");
                     return false;
                 }
-                
-                for(PostBox inbox : inboxes) {
+
+                for (PostBox inbox : inboxes) {
                     // prevent sendingn eEBs for SENT messages (where i am the recipient)
-                    if(mh.getSender()!=null) {
-                        
-                        String senderName="";
+                    if (mh.getSender() != null) {
+
+                        String senderName = "";
                         try {
-                            Identity senderIdent=BeaAccess.getInstance().getIdentity(inbox.getSafeId());
-                            senderName=senderIdent.getUserName();
+                            Identity senderIdent = BeaAccess.getInstance().getIdentity(inbox.getSafeId());
+                            senderName = senderIdent.getUserName();
                         } catch (Throwable t) {
                             log.error(t);
                         }
-                        
-                        if(mh.getSender().equals(inbox.getSafeId()) || mh.getSender().equals(senderName)) {
+
+                        if (mh.getSender().equals(inbox.getSafeId()) || mh.getSender().equals(senderName)) {
                             ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Ein eEB kann nicht für selbst verschickte Nachrichten abgegeben werden.", "Fehler");
                             return false;
                         }
                     }
                 }
-                
+
                 JTextField hiddenField = new JTextField();
                 MultiCalDialog dlg = new MultiCalDialog(hiddenField, EditorsRegistry.getInstance().getMainWindow(), true);
                 Calendar c = Calendar.getInstance();
@@ -2735,7 +2751,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                     JOptionPane.showMessageDialog(this, "Abgabedatum ungültig", "eEB abgeben", JOptionPane.WARNING_MESSAGE);
                     return false;
                 }
-                
+
                 Message m = BeaAccess.getInstance().getMessage(mh.getId(), BeaAccess.getInstance().getLoggedInSafeId());
                 ArrayList<String> recipients = new ArrayList<String>();
                 recipients.add(m.getSenderSafeId());
@@ -2778,26 +2794,26 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                     ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Absender-Postfach für eEB kann nicht ermittelt werden.", "Fehler");
                     return false;
                 }
-                
-                for(PostBox inbox : inboxes) {
+
+                for (PostBox inbox : inboxes) {
                     // prevent sendingn eEBs for SENT messages (where i am the recipient)
-                    if(mh.getSender()!=null) {
-                        
-                        String senderName="";
+                    if (mh.getSender() != null) {
+
+                        String senderName = "";
                         try {
-                            Identity senderIdent=BeaAccess.getInstance().getIdentity(inbox.getSafeId());
-                            senderName=senderIdent.getUserName();
+                            Identity senderIdent = BeaAccess.getInstance().getIdentity(inbox.getSafeId());
+                            senderName = senderIdent.getUserName();
                         } catch (Throwable t) {
                             log.error(t);
                         }
-                        
-                        if(mh.getSender().equals(inbox.getSafeId()) || mh.getSender().equals(senderName)) {
+
+                        if (mh.getSender().equals(inbox.getSafeId()) || mh.getSender().equals(senderName)) {
                             ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Ein eEB kann nicht für selbst verschickte Nachrichten verweigert werden.", "Fehler");
                             return false;
                         }
                     }
                 }
-                
+
                 String comment = "";
                 String code = EebLists.getDefaultRejectionReason().getCode();
                 EebRejectDialog dlg = new EebRejectDialog(EditorsRegistry.getInstance().getMainWindow(), true);

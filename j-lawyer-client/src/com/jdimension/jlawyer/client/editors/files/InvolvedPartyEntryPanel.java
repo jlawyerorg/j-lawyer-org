@@ -1093,6 +1093,7 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
                 dlg.addAllToClient(this.container.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_CLIENT));
                 dlg.addAllToOpponent(this.container.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT));
                 dlg.addAllToOpponentAttorney(this.container.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_OPPONENTATTORNEY));
+                dlg.setAzRecipient(this.txtReference.getText());
                 FrameUtils.centerDialog(dlg, null);
                 dlg.setVisible(true);
             }
