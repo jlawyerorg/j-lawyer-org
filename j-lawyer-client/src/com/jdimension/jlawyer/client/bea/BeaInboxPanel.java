@@ -1030,6 +1030,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
         mnuMarkUnread = new javax.swing.JMenuItem();
         mnuSearchSave = new javax.swing.JMenuItem();
         mnuSearchSaveNoAttachments = new javax.swing.JMenuItem();
+        mnuSearchSaveOnlyAttachments = new javax.swing.JMenuItem();
         mnuRestoreFromTrash = new javax.swing.JMenuItem();
         jMenuItem1 = new javax.swing.JMenuItem();
         jLabel18 = new javax.swing.JLabel();
@@ -1122,6 +1123,15 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
             }
         });
         popEmailList.add(mnuSearchSaveNoAttachments);
+
+        mnuSearchSaveOnlyAttachments.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/find.png"))); // NOI18N
+        mnuSearchSaveOnlyAttachments.setText("in Akte speichern (nur Anhänge)...");
+        mnuSearchSaveOnlyAttachments.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuSearchSaveOnlyAttachmentsActionPerformed(evt);
+            }
+        });
+        popEmailList.add(mnuSearchSaveOnlyAttachments);
 
         mnuRestoreFromTrash.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/undo.png"))); // NOI18N
         mnuRestoreFromTrash.setText("wiederherstellen");
@@ -1867,51 +1877,8 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
 
     private void mnuSearchSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSearchSaveActionPerformed
 
-        this.saveToCase(null, true, false);
+        this.saveToCase(null, true, false, false);
 
-//        if (this.tblMails.getSelectedRowCount() == 1) {
-//            ClientSettings settings = ClientSettings.getInstance();
-//            try {
-//                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-//                ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
-//
-//                org.jlawyer.bea.model.Message msg = (org.jlawyer.bea.model.Message) this.tblMails.getValueAt(this.tblMails.getSelectedRow(), 0);
-//                MessageExport export=BeaAccess.exportMessage(msg);
-//                
-//                SearchAndAssignDialog dlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true);
-//                dlg.setVisible(true);
-//                ArchiveFileBean sel = dlg.getSelection();
-//
-//                dlg.dispose();
-//
-//                if (sel != null) {
-//
-//                    java.util.Date receivedPrefix = msg.getReceptionTime();
-//                    if (receivedPrefix == null) {
-//                        receivedPrefix = new java.util.Date();
-//                    }
-//                    String newName = FileUtils.getNewFileName(export.getFileName(), true, receivedPrefix);
-//                    if (newName == null) {
-//                        return;
-//                    }
-//
-//                    if (newName.trim().length() == 0) {
-//                        newName = "beA-Nachricht";
-//                    }
-//
-//                    if (!newName.toLowerCase().endsWith(".bea")) {
-//                        newName = newName + ".bea";
-//                    }
-//
-//                    afs.addDocument(sel.getId(), newName, export.getContent(), "");
-//
-//                }
-//
-//            } catch (Exception ex) {
-//                log.error(ex);
-//                ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Speichern der beA-Nachricht: " + ex.getMessage(), "Fehler");
-//            }
-//        }
     }//GEN-LAST:event_mnuSearchSaveActionPerformed
 
     private void tblMailsMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblMailsMouseReleased
@@ -2013,55 +1980,8 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
 
     private void mnuSearchSaveNoAttachmentsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSearchSaveNoAttachmentsActionPerformed
 
-        this.saveToCase(null, false, false);
+        this.saveToCase(null, false, false, false);
 
-//        if (this.tblMails.getSelectedRowCount() == 1) {
-//            ClientSettings settings = ClientSettings.getInstance();
-//            try {
-//                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-//                ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
-//
-//                org.jlawyer.bea.model.Message msg = (org.jlawyer.bea.model.Message) this.tblMails.getValueAt(this.tblMails.getSelectedRow(), 0);
-//                Message clone=(Message)msg.clone();
-//                clone.getAttachments().clear();
-//                
-//                BeaAccess bea=BeaAccess.getInstance();
-//                MessageExport export=bea.exportMessage(clone);
-//                
-//                SearchAndAssignDialog dlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true);
-//                dlg.setVisible(true);
-//                ArchiveFileBean sel = dlg.getSelection();
-//
-//                dlg.dispose();
-//
-//                if (sel != null) {
-//
-//                    java.util.Date receivedPrefix = msg.getReceptionTime();
-//                    if (receivedPrefix == null) {
-//                        receivedPrefix = new java.util.Date();
-//                    }
-//                    String newName = FileUtils.getNewFileName(export.getFileName(), true, receivedPrefix);
-//                    if (newName == null) {
-//                        return;
-//                    }
-//
-//                    if (newName.trim().length() == 0) {
-//                        newName = "beA-Nachricht";
-//                    }
-//
-//                    if (!newName.toLowerCase().endsWith(".bea")) {
-//                        newName = newName + ".bea";
-//                    }
-//
-//                    afs.addDocument(sel.getId(), newName, export.getContent(), "");
-//
-//                }
-//
-//            } catch (Exception ex) {
-//                log.error(ex);
-//                ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Speichern der beA-Nachricht: " + ex.getMessage(), "Fehler");
-//            }
-//        }
     }//GEN-LAST:event_mnuSearchSaveNoAttachmentsActionPerformed
 
     private void chkCaseTaggingActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkCaseTaggingActionPerformed
@@ -2146,6 +2066,10 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
         this.treeFoldersValueChangedImpl(new TreeSelectionEvent(this.tblMails, this.treeFolders.getSelectionPath(), false, null, null), sortCol, scrollToRow);
 
     }//GEN-LAST:event_mnuRestoreFromTrashActionPerformed
+
+    private void mnuSearchSaveOnlyAttachmentsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSearchSaveOnlyAttachmentsActionPerformed
+        this.saveToCase(null, false, false, true);
+    }//GEN-LAST:event_mnuSearchSaveOnlyAttachmentsActionPerformed
 
     private void displayMessage() {
 
@@ -2572,7 +2496,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
     }
 
     @Override
-    public boolean saveToCase(String caseId, boolean withAttachments, boolean separateAttachments) {
+    public boolean saveToCase(String caseId, boolean withAttachments, boolean separateAttachments, boolean attachmentsOnly) {
         if (this.tblMails.getSelectedRowCount() == 1) {
             ClientSettings settings = ClientSettings.getInstance();
             try {
@@ -2605,7 +2529,59 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                     }
                 }
 
-                if (caseId != null) {
+                if (attachmentsOnly) {
+                    if (caseId != null) {
+
+                        String temp = ClientSettings.getInstance().getConfiguration(ClientSettings.CONF_BEA_TAGGINGENABLED, "false");
+                        if ("true".equalsIgnoreCase(temp)) {
+                            String caseTag = ClientSettings.getInstance().getConfiguration(ClientSettings.CONF_BEA_LASTTAG, "");
+                            if (caseTag != null && !"".equalsIgnoreCase(caseTag)) {
+                                afs.setTag(caseId, new ArchiveFileTagsBean(null, caseTag), true);
+                            }
+                        }
+
+                        for (Attachment att : m.getAttachments()) {
+                            String attachmentName = att.getFileName();
+                            byte[] attachmentData = att.getContent();
+                            String newName = attachmentName;
+                            if (newName == null) {
+                                newName = "";
+                            }
+                            newName = FileUtils.sanitizeFileName(newName);
+                            java.util.Date receivedPrefix = m.getReceptionTime();
+                            if (receivedPrefix == null) {
+                                receivedPrefix = new java.util.Date();
+                            }
+                            String formerName = newName;
+                            newName = FileUtils.getNewFileName(newName, true, receivedPrefix);
+                            if (newName == null) {
+                                // user may have decided to skip this attachment - continue with next
+                                continue;
+                            }
+                            newName = FileUtils.preserveExtension(formerName, newName);
+                            newName = FileUtils.sanitizeFileName(newName);
+
+                            if (newName.trim().length() == 0) {
+                                newName = "Anhang";
+                            }
+
+                            ArchiveFileDocumentsBean newlyAddedDocument = afs.addDocument(caseId, newName, attachmentData, "");
+                            
+                            temp = ClientSettings.getInstance().getConfiguration(ClientSettings.CONF_BEA_DOCUMENTTAGGINGENABLED, "false");
+                            if ("true".equalsIgnoreCase(temp)) {
+                                String docTag = ClientSettings.getInstance().getConfiguration(ClientSettings.CONF_BEA_LASTDOCUMENTTAG, "");
+                                if (docTag != null && !"".equalsIgnoreCase(docTag)) {
+                                    afs.setDocumentTag(newlyAddedDocument.getId(), new DocumentTagsBean(newlyAddedDocument.getId(), docTag), true);
+                                }
+                            }
+                        }
+
+                        
+
+                    }
+                }
+
+                if (caseId != null && !attachmentsOnly) {
 
                     java.util.Date receivedPrefix = m.getReceptionTime();
                     if (receivedPrefix == null) {
@@ -2643,7 +2619,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
 
                 }
 
-                if (caseId != null && separateAttachments) {
+                if (caseId != null && separateAttachments && !attachmentsOnly) {
                     for (Attachment att : m.getAttachments()) {
                         String attachmentName = att.getFileName();
                         byte[] attachmentData = att.getContent();
@@ -2926,6 +2902,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
     private javax.swing.JMenuItem mnuRestoreFromTrash;
     private javax.swing.JMenuItem mnuSearchSave;
     private javax.swing.JMenuItem mnuSearchSaveNoAttachments;
+    private javax.swing.JMenuItem mnuSearchSaveOnlyAttachments;
     private javax.swing.JPanel pnlActions;
     private javax.swing.JPanel pnlActionsChild;
     private javax.swing.JPopupMenu popEmailList;

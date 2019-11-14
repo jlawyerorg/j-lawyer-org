@@ -789,7 +789,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
             deleteEnabled = false;
             this.chkDeleteAfterAction.setSelected(false);
         }
-        
+
         temp = cs.getConfiguration(ClientSettings.CONF_MAILS_DOCUMENTTAGGINGENABLED, "false");
         if ("true".equalsIgnoreCase(temp)) {
             this.chkDocumentTagging.setSelected(true);
@@ -915,24 +915,25 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                 this.cmbCaseTag.setSelectedItem("");
             }
         } else if (e instanceof AllDocumentTagsEvent) {
-            DefaultComboBoxModel dm=new DefaultComboBoxModel();
+            DefaultComboBoxModel dm = new DefaultComboBoxModel();
             dm.addElement("");
-            ArrayList<String> allTags=new ArrayList<String>();
-            for(AppOptionGroupBean tag: ((AllDocumentTagsEvent) e).getTagDtos()) {
+            ArrayList<String> allTags = new ArrayList<String>();
+            for (AppOptionGroupBean tag : ((AllDocumentTagsEvent) e).getTagDtos()) {
                 //dm.addElement(tag.getValue());
                 allTags.add(tag.getValue());
             }
             Collections.sort(allTags);
-            for(String s: allTags) {
+            for (String s : allTags) {
                 dm.addElement(s);
             }
             this.cmbDocumentTag.setModel(dm);
-            ClientSettings settings=ClientSettings.getInstance();
-            String lastTag=settings.getConfiguration(ClientSettings.CONF_MAIL_LASTDOCUMENTTAG, "");
-            if(allTags.contains(lastTag))
+            ClientSettings settings = ClientSettings.getInstance();
+            String lastTag = settings.getConfiguration(ClientSettings.CONF_MAIL_LASTDOCUMENTTAG, "");
+            if (allTags.contains(lastTag)) {
                 this.cmbDocumentTag.setSelectedItem(lastTag);
-            else
+            } else {
                 this.cmbDocumentTag.setSelectedItem("");
+            }
         }
     }
 
@@ -991,26 +992,24 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
             @Override
             public void run() {
                 try {
-                traverseFolders(inboxFolder, rootNode);
-                DefaultTreeModel tm = new DefaultTreeModel(rootNode);
-                treeFolders.setModel(tm);
-                JTreeUtils.expandAll(treeFolders);
-                treeFolders.setCellRenderer(renderer);
+                    traverseFolders(inboxFolder, rootNode);
+                    DefaultTreeModel tm = new DefaultTreeModel(rootNode);
+                    treeFolders.setModel(tm);
+                    JTreeUtils.expandAll(treeFolders);
+                    treeFolders.setCellRenderer(renderer);
                 } catch (Throwable t) {
                     log.error("Could not load folder");
                     t.printStackTrace();
                 }
             }
-            
+
         }).start();
         //this.traverseFolders(new FolderContainer(folder), rootNode);
 
         //DefaultTreeModel tm = new DefaultTreeModel(rootNode);
         //this.treeFolders.setModel(tm);
         //JTreeUtils.expandAll(this.treeFolders);
-
         //this.treeFolders.setCellRenderer(this.renderer);
-
     }
 
     private void traverseFolders(FolderContainer current, DefaultMutableTreeNode currentNode) throws Exception {
@@ -1091,6 +1090,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         mnuMarkUnread = new javax.swing.JMenuItem();
         mnuSearchSave = new javax.swing.JMenuItem();
         mnuSearchSaveNoAttachments = new javax.swing.JMenuItem();
+        mnuSearchSaveOnlyAttachments = new javax.swing.JMenuItem();
         mnuOpenInExternalMailer = new javax.swing.JMenuItem();
         jMenuItem1 = new javax.swing.JMenuItem();
         jLabel18 = new javax.swing.JLabel();
@@ -1184,6 +1184,15 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
             }
         });
         popEmailList.add(mnuSearchSaveNoAttachments);
+
+        mnuSearchSaveOnlyAttachments.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/find.png"))); // NOI18N
+        mnuSearchSaveOnlyAttachments.setText("in Akte speichern (nur Anhänge)...");
+        mnuSearchSaveOnlyAttachments.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuSearchSaveOnlyAttachmentsActionPerformed(evt);
+            }
+        });
+        popEmailList.add(mnuSearchSaveOnlyAttachments);
 
         mnuOpenInExternalMailer.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/mail_send.png"))); // NOI18N
         mnuOpenInExternalMailer.setText("in externem Mailprogramm öffnen");
@@ -2026,7 +2035,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
     }//GEN-LAST:event_tblMailsKeyReleased
 
     private void mnuSearchSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSearchSaveActionPerformed
-        this.saveToCase(null, true, false);
+        this.saveToCase(null, true, false, false);
     }//GEN-LAST:event_mnuSearchSaveActionPerformed
 
     private void tblMailsMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblMailsMouseReleased
@@ -2215,7 +2224,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
     }//GEN-LAST:event_mnuOpenInExternalMailerActionPerformed
 
     private void mnuSearchSaveNoAttachmentsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSearchSaveNoAttachmentsActionPerformed
-        this.saveToCase(null, false, false);
+        this.saveToCase(null, false, false, false);
     }//GEN-LAST:event_mnuSearchSaveNoAttachmentsActionPerformed
 
     private void cmbDownloadMailsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbDownloadMailsActionPerformed
@@ -2271,6 +2280,10 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         String lastTag = this.cmbDocumentTag.getSelectedItem().toString();
         settings.setConfiguration(ClientSettings.CONF_MAIL_LASTDOCUMENTTAG, lastTag);
     }//GEN-LAST:event_cmbDocumentTagActionPerformed
+
+    private void mnuSearchSaveOnlyAttachmentsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSearchSaveOnlyAttachmentsActionPerformed
+        this.saveToCase(null, false, false, true);
+    }//GEN-LAST:event_mnuSearchSaveOnlyAttachmentsActionPerformed
 
     private void displayMessage() {
 
@@ -2350,7 +2363,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                                             // both archived
                                             // sort by changed date
                                             //return aFile1.getFileNumber().compareTo(aFile2.getFileNumber());
-                                            return new FileNumberComparator().compare(aFile1, aFile2)*-1;
+                                            return new FileNumberComparator().compare(aFile1, aFile2) * -1;
                                         } else {
                                             // only 2 is archived
                                             return -1;
@@ -2362,7 +2375,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                                         // both are non-archived
                                         // sort by changed date
                                         //return aFile1.getFileNumber().compareTo(aFile2.getFileNumber());
-                                        return new FileNumberComparator().compare(aFile1, aFile2)*-1;
+                                        return new FileNumberComparator().compare(aFile1, aFile2) * -1;
                                     }
 
                                 }
@@ -2658,7 +2671,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
     }
 
     @Override
-    public boolean saveToCase(String caseId, boolean withAttachments, boolean separateAttachments) {
+    public boolean saveToCase(String caseId, boolean withAttachments, boolean separateAttachments, boolean attachmentsOnly) {
         if (this.tblMails.getSelectedRowCount() == 1) {
             ClientSettings settings = ClientSettings.getInstance();
             try {
@@ -2725,7 +2738,57 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                     }
                 }
 
-                if (caseId != null) {
+                if (attachmentsOnly) {
+                    if (caseId != null) {
+
+                        String temp = ClientSettings.getInstance().getConfiguration(ClientSettings.CONF_MAILS_TAGGINGENABLED, "false");
+                        if ("true".equalsIgnoreCase(temp)) {
+                            String caseTag = ClientSettings.getInstance().getConfiguration(ClientSettings.CONF_MAIL_LASTTAG, "");
+                            if (caseTag != null && !"".equalsIgnoreCase(caseTag)) {
+                                afs.setTag(caseId, new ArchiveFileTagsBean(null, caseTag), true);
+                            }
+                        }
+
+                        ArrayList<String> attachmentNames = EmailUtils.getAttachmentNames(m.getContent());
+                        for (String attachmentName : attachmentNames) {
+                            byte[] attachmentData = EmailUtils.getAttachmentBytes(attachmentName, msgC);
+                            String newName = attachmentName;
+                            if (newName == null) {
+                                newName = "";
+                            }
+                            newName = FileUtils.sanitizeFileName(newName);
+                            java.util.Date receivedPrefix = m.getReceivedDate();
+                            if (receivedPrefix == null) {
+                                receivedPrefix = new java.util.Date();
+                            }
+                            String formerName = newName;
+                            newName = FileUtils.getNewFileName(newName, true, receivedPrefix);
+                            if (newName == null) {
+                                // user may have decided to skip this attachment - continue with next
+                                continue;
+                            }
+                            newName = FileUtils.preserveExtension(formerName, newName);
+                            newName = FileUtils.sanitizeFileName(newName);
+
+                            if (newName.trim().length() == 0) {
+                                newName = "Anhang";
+                            }
+
+                            ArchiveFileDocumentsBean newlyAddedDocument=afs.addDocument(caseId, newName, attachmentData, "");
+
+                            temp = ClientSettings.getInstance().getConfiguration(ClientSettings.CONF_MAILS_DOCUMENTTAGGINGENABLED, "false");
+                            if ("true".equalsIgnoreCase(temp)) {
+                                String docTag = ClientSettings.getInstance().getConfiguration(ClientSettings.CONF_MAIL_LASTDOCUMENTTAG, "");
+                                if (docTag != null && !"".equalsIgnoreCase(docTag)) {
+                                    afs.setDocumentTag(newlyAddedDocument.getId(), new DocumentTagsBean(newlyAddedDocument.getId(), docTag), true);
+                                }
+                            }
+                        }
+
+                    }
+                }
+
+                if (caseId != null && !attachmentsOnly) {
 
                     String newName = m.getSubject();
                     if (newName == null) {
@@ -2750,28 +2813,27 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                         newName = newName + ".eml";
                     }
 
-                    ArchiveFileDocumentsBean newlyAddedDocument=afs.addDocument(caseId, newName, data, "");
+                    ArchiveFileDocumentsBean newlyAddedDocument = afs.addDocument(caseId, newName, data, "");
 
                     String temp = ClientSettings.getInstance().getConfiguration(ClientSettings.CONF_MAILS_TAGGINGENABLED, "false");
                     if ("true".equalsIgnoreCase(temp)) {
-                        String caseTag=ClientSettings.getInstance().getConfiguration(ClientSettings.CONF_MAIL_LASTTAG, "");
+                        String caseTag = ClientSettings.getInstance().getConfiguration(ClientSettings.CONF_MAIL_LASTTAG, "");
                         if (caseTag != null && !"".equalsIgnoreCase(caseTag)) {
                             afs.setTag(caseId, new ArchiveFileTagsBean(null, caseTag), true);
                         }
                     }
-                    
+
                     temp = ClientSettings.getInstance().getConfiguration(ClientSettings.CONF_MAILS_DOCUMENTTAGGINGENABLED, "false");
                     if ("true".equalsIgnoreCase(temp)) {
-                        String docTag=ClientSettings.getInstance().getConfiguration(ClientSettings.CONF_MAIL_LASTDOCUMENTTAG, "");
+                        String docTag = ClientSettings.getInstance().getConfiguration(ClientSettings.CONF_MAIL_LASTDOCUMENTTAG, "");
                         if (docTag != null && !"".equalsIgnoreCase(docTag)) {
                             afs.setDocumentTag(newlyAddedDocument.getId(), new DocumentTagsBean(newlyAddedDocument.getId(), docTag), true);
                         }
                     }
-                    
 
                 }
 
-                if (caseId != null && separateAttachments) {
+                if (caseId != null && separateAttachments && !attachmentsOnly) {
                     ArrayList<String> attachmentNames = EmailUtils.getAttachmentNames(m.getContent());
                     for (String attachmentName : attachmentNames) {
                         byte[] attachmentData = EmailUtils.getAttachmentBytes(attachmentName, msgC);
@@ -2878,6 +2940,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
     private javax.swing.JMenuItem mnuRemoveFolder;
     private javax.swing.JMenuItem mnuSearchSave;
     private javax.swing.JMenuItem mnuSearchSaveNoAttachments;
+    private javax.swing.JMenuItem mnuSearchSaveOnlyAttachments;
     private javax.swing.JPanel pnlActions;
     private javax.swing.JPanel pnlActionsChild;
     private javax.swing.JPopupMenu popEmailList;
