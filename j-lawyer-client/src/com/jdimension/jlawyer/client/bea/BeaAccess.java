@@ -700,7 +700,9 @@ public class BeaAccess {
 
     private static final Logger log=Logger.getLogger(BeaAccess.class.getName());
     
-
+    private String productName="j-lawyer.org 1.9";
+    private String producer="j-lawyer.org";
+    private String registrationId="1012.0001.0001.000224";
     
     private BeaWrapper wrapper = null;
 
@@ -739,7 +741,7 @@ public class BeaAccess {
         ServerSettings set = ServerSettings.getInstance();
         String endpoint = set.getSetting(set.SERVERCONF_BEAENDPOINT, "https://schulung-ksw.bea-brak.de");
 
-        this.wrapper = new BeaWrapper(endpoint, certificate, password);
+        this.wrapper = new BeaWrapper(endpoint, certificate, password, productName, producer, registrationId);
 
         this.initializeCaches();
         
@@ -749,7 +751,7 @@ public class BeaAccess {
         
         ServerSettings set = ServerSettings.getInstance();
         String endpoint = set.getSetting(set.SERVERCONF_BEAENDPOINT, "https://schulung-ksw.bea-brak.de");
-        this.wrapper = new BeaWrapper(endpoint);
+        this.wrapper = new BeaWrapper(endpoint, productName, producer, registrationId);
         
         this.initializeCaches();
     }
