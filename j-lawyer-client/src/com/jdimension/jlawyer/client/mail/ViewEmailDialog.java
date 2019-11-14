@@ -665,12 +665,17 @@ package com.jdimension.jlawyer.client.mail;
 
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.launcher.ObservedDocument;
+import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
+import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
+import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collection;
 import javax.mail.*;
 import javax.mail.Message.RecipientType;
 import javax.mail.internet.MimeUtility;
@@ -945,6 +950,27 @@ public class ViewEmailDialog extends javax.swing.JDialog {
     private void cmdForwardActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdForwardActionPerformed
         SendEmailDialog dlg = new SendEmailDialog(EditorsRegistry.getInstance().getMainWindow(), false);
         dlg.setArchiveFile(this.contextArchiveFile);
+        if(this.contextArchiveFile != null) {
+            try {
+                ClientSettings settings = ClientSettings.getInstance();
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                ArchiveFileServiceRemote afs=locator.lookupArchiveFileServiceRemote();
+                Collection<AddressBean> list=afs.getClients(this.contextArchiveFile.getId());
+                for(AddressBean a: list) {
+                    dlg.addToClient(a);
+                }
+                list=afs.getOpponents(this.contextArchiveFile.getId());
+                for(AddressBean a: list) {
+                    dlg.addToOpponent(a);
+                }
+                list=afs.getOpponentAttorneys(this.contextArchiveFile.getId());
+                for(AddressBean a: list) {
+                    dlg.addToOpponentAttorney(a);
+                }
+            } catch (Throwable t) {
+                log.error("Unable to add recipient candidates", t);
+            }
+        }
 
         MessageContainer msgC = this.msgContainer;
         try {
