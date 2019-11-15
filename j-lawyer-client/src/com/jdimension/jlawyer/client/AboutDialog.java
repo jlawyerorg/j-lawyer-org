@@ -663,6 +663,7 @@
  */
 package com.jdimension.jlawyer.client;
 
+import com.jdimension.jlawyer.client.bea.BeaAccess;
 import com.jdimension.jlawyer.client.utils.VersionUtils;
 import java.io.BufferedReader;
 import java.io.InputStream;
@@ -693,6 +694,8 @@ public class AboutDialog extends javax.swing.JDialog {
         sb.append("<b>");
         sb.append(java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/AboutDialog").getString("server.version"), new Object[] {VersionUtils.getServerVersion()}));
         sb.append(java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/AboutDialog").getString("client.version"), new Object[] {VersionUtils.getFullClientVersion()}));
+        sb.append("<br/>");
+        sb.append("beA-Wrapper-Version: ").append(BeaAccess.getBeaWrapperVersion());
         sb.append("</b>");
         sb.append("</html>");
         

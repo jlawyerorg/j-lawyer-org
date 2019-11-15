@@ -756,6 +756,10 @@ public class BeaAccess {
         this.initializeCaches();
     }
     
+    public static String getBeaWrapperVersion() {
+        return BeaWrapper.getVersion();
+    }
+    
     private void checkValidBeaClient() throws BeaWrapperException {
         ServerSettings set = ServerSettings.getInstance();
         String enabledVersions = set.getSetting(ServerSettings.SERVERCONF_BEAENABLEDVERSIONS, "");
