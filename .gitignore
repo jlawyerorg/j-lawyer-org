@@ -33,3 +33,14 @@
 /mybuild.sh
 /j-lawyer-server/j-lawyer-server-ejb/test/data/template-run.docx
 /j-lawyer-server/j-lawyer-server-ejb/test/data/textfield-run.docx
+/.directory
+/build.log
+/j-lawyer-client/.directory
+/j-lawyer-client/lib/.directory
+/j-lawyer-client/lib/bea/.directory
+/j-lawyer-server/lib/.directory
+/j-lawyer-server/lib/test/.directory
+/j-lawyer-client/src/images/.directory
+/j-lawyer-client/src/fonts/exo2/.directory
+/j-lawyer-server/j-lawyer-server-ejb/lib/.directory
+/j-lawyer-client/ks.jpg
