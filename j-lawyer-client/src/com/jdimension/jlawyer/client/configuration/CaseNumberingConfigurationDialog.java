@@ -712,7 +712,7 @@ public class CaseNumberingConfigurationDialog extends javax.swing.JDialog {
     }
     
     private void updatePreview() {
-        if(this.selectePattern.indexOf("NNNNN")>=0) {
+        if(this.selectePattern.indexOf("NNNNN")>=0 || this.selectePattern.indexOf("nnn")>=0) {
             this.txtStartFrom.setEnabled(true);
         } else {
             this.txtStartFrom.setEnabled(false);

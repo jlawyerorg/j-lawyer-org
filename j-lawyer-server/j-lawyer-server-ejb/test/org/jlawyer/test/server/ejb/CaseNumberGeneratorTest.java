@@ -913,6 +913,35 @@ public class CaseNumberGeneratorTest {
             Assert.fail();
         }
         
+        try {
+            ArrayList<String> existing = new ArrayList<String>();
+            for (int i = 0; i < 700; i++) {
+                String next = CaseNumberGenerator.getNextCaseNumber(existing, "nnn/YY", -1);
+                existing.add(next);
+            }
+        } catch (InvalidCaseNumberPatternException ex) {
+            Assert.fail();
+        }
+        try {
+            ArrayList<String> existing = new ArrayList<String>();
+            existing.add("103/19");
+            for (int i = 0; i < 700; i++) {
+                String next = CaseNumberGenerator.getNextCaseNumber(existing, "nnn/YY", 100);
+                existing.add(next);
+            }
+        } catch (InvalidCaseNumberPatternException ex) {
+            Assert.fail();
+        }
+        try {
+            ArrayList<String> existing = new ArrayList<String>();
+            for (int i = 0; i < 10; i++) {
+                String next = CaseNumberGenerator.getNextCaseNumber(existing, "nnn/YY", 1000);
+                Assert.fail("must never happen");
+            }
+        } catch (InvalidCaseNumberPatternException ex) {
+            // this is expected
+        }
+        
         
     }
     
