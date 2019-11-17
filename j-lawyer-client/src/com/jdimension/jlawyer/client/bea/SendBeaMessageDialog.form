@@ -118,15 +118,15 @@
                               <EmptySpace max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="0" max="-2" attributes="0">
                                   <Component id="txtAzSender" max="32767" attributes="0"/>
-                                  <Component id="cmbAzRecipient" pref="120" max="32767" attributes="0"/>
+                                  <Component id="cmbAzRecipient" min="-2" pref="120" max="-2" attributes="0"/>
                               </Group>
-                              <EmptySpace pref="79" max="32767" attributes="0"/>
+                              <EmptySpace max="32767" attributes="0"/>
                               <Component id="chkDocumentTagging" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="cmbDocumentTag" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <Component id="contentPanel" alignment="0" max="32767" attributes="0"/>
-                          <Component id="jScrollPane2" alignment="0" max="32767" attributes="0"/>
+                          <Component id="jScrollPane2" alignment="0" pref="530" max="32767" attributes="0"/>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" max="-2" attributes="0">
@@ -188,23 +188,25 @@
                       </Group>
                   </Group>
               </Group>
-              <EmptySpace min="-2" pref="1" max="-2" attributes="0"/>
+              <EmptySpace min="-2" pref="2" max="-2" attributes="0"/>
               <Group type="103" groupAlignment="1" attributes="0">
                   <Component id="jToolBar1" min="-2" max="-2" attributes="0"/>
+                  <Group type="103" groupAlignment="0" attributes="0">
+                      <Group type="103" alignment="0" groupAlignment="3" attributes="0">
+                          <Component id="chkDocumentTagging" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="cmbDocumentTag" alignment="3" min="-2" max="-2" attributes="0"/>
+                      </Group>
+                      <Component id="chkSaveAsDocument" min="-2" max="-2" attributes="0"/>
+                  </Group>
                   <Group type="102" attributes="0">
                       <Group type="103" groupAlignment="3" attributes="0">
                           <Component id="jLabel8" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="txtAzSender" alignment="3" min="-2" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
-                      <Group type="103" groupAlignment="0" attributes="0">
-                          <Group type="103" alignment="0" groupAlignment="3" attributes="0">
-                              <Component id="chkDocumentTagging" alignment="3" min="-2" max="-2" attributes="0"/>
-                              <Component id="cmbDocumentTag" alignment="3" min="-2" max="-2" attributes="0"/>
-                              <Component id="jLabel9" alignment="3" min="-2" max="-2" attributes="0"/>
-                              <Component id="cmbAzRecipient" alignment="3" min="-2" max="-2" attributes="0"/>
-                          </Group>
-                          <Component id="chkSaveAsDocument" min="-2" max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="3" attributes="0">
+                          <Component id="jLabel9" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="cmbAzRecipient" alignment="3" min="-2" max="-2" attributes="0"/>
                       </Group>
                   </Group>
               </Group>
@@ -285,6 +287,20 @@
           </Properties>
           <Events>
             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdAttachActionPerformed"/>
+          </Events>
+        </Component>
+        <Component class="javax.swing.JButton" name="cmdSaveDraft">
+          <Properties>
+            <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+              <Image iconType="3" name="/icons32/kate.png"/>
+            </Property>
+            <Property name="toolTipText" type="java.lang.String" value="in &quot;Entw&#xfc;rfe&quot; speichern und sp&#xe4;ter signieren/senden"/>
+            <Property name="focusable" type="boolean" value="false"/>
+            <Property name="horizontalTextPosition" type="int" value="0"/>
+            <Property name="verticalTextPosition" type="int" value="3"/>
+          </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdSaveDraftActionPerformed"/>
           </Events>
         </Component>
       </SubComponents>
