@@ -723,6 +723,10 @@ public class BeaFolderTreeCellRenderer extends DefaultTreeCellRenderer {
             if("inbox".equalsIgnoreCase(f.getType()))
                 this.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder_inbox.png")));
             
+            if(BeaAccess.FOLDER_NAME_JLAWYER_PROCESSED.equals(f.getName())) {
+                this.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/jlawyerorg.png")));
+            }
+            
             int unread=f.getUnreadMessageCount();
             if(unread>0) {
                 this.setFont(this.getFont().deriveFont(Font.BOLD));

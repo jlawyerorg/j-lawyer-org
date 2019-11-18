@@ -700,6 +700,8 @@ public class BeaAccess {
 
     private static final Logger log=Logger.getLogger(BeaAccess.class.getName());
     
+    public static String FOLDER_NAME_JLAWYER_PROCESSED="in Akte importiert";
+    
     private String productName="j-lawyer.org 1.9";
     private String producer="j-lawyer.org";
     private String registrationId="1012.0001.0001.000224";
@@ -710,6 +712,7 @@ public class BeaAccess {
 
     private Collection<PostBox> inboxes = null;
     private Hashtable<String, Identity> identityCache = new Hashtable<String, Identity>();
+    private Hashtable<String, Folder> importedFolderCache = new Hashtable<String, Folder>();
     
     private PersistentCacheManager cacheManager = null;
     private Cache<String, Message> messageCache=null;
@@ -917,11 +920,36 @@ public class BeaAccess {
         
         instance=null;
     }
+    
+    public Folder getImportedFolder(String safeId) throws BeaWrapperException {
+        if(!this.importedFolderCache.containsKey(safeId))
+            this.getFolderStructure(safeId);
+        return this.importedFolderCache.get(safeId);
+    }
 
     public Collection<Folder> getFolderStructure(String safeId) throws BeaWrapperException {
         this.checkValidBeaClient();
         this.checkValidBeaClient();
-        return this.wrapper.getFolderStructure(safeId);
+        Collection<Folder> folders=this.wrapper.getFolderStructure(safeId);
+        long inboxId=-1;
+        long jlawyerProcessedId=-1;
+        for(Folder f: folders) {
+            if(Folder.TYPE_INBOX.equals(f.getType())) {
+                inboxId=f.getId();
+            }
+            if(FOLDER_NAME_JLAWYER_PROCESSED.equals(f.getName())) {
+                jlawyerProcessedId=f.getId();
+                this.importedFolderCache.put(safeId, f);
+            }
+        }
+        if(jlawyerProcessedId==-1) {
+            // try to create the default jlawyer folder
+            Folder jlFolder=this.addFolder(FOLDER_NAME_JLAWYER_PROCESSED, inboxId);
+            folders.add(jlFolder);
+            this.importedFolderCache.put(safeId, jlFolder);
+        }
+        
+        return folders;
     }
 
     public Collection<PostBox> getPostBoxes() throws BeaWrapperException {
@@ -1017,6 +1045,10 @@ public class BeaAccess {
     }
 
     public boolean moveMessageToFolder(String messageId, long sourceFolderId, long targetFolderId) throws BeaWrapperException {
+        
+        if(sourceFolderId==targetFolderId)
+            return true;
+        
         this.checkValidBeaClient();
         boolean success= this.wrapper.moveMessageToFolder(messageId, targetFolderId);
         if(this.folderOverviewCache.containsKey(targetFolderId))

@@ -393,6 +393,8 @@
                                   <Component id="chkDocumentTagging" min="-2" max="-2" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
                                   <Component id="cmbDocumentTag" min="-2" max="-2" attributes="0"/>
+                                  <EmptySpace type="separate" max="-2" attributes="0"/>
+                                  <Component id="chkMoveToImported" min="-2" max="-2" attributes="0"/>
                                   <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                               </Group>
                               <Component id="jSplitPane1" pref="864" max="32767" attributes="0"/>
@@ -409,6 +411,7 @@
                               <Component id="chkCaseTagging" alignment="3" min="-2" max="-2" attributes="0"/>
                               <Component id="cmbDocumentTag" alignment="3" min="-2" max="-2" attributes="0"/>
                               <Component id="chkDocumentTagging" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="chkMoveToImported" alignment="3" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <EmptySpace max="-2" attributes="0"/>
                           <Component id="jSplitPane1" pref="233" max="32767" attributes="0"/>
@@ -507,6 +510,15 @@
                   <AuxValues>
                     <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;String&gt;"/>
                   </AuxValues>
+                </Component>
+                <Component class="javax.swing.JCheckBox" name="chkMoveToImported">
+                  <Properties>
+                    <Property name="text" type="java.lang.String" value="in &quot;importiert&quot; verschieben"/>
+                    <Property name="toolTipText" type="java.lang.String" value="verschiebt die Nachricht nach Zuordnung in den Ordner &quot;in Akte importiert&quot;"/>
+                  </Properties>
+                  <Events>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="chkMoveToImportedActionPerformed"/>
+                  </Events>
                 </Component>
               </SubComponents>
             </Container>

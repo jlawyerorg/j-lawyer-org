@@ -782,6 +782,11 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
             this.chkDocumentTagging.setSelected(true);
         }
 
+        temp = cs.getConfiguration(ClientSettings.CONF_BEA_MOVETOIMPORTEDENABLED, "false");
+        if ("true".equalsIgnoreCase(temp)) {
+            this.chkMoveToImported.setSelected(true);
+        }
+
         EventBroker eb = EventBroker.getInstance();
         eb.subscribeConsumer(this, Event.TYPE_ALLCASETAGS);
         eb.subscribeConsumer(this, Event.TYPE_ALLDOCUMENTTAGS);
@@ -1057,6 +1062,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
         beaMessageContentUI = new com.jdimension.jlawyer.client.bea.BeaMessageContentUI();
         chkDocumentTagging = new javax.swing.JCheckBox();
         cmbDocumentTag = new javax.swing.JComboBox<>();
+        chkMoveToImported = new javax.swing.JCheckBox();
         jPanel1 = new javax.swing.JPanel();
         cmdRefresh = new javax.swing.JButton();
         cmdLogout = new javax.swing.JButton();
@@ -1325,6 +1331,14 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
             }
         });
 
+        chkMoveToImported.setText("in \"importiert\" verschieben");
+        chkMoveToImported.setToolTipText("verschiebt die Nachricht nach Zuordnung in den Ordner \"in Akte importiert\"");
+        chkMoveToImported.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                chkMoveToImportedActionPerformed(evt);
+            }
+        });
+
         org.jdesktop.layout.GroupLayout jPanel2Layout = new org.jdesktop.layout.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
@@ -1339,6 +1353,8 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                         .add(chkDocumentTagging)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(cmbDocumentTag, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .add(18, 18, 18)
+                        .add(chkMoveToImported)
                         .add(0, 0, Short.MAX_VALUE))
                     .add(jSplitPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 864, Short.MAX_VALUE))
                 .addContainerGap())
@@ -1350,7 +1366,8 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                     .add(cmbCaseTag, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(chkCaseTagging)
                     .add(cmbDocumentTag, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(chkDocumentTagging))
+                    .add(chkDocumentTagging)
+                    .add(chkMoveToImported))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jSplitPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 233, Short.MAX_VALUE))
         );
@@ -1650,21 +1667,23 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
             this.treeFolders.setSelectionRow(row);
 
             DefaultMutableTreeNode tn = (DefaultMutableTreeNode) this.treeFolders.getSelectionPath().getLastPathComponent();
-            org.jlawyer.bea.model.Folder f = (org.jlawyer.bea.model.Folder) tn.getUserObject();
-            System.out.println(f.getType());
-            if (f.getType().equals(org.jlawyer.bea.model.Folder.TYPE_INBOX) || f.getType().equals(org.jlawyer.bea.model.Folder.TYPE_SENT) || f.getType().equals(org.jlawyer.bea.model.Folder.TYPE_TRASH)) {
-                this.mnuRemoveFolder.setEnabled(false);
-            } else {
-                this.mnuRemoveFolder.setEnabled(true);
-            }
+            if (tn.getUserObject() instanceof org.jlawyer.bea.model.Folder) {
+                org.jlawyer.bea.model.Folder f = (org.jlawyer.bea.model.Folder) tn.getUserObject();
+                System.out.println(f.getType());
+                if (f.getType().equals(org.jlawyer.bea.model.Folder.TYPE_INBOX) || f.getType().equals(org.jlawyer.bea.model.Folder.TYPE_SENT) || f.getType().equals(org.jlawyer.bea.model.Folder.TYPE_TRASH)) {
+                    this.mnuRemoveFolder.setEnabled(false);
+                } else {
+                    this.mnuRemoveFolder.setEnabled(true);
+                }
 
-            if (f.getType().equals(org.jlawyer.bea.model.Folder.TYPE_TRASH)) {
-                this.mnuEmptyTrash.setEnabled(true);
-            } else {
-                this.mnuEmptyTrash.setEnabled(false);
-            }
+                if (f.getType().equals(org.jlawyer.bea.model.Folder.TYPE_TRASH)) {
+                    this.mnuEmptyTrash.setEnabled(true);
+                } else {
+                    this.mnuEmptyTrash.setEnabled(false);
+                }
 
-            this.popFolders.show(evt.getComponent(), evt.getX(), evt.getY());
+                this.popFolders.show(evt.getComponent(), evt.getX(), evt.getY());
+            }
         }
 
 
@@ -2070,6 +2089,13 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
     private void mnuSearchSaveOnlyAttachmentsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSearchSaveOnlyAttachmentsActionPerformed
         this.saveToCase(null, false, false, true);
     }//GEN-LAST:event_mnuSearchSaveOnlyAttachmentsActionPerformed
+
+    private void chkMoveToImportedActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkMoveToImportedActionPerformed
+        ClientSettings settings = ClientSettings.getInstance();
+
+        boolean move = this.chkMoveToImported.isSelected();
+        settings.setConfiguration(ClientSettings.CONF_BEA_MOVETOIMPORTEDENABLED, "" + move);
+    }//GEN-LAST:event_chkMoveToImportedActionPerformed
 
     private void displayMessage() {
 
@@ -2566,7 +2592,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                             }
 
                             ArchiveFileDocumentsBean newlyAddedDocument = afs.addDocument(caseId, newName, attachmentData, "");
-                            
+
                             temp = ClientSettings.getInstance().getConfiguration(ClientSettings.CONF_BEA_DOCUMENTTAGGINGENABLED, "false");
                             if ("true".equalsIgnoreCase(temp)) {
                                 String docTag = ClientSettings.getInstance().getConfiguration(ClientSettings.CONF_BEA_LASTDOCUMENTTAG, "");
@@ -2575,8 +2601,6 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                                 }
                             }
                         }
-
-                        
 
                     }
                 }
@@ -2646,6 +2670,30 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                         }
 
                         afs.addDocument(caseId, newName, attachmentData, "");
+                    }
+
+                }
+
+                String temp = ClientSettings.getInstance().getConfiguration(ClientSettings.CONF_BEA_MOVETOIMPORTEDENABLED, "false");
+                if ("true".equalsIgnoreCase(temp)) {
+                    int scrollToRow = tblMails.getSelectedRow();
+                    int sortCol = -1;
+                    List<? extends SortKey> sortKeys = this.tblMails.getRowSorter().getSortKeys();
+                    if (sortKeys != null) {
+                        if (sortKeys.size() > 0) {
+                            sortCol = sortKeys.get(0).getColumn();
+                        }
+                    }
+                    DefaultMutableTreeNode tn = (DefaultMutableTreeNode) this.treeFolders.getSelectionPath().getLastPathComponent();
+                    org.jlawyer.bea.model.Folder sourceFolder = (org.jlawyer.bea.model.Folder) tn.getUserObject();
+                    Folder importedFolder=BeaAccess.getInstance().getImportedFolder(sourceFolder.getSafeId());
+                    if (importedFolder!=null) {
+                        BeaAccess.getInstance().moveMessageToFolder(mh.getId(), sourceFolder.getId(), importedFolder.getId());
+                        try {
+                            this.treeFoldersValueChangedImpl(new TreeSelectionEvent(this.tblMails, this.treeFolders.getSelectionPath(), false, null, null), sortCol, scrollToRow);
+                        } catch (Throwable t) {
+                            log.error("Unable to refresh beA folder after moving message to imported", t);
+                        }
                     }
 
                 }
@@ -2875,6 +2923,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
     private com.jdimension.jlawyer.client.bea.BeaMessageContentUI beaMessageContentUI;
     private javax.swing.JCheckBox chkCaseTagging;
     private javax.swing.JCheckBox chkDocumentTagging;
+    private javax.swing.JCheckBox chkMoveToImported;
     private javax.swing.JComboBox<String> cmbCaseTag;
     private javax.swing.JComboBox<String> cmbDocumentTag;
     private javax.swing.JButton cmdDelete;
