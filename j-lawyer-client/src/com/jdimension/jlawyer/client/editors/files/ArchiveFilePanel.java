@@ -4511,7 +4511,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 boolean documentExists=remote.doesDocumentExist(this.dto.getId(), newName);
                 while(documentExists) {
                     
-                    newName = FileUtils.getNewFileName(doc.getName(), false, new Date(), this, "neuer Name für PDF-Dokument");
+                    newName = FileUtils.getNewFileName(newName, false, new Date(), this, "neuer Name für PDF-Dokument");
                     if(newName==null || "".equals(newName)) {
                         return;
                     }
