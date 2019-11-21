@@ -672,10 +672,12 @@ import java.awt.Color;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.util.logging.Level;
 
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
+import javax.swing.UnsupportedLookAndFeelException;
 import org.apache.log4j.Logger;
 import org.jlawyer.bea.ArbitraryCache;
 import org.jlawyer.bea.BeaWrapper;
@@ -768,6 +770,18 @@ public class Main {
                 System.out.println("Could not set look and feel: " + ex.getMessage());
             }
         }
+        
+//        try {
+//            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+//        } catch (ClassNotFoundException ex) {
+//            java.util.logging.Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+//        } catch (InstantiationException ex) {
+//            java.util.logging.Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+//        } catch (IllegalAccessException ex) {
+//            java.util.logging.Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+//        } catch (UnsupportedLookAndFeelException ex) {
+//            java.util.logging.Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+//        }
 
         splash = new StartupSplashFrame();
 

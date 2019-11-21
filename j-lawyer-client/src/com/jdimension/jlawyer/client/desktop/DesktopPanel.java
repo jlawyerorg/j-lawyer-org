@@ -964,6 +964,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
 
         chkOnlyMyReviews.setForeground(new java.awt.Color(255, 255, 255));
         chkOnlyMyReviews.setText("nur meine anzeigen");
+        chkOnlyMyReviews.setOpaque(false);
         chkOnlyMyReviews.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 chkOnlyMyReviewsActionPerformed(evt);
@@ -1008,8 +1009,10 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
 
         jSplitPane1.setRightComponent(jPanel2);
 
+        jSplitPane2.setBorder(null);
         jSplitPane2.setDividerLocation(400);
         jSplitPane2.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
+        jSplitPane2.setOpaque(false);
 
         jPanel1.setOpaque(false);
 
@@ -1082,7 +1085,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
                     .add(chkOnlyMyCases)
                     .add(cmdRefreshLastChanged))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jScrollPane3, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 123, Short.MAX_VALUE)
+                .add(jScrollPane3, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 258, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
