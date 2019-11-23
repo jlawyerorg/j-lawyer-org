@@ -698,6 +698,7 @@ import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import javax.swing.text.StyledEditorKit;
 import javax.swing.text.html.HTMLDocument;
+import javax.swing.text.html.HTMLEditorKit;
 import org.apache.log4j.Logger;
 
 /**
@@ -717,8 +718,8 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
      */
     public MailContentUI() {
         initComponents();
-        
-        this.jScrollPane1.setPreferredSize(new Dimension((int)this.jScrollPane1.getSize().getWidth(), (int)this.jScrollPane1.getSize().getHeight()));
+
+        this.jScrollPane1.setPreferredSize(new Dimension((int) this.jScrollPane1.getSize().getWidth(), (int) this.jScrollPane1.getSize().getHeight()));
 
         this.lblSentDate.setText(" ");
 
@@ -742,7 +743,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
 
         this.lblCC.setText(" ");
         this.lblCC.setToolTipText(null);
-        
+
         this.lblBCC.setText(" ");
         this.lblBCC.setToolTipText(null);
 
@@ -761,7 +762,6 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
 //            return this.editBody.getText();
 //        else
 //            return "";
-
 //        try {
 //            return this.editBody.getDocument().getText(0, editBody.getDocument().getLength());
 //        } catch (Throwable t) {
@@ -772,7 +772,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
     public String getContentType() {
         return this.editBody.getContentType();
     }
-    
+
     public void setErrorMessage(String errorMessage) {
         this.editBody.setText(errorMessage);
     }
@@ -794,9 +794,10 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
                     folder.open(Folder.READ_WRITE);
                 }
             }
-            
-            if (!(msgC.isRead()))
+
+            if (!(msgC.isRead())) {
                 msgC.setRead(true);
+            }
 
             if (msg.isExpunged()) {
                 JOptionPane.showMessageDialog(this, "Nachricht wurde verschoben oder gelöscht!", "Fehler", JOptionPane.ERROR_MESSAGE);
@@ -817,18 +818,14 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
                 MailContentUI.setMessageImpl(this, msg, this.lblSubject, this.lblSentDate, this.lblTo, this.lblCC, this.lblBCC, this.lblFrom, this.editBody, this.lstAttachments, this.cmdShowHtml, false);
             }
 
-
-
-
             //folder.close(true);
-            
             try {
                 //folder.close(true);
                 EmailUtils.closeIfIMAP(folder);
             } catch (Throwable t) {
                 log.error(t);
             }
-            
+
         } catch (Exception ex) {
             log.error("Error getting contents of IMAP message", ex);
             JOptionPane.showMessageDialog(this, "Fehler Öffnen der Nachricht: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
@@ -839,12 +836,14 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
     public static void setMessageImpl(MailContentUI contentUI, Message msg, JLabel lblSubject, JLabel lblSentDate, JLabel lblTo, JLabel lblCC, JLabel lblBCC, JLabel lblFrom, JEditorPane editBody, JList lstAttachments, JButton cmdShowHtml, boolean edt) throws Exception {
         // we copy the message to avoid the "Unable to load BODYSTRUCTURE" issue
 
-        boolean closed=false;
-        if(msg.getFolder()!=null)
-            closed=!msg.getFolder().isOpen();
-        if(closed)
+        boolean closed = false;
+        if (msg.getFolder() != null) {
+            closed = !msg.getFolder().isOpen();
+        }
+        if (closed) {
             msg.getFolder().open(Folder.READ_WRITE);
-        
+        }
+
         AppUserBean cu = UserSettings.getInstance().getCurrentUser();
         if (EmailUtils.isReceiptRequested(msg)) {
             int response = JOptionPane.showConfirmDialog(contentUI, "Der Absender hat eine Lesebestätigung angefordert - jetzt senden?", "Lesebestätigung", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
@@ -853,32 +852,30 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
             }
         }
 
-
-
         Properties props = System.getProperties();
         props.setProperty("mail.store.protocol", cu.getEmailInType());
-        if(cu.isEmailInSsl())
+        if (cu.isEmailInSsl()) {
             props.setProperty("mail." + cu.getEmailInType() + ".ssl.enable", "true");
+        }
 
         //Session session = Session.getDefaultInstance(props, null);
-        
         // Copy the message by writing into an byte array and
         // creating a new MimeMessage object based on the contents
         // of the byte array:
-        
-        closed=false;
-        if(msg.getFolder()!=null)
-            closed=!msg.getFolder().isOpen();
-        if(closed)
+        closed = false;
+        if (msg.getFolder() != null) {
+            closed = !msg.getFolder().isOpen();
+        }
+        if (closed) {
             msg.getFolder().open(Folder.READ_WRITE);
-        
+        }
+
         // this should force the message to be fully loaded
 //        InputStream is=msg.getInputStream();
 //        byte[] buffer=new byte[1024];
 //        while(is.read(buffer)>-1) {
 //            log.debug(buffer.length);
 //        }
-        
         // try two times, i've seen sporadic FolderClosedException
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         try {
@@ -894,7 +891,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
             msg.writeTo(bos);
         }
         bos.close();
-        SharedByteArrayInputStream bis =new SharedByteArrayInputStream(bos.toByteArray());
+        SharedByteArrayInputStream bis = new SharedByteArrayInputStream(bos.toByteArray());
         //ByteArrayInputStream bis =new ByteArrayInputStream(bos.toByteArray());
         Session session = Session.getDefaultInstance(props, null);
         //Session session=msg.getSession();
@@ -903,17 +900,12 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
         //MimeMessage copiedMsg = new MimeMessag(msg.getFolder(), msg.get)
         bis.close();
 
-        
-        
         // The copiedMsg object is disconnected from the server so
         // setFlags will have no effect (for example).  Use
         // the original msg object for such operations.  Use
         // the copiedMsg object to access the content of the message.
-
-        
         // todo: remove?
         // copiedMsg=msg;
-
         lblSentDate.setText(df.format(copiedMsg.getSentDate()));
         lblSubject.setText(copiedMsg.getSubject());
         lblSubject.setToolTipText(lblSubject.getText());
@@ -949,7 +941,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
         }
         lblBCC.setText(bcc);
         lblBCC.setToolTipText(bcc);
-        
+
         ((DefaultListModel) lstAttachments.getModel()).removeAllElements();
         if (copiedMsg.isMimeType("multipart/*")) {
             ArrayList<String> attachments = EmailUtils.getAttachmentNames(copiedMsg.getContent());
@@ -960,16 +952,39 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
 
 //        if(!copiedMsg.getFolder().isOpen())
 //                copiedMsg.getFolder().open(Folder.READ_WRITE);
-        
         if (copiedMsg.isMimeType("multipart/*")) {
-            String html = recursiveFindPart(copiedMsg.getContent(), "text/html");
-            if (html != null) {
+            ArrayList<String> partsFound = new ArrayList<String>();
+            //String html = recursiveFindPart(copiedMsg.getContent(), "text/html");
+            recursiveFindPart(copiedMsg.getContent(), "text/html", partsFound);
+            //if (html != null) {
+            if (partsFound.size() > 0) {
+                //editBody.setEditorKit(new HTMLEditorKit());
+                StringBuffer sb = new StringBuffer();
+                sb.append("<html>");
+                for (String p : partsFound) {
+                    String pNew = p;
+                    pNew = p.trim();
+                    if (pNew.startsWith("<html>")) {
+                        pNew = pNew.substring(6);
+                    }
+                    if (pNew.endsWith("</html>")) {
+                        pNew = pNew.substring(0, pNew.length() - 7);
+                    }
+                    sb.append(pNew);
+                }
+                sb.append("</html>");
+                //String html=partsFound.get(0);
+                String html = sb.toString();
+
+                html = html.replaceAll("<body>", "<p>");
+                html = html.replaceAll("</body>", "</p>");
+                html = html.replaceAll("<body ", "<p ");
+
                 editBody.setContentType("text/html");
                 //html = this.cleanUpHTML(html);
 
                 // do this AFTER setContentType and BEFORE setText!!!
                 editBody.getDocument().putProperty("IgnoreCharsetDirective", Boolean.TRUE);
-
 
                 try {
                     Font font = new Font("Arial", Font.PLAIN, 13);
@@ -1001,14 +1016,14 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
                 int index = whitelist.indexOf(lblFrom.getText());
                 if (index > -1) {
                     cmdShowHtml.setEnabled(false);
-                    Dimension d=editBody.getParent().getParent().getSize();
+                    Dimension d = editBody.getParent().getParent().getSize();
                     editBody.setText(html);
                     editBody.getParent().getParent().setSize(d);
                 } else {
                     contentUI.setCachedHtml(html);
                     //this.cachedHtml = html;
                     cmdShowHtml.setEnabled(true);
-                    Dimension d=editBody.getParent().getParent().getSize();
+                    Dimension d = editBody.getParent().getParent().getSize();
                     editBody.setText(HTML_WARNING);
                     editBody.getParent().getParent().setSize(d);
                 }
@@ -1024,18 +1039,21 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
 //                        th.printStackTrace();
 //                    }
             } else {
-                String text = recursiveFindPart(copiedMsg.getContent(), "text/plain");
-                if (text != null) {
+                //editBody.setEditorKit(new StyledEditorKit());
+                recursiveFindPart(copiedMsg.getContent(), "text/plain", partsFound);
+                //String text = recursiveFindPart(copiedMsg.getContent(), "text/plain");
+                if (partsFound.size() > 0) {
+                    String text = partsFound.get(0);
                     editBody.setContentType("text/plain");
 
-                    Dimension d=editBody.getParent().getParent().getSize();
+                    Dimension d = editBody.getParent().getParent().getSize();
                     editBody.setText(text);
                     editBody.setCaretPosition(0);
                     editBody.getParent().getParent().setSize(d);
                 } else {
                     editBody.setContentType("text/plain");
 
-                    Dimension d=editBody.getParent().getParent().getSize();
+                    Dimension d = editBody.getParent().getParent().getSize();
                     editBody.setText("unknown message content");
                     editBody.setCaretPosition(0);
                     editBody.getParent().getParent().setSize(d);
@@ -1045,7 +1063,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
             if (copiedMsg.isMimeType("text/plain")) {
                 //this.editBody.setContentType(msg.getContentType());
                 editBody.setContentType("text/plain");
-                Dimension d=editBody.getParent().getParent().getSize();
+                Dimension d = editBody.getParent().getParent().getSize();
                 editBody.setText(copiedMsg.getContent().toString());
                 editBody.setCaretPosition(0);
                 editBody.getParent().getParent().setSize(d);
@@ -1057,13 +1075,11 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
 //                    body = this.cleanUpHTML(body);
 //                    this.editBody.setText(body);
 //                    
-
                 editBody.setContentType("text/html");
                 //html = this.cleanUpHTML(html);
 
                 // do this AFTER setContentType and BEFORE setText!!!
                 editBody.getDocument().putProperty("IgnoreCharsetDirective", Boolean.TRUE);
-
 
                 try {
                     Font font = new Font("Arial", Font.PLAIN, 13);
@@ -1095,14 +1111,14 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
                 int index = whitelist.indexOf(lblFrom.getText());
                 if (index > -1) {
                     cmdShowHtml.setEnabled(false);
-                    Dimension d=editBody.getParent().getParent().getSize();
+                    Dimension d = editBody.getParent().getParent().getSize();
                     editBody.setText(body);
                     editBody.getParent().getParent().setSize(d);
                 } else {
                     contentUI.setCachedHtml(body);
                     //this.cachedHtml = body;
                     cmdShowHtml.setEnabled(true);
-                    Dimension d=editBody.getParent().getParent().getSize();
+                    Dimension d = editBody.getParent().getParent().getSize();
                     editBody.setText(HTML_WARNING);
                     editBody.getParent().getParent().setSize(d);
                 }
@@ -1111,10 +1127,11 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
             //this.editBody.setText(msg.getContent().toString());
         }
         editBody.setCaretPosition(0);
-        
-        if(closed)
-            //msg.getFolder().close(true);
+
+        if (closed) //msg.getFolder().close(true);
+        {
             EmailUtils.closeIfIMAP(msg.getFolder());
+        }
 
     }
 
@@ -1145,15 +1162,16 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
 
     }
 
-    private static String recursiveFindPart(Object partObject, String mimeType) throws Exception {
+    private static void recursiveFindPart(Object partObject, String mimeType, ArrayList<String> resultList) throws Exception {
         if (partObject instanceof Multipart) {
             Multipart mp = (Multipart) partObject;
             for (int i = 0; i < mp.getCount(); i++) {
                 Part childPart = mp.getBodyPart(i);
-                String returnValue = recursiveFindPart(childPart, mimeType);
-                if (returnValue != null) {
-                    return returnValue;
-                }
+                //String returnValue = recursiveFindPart(childPart, mimeType);
+                recursiveFindPart(childPart, mimeType, resultList);
+//                if (returnValue != null) {
+//                    return returnValue;
+//                }
             }
         } else {
 
@@ -1164,16 +1182,17 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
                 MimeBodyPart mimePart = (MimeBodyPart) part;
 
                 if (mimePart.getContent() instanceof Multipart) {
-                    String returnValue = recursiveFindPart(mimePart.getContent(), mimeType);
-                    if (returnValue != null) {
-                        return returnValue;
-                    }
+                    //String returnValue = recursiveFindPart(mimePart.getContent(), mimeType);
+                    recursiveFindPart(mimePart.getContent(), mimeType, resultList);
+//                    if (returnValue != null) {
+//                        return returnValue;
+//                    }
                 }
 
                 //if (mimePart.isMimeType(mimeType)) {
                 if (mimePart.getContentType().toLowerCase().startsWith(mimeType)) {
-                    return mimePart.getContent().toString();
-
+                    //return mimePart.getContent().toString();
+                    resultList.add(mimePart.getContent().toString());
                 }
 
             } else if (disposition.equalsIgnoreCase(Part.ATTACHMENT)) {
@@ -1183,16 +1202,16 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
                 //Anhang wird in ein Verzeichnis gespeichert
                 //saveFile(part.getFileName(), part.getInputStream());
 
-
                 MimeBodyPart mimePart = (MimeBodyPart) part;
 
                 if (mimePart.isMimeType(mimeType)) {
-                    return mimePart.getContent().toString();
+                    //return mimePart.getContent().toString();
+                    resultList.add(mimePart.getContent().toString());
                 }
             }
         }
 
-        return null;
+        //return null;
     }
 
     private String findPart(Multipart mp, String mimeType) throws Exception {
@@ -1221,7 +1240,6 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
             } else if (disposition.equalsIgnoreCase(Part.INLINE)) {
                 //Anhang wird in ein Verzeichnis gespeichert
                 //saveFile(part.getFileName(), part.getInputStream());
-
 
                 MimeBodyPart mimePart = (MimeBodyPart) part;
 
@@ -1457,7 +1475,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
 
     private void lstAttachmentsMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lstAttachmentsMouseReleased
         if (evt.isPopupTrigger() && evt.getComponent().isEnabled()) {
-            
+
             if (this.lstAttachments.getSelectedValuesList().size() == 0) {
                 int index = lstAttachments.locationToIndex(evt.getPoint());
                 if (index >= 0) {
@@ -1475,8 +1493,8 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
             try {
                 byte[] data = EmailUtils.getAttachmentBytes(this.lstAttachments.getSelectedValue().toString(), this.msgContainer);
                 //String tmpFile = FileUtils.createTempFile(this.lstAttachments.getSelectedValue().toString(), data);
-                ReadOnlyDocumentStore store=new ReadOnlyDocumentStore("mailattachment-" + this.lstAttachments.getSelectedValue().toString(), this.lstAttachments.getSelectedValue().toString());
-                Launcher launcher=LauncherFactory.getLauncher(this.lstAttachments.getSelectedValue().toString(), data, store);
+                ReadOnlyDocumentStore store = new ReadOnlyDocumentStore("mailattachment-" + this.lstAttachments.getSelectedValue().toString(), this.lstAttachments.getSelectedValue().toString());
+                Launcher launcher = LauncherFactory.getLauncher(this.lstAttachments.getSelectedValue().toString(), data, store);
                 launcher.launch(false);
             } catch (Exception ex) {
                 log.error("Error opening attachment", ex);
@@ -1570,7 +1588,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
     }//GEN-LAST:event_mnuSearchSaveActionPerformed
 
     private void cmdShowHtmlActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdShowHtmlActionPerformed
-        Dimension d=editBody.getParent().getParent().getSize();
+        Dimension d = editBody.getParent().getParent().getSize();
         this.editBody.setText(this.cachedHtml);
         this.editBody.setCaretPosition(0);
         this.editBody.getParent().getParent().setSize(d);
@@ -1619,7 +1637,6 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
             if (he.getURL() == null) {
                 return;
             }
-
 
             String url = he.getURL().toString();
             if (url.toLowerCase().startsWith("mailto:")) {
