@@ -794,6 +794,8 @@ public class SaveToCasePanel extends javax.swing.JPanel {
         cmdSaveFullMessage.setFont(new java.awt.Font("Dialog", 1, 8)); // NOI18N
         cmdSaveFullMessage.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/filesave.png"))); // NOI18N
         cmdSaveFullMessage.setToolTipText("vollständige Nachricht in Akte speichern");
+        cmdSaveFullMessage.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
+        cmdSaveFullMessage.setContentAreaFilled(false);
         cmdSaveFullMessage.setMargin(new java.awt.Insets(0, 0, 0, 0));
         cmdSaveFullMessage.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -804,6 +806,8 @@ public class SaveToCasePanel extends javax.swing.JPanel {
         cmdSaveMessageWithoutAttachments.setFont(new java.awt.Font("Dialog", 1, 8)); // NOI18N
         cmdSaveMessageWithoutAttachments.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/filesave-noattachment.png"))); // NOI18N
         cmdSaveMessageWithoutAttachments.setToolTipText("Nachricht ohne Anhänge in Akte speichern");
+        cmdSaveMessageWithoutAttachments.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
+        cmdSaveMessageWithoutAttachments.setContentAreaFilled(false);
         cmdSaveMessageWithoutAttachments.setMargin(new java.awt.Insets(0, 0, 0, 0));
         cmdSaveMessageWithoutAttachments.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -814,6 +818,8 @@ public class SaveToCasePanel extends javax.swing.JPanel {
         cmdSaveSeparate.setFont(new java.awt.Font("Dialog", 1, 8)); // NOI18N
         cmdSaveSeparate.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/filesave-separate.png"))); // NOI18N
         cmdSaveSeparate.setToolTipText("Nachricht und Anhänge werden beide separat in die Akte übernommen");
+        cmdSaveSeparate.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
+        cmdSaveSeparate.setContentAreaFilled(false);
         cmdSaveSeparate.setMargin(new java.awt.Insets(0, 0, 0, 0));
         cmdSaveSeparate.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -824,6 +830,8 @@ public class SaveToCasePanel extends javax.swing.JPanel {
         cmdSaveMessageAttachmentsOnly.setFont(new java.awt.Font("Dialog", 1, 8)); // NOI18N
         cmdSaveMessageAttachmentsOnly.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/attach.png"))); // NOI18N
         cmdSaveMessageAttachmentsOnly.setToolTipText("nur Anhänge in Akte speichern");
+        cmdSaveMessageAttachmentsOnly.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
+        cmdSaveMessageAttachmentsOnly.setContentAreaFilled(false);
         cmdSaveMessageAttachmentsOnly.setMargin(new java.awt.Insets(0, 0, 0, 0));
         cmdSaveMessageAttachmentsOnly.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {

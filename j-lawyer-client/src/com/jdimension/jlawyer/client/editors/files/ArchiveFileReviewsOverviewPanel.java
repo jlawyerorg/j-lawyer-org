@@ -772,7 +772,6 @@ public class ArchiveFileReviewsOverviewPanel extends javax.swing.JPanel implemen
 
         lblPanelTitle.setFont(new java.awt.Font("Dialog", 1, 24)); // NOI18N
         lblPanelTitle.setForeground(new java.awt.Color(255, 255, 255));
-        lblPanelTitle.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/flag_big.png"))); // NOI18N
         lblPanelTitle.setText("Wiedervorlagen und Fristen nach Fälligkeit");
 
         jPanel1.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(255, 255, 255), 2, true));
@@ -836,9 +835,10 @@ public class ArchiveFileReviewsOverviewPanel extends javax.swing.JPanel implemen
             .add(layout.createSequentialGroup()
                 .addContainerGap()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jLabel18)
-                    .add(lblPanelTitle)
-                    .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                    .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
+                        .add(org.jdesktop.layout.GroupLayout.LEADING, lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .add(org.jdesktop.layout.GroupLayout.LEADING, jLabel18, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 240, Short.MAX_VALUE)
                 .addContainerGap())

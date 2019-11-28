@@ -719,6 +719,8 @@ public class CreateNewAddressPanel extends javax.swing.JPanel {
         lblAddress.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
 
         cmdSaveCompany.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/filesave.png"))); // NOI18N
+        cmdSaveCompany.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
+        cmdSaveCompany.setContentAreaFilled(false);
         cmdSaveCompany.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmdSaveCompanyActionPerformed(evt);
@@ -726,6 +728,8 @@ public class CreateNewAddressPanel extends javax.swing.JPanel {
         });
 
         cmdSavePerson.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/filesave.png"))); // NOI18N
+        cmdSavePerson.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
+        cmdSavePerson.setContentAreaFilled(false);
         cmdSavePerson.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmdSavePersonActionPerformed(evt);

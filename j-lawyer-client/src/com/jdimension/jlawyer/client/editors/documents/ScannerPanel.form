@@ -37,9 +37,11 @@
           <Group type="102" alignment="0" attributes="0">
               <EmptySpace min="-2" max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Component id="jLabel18" alignment="0" min="-2" max="-2" attributes="0"/>
-                  <Component id="lblPanelTitle" alignment="0" min="-2" max="-2" attributes="0"/>
                   <Component id="jPanel1" min="-2" max="-2" attributes="0"/>
+                  <Group type="103" alignment="0" groupAlignment="1" max="-2" attributes="0">
+                      <Component id="lblPanelTitle" alignment="0" max="32767" attributes="0"/>
+                      <Component id="jLabel18" alignment="0" max="32767" attributes="0"/>
+                  </Group>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="splitMain" pref="715" max="32767" attributes="0"/>
@@ -52,7 +54,7 @@
     <Component class="javax.swing.JLabel" name="jLabel18">
       <Properties>
         <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-          <Image iconType="3" name="/icons/folder_documents_big.png"/>
+          <Image iconType="3" name="/icons/scanner_big.png"/>
         </Property>
       </Properties>
     </Component>
@@ -63,9 +65,6 @@
         </Property>
         <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
           <Color blue="ff" green="ff" red="ff" type="rgb"/>
-        </Property>
-        <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-          <Image iconType="3" name="/icons/scanner_big.png"/>
         </Property>
         <Property name="text" type="java.lang.String" value="Scans"/>
       </Properties>

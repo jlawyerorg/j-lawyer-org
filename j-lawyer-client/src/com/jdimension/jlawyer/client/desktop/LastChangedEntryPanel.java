@@ -797,11 +797,11 @@ public class LastChangedEntryPanel extends javax.swing.JPanel {
         });
 
         lblChangedBy.setFont(new java.awt.Font("Dialog", 3, 12)); // NOI18N
-        lblChangedBy.setForeground(new java.awt.Color(0, 0, 255));
+        lblChangedBy.setForeground(new java.awt.Color(14, 114, 181));
         lblChangedBy.setText("user");
 
         lblTags.setFont(new java.awt.Font("Dialog", 0, 10)); // NOI18N
-        lblTags.setForeground(new java.awt.Color(0, 0, 204));
+        lblTags.setForeground(new java.awt.Color(14, 114, 181));
         lblTags.setText(" ");
 
         jLabel1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder.png"))); // NOI18N

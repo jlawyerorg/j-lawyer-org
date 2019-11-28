@@ -676,8 +676,7 @@ public class NewAddressPanel extends AddressPanel implements ResetOnDisplayEdito
     public NewAddressPanel() {
         super();
         this.lblPanelTitle.setText("neue Adresse anlegen");
-        this.lblPanelTitle.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit_add_big.png")));
-
+        
     }
     
     public void setCompany(String company) {

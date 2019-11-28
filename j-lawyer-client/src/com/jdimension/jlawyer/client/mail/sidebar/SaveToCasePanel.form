@@ -116,6 +116,12 @@
           <Image iconType="3" name="/icons/filesave.png"/>
         </Property>
         <Property name="toolTipText" type="java.lang.String" value="vollst&#xe4;ndige Nachricht in Akte speichern"/>
+        <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
+          <Border info="org.netbeans.modules.form.compat2.border.LineBorderInfo">
+            <LineBorder/>
+          </Border>
+        </Property>
+        <Property name="contentAreaFilled" type="boolean" value="false"/>
         <Property name="margin" type="java.awt.Insets" editor="org.netbeans.beaninfo.editors.InsetsEditor">
           <Insets value="[0, 0, 0, 0]"/>
         </Property>
@@ -133,6 +139,12 @@
           <Image iconType="3" name="/icons/filesave-noattachment.png"/>
         </Property>
         <Property name="toolTipText" type="java.lang.String" value="Nachricht ohne Anh&#xe4;nge in Akte speichern"/>
+        <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
+          <Border info="org.netbeans.modules.form.compat2.border.LineBorderInfo">
+            <LineBorder/>
+          </Border>
+        </Property>
+        <Property name="contentAreaFilled" type="boolean" value="false"/>
         <Property name="margin" type="java.awt.Insets" editor="org.netbeans.beaninfo.editors.InsetsEditor">
           <Insets value="[0, 0, 0, 0]"/>
         </Property>
@@ -150,6 +162,12 @@
           <Image iconType="3" name="/icons/filesave-separate.png"/>
         </Property>
         <Property name="toolTipText" type="java.lang.String" value="Nachricht und Anh&#xe4;nge werden beide separat in die Akte &#xfc;bernommen"/>
+        <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
+          <Border info="org.netbeans.modules.form.compat2.border.LineBorderInfo">
+            <LineBorder/>
+          </Border>
+        </Property>
+        <Property name="contentAreaFilled" type="boolean" value="false"/>
         <Property name="margin" type="java.awt.Insets" editor="org.netbeans.beaninfo.editors.InsetsEditor">
           <Insets value="[0, 0, 0, 0]"/>
         </Property>
@@ -167,6 +185,12 @@
           <Image iconType="3" name="/icons/attach.png"/>
         </Property>
         <Property name="toolTipText" type="java.lang.String" value="nur Anh&#xe4;nge in Akte speichern"/>
+        <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
+          <Border info="org.netbeans.modules.form.compat2.border.LineBorderInfo">
+            <LineBorder/>
+          </Border>
+        </Property>
+        <Property name="contentAreaFilled" type="boolean" value="false"/>
         <Property name="margin" type="java.awt.Insets" editor="org.netbeans.beaninfo.editors.InsetsEditor">
           <Insets value="[0, 0, 0, 0]"/>
         </Property>

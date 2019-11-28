@@ -862,7 +862,7 @@ public class ReviewDueEntryPanel extends javax.swing.JPanel {
         lblTags = new javax.swing.JLabel();
 
         lblResponsible.setFont(new java.awt.Font("Dialog", 2, 12)); // NOI18N
-        lblResponsible.setForeground(new java.awt.Color(0, 0, 255));
+        lblResponsible.setForeground(new java.awt.Color(14, 114, 181));
         lblResponsible.setText("user");
 
         lblIcon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/clicknrungrey.png"))); // NOI18N
@@ -903,7 +903,7 @@ public class ReviewDueEntryPanel extends javax.swing.JPanel {
         });
 
         lblTags.setFont(new java.awt.Font("Dialog", 0, 10)); // NOI18N
-        lblTags.setForeground(new java.awt.Color(0, 0, 204));
+        lblTags.setForeground(new java.awt.Color(14, 114, 181));
         lblTags.setText(" ");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);

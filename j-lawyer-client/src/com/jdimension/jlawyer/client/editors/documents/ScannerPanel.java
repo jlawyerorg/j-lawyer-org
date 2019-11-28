@@ -977,11 +977,10 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
         chkDocumentTagging = new javax.swing.JCheckBox();
         cmbDocumentTag = new javax.swing.JComboBox<>();
 
-        jLabel18.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder_documents_big.png"))); // NOI18N
+        jLabel18.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/scanner_big.png"))); // NOI18N
 
         lblPanelTitle.setFont(new java.awt.Font("Dialog", 1, 24)); // NOI18N
         lblPanelTitle.setForeground(new java.awt.Color(255, 255, 255));
-        lblPanelTitle.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/scanner_big.png"))); // NOI18N
         lblPanelTitle.setText("Scans");
 
         jPanel1.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(255, 255, 255), 2, true));
@@ -1158,9 +1157,10 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
             .add(layout.createSequentialGroup()
                 .addContainerGap()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jLabel18)
-                    .add(lblPanelTitle)
-                    .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                    .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
+                        .add(org.jdesktop.layout.GroupLayout.LEADING, lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .add(org.jdesktop.layout.GroupLayout.LEADING, jLabel18, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(splitMain, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 715, Short.MAX_VALUE)
                 .addContainerGap())

@@ -937,8 +937,12 @@ public class SplashThread implements Runnable {
 
                 ClientSettings cs = ClientSettings.getInstance();
                 gui.setTitle(gui.getTitle() + " " + VersionUtils.getFullClientVersion() + " [" + UserSettings.getInstance().getCurrentUser().getPrincipalId() + "@" + cs.getConfiguration(ClientSettings.CONF_LASTSERVER, "localhost") + "]");
-
+                gui.buildModuleBar();
+                
+                gui.pack();
+                gui.doLayout();
                 gui.setVisible(true);
+                
                 //gui.setDividerLocation(135);
 
                 notifyEditorForStatus(ClientSettings.getInstance().getRootModule());

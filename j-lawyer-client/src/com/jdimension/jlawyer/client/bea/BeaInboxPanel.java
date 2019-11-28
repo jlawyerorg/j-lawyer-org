@@ -675,6 +675,7 @@ import com.jdimension.jlawyer.client.editors.files.DescendingDateTimeStringCompa
 import com.jdimension.jlawyer.client.editors.files.FileNumberComparator;
 import com.jdimension.jlawyer.client.events.AllCaseTagsEvent;
 import com.jdimension.jlawyer.client.events.AllDocumentTagsEvent;
+import com.jdimension.jlawyer.client.events.BeaStatusEvent;
 import com.jdimension.jlawyer.client.events.Event;
 import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.events.EventConsumer;
@@ -982,10 +983,15 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                             Folder inbox = inboxFolders.get(safeId);
                             if (inbox != null) {
                                 ArrayList<MessageHeader> messages = BeaAccess.getInstance().getFolderOverview(inbox);
+                                int unread=0;
                                 for (MessageHeader mh : messages) {
                                     EditorsRegistry.getInstance().updateStatus("beA-Nachricht wird geladen: " + StringUtils.nonNull(mh.getSubject()));
                                     BeaAccess.getInstance().getMessage(mh.getId(), safeId);
+                                    if(!mh.isRead())
+                                        unread=unread+1;
                                 }
+                                BeaStatusEvent e=new BeaStatusEvent(unread);
+                                EventBroker.getInstance().publishEvent(e);
                             }
                         }
                     } catch (Throwable t) {

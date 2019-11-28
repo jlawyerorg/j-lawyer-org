@@ -47,10 +47,8 @@
           <Group type="102" alignment="0" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Component id="jLabel18" min="-2" max="-2" attributes="0"/>
                   <Group type="102" attributes="0">
                       <Group type="103" groupAlignment="1" attributes="0">
-                          <Component id="lblPanelTitle" min="-2" max="-2" attributes="0"/>
                           <Component id="chkEncryption" min="-2" max="-2" attributes="0"/>
                           <Component id="cmdNewSmsWithEncryptionPassword" min="-2" max="-2" attributes="0"/>
                       </Group>
@@ -58,6 +56,10 @@
                       <Component id="lblEncryption" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <Component id="jPanel16" min="-2" max="-2" attributes="0"/>
+                  <Group type="103" alignment="0" groupAlignment="1" attributes="0">
+                      <Component id="lblPanelTitle" alignment="1" min="-2" pref="37" max="-2" attributes="0"/>
+                      <Component id="jLabel18" min="-2" max="-2" attributes="0"/>
+                  </Group>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="lblHeaderInfo" min="-2" max="-2" attributes="0"/>

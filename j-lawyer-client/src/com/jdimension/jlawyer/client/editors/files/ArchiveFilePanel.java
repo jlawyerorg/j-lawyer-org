@@ -2818,7 +2818,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         lblPanelTitle.setFont(new java.awt.Font("Dialog", 1, 24)); // NOI18N
         lblPanelTitle.setForeground(new java.awt.Color(255, 255, 255));
         lblPanelTitle.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
-        lblPanelTitle.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder_big.png"))); // NOI18N
         lblPanelTitle.setText("check");
 
         jLabel2.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder_big.png"))); // NOI18N
@@ -2950,11 +2949,12 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(lblPanelTitle)
-                    .add(jLabel2)
                     .add(jPanel13, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(cmdHeaderAddNote)
-                    .add(cmdFavoriteDocuments))
+                    .add(cmdFavoriteDocuments)
+                    .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
+                        .add(org.jdesktop.layout.GroupLayout.LEADING, lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .add(org.jdesktop.layout.GroupLayout.LEADING, jLabel2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(lblHeaderInfo)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
