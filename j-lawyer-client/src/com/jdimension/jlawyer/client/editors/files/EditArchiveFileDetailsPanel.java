@@ -679,7 +679,7 @@ public class EditArchiveFileDetailsPanel extends ArchiveFilePanel {
         this.setOpenedFromEditorClass(EditArchiveFilePanel.class.getName());
         
         this.lblPanelTitle.setText("Akte bearbeiten");
-        this.lblPanelTitle.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit_big.png")));
+        //this.lblPanelTitle.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit_big.png")));
     }
     
 }

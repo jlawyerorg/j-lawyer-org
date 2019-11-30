@@ -661,163 +661,18 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.client.editors.files;
+package themes.colors;
 
-import com.jdimension.jlawyer.client.utils.ComponentUtils;
-import com.jdimension.jlawyer.client.utils.FileUtils;
-import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import java.awt.Color;
-import java.awt.Component;
-import java.awt.Font;
-import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.Hashtable;
-import javax.swing.Icon;
-import javax.swing.JLabel;
-import javax.swing.JPopupMenu;
-import javax.swing.JTable;
-import javax.swing.JTextField;
-import javax.swing.table.DefaultTableCellRenderer;
-import themes.colors.DefaultColorTheme;
 
 /**
  *
  * @author jens
  */
-public class DocumentTableCellRenderer extends DefaultTableCellRenderer {
-
-    private DecimalFormat megaBytes = new DecimalFormat("0.0");
-    private Hashtable<String, ArrayList<String>> renderTags = null;
-
-    private ArrayList documentHits = new ArrayList();
-    private JTextField txtSearchDocumentNames = null;
-    private JLabel lblDocumentHits = null;
-    private JPopupMenu popDocumentTags = null;
-
-    public DocumentTableCellRenderer(JTextField txtSearchDocumentNames, JLabel lblDocumentHits, JPopupMenu popDocumentTags) {
-        this.txtSearchDocumentNames = txtSearchDocumentNames;
-        this.lblDocumentHits = lblDocumentHits;
-        this.popDocumentTags = popDocumentTags;
-    }
-
-    public void setRenderTags(Hashtable<String, ArrayList<String>> tags) {
-        this.renderTags = tags;
-    }
-
-    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-
-        JLabel label = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-        label.setIcon(null);
-
-        if (column == 1) {
-            if (value instanceof Boolean) {
-                if (((Boolean) value).booleanValue() == true) {
-                    label.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/package_favorite.png")));
-                } else {
-                    label.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/package_favorite_grey.png")));
-                }
-            } else {
-                label.setIcon(null);
-
-            }
-            label.setText("");
-            label.setToolTipText("Klicken um Dokument in die Favoriten aufzunehmen");
-        }
-
-        if (column == 2) {
-            String sValue = (String) value;
-            FileUtils fu = FileUtils.getInstance();
-            Icon icon = fu.getFileTypeIcon(sValue);
-            label.setText(sValue);
-            label.setIcon(icon);
-
-        }
-
-        if (column == 4) {
-            if (value == null) {
-                value = 0l;
-            }
-            long lValue = (long) value;
-            if (lValue < 1024) {
-                lValue = 1024l;
-            }
-
-            if (lValue > (1024 * 1024)) {
-                label.setText(megaBytes.format(lValue / 1024l / 1024l) + " MB");
-            } else {
-                label.setText(megaBytes.format(lValue / 1024l) + " KB");
-            }
-
-            this.setHorizontalAlignment(JLabel.RIGHT);
-
-        }
-
-        if (column == 4) {
-            this.setHorizontalAlignment(JLabel.RIGHT);
-        } else {
-            this.setHorizontalAlignment(JLabel.LEFT);
-        }
-
-        boolean match = false;
-        if (txtSearchDocumentNames.getText() != null && !("".equals(txtSearchDocumentNames.getText()))) {
-            if (label.getText().toLowerCase().indexOf(txtSearchDocumentNames.getText().toLowerCase()) >= 0) {
-                label.setForeground(DefaultColorTheme.COLOR_LOGO_GREEN);
-                label.setFont(label.getFont().deriveFont(Font.BOLD));
-                if (!documentHits.contains(row)) {
-                    getDocumentHits().add(row);
-                }
-                match = true;
-            } else {
-                label.setForeground(Color.gray);
-                label.setFont(label.getFont().deriveFont(Font.PLAIN));
-            }
-        }
-
-        String[] docTags = ComponentUtils.getSelectedMenuItems(this.popDocumentTags);
-        if (docTags.length > 0) {
-            Object docObject = table.getValueAt(row, 0);
-            if (docObject != null && docObject instanceof ArchiveFileDocumentsBean) {
-                String id = ((ArchiveFileDocumentsBean) docObject).getId();
-                if (renderTags.containsKey(id)) {
-                    for (String tag : docTags) {
-                        if (renderTags.get(id).contains(tag)) {
-                            label.setForeground(DefaultColorTheme.COLOR_LOGO_GREEN);
-                            label.setFont(label.getFont().deriveFont(Font.BOLD));
-                            if (!documentHits.contains(row)) {
-                                getDocumentHits().add(row);
-                            }
-                            match = true;
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-
-        if (!match) {
-            if (isSelected) {
-                label.setForeground(Color.white);
-            } else {
-                label.setForeground(Color.black);
-            }
-            label.setFont(label.getFont().deriveFont(Font.PLAIN));
-        }
-        lblDocumentHits.setText(getDocumentHits().size() + " Treffer");
-        return label;
-    }
-
-    /**
-     * @return the documentHits
-     */
-    public ArrayList getDocumentHits() {
-        return documentHits;
-    }
-
-    /**
-     * @param documentHits the documentHits to set
-     */
-    public void setDocumentHits(ArrayList documentHits) {
-        this.documentHits = documentHits;
-    }
-
+public class DefaultColorTheme {
+    
+    public static Color COLOR_LOGO_RED=new Color(222, 49, 59);
+    public static Color COLOR_LOGO_GREEN=new Color(151, 191, 13);
+    public static Color COLOR_LOGO_BLUE=new Color(14, 114, 181);
+    
 }

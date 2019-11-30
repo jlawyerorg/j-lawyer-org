@@ -502,7 +502,7 @@
                 <Component class="javax.swing.JButton" name="cmdTagFilter">
                   <Properties>
                     <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-                      <Image iconType="3" name="/icons16/material/baseline_star_white_36dp.png"/>
+                      <Image iconType="3" name="/icons16/material/baseline_label_white_36dp.png"/>
                     </Property>
                     <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
                       <Border info="org.netbeans.modules.form.compat2.border.LineBorderInfo">
@@ -524,7 +524,7 @@
                 <Component class="javax.swing.JButton" name="cmdDocumentTagFilter">
                   <Properties>
                     <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-                      <Image iconType="3" name="/icons16/material/baseline_star_white_36dp.png"/>
+                      <Image iconType="3" name="/icons16/material/baseline_label_white_36dp.png"/>
                     </Property>
                     <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
                       <Border info="org.netbeans.modules.form.compat2.border.LineBorderInfo">

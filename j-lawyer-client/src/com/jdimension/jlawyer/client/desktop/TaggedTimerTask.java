@@ -763,9 +763,9 @@ public class TaggedTimerTask extends java.util.TimerTask {
                 popup.add(mi);
             }
             if (hasSelection) {
-                button.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_star_green_36dp.png")));
+                button.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_label_green_36dp.png")));
             } else {
-                button.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_star_white_36dp.png")));
+                button.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_label_white_36dp.png")));
             }
             for (MenuElement me : popup.getSubElements()) {
                 ((JCheckBoxMenuItem) me.getComponent()).addActionListener(new ActionListener() {
@@ -784,9 +784,9 @@ public class TaggedTimerTask extends java.util.TimerTask {
                         }
 
                         if (selected) {
-                            button.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_star_green_36dp.png")));
+                            button.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_label_green_36dp.png")));
                         } else {
-                            button.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_star_white_36dp.png")));
+                            button.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_label_white_36dp.png")));
                         }
 
                         System.out.println("60: " + al);

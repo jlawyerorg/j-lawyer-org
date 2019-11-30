@@ -677,7 +677,7 @@ public class EditAddressDetailsPanel extends AddressPanel {
         this.setOpenedFromEditorClass(EditAddressPanel.class.getName());
         
         this.lblPanelTitle.setText("Adresse bearbeiten");
-        this.lblPanelTitle.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit_big.png")));
+        //this.lblPanelTitle.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit_big.png")));
     }
     
 }

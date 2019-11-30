@@ -682,6 +682,7 @@ import javax.swing.JLabel;
 import javax.swing.JProgressBar;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
+import themes.colors.DefaultColorTheme;
 
 /**
  *
@@ -738,10 +739,10 @@ public class BoxAccess {
                     String stdout = new Shell.Plain(shell).exec("echo 'Hello World'");
                     if ("Hello World".equals(stdout.trim())) {
                         ThreadUtils.setLabel(output, "Ok");
-                        ThreadUtils.setLabelForeGround(output, Color.GREEN.darker().darker());
+                        ThreadUtils.setLabelForeGround(output, DefaultColorTheme.COLOR_LOGO_GREEN);
                     } else {
                         ThreadUtils.setLabel(output, "Unerwartete Antwort");
-                        ThreadUtils.setLabelForeGround(output, Color.RED.darker().darker());
+                        ThreadUtils.setLabelForeGround(output, DefaultColorTheme.COLOR_LOGO_RED);
                     }
                     ThreadUtils.setVisible(progress, false);
                 } catch (Throwable e) {
@@ -750,7 +751,7 @@ public class BoxAccess {
                         msg = "Falsches Passwort!";
                     }
                     ThreadUtils.setLabel(output, msg);
-                    ThreadUtils.setLabelForeGround(output, Color.RED.darker().darker());
+                    ThreadUtils.setLabelForeGround(output, DefaultColorTheme.COLOR_LOGO_RED);
                     ThreadUtils.setToolTipText(output, msg);
                     ThreadUtils.setVisible(progress, false);
                 }
@@ -823,7 +824,7 @@ public class BoxAccess {
                     }
                     ThreadUtils.setLabel(output, msg);
                     ThreadUtils.setToolTipText(output, msg);
-                    ThreadUtils.setLabelForeGround(output, Color.RED.darker().darker());
+                    ThreadUtils.setLabelForeGround(output, DefaultColorTheme.COLOR_LOGO_RED);
                     ThreadUtils.setVisible(progress, false);
                 }
             }
@@ -841,10 +842,10 @@ public class BoxAccess {
                     
                     if (stdout.trim().toLowerCase().endsWith("\n1")) {
                         ThreadUtils.setLabel(output, "Datenbankpasswort verifiziert");
-                        ThreadUtils.setLabelForeGround(output, Color.GREEN.darker().darker());
+                        ThreadUtils.setLabelForeGround(output, DefaultColorTheme.COLOR_LOGO_GREEN);
                     } else {
                         ThreadUtils.setLabel(output, "Datenbankpasswort ungültig!");
-                        ThreadUtils.setLabelForeGround(output, Color.RED.darker().darker());
+                        ThreadUtils.setLabelForeGround(output, DefaultColorTheme.COLOR_LOGO_RED);
                     }
                     
                     //shell = new SSHByPassword(host, 22, "root", password);
@@ -865,7 +866,7 @@ public class BoxAccess {
                     }
                     ThreadUtils.setLabel(output, msg);
                     ThreadUtils.setToolTipText(output, msg);
-                    ThreadUtils.setLabelForeGround(output, Color.RED.darker().darker());
+                    ThreadUtils.setLabelForeGround(output, DefaultColorTheme.COLOR_LOGO_RED);
                     ThreadUtils.setVisible(progress, false);
                 }
             }
@@ -895,10 +896,10 @@ public class BoxAccess {
                     String stdout = new Shell.Plain(shell).exec("service j-lawyer-server status");
                     if (stdout.toLowerCase().indexOf("active: active") > -1) {
                         ThreadUtils.setLabel(output, "Erreichbar, Service läuft");
-                        ThreadUtils.setLabelForeGround(output, Color.GREEN.darker().darker());
+                        ThreadUtils.setLabelForeGround(output, DefaultColorTheme.COLOR_LOGO_GREEN);
                     } else {
                         ThreadUtils.setLabel(output, "Service läuft nicht!");
-                        ThreadUtils.setLabelForeGround(output, Color.RED.darker().darker());
+                        ThreadUtils.setLabelForeGround(output, DefaultColorTheme.COLOR_LOGO_RED);
                     }
                     ThreadUtils.setVisible(progress, false);
                 } catch (Throwable e) {
@@ -908,7 +909,7 @@ public class BoxAccess {
                     }
                     ThreadUtils.setLabel(output, msg);
                     ThreadUtils.setToolTipText(output, msg);
-                    ThreadUtils.setLabelForeGround(output, Color.RED.darker().darker());
+                    ThreadUtils.setLabelForeGround(output, DefaultColorTheme.COLOR_LOGO_RED);
                     ThreadUtils.setVisible(progress, false);
                 }
             }
@@ -935,17 +936,17 @@ public class BoxAccess {
                 try {
                     ThreadUtils.setVisible(progress, true);
                     ThreadUtils.setLabel(output, "Service wird neu gestartet...");
-                    ThreadUtils.setLabelForeGround(output, Color.GREEN.darker().darker());
+                    ThreadUtils.setLabelForeGround(output, DefaultColorTheme.COLOR_LOGO_GREEN);
                     Shell shell = new SSHByPassword(host, 22, "root", password);
                     String stdout = new Shell.Plain(shell).exec("service j-lawyer-server restart");
                     if (stdout.trim().length() == 0) {
                         ThreadUtils.setLabel(output, "Serviceneustart läuft und kann bis zu 3min dauern");
                         ThreadUtils.setToolTipText(output, "Serviceneustart läuft und kann bis zu 3min dauern");
-                        ThreadUtils.setLabelForeGround(output, Color.GREEN.darker().darker());
+                        ThreadUtils.setLabelForeGround(output, DefaultColorTheme.COLOR_LOGO_GREEN);
                     } else {
                         ThreadUtils.setLabel(output, "Serviceneustart fehlgeschlagen!");
                         ThreadUtils.setToolTipText(output, "Serviceneustart fehlgeschlagen!");
-                        ThreadUtils.setLabelForeGround(output, Color.RED.darker().darker());
+                        ThreadUtils.setLabelForeGround(output, DefaultColorTheme.COLOR_LOGO_RED);
                     }
                     ThreadUtils.setVisible(progress, false);
                 } catch (Throwable e) {
@@ -955,7 +956,7 @@ public class BoxAccess {
                     }
                     ThreadUtils.setLabel(output, msg);
                     ThreadUtils.setToolTipText(output, msg);
-                    ThreadUtils.setLabelForeGround(output, Color.RED.darker().darker());
+                    ThreadUtils.setLabelForeGround(output, DefaultColorTheme.COLOR_LOGO_RED);
                     ThreadUtils.setVisible(progress, false);
                 }
             }
@@ -970,12 +971,12 @@ public class BoxAccess {
                 try {
                     ThreadUtils.setVisible(progress, true);
                     ThreadUtils.setLabel(output, "Box wird neu gestartet...");
-                    ThreadUtils.setLabelForeGround(output, Color.GREEN.darker().darker());
+                    ThreadUtils.setLabelForeGround(output, DefaultColorTheme.COLOR_LOGO_GREEN);
                     Shell shell = new SSHByPassword(host, 22, "root", password);
                     String stdout = new Shell.Plain(shell).exec("reboot");
                     ThreadUtils.setLabel(output, "Reboot läuft und kann bis zu 3min dauern");
                     ThreadUtils.setToolTipText(output, "Reboot läuft und kann bis zu 3min dauern");
-                    ThreadUtils.setLabelForeGround(output, Color.GREEN.darker().darker());
+                    ThreadUtils.setLabelForeGround(output, DefaultColorTheme.COLOR_LOGO_GREEN);
                     ThreadUtils.setVisible(progress, false);
 
                 } catch (Throwable e) {
@@ -985,7 +986,7 @@ public class BoxAccess {
                     }
                     ThreadUtils.setLabel(output, msg);
                     ThreadUtils.setToolTipText(output, msg);
-                    ThreadUtils.setLabelForeGround(output, Color.RED.darker().darker());
+                    ThreadUtils.setLabelForeGround(output, DefaultColorTheme.COLOR_LOGO_RED);
                     ThreadUtils.setVisible(progress, false);
                 }
             }
@@ -1000,12 +1001,12 @@ public class BoxAccess {
                 try {
                     ThreadUtils.setVisible(progress, true);
                     ThreadUtils.setLabel(output, "Box wird heruntergefahren...");
-                    ThreadUtils.setLabelForeGround(output, Color.GREEN.darker().darker());
+                    ThreadUtils.setLabelForeGround(output, DefaultColorTheme.COLOR_LOGO_GREEN);
                     Shell shell = new SSHByPassword(host, 22, "root", password);
                     String stdout = new Shell.Plain(shell).exec("shutdown now");
                     ThreadUtils.setLabel(output, "Herunterfahren angefordert");
                     ThreadUtils.setToolTipText(output, "Sie können die j-lawyer.BOX vom Strom trennen sobald nur noch die rote LED leuchtet");
-                    ThreadUtils.setLabelForeGround(output, Color.GREEN.darker().darker());
+                    ThreadUtils.setLabelForeGround(output, DefaultColorTheme.COLOR_LOGO_GREEN);
                     ThreadUtils.setVisible(progress, false);
 
                 } catch (Throwable e) {
@@ -1015,7 +1016,7 @@ public class BoxAccess {
                     }
                     ThreadUtils.setLabel(output, msg);
                     ThreadUtils.setToolTipText(output, msg);
-                    ThreadUtils.setLabelForeGround(output, Color.RED.darker().darker());
+                    ThreadUtils.setLabelForeGround(output, DefaultColorTheme.COLOR_LOGO_RED);
                     ThreadUtils.setVisible(progress, false);
                 }
             }
