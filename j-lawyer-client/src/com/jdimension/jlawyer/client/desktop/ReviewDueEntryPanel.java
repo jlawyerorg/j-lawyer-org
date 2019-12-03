@@ -690,6 +690,7 @@ import java.util.Date;
 import javax.swing.JOptionPane;
 import javax.swing.JTextField;
 import org.apache.log4j.Logger;
+import themes.colors.DefaultColorTheme;
 
 /**
  *
@@ -882,6 +883,7 @@ public class ReviewDueEntryPanel extends javax.swing.JPanel {
 
         java.util.ResourceBundle bundle = java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/ReviewDueEntryPanel"); // NOI18N
         lblDescription.setText(bundle.getString("label.followup")); // NOI18N
+        lblDescription.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         lblDescription.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 lblDescriptionMouseClicked(evt);
@@ -994,7 +996,7 @@ public class ReviewDueEntryPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_lblDescriptionMouseClicked
 
     private void lblDescriptionMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblDescriptionMouseEntered
-        this.lblDescription.setForeground(new Color(0, 0, 255));
+        this.lblDescription.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
     }//GEN-LAST:event_lblDescriptionMouseEntered
 
     private void lblDescriptionMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblDescriptionMouseExited

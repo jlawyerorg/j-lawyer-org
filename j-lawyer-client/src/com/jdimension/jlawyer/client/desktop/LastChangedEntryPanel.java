@@ -681,6 +681,7 @@ import java.awt.Component;
 import java.awt.Image;
 import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
+import themes.colors.DefaultColorTheme;
 
 /**
  *
@@ -837,7 +838,7 @@ public class LastChangedEntryPanel extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void lblDescriptionMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblDescriptionMouseEntered
-        this.lblDescription.setForeground(new Color(0, 0, 255));
+        this.lblDescription.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
     }//GEN-LAST:event_lblDescriptionMouseEntered
 
     private void lblDescriptionMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblDescriptionMouseExited

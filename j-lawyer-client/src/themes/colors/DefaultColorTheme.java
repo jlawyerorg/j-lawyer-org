@@ -675,4 +675,6 @@ public class DefaultColorTheme {
     public static Color COLOR_LOGO_GREEN=new Color(151, 191, 13);
     public static Color COLOR_LOGO_BLUE=new Color(14, 114, 181);
     
+    public static Color COLOR_DARK_GREY=new Color(102, 102, 102);
+    
 }
