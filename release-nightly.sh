@@ -9,6 +9,8 @@ rm ../j-lawyer-releases/j-lawyer-server/wildfly/standalone/deployments/j-lawyer-
 cp ./j-lawyer-client/dist/j-lawyer-client.jar ../j-lawyer-releases/j-lawyer-client/
 cp ./j-lawyer-client/dist/lib/*.jar ../j-lawyer-releases/j-lawyer-client/lib/
 cp ./j-lawyer-server/dist/j-lawyer-server.ear ../j-lawyer-releases/j-lawyer-server/wildfly/standalone/deployments/
+# e.g. beA config_schulung.jar
+cp ../j-lawyer-releases/j-lawyer-client-default/lib/* ../j-lawyer-releases/j-lawyer-client/lib/ 
 
 
 rm ../j-lawyer-client-installer/media/*.*

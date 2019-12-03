@@ -1037,8 +1037,6 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
         mnuRemoveFolder = new javax.swing.JMenuItem();
         mnuEmptyTrash = new javax.swing.JMenuItem();
         popEmailList = new javax.swing.JPopupMenu();
-        mnuMarkRead = new javax.swing.JMenuItem();
-        mnuMarkUnread = new javax.swing.JMenuItem();
         mnuSearchSave = new javax.swing.JMenuItem();
         mnuSearchSaveNoAttachments = new javax.swing.JMenuItem();
         mnuSearchSaveOnlyAttachments = new javax.swing.JMenuItem();
@@ -1099,24 +1097,6 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
             }
         });
         popFolders.add(mnuEmptyTrash);
-
-        mnuMarkRead.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png"))); // NOI18N
-        mnuMarkRead.setText("als gelesen markieren");
-        mnuMarkRead.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                mnuMarkReadActionPerformed(evt);
-            }
-        });
-        popEmailList.add(mnuMarkRead);
-
-        mnuMarkUnread.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png"))); // NOI18N
-        mnuMarkUnread.setText("als ungelesen markieren");
-        mnuMarkUnread.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                mnuMarkUnreadActionPerformed(evt);
-            }
-        });
-        popEmailList.add(mnuMarkUnread);
 
         mnuSearchSave.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/find.png"))); // NOI18N
         mnuSearchSave.setText("in Akte speichern...");
@@ -1733,27 +1713,6 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
             this.popEmailList.show(this.tblMails, evt.getX(), evt.getY());
         }
     }//GEN-LAST:event_tblMailsMousePressed
-
-    private void mnuMarkReadActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuMarkReadActionPerformed
-        int[] selected = this.tblMails.getSelectedRows();
-        for (int sel : selected) {
-            MessageHeader msgC = (MessageHeader) this.tblMails.getValueAt(sel, 3);
-            msgC.setRead(true);
-            this.tblMails.setValueAt(msgC, sel, 3);
-
-        }
-    }//GEN-LAST:event_mnuMarkReadActionPerformed
-
-    private void mnuMarkUnreadActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuMarkUnreadActionPerformed
-        int[] selected = this.tblMails.getSelectedRows();
-        for (int sel : selected) {
-            MessageHeader msgC = (MessageHeader) this.tblMails.getValueAt(sel, 3);
-
-            msgC.setRead(false);
-            this.tblMails.setValueAt(msgC, sel, 3);
-
-        }
-    }//GEN-LAST:event_mnuMarkUnreadActionPerformed
 
     private void cmdDeleteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdDeleteActionPerformed
         int[] selected = this.tblMails.getSelectedRows();
@@ -2950,8 +2909,6 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
     protected javax.swing.JLabel lblPanelTitle;
     private javax.swing.JSplitPane mainSplitter;
     private javax.swing.JMenuItem mnuEmptyTrash;
-    private javax.swing.JMenuItem mnuMarkRead;
-    private javax.swing.JMenuItem mnuMarkUnread;
     private javax.swing.JMenuItem mnuNewFolder;
     private javax.swing.JMenuItem mnuRemoveFolder;
     private javax.swing.JMenuItem mnuRestoreFromTrash;
