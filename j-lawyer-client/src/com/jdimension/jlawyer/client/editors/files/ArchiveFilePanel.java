@@ -4189,7 +4189,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         JFileChooser chooser = new JFileChooser(lastDir);
         chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
         chooser.setAcceptAllFileFilterUsed(false);
-        if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+        if (chooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
             File dir = chooser.getSelectedFile();
             try {
                 s.setConfiguration("client.archivefiles.htmlexport.lastdir", dir.getCanonicalPath());
