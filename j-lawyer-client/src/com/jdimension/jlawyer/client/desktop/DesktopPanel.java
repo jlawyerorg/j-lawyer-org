@@ -1149,6 +1149,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         });
 
         cmdTagFilter.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_label_white_36dp.png"))); // NOI18N
+        cmdTagFilter.setToolTipText("Akten-Etiketten");
         cmdTagFilter.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(255, 255, 255), 1, true));
         cmdTagFilter.setContentAreaFilled(false);
         cmdTagFilter.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
@@ -1164,6 +1165,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         });
 
         cmdDocumentTagFilter.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_label_white_36dp.png"))); // NOI18N
+        cmdDocumentTagFilter.setToolTipText("Dokument-Etiketten");
         cmdDocumentTagFilter.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(255, 255, 255), 1, true));
         cmdDocumentTagFilter.setContentAreaFilled(false);
         cmdDocumentTagFilter.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));

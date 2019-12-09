@@ -680,6 +680,7 @@ import javax.swing.Icon;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import org.apache.log4j.Logger;
+import themes.colors.DefaultColorTheme;
 
 /**
  *
@@ -692,6 +693,7 @@ public class ModuleButton extends javax.swing.JPanel implements EventConsumer {
     private ModuleMetadata module = null;
 
     private Color labelForeColor = new Color(102, 102, 102);
+    private Color defaultBackColor=Color.GRAY;
 
     private String editorClass = null;
 
@@ -705,6 +707,7 @@ public class ModuleButton extends javax.swing.JPanel implements EventConsumer {
      */
     public ModuleButton(ModuleMetadata m) {
         initComponents();
+        this.defaultBackColor=this.getBackground();
         this.module = m;
 
         this.editorClass = m.getEditorClass();
@@ -927,6 +930,7 @@ public class ModuleButton extends javax.swing.JPanel implements EventConsumer {
                 JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("error.loadingeditor") + ex.getMessage(), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.error"), JOptionPane.ERROR_MESSAGE);
             }
             this.lblIndicator.setForeground(new Color(102, 102, 102));
+            setForeground(this.defaultBackColor);
         } else {
             //this.scrollMain.setViewportView(null);
             EditorsRegistry.getInstance().setMainEditorsPaneView(null);
@@ -1011,6 +1015,7 @@ public class ModuleButton extends javax.swing.JPanel implements EventConsumer {
                 if (incomingValue > cVal) {
                     lblIndicator.setForeground(new Color(222, 49, 59));
                     lblIndicator.setText("" + incomingValue);
+                    setForeground(DefaultColorTheme.COLOR_LOGO_GREEN);
                 } else if (incomingValue==0) {
                     lblIndicator.setForeground(new Color(222, 49, 59));
                     lblIndicator.setText("");
