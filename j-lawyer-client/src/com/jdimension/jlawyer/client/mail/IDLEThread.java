@@ -706,7 +706,7 @@ public class IDLEThread implements Runnable {
                     ((IMAPFolder) f).idle();
                     Thread.sleep(500);
                 } catch (MessagingException mex) {
-                    log.error("IMAP IDLE not supported - cancelling IDLE thread!", mex);
+                    log.error("IMAP IDLE not supported - cancelling IDLE thread: " + mex.getMessage());
                     return;
                 } catch (Throwable t) {
                     log.error(t);
