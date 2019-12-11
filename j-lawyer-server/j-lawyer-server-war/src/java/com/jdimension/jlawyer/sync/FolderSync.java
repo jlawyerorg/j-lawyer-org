@@ -812,7 +812,7 @@ public class FolderSync {
                     }
                 }
                 if(f.isDirectory() && !sourceDirNames.contains(f.getName())) {
-                    log.info("Deleting " + f.getName() + " from sync location");
+                    log.info("Deleting " + f.getName() + " from sync location because it is not contained in " + sourceDirNames.toString());
                     f.delete();
                 }
             }
