@@ -4,18 +4,6 @@ alter table campaign_contacts add CONSTRAINT campaign_contacts_ibfk_2 FOREIGN KE
 ALTER TABLE case_contacts DROP FOREIGN KEY case_contacts_ibfk_1;
 alter table case_contacts add CONSTRAINT case_contacts_ibfk_1 FOREIGN KEY (archiveFileKey) REFERENCES cases (id) ON DELETE CASCADE;
 
--- IF EXISTS (
---               SELECT *
---               FROM INFORMATION_SCHEMA.STATISTICS
---               WHERE INDEX_SCHEMA = DATABASE()
---                     AND TABLE_NAME='case_contacts'
---                     AND INDEX_NAME = 'case_contacts_ibfk_2')
---         BEGIN
---             ALTER TABLE case_contacts DROP FOREIGN KEY case_contacts_ibfk_2;
---         END
---         END IF;
-
-
 ALTER TABLE case_contacts DROP FOREIGN KEY case_contacts_ibfk_2;
 alter table case_contacts add CONSTRAINT case_contacts_ibfk_2 FOREIGN KEY (addressKey) REFERENCES contacts (id) ON DELETE CASCADE;
 
