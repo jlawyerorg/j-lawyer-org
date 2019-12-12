@@ -675,184 +675,190 @@ import org.apache.log4j.Logger;
  * @author jens
  */
 public class FolderSync {
-    
-    private static final Logger log=Logger.getLogger(FolderSync.class.getName());
-    
-    private File from=null;
-    private VirtualFile to=null;
-    private CancellationTask cancelWhenRunning=null;
-    
+
+    private static final Logger log = Logger.getLogger(FolderSync.class.getName());
+
+    private File from = null;
+    private VirtualFile to = null;
+    private CancellationTask cancelWhenRunning = null;
+
     public FolderSync(File from, VirtualFile target, CancellationTask cancelWhenRunning) {
-        this.from=from;
-        this.to=target;
-        this.cancelWhenRunning=cancelWhenRunning;
+        this.from = from;
+        this.to = target;
+        this.cancelWhenRunning = cancelWhenRunning;
     }
-    
+
     public void synchronize() throws Exception {
         synchronize(180);
     }
-    
+
     public void synchronize(int ignoreNewerThanSeconds) throws Exception {
-        
-        if(!from.isDirectory())
-            throw new Exception ("Source is not a directory");
-        
-        if(!to.isDirectory()) {
-            throw new Exception ("Target is not a directory");
+
+        if (!from.isDirectory()) {
+            throw new Exception("Source is not a directory");
         }
-        
-        if(!to.isReadable() || !to.isWritable()) {
-            throw new Exception ("Target has invalid file permissions");
+
+        if (!to.isDirectory()) {
+            throw new Exception("Target is not a directory");
         }
-        
+
+        if (!to.isReadable() || !to.isWritable()) {
+            throw new Exception("Target has invalid file permissions");
+        }
+
         // FILES
         // 1: delete from target what is not in source
-        
-            // get a list of files in source
-            File[] sourceFiles=from.listFiles();
-            ArrayList<String>sourceFileNames=new ArrayList<String>();
-            for(File f: sourceFiles) {
-                if(this.cancelWhenRunning!=null) {
-                    if(this.cancelWhenRunning.requestsCancellation()) {
-                        log.warn("sync cancellation requested by other task");
-                        return;
-                    }
+        // get a list of files in source
+        File[] sourceFiles = from.listFiles();
+        ArrayList<String> sourceFileNames = new ArrayList<String>();
+        for (File f : sourceFiles) {
+            if (this.cancelWhenRunning != null) {
+                if (this.cancelWhenRunning.requestsCancellation()) {
+                    log.warn("sync cancellation requested by other task");
+                    return;
                 }
-                if(f.isFile())
-                    sourceFileNames.add(f.getName());
             }
-            
-            // iterate over target files
-            for(VirtualFile f: to.listFiles()) {
-                if(this.cancelWhenRunning!=null) {
-                    if(this.cancelWhenRunning.requestsCancellation()) {
-                        log.warn("sync cancellation requested by other task");
-                        return;
-                    }
+            if (f.isFile()) {
+                sourceFileNames.add(f.getName());
+            }
+        }
+
+        // iterate over target files
+        for (VirtualFile f : to.listFiles()) {
+            if (this.cancelWhenRunning != null) {
+                if (this.cancelWhenRunning.requestsCancellation()) {
+                    log.warn("sync cancellation requested by other task");
+                    return;
                 }
-                if(f.isFile() && !sourceFileNames.contains(f.getName())) {
-                    log.info("Deleting " + f.getName() + " from sync location");
+            }
+            if (f.isFile() && !sourceFileNames.contains(f.getName())) {
+                log.info("Deleting " + f.getName() + " from sync location");
+                try {
                     f.delete();
+                } catch (Throwable t) {
+                    log.error("Could not delete " + f.getName(), t);
                 }
             }
-        
-        
-        
+        }
+
         // 2: copy to target what is only in source
-        
-            // get a list of files in target
-            Collection<VirtualFile> targetFiles=to.listFiles();
-            ArrayList<String>targetFileNames=new ArrayList<String>();
-            for(VirtualFile f: targetFiles) {
-                if(f.isFile())
-                    targetFileNames.add(f.getName());
+        // get a list of files in target
+        Collection<VirtualFile> targetFiles = to.listFiles();
+        ArrayList<String> targetFileNames = new ArrayList<String>();
+        for (VirtualFile f : targetFiles) {
+            if (f.isFile()) {
+                targetFileNames.add(f.getName());
             }
-            
-            // iterate over source files
-            for(File f: from.listFiles()) {
-                if(this.cancelWhenRunning!=null) {
-                    if(this.cancelWhenRunning.requestsCancellation()) {
-                        log.warn("sync cancellation requested by other task");
-                        return;
-                    }
+        }
+
+        // iterate over source files
+        for (File f : from.listFiles()) {
+            if (this.cancelWhenRunning != null) {
+                if (this.cancelWhenRunning.requestsCancellation()) {
+                    log.warn("sync cancellation requested by other task");
+                    return;
                 }
-                if(f.isFile()) {
-                    if(!targetFileNames.contains(f.getName())) {
-                        // only copy if not currently being written (last modified at least 3 mins ago)
-                        if((System.currentTimeMillis() - f.lastModified()) > 1000*ignoreNewerThanSeconds) {
-                            log.info("Copying " + f.getName() + " to sync location");
-                            to.copyLocalFile(f);
-                        }
-                    } else {
-                        // compare size, copy if different
-                        long fromLength=f.length();
-                        long toLength=-1;
-                        for(VirtualFile toFile: targetFiles) {
-                            if(this.cancelWhenRunning!=null) {
-                    if(this.cancelWhenRunning.requestsCancellation()) {
-                        log.warn("sync cancellation requested by other task");
-                        return;
+            }
+            if (f.isFile()) {
+                if (!targetFileNames.contains(f.getName())) {
+                    // only copy if not currently being written (last modified at least 3 mins ago)
+                    if ((System.currentTimeMillis() - f.lastModified()) > 1000 * ignoreNewerThanSeconds) {
+                        log.info("Copying " + f.getName() + " to sync location");
+                        to.copyLocalFile(f);
                     }
-                }
-                            if(toFile.isFile() && toFile.getName().equals(f.getName())) {
-                                toLength=toFile.length();
-                                break;
+                } else {
+                    // compare size, copy if different
+                    long fromLength = f.length();
+                    long toLength = -1;
+                    for (VirtualFile toFile : targetFiles) {
+                        if (this.cancelWhenRunning != null) {
+                            if (this.cancelWhenRunning.requestsCancellation()) {
+                                log.warn("sync cancellation requested by other task");
+                                return;
                             }
                         }
-                        if(fromLength != toLength) {
-                            log.info("Copying " + f.getName() + " to sync location");
-                            to.copyLocalFile(f);
+                        if (toFile.isFile() && toFile.getName().equals(f.getName())) {
+                            toLength = toFile.length();
+                            break;
                         }
                     }
-                }
-                
-            }
-            
-            
-            
-            
-            // DIRECTORIES
-            
-            // 1: delete from target what is not in source
-        
-            // get a list of files in source
-            File[] sourceDirs=from.listFiles();
-            ArrayList<String>sourceDirNames=new ArrayList<String>();
-            for(File f: sourceDirs) {
-                if(f.isDirectory())
-                    sourceDirNames.add(f.getName());
-            }
-            
-            // iterate over target files
-            for(VirtualFile f: to.listFiles()) {
-                if(this.cancelWhenRunning!=null) {
-                    if(this.cancelWhenRunning.requestsCancellation()) {
-                        log.warn("sync cancellation requested by other task");
-                        return;
+                    if (fromLength != toLength) {
+                        log.info("Copying " + f.getName() + " to sync location");
+                        to.copyLocalFile(f);
                     }
                 }
-                if(f.isDirectory() && !sourceDirNames.contains(f.getName())) {
+            }
+
+        }
+
+        // DIRECTORIES
+        // 1: delete from target what is not in source
+        // get a list of files in source
+        File[] sourceDirs = from.listFiles();
+        ArrayList<String> sourceDirNames = new ArrayList<String>();
+        for (File f : sourceDirs) {
+            if (f.isDirectory()) {
+                sourceDirNames.add(f.getName());
+            }
+        }
+
+        // iterate over target files
+        for (VirtualFile f : to.listFiles()) {
+            if (this.cancelWhenRunning != null) {
+                if (this.cancelWhenRunning.requestsCancellation()) {
+                    log.warn("sync cancellation requested by other task");
+                    return;
+                }
+            }
+            if (f.isDirectory() && !sourceDirNames.contains(f.getName())) {
+                if (sourceDirNames.size() < 50) {
                     log.info("Deleting " + f.getName() + " from sync location because it is not contained in " + sourceDirNames.toString());
-                    f.delete();
+                } else {
+                    log.info("Deleting " + f.getName() + " from sync location");
+                }
+                try {
+                    f.deleteAll();
+                } catch (Throwable t) {
+                    log.error("Deleting " + f.getName() + " failed: " + t.getMessage(), t);
+                    log.error("falling back to non-recursive delete");
+                    try {
+                        f.delete();
+                    } catch (Throwable t2) {
+                        log.error("Could not delete " + f.getName(), t);
+                    }
                 }
             }
-        
-        
-        
+        }
+
         // 2: copy to target what is only in source
-        
-            // get a list of files in target
-            Collection<VirtualFile> targetDirs=to.listFiles();
-            ArrayList<String>targetDirNames=new ArrayList<String>();
-            for(VirtualFile f: targetDirs) {
-                if(f.isDirectory())
-                    targetDirNames.add(f.getName());
+        // get a list of files in target
+        Collection<VirtualFile> targetDirs = to.listFiles();
+        ArrayList<String> targetDirNames = new ArrayList<String>();
+        for (VirtualFile f : targetDirs) {
+            if (f.isDirectory()) {
+                targetDirNames.add(f.getName());
             }
-            
-            // iterate over source files
-            for(File f: from.listFiles()) {
-                if(this.cancelWhenRunning!=null) {
-                    if(this.cancelWhenRunning.requestsCancellation()) {
-                        log.warn("sync cancellation requested by other task");
-                        return;
-                    }
-                }
-                if(f.isDirectory()) {
-                    
-                    
-                    if(!targetDirNames.contains(f.getName())) {
-                        to.createDirectory(f.getName());
-                    }
-                    
-                    FolderSync fs=new FolderSync(f, VirtualFile.getFile(to.getLocation() + "/" + f.getName() + "/"), this.cancelWhenRunning);
-                    fs.synchronize(ignoreNewerThanSeconds);
+        }
+
+        // iterate over source files
+        for (File f : from.listFiles()) {
+            if (this.cancelWhenRunning != null) {
+                if (this.cancelWhenRunning.requestsCancellation()) {
+                    log.warn("sync cancellation requested by other task");
+                    return;
                 }
             }
-        
-        
-        
-        
-        
+            if (f.isDirectory()) {
+
+                if (!targetDirNames.contains(f.getName())) {
+                    to.createDirectory(f.getName());
+                }
+
+                FolderSync fs = new FolderSync(f, VirtualFile.getFile(to.getLocation() + "/" + f.getName() + "/"), this.cancelWhenRunning);
+                fs.synchronize(ignoreNewerThanSeconds);
+            }
+        }
+
     }
-    
+
 }

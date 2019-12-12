@@ -702,6 +702,8 @@ public abstract class VirtualFile {
     
     public abstract void delete() throws Exception;
     
+    public abstract void deleteAll() throws Exception;
+    
     public abstract void close() throws Exception;
     
     public abstract void copyLocalFile(File f) throws Exception;
