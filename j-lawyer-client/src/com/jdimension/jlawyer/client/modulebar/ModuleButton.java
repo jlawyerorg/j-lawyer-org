@@ -676,6 +676,7 @@ import com.jdimension.jlawyer.client.events.ScannerStatusEvent;
 import com.jdimension.jlawyer.server.modules.ModuleMetadata;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Graphics;
 import javax.swing.Icon;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
@@ -692,7 +693,7 @@ public class ModuleButton extends javax.swing.JPanel implements EventConsumer {
 
     private ModuleMetadata module = null;
 
-    private Color labelForeColor = new Color(102, 102, 102);
+    private Color labelForeColor = DefaultColorTheme.COLOR_DARK_GREY.darker();
     private Color defaultBackColor=Color.GRAY;
 
     private String editorClass = null;
@@ -701,6 +702,8 @@ public class ModuleButton extends javax.swing.JPanel implements EventConsumer {
 //    private Icon rollOverIcon=new javax.swing.ImageIcon(getClass().getResource("/icons32/material/sharp_folder_green_36dp.png"));
     private Icon icon = null;
     private Icon rollOverIcon = null;
+    
+    private String indicatorValue="";
 
     /**
      * Creates new form ModuleButton
@@ -728,6 +731,7 @@ public class ModuleButton extends javax.swing.JPanel implements EventConsumer {
 
         if (mod && ed) {
             setText("<html>" + m.getModuleName() + ":<br/>" + m.getEditorName() + "</html>");
+            //setText("<html><table><tr><td>" + m.getModuleName() + ":<br/>" + m.getEditorName() + "</td><td>56</td></tr></table></html>");
         } else if (mod) {
             setText(m.getModuleName());
         } else if (ed) {
@@ -743,7 +747,7 @@ public class ModuleButton extends javax.swing.JPanel implements EventConsumer {
         }
 
         this.lblIndicator.setText("");
-        this.lblIndicator.setForeground(new Color(102, 102, 102));
+        this.lblIndicator.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
 //        if(m.getEditorName().indexOf("E-Mail")>-1) {
 //            this.lblIndicator.setText("78");
 //            this.lblIndicator.setForeground(new Color(222, 49, 59));
@@ -837,7 +841,7 @@ public class ModuleButton extends javax.swing.JPanel implements EventConsumer {
             }
         });
 
-        lblIndicator.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        lblIndicator.setFont(new java.awt.Font("Dialog", 1, 10)); // NOI18N
         lblIndicator.setForeground(new java.awt.Color(102, 102, 102));
         lblIndicator.setText("3");
         lblIndicator.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -863,7 +867,7 @@ public class ModuleButton extends javax.swing.JPanel implements EventConsumer {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(lblModuleName, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addComponent(iconButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addComponent(lblIndicator, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(lblIndicator, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -929,7 +933,13 @@ public class ModuleButton extends javax.swing.JPanel implements EventConsumer {
                 log.error("Error creating editor from class " + editorClass, ex);
                 JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("error.loadingeditor") + ex.getMessage(), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.error"), JOptionPane.ERROR_MESSAGE);
             }
-            this.lblIndicator.setForeground(new Color(102, 102, 102));
+            //this.lblIndicator.setForeground(new Color(102, 102, 102));
+            try {
+                this.updateIndicator(Integer.parseInt(this.indicatorValue));
+            } catch (Throwable t) {
+                
+            }
+            
             setForeground(this.defaultBackColor);
         } else {
             //this.scrollMain.setViewportView(null);
@@ -1000,29 +1010,37 @@ public class ModuleButton extends javax.swing.JPanel implements EventConsumer {
     }
 
     private void updateIndicator(int incomingValue) {
+        
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-                String currentValue = lblIndicator.getText();
+                String currentValue = indicatorValue;
                 int cVal = 0;
                 try {
                     cVal = Integer.parseInt(currentValue);
                 } catch (Throwable t) {
                     //log.error(t);
-                    lblIndicator.setForeground(new Color(102, 102, 102));
-                    lblIndicator.setText("" + cVal);
+                    lblIndicator.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
+                    //lblIndicator.setText("" + cVal);
+                    //lblIndicator.setText("<html><table><tr><td>" + cVal +"</td></tr></table></html>");
+                    //<p style="border:3px; border-style:solid; border-color:#FF0000; padding: 1em;">
+                    lblIndicator.setText("<html><table><tr><td>" + "<p style=\"color:white; background-color:#0E72B5; \">&nbsp;" + cVal +"&nbsp;</p></td></tr></table></html>");
                 }
                 if (incomingValue > cVal) {
-                    lblIndicator.setForeground(new Color(222, 49, 59));
-                    lblIndicator.setText("" + incomingValue);
+                    lblIndicator.setForeground(DefaultColorTheme.COLOR_LOGO_RED);
+                    //lblIndicator.setText("" + incomingValue);
+                    //lblIndicator.setText("<html><table><tr><td>" + incomingValue +"</td></tr></table></html>");
+                    lblIndicator.setText("<html><table><tr><td>" + "<p style=\"color:white; background-color:#DE313B; \">&nbsp;" + incomingValue +"&nbsp;</p></td></tr></table></html>");
                     setForeground(DefaultColorTheme.COLOR_LOGO_GREEN);
                 } else if (incomingValue==0) {
-                    lblIndicator.setForeground(new Color(222, 49, 59));
+                    lblIndicator.setForeground(DefaultColorTheme.COLOR_LOGO_RED);
                     lblIndicator.setText("");
                 } else {
-                    lblIndicator.setForeground(new Color(102, 102, 102));
-                    lblIndicator.setText("" + incomingValue);
+                    lblIndicator.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
+                    //lblIndicator.setText("" + incomingValue);
+                    lblIndicator.setText("<html><table><tr><td>" + "<p style=\"color:white; background-color:#0E72B5; \">&nbsp;" + incomingValue +"&nbsp;</p></td></tr></table></html>");
                 }
+                indicatorValue=""+incomingValue;
             }
 
         });
