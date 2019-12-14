@@ -704,6 +704,18 @@ public class FrameUtils {
         frame.setLocation(p);
     }
     
+    public static void fitDialogToScreen(JDialog dlg, float percentOfScreen) {
+        
+        Dimension d = null; // size of what we're positioning against
+        Point     p = null;
+        
+            d = Toolkit.getDefaultToolkit().getScreenSize();
+            
+            dlg.setSize((int)(d.getWidth()*percentOfScreen), (int)(d.getHeight()*percentOfScreen));
+        
+        centerDialog(dlg, null);
+    }
+    
     public static void centerDialog(JDialog dlg, JFrame parent) {
         Dimension d = null; // size of what we're positioning against
         Point     p = null;
