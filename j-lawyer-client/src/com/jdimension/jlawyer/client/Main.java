@@ -663,6 +663,7 @@
  */
 package com.jdimension.jlawyer.client;
 
+import com.formdev.flatlaf.FlatIntelliJLaf;
 import com.jdimension.jlawyer.client.events.Event;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.FontUtils;
@@ -751,7 +752,8 @@ public class Main {
 
     private void showSplash(String cmdHost, String cmdPort, String cmdHttpPort, String cmdUser, String cmdPassword) {
 
-        //this.updateStatus("Oberflächenlayout wird gesetzt...", true);
+        //FlatIntelliJLaf.install();
+        
         boolean nimbusFound = false;
         try {
             for (LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
@@ -763,7 +765,6 @@ public class Main {
                     break;
                 }
             }
-//            updateStatus(".", true);
         } catch (Exception ex) {
         }
         if (!nimbusFound) {
@@ -773,18 +774,6 @@ public class Main {
                 System.out.println("Could not set look and feel: " + ex.getMessage());
             }
         }
-        
-//        try {
-//            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-//        } catch (ClassNotFoundException ex) {
-//            java.util.logging.Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
-//        } catch (InstantiationException ex) {
-//            java.util.logging.Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
-//        } catch (IllegalAccessException ex) {
-//            java.util.logging.Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
-//        } catch (UnsupportedLookAndFeelException ex) {
-//            java.util.logging.Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
-//        }
 
         splash = new StartupSplashFrame();
 
