@@ -667,6 +667,7 @@ import com.jdimension.jlawyer.client.settings.UserSettings;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import org.apache.log4j.Logger;
+import themes.colors.DefaultColorTheme;
 
 /**
  *
@@ -686,6 +687,8 @@ public class DayCaseUserHistoryDetailsPanel extends javax.swing.JPanel {
         this.lblUserAndTime.setText(principalId + " @ " + df.format(time));
         this.lblUserAndTime.setIcon(UserSettings.getInstance().getUserSmallIcon(principalId));
         this.jTextArea1.setText(activity);
+        
+        this.lblUserAndTime.setBackground(DefaultColorTheme.COLOR_LOGO_GREEN);
     }
 
     

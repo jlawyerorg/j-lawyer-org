@@ -723,6 +723,8 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
      */
     public BeaMessageContentUI() {
         initComponents();
+        
+        ComponentUtils.decorateSplitPane(jSplitPane1);
 
         this.jScrollPane1.setPreferredSize(new Dimension((int) this.jScrollPane1.getSize().getWidth(), (int) this.jScrollPane1.getSize().getHeight()));
 

@@ -769,6 +769,10 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
         this.initializing = true;
 
         initComponents();
+        
+        ComponentUtils.decorateSplitPane(jSplitPane1);
+        ComponentUtils.decorateSplitPane(this.mainSplitter);
+        ComponentUtils.decorateSplitPane(this.splitterFolderDetails);
 
         ClientSettings cs = ClientSettings.getInstance();
         String temp = cs.getConfiguration(ClientSettings.CONF_BEA_TAGGINGENABLED, "false");
@@ -1046,9 +1050,13 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
         lblPanelTitle = new javax.swing.JLabel();
         jToolBar1 = new javax.swing.JToolBar();
         cmdNew = new javax.swing.JButton();
+        jSeparator1 = new javax.swing.JToolBar.Separator();
         cmdReply = new javax.swing.JButton();
+        jSeparator2 = new javax.swing.JToolBar.Separator();
         cmdReplyAll = new javax.swing.JButton();
+        jSeparator3 = new javax.swing.JToolBar.Separator();
         cmdForward = new javax.swing.JButton();
+        jSeparator4 = new javax.swing.JToolBar.Separator();
         cmdDelete = new javax.swing.JButton();
         mainSplitter = new javax.swing.JSplitPane();
         scrollTree = new javax.swing.JScrollPane();
@@ -1148,6 +1156,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
 
         jToolBar1.setFloatable(false);
         jToolBar1.setRollover(true);
+        jToolBar1.setOpaque(false);
 
         cmdNew.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/mail_post_to3.png"))); // NOI18N
         cmdNew.setToolTipText("neue E-Mail schreiben");
@@ -1160,6 +1169,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
             }
         });
         jToolBar1.add(cmdNew);
+        jToolBar1.add(jSeparator1);
 
         cmdReply.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/mail_reply.png"))); // NOI18N
         cmdReply.setToolTipText("Beantworten");
@@ -1173,6 +1183,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
             }
         });
         jToolBar1.add(cmdReply);
+        jToolBar1.add(jSeparator2);
 
         cmdReplyAll.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/mail_replyall.png"))); // NOI18N
         cmdReplyAll.setToolTipText("Allen antworten");
@@ -1186,6 +1197,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
             }
         });
         jToolBar1.add(cmdReplyAll);
+        jToolBar1.add(jSeparator3);
 
         cmdForward.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/mail_forward.png"))); // NOI18N
         cmdForward.setToolTipText("Weiterleiten");
@@ -1199,6 +1211,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
             }
         });
         jToolBar1.add(cmdForward);
+        jToolBar1.add(jSeparator4);
 
         cmdDelete.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/agt_stop1.png"))); // NOI18N
         cmdDelete.setToolTipText("Löschen");
@@ -2904,6 +2917,10 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
     private javax.swing.JPanel jPanel2;
     private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JScrollPane jScrollPane4;
+    private javax.swing.JToolBar.Separator jSeparator1;
+    private javax.swing.JToolBar.Separator jSeparator2;
+    private javax.swing.JToolBar.Separator jSeparator3;
+    private javax.swing.JToolBar.Separator jSeparator4;
     private javax.swing.JSplitPane jSplitPane1;
     private javax.swing.JToolBar jToolBar1;
     protected javax.swing.JLabel lblPanelTitle;

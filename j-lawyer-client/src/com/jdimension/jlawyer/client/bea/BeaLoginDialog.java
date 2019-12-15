@@ -674,6 +674,7 @@ import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 import org.apache.commons.lang3.StringUtils;
 import org.jboss.logging.Logger;
+import themes.colors.DefaultColorTheme;
 
 /**
  *
@@ -712,8 +713,8 @@ public class BeaLoginDialog extends javax.swing.JDialog {
         AppUserBean cu = UserSettings.getInstance().getCurrentUser();
         if(cu.getBeaCertificate()==null || StringUtils.isEmpty(cu.getBeaCertificatePassword())) {
             this.cmdCertificateLogin.setEnabled(false);
-            this.lblCertificateLogin.setText("Für den Nutzer ist kein Zertifikat hinterlegt.");
-            this.lblCertificateLogin.setForeground(Color.red.darker());
+            this.lblCertificateLogin.setText("<html>F&uuml;r den Nutzer ist kein Zertifikat hinterlegt.</html>");
+            this.lblCertificateLogin.setForeground(DefaultColorTheme.COLOR_LOGO_RED);
         } else {
             this.cmdCertificateLogin.setEnabled(true);
             
@@ -884,7 +885,7 @@ public class BeaLoginDialog extends javax.swing.JDialog {
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(lblPanelTitle, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 344, Short.MAX_VALUE)
+                    .addComponent(lblPanelTitle, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addComponent(cmdCertificateLogin)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -895,7 +896,7 @@ public class BeaLoginDialog extends javax.swing.JDialog {
                         .addComponent(cmdCardLogin)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+                            .addComponent(jLabel1)
                             .addComponent(lblCardLogin, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                     .addComponent(prgCertLogin, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
@@ -935,8 +936,8 @@ public class BeaLoginDialog extends javax.swing.JDialog {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)

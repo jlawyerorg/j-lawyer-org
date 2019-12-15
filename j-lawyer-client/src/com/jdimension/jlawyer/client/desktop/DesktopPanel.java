@@ -683,6 +683,7 @@ import com.jdimension.jlawyer.client.events.ScannerStatusEvent;
 import com.jdimension.jlawyer.client.launcher.DocumentObserverTask;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
+import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.FaxQueueBean;
@@ -723,6 +724,9 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
     public DesktopPanel() {
         this.initializing = true;
         initComponents();
+        
+        ComponentUtils.decorateSplitPane(jSplitPane1, Color.WHITE);
+        ComponentUtils.decorateSplitPane(jSplitPane2, Color.WHITE);
         
         
         //this.frmMyAppointments.setVisible(false);

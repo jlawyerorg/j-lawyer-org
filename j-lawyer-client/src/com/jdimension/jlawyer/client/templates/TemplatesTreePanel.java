@@ -671,6 +671,7 @@ import com.jdimension.jlawyer.client.launcher.LauncherFactory;
 import com.jdimension.jlawyer.client.launcher.TemplateDocumentStore;
 import com.jdimension.jlawyer.client.processing.ProgressIndicator;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.JTreeUtils;
@@ -737,6 +738,9 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
     public TemplatesTreePanel() {
 
         initComponents();
+        
+        ComponentUtils.decorateSplitPane(jSplitPane1);
+        ComponentUtils.decorateSplitPane(jSplitPane2);
 
         this.lstTemplates.setCellRenderer(new TemplateListCellRenderer());
 

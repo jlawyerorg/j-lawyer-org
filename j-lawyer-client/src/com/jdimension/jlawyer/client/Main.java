@@ -752,28 +752,28 @@ public class Main {
 
     private void showSplash(String cmdHost, String cmdPort, String cmdHttpPort, String cmdUser, String cmdPassword) {
 
-        //FlatIntelliJLaf.install();
+        FlatIntelliJLaf.install();
         
-        boolean nimbusFound = false;
-        try {
-            for (LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
-                //updateStatus(".", false);
-                if ("Nimbus".equals(info.getName())) {
-                    UIManager.setLookAndFeel(info.getClassName());
-                    //UIManager.getDefaults().put("Table[Enabled+Selected].textBackground", new Color(255,102,0));
-                    nimbusFound = true;
-                    break;
-                }
-            }
-        } catch (Exception ex) {
-        }
-        if (!nimbusFound) {
-            try {
-                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-            } catch (Exception ex) {
-                System.out.println("Could not set look and feel: " + ex.getMessage());
-            }
-        }
+//        boolean nimbusFound = false;
+//        try {
+//            for (LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
+//                //updateStatus(".", false);
+//                if ("Nimbus".equals(info.getName())) {
+//                    UIManager.setLookAndFeel(info.getClassName());
+//                    //UIManager.getDefaults().put("Table[Enabled+Selected].textBackground", new Color(255,102,0));
+//                    nimbusFound = true;
+//                    break;
+//                }
+//            }
+//        } catch (Exception ex) {
+//        }
+//        if (!nimbusFound) {
+//            try {
+//                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+//            } catch (Exception ex) {
+//                System.out.println("Could not set look and feel: " + ex.getMessage());
+//            }
+//        }
 
         splash = new StartupSplashFrame();
 

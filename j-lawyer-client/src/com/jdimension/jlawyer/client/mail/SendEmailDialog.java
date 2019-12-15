@@ -1132,6 +1132,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         txtTo = new javax.swing.JTextField();
         jToolBar1 = new javax.swing.JToolBar();
         cmdSend = new javax.swing.JButton();
+        jSeparator4 = new javax.swing.JToolBar.Separator();
         cmdAttach = new javax.swing.JButton();
         cmdRecipients = new javax.swing.JButton();
         txtCc = new javax.swing.JTextField();
@@ -1249,6 +1250,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
             }
         });
         jToolBar1.add(cmdSend);
+        jToolBar1.add(jSeparator4);
 
         cmdAttach.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/attach.png"))); // NOI18N
         cmdAttach.setToolTipText("Datei anhängen");
@@ -2386,6 +2388,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
     private javax.swing.JPopupMenu.Separator jSeparator1;
     private javax.swing.JPopupMenu.Separator jSeparator2;
     private javax.swing.JPopupMenu.Separator jSeparator3;
+    private javax.swing.JToolBar.Separator jSeparator4;
     private javax.swing.JToolBar jToolBar1;
     private javax.swing.JLabel lblEncryption;
     private javax.swing.JLabel lblFrom;

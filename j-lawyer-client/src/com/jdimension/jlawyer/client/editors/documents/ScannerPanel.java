@@ -679,6 +679,7 @@ import com.jdimension.jlawyer.client.launcher.Launcher;
 import com.jdimension.jlawyer.client.launcher.LauncherFactory;
 import com.jdimension.jlawyer.client.launcher.ReadOnlyDocumentStore;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
@@ -838,6 +839,9 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
     public ScannerPanel() {
         
         initComponents();
+        
+        ComponentUtils.decorateSplitPane(this.splitMain);
+        ComponentUtils.decorateSplitPane(this.splitTop);
         
         ClientSettings settings=ClientSettings.getInstance();
         String temp = settings.getConfiguration(ClientSettings.CONF_SCANS_TAGGINGENABLED, "false");

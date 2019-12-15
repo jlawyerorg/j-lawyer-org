@@ -707,6 +707,8 @@ public class DrebisInboxPanel extends javax.swing.JPanel implements ThemeableEdi
     public DrebisInboxPanel() {
 
         initComponents();
+        
+        ComponentUtils.decorateSplitPane(jSplitPane1);
 
         new Thread(new Runnable() {
 

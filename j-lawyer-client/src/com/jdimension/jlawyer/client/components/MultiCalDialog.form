@@ -27,8 +27,8 @@
       <Group type="103" groupAlignment="1" attributes="0">
           <Group type="102" alignment="0" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
-              <Group type="103" groupAlignment="1" max="-2" attributes="0">
-                  <Group type="102" alignment="1" attributes="0">
+              <Group type="103" groupAlignment="0" attributes="0">
+                  <Group type="102" alignment="0" attributes="0">
                       <Component id="cmdYearBack" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="cmdMonthBack" min="-2" max="-2" attributes="0"/>
@@ -39,24 +39,19 @@
                       <EmptySpace max="32767" attributes="0"/>
                       <Component id="cmdCancel" min="-2" max="-2" attributes="0"/>
                   </Group>
-                  <Group type="102" alignment="1" attributes="0">
-                      <Group type="103" groupAlignment="1" max="-2" attributes="0">
-                          <Component id="lblC1" max="32767" attributes="0"/>
-                          <Component id="c1" min="-2" max="-2" attributes="0"/>
-                      </Group>
-                      <EmptySpace max="-2" attributes="0"/>
+                  <Group type="102" attributes="0">
                       <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                          <Component id="c2" max="32767" attributes="0"/>
-                          <Component id="lblC2" min="-2" pref="154" max="-2" attributes="0"/>
-                      </Group>
-                      <EmptySpace max="-2" attributes="0"/>
-                      <Group type="103" groupAlignment="0" max="-2" attributes="0">
+                          <Component id="c1" alignment="0" max="32767" attributes="0"/>
                           <Component id="c3" max="32767" attributes="0"/>
-                          <Component id="lblC3" min="-2" pref="154" max="-2" attributes="0"/>
+                          <Component id="lblC3" alignment="0" max="32767" attributes="0"/>
+                          <Component id="lblC2" alignment="0" max="32767" attributes="0"/>
+                          <Component id="c2" alignment="1" max="32767" attributes="0"/>
+                          <Component id="lblC1" alignment="0" max="32767" attributes="0"/>
                       </Group>
+                      <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                   </Group>
               </Group>
-              <EmptySpace pref="20" max="32767" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
@@ -64,28 +59,30 @@
       <Group type="103" groupAlignment="0" attributes="0">
           <Group type="102" alignment="0" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
+              <Component id="lblC1" min="-2" max="-2" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
+              <Component id="c1" min="-2" max="-2" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
+              <Component id="lblC2" min="-2" max="-2" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
+              <Component id="c2" min="-2" max="-2" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
+              <Component id="lblC3" min="-2" max="-2" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
+              <Component id="c3" min="-2" max="-2" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
-                  <Component id="lblC1" alignment="3" min="-2" max="-2" attributes="0"/>
-                  <Component id="lblC2" alignment="3" min="-2" max="-2" attributes="0"/>
-                  <Component id="lblC3" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="cmdYearBack" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="cmdMonthBack" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="cmdMonthForward" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="cmdYearForward" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
+              <EmptySpace max="32767" attributes="0"/>
+          </Group>
+          <Group type="102" alignment="1" attributes="0">
+              <EmptySpace max="32767" attributes="0"/>
+              <Component id="cmdCancel" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
-              <Group type="103" groupAlignment="0" attributes="0">
-                  <Component id="c1" min="-2" max="-2" attributes="0"/>
-                  <Component id="c3" alignment="0" min="-2" max="-2" attributes="0"/>
-                  <Component id="c2" alignment="0" min="-2" max="-2" attributes="0"/>
-              </Group>
-              <EmptySpace max="-2" attributes="0"/>
-              <Group type="103" groupAlignment="0" attributes="0">
-                  <Component id="cmdCancel" min="-2" max="-2" attributes="0"/>
-                  <Group type="103" alignment="0" groupAlignment="3" attributes="0">
-                      <Component id="cmdYearBack" alignment="3" min="-2" max="-2" attributes="0"/>
-                      <Component id="cmdMonthBack" alignment="3" min="-2" max="-2" attributes="0"/>
-                      <Component id="cmdMonthForward" alignment="3" min="-2" max="-2" attributes="0"/>
-                      <Component id="cmdYearForward" alignment="3" min="-2" max="-2" attributes="0"/>
-                  </Group>
-              </Group>
-              <EmptySpace pref="14" max="32767" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
@@ -106,6 +103,9 @@
       </Events>
     </Component>
     <Component class="com.toedter.calendar.JDayChooser" name="c1">
+      <Properties>
+        <Property name="dayBordersVisible" type="boolean" value="false"/>
+      </Properties>
       <Events>
         <EventHandler event="mouseClicked" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="c1MouseClicked"/>
         <EventHandler event="mousePressed" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="c1MousePressed"/>
@@ -113,29 +113,44 @@
       </Events>
     </Component>
     <Component class="com.toedter.calendar.JDayChooser" name="c2">
+      <Properties>
+        <Property name="dayBordersVisible" type="boolean" value="false"/>
+      </Properties>
       <Events>
         <EventHandler event="propertyChange" listener="java.beans.PropertyChangeListener" parameters="java.beans.PropertyChangeEvent" handler="c2PropertyChange"/>
       </Events>
     </Component>
     <Component class="com.toedter.calendar.JDayChooser" name="c3">
+      <Properties>
+        <Property name="dayBordersVisible" type="boolean" value="false"/>
+      </Properties>
       <Events>
         <EventHandler event="propertyChange" listener="java.beans.PropertyChangeListener" parameters="java.beans.PropertyChangeEvent" handler="c3PropertyChange"/>
       </Events>
     </Component>
     <Component class="javax.swing.JLabel" name="lblC1">
       <Properties>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+          <Font name="Dialog" size="14" style="1"/>
+        </Property>
         <Property name="horizontalAlignment" type="int" value="0"/>
         <Property name="text" type="java.lang.String" value="jLabel1"/>
       </Properties>
     </Component>
     <Component class="javax.swing.JLabel" name="lblC2">
       <Properties>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+          <Font name="Dialog" size="14" style="1"/>
+        </Property>
         <Property name="horizontalAlignment" type="int" value="0"/>
         <Property name="text" type="java.lang.String" value="jLabel1"/>
       </Properties>
     </Component>
     <Component class="javax.swing.JLabel" name="lblC3">
       <Properties>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+          <Font name="Dialog" size="14" style="1"/>
+        </Property>
         <Property name="horizontalAlignment" type="int" value="0"/>
         <Property name="text" type="java.lang.String" value="jLabel1"/>
       </Properties>

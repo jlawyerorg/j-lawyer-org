@@ -806,7 +806,6 @@ public class ModuleButton extends javax.swing.JPanel implements EventConsumer {
 
         iconButton.setFont(new java.awt.Font("Dialog", 0, 10)); // NOI18N
         iconButton.setForeground(new java.awt.Color(255, 255, 255));
-        iconButton.setText(" ");
         iconButton.setBorder(null);
         iconButton.setBorderPainted(false);
         iconButton.setContentAreaFilled(false);
@@ -855,13 +854,13 @@ public class ModuleButton extends javax.swing.JPanel implements EventConsumer {
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
+                .addGap(10, 10, 10)
                 .addComponent(iconButton)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGap(5, 5, 5)
                 .addComponent(lblModuleName)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGap(5, 5, 5)
                 .addComponent(lblIndicator)
-                .addContainerGap())
+                .addGap(5, 5, 5))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)

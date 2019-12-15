@@ -666,6 +666,7 @@ package com.jdimension.jlawyer.client.mail;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.ThemeableEditor;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.PlaceHolderUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.documents.PlaceHolders;
@@ -700,6 +701,8 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
     public EmailTemplatesPanel() {
 
         initComponents();
+        
+        ComponentUtils.decorateSplitPane(jSplitPane1);
         
         tp=new TextEditorPanel();
         hp=new HtmlEditorPanel();

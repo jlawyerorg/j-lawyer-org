@@ -670,6 +670,7 @@ import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import javax.swing.ImageIcon;
+import themes.colors.DefaultColorTheme;
 
 /**
  *
@@ -687,6 +688,7 @@ public class StartupSplashFrame extends javax.swing.JFrame {
         this.lblDate.setText(new SimpleDateFormat("EEE dd.MM.yyyy").format(new Date()));
         this.lblCompany.setText("");
         this.lblProgress.setText("");
+        this.lblProgress.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
         this.lblVersion.setText(VersionUtils.getClientVersion());
         this.lblFullClientVersion.setText(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/StartupSplashFrame").getString("label.version") + " " + VersionUtils.getFullClientVersion());
 
@@ -759,17 +761,17 @@ public class StartupSplashFrame extends javax.swing.JFrame {
         lblFullClientVersion.setBounds(520, 60, 160, 20);
 
         lblProgress.setFont(new java.awt.Font("Dialog", 1, 18)); // NOI18N
-        lblProgress.setForeground(new java.awt.Color(102, 102, 102));
+        lblProgress.setForeground(new java.awt.Color(255, 255, 255));
         lblProgress.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         lblProgress.setText("jLabel2");
         getContentPane().add(lblProgress);
-        lblProgress.setBounds(10, 360, 680, 22);
+        lblProgress.setBounds(30, 355, 640, 20);
 
         progress.setIndeterminate(true);
         progress.setString("");
         progress.setStringPainted(true);
         getContentPane().add(progress);
-        progress.setBounds(10, 355, 680, 30);
+        progress.setBounds(30, 355, 640, 25);
 
         lblCompany.setForeground(new java.awt.Color(102, 102, 102));
         lblCompany.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
