@@ -665,6 +665,8 @@ package com.jdimension.jlawyer.client.mail;
 
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.documents.SearchAndAssignDialog;
+import com.jdimension.jlawyer.client.events.DocumentAddedEvent;
+import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.launcher.Launcher;
 import com.jdimension.jlawyer.client.launcher.LauncherFactory;
 import com.jdimension.jlawyer.client.launcher.ReadOnlyDocumentStore;
@@ -674,6 +676,7 @@ import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.*;
 import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Component;
@@ -1576,7 +1579,10 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
                         return;
                     }
 
-                    afs.addDocument(sel.getId(), newName, data, "");
+                    ArchiveFileDocumentsBean newDoc=afs.addDocument(sel.getId(), newName, data, "");
+                    
+                    EventBroker eb = EventBroker.getInstance();
+                    eb.publishEvent(new DocumentAddedEvent(newDoc));
 
                 }
 
