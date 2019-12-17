@@ -1159,7 +1159,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
         jToolBar1.setOpaque(false);
 
         cmdNew.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/mail_post_to3.png"))); // NOI18N
-        cmdNew.setToolTipText("neue E-Mail schreiben");
+        cmdNew.setToolTipText("neue Nachricht schreiben");
         cmdNew.setFocusable(false);
         cmdNew.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         cmdNew.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);

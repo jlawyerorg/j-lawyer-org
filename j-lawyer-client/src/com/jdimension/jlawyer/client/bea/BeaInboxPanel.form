@@ -196,7 +196,7 @@
             <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
               <Image iconType="3" name="/icons32/mail_post_to3.png"/>
             </Property>
-            <Property name="toolTipText" type="java.lang.String" value="neue E-Mail schreiben"/>
+            <Property name="toolTipText" type="java.lang.String" value="neue Nachricht schreiben"/>
             <Property name="focusable" type="boolean" value="false"/>
             <Property name="horizontalTextPosition" type="int" value="0"/>
             <Property name="verticalTextPosition" type="int" value="3"/>

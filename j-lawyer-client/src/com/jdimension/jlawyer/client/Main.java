@@ -663,6 +663,7 @@
  */
 package com.jdimension.jlawyer.client;
 
+import com.formdev.flatlaf.FlatDarculaLaf;
 import com.formdev.flatlaf.FlatIntelliJLaf;
 import com.jdimension.jlawyer.client.events.Event;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
@@ -753,6 +754,23 @@ public class Main {
     private void showSplash(String cmdHost, String cmdPort, String cmdHttpPort, String cmdUser, String cmdPassword) {
 
         FlatIntelliJLaf.install();
+        
+        //FlatDarculaLaf.install();
+        
+        // https://www.formdev.com/flatlaf/customizing/
+        UIManager.put( "ScrollBar.width", 14 );
+        UIManager.put( "ScrollBar.showButtons", true );
+        
+        
+//        Object selColor=UIManager.get("TabbedPane.selectedBackground");
+//        if(selColor!=null) {
+//            if(selColor instanceof Color) {
+//                Color selectedColor=(Color)selColor;
+//                UIManager.put("TabbedPane.selectedBackground", Color.BLACK);
+//            }
+//        }
+//        UIManager.put("TabbedPane.selectedBackground", Color.BLACK);
+        
         
 //        boolean nimbusFound = false;
 //        try {
