@@ -689,6 +689,7 @@ public class StartupSplashFrame extends javax.swing.JFrame {
         this.lblCompany.setText("");
         this.lblProgress.setText("");
         this.lblProgress.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
+        this.progress.setForeground(DefaultColorTheme.COLOR_LOGO_GREEN);
         this.lblVersion.setText(VersionUtils.getClientVersion());
         this.lblFullClientVersion.setText(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/StartupSplashFrame").getString("label.version") + " " + VersionUtils.getFullClientVersion());
 
@@ -771,7 +772,7 @@ public class StartupSplashFrame extends javax.swing.JFrame {
         progress.setString("");
         progress.setStringPainted(true);
         getContentPane().add(progress);
-        progress.setBounds(30, 355, 640, 25);
+        progress.setBounds(30, 355, 640, 20);
 
         lblCompany.setForeground(new java.awt.Color(102, 102, 102));
         lblCompany.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
@@ -827,6 +828,8 @@ public class StartupSplashFrame extends javax.swing.JFrame {
                 this.progress.setMaximum(max);
             }
             this.progress.setValue(value);
+            
+            
         }
 
         if (this.progress.getString() != null && !(this.progress.getString().equals(s))) {

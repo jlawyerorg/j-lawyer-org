@@ -716,21 +716,21 @@ public class LoginDialog extends javax.swing.JFrame {
             InputStream is = StartupSplashFrame.class.getResourceAsStream("/fonts/exo2/exo2-bold.ttf");
             Font font = Font.createFont(Font.TRUETYPE_FONT, is);
             
-            this.lblPassword.setFont(font.deriveFont(Font.BOLD, 28));
+            this.lblPassword.setFont(font.deriveFont(Font.BOLD, 18));
             this.lblPassword.setForeground(Color.WHITE);
             
-            this.lblUser.setFont(font.deriveFont(Font.BOLD, 28));
+            this.lblUser.setFont(font.deriveFont(Font.BOLD, 18));
             this.lblUser.setForeground(Color.WHITE);
             
-            this.txtUser.setFont(font.deriveFont(Font.BOLD, 18));
+            this.txtUser.setFont(font.deriveFont(Font.BOLD, 14));
             this.txtUser.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
             
-            this.pwPassword.setFont(font.deriveFont(Font.BOLD, 18));
+            this.pwPassword.setFont(font.deriveFont(Font.BOLD, 14));
             this.pwPassword.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
             
-            this.cmdLogin.setFont(font.deriveFont(Font.BOLD, 24));
+            this.cmdLogin.setFont(font.deriveFont(Font.BOLD, 20));
             
-            this.cmdCancel.setFont(font.deriveFont(Font.BOLD, 24));
+            this.cmdCancel.setFont(font.deriveFont(Font.BOLD, 20));
             
             this.jTabbedPane1.setFont(font.deriveFont(Font.BOLD, 14));
             //this.jTabbedPane1.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
@@ -933,42 +933,47 @@ public class LoginDialog extends javax.swing.JFrame {
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel1Layout.createSequentialGroup()
+                .add(72, 72, 72)
                 .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(jPanel1Layout.createSequentialGroup()
-                        .add(492, 492, 492)
+                        .add(lblPassword)
+                        .add(348, 348, 348)
                         .add(lblHint, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 24, Short.MAX_VALUE))
                     .add(jPanel1Layout.createSequentialGroup()
-                        .add(72, 72, 72)
+                        .add(lblUser)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                            .add(pwPassword)
-                            .add(txtUser)
                             .add(jPanel1Layout.createSequentialGroup()
                                 .add(cmdLogin)
                                 .add(18, 18, 18)
-                                .add(cmdCancel)
-                                .add(0, 0, Short.MAX_VALUE))
-                            .add(lblUser, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .add(lblPassword, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                                .add(cmdCancel))
+                            .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
+                                .add(pwPassword, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 330, Short.MAX_VALUE)
+                                .add(txtUser)))
+                        .add(0, 0, Short.MAX_VALUE)))
                 .add(72, 72, 72))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel1Layout.createSequentialGroup()
-                .addContainerGap()
-                .add(lblUser)
-                .add(8, 8, 8)
-                .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
-                    .add(lblHint)
+                .add(48, 48, 48)
+                .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(lblUser)
                     .add(txtUser, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .add(16, 16, 16)
-                .add(lblPassword)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(pwPassword, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(jPanel1Layout.createSequentialGroup()
+                        .add(25, 25, 25)
+                        .add(lblHint))
+                    .add(jPanel1Layout.createSequentialGroup()
+                        .add(18, 18, 18)
+                        .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                            .add(lblPassword)
+                            .add(pwPassword, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))))
                 .add(18, 18, 18)
                 .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(cmdLogin)
                     .add(cmdCancel))
-                .addContainerGap(161, Short.MAX_VALUE))
+                .addContainerGap(167, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("Login", jPanel1);
@@ -1015,7 +1020,7 @@ public class LoginDialog extends javax.swing.JFrame {
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel2Layout.createSequentialGroup()
-                .addContainerGap()
+                .add(48, 48, 48)
                 .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(jLabel1)
                     .add(txtServer, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
@@ -1027,7 +1032,7 @@ public class LoginDialog extends javax.swing.JFrame {
                 .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(jLabel5)
                     .add(txtHttpPort, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(238, Short.MAX_VALUE))
+                .addContainerGap(214, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab(bundle.getString("tab.title.connection"), jPanel2); // NOI18N
@@ -1224,11 +1229,13 @@ public class LoginDialog extends javax.swing.JFrame {
         bgPanelLayout.setHorizontalGroup(
             bgPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(org.jdesktop.layout.GroupLayout.TRAILING, bgPanelLayout.createSequentialGroup()
-                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .add(bgPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jLabel3, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 593, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(jTabbedPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 593, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap())
+                .addContainerGap(73, Short.MAX_VALUE)
+                .add(jLabel3, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 593, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .add(72, 72, 72))
+            .add(bgPanelLayout.createSequentialGroup()
+                .add(72, 72, 72)
+                .add(jTabbedPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 593, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         bgPanelLayout.setVerticalGroup(
             bgPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
