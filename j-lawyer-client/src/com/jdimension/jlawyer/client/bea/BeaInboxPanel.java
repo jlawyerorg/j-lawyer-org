@@ -1999,6 +1999,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
         try {
             BeaAccess.getInstance().logout();
             this.emptyView();
+            this.cmdRefresh.setEnabled(true);
         } catch (BeaWrapperException ex) {
             log.error("beA logout failed", ex);
         }

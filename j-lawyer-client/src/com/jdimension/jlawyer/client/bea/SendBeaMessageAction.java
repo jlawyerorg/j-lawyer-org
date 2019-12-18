@@ -700,7 +700,7 @@ public class SendBeaMessageAction extends ProgressableAction {
 
     private static final Logger log = Logger.getLogger(SendBeaMessageAction.class.getName());
     private static SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy, HH:mm");
-    private ArrayList<String> attachments = null;
+    ArrayList<BeaAttachmentMetadata> attachments = null;
     private AppUserBean cu = null;
     private boolean readReceipt = false;
     private BeaListItem authority=null;
@@ -714,9 +714,9 @@ public class SendBeaMessageAction extends ProgressableAction {
     private String azSender=null;
     private String azRecipient=null;
 
-    public SendBeaMessageAction(ProgressIndicator i, JDialog cleanAfter, String fromSafeId, ArrayList<String> attachments, AppUserBean cu, boolean readReceipt, BeaListItem authority, Enumeration to, String subject, String body, String documentTag, String azSender, String azRecipient) {
+    public SendBeaMessageAction(ProgressIndicator i, JDialog cleanAfter, String fromSafeId, ArrayList<BeaAttachmentMetadata> attachmentMetadata, AppUserBean cu, boolean readReceipt, BeaListItem authority, Enumeration to, String subject, String body, String documentTag, String azSender, String azRecipient) {
         super(i, false, cleanAfter);
-        this.attachments = attachments;
+        this.attachments = attachmentMetadata;
         this.cu = cu;
         this.readReceipt = readReceipt;
         this.to = to;
@@ -730,8 +730,8 @@ public class SendBeaMessageAction extends ProgressableAction {
         this.azRecipient=azRecipient;
     }
 
-    public SendBeaMessageAction(ProgressIndicator i, JDialog cleanAfter, String fromSafeId, ArrayList<String> attachments, AppUserBean cu, boolean readReceipt, BeaListItem authority, Enumeration to, String subject, String body, ArchiveFileBean af, String documentTag, String azSender, String azRecipient) {
-        this(i, cleanAfter, fromSafeId, attachments, cu, readReceipt, authority, to, subject, body, documentTag, azSender, azRecipient);
+    public SendBeaMessageAction(ProgressIndicator i, JDialog cleanAfter, String fromSafeId, ArrayList<BeaAttachmentMetadata> attachmentMetadata, AppUserBean cu, boolean readReceipt, BeaListItem authority, Enumeration to, String subject, String body, ArchiveFileBean af, String documentTag, String azSender, String azRecipient) {
+        this(i, cleanAfter, fromSafeId, attachmentMetadata, cu, readReceipt, authority, to, subject, body, documentTag, azSender, azRecipient);
         this.archiveFile = af;
     }
 
@@ -782,10 +782,11 @@ public class SendBeaMessageAction extends ProgressableAction {
 
             String senderSafeId = this.fromSafeId;
 
-            for (String url : this.attachments) {
+            for (BeaAttachmentMetadata meta : this.attachments) {
                 Attachment att = new Attachment();
-                File f = new File(url);
+                File f = new File(meta.getUrl());
                 att.setFileName(f.getName());
+                att.setAlias(meta.getAlias());
                 att.setContent(FileUtils.readFileToByteArray(f));
                 msg.getAttachments().add(att);
             }
@@ -859,10 +860,10 @@ public class SendBeaMessageAction extends ProgressableAction {
             storeException = t;
         }
 
-        for (String url : this.attachments) {
-            File f = new File(url);
+        for (BeaAttachmentMetadata meta : this.attachments) {
+            File f = new File(meta.getUrl());
             if (f.exists()) {
-                LauncherFactory.cleanupTempFile(url);
+                LauncherFactory.cleanupTempFile(meta.getUrl());
             }
         }
 

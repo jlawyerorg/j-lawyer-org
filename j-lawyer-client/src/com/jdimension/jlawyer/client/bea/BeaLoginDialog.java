@@ -698,6 +698,8 @@ public class BeaLoginDialog extends javax.swing.JDialog {
         super(parent, modal);
         initComponents();
         
+        this.lblPanelTitle.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
+        
         this.setLocationRelativeTo(null);
         
         this.fParent=parent;
@@ -746,6 +748,7 @@ public class BeaLoginDialog extends javax.swing.JDialog {
         super(parent, modal);
         initComponents();
         
+        this.lblPanelTitle.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
         
         this.setLocationRelativeTo(null);
         
