@@ -687,6 +687,7 @@ import org.apache.log4j.Logger;
 import org.jlawyer.bea.ArbitraryCache;
 import org.jlawyer.bea.BeaWrapper;
 import org.jlawyer.bea.util.ConverterUtil;
+import themes.colors.DefaultColorTheme;
 
 /**
  *
@@ -769,7 +770,9 @@ public class Main {
 //                UIManager.put("TabbedPane.selectedBackground", Color.BLACK);
 //            }
 //        }
-//        UIManager.put("TabbedPane.selectedBackground", Color.BLACK);
+        //UIManager.put("TabbedPane.selectedBackground", DefaultColorTheme.COLOR_LIGHT_GREY);
+        UIManager.put("TabbedPane.selectedBackground", Color.WHITE);
+        UIManager.put( "TabbedPane.showTabSeparators", true );
         
         
 //        boolean nimbusFound = false;
