@@ -2157,6 +2157,7 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
 
             }
             this.updateAttachmentSize();
+            this.updateAlias();
         }
 
     }//GEN-LAST:event_mnuRemoveAttachmentActionPerformed
