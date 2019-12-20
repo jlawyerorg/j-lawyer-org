@@ -691,6 +691,11 @@ public abstract class Launcher {
         DocumentObserver observer = DocumentObserver.getInstance();
         return observer.isDocumentOpen(documentIdentifier);
     }
+    
+    public boolean isDocumentReadOnly(String documentIdentifier) {
+        DocumentObserver observer = DocumentObserver.getInstance();
+        return observer.isDocumentReadOnly(documentIdentifier);
+    }
 
     protected String getExtension(String url) {
         int index = url.lastIndexOf('.');
@@ -734,7 +739,11 @@ public abstract class Launcher {
                         }
                     }
                 }
-            } else {
+            } else if(isDocumentReadOnly(store.getDocumentIdentifier())) {
+                // if the former document is readonly, we can open another instance
+                log.debug("document is already open, but in readonly mode - proceed with opening new instance...");
+                
+            }else {
                 log.debug("Dokument " + store.getFileName() + "ist bereits geöffnet");
                 throw new Exception("Dokument " + store.getFileName() + " ist bereits geöffnet");
             }

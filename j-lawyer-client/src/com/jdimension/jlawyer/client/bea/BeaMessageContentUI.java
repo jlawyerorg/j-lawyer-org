@@ -1448,7 +1448,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
                 byte[] data = ((Attachment) this.lstAttachments.getSelectedValue()).getContent();
                 String fileName=((Attachment) this.lstAttachments.getSelectedValue()).getFileName();
                 //String tmpFile = FileUtils.createTempFile(this.lstAttachments.getSelectedValue().toString(), data);
-                ReadOnlyDocumentStore store = new ReadOnlyDocumentStore("mailattachment-" + fileName, fileName);
+                ReadOnlyDocumentStore store = new ReadOnlyDocumentStore("beaattachment-" + fileName, fileName);
                 Launcher launcher = LauncherFactory.getLauncher(fileName, data, store);
                 launcher.launch(false);
             } catch (Exception ex) {
