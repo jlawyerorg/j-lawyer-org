@@ -729,11 +729,11 @@ public class SearchAndAssignScanAction extends DeleteScanAction {
                 boolean added = is.assignObservedFile(this.fileName, sel.getId(), newName);
 
                 if (this.getCaseTag() != null) {
-                    locator.lookupArchiveFileServiceRemote().setTag(archiveFileId, new ArchiveFileTagsBean(null, this.getCaseTag()), true);
+                    locator.lookupArchiveFileServiceRemote().setTag(sel.getId(), new ArchiveFileTagsBean(null, this.getCaseTag()), true);
                 }
 
                 if (this.getDocumentTag() != null) {
-                    Collection docs = locator.lookupArchiveFileServiceRemote().getDocuments(archiveFileId);
+                    Collection docs = locator.lookupArchiveFileServiceRemote().getDocuments(sel.getId());
                     for (Object d : docs) {
                         if (d instanceof ArchiveFileDocumentsBean) {
                             ArchiveFileDocumentsBean doc = (ArchiveFileDocumentsBean) d;
