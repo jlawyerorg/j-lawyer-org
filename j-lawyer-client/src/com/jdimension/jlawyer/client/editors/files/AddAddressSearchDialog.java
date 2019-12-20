@@ -948,7 +948,7 @@ public class AddAddressSearchDialog extends javax.swing.JDialog {
                 conflict = true;
             }
             if (conflict) {
-                JOptionPane.showMessageDialog(this, "Warnung: es liegt ein Interessenkonflikt vor!\n(Beteiligter ist in verschiedenen Akten sowohl Mandant als auch Gegner)!", "Warnung", JOptionPane.WARNING_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Warnung: es könnte ein Interessenkonflikt vorliegen!\n(Beteiligter ist in verschiedenen Akten sowohl Mandant als auch Gegner)!", "Warnung", JOptionPane.WARNING_MESSAGE);
             }
         } catch (Exception ex) {
             log.error("Error getting archive files for address", ex);
