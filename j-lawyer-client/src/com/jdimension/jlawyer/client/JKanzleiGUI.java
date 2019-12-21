@@ -759,7 +759,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         setExtendedState(java.awt.Frame.MAXIMIZED_BOTH);
 //        this.doLayout();
 //        this.pack();
-        FrameUtils.centerFrame(this, null);
+        //FrameUtils.centerFrame(this, null);
 
         String dividerLocation = settings.getConfiguration(ClientSettings.CONF_DIVIDERLOCATION, "175");
 //        this.jSplitPane1.setDividerLocation(Integer.parseInt(dividerLocation));
