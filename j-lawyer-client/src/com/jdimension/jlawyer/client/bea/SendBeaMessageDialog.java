@@ -920,7 +920,7 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
 
                     updateAlias();
                 }
-                System.out.println("" + evt.getColumn() + " " + evt.getFirstRow() + " " + evt.getLastRow());
+                //System.out.println("" + evt.getColumn() + " " + evt.getFirstRow() + " " + evt.getLastRow());
             }
         });
 
