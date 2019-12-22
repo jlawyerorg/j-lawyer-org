@@ -711,7 +711,7 @@ public class FrameUtils {
         
             d = Toolkit.getDefaultToolkit().getScreenSize();
             
-            dlg.setSize((int)(d.getWidth()*percentOfScreen), (int)(d.getHeight()*percentOfScreen));
+            dlg.setSize((int)(d.getWidth()*(percentOfScreen/100f)), (int)(d.getHeight()*(percentOfScreen/100f)));
         
         centerDialog(dlg, null);
     }

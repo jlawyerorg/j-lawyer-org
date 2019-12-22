@@ -816,7 +816,8 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog {
 
         //ComponentUtils.restoreDialogSize(this);
 
-        FrameUtils.fitDialogToScreen(this, 90f);
+        FrameUtils.fitDialogToScreen(this, 85f);
+        
         
         this.jSplitPane1.setDividerLocation(0.5d);
         
