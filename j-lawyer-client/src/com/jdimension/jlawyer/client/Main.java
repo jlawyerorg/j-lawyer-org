@@ -755,14 +755,12 @@ public class Main {
     private void showSplash(String cmdHost, String cmdPort, String cmdHttpPort, String cmdUser, String cmdPassword) {
 
         FlatIntelliJLaf.install();
-        
+
         //FlatDarculaLaf.install();
-        
         // https://www.formdev.com/flatlaf/customizing/
-        UIManager.put( "ScrollBar.width", 14 );
-        UIManager.put( "ScrollBar.showButtons", true );
-        
-        
+        UIManager.put("ScrollBar.width", 14);
+        UIManager.put("ScrollBar.showButtons", true);
+
 //        Object selColor=UIManager.get("TabbedPane.selectedBackground");
 //        if(selColor!=null) {
 //            if(selColor instanceof Color) {
@@ -772,9 +770,14 @@ public class Main {
 //        }
         //UIManager.put("TabbedPane.selectedBackground", DefaultColorTheme.COLOR_LIGHT_GREY);
         UIManager.put("TabbedPane.selectedBackground", Color.WHITE);
-        UIManager.put( "TabbedPane.showTabSeparators", true );
-        
-        
+        UIManager.put("TabbedPane.showTabSeparators", true);
+
+        // table customizations
+        UIManager.put("Table.selectionBackground", DefaultColorTheme.COLOR_LOGO_BLUE);
+        //UIManager.put( "Table.selectionForeground" );
+        UIManager.put("Table.selectionInactiveBackground", DefaultColorTheme.COLOR_LOGO_BLUE);
+        //UIManager.put( "Table.selectionInactiveForeground"
+
 //        boolean nimbusFound = false;
 //        try {
 //            for (LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
@@ -795,7 +798,6 @@ public class Main {
 //                System.out.println("Could not set look and feel: " + ex.getMessage());
 //            }
 //        }
-
         splash = new StartupSplashFrame();
 
         //splash.setLocation(200, 200);
@@ -1120,7 +1122,7 @@ public class Main {
         allTpl.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_insert_drive_file_green_36dp.png")));
         allTpl.setSettingsEntry(true);
         templates.addChildModule(allTpl);
-        
+
         ModuleMetadata docSearch = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.docs.search"));
         docSearch.setEditorClass("com.jdimension.jlawyer.client.editors.search.DocumentSearchPanel");
         //docSearch.setIcon("kfind.png");
