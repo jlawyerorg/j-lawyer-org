@@ -905,7 +905,7 @@ public class DrebisInboxPanel extends javax.swing.JPanel implements ThemeableEdi
         txtFileNumber = new javax.swing.JTextField();
         cmdSaveConfirm = new javax.swing.JButton();
 
-        jLabel18.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/message_big.png"))); // NOI18N
+        jLabel18.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/Icons2-17.png"))); // NOI18N
 
         lblPanelTitle.setFont(new java.awt.Font("Dialog", 1, 24)); // NOI18N
         lblPanelTitle.setForeground(new java.awt.Color(255, 255, 255));

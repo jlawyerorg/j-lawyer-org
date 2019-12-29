@@ -811,6 +811,13 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.initializing = true;
         initComponents();
         
+        if (this.getClass().getName().equals(NewArchiveFilePanel.class.getName())) {
+            jLabel2.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/Icons2-12.png")));
+        } else {
+            jLabel2.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder_big.png")));
+        }
+        
+        
         ComponentUtils.decorateSplitPane(this.splitDocuments);
         
         //this.tagPanel.setPreferredSize(new Dimension(this.getWidth()-100, this.tagPanel.getHeight()));

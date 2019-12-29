@@ -707,6 +707,13 @@ public class HistoryPanel extends javax.swing.JPanel implements ThemeableEditor 
     public HistoryPanel(String principalId, String dialogTitle) {
         this.principalId=principalId;
         initComponents();
+        
+        if(this.getClass().getName().equals(MyHistoryPanel.class.getName())) {
+            jLabel18.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/history_big_my.png")));
+        } else {
+            jLabel18.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/history_big.png")));
+        }
+        
         this.lblPanelTitle.setText(dialogTitle);
         
         try {

@@ -884,7 +884,7 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
         lblPanelTitle.setForeground(new java.awt.Color(255, 255, 255));
         lblPanelTitle.setText("check");
 
-        jLabel2.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder_big.png"))); // NOI18N
+        jLabel2.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/Icons2-13.png"))); // NOI18N
 
         chkIncludeArchive.setText("Archivsuche");
 

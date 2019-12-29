@@ -768,7 +768,7 @@ public class ArchiveFileReviewsOverviewPanel extends javax.swing.JPanel implemen
         });
         jScrollPane1.setViewportView(tblResults);
 
-        jLabel18.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/schedule_big.png"))); // NOI18N
+        jLabel18.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/Icons2-22.png"))); // NOI18N
 
         lblPanelTitle.setFont(new java.awt.Font("Dialog", 1, 24)); // NOI18N
         lblPanelTitle.setForeground(new java.awt.Color(255, 255, 255));

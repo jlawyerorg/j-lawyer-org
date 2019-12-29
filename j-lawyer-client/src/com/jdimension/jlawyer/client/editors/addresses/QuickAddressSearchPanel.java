@@ -880,7 +880,7 @@ public class QuickAddressSearchPanel extends javax.swing.JPanel implements Theme
         lblSummary.setVerticalAlignment(javax.swing.SwingConstants.TOP);
         jScrollPane2.setViewportView(lblSummary);
 
-        jLabel18.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/vcard_big.png"))); // NOI18N
+        jLabel18.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/Icons2-20.png"))); // NOI18N
 
         lblPanelTitle.setFont(new java.awt.Font("Dialog", 1, 24)); // NOI18N
         lblPanelTitle.setForeground(new java.awt.Color(255, 255, 255));

@@ -735,6 +735,13 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
     public AddressPanel() {
         this.dto = null;
         initComponents();
+        
+        if (this.getClass().getName().equals(NewAddressPanel.class.getName())) {
+            jLabel18.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/Icons2-19.png")));
+        } else {
+            jLabel18.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/vcard_big.png")));
+        }
+        
         this.tagPanel.setLayout(new WrapLayout());
         this.cmbSalutation.setRenderer(new OptionGroupListCellRenderer());
         this.cmbComplimentaryClose.setRenderer(new OptionGroupListCellRenderer());

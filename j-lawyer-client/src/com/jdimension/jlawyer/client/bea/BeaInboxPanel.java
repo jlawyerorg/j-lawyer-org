@@ -1147,11 +1147,10 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
 
         setMaximumSize(new java.awt.Dimension(3600, 3600));
 
-        jLabel18.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/message_big.png"))); // NOI18N
+        jLabel18.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/Icons2-16.png"))); // NOI18N
 
         lblPanelTitle.setFont(new java.awt.Font("Dialog", 1, 24)); // NOI18N
         lblPanelTitle.setForeground(new java.awt.Color(255, 255, 255));
-        lblPanelTitle.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/bea32.png"))); // NOI18N
         lblPanelTitle.setText("Anwaltspostfach");
 
         jToolBar1.setFloatable(false);

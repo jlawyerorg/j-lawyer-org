@@ -916,8 +916,8 @@ public class Main {
         filesNew.setFullName("neue Akte anlegen");
         filesNew.setEditorName("neu");
         filesNew.setModuleName("Akte");
-        filesNew.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/sharp_folder_blue_36dp.png")));
-        filesNew.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/sharp_folder_green_36dp.png")));
+        filesNew.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-12-blue.png")));
+        filesNew.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-12-green.png")));
         filesNew.setHotKey(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0), "F2");
 //        ModuleMetadata filesView=new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.cases.view"));
 //        filesView.setEditorClass("com.jdimension.jlawyer.client.editors.files.ViewArchiveFilePanel");
@@ -931,8 +931,8 @@ public class Main {
         filesEdit.setFullName("vorhandene Akte suchen");
         filesEdit.setEditorName("suchen");
         filesEdit.setModuleName("Akte");
-        filesEdit.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/sharp_folder_blue_36dp.png")));
-        filesEdit.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/sharp_folder_green_36dp.png")));
+        filesEdit.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-13-blue.png")));
+        filesEdit.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-13-green.png")));
         filesEdit.setHotKey(KeyStroke.getKeyStroke(KeyEvent.VK_F3, 0), "F3");
         files.addChildModule(filesEdit);
 
@@ -955,8 +955,8 @@ public class Main {
         addressesNew.setFullName("neue Adresse anlegen");
         addressesNew.setEditorName("neu");
         addressesNew.setModuleName("Adresse");
-        addressesNew.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_perm_contact_calendar_blue_36dp.png")));
-        addressesNew.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_perm_contact_calendar_green_36dp.png")));
+        addressesNew.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-19-blue.png")));
+        addressesNew.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-19-green.png")));
         addressesNew.setHotKey(KeyStroke.getKeyStroke(KeyEvent.VK_F4, 0), "F4");
         addresses.addChildModule(addressesNew);
 //        ModuleMetadata addressesView=new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.contacts.view"));
@@ -971,8 +971,8 @@ public class Main {
         addressesEdit.setFullName("vorhandene Adresse suchen");
         addressesEdit.setEditorName("suchen");
         addressesEdit.setModuleName("Adresse");
-        addressesEdit.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_perm_contact_calendar_blue_36dp.png")));
-        addressesEdit.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_perm_contact_calendar_green_36dp.png")));
+        addressesEdit.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-20-blue.png")));
+        addressesEdit.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-20-green.png")));
         addressesEdit.setHotKey(KeyStroke.getKeyStroke(KeyEvent.VK_F5, 0), "F5");
         addresses.addChildModule(addressesEdit);
 //        ModuleMetadata addressesSearch=new ModuleMetadata("suchen");
@@ -992,8 +992,8 @@ public class Main {
         reviewsDue.setFullName("fällige Wiedervorlagen");
         reviewsDue.setEditorName("fällige");
         reviewsDue.setModuleName("WV");
-        reviewsDue.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_event_available_blue_36dp.png")));
-        reviewsDue.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_event_available_green_36dp.png")));
+        reviewsDue.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-22-blue.png")));
+        reviewsDue.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-22-green.png")));
         reviewsDue.setHotKey(KeyStroke.getKeyStroke(KeyEvent.VK_F6, 0), "F6");
         reviews.addChildModule(reviewsDue);
         ModuleMetadata reviewsSearch = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.fup.find"));
@@ -1004,8 +1004,8 @@ public class Main {
         reviewsSearch.setFullName("Wiedervorlagensuche");
         reviewsSearch.setEditorName("suchen");
         reviewsSearch.setModuleName("WV");
-        reviewsSearch.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_event_available_blue_36dp.png")));
-        reviewsSearch.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_event_available_green_36dp.png")));
+        reviewsSearch.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-15-blue.png")));
+        reviewsSearch.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-15-green.png")));
         reviews.addChildModule(reviewsSearch);
         ModuleMetadata reviewsMissing = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.fup.missing"));
         reviewsMissing.setEditorClass("com.jdimension.jlawyer.client.editors.files.ArchiveFileReviewsMissingPanel");
@@ -1015,8 +1015,8 @@ public class Main {
         reviewsMissing.setFullName("fehlende Wiedervorlagen");
         reviewsMissing.setEditorName("fehlende");
         reviewsMissing.setModuleName("WV");
-        reviewsMissing.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_event_available_blue_36dp.png")));
-        reviewsMissing.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_event_available_green_36dp.png")));
+        reviewsMissing.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-14-blue.png")));
+        reviewsMissing.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-14-green.png")));
         reviews.addChildModule(reviewsMissing);
 
 //        ModuleMetadata reports=new ModuleMetadata("Reporte");
@@ -1033,8 +1033,8 @@ public class Main {
         mailInbox.setFullName("Email-Posteingang");
         mailInbox.setEditorName("E-Mail");
         mailInbox.setModuleName("Post");
-        mailInbox.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_email_blue_36dp.png")));
-        mailInbox.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_email_green_36dp.png")));
+        mailInbox.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-30-blue.png")));
+        mailInbox.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-30-green.png")));
         mailInbox.setStatusEventType(Event.TYPE_MAILSTATUS);
         mailInbox.setHotKey(KeyStroke.getKeyStroke(KeyEvent.VK_F7, 0), "F7");
         mail.addChildModule(mailInbox);
@@ -1045,8 +1045,8 @@ public class Main {
         bea.setFullName("beA-Posteingang");
         bea.setEditorName("beA");
         bea.setModuleName("Post");
-        bea.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_email_blue_36dp.png")));
-        bea.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_email_green_36dp.png")));
+        bea.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-16-blue.png")));
+        bea.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-16-green.png")));
         bea.setStatusEventType(Event.TYPE_BEASTATUS);
         bea.setHotKey(KeyStroke.getKeyStroke(KeyEvent.VK_F8, 0), "F8");
         mail.addChildModule(bea);
@@ -1057,8 +1057,8 @@ public class Main {
         drebis.setFullName("Drebis-Posteingang");
         drebis.setEditorName("Drebis");
         drebis.setModuleName("Post");
-        drebis.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_email_blue_36dp.png")));
-        drebis.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_email_green_36dp.png")));
+        drebis.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-17-blue.png")));
+        drebis.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-17-green.png")));
         drebis.setStatusEventType(Event.TYPE_DREBISSTATUS);
         mail.addChildModule(drebis);
         ModuleMetadata faxStatus = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.comm.fax"));
@@ -1130,8 +1130,8 @@ public class Main {
         docSearch.setFullName("Suchmaschine");
         docSearch.setEditorName("Volltext");
         docSearch.setModuleName("Wissen");
-        docSearch.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_search_blue_36dp.png")));
-        docSearch.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_search_green_36dp.png")));
+        docSearch.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-21-blue.png")));
+        docSearch.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-21-green.png")));
         templates.addChildModule(docSearch);
 
         ModuleMetadata history = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.history"));
@@ -1145,8 +1145,8 @@ public class Main {
         myHistory.setFullName("Meine Historie");
         myHistory.setEditorName("meine Änd.");
         myHistory.setModuleName("Wissen");
-        myHistory.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_history_blue_36dp.png")));
-        myHistory.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_history_green_36dp.png")));
+        myHistory.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-25-blue.png")));
+        myHistory.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-25-green.png")));
         history.addChildModule(myHistory);
         ModuleMetadata allHistory = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.history.all"));
         allHistory.setEditorClass("com.jdimension.jlawyer.client.editors.history.AllHistoryPanel");
@@ -1155,8 +1155,8 @@ public class Main {
         allHistory.setFullName("Historie");
         allHistory.setEditorName("alle Änd.");
         allHistory.setModuleName("Wissen");
-        allHistory.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_history_blue_36dp.png")));
-        allHistory.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_history_green_36dp.png")));
+        allHistory.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-26-blue.png")));
+        allHistory.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-26-green.png")));
         history.addChildModule(allHistory);
 
         ModuleMetadata knowledge = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.knowledge"));
@@ -1170,8 +1170,8 @@ public class Main {
         ug.setFullName("Urteile & Gesetze");
         ug.setEditorName("U&G");
         ug.setModuleName("Wissen");
-        ug.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_search_blue_36dp.png")));
-        ug.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_search_green_36dp.png")));
+        ug.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-18-blue.png")));
+        ug.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-18-green.png")));
         knowledge.addChildModule(ug);
 
         settings.setRootModule(root);
