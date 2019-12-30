@@ -4198,6 +4198,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         JFileChooser chooser = new JFileChooser(lastDir);
         chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
         chooser.setAcceptAllFileFilterUsed(false);
+        chooser.setDialogTitle("Verzeichnis wählen");
+        chooser.setApproveButtonText("Auswählen");
         if (chooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
             File dir = chooser.getSelectedFile();
             try {
