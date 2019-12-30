@@ -1047,7 +1047,7 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
     private void mnuSendEmailActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSendEmailActionPerformed
         
             if (this.a.getEmail() == null || "".equals(this.a.getEmail())) {
-                JOptionPane.showMessageDialog(this, "Zu diesem Kontakt ist keine Emailadresse erfasst.", "Fehler", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Zu diesem Kontakt ist keine E-Mail-Adresse erfasst.", "Fehler", JOptionPane.ERROR_MESSAGE);
 
             } else {
                 SendEmailDialog dlg = new SendEmailDialog(EditorsRegistry.getInstance().getMainWindow(), false);

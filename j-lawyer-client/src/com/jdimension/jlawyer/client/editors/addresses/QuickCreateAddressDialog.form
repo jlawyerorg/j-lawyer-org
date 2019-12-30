@@ -417,7 +417,7 @@
         </Component>
         <Component class="javax.swing.JLabel" name="jLabel10">
           <Properties>
-            <Property name="text" type="java.lang.String" value="Email:"/>
+            <Property name="text" type="java.lang.String" value="E-Mail:"/>
           </Properties>
         </Component>
         <Component class="javax.swing.JTextField" name="txtFax">

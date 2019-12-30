@@ -702,7 +702,7 @@ public class IdentityPanel extends javax.swing.JPanel {
         this.lblPhone.setText("Telefon: " + StringUtils.nonEmpty(i.getPhone()));
         this.lblMobile.setText("Mobil: " + StringUtils.nonEmpty(i.getMobile()));
         this.lblFax.setText("Fax: " + StringUtils.nonEmpty(i.getFax()));
-        this.lblEmail.setText("Email: " + StringUtils.nonEmpty(i.getEmail()));
+        this.lblEmail.setText("E-Mail: " + StringUtils.nonEmpty(i.getEmail()));
         this.lblOrganisation.setText("Organisation: " + StringUtils.nonEmpty(i.getOrganization()) + ", " + StringUtils.nonEmpty(i.getOrganizationExtension()));
     }
 
@@ -752,7 +752,7 @@ public class IdentityPanel extends javax.swing.JPanel {
 
         lblFax.setText("Fax:");
 
-        lblEmail.setText("Email");
+        lblEmail.setText("E-Mail");
 
         lblOrganisation.setText("Organisation:");
 

@@ -793,14 +793,6 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
 
         ClientSettings settings = ClientSettings.getInstance();
         this.cu = UserSettings.getInstance().getCurrentUser();
-//        if (!EmailUtils.hasConfig(cu)) {
-//            this.cmdSend.setEnabled(false);
-//            this.cmdAttach.setEnabled(false);
-//            //this.taBody.setEnabled(false);
-//            this.contentPanel.setEnabled(false);
-//            JOptionPane.showMessageDialog(this, "Email ist für diesen Nutzer nicht konfiguriert!", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
-//
-//        }
 
         String saveToFile = settings.getConfiguration(settings.CONF_BEA_SAVETOARCHIVEFILE, "1");
         if ("1".equalsIgnoreCase(saveToFile)) {

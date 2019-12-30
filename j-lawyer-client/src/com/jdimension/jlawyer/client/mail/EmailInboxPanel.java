@@ -804,7 +804,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         eb.subscribeConsumer(this, Event.TYPE_ALLCASETAGS);
         eb.subscribeConsumer(this, Event.TYPE_ALLDOCUMENTTAGS);
 
-        DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode("Email-Postfach");
+        DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode("E-Mail-Postfach");
         DefaultTreeModel dtm = new DefaultTreeModel(rootNode);
         this.treeFolders.setModel(dtm);
 
@@ -2895,7 +2895,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
 
             } catch (Exception ex) {
                 log.error(ex);
-                ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Speichern der Email: " + ex.getMessage(), "Fehler");
+                ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Speichern der E-Mail: " + ex.getMessage(), "Fehler");
             }
         }
         return false;

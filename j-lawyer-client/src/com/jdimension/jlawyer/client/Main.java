@@ -1030,7 +1030,7 @@ public class Main {
         mailInbox.setEditorClass("com.jdimension.jlawyer.client.mail.EmailInboxPanel");
         mailInbox.setBackgroundImage("emails.jpg");
         //mailInbox.setIcon("inbox.png");
-        mailInbox.setFullName("Email-Posteingang");
+        mailInbox.setFullName("E-Mail-Posteingang");
         mailInbox.setEditorName("E-Mail");
         mailInbox.setModuleName("Post");
         mailInbox.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-30-blue.png")));
@@ -1076,7 +1076,7 @@ public class Main {
         mailTpl.setEditorClass("com.jdimension.jlawyer.client.mail.EmailTemplatesPanel");
         mailTpl.setBackgroundImage("emails.jpg");
         //mailTpl.setIcon("moc_src.png");
-        mailTpl.setFullName("Email- und beA-Vorlagen");
+        mailTpl.setFullName("E-Mail- und beA-Vorlagen");
         mailTpl.setEditorName("Vorlagen");
         mailTpl.setModuleName("Post");
         mailTpl.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_email_blue_36dp.png")));

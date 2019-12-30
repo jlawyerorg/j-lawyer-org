@@ -764,7 +764,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
             this.cmdAttach.setEnabled(false);
             //this.taBody.setEnabled(false);
             this.contentPanel.setEnabled(false);
-            JOptionPane.showMessageDialog(this, "Email ist für diesen Nutzer nicht konfiguriert!", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(this, "E-Mail ist für diesen Nutzer nicht konfiguriert!", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
 
         }
 

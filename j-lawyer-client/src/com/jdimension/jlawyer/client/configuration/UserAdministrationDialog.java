@@ -1260,7 +1260,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 .addContainerGap(13, Short.MAX_VALUE))
         );
 
-        jTabbedPane1.addTab("Email", jPanel7);
+        jTabbedPane1.addTab("E-Mail", jPanel7);
 
         jLabel15.setText("Zertifikat:");
 

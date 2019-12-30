@@ -907,7 +907,7 @@ public class QuickCreateAddressDialog extends javax.swing.JDialog {
 
         jLabel9.setText("Fax:");
 
-        jLabel10.setText("Email:");
+        jLabel10.setText("E-Mail:");
 
         txtEmail.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyPressed(java.awt.event.KeyEvent evt) {

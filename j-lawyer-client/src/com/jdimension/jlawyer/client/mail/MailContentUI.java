@@ -813,7 +813,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
                 dlg.setShowCancelButton(false);
                 dlg.setInfinite(true);
                 DecimalFormat df = new DecimalFormat("###0.00");
-                dlg.progress("Lade Email... (" + df.format(msg.getSize() / 1024 / 1024) + "MB)");
+                dlg.progress("Lade E-Mail... (" + df.format(msg.getSize() / 1024 / 1024) + "MB)");
                 LoadEmailAction lea = new LoadEmailAction(dlg, this, msg, this.lblSubject, this.lblSentDate, this.lblTo, this.lblCC, this.lblBCC, this.lblFrom, this.editBody, this.lstAttachments, this.cmdShowHtml);
                 lea.start();
                 return;
