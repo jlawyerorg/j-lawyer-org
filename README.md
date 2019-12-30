@@ -28,7 +28,7 @@ We use [SemVer](http://semver.org/) for versioning. For the versions available, 
 * **Anatol Anuschewski** - *plugins* - [an-mus](https://github.com/an-mus)
 * **Karin Beck** - *urteile-gesetze.de integration* - [karbek](https://github.com/karbek)
 * **Daniel Beck** - *urteile-gesetze.de integration* - [danbeck](https://github.com/danbeck)
-* **Patrick Baumfalk** - *Icons, Dokumentvorlagen* - [PBaumfalk](https://github.com/PBaumfalk)
+* **Patrick Baumfalk** - *Icons, Document Templates* - [PBaumfalk](https://github.com/PBaumfalk)
 
 ## License
 
