@@ -986,7 +986,9 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                         for (String safeId : inboxFolders.keySet()) {
                             Folder inbox = inboxFolders.get(safeId);
                             if (inbox != null) {
+                                EditorsRegistry.getInstance().updateStatus("Nachrichtenübersicht wird geladen für " + inbox.getName() + "...");
                                 ArrayList<MessageHeader> messages = BeaAccess.getInstance().getFolderOverview(inbox);
+                                EditorsRegistry.getInstance().clearStatus();
                                 int unread=0;
                                 for (MessageHeader mh : messages) {
                                     EditorsRegistry.getInstance().updateStatus("beA-Nachricht wird geladen: " + StringUtils.nonNull(mh.getSubject()));
