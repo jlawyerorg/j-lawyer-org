@@ -915,7 +915,7 @@ public class Main {
         files.addChildModule(filesNew);
         filesNew.setFullName("neue Akte anlegen");
         filesNew.setEditorName("neu");
-        filesNew.setModuleName("Akte");
+        filesNew.setModuleName("Akten");
         filesNew.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-12-blue.png")));
         filesNew.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-12-green.png")));
         filesNew.setHotKey(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0), "F2");
@@ -930,7 +930,7 @@ public class Main {
         filesEdit.setBackgroundImage("archivefiles.jpg");
         filesEdit.setFullName("vorhandene Akte suchen");
         filesEdit.setEditorName("suchen");
-        filesEdit.setModuleName("Akte");
+        filesEdit.setModuleName("Akten");
         filesEdit.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-13-blue.png")));
         filesEdit.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-13-green.png")));
         filesEdit.setHotKey(KeyStroke.getKeyStroke(KeyEvent.VK_F3, 0), "F3");
@@ -954,7 +954,7 @@ public class Main {
         //addressesNew.setIcon("addresses_new.png");
         addressesNew.setFullName("neue Adresse anlegen");
         addressesNew.setEditorName("neu");
-        addressesNew.setModuleName("Adresse");
+        addressesNew.setModuleName("Adressen");
         addressesNew.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-19-blue.png")));
         addressesNew.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-19-green.png")));
         addressesNew.setHotKey(KeyStroke.getKeyStroke(KeyEvent.VK_F4, 0), "F4");
@@ -970,7 +970,7 @@ public class Main {
         //addressesEdit.setIcon("addresses_update.png");
         addressesEdit.setFullName("vorhandene Adresse suchen");
         addressesEdit.setEditorName("suchen");
-        addressesEdit.setModuleName("Adresse");
+        addressesEdit.setModuleName("Adressen");
         addressesEdit.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-20-blue.png")));
         addressesEdit.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-20-green.png")));
         addressesEdit.setHotKey(KeyStroke.getKeyStroke(KeyEvent.VK_F5, 0), "F5");
@@ -991,7 +991,7 @@ public class Main {
         //reviewsDue.setIcon("reviews_due.png");
         reviewsDue.setFullName("fällige Wiedervorlagen");
         reviewsDue.setEditorName("fällige");
-        reviewsDue.setModuleName("WV");
+        reviewsDue.setModuleName("Wiedervorlagen");
         reviewsDue.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-22-blue.png")));
         reviewsDue.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-22-green.png")));
         reviewsDue.setHotKey(KeyStroke.getKeyStroke(KeyEvent.VK_F6, 0), "F6");
@@ -1003,7 +1003,7 @@ public class Main {
         //reviewsSearch.setIcon("reviews_find.png");
         reviewsSearch.setFullName("Wiedervorlagensuche");
         reviewsSearch.setEditorName("suchen");
-        reviewsSearch.setModuleName("WV");
+        reviewsSearch.setModuleName("Wiedervorlagen");
         reviewsSearch.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-15-blue.png")));
         reviewsSearch.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-15-green.png")));
         reviews.addChildModule(reviewsSearch);
@@ -1014,7 +1014,7 @@ public class Main {
         //reviewsMissing.setIcon("reviews_missing.png");
         reviewsMissing.setFullName("fehlende Wiedervorlagen");
         reviewsMissing.setEditorName("fehlende");
-        reviewsMissing.setModuleName("WV");
+        reviewsMissing.setModuleName("Wiedervorlagen");
         reviewsMissing.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-14-blue.png")));
         reviewsMissing.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-14-green.png")));
         reviews.addChildModule(reviewsMissing);
@@ -1117,7 +1117,7 @@ public class Main {
         //allTpl.setIcon("doctemplates_templates.png");
         allTpl.setFullName("Dokumentvorlagen");
         allTpl.setEditorName("Dokumentvorlagen");
-        allTpl.setModuleName("Akte");
+        allTpl.setModuleName("Akten");
         allTpl.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_insert_drive_file_blue_36dp.png")));
         allTpl.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_insert_drive_file_green_36dp.png")));
         allTpl.setSettingsEntry(true);
@@ -1129,7 +1129,7 @@ public class Main {
         docSearch.setBackgroundImage("templates.jpg");
         docSearch.setFullName("Suchmaschine");
         docSearch.setEditorName("Volltext");
-        docSearch.setModuleName("Wissen");
+        docSearch.setModuleName("Informationen");
         docSearch.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-21-blue.png")));
         docSearch.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-21-green.png")));
         templates.addChildModule(docSearch);
@@ -1144,7 +1144,7 @@ public class Main {
         //myHistory.setIcon("history_my.png");
         myHistory.setFullName("Meine Historie");
         myHistory.setEditorName("meine Änd.");
-        myHistory.setModuleName("Wissen");
+        myHistory.setModuleName("Informationen");
         myHistory.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-25-blue.png")));
         myHistory.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-25-green.png")));
         history.addChildModule(myHistory);
@@ -1154,7 +1154,7 @@ public class Main {
         //allHistory.setIcon("history_all.png");
         allHistory.setFullName("Historie");
         allHistory.setEditorName("alle Änd.");
-        allHistory.setModuleName("Wissen");
+        allHistory.setModuleName("Informationen");
         allHistory.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-26-blue.png")));
         allHistory.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-26-green.png")));
         history.addChildModule(allHistory);
@@ -1169,7 +1169,7 @@ public class Main {
         ug.setIcon("urteile-gesetze.png");
         ug.setFullName("Urteile & Gesetze");
         ug.setEditorName("U&G");
-        ug.setModuleName("Wissen");
+        ug.setModuleName("Informationen");
         ug.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-18-blue.png")));
         ug.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-18-green.png")));
         knowledge.addChildModule(ug);
