@@ -791,7 +791,6 @@ public class ModuleButton extends javax.swing.JPanel implements EventConsumer {
 
         jLabel2.setText("jLabel2");
 
-        setOpaque(false);
         addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 formMouseClicked(evt);
@@ -825,7 +824,6 @@ public class ModuleButton extends javax.swing.JPanel implements EventConsumer {
         });
 
         lblModuleName.setFont(new java.awt.Font("Dialog", 1, 10)); // NOI18N
-        lblModuleName.setForeground(new java.awt.Color(102, 102, 102));
         lblModuleName.setText("jLabel1");
         lblModuleName.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         lblModuleName.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -846,6 +844,12 @@ public class ModuleButton extends javax.swing.JPanel implements EventConsumer {
         lblIndicator.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 lblIndicatorMouseClicked(evt);
+            }
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                lblIndicatorMouseExited(evt);
+            }
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                lblIndicatorMouseEntered(evt);
             }
         });
 
@@ -871,22 +875,26 @@ public class ModuleButton extends javax.swing.JPanel implements EventConsumer {
     }// </editor-fold>//GEN-END:initComponents
 
     private void lblModuleNameMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblModuleNameMouseEntered
-        this.lblModuleName.setForeground(Color.black);
+        //this.lblModuleName.setForeground(Color.black);
+        this.setBackground(this.defaultBackColor.brighter().brighter());
         this.iconButton.setIcon(this.getRollOverIcon());
     }//GEN-LAST:event_lblModuleNameMouseEntered
 
     private void lblModuleNameMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblModuleNameMouseExited
-        this.lblModuleName.setForeground(labelForeColor);
+        //this.lblModuleName.setForeground(labelForeColor);
+        this.setBackground(this.defaultBackColor);
         this.iconButton.setIcon(this.getIcon());
     }//GEN-LAST:event_lblModuleNameMouseExited
 
     private void iconButtonMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_iconButtonMouseEntered
-        this.lblModuleName.setForeground(Color.black);
+        //this.lblModuleName.setForeground(Color.black);
+        this.setBackground(this.defaultBackColor.brighter().brighter());
         this.iconButton.setIcon(this.getRollOverIcon());
     }//GEN-LAST:event_iconButtonMouseEntered
 
     private void iconButtonMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_iconButtonMouseExited
-        this.lblModuleName.setForeground(labelForeColor);
+        //this.lblModuleName.setForeground(labelForeColor);
+        this.setBackground(this.defaultBackColor);
         this.iconButton.setIcon(this.getIcon());
     }//GEN-LAST:event_iconButtonMouseExited
 
@@ -913,6 +921,16 @@ public class ModuleButton extends javax.swing.JPanel implements EventConsumer {
     private void formMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_formMouseClicked
         actionPerformed();
     }//GEN-LAST:event_formMouseClicked
+
+    private void lblIndicatorMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblIndicatorMouseEntered
+        this.setBackground(this.defaultBackColor.brighter().brighter());
+        this.iconButton.setIcon(this.getRollOverIcon());
+    }//GEN-LAST:event_lblIndicatorMouseEntered
+
+    private void lblIndicatorMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblIndicatorMouseExited
+        this.setBackground(this.defaultBackColor);
+        this.iconButton.setIcon(this.getIcon());
+    }//GEN-LAST:event_lblIndicatorMouseExited
 
     public void actionPerformed() {
         if (this.editorClass != null) {
