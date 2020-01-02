@@ -730,12 +730,13 @@ public class ModuleButton extends javax.swing.JPanel implements EventConsumer {
         boolean ed = m.getEditorName().length() > 0;
 
         if (mod && ed) {
-            setText("<html>" + m.getModuleName() + ":<br/>" + m.getEditorName() + "</html>");
+            //setText("<html><b>" + m.getModuleName() + ":<br/>" + m.getEditorName() + "</b></html>");
+            setText("<html><b>" + m.getEditorName() + "</b></html>");
             //setText("<html><table><tr><td>" + m.getModuleName() + ":<br/>" + m.getEditorName() + "</td><td>56</td></tr></table></html>");
         } else if (mod) {
-            setText(m.getModuleName());
+            setText("<html><b>" + m.getModuleName() + "</b></html>");
         } else if (ed) {
-            setText(m.getEditorName());
+            setText("<html><b>" + m.getEditorName() + "</b></html>");
         } else {
             setText("*");
         }
@@ -823,7 +824,6 @@ public class ModuleButton extends javax.swing.JPanel implements EventConsumer {
             }
         });
 
-        lblModuleName.setFont(new java.awt.Font("Dialog", 1, 10)); // NOI18N
         lblModuleName.setText("jLabel1");
         lblModuleName.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         lblModuleName.addMouseListener(new java.awt.event.MouseAdapter() {

@@ -663,160 +663,38 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.modulebar;
 
-import com.jdimension.jlawyer.client.configuration.PopulateOptionsEditor;
-import com.jdimension.jlawyer.client.editors.EditorsRegistry;
-import com.jdimension.jlawyer.server.modules.ModuleMetadata;
 import java.awt.Color;
-import java.awt.Component;
 import java.awt.Font;
-import java.awt.KeyEventDispatcher;
-import java.awt.KeyboardFocusManager;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
-import java.util.HashMap;
-import javax.swing.AbstractAction;
-import javax.swing.Action;
-import javax.swing.GroupLayout;
-import javax.swing.JLabel;
-import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JSeparator;
-import javax.swing.KeyStroke;
-import static javax.swing.SwingConstants.LEADING;
-import javax.swing.SwingUtilities;
-import org.jdesktop.swingx.JXTitledSeparator;
+import org.apache.log4j.Logger;
 import themes.colors.DefaultColorTheme;
 
 /**
  *
  * @author jens
  */
-public class ModuleBar extends javax.swing.JPanel {
+public class ModuleGroupLabel extends javax.swing.JPanel {
 
-    private HashMap<KeyStroke, Action> hotKeyActions = new HashMap<KeyStroke, Action>();
+    private static final Logger log = Logger.getLogger(ModuleGroupLabel.class.getName());
 
     /**
-     * Creates new form ModuleBar
+     * Creates new form ModuleButton
      */
-    public ModuleBar() {
+    public ModuleGroupLabel(String groupCaption) {
         initComponents();
-        
-        this.cmdSettings.setFont(this.cmdSettings.getFont().deriveFont(Font.BOLD));
-    }
-
-    public void actionPerformed(int moduleIndex) {
-        ModuleButton mb = (ModuleButton) this.buttonPane.getComponent(moduleIndex);
-        mb.actionPerformed();
-    }
-
-    public void addModule(ModuleMetadata m) {
-
-        if (m.isSettingsEntry()) {
-            JMenuItem mi = new JMenuItem("<html>" + m.getModuleName() + ":<br/>" + m.getEditorName() + "</html>");
-            mi.setIcon(m.getDefaultIcon());
-            mi.setRolloverIcon(m.getRolloverIcon());
-            mi.setFont(new java.awt.Font("Dialog", 1, 10));
-            mi.setForeground(new java.awt.Color(102, 102, 102));
-            mi.setSelectedIcon(m.getRolloverIcon());
-            JPanel caller = this;
-            mi.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent ae) {
-                    if (m.getEditorClass() != null) {
-                        Object editor = null;
-                        try {
-                            editor = EditorsRegistry.getInstance().getEditor(m.getEditorClass());
-                            if (editor instanceof PopulateOptionsEditor) {
-                                ((PopulateOptionsEditor) editor).populateOptions();
-                            }
-
-                            EditorsRegistry.getInstance().setMainEditorsPaneView((Component) editor);
-
-                        } catch (Exception ex) {
-                            //log.error("Error creating editor from class " + m.getEditorClass(), ex);
-                            JOptionPane.showMessageDialog(caller, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("error.loadingeditor") + ex.getMessage(), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.error"), JOptionPane.ERROR_MESSAGE);
-                        }
-
-                    } else {
-                        //this.scrollMain.setViewportView(null);
-                        EditorsRegistry.getInstance().setMainEditorsPaneView(null);
-                    }
-                }
-
-            });
-            this.popSettings.add(mi);
-        } else {
-            if (buttonPane.getComponentCount() > 0) {
-                ModuleButton mb = (ModuleButton) buttonPane.getComponent(buttonPane.getComponentCount() - 1);
-                String formerModuleName = mb.getModule().getModuleName();
-                if (!formerModuleName.equals(m.getModuleName())) {
-                    //buttonPane.add(new JSeparator());
-                    
-                    buttonPane.add(new ModuleGroupLabel(m.getModuleName()));
-
-//                    JXTitledSeparator sep=new org.jdesktop.swingx.JXTitledSeparator();
-//                    sep.setTitle(m.getModuleName());
-//                    sep.setFont(new java.awt.Font("Dialog", 1, 10));
-//                    buttonPane.add(sep);
-//                    sep.setSize(50, 50);
-//                    buttonPane.doLayout();
-//                    JPanel pan=new JPanel();
-//                    //JLabel sep=new JLabel("<html><p align=\"left\"><b><u>" + m.getModuleName() + "</u></b></p></html>");
-//                    JLabel sep=new JLabel(m.getModuleName());
-//                    sep.setOpaque(true);
-//                    sep.setSize(this.getWidth(), sep.getHeight());
-//                    sep.setFont(new java.awt.Font("Dialog", 1, 12).deriveFont(Font.BOLD));
-//                    sep.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
-//                    sep.setBackground(Color.WHITE);
-//                    sep.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
-//                    //sep.setBackground(DefaultColorTheme.COLOR_DARK_GREY);
-//                    
-//                    pan.add(sep);
-//                    buttonPane.add(pan);
-                }
-            }
-
-            ModuleButton b = new ModuleButton(m);
-            buttonPane.add(b);
-            if (m.getHotKey() != null) {
-                this.hotKeyActions.put(m.getHotKey(), new AbstractAction(m.getEditorClass()) {
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        b.actionPerformed();
-                    }
-                });
-            }
-
-        }
+        this.lblModuleName.setText(groupCaption);
+        this.lblModuleName.setFont(this.lblModuleName.getFont().deriveFont(Font.BOLD));
+        //this.setBackground(DefaultColorTheme.COLOR_DARK_GREY);
+        this.setBackground(Color.WHITE);
+        this.lblModuleName.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE.darker());
 
     }
 
-    /**
-     * Should be called AFTER all the modules have been added
-     */
-    public void initializeHotKeys() {
-        KeyboardFocusManager kfm = KeyboardFocusManager.getCurrentKeyboardFocusManager();
-        kfm.addKeyEventDispatcher(new KeyEventDispatcher() {
-            @Override
-            public boolean dispatchKeyEvent(KeyEvent e) {
-                KeyStroke keyStroke = KeyStroke.getKeyStrokeForEvent(e);
-                if (hotKeyActions.containsKey(keyStroke)) {
-                    final Action a = hotKeyActions.get(keyStroke);
-                    final ActionEvent ae = new ActionEvent(e.getSource(), e.getID(), null);
-                    SwingUtilities.invokeLater(new Runnable() {
-                        @Override
-                        public void run() {
-                            a.actionPerformed(ae);
-                        }
-                    });
-                    return true;
-                }
-                return false;
-            }
+    public void setText(String text) {
+        this.lblModuleName.setText(text);
+    }
 
-        });
+    public String getText() {
+        return this.lblModuleName.getText();
     }
 
     /**
@@ -828,66 +706,33 @@ public class ModuleBar extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        popSettings = new javax.swing.JPopupMenu();
-        cmdSettings = new javax.swing.JButton();
-        jScrollPane1 = new javax.swing.JScrollPane();
-        buttonPane = new javax.swing.JPanel();
+        lblModuleName = new javax.swing.JLabel();
 
-        setOpaque(false);
-
-        cmdSettings.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_settings_applications_black_36dp.png"))); // NOI18N
-        cmdSettings.setText("Einstellungen");
-        cmdSettings.setBorder(null);
-        cmdSettings.setBorderPainted(false);
-        cmdSettings.setContentAreaFilled(false);
-        cmdSettings.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
-        cmdSettings.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_settings_applications_green_36dp.png"))); // NOI18N
-        cmdSettings.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mousePressed(java.awt.event.MouseEvent evt) {
-                cmdSettingsMousePressed(evt);
-            }
-        });
-        cmdSettings.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdSettingsActionPerformed(evt);
-            }
-        });
-
-        jScrollPane1.setBorder(null);
-
-        buttonPane.setOpaque(false);
-        buttonPane.setLayout(new javax.swing.BoxLayout(buttonPane, javax.swing.BoxLayout.PAGE_AXIS));
-        jScrollPane1.setViewportView(buttonPane);
+        lblModuleName.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
+        lblModuleName.setText("jLabel1");
+        lblModuleName.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 180, Short.MAX_VALUE)
-            .addComponent(cmdSettings, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(lblModuleName, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addComponent(jScrollPane1)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(cmdSettings))
+            .addComponent(lblModuleName, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    private void cmdSettingsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSettingsActionPerformed
-        //this.popSettings.show(this.cmdSettings, evt.getX(), evt.getY());
-    }//GEN-LAST:event_cmdSettingsActionPerformed
-
-    private void cmdSettingsMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdSettingsMousePressed
-        this.popSettings.show(this.cmdSettings, evt.getX(), evt.getY());
-    }//GEN-LAST:event_cmdSettingsMousePressed
+    
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JPanel buttonPane;
-    private javax.swing.JButton cmdSettings;
-    private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JPopupMenu popSettings;
+    private javax.swing.JLabel lblModuleName;
     // End of variables declaration//GEN-END:variables
+
+    
+
 }
