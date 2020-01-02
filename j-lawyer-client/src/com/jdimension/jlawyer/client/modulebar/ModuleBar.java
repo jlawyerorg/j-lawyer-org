@@ -718,7 +718,8 @@ public class ModuleBar extends javax.swing.JPanel {
             mi.setIcon(m.getDefaultIcon());
             mi.setRolloverIcon(m.getRolloverIcon());
             mi.setFont(new java.awt.Font("Dialog", 1, 10));
-            mi.setForeground(new java.awt.Color(102, 102, 102));
+            //mi.setForeground(new java.awt.Color(102, 102, 102));
+            mi.setForeground(Color.BLACK);
             mi.setSelectedIcon(m.getRolloverIcon());
             //mi.putClientProperty("Menu.selectionForeground", Color.WHITE);
             //mi.putClientProperty("MenuItem[MouseOver].textForeground", Color.WHITE);
