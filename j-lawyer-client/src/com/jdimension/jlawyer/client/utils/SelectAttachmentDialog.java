@@ -754,21 +754,15 @@ public class SelectAttachmentDialog extends javax.swing.JDialog {
         pnlFromDesktop.setLayout(pnlFromDesktopLayout);
         pnlFromDesktopLayout.setHorizontalGroup(
             pnlFromDesktopLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 505, Short.MAX_VALUE)
+            .addGap(0, 571, Short.MAX_VALUE)
             .addGroup(pnlFromDesktopLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addGroup(pnlFromDesktopLayout.createSequentialGroup()
-                    .addGap(0, 0, Short.MAX_VALUE)
-                    .addComponent(fileChooser, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGap(0, 0, Short.MAX_VALUE)))
+                .addComponent(fileChooser, javax.swing.GroupLayout.DEFAULT_SIZE, 571, Short.MAX_VALUE))
         );
         pnlFromDesktopLayout.setVerticalGroup(
             pnlFromDesktopLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 326, Short.MAX_VALUE)
+            .addGap(0, 364, Short.MAX_VALUE)
             .addGroup(pnlFromDesktopLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addGroup(pnlFromDesktopLayout.createSequentialGroup()
-                    .addGap(0, 0, Short.MAX_VALUE)
-                    .addComponent(fileChooser, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGap(0, 0, Short.MAX_VALUE)))
+                .addComponent(fileChooser, javax.swing.GroupLayout.DEFAULT_SIZE, 364, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("vom Arbeitsplatz", pnlFromDesktop);
@@ -807,7 +801,7 @@ public class SelectAttachmentDialog extends javax.swing.JDialog {
                 .addContainerGap()
                 .addGroup(pnlFromCaseLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, pnlFromCaseLayout.createSequentialGroup()
-                        .addGap(0, 283, Short.MAX_VALUE)
+                        .addGap(0, 349, Short.MAX_VALUE)
                         .addComponent(cmdSelect)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cmdCancel))
@@ -818,7 +812,7 @@ public class SelectAttachmentDialog extends javax.swing.JDialog {
             pnlFromCaseLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(pnlFromCaseLayout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 271, Short.MAX_VALUE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 309, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(pnlFromCaseLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(cmdCancel)
