@@ -778,8 +778,8 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
 
         popupArchiveFileActions = new javax.swing.JPopupMenu();
         mnuOpenSelectedArchiveFile = new javax.swing.JMenuItem();
-        mnuDeleteSelectedArchiveFiles = new javax.swing.JMenuItem();
         mnuDuplicateSelectedArchiveFiles = new javax.swing.JMenuItem();
+        mnuDeleteSelectedArchiveFiles = new javax.swing.JMenuItem();
         popTagFilter = new javax.swing.JPopupMenu();
         popDocumentTagFilter = new javax.swing.JPopupMenu();
         cmdTagFilter = new javax.swing.JButton();
@@ -807,16 +807,6 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
         });
         popupArchiveFileActions.add(mnuOpenSelectedArchiveFile);
 
-        mnuDeleteSelectedArchiveFiles.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editdelete.png"))); // NOI18N
-        mnuDeleteSelectedArchiveFiles.setText("löschen");
-        mnuDeleteSelectedArchiveFiles.setToolTipText("gewählte Akten löschen");
-        mnuDeleteSelectedArchiveFiles.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                mnuDeleteSelectedArchiveFilesActionPerformed(evt);
-            }
-        });
-        popupArchiveFileActions.add(mnuDeleteSelectedArchiveFiles);
-
         mnuDuplicateSelectedArchiveFiles.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editcopy.png"))); // NOI18N
         mnuDuplicateSelectedArchiveFiles.setText("duplizieren");
         mnuDuplicateSelectedArchiveFiles.setToolTipText("gewählte Akten duplizieren");
@@ -826,6 +816,16 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
             }
         });
         popupArchiveFileActions.add(mnuDuplicateSelectedArchiveFiles);
+
+        mnuDeleteSelectedArchiveFiles.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editdelete.png"))); // NOI18N
+        mnuDeleteSelectedArchiveFiles.setText("löschen");
+        mnuDeleteSelectedArchiveFiles.setToolTipText("gewählte Akten löschen");
+        mnuDeleteSelectedArchiveFiles.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuDeleteSelectedArchiveFilesActionPerformed(evt);
+            }
+        });
+        popupArchiveFileActions.add(mnuDeleteSelectedArchiveFiles);
 
         cmdTagFilter.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/favorites.png"))); // NOI18N
         cmdTagFilter.addMouseListener(new java.awt.event.MouseAdapter() {

@@ -1509,12 +1509,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         reviewsPopup = new javax.swing.JPopupMenu();
         mnuSetReviewDone = new javax.swing.JMenuItem();
         mnuSetReviewOpen = new javax.swing.JMenuItem();
-        mnuRemoveReview = new javax.swing.JMenuItem();
         mnuDuplicateReview = new javax.swing.JMenuItem();
         mnuPostponeReview = new javax.swing.JMenuItem();
         mnuEditReview = new javax.swing.JMenuItem();
+        mnuRemoveReview = new javax.swing.JMenuItem();
         documentsPopup = new javax.swing.JPopupMenu();
-        mnuRemoveDocument = new javax.swing.JMenuItem();
         mnuOpenDocument = new javax.swing.JMenuItem();
         mnuSaveDocumentsLocally = new javax.swing.JMenuItem();
         mnuOpenDocumentMicrosoftOffice = new javax.swing.JMenuItem();
@@ -1525,6 +1524,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         mnuRenameDocument = new javax.swing.JMenuItem();
         mnuSetDocumentDate = new javax.swing.JMenuItem();
         mnuToggleFavorite = new javax.swing.JMenuItem();
+        mnuRemoveDocument = new javax.swing.JMenuItem();
         jSeparator1 = new javax.swing.JPopupMenu.Separator();
         mnuSendDocument = new javax.swing.JMenuItem();
         mnuSendDocumentPDF = new javax.swing.JMenuItem();
@@ -1671,15 +1671,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         });
         reviewsPopup.add(mnuSetReviewOpen);
 
-        mnuRemoveReview.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editdelete.png"))); // NOI18N
-        mnuRemoveReview.setText("entfernen");
-        mnuRemoveReview.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                mnuRemoveReviewActionPerformed(evt);
-            }
-        });
-        reviewsPopup.add(mnuRemoveReview);
-
         mnuDuplicateReview.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editcopy.png"))); // NOI18N
         mnuDuplicateReview.setText("duplizieren");
         mnuDuplicateReview.addActionListener(new java.awt.event.ActionListener() {
@@ -1707,14 +1698,14 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         });
         reviewsPopup.add(mnuEditReview);
 
-        mnuRemoveDocument.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editdelete.png"))); // NOI18N
-        mnuRemoveDocument.setText("löschen");
-        mnuRemoveDocument.addActionListener(new java.awt.event.ActionListener() {
+        mnuRemoveReview.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editdelete.png"))); // NOI18N
+        mnuRemoveReview.setText("entfernen");
+        mnuRemoveReview.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                mnuRemoveDocumentActionPerformed(evt);
+                mnuRemoveReviewActionPerformed(evt);
             }
         });
-        documentsPopup.add(mnuRemoveDocument);
+        reviewsPopup.add(mnuRemoveReview);
 
         mnuOpenDocument.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editcopy.png"))); // NOI18N
         mnuOpenDocument.setText("öffnen");
@@ -1805,6 +1796,15 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
         });
         documentsPopup.add(mnuToggleFavorite);
+
+        mnuRemoveDocument.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editdelete.png"))); // NOI18N
+        mnuRemoveDocument.setText("löschen");
+        mnuRemoveDocument.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuRemoveDocumentActionPerformed(evt);
+            }
+        });
+        documentsPopup.add(mnuRemoveDocument);
         documentsPopup.add(jSeparator1);
 
         mnuSendDocument.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/mail_send.png"))); // NOI18N

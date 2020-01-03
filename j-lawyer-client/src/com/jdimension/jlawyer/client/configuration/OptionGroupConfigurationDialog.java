@@ -716,14 +716,23 @@ public class OptionGroupConfigurationDialog extends javax.swing.JDialog {
     private void initComponents() {
 
         popDelete = new javax.swing.JPopupMenu();
-        mnuDelete = new javax.swing.JMenuItem();
         mnuRename = new javax.swing.JMenuItem();
+        mnuDelete = new javax.swing.JMenuItem();
         jScrollPane1 = new javax.swing.JScrollPane();
         lstOptions = new javax.swing.JList();
         cmdClose = new javax.swing.JButton();
         lblCaption = new javax.swing.JLabel();
         cmdAdd = new javax.swing.JButton();
         txtOption = new javax.swing.JTextField();
+
+        mnuRename.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit.png"))); // NOI18N
+        mnuRename.setText("Umbenennen");
+        mnuRename.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuRenameActionPerformed(evt);
+            }
+        });
+        popDelete.add(mnuRename);
 
         mnuDelete.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editdelete.png"))); // NOI18N
         java.util.ResourceBundle bundle = java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/configuration/OptionGroupConfigurationDialog"); // NOI18N
@@ -734,15 +743,6 @@ public class OptionGroupConfigurationDialog extends javax.swing.JDialog {
             }
         });
         popDelete.add(mnuDelete);
-
-        mnuRename.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit.png"))); // NOI18N
-        mnuRename.setText("Umbenennen");
-        mnuRename.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                mnuRenameActionPerformed(evt);
-            }
-        });
-        popDelete.add(mnuRename);
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 

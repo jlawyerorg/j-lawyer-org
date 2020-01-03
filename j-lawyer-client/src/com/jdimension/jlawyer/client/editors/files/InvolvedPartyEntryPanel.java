@@ -777,7 +777,6 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
     private void initComponents() {
 
         partiesPopup = new javax.swing.JPopupMenu();
-        mnuRemoveParty = new javax.swing.JMenuItem();
         mnuSendEmail = new javax.swing.JMenuItem();
         mnuSendBea = new javax.swing.JMenuItem();
         mnuShowBeaIdentity = new javax.swing.JMenuItem();
@@ -785,6 +784,7 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
         mnuCallMobile = new javax.swing.JMenuItem();
         mnuCallPhone = new javax.swing.JMenuItem();
         mnuSendFax = new javax.swing.JMenuItem();
+        mnuRemoveParty = new javax.swing.JMenuItem();
         lblAddress = new javax.swing.JLabel();
         cmbRefType = new javax.swing.JComboBox<>();
         jLabel3 = new javax.swing.JLabel();
@@ -801,15 +801,6 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
         txtCustom1 = new javax.swing.JTextField();
         txtCustom2 = new javax.swing.JTextField();
         txtCustom3 = new javax.swing.JTextField();
-
-        mnuRemoveParty.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editdelete.png"))); // NOI18N
-        mnuRemoveParty.setText("löschen");
-        mnuRemoveParty.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                mnuRemovePartyActionPerformed(evt);
-            }
-        });
-        partiesPopup.add(mnuRemoveParty);
 
         mnuSendEmail.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/mail_send.png"))); // NOI18N
         mnuSendEmail.setText("E-Mail verfassen");
@@ -873,6 +864,15 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
             }
         });
         partiesPopup.add(mnuSendFax);
+
+        mnuRemoveParty.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editdelete.png"))); // NOI18N
+        mnuRemoveParty.setText("löschen");
+        mnuRemoveParty.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuRemovePartyActionPerformed(evt);
+            }
+        });
+        partiesPopup.add(mnuRemoveParty);
 
         lblAddress.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
         lblAddress.setText("Kutschke, Jens");

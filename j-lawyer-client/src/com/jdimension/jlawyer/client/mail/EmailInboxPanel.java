@@ -1088,8 +1088,8 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
 
         popFolders = new javax.swing.JPopupMenu();
         mnuNewFolder = new javax.swing.JMenuItem();
-        mnuRemoveFolder = new javax.swing.JMenuItem();
         mnuEmptyTrash = new javax.swing.JMenuItem();
+        mnuRemoveFolder = new javax.swing.JMenuItem();
         popEmailList = new javax.swing.JPopupMenu();
         mnuMarkRead = new javax.swing.JMenuItem();
         mnuMarkUnread = new javax.swing.JMenuItem();
@@ -1140,15 +1140,6 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         });
         popFolders.add(mnuNewFolder);
 
-        mnuRemoveFolder.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editdelete.png"))); // NOI18N
-        mnuRemoveFolder.setText("Ordner löschen");
-        mnuRemoveFolder.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                mnuRemoveFolderActionPerformed(evt);
-            }
-        });
-        popFolders.add(mnuRemoveFolder);
-
         mnuEmptyTrash.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/trash.png"))); // NOI18N
         mnuEmptyTrash.setText("Papierkorb leeren");
         mnuEmptyTrash.addActionListener(new java.awt.event.ActionListener() {
@@ -1157,6 +1148,15 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
             }
         });
         popFolders.add(mnuEmptyTrash);
+
+        mnuRemoveFolder.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editdelete.png"))); // NOI18N
+        mnuRemoveFolder.setText("Ordner löschen");
+        mnuRemoveFolder.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuRemoveFolderActionPerformed(evt);
+            }
+        });
+        popFolders.add(mnuRemoveFolder);
 
         mnuMarkRead.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png"))); // NOI18N
         mnuMarkRead.setText("als gelesen markieren");

@@ -882,9 +882,9 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
     private void initComponents() {
 
         popFolders = new javax.swing.JPopupMenu();
-        mnuRemoveFolder = new javax.swing.JMenuItem();
         mnuNewFolder = new javax.swing.JMenuItem();
         mnuRenameFolder = new javax.swing.JMenuItem();
+        mnuRemoveFolder = new javax.swing.JMenuItem();
         popTemplates = new javax.swing.JPopupMenu();
         mnuEditTemplate = new javax.swing.JMenuItem();
         mnuRenameTemplate = new javax.swing.JMenuItem();
@@ -905,15 +905,6 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
         jScrollPane2 = new javax.swing.JScrollPane();
         treeFolders = new javax.swing.JTree();
 
-        mnuRemoveFolder.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editdelete.png"))); // NOI18N
-        mnuRemoveFolder.setText("Ordner löschen");
-        mnuRemoveFolder.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                mnuRemoveFolderActionPerformed(evt);
-            }
-        });
-        popFolders.add(mnuRemoveFolder);
-
         mnuNewFolder.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit_add.png"))); // NOI18N
         mnuNewFolder.setText("neuer Ordner");
         mnuNewFolder.addActionListener(new java.awt.event.ActionListener() {
@@ -931,6 +922,15 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
             }
         });
         popFolders.add(mnuRenameFolder);
+
+        mnuRemoveFolder.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editdelete.png"))); // NOI18N
+        mnuRemoveFolder.setText("Ordner löschen");
+        mnuRemoveFolder.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuRemoveFolderActionPerformed(evt);
+            }
+        });
+        popFolders.add(mnuRemoveFolder);
 
         mnuEditTemplate.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit.png"))); // NOI18N
         mnuEditTemplate.setText("bearbeiten");

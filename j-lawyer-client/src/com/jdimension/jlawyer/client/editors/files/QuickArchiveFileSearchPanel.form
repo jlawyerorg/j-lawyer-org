@@ -20,18 +20,6 @@
             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuOpenSelectedArchiveFileActionPerformed"/>
           </Events>
         </MenuItem>
-        <MenuItem class="javax.swing.JMenuItem" name="mnuDeleteSelectedArchiveFiles">
-          <Properties>
-            <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-              <Image iconType="3" name="/icons/editdelete.png"/>
-            </Property>
-            <Property name="text" type="java.lang.String" value="l&#xf6;schen"/>
-            <Property name="toolTipText" type="java.lang.String" value="gew&#xe4;hlte Akten l&#xf6;schen"/>
-          </Properties>
-          <Events>
-            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuDeleteSelectedArchiveFilesActionPerformed"/>
-          </Events>
-        </MenuItem>
         <MenuItem class="javax.swing.JMenuItem" name="mnuDuplicateSelectedArchiveFiles">
           <Properties>
             <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
@@ -42,6 +30,18 @@
           </Properties>
           <Events>
             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuDuplicateSelectedArchiveFilesActionPerformed"/>
+          </Events>
+        </MenuItem>
+        <MenuItem class="javax.swing.JMenuItem" name="mnuDeleteSelectedArchiveFiles">
+          <Properties>
+            <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+              <Image iconType="3" name="/icons/editdelete.png"/>
+            </Property>
+            <Property name="text" type="java.lang.String" value="l&#xf6;schen"/>
+            <Property name="toolTipText" type="java.lang.String" value="gew&#xe4;hlte Akten l&#xf6;schen"/>
+          </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuDeleteSelectedArchiveFilesActionPerformed"/>
           </Events>
         </MenuItem>
       </SubComponents>

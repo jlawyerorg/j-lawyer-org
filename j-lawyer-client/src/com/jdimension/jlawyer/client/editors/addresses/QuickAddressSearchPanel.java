@@ -788,8 +788,8 @@ public class QuickAddressSearchPanel extends javax.swing.JPanel implements Theme
 
         popupAddressActions = new javax.swing.JPopupMenu();
         mnuOpenSelectedAddress = new javax.swing.JMenuItem();
-        mnuDeleteSelectedAddresses = new javax.swing.JMenuItem();
         mnuDuplicateSelectedAddress = new javax.swing.JMenuItem();
+        mnuDeleteSelectedAddresses = new javax.swing.JMenuItem();
         popTagFilter = new javax.swing.JPopupMenu();
         jLabel1 = new javax.swing.JLabel();
         txtSearchString = new javax.swing.JTextField();
@@ -814,16 +814,6 @@ public class QuickAddressSearchPanel extends javax.swing.JPanel implements Theme
         });
         popupAddressActions.add(mnuOpenSelectedAddress);
 
-        mnuDeleteSelectedAddresses.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editdelete.png"))); // NOI18N
-        mnuDeleteSelectedAddresses.setText("löschen");
-        mnuDeleteSelectedAddresses.setToolTipText("gewählte Adressen löschen");
-        mnuDeleteSelectedAddresses.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                mnuDeleteSelectedAddressesActionPerformed(evt);
-            }
-        });
-        popupAddressActions.add(mnuDeleteSelectedAddresses);
-
         mnuDuplicateSelectedAddress.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editcopy.png"))); // NOI18N
         mnuDuplicateSelectedAddress.setText("duplizieren");
         mnuDuplicateSelectedAddress.setToolTipText("gewählte Adresse duplizieren");
@@ -833,6 +823,16 @@ public class QuickAddressSearchPanel extends javax.swing.JPanel implements Theme
             }
         });
         popupAddressActions.add(mnuDuplicateSelectedAddress);
+
+        mnuDeleteSelectedAddresses.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editdelete.png"))); // NOI18N
+        mnuDeleteSelectedAddresses.setText("löschen");
+        mnuDeleteSelectedAddresses.setToolTipText("gewählte Adressen löschen");
+        mnuDeleteSelectedAddresses.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuDeleteSelectedAddressesActionPerformed(evt);
+            }
+        });
+        popupAddressActions.add(mnuDeleteSelectedAddresses);
 
         jLabel1.setText("Suchanfrage:");
 
