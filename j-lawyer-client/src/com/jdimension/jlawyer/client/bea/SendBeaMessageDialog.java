@@ -1960,6 +1960,8 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
         try {
             //this.txtImportFile.setText(chooser.getSelectedFile().getCanonicalPath());
             File[] files = sad.getSelectedFiles();
+            if(files==null)
+                return;
             for (File f : files) {
                 byte[] data = FileUtils.readFile(f);
                 String tmpUrl = FileUtils.createTempFile(f.getName(), data);
