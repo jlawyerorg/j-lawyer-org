@@ -716,6 +716,16 @@ public class ReviewDueEntryPanel extends javax.swing.JPanel {
      */
     public ReviewDueEntryPanel() {
         initComponents();
+        
+        ClientSettings settings=ClientSettings.getInstance();
+        String fontSizeOffset = settings.getConfiguration(settings.CONF_UI_FONTSIZEOFFSET, "0");
+        try {
+            int offset = Integer.parseInt(fontSizeOffset);
+            Font currentFont=this.lblTags.getFont();
+            this.lblTags.setFont(currentFont.deriveFont((float)currentFont.getSize() + (float)offset));
+        } catch (Throwable t) {
+            log.error("Could not set font size", t);
+        }
     }
 
     public void setEntry(ReviewDueEntry entry) {

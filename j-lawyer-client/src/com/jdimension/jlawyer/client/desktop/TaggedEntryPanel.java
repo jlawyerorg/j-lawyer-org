@@ -678,6 +678,7 @@ import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.ui.tagging.TagUtils;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Font;
 import java.awt.Image;
 import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
@@ -698,6 +699,19 @@ public class TaggedEntryPanel extends javax.swing.JPanel {
      */
     public TaggedEntryPanel() {
         initComponents();
+        
+        ClientSettings settings=ClientSettings.getInstance();
+        String fontSizeOffset = settings.getConfiguration(settings.CONF_UI_FONTSIZEOFFSET, "0");
+        try {
+            int offset = Integer.parseInt(fontSizeOffset);
+            Font currentFont=this.lblTags.getFont();
+            this.lblTags.setFont(currentFont.deriveFont((float)currentFont.getSize() + (float)offset));
+            
+            currentFont=this.lblDocument.getFont();
+            this.lblDocument.setFont(currentFont.deriveFont((float)currentFont.getSize() + (float)offset));
+        } catch (Throwable t) {
+            log.error("Could not set font size", t);
+        }
     }
 
     public void setEntry(TaggedEntry entry) {
@@ -801,7 +815,6 @@ public class TaggedEntryPanel extends javax.swing.JPanel {
         jLabel1 = new javax.swing.JLabel();
         lblDocument = new javax.swing.JLabel();
 
-        lblDescription.setFont(new java.awt.Font("Dialog", 0, 12)); // NOI18N
         java.util.ResourceBundle bundle = java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/LastChangedEntryPanel"); // NOI18N
         lblDescription.setText(bundle.getString("label.case.name")); // NOI18N
         lblDescription.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
@@ -843,7 +856,7 @@ public class TaggedEntryPanel extends javax.swing.JPanel {
                     .addComponent(lblDocument, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(lblDescription)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 136, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 127, Short.MAX_VALUE)
                         .addComponent(lblChangedBy)))
                 .addContainerGap())
         );
