@@ -725,7 +725,7 @@ public class FileUtils extends ServerFileUtils {
 
             String osName = System.getProperty("os.name").toLowerCase();
 
-            if (osName.indexOf("linux") > -1) {
+            if (osName.indexOf("linux") > -1 || osName.startsWith("mac")) {
 
                 if(fileExt.startsWith("."))
                     fileExt=fileExt.substring(1,fileExt.length());
@@ -751,24 +751,24 @@ public class FileUtils extends ServerFileUtils {
                     file.delete();
                     return icon;
                 }
-            } else if (osName.startsWith("mac")) {
+//            } else if (osName.startsWith("mac")) {
 
-                //Create a temporary file with the specified extension
-                File file = File.createTempFile("icon", fileExt);
+// this was not working - maybe macOS needs a "real" file, not just an empty one?
 
-//                FileSystemView view = FileSystemView.getFileSystemView();
-//                Icon icon = FileSystemView.getFileSystemView().getSystemIcon(file);
-                
-                final javax.swing.JFileChooser fc = new javax.swing.JFileChooser();
-                Icon icon = fc.getUI().getFileView(fc).getIcon(file);
-                
-                if (icon != null) {
-                    this.iconCache.put(fileExt, icon);
-                }
-
-                //Delete the temporary file
-                file.delete();
-                return icon;
+//
+//                //Create a temporary file with the specified extension
+//                File file = File.createTempFile("icon", fileExt);
+//
+//                final javax.swing.JFileChooser fc = new javax.swing.JFileChooser();
+//                Icon icon = fc.getUI().getFileView(fc).getIcon(file);
+//                
+//                if (icon != null) {
+//                    this.iconCache.put(fileExt, icon);
+//                }
+//
+//                //Delete the temporary file
+//                file.delete();
+//                return icon;
 
             } else {
                 // Windows behaviour is default
