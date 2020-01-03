@@ -3536,7 +3536,35 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             evt.consume();
             this.openSelectedDocument(tblDocuments.getSelectedRows());
         } else if (evt.getClickCount() == 1 && !evt.isConsumed()) {
-            evt.consume();
+            boolean processedAction=false;
+            if(this.cmdSave.isEnabled() && evt.getButton()==MouseEvent.BUTTON1) {
+                int row = this.tblDocuments.rowAtPoint(evt.getPoint());
+                int col = this.tblDocuments.columnAtPoint(evt.getPoint());
+                if (col == 1) {
+                    // user clicked favorites icon column
+                    processedAction=true;
+                    try {
+                        ClientSettings settings = ClientSettings.getInstance();
+                        JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                        ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
+                        DefaultTableModel tModel = (DefaultTableModel) this.tblDocuments.getModel();
+                        ArchiveFileDocumentsBean doc = (ArchiveFileDocumentsBean) this.tblDocuments.getValueAt(row, 0);
+                        Boolean favorite = (Boolean) this.tblDocuments.getValueAt(row, 1);
+                        boolean newValue = !favorite.booleanValue();
+                        remote.setDocumentFavorite(doc.getId(), newValue);
+                        doc.setFavorite(newValue);
+                        this.tblDocuments.setValueAt(new Boolean(newValue), row, 1);
+                        this.updateFavoriteDocuments();
+                        
+                    } catch (Exception ioe) {
+                        log.error("Error setting document as favorite", ioe);
+                        JOptionPane.showMessageDialog(this, "Fehler beim Speichern: " + ioe.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+            }
+            if(!processedAction) {
+                evt.consume();
+            }
             //this.updateDocumentPreview();
         }
 
