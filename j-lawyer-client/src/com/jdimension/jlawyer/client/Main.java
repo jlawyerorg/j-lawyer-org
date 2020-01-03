@@ -1129,7 +1129,7 @@ public class Main {
         docSearch.setBackgroundImage("templates.jpg");
         docSearch.setFullName("Suchmaschine");
         docSearch.setEditorName("Volltext");
-        docSearch.setModuleName("Informationen");
+        docSearch.setModuleName("Recherche");
         docSearch.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-21-blue.png")));
         docSearch.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-21-green.png")));
         templates.addChildModule(docSearch);
@@ -1144,7 +1144,7 @@ public class Main {
         //myHistory.setIcon("history_my.png");
         myHistory.setFullName("Meine Historie");
         myHistory.setEditorName("meine Änd.");
-        myHistory.setModuleName("Informationen");
+        myHistory.setModuleName("Recherche");
         myHistory.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-25-blue.png")));
         myHistory.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-25-green.png")));
         history.addChildModule(myHistory);
@@ -1154,7 +1154,7 @@ public class Main {
         //allHistory.setIcon("history_all.png");
         allHistory.setFullName("Historie");
         allHistory.setEditorName("alle Änd.");
-        allHistory.setModuleName("Informationen");
+        allHistory.setModuleName("Recherche");
         allHistory.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-26-blue.png")));
         allHistory.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-26-green.png")));
         history.addChildModule(allHistory);
@@ -1169,7 +1169,7 @@ public class Main {
         ug.setIcon("urteile-gesetze.png");
         ug.setFullName("Urteile & Gesetze");
         ug.setEditorName("U&G");
-        ug.setModuleName("Informationen");
+        ug.setModuleName("Recherche");
         ug.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-18-blue.png")));
         ug.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-18-green.png")));
         knowledge.addChildModule(ug);
