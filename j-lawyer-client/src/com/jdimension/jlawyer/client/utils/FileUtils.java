@@ -756,8 +756,12 @@ public class FileUtils extends ServerFileUtils {
                 //Create a temporary file with the specified extension
                 File file = File.createTempFile("icon", fileExt);
 
-                FileSystemView view = FileSystemView.getFileSystemView();
-                Icon icon = FileSystemView.getFileSystemView().getSystemIcon(file);
+//                FileSystemView view = FileSystemView.getFileSystemView();
+//                Icon icon = FileSystemView.getFileSystemView().getSystemIcon(file);
+                
+                final javax.swing.JFileChooser fc = new javax.swing.JFileChooser();
+                Icon icon = fc.getUI().getFileView(fc).getIcon(file);
+                
                 if (icon != null) {
                     this.iconCache.put(fileExt, icon);
                 }
