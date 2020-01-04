@@ -721,7 +721,7 @@ public class DocumentTableCellRenderer extends DefaultTableCellRenderer {
 
             }
             label.setText("");
-            label.setToolTipText("Klicken um Dokument in die Favoriten aufzunehmen");
+            label.setToolTipText("Sternsymbol klicken um Dokument in die Favoriten aufzunehmen");
         }
 
         if (column == 2) {
