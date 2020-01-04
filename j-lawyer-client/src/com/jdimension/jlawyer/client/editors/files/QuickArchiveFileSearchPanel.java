@@ -828,7 +828,7 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
         popupArchiveFileActions.add(mnuDeleteSelectedArchiveFiles);
 
         cmdTagFilter.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/favorites.png"))); // NOI18N
-        cmdTagFilter.setToolTipText("nach Etiketten filtern");
+        cmdTagFilter.setToolTipText("nach Akten-Etiketten filtern");
         cmdTagFilter.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mousePressed(java.awt.event.MouseEvent evt) {
                 cmdTagFilterMousePressed(evt);
@@ -918,6 +918,7 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
         );
 
         cmdDocumentTagFilter.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/favorites.png"))); // NOI18N
+        cmdDocumentTagFilter.setToolTipText("nach Dokument-Etiketten filtern");
         cmdDocumentTagFilter.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mousePressed(java.awt.event.MouseEvent evt) {
                 cmdDocumentTagFilterMousePressed(evt);

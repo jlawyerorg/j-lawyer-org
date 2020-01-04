@@ -141,7 +141,7 @@
         <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
           <Image iconType="3" name="/icons16/favorites.png"/>
         </Property>
-        <Property name="toolTipText" type="java.lang.String" value="nach Etiketten filtern"/>
+        <Property name="toolTipText" type="java.lang.String" value="nach Akten-Etiketten filtern"/>
       </Properties>
       <Events>
         <EventHandler event="mousePressed" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="cmdTagFilterMousePressed"/>
@@ -285,6 +285,7 @@
         <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
           <Image iconType="3" name="/icons16/favorites.png"/>
         </Property>
+        <Property name="toolTipText" type="java.lang.String" value="nach Dokument-Etiketten filtern"/>
       </Properties>
       <Events>
         <EventHandler event="mousePressed" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="cmdDocumentTagFilterMousePressed"/>
