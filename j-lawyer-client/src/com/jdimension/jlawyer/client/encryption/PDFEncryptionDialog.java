@@ -853,6 +853,8 @@ public class PDFEncryptionDialog extends javax.swing.JDialog {
         JFileChooser chooser = new JFileChooser(this.txtLastDir.getText());
         chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
         chooser.setAcceptAllFileFilterUsed(false);
+        chooser.setDialogTitle("Verzeichnis wählen");
+        chooser.setApproveButtonText("Auswählen");
         if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
             this.txtLastDir.setText(chooser.getSelectedFile().getAbsolutePath());
         }

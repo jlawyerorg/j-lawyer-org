@@ -776,11 +776,11 @@ public class CaseNumberGenerator {
         return next(allExisting, pattern, date, startFromIndex);
     }
     
-    private static synchronized String next(ArrayList<String> allExisting, String pattern, int startFromIndex) {
+    private static synchronized String next(ArrayList<String> allExisting, String pattern, int startFromIndex) throws InvalidCaseNumberPatternException {
         return next(allExisting, pattern, new Date(), startFromIndex);
     }
     
-    private static synchronized String next(ArrayList<String> allExisting, String pattern, Date date, int startFromIndex) {
+    private static synchronized String next(ArrayList<String> allExisting, String pattern, Date date, int startFromIndex) throws InvalidCaseNumberPatternException {
         
         Date current=date;
         if(current==null)
@@ -833,6 +833,9 @@ public class CaseNumberGenerator {
             globalIndex=startFromIndex;
         }
         int localIndex=1;
+        if(startFromIndex!=-1) {
+            localIndex=startFromIndex;
+        }
         String currentPattern = null;
         do {
             if(DBG)
@@ -902,6 +905,10 @@ public class CaseNumberGenerator {
                 if(DBG)
                 System.out.println("120");
                 String s = mn.group(1);
+                
+                if(("" + localIndex).length()>s.length()) {
+                    throw new InvalidCaseNumberPatternException("Case number " + localIndex + " has exceeded maximum value of " + s + "!");
+                }
                 
                 DecimalFormat df=new DecimalFormat(s.replaceAll("n", "0"));
                 String dfs=df.format(localIndex);

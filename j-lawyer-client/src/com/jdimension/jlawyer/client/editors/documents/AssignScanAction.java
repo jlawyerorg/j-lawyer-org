@@ -671,6 +671,7 @@ import com.jdimension.jlawyer.persistence.ArchiveFileTagsBean;
 import com.jdimension.jlawyer.persistence.DocumentTagsBean;
 import com.jdimension.jlawyer.services.IntegrationServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import java.util.ArrayList;
 import java.util.Collection;
 import javax.swing.JTable;
 import org.apache.log4j.Logger;
@@ -695,9 +696,25 @@ public class AssignScanAction extends DeleteScanAction {
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
-            String newName = this.getNewFileName(this.fileName);
-            if (newName == null) {
-                return;
+            Collection docList = locator.lookupArchiveFileServiceRemote().getDocuments(this.archiveFileId);
+            ArrayList<String> docNames = new ArrayList<String>();
+            for (Object o : docList) {
+                if (o instanceof ArchiveFileDocumentsBean) {
+                    docNames.add(((ArchiveFileDocumentsBean) o).getName().toLowerCase());
+                }
+            }
+            boolean nameExists = true;
+            String newName = null;
+            while (nameExists) {
+                newName = this.getNewFileName(this.fileName);
+                if (newName == null) {
+                    return;
+                }
+                if (docNames.contains(newName.toLowerCase())) {
+                    ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Datei existiert bereits: " + newName, "Hinweis");
+                } else {
+                    nameExists = false;
+                }
             }
 
             IntegrationServiceRemote is = locator.lookupIntegrationServiceRemote();

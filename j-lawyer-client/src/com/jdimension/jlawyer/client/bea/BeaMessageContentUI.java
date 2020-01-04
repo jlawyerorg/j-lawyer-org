@@ -667,6 +667,8 @@ import com.jdimension.jlawyer.client.mail.*;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.documents.SearchAndAssignDialog;
 import com.jdimension.jlawyer.client.editors.files.DescendingDateTimeStringComparator;
+import com.jdimension.jlawyer.client.events.DocumentAddedEvent;
+import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.launcher.Launcher;
 import com.jdimension.jlawyer.client.launcher.LauncherFactory;
 import com.jdimension.jlawyer.client.launcher.ReadOnlyDocumentStore;
@@ -676,6 +678,7 @@ import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.*;
 import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Color;
@@ -723,6 +726,8 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
      */
     public BeaMessageContentUI() {
         initComponents();
+        
+        ComponentUtils.decorateSplitPane(jSplitPane1);
 
         this.jScrollPane1.setPreferredSize(new Dimension((int) this.jScrollPane1.getSize().getWidth(), (int) this.jScrollPane1.getSize().getHeight()));
 
@@ -1141,7 +1146,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
         });
         mnuSave.add(mnuSearchSave);
 
-        mnuSaveAsFile.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/harddrive.png"))); // NOI18N
+        mnuSaveAsFile.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/filesave.png"))); // NOI18N
         mnuSaveAsFile.setText("als Datei...");
         mnuSaveAsFile.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -1443,7 +1448,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
                 byte[] data = ((Attachment) this.lstAttachments.getSelectedValue()).getContent();
                 String fileName=((Attachment) this.lstAttachments.getSelectedValue()).getFileName();
                 //String tmpFile = FileUtils.createTempFile(this.lstAttachments.getSelectedValue().toString(), data);
-                ReadOnlyDocumentStore store = new ReadOnlyDocumentStore("mailattachment-" + fileName, fileName);
+                ReadOnlyDocumentStore store = new ReadOnlyDocumentStore("beaattachment-" + fileName, fileName);
                 Launcher launcher = LauncherFactory.getLauncher(fileName, data, store);
                 launcher.launch(false);
             } catch (Exception ex) {
@@ -1526,7 +1531,10 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
                         return;
                     }
 
-                    afs.addDocument(sel.getId(), newName, data, "");
+                    ArchiveFileDocumentsBean newDoc=afs.addDocument(sel.getId(), newName, data, "");
+                    
+                    EventBroker eb = EventBroker.getInstance();
+                    eb.publishEvent(new DocumentAddedEvent(newDoc));
 
                 }
 

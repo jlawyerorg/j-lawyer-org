@@ -738,6 +738,19 @@ public class SystemMonitorTask extends java.util.TimerTask {
             this.memWarnLevel = getLimit(settings, "jlawyer.server.monitor.memwarn", this.memWarnLevel);
             this.vmErrorLevel = getLimit(settings, "jlawyer.server.monitor.vmerror", this.vmErrorLevel);
             this.vmWarnLevel = getLimit(settings, "jlawyer.server.monitor.vmwarn", this.vmWarnLevel);
+            String vmIssuesInSequenceString = "0";
+            int vmIssuesInSequence = 0;
+          ServerSettingsBean vmSeq = settings.find("jlawyer.server.monitor.vm.issuessequence");
+            if (vmSeq != null) {
+                try {
+                    vmIssuesInSequenceString = vmSeq.getSettingValue();
+                    if (vmIssuesInSequenceString != null) {
+                        vmIssuesInSequence = Integer.parseInt(vmIssuesInSequenceString);
+                    }
+                } catch (Throwable t) {
+                    log.error("Value jlawyer.server.monitor.vm.issuessequence is not a valid integer: " + vmIssuesInSequenceString);
+                }
+            }
 
             boolean cpuEnabled = this.isEnabled(settings, "jlawyer.server.monitor.enabled.cpu");
             boolean ramEnabled = this.isEnabled(settings, "jlawyer.server.monitor.enabled.ram");
@@ -754,10 +767,10 @@ public class SystemMonitorTask extends java.util.TimerTask {
                 int disk = this.getDiskStatusLevel();
                 if (disk > aggregate) {
                     aggregate = disk;
-                    status = this.getStatusString(aggregate, "Disk");
+                    status = this.getStatusString(aggregate, "Disk", null);
                 }
                 if (disk > MonitoringConstants.LEVEL_NORMAL) {
-                    mailBody.append(this.getStatusString(disk, "Disk")).append("\r\n");
+                    mailBody.append(this.getStatusString(disk, "Disk", "Ggf. nicht mehr benoetigte Daten loeschen und Papierkorb leeren.")).append("\r\n");
                 }
             }
 
@@ -765,10 +778,10 @@ public class SystemMonitorTask extends java.util.TimerTask {
                 int cpu = this.getCPUStatusLevel(settings);
                 if (cpu > aggregate) {
                     aggregate = cpu;
-                    status = this.getStatusString(aggregate, "CPU");
+                    status = this.getStatusString(aggregate, "CPU", null);
                 }
                 if (cpu > MonitoringConstants.LEVEL_NORMAL) {
-                    mailBody.append(this.getStatusString(cpu, "CPU")).append("\r\n");
+                    mailBody.append(this.getStatusString(cpu, "CPU", null)).append("\r\n");
                 }
             }
 
@@ -776,23 +789,42 @@ public class SystemMonitorTask extends java.util.TimerTask {
                 int mem = this.getPhysicalMemStatusLevel();
                 if (mem > aggregate) {
                     aggregate = mem;
-                    status = this.getStatusString(aggregate, "RAM");
+                    status = this.getStatusString(aggregate, "RAM", null);
 //                mailBody.append(status).append("\r\n");
                 }
                 if (mem > MonitoringConstants.LEVEL_NORMAL) {
-                    mailBody.append(this.getStatusString(mem, "RAM")).append("\r\n");
+                    mailBody.append(this.getStatusString(mem, "RAM", null)).append("\r\n");
                 }
             }
 
             if (javaEnabled) {
                 int vm = this.getVMMemStatusLevel();
-                if (vm > aggregate) {
-                    aggregate = vm;
-                    status = this.getStatusString(aggregate, "VM-Speicher");
-//                mailBody.append(status).append("\r\n");
-                }
                 if (vm > MonitoringConstants.LEVEL_NORMAL) {
-                    mailBody.append(this.getStatusString(vm, "VM-Speicher")).append("\r\n");
+                    // in case of warning or error, increase the issues sequence
+                    vmIssuesInSequence = vmIssuesInSequence + 1;
+                } else {
+                    // in case of normal, reset issues sequence to 0
+                    vmIssuesInSequence = 0;
+                    vm = MonitoringConstants.LEVEL_NORMAL;
+                }
+                ServerSettingsBean st = settings.find("jlawyer.server.monitor.vm.issuessequence");
+                if (st == null) {
+                    // first status ever
+                    ServerSettingsBean sb = new ServerSettingsBean("jlawyer.server.monitor.vm.issuessequence");
+                    sb.setSettingValue(""+vmIssuesInSequence);
+                    settings.create(sb);
+                } else if (!(""+vmIssuesInSequence).equals(st.getSettingValue())) {
+                    st.setSettingValue(""+vmIssuesInSequence);
+                    settings.edit(st);
+                }
+                if (vm > aggregate && vmIssuesInSequence >= 3) {
+                    // vm is in warning or error state, and has been in a sequence of three checks
+                    aggregate = vm;
+                    status = this.getStatusString(aggregate, "VM-Speicher", null);
+
+                }
+                if (vm > MonitoringConstants.LEVEL_NORMAL && vmIssuesInSequence >= 3) {
+                    mailBody.append(this.getStatusString(vm, "VM-Speicher", "Ggf. den j-lawyer.org Serverdienst durchstarten (stoppen und neu starten).")).append("\r\n");
                 }
             }
 
@@ -981,7 +1013,7 @@ public class SystemMonitorTask extends java.util.TimerTask {
         return defaultValue;
     }
 
-    private String getStatusString(int level, String subject) {
+    private String getStatusString(int level, String subject, String solutionHint) {
         if (level == MonitoringConstants.LEVEL_NORMAL) {
             return "";
         }
@@ -997,6 +1029,10 @@ public class SystemMonitorTask extends java.util.TimerTask {
             sb.append("Warn");
         }
         sb.append("-Limit erreicht.");
+        if (solutionHint != null) {
+            sb.append(" \r\n\r\n");
+            sb.append(solutionHint);
+        }
         return sb.toString();
     }
 
@@ -1011,6 +1047,7 @@ public class SystemMonitorTask extends java.util.TimerTask {
         }
 
         ServerSettingsBean smtpHostS = settings.find("jlawyer.server.monitor.smtpserver");
+        ServerSettingsBean smtpHostP = settings.find("jlawyer.server.monitor.smtpport");
         ServerSettingsBean smtpUserS = settings.find("jlawyer.server.monitor.smtpuser");
         ServerSettingsBean smtpSenderName = settings.find("jlawyer.server.monitor.smtpsendername");
         ServerSettingsBean smtpPwdS = settings.find("jlawyer.server.monitor.smtppwd");
@@ -1043,6 +1080,19 @@ public class SystemMonitorTask extends java.util.TimerTask {
         Properties props = new Properties();
         if ("true".equalsIgnoreCase(smtpSsl)) {
             props.put("mail.smtp.ssl.enable", "true");
+        }
+        
+        if (smtpHostP != null) {
+            String p=smtpHostP.getSettingValue();
+            if (p != null && !("".equalsIgnoreCase(p))) {
+                try {
+                    int testInt = Integer.parseInt(p);
+                    props.put("mail.smtp.port", p);
+                    props.put("mail.smtps.port", p);
+                } catch (Throwable t) {
+                    log.error("Invalid SMTP port: " + p);
+                }
+            }
         }
 
         props.put("mail.smtp.host", smtpHost);
@@ -1080,7 +1130,7 @@ public class SystemMonitorTask extends java.util.TimerTask {
                 }
             }
 
-            msg.setFrom(new InternetAddress(smtpUser, "j-lawyer Server"));
+            msg.setFrom(new InternetAddress(smtpUser, senderName));
 
             msg.setRecipients(javax.mail.Message.RecipientType.TO, smtpTo);
             msg.setSubject(subject);

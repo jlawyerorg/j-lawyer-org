@@ -997,6 +997,8 @@ public class VoipService implements VoipServiceRemote, VoipServiceLocal {
                 throw new SipgateException("Fax " + sessionId + " wird noch verarbeitet - Bericht kann noch nicht erzeugt werden!");
             }
 
+        } else {
+            throw new SipgateException("Fax " + sessionId + " kann nicht in der Datenbank gefunden werden!");
         }
 
         ArchiveFileBean afb = fb.getArchiveFileKey();

@@ -666,6 +666,7 @@ package com.jdimension.jlawyer.ui.tagging;
 import java.awt.*;
 import javax.swing.ButtonModel;
 import javax.swing.JToggleButton;
+import themes.colors.DefaultColorTheme;
 
 /**
  *
@@ -676,7 +677,8 @@ public class TagToggleButton extends JToggleButton {
     private Color foreGround=Color.DARK_GRAY.brighter().brighter().brighter();
     
     private Color selectedBackColor=new Color(0,153,255);
-    private Color selectedForeColor=new Color(0,0,0,0);
+    //private Color selectedForeColor=new Color(0,0,0,0);
+    private Color selectedForeColor=DefaultColorTheme.COLOR_LOGO_GREEN;
     
     private GradientPaint gpSelected=null;
     private GradientPaint gpUnselected=null;
@@ -735,17 +737,23 @@ public class TagToggleButton extends JToggleButton {
     protected void paintComponent(Graphics g) {
         
         if(this.gpSelected==null)
+            //this.gpSelected=new GradientPaint(0, 0, selectedForeColor, 0, getHeight(), selectedBackColor);
             this.gpSelected=new GradientPaint(0, 0, selectedForeColor, 0, getHeight(), selectedBackColor);
         
         if(this.gpUnselected==null)
             this.gpUnselected=new   GradientPaint(0,   0,   Color.lightGray,   0, getHeight(), Color.white);
         
         
+        
         ButtonModel buttonModel = getModel();
         Graphics2D gd = (Graphics2D) g.create();
         gd.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         //gd.setPaint(new GradientPaint(0, 0, Color.white, 0, getHeight(), new Color(0, 0, 0, 0)));
-        gd.setPaint(gpUnselected);
+        Paint defaultPaint=gd.getPaint();
+        
+        //gd.setPaint(gpUnselected);
+        gd.setPaint(DefaultColorTheme.COLOR_LIGHT_GREY);
+        
         
         //gd.setPaint(new GradientPaint(0, 0, new Color(0, 0, 0, 0), 0, getHeight(), Color.white));
         //setForeground(Color.DARK_GRAY.brighter().brighter().brighter());
@@ -765,12 +773,14 @@ public class TagToggleButton extends JToggleButton {
         if (buttonModel.isSelected()) {
             this.setForeground(Color.white);
         } else {
-            this.setForeground(Color.gray);
+            this.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
         }
 
         if (buttonModel.isSelected()) {
             
-            gd.setPaint(gpSelected);
+            //gd.setPaint(gpSelected);
+            gd.setPaint(DefaultColorTheme.COLOR_LOGO_GREEN);
+            
             // issue - causes infinite #paintComponent loop: setForeground(Color.white);
             //this.setFont(this.getFont().deriveFont(Font.BOLD));
 //            if (buttonModel.isSelected()) {
@@ -781,7 +791,39 @@ public class TagToggleButton extends JToggleButton {
 //            }
         }
 
-        gd.fillRoundRect(0, 0, getWidth(), getHeight(), 10, 10);
+        //gd.fillRoundRect(0, 0, getWidth(), getHeight(), 10, 10);
+        Polygon plgn=new Polygon();
+        plgn.addPoint(0, 0);
+        plgn.addPoint(getWidth()-10, 0);
+        plgn.addPoint(getWidth(), getHeight()/2);
+        plgn.addPoint(getWidth()-10, getHeight());
+        plgn.addPoint(0, getHeight());
+        gd.fillPolygon(plgn);
+        
+        gd.setPaint(defaultPaint);
+        if(buttonModel.isSelected())
+            gd.setColor(Color.WHITE);
+        else
+            gd.setColor(DefaultColorTheme.COLOR_DARK_GREY);
+        gd.fillOval(getWidth()-10, getHeight()/2-3, 5, 5);
+        
+        
+        
+        gd.setColor(DefaultColorTheme.COLOR_DARK_GREY);
+        Polygon l1=new Polygon();
+//        l1.addPoint(getWidth()-10+3, getHeight()/2+1);
+//        l1.addPoint(getWidth(), getHeight()+1);
+//        l1.addPoint(getWidth()-10+5, getHeight()/2-1);
+//        l1.addPoint(getWidth(), getHeight()+4);
+        
+        l1.addPoint(getWidth()-10+2, getHeight()/2+1);
+        l1.addPoint(getWidth(), 1);
+        l1.addPoint(getWidth()-10+5, getHeight()/2+3);
+        l1.addPoint(getWidth(), 5);
+        
+        gd.fillPolygon(l1);
+
+        //gd.fill
         gd.dispose();
         super.paintComponent(g);
     }

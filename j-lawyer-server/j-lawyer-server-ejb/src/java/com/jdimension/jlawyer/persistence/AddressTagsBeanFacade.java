@@ -698,5 +698,11 @@ public class AddressTagsBeanFacade extends AbstractFacade<AddressTagsBean> imple
         List<AddressTagsBean> list = getEntityManager().createQuery("from AddressTagsBean where addressKey = ?1 and tagName = ?2").setParameter(1, addressKey).setParameter(2, tagName).getResultList();
         return list;
     }
+
+    @Override
+    public List<AddressTagsBean> findByTagName(String tagName) {
+        List<AddressTagsBean> list = getEntityManager().createQuery("from AddressTagsBean where tagName = ?1").setParameter(1, tagName).getResultList();
+        return list;
+    }
     
 }

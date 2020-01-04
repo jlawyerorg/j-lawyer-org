@@ -777,7 +777,6 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
     private void initComponents() {
 
         partiesPopup = new javax.swing.JPopupMenu();
-        mnuRemoveParty = new javax.swing.JMenuItem();
         mnuSendEmail = new javax.swing.JMenuItem();
         mnuSendBea = new javax.swing.JMenuItem();
         mnuShowBeaIdentity = new javax.swing.JMenuItem();
@@ -785,6 +784,7 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
         mnuCallMobile = new javax.swing.JMenuItem();
         mnuCallPhone = new javax.swing.JMenuItem();
         mnuSendFax = new javax.swing.JMenuItem();
+        mnuRemoveParty = new javax.swing.JMenuItem();
         lblAddress = new javax.swing.JLabel();
         cmbRefType = new javax.swing.JComboBox<>();
         jLabel3 = new javax.swing.JLabel();
@@ -801,15 +801,6 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
         txtCustom1 = new javax.swing.JTextField();
         txtCustom2 = new javax.swing.JTextField();
         txtCustom3 = new javax.swing.JTextField();
-
-        mnuRemoveParty.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editdelete.png"))); // NOI18N
-        mnuRemoveParty.setText("löschen");
-        mnuRemoveParty.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                mnuRemovePartyActionPerformed(evt);
-            }
-        });
-        partiesPopup.add(mnuRemoveParty);
 
         mnuSendEmail.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/mail_send.png"))); // NOI18N
         mnuSendEmail.setText("E-Mail verfassen");
@@ -873,6 +864,15 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
             }
         });
         partiesPopup.add(mnuSendFax);
+
+        mnuRemoveParty.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editdelete.png"))); // NOI18N
+        mnuRemoveParty.setText("löschen");
+        mnuRemoveParty.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuRemovePartyActionPerformed(evt);
+            }
+        });
+        partiesPopup.add(mnuRemoveParty);
 
         lblAddress.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
         lblAddress.setText("Kutschke, Jens");
@@ -1047,7 +1047,7 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
     private void mnuSendEmailActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSendEmailActionPerformed
         
             if (this.a.getEmail() == null || "".equals(this.a.getEmail())) {
-                JOptionPane.showMessageDialog(this, "Zu diesem Kontakt ist keine Emailadresse erfasst.", "Fehler", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Zu diesem Kontakt ist keine E-Mail-Adresse erfasst.", "Fehler", JOptionPane.ERROR_MESSAGE);
 
             } else {
                 SendEmailDialog dlg = new SendEmailDialog(EditorsRegistry.getInstance().getMainWindow(), false);
@@ -1093,6 +1093,7 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
                 dlg.addAllToClient(this.container.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_CLIENT));
                 dlg.addAllToOpponent(this.container.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT));
                 dlg.addAllToOpponentAttorney(this.container.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_OPPONENTATTORNEY));
+                dlg.setAzRecipient(this.txtReference.getText());
                 FrameUtils.centerDialog(dlg, null);
                 dlg.setVisible(true);
             }

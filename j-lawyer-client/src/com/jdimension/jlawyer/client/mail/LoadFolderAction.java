@@ -773,7 +773,7 @@ public class LoadFolderAction extends ProgressableAction {
                     try {
                         ComponentUtils.autoSizeColumns(table);
                     } catch (Throwable t) {
-                        log.error(t);
+                        log.error("Could not auto-size columns", t);
                     }
                     break;
                 }

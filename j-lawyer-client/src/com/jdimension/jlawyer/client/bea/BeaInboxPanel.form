@@ -49,28 +49,6 @@
         <Property name="useNullLayout" type="boolean" value="true"/>
       </Layout>
       <SubComponents>
-        <MenuItem class="javax.swing.JMenuItem" name="mnuMarkRead">
-          <Properties>
-            <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-              <Image iconType="3" name="/icons/agt_action_success.png"/>
-            </Property>
-            <Property name="text" type="java.lang.String" value="als gelesen markieren"/>
-          </Properties>
-          <Events>
-            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuMarkReadActionPerformed"/>
-          </Events>
-        </MenuItem>
-        <MenuItem class="javax.swing.JMenuItem" name="mnuMarkUnread">
-          <Properties>
-            <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-              <Image iconType="3" name="/icons/cancel.png"/>
-            </Property>
-            <Property name="text" type="java.lang.String" value="als ungelesen markieren"/>
-          </Properties>
-          <Events>
-            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuMarkUnreadActionPerformed"/>
-          </Events>
-        </MenuItem>
         <MenuItem class="javax.swing.JMenuItem" name="mnuSearchSave">
           <Properties>
             <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
@@ -91,6 +69,29 @@
           </Properties>
           <Events>
             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuSearchSaveNoAttachmentsActionPerformed"/>
+          </Events>
+        </MenuItem>
+        <MenuItem class="javax.swing.JMenuItem" name="mnuSearchSaveOnlyAttachments">
+          <Properties>
+            <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+              <Image iconType="3" name="/icons/find.png"/>
+            </Property>
+            <Property name="text" type="java.lang.String" value="in Akte speichern (nur Anh&#xe4;nge)..."/>
+          </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuSearchSaveOnlyAttachmentsActionPerformed"/>
+          </Events>
+        </MenuItem>
+        <MenuItem class="javax.swing.JMenuItem" name="mnuRestoreFromTrash">
+          <Properties>
+            <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+              <Image iconType="3" name="/icons16/undo.png"/>
+            </Property>
+            <Property name="text" type="java.lang.String" value="wiederherstellen"/>
+            <Property name="actionCommand" type="java.lang.String" value=""/>
+          </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuRestoreFromTrashActionPerformed"/>
           </Events>
         </MenuItem>
       </SubComponents>
@@ -143,9 +144,11 @@
           <Group type="102" alignment="0" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Component id="jLabel18" alignment="0" min="-2" max="-2" attributes="0"/>
-                  <Component id="lblPanelTitle" alignment="0" min="-2" max="-2" attributes="0"/>
                   <Component id="jPanel1" min="-2" max="-2" attributes="0"/>
+                  <Group type="103" alignment="0" groupAlignment="1" max="-2" attributes="0">
+                      <Component id="lblPanelTitle" alignment="0" max="32767" attributes="0"/>
+                      <Component id="jLabel18" alignment="0" max="32767" attributes="0"/>
+                  </Group>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="jToolBar1" min="-2" max="-2" attributes="0"/>
@@ -160,7 +163,7 @@
     <Component class="javax.swing.JLabel" name="jLabel18">
       <Properties>
         <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-          <Image iconType="3" name="/icons/message_big.png"/>
+          <Image iconType="3" name="/icons/Icons2-16.png"/>
         </Property>
       </Properties>
     </Component>
@@ -172,9 +175,6 @@
         <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
           <Color blue="ff" green="ff" red="ff" type="rgb"/>
         </Property>
-        <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-          <Image iconType="3" name="/icons32/bea32.png"/>
-        </Property>
         <Property name="text" type="java.lang.String" value="Anwaltspostfach"/>
       </Properties>
       <AuxValues>
@@ -185,6 +185,7 @@
       <Properties>
         <Property name="floatable" type="boolean" value="false"/>
         <Property name="rollover" type="boolean" value="true"/>
+        <Property name="opaque" type="boolean" value="false"/>
       </Properties>
 
       <Layout class="org.netbeans.modules.form.compat2.layouts.DesignBoxLayout"/>
@@ -194,7 +195,7 @@
             <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
               <Image iconType="3" name="/icons32/mail_post_to3.png"/>
             </Property>
-            <Property name="toolTipText" type="java.lang.String" value="neue E-Mail schreiben"/>
+            <Property name="toolTipText" type="java.lang.String" value="neue Nachricht schreiben"/>
             <Property name="focusable" type="boolean" value="false"/>
             <Property name="horizontalTextPosition" type="int" value="0"/>
             <Property name="verticalTextPosition" type="int" value="3"/>
@@ -202,6 +203,8 @@
           <Events>
             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdNewActionPerformed"/>
           </Events>
+        </Component>
+        <Component class="javax.swing.JToolBar$Separator" name="jSeparator1">
         </Component>
         <Component class="javax.swing.JButton" name="cmdReply">
           <Properties>
@@ -218,6 +221,8 @@
             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdReplyActionPerformed"/>
           </Events>
         </Component>
+        <Component class="javax.swing.JToolBar$Separator" name="jSeparator2">
+        </Component>
         <Component class="javax.swing.JButton" name="cmdReplyAll">
           <Properties>
             <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
@@ -233,6 +238,8 @@
             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdReplyAllActionPerformed"/>
           </Events>
         </Component>
+        <Component class="javax.swing.JToolBar$Separator" name="jSeparator3">
+        </Component>
         <Component class="javax.swing.JButton" name="cmdForward">
           <Properties>
             <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
@@ -247,6 +254,8 @@
           <Events>
             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdForwardActionPerformed"/>
           </Events>
+        </Component>
+        <Component class="javax.swing.JToolBar$Separator" name="jSeparator4">
         </Component>
         <Component class="javax.swing.JButton" name="cmdDelete">
           <Properties>
@@ -370,6 +379,8 @@
                                   <Component id="chkDocumentTagging" min="-2" max="-2" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
                                   <Component id="cmbDocumentTag" min="-2" max="-2" attributes="0"/>
+                                  <EmptySpace type="separate" max="-2" attributes="0"/>
+                                  <Component id="chkMoveToImported" min="-2" max="-2" attributes="0"/>
                                   <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                               </Group>
                               <Component id="jSplitPane1" pref="864" max="32767" attributes="0"/>
@@ -386,6 +397,7 @@
                               <Component id="chkCaseTagging" alignment="3" min="-2" max="-2" attributes="0"/>
                               <Component id="cmbDocumentTag" alignment="3" min="-2" max="-2" attributes="0"/>
                               <Component id="chkDocumentTagging" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="chkMoveToImported" alignment="3" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <EmptySpace max="-2" attributes="0"/>
                           <Component id="jSplitPane1" pref="233" max="32767" attributes="0"/>
@@ -396,7 +408,7 @@
               <SubComponents>
                 <Component class="javax.swing.JCheckBox" name="chkCaseTagging">
                   <Properties>
-                    <Property name="text" type="java.lang.String" value="Akte markieren:"/>
+                    <Property name="text" type="java.lang.String" value="Aktenetikett:"/>
                     <Property name="actionCommand" type="java.lang.String" value="Zielakte markieren:"/>
                   </Properties>
                   <Events>
@@ -465,7 +477,7 @@
                 </Container>
                 <Component class="javax.swing.JCheckBox" name="chkDocumentTagging">
                   <Properties>
-                    <Property name="text" type="java.lang.String" value="Dokument markieren:"/>
+                    <Property name="text" type="java.lang.String" value="Dokumentetikett:"/>
                     <Property name="actionCommand" type="java.lang.String" value="Zielakte markieren:"/>
                   </Properties>
                   <Events>
@@ -484,6 +496,15 @@
                   <AuxValues>
                     <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;String&gt;"/>
                   </AuxValues>
+                </Component>
+                <Component class="javax.swing.JCheckBox" name="chkMoveToImported">
+                  <Properties>
+                    <Property name="text" type="java.lang.String" value="in &quot;importiert&quot; verschieben"/>
+                    <Property name="toolTipText" type="java.lang.String" value="verschiebt die Nachricht nach Zuordnung in den Ordner &quot;in Akte importiert&quot;"/>
+                  </Properties>
+                  <Events>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="chkMoveToImportedActionPerformed"/>
+                  </Events>
                 </Component>
               </SubComponents>
             </Container>

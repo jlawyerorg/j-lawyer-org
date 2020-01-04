@@ -664,21 +664,29 @@
 package com.jdimension.jlawyer.client.utils;
 
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
+import java.awt.Graphics;
 import java.util.ArrayList;
 import java.util.List;
+import javax.swing.BorderFactory;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JList;
 import javax.swing.JPopupMenu;
+import javax.swing.JSplitPane;
 import javax.swing.JTable;
 import javax.swing.JTree;
 import javax.swing.MenuElement;
+import javax.swing.border.Border;
+import javax.swing.plaf.basic.BasicSplitPaneDivider;
+import javax.swing.plaf.basic.BasicSplitPaneUI;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import org.apache.log4j.Logger;
+import themes.colors.DefaultColorTheme;
 
 /**
  *
@@ -714,7 +722,7 @@ public class ComponentUtils {
             cmb.addItem(objects[i]);
         }
     }
-    
+
     public static void addAllItemsToCombobox(JComboBox cmb, List objects) {
         for (int i = 0; i < objects.size(); i++) {
             cmb.addItem(objects.get(i));
@@ -859,7 +867,7 @@ public class ComponentUtils {
         }
         return list.toArray(new String[list.size()]);
     }
-    
+
     public static void unSelectMenuItems(JPopupMenu pop) {
         for (MenuElement me : pop.getSubElements()) {
             if (me.getComponent() instanceof JCheckBoxMenuItem) {
@@ -867,5 +875,46 @@ public class ComponentUtils {
                 mi.setSelected(false);
             }
         }
+    }
+
+    public static void decorateSplitPane(JSplitPane split) {
+        decorateSplitPane(split, null);
+    }
+
+    public static void decorateSplitPane(JSplitPane split, Color dividerColor) {
+        BasicSplitPaneDivider divider = ((BasicSplitPaneUI) split.getUI()).getDivider();
+        split.setOneTouchExpandable(false);
+        divider.setDividerSize(5);
+
+        //divider.setBorder(BorderFactory.createTitledBorder(divider.getBorder(), "Custom border title -- gets rid of the one-touch arrows!"));
+        //divider.setBackground(DefaultColorTheme.COLOR_DARK_GREY);
+//        if(dividerColor!=null) {
+//            divider.setBorder(BorderFactory.createLineBorder(dividerColor, 1, false));
+//            divider.setBackground(dividerColor);
+//        } else {
+//            divider.setBorder(BorderFactory.createLineBorder(DefaultColorTheme.COLOR_DARK_GREY, 1, false));
+//            divider.setBackground(DefaultColorTheme.COLOR_DARK_GREY);
+//        }
+        split.setUI(new BasicSplitPaneUI() {
+            public BasicSplitPaneDivider createDefaultDivider() {
+                return new BasicSplitPaneDivider(this) {
+                    public void setBorder(Border b) {
+                    }
+
+                    @Override
+                    public void paint(Graphics g) {
+                        if(dividerColor!=null) {
+                            g.setColor(dividerColor);
+                        } else {
+                            g.setColor(DefaultColorTheme.COLOR_DARK_GREY);
+                        }
+                        g.fillRect(0, 0, getSize().width, getSize().height);
+                        super.paint(g);
+                    }
+                };
+            }
+        });
+        split.setBorder(null);
+
     }
 }

@@ -691,5 +691,5 @@ public interface AddressTagsBeanFacadeLocal {
     
     List<AddressTagsBean> findByAddressKeyAndTagName(AddressBean archiveFileKey, String tagName);
     
-    
+    List<AddressTagsBean> findByTagName(String tagName);
 }

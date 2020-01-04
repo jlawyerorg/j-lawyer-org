@@ -689,6 +689,8 @@ public interface DocumentTagsBeanFacadeLocal {
     
     List<DocumentTagsBean> findByDocumentKeyAndTagName(ArchiveFileDocumentsBean documentKey, String tagName);
     
+    List<DocumentTagsBean> findByTagName(String tagName);
+    
     int count();
     
 }

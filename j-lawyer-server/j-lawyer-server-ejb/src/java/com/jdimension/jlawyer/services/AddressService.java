@@ -1142,4 +1142,17 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
         
         return list;
     }
+
+    @Override
+    @RolesAllowed({"writeAddressRole"})
+    public void renameTag(String fromName, String toName) throws Exception {
+        StringGenerator idGen = new StringGenerator();
+
+        List<AddressTagsBean> tags = this.addressTagsFacade.findByTagName(fromName);
+        for (AddressTagsBean t : tags) {
+            t.setTagName(toName);
+            this.addressTagsFacade.edit(t);
+
+        }
+    }
 }

@@ -699,4 +699,10 @@ public class DocumentTagsBeanFacade extends AbstractFacade<DocumentTagsBean> imp
         return list;
     }
     
+    @Override
+    public List<DocumentTagsBean> findByTagName(String tagName) {
+        List<DocumentTagsBean> list = getEntityManager().createQuery("from DocumentTagsBean where tagName = ?1").setParameter(1, tagName).getResultList();
+        return list;
+    }
+    
 }

@@ -874,7 +874,22 @@ exists or setup the property manually. For example like this:
         <copyfiles files="${file.reference.simple-odf-0.8.2-incubating.jar}" todir="${build.classes.dir}"/>
         <copyfiles files="${file.reference.xslt-runner-1.2.4-incubating.jar}" todir="${build.classes.dir}"/>
         <copyfiles files="${file.reference.xslt-runner-task-1.2.4-incubating.jar}" todir="${build.classes.dir}"/>
-        <copyfiles files="${file.reference.tika-app-1.5.jar}" todir="${build.classes.dir}"/>
+        <copyfiles files="${file.reference.activation-1.1.1.jar}" todir="${build.classes.dir}"/>
+        <copyfiles files="${file.reference.tika-app-1.22.jar}" todir="${build.classes.dir}"/>
+        <copyfiles files="${file.reference.commons-codec-1.13.jar}" todir="${build.classes.dir}"/>
+        <copyfiles files="${file.reference.commons-collections4-4.4.jar}" todir="${build.classes.dir}"/>
+        <copyfiles files="${file.reference.commons-compress-1.19.jar}" todir="${build.classes.dir}"/>
+        <copyfiles files="${file.reference.commons-math3-3.6.1.jar}" todir="${build.classes.dir}"/>
+        <copyfiles files="${file.reference.jaxb-api-2.3.1.jar}" todir="${build.classes.dir}"/>
+        <copyfiles files="${file.reference.jaxb-core-2.3.0.1.jar}" todir="${build.classes.dir}"/>
+        <copyfiles files="${file.reference.jaxb-impl-2.3.2.jar}" todir="${build.classes.dir}"/>
+        <copyfiles files="${file.reference.poi-4.1.1.jar}" todir="${build.classes.dir}"/>
+        <copyfiles files="${file.reference.poi-excelant-4.1.1.jar}" todir="${build.classes.dir}"/>
+        <copyfiles files="${file.reference.poi-ooxml-4.1.1.jar}" todir="${build.classes.dir}"/>
+        <copyfiles files="${file.reference.poi-ooxml-schemas-4.1.1.jar}" todir="${build.classes.dir}"/>
+        <copyfiles files="${file.reference.poi-scratchpad-4.1.1.jar}" todir="${build.classes.dir}"/>
+        <copyfiles files="${file.reference.curvesapi-1.06.jar}" todir="${build.classes.dir}"/>
+        <copyfiles files="${file.reference.xmlbeans-3.1.0.jar}" todir="${build.classes.dir}"/>
     </target>
     <target if="is.server.weblogic" name="-library-inclusion-in-archive-weblogic">
         <basename file="${reference.j-lawyer-server-entities.dist}" property="manifest.reference.j-lawyer-server-entities.dist"/>
@@ -909,9 +924,24 @@ exists or setup the property manually. For example like this:
         <basename file="${file.reference.simple-odf-0.8.2-incubating.jar}" property="manifest.file.reference.simple-odf-0.8.2-incubating.jar"/>
         <basename file="${file.reference.xslt-runner-1.2.4-incubating.jar}" property="manifest.file.reference.xslt-runner-1.2.4-incubating.jar"/>
         <basename file="${file.reference.xslt-runner-task-1.2.4-incubating.jar}" property="manifest.file.reference.xslt-runner-task-1.2.4-incubating.jar"/>
-        <basename file="${file.reference.tika-app-1.5.jar}" property="manifest.file.reference.tika-app-1.5.jar"/>
+        <basename file="${file.reference.activation-1.1.1.jar}" property="manifest.file.reference.activation-1.1.1.jar"/>
+        <basename file="${file.reference.tika-app-1.22.jar}" property="manifest.file.reference.tika-app-1.22.jar"/>
+        <basename file="${file.reference.commons-codec-1.13.jar}" property="manifest.file.reference.commons-codec-1.13.jar"/>
+        <basename file="${file.reference.commons-collections4-4.4.jar}" property="manifest.file.reference.commons-collections4-4.4.jar"/>
+        <basename file="${file.reference.commons-compress-1.19.jar}" property="manifest.file.reference.commons-compress-1.19.jar"/>
+        <basename file="${file.reference.commons-math3-3.6.1.jar}" property="manifest.file.reference.commons-math3-3.6.1.jar"/>
+        <basename file="${file.reference.jaxb-api-2.3.1.jar}" property="manifest.file.reference.jaxb-api-2.3.1.jar"/>
+        <basename file="${file.reference.jaxb-core-2.3.0.1.jar}" property="manifest.file.reference.jaxb-core-2.3.0.1.jar"/>
+        <basename file="${file.reference.jaxb-impl-2.3.2.jar}" property="manifest.file.reference.jaxb-impl-2.3.2.jar"/>
+        <basename file="${file.reference.poi-4.1.1.jar}" property="manifest.file.reference.poi-4.1.1.jar"/>
+        <basename file="${file.reference.poi-excelant-4.1.1.jar}" property="manifest.file.reference.poi-excelant-4.1.1.jar"/>
+        <basename file="${file.reference.poi-ooxml-4.1.1.jar}" property="manifest.file.reference.poi-ooxml-4.1.1.jar"/>
+        <basename file="${file.reference.poi-ooxml-schemas-4.1.1.jar}" property="manifest.file.reference.poi-ooxml-schemas-4.1.1.jar"/>
+        <basename file="${file.reference.poi-scratchpad-4.1.1.jar}" property="manifest.file.reference.poi-scratchpad-4.1.1.jar"/>
+        <basename file="${file.reference.curvesapi-1.06.jar}" property="manifest.file.reference.curvesapi-1.06.jar"/>
+        <basename file="${file.reference.xmlbeans-3.1.0.jar}" property="manifest.file.reference.xmlbeans-3.1.0.jar"/>
         <manifest file="${build.ear.classes.dir}/META-INF/MANIFEST.MF" mode="update">
-            <attribute name="Extension-List" value="jar-1 jar-2 jar-3 jar-4 jar-5 jar-6 jar-7 jar-8 jar-9 jar-10 jar-11 jar-12 jar-13 jar-14 jar-15 jar-16 jar-17 jar-18 jar-19 jar-20 jar-21 jar-22 jar-23 jar-24 jar-25 jar-26 jar-27 jar-28 jar-29 jar-30 jar-31 jar-32 jar-33 "/>
+            <attribute name="Extension-List" value="jar-1 jar-2 jar-3 jar-4 jar-5 jar-6 jar-7 jar-8 jar-9 jar-10 jar-11 jar-12 jar-13 jar-14 jar-15 jar-16 jar-17 jar-18 jar-19 jar-20 jar-21 jar-22 jar-23 jar-24 jar-25 jar-26 jar-27 jar-28 jar-29 jar-30 jar-31 jar-32 jar-33 jar-34 jar-35 jar-36 jar-37 jar-38 jar-39 jar-40 jar-41 jar-42 jar-43 jar-44 jar-45 jar-46 jar-47 jar-48 "/>
             <attribute name="jar-1-Extension-Name" value="${manifest.reference.j-lawyer-server-entities.dist}"/>
             <attribute name="jar-2-Extension-Name" value="${manifest.reference.j-lawyer-server-api.jar}"/>
             <attribute name="jar-3-Extension-Name" value="${manifest.reference.j-lawyer-server-common.jar}"/>
@@ -944,7 +974,22 @@ exists or setup the property manually. For example like this:
             <attribute name="jar-30-Extension-Name" value="${manifest.file.reference.simple-odf-0.8.2-incubating.jar}"/>
             <attribute name="jar-31-Extension-Name" value="${manifest.file.reference.xslt-runner-1.2.4-incubating.jar}"/>
             <attribute name="jar-32-Extension-Name" value="${manifest.file.reference.xslt-runner-task-1.2.4-incubating.jar}"/>
-            <attribute name="jar-33-Extension-Name" value="${manifest.file.reference.tika-app-1.5.jar}"/>
+            <attribute name="jar-33-Extension-Name" value="${manifest.file.reference.activation-1.1.1.jar}"/>
+            <attribute name="jar-34-Extension-Name" value="${manifest.file.reference.tika-app-1.22.jar}"/>
+            <attribute name="jar-35-Extension-Name" value="${manifest.file.reference.commons-codec-1.13.jar}"/>
+            <attribute name="jar-36-Extension-Name" value="${manifest.file.reference.commons-collections4-4.4.jar}"/>
+            <attribute name="jar-37-Extension-Name" value="${manifest.file.reference.commons-compress-1.19.jar}"/>
+            <attribute name="jar-38-Extension-Name" value="${manifest.file.reference.commons-math3-3.6.1.jar}"/>
+            <attribute name="jar-39-Extension-Name" value="${manifest.file.reference.jaxb-api-2.3.1.jar}"/>
+            <attribute name="jar-40-Extension-Name" value="${manifest.file.reference.jaxb-core-2.3.0.1.jar}"/>
+            <attribute name="jar-41-Extension-Name" value="${manifest.file.reference.jaxb-impl-2.3.2.jar}"/>
+            <attribute name="jar-42-Extension-Name" value="${manifest.file.reference.poi-4.1.1.jar}"/>
+            <attribute name="jar-43-Extension-Name" value="${manifest.file.reference.poi-excelant-4.1.1.jar}"/>
+            <attribute name="jar-44-Extension-Name" value="${manifest.file.reference.poi-ooxml-4.1.1.jar}"/>
+            <attribute name="jar-45-Extension-Name" value="${manifest.file.reference.poi-ooxml-schemas-4.1.1.jar}"/>
+            <attribute name="jar-46-Extension-Name" value="${manifest.file.reference.poi-scratchpad-4.1.1.jar}"/>
+            <attribute name="jar-47-Extension-Name" value="${manifest.file.reference.curvesapi-1.06.jar}"/>
+            <attribute name="jar-48-Extension-Name" value="${manifest.file.reference.xmlbeans-3.1.0.jar}"/>
         </manifest>
     </target>
     <target depends="compile" name="library-inclusion-in-manifest">
@@ -980,7 +1025,22 @@ exists or setup the property manually. For example like this:
         <copyfiles files="${file.reference.simple-odf-0.8.2-incubating.jar}" todir="${dist.ear.dir}/lib"/>
         <copyfiles files="${file.reference.xslt-runner-1.2.4-incubating.jar}" todir="${dist.ear.dir}/lib"/>
         <copyfiles files="${file.reference.xslt-runner-task-1.2.4-incubating.jar}" todir="${dist.ear.dir}/lib"/>
-        <copyfiles files="${file.reference.tika-app-1.5.jar}" todir="${dist.ear.dir}/lib"/>
+        <copyfiles files="${file.reference.activation-1.1.1.jar}" todir="${dist.ear.dir}/lib"/>
+        <copyfiles files="${file.reference.tika-app-1.22.jar}" todir="${dist.ear.dir}/lib"/>
+        <copyfiles files="${file.reference.commons-codec-1.13.jar}" todir="${dist.ear.dir}/lib"/>
+        <copyfiles files="${file.reference.commons-collections4-4.4.jar}" todir="${dist.ear.dir}/lib"/>
+        <copyfiles files="${file.reference.commons-compress-1.19.jar}" todir="${dist.ear.dir}/lib"/>
+        <copyfiles files="${file.reference.commons-math3-3.6.1.jar}" todir="${dist.ear.dir}/lib"/>
+        <copyfiles files="${file.reference.jaxb-api-2.3.1.jar}" todir="${dist.ear.dir}/lib"/>
+        <copyfiles files="${file.reference.jaxb-core-2.3.0.1.jar}" todir="${dist.ear.dir}/lib"/>
+        <copyfiles files="${file.reference.jaxb-impl-2.3.2.jar}" todir="${dist.ear.dir}/lib"/>
+        <copyfiles files="${file.reference.poi-4.1.1.jar}" todir="${dist.ear.dir}/lib"/>
+        <copyfiles files="${file.reference.poi-excelant-4.1.1.jar}" todir="${dist.ear.dir}/lib"/>
+        <copyfiles files="${file.reference.poi-ooxml-4.1.1.jar}" todir="${dist.ear.dir}/lib"/>
+        <copyfiles files="${file.reference.poi-ooxml-schemas-4.1.1.jar}" todir="${dist.ear.dir}/lib"/>
+        <copyfiles files="${file.reference.poi-scratchpad-4.1.1.jar}" todir="${dist.ear.dir}/lib"/>
+        <copyfiles files="${file.reference.curvesapi-1.06.jar}" todir="${dist.ear.dir}/lib"/>
+        <copyfiles files="${file.reference.xmlbeans-3.1.0.jar}" todir="${dist.ear.dir}/lib"/>
         <manifest file="${build.ear.classes.dir}/META-INF/MANIFEST.MF" mode="update"/>
     </target>
     <target name="-copy-meta-inf">

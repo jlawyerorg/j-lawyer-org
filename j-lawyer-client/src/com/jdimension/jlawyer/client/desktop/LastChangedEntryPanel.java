@@ -678,9 +678,11 @@ import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.ui.tagging.TagUtils;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Font;
 import java.awt.Image;
 import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
+import themes.colors.DefaultColorTheme;
 
 /**
  *
@@ -697,6 +699,16 @@ public class LastChangedEntryPanel extends javax.swing.JPanel {
      */
     public LastChangedEntryPanel() {
         initComponents();
+        
+        ClientSettings settings=ClientSettings.getInstance();
+        String fontSizeOffset = settings.getConfiguration(settings.CONF_UI_FONTSIZEOFFSET, "0");
+        try {
+            int offset = Integer.parseInt(fontSizeOffset);
+            Font currentFont=this.lblTags.getFont();
+            this.lblTags.setFont(currentFont.deriveFont((float)currentFont.getSize() + (float)offset));
+        } catch (Throwable t) {
+            log.error("Could not set font size", t);
+        }
     }
 
     public void setEntry(LastChangedEntry entry) {
@@ -780,7 +792,6 @@ public class LastChangedEntryPanel extends javax.swing.JPanel {
         lblTags = new javax.swing.JLabel();
         jLabel1 = new javax.swing.JLabel();
 
-        lblDescription.setFont(new java.awt.Font("Dialog", 0, 12)); // NOI18N
         java.util.ResourceBundle bundle = java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/LastChangedEntryPanel"); // NOI18N
         lblDescription.setText(bundle.getString("label.case.name")); // NOI18N
         lblDescription.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
@@ -797,11 +808,11 @@ public class LastChangedEntryPanel extends javax.swing.JPanel {
         });
 
         lblChangedBy.setFont(new java.awt.Font("Dialog", 3, 12)); // NOI18N
-        lblChangedBy.setForeground(new java.awt.Color(0, 0, 255));
+        lblChangedBy.setForeground(new java.awt.Color(14, 114, 181));
         lblChangedBy.setText("user");
 
         lblTags.setFont(new java.awt.Font("Dialog", 0, 10)); // NOI18N
-        lblTags.setForeground(new java.awt.Color(0, 0, 204));
+        lblTags.setForeground(new java.awt.Color(14, 114, 181));
         lblTags.setText(" ");
 
         jLabel1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder.png"))); // NOI18N
@@ -818,7 +829,7 @@ public class LastChangedEntryPanel extends javax.swing.JPanel {
                     .addComponent(lblTags, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(lblDescription)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 136, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 127, Short.MAX_VALUE)
                         .addComponent(lblChangedBy)))
                 .addContainerGap())
         );
@@ -830,14 +841,14 @@ public class LastChangedEntryPanel extends javax.swing.JPanel {
                     .addComponent(lblChangedBy, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(lblDescription, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(jLabel1))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGap(3, 3, 3)
                 .addComponent(lblTags)
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
 
     private void lblDescriptionMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblDescriptionMouseEntered
-        this.lblDescription.setForeground(new Color(0, 0, 255));
+        this.lblDescription.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
     }//GEN-LAST:event_lblDescriptionMouseEntered
 
     private void lblDescriptionMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblDescriptionMouseExited

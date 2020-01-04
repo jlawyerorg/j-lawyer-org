@@ -671,6 +671,7 @@ import com.jdimension.jlawyer.client.launcher.LauncherFactory;
 import com.jdimension.jlawyer.client.launcher.TemplateDocumentStore;
 import com.jdimension.jlawyer.client.processing.ProgressIndicator;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.JTreeUtils;
@@ -737,6 +738,9 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
     public TemplatesTreePanel() {
 
         initComponents();
+        
+        ComponentUtils.decorateSplitPane(jSplitPane1);
+        ComponentUtils.decorateSplitPane(jSplitPane2);
 
         this.lstTemplates.setCellRenderer(new TemplateListCellRenderer());
 
@@ -878,9 +882,9 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
     private void initComponents() {
 
         popFolders = new javax.swing.JPopupMenu();
-        mnuRemoveFolder = new javax.swing.JMenuItem();
         mnuNewFolder = new javax.swing.JMenuItem();
         mnuRenameFolder = new javax.swing.JMenuItem();
+        mnuRemoveFolder = new javax.swing.JMenuItem();
         popTemplates = new javax.swing.JPopupMenu();
         mnuEditTemplate = new javax.swing.JMenuItem();
         mnuRenameTemplate = new javax.swing.JMenuItem();
@@ -901,15 +905,6 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
         jScrollPane2 = new javax.swing.JScrollPane();
         treeFolders = new javax.swing.JTree();
 
-        mnuRemoveFolder.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editdelete.png"))); // NOI18N
-        mnuRemoveFolder.setText("Ordner löschen");
-        mnuRemoveFolder.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                mnuRemoveFolderActionPerformed(evt);
-            }
-        });
-        popFolders.add(mnuRemoveFolder);
-
         mnuNewFolder.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit_add.png"))); // NOI18N
         mnuNewFolder.setText("neuer Ordner");
         mnuNewFolder.addActionListener(new java.awt.event.ActionListener() {
@@ -927,6 +922,15 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
             }
         });
         popFolders.add(mnuRenameFolder);
+
+        mnuRemoveFolder.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editdelete.png"))); // NOI18N
+        mnuRemoveFolder.setText("Ordner löschen");
+        mnuRemoveFolder.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuRemoveFolderActionPerformed(evt);
+            }
+        });
+        popFolders.add(mnuRemoveFolder);
 
         mnuEditTemplate.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit.png"))); // NOI18N
         mnuEditTemplate.setText("bearbeiten");
@@ -964,11 +968,10 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
         });
         popTemplates.add(mnuDeleteTemplate);
 
-        jLabel18.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder_documents_big.png"))); // NOI18N
+        jLabel18.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/kmultiple_big.png"))); // NOI18N
 
         lblPanelTitle.setFont(new java.awt.Font("Dialog", 1, 24)); // NOI18N
         lblPanelTitle.setForeground(new java.awt.Color(255, 255, 255));
-        lblPanelTitle.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/kmultiple.png"))); // NOI18N
         lblPanelTitle.setText("Vorlagen");
 
         cmdNewODT.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit_add.png"))); // NOI18N
@@ -1088,7 +1091,7 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
                         .add(18, 18, 18)
                         .add(jLabel18)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 757, Short.MAX_VALUE))
+                        .add(lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 737, Short.MAX_VALUE))
                     .add(layout.createSequentialGroup()
                         .add(0, 0, Short.MAX_VALUE)
                         .add(cmdAddExisting)
@@ -1103,9 +1106,10 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
             .add(layout.createSequentialGroup()
                 .addContainerGap()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jLabel18)
-                    .add(lblPanelTitle)
-                    .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                    .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
+                        .add(org.jdesktop.layout.GroupLayout.LEADING, lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .add(org.jdesktop.layout.GroupLayout.LEADING, jLabel18, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jSplitPane2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 398, Short.MAX_VALUE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)

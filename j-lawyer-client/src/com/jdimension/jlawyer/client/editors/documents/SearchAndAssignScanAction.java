@@ -672,6 +672,7 @@ import com.jdimension.jlawyer.persistence.ArchiveFileTagsBean;
 import com.jdimension.jlawyer.persistence.DocumentTagsBean;
 import com.jdimension.jlawyer.services.IntegrationServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import java.util.ArrayList;
 import java.util.Collection;
 import javax.swing.JTable;
 import org.apache.log4j.Logger;
@@ -706,19 +707,33 @@ public class SearchAndAssignScanAction extends DeleteScanAction {
 
             if (sel != null) {
 
-                String newName = this.getNewFileName(this.fileName);
-                if (newName == null) {
-                    return;
+                Collection docList=locator.lookupArchiveFileServiceRemote().getDocuments(sel.getId());
+                ArrayList<String> docNames=new ArrayList<String>();
+                for(Object o: docList) {
+                    if(o instanceof ArchiveFileDocumentsBean)
+                        docNames.add(((ArchiveFileDocumentsBean)o).getName().toLowerCase());
+                }
+                boolean nameExists = true;
+                String newName=null;
+                while (nameExists) {
+                    newName = this.getNewFileName(this.fileName);
+                    if (newName == null) {
+                        return;
+                    }
+                    if(docNames.contains(newName.toLowerCase()))
+                        ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Datei existiert bereits: " + newName, "Hinweis");
+                    else
+                        nameExists=false;
                 }
 
                 boolean added = is.assignObservedFile(this.fileName, sel.getId(), newName);
 
                 if (this.getCaseTag() != null) {
-                    locator.lookupArchiveFileServiceRemote().setTag(archiveFileId, new ArchiveFileTagsBean(null, this.getCaseTag()), true);
+                    locator.lookupArchiveFileServiceRemote().setTag(sel.getId(), new ArchiveFileTagsBean(null, this.getCaseTag()), true);
                 }
 
                 if (this.getDocumentTag() != null) {
-                    Collection docs = locator.lookupArchiveFileServiceRemote().getDocuments(archiveFileId);
+                    Collection docs = locator.lookupArchiveFileServiceRemote().getDocuments(sel.getId());
                     for (Object d : docs) {
                         if (d instanceof ArchiveFileDocumentsBean) {
                             ArchiveFileDocumentsBean doc = (ArchiveFileDocumentsBean) d;

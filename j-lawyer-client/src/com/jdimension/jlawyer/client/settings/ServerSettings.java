@@ -692,9 +692,14 @@ public class ServerSettings {
     public static final String PROFILE_COMPANYWWW="profile.company.www";
     
     public static final String PROFILE_COMPANYTAXID="profile.company.taxid";
+    public static final String PROFILE_COMPANYUSTID="profile.company.ustid";
     public static final String PROFILE_COMPANYBANK="profile.company.bank";
     public static final String PROFILE_COMPANYBANKCODE="profile.company.bankcode";
     public static final String PROFILE_COMPANYACCOUNTNO="profile.company.accountno";
+    
+    public static final String PROFILE_COMPANYBANK_AK="profile.company.ak.bank";
+    public static final String PROFILE_COMPANYBANKCODE_AK="profile.company.ak.bankcode";
+    public static final String PROFILE_COMPANYACCOUNTNO_AK="profile.company.ak.accountno";
     
     public static final String SERVERCONF_VOIPMODE="jlawyer.server.voip.voipmode";
     public static final String SERVERCONF_VOIPUSER="jlawyer.server.voip.voipuser";
@@ -744,6 +749,7 @@ public class ServerSettings {
     public static final String SERVERCONF_MONITOR_VMERROR="jlawyer.server.monitor.vmerror";
     public static final String SERVERCONF_MONITOR_NOTIFY="jlawyer.server.monitor.notify";
     public static final String SERVERCONF_MONITOR_SMTPSERVER="jlawyer.server.monitor.smtpserver";
+    public static final String SERVERCONF_MONITOR_SMTPPORT="jlawyer.server.monitor.smtpport";
     public static final String SERVERCONF_MONITOR_SMTPUSER="jlawyer.server.monitor.smtpuser";
     public static final String SERVERCONF_MONITOR_SMTPPASSWORD="jlawyer.server.monitor.smtppwd";
     public static final String SERVERCONF_MONITOR_SMTPSENDERNAME="jlawyer.server.monitor.smtpsendername";

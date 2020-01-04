@@ -85,8 +85,8 @@
 				</textElement>
 				<text><![CDATA[Kurzrubrum:]]></text>
 			</staticText>
-                        <textField>
-				<reportElement x="160" y="80" width="430" height="20"/>
+                        <textField isStretchWithOverflow="true">
+				<reportElement x="110" y="80" width="430" height="20"/>
 				<textElement>
 					<font size="10"/>
 				</textElement>
@@ -94,14 +94,14 @@
 			</textField>
                         
                         <staticText>
-				<reportElement x="10" y="100" width="130" height="20"/>
+				<reportElement positionType="Float" x="10" y="100" width="110" height="20"/>
 				<textElement>
 					<font size="10" isBold="true"/>
 				</textElement>
 				<text><![CDATA[wegen:]]></text>
 			</staticText>
-                        <textField>
-				<reportElement x="160" y="100" width="430" height="20"/>
+                        <textField isStretchWithOverflow="true">
+				<reportElement positionType="Float" x="110" y="100" width="430" height="20"/>
 				<textElement>
 					<font size="10"/>
 				</textElement>
@@ -109,14 +109,14 @@
 			</textField>
                         
                         <staticText>
-				<reportElement x="10" y="120" width="130" height="20"/>
+				<reportElement positionType="Float" x="10" y="120" width="130" height="20"/>
 				<textElement>
 					<font size="10" isBold="true"/>
 				</textElement>
 				<text><![CDATA[Anwalt:]]></text>
 			</staticText>
                         <textField>
-				<reportElement x="160" y="120" width="430" height="20"/>
+				<reportElement positionType="Float" x="110" y="120" width="430" height="20"/>
 				<textElement>
 					<font size="10"/>
 				</textElement>
@@ -124,14 +124,14 @@
 			</textField>
                         
                         <staticText>
-				<reportElement x="10" y="140" width="130" height="20"/>
+				<reportElement positionType="Float" x="10" y="140" width="130" height="20"/>
 				<textElement>
 					<font size="10" isBold="true"/>
 				</textElement>
 				<text><![CDATA[Notiz:]]></text>
 			</staticText>
                         <textField isStretchWithOverflow="true">
-				<reportElement x="160" y="140" width="370" height="20"/>
+				<reportElement positionType="Float" x="110" y="140" width="370" height="20"/>
 				<textElement>
 					<font size="10"/>
 				</textElement>

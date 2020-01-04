@@ -676,6 +676,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableModel;
 import org.apache.log4j.Logger;
 import org.jlawyer.bea.BeaWrapperException;
+import org.jlawyer.bea.model.Folder;
 import org.jlawyer.bea.model.Message;
 import org.jlawyer.bea.model.MessageHeader;
 
@@ -686,18 +687,20 @@ import org.jlawyer.bea.model.MessageHeader;
 public class LoadBeaFolderAction extends ProgressableAction {
 
     private static final Logger log = Logger.getLogger(LoadBeaFolderAction.class.getName());
-    private static SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy, HH:mm");
-    
-    private static ArrayList DOWNLOAD_RESTRICTIONS=new ArrayList() {};
-    
+    private static SimpleDateFormat dfDateTime = new SimpleDateFormat("dd.MM.yyyy, HH:mm");
+    private static SimpleDateFormat dfDate = new SimpleDateFormat("dd.MM.yyyy");
+
+    private static ArrayList DOWNLOAD_RESTRICTIONS = new ArrayList() {
+    };
+
     private org.jlawyer.bea.model.Folder f = null;
     private JTable table = null;
     private int sortCol = -1;
     private int scrollToRow = -1;
-    
-    private ArrayList<MessageHeader> headers=null;
-    
-    private int max=1;
+
+    private ArrayList<MessageHeader> headers = null;
+
+    private int max = 1;
 
     public LoadBeaFolderAction(ProgressIndicator i, org.jlawyer.bea.model.Folder f, JTable table, int sortCol, int scrollToRow) throws BeaWrapperException {
         super(i, false);
@@ -705,10 +708,10 @@ public class LoadBeaFolderAction extends ProgressableAction {
         this.table = table;
         this.sortCol = sortCol;
         this.scrollToRow = scrollToRow;
-        
-        BeaAccess bea=BeaAccess.getInstance();
-        headers=bea.getFolderOverview(f);
-        this.max=headers.size();
+
+        BeaAccess bea = BeaAccess.getInstance();
+        headers = bea.getFolderOverview(f);
+        this.max = headers.size();
     }
 
     @Override
@@ -743,8 +746,6 @@ public class LoadBeaFolderAction extends ProgressableAction {
 //            } catch (Throwable t) {
 //                currentRestriction=new LoadFolderRestriction(LoadFolderRestriction.RESTRICTION_50);
 //            }
-            
-            
 //            int fromIndex=1;
 //            int toIndex=f.getMessageCount();
 //            if(currentRestriction.getRestriction()==LoadFolderRestriction.RESTRICTION_20) {
@@ -759,10 +760,7 @@ public class LoadBeaFolderAction extends ProgressableAction {
 //                if(currentRestriction.getRestriction()==LoadFolderRestriction.RESTRICTION_500) {
 //                    fromIndex=Math.max(1, toIndex-500);
 //                }
-            
-            
-            BeaAccess bea=BeaAccess.getInstance();
-            
+            BeaAccess bea = BeaAccess.getInstance();
 
             final int indexMax = headers.size() - 1;
             for (int i = 0; i < headers.size(); i++) {
@@ -775,13 +773,12 @@ public class LoadBeaFolderAction extends ProgressableAction {
                 // this.progress("Lade Nachrichten " + (i + 1) + "/" + this.getMax());
                 this.progress("Lade Nachrichten... " + (i + 1));
 
-                
                 //System.out.println("*****************************************************************************");
                 //System.out.println("MESSAGE " + (i + 1) + ":");
                 MessageHeader msgh = headers.get(i);
                 EditorsRegistry.getInstance().updateStatus("Lade Nachricht " + StringUtils.nonNull(msgh.getSubject()), true);
                 //final Message msg=bea.getMessage(msgh.getId(), msgh.getPostBoxSafeId());
-                
+
                 String to = "";
                 if (msgh.getRecipients().size() > 0) {
                     to = msgh.getRecipients().get(0).getName();
@@ -789,16 +786,12 @@ public class LoadBeaFolderAction extends ProgressableAction {
                         to = to + ", " + msgh.getRecipients().get(j).getName();
                     }
                 }
-                final String toString=to;
-                
-                
-                
+                final String toString = to;
+
 //                if(msg.isSet(Flags.Flag.SEEN) && currentRestriction.getRestriction()==LoadFolderRestriction.RESTRICTION_UNREAD) {
 //                    // only show unread mails
 //                    continue;
 //                }
-                
-
 //                final String subject=MimeUtility.decodeText(msg.getFrom()[0].toString());
                 final int currentIndex = i;
 
@@ -806,19 +799,31 @@ public class LoadBeaFolderAction extends ProgressableAction {
 
                     public void run() {
                         try {
-//                            if (!(msg.getFolder().isOpen())) {
-//                                msg.getFolder().open(Folder.READ_WRITE);
-//                            }
-                            //((DefaultTableModel) table.getModel()).addRow(new Object[]{new MessageContainer(msg, msg.getSubject(), msg.isSet(Flags.Flag.SEEN)), from, toString2, df.format(msg.getSentDate())});
-                            if(msgh.getReceptionTime()!=null) {
-                                ((DefaultTableModel) table.getModel()).addRow(new Object[]{new Boolean(msgh.isUrgent()), new Boolean(msgh.isConfidential()), new Boolean(msgh.isCheckRequired()), msgh, msgh.getSender(), toString, df.format(msgh.getReceptionTime()), msgh.getReferenceNumber(), msgh.getReferenceJustice()});
-                            } else {
-                                if(msgh.getSentTime()!=null) {
-                                    ((DefaultTableModel) table.getModel()).addRow(new Object[]{new Boolean(msgh.isUrgent()), new Boolean(msgh.isConfidential()), new Boolean(msgh.isCheckRequired()), msgh, msgh.getSender(), toString, df.format(msgh.getSentTime()), msgh.getReferenceNumber(), msgh.getReferenceJustice()});
+
+                            if (f.getType() == Folder.TYPE_TRASH) {
+                                // trash folder - show permanent deletion date
+                                if (msgh.getReceptionTime() != null) {
+                                    ((DefaultTableModel) table.getModel()).addRow(new Object[]{new Boolean(msgh.isUrgent()), new Boolean(msgh.isConfidential()), new Boolean(msgh.isCheckRequired()), msgh, msgh.getSender(), toString, dfDateTime.format(msgh.getReceptionTime()), msgh.getReferenceNumber(), msgh.getReferenceJustice(), dfDate.format(msgh.getPermanentDeletion())});
                                 } else {
-                                    ((DefaultTableModel) table.getModel()).addRow(new Object[]{new Boolean(msgh.isUrgent()), new Boolean(msgh.isConfidential()), new Boolean(msgh.isCheckRequired()), msgh, msgh.getSender(), toString, null, msgh.getReferenceNumber(), msgh.getReferenceJustice()});
+                                    if (msgh.getSentTime() != null) {
+                                        ((DefaultTableModel) table.getModel()).addRow(new Object[]{new Boolean(msgh.isUrgent()), new Boolean(msgh.isConfidential()), new Boolean(msgh.isCheckRequired()), msgh, msgh.getSender(), toString, dfDateTime.format(msgh.getSentTime()), msgh.getReferenceNumber(), msgh.getReferenceJustice(), dfDate.format(msgh.getPermanentDeletion())});
+                                    } else {
+                                        ((DefaultTableModel) table.getModel()).addRow(new Object[]{new Boolean(msgh.isUrgent()), new Boolean(msgh.isConfidential()), new Boolean(msgh.isCheckRequired()), msgh, msgh.getSender(), toString, null, msgh.getReferenceNumber(), msgh.getReferenceJustice(), dfDate.format(msgh.getPermanentDeletion())});
+                                    }
+
                                 }
-                            
+                            } else {
+                                // not the trash folder
+                                if (msgh.getReceptionTime() != null) {
+                                    ((DefaultTableModel) table.getModel()).addRow(new Object[]{new Boolean(msgh.isUrgent()), new Boolean(msgh.isConfidential()), new Boolean(msgh.isCheckRequired()), msgh, msgh.getSender(), toString, dfDateTime.format(msgh.getReceptionTime()), msgh.getReferenceNumber(), msgh.getReferenceJustice()});
+                                } else {
+                                    if (msgh.getSentTime() != null) {
+                                        ((DefaultTableModel) table.getModel()).addRow(new Object[]{new Boolean(msgh.isUrgent()), new Boolean(msgh.isConfidential()), new Boolean(msgh.isCheckRequired()), msgh, msgh.getSender(), toString, dfDateTime.format(msgh.getSentTime()), msgh.getReferenceNumber(), msgh.getReferenceJustice()});
+                                    } else {
+                                        ((DefaultTableModel) table.getModel()).addRow(new Object[]{new Boolean(msgh.isUrgent()), new Boolean(msgh.isConfidential()), new Boolean(msgh.isCheckRequired()), msgh, msgh.getSender(), toString, null, msgh.getReferenceNumber(), msgh.getReferenceJustice()});
+                                    }
+
+                                }
                             }
                             if (scrollToRow > 0) {
                                 if (currentIndex == (indexMax)) {
@@ -833,8 +838,9 @@ public class LoadBeaFolderAction extends ProgressableAction {
                     }
                 }));
                 try {
-                if(i==(headers.size()-1) || i==(headers.size()/2))
-                    ComponentUtils.autoSizeColumns(table);
+                    if (i == (headers.size() - 1) || i == (headers.size() / 2)) {
+                        ComponentUtils.autoSizeColumns(table);
+                    }
                 } catch (Throwable t) {
                     log.error(t);
                 }
@@ -859,18 +865,16 @@ public class LoadBeaFolderAction extends ProgressableAction {
             } catch (Throwable t) {
                 log.error("Error sorting mails", t);
             }
-            
+
             SwingUtilities.invokeLater(new Thread(new Runnable() {
 
-                    public void run() {
-                        ComponentUtils.autoSizeColumns(table);
-                    }
+                public void run() {
+                    ComponentUtils.autoSizeColumns(table);
+                }
             }));
 
             //ComponentUtils.autoSizeColumns(table);
             EditorsRegistry.getInstance().clearStatus(true);
-
-            
 
         } catch (Exception ex) {
             log.error(ex);

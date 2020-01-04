@@ -712,6 +712,7 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
                 this.chkMonitorRam.setEnabled(false);
                 this.txtPassword.setEnabled(false);
                 this.txtSmtp.setEnabled(false);
+                this.txtSmtpPort.setEnabled(false);
                 this.txtUser.setEnabled(false);
                 this.txtSenderName.setEnabled(false);
                 this.txtRecipient.setEnabled(false);
@@ -774,6 +775,7 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
             
             this.txtPassword.setText(set.getSetting(set.SERVERCONF_MONITOR_SMTPPASSWORD, ""));
             this.txtSmtp.setText(set.getSetting(set.SERVERCONF_MONITOR_SMTPSERVER, ""));
+            this.txtSmtpPort.setText(set.getSetting(set.SERVERCONF_MONITOR_SMTPPORT, ""));
             this.txtUser.setText(set.getSetting(set.SERVERCONF_MONITOR_SMTPUSER, ""));
             this.txtSenderName.setText(set.getSetting(set.SERVERCONF_MONITOR_SMTPSENDERNAME, ""));
             this.txtRecipient.setText(set.getSetting(set.SERVERCONF_MONITOR_SMTPTO, ""));
@@ -906,6 +908,8 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
         txtSenderName = new javax.swing.JTextField();
         jLabel20 = new javax.swing.JLabel();
         chkEmailStartTls = new javax.swing.JCheckBox();
+        jLabel21 = new javax.swing.JLabel();
+        txtSmtpPort = new javax.swing.JTextField();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Servermonitoring");
@@ -1001,7 +1005,7 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jLabel5)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 244, Short.MAX_VALUE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 260, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -1160,6 +1164,8 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
 
         chkEmailStartTls.setText("StartTLS");
 
+        jLabel21.setText("Port (optional):");
+
         javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
         jPanel4.setLayout(jPanel4Layout);
         jPanel4Layout.setHorizontalGroup(
@@ -1176,19 +1182,22 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
                             .addComponent(jLabel7)
                             .addComponent(jLabel8)
                             .addComponent(jLabel19)
-                            .addComponent(jLabel20))
+                            .addComponent(jLabel20)
+                            .addComponent(jLabel21))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(txtRecipient)
                             .addComponent(txtUser)
                             .addComponent(txtPassword)
+                            .addComponent(txtSenderName)
                             .addGroup(jPanel4Layout.createSequentialGroup()
                                 .addComponent(txtSmtp, javax.swing.GroupLayout.PREFERRED_SIZE, 289, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(chkEmailStartTls)
                                 .addGap(2, 2, 2)
-                                .addComponent(chkSsl))
-                            .addComponent(txtSenderName))))
+                                .addComponent(chkSsl)
+                                .addGap(0, 0, Short.MAX_VALUE))
+                            .addComponent(txtSmtpPort))))
                 .addContainerGap())
         );
         jPanel4Layout.setVerticalGroup(
@@ -1203,6 +1212,10 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
                     .addComponent(chkEmailStartTls))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel21)
+                    .addComponent(txtSmtpPort, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel7)
                     .addComponent(txtUser, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -1213,11 +1226,11 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
                 .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(txtPassword, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel8))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 27, Short.MAX_VALUE)
+                .addGap(18, 18, 18)
                 .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel19)
                     .addComponent(txtRecipient, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap())
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
@@ -1262,7 +1275,7 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jTabbedPane1)
+                .addComponent(jTabbedPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 442, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(cmdCancel)
@@ -1316,6 +1329,7 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
         set.setSetting(set.SERVERCONF_MONITOR_SMTPUSER, this.txtUser.getText());
         set.setSetting(set.SERVERCONF_MONITOR_SMTPSENDERNAME, this.txtSenderName.getText());
         set.setSetting(set.SERVERCONF_MONITOR_SMTPSERVER, this.txtSmtp.getText());
+        set.setSetting(set.SERVERCONF_MONITOR_SMTPPORT, this.txtSmtpPort.getText());
         set.setSetting(set.SERVERCONF_MONITOR_SMTPTO, this.txtRecipient.getText());
         String ssl="false";
         if(this.chkSsl.isSelected())
@@ -1417,6 +1431,7 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
     private javax.swing.JLabel jLabel19;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel20;
+    private javax.swing.JLabel jLabel21;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
@@ -1439,6 +1454,7 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
     private javax.swing.JTextField txtRecipient;
     private javax.swing.JTextField txtSenderName;
     private javax.swing.JTextField txtSmtp;
+    private javax.swing.JTextField txtSmtpPort;
     private javax.swing.JTextField txtUser;
     // End of variables declaration//GEN-END:variables
 }

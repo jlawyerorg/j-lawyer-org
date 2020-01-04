@@ -663,10 +663,13 @@
  */
 package com.jdimension.jlawyer.server.modules;
 
+import com.sun.glass.events.KeyEvent;
 import java.awt.Image;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Vector;
+import javax.swing.Icon;
+import javax.swing.KeyStroke;
 import javax.swing.tree.TreeNode;
 
 /**
@@ -675,23 +678,40 @@ import javax.swing.tree.TreeNode;
  */
 public class ModuleMetadata implements TreeNode {
     
-    /** Creates a new instance of ModuleMetadata */
-    public ModuleMetadata() {
-    }
-    
     private String backgroundImage=null;
-    private String icon=null;
-    private transient Image iconAsImage=null;
-
-    private String text;
-    private String fullName=null;
-
+    private Icon defaultIcon=null;
+    private Icon rolloverIcon=null;
+    private String moduleName="";
+    private String editorName="";
+    private boolean settingsEntry=false;
+    
+    
     private String editorClass;
     
     private ModuleMetadata parent=null;
 
     private java.util.ArrayList<ModuleMetadata> childModules=new ArrayList<ModuleMetadata>();
 
+    // legacy stuff
+    private String icon=null;
+    private transient Image iconAsImage=null;
+    private String text;
+    private String fullName=null;
+    
+    private Integer statusEventType=-1;
+    
+    private KeyStroke hotKey=null;
+    private String hotKeyName=null;
+
+    
+    /** Creates a new instance of ModuleMetadata */
+    public ModuleMetadata() {
+        
+    }
+    
+    
+    
+    
     public String getText() {
         return text;
     }
@@ -826,6 +846,119 @@ public class ModuleMetadata implements TreeNode {
      */
     public void setFullName(String fullName) {
         this.fullName = fullName;
+    }
+
+    /**
+     * @return the defaultIcon
+     */
+    public Icon getDefaultIcon() {
+        return defaultIcon;
+    }
+
+    /**
+     * @param defaultIcon the defaultIcon to set
+     */
+    public void setDefaultIcon(Icon defaultIcon) {
+        this.defaultIcon = defaultIcon;
+    }
+
+    /**
+     * @return the rolloverIcon
+     */
+    public Icon getRolloverIcon() {
+        return rolloverIcon;
+    }
+
+    /**
+     * @param rolloverIcon the rolloverIcon to set
+     */
+    public void setRolloverIcon(Icon rolloverIcon) {
+        this.rolloverIcon = rolloverIcon;
+    }
+
+    /**
+     * @return the moduleName
+     */
+    public String getModuleName() {
+        return moduleName;
+    }
+
+    /**
+     * @param moduleName the moduleName to set
+     */
+    public void setModuleName(String moduleName) {
+        this.moduleName = moduleName;
+    }
+
+    /**
+     * @return the editorName
+     */
+    public String getEditorName() {
+        return editorName;
+    }
+
+    /**
+     * @param editorName the editorName to set
+     */
+    public void setEditorName(String editorName) {
+        this.editorName = editorName;
+    }
+
+    /**
+     * @return the settingsEntry
+     */
+    public boolean isSettingsEntry() {
+        return settingsEntry;
+    }
+
+    /**
+     * @param settingsEntry the settingsEntry to set
+     */
+    public void setSettingsEntry(boolean settingsEntry) {
+        this.settingsEntry = settingsEntry;
+    }
+
+    /**
+     * @return the statusEventType
+     */
+    public Integer getStatusEventType() {
+        return statusEventType;
+    }
+
+    /**
+     * @param statusEventType the statusEventType to set
+     */
+    public void setStatusEventType(Integer statusEventType) {
+        this.statusEventType = statusEventType;
+    }
+
+    /**
+     * @return the hotKey
+     */
+    public KeyStroke getHotKey() {
+        return hotKey;
+    }
+
+    /**
+     * @param hotKey the hotKey to set
+     */
+    public void setHotKey(KeyStroke hotKey, String keyName) {
+        this.hotKey = hotKey;
+        this.setHotKeyName(keyName);
+    }
+
+    /**
+     * @return the hotKeyName
+     */
+    public String getHotKeyName() {
+        return hotKeyName;
+    }
+
+    /**
+     * @param hotKeyName the hotKeyName to set
+     */
+    public void setHotKeyName(String hotKeyName) {
+        this.hotKeyName = hotKeyName;
     }
     
 }

@@ -688,6 +688,8 @@ import java.util.ArrayList;
 import javax.swing.JDialog;
 import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
+import org.jlawyer.plugins.calculation.GenericCalculationTable;
+import org.jlawyer.plugins.calculation.StyledCalculationTable;
 
 /**
  *
@@ -717,7 +719,7 @@ public class GenericCalculationCallback implements CalculationPluginCallback {
     }
 
     @Override
-    public void processResultToDocument(CalculationTable table, Container c) {
+    public void processResultToDocument(GenericCalculationTable table, Container c) {
         if (table != null) {
 
             Container pluginDlg = FrameUtils.getDialogOfComponent(c);
@@ -725,8 +727,6 @@ public class GenericCalculationCallback implements CalculationPluginCallback {
                 pluginDlg.setVisible(false);
                 ((JDialog) pluginDlg).dispose();
             }
-
-            System.out.println("received table with cols: " + table.getColumnLabels().size());
 
             if (this.selectedCase == null) {
                 SearchAndAssignDialog dlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true);
@@ -763,7 +763,7 @@ public class GenericCalculationCallback implements CalculationPluginCallback {
             }
         }
     }
-
+    
     private static class HtmlSelection implements Transferable {
 
         private static ArrayList htmlFlavors = new ArrayList();

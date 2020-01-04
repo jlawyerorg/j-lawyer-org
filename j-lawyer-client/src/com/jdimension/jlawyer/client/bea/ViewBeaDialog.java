@@ -825,6 +825,7 @@ public class ViewBeaDialog extends javax.swing.JDialog {
         Message msgC = this.msg;
         try {
             String replyToSafeId = msgC.getSenderSafeId();
+            dlg.setAzRecipient(msgC.getReferenceNumber());
             Identity replyToIdentity=BeaAccess.getInstance().getIdentity(replyToSafeId);
             try {
                 dlg.setTo(replyToIdentity);
@@ -873,6 +874,7 @@ if (!BeaAccess.hasInstance()) {
         Message msgC = this.msg;
         try {
             String replyToSafeId = msgC.getSenderSafeId();
+            dlg.setAzRecipient(msgC.getReferenceNumber());
             Identity replyToIdentity=BeaAccess.getInstance().getIdentity(replyToSafeId);
             try {
                 dlg.setTo(replyToIdentity);
@@ -928,6 +930,8 @@ if (!BeaAccess.hasInstance()) {
 
         Message msgC = this.msg;
         try {
+            
+            dlg.setAzRecipient(msgC.getReferenceNumber());
             
             String subject = msgC.getSubject();
             if (subject == null) {

@@ -684,7 +684,6 @@ public class NewArchiveFilePanel extends ArchiveFilePanel implements ResetOnDisp
     public NewArchiveFilePanel() {
         super();
         this.lblPanelTitle.setText("neue Akte anlegen");
-        this.lblPanelTitle.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit_add_big.png")));
         this.lblArchivedSince.setText("");
     }
 

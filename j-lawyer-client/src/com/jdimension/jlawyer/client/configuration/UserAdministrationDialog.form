@@ -571,8 +571,8 @@
         <Container class="javax.swing.JPanel" name="jPanel7">
           <Constraints>
             <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout" value="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout$JTabbedPaneConstraintsDescription">
-              <JTabbedPaneConstraints tabName="Email">
-                <Property name="tabTitle" type="java.lang.String" value="Email"/>
+              <JTabbedPaneConstraints tabName="E-Mail">
+                <Property name="tabTitle" type="java.lang.String" value="E-Mail"/>
               </JTabbedPaneConstraints>
             </Constraint>
           </Constraints>
@@ -619,17 +619,22 @@
                                       <EmptySpace max="-2" attributes="0"/>
                                   </Group>
                               </Group>
+                              <Group type="103" groupAlignment="0" max="-2" attributes="0">
+                                  <Component id="txtOutServer" max="32767" attributes="0"/>
+                                  <Component id="txtOutUsername" pref="229" max="32767" attributes="0"/>
+                              </Group>
+                              <EmptySpace type="unrelated" max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="0" attributes="0">
                                   <Group type="102" attributes="0">
-                                      <Component id="txtOutUsername" min="-2" pref="229" max="-2" attributes="0"/>
-                                      <EmptySpace type="unrelated" max="-2" attributes="0"/>
                                       <Component id="jLabel9" min="-2" max="-2" attributes="0"/>
                                       <EmptySpace max="-2" attributes="0"/>
                                       <Component id="pwdOutPassword" max="32767" attributes="0"/>
                                   </Group>
                                   <Group type="102" attributes="0">
-                                      <Component id="txtOutServer" max="32767" attributes="0"/>
+                                      <Component id="jLabel17" min="-2" max="-2" attributes="0"/>
                                       <EmptySpace max="-2" attributes="0"/>
+                                      <Component id="txtOutPort" max="32767" attributes="0"/>
+                                      <EmptySpace type="separate" max="-2" attributes="0"/>
                                       <Component id="chkEmailStartTls" min="-2" max="-2" attributes="0"/>
                                       <EmptySpace max="-2" attributes="0"/>
                                       <Component id="chkEmailOutSsl" min="-2" max="-2" attributes="0"/>
@@ -697,6 +702,8 @@
                           <Component id="jLabel7" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="chkEmailOutSsl" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="chkEmailStartTls" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="jLabel17" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="txtOutPort" alignment="3" min="-2" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="1" attributes="0">
@@ -817,6 +824,13 @@
             <Component class="javax.swing.JPasswordField" name="pwdInPassword">
             </Component>
             <Component class="javax.swing.JPasswordField" name="pwdOutPassword">
+            </Component>
+            <Component class="javax.swing.JLabel" name="jLabel17">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="Port (optional):"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JTextField" name="txtOutPort">
             </Component>
           </SubComponents>
         </Container>

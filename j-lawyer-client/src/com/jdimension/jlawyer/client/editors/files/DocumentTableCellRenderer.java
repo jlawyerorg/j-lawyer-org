@@ -678,6 +678,7 @@ import javax.swing.JPopupMenu;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.table.DefaultTableCellRenderer;
+import themes.colors.DefaultColorTheme;
 
 /**
  *
@@ -720,7 +721,7 @@ public class DocumentTableCellRenderer extends DefaultTableCellRenderer {
 
             }
             label.setText("");
-            label.setToolTipText("Klicken um Dokument in die Favoriten aufzunehmen");
+            label.setToolTipText("Sternsymbol klicken um Dokument in die Favoriten aufzunehmen");
         }
 
         if (column == 2) {
@@ -760,7 +761,7 @@ public class DocumentTableCellRenderer extends DefaultTableCellRenderer {
         boolean match = false;
         if (txtSearchDocumentNames.getText() != null && !("".equals(txtSearchDocumentNames.getText()))) {
             if (label.getText().toLowerCase().indexOf(txtSearchDocumentNames.getText().toLowerCase()) >= 0) {
-                label.setForeground(Color.green.darker());
+                label.setForeground(DefaultColorTheme.COLOR_LOGO_GREEN);
                 label.setFont(label.getFont().deriveFont(Font.BOLD));
                 if (!documentHits.contains(row)) {
                     getDocumentHits().add(row);
@@ -780,7 +781,7 @@ public class DocumentTableCellRenderer extends DefaultTableCellRenderer {
                 if (renderTags.containsKey(id)) {
                     for (String tag : docTags) {
                         if (renderTags.get(id).contains(tag)) {
-                            label.setForeground(Color.green.darker());
+                            label.setForeground(DefaultColorTheme.COLOR_LOGO_GREEN);
                             label.setFont(label.getFont().deriveFont(Font.BOLD));
                             if (!documentHits.contains(row)) {
                                 getDocumentHits().add(row);

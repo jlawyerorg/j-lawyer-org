@@ -810,7 +810,7 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
             reviews = fileService.getReviews(this.archiveFileKey);
             this.progress("Lade Akte: Dokumente...");
             documents = fileService.getDocuments(this.archiveFileKey);
-            this.progress("Lade Akte: Tags...");
+            this.progress("Lade Akte: Etiketten...");
             tags = fileService.getTags(archiveFileKey);
 
         } catch (Exception ex) {
@@ -985,7 +985,7 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
         rtrs.sort();
         //ComponentUtils.autoSizeColumns(tblReviews);
 
-        this.progress("Aktualisiere Dialog: Tags...");
+        this.progress("Aktualisiere Dialog: Etiketten...");
         ArrayList<String> activeTags = new ArrayList<String>();
         this.tagPanel.removeAll();
         this.documentTagPanel.removeAll();

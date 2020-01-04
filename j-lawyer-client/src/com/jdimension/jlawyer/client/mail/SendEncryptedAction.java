@@ -758,6 +758,16 @@ public class SendEncryptedAction extends ProgressableAction {
             protocol = "smtps";
             props.put("mail.smtp.ssl.enable", "true");
         }
+        
+        if(cu.getEmailOutPort()!=null && !("".equalsIgnoreCase(cu.getEmailOutPort()))) {
+            try {
+                int testInt=Integer.parseInt(cu.getEmailOutPort());
+                props.put("mail.smtp.port", cu.getEmailOutPort());
+                props.put("mail.smtps.port", cu.getEmailOutPort());
+            } catch (Throwable t) {
+                log.error("Invalid SMTP port: " + cu.getEmailOutPort());
+            }
+        }
 
         props.put("mail.smtp.host", cu.getEmailOutServer());
         //props.put("mail.smtp.port", "25");

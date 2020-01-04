@@ -766,6 +766,7 @@ public class SaveToCasePanel extends javax.swing.JPanel {
         cmdSaveFullMessage = new javax.swing.JButton();
         cmdSaveMessageWithoutAttachments = new javax.swing.JButton();
         cmdSaveSeparate = new javax.swing.JButton();
+        cmdSaveMessageAttachmentsOnly = new javax.swing.JButton();
 
         lblDescription.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder.png"))); // NOI18N
         java.util.ResourceBundle bundle = java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/editors/addresses/CaseForContactEntryPanel"); // NOI18N
@@ -792,7 +793,9 @@ public class SaveToCasePanel extends javax.swing.JPanel {
 
         cmdSaveFullMessage.setFont(new java.awt.Font("Dialog", 1, 8)); // NOI18N
         cmdSaveFullMessage.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/filesave.png"))); // NOI18N
-        cmdSaveFullMessage.setToolTipText("vollständige Email in Akte speichern");
+        cmdSaveFullMessage.setToolTipText("vollständige Nachricht in Akte speichern");
+        cmdSaveFullMessage.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
+        cmdSaveFullMessage.setContentAreaFilled(false);
         cmdSaveFullMessage.setMargin(new java.awt.Insets(0, 0, 0, 0));
         cmdSaveFullMessage.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -802,7 +805,9 @@ public class SaveToCasePanel extends javax.swing.JPanel {
 
         cmdSaveMessageWithoutAttachments.setFont(new java.awt.Font("Dialog", 1, 8)); // NOI18N
         cmdSaveMessageWithoutAttachments.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/filesave-noattachment.png"))); // NOI18N
-        cmdSaveMessageWithoutAttachments.setToolTipText("Email ohne Anhänge in Akte speichern");
+        cmdSaveMessageWithoutAttachments.setToolTipText("Nachricht ohne Anhänge in Akte speichern");
+        cmdSaveMessageWithoutAttachments.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
+        cmdSaveMessageWithoutAttachments.setContentAreaFilled(false);
         cmdSaveMessageWithoutAttachments.setMargin(new java.awt.Insets(0, 0, 0, 0));
         cmdSaveMessageWithoutAttachments.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -812,11 +817,25 @@ public class SaveToCasePanel extends javax.swing.JPanel {
 
         cmdSaveSeparate.setFont(new java.awt.Font("Dialog", 1, 8)); // NOI18N
         cmdSaveSeparate.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/filesave-separate.png"))); // NOI18N
-        cmdSaveSeparate.setToolTipText("E-Mail und Anhänge werden beide separat in die Akte übernommen");
+        cmdSaveSeparate.setToolTipText("Nachricht und Anhänge werden beide separat in die Akte übernommen");
+        cmdSaveSeparate.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
+        cmdSaveSeparate.setContentAreaFilled(false);
         cmdSaveSeparate.setMargin(new java.awt.Insets(0, 0, 0, 0));
         cmdSaveSeparate.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmdSaveSeparateActionPerformed(evt);
+            }
+        });
+
+        cmdSaveMessageAttachmentsOnly.setFont(new java.awt.Font("Dialog", 1, 8)); // NOI18N
+        cmdSaveMessageAttachmentsOnly.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/attach.png"))); // NOI18N
+        cmdSaveMessageAttachmentsOnly.setToolTipText("nur Anhänge in Akte speichern");
+        cmdSaveMessageAttachmentsOnly.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
+        cmdSaveMessageAttachmentsOnly.setContentAreaFilled(false);
+        cmdSaveMessageAttachmentsOnly.setMargin(new java.awt.Insets(0, 0, 0, 0));
+        cmdSaveMessageAttachmentsOnly.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdSaveMessageAttachmentsOnlyActionPerformed(evt);
             }
         });
 
@@ -841,8 +860,10 @@ public class SaveToCasePanel extends javax.swing.JPanel {
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(cmdSaveMessageWithoutAttachments)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(cmdSaveMessageAttachmentsOnly)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(cmdSaveSeparate)))
-                        .addGap(0, 52, Short.MAX_VALUE)))
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -858,7 +879,8 @@ public class SaveToCasePanel extends javax.swing.JPanel {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(cmdSaveFullMessage)
                     .addComponent(cmdSaveMessageWithoutAttachments)
-                    .addComponent(cmdSaveSeparate))
+                    .addComponent(cmdSaveSeparate)
+                    .addComponent(cmdSaveMessageAttachmentsOnly))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -923,7 +945,7 @@ public class SaveToCasePanel extends javax.swing.JPanel {
     }//GEN-LAST:event_lblDescriptionMouseClicked
 
     private void cmdSaveFullMessageActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveFullMessageActionPerformed
-        boolean saved=this.executor.saveToCase(this.e.getId(), true, false);
+        boolean saved=this.executor.saveToCase(this.e.getId(), true, false, false);
         if(saved) {
             this.cmdSaveFullMessage.setEnabled(false);
             this.cmdSaveFullMessage.setBackground(Color.green.darker().darker());
@@ -933,7 +955,7 @@ public class SaveToCasePanel extends javax.swing.JPanel {
     }//GEN-LAST:event_cmdSaveFullMessageActionPerformed
 
     private void cmdSaveMessageWithoutAttachmentsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveMessageWithoutAttachmentsActionPerformed
-        boolean saved=this.executor.saveToCase(this.e.getId(), false, false);
+        boolean saved=this.executor.saveToCase(this.e.getId(), false, false, false);
         if(saved) {
             this.cmdSaveMessageWithoutAttachments.setEnabled(false);
             this.cmdSaveMessageWithoutAttachments.setBackground(Color.green.darker().darker());
@@ -943,7 +965,7 @@ public class SaveToCasePanel extends javax.swing.JPanel {
     }//GEN-LAST:event_cmdSaveMessageWithoutAttachmentsActionPerformed
 
     private void cmdSaveSeparateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveSeparateActionPerformed
-        boolean saved=this.executor.saveToCase(this.e.getId(), true, true);
+        boolean saved=this.executor.saveToCase(this.e.getId(), true, true, false);
         if(saved) {
             this.cmdSaveSeparate.setEnabled(false);
             this.cmdSaveSeparate.setBackground(Color.green.darker().darker());
@@ -952,8 +974,19 @@ public class SaveToCasePanel extends javax.swing.JPanel {
         }
     }//GEN-LAST:event_cmdSaveSeparateActionPerformed
 
+    private void cmdSaveMessageAttachmentsOnlyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveMessageAttachmentsOnlyActionPerformed
+        boolean saved=this.executor.saveToCase(this.e.getId(), false, false, true);
+        if(saved) {
+            this.cmdSaveMessageAttachmentsOnly.setEnabled(false);
+            this.cmdSaveMessageAttachmentsOnly.setBackground(Color.green.darker().darker());
+        } else {
+            this.cmdSaveMessageAttachmentsOnly.setBackground(Color.red.darker().darker());
+        }
+    }//GEN-LAST:event_cmdSaveMessageAttachmentsOnlyActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton cmdSaveFullMessage;
+    private javax.swing.JButton cmdSaveMessageAttachmentsOnly;
     private javax.swing.JButton cmdSaveMessageWithoutAttachments;
     private javax.swing.JButton cmdSaveSeparate;
     private javax.swing.JLabel lblArchived;

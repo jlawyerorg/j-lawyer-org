@@ -670,7 +670,10 @@ import java.util.Hashtable;
 import java.util.List;
 import org.apache.log4j.Logger;
 import org.jlawyer.plugins.calculation.CalculationTable;
+import org.jlawyer.plugins.calculation.Cell;
+import org.jlawyer.plugins.calculation.StyledCalculationTable;
 import org.odftoolkit.odfdom.dom.element.text.TextLineBreakElement;
+import org.odftoolkit.odfdom.dom.element.text.TextTabElement;
 import org.odftoolkit.odfdom.type.Color;
 import org.odftoolkit.simple.SpreadsheetDocument;
 import org.odftoolkit.simple.TextDocument;
@@ -768,6 +771,9 @@ public class LibreOfficeAccess {
                                     removalElements.add(item.getElement());
                                     removalItems.add(item.getElement().item(itemIndex));
                                     break;
+                                } else if (item.getElement().item(itemIndex) instanceof TextTabElement) {
+                                    // tabs can be use for formatting - do not remove them
+
                                 } else if ("".equals(item.getElement().item(itemIndex).getTextContent().trim())) {
                                     //item.getElement().removeChild(item.getElement().item(itemIndex));
                                     removalElements.add(item.getElement());
@@ -801,52 +807,142 @@ public class LibreOfficeAccess {
 
                 } else if (values.get(key) instanceof CalculationTable) {
                     List<Table> allTables = outputOdt.getTableList();
-                    CalculationTable tab=(CalculationTable)values.get(key);
+                    CalculationTable tab = (CalculationTable) values.get(key);
                     for (Table t : allTables) {
                         if (t.getColumnCount() == 1 && t.getRowCount() == 1) {
                             if (key.equals(t.getCellByPosition(0, 0).getStringValue())) {
                                 Border border = new Border(Color.WHITE, 1.0, SupportedLinearMeasure.PT);
-                                for (int i = 0; i < tab.getData()[0].length-1; i++) {
+                                for (int i = 0; i < tab.getData()[0].length - 1; i++) {
                                     t.appendColumn();
                                 }
-                                for (int i = 0; i < tab.getData().length-1; i++) {
+                                for (int i = 0; i < tab.getData().length - 1; i++) {
                                     t.appendRow();
                                 }
-                                int firstDataRow=0;
-                                if(tab.getColumnLabels().size()>0) {
-                                    firstDataRow=1;
+                                int firstDataRow = 0;
+                                if (tab.getColumnLabels().size() > 0) {
+                                    firstDataRow = 1;
                                     t.appendRow();
-                                    for(int i=0;i<tab.getColumnLabels().size();i++) {
+                                    for (int i = 0; i < tab.getColumnLabels().size(); i++) {
                                         t.getCellByPosition(i, 0).setStringValue(tab.getColumnLabels().get(i));
                                         border.setColor(Color.WHITE);
                                         t.getCellByPosition(i, 0).setBorders(CellBordersType.NONE, border);
                                         t.getCellByPosition(i, 0).setHorizontalAlignment(StyleTypeDefinitions.HorizontalAlignmentType.CENTER);
-                                        Font f=t.getCellByPosition(i, 0).getFont();
+                                        Font f = t.getCellByPosition(i, 0).getFont();
                                         f.setFontStyle(StyleTypeDefinitions.FontStyle.BOLD);
                                         t.getCellByPosition(i, 0).setFont(f);
                                     }
                                 }
-                                for(int i=0;i<tab.getData()[0].length;i++) {
-                                    for(int k=0;k<tab.getData().length;k++) {
-                                        t.getCellByPosition(i, k+firstDataRow).setStringValue(tab.getData()[k][i]);
+                                for (int i = 0; i < tab.getData()[0].length; i++) {
+                                    for (int k = 0; k < tab.getData().length; k++) {
+                                        t.getCellByPosition(i, k + firstDataRow).setStringValue(tab.getData()[k][i]);
                                         border.setColor(Color.WHITE);
-                                        t.getCellByPosition(i, k+firstDataRow).setBorders(CellBordersType.NONE, border);
+                                        t.getCellByPosition(i, k + firstDataRow).setBorders(CellBordersType.NONE, border);
                                         // set font to regular
-                                        Font f=t.getCellByPosition(i, k+firstDataRow).getFont();
+                                        Font f = t.getCellByPosition(i, k + firstDataRow).getFont();
                                         f.setFontStyle(StyleTypeDefinitions.FontStyle.REGULAR);
-                                        t.getCellByPosition(i, k+firstDataRow).setFont(f);
+                                        t.getCellByPosition(i, k + firstDataRow).setFont(f);
                                         // set alignment
-                                        int alignment=tab.getAlignment(i);
-                                        if(alignment==CalculationTable.ALIGNMENT_CENTER) {
-                                            t.getCellByPosition(i, k+firstDataRow).setHorizontalAlignment(StyleTypeDefinitions.HorizontalAlignmentType.CENTER);
-                                        } else if(alignment==CalculationTable.ALIGNMENT_RIGHT) {
-                                            t.getCellByPosition(i, k+firstDataRow).setHorizontalAlignment(StyleTypeDefinitions.HorizontalAlignmentType.RIGHT);
+                                        int alignment = tab.getAlignment(i);
+                                        if (alignment == CalculationTable.ALIGNMENT_CENTER) {
+                                            t.getCellByPosition(i, k + firstDataRow).setHorizontalAlignment(StyleTypeDefinitions.HorizontalAlignmentType.CENTER);
+                                        } else if (alignment == CalculationTable.ALIGNMENT_RIGHT) {
+                                            t.getCellByPosition(i, k + firstDataRow).setHorizontalAlignment(StyleTypeDefinitions.HorizontalAlignmentType.RIGHT);
                                         } else {
-                                            t.getCellByPosition(i, k+firstDataRow).setHorizontalAlignment(StyleTypeDefinitions.HorizontalAlignmentType.LEFT);
+                                            t.getCellByPosition(i, k + firstDataRow).setHorizontalAlignment(StyleTypeDefinitions.HorizontalAlignmentType.LEFT);
                                         }
                                     }
                                 }
-                                
+
+                            }
+                        }
+                    }
+                } else if (values.get(key) instanceof StyledCalculationTable) {
+                    List<Table> allTables = outputOdt.getTableList();
+                    StyledCalculationTable tab = (StyledCalculationTable) values.get(key);
+                    for (Table t : allTables) {
+                        if (t.getColumnCount() == 1 && t.getRowCount() == 1) {
+                            if (key.equals(t.getCellByPosition(0, 0).getStringValue())) {
+                                Border border = new Border(Color.BLACK, 0.05, SupportedLinearMeasure.PT);
+                                border.setColor(new org.odftoolkit.odfdom.type.Color(tab.getBorderColor()));
+                                for (int i = 0; i < tab.getColumnCount() - 1; i++) {
+                                    //for (int i = 0; i < tab.getColumnCount(); i++) {
+                                    t.appendColumn();
+                                    //t.getColumnByIndex(i).setUseOptimalWidth(true);
+//                                    if(tab.getColumnWidth(i)>-1) {
+//                                        t.getColumnByIndex(i).setWidth(tab.getColumnWidth(i));
+//                                    }
+                                }
+                                for (int i = 0; i < tab.getRowCount() - 1; i++) {
+                                    //for (int i = 0; i < tab.getRowCount(); i++) {
+                                    t.appendRow();
+                                }
+
+                                for (int i = 0; i < tab.getColumnCount(); i++) {
+                                    if (tab.getColumnWidth(i) > -1) {
+                                        t.getColumnByIndex(i).setWidth(tab.getColumnWidth(i));
+                                    } else {
+                                        t.getColumnByIndex(i).setUseOptimalWidth(true);
+                                    }
+                                }
+
+                                for (int i = 0; i < tab.getColumnCount(); i++) {
+                                    for (int k = 0; k < tab.getRowCount(); k++) {
+                                        t.getCellByPosition(i, k).setStringValue(tab.getValueAt(k, i));
+                                        if (tab.isLineBorder()) {
+                                            Border b = new Border(Color.BLACK, 0.05, SupportedLinearMeasure.PT);
+                                            b.setColor(new org.odftoolkit.odfdom.type.Color(tab.getBorderColor()));
+                                            t.getCellByPosition(i, k).setBorders(CellBordersType.ALL_FOUR, b);
+                                        } else {
+                                            t.getCellByPosition(i, k).setBorders(CellBordersType.NONE, border);
+                                        }
+
+                                        // set font to regular
+                                        Font f = t.getCellByPosition(i, k).getFont();
+                                        Cell c = tab.getCellAt(k, i);
+                                        if (!("".equals(tab.getFontFamily()))) {
+                                            f.setFamilyName(tab.getFontFamily());
+                                        }
+                                        if (c.isBold()) {
+                                            if (c.isItalic()) {
+                                                f.setFontStyle(StyleTypeDefinitions.FontStyle.BOLDITALIC);
+                                            } else {
+                                                f.setFontStyle(StyleTypeDefinitions.FontStyle.BOLD);
+                                            }
+                                        } else {
+                                            if (c.isItalic()) {
+                                                f.setFontStyle(StyleTypeDefinitions.FontStyle.ITALIC);
+                                            } else {
+                                                f.setFontStyle(StyleTypeDefinitions.FontStyle.REGULAR);
+                                            }
+                                        }
+                                        if (c.isUnderline()) {
+                                            f.setTextLinePosition(StyleTypeDefinitions.TextLinePosition.UNDER);
+                                        } else {
+                                            f.setTextLinePosition(StyleTypeDefinitions.TextLinePosition.REGULAR);
+                                        }
+                                        if (c.getFontSize() > 0) {
+                                            f.setSize(c.getFontSize());
+                                        }
+                                        f.setColor(new org.odftoolkit.odfdom.type.Color(c.getForeGround()));
+                                        t.getCellByPosition(i, k).setFont(f);
+                                        t.getCellByPosition(i, k).setCellBackgroundColor(new org.odftoolkit.odfdom.type.Color(c.getBackGround()));
+                                        // set alignment
+                                        Cell cell = tab.getCellAt(k, i);
+                                        int alignment = cell.getAlignment();
+                                        if (alignment == Cell.ALIGNMENT_CENTER) {
+                                            t.getCellByPosition(i, k).setHorizontalAlignment(StyleTypeDefinitions.HorizontalAlignmentType.CENTER);
+                                        } else if (alignment == Cell.ALIGNMENT_RIGHT) {
+                                            t.getCellByPosition(i, k).setHorizontalAlignment(StyleTypeDefinitions.HorizontalAlignmentType.RIGHT);
+                                        } else {
+                                            t.getCellByPosition(i, k).setHorizontalAlignment(StyleTypeDefinitions.HorizontalAlignmentType.LEFT);
+                                        }
+                                    }
+                                }
+
+                                for (int i = 0; i < t.getColumnCount(); i++) {
+                                    t.getColumnByIndex(i).setUseOptimalWidth(true);
+                                }
+
                             }
                         }
                     }
@@ -864,29 +960,12 @@ public class LibreOfficeAccess {
             outputOdt.save(new File(file));
             outputOdt.close();
 
-        } else if (file.toLowerCase()
-                .endsWith(".ods")) {
+        } else if (file.toLowerCase().endsWith(".ods")) {
             SpreadsheetDocument outputOds;
             outputOds = SpreadsheetDocument.loadDocument(file);
 
             Enumeration en = values.keys();
             while (en.hasMoreElements()) {
-//                String key = (String) en.nextElement();
-//                String regExKey = "\\{\\{" + key.substring(2, key.length() - 2) + "\\}\\}";
-//                String value = (String) values.get(key);
-//                if (value == null) {
-//                    value = "";
-//                }
-//
-//                TextNavigation search = new TextNavigation(regExKey, outputOds);
-//
-//                while (search.hasNext()) {
-//
-//                    TextSelection item = (TextSelection) search.nextSelection();
-//
-//                    item.replaceWith(value);
-//
-//                }
 
                 String key = (String) en.nextElement();
 
@@ -942,8 +1021,15 @@ public class LibreOfficeAccess {
 
             outputOds.save(new File(file));
             outputOds.close();
+        } else if (file.toLowerCase().endsWith(".docx")) {
+            MicrosoftOfficeAccess.setPlaceHolders(file, values);
         }
 
+    }
+
+    private static Font newFontInstance(Font f) {
+        Font newFont = new Font(f.getFamilyName(), f.getFontStyle(), f.getSize());
+        return newFont;
     }
 
     public static java.util.List<String> getPlaceHolders(String file) throws Exception {
@@ -952,41 +1038,6 @@ public class LibreOfficeAccess {
             TextDocument outputOdt;
             ArrayList<String> resultList = new ArrayList<String>();
             outputOdt = TextDocument.loadDocument(file);
-//        Iterator<Paragraph> it = outputOdt.getParagraphIterator();
-//        while (it.hasNext()) {
-//            Paragraph p = it.next();
-//            try {
-//                String content = p.getTextContent();
-//                findPlaceHolders(content, resultList);
-//            } catch (java.lang.NullPointerException npe) {
-//                log.error("Errors getting paragraphs text content within document " + file);
-//            }
-//            //content = replacePlaceHolders(content, replaceStr, targetStr);
-//            //p.setTextContent(content);
-//        }
-//
-//        Iterator<List> it2 = outputOdt.getListIterator();
-//        while (it2.hasNext()) {
-//            List l = it2.next();
-//            for (ListItem li : l.getItems()) {
-//                String content = li.getTextContent();
-//                findPlaceHolders(content, resultList);
-////                content = replacePlaceHolders(content, replaceStr, targetStr);
-////                li.setTextContent(content);
-//            }
-//        }
-//
-//        java.util.List<Table> tableList = outputOdt.getTableList();
-//        for (Table t : tableList) {
-//            for (int c = 0; c < t.getColumnCount(); c++) {
-//                for (int r = 0; r < t.getRowCount(); r++) {
-//                    Cell curCell = t.getCellByPosition(c, r);
-//                    //curCell.setStringValue(replacePlaceHolders(curCell.getStringValue(), replaceStr, targetStr));
-//                    String content = curCell.getStringValue();
-//                    findPlaceHolders(content, resultList);
-//                }
-//            }
-//        }
 
             for (String r : PlaceHolders.ALLPLACEHOLDERS) {
                 String key = r;
@@ -1051,6 +1102,11 @@ public class LibreOfficeAccess {
 
             outputOds.close();
             return resultList;
+        } else if (file.toLowerCase().endsWith(".docx")) {
+
+            
+            return new ArrayList(MicrosoftOfficeAccess.getPlaceHolders(file));
+
         }
 
         return new ArrayList<String>();

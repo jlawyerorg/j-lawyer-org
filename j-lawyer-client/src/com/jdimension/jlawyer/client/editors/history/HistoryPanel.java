@@ -707,6 +707,13 @@ public class HistoryPanel extends javax.swing.JPanel implements ThemeableEditor 
     public HistoryPanel(String principalId, String dialogTitle) {
         this.principalId=principalId;
         initComponents();
+        
+        if(this.getClass().getName().equals(MyHistoryPanel.class.getName())) {
+            jLabel18.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/history_big_my.png")));
+        } else {
+            jLabel18.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/history_big.png")));
+        }
+        
         this.lblPanelTitle.setText(dialogTitle);
         
         try {
@@ -795,7 +802,6 @@ public class HistoryPanel extends javax.swing.JPanel implements ThemeableEditor 
 
         lblPanelTitle.setFont(new java.awt.Font("Dialog", 1, 24)); // NOI18N
         lblPanelTitle.setForeground(new java.awt.Color(255, 255, 255));
-        lblPanelTitle.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/history_my_big.png"))); // NOI18N
         lblPanelTitle.setText("Meine Timeline");
 
         historyIntervalSlider.setPaintLabels(true);
@@ -888,9 +894,10 @@ public class HistoryPanel extends javax.swing.JPanel implements ThemeableEditor 
             .add(layout.createSequentialGroup()
                 .addContainerGap()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jLabel18)
-                    .add(lblPanelTitle)
-                    .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                    .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
+                        .add(org.jdesktop.layout.GroupLayout.LEADING, lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .add(org.jdesktop.layout.GroupLayout.LEADING, jLabel18, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                 .add(historyIntervalSlider, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)

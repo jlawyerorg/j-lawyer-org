@@ -853,7 +853,8 @@ public class ImportZipCodesThread implements Runnable {
         }
         
         ThreadUtils.enableComponent(this.closeButton, true);
-        ThreadUtils.enableComponent(this.importButton, true);
+        ThreadUtils.setText(closeButton, "Fertig - Dialog schliessen");
+        ThreadUtils.enableComponent(this.importButton, false);
         ThreadUtils.setDefaultCursor(this.owner);
     
 }

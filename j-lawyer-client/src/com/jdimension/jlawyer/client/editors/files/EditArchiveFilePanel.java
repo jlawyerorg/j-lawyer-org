@@ -677,7 +677,6 @@ public class EditArchiveFilePanel extends QuickArchiveFileSearchPanel {
         //super(EditArchiveFileDetailsPanel.class.getName());
         //this.lblPanelTitle.setText("Akte suchen und bearbeiten");
         this.lblPanelTitle.setText("Akte suchen");
-        this.lblPanelTitle.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit_big.png")));
     }
     
 }

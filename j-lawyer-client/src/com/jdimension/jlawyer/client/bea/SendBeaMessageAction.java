@@ -688,7 +688,7 @@ import org.apache.log4j.Logger;
 import org.jlawyer.bea.BeaWrapperException;
 import org.jlawyer.bea.model.Attachment;
 import org.jlawyer.bea.model.Identity;
-import org.jlawyer.bea.model.LegalAuthority;
+import org.jlawyer.bea.model.BeaListItem;
 import org.jlawyer.bea.model.Message;
 import org.jlawyer.bea.model.MessageExport;
 
@@ -700,20 +700,23 @@ public class SendBeaMessageAction extends ProgressableAction {
 
     private static final Logger log = Logger.getLogger(SendBeaMessageAction.class.getName());
     private static SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy, HH:mm");
-    private ArrayList<String> attachments = null;
+    ArrayList<BeaAttachmentMetadata> attachments = null;
     private AppUserBean cu = null;
     private boolean readReceipt = false;
-    private LegalAuthority authority=null;
+    private BeaListItem authority=null;
     private Enumeration to = null;
     private String subject = "";
     private String body = "";
     private String fromSafeId = "";
     private ArchiveFileBean archiveFile = null;
     private String documentTag = null;
+    
+    private String azSender=null;
+    private String azRecipient=null;
 
-    public SendBeaMessageAction(ProgressIndicator i, JDialog cleanAfter, String fromSafeId, ArrayList<String> attachments, AppUserBean cu, boolean readReceipt, LegalAuthority authority, Enumeration to, String subject, String body, String documentTag) {
+    public SendBeaMessageAction(ProgressIndicator i, JDialog cleanAfter, String fromSafeId, ArrayList<BeaAttachmentMetadata> attachmentMetadata, AppUserBean cu, boolean readReceipt, BeaListItem authority, Enumeration to, String subject, String body, String documentTag, String azSender, String azRecipient) {
         super(i, false, cleanAfter);
-        this.attachments = attachments;
+        this.attachments = attachmentMetadata;
         this.cu = cu;
         this.readReceipt = readReceipt;
         this.to = to;
@@ -723,10 +726,12 @@ public class SendBeaMessageAction extends ProgressableAction {
         this.documentTag = documentTag;
         this.readReceipt=readReceipt;
         this.authority=authority;
+        this.azSender=azSender;
+        this.azRecipient=azRecipient;
     }
 
-    public SendBeaMessageAction(ProgressIndicator i, JDialog cleanAfter, String fromSafeId, ArrayList<String> attachments, AppUserBean cu, boolean readReceipt, LegalAuthority authority, Enumeration to, String subject, String body, ArchiveFileBean af, String documentTag) {
-        this(i, cleanAfter, fromSafeId, attachments, cu, readReceipt, authority, to, subject, body, documentTag);
+    public SendBeaMessageAction(ProgressIndicator i, JDialog cleanAfter, String fromSafeId, ArrayList<BeaAttachmentMetadata> attachmentMetadata, AppUserBean cu, boolean readReceipt, BeaListItem authority, Enumeration to, String subject, String body, ArchiveFileBean af, String documentTag, String azSender, String azRecipient) {
+        this(i, cleanAfter, fromSafeId, attachmentMetadata, cu, readReceipt, authority, to, subject, body, documentTag, azSender, azRecipient);
         this.archiveFile = af;
     }
 
@@ -754,6 +759,11 @@ public class SendBeaMessageAction extends ProgressableAction {
 
             msg.setSubject(subject);
             msg.setBody(body);
+            if(this.azSender!=null && !("".equals(this.azSender)))
+            msg.setReferenceNumber(this.azSender);
+            
+            if(this.azRecipient!=null && !("".equals(this.azRecipient)))
+            msg.setReferenceJustice(this.azRecipient);
 
             if (this.archiveFile != null) {
                 msg.setReferenceNumber(this.archiveFile.getFileNumber());
@@ -772,10 +782,11 @@ public class SendBeaMessageAction extends ProgressableAction {
 
             String senderSafeId = this.fromSafeId;
 
-            for (String url : this.attachments) {
+            for (BeaAttachmentMetadata meta : this.attachments) {
                 Attachment att = new Attachment();
-                File f = new File(url);
+                File f = new File(meta.getUrl());
                 att.setFileName(f.getName());
+                att.setAlias(meta.getAlias());
                 att.setContent(FileUtils.readFileToByteArray(f));
                 msg.getAttachments().add(att);
             }
@@ -813,7 +824,7 @@ public class SendBeaMessageAction extends ProgressableAction {
                 if (receivedPrefix == null) {
                     receivedPrefix = new java.util.Date();
                 }
-                String newName = com.jdimension.jlawyer.client.utils.FileUtils.getNewFileName(mex.getFileName(), true, receivedPrefix);
+                String newName = com.jdimension.jlawyer.client.utils.FileUtils.getNewFileName(mex.getFileName(), true, receivedPrefix, this.indicator);
                 if (newName == null) {
                     return false;
                 }
@@ -849,10 +860,10 @@ public class SendBeaMessageAction extends ProgressableAction {
             storeException = t;
         }
 
-        for (String url : this.attachments) {
-            File f = new File(url);
+        for (BeaAttachmentMetadata meta : this.attachments) {
+            File f = new File(meta.getUrl());
             if (f.exists()) {
-                LauncherFactory.cleanupTempFile(url);
+                LauncherFactory.cleanupTempFile(meta.getUrl());
             }
         }
 

@@ -720,7 +720,7 @@ public class EMLInternalLauncher extends InternalLauncher {
                 view.setTitle(message.getSubject());
             } catch (Throwable t) {
                 log.error(t);
-                view.setTitle("Emailansicht");
+                view.setTitle("E-Mail-Ansicht");
             }
             view.setVisible(true);
             odoc.setStatus(ObservedDocument.STATUS_OPEN);

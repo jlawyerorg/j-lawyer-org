@@ -671,6 +671,7 @@ import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
+import javax.swing.table.DefaultTableModel;
 
 /**
  *
@@ -788,21 +789,45 @@ public class TableUtils {
                 selectionModel.addSelectionInterval(clickedRow, clickedRow);
             } else {
                 // No modifier key pressed
-                
+
                 // if there is a selection, do nothing and let the popup open
                 // otherwise select current row
-                if(selectionModel.isSelectionEmpty())
+                if (selectionModel.isSelectionEmpty()) {
                     selectionModel.setSelectionInterval(clickedRow, clickedRow);
+                }
             }
         }
     }
 
+    public static void moveUpwards(JTable table) {
+        moveRowBy(table, -1);
+    }
+
+    public static void moveDownwards(JTable table) {
+        moveRowBy(table, 1);
+    }
+
+    private static void moveRowBy(JTable table, int by) {
+        DefaultTableModel model = (DefaultTableModel) table.getModel();
+        int[] rows = table.getSelectedRows();
+        int destination = rows[0] + by;
+        int rowCount = model.getRowCount();
+
+        if (destination < 0 || destination >= rowCount) {
+            return;
+        }
+
+        model.moveRow(rows[0], rows[rows.length - 1], destination);
+        table.setRowSelectionInterval(rows[0] + by, rows[rows.length - 1] + by);
+    }
+
     private static String escape(Object cell) {
         if (cell != null) {
-            if(cell.toString()!=null)
+            if (cell.toString() != null) {
                 return cell.toString().replace(LINE_BREAK, " ").replace(CELL_BREAK, " ");
-            else
+            } else {
                 return " ";
+            }
         } else {
             return " ";
         }

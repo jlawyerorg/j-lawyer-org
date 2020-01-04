@@ -747,6 +747,15 @@ public class DocumentObserver {
         return false;
     }
     
+    public boolean isDocumentReadOnly(String docId) {
+        for (ObservedDocument doc : docs) {
+            if (doc.getStore().getDocumentIdentifier().equals(docId)) {
+                return (doc.getStore() instanceof ReadOnlyDocumentStore);
+            }
+        }
+        return false;
+    }
+    
     public ObservedDocument getDocumentById(String docId) {
         for (ObservedDocument doc : docs) {
             if (doc.getStore().getDocumentIdentifier().equals(docId)) {

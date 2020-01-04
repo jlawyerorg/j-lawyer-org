@@ -719,6 +719,8 @@ public interface ArchiveFileServiceLocal {
 
     Collection<ArchiveFileReviewsBean> getAllOpenReviewsUnrestricted();
 
+    boolean doesDocumentExist(String caseId, String documentName);
+    
     boolean doesDocumentExist(String id);
     
 }

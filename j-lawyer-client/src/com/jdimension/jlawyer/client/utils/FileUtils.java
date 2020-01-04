@@ -672,6 +672,7 @@ import java.io.FileOutputStream;
 import java.text.SimpleDateFormat;
 import java.util.Hashtable;
 import javax.swing.Icon;
+import javax.swing.ImageIcon;
 import javax.swing.JDialog;
 import javax.swing.JOptionPane;
 import javax.swing.JRootPane;
@@ -721,16 +722,68 @@ public class FileUtils extends ServerFileUtils {
         }
 
         try {
-            //Create a temporary file with the specified extension
-            File file = File.createTempFile("icon", fileExt);
 
-            FileSystemView view = FileSystemView.getFileSystemView();
-            Icon icon = view.getSystemIcon(file);
-            this.iconCache.put(fileExt, icon);
+            String osName = System.getProperty("os.name").toLowerCase();
 
-            //Delete the temporary file
-            file.delete();
-            return icon;
+            if (osName.indexOf("linux") > -1 || osName.startsWith("mac")) {
+
+                if(fileExt.startsWith("."))
+                    fileExt=fileExt.substring(1,fileExt.length());
+                fileExt=fileExt.toLowerCase();
+                ImageIcon image = null;
+                try {
+                    image=new ImageIcon(getClass().getResource("/icons16/fileicons/file_type_" + fileExt + ".png"));
+                } catch (Throwable t) {
+                    log.warn("no file type icon for " + fileExt);
+                }
+                if (image != null) {
+                    this.iconCache.put(fileExt, image);
+                    return image;
+                } else {
+                    //Create a temporary file with the specified extension
+                    File file = File.createTempFile("icon", fileExt);
+
+                    FileSystemView view = FileSystemView.getFileSystemView();
+                    Icon icon = view.getSystemIcon(file);
+                    this.iconCache.put(fileExt, icon);
+
+                    //Delete the temporary file
+                    file.delete();
+                    return icon;
+                }
+//            } else if (osName.startsWith("mac")) {
+
+// this was not working - maybe macOS needs a "real" file, not just an empty one?
+
+//
+//                //Create a temporary file with the specified extension
+//                File file = File.createTempFile("icon", fileExt);
+//
+//                final javax.swing.JFileChooser fc = new javax.swing.JFileChooser();
+//                Icon icon = fc.getUI().getFileView(fc).getIcon(file);
+//                
+//                if (icon != null) {
+//                    this.iconCache.put(fileExt, icon);
+//                }
+//
+//                //Delete the temporary file
+//                file.delete();
+//                return icon;
+
+            } else {
+                // Windows behaviour is default
+                //Create a temporary file with the specified extension
+                File file = File.createTempFile("icon", fileExt);
+
+                FileSystemView view = FileSystemView.getFileSystemView();
+                Icon icon = view.getSystemIcon(file);
+                this.iconCache.put(fileExt, icon);
+
+                //Delete the temporary file
+                file.delete();
+                return icon;
+            }
+
         } catch (Throwable t) {
             log.error("Could not determine default file type icon for " + fileName, t);
             return null;
@@ -744,6 +797,12 @@ public class FileUtils extends ServerFileUtils {
     public static String getNewFileName(String currentFileName, boolean datetimePrefix, java.util.Date d) {
 
         return getNewFileName(currentFileName, datetimePrefix, d, EditorsRegistry.getInstance().getMainWindow(), "Datei umbenennen");
+
+    }
+
+    public static String getNewFileName(String currentFileName, boolean datetimePrefix, java.util.Date d, Component parent) {
+
+        return getNewFileName(currentFileName, datetimePrefix, d, parent, "Datei umbenennen");
 
     }
 
@@ -795,7 +854,7 @@ public class FileUtils extends ServerFileUtils {
         return newFileName;
 
     }
-    
+
     public static String createTempFile(String fileName, byte[] content) throws Exception {
         return createTempFile(fileName, content, false);
     }
@@ -812,7 +871,7 @@ public class FileUtils extends ServerFileUtils {
         FileOutputStream fos = new FileOutputStream(new File(tmpFile), false);
         fos.write(content);
         fos.close();
-        
+
         if (readOnly) {
             try {
                 new File(tmpFile).setReadOnly();

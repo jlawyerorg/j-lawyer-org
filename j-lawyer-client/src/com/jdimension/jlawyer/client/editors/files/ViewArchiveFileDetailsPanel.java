@@ -679,7 +679,7 @@ public class ViewArchiveFileDetailsPanel extends ArchiveFilePanel {
         this.cmdToEditMode.setEnabled(true);
         
         this.lblPanelTitle.setText("Akte einsehen");
-        this.lblPanelTitle.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/info_big.png")));
+        //this.lblPanelTitle.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/info_big.png")));
     }
 
     @Override

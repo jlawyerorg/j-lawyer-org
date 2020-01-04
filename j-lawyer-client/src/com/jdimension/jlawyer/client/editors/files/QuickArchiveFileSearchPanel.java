@@ -715,7 +715,7 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
             this.detailsEditorClass = ViewArchiveFileDetailsPanel.class.getName();
         }
 
-        String[] colNames = new String[]{"Aktenzeichen", "Kurzrubrum", "wegen", "archiviert", "Anwalt", "Tags"};
+        String[] colNames = new String[]{"Aktenzeichen", "Kurzrubrum", "wegen", "archiviert", "Anwalt", "Etiketten"};
         QuickArchiveFileSearchTableModel model = new QuickArchiveFileSearchTableModel(colNames, 0);
         this.tblResults.setModel(model);
 
@@ -743,7 +743,7 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
 
     public void clearInputs() {
         this.txtSearchString.setText("");
-        String[] colNames = new String[]{"Aktenzeichen", "Kurzrubrum", "wegen", "archiviert", "Anwalt", "Tags"};
+        String[] colNames = new String[]{"Aktenzeichen", "Kurzrubrum", "wegen", "archiviert", "Anwalt", "Etiketten"};
         QuickArchiveFileSearchTableModel model = new QuickArchiveFileSearchTableModel(colNames, 0);
         this.tblResults.setModel(model);
 
@@ -778,8 +778,8 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
 
         popupArchiveFileActions = new javax.swing.JPopupMenu();
         mnuOpenSelectedArchiveFile = new javax.swing.JMenuItem();
-        mnuDeleteSelectedArchiveFiles = new javax.swing.JMenuItem();
         mnuDuplicateSelectedArchiveFiles = new javax.swing.JMenuItem();
+        mnuDeleteSelectedArchiveFiles = new javax.swing.JMenuItem();
         popTagFilter = new javax.swing.JPopupMenu();
         popDocumentTagFilter = new javax.swing.JPopupMenu();
         cmdTagFilter = new javax.swing.JButton();
@@ -807,16 +807,6 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
         });
         popupArchiveFileActions.add(mnuOpenSelectedArchiveFile);
 
-        mnuDeleteSelectedArchiveFiles.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editdelete.png"))); // NOI18N
-        mnuDeleteSelectedArchiveFiles.setText("löschen");
-        mnuDeleteSelectedArchiveFiles.setToolTipText("gewählte Akten löschen");
-        mnuDeleteSelectedArchiveFiles.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                mnuDeleteSelectedArchiveFilesActionPerformed(evt);
-            }
-        });
-        popupArchiveFileActions.add(mnuDeleteSelectedArchiveFiles);
-
         mnuDuplicateSelectedArchiveFiles.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editcopy.png"))); // NOI18N
         mnuDuplicateSelectedArchiveFiles.setText("duplizieren");
         mnuDuplicateSelectedArchiveFiles.setToolTipText("gewählte Akten duplizieren");
@@ -826,6 +816,16 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
             }
         });
         popupArchiveFileActions.add(mnuDuplicateSelectedArchiveFiles);
+
+        mnuDeleteSelectedArchiveFiles.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editdelete.png"))); // NOI18N
+        mnuDeleteSelectedArchiveFiles.setText("löschen");
+        mnuDeleteSelectedArchiveFiles.setToolTipText("gewählte Akten löschen");
+        mnuDeleteSelectedArchiveFiles.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuDeleteSelectedArchiveFilesActionPerformed(evt);
+            }
+        });
+        popupArchiveFileActions.add(mnuDeleteSelectedArchiveFiles);
 
         cmdTagFilter.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/favorites.png"))); // NOI18N
         cmdTagFilter.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -882,10 +882,9 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
 
         lblPanelTitle.setFont(new java.awt.Font("Dialog", 1, 24)); // NOI18N
         lblPanelTitle.setForeground(new java.awt.Color(255, 255, 255));
-        lblPanelTitle.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder_big.png"))); // NOI18N
         lblPanelTitle.setText("check");
 
-        jLabel2.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder_big.png"))); // NOI18N
+        jLabel2.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/Icons2-13.png"))); // NOI18N
 
         chkIncludeArchive.setText("Archivsuche");
 
@@ -963,9 +962,10 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
             .add(layout.createSequentialGroup()
                 .addContainerGap()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(lblPanelTitle)
-                    .add(jLabel2)
-                    .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                    .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
+                        .add(org.jdesktop.layout.GroupLayout.LEADING, lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .add(org.jdesktop.layout.GroupLayout.LEADING, jLabel2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(cmdQuickSearch)

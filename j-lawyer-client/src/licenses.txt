@@ -24,6 +24,9 @@ ez-vcard (by Mike Angstadt) - BSD 3-clause
 https://code.google.com/p/ez-vcard/
 http://opensource.org/licenses/BSD-3-Clause
 
+FileIcons (braver) - MIT license
+https://github.com/braver/FileIcons
+
 javasysmon (by ThoughtWorks, Inc) - BSD 2-clause
 https://github.com/jezhumble/javasysmon
 https://github.com/jezhumble/javasysmon/blob/master/LICENSE

@@ -675,7 +675,6 @@ public class EditAddressPanel extends QuickAddressSearchPanel {
         //super(EditAddressDetailsPanel.class.getName());
         
         this.lblPanelTitle.setText("Adresse suchen");
-        this.lblPanelTitle.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit_big.png")));
     }
     
 }

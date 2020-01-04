@@ -685,8 +685,8 @@ import org.apache.commons.vfs2.provider.sftp.SftpFileSystemConfigBuilder;
 public class LocalSshFtpFile extends VirtualFile {
 
     private FileObject fo = null;
-    private FileSystemManager fsManager=null;
-    private String location=null;
+    private FileSystemManager fsManager = null;
+    private String location = null;
 
     public LocalSshFtpFile(String location) throws Exception {
         FileSystemOptions opts = new FileSystemOptions();
@@ -706,7 +706,7 @@ public class LocalSshFtpFile extends VirtualFile {
         }
 
         this.fo = fsManager.resolveFile(location, opts);
-        this.location=location;
+        this.location = location;
     }
 
     @Override
@@ -716,8 +716,8 @@ public class LocalSshFtpFile extends VirtualFile {
 
         FileObject[] children = this.fo.getChildren();
         for (FileObject child : children) {
-            
-                list.add(new LocalSshFtpFile(child.getURL().toString()));
+
+            list.add(new LocalSshFtpFile(child.getURL().toString()));
         }
         return list;
     }
@@ -739,7 +739,12 @@ public class LocalSshFtpFile extends VirtualFile {
 
     @Override
     public void delete() throws Exception {
-        this.fo.delete();
+        this.fo.deleteAll();
+    }
+
+    @Override
+    public void deleteAll() throws Exception {
+        this.fo.deleteAll();
     }
 
     @Override
@@ -750,10 +755,11 @@ public class LocalSshFtpFile extends VirtualFile {
         }
 
         String newFileLocation = this.fo.getURL().toString();
-        if(!newFileLocation.endsWith("/"))
-            newFileLocation=newFileLocation + "/";
-        newFileLocation=newFileLocation + f.getName();
-        
+        if (!newFileLocation.endsWith("/")) {
+            newFileLocation = newFileLocation + "/";
+        }
+        newFileLocation = newFileLocation + f.getName();
+
         FileSystemOptions opts = new FileSystemOptions();
         FileSystemManager fsManager = VFS.getManager();
 
@@ -827,19 +833,21 @@ public class LocalSshFtpFile extends VirtualFile {
             return true;
         }
     }
-    
+
     protected void createFolder() throws Exception {
         this.fo.createFolder();
     }
 
     @Override
     public void createDirectory(String name) throws Exception {
-        if(!this.fo.isFolder() || !this.fo.exists())
+        if (!this.fo.isFolder() || !this.fo.exists()) {
             throw new Exception("Can only create sub directory in a directory and directory must exist");
-        
-        LocalSshFtpFile newDir=new LocalSshFtpFile(this.location + "/" + name + "/");
-        if(!newDir.exists())
+        }
+
+        LocalSshFtpFile newDir = new LocalSshFtpFile(this.location + "/" + name + "/");
+        if (!newDir.exists()) {
             newDir.createFolder();
+        }
     }
 
     @Override
@@ -849,12 +857,13 @@ public class LocalSshFtpFile extends VirtualFile {
 
     @Override
     public long length() throws Exception {
-        if(this.fo.isFolder())
+        if (this.fo.isFolder()) {
             return 0;
-        else if(this.fo.isFile())
+        } else if (this.fo.isFile()) {
             return this.fo.getContent().getSize();
-        else
+        } else {
             return 0;
+        }
     }
 
 }

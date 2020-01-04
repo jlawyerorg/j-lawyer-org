@@ -710,6 +710,8 @@ public class GenerateMassMailDocumentsDialog extends javax.swing.JDialog {
         this.campaign = campaign;
         this.addresses = addresses;
         initComponents();
+        
+        ComponentUtils.decorateSplitPane(jSplitPane1);
 
         String[] colNames = new String[]{"Platzhalter", "Wert"};
         ArchiveFileTemplatePlaceHoldersTableModel model = new ArchiveFileTemplatePlaceHoldersTableModel(colNames, 0);

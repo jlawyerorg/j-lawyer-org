@@ -697,7 +697,9 @@ public class MultiCalDialog extends javax.swing.JDialog {
         super(parent, "", modal, parent.getGraphicsConfiguration());
         this.initializing=true;
         this.target=target;
-        initComponents();        
+        initComponents();     
+        
+        //c1.se
         
         c1Cal=Calendar.getInstance();
         c1.setCalendar(c1Cal);
@@ -763,6 +765,7 @@ public class MultiCalDialog extends javax.swing.JDialog {
             }
         });
 
+        c1.setDayBordersVisible(false);
         c1.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 c1MouseClicked(evt);
@@ -777,24 +780,29 @@ public class MultiCalDialog extends javax.swing.JDialog {
             }
         });
 
+        c2.setDayBordersVisible(false);
         c2.addPropertyChangeListener(new java.beans.PropertyChangeListener() {
             public void propertyChange(java.beans.PropertyChangeEvent evt) {
                 c2PropertyChange(evt);
             }
         });
 
+        c3.setDayBordersVisible(false);
         c3.addPropertyChangeListener(new java.beans.PropertyChangeListener() {
             public void propertyChange(java.beans.PropertyChangeEvent evt) {
                 c3PropertyChange(evt);
             }
         });
 
+        lblC1.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
         lblC1.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         lblC1.setText("jLabel1");
 
+        lblC2.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
         lblC2.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         lblC2.setText("jLabel1");
 
+        lblC3.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
         lblC3.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         lblC3.setText("jLabel1");
 
@@ -832,7 +840,7 @@ public class MultiCalDialog extends javax.swing.JDialog {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
             .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(cmdYearBack)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -844,41 +852,42 @@ public class MultiCalDialog extends javax.swing.JDialog {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(cmdCancel))
                     .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                            .addComponent(lblC1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(c1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(c2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(lblC2, javax.swing.GroupLayout.PREFERRED_SIZE, 154, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(c1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(c3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(lblC3, javax.swing.GroupLayout.PREFERRED_SIZE, 154, javax.swing.GroupLayout.PREFERRED_SIZE))))
-                .addContainerGap(20, Short.MAX_VALUE))
+                            .addComponent(lblC3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(lblC2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(c2, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(lblC1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addGap(0, 0, Short.MAX_VALUE)))
+                .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
+                .addComponent(lblC1)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(c1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(lblC2)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(c2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(lblC3)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(c3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(lblC1)
-                    .addComponent(lblC2)
-                    .addComponent(lblC3))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(c1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(c3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(c2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(cmdCancel)
-                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(cmdYearBack)
-                        .addComponent(cmdMonthBack)
-                        .addComponent(cmdMonthForward)
-                        .addComponent(cmdYearForward)))
-                .addContainerGap(14, Short.MAX_VALUE))
+                    .addComponent(cmdYearBack)
+                    .addComponent(cmdMonthBack)
+                    .addComponent(cmdMonthForward)
+                    .addComponent(cmdYearForward))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(cmdCancel)
+                .addContainerGap())
         );
 
         pack();
@@ -955,15 +964,17 @@ public class MultiCalDialog extends javax.swing.JDialog {
 //        selectDate(c1, c1Cal);
     }//GEN-LAST:event_c1MousePressed
 
-//    private void selectDate(JCalendar cal) {
-//        cal.getCalendar().set(Calendar.HOUR_OF_DAY, 0);
-//        cal.getCalendar().set(Calendar.MINUTE, 0);
-//        cal.getCalendar().set(Calendar.SECOND, 0);
-//        Date d=cal.getDate();
-//        SimpleDateFormat df=new SimpleDateFormat("dd.MM.yyyy");
-//        this.target.setText(df.format(d));
-//        this.cmdCancelActionPerformed(null);
-//    }
+    public void setMaxDate(Date d) {
+        this.c1.setMaxSelectableDate(d);
+        this.c2.setMaxSelectableDate(d);
+        this.c3.setMaxSelectableDate(d);
+    }
+    
+    public void setMinDate(Date d) {
+        this.c1.setMinSelectableDate(d);
+        this.c2.setMinSelectableDate(d);
+        this.c3.setMinSelectableDate(d);
+    }
     
      private void selectDate(JDayChooser cal, Calendar c) {
          c.set(Calendar.DAY_OF_MONTH, cal.getDay());

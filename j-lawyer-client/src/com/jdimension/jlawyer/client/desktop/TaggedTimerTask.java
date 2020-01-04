@@ -666,7 +666,9 @@ package com.jdimension.jlawyer.client.desktop;
 import com.jdimension.jlawyer.client.editors.*;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
+import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
+import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileTagsBean;
@@ -741,9 +743,11 @@ public class TaggedTimerTask extends java.util.TimerTask {
 
         }
         Collections.sort(currentComboItems);
+        StringUtils.sortIgnoreCase(currentComboItems);
         if (tagsInUse == null) {
             tagsInUse = new ArrayList<String>();
         }
+        StringUtils.sortIgnoreCase(tagsInUse);
         if (!tagsInUse.equals(currentComboItems)) {
 
             popup.removeAll();
@@ -759,9 +763,9 @@ public class TaggedTimerTask extends java.util.TimerTask {
                 popup.add(mi);
             }
             if (hasSelection) {
-                button.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/favorites-green.png")));
+                button.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_label_green_36dp.png")));
             } else {
-                button.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/favorites.png")));
+                button.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_label_white_36dp.png")));
             }
             for (MenuElement me : popup.getSubElements()) {
                 ((JCheckBoxMenuItem) me.getComponent()).addActionListener(new ActionListener() {
@@ -780,9 +784,9 @@ public class TaggedTimerTask extends java.util.TimerTask {
                         }
 
                         if (selected) {
-                            button.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/favorites-green.png")));
+                            button.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_label_green_36dp.png")));
                         } else {
-                            button.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/favorites.png")));
+                            button.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_label_white_36dp.png")));
                         }
 
                         System.out.println("60: " + al);
@@ -820,14 +824,36 @@ public class TaggedTimerTask extends java.util.TimerTask {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
             String[] lastFilterTags = settings.getConfigurationArray(ClientSettings.CONF_DESKTOP_LASTFILTERTAG, new String[]{""});
-            List<String> tagsInUse = settings.getArchiveFileTagsInUse();
-            if(this.rebuildPopup && !(this.popTags.isVisible()))
-                this.buildPopup(this.tagMenu, this.popTags, tagsInUse, lastFilterTags, settings.CONF_DESKTOP_LASTFILTERTAG);
+            List<String> caseTagsInUse = settings.getArchiveFileTagsInUse();
+            AppOptionGroupBean[] allCaseTags=settings.getArchiveFileTagDtos();
+            List<String> allCaseTagsAsString=new ArrayList<String>();
+            for(AppOptionGroupBean aog: allCaseTags) {
+                allCaseTagsAsString.add(aog.getValue());
+            }
+            for(String t: caseTagsInUse) {
+                if(!allCaseTagsAsString.contains(t))
+                    allCaseTagsAsString.add(t);
+            }
+            if(this.rebuildPopup && !(this.popTags.isVisible())) {
+                //this.buildPopup(this.tagMenu, this.popTags, tagsInUse, lastFilterTags, settings.CONF_DESKTOP_LASTFILTERTAG);
+                this.buildPopup(this.tagMenu, this.popTags, allCaseTagsAsString, lastFilterTags, settings.CONF_DESKTOP_LASTFILTERTAG);
+            }
 
             String[] lastFilterDocumentTags = settings.getConfigurationArray(ClientSettings.CONF_DESKTOP_LASTFILTERDOCUMENTTAG, new String[]{""});
-            tagsInUse = settings.getDocumentTagsInUse();
-            if(this.rebuildPopup && !(this.popDocumentTags.isVisible()))
-                this.buildPopup(this.tagDocumentMenu, this.popDocumentTags, tagsInUse, lastFilterDocumentTags, settings.CONF_DESKTOP_LASTFILTERDOCUMENTTAG);
+            List<String> docTagsInUse = settings.getDocumentTagsInUse();
+            AppOptionGroupBean[] allDocTags=settings.getDocumentTagDtos();
+            List<String> allDocTagsAsString=new ArrayList<String>();
+            for(AppOptionGroupBean aog: allDocTags) {
+                allDocTagsAsString.add(aog.getValue());
+            }
+            for(String t: docTagsInUse) {
+                if(!allDocTagsAsString.contains(t))
+                    allDocTagsAsString.add(t);
+            }
+            if(this.rebuildPopup && !(this.popDocumentTags.isVisible())) {
+                //this.buildPopup(this.tagDocumentMenu, this.popDocumentTags, tagsInUse, lastFilterDocumentTags, settings.CONF_DESKTOP_LASTFILTERDOCUMENTTAG);
+                this.buildPopup(this.tagDocumentMenu, this.popDocumentTags, allDocTagsAsString, lastFilterDocumentTags, settings.CONF_DESKTOP_LASTFILTERDOCUMENTTAG);
+            }
 
             if (lastFilterTags.length == 0 && lastFilterDocumentTags.length == 0) {
                 running=false;
@@ -927,7 +953,7 @@ public class TaggedTimerTask extends java.util.TimerTask {
                         //if (!containedIds.contains(lce.getId())) {
                         resultUI.add(ep);
                         i++;
-                        if (i == 25) {
+                        if (i == 50) {
                             //layout.setRows(i);
                             running=false;
                             return;
@@ -962,7 +988,7 @@ public class TaggedTimerTask extends java.util.TimerTask {
                         //if (!containedIds.contains(lce.getId())) {
                         resultUI.add(ep);
                         i++;
-                        if (i == 25) {
+                        if (i == 50) {
                             //layout.setRows(i);
                             running=false;
                             return;

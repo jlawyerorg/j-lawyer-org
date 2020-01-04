@@ -725,7 +725,7 @@ public class QuickAddressSearchPanel extends javax.swing.JPanel implements Theme
         } else {
             this.detailsEditorClass = ViewAddressDetailsPanel.class.getName();
         }
-        String[] colNames = new String[]{"Name", "Vorname", "Firma", "PLZ", "Ort", "Strasse", "Land", "Tags"};
+        String[] colNames = new String[]{"Name", "Vorname", "Firma", "PLZ", "Ort", "Strasse", "Land", "Etiketten"};
         QuickAddressSearchTableModel model = new QuickAddressSearchTableModel(colNames, 0);
         this.tblResults.setModel(model);
 
@@ -754,7 +754,7 @@ public class QuickAddressSearchPanel extends javax.swing.JPanel implements Theme
 
     public void clearInputs() {
         this.txtSearchString.setText("");
-        String[] colNames = new String[]{"Name", "Vorname", "Firma", "PLZ", "Ort", "Strasse", "Land", "Tags"};
+        String[] colNames = new String[]{"Name", "Vorname", "Firma", "PLZ", "Ort", "Strasse", "Land", "Etiketten"};
         QuickAddressSearchTableModel model = new QuickAddressSearchTableModel(colNames, 0);
         this.tblResults.setModel(model);
     }
@@ -788,8 +788,8 @@ public class QuickAddressSearchPanel extends javax.swing.JPanel implements Theme
 
         popupAddressActions = new javax.swing.JPopupMenu();
         mnuOpenSelectedAddress = new javax.swing.JMenuItem();
-        mnuDeleteSelectedAddresses = new javax.swing.JMenuItem();
         mnuDuplicateSelectedAddress = new javax.swing.JMenuItem();
+        mnuDeleteSelectedAddresses = new javax.swing.JMenuItem();
         popTagFilter = new javax.swing.JPopupMenu();
         jLabel1 = new javax.swing.JLabel();
         txtSearchString = new javax.swing.JTextField();
@@ -814,16 +814,6 @@ public class QuickAddressSearchPanel extends javax.swing.JPanel implements Theme
         });
         popupAddressActions.add(mnuOpenSelectedAddress);
 
-        mnuDeleteSelectedAddresses.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editdelete.png"))); // NOI18N
-        mnuDeleteSelectedAddresses.setText("löschen");
-        mnuDeleteSelectedAddresses.setToolTipText("gewählte Adressen löschen");
-        mnuDeleteSelectedAddresses.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                mnuDeleteSelectedAddressesActionPerformed(evt);
-            }
-        });
-        popupAddressActions.add(mnuDeleteSelectedAddresses);
-
         mnuDuplicateSelectedAddress.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editcopy.png"))); // NOI18N
         mnuDuplicateSelectedAddress.setText("duplizieren");
         mnuDuplicateSelectedAddress.setToolTipText("gewählte Adresse duplizieren");
@@ -833,6 +823,16 @@ public class QuickAddressSearchPanel extends javax.swing.JPanel implements Theme
             }
         });
         popupAddressActions.add(mnuDuplicateSelectedAddress);
+
+        mnuDeleteSelectedAddresses.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editdelete.png"))); // NOI18N
+        mnuDeleteSelectedAddresses.setText("löschen");
+        mnuDeleteSelectedAddresses.setToolTipText("gewählte Adressen löschen");
+        mnuDeleteSelectedAddresses.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuDeleteSelectedAddressesActionPerformed(evt);
+            }
+        });
+        popupAddressActions.add(mnuDeleteSelectedAddresses);
 
         jLabel1.setText("Suchanfrage:");
 
@@ -880,7 +880,7 @@ public class QuickAddressSearchPanel extends javax.swing.JPanel implements Theme
         lblSummary.setVerticalAlignment(javax.swing.SwingConstants.TOP);
         jScrollPane2.setViewportView(lblSummary);
 
-        jLabel18.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/vcard_big.png"))); // NOI18N
+        jLabel18.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/Icons2-20.png"))); // NOI18N
 
         lblPanelTitle.setFont(new java.awt.Font("Dialog", 1, 24)); // NOI18N
         lblPanelTitle.setForeground(new java.awt.Color(255, 255, 255));
@@ -951,9 +951,10 @@ public class QuickAddressSearchPanel extends javax.swing.JPanel implements Theme
             .add(layout.createSequentialGroup()
                 .addContainerGap()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jLabel18)
-                    .add(lblPanelTitle)
-                    .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                    .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
+                        .add(org.jdesktop.layout.GroupLayout.LEADING, lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .add(org.jdesktop.layout.GroupLayout.LEADING, jLabel18, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(org.jdesktop.layout.GroupLayout.TRAILING, cmdQuickSearch)

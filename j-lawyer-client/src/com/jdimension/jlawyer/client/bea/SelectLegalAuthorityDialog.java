@@ -670,7 +670,7 @@ import java.util.Hashtable;
 import java.util.List;
 import javax.swing.DefaultListModel;
 import org.jlawyer.bea.model.LegalAuthorities;
-import org.jlawyer.bea.model.LegalAuthority;
+import org.jlawyer.bea.model.BeaListItem;
 
 /**
  *
@@ -678,9 +678,9 @@ import org.jlawyer.bea.model.LegalAuthority;
  */
 public class SelectLegalAuthorityDialog extends javax.swing.JDialog {
     
-    private LegalAuthority selectedAuthority=null;
+    private BeaListItem selectedAuthority=null;
     
-    private Hashtable<String,LegalAuthority> authorities=new Hashtable<String,LegalAuthority>();
+    private Hashtable<String,BeaListItem> authorities=new Hashtable<String,BeaListItem>();
 
     /**
      * Creates new form SelectLegalAuthorityDialog
@@ -690,8 +690,8 @@ public class SelectLegalAuthorityDialog extends javax.swing.JDialog {
         initComponents();
         
         DefaultListModel lm=new DefaultListModel();
-        List<LegalAuthority> auths=LegalAuthorities.getAuthorities();
-        for(LegalAuthority la: auths) {
+        List<BeaListItem> auths=LegalAuthorities.getAuthorities();
+        for(BeaListItem la: auths) {
             lm.addElement(la.getName());
             authorities.put(la.getName(), la);
         }
@@ -810,8 +810,8 @@ public class SelectLegalAuthorityDialog extends javax.swing.JDialog {
     private void txtSearchKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtSearchKeyReleased
         this.cmdOK.setEnabled(false);
         DefaultListModel lm=new DefaultListModel();
-        List<LegalAuthority> auths=LegalAuthorities.getAuthorities();
-        for(LegalAuthority la: auths) {
+        List<BeaListItem> auths=LegalAuthorities.getAuthorities();
+        for(BeaListItem la: auths) {
             if(la.getName().toLowerCase().indexOf(txtSearch.getText().toLowerCase())>-1)
                 lm.addElement(la.getName());
         }
@@ -896,7 +896,7 @@ public class SelectLegalAuthorityDialog extends javax.swing.JDialog {
     /**
      * @return the selectedAuthority
      */
-    public LegalAuthority getSelectedAuthority() {
+    public BeaListItem getSelectedAuthority() {
         return selectedAuthority;
     }
 }

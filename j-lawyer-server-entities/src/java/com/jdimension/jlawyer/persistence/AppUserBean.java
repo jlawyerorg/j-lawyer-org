@@ -709,6 +709,8 @@ public class AppUserBean implements Serializable {
     private String emailOutUser;
     @Column(name = "emailOutPwd")
     private String emailOutPwd;
+    @Column(name = "emailOutPort")
+    private String emailOutPort;
     @Column(name = "emailSenderName")
     private String emailSenderName;
     @Column(name = "emailSignature")
@@ -1056,6 +1058,20 @@ public class AppUserBean implements Serializable {
      */
     public void setBeaCertificateAutoLogin(boolean beaCertificateAutoLogin) {
         this.beaCertificateAutoLogin = beaCertificateAutoLogin;
+    }
+
+    /**
+     * @return the emailOutPort
+     */
+    public String getEmailOutPort() {
+        return emailOutPort;
+    }
+
+    /**
+     * @param emailOutPort the emailOutPort to set
+     */
+    public void setEmailOutPort(String emailOutPort) {
+        this.emailOutPort = emailOutPort;
     }
     
     

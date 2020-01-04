@@ -684,6 +684,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
+import themes.colors.DefaultColorTheme;
 
 /**
  *
@@ -703,6 +704,7 @@ public class DayCaseHistoryDetailsPanel extends javax.swing.JPanel {
         initComponents();
         this.afb=afb;
         this.lblArchiveFile.setText(afb.getFileNumber() + " " + afb.getName() + " ");
+        this.lblArchiveFile.setBackground(DefaultColorTheme.COLOR_LOGO_BLUE);
     }
 
     public void setEntries(ArrayList<ArchiveFileHistoryBean> list) {
@@ -743,7 +745,7 @@ public class DayCaseHistoryDetailsPanel extends javax.swing.JPanel {
         lblArchiveFile.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
         lblArchiveFile.setForeground(new java.awt.Color(255, 255, 255));
         lblArchiveFile.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        lblArchiveFile.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder.png"))); // NOI18N
+        lblArchiveFile.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_folder_white_36dp.png"))); // NOI18N
         lblArchiveFile.setText("der ./. den");
         lblArchiveFile.setVerticalAlignment(javax.swing.SwingConstants.TOP);
         lblArchiveFile.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));

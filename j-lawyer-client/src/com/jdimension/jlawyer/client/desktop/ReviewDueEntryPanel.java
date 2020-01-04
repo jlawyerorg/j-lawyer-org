@@ -690,6 +690,7 @@ import java.util.Date;
 import javax.swing.JOptionPane;
 import javax.swing.JTextField;
 import org.apache.log4j.Logger;
+import themes.colors.DefaultColorTheme;
 
 /**
  *
@@ -715,6 +716,16 @@ public class ReviewDueEntryPanel extends javax.swing.JPanel {
      */
     public ReviewDueEntryPanel() {
         initComponents();
+        
+        ClientSettings settings=ClientSettings.getInstance();
+        String fontSizeOffset = settings.getConfiguration(settings.CONF_UI_FONTSIZEOFFSET, "0");
+        try {
+            int offset = Integer.parseInt(fontSizeOffset);
+            Font currentFont=this.lblTags.getFont();
+            this.lblTags.setFont(currentFont.deriveFont((float)currentFont.getSize() + (float)offset));
+        } catch (Throwable t) {
+            log.error("Could not set font size", t);
+        }
     }
 
     public void setEntry(ReviewDueEntry entry) {
@@ -862,7 +873,7 @@ public class ReviewDueEntryPanel extends javax.swing.JPanel {
         lblTags = new javax.swing.JLabel();
 
         lblResponsible.setFont(new java.awt.Font("Dialog", 2, 12)); // NOI18N
-        lblResponsible.setForeground(new java.awt.Color(0, 0, 255));
+        lblResponsible.setForeground(new java.awt.Color(14, 114, 181));
         lblResponsible.setText("user");
 
         lblIcon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/clicknrungrey.png"))); // NOI18N
@@ -882,6 +893,7 @@ public class ReviewDueEntryPanel extends javax.swing.JPanel {
 
         java.util.ResourceBundle bundle = java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/ReviewDueEntryPanel"); // NOI18N
         lblDescription.setText(bundle.getString("label.followup")); // NOI18N
+        lblDescription.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         lblDescription.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 lblDescriptionMouseClicked(evt);
@@ -903,7 +915,7 @@ public class ReviewDueEntryPanel extends javax.swing.JPanel {
         });
 
         lblTags.setFont(new java.awt.Font("Dialog", 0, 10)); // NOI18N
-        lblTags.setForeground(new java.awt.Color(0, 0, 204));
+        lblTags.setForeground(new java.awt.Color(14, 114, 181));
         lblTags.setText(" ");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
@@ -935,17 +947,17 @@ public class ReviewDueEntryPanel extends javax.swing.JPanel {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(cmdPostpone)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGap(3, 3, 3)
                         .addComponent(lblResponsible))
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(chkDescription)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGap(3, 3, 3)
                         .addComponent(lblIcon, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(lblDescription)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGap(3, 3, 3)
                         .addComponent(lblTags)))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGap(3, 3, 3))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -994,7 +1006,7 @@ public class ReviewDueEntryPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_lblDescriptionMouseClicked
 
     private void lblDescriptionMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblDescriptionMouseEntered
-        this.lblDescription.setForeground(new Color(0, 0, 255));
+        this.lblDescription.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
     }//GEN-LAST:event_lblDescriptionMouseEntered
 
     private void lblDescriptionMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblDescriptionMouseExited

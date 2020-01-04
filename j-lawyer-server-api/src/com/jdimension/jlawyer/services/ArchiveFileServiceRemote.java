@@ -787,10 +787,16 @@ public interface ArchiveFileServiceRemote {
 
     boolean udpateFileNumber(String from, String to) throws Exception;
 
+    boolean doesDocumentExist(String caseId, String documentName);
+    
     boolean doesDocumentExist(String id);
 
     List<ArchiveFileDocumentsBean> getTaggedDocuments(java.lang.String[] docTagName, int limit);
 
     Hashtable<String, ArrayList<String>> getDocumentTagsForCase(String caseId);
+
+    void renameTag(String fromName, String toName) throws Exception;
+
+    void renameDocumentTag(String fromName, String toName) throws Exception;
 
 }

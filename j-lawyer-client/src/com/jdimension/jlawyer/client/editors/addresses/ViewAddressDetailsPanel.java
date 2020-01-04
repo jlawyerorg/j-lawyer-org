@@ -679,7 +679,7 @@ public class ViewAddressDetailsPanel extends AddressPanel {
         this.cmdToEditMode.setEnabled(true);
         
         this.lblPanelTitle.setText("Adresse einsehen");
-        this.lblPanelTitle.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/info_big.png")));
+        //this.lblPanelTitle.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/info_big.png")));
     }
 
     @Override

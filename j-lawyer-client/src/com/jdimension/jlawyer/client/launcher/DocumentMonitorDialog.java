@@ -801,18 +801,18 @@ public class DocumentMonitorDialog extends javax.swing.JDialog implements Docume
     }// </editor-fold>//GEN-END:initComponents
 
     private void cmdCloseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCloseActionPerformed
-        if(this.shuttingDown) {
-
-            DocumentObserver observer = DocumentObserver.getInstance();
-            int openDocs=observer.getDocuments().size();
-            if (openDocs > 0) {
-
-                int response = JOptionPane.showConfirmDialog(this, "Anwendung schliessen ohne offene Dokumente zu speichern?", openDocs + " offene Dokumente", JOptionPane.YES_NO_OPTION);
-                if (response == JOptionPane.NO_OPTION) {
-                    return;
-                }
-            }
-        }
+//        if(this.shuttingDown) {
+//
+//            DocumentObserver observer = DocumentObserver.getInstance();
+//            int openDocs=observer.getDocuments().size();
+//            if (openDocs > 0) {
+//
+//                int response = JOptionPane.showConfirmDialog(this, "Anwendung schliessen ohne offene Dokumente zu speichern?", openDocs + " offene Dokumente", JOptionPane.YES_NO_OPTION);
+//                if (response == JOptionPane.NO_OPTION) {
+//                    return;
+//                }
+//            }
+//        }
         
         this.setVisible(false);
         this.dispose();

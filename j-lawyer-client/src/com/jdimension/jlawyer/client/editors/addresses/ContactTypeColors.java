@@ -664,6 +664,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.client.editors.addresses;
 
 import java.awt.Color;
+import themes.colors.DefaultColorTheme;
 
 /**
  *
@@ -671,8 +672,12 @@ import java.awt.Color;
  */
 public class ContactTypeColors {
     
-    public static final Color CLIENT=new Color(153, 204, 0);
-    public static final Color OPPONENT=new Color(255, 51, 0).brighter();
-    public static final Color OTHER=new Color(102, 204, 255);
+//    public static final Color CLIENT=new Color(153, 204, 0);
+//    public static final Color OPPONENT=new Color(255, 51, 0).brighter();
+//    public static final Color OTHER=new Color(102, 204, 255);
+    
+    public static final Color CLIENT=DefaultColorTheme.COLOR_LOGO_GREEN;
+    public static final Color OPPONENT=DefaultColorTheme.COLOR_LOGO_RED;
+    public static final Color OTHER=DefaultColorTheme.COLOR_LOGO_BLUE;
     
 }

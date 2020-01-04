@@ -812,6 +812,8 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         chkEmailStartTls = new javax.swing.JCheckBox();
         pwdInPassword = new javax.swing.JPasswordField();
         pwdOutPassword = new javax.swing.JPasswordField();
+        jLabel17 = new javax.swing.JLabel();
+        txtOutPort = new javax.swing.JTextField();
         jPanel8 = new javax.swing.JPanel();
         jLabel15 = new javax.swing.JLabel();
         jScrollPane2 = new javax.swing.JScrollPane();
@@ -1139,6 +1141,8 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
 
         chkEmailStartTls.setText("StartTLS");
 
+        jLabel17.setText("Port (optional):");
+
         org.jdesktop.layout.GroupLayout jPanel7Layout = new org.jdesktop.layout.GroupLayout(jPanel7);
         jPanel7.setLayout(jPanel7Layout);
         jPanel7Layout.setHorizontalGroup(
@@ -1173,16 +1177,20 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                             .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel7Layout.createSequentialGroup()
                                 .add(jLabel7)
                                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)))
+                        .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
+                            .add(txtOutServer)
+                            .add(txtOutUsername, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 229, Short.MAX_VALUE))
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                         .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                             .add(jPanel7Layout.createSequentialGroup()
-                                .add(txtOutUsername, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 229, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                                 .add(jLabel9)
                                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                                 .add(pwdOutPassword))
                             .add(jPanel7Layout.createSequentialGroup()
-                                .add(txtOutServer)
+                                .add(jLabel17)
                                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(txtOutPort)
+                                .add(18, 18, 18)
                                 .add(chkEmailStartTls)
                                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                                 .add(chkEmailOutSsl))))
@@ -1231,7 +1239,9 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                     .add(txtOutServer, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(jLabel7)
                     .add(chkEmailOutSsl)
-                    .add(chkEmailStartTls))
+                    .add(chkEmailStartTls)
+                    .add(jLabel17)
+                    .add(txtOutPort, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
                     .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
@@ -1250,7 +1260,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 .addContainerGap(13, Short.MAX_VALUE))
         );
 
-        jTabbedPane1.addTab("Email", jPanel7);
+        jTabbedPane1.addTab("E-Mail", jPanel7);
 
         jLabel15.setText("Zertifikat:");
 
@@ -1537,6 +1547,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 this.txtInUser.setText(u.getEmailInUser());
                 this.pwdInPassword.setText(u.getEmailInPwd());
                 this.txtOutServer.setText(u.getEmailOutServer());
+                this.txtOutPort.setText(u.getEmailOutPort());
                 this.txtOutUsername.setText(u.getEmailOutUser());
                 this.pwdOutPassword.setText(u.getEmailOutPwd());
                 this.chkEmailInSsl.setSelected(u.isEmailInSsl());
@@ -1645,6 +1656,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 u.setEmailInUser(this.txtInUser.getText());
                 u.setEmailInPwd(this.pwdInPassword.getText());
                 u.setEmailOutServer(this.txtOutServer.getText());
+                u.setEmailOutPort(this.txtOutPort.getText());
                 u.setEmailOutUser(this.txtOutUsername.getText());
                 u.setEmailOutPwd(this.pwdOutPassword.getText());
                 u.setEmailInSsl(this.chkEmailInSsl.isSelected());
@@ -1686,6 +1698,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         this.txtInUser.setText("");
         this.pwdInPassword.setText("");
         this.txtOutServer.setText("");
+        this.txtOutPort.setText("");
         this.txtOutUsername.setText("");
         this.pwdOutPassword.setText("");
         this.chkEmailInSsl.setSelected(true);
@@ -2039,6 +2052,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
     private javax.swing.JLabel jLabel14;
     private javax.swing.JLabel jLabel15;
     private javax.swing.JLabel jLabel16;
+    private javax.swing.JLabel jLabel17;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
@@ -2071,6 +2085,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
     private javax.swing.JTextField txtEmailSender;
     private javax.swing.JTextField txtInServer;
     private javax.swing.JTextField txtInUser;
+    private javax.swing.JTextField txtOutPort;
     private javax.swing.JTextField txtOutServer;
     private javax.swing.JTextField txtOutUsername;
     private javax.swing.JPasswordField txtPassword;

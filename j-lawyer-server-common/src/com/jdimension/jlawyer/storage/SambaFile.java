@@ -794,5 +794,10 @@ public class SambaFile extends VirtualFile {
         else
             return 0;
     }
+
+    @Override
+    public void deleteAll() throws Exception {
+        this.sf.delete();
+    }
     
 }

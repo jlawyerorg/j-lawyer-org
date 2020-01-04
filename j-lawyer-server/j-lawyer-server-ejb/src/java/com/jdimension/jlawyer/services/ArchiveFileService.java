@@ -2005,12 +2005,12 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 tag.setId(tagId);
                 tag.setArchiveFileKey(aFile);
                 this.archiveFileTagsFacade.create(tag);
-                historyText = "Akten-Tag gesetzt: " + tag.getTagName();
+                historyText = "Akten-Etikett gesetzt: " + tag.getTagName();
             }
         } else if (check.size() > 0) {
             ArchiveFileTagsBean remove = (ArchiveFileTagsBean) check.get(0);
             this.archiveFileTagsFacade.remove(remove);
-            historyText = "Akten-Tag entfernt: " + tag.getTagName();
+            historyText = "Akten-Etikett entfernt: " + tag.getTagName();
         }
 
         ArchiveFileHistoryBean newHistEntry = new ArchiveFileHistoryBean();
@@ -2040,12 +2040,12 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 tag.setId(tagId);
                 tag.setArchiveFileKey(aFile);
                 this.documentTagsFacade.create(tag);
-                historyText = "Dokument-Tag gesetzt an " + aFile.getName() + ": " + tag.getTagName();
+                historyText = "Dokument-Etikett gesetzt an " + aFile.getName() + ": " + tag.getTagName();
             }
         } else if (check.size() > 0) {
             DocumentTagsBean remove = (DocumentTagsBean) check.get(0);
             this.documentTagsFacade.remove(remove);
-            historyText = "Dokument-Tag entfernt von " + aFile.getName() + ": " + tag.getTagName();
+            historyText = "Dokument-Etikett entfernt von " + aFile.getName() + ": " + tag.getTagName();
         }
 
         ArchiveFileHistoryBean newHistEntry = new ArchiveFileHistoryBean();
@@ -2097,7 +2097,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             }
         } catch (SQLException sqle) {
             log.error("Error finding tags in use", sqle);
-            throw new EJBException("Aktuelle genutzte Tags konnten nicht gefunden werden.", sqle);
+            throw new EJBException("Aktuelle genutzte Etiketten konnten nicht gefunden werden.", sqle);
         } finally {
             try {
                 rs.close();
@@ -2139,7 +2139,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             }
         } catch (SQLException sqle) {
             log.error("Error finding tags in use", sqle);
-            throw new EJBException("Aktuelle genutzte Tags konnten nicht gefunden werden.", sqle);
+            throw new EJBException("Aktuelle genutzte Etiketten konnten nicht gefunden werden.", sqle);
         } finally {
             try {
                 rs.close();
@@ -3045,7 +3045,8 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                     inClauseDoc = inClauseDoc.replaceFirst(",", "");
 
                     // with archive and tag
-                    st = con.prepareStatement("select distinct case_tags.archiveFileKey, case_tags.tagName, document_tags.tagName from case_tags, case_documents, document_tags where case_tags.archiveFileKey in (" + "select cases.id from cases, case_tags where (ucase(cases.name) like ? or ucase(fileNumber) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(subjectField) like ?) and ((case_tags.tagName in (" + inClauseCase + ") and case_tags.archiveFileKey=cases.id) or (document_tags.tagName in (" + inClauseDoc + ") and document_tags.documentKey=case_documents.id and case_documents.archiveFileKey=cases.id)))");
+                    //st = con.prepareStatement("select distinct case_tags.archiveFileKey, case_tags.tagName, document_tags.tagName from case_tags, case_documents, document_tags where case_tags.archiveFileKey in (" + "select cases.id from cases, case_tags where (ucase(cases.name) like ? or ucase(fileNumber) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(subjectField) like ?) and ((case_tags.tagName in (" + inClauseCase + ") and case_tags.archiveFileKey=cases.id) or (document_tags.tagName in (" + inClauseDoc + ") and document_tags.documentKey=case_documents.id and case_documents.archiveFileKey=cases.id)))");
+                    st = con.prepareStatement("select distinct case_tags.archiveFileKey, case_tags.tagName, document_tags.tagName from case_tags, case_documents, document_tags where case_tags.archiveFileKey in (" + "select cases.id from cases where (ucase(cases.name) like ? or ucase(fileNumber) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(subjectField) like ?) and ((case_tags.tagName in (" + inClauseCase + ") and case_tags.archiveFileKey=cases.id) or (document_tags.tagName in (" + inClauseDoc + ") and document_tags.documentKey=case_documents.id and case_documents.archiveFileKey=cases.id)))");
                     st.setString(1, wildCard);
                     st.setString(2, wildCard);
                     st.setString(3, wildCard);
@@ -3093,7 +3094,8 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 inClauseCase = inClauseCase.replaceFirst(",", "");
                 inClauseDoc = inClauseDoc.replaceFirst(",", "");
                 // without archive and with tag
-                st = con.prepareStatement("select distinct case_tags.archiveFileKey, case_tags.tagName, document_tags.tagName from case_tags, case_documents, document_tags where case_tags.archiveFileKey in (" + "select cases.id from cases, case_tags where (ucase(cases.name) like ? or ucase(fileNumber) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(subjectField) like ?) and archived=0 and ((case_tags.tagName in (" + inClauseCase + ") and case_tags.archiveFileKey=cases.id) or (document_tags.tagName in (" + inClauseDoc + ") and document_tags.documentKey=case_documents.id and case_documents.archiveFileKey=cases.id)))");
+                //st = con.prepareStatement("select distinct case_tags.archiveFileKey, case_tags.tagName, document_tags.tagName from case_tags, case_documents, document_tags where case_tags.archiveFileKey in (" + "select cases.id from cases, case_tags where (ucase(cases.name) like ? or ucase(fileNumber) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(subjectField) like ?) and archived=0 and ((case_tags.tagName in (" + inClauseCase + ") and case_tags.archiveFileKey=cases.id) or (document_tags.tagName in (" + inClauseDoc + ") and document_tags.documentKey=case_documents.id and case_documents.archiveFileKey=cases.id)))");
+                st = con.prepareStatement("select distinct case_tags.archiveFileKey, case_tags.tagName, document_tags.tagName from case_tags, case_documents, document_tags where case_tags.archiveFileKey in (" + "select cases.id from cases where (ucase(cases.name) like ? or ucase(fileNumber) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(subjectField) like ?) and archived=0 and ((case_tags.tagName in (" + inClauseCase + ") and case_tags.archiveFileKey=cases.id) or (document_tags.tagName in (" + inClauseDoc + ") and document_tags.documentKey=case_documents.id and case_documents.archiveFileKey=cases.id)))");
                 st.setString(1, wildCard);
                 st.setString(2, wildCard);
                 st.setString(3, wildCard);
@@ -3340,6 +3342,23 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
     @Override
     @RolesAllowed({"loginRole"})
+    public boolean doesDocumentExist(String caseId, String documentName) {
+        ArchiveFileBean aFile = this.archiveFileFacade.find(caseId);
+
+        List resultList = this.archiveFileDocumentsFacade.findByArchiveFileKey(aFile);
+        for (Object d : resultList) {
+            if (d instanceof ArchiveFileDocumentsBean) {
+                ArchiveFileDocumentsBean doc = (ArchiveFileDocumentsBean) d;
+                if (doc.getName().equalsIgnoreCase(documentName)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+    
+    @Override
+    @RolesAllowed({"loginRole"})
     public boolean doesDocumentExist(String id) {
         ArchiveFileDocumentsBean db = this.archiveFileDocumentsFacade.find(id);
         if (db == null) {
@@ -3488,6 +3507,48 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         }
 
         return returnList;
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public void renameTag(String fromName, String toName) throws Exception {
+        
+        StringGenerator idGen = new StringGenerator();
+
+        List<ArchiveFileTagsBean> tags = this.archiveFileTagsFacade.findByTagName(fromName);
+        for (ArchiveFileTagsBean t : tags) {
+            t.setTagName(toName);
+            this.archiveFileTagsFacade.edit(t);
+
+            ArchiveFileHistoryBean newHistEntry = new ArchiveFileHistoryBean();
+            newHistEntry.setId(idGen.getID().toString());
+            newHistEntry.setArchiveFileKey(t.getArchiveFileKey());
+            newHistEntry.setChangeDate(new Date());
+            newHistEntry.setChangeDescription("Etikett geändert: " + fromName + " -> " + toName);
+            newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
+            this.archiveFileHistoryFacade.create(newHistEntry);
+        }
+        
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public void renameDocumentTag(String fromName, String toName) throws Exception {
+        StringGenerator idGen = new StringGenerator();
+
+        List<DocumentTagsBean> tags = this.documentTagsFacade.findByTagName(fromName);
+        for (DocumentTagsBean t : tags) {
+            t.setTagName(toName);
+            this.documentTagsFacade.edit(t);
+
+            ArchiveFileHistoryBean newHistEntry = new ArchiveFileHistoryBean();
+            newHistEntry.setId(idGen.getID().toString());
+            newHistEntry.setArchiveFileKey(t.getDocumentKey().getArchiveFileKey());
+            newHistEntry.setChangeDate(new Date());
+            newHistEntry.setChangeDescription("Etikett für Dokument " + t.getDocumentKey().getName() + " geändert: " + fromName + " -> " + toName);
+            newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
+            this.archiveFileHistoryFacade.create(newHistEntry);
+        }
     }
 
 }

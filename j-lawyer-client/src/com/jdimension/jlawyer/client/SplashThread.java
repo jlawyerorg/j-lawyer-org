@@ -873,20 +873,6 @@ public class SplashThread implements Runnable {
         };
         pool.execute(reportsRunnable);
 
-        Runnable helpRunnable = new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.help"), true);
-                    loadHelp();
-                } catch (Throwable t) {
-                    log.error("Error loading tips of the day", t);
-                }
-            }
-
-        };
-        pool.execute(helpRunnable);
-
         Runnable pluginRunnable = new Runnable() {
             @Override
             public void run() {
@@ -911,7 +897,18 @@ public class SplashThread implements Runnable {
         updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.modules"), true);
         this.loadedMods = 0;
         this.updateProgress(false, this.numberOfMods, 0, "");
-        this.preloadEditors(theme, rootModule);
+//        try {
+//            SwingUtilities.invokeAndWait(new Runnable() {
+//                @Override
+//                public void run() {
+        preloadEditors(theme, rootModule);
+//                }
+//
+//            });
+//        } catch (Exception ex) {
+//
+//        }
+        //this.preloadEditors(theme, rootModule);
         //updateStatus(".", true);
         //pool.shutdown();
 //        try {
@@ -940,8 +937,12 @@ public class SplashThread implements Runnable {
 
                 ClientSettings cs = ClientSettings.getInstance();
                 gui.setTitle(gui.getTitle() + " " + VersionUtils.getFullClientVersion() + " [" + UserSettings.getInstance().getCurrentUser().getPrincipalId() + "@" + cs.getConfiguration(ClientSettings.CONF_LASTSERVER, "localhost") + "]");
-
+                gui.buildModuleBar();
+                
+                gui.pack();
+                gui.doLayout();
                 gui.setVisible(true);
+                
                 //gui.setDividerLocation(135);
 
                 notifyEditorForStatus(ClientSettings.getInstance().getRootModule());
@@ -978,106 +979,6 @@ public class SplashThread implements Runnable {
                 }
             }
         });
-    }
-
-    private void loadHelp() throws Exception {
-        this.updateProgress(false, 1, 0, "");
-
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    URL updateURL = new URL("https://www.j-lawyer.org/downloads/tip-list.xml");
-                    URLConnection urlCon = updateURL.openConnection();
-                    urlCon.setRequestProperty("User-Agent", "j-lawyer Client v" + VersionUtils.getFullClientVersion());
-                    urlCon.setConnectTimeout(5000);
-                    urlCon.setReadTimeout(5000);
-
-                    InputStream is = urlCon.getInputStream();
-                    InputStreamReader reader = new InputStreamReader(is, "UTF-8");
-
-                    char[] buffer = new char[1024];
-                    int len = 0;
-                    StringBuffer sb = new StringBuffer();
-                    while ((len = reader.read(buffer)) > -1) {
-                        sb.append(buffer, 0, len);
-                    }
-                    reader.close();
-                    is.close();
-                    String updateContent = sb.toString();
-
-                    DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-                    DocumentBuilder remoteDb = dbf.newDocumentBuilder();
-                    InputSource inSrc1 = new InputSource(new StringReader(updateContent));
-                    inSrc1.setEncoding("UTF-8");
-                    Document remoteDoc = remoteDb.parse(inSrc1);
-
-                    NodeList remoteList = remoteDoc.getElementsByTagName("tip-list");
-                    String remoteVersion = remoteList.item(0).getAttributes().getNamedItem("version").getNodeValue();
-                    String baseUrl = remoteList.item(0).getAttributes().getNamedItem("baseurl").getNodeValue();
-                    if (!baseUrl.endsWith("/")) {
-                        baseUrl = baseUrl + "/";
-                    }
-
-                    remoteList = remoteDoc.getElementsByTagName("tip");
-
-                    // load from server when not in cache or when version has been updated
-                    boolean reload = false;
-                    String tipDir = System.getProperty("user.home") + System.getProperty("file.separator") + ".j-lawyer-client" + System.getProperty("file.separator") + "tips";
-                    File tipDirFile = new File(tipDir);
-                    if (!tipDirFile.exists()) {
-                        tipDirFile.mkdirs();
-                    }
-                    String tipList = tipDir + System.getProperty("file.separator") + "tip-list.xml";
-                    File tipListFile = new File(tipList);
-                    if (tipListFile.exists()) {
-                        // check version
-                        DocumentBuilder localDb = dbf.newDocumentBuilder();
-                        InputSource inSrc = new InputSource(new FileReader(tipListFile));
-                        inSrc.setEncoding("UTF-8");
-                        Document localDoc = localDb.parse(inSrc);
-
-                        NodeList nl = localDoc.getElementsByTagName("tip-list");
-                        String localVersion = nl.item(0).getAttributes().getNamedItem("version").getNodeValue();
-
-                        if (!localVersion.equalsIgnoreCase(remoteVersion)) {
-                            reload = true;
-                        }
-                    } else {
-                        reload = true;
-                    }
-
-                    if (reload) {
-                        // delete all including the tip-list.xml
-                        File[] children = tipDirFile.listFiles();
-                        for (File child : children) {
-                            child.delete();
-                        }
-                    }
-
-                    // always write new tip-list.xml - it needs to be downloaded anyways!
-                    FileWriter fw = new FileWriter(tipListFile);
-                    fw.write(updateContent);
-                    fw.close();
-
-                    if (reload) {
-                        //updateProgress(false, remoteList.getLength() + 1, 1, "");
-                        // re-download all the tip html files
-                        for (int i = 0; i < remoteList.getLength(); i++) {
-                            //updateProgress(false, remoteList.getLength() + 1, i + 1, "");
-                            Node currentTip = remoteList.item(i);
-                            String htmlName = currentTip.getAttributes().getNamedItem("file").getNodeValue();
-                            download(baseUrl + htmlName, tipDir + System.getProperty("file.separator") + htmlName);
-                        }
-                    }
-                } catch (Throwable t) {
-                    log.error("Error loading tip of the day", t);
-                    t.printStackTrace();
-                }
-            }
-
-        }).start();
-
     }
 
     private void download(String url, String localFile) throws Exception {
@@ -1256,44 +1157,6 @@ public class SplashThread implements Runnable {
 
     private void preloadEditors(ThemeSettings theme, ModuleMetadata module) {
 
-//        Runnable r = new Runnable() {
-//            public void run() {
-//                //this.updateStatus(java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.loadingmodules"), new Object[] {this.loadedMods, this.numberOfMods, module.getFullName()}), true);
-//                updateStatus(java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.loadingmodules"), new Object[]{module.getFullName()}), true);
-//
-//                String editorClass = ((ModuleMetadata) module).getEditorClass();
-//                if (editorClass != null) {
-//                    Object editor = null;
-//                    //updateStatus(".", false);
-//                    try {
-//                        editor = EditorsRegistry.getInstance().getEditor(editorClass);
-//                        if (module.getBackgroundImage() != null) {
-//                            if (editor instanceof ThemeableEditor) {
-//                                Image image = theme.getBackground(module);
-//                                if (image != null) {
-//                                    ((ThemeableEditor) editor).setBackgroundImage(image);
-//                                }
-//                            } else {
-//                                log.warn("Editor " + editorClass + " has a background image set but does not implement interface ThemeableEditor");
-//                            }
-//                        }
-//
-//                    } catch (Exception ex) {
-//                        log.error("Error preloading editor from class " + editorClass, ex);
-//                        ThreadUtils.showErrorDialog(owner, java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("error.loadingeditor"), new Object[]{ex.getMessage()}), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("msg.error"));
-//                    }
-//
-//                }
-//                loadedMods++;
-//                updateProgress(false, numberOfMods, loadedMods, "");
-//            }
-//        };
-//        pool.execute(r);
-//
-//        for (int i = 0; i < module.getChildCount(); i++) {
-//            this.preloadEditors(theme, (ModuleMetadata) module.getChildAt(i), pool);
-//        }
-
         this.loadedMods++;
 
         //this.updateStatus(java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.loadingmodules"), new Object[] {this.loadedMods, this.numberOfMods, module.getFullName()}), true);
@@ -1302,18 +1165,44 @@ public class SplashThread implements Runnable {
 
         String editorClass = ((ModuleMetadata) module).getEditorClass();
         if (editorClass != null) {
-            Object editor = null;
+            //Object editor = null;
             //updateStatus(".", false);
             try {
-                editor = EditorsRegistry.getInstance().getEditor(editorClass);
-                if (module.getBackgroundImage() != null) {
-                    if (editor instanceof ThemeableEditor) {
-                        Image image = theme.getBackground(module);
-                        if (image != null) {
-                            ((ThemeableEditor) editor).setBackgroundImage(image);
+                if (!SwingUtilities.isEventDispatchThread()) {
+                    SwingUtilities.invokeAndWait(new Runnable() {
+                        @Override
+                        public void run() {
+                            try {
+                                Object editor = EditorsRegistry.getInstance().getEditor(editorClass);
+                                if (module.getBackgroundImage() != null) {
+                                    if (editor instanceof ThemeableEditor) {
+                                        Image image = theme.getBackground(module);
+                                        if (image != null) {
+                                            ((ThemeableEditor) editor).setBackgroundImage(image);
+                                        }
+                                    } else {
+                                        log.warn("Editor " + editorClass + " has a background image set but does not implement interface ThemeableEditor");
+                                    }
+                                }
+                            } catch (Exception ex) {
+                                log.error("Fehler beim Laden des Moduls " + editorClass, ex);
+                                ThreadUtils.showErrorDialog(owner, "Fehler beim Laden des Moduls " + editorClass + ": " + ex.getMessage(), "Fehler");
+                            }
                         }
-                    } else {
-                        log.warn("Editor " + editorClass + " has a background image set but does not implement interface ThemeableEditor");
+
+                    });
+
+                } else {
+                    Object editor = EditorsRegistry.getInstance().getEditor(editorClass);
+                    if (module.getBackgroundImage() != null) {
+                        if (editor instanceof ThemeableEditor) {
+                            Image image = theme.getBackground(module);
+                            if (image != null) {
+                                ((ThemeableEditor) editor).setBackgroundImage(image);
+                            }
+                        } else {
+                            log.warn("Editor " + editorClass + " has a background image set but does not implement interface ThemeableEditor");
+                        }
                     }
                 }
 
@@ -1352,31 +1241,55 @@ public class SplashThread implements Runnable {
     }
 
     private void updateStatus(final String s, final boolean newLine) {
-        SwingUtilities.invokeLater(
-                new Runnable() {
-            public void run() {
-                if (splash != null) {
+        if (!SwingUtilities.isEventDispatchThread()) {
+            SwingUtilities.invokeLater(
+                    new Runnable() {
+                public void run() {
+                    if (splash != null) {
 
-                    if (newLine) {
-                        splash.addStatus(System.getProperty("line.separator"));
+                        if (newLine) {
+                            splash.addStatus(System.getProperty("line.separator"));
+                        }
+
+                        splash.addStatus(s);
+                        //splash.revalidate();
+                        //splash.repaint();
                     }
-
-                    splash.addStatus(s);
                 }
+            });
+        } else {
+            if (splash != null) {
+
+                if (newLine) {
+                    splash.addStatus(System.getProperty("line.separator"));
+                }
+
+                splash.addStatus(s);
+                //splash.revalidate();
+                //splash.repaint();
             }
-        });
+        }
     }
 
     private void updateProgress(final boolean indeterminate, final int max, final int value, final String s) {
-        SwingUtilities.invokeLater(
-                new Runnable() {
-            public void run() {
-                if (splash != null) {
-                    splash.setProgress(indeterminate, max, value, s);
-
+        if (!SwingUtilities.isEventDispatchThread()) {
+            SwingUtilities.invokeLater(
+                    new Runnable() {
+                public void run() {
+                    if (splash != null) {
+                        splash.setProgress(indeterminate, max, value, s);
+                        //splash.revalidate();
+                        //splash.repaint();
+                    }
                 }
+            });
+        } else {
+            if (splash != null) {
+                splash.setProgress(indeterminate, max, value, s);
+                //splash.revalidate();
+                //splash.repaint();
             }
-        });
+        }
     }
 
     private void loadCalculations() throws Exception {

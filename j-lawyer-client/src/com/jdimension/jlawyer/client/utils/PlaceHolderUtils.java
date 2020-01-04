@@ -674,7 +674,7 @@ import java.util.Date;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Locale;
-import org.jlawyer.plugins.calculation.CalculationTable;
+import org.jlawyer.plugins.calculation.GenericCalculationTable;
 
 /**
  *
@@ -689,7 +689,7 @@ public class PlaceHolderUtils extends PlaceHolders {
 
     }
 
-    public static Hashtable getPlaceHolderValues(Hashtable placeHolders, ArchiveFileBean aFile, List<ArchiveFileAddressesBean> involved, AddressBean cl, AddressBean opp, AddressBean oppAtt, String dictateSign, CalculationTable calculationTable) {
+    public static Hashtable getPlaceHolderValues(Hashtable placeHolders, ArchiveFileBean aFile, List<ArchiveFileAddressesBean> involved, AddressBean cl, AddressBean opp, AddressBean oppAtt, String dictateSign, GenericCalculationTable calculationTable) {
 
         NumberFormat currencyFormat = NumberFormat.getNumberInstance();
         currencyFormat.setMinimumFractionDigits(2);
@@ -752,6 +752,9 @@ public class PlaceHolderUtils extends PlaceHolders {
         if (placeHolders.containsKey(PROFIL_STEUERNR)) {
             placeHolders.put(PROFIL_STEUERNR, set.getSetting(set.PROFILE_COMPANYTAXID, ""));
         }
+        if (placeHolders.containsKey(PROFIL_USTIDNR)) {
+            placeHolders.put(PROFIL_USTIDNR, set.getSetting(set.PROFILE_COMPANYUSTID, ""));
+        }
         if (placeHolders.containsKey(PROFIL_BANK)) {
             placeHolders.put(PROFIL_BANK, set.getSetting(set.PROFILE_COMPANYBANK, ""));
         }
@@ -761,6 +764,16 @@ public class PlaceHolderUtils extends PlaceHolders {
         if (placeHolders.containsKey(PROFIL_KONTONR)) {
             placeHolders.put(PROFIL_KONTONR, set.getSetting(set.PROFILE_COMPANYACCOUNTNO, ""));
         }
+        if (placeHolders.containsKey(PROFIL_BANK_AK)) {
+            placeHolders.put(PROFIL_BANK_AK, set.getSetting(set.PROFILE_COMPANYBANK_AK, ""));
+        }
+        if (placeHolders.containsKey(PROFIL_BLZ_AK)) {
+            placeHolders.put(PROFIL_BLZ_AK, set.getSetting(set.PROFILE_COMPANYBANKCODE_AK, ""));
+        }
+        if (placeHolders.containsKey(PROFIL_KONTONR_AK)) {
+            placeHolders.put(PROFIL_KONTONR_AK, set.getSetting(set.PROFILE_COMPANYACCOUNTNO_AK, ""));
+        }
+        
 
         // client information
         if (cl != null) {
@@ -772,6 +785,9 @@ public class PlaceHolderUtils extends PlaceHolders {
             }
             if (placeHolders.containsKey(MANDANT_FIRMA)) {
                 placeHolders.put(MANDANT_FIRMA, val(cl.getCompany()));
+            }
+            if (placeHolders.containsKey(MANDANT_ABTLG)) {
+                placeHolders.put(MANDANT_ABTLG, val(cl.getDepartment()));
             }
             if (placeHolders.containsKey(MANDANT_TITEL)) {
                 placeHolders.put(MANDANT_TITEL, val(cl.getTitle()));
@@ -890,6 +906,9 @@ public class PlaceHolderUtils extends PlaceHolders {
             if (placeHolders.containsKey(GEGNER_FIRMA)) {
                 placeHolders.put(GEGNER_FIRMA, val(opp.getCompany()));
             }
+            if (placeHolders.containsKey(GEGNER_ABTLG)) {
+                placeHolders.put(GEGNER_ABTLG, val(opp.getDepartment()));
+            }
             if (placeHolders.containsKey(GEGNER_TITEL)) {
                 placeHolders.put(GEGNER_TITEL, val(opp.getTitle()));
             }
@@ -1005,6 +1024,9 @@ public class PlaceHolderUtils extends PlaceHolders {
             }
             if (placeHolders.containsKey(DRITTE_FIRMA)) {
                 placeHolders.put(DRITTE_FIRMA, val(oppAtt.getCompany()));
+            }
+            if (placeHolders.containsKey(DRITTE_ABTLG)) {
+                placeHolders.put(DRITTE_ABTLG, val(oppAtt.getDepartment()));
             }
             if (placeHolders.containsKey(DRITTE_TITEL)) {
                 placeHolders.put(DRITTE_TITEL, val(oppAtt.getTitle()));

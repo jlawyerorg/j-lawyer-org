@@ -716,7 +716,33 @@ public class UserProfileDialog extends javax.swing.JDialog {
             "licq.png",
             "mozillacrystal.png",
             "msn.png",
-            "organizer.png"
+            "organizer.png",
+            "Mitarbeiter-Icons-01.png",
+            "Mitarbeiter-Icons-02.png",
+            "Mitarbeiter-Icons-03.png",
+            "Mitarbeiter-Icons-04.png",
+            "Mitarbeiter-Icons-05.png",
+            "Mitarbeiter-Icons-06.png",
+            "Mitarbeiter-Icons-07.png",
+            "Mitarbeiter-Icons-08.png",
+            "Mitarbeiter-Icons-09.png",
+            "Mitarbeiter-Icons-10.png",
+            "Mitarbeiter-Icons-11.png",
+            "Mitarbeiter-Icons-12.png",
+            "Mitarbeiter-Icons-13.png",
+            "Mitarbeiter-Icons-14.png",
+            "Mitarbeiter-Icons-15.png",
+            "Mitarbeiter-Icons-16.png",
+            "Mitarbeiter-Icons-17.png",
+            "Mitarbeiter-Icons-18.png",
+            "Mitarbeiter-Icons-19.png",
+            "Mitarbeiter-Icons-20.png",
+            "Mitarbeiter-Icons-21.png",
+            "Mitarbeiter-Icons-22.png",
+            "Mitarbeiter-Icons-23.png",
+            "Mitarbeiter-Icons-24.png",
+            "Mitarbeiter-Icons-25.png"
+            
         };
         
         Object[] items =
@@ -735,7 +761,33 @@ public class UserProfileDialog extends javax.swing.JDialog {
             new ImageIcon(getClass().getResource("/avatar32/licq.png")),
             new ImageIcon(getClass().getResource("/avatar32/mozillacrystal.png")),
             new ImageIcon(getClass().getResource("/avatar32/msn.png")),
-            new ImageIcon(getClass().getResource("/avatar32/organizer.png"))
+            new ImageIcon(getClass().getResource("/avatar32/organizer.png")),
+            new ImageIcon(getClass().getResource("/avatar32/Mitarbeiter-Icons-01.png")),
+            new ImageIcon(getClass().getResource("/avatar32/Mitarbeiter-Icons-02.png")),
+            new ImageIcon(getClass().getResource("/avatar32/Mitarbeiter-Icons-03.png")),
+            new ImageIcon(getClass().getResource("/avatar32/Mitarbeiter-Icons-04.png")),
+            new ImageIcon(getClass().getResource("/avatar32/Mitarbeiter-Icons-05.png")),
+            new ImageIcon(getClass().getResource("/avatar32/Mitarbeiter-Icons-06.png")),
+            new ImageIcon(getClass().getResource("/avatar32/Mitarbeiter-Icons-07.png")),
+            new ImageIcon(getClass().getResource("/avatar32/Mitarbeiter-Icons-08.png")),
+            new ImageIcon(getClass().getResource("/avatar32/Mitarbeiter-Icons-09.png")),
+            new ImageIcon(getClass().getResource("/avatar32/Mitarbeiter-Icons-10.png")),
+            new ImageIcon(getClass().getResource("/avatar32/Mitarbeiter-Icons-11.png")),
+            new ImageIcon(getClass().getResource("/avatar32/Mitarbeiter-Icons-12.png")),
+            new ImageIcon(getClass().getResource("/avatar32/Mitarbeiter-Icons-13.png")),
+            new ImageIcon(getClass().getResource("/avatar32/Mitarbeiter-Icons-14.png")),
+            new ImageIcon(getClass().getResource("/avatar32/Mitarbeiter-Icons-15.png")),
+            new ImageIcon(getClass().getResource("/avatar32/Mitarbeiter-Icons-16.png")),
+            new ImageIcon(getClass().getResource("/avatar32/Mitarbeiter-Icons-17.png")),
+            new ImageIcon(getClass().getResource("/avatar32/Mitarbeiter-Icons-18.png")),
+            new ImageIcon(getClass().getResource("/avatar32/Mitarbeiter-Icons-19.png")),
+            new ImageIcon(getClass().getResource("/avatar32/Mitarbeiter-Icons-20.png")),
+            new ImageIcon(getClass().getResource("/avatar32/Mitarbeiter-Icons-21.png")),
+            new ImageIcon(getClass().getResource("/avatar32/Mitarbeiter-Icons-22.png")),
+            new ImageIcon(getClass().getResource("/avatar32/Mitarbeiter-Icons-23.png")),
+            new ImageIcon(getClass().getResource("/avatar32/Mitarbeiter-Icons-24.png")),
+            new ImageIcon(getClass().getResource("/avatar32/Mitarbeiter-Icons-25.png"))
+            
         };
         this.cmbAvatar.setModel(new DefaultComboBoxModel(items));
         

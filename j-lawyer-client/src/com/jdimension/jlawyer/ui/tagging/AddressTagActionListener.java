@@ -698,7 +698,7 @@ public class AddressTagActionListener implements ActionListener {
             if(this.addressId==null) {
                 if(this.caller!=null) {
                     TagToggleButton tb=(TagToggleButton)ae.getSource();
-                    boolean saved=this.caller.confirmSave("Bevor Tags aktiviert werden können,\nmuß die Adresse gespeichert werden.\n\nJetzt speichern?", tb.getText());
+                    boolean saved=this.caller.confirmSave("Bevor Etiketten aktiviert werden können,\nmuß die Adresse gespeichert werden.\n\nJetzt speichern?", tb.getText());
                     if(!saved) {
                         
                         tb.setSelected(false);
@@ -715,7 +715,7 @@ public class AddressTagActionListener implements ActionListener {
 
         } catch (Throwable t) {
             log.error("Error setting tag", t);
-            JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Setzen des Tags: " + t.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Setzen des Etiketts: " + t.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
         }
     }
 }
