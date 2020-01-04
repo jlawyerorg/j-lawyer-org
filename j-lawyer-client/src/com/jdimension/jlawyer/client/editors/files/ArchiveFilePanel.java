@@ -2919,7 +2919,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         });
 
         cmdFavoriteDocuments.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/package_favorite.png"))); // NOI18N
-        cmdFavoriteDocuments.setToolTipText("Dokument-Favoriten");
+        cmdFavoriteDocuments.setToolTipText("Dokument-Favoriten anzeigen");
         cmdFavoriteDocuments.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mousePressed(java.awt.event.MouseEvent evt) {
                 cmdFavoriteDocumentsMousePressed(evt);
