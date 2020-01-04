@@ -615,7 +615,7 @@
             </Property>
             <Property name="horizontalAlignment" type="int" value="0"/>
             <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-              <Image iconType="3" name="/icons16/bea16lineborder.png"/>
+              <Image iconType="3" name="/icons16/beadesktop16.png"/>
             </Property>
             <Property name="text" type="java.lang.String" value="?"/>
             <Property name="toolTipText" type="java.lang.String" value="noch nicht eingeloggt"/>
@@ -648,7 +648,7 @@
             </Property>
             <Property name="horizontalAlignment" type="int" value="0"/>
             <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-              <Image iconType="3" name="/icons16/drebis16.png"/>
+              <Image iconType="3" name="/icons16/drebisdesktop16.png"/>
             </Property>
             <Property name="text" type="java.lang.String" value="?"/>
             <Property name="enabled" type="boolean" value="false"/>

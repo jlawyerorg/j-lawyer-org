@@ -1234,7 +1234,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         lblUnreadBea.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
         lblUnreadBea.setForeground(java.awt.Color.white);
         lblUnreadBea.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        lblUnreadBea.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/bea16lineborder.png"))); // NOI18N
+        lblUnreadBea.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/beadesktop16.png"))); // NOI18N
         lblUnreadBea.setText("?");
         lblUnreadBea.setToolTipText("noch nicht eingeloggt");
         lblUnreadBea.setEnabled(false);
@@ -1249,7 +1249,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         lblUnreadDrebis.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
         lblUnreadDrebis.setForeground(java.awt.Color.white);
         lblUnreadDrebis.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        lblUnreadDrebis.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/drebis16.png"))); // NOI18N
+        lblUnreadDrebis.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/drebisdesktop16.png"))); // NOI18N
         lblUnreadDrebis.setText("?");
         lblUnreadDrebis.setEnabled(false);
 
