@@ -687,7 +687,7 @@ public class VersionUtils {
     }
 
     public static String getBuild() {
-        return "3";
+        return "4";
     }
     
     public static boolean isVersionGreater(String referenceVersion, String compareToVersion) {
