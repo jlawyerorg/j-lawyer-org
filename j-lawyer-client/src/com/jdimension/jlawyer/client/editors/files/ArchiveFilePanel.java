@@ -3541,6 +3541,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             if(this.cmdSave.isEnabled() && evt.getButton()==MouseEvent.BUTTON1) {
                 int row = this.tblDocuments.rowAtPoint(evt.getPoint());
                 int col = this.tblDocuments.columnAtPoint(evt.getPoint());
+                if(col<0 || row <0) {
+                    return;
+                }
                 if (col == 1) {
                     // user clicked favorites icon column
                     processedAction=true;
