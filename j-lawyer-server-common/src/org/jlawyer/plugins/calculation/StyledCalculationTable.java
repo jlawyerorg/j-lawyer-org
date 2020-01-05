@@ -851,8 +851,9 @@ public class StyledCalculationTable extends GenericCalculationTable implements S
     
     public String toHtml() {
         StringBuffer sb=new StringBuffer();
+        String borderCol=String.format("#%02x%02x%02x", this.borderColor.getRed(), this.borderColor.getGreen(), this.borderColor.getBlue());
         if(this.isLineBorder()) {
-            sb.append("<html><table border=\"1\" cellspacing=\"0\" width=\"85%\">");
+            sb.append("<html><table border=\"1\" bordercolor=\"" + borderCol + "\" cellspacing=\"0\" width=\"85%\">");
         } else {
             sb.append("<html><table border=\"0\" width=\"85%\">");
         }
