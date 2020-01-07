@@ -760,13 +760,15 @@ public class MicrosoftOfficeAccess {
 
             for (String r : PlaceHolders.ALLPLACEHOLDERS) {
                 String key = r;
-
                 for (XWPFHeader header : outputDocx.getHeaderList()) {
                     findInBodyElements(key, header.getBodyElements(), resultList);
+                    if (resultList.contains(key)) {
+                        continue;
+                    }
                 }
                 // REPLACE BODY
                 findInBodyElements(key, outputDocx.getBodyElements(), resultList);
-
+                
             }
 
             //List<Table> allTables = outputOdt.getTableList();
@@ -783,13 +785,25 @@ public class MicrosoftOfficeAccess {
     }
 
     private static void findInBodyElements(String key, List<IBodyElement> bodyElements, ArrayList<String> resultList) {
+        if (resultList.contains(key)) {
+            return;
+        }
+
         for (IBodyElement bodyElement : bodyElements) {
             if (bodyElement.getElementType().compareTo(BodyElementType.PARAGRAPH) == 0) {
                 findInParagraph(key, (XWPFParagraph) bodyElement, resultList);
+                if (resultList.contains(key)) {
+                    return;
+                }
                 findInTextfield(key, (XWPFParagraph) bodyElement, resultList);
+                if (resultList.contains(key)) {
+                    return;
+                }
+                
             }
             if (bodyElement.getElementType().compareTo(BodyElementType.TABLE) == 0) {
                 findInTable(key, (XWPFTable) bodyElement, resultList);
+                
             }
         }
     }
@@ -819,6 +833,10 @@ public class MicrosoftOfficeAccess {
 
     private static void findInParagraph(String key, XWPFParagraph xwpfParagraph, ArrayList<String> resultList) {
 
+        if (resultList.contains(key)) {
+            return;
+        }
+
         //for (XWPFParagraph paragraph : xwpfParagraphs) {
         List<XWPFRun> runs = xwpfParagraph.getRuns();
 
@@ -827,6 +845,7 @@ public class MicrosoftOfficeAccess {
         if (found != null) {
             if (!resultList.contains(key)) {
                 resultList.add(key);
+                return;
             }
         }
 
@@ -873,14 +892,24 @@ public class MicrosoftOfficeAccess {
     }
 
     private static void findInTable(String key, XWPFTable table, ArrayList<String> resultList) {
+        if (resultList.contains(key)) {
+            return;
+        }
+
         for (XWPFTableRow row : table.getRows()) {
             for (XWPFTableCell cell : row.getTableCells()) {
                 for (IBodyElement bodyElement : cell.getBodyElements()) {
                     if (bodyElement.getElementType().compareTo(BodyElementType.PARAGRAPH) == 0) {
                         findInParagraph(key, (XWPFParagraph) bodyElement, resultList);
+                        if (resultList.contains(key)) {
+                            return;
+                        }
                     }
                     if (bodyElement.getElementType().compareTo(BodyElementType.TABLE) == 0) {
                         findInTable(key, (XWPFTable) bodyElement, resultList);
+                        if (resultList.contains(key)) {
+                            return;
+                        }
                     }
                 }
             }
@@ -904,6 +933,10 @@ public class MicrosoftOfficeAccess {
 
     private static void findInTextfield(String key, XWPFParagraph xwpfParagraph, ArrayList<String> resultList) {
 
+        if (resultList.contains(key)) {
+            return;
+        }
+
         XmlCursor cursor = xwpfParagraph.getCTP().newCursor();
         cursor.selectPath("declare namespace w='http://schemas.openxmlformats.org/wordprocessingml/2006/main' .//*/w:txbxContent/w:p/w:r");
 
@@ -923,6 +956,7 @@ public class MicrosoftOfficeAccess {
                 if (text != null && text.contains(key)) {
                     if (!resultList.contains(key)) {
                         resultList.add(key);
+                        return;
                     }
                 }
 //                if (text != null && text.contains(someWords)) {
