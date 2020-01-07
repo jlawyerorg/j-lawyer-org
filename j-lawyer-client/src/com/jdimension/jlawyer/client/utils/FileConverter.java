@@ -676,7 +676,7 @@ public class FileConverter {
 
     private static final Logger log = Logger.getLogger(FileConverter.class.getName());
 
-    public static final List<String> INPUTTYPES = Arrays.asList(".xml", ".html", ".doc", ".docx", ".odt", ".txt", ".rtf", ".sdw", ".eps", ".gif", ".jpg", ".odd", ".png", ".tiff", ".bmp", ".csv", ".xls", ".xlsx", ".ods", ".sdc", ".odp", ".ppt", ".pptx", ".sda");
+    public static final List<String> INPUTTYPES = Arrays.asList(".xml", ".html", ".doc", ".docx", ".odt", ".txt", ".rtf", ".sdw", ".eps", ".gif", ".jpg", ".odd", ".png", ".tiff", ".bmp", ".csv", ".xls", ".xlsx", ".ods", ".sdc", ".odp", ".ppt", ".pptx", ".sda", ".fodp", ".fodt");
     public static final List<String> OUTPUTTYPES = Arrays.asList("bmp", "csv", "doc", "docx", "jpg", "odp", "ods", "odt", "pdf", "png", "ppt", "pptx", "rtf", "tiff", "txt", "xls", "xlsx");
 
     
