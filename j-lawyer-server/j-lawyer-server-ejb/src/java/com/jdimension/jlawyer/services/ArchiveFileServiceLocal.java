@@ -681,6 +681,8 @@ public interface ArchiveFileServiceLocal {
 
     public ArchiveFileDocumentsBean addDocument(String archiveFileId, String fileName, byte[] data, String dictateSign) throws Exception;
     
+    public ArchiveFileBean createArchiveFile(ArchiveFileBean dto) throws Exception;
+    
     public int getArchiveFileCount();
     public ArchiveFileBean getArchiveFile(String id);
     public ArrayList<String> getAllArchiveFileIds();
