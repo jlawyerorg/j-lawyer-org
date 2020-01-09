@@ -667,6 +667,7 @@ import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileHistoryBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileTagsBean;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -682,6 +683,7 @@ public interface ArchiveFileServiceLocal {
     public ArchiveFileDocumentsBean addDocument(String archiveFileId, String fileName, byte[] data, String dictateSign) throws Exception;
     
     public ArchiveFileBean createArchiveFile(ArchiveFileBean dto) throws Exception;
+    public void updateArchiveFile(ArchiveFileBean dto);
     
     public int getArchiveFileCount();
     public ArchiveFileBean getArchiveFile(String id);
@@ -714,6 +716,8 @@ public interface ArchiveFileServiceLocal {
     Collection getOpponentAttorneysUnrestricted(String archiveFileKey);
 
     Collection getReviewsUnrestricted(String archiveFileKey);
+    
+    public Collection<ArchiveFileTagsBean> getTags(String archiveFileId);
 
     Collection getDocumentsUnrestricted(String archiveFileKey);
 

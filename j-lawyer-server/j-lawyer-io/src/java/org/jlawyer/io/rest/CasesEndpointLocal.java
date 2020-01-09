@@ -677,7 +677,11 @@ public interface CasesEndpointLocal {
     Response listCases();
 
     Response getCase(String id);
+    
+    public Response getCaseTags(String id);
 
     public Response createCase(ArchiveFileBean afb);
+    
+    public Response updateCase(ArchiveFileBean afb);
     
 }

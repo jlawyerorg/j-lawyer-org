@@ -664,12 +664,15 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package org.jlawyer.io.rest;
 
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileTagsBean;
 import com.jdimension.jlawyer.services.ArchiveFileServiceLocal;
 import java.util.ArrayList;
+import java.util.Collection;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.naming.InitialContext;
+import javax.transaction.Transactional;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
@@ -729,12 +732,48 @@ public class CasesEndpoint implements CasesEndpointLocal {
     @Path("/{id}")
     @RolesAllowed({"readArchiveFileRole"})
     public Response getCase(@PathParam("id") String id) {
+        // http://localhost:8080/j-lawyer-io/rest/cases/2c851dc47f0001011cdef6be8abaddee
         try {
 
             InitialContext ic = new InitialContext();
             ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal");
             ArchiveFileBean afb=cases.getArchiveFile(id);
             Response res = Response.ok(afb).build();
+            return res;
+        } catch (Exception ex) {
+            log.error("can not get case " + id, ex);
+            Response res = Response.serverError().build();
+            return res;
+        }
+    }
+    
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/{id}/tags")
+    @RolesAllowed({"readArchiveFileRole"})
+    @Transactional
+    public Response getCaseTags(@PathParam("id") String id) {
+        http://localhost:8080/j-lawyer-io/rest/cases/2c851dc47f0001011cdef6be8abaddee/tags
+        try {
+
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal");
+            ArchiveFileBean currentCase=cases.getArchiveFile(id);
+            if(currentCase==null) {
+                log.error("case with id " + id + " does not exist");
+                Response res = Response.serverError().build();
+                return res;
+            }
+            
+            Collection<ArchiveFileTagsBean> tags=cases.getTags(id);
+            ArrayList<String> tagList=new ArrayList<String>();
+            for(ArchiveFileTagsBean tag: tags) {
+                tagList.add(tag.getTagName());
+                
+            }
+            
+            Response res = Response.ok(tagList).build();
             return res;
         } catch (Exception ex) {
             log.error("can not get case " + id, ex);
@@ -761,21 +800,61 @@ public class CasesEndpoint implements CasesEndpointLocal {
             
             InitialContext ic = new InitialContext();
             ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal");
-            //ArchiveFileBean afb=new ArchiveFileBean();
-//            afb.setAssistant(assistant);
-//            afb.setClaimNumber(claimNumber);
-//            afb.setClaimValue(0);
-//            afb.setCustom1(custom1);
-//            afb.setCustom2(custom1);
-//            afb.setCustom3(custom3);
-//            afb.setLawyer(lawyer);
-//            afb.setName(name);
-//            afb.setNotice(notice);
-//            afb.setReason(reason);
-//            afb.setSubjectField(subjectField);
-            
             
             afb=cases.createArchiveFile(afb);
+            Response res = Response.ok(afb).build();
+            return res;
+        } catch (Exception ex) {
+            log.error("can not create new case " + afb.getName(), ex);
+            Response res = Response.serverError().build();
+            return res;
+        }
+    }
+    
+    @Override
+    @PUT
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/update")
+    @RolesAllowed({"writeArchiveFileRole"})
+    public Response updateCase(ArchiveFileBean afb) {
+        
+        // curl -u admin:a -X PUT -H "Content-Type: application/json" -d '{"id":"2187c30c7f0001011c78dd99d50cbd20", "name":"via REST", "reason":"wegen REST", "subjectField":"Familienrecht", "notice":"notiz REST","assistant":"user", "lawyer":"admin", "claimNumber":"RESTcn","claimValue":"3.44","custom1":"RESTc1","custom2":"RESTc2","custom3":"RESTc3"}' http://localhost:8080/j-lawyer-io/rest/cases/update
+        
+        try {
+
+            if(afb.getId()==null || "".equals(afb.getId())) {
+                log.error("Can update case - no case id given");
+                return Response.serverError().build();
+            }
+            
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal");
+            
+            ArchiveFileBean currentCase=cases.getArchiveFile(afb.getId());
+            if(currentCase==null) {
+                log.error("case with id " + afb.getId() + " does not exist - skipping update");
+                Response res = Response.serverError().build();
+                return res;
+            }
+            // file number must not be changed
+            
+            currentCase.setArchived(afb.getArchived());
+            currentCase.setAssistant(afb.getAssistant());
+            currentCase.setClaimNumber(afb.getClaimNumber());
+            currentCase.setClaimValue(afb.getClaimValue());
+            currentCase.setCustom1(afb.getCustom1());
+            currentCase.setCustom2(afb.getCustom2());
+            currentCase.setCustom3(afb.getCustom3());
+            currentCase.setLawyer(afb.getLawyer());
+            currentCase.setName(afb.getName());
+            currentCase.setNotice(afb.getNotice());
+            currentCase.setReason(afb.getReason());
+            currentCase.setSubjectField(afb.getSubjectField());
+            
+            
+            cases.updateArchiveFile(currentCase);
+            afb=cases.getArchiveFile(afb.getId());
+            
             Response res = Response.ok(afb).build();
             return res;
         } catch (Exception ex) {
