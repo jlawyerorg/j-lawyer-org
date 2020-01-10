@@ -768,7 +768,7 @@ public class BeaAccess {
         String enabledVersions = set.getSetting(ServerSettings.SERVERCONF_BEAENABLEDVERSIONS, "");
         boolean valid=(enabledVersions.indexOf(VersionUtils.getFullClientVersion())>-1);
         if(!valid) {
-            throw new BeaWrapperException("j-lawyer.org Client in Version " + VersionUtils.getFullClientVersion() + " ist nicht mehr für die beA-Schnittstelle qualifiziert.");
+            throw new BeaWrapperException("j-lawyer.org Client in Version " + VersionUtils.getFullClientVersion() + " ist nicht mehr für die beA-Schnittstelle qualifiziert." + System.lineSeparator() + "Bitte prüfen Sie unter www.j-lawyer.org ob ein Update verfügbar ist oder beA-bezogene Informationen des Herstellers vorliegen.");
         }
     }
     
