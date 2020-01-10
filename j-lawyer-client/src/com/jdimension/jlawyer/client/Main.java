@@ -760,6 +760,10 @@ public class Main {
         // https://www.formdev.com/flatlaf/customizing/
         UIManager.put("ScrollBar.width", 14);
         UIManager.put("ScrollBar.showButtons", true);
+        UIManager.put( "ScrollPane.smoothScrolling", true );
+        UIManager.put( "Table.showHorizontalLines", true );
+        //UIManager.put( "Table.showVerticalLines", true );
+        
 
 //        Object selColor=UIManager.get("TabbedPane.selectedBackground");
 //        if(selColor!=null) {
