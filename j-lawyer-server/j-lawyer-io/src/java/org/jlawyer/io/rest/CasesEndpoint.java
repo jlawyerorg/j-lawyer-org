@@ -663,8 +663,12 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package org.jlawyer.io.rest;
 
+import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileTagsBean;
+import com.jdimension.jlawyer.security.Base64;
 import com.jdimension.jlawyer.services.ArchiveFileServiceLocal;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -672,17 +676,20 @@ import javax.annotation.security.RolesAllowed;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.naming.InitialContext;
-import javax.transaction.Transactional;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
-import javax.ws.rs.QueryParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import org.jboss.logging.Logger;
+import org.jlawyer.io.rest.pojo.RestfulDocument;
+import org.jlawyer.io.rest.pojo.RestfulDocumentContent;
+import org.jlawyer.io.rest.pojo.RestfulDueDate;
+import org.jlawyer.io.rest.pojo.RestfulInvolvement;
+import org.jlawyer.io.rest.pojo.RestfulTag;
 
 /**
  *
@@ -747,14 +754,15 @@ public class CasesEndpoint implements CasesEndpointLocal {
         }
     }
     
+    
+    
     @Override
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/{id}/tags")
     @RolesAllowed({"readArchiveFileRole"})
-    @Transactional
     public Response getCaseTags(@PathParam("id") String id) {
-        http://localhost:8080/j-lawyer-io/rest/cases/2c851dc47f0001011cdef6be8abaddee/tags
+        // http://localhost:8080/j-lawyer-io/rest/cases/2c851dc47f0001011cdef6be8abaddee/tags
         try {
 
             InitialContext ic = new InitialContext();
@@ -767,9 +775,12 @@ public class CasesEndpoint implements CasesEndpointLocal {
             }
             
             Collection<ArchiveFileTagsBean> tags=cases.getTags(id);
-            ArrayList<String> tagList=new ArrayList<String>();
+            ArrayList<RestfulTag> tagList=new ArrayList<RestfulTag>();
             for(ArchiveFileTagsBean tag: tags) {
-                tagList.add(tag.getTagName());
+                RestfulTag t=new RestfulTag();
+                t.setId(tag.getId());
+                t.setName(tag.getTagName());
+                tagList.add(t);
                 
             }
             
@@ -781,6 +792,8 @@ public class CasesEndpoint implements CasesEndpointLocal {
             return res;
         }
     }
+    
+    
 
     @Override
     @PUT
@@ -863,6 +876,166 @@ public class CasesEndpoint implements CasesEndpointLocal {
             return res;
         }
     }
+
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/{id}/documents")
+    @RolesAllowed({"readArchiveFileRole"})
+    public Response getCaseDocuments(@PathParam("id") String id) {
+        //http://localhost:8080/j-lawyer-io/rest/cases/0c79112f7f000101327bf357f0b6010c/documents
+        try {
+
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal");
+            ArchiveFileBean currentCase=cases.getArchiveFile(id);
+            if(currentCase==null) {
+                log.error("case with id " + id + " does not exist");
+                Response res = Response.serverError().build();
+                return res;
+            }
+            
+            Collection<ArchiveFileDocumentsBean> documents=cases.getDocuments(id);
+            ArrayList<RestfulDocument> docList=new ArrayList<RestfulDocument>();
+            for(ArchiveFileDocumentsBean doc: documents) {
+                RestfulDocument d=new RestfulDocument();
+                d.setId(doc.getId());
+                d.setName(doc.getName());
+                d.setCreationDate(doc.getCreationDate());
+                d.setFavorite(doc.isFavorite());
+                d.setSize(doc.getSize());
+                docList.add(d);
+            }
+            
+            Response res = Response.ok(docList).build();
+            return res;
+        } catch (Exception ex) {
+            log.error("can not get case " + id, ex);
+            Response res = Response.serverError().build();
+            return res;
+        }
+    }
+
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/document/{id}/content")
+    @RolesAllowed({"readArchiveFileRole"})
+    public Response getDocumentContent(@PathParam("id") String id) {
+        //http://localhost:8080/j-lawyer-io/rest/cases/document/0c6f1f867f00010173b54cfcd4cce056/content
+        try {
+
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal");
+            byte[] content=cases.getDocumentContent(id);
+            
+            if(content==null) {
+                log.error("can not get content of document " + id);
+            Response res = Response.serverError().build();
+            return res;
+            }
+                
+            String base64=new Base64().encode(content);
+            RestfulDocumentContent rdc=new RestfulDocumentContent();
+            rdc.setId(id);
+            rdc.setBase64content(base64);
+            Response res = Response.ok(rdc).build();
+            return res;
+        } catch (Exception ex) {
+            log.error("can not get case " + id, ex);
+            Response res = Response.serverError().build();
+            return res;
+        }
+    }
+
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/{id}/duedates")
+    @RolesAllowed({"readArchiveFileRole"})
+    public Response getDueDates(@PathParam("id") String id) {
+        //http://localhost:8080/j-lawyer-io/rest/cases/0c79112f7f000101327bf357f0b6010c/duedates
+        try {
+
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal");
+            ArchiveFileBean currentCase=cases.getArchiveFile(id);
+            if(currentCase==null) {
+                log.error("case with id " + id + " does not exist");
+                Response res = Response.serverError().build();
+                return res;
+            }
+            
+            Collection<ArchiveFileReviewsBean> reviews=cases.getReviews(id);
+            ArrayList<RestfulDueDate> ddList=new ArrayList<RestfulDueDate>();
+            for(ArchiveFileReviewsBean rev: reviews) {
+                RestfulDueDate dd=new RestfulDueDate();
+                dd.setId(rev.getId());
+                dd.setAssignee(rev.getAssignee());
+                dd.setDone(rev.getDoneBoolean());
+                dd.setDueDate(rev.getReviewDate());
+                dd.setReason(rev.getReviewReason());
+                dd.setType(RestfulDueDate.TYPE_RESPITE);
+                if(rev.getReviewType()==ArchiveFileReviewsBean.REVIEWTYPE_FOLLOWUP)
+                    dd.setType(RestfulDueDate.TYPE_FOLLOWUP);
+                ddList.add(dd);
+            }
+            
+            Response res = Response.ok(ddList).build();
+            return res;
+        } catch (Exception ex) {
+            log.error("can not get case " + id, ex);
+            Response res = Response.serverError().build();
+            return res;
+        }
+    }
+
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/{id}/involved")
+    @RolesAllowed({"readArchiveFileRole"})
+    public Response getInvolved(@PathParam("id") String id) {
+        //http://localhost:8080/j-lawyer-io/rest/cases/0c79112f7f000101327bf357f0b6010c/involved
+        try {
+
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal");
+            ArchiveFileBean currentCase=cases.getArchiveFile(id);
+            if(currentCase==null) {
+                log.error("case with id " + id + " does not exist");
+                Response res = Response.serverError().build();
+                return res;
+            }
+            
+            Collection<ArchiveFileAddressesBean> involvements=cases.getInvolvementDetailsForCase(id);
+            ArrayList<RestfulInvolvement> invList=new ArrayList<RestfulInvolvement>();
+            for(ArchiveFileAddressesBean inv: involvements) {
+                RestfulInvolvement i=new RestfulInvolvement();
+                i.setId(inv.getId());
+                i.setContact(inv.getContact());
+                i.setCustom1(inv.getCustom1());
+                i.setCustom2(inv.getCustom2());
+                i.setCustom3(inv.getCustom3());
+                i.setContactId(inv.getAddressKey().getId());
+                i.setReference(inv.getReference());
+                i.setInvolvementType(RestfulInvolvement.getTYPE_OTHER());
+                if(inv.getReferenceType()==ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT)
+                    i.setInvolvementType(RestfulInvolvement.getTYPE_OPPONENT());
+                else if(inv.getReferenceType()==ArchiveFileAddressesBean.REFERENCETYPE_CLIENT)
+                    i.setInvolvementType(RestfulInvolvement.getTYPE_CLIENT());
+                invList.add(i);
+            }
+            
+            Response res = Response.ok(invList).build();
+            return res;
+        } catch (Exception ex) {
+            log.error("can not get case " + id, ex);
+            Response res = Response.serverError().build();
+            return res;
+        }
+    }
+    
     
     
 }

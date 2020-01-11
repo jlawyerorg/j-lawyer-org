@@ -663,6 +663,7 @@
  */
 package com.jdimension.jlawyer.services;
 
+import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileHistoryBean;
@@ -671,6 +672,7 @@ import com.jdimension.jlawyer.persistence.ArchiveFileTagsBean;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.List;
 import javax.ejb.Local;
 
 /**
@@ -724,6 +726,8 @@ public interface ArchiveFileServiceLocal {
     byte[] getDocumentContentUnrestricted(String id) throws Exception;
 
     Collection<ArchiveFileReviewsBean> getAllOpenReviewsUnrestricted();
+    
+    public List<ArchiveFileAddressesBean> getInvolvementDetailsForCase(String archiveFileKey);
 
     boolean doesDocumentExist(String caseId, String documentName);
     

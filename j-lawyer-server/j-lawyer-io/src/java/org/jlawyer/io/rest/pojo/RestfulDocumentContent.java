@@ -661,35 +661,48 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package org.jlawyer.io.rest;
-
-import com.jdimension.jlawyer.persistence.ArchiveFileBean;
-import javax.ejb.Local;
-import javax.ws.rs.core.Response;
+package org.jlawyer.io.rest.pojo;
 
 /**
  *
  * @author jens
  */
-@Local
-public interface CasesEndpointLocal {
-
-    Response listCases();
-
-    Response getCase(String id);
+public class RestfulDocumentContent {
     
-    public Response getCaseTags(String id);
+    private String id=null;
+    private String base64content=null;
 
-    public Response createCase(ArchiveFileBean afb);
+    public RestfulDocumentContent() {
+    }
+
+    /**
+     * @return the id
+     */
+    public String getId() {
+        return id;
+    }
+
+    /**
+     * @param id the id to set
+     */
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    /**
+     * @return the base64content
+     */
+    public String getBase64content() {
+        return base64content;
+    }
+
+    /**
+     * @param base64content the base64content to set
+     */
+    public void setBase64content(String base64content) {
+        this.base64content = base64content;
+    }
     
-    public Response updateCase(ArchiveFileBean afb);
-
-    Response getCaseDocuments(String id);
-
-    Response getDocumentContent(String id);
-
-    Response getDueDates(String id);
-
-    Response getInvolved(String id);
+    
     
 }

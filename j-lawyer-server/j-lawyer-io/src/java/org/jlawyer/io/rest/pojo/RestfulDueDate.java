@@ -661,35 +661,114 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package org.jlawyer.io.rest;
+package org.jlawyer.io.rest.pojo;
 
-import com.jdimension.jlawyer.persistence.ArchiveFileBean;
-import javax.ejb.Local;
-import javax.ws.rs.core.Response;
+import java.util.Date;
 
 /**
  *
  * @author jens
  */
-@Local
-public interface CasesEndpointLocal {
-
-    Response listCases();
-
-    Response getCase(String id);
+public class RestfulDueDate {
     
-    public Response getCaseTags(String id);
-
-    public Response createCase(ArchiveFileBean afb);
+    public static final transient String TYPE_RESPITE="RESPITE";
+    public static final transient String TYPE_FOLLOWUP="FOLLOWUP";
     
-    public Response updateCase(ArchiveFileBean afb);
+    private String id=null;
+    private String reason=null;
+    private Date dueDate=null;
+    private boolean done=false;
+    private String assignee=null;
+    private String type=null;
 
-    Response getCaseDocuments(String id);
+    public RestfulDueDate() {
+    }
 
-    Response getDocumentContent(String id);
+    /**
+     * @return the id
+     */
+    public String getId() {
+        return id;
+    }
 
-    Response getDueDates(String id);
+    /**
+     * @param id the id to set
+     */
+    public void setId(String id) {
+        this.id = id;
+    }
 
-    Response getInvolved(String id);
+    /**
+     * @return the reason
+     */
+    public String getReason() {
+        return reason;
+    }
+
+    /**
+     * @param reason the reason to set
+     */
+    public void setReason(String reason) {
+        this.reason = reason;
+    }
+
+    /**
+     * @return the dueDate
+     */
+    public Date getDueDate() {
+        return dueDate;
+    }
+
+    /**
+     * @param dueDate the dueDate to set
+     */
+    public void setDueDate(Date dueDate) {
+        this.dueDate = dueDate;
+    }
+
+    /**
+     * @return the done
+     */
+    public boolean isDone() {
+        return done;
+    }
+
+    /**
+     * @param done the done to set
+     */
+    public void setDone(boolean done) {
+        this.done = done;
+    }
+
+    /**
+     * @return the assignee
+     */
+    public String getAssignee() {
+        return assignee;
+    }
+
+    /**
+     * @param assignee the assignee to set
+     */
+    public void setAssignee(String assignee) {
+        this.assignee = assignee;
+    }
+
+    /**
+     * @return the type
+     */
+    public String getType() {
+        return type;
+    }
+
+    /**
+     * @param type the type to set
+     */
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    
+    
     
 }
