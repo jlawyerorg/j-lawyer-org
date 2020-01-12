@@ -663,6 +663,7 @@
  */
 package com.jdimension.jlawyer.services;
 
+import com.jdimension.jlawyer.persistence.AddressBean;
 import javax.ejb.Local;
 
 /**
@@ -673,5 +674,7 @@ import javax.ejb.Local;
 public interface AddressServiceLocal {
     
     public int getAddressCount();
+    
+    public AddressBean getAddress(String id);
     
 }

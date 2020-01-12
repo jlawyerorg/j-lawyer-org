@@ -660,23 +660,58 @@ specific requirements.
 if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
-*/
+ */
 package org.jlawyer.io.rest;
 
-import java.util.HashSet;
-import java.util.Set;
-import javax.ws.rs.ApplicationPath;
-import javax.ws.rs.core.Application;
+import com.jdimension.jlawyer.persistence.AddressBean;
+import com.jdimension.jlawyer.services.AddressServiceLocal;
+import javax.annotation.security.RolesAllowed;
+import javax.ejb.Stateless;
+import javax.naming.InitialContext;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import org.jboss.logging.Logger;
 
-@ApplicationPath("/rest")
-public class EndpointServiceLocator extends Application
-{
-    public Set<Class<?>> getClasses()
-    {
-        Set<Class<?>> s = new HashSet<Class<?>>();
-        s.add(SecurityEndpoint.class);
-        s.add(CasesEndpoint.class);
-        s.add(ContactsEndpoint.class);
-        return s;
+/**
+ *
+ * http://localhost:8080/j-lawyer-io/rest/contacts
+ */
+@Stateless
+@Path("/contacts")
+@Consumes({"application/json"})
+@Produces({"application/json"})
+public class ContactsEndpoint implements ContactsEndpointLocal {
+
+    private static final Logger log=Logger.getLogger(ContactsEndpoint.class.getName());
+    
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/{id}")
+    @RolesAllowed({"readAddressRole"})
+    public Response getContact(@PathParam("id") String id) {
+        // http://localhost:8080/j-lawyer-io/rest/contacts/0c617d4e7f0001012eebc10d402e8a74
+        try {
+
+            InitialContext ic = new InitialContext();
+            AddressServiceLocal addresses = (AddressServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/AddressService!com.jdimension.jlawyer.services.AddressServiceLocal");
+            AddressBean adr=addresses.getAddress(id);
+            Response res = Response.ok(adr).build();
+            return res;
+        } catch (Exception ex) {
+            log.error("can not get address " + id, ex);
+            Response res = Response.serverError().build();
+            return res;
+        }
     }
+
+    // Add business logic below. (Right-click in editor and choose
+    // "Insert Code > Add Business Method")
+    
+    
 }
