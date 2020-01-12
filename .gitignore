@@ -48,3 +48,5 @@
 /j-lawyer-server/j-lawyer-io/nbproject/private/
 /j-lawyer-server/j-lawyer-io/build/
 /j-lawyer-server/j-lawyer-io/dist/
+/j-lawyer-server/j-lawyer-io/web/swagger-ui/swagger.json
+/j-lawyer-server/j-lawyer-io/jaxrs-analyzer-error.log

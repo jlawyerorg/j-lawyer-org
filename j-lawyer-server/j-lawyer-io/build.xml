@@ -68,4 +68,23 @@
     nbproject/build-impl.xml file. 
 
     -->
+    
+    <target name="-post-compile">
+        <echo>basedir: ${basedir}</echo>
+        <!-- <java jar="tools/jaxrs-analyzer.jar" -->
+        <java classname="com.sebastian_daschner.jaxrs_analyzer.Main" 
+                  fork="true"
+                  failonerror="true"
+                  maxmemory="256m" 
+                  output="web/swagger-ui/swagger.json"
+                  error="jaxrs-analyzer-error.log">
+            <arg line="-n j-lawyer-io -b swagger ${basedir}/build/web/WEB-INF/classes/"/>
+            <classpath>
+                <pathelement location="tools/jaxrs-analyzer.jar"/>
+                <pathelement location="../../j-lawyer-server-entities/dist/j-lawyer-server-entities.jar"/>
+                <pathelement path="${java.class.path}"/>
+            </classpath>
+        </java>
+    </target>
+    
 </project>
