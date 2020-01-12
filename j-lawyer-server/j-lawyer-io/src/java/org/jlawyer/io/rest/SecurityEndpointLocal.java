@@ -672,11 +672,7 @@ import javax.ws.rs.core.Response;
  */
 @Local
 public interface SecurityEndpointLocal {
-    
-        DummyPojo getDummy();
 
-    String getDummyString();
-
-    Response dummyresponse();
+    Response getApiMetadata();
     
 }

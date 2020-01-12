@@ -660,44 +660,36 @@ specific requirements.
 if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
-*/
-package org.jlawyer.io.rest;
+ */
+package org.jlawyer.io.rest.pojo;
 
-import javax.xml.bind.annotation.XmlRootElement;
-
-@XmlRootElement(name = "dummy")
-public class DummyPojo {
-    private String myString="myString";
-    private int myInt=42;
-
-    public DummyPojo() {
+/**
+ *
+ * @author jens
+ */
+public class ApiMetadata {
+    
+    private int apiLevel=1;
+    
+    public ApiMetadata() {
     }
 
     /**
-     * @return the myString
+     * @return the apiLevel
      */
-    public String getMyString() {
-        return myString;
+    public int getApiLevel() {
+        return apiLevel;
     }
 
     /**
-     * @param myString the myString to set
+     * @param apiLevel the apiLevel to set
      */
-    public void setMyString(String myString) {
-        this.myString = myString;
+    public void setApiLevel(int apiLevel) {
+        this.apiLevel = apiLevel;
     }
 
-    /**
-     * @return the myInt
-     */
-    public int getMyInt() {
-        return myInt;
-    }
-
-    /**
-     * @param myInt the myInt to set
-     */
-    public void setMyInt(int myInt) {
-        this.myInt = myInt;
-    }
+    
+    
+    
+    
 }

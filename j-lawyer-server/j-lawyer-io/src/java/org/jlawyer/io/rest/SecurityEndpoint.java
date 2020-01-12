@@ -660,7 +660,7 @@ specific requirements.
 if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
-*/
+ */
 package org.jlawyer.io.rest;
 
 import javax.annotation.security.RolesAllowed;
@@ -671,50 +671,32 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import org.jlawyer.io.rest.pojo.ApiMetadata;
 
 /**
  *
- * http://localhost:8080/j-lawyer-io/rest/security/dummy
+ * http://localhost:8080/j-lawyer-io/rest/security/metadata
  */
 @Stateless
 @Path("/security")
-@Consumes({ "application/json" })
-@Produces({ "application/json" })
+@Consumes({"application/json"})
+@Produces({"application/json"})
 public class SecurityEndpoint implements SecurityEndpointLocal {
 
     // Add business logic below. (Right-click in editor and choose
     // "Insert Code > Add Business Method")
-    
-        @Override
-    @Path("/dummy")
+    @Override
+    @Path("/metadata")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public DummyPojo getDummy() {
-        return new DummyPojo();
-    }
-    
-    
+    public Response getApiMetadata() {
 
-    // Add business logic below. (Right-click in editor and choose
-    // "Insert Code > Add Business Method")
+        ApiMetadata meta = new ApiMetadata();
+        meta.setApiLevel(1);
 
-    @Override
-    @GET
-    @Produces(MediaType.TEXT_PLAIN)
-    @Path("/dummystring")
-    public String getDummyString() {
-        return "dummystring";
-    }
-
-    @Override
-    @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    @Path("/dummyresponse")
-    @RolesAllowed({"Admin"})
-    public Response dummyresponse() {
-        DummyPojo x=new DummyPojo();
-        Response res = Response.ok(x).build();
+        Response res = Response.ok(meta).build();
         return res;
+
     }
-    
+
 }
