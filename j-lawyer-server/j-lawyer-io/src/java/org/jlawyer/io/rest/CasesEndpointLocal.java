@@ -666,6 +666,7 @@ package org.jlawyer.io.rest;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import javax.ejb.Local;
 import javax.ws.rs.core.Response;
+import org.jlawyer.io.rest.pojo.RestfulDocumentContent;
 
 /**
  *
@@ -691,5 +692,11 @@ public interface CasesEndpointLocal {
     Response getDueDates(String id);
 
     Response getInvolved(String id);
+
+    Response createDocument(RestfulDocumentContent document);
+
+    Response updateDocument(RestfulDocumentContent document);
+
+    Response deleteDocument(String id);
     
 }

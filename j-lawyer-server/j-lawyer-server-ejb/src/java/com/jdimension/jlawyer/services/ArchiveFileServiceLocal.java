@@ -732,5 +732,13 @@ public interface ArchiveFileServiceLocal {
     boolean doesDocumentExist(String caseId, String documentName);
     
     boolean doesDocumentExist(String id);
+
+    ArchiveFileDocumentsBean getDocument(String id) throws Exception;
+    
+    public boolean renameDocument(String id, String newName) throws Exception;
+    
+    public void removeDocument(String id) throws Exception;
+    
+    public boolean setDocumentContent(String id, byte[] content) throws Exception;
     
 }

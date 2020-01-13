@@ -667,14 +667,13 @@ package org.jlawyer.io.rest.pojo;
  *
  * @author jens
  */
-public class RestfulDocumentContent {
+public class RestfulCaseOverview {
     
     private String id=null;
-    private String caseId=null;
-    private String fileName=null;
-    private String base64content=null;
+    private String name=null;
+    private String fileNumber=null;
 
-    public RestfulDocumentContent() {
+    public RestfulCaseOverview() {
     }
 
     /**
@@ -692,45 +691,31 @@ public class RestfulDocumentContent {
     }
 
     /**
-     * @return the base64content
+     * @return the name
      */
-    public String getBase64content() {
-        return base64content;
+    public String getName() {
+        return name;
     }
 
     /**
-     * @param base64content the base64content to set
+     * @param name the name to set
      */
-    public void setBase64content(String base64content) {
-        this.base64content = base64content;
+    public void setName(String name) {
+        this.name = name;
     }
 
     /**
-     * @return the fileName
+     * @return the fileNumber
      */
-    public String getFileName() {
-        return fileName;
+    public String getFileNumber() {
+        return fileNumber;
     }
 
     /**
-     * @param fileName the fileName to set
+     * @param fileNumber the fileNumber to set
      */
-    public void setFileName(String fileName) {
-        this.fileName = fileName;
-    }
-
-    /**
-     * @return the caseId
-     */
-    public String getCaseId() {
-        return caseId;
-    }
-
-    /**
-     * @param caseId the caseId to set
-     */
-    public void setCaseId(String caseId) {
-        this.caseId = caseId;
+    public void setFileNumber(String fileNumber) {
+        this.fileNumber = fileNumber;
     }
     
     

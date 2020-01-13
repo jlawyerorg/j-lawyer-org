@@ -1750,6 +1750,8 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         return getDocumentContentImpl(id);
 
     }
+    
+    
 
     private byte[] getDocumentContentImpl(String id) throws Exception {
         ArchiveFileDocumentsBean db = this.archiveFileDocumentsFacade.find(id);
@@ -3549,6 +3551,17 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
             this.archiveFileHistoryFacade.create(newHistEntry);
         }
+    }
+
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public ArchiveFileDocumentsBean getDocument(String id) throws Exception {
+        ArchiveFileDocumentsBean db = this.archiveFileDocumentsFacade.find(id);
+        if (db == null) {
+            log.error("Document with id " + id + " does not exist");
+            throw new Exception("Dokument mit ID " + id + " existiert nicht!");
+        }
+        return db;
     }
 
 }
