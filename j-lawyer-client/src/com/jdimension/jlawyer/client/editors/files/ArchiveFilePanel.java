@@ -4278,6 +4278,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                     try {
                         if (ze.getLastModifiedTime() != null) {
                             newFile.setLastModified(ze.getLastModifiedTime().toMillis());
+                        } else {
+                            log.warn("ZIP entry does not have a last modified timestamp for " + newFile.getName());
                         }
                     } catch (Throwable t) {
                         log.error("Unable to set last modified time", t);
