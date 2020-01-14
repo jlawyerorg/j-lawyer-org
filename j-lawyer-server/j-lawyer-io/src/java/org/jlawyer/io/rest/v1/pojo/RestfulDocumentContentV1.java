@@ -667,14 +667,14 @@ package org.jlawyer.io.rest.v1.pojo;
  *
  * @author jens
  */
-public class RestfulDocumentContent {
+public class RestfulDocumentContentV1 {
     
     private String id=null;
     private String caseId=null;
     private String fileName=null;
     private String base64content=null;
 
-    public RestfulDocumentContent() {
+    public RestfulDocumentContentV1() {
     }
 
     /**

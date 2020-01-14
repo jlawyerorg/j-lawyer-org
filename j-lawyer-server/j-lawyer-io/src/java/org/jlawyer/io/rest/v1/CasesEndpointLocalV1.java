@@ -666,7 +666,7 @@ package org.jlawyer.io.rest.v1;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import javax.ejb.Local;
 import javax.ws.rs.core.Response;
-import org.jlawyer.io.rest.v1.pojo.RestfulDocumentContent;
+import org.jlawyer.io.rest.v1.pojo.RestfulDocumentContentV1;
 import org.jlawyer.io.rest.v1.pojo.RestfulPartyV1;
 
 /**
@@ -694,9 +694,9 @@ public interface CasesEndpointLocalV1 {
 
     Response getCaseParties(String id);
 
-    Response createDocument(RestfulDocumentContent document);
+    Response createDocument(RestfulDocumentContentV1 document);
 
-    Response updateDocument(RestfulDocumentContent document);
+    Response updateDocument(RestfulDocumentContentV1 document);
 
     Response deleteDocument(String id);
 
