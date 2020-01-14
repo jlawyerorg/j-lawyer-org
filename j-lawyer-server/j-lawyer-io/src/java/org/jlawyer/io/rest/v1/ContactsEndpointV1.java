@@ -661,188 +661,63 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package org.jlawyer.io.rest.pojo;
+package org.jlawyer.io.rest.v1;
 
-import java.util.Date;
+import com.jdimension.jlawyer.persistence.AddressBean;
+import com.jdimension.jlawyer.services.AddressServiceLocal;
+import javax.annotation.security.RolesAllowed;
+import javax.ejb.Stateless;
+import javax.naming.InitialContext;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import org.jboss.logging.Logger;
 
 /**
  *
- * @author jens
+ * http://localhost:8080/j-lawyer-io/rest/contacts
  */
-public class RestfulInvolvement {
+@Stateless
+@Path("/v1/contacts")
+@Consumes({"application/json"})
+@Produces({"application/json"})
+public class ContactsEndpointV1 implements ContactsEndpointLocalV1 {
+
+    private static final Logger log=Logger.getLogger(ContactsEndpointV1.class.getName());
     
-    private static transient String TYPE_CLIENT="CLIENT";
-    private static transient String TYPE_OPPONENT="OPPONENT";
-    private static transient String TYPE_OTHER="OTHER";
-    
-    private String id=null;
-    private String reference=null;
-    private String involvementType=null;
-    private String contact=null;
-    private String custom1=null;
-    private String custom2=null;
-    private String custom3=null;
-    private String contactId=null;
-    
-    
-    public RestfulInvolvement() {
-    }
-
     /**
-     * @return the id
+     * Returns a contacts metadata given its ID
+     * @param id contact ID
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
      */
-    public String getId() {
-        return id;
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/{id}")
+    @RolesAllowed({"readAddressRole"})
+    public Response getContact(@PathParam("id") String id) {
+        // http://localhost:8080/j-lawyer-io/rest/contacts/0c617d4e7f0001012eebc10d402e8a74
+        try {
+
+            InitialContext ic = new InitialContext();
+            AddressServiceLocal addresses = (AddressServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/AddressService!com.jdimension.jlawyer.services.AddressServiceLocal");
+            AddressBean adr=addresses.getAddress(id);
+            Response res = Response.ok(adr).build();
+            return res;
+        } catch (Exception ex) {
+            log.error("can not get address " + id, ex);
+            Response res = Response.serverError().build();
+            return res;
+        }
     }
 
-    /**
-     * @param id the id to set
-     */
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    /**
-     * @return the TYPE_CLIENT
-     */
-    public static String getTYPE_CLIENT() {
-        return TYPE_CLIENT;
-    }
-
-    /**
-     * @param aTYPE_CLIENT the TYPE_CLIENT to set
-     */
-    public static void setTYPE_CLIENT(String aTYPE_CLIENT) {
-        TYPE_CLIENT = aTYPE_CLIENT;
-    }
-
-    /**
-     * @return the TYPE_OPPONENT
-     */
-    public static String getTYPE_OPPONENT() {
-        return TYPE_OPPONENT;
-    }
-
-    /**
-     * @param aTYPE_OPPONENT the TYPE_OPPONENT to set
-     */
-    public static void setTYPE_OPPONENT(String aTYPE_OPPONENT) {
-        TYPE_OPPONENT = aTYPE_OPPONENT;
-    }
-
-    /**
-     * @return the TYPE_OTHER
-     */
-    public static String getTYPE_OTHER() {
-        return TYPE_OTHER;
-    }
-
-    /**
-     * @param aTYPE_OTHER the TYPE_OTHER to set
-     */
-    public static void setTYPE_OTHER(String aTYPE_OTHER) {
-        TYPE_OTHER = aTYPE_OTHER;
-    }
-
-    /**
-     * @return the reference
-     */
-    public String getReference() {
-        return reference;
-    }
-
-    /**
-     * @param reference the reference to set
-     */
-    public void setReference(String reference) {
-        this.reference = reference;
-    }
-
-    /**
-     * @return the involvementType
-     */
-    public String getInvolvementType() {
-        return involvementType;
-    }
-
-    /**
-     * @param involvementType the involvementType to set
-     */
-    public void setInvolvementType(String involvementType) {
-        this.involvementType = involvementType;
-    }
-
-    /**
-     * @return the contact
-     */
-    public String getContact() {
-        return contact;
-    }
-
-    /**
-     * @param contact the contact to set
-     */
-    public void setContact(String contact) {
-        this.contact = contact;
-    }
-
-    /**
-     * @return the custom1
-     */
-    public String getCustom1() {
-        return custom1;
-    }
-
-    /**
-     * @param custom1 the custom1 to set
-     */
-    public void setCustom1(String custom1) {
-        this.custom1 = custom1;
-    }
-
-    /**
-     * @return the custom2
-     */
-    public String getCustom2() {
-        return custom2;
-    }
-
-    /**
-     * @param custom2 the custom2 to set
-     */
-    public void setCustom2(String custom2) {
-        this.custom2 = custom2;
-    }
-
-    /**
-     * @return the custom3
-     */
-    public String getCustom3() {
-        return custom3;
-    }
-
-    /**
-     * @param custom3 the custom3 to set
-     */
-    public void setCustom3(String custom3) {
-        this.custom3 = custom3;
-    }
-
-    /**
-     * @return the contactId
-     */
-    public String getContactId() {
-        return contactId;
-    }
-
-    /**
-     * @param contactId the contactId to set
-     */
-    public void setContactId(String contactId) {
-        this.contactId = contactId;
-    }
-
-    
+    // Add business logic below. (Right-click in editor and choose
+    // "Insert Code > Add Business Method")
     
     
 }

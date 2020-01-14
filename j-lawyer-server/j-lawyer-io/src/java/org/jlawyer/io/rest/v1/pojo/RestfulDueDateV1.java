@@ -661,7 +661,7 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package org.jlawyer.io.rest.pojo;
+package org.jlawyer.io.rest.v1.pojo;
 
 import java.util.Date;
 
@@ -669,15 +669,19 @@ import java.util.Date;
  *
  * @author jens
  */
-public class RestfulDocument {
+public class RestfulDueDateV1 {
+    
+    public static final transient String TYPE_RESPITE="RESPITE";
+    public static final transient String TYPE_FOLLOWUP="FOLLOWUP";
     
     private String id=null;
-    private String name=null;
-    private Date creationDate=null;
-    private long size=0l;
-    private boolean favorite=false;
+    private String reason=null;
+    private Date dueDate=null;
+    private boolean done=false;
+    private String assignee=null;
+    private String type=null;
 
-    public RestfulDocument() {
+    public RestfulDueDateV1() {
     }
 
     /**
@@ -695,60 +699,75 @@ public class RestfulDocument {
     }
 
     /**
-     * @return the name
+     * @return the reason
      */
-    public String getName() {
-        return name;
+    public String getReason() {
+        return reason;
     }
 
     /**
-     * @param name the name to set
+     * @param reason the reason to set
      */
-    public void setName(String name) {
-        this.name = name;
+    public void setReason(String reason) {
+        this.reason = reason;
     }
 
     /**
-     * @return the creationDate
+     * @return the dueDate
      */
-    public Date getCreationDate() {
-        return creationDate;
+    public Date getDueDate() {
+        return dueDate;
     }
 
     /**
-     * @param creationDate the creationDate to set
+     * @param dueDate the dueDate to set
      */
-    public void setCreationDate(Date creationDate) {
-        this.creationDate = creationDate;
+    public void setDueDate(Date dueDate) {
+        this.dueDate = dueDate;
     }
 
     /**
-     * @return the size
+     * @return the done
      */
-    public long getSize() {
-        return size;
+    public boolean isDone() {
+        return done;
     }
 
     /**
-     * @param size the size to set
+     * @param done the done to set
      */
-    public void setSize(long size) {
-        this.size = size;
+    public void setDone(boolean done) {
+        this.done = done;
     }
 
     /**
-     * @return the favorite
+     * @return the assignee
      */
-    public boolean isFavorite() {
-        return favorite;
+    public String getAssignee() {
+        return assignee;
     }
 
     /**
-     * @param favorite the favorite to set
+     * @param assignee the assignee to set
      */
-    public void setFavorite(boolean favorite) {
-        this.favorite = favorite;
+    public void setAssignee(String assignee) {
+        this.assignee = assignee;
     }
+
+    /**
+     * @return the type
+     */
+    public String getType() {
+        return type;
+    }
+
+    /**
+     * @param type the type to set
+     */
+    public void setType(String type) {
+        this.type = type;
+    }
+
     
     
     

@@ -661,57 +661,45 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package org.jlawyer.io.rest;
+package org.jlawyer.io.rest.v1;
 
-import com.jdimension.jlawyer.persistence.AddressBean;
-import com.jdimension.jlawyer.services.AddressServiceLocal;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.Stateless;
-import javax.naming.InitialContext;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import org.jboss.logging.Logger;
+import org.jlawyer.io.rest.v1.pojo.ApiMetadataV1;
 
 /**
  *
- * http://localhost:8080/j-lawyer-io/rest/contacts
+ * http://localhost:8080/j-lawyer-io/rest/security/metadata
  */
 @Stateless
-@Path("/contacts")
+@Path("/v1/security")
 @Consumes({"application/json"})
 @Produces({"application/json"})
-public class ContactsEndpoint implements ContactsEndpointLocal {
+public class SecurityEndpointV1 implements SecurityEndpointLocalV1 {
 
-    private static final Logger log=Logger.getLogger(ContactsEndpoint.class.getName());
-    
+    /**
+     * Returns this API backends metadata, such as API level. This can be used by a client to determine the capabilities of this backend.
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
     @Override
+    @Path("/metadata")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Path("/{id}")
-    @RolesAllowed({"readAddressRole"})
-    public Response getContact(@PathParam("id") String id) {
-        // http://localhost:8080/j-lawyer-io/rest/contacts/0c617d4e7f0001012eebc10d402e8a74
-        try {
+    public Response getApiMetadata() {
 
-            InitialContext ic = new InitialContext();
-            AddressServiceLocal addresses = (AddressServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/AddressService!com.jdimension.jlawyer.services.AddressServiceLocal");
-            AddressBean adr=addresses.getAddress(id);
-            Response res = Response.ok(adr).build();
-            return res;
-        } catch (Exception ex) {
-            log.error("can not get address " + id, ex);
-            Response res = Response.serverError().build();
-            return res;
-        }
+        ApiMetadataV1 meta = new ApiMetadataV1();
+        meta.setApiLevel(1);
+
+        Response res = Response.ok(meta).build();
+        return res;
+
     }
 
-    // Add business logic below. (Right-click in editor and choose
-    // "Insert Code > Add Business Method")
-    
-    
 }

@@ -661,77 +661,34 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package org.jlawyer.io.rest.pojo;
+package org.jlawyer.io.rest.v1.pojo;
 
 /**
  *
  * @author jens
  */
-public class RestfulDocumentContent {
+public class ApiMetadataV1 {
     
-    private String id=null;
-    private String caseId=null;
-    private String fileName=null;
-    private String base64content=null;
-
-    public RestfulDocumentContent() {
+    private int apiLevel=1;
+    
+    public ApiMetadataV1() {
     }
 
     /**
-     * @return the id
+     * @return the apiLevel
      */
-    public String getId() {
-        return id;
+    public int getApiLevel() {
+        return apiLevel;
     }
 
     /**
-     * @param id the id to set
+     * @param apiLevel the apiLevel to set
      */
-    public void setId(String id) {
-        this.id = id;
+    public void setApiLevel(int apiLevel) {
+        this.apiLevel = apiLevel;
     }
 
-    /**
-     * @return the base64content
-     */
-    public String getBase64content() {
-        return base64content;
-    }
-
-    /**
-     * @param base64content the base64content to set
-     */
-    public void setBase64content(String base64content) {
-        this.base64content = base64content;
-    }
-
-    /**
-     * @return the fileName
-     */
-    public String getFileName() {
-        return fileName;
-    }
-
-    /**
-     * @param fileName the fileName to set
-     */
-    public void setFileName(String fileName) {
-        this.fileName = fileName;
-    }
-
-    /**
-     * @return the caseId
-     */
-    public String getCaseId() {
-        return caseId;
-    }
-
-    /**
-     * @param caseId the caseId to set
-     */
-    public void setCaseId(String caseId) {
-        this.caseId = caseId;
-    }
+    
     
     
     

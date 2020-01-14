@@ -660,43 +660,19 @@ specific requirements.
 if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
- */
-package org.jlawyer.io.rest;
+*/
+package org.jlawyer.io.rest.v1;
 
-import javax.annotation.security.RolesAllowed;
-import javax.ejb.Stateless;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
+import javax.ejb.Local;
 import javax.ws.rs.core.Response;
-import org.jlawyer.io.rest.pojo.ApiMetadata;
 
 /**
  *
- * http://localhost:8080/j-lawyer-io/rest/security/metadata
+ * @author jens
  */
-@Stateless
-@Path("/security")
-@Consumes({"application/json"})
-@Produces({"application/json"})
-public class SecurityEndpoint implements SecurityEndpointLocal {
+@Local
+public interface SecurityEndpointLocalV1 {
 
-    // Add business logic below. (Right-click in editor and choose
-    // "Insert Code > Add Business Method")
-    @Override
-    @Path("/metadata")
-    @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response getApiMetadata() {
-
-        ApiMetadata meta = new ApiMetadata();
-        meta.setApiLevel(1);
-
-        Response res = Response.ok(meta).build();
-        return res;
-
-    }
-
+    Response getApiMetadata();
+    
 }

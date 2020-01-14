@@ -661,34 +661,94 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package org.jlawyer.io.rest.pojo;
+package org.jlawyer.io.rest.v1.pojo;
+
+import java.util.Date;
 
 /**
  *
  * @author jens
  */
-public class ApiMetadata {
+public class RestfulDocumentV1 {
     
-    private int apiLevel=1;
-    
-    public ApiMetadata() {
+    private String id=null;
+    private String name=null;
+    private Date creationDate=null;
+    private long size=0l;
+    private boolean favorite=false;
+
+    public RestfulDocumentV1() {
     }
 
     /**
-     * @return the apiLevel
+     * @return the id
      */
-    public int getApiLevel() {
-        return apiLevel;
+    public String getId() {
+        return id;
     }
 
     /**
-     * @param apiLevel the apiLevel to set
+     * @param id the id to set
      */
-    public void setApiLevel(int apiLevel) {
-        this.apiLevel = apiLevel;
+    public void setId(String id) {
+        this.id = id;
     }
 
-    
+    /**
+     * @return the name
+     */
+    public String getName() {
+        return name;
+    }
+
+    /**
+     * @param name the name to set
+     */
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    /**
+     * @return the creationDate
+     */
+    public Date getCreationDate() {
+        return creationDate;
+    }
+
+    /**
+     * @param creationDate the creationDate to set
+     */
+    public void setCreationDate(Date creationDate) {
+        this.creationDate = creationDate;
+    }
+
+    /**
+     * @return the size
+     */
+    public long getSize() {
+        return size;
+    }
+
+    /**
+     * @param size the size to set
+     */
+    public void setSize(long size) {
+        this.size = size;
+    }
+
+    /**
+     * @return the favorite
+     */
+    public boolean isFavorite() {
+        return favorite;
+    }
+
+    /**
+     * @param favorite the favorite to set
+     */
+    public void setFavorite(boolean favorite) {
+        this.favorite = favorite;
+    }
     
     
     

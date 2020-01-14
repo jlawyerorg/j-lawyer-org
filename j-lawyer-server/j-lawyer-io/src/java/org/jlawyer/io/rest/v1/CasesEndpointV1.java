@@ -661,9 +661,10 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package org.jlawyer.io.rest;
+package org.jlawyer.io.rest.v1;
 
 import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
@@ -672,6 +673,7 @@ import com.jdimension.jlawyer.security.Base64;
 import com.jdimension.jlawyer.services.ArchiveFileServiceLocal;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -686,28 +688,33 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import org.jboss.logging.Logger;
-import org.jlawyer.io.rest.pojo.RestfulCaseOverview;
-import org.jlawyer.io.rest.pojo.RestfulDocument;
-import org.jlawyer.io.rest.pojo.RestfulDocumentContent;
-import org.jlawyer.io.rest.pojo.RestfulDueDate;
-import org.jlawyer.io.rest.pojo.RestfulInvolvement;
-import org.jlawyer.io.rest.pojo.RestfulTag;
+import org.jlawyer.io.rest.v1.pojo.RestfulCaseOverviewV1;
+import org.jlawyer.io.rest.v1.pojo.RestfulDocumentV1;
+import org.jlawyer.io.rest.v1.pojo.RestfulDocumentContent;
+import org.jlawyer.io.rest.v1.pojo.RestfulDueDateV1;
+import org.jlawyer.io.rest.v1.pojo.RestfulPartyV1;
+import org.jlawyer.io.rest.v1.pojo.RestfulTagV1;
 
 /**
  *
  * http://localhost:8080/j-lawyer-io/rest/cases/list
  */
 @Stateless
-@Path("/cases")
+@Path("/v1/cases")
 @Consumes({"application/json"})
 @Produces({"application/json"})
-public class CasesEndpoint implements CasesEndpointLocal {
+public class CasesEndpointV1 implements CasesEndpointLocalV1 {
 
-    private static final Logger log = Logger.getLogger(CasesEndpoint.class.getName());
+    private static final Logger log = Logger.getLogger(CasesEndpointV1.class.getName());
 
     @EJB
     private ArchiveFileServiceLocal archiveFileSvc;
-
+    
+    /**
+     * Lists all cases
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
     @Override
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -720,10 +727,10 @@ public class CasesEndpoint implements CasesEndpointLocal {
             InitialContext ic = new InitialContext();
             ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal");
             ArrayList<String> ids = cases.getAllArchiveFileIds();
-            ArrayList<RestfulCaseOverview> rcoList = new ArrayList<RestfulCaseOverview>();
+            ArrayList<RestfulCaseOverviewV1> rcoList = new ArrayList<RestfulCaseOverviewV1>();
             for (String id : ids) {
                 ArchiveFileBean afb = cases.getArchiveFile(id);
-                RestfulCaseOverview rco = new RestfulCaseOverview();
+                RestfulCaseOverviewV1 rco = new RestfulCaseOverviewV1();
                 rco.setId(id);
                 rco.setName(afb.getName());
                 rco.setFileNumber(afb.getFileNumber());
@@ -739,8 +746,12 @@ public class CasesEndpoint implements CasesEndpointLocal {
 
     }
 
-    // Add business logic below. (Right-click in editor and choose
-    // "Insert Code > Add Business Method")
+    /**
+     * Returns all case metadata based on its ID
+     * @param id case ID
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
     @Override
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -762,6 +773,12 @@ public class CasesEndpoint implements CasesEndpointLocal {
         }
     }
 
+    /**
+     * Returns all tags attached to the case give by its ID
+     * @param id case ID
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
     @Override
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -781,9 +798,9 @@ public class CasesEndpoint implements CasesEndpointLocal {
             }
 
             Collection<ArchiveFileTagsBean> tags = cases.getTags(id);
-            ArrayList<RestfulTag> tagList = new ArrayList<RestfulTag>();
+            ArrayList<RestfulTagV1> tagList = new ArrayList<RestfulTagV1>();
             for (ArchiveFileTagsBean tag : tags) {
-                RestfulTag t = new RestfulTag();
+                RestfulTagV1 t = new RestfulTagV1();
                 t.setId(tag.getId());
                 t.setName(tag.getTagName());
                 tagList.add(t);
@@ -800,18 +817,23 @@ public class CasesEndpoint implements CasesEndpointLocal {
     }
     
     
-
+    /**
+     * Creates a new case
+     * @param caseData case data
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
     @Override
     @PUT
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/create")
     @RolesAllowed({"createArchiveFileRole"})
-    public Response createCase(ArchiveFileBean afb) {
+    public Response createCase(ArchiveFileBean caseData) {
 
         // curl -u admin:a -X PUT -H "Content-Type: application/json" -d '{"name":"via REST", "reason":"wegen REST", "subjectField":"Familienrecht", "notice":"notiz REST","assistant":"user", "lawyer":"admin", "claimNumber":"RESTcn","claimValue":"3.44","custom1":"RESTc1","custom2":"RESTc2","custom3":"RESTc3"}' http://localhost:8080/j-lawyer-io/rest/cases/create
         try {
 
-            if (afb.getName() == null || "".equals(afb.getName())) {
+            if (caseData.getName() == null || "".equals(caseData.getName())) {
                 log.error("Can not create new case - no case number given");
                 return Response.serverError().build();
             }
@@ -819,27 +841,33 @@ public class CasesEndpoint implements CasesEndpointLocal {
             InitialContext ic = new InitialContext();
             ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal");
 
-            afb = cases.createArchiveFile(afb);
-            Response res = Response.ok(afb).build();
+            caseData = cases.createArchiveFile(caseData);
+            Response res = Response.ok(caseData).build();
             return res;
         } catch (Exception ex) {
-            log.error("can not create new case " + afb.getName(), ex);
+            log.error("can not create new case " + caseData.getName(), ex);
             Response res = Response.serverError().build();
             return res;
         }
     }
 
+    /**
+     * Updates an existing case based on its ID
+     * @param caseData case data
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
     @Override
     @PUT
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/update")
     @RolesAllowed({"writeArchiveFileRole"})
-    public Response updateCase(ArchiveFileBean afb) {
+    public Response updateCase(ArchiveFileBean caseData) {
 
         // curl -u admin:a -X PUT -H "Content-Type: application/json" -d '{"id":"2187c30c7f0001011c78dd99d50cbd20", "name":"via REST", "reason":"wegen REST", "subjectField":"Familienrecht", "notice":"notiz REST","assistant":"user", "lawyer":"admin", "claimNumber":"RESTcn","claimValue":"3.44","custom1":"RESTc1","custom2":"RESTc2","custom3":"RESTc3"}' http://localhost:8080/j-lawyer-io/rest/cases/update
         try {
 
-            if (afb.getId() == null || "".equals(afb.getId())) {
+            if (caseData.getId() == null || "".equals(caseData.getId())) {
                 log.error("Can update case - no case id given");
                 return Response.serverError().build();
             }
@@ -847,42 +875,49 @@ public class CasesEndpoint implements CasesEndpointLocal {
             InitialContext ic = new InitialContext();
             ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal");
 
-            ArchiveFileBean currentCase = cases.getArchiveFile(afb.getId());
+            ArchiveFileBean currentCase = cases.getArchiveFile(caseData.getId());
             if (currentCase == null) {
-                log.error("case with id " + afb.getId() + " does not exist - skipping update");
+                log.error("case with id " + caseData.getId() + " does not exist - skipping update");
                 Response res = Response.serverError().build();
                 return res;
             }
             // file number must not be changed
 
-            currentCase.setArchived(afb.getArchived());
-            currentCase.setAssistant(afb.getAssistant());
-            currentCase.setClaimNumber(afb.getClaimNumber());
-            currentCase.setClaimValue(afb.getClaimValue());
-            currentCase.setCustom1(afb.getCustom1());
-            currentCase.setCustom2(afb.getCustom2());
-            currentCase.setCustom3(afb.getCustom3());
-            currentCase.setLawyer(afb.getLawyer());
-            currentCase.setName(afb.getName());
-            currentCase.setNotice(afb.getNotice());
-            currentCase.setReason(afb.getReason());
-            currentCase.setSubjectField(afb.getSubjectField());
+            currentCase.setArchived(caseData.getArchived());
+            currentCase.setAssistant(caseData.getAssistant());
+            currentCase.setClaimNumber(caseData.getClaimNumber());
+            currentCase.setClaimValue(caseData.getClaimValue());
+            currentCase.setCustom1(caseData.getCustom1());
+            currentCase.setCustom2(caseData.getCustom2());
+            currentCase.setCustom3(caseData.getCustom3());
+            currentCase.setLawyer(caseData.getLawyer());
+            currentCase.setName(caseData.getName());
+            currentCase.setNotice(caseData.getNotice());
+            currentCase.setReason(caseData.getReason());
+            currentCase.setSubjectField(caseData.getSubjectField());
 
             cases.updateArchiveFile(currentCase);
-            afb = cases.getArchiveFile(afb.getId());
+            caseData = cases.getArchiveFile(caseData.getId());
 
-            Response res = Response.ok(afb).build();
+            Response res = Response.ok(caseData).build();
             return res;
         } catch (Exception ex) {
-            log.error("can not create new case " + afb.getName(), ex);
+            log.error("can not create new case " + caseData.getName(), ex);
             Response res = Response.serverError().build();
             return res;
         }
     }
 
+    /**
+     * Returns a list of documents for a given case
+     * @param id case ID
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
     @Override
     @GET
     @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
     @Path("/{id}/documents")
     @RolesAllowed({"readArchiveFileRole"})
     public Response getCaseDocuments(@PathParam("id") String id) {
@@ -899,9 +934,9 @@ public class CasesEndpoint implements CasesEndpointLocal {
             }
 
             Collection<ArchiveFileDocumentsBean> documents = cases.getDocuments(id);
-            ArrayList<RestfulDocument> docList = new ArrayList<RestfulDocument>();
+            ArrayList<RestfulDocumentV1> docList = new ArrayList<RestfulDocumentV1>();
             for (ArchiveFileDocumentsBean doc : documents) {
-                RestfulDocument d = new RestfulDocument();
+                RestfulDocumentV1 d = new RestfulDocumentV1();
                 d.setId(doc.getId());
                 d.setName(doc.getName());
                 d.setCreationDate(doc.getCreationDate());
@@ -919,8 +954,12 @@ public class CasesEndpoint implements CasesEndpointLocal {
         }
     }
     
-    
-
+    /**
+     * Returns a a documents content given its ID. The return value is Base64 encoded.
+     * @param id document ID
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
     @Override
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -961,6 +1000,12 @@ public class CasesEndpoint implements CasesEndpointLocal {
         }
     }
 
+    /**
+     * Returns all due dates for a given case
+     * @param id case ID
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
     @Override
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -980,17 +1025,17 @@ public class CasesEndpoint implements CasesEndpointLocal {
             }
 
             Collection<ArchiveFileReviewsBean> reviews = cases.getReviews(id);
-            ArrayList<RestfulDueDate> ddList = new ArrayList<RestfulDueDate>();
+            ArrayList<RestfulDueDateV1> ddList = new ArrayList<RestfulDueDateV1>();
             for (ArchiveFileReviewsBean rev : reviews) {
-                RestfulDueDate dd = new RestfulDueDate();
+                RestfulDueDateV1 dd = new RestfulDueDateV1();
                 dd.setId(rev.getId());
                 dd.setAssignee(rev.getAssignee());
                 dd.setDone(rev.getDoneBoolean());
                 dd.setDueDate(rev.getReviewDate());
                 dd.setReason(rev.getReviewReason());
-                dd.setType(RestfulDueDate.TYPE_RESPITE);
+                dd.setType(RestfulDueDateV1.TYPE_RESPITE);
                 if (rev.getReviewType() == ArchiveFileReviewsBean.REVIEWTYPE_FOLLOWUP) {
-                    dd.setType(RestfulDueDate.TYPE_FOLLOWUP);
+                    dd.setType(RestfulDueDateV1.TYPE_FOLLOWUP);
                 }
                 ddList.add(dd);
             }
@@ -1004,12 +1049,18 @@ public class CasesEndpoint implements CasesEndpointLocal {
         }
     }
 
+    /**
+     * Returns a list of all parties involved in a case
+     * @param id case ID
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
     @Override
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Path("/{id}/involved")
+    @Path("/{id}/parties")
     @RolesAllowed({"readArchiveFileRole"})
-    public Response getInvolved(@PathParam("id") String id) {
+    public Response getCaseParties(@PathParam("id") String id) {
         //http://localhost:8080/j-lawyer-io/rest/cases/0c79112f7f000101327bf357f0b6010c/involved
         try {
 
@@ -1023,9 +1074,9 @@ public class CasesEndpoint implements CasesEndpointLocal {
             }
 
             Collection<ArchiveFileAddressesBean> involvements = cases.getInvolvementDetailsForCase(id);
-            ArrayList<RestfulInvolvement> invList = new ArrayList<RestfulInvolvement>();
+            ArrayList<RestfulPartyV1> invList = new ArrayList<RestfulPartyV1>();
             for (ArchiveFileAddressesBean inv : involvements) {
-                RestfulInvolvement i = new RestfulInvolvement();
+                RestfulPartyV1 i = new RestfulPartyV1();
                 i.setId(inv.getId());
                 i.setContact(inv.getContact());
                 i.setCustom1(inv.getCustom1());
@@ -1033,11 +1084,11 @@ public class CasesEndpoint implements CasesEndpointLocal {
                 i.setCustom3(inv.getCustom3());
                 i.setContactId(inv.getAddressKey().getId());
                 i.setReference(inv.getReference());
-                i.setInvolvementType(RestfulInvolvement.getTYPE_OTHER());
+                i.setInvolvementType(RestfulPartyV1.getTYPE_OTHER());
                 if (inv.getReferenceType() == ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT) {
-                    i.setInvolvementType(RestfulInvolvement.getTYPE_OPPONENT());
+                    i.setInvolvementType(RestfulPartyV1.getTYPE_OPPONENT());
                 } else if (inv.getReferenceType() == ArchiveFileAddressesBean.REFERENCETYPE_CLIENT) {
-                    i.setInvolvementType(RestfulInvolvement.getTYPE_CLIENT());
+                    i.setInvolvementType(RestfulPartyV1.getTYPE_CLIENT());
                 }
                 invList.add(i);
             }
@@ -1051,8 +1102,12 @@ public class CasesEndpoint implements CasesEndpointLocal {
         }
     }
     
-    
-
+    /**
+     * Creates a new document within an existing case. An ID for the document is not required in the request.
+     * @param document document data
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
     @Override
     @PUT
     @Produces(MediaType.APPLICATION_JSON)
@@ -1086,6 +1141,12 @@ public class CasesEndpoint implements CasesEndpointLocal {
         }
     }
 
+    /**
+     * Updates a document. This method can be used for both renaming a document as well as for uploading new content. For renaming, the request does not need to provide content. For uploading new content, there is no need to provide a file name.
+     * @param document the documents new data
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
     @Override
     @PUT
     @Produces(MediaType.APPLICATION_JSON)
@@ -1136,6 +1197,12 @@ public class CasesEndpoint implements CasesEndpointLocal {
         
     }
 
+    /**
+     * Deletes a document based on its ID
+     * @param id document ID
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
     @Override
     @DELETE
     @Produces(MediaType.APPLICATION_JSON)
@@ -1159,5 +1226,42 @@ public class CasesEndpoint implements CasesEndpointLocal {
             return res;
         }
     }
+
+    /**
+     * Creates a new party in a given case. 
+     * @param party the parties metadata
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @PUT
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/party/create")
+    @RolesAllowed({"writeArchiveFileRole"})
+    public Response createParty(RestfulPartyV1 party) {
+        try {
+
+//            InitialContext ic = new InitialContext();
+//            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal");
+//
+//            
+//            parties.create(newAab);
+//
+////ArchiveFileDocumentsBean newDoc=cases.addDocument(document.getCaseId(), document.getFileName(), data, "");
+//            
+//            RestfulPartyV1 newParty=new RestfulPartyV1();
+//            newParty.setId(newDoc.getId());
+            
+            Response res = Response.ok(null).build();
+            return res;
+        } catch (Exception ex) {
+            log.error("can not create new party for address " + party.getAddressId(), ex);
+            Response res = Response.serverError().build();
+            return res;
+        }
+    }
+
+    
 
 }

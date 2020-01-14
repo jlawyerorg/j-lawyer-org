@@ -661,18 +661,48 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package org.jlawyer.io.rest;
-
-import javax.ejb.Local;
-import javax.ws.rs.core.Response;
+package org.jlawyer.io.rest.v1.pojo;
 
 /**
  *
  * @author jens
  */
-@Local
-public interface ContactsEndpointLocal {
+public class RestfulTagV1 {
+    
+    private String id=null;
+    private String name=null;
 
-    Response getContact(String id);
+    public RestfulTagV1() {
+    }
+
+    /**
+     * @return the id
+     */
+    public String getId() {
+        return id;
+    }
+
+    /**
+     * @param id the id to set
+     */
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    /**
+     * @return the name
+     */
+    public String getName() {
+        return name;
+    }
+
+    /**
+     * @param name the name to set
+     */
+    public void setName(String name) {
+        this.name = name;
+    }
+    
+    
     
 }

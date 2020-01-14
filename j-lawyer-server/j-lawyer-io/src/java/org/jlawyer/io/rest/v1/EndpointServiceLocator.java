@@ -660,64 +660,23 @@ specific requirements.
 if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
- */
-package org.jlawyer.io.rest.pojo;
+*/
+package org.jlawyer.io.rest.v1;
 
-/**
- *
- * @author jens
- */
-public class RestfulCaseOverview {
-    
-    private String id=null;
-    private String name=null;
-    private String fileNumber=null;
+import java.util.HashSet;
+import java.util.Set;
+import javax.ws.rs.ApplicationPath;
+import javax.ws.rs.core.Application;
 
-    public RestfulCaseOverview() {
+@ApplicationPath("/rest")
+public class EndpointServiceLocator extends Application
+{
+    public Set<Class<?>> getClasses()
+    {
+        Set<Class<?>> s = new HashSet<Class<?>>();
+        s.add(SecurityEndpointV1.class);
+        s.add(CasesEndpointV1.class);
+        s.add(ContactsEndpointV1.class);
+        return s;
     }
-
-    /**
-     * @return the id
-     */
-    public String getId() {
-        return id;
-    }
-
-    /**
-     * @param id the id to set
-     */
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    /**
-     * @return the name
-     */
-    public String getName() {
-        return name;
-    }
-
-    /**
-     * @param name the name to set
-     */
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    /**
-     * @return the fileNumber
-     */
-    public String getFileNumber() {
-        return fileNumber;
-    }
-
-    /**
-     * @param fileNumber the fileNumber to set
-     */
-    public void setFileNumber(String fileNumber) {
-        this.fileNumber = fileNumber;
-    }
-    
-    
-    
 }

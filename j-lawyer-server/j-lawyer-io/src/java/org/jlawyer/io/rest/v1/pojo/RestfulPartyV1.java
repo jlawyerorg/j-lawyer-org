@@ -661,7 +661,7 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package org.jlawyer.io.rest.pojo;
+package org.jlawyer.io.rest.v1.pojo;
 
 import java.util.Date;
 
@@ -669,19 +669,23 @@ import java.util.Date;
  *
  * @author jens
  */
-public class RestfulDueDate {
+public class RestfulPartyV1 {
     
-    public static final transient String TYPE_RESPITE="RESPITE";
-    public static final transient String TYPE_FOLLOWUP="FOLLOWUP";
+    private static transient String TYPE_CLIENT="CLIENT";
+    private static transient String TYPE_OPPONENT="OPPONENT";
+    private static transient String TYPE_OTHER="OTHER";
     
     private String id=null;
-    private String reason=null;
-    private Date dueDate=null;
-    private boolean done=false;
-    private String assignee=null;
-    private String type=null;
-
-    public RestfulDueDate() {
+    private String reference=null;
+    private String involvementType=null;
+    private String contact=null;
+    private String custom1=null;
+    private String custom2=null;
+    private String custom3=null;
+    private String contactId=null;
+    
+    
+    public RestfulPartyV1() {
     }
 
     /**
@@ -699,73 +703,143 @@ public class RestfulDueDate {
     }
 
     /**
-     * @return the reason
+     * @return the TYPE_CLIENT
      */
-    public String getReason() {
-        return reason;
+    public static String getTYPE_CLIENT() {
+        return TYPE_CLIENT;
     }
 
     /**
-     * @param reason the reason to set
+     * @param aTYPE_CLIENT the TYPE_CLIENT to set
      */
-    public void setReason(String reason) {
-        this.reason = reason;
+    public static void setTYPE_CLIENT(String aTYPE_CLIENT) {
+        TYPE_CLIENT = aTYPE_CLIENT;
     }
 
     /**
-     * @return the dueDate
+     * @return the TYPE_OPPONENT
      */
-    public Date getDueDate() {
-        return dueDate;
+    public static String getTYPE_OPPONENT() {
+        return TYPE_OPPONENT;
     }
 
     /**
-     * @param dueDate the dueDate to set
+     * @param aTYPE_OPPONENT the TYPE_OPPONENT to set
      */
-    public void setDueDate(Date dueDate) {
-        this.dueDate = dueDate;
+    public static void setTYPE_OPPONENT(String aTYPE_OPPONENT) {
+        TYPE_OPPONENT = aTYPE_OPPONENT;
     }
 
     /**
-     * @return the done
+     * @return the TYPE_OTHER
      */
-    public boolean isDone() {
-        return done;
+    public static String getTYPE_OTHER() {
+        return TYPE_OTHER;
     }
 
     /**
-     * @param done the done to set
+     * @param aTYPE_OTHER the TYPE_OTHER to set
      */
-    public void setDone(boolean done) {
-        this.done = done;
+    public static void setTYPE_OTHER(String aTYPE_OTHER) {
+        TYPE_OTHER = aTYPE_OTHER;
     }
 
     /**
-     * @return the assignee
+     * @return the reference
      */
-    public String getAssignee() {
-        return assignee;
+    public String getReference() {
+        return reference;
     }
 
     /**
-     * @param assignee the assignee to set
+     * @param reference the reference to set
      */
-    public void setAssignee(String assignee) {
-        this.assignee = assignee;
+    public void setReference(String reference) {
+        this.reference = reference;
     }
 
     /**
-     * @return the type
+     * @return the involvementType
      */
-    public String getType() {
-        return type;
+    public String getInvolvementType() {
+        return involvementType;
     }
 
     /**
-     * @param type the type to set
+     * @param involvementType the involvementType to set
      */
-    public void setType(String type) {
-        this.type = type;
+    public void setInvolvementType(String involvementType) {
+        this.involvementType = involvementType;
+    }
+
+    /**
+     * @return the contact
+     */
+    public String getContact() {
+        return contact;
+    }
+
+    /**
+     * @param contact the contact to set
+     */
+    public void setContact(String contact) {
+        this.contact = contact;
+    }
+
+    /**
+     * @return the custom1
+     */
+    public String getCustom1() {
+        return custom1;
+    }
+
+    /**
+     * @param custom1 the custom1 to set
+     */
+    public void setCustom1(String custom1) {
+        this.custom1 = custom1;
+    }
+
+    /**
+     * @return the custom2
+     */
+    public String getCustom2() {
+        return custom2;
+    }
+
+    /**
+     * @param custom2 the custom2 to set
+     */
+    public void setCustom2(String custom2) {
+        this.custom2 = custom2;
+    }
+
+    /**
+     * @return the custom3
+     */
+    public String getCustom3() {
+        return custom3;
+    }
+
+    /**
+     * @param custom3 the custom3 to set
+     */
+    public void setCustom3(String custom3) {
+        this.custom3 = custom3;
+    }
+
+    /**
+     * @return the contactId
+     */
+    public String getAddressId() {
+        return contactId;
+    }
+
+    /**
+     * @param contactId the contactId to set
+     */
+    public void setContactId(String contactId) {
+        this.contactId = contactId;
     }
 
     

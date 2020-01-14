@@ -661,42 +661,78 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package org.jlawyer.io.rest;
-
-import com.jdimension.jlawyer.persistence.ArchiveFileBean;
-import javax.ejb.Local;
-import javax.ws.rs.core.Response;
-import org.jlawyer.io.rest.pojo.RestfulDocumentContent;
+package org.jlawyer.io.rest.v1.pojo;
 
 /**
  *
  * @author jens
  */
-@Local
-public interface CasesEndpointLocal {
-
-    Response listCases();
-
-    Response getCase(String id);
+public class RestfulDocumentContent {
     
-    public Response getCaseTags(String id);
+    private String id=null;
+    private String caseId=null;
+    private String fileName=null;
+    private String base64content=null;
 
-    public Response createCase(ArchiveFileBean afb);
+    public RestfulDocumentContent() {
+    }
+
+    /**
+     * @return the id
+     */
+    public String getId() {
+        return id;
+    }
+
+    /**
+     * @param id the id to set
+     */
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    /**
+     * @return the base64content
+     */
+    public String getBase64content() {
+        return base64content;
+    }
+
+    /**
+     * @param base64content the base64content to set
+     */
+    public void setBase64content(String base64content) {
+        this.base64content = base64content;
+    }
+
+    /**
+     * @return the fileName
+     */
+    public String getFileName() {
+        return fileName;
+    }
+
+    /**
+     * @param fileName the fileName to set
+     */
+    public void setFileName(String fileName) {
+        this.fileName = fileName;
+    }
+
+    /**
+     * @return the caseId
+     */
+    public String getCaseId() {
+        return caseId;
+    }
+
+    /**
+     * @param caseId the caseId to set
+     */
+    public void setCaseId(String caseId) {
+        this.caseId = caseId;
+    }
     
-    public Response updateCase(ArchiveFileBean afb);
-
-    Response getCaseDocuments(String id);
-
-    Response getDocumentContent(String id);
-
-    Response getDueDates(String id);
-
-    Response getInvolved(String id);
-
-    Response createDocument(RestfulDocumentContent document);
-
-    Response updateDocument(RestfulDocumentContent document);
-
-    Response deleteDocument(String id);
+    
     
 }

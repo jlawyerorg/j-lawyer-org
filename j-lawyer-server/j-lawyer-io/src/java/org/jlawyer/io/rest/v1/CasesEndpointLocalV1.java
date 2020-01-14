@@ -661,48 +661,46 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package org.jlawyer.io.rest.pojo;
+package org.jlawyer.io.rest.v1;
+
+import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import javax.ejb.Local;
+import javax.ws.rs.core.Response;
+import org.jlawyer.io.rest.v1.pojo.RestfulDocumentContent;
+import org.jlawyer.io.rest.v1.pojo.RestfulPartyV1;
 
 /**
  *
  * @author jens
  */
-public class RestfulTag {
+@Local
+public interface CasesEndpointLocalV1 {
+
+    Response listCases();
+
+    Response getCase(String id);
     
-    private String id=null;
-    private String name=null;
+    public Response getCaseTags(String id);
 
-    public RestfulTag() {
-    }
-
-    /**
-     * @return the id
-     */
-    public String getId() {
-        return id;
-    }
-
-    /**
-     * @param id the id to set
-     */
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    /**
-     * @return the name
-     */
-    public String getName() {
-        return name;
-    }
-
-    /**
-     * @param name the name to set
-     */
-    public void setName(String name) {
-        this.name = name;
-    }
+    public Response createCase(ArchiveFileBean afb);
     
-    
+    public Response updateCase(ArchiveFileBean afb);
+
+    Response getCaseDocuments(String id);
+
+    Response getDocumentContent(String id);
+
+    Response getDueDates(String id);
+
+    Response getCaseParties(String id);
+
+    Response createDocument(RestfulDocumentContent document);
+
+    Response updateDocument(RestfulDocumentContent document);
+
+    Response deleteDocument(String id);
+
+    Response createParty(RestfulPartyV1 party);
+
     
 }
