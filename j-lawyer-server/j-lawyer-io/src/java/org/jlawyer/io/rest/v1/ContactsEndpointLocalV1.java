@@ -663,6 +663,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package org.jlawyer.io.rest.v1;
 
+import com.jdimension.jlawyer.persistence.AddressBean;
 import javax.ejb.Local;
 import javax.ws.rs.core.Response;
 
@@ -674,5 +675,7 @@ import javax.ws.rs.core.Response;
 public interface ContactsEndpointLocalV1 {
 
     Response getContact(String id);
+
+    Response createContact(AddressBean contact);
     
 }

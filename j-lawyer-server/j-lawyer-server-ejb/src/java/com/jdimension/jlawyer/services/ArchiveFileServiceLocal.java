@@ -740,5 +740,7 @@ public interface ArchiveFileServiceLocal {
     public void removeDocument(String id) throws Exception;
     
     public boolean setDocumentContent(String id, byte[] content) throws Exception;
+
+    ArchiveFileAddressesBean addAddressToCase(ArchiveFileAddressesBean address) throws Exception;
     
 }

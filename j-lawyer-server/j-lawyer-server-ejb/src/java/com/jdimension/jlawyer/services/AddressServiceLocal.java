@@ -677,4 +677,6 @@ public interface AddressServiceLocal {
     
     public AddressBean getAddress(String id);
     
+    public AddressBean createAddress(AddressBean dto);
+    
 }

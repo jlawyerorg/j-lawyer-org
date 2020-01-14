@@ -670,6 +670,7 @@ import javax.ejb.Stateless;
 import javax.naming.InitialContext;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -716,8 +717,34 @@ public class ContactsEndpointV1 implements ContactsEndpointLocalV1 {
         }
     }
 
-    // Add business logic below. (Right-click in editor and choose
-    // "Insert Code > Add Business Method")
+    /**
+     * Creates a new contact
+     *
+     * @param contact contact data
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @PUT
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/create")
+    @RolesAllowed({"createAddressRole"})
+    public Response createContact(AddressBean contact) {
+        try {
+
+            InitialContext ic = new InitialContext();
+            AddressServiceLocal addresses = (AddressServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/AddressService!com.jdimension.jlawyer.services.AddressServiceLocal");
+            
+            contact = addresses.createAddress(contact);
+            Response res = Response.ok(contact).build();
+            return res;
+        } catch (Exception ex) {
+            log.error("can not create new address " + contact.toString(), ex);
+            Response res = Response.serverError().build();
+            return res;
+        }
+
     
+    }
     
 }

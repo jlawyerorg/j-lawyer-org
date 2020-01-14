@@ -1891,6 +1891,8 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
         return true;
     }
+    
+    
 
     @Override
     @RolesAllowed({"writeArchiveFileRole"})
@@ -3562,6 +3564,28 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             throw new Exception("Dokument mit ID " + id + " existiert nicht!");
         }
         return db;
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public ArchiveFileAddressesBean addAddressToCase(ArchiveFileAddressesBean address) throws Exception {
+        if(address.getArchiveFileKey()==null) {
+            throw new Exception("Akteninformationen erforderlich, um Beteiligten hinzuzufügen");
+        }
+        
+        if(address.getAddressKey()==null) {
+            throw new Exception("Adressinformationen erforderlich, um Beteiligten hinzuzufügen");
+        }
+        
+        StringGenerator idGen=new StringGenerator();
+        String id=idGen.getID().toString();
+        address.setId(id);
+        
+        this.archiveFileAddressesFacade.create(address);
+        
+        address=this.archiveFileAddressesFacade.find(id);
+        return address;
+        
     }
 
 }

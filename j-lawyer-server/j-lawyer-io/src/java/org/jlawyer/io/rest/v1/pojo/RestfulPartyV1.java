@@ -671,9 +671,9 @@ import java.util.Date;
  */
 public class RestfulPartyV1 {
     
-    private static transient String TYPE_CLIENT="CLIENT";
-    private static transient String TYPE_OPPONENT="OPPONENT";
-    private static transient String TYPE_OTHER="OTHER";
+    public static transient String TYPE_CLIENT="CLIENT";
+    public static transient String TYPE_OPPONENT="OPPONENT";
+    public static transient String TYPE_OTHER="OTHER";
     
     private String id=null;
     private String reference=null;
@@ -683,6 +683,7 @@ public class RestfulPartyV1 {
     private String custom2=null;
     private String custom3=null;
     private String contactId=null;
+    private String caseId=null;
     
     
     public RestfulPartyV1() {
@@ -838,8 +839,22 @@ public class RestfulPartyV1 {
     /**
      * @param contactId the contactId to set
      */
-    public void setContactId(String contactId) {
+    public void setAddressId(String contactId) {
         this.contactId = contactId;
+    }
+
+    /**
+     * @return the caseId
+     */
+    public String getCaseId() {
+        return caseId;
+    }
+
+    /**
+     * @param caseId the caseId to set
+     */
+    public void setCaseId(String caseId) {
+        this.caseId = caseId;
     }
 
     
