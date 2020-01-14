@@ -710,6 +710,7 @@ import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableModel;
 import org.apache.log4j.Logger;
+import org.jlawyer.bea.model.Attachment;
 import org.jlawyer.bea.model.Identity;
 import org.jlawyer.bea.model.BeaListItem;
 import org.jlawyer.bea.model.PostBox;
@@ -1851,11 +1852,16 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
         for (int i = 0; i < this.tblAttachments.getRowCount(); i++) {
             String name = this.tblAttachments.getValueAt(i, 5).toString();
             String alias = this.tblAttachments.getValueAt(i, 4).toString();
+            Boolean schriftsatz=(Boolean)this.tblAttachments.getValueAt(i, 0);
             for (String fileName : this.attachments.keySet()) {
                 if (name.equals(fileName)) {
                     BeaAttachmentMetadata meta = new BeaAttachmentMetadata();
                     meta.setUrl(this.attachments.get(fileName));
                     meta.setAlias(alias);
+                    if(schriftsatz)
+                        meta.setType(Attachment.TYPE_SCHRIFTSATZ);
+                    else
+                        meta.setType(Attachment.TYPE_ATTACHMENT);
                     attachmentMetadata.add(meta);
                 }
             }

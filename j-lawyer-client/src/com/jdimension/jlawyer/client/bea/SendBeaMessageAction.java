@@ -788,6 +788,7 @@ public class SendBeaMessageAction extends ProgressableAction {
                 att.setFileName(f.getName());
                 att.setAlias(meta.getAlias());
                 att.setContent(FileUtils.readFileToByteArray(f));
+                att.setType(meta.getType());
                 msg.getAttachments().add(att);
             }
             
