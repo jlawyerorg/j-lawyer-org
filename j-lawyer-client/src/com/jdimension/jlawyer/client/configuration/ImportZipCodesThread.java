@@ -823,7 +823,8 @@ public class ImportZipCodesThread implements Runnable {
                 
                 CityDataBean dto=new CityDataBean();
                 dto.setZipCode(zip);
-                dto.setCity(city + " (" + state + ")");
+                //dto.setCity(city + " (" + state + ")");
+                dto.setCity(city);
                 newCityData.add(dto);
                 if(newCityData.size()==100) {
                     mgmt.createCityData(newCityData.toArray(new CityDataBean[0]));
