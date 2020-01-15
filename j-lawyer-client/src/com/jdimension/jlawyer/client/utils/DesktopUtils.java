@@ -665,7 +665,10 @@ package com.jdimension.jlawyer.client.utils;
 
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.ShowURLDialog;
+import java.awt.Component;
 import java.awt.Desktop;
+import java.awt.Dialog;
+import java.awt.Frame;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
@@ -696,6 +699,11 @@ public class DesktopUtils {
     }
 
     public static void openBrowser(String url) {
+        openBrowserFromFrame(url, null);
+    }
+
+    public static void openBrowserFromDialog(String url, Dialog owner) {
+
         boolean browserSupport = true;
         if (Desktop.isDesktopSupported()) {
             Desktop desktop = Desktop.getDesktop();
@@ -707,7 +715,54 @@ public class DesktopUtils {
                 } catch (Throwable t) {
                     log.error("Error opening browser", t);
                     //JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Internetbrowser kann auf Ihrem System nicht automatisch gestartet werden. Der Inhalt ist verfügbar unter " + url, "Hinweis", JOptionPane.INFORMATION_MESSAGE);
-                    ShowURLDialog dlg = new ShowURLDialog(EditorsRegistry.getInstance().getMainWindow(), true, url);
+                    if (owner == null) {
+                        ShowURLDialog dlg = new ShowURLDialog(EditorsRegistry.getInstance().getMainWindow(), true, url);
+                        dlg.setVisible(true);
+                    } else {
+                        ShowURLDialog dlg = new ShowURLDialog(owner, true, url);
+                        dlg.setVisible(true);
+                    }
+
+                }
+
+            } else {
+                browserSupport = false;
+            }
+        } else {
+            browserSupport = false;
+
+        }
+        if (!browserSupport) {
+            //JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Internetbrowser kann auf Ihrem System nicht automatisch gestartet werden. Die Inhalt ist verfügbar unter " + url, "Hinweis", JOptionPane.INFORMATION_MESSAGE);
+            if (owner == null) {
+                ShowURLDialog dlg = new ShowURLDialog(EditorsRegistry.getInstance().getMainWindow(), true, url);
+                dlg.setVisible(true);
+            } else {
+                ShowURLDialog dlg = new ShowURLDialog(owner, true, url);
+                dlg.setVisible(true);
+            }
+
+        }
+    }
+
+    public static void openBrowserFromFrame(String url, Frame owner) {
+
+        if (owner == null) {
+            owner = EditorsRegistry.getInstance().getMainWindow();
+        }
+
+        boolean browserSupport = true;
+        if (Desktop.isDesktopSupported()) {
+            Desktop desktop = Desktop.getDesktop();
+            if (desktop.isSupported(Desktop.Action.BROWSE)) {
+                URI uri = null;
+                try {
+                    uri = new URI(url);
+                    desktop.browse(uri);
+                } catch (Throwable t) {
+                    log.error("Error opening browser", t);
+                    //JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Internetbrowser kann auf Ihrem System nicht automatisch gestartet werden. Der Inhalt ist verfügbar unter " + url, "Hinweis", JOptionPane.INFORMATION_MESSAGE);
+                    ShowURLDialog dlg = new ShowURLDialog(owner, true, url);
                     dlg.setVisible(true);
                 }
 
@@ -720,8 +775,14 @@ public class DesktopUtils {
         }
         if (!browserSupport) {
             //JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Internetbrowser kann auf Ihrem System nicht automatisch gestartet werden. Die Inhalt ist verfügbar unter " + url, "Hinweis", JOptionPane.INFORMATION_MESSAGE);
-            ShowURLDialog dlg = new ShowURLDialog(EditorsRegistry.getInstance().getMainWindow(), true, url);
-            dlg.setVisible(true);
+            if (owner == null) {
+                ShowURLDialog dlg = new ShowURLDialog(EditorsRegistry.getInstance().getMainWindow(), true, url);
+                dlg.setVisible(true);
+            } else {
+                ShowURLDialog dlg = new ShowURLDialog(owner, true, url);
+                dlg.setVisible(true);
+            }
+
         }
     }
 

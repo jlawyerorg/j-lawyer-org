@@ -661,96 +661,130 @@
  * For more information on this, and how to apply and follow the GNU AGPL, see
  * <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.client.utils;
+package com.jdimension.jlawyer.client.editors.files;
 
-import java.awt.Container;
-import java.awt.Dimension;
-import java.awt.Point;
-import java.awt.Toolkit;
-import java.awt.Window;
-import javax.swing.JDialog;
-import javax.swing.JFrame;
+import com.jdimension.jlawyer.client.templates.*;
+import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import com.jdimension.jlawyer.client.processing.ProgressIndicator;
+import com.jdimension.jlawyer.client.processing.ProgressableAction;
+import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.utils.DesktopUtils;
+import com.jdimension.jlawyer.client.utils.FileUtils;
+import com.jdimension.jlawyer.client.utils.ThreadUtils;
+import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
+import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import com.sun.glass.ui.Cursor;
+import java.awt.Component;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
+import javax.swing.*;
+import org.apache.log4j.Logger;
+import org.jlawyer.data.tree.GenericNode;
 
 /**
  *
  * @author jens
  */
-public class FrameUtils {
-    
-    public static void centerFrame(JFrame frame, JFrame parent) {
-        Dimension d = null; // size of what we're positioning against
-        Point     p = null;
-        
-        if (parent != null) // w is what we are positioning against, null means desktop
-        {
-            d = parent.getSize();
-            p = parent.getLocation();
-        } else {
-            d = Toolkit.getDefaultToolkit().getScreenSize();
-            p = new Point();
+public class ExportAsHtmlAction extends ProgressableAction {
+
+    private static final Logger log = Logger.getLogger(ExportAsHtmlAction.class.getName());
+    //private JTable table = null;
+    //private SendEmailDialog dlg = null;
+
+    private Component owner;
+    private File dir=null;
+    private String caseId=null;
+
+    public ExportAsHtmlAction(ProgressIndicator i, Component owner, File dir, String caseId) {
+        super(i, false);
+
+        this.owner = owner;
+        this.dir=dir;
+        this.caseId=caseId;
+
+    }
+
+    @Override
+    public int getMax() {
+        return 0;
+    }
+
+    @Override
+    public int getMin() {
+        return 0;
+    }
+
+    @Override
+    public boolean execute() throws Exception {
+
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
+            this.progress("Lade Export vom Server...");
+            byte[] zipBytes = fileService.exportCaseToHtml(this.caseId);
+
+            //get the zip file content
+            ZipInputStream zis
+                    = new ZipInputStream(new ByteArrayInputStream(zipBytes));
+            //get the zipped file list entry
+            ZipEntry ze = zis.getNextEntry();
+
+            String browserUrl = "file://" + dir.getPath() + "/";
+
+            while (ze != null) {
+
+                String fileName = ze.getName();
+                this.progress("Entpacke Datei " + fileName);
+                if (fileName.endsWith("index.html")) {
+                    browserUrl = browserUrl + fileName;
+                }
+                File newFile = new File(dir.getPath() + File.separator + fileName);
+                byte[] buffer = new byte[1024];
+                //create all non exists folders
+                //else you will hit FileNotFoundException for compressed folder
+                new File(newFile.getParent()).mkdirs();
+
+                FileOutputStream fos = new FileOutputStream(newFile);
+
+                int len;
+                while ((len = zis.read(buffer)) > 0) {
+                    fos.write(buffer, 0, len);
+                }
+
+                fos.close();
+
+                try {
+                    if (ze.getLastModifiedTime() != null) {
+                        newFile.setLastModified(ze.getLastModifiedTime().toMillis());
+                    } else {
+                        log.warn("ZIP entry does not have a last modified timestamp for " + newFile.getName());
+                    }
+                } catch (Throwable t) {
+                    log.error("Unable to set last modified time", t);
+                }
+
+                ze = zis.getNextEntry();
+            }
+
+            zis.closeEntry();
+            zis.close();
+
+            DesktopUtils.openBrowserFromDialog(browserUrl, this.indicator);
+
+        } catch (Throwable t) {
+            log.error("Could not unzip exported case", t);
+            EditorsRegistry.getInstance().clearStatus(true);
+            ThreadUtils.setDefaultCursor(this.owner);
         }
-        
-        double centreX = p.getX() + d.getWidth()  / 2;
-        double centreY = p.getY() + d.getHeight() / 2;
-        
-        frame.getSize(d);
-        p.setLocation(centreX - d.getWidth() / 2,
-                centreY - d.getHeight() / 2);
-        if (p.getX() < 0)
-            p.setLocation(0, p.getY());
-        
-        if (p.getY() < 0)
-            p.setLocation(p.getX(), 0);
-        
-        frame.setLocation(p);
+        EditorsRegistry.getInstance().clearStatus(true);
+        ThreadUtils.setDefaultCursor(this.owner);
+
+        return true;
+
     }
-    
-    public static void fitDialogToScreen(JDialog dlg, float percentOfScreen) {
-        
-        Dimension d = null; // size of what we're positioning against
-        Point     p = null;
-        
-            d = Toolkit.getDefaultToolkit().getScreenSize();
-            
-            dlg.setSize((int)(d.getWidth()*(percentOfScreen/100f)), (int)(d.getHeight()*(percentOfScreen/100f)));
-        
-        centerDialog(dlg, null);
-    }
-    
-    public static void centerDialog(JDialog dlg, Window parent) {
-        Dimension d = null; // size of what we're positioning against
-        Point     p = null;
-        
-        if (parent != null) // w is what we are positioning against, null means desktop
-        {
-            d = parent.getSize();
-            p = parent.getLocation();
-        } else {
-            d = Toolkit.getDefaultToolkit().getScreenSize();
-            p = new Point();
-        }
-        
-        double centreX = p.getX() + d.getWidth()  / 2;
-        double centreY = p.getY() + d.getHeight() / 2;
-        
-        dlg.getSize(d);
-        p.setLocation(centreX - d.getWidth() / 2,
-                centreY - d.getHeight() / 2);
-        if (p.getX() < 0)
-            p.setLocation(0, p.getY());
-        
-        if (p.getY() < 0)
-            p.setLocation(p.getX(), 0);
-        
-        dlg.setLocation(p);
-    }
-    
-    public static Container getDialogOfComponent(Container c) {
-        
-        while(!(c instanceof JDialog) && c.getParent()!=null) {
-            c=c.getParent();
-        }
-        return c;
-    }
-    
 }

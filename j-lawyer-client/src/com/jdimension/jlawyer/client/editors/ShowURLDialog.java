@@ -664,7 +664,10 @@
 package com.jdimension.jlawyer.client.editors;
 
 import com.jdimension.jlawyer.client.utils.FrameUtils;
+import java.awt.Dialog;
+import java.awt.Frame;
 import java.awt.Toolkit;
+import java.awt.Window;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 import javax.swing.JFrame;
@@ -681,12 +684,23 @@ public class ShowURLDialog extends javax.swing.JDialog {
     /**
      * Creates new form ShowURLDialog
      */
-    public ShowURLDialog(java.awt.Frame parent, boolean modal, String url) {
+    public ShowURLDialog(Dialog parent, boolean modal, String url) {
         super(parent, modal);
         initComponents();
         this.setUrl(url);
         try {
-            FrameUtils.centerDialog(this, (JFrame) parent);
+            FrameUtils.centerDialog(this, parent);
+        } catch (Throwable t) {
+            log.error(t);
+        }
+    }
+    
+    public ShowURLDialog(Frame parent, boolean modal, String url) {
+        super(parent, modal);
+        initComponents();
+        this.setUrl(url);
+        try {
+            FrameUtils.centerDialog(this, parent);
         } catch (Throwable t) {
             log.error(t);
         }
