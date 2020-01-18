@@ -671,10 +671,6 @@ import java.util.Date;
  */
 public class RestfulPartyV1 {
     
-    public static transient String TYPE_CLIENT="CLIENT";
-    public static transient String TYPE_OPPONENT="OPPONENT";
-    public static transient String TYPE_OTHER="OTHER";
-    
     private String id=null;
     private String reference=null;
     private String involvementType=null;
@@ -701,48 +697,6 @@ public class RestfulPartyV1 {
      */
     public void setId(String id) {
         this.id = id;
-    }
-
-    /**
-     * @return the TYPE_CLIENT
-     */
-    public static String getTYPE_CLIENT() {
-        return TYPE_CLIENT;
-    }
-
-    /**
-     * @param aTYPE_CLIENT the TYPE_CLIENT to set
-     */
-    public static void setTYPE_CLIENT(String aTYPE_CLIENT) {
-        TYPE_CLIENT = aTYPE_CLIENT;
-    }
-
-    /**
-     * @return the TYPE_OPPONENT
-     */
-    public static String getTYPE_OPPONENT() {
-        return TYPE_OPPONENT;
-    }
-
-    /**
-     * @param aTYPE_OPPONENT the TYPE_OPPONENT to set
-     */
-    public static void setTYPE_OPPONENT(String aTYPE_OPPONENT) {
-        TYPE_OPPONENT = aTYPE_OPPONENT;
-    }
-
-    /**
-     * @return the TYPE_OTHER
-     */
-    public static String getTYPE_OTHER() {
-        return TYPE_OTHER;
-    }
-
-    /**
-     * @param aTYPE_OTHER the TYPE_OTHER to set
-     */
-    public static void setTYPE_OTHER(String aTYPE_OTHER) {
-        TYPE_OTHER = aTYPE_OTHER;
     }
 
     /**

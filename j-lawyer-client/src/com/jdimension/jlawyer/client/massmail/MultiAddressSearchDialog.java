@@ -697,7 +697,7 @@ public class MultiAddressSearchDialog extends javax.swing.JDialog {
     /**
      * Creates new form AddAddressSearchDialog
      */
-    public MultiAddressSearchDialog(java.awt.Frame parent, boolean modal, int targetReferenceType) {
+    public MultiAddressSearchDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
 
@@ -961,7 +961,7 @@ public class MultiAddressSearchDialog extends javax.swing.JDialog {
         java.awt.EventQueue.invokeLater(new Runnable() {
 
             public void run() {
-                new MultiAddressSearchDialog(new javax.swing.JFrame(), true, -1).setVisible(true);
+                new MultiAddressSearchDialog(new javax.swing.JFrame(), true).setVisible(true);
             }
         });
     }

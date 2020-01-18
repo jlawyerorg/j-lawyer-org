@@ -1015,7 +1015,7 @@ public class MassMailPanel extends javax.swing.JPanel implements ThemeableEditor
 
     private void cmdAddContactsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdAddContactsActionPerformed
         if (this.cmbCampaign.getSelectedItem() != null) {
-            MultiAddressSearchDialog dlg = new MultiAddressSearchDialog(EditorsRegistry.getInstance().getMainWindow(), true, ArchiveFileAddressesBean.REFERENCETYPE_CLIENT);
+            MultiAddressSearchDialog dlg = new MultiAddressSearchDialog(EditorsRegistry.getInstance().getMainWindow(), true);
             dlg.setTitle("Adressen hinzufügen");
             FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
             dlg.setVisible(true);

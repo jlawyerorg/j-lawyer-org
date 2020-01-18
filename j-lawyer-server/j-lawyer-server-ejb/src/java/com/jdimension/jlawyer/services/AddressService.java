@@ -1155,4 +1155,48 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
 
         }
     }
+
+    @Override
+    public ArrayList<String> getAllAddressIds() {
+        JDBCUtils utils = new JDBCUtils();
+        Connection con = null;
+        ResultSet rs = null;
+        PreparedStatement st = null;
+        ArrayList<String> list = new ArrayList<String>();
+        try {
+            con = utils.getConnection();
+            st = con.prepareStatement("select id from contacts");
+            rs = st.executeQuery();
+
+            //ArchiveFileLocalHome home = this.lookupArchiveFileBean();
+            while (rs.next()) {
+                String id = rs.getString(1);
+                list.add(id);
+            }
+        } catch (SQLException sqle) {
+            log.error("Error finding addresses", sqle);
+            throw new EJBException("Adressensuche konnte nicht ausgeführt werden.", sqle);
+//        } catch (FinderException fe) {
+//            log.error("Error finding archive file", fe);
+//            throw new EJBException("Aktensuche konnte nicht ausgeführt werden.", fe);
+        } finally {
+            try {
+                rs.close();
+            } catch (Throwable t) {
+                log.error(t);
+            }
+            try {
+                st.close();
+            } catch (Throwable t) {
+                log.error(t);
+            }
+            try {
+                con.close();
+            } catch (Throwable t) {
+                log.error(t);
+            }
+        }
+
+        return list;
+    }
 }

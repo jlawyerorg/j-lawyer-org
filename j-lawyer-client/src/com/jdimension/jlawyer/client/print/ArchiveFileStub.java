@@ -683,10 +683,10 @@ public class ArchiveFileStub extends GenericStub {
     private String reason;
     private String lawyer;
     private String assistant;
-    private List<AddressDetail> clients = new ArrayList<AddressDetail>();
-    private List<AddressDetail> opponents = new ArrayList<AddressDetail>();
-    private List<AddressDetail> opponentAttorneys = new ArrayList<AddressDetail>();
+    
     private List<ReviewsDetail> reviews = new ArrayList<ReviewsDetail>();
+    
+    private Hashtable<String,List<AddressDetail>> parties=new Hashtable<String,List<AddressDetail>>();
 
     public ArchiveFileStub() {
         super();
@@ -764,12 +764,14 @@ public class ArchiveFileStub extends GenericStub {
         this.claimValue = claimValue;
     }
 
-    public List<AddressDetail> getClients() {
-        return clients;
+    public List<AddressDetail> getParties(String name) {
+        if(this.parties.containsKey(name))
+            return this.parties.get(name);
+        return new ArrayList<AddressDetail>();
     }
 
-    public void setClients(List<AddressDetail> clients) {
-        this.clients = clients;
+    public void setParties(List<AddressDetail> parties, String name) {
+        this.parties.put(name, parties);
     }
 
     public String getFileNumber() {
@@ -794,22 +796,6 @@ public class ArchiveFileStub extends GenericStub {
 
     public void setNotice(String notice) {
         this.notice = notice;
-    }
-
-    public List<AddressDetail> getOpponentAttorneys() {
-        return opponentAttorneys;
-    }
-
-    public void setOpponentAttorneys(List<AddressDetail> opponentAttorneys) {
-        this.opponentAttorneys = opponentAttorneys;
-    }
-
-    public List<AddressDetail> getOpponents() {
-        return opponents;
-    }
-
-    public void setOpponents(List<AddressDetail> opponents) {
-        this.opponents = opponents;
     }
 
     /**

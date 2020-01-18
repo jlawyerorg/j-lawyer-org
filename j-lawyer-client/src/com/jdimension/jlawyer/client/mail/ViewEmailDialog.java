@@ -955,18 +955,18 @@ public class ViewEmailDialog extends javax.swing.JDialog {
                 ClientSettings settings = ClientSettings.getInstance();
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                 ArchiveFileServiceRemote afs=locator.lookupArchiveFileServiceRemote();
-                Collection<AddressBean> list=afs.getClients(this.contextArchiveFile.getId());
-                for(AddressBean a: list) {
-                    dlg.addToClient(a);
-                }
-                list=afs.getOpponents(this.contextArchiveFile.getId());
-                for(AddressBean a: list) {
-                    dlg.addToOpponent(a);
-                }
-                list=afs.getOpponentAttorneys(this.contextArchiveFile.getId());
-                for(AddressBean a: list) {
-                    dlg.addToOpponentAttorney(a);
-                }
+//                Collection<AddressBean> list=afs.getClients(this.contextArchiveFile.getId());
+//                for(AddressBean a: list) {
+//                    dlg.addToClient(a);
+//                }
+//                list=afs.getOpponents(this.contextArchiveFile.getId());
+//                for(AddressBean a: list) {
+//                    dlg.addToOpponent(a);
+//                }
+//                list=afs.getOpponentAttorneys(this.contextArchiveFile.getId());
+//                for(AddressBean a: list) {
+//                    dlg.addToOpponentAttorney(a);
+//                }
             } catch (Throwable t) {
                 log.error("Unable to add recipient candidates", t);
             }

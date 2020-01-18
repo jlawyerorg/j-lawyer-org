@@ -663,7 +663,9 @@
  */
 package com.jdimension.jlawyer.services;
 
+import com.jdimension.jlawyer.persistence.PartyTypeBean;
 import com.jdimension.jlawyer.server.services.MonitoringSnapshot;
+import java.util.Collection;
 import javax.ejb.Local;
 
 /**
@@ -681,4 +683,8 @@ public interface SystemManagementLocal {
     String getServerInterfacesBoundTo() throws Exception;
 
     boolean setServerInterfaceBindings(String ip) throws Exception;
+
+    Collection<PartyTypeBean> getPartyTypes();
+
+    PartyTypeBean getPartyType(String id);
 }

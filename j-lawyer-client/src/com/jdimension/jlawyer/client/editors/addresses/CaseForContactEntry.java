@@ -665,6 +665,8 @@ package com.jdimension.jlawyer.client.editors.addresses;
 
 import com.jdimension.jlawyer.client.desktop.*;
 import com.jdimension.jlawyer.server.constants.ArchiveFileConstants;
+import java.awt.Color;
+import themes.colors.DefaultColorTheme;
 
 /**
  *
@@ -678,6 +680,7 @@ public class CaseForContactEntry {
     private String reason=null;
     private String role=null;
     private boolean archived=false;
+    private Color roleForeground=DefaultColorTheme.COLOR_LOGO_BLUE;
     
     
     public CaseForContactEntry() {
@@ -765,6 +768,20 @@ public class CaseForContactEntry {
      */
     public void setArchived(boolean archived) {
         this.archived = archived;
+    }
+
+    /**
+     * @return the roleForeground
+     */
+    public Color getRoleForeground() {
+        return roleForeground;
+    }
+
+    /**
+     * @param roleForeground the roleForeground to set
+     */
+    public void setRoleForeground(Color roleForeground) {
+        this.roleForeground = roleForeground;
     }
     
 }

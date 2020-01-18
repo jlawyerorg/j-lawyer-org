@@ -668,6 +668,7 @@ import com.jdimension.jlawyer.server.services.MonitoringSnapshot;
 import com.jdimension.jlawyer.server.services.ServerInformation;
 import java.io.File;
 import java.util.Collection;
+import java.util.Hashtable;
 import java.util.List;
 import java.util.Properties;
 import javax.ejb.Remote;
@@ -783,5 +784,9 @@ public interface SystemManagementRemote {
     String getTemplatePreview(GenericNode folder, String fileName) throws Exception;
 
     void renameTemplate(GenericNode folder, String fromName, String toName) throws Exception;
+
+    Collection<PartyTypeBean> getPartyTypes();
+
+    Hashtable<String,PartyTypeBean> getPartyTypesTable();
     
 }

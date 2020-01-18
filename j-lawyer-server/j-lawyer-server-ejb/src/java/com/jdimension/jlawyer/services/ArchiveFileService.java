@@ -729,6 +729,8 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     @EJB
     private AddressBeanFacadeLocal addressFacade;
     @EJB
+    private PartyTypeBeanFacadeLocal partyTypeFacade;
+    @EJB
     private ServerSettingsBeanFacadeLocal settingsFacade;
 
     private static final String PS_SEARCHENHANCED_2 = "select id from cases where ucase(name) like ? or ucase(fileNumber) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(subjectField) like ?";
@@ -745,6 +747,8 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             throw new EJBException("Error getting number of archive files", ex);
         }
     }
+    
+    
 
     // @todo: more efficient implementation
     private synchronized String getNextCaseNumber() throws InvalidCaseNumberPatternException {
@@ -1028,53 +1032,38 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         }
     }
 
-    @Override
-    @RolesAllowed({"readArchiveFileRole"})
-    public Collection getClients(String archiveFileKey) {
-        return getAddressesByType(archiveFileKey, ArchiveFileAddressesBean.REFERENCETYPE_CLIENT);
-    }
+//    @Override
+//    @RolesAllowed({"readArchiveFileRole"})
+//    public Collection getClients(String archiveFileKey) {
+//        return getAddressesByType(archiveFileKey, ArchiveFileAddressesBean.REFERENCETYPE_CLIENT);
+//    }
 
-    private Collection getAddressesByType(String archiveFileKey, int referenceType) {
-
-        ArchiveFileBean aFile = this.archiveFileFacade.find(archiveFileKey);
-
-        List resultList = this.archiveFileAddressesFacade.findByArchiveFileKeyAndReferenceType(aFile, referenceType);
-
-        ArrayList clientList = new ArrayList();
-        for (Object client : resultList) {
-            clientList.add(((ArchiveFileAddressesBean) client).getAddressKey());
-            //AddressBean a=this.addressFacade.find(((ArchiveFileAddressesBean)client).getAddressKey());
-            //clientList.add(a);
-        }
-        return clientList;
-
-//        ArchiveFileAddressesLocalHome addHome=this.lookupArchiveFileAddressesBean();
-//        AddressLocalHome aHome=this.lookupAddressBean();
-//        try {
-//            Collection clients=addHome.findByArchiveFileAndType(archiveFileKey, referenceType);
-//            ArrayList clientList=new ArrayList(clients.size());
-//            for(Object client: clients) {
-//                ArchiveFileAddressesLocal add=(ArchiveFileAddressesLocal)client;
-//                AddressLocal address=aHome.findByPrimaryKey(add.getAddressKey());
-//                clientList.add(address.getDTO());
-//            }
-//            return clientList;
-//        } catch (FinderException fe) {
-//            return new ArrayList();
+//    private Collection getAddressesByType(String archiveFileKey, int referenceType) {
+//
+//        ArchiveFileBean aFile = this.archiveFileFacade.find(archiveFileKey);
+//
+//        List resultList = this.archiveFileAddressesFacade.findByArchiveFileKeyAndReferenceType(aFile, referenceType);
+//
+//        ArrayList clientList = new ArrayList();
+//        for (Object client : resultList) {
+//            clientList.add(((ArchiveFileAddressesBean) client).getAddressKey());
+//            //AddressBean a=this.addressFacade.find(((ArchiveFileAddressesBean)client).getAddressKey());
+//            //clientList.add(a);
 //        }
-    }
+//        return clientList;
+//    }
 
-    @Override
-    @RolesAllowed({"readArchiveFileRole"})
-    public Collection getOpponents(String archiveFileKey) {
-        return getAddressesByType(archiveFileKey, ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT);
-    }
-
-    @Override
-    @RolesAllowed({"readArchiveFileRole"})
-    public Collection getOpponentAttorneys(String archiveFileKey) {
-        return getAddressesByType(archiveFileKey, ArchiveFileAddressesBean.REFERENCETYPE_OPPONENTATTORNEY);
-    }
+//    @Override
+//    @RolesAllowed({"readArchiveFileRole"})
+//    public Collection getOpponents(String archiveFileKey) {
+//        return getAddressesByType(archiveFileKey, ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT);
+//    }
+//
+//    @Override
+//    @RolesAllowed({"readArchiveFileRole"})
+//    public Collection getOpponentAttorneys(String archiveFileKey) {
+//        return getAddressesByType(archiveFileKey, ArchiveFileAddressesBean.REFERENCETYPE_OPPONENTATTORNEY);
+//    }
 
     @Override
     @RolesAllowed({"readArchiveFileRole"})
@@ -1226,30 +1215,38 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 this.archiveFileReviewsFacade.create(rev);
             }
         }
-
-        // remove all existing clients
-        List<ArchiveFileAddressesBean> addList = this.archiveFileAddressesFacade.findByArchiveFileKeyAndReferenceType(aFile, ArchiveFileAddressesBean.REFERENCETYPE_CLIENT);
+        
+        // remove all existing parties
+        List<ArchiveFileAddressesBean> addList = this.archiveFileAddressesFacade.findByArchiveFileKey(aFile);
         if (addList != null) {
             for (ArchiveFileAddressesBean add : addList) {
                 this.archiveFileAddressesFacade.remove(add);
             }
         }
 
-        // remove all existing opponents
-        addList = this.archiveFileAddressesFacade.findByArchiveFileKeyAndReferenceType(aFile, ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT);
-        if (addList != null) {
-            for (ArchiveFileAddressesBean add : addList) {
-                this.archiveFileAddressesFacade.remove(add);
-            }
-        }
-
-        // remove all existing opponent attorneys
-        addList = this.archiveFileAddressesFacade.findByArchiveFileKeyAndReferenceType(aFile, ArchiveFileAddressesBean.REFERENCETYPE_OPPONENTATTORNEY);
-        if (addList != null) {
-            for (ArchiveFileAddressesBean add : addList) {
-                this.archiveFileAddressesFacade.remove(add);
-            }
-        }
+//        // remove all existing clients
+//        List<ArchiveFileAddressesBean> addList = this.archiveFileAddressesFacade.findByArchiveFileKeyAndReferenceType(aFile, ArchiveFileAddressesBean.REFERENCETYPE_CLIENT);
+//        if (addList != null) {
+//            for (ArchiveFileAddressesBean add : addList) {
+//                this.archiveFileAddressesFacade.remove(add);
+//            }
+//        }
+//
+//        // remove all existing opponents
+//        addList = this.archiveFileAddressesFacade.findByArchiveFileKeyAndReferenceType(aFile, ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT);
+//        if (addList != null) {
+//            for (ArchiveFileAddressesBean add : addList) {
+//                this.archiveFileAddressesFacade.remove(add);
+//            }
+//        }
+//
+//        // remove all existing opponent attorneys
+//        addList = this.archiveFileAddressesFacade.findByArchiveFileKeyAndReferenceType(aFile, ArchiveFileAddressesBean.REFERENCETYPE_OPPONENTATTORNEY);
+//        if (addList != null) {
+//            for (ArchiveFileAddressesBean add : addList) {
+//                this.archiveFileAddressesFacade.remove(add);
+//            }
+//        }
 
         // create all new addresse with their respective types
         List<ArchiveFileAddressesBean> newAdds = dto.getArchiveFileAddressesBeanList();
@@ -1915,6 +1912,8 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
         return this.archiveFileReviewsFacade.find(revId);
     }
+    
+    
 
     @Override
     @RolesAllowed({"writeArchiveFileRole"})
@@ -2795,20 +2794,20 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         return getHistoryForArchiveFileImpl(archiveFileKey);
     }
 
-    @Override
-    public Collection getClientsUnrestricted(String archiveFileKey) {
-        return getAddressesByType(archiveFileKey, ArchiveFileAddressesBean.REFERENCETYPE_CLIENT);
-    }
-
-    @Override
-    public Collection getOpponentsUnrestricted(String archiveFileKey) {
-        return getAddressesByType(archiveFileKey, ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT);
-    }
-
-    @Override
-    public Collection getOpponentAttorneysUnrestricted(String archiveFileKey) {
-        return getAddressesByType(archiveFileKey, ArchiveFileAddressesBean.REFERENCETYPE_OPPONENTATTORNEY);
-    }
+//    @Override
+//    public Collection getClientsUnrestricted(String archiveFileKey) {
+//        return getAddressesByType(archiveFileKey, ArchiveFileAddressesBean.REFERENCETYPE_CLIENT);
+//    }
+//
+//    @Override
+//    public Collection getOpponentsUnrestricted(String archiveFileKey) {
+//        return getAddressesByType(archiveFileKey, ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT);
+//    }
+//
+//    @Override
+//    public Collection getOpponentAttorneysUnrestricted(String archiveFileKey) {
+//        return getAddressesByType(archiveFileKey, ArchiveFileAddressesBean.REFERENCETYPE_OPPONENTATTORNEY);
+//    }
 
     @Override
     public Collection getReviewsUnrestricted(String archiveFileKey) {
@@ -3276,22 +3275,17 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
     private String getSortString(ArchiveFileAddressesBean afab) {
         // 1 for clients, 2 for opponents, 3 for others
-        String sortString = "1";
+        String sortString = "";
         if (afab != null) {
-            if (afab.getReferenceType() == ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT) {
-                sortString = "2";
-            } else if (afab.getReferenceType() == ArchiveFileAddressesBean.REFERENCETYPE_OPPONENTATTORNEY) {
-                sortString = "3";
+            if (afab.getReferenceType() != null) {
+                sortString=sortString+afab.getReferenceType().getName();
             }
-
-            sortString = sortString + afab.getAddressKey().toDisplayName();
+            sortString = sortString + afab.getAddressKey().toDisplayName(); 
         }
         return sortString;
     }
-
-    @Override
-    @RolesAllowed({"readArchiveFileRole"})
-    public List<ArchiveFileAddressesBean> getInvolvementDetailsForCase(String archiveFileKey) {
+    
+    private List<ArchiveFileAddressesBean> getInvolvementDetailsForCaseImpl(String archiveFileKey) {
         ArchiveFileBean aFile = this.archiveFileFacade.find(archiveFileKey);
         List resultList = this.archiveFileAddressesFacade.findByArchiveFileKey(aFile);
         if (resultList != null) {
@@ -3320,6 +3314,17 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             }
         }
         return resultList;
+    }
+
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public List<ArchiveFileAddressesBean> getInvolvementDetailsForCase(String archiveFileKey) {
+        return this.getInvolvementDetailsForCaseImpl(archiveFileKey);
+    }
+    
+    @Override
+    public List<ArchiveFileAddressesBean> getInvolvementDetailsForCaseUnrestricted(String archiveFileKey) {
+        return this.getInvolvementDetailsForCaseImpl(archiveFileKey);
     }
 
     @Override
@@ -3587,5 +3592,66 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         return address;
         
     }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public List<PartyTypeBean> getAllPartyTypes() {
+        return this.partyTypeFacade.findAll();
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public ArchiveFileAddressesBean updateParty(String caseId, ArchiveFileAddressesBean party) throws Exception {
+        StringGenerator idGen = new StringGenerator();
+        ArchiveFileBean aFile = this.archiveFileFacade.find(caseId);
+        
+        ArchiveFileAddressesBean oldParty=this.archiveFileAddressesFacade.find(party.getId());
+        String name="?";
+        if(oldParty.getAddressKey()!=null) {
+            name=oldParty.getAddressKey().toDisplayName();
+        }
+        
+        oldParty.setContact(party.getContact());
+        oldParty.setCustom1(party.getCustom1());
+        oldParty.setCustom2(party.getCustom2());
+        oldParty.setCustom3(party.getCustom3());
+        oldParty.setReference(party.getReference());
+        oldParty.setReferenceType(party.getReferenceType());
+        
+        this.archiveFileAddressesFacade.edit(oldParty);
+
+        ArchiveFileHistoryBean newHistEntry = new ArchiveFileHistoryBean();
+        newHistEntry.setId(idGen.getID().toString());
+        newHistEntry.setArchiveFileKey(aFile);
+        newHistEntry.setChangeDate(new Date());
+        newHistEntry.setChangeDescription("Beteiligtendaten für " + name + " geändert");
+        newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
+        this.archiveFileHistoryFacade.create(newHistEntry);
+
+        return this.archiveFileAddressesFacade.find(oldParty.getId());
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public void removeParty(String id) throws Exception {
+        
+        StringGenerator idGen = new StringGenerator();
+        ArchiveFileAddressesBean db = this.archiveFileAddressesFacade.find(id);
+        ArchiveFileBean aFile = db.getArchiveFileKey();
+
+
+        ArchiveFileHistoryBean newHistEntry = new ArchiveFileHistoryBean();
+        newHistEntry.setId(idGen.getID().toString());
+        newHistEntry.setArchiveFileKey(aFile);
+        newHistEntry.setChangeDate(new Date());
+        newHistEntry.setChangeDescription("Beteiligter gelöscht: " + db.getAddressKey().toDisplayName());
+        newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
+        this.archiveFileHistoryFacade.create(newHistEntry);
+
+        this.archiveFileAddressesFacade.remove(db);
+        
+    }
+    
+    
 
 }

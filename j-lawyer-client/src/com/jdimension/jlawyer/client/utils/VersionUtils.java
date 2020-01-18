@@ -679,7 +679,7 @@ public class VersionUtils {
     private static final Logger log = Logger.getLogger(VersionUtils.class.getName());
 
     public static String getClientVersion() {
-        return "1.11";
+        return "1.12";
     }
 
     public static String getPatchLevel() {
@@ -687,7 +687,7 @@ public class VersionUtils {
     }
 
     public static String getBuild() {
-        return "4";
+        return "0";
     }
     
     public static boolean isVersionGreater(String referenceVersion, String compareToVersion) {

@@ -833,9 +833,7 @@ public class HTMLExport {
 
         ArchiveFileHistoryBean[] history = null;
         Collection documents = null;
-        Collection clients = null;
-        Collection opponents = null;
-        Collection opponentAttorneys = null;
+        Collection parties = null;
         Collection reviews = null;
         //ClientSettings settings = ClientSettings.getInstance();
         //JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
@@ -843,9 +841,7 @@ public class HTMLExport {
         //ArchiveFileServiceRemoteHome home = (ArchiveFileServiceRemoteHome)locator.getRemoteHome("ejb/ArchiveFileServiceBean", ArchiveFileServiceRemoteHome.class);
         //ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
         history = caseFacade.getHistoryForArchiveFileUnrestricted(dto.getId());
-        clients = caseFacade.getClientsUnrestricted(dto.getId());
-        opponents = caseFacade.getOpponentsUnrestricted(dto.getId());
-        opponentAttorneys = caseFacade.getOpponentAttorneysUnrestricted(dto.getId());
+        parties = caseFacade.getInvolvementDetailsForCaseUnrestricted(dto.getId());
         reviews = caseFacade.getReviewsUnrestricted(dto.getId());
         documents = caseFacade.getDocumentsUnrestricted(dto.getId());
 
@@ -885,9 +881,9 @@ public class HTMLExport {
         }
         sContent = sContent.replaceAll("\\{\\{reviews\\}\\}", sb.toString());
 
-        sContent = sContent.replaceAll("\\{\\{clients\\}\\}", this.getPartiesList(clients));
-        sContent = sContent.replaceAll("\\{\\{opponents\\}\\}", this.getPartiesList(opponents));
-        sContent = sContent.replaceAll("\\{\\{opponentattorneys\\}\\}", this.getPartiesList(opponentAttorneys));
+        sContent = sContent.replaceAll("\\{\\{parties\\}\\}", this.getPartiesList(parties));
+//        sContent = sContent.replaceAll("\\{\\{opponents\\}\\}", this.getPartiesList(opponents));
+//        sContent = sContent.replaceAll("\\{\\{opponentattorneys\\}\\}", this.getPartiesList(opponentAttorneys));
 
         ArrayList docList = new ArrayList(documents);
         Collections.sort(docList, new DocumentsComparator());
@@ -1000,12 +996,13 @@ public class HTMLExport {
         //Collections.sort(partiesList, new ReviewsComparator());
         StringBuffer sb = new StringBuffer();
         for (Object p : partiesList) {
-            if (p instanceof AddressBean) {
-                AddressBean ab = (AddressBean) p;
+            if (p instanceof ArchiveFileAddressesBean) {
+                AddressBean ab = ((ArchiveFileAddressesBean) p).getAddressKey();
+                PartyTypeBean pt=((ArchiveFileAddressesBean) p).getReferenceType();
                 // <tr><td><p class="post_info">01.01.2013</p></td><td><p class="post_info">dings</p></td></tr>
                 //sb.append("<tr valign=\"top\"><td><p class=\"post_info\">");
                 sb.append("<p class=\"post_info\">");
-                sb.append(toHtml4(ab.toDisplayName()));
+                sb.append(toHtml4(ab.toDisplayName() + " (" + pt.getName() + ")"));
 //                sb.append("</p></td><td><p class=\"post_info\">");
 //                sb.append(rb.getReviewReason());
                 //sb.append("</p></td></tr>");

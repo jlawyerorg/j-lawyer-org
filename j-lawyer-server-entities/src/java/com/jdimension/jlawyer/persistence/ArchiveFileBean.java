@@ -874,19 +874,7 @@ public class ArchiveFileBean implements Serializable {
         this.archiveFileReviewsBeanList = archiveFileReviewsBeanList;
     }
     
-    public void addClient(ArchiveFileAddressesBean dto) {
-        if(this.archiveFileAddressesBeanList==null)
-            this.archiveFileAddressesBeanList=new ArrayList<ArchiveFileAddressesBean>();
-        this.archiveFileAddressesBeanList.add(dto);
-    }
-    
-    public void addOpponent(ArchiveFileAddressesBean dto) {
-        if(this.archiveFileAddressesBeanList==null)
-            this.archiveFileAddressesBeanList=new ArrayList<ArchiveFileAddressesBean>();
-        this.archiveFileAddressesBeanList.add(dto);
-    }
-    
-    public void addOpponentAttorney(ArchiveFileAddressesBean dto) {
+    public void addParty(ArchiveFileAddressesBean dto) {
         if(this.archiveFileAddressesBeanList==null)
             this.archiveFileAddressesBeanList=new ArrayList<ArchiveFileAddressesBean>();
         this.archiveFileAddressesBeanList.add(dto);
@@ -898,41 +886,40 @@ public class ArchiveFileBean implements Serializable {
         this.archiveFileReviewsBeanList.add(dto);
     }
     
-    public void removeAllClients() {
+    public void removeAllParties() {
         if(this.archiveFileAddressesBeanList!=null) {
         for(int i=this.archiveFileAddressesBeanList.size()-1;i>-1;i--) {
             ArchiveFileAddressesBean b=this.archiveFileAddressesBeanList.get(i);
-            if(b.getReferenceType()==b.REFERENCETYPE_CLIENT) {
-                this.archiveFileAddressesBeanList.remove(i);
-            }
+            this.archiveFileAddressesBeanList.remove(i);
+            
             
         }
         }
     }
-    
-    public void removeAllOpponents() {
-        if(this.archiveFileAddressesBeanList!=null) {
-        for(int i=this.archiveFileAddressesBeanList.size()-1;i>-1;i--) {
-            ArchiveFileAddressesBean b=this.archiveFileAddressesBeanList.get(i);
-            if(b.getReferenceType()==b.REFERENCETYPE_OPPONENT) {
-                this.archiveFileAddressesBeanList.remove(i);
-            }
-            
-        }
-        }
-    }
-    
-    public void removeAllOpponentAttorneys() {
-        if(this.archiveFileAddressesBeanList!=null) {
-        for(int i=this.archiveFileAddressesBeanList.size()-1;i>-1;i--) {
-            ArchiveFileAddressesBean b=this.archiveFileAddressesBeanList.get(i);
-            if(b.getReferenceType()==b.REFERENCETYPE_OPPONENTATTORNEY) {
-                this.archiveFileAddressesBeanList.remove(i);
-            }
-            
-        }
-        }
-    }
+//    
+//    public void removeAllOpponents() {
+//        if(this.archiveFileAddressesBeanList!=null) {
+//        for(int i=this.archiveFileAddressesBeanList.size()-1;i>-1;i--) {
+//            ArchiveFileAddressesBean b=this.archiveFileAddressesBeanList.get(i);
+//            if(b.getReferenceType()==b.REFERENCETYPE_OPPONENT) {
+//                this.archiveFileAddressesBeanList.remove(i);
+//            }
+//            
+//        }
+//        }
+//    }
+//    
+//    public void removeAllOpponentAttorneys() {
+//        if(this.archiveFileAddressesBeanList!=null) {
+//        for(int i=this.archiveFileAddressesBeanList.size()-1;i>-1;i--) {
+//            ArchiveFileAddressesBean b=this.archiveFileAddressesBeanList.get(i);
+//            if(b.getReferenceType()==b.REFERENCETYPE_OPPONENTATTORNEY) {
+//                this.archiveFileAddressesBeanList.remove(i);
+//            }
+//            
+//        }
+//        }
+//    }
 
     /**
      * @return the lawyer

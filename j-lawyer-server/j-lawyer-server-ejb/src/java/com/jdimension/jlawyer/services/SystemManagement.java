@@ -684,6 +684,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Enumeration;
+import java.util.Hashtable;
 import java.util.List;
 import java.util.Properties;
 import javax.annotation.security.PermitAll;
@@ -739,6 +740,8 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     private AppRoleBeanFacadeLocal roleBeanFacade;
     @EJB
     private ServerSettingsBeanFacadeLocal settingsFacade;
+    @EJB
+    private PartyTypeBeanFacadeLocal partyTypesFacade;
 
     @Override
     @RolesAllowed({"loginRole"})
@@ -748,8 +751,8 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
 
     }
 
-    // Add business logic below. (Right-click in editor and choose
-    // "Insert Code > Add Business Method")
+    
+    
     @Override
     @RolesAllowed({"loginRole"})
     public BankDataBean[] searchBankData(String query) {
@@ -1913,5 +1916,32 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
 
         fromFile.renameTo(new File(to));
     }
+    
+    
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public Collection<PartyTypeBean> getPartyTypes() {
+        return this.partyTypesFacade.findAll();
+    }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public PartyTypeBean getPartyType(String id) {
+        return this.partyTypesFacade.find(id);
+    }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public Hashtable<String,PartyTypeBean> getPartyTypesTable() {
+        List<PartyTypeBean> allParties=this.partyTypesFacade.findAll();
+        Hashtable<String,PartyTypeBean> result=new Hashtable<String,PartyTypeBean>();
+        for(PartyTypeBean p: allParties) {
+            result.put(p.getName(), p);
+        }
+        return result;
+    }
+    
+    
 
 }

@@ -664,6 +664,8 @@
 package com.jdimension.jlawyer.services;
 
 import com.jdimension.jlawyer.persistence.AddressBean;
+import java.util.ArrayList;
+import java.util.List;
 import javax.ejb.Local;
 
 /**
@@ -678,5 +680,9 @@ public interface AddressServiceLocal {
     public AddressBean getAddress(String id);
     
     public AddressBean createAddress(AddressBean dto);
+
+    ArrayList<String> getAllAddressIds();
+    
+    public void updateAddress(AddressBean dto);
     
 }

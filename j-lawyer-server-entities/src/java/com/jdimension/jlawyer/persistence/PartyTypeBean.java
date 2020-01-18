@@ -1,5 +1,4 @@
-/*
-                    GNU AFFERO GENERAL PUBLIC LICENSE
+/*                    GNU AFFERO GENERAL PUBLIC LICENSE
                        Version 3, 19 November 2007
 
  Copyright (C) 2007 Free Software Foundation, Inc. <https://fsf.org/>
@@ -661,52 +660,124 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package org.jlawyer.io.rest.v1;
+package com.jdimension.jlawyer.persistence;
 
-import com.jdimension.jlawyer.persistence.ArchiveFileBean;
-import javax.ejb.Local;
-import javax.ws.rs.core.Response;
-import org.jlawyer.io.rest.v1.pojo.RestfulDocumentContentV1;
-import org.jlawyer.io.rest.v1.pojo.RestfulPartyV1;
+import java.io.Serializable;
+import javax.persistence.Basic;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
+import javax.persistence.Table;
+import javax.xml.bind.annotation.XmlRootElement;
 
 /**
  *
  * @author jens
  */
-@Local
-public interface CasesEndpointLocalV1 {
+@Entity
+@Table(name = "party_types")
+@XmlRootElement
+@NamedQueries({
+    @NamedQuery(name = "PartyTypeBean.findAll", query = "SELECT p FROM PartyTypeBean p"),
+    @NamedQuery(name = "PartyTypeBean.findById", query = "SELECT p FROM PartyTypeBean p WHERE p.id = :id"),
+    @NamedQuery(name = "PartyTypeBean.findByName", query = "SELECT p FROM PartyTypeBean p WHERE p.name = :name")})
+public class PartyTypeBean implements Serializable {
 
-    Response listCases();
-
-    Response getCase(String id);
+    private static final long serialVersionUID = 1L;
     
-    public Response getCaseTags(String id);
-
-    public Response createCase(ArchiveFileBean afb);
+    @Id
+    @Basic(optional = false)
+    @Column(name = "id")
+    private String id;
     
-    public Response updateCase(ArchiveFileBean afb);
+    @Column(name = "name")
+    private String name;
+    
+    @Column(name = "placeholder")
+    private String placeHolder;
+    
+    @Column(name = "color")
+    private int color;
+    
+    
 
-    Response getCaseDocuments(String id);
+    public String getId() {
+        return id;
+    }
 
-    Response getDocumentContent(String id);
+    public void setId(String id) {
+        this.id = id;
+    }
 
-    Response getDueDates(String id);
+    @Override
+    public int hashCode() {
+        int hash = 0;
+        hash += (id != null ? id.hashCode() : 0);
+        return hash;
+    }
 
-    Response getCaseParties(String id);
+    @Override
+    public boolean equals(Object object) {
+        // TODO: Warning - this method won't work in the case the id fields are not set
+        if (!(object instanceof PartyTypeBean)) {
+            return false;
+        }
+        PartyTypeBean other = (PartyTypeBean) object;
+        if ((this.id == null && other.id != null) || (this.id != null && !this.id.equals(other.id))) {
+            return false;
+        }
+        return true;
+    }
 
-    Response createDocument(RestfulDocumentContentV1 document);
+    @Override
+    public String toString() {
+        return "com.jdimension.jlawyer.persistence.PartyTypeBean[ id=" + id + " ]";
+    }
 
-    Response updateDocument(RestfulDocumentContentV1 document);
+    /**
+     * @return the name
+     */
+    public String getName() {
+        return name;
+    }
 
-    Response deleteDocument(String id);
+    /**
+     * @param name the name to set
+     */
+    public void setName(String name) {
+        this.name = name;
+    }
 
-    Response createParty(RestfulPartyV1 party);
+    /**
+     * @return the placeHolder
+     */
+    public String getPlaceHolder() {
+        return placeHolder;
+    }
 
-    Response updateParty(RestfulPartyV1 party);
+    /**
+     * @param placeHolder the placeHolder to set
+     */
+    public void setPlaceHolder(String placeHolder) {
+        this.placeHolder = placeHolder;
+    }
 
-    Response deleteParty(String id);
+    /**
+     * @return the color
+     */
+    public int getColor() {
+        return color;
+    }
 
-    Response getPartyTypes();
-
+    /**
+     * @param color the color to set
+     */
+    public void setColor(int color) {
+        this.color = color;
+    }
     
 }

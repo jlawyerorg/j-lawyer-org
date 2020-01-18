@@ -661,52 +661,107 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package org.jlawyer.io.rest.v1;
-
-import com.jdimension.jlawyer.persistence.ArchiveFileBean;
-import javax.ejb.Local;
-import javax.ws.rs.core.Response;
-import org.jlawyer.io.rest.v1.pojo.RestfulDocumentContentV1;
-import org.jlawyer.io.rest.v1.pojo.RestfulPartyV1;
+package org.jlawyer.io.rest.v1.pojo;
 
 /**
  *
  * @author jens
  */
-@Local
-public interface CasesEndpointLocalV1 {
-
-    Response listCases();
-
-    Response getCase(String id);
+public class RestfulContactOverviewV1 {
     
-    public Response getCaseTags(String id);
+    private String id=null;
+    private String name=null;
+    private String firstName=null;
+    private String company=null;
+    private String zipCode=null;
+    private String city=null;
 
-    public Response createCase(ArchiveFileBean afb);
-    
-    public Response updateCase(ArchiveFileBean afb);
+    public RestfulContactOverviewV1() {
+    }
 
-    Response getCaseDocuments(String id);
+    /**
+     * @return the id
+     */
+    public String getId() {
+        return id;
+    }
 
-    Response getDocumentContent(String id);
+    /**
+     * @param id the id to set
+     */
+    public void setId(String id) {
+        this.id = id;
+    }
 
-    Response getDueDates(String id);
+    /**
+     * @return the name
+     */
+    public String getName() {
+        return name;
+    }
 
-    Response getCaseParties(String id);
+    /**
+     * @param name the name to set
+     */
+    public void setName(String name) {
+        this.name = name;
+    }
 
-    Response createDocument(RestfulDocumentContentV1 document);
+    /**
+     * @return the firstName
+     */
+    public String getFirstName() {
+        return firstName;
+    }
 
-    Response updateDocument(RestfulDocumentContentV1 document);
+    /**
+     * @param firstName the firstName to set
+     */
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
+    }
 
-    Response deleteDocument(String id);
+    /**
+     * @return the organization
+     */
+    public String getCompany() {
+        return company;
+    }
 
-    Response createParty(RestfulPartyV1 party);
+    /**
+     * @param organization the organization to set
+     */
+    public void setCompany(String organization) {
+        this.company = organization;
+    }
 
-    Response updateParty(RestfulPartyV1 party);
+    /**
+     * @return the zipCode
+     */
+    public String getZipCode() {
+        return zipCode;
+    }
 
-    Response deleteParty(String id);
+    /**
+     * @param zipCode the zipCode to set
+     */
+    public void setZipCode(String zipCode) {
+        this.zipCode = zipCode;
+    }
 
-    Response getPartyTypes();
+    /**
+     * @return the city
+     */
+    public String getCity() {
+        return city;
+    }
+
+    /**
+     * @param city the city to set
+     */
+    public void setCity(String city) {
+        this.city = city;
+    }
 
     
 }

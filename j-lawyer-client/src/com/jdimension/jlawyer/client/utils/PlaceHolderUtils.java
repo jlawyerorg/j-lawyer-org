@@ -668,6 +668,7 @@ import com.jdimension.jlawyer.documents.PlaceHolders;
 import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.persistence.PartyTypeBean;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -855,7 +856,11 @@ public class PlaceHolderUtils extends PlaceHolders {
             if (placeHolders.containsKey(MANDANT_GEB)) {
                 placeHolders.put(MANDANT_GEB, val(cl.getBirthDate()));
             }
-            ArchiveFileAddressesBean involvement = getInvolvement(cl, involved, ArchiveFileAddressesBean.REFERENCETYPE_CLIENT);
+            
+            
+            
+            //ArchiveFileAddressesBean involvement = getInvolvement(cl, involved, ArchiveFileAddressesBean.REFERENCETYPE_CLIENT);
+            ArchiveFileAddressesBean involvement = getInvolvement(cl, involved, null);
             if (involvement != null) {
                 if (placeHolders.containsKey(MANDANT_AKTE_KONTAKT)) {
                     placeHolders.put(MANDANT_AKTE_KONTAKT, val(involvement.getContact()));
@@ -975,7 +980,8 @@ public class PlaceHolderUtils extends PlaceHolders {
             if (placeHolders.containsKey(GEGNER_GEB)) {
                 placeHolders.put(GEGNER_GEB, val(opp.getBirthDate()));
             }
-            ArchiveFileAddressesBean involvement = getInvolvement(opp, involved, ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT);
+            //ArchiveFileAddressesBean involvement = getInvolvement(opp, involved, ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT);
+            ArchiveFileAddressesBean involvement = getInvolvement(cl, involved, null);
             if (involvement != null) {
                 if (placeHolders.containsKey(GEGNER_AKTE_KONTAKT)) {
                     placeHolders.put(GEGNER_AKTE_KONTAKT, val(involvement.getContact()));
@@ -1094,7 +1100,8 @@ public class PlaceHolderUtils extends PlaceHolders {
             if (placeHolders.containsKey(DRITTE_GEB)) {
                 placeHolders.put(DRITTE_GEB, val(oppAtt.getBirthDate()));
             }
-            ArchiveFileAddressesBean involvement = getInvolvement(oppAtt, involved, ArchiveFileAddressesBean.REFERENCETYPE_OPPONENTATTORNEY);
+            //ArchiveFileAddressesBean involvement = getInvolvement(oppAtt, involved, ArchiveFileAddressesBean.REFERENCETYPE_OPPONENTATTORNEY);
+            ArchiveFileAddressesBean involvement = getInvolvement(cl, involved, null);
             if (involvement != null) {
                 if (placeHolders.containsKey(DRITTE_AKTE_KONTAKT)) {
                     placeHolders.put(DRITTE_AKTE_KONTAKT, val(involvement.getContact()));
@@ -1257,10 +1264,10 @@ public class PlaceHolderUtils extends PlaceHolders {
         return s;
     }
 
-    private static ArchiveFileAddressesBean getInvolvement(AddressBean cl, List<ArchiveFileAddressesBean> involved, int referenceType) {
+    private static ArchiveFileAddressesBean getInvolvement(AddressBean cl, List<ArchiveFileAddressesBean> involved, PartyTypeBean referenceType) {
         if (involved != null) {
             for (ArchiveFileAddressesBean i : involved) {
-                if (i.getReferenceType() == referenceType && cl.getId().equals(i.getAddressKey().getId())) {
+                if (i.getReferenceType().equals(referenceType) && cl.getId().equals(i.getAddressKey().getId())) {
                     return i;
                 }
             }

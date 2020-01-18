@@ -677,5 +677,9 @@ public interface ContactsEndpointLocalV1 {
     Response getContact(String id);
 
     Response createContact(AddressBean contact);
+
+    Response listContacts();
+
+    Response updateContact(AddressBean contact);
     
 }

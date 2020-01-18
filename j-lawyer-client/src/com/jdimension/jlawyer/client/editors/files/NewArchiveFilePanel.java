@@ -742,15 +742,10 @@ public class NewArchiveFilePanel extends ArchiveFilePanel implements ResetOnDisp
             }
         }
         
-        if(!(this.pnlInvolvedParties.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_OPPONENTATTORNEY).size()==0)) {
+        if(!(this.pnlInvolvedParties.getInvolvedParties().size()==0)) {
             return true;
         }
-        if(!(this.pnlInvolvedParties.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT).size()==0)) {
-            return true;
-        }
-        if(!(this.pnlInvolvedParties.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_CLIENT).size()==0)) {
-            return true;
-        }
+        
         
         return false;
         

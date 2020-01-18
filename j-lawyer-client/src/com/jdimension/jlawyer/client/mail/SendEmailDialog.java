@@ -722,13 +722,19 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
     private static final Logger log = Logger.getLogger(SendEmailDialog.class.getName());
     private AppUserBean cu = null;
     private Hashtable<String, String> attachments = new Hashtable<String, String>();
+    
     private ArchiveFileBean contextArchiveFile = null;
+    
     private AddressBean contextClient = null;
     private ArrayList<AddressBean> contextClients = new ArrayList<AddressBean>();
     private AddressBean contextOpponent = null;
     private ArrayList<AddressBean> contextOpponents = new ArrayList<AddressBean>();
     private AddressBean contextOppAttorney = null;
     private ArrayList<AddressBean> contextOppAttorneys = new ArrayList<AddressBean>();
+    
+    //private Hashtable<String,ArrayList<AddressBean>> contextParties=new Hashtable<String,ArrayList<AddressBean>>();
+    
+    
     private String contextDictateSign = null;
     private TextEditorPanel tp;
     private HtmlEditorPanel hp;

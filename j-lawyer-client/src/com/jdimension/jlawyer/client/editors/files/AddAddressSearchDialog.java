@@ -675,6 +675,7 @@ import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.persistence.PartyTypeBean;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.ui.tagging.TagUtils;
@@ -700,33 +701,44 @@ import org.apache.log4j.Logger;
 public class AddAddressSearchDialog extends javax.swing.JDialog {
 
     private static final Logger log = Logger.getLogger(AddAddressSearchDialog.class.getName());
-    private int targetReferenceType = -1;
+    private PartyTypeBean targetReferenceType = null;
     private AddressBean resultAddress = null;
     private ArchiveFileAddressesBean resultInvolvement = null;
+    private List<PartyTypeBean> partyTypes=null;
 
     /**
      * Creates new form AddAddressSearchDialog
      */
-    public AddAddressSearchDialog(java.awt.Frame parent, boolean modal, int targetReferenceType) {
+    public AddAddressSearchDialog(java.awt.Frame parent, boolean modal, PartyTypeBean targetReferenceType) {
         super(parent, modal);
         this.targetReferenceType = targetReferenceType;
         initComponents();
 
-        if (this.targetReferenceType == ArchiveFileAddressesBean.REFERENCETYPE_CLIENT) {
-            this.cmbRefType.setSelectedItem("Mandant");
-        } else if (this.targetReferenceType == ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT) {
-            this.cmbRefType.setSelectedItem("Gegner");
-        }
-        if (this.targetReferenceType == ArchiveFileAddressesBean.REFERENCETYPE_OPPONENTATTORNEY) {
-            this.cmbRefType.setSelectedItem("Dritte");
-        }
-
+        
+        
         String[] colNames = new String[]{"Name", "Vorname", "Firma", "PLZ", "Ort", "Strasse", "Land", "Etiketten"};
         QuickAddressSearchTableModel model = new QuickAddressSearchTableModel(colNames, 0);
         this.tblResults.setModel(model);
         ComponentUtils.autoSizeColumns(tblResults);
 
         ClientSettings s = ClientSettings.getInstance();
+        try {
+        JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(s.getLookupProperties());
+            ArchiveFileServiceRemote afRem = locator.lookupArchiveFileServiceRemote();
+            this.partyTypes=afRem.getAllPartyTypes();
+        } catch (Throwable t) {
+            log.error("Error getting party types", t);
+            JOptionPane.showMessageDialog(this, "Beteiligtentypen können nicht ermittelt werden: " + t.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            EditorsRegistry.getInstance().clearStatus();
+        }
+        
+        this.cmbRefType.removeAllItems();
+        for(PartyTypeBean ptb: this.partyTypes) {
+            this.cmbRefType.addItem(ptb.getName());
+        
+        }
+        this.cmbRefType.setSelectedItem(this.targetReferenceType.getName());
+        
         List<String> tags = s.getAddressTagsInUse();
         TagUtils.populateTags(tags, cmdTagFilter, popTagFilter, null);
 
@@ -927,29 +939,29 @@ public class AddAddressSearchDialog extends javax.swing.JDialog {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             ArchiveFileServiceRemote afRem = locator.lookupArchiveFileServiceRemote();
             Collection col = afRem.getArchiveFileAddressesForAddress(id.getAddressDTO().getId());
-            List<ArchiveFileBean> clientFiles = new ArrayList<ArchiveFileBean>();
-            List<ArchiveFileBean> opponentFiles = new ArrayList<ArchiveFileBean>();
-            List<ArchiveFileBean> opponentAttFiles = new ArrayList<ArchiveFileBean>();
-            for (Object o : col) {
-                ArchiveFileAddressesBean afb = (ArchiveFileAddressesBean) o;
-                if (afb.getReferenceType() == ArchiveFileAddressesBean.REFERENCETYPE_CLIENT) {
-                    clientFiles.add(afb.getArchiveFileKey());
-                } else if (afb.getReferenceType() == ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT) {
-                    opponentFiles.add(afb.getArchiveFileKey());
-                } else if (afb.getReferenceType() == ArchiveFileAddressesBean.REFERENCETYPE_OPPONENTATTORNEY) {
-                    opponentAttFiles.add(afb.getArchiveFileKey());
-                }
-            }
+//            List<ArchiveFileBean> clientFiles = new ArrayList<ArchiveFileBean>();
+//            List<ArchiveFileBean> opponentFiles = new ArrayList<ArchiveFileBean>();
+//            List<ArchiveFileBean> opponentAttFiles = new ArrayList<ArchiveFileBean>();
+//            for (Object o : col) {
+//                ArchiveFileAddressesBean afb = (ArchiveFileAddressesBean) o;
+//                if (afb.getReferenceType() == ArchiveFileAddressesBean.REFERENCETYPE_CLIENT) {
+//                    clientFiles.add(afb.getArchiveFileKey());
+//                } else if (afb.getReferenceType() == ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT) {
+//                    opponentFiles.add(afb.getArchiveFileKey());
+//                } else if (afb.getReferenceType() == ArchiveFileAddressesBean.REFERENCETYPE_OPPONENTATTORNEY) {
+//                    opponentAttFiles.add(afb.getArchiveFileKey());
+//                }
+//            }
             boolean conflict = false;
-            if (this.targetReferenceType == ArchiveFileAddressesBean.REFERENCETYPE_CLIENT && opponentFiles.size() > 0) {
-                conflict = true;
-            }
-            if (this.targetReferenceType == ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT && clientFiles.size() > 0) {
-                conflict = true;
-            }
-            if (conflict) {
-                JOptionPane.showMessageDialog(this, "Warnung: es könnte ein Interessenkonflikt vorliegen!\n(Beteiligter ist in verschiedenen Akten sowohl Mandant als auch Gegner)!", "Warnung", JOptionPane.WARNING_MESSAGE);
-            }
+//            if (this.targetReferenceType == ArchiveFileAddressesBean.REFERENCETYPE_CLIENT && opponentFiles.size() > 0) {
+//                conflict = true;
+//            }
+//            if (this.targetReferenceType == ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT && clientFiles.size() > 0) {
+//                conflict = true;
+//            }
+//            if (conflict) {
+//                JOptionPane.showMessageDialog(this, "Warnung: es könnte ein Interessenkonflikt vorliegen!\n(Beteiligter ist in verschiedenen Akten sowohl Mandant als auch Gegner)!", "Warnung", JOptionPane.WARNING_MESSAGE);
+//            }
         } catch (Exception ex) {
             log.error("Error getting archive files for address", ex);
             JOptionPane.showMessageDialog(this, "Fehler beim Prüfen von Interessenkonflikten: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
@@ -1022,12 +1034,15 @@ public class AddAddressSearchDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_cmdTagFilterMousePressed
 
     private void cmbRefTypeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbRefTypeActionPerformed
-        if ("Mandant".equals(this.cmbRefType.getSelectedItem()))
-            this.targetReferenceType = ArchiveFileAddressesBean.REFERENCETYPE_CLIENT;
-        else if ("Gegner".equals(this.cmbRefType.getSelectedItem()))
-            this.targetReferenceType = ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT;
-        if ("Dritte".equals(this.cmbRefType.getSelectedItem()))
-            this.targetReferenceType = ArchiveFileAddressesBean.REFERENCETYPE_OPPONENTATTORNEY;
+        
+        PartyTypeBean selected=null;
+        for(PartyTypeBean ptb: this.partyTypes) {
+            if (ptb.getName().equals(this.cmbRefType.getSelectedItem())) {
+                this.targetReferenceType=ptb;
+                return;
+            }
+        }
+        
     }//GEN-LAST:event_cmbRefTypeActionPerformed
 
     private int getRowForObject(QuickAddressSearchRowIdentifier id) {
@@ -1050,7 +1065,7 @@ public class AddAddressSearchDialog extends javax.swing.JDialog {
         java.awt.EventQueue.invokeLater(new Runnable() {
 
             public void run() {
-                new AddAddressSearchDialog(new javax.swing.JFrame(), true, -1).setVisible(true);
+                new AddAddressSearchDialog(new javax.swing.JFrame(), true, null).setVisible(true);
             }
         });
     }

@@ -720,6 +720,8 @@ public class CaseForContactEntryPanel extends javax.swing.JPanel {
         //this.lblDescription.setToolTipText(sh.getText());
         //this.lblDescription.setIcon(FileUtils.getInstance().getFileTypeIcon(sh.getFileName()));
         this.lblRole.setText(e.getRole());
+        this.lblRole.setForeground(e.getRoleForeground());
+        
         
         String contactCaption=java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/editors/addresses/CaseForContactEntryPanel").getString("role");
         String tooltip="<html><b>" + e.getFileNumber() + " " + e.getName() + "</b><br/>" + e.getReason() + "<br/>"  + contactCaption + ": " + e.getRole() + "</html>";

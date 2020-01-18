@@ -665,6 +665,7 @@ package org.jlawyer.io.rest.v1;
 
 import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.services.AddressServiceLocal;
+import java.util.ArrayList;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.Stateless;
 import javax.naming.InitialContext;
@@ -677,6 +678,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import org.jboss.logging.Logger;
+import org.jlawyer.io.rest.v1.pojo.RestfulContactOverviewV1;
 
 /**
  *
@@ -689,6 +691,9 @@ import org.jboss.logging.Logger;
 public class ContactsEndpointV1 implements ContactsEndpointLocalV1 {
 
     private static final Logger log=Logger.getLogger(ContactsEndpointV1.class.getName());
+    
+    
+    
     
     /**
      * Returns a contacts metadata given its ID
@@ -746,5 +751,122 @@ public class ContactsEndpointV1 implements ContactsEndpointLocalV1 {
 
     
     }
+
+    /**
+     * Lists all contacts
+     *
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/list")
+    @RolesAllowed({"readAddressRole"})
+    public Response listContacts() {
+        try {
+
+            InitialContext ic = new InitialContext();
+            AddressServiceLocal addresses = (AddressServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/AddressService!com.jdimension.jlawyer.services.AddressServiceLocal");
+            ArrayList<String> ids = addresses.getAllAddressIds();
+            ArrayList<RestfulContactOverviewV1> rcoList = new ArrayList<RestfulContactOverviewV1>();
+            for (String id : ids) {
+                AddressBean afb = addresses.getAddress(id);
+                RestfulContactOverviewV1 rco = new RestfulContactOverviewV1();
+                rco.setId(id);
+                rco.setName(afb.getName());
+                rco.setCity(afb.getCity());
+                rco.setFirstName(afb.getFirstName());
+                rco.setCompany(afb.getCompany());
+                rco.setZipCode(afb.getZipCode());
+                rcoList.add(rco);
+            }
+            Response res = Response.ok(rcoList).build();
+            return res;
+        } catch (Exception ex) {
+            log.error("Can not list contacts", ex);
+            Response res = Response.serverError().build();
+            return res;
+        }
+    }
+
+    /**
+     * Updates an existing contact based on its ID
+     *
+     * @param contact the contacts data
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @PUT
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/update")
+    @RolesAllowed({"writeAddressRole"})
+    public Response updateContact(AddressBean contact) {
+        try {
+
+            if (contact.getId() == null || "".equals(contact.getId())) {
+                log.error("Can update contact - no contact id given");
+                return Response.serverError().build();
+            }
+
+            InitialContext ic = new InitialContext();
+            AddressServiceLocal addresses = (AddressServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/AddressService!com.jdimension.jlawyer.services.AddressServiceLocal");
+            
+            AddressBean currentContact = addresses.getAddress(contact.getId());
+            if (currentContact == null) {
+                log.error("contact with id " + contact.getId() + " does not exist - skipping update");
+                Response res = Response.serverError().build();
+                return res;
+            }
+            // file number must not be changed
+
+            currentContact.setBankAccount(contact.getBankAccount());
+            currentContact.setBankCode(contact.getBankCode());
+            currentContact.setBankName(contact.getBankName());
+            currentContact.setBeaSafeId(contact.getBeaSafeId());
+            currentContact.setBirthDate(contact.getBirthDate());
+            currentContact.setCity(contact.getCity());
+            currentContact.setCompany(contact.getCompany());
+            currentContact.setComplimentaryClose(contact.getComplimentaryClose());
+            currentContact.setCountry(contact.getCountry());
+            currentContact.setCustom1(contact.getCustom1());
+            currentContact.setCustom2(contact.getCustom2());
+            currentContact.setCustom3(contact.getCustom3());
+            currentContact.setDepartment(contact.getDepartment());
+            currentContact.setEmail(contact.getEmail());
+            currentContact.setEncryptionPwd(contact.getEncryptionPwd());
+            currentContact.setFax(contact.getFax());
+            currentContact.setFirstName(contact.getFirstName());
+            currentContact.setInsuranceName(contact.getInsuranceName());
+            currentContact.setInsuranceNumber(contact.getInsuranceNumber());
+            currentContact.setLegalProtection(contact.getLegalProtection());
+            currentContact.setMobile(contact.getMobile());
+            currentContact.setMotorInsuranceName(contact.getMotorInsuranceName());
+            currentContact.setMotorInsuranceNumber(contact.getMotorInsuranceNumber());
+            currentContact.setName(contact.getName());
+            currentContact.setPhone(contact.getPhone());
+            currentContact.setSalutation(contact.getSalutation());
+            currentContact.setStreet(contact.getStreet());
+            currentContact.setTitle(contact.getTitle());
+            currentContact.setTrafficInsuranceName(contact.getTrafficInsuranceName());
+            currentContact.setTrafficInsuranceNumber(contact.getTrafficInsuranceNumber());
+            currentContact.setTrafficLegalProtection(contact.getTrafficLegalProtection());
+            currentContact.setWebsite(contact.getWebsite());
+            currentContact.setZipCode(contact.getZipCode());
+
+            addresses.updateAddress(currentContact);
+            AddressBean addressData = addresses.getAddress(currentContact.getId());
+
+            Response res = Response.ok(addressData).build();
+            return res;
+        } catch (Exception ex) {
+            log.error("can not update address " + contact.toDisplayName(), ex);
+            Response res = Response.serverError().build();
+            return res;
+        }
+    }
+    
+    
     
 }
