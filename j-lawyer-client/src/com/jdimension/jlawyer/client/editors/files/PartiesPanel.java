@@ -702,7 +702,7 @@ public class PartiesPanel extends javax.swing.JPanel {
     public PartiesPanel() {
         initComponents();
         
-        this.tblParties.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+        //this.tblParties.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
         
     }
     
