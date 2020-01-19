@@ -718,7 +718,11 @@ public class MicrosoftOfficeDocxTest {
     public void getPlaceHolders() {
         try {
             //ArrayList l = new ArrayList(LibreOfficeAccess.getPlaceHolders("/home/jens/jenkins-home/workspace/j-lawyer-server/j-lawyer-server-ejb/test/data/template.odt"));
-            ArrayList l = new ArrayList(LibreOfficeAccess.getPlaceHolders("test/data/template.docx"));
+            ArrayList<String> allPartyTypesPlaceholders=new ArrayList<>();
+            allPartyTypesPlaceholders.add("MANDANT");
+            allPartyTypesPlaceholders.add("GEGNER");
+            allPartyTypesPlaceholders.add("DRITTE");
+            ArrayList l = new ArrayList(LibreOfficeAccess.getPlaceHolders("test/data/template.docx", allPartyTypesPlaceholders));
             Assert.assertEquals(3, l.size());
         } catch (Throwable t) {
             Assert.fail(t.getMessage());
@@ -730,7 +734,11 @@ public class MicrosoftOfficeDocxTest {
     public void getPlaceHoldersInTextfield() {
         try {
             //ArrayList l = new ArrayList(LibreOfficeAccess.getPlaceHolders("/home/jens/jenkins-home/workspace/j-lawyer-server/j-lawyer-server-ejb/test/data/template.odt"));
-            ArrayList l = new ArrayList(LibreOfficeAccess.getPlaceHolders("test/data/textfield.docx"));
+            ArrayList<String> allPartyTypesPlaceholders=new ArrayList<>();
+            allPartyTypesPlaceholders.add("MANDANT");
+            allPartyTypesPlaceholders.add("GEGNER");
+            allPartyTypesPlaceholders.add("DRITTE");
+            ArrayList l = new ArrayList(LibreOfficeAccess.getPlaceHolders("test/data/textfield.docx", allPartyTypesPlaceholders));
             Assert.assertEquals(13, l.size());
         } catch (Throwable t) {
             Assert.fail(t.getMessage());

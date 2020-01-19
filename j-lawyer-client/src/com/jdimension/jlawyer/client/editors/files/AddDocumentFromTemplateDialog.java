@@ -700,7 +700,7 @@ import org.jlawyer.plugins.calculation.GenericCalculationTable;
  *
  * @author jens
  */
-public class AddDocumentFromTemplateDialog extends javax.swing.JDialog {
+public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implements PartiesSelectionListener {
 
     private static final Logger log = Logger.getLogger(AddDocumentFromTemplateDialog.class.getName());
     private JTable targetTable = null;
@@ -712,6 +712,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog {
     private JTable tblReviewReasons = null;
     private List<ArchiveFileAddressesBean> involved=null;
     private GenericCalculationTable calculationTable=null;
+    private List<PartyTypeBean> allPartyTypes=null;
 
     public AddDocumentFromTemplateDialog(java.awt.Frame parent, boolean modal, JTable targetTable, ArchiveFileBean aFile, List<ArchiveFileAddressesBean> involved, List<AddressBean> allCl, List<AddressBean> allOpp, List<AddressBean> allOppAtt, JTable tblReviewReasons) {
         this(parent, modal, targetTable, aFile, involved, allCl, allOpp, allOppAtt, tblReviewReasons, null);
@@ -732,7 +733,10 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog {
         this.involved=involved;
         initComponents();
         
+        this.pnlPartiesPanel.initialize(involved);
+        
         ComponentUtils.decorateSplitPane(jSplitPane1);
+        ComponentUtils.decorateSplitPane(this.splitPlaceholders);
 
         this.cmbClients.removeAllItems();
         this.cmbClients.setRenderer(new AddressBeanListCellRenderer());
@@ -821,12 +825,29 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog {
         
         this.jSplitPane1.setDividerLocation(0.5d);
         
+        try {
+            //InitialContext context = new InitialContext(settings.getLookupProperties());
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            this.allPartyTypes=locator.lookupArchiveFileServiceRemote().getAllPartyTypes();
+
+        } catch (Exception ex) {
+            log.error("Error getting all party types", ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim Laden der Beteiligtentypen: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            EditorsRegistry.getInstance().clearStatus();
+        }
+        
 
         this.initializing = false;
 
     }
 
-    private String getFileName(String templateName, Object client, Object opponent, Object other) {
+    private void updateFileName() {
+        
+        String templateName=null;
+        if (this.lstTemplates.getSelectedValue() != null) {
+            templateName=this.lstTemplates.getSelectedValue().toString();
+        }
+        
         String name = "";
         SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
 
@@ -837,29 +858,15 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog {
         //name=templateFileName + "_" + df.format(new Date());
         name = df.format(new Date()) + "_" + templateFileName;
 
-        if (client != null) {
-            if (client instanceof AddressBean) {
-                String contactName = ((AddressBean) client).toDisplayName();
+        for(PartyTypeBean ptb: this.allPartyTypes) {
+            AddressBean party=this.pnlPartiesPanel.getSelectedParty(ptb);
+            if(party!=null) {
+                String contactName = party.toDisplayName();
                 contactName = StringUtils.removeSonderzeichen(contactName);
-                name = name.replaceAll("MANDANT", contactName);
+                name = name.replaceAll(ptb.getPlaceHolder(), contactName);
             }
         }
-
-        if (opponent != null) {
-            if (opponent instanceof AddressBean) {
-                String contactName = ((AddressBean) opponent).toDisplayName();
-                contactName = StringUtils.removeSonderzeichen(contactName);
-                name = name.replaceAll("GEGNER", contactName);
-            }
-        }
-
-        if (other != null) {
-            if (other instanceof AddressBean) {
-                String contactName = ((AddressBean) other).toDisplayName();
-                contactName = StringUtils.removeSonderzeichen(contactName);
-                name = name.replaceAll("DRITTE", contactName);
-            }
-        }
+        
         name = name.replaceAll(",", "");
         name = name.replaceAll("\"", "");
         name = name.replaceAll("§", "");
@@ -879,7 +886,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog {
         name = name.replaceAll(":", "");
         name = name.replaceAll(";", "");
 
-        return name;
+        this.txtFileName.setText(name);
     }
 
     /**
@@ -918,14 +925,16 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog {
         txtFileName = new javax.swing.JTextField();
         jLabel1 = new javax.swing.JLabel();
         jPanel2 = new javax.swing.JPanel();
-        jScrollPane1 = new javax.swing.JScrollPane();
-        tblPlaceHolders = new javax.swing.JTable();
         jLabel4 = new javax.swing.JLabel();
         cmbClients = new javax.swing.JComboBox();
         jLabel5 = new javax.swing.JLabel();
         cmbOpponents = new javax.swing.JComboBox();
         jLabel6 = new javax.swing.JLabel();
         cmbOpponentAttorneys = new javax.swing.JComboBox();
+        splitPlaceholders = new javax.swing.JSplitPane();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        tblPlaceHolders = new javax.swing.JTable();
+        pnlPartiesPanel = new com.jdimension.jlawyer.client.editors.files.PartiesPanel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
@@ -1157,7 +1166,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog {
                     .add(jLabel1))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(cmbDictateSigns, 0, 441, Short.MAX_VALUE)
+                    .add(cmbDictateSigns, 0, 342, Short.MAX_VALUE)
                     .add(txtFileName))
                 .addContainerGap())
         );
@@ -1176,20 +1185,6 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog {
         );
 
         jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder("Platzhalter"));
-
-        tblPlaceHolders.setModel(new javax.swing.table.DefaultTableModel(
-            new Object [][] {
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null}
-            },
-            new String [] {
-                "Title 1", "Title 2", "Title 3", "Title 4"
-            }
-        ));
-        tblPlaceHolders.getTableHeader().setReorderingAllowed(false);
-        jScrollPane1.setViewportView(tblPlaceHolders);
 
         jLabel4.setText("Mandant:");
 
@@ -1224,14 +1219,34 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog {
             }
         });
 
+        splitPlaceholders.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
+        splitPlaceholders.setResizeWeight(0.5);
+
+        tblPlaceHolders.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null}
+            },
+            new String [] {
+                "Title 1", "Title 2", "Title 3", "Title 4"
+            }
+        ));
+        tblPlaceHolders.getTableHeader().setReorderingAllowed(false);
+        jScrollPane1.setViewportView(tblPlaceHolders);
+
+        splitPlaceholders.setLeftComponent(jScrollPane1);
+        splitPlaceholders.setRightComponent(pnlPartiesPanel);
+
         org.jdesktop.layout.GroupLayout jPanel2Layout = new org.jdesktop.layout.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
             jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel2Layout.createSequentialGroup()
                 .addContainerGap()
-                .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
-                    .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 487, Short.MAX_VALUE)
+                .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(splitPlaceholders, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 484, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(jPanel2Layout.createSequentialGroup()
                         .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                             .add(jLabel4)
@@ -1239,17 +1254,16 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog {
                             .add(jLabel6))
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
-                            .add(org.jdesktop.layout.GroupLayout.LEADING, cmbOpponents, 0, 407, Short.MAX_VALUE)
+                            .add(org.jdesktop.layout.GroupLayout.LEADING, cmbOpponents, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .add(cmbOpponentAttorneys, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .add(org.jdesktop.layout.GroupLayout.LEADING, cmbClients, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                            .add(org.jdesktop.layout.GroupLayout.LEADING, cmbClients, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 407, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))))
                 .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel2Layout.createSequentialGroup()
-                .addContainerGap()
-                .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 217, Short.MAX_VALUE)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                .add(splitPlaceholders, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 597, Short.MAX_VALUE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(jLabel4)
                     .add(cmbClients, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
@@ -1261,29 +1275,30 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog {
                 .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(cmbOpponentAttorneys, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(jLabel6))
-                .addContainerGap())
+                .add(18, 18, 18))
         );
 
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(layout.createSequentialGroup()
+            .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
-                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
+                    .add(layout.createSequentialGroup()
+                        .add(0, 0, Short.MAX_VALUE)
+                        .add(cmdAddDocument)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(cmdCancel))
+                    .add(layout.createSequentialGroup()
                         .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                             .add(jPanel1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .add(jPanel3, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
-                            .add(jPanel2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                            .add(jPanel4, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-                    .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
-                        .add(cmdAddDocument)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(cmdCancel)))
-                .addContainerGap())
+                            .add(jPanel2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .add(jPanel4, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                .add(10, 10, 10))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -1478,9 +1493,8 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog {
 
         this.cl = (AddressBean) this.cmbClients.getSelectedItem();
 
-        if (this.lstTemplates.getSelectedValue() != null) {
-            this.txtFileName.setText(this.getFileName(this.lstTemplates.getSelectedValue().toString(), this.cl, this.opp, this.oppAtt));
-        }
+        
+        this.updateFileName();
 
         this.lstTemplatesMouseClicked(null);
     }//GEN-LAST:event_cmbClientsItemStateChanged
@@ -1492,9 +1506,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog {
 
         this.opp = (AddressBean) this.cmbOpponents.getSelectedItem();
 
-        if (this.lstTemplates.getSelectedValue() != null) {
-            this.txtFileName.setText(this.getFileName(this.lstTemplates.getSelectedValue().toString(), this.cl, this.opp, this.oppAtt));
-        }
+        this.updateFileName();
 
         this.lstTemplatesMouseClicked(null);
     }//GEN-LAST:event_cmbOpponentsItemStateChanged
@@ -1506,9 +1518,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog {
 
         this.oppAtt = (AddressBean) this.cmbOpponentAttorneys.getSelectedItem();
 
-        if (this.lstTemplates.getSelectedValue() != null) {
-            this.txtFileName.setText(this.getFileName(this.lstTemplates.getSelectedValue().toString(), this.cl, this.opp, this.oppAtt));
-        }
+        this.updateFileName();
 
         this.lstTemplatesMouseClicked(null);
     }//GEN-LAST:event_cmbOpponentAttorneysItemStateChanged
@@ -1566,7 +1576,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog {
             //SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
             try {
 
-                this.txtFileName.setText(this.getFileName(this.lstTemplates.getSelectedValue().toString(), this.cl, this.opp, this.oppAtt));
+                this.updateFileName();
 
                 DefaultMutableTreeNode tn = (DefaultMutableTreeNode) this.treeFolders.getSelectionPath().getLastPathComponent();
                 GenericNode gn = (GenericNode) tn.getUserObject();
@@ -1582,7 +1592,8 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog {
                 for (String ph : placeHolders) {
                     ht.put(ph, "");
                 }
-                ht = PlaceHolderUtils.getPlaceHolderValues(ht, aFile, involved, cl, opp, oppAtt, this.cmbDictateSigns.getSelectedItem().toString(), this.calculationTable);
+                Hashtable<PartyTypeBean,AddressBean> selectedParties=this.pnlPartiesPanel.getSelectedParties(this.allPartyTypes);
+                ht = PlaceHolderUtils.getPlaceHolderValues(ht, aFile, involved, selectedParties, this.cmbDictateSigns.getSelectedItem().toString(), this.calculationTable);
 
                 Enumeration htEn = ht.keys();
                 while (htEn.hasMoreElements()) {
@@ -1765,13 +1776,21 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog {
     private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JSplitPane jSplitPane1;
     private javax.swing.JList lstTemplates;
+    private com.jdimension.jlawyer.client.editors.files.PartiesPanel pnlPartiesPanel;
     private javax.swing.JRadioButton radioReviewTypeFollowUp;
     private javax.swing.JRadioButton radioReviewTypeNone;
     private javax.swing.JRadioButton radioReviewTypeRespite;
+    private javax.swing.JSplitPane splitPlaceholders;
     private javax.swing.JTable tblPlaceHolders;
     private javax.swing.JTree treeFolders;
     private javax.swing.JTextField txtFileName;
     private javax.swing.JTextField txtReviewDateField;
     private javax.swing.JTextField txtTemplateFilter;
     // End of variables declaration//GEN-END:variables
+
+    @Override
+    public void selectedPartiesUpdated() {
+        this.updateFileName();
+        this.lstTemplatesMouseClicked(null);
+    }
 }

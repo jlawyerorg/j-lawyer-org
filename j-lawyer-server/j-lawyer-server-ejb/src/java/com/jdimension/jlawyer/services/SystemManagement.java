@@ -1836,7 +1836,13 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
 
         localBaseDir = localBaseDir + "templates" + TreeNodeUtils.buildNodePath(folder) + System.getProperty("file.separator") + templateName;
 
-        return LibreOfficeAccess.getPlaceHolders(localBaseDir);
+        Collection<PartyTypeBean> partyTypes=this.getPartyTypes();
+        ArrayList<String> allPartyTypesPlaceholders=new ArrayList<String>();
+        for(PartyTypeBean ptb: partyTypes) {
+            allPartyTypesPlaceholders.add(ptb.getPlaceHolder());
+        }
+        
+        return LibreOfficeAccess.getPlaceHolders(localBaseDir, allPartyTypesPlaceholders);
     }
 
     @Override

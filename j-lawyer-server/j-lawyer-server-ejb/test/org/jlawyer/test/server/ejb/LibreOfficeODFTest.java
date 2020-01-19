@@ -718,7 +718,11 @@ public class LibreOfficeODFTest {
     public void getPlaceHolders() {
         try {
             //ArrayList l = new ArrayList(LibreOfficeAccess.getPlaceHolders("/home/jens/jenkins-home/workspace/j-lawyer-server/j-lawyer-server-ejb/test/data/template.odt"));
-            ArrayList l = new ArrayList(LibreOfficeAccess.getPlaceHolders("test/data/template.odt"));
+            ArrayList<String> allPartyTypesPlaceholders=new ArrayList<>();
+            allPartyTypesPlaceholders.add("MANDANT");
+            allPartyTypesPlaceholders.add("GEGNER");
+            allPartyTypesPlaceholders.add("DRITTE");
+            ArrayList l = new ArrayList(LibreOfficeAccess.getPlaceHolders("test/data/template.odt", allPartyTypesPlaceholders));
             Assert.assertEquals(3, l.size());
         } catch (Throwable t) {
             Assert.fail(t.getMessage());
