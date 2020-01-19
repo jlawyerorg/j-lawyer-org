@@ -690,6 +690,7 @@ import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Color;
 import java.awt.Component;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import javax.swing.DefaultListModel;
 import javax.swing.JDialog;
@@ -740,8 +741,13 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
                 this.partyTypes=afs.getAllPartyTypes();
                 
                 this.cmbRefType.removeAllItems();
+                ArrayList<String> refTypeNames=new ArrayList<>();
                 for(PartyTypeBean p: this.partyTypes) {
-                    this.cmbRefType.addItem(p.getName());
+                    refTypeNames.add(p.getName());
+                }
+                Collections.sort(refTypeNames);
+                for(String s: refTypeNames) {
+                    this.cmbRefType.addItem(s);
                 }
 
             } catch (Throwable t) {
