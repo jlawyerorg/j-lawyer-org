@@ -2281,10 +2281,18 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
     private void cmdSendEmailActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSendEmailActionPerformed
         SendEmailDialog dlg = new SendEmailDialog(EditorsRegistry.getInstance().getMainWindow(), false);
         dlg.setTo(this.txtEmail.getText());
-        // we do not know what role this person has - so put it as all three types
-        dlg.addToClient(dto);
-        dlg.addToOpponent(dto);
-        dlg.addToOpponentAttorney(dto);
+
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
+
+            // we do not know what role this person has - so put it as all three types
+            Collection<PartyTypeBean> allPartyTypes = locator.lookupSystemManagementRemote().getPartyTypes();
+            for (PartyTypeBean ptb : allPartyTypes) {
+                dlg.addParty(dto, ptb);
+            }
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Fehler beim Ermitteln der Beteiligtentypen: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+        }
 
         FrameUtils.centerDialog(dlg, null);
         dlg.setVisible(true);
@@ -2461,10 +2469,17 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
 
             SendBeaMessageDialog dlg = new SendBeaMessageDialog(EditorsRegistry.getInstance().getMainWindow(), false);
             dlg.setTo(i);
-            // we do not know what role this person has - so put it as all three types
-            dlg.addToClient(dto);
-            dlg.addToOpponent(dto);
-            dlg.addToOpponentAttorney(dto);
+            try {
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
+
+                // we do not know what role this person has - so put it as all three types
+                Collection<PartyTypeBean> allPartyTypes = locator.lookupSystemManagementRemote().getPartyTypes();
+                for (PartyTypeBean ptb : allPartyTypes) {
+                    dlg.addParty(dto, ptb);
+                }
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, "Fehler beim Ermitteln der Beteiligtentypen: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            }
 
             FrameUtils.centerDialog(dlg, null);
             dlg.setVisible(true);

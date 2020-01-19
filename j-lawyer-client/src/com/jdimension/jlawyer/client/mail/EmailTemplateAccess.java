@@ -667,6 +667,7 @@ import com.jdimension.jlawyer.documents.PlaceHolders;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Hashtable;
+import java.util.List;
 
 /**
  *
@@ -674,18 +675,15 @@ import java.util.Hashtable;
  */
 public class EmailTemplateAccess {
     
-    public static ArrayList<String> getPlaceHoldersInTemplate(String templateText) {
+    public static ArrayList<String> getPlaceHoldersInTemplate(String templateText, List<String> allPartyTypesPlaceHolders) {
         ArrayList<String> result=new ArrayList<String>();
         if(templateText==null)
             templateText="";
-        for (String r : PlaceHolders.ALLPLACEHOLDERS) {
+        for (String r : PlaceHolders.getAllPlaceHolders(allPartyTypesPlaceHolders)) {
             String key = r;
             if(templateText.indexOf(r)>-1)
                 result.add(r);
             
-            String alias=PlaceHolders.aliasForPlaceHolder(key);
-            if(templateText.indexOf(alias)>-1)
-                result.add(alias);
         }
         return result;
     }

@@ -1084,9 +1084,10 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
                 dlg.setInvolvedInCase(this.container.getInvolvedParties());
                 dlg.setArchiveFile(this.caseDto);
                 dlg.setTo(this.a.getEmail());
-//                dlg.addAllToClient(this.container.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_CLIENT));
-//                dlg.addAllToOpponent(this.container.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT));
-//                dlg.addAllToOpponentAttorney(this.container.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_OPPONENTATTORNEY));
+                ArrayList<ArchiveFileAddressesBean> involved=this.container.getInvolvedParties();
+                for(ArchiveFileAddressesBean aab: involved) {
+                    dlg.addParty(aab.getAddressKey(), aab.getReferenceType());
+                }
                 
                 FrameUtils.centerDialog(dlg, null);
                 dlg.setVisible(true);
@@ -1120,9 +1121,11 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
                 SendBeaMessageDialog dlg = new SendBeaMessageDialog(EditorsRegistry.getInstance().getMainWindow(), false);
                 dlg.setArchiveFile(this.caseDto);
                 dlg.setTo(iTo);
-//                dlg.addAllToClient(this.container.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_CLIENT));
-//                dlg.addAllToOpponent(this.container.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT));
-//                dlg.addAllToOpponentAttorney(this.container.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_OPPONENTATTORNEY));
+                
+                ArrayList<ArchiveFileAddressesBean> involved=this.container.getInvolvedParties();
+                for(ArchiveFileAddressesBean aab: involved) {
+                    dlg.addParty(aab.getAddressKey(), aab.getReferenceType());
+                }
                 dlg.setAzRecipient(this.txtReference.getText());
                 FrameUtils.centerDialog(dlg, null);
                 dlg.setVisible(true);

@@ -689,22 +689,25 @@ import org.apache.log4j.Logger;
  * @author jens
  */
 public class PartiesPanel extends javax.swing.JPanel {
-
+    
     private static final Logger log = Logger.getLogger(PartiesPanel.class.getName());
     
-    private boolean ignoreTableChanges=false;
-    private PartiesSelectionListener listener=null;
+    private boolean ignoreTableChanges = false;
+    private PartiesSelectionListener listener = null;
+    private List<PartyTypeBean> partyTypes = null;
 
     /**
      * Creates new form PartiesPanel
      */
     public PartiesPanel() {
         initComponents();
-
+        
+        this.tblParties.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+        
     }
     
     public void setListener(PartiesSelectionListener l) {
-        this.listener=l;
+        this.listener = l;
     }
 
 //    class PartyEditor extends DefaultCellEditor {
@@ -739,13 +742,13 @@ public class PartiesPanel extends javax.swing.JPanel {
 //        
 //    }
     class PartyRenderer extends DefaultTableCellRenderer {
-
+        
         private List<AddressBean> parties = null;
-
+        
         public PartyRenderer(List<AddressBean> parties) {
             this.parties = parties;
         }
-
+        
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
@@ -760,27 +763,33 @@ public class PartiesPanel extends javax.swing.JPanel {
                 if (value instanceof AddressBean) {
                     ((JLabel) c).setText(((AddressBean) value).toDisplayName());
                 }
-
+                
             }
             return c;
-
+            
         }
     }
-
+    
     public void initialize(List<ArchiveFileAddressesBean> involved) {
         try {
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            List<PartyTypeBean> partyTypes = locator.lookupArchiveFileServiceRemote().getAllPartyTypes();
+            this.partyTypes = locator.lookupArchiveFileServiceRemote().getAllPartyTypes();
             ArrayList<String> columnNames = new ArrayList<String>();
             ArrayList<AddressBean> parties = new ArrayList<AddressBean>();
+            // collect all addresses of relevant parties
             for (ArchiveFileAddressesBean aab : involved) {
-                parties.add(aab.getAddressKey());
-                if (!columnNames.contains(aab.getReferenceType().getName())) {
-                    columnNames.add(aab.getReferenceType().getName());
-                }
+                parties.add(aab.getAddressKey());                
             }
 
+            // display a column for EACH type, regardless of whether it is uses
+            // this is required because we do not know which placeholders are used in the template the user selected, and we allow to use an address for ANY type
+            for (PartyTypeBean ptb : partyTypes) {
+                if (!columnNames.contains(ptb.getName())) {
+                    columnNames.add(ptb.getName());
+                }
+            }
+            
             Collections.sort(columnNames);
             ArrayList<String> allColumnNames = new ArrayList<String>();
             allColumnNames.add("Beteiligte");
@@ -800,15 +809,15 @@ public class PartiesPanel extends javax.swing.JPanel {
                 this.tblParties.getColumnModel().getColumn(i).setMaxWidth(30);
                 this.tblParties.getColumnModel().getColumn(i).setMinWidth(30);
                 this.tblParties.getColumnModel().getColumn(i).setPreferredWidth(30);
-
+                
             }
-
+            
             for (ArchiveFileAddressesBean aab : involved) {
-                ArrayList row=new ArrayList();
+                ArrayList row = new ArrayList();
                 row.add(aab.getAddressKey());
-                for(int i=1;i<this.tblParties.getColumnCount();i++) {
-                    String colName=this.tblParties.getColumnName(i);
-                    row.add(colName.equals(aab.getReferenceType().getName()) && getNumberOfSelected(i)==0);
+                for (int i = 1; i < this.tblParties.getColumnCount(); i++) {
+                    String colName = this.tblParties.getColumnName(i);
+                    row.add(colName.equals(aab.getReferenceType().getName()) && getNumberOfSelected(i) == 0);
                 }
                 Object[] rowArray = row.toArray();
                 model.addRow(rowArray);
@@ -821,24 +830,26 @@ public class PartiesPanel extends javax.swing.JPanel {
             this.tblParties.getModel().addTableModelListener(
                     new TableModelListener() {
                 public void tableChanged(TableModelEvent evt) {
-                    if(ignoreTableChanges)
+                    if (ignoreTableChanges) {
                         return;
+                    }
                     
-                    ignoreTableChanges=true;
-                    if(evt.getColumn()>0) {
-                        Boolean newValue=(Boolean)tblParties.getValueAt(evt.getFirstRow(), evt.getColumn());
-                        if(newValue==true) {
-                            for(int i=0;i<tblParties.getRowCount();i++) {
-                                tblParties.setValueAt((i==evt.getFirstRow()), i, evt.getColumn());
+                    ignoreTableChanges = true;
+                    if (evt.getColumn() > 0) {
+                        Boolean newValue = (Boolean) tblParties.getValueAt(evt.getFirstRow(), evt.getColumn());
+                        if (newValue == true) {
+                            for (int i = 0; i < tblParties.getRowCount(); i++) {
+                                tblParties.setValueAt((i == evt.getFirstRow()), i, evt.getColumn());
                             }
                         }
                     }
-                    ignoreTableChanges=false;
-                    if(listener!=null)
+                    ignoreTableChanges = false;
+                    if (listener != null) {
                         listener.selectedPartiesUpdated();
+                    }
                 }
             });
-
+            
         } catch (Exception ex) {
             log.error("Error initializing parties panel", ex);
             JOptionPane.showMessageDialog(this, "Fehler beim Laden der Beteiligtentypen: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
@@ -846,15 +857,40 @@ public class PartiesPanel extends javax.swing.JPanel {
         }
     }
     
+    public void addParty(ArchiveFileAddressesBean aab) {
+        this.addParty(aab.getAddressKey(), aab.getReferenceType());
+    }
+    
+    public void addParty(AddressBean party) {
+        this.addParty(party, null);
+    }
+    
+    public void addParty(AddressBean party, PartyTypeBean ptb) {
+        PartiesPanelTableModel model = (PartiesPanelTableModel) this.tblParties.getModel();
+        ArrayList row = new ArrayList();
+        row.add(party);
+        for (int i = 1; i < this.tblParties.getColumnCount(); i++) {
+            String colName = this.tblParties.getColumnName(i);
+            if (ptb != null) {
+                row.add(colName.equals(ptb.getName()) && getNumberOfSelected(i) == 0);
+            } else {
+                row.add(getNumberOfSelected(i) == 0);
+            }
+        }
+        Object[] rowArray = row.toArray();
+        model.addRow(rowArray);        
+        
+    }
+    
     public AddressBean getSelectedParty(PartyTypeBean ptb) {
         for (int i = 1; i < this.tblParties.getColumnCount(); i++) {
-            String colName=this.tblParties.getColumnName(i);
-            if(colName.equals(ptb.getName())) {
+            String colName = this.tblParties.getColumnName(i);
+            if (colName.equals(ptb.getName())) {
                 // found the right column, now get the selected party
-                for(int k=0;k<this.tblParties.getRowCount();k++) {
-                    Boolean value=(Boolean)tblParties.getValueAt(k, i);
-                    if(value==true) {
-                        AddressBean ab=(AddressBean)this.tblParties.getValueAt(k, 0);
+                for (int k = 0; k < this.tblParties.getRowCount(); k++) {
+                    Boolean value = (Boolean) tblParties.getValueAt(k, i);
+                    if (value == true) {
+                        AddressBean ab = (AddressBean) this.tblParties.getValueAt(k, 0);
                         return ab;
                     }
                 }
@@ -863,11 +899,11 @@ public class PartiesPanel extends javax.swing.JPanel {
         return null;
     }
     
-    public Hashtable<PartyTypeBean,AddressBean> getSelectedParties(List<PartyTypeBean> allPartyTypes) {
-        Hashtable<PartyTypeBean,AddressBean> result=new Hashtable<PartyTypeBean,AddressBean>();
-        for(PartyTypeBean ptb: allPartyTypes) {
-            AddressBean selected=this.getSelectedParty(ptb);
-            if(selected!=null) {
+    public Hashtable<PartyTypeBean, AddressBean> getSelectedParties(List<PartyTypeBean> allPartyTypes) {
+        Hashtable<PartyTypeBean, AddressBean> result = new Hashtable<PartyTypeBean, AddressBean>();
+        for (PartyTypeBean ptb : allPartyTypes) {
+            AddressBean selected = this.getSelectedParty(ptb);
+            if (selected != null) {
                 result.put(ptb, selected);
             }
         }
@@ -875,12 +911,13 @@ public class PartiesPanel extends javax.swing.JPanel {
     }
     
     private int getNumberOfSelected(int column) {
-        int count=0;
-        for(int i=0;i<this.tblParties.getRowCount();i++) {
-            Object o= this.tblParties.getValueAt(i, column);
-            if(o instanceof Boolean) {
-                if(((Boolean)o).equals(Boolean.TRUE))
-                    count=count+1;
+        int count = 0;
+        for (int i = 0; i < this.tblParties.getRowCount(); i++) {
+            Object o = this.tblParties.getValueAt(i, column);
+            if (o instanceof Boolean) {
+                if (((Boolean) o).equals(Boolean.TRUE)) {
+                    count = count + 1;
+                }
             }
         }
         return count;

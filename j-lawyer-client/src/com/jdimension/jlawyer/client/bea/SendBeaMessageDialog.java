@@ -671,6 +671,7 @@ import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.documents.SearchAndAssignDialog;
 import com.jdimension.jlawyer.client.editors.files.AddressBeanListCellRenderer;
 import com.jdimension.jlawyer.client.editors.files.OptionsComboBoxModel;
+import com.jdimension.jlawyer.client.editors.files.PartiesSelectionListener;
 import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.events.ReviewAddedEvent;
 import com.jdimension.jlawyer.client.launcher.Launcher;
@@ -693,8 +694,10 @@ import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
+import com.jdimension.jlawyer.persistence.PartyTypeBean;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.io.File;
 import java.text.DecimalFormat;
@@ -720,24 +723,21 @@ import themes.colors.DefaultColorTheme;
  *
  * @author jens
  */
-public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCommunicationDialog {
+public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCommunicationDialog, PartiesSelectionListener {
 
     private static final Logger log = Logger.getLogger(SendBeaMessageDialog.class.getName());
     private AppUserBean cu = null;
     private Hashtable<String, String> attachments = new Hashtable<String, String>();
     private ArchiveFileBean contextArchiveFile = null;
-    private AddressBean contextClient = null;
-    private ArrayList<AddressBean> contextClients = new ArrayList<AddressBean>();
-    private AddressBean contextOpponent = null;
-    private ArrayList<AddressBean> contextOpponents = new ArrayList<AddressBean>();
-    private AddressBean contextOppAttorney = null;
-    private ArrayList<AddressBean> contextOppAttorneys = new ArrayList<AddressBean>();
     private String contextDictateSign = null;
     private TextEditorPanel tp;
 
     private BeaListItem authority = null;
 
     private ArrayList<ArchiveFileAddressesBean> caseInvolvements = null;
+    
+    private Collection<PartyTypeBean> allPartyTypes = new ArrayList<PartyTypeBean>();
+    private List<String> allPartyTypesPlaceholders = new ArrayList<String>();
 
     /**
      * Creates new form SendEmailDialog
@@ -745,19 +745,13 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
     public SendBeaMessageDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
+        
+        this.pnlParties.initialize(new ArrayList<ArchiveFileAddressesBean>());
+        this.pnlParties.setListener(this);
 
         this.cmbAzRecipient.removeAllItems();
         this.cmbAzRecipient.setModel(new DefaultComboBoxModel());
         this.cmbAzRecipient.addItem("");
-
-        this.cmbClient.removeAllItems();
-        this.cmbClient.setRenderer(new AddressBeanListCellRenderer());
-
-        this.cmbOpponent.removeAllItems();
-        this.cmbOpponent.setRenderer(new AddressBeanListCellRenderer());
-
-        this.cmbOpponentAtt.removeAllItems();
-        this.cmbOpponentAtt.setRenderer(new AddressBeanListCellRenderer());
 
         this.cmbFrom.removeAllItems();
         this.cmbFrom.setModel(new DefaultComboBoxModel());
@@ -832,6 +826,18 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
             }
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Fehler beim Erstellen der Vorlage: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+        }
+        
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+
+            this.allPartyTypes = locator.lookupSystemManagementRemote().getPartyTypes();
+            this.allPartyTypesPlaceholders = new ArrayList<String>();
+            for (PartyTypeBean ptb : allPartyTypes) {
+                allPartyTypesPlaceholders.add(ptb.getPlaceHolder());
+            }
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Fehler beim Ermitteln der Beteiligtentypen: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
         }
 
         this.cmbReviewReason.setRenderer(new OptionGroupListCellRenderer());
@@ -1024,74 +1030,21 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
         this.txtAzSender.setText(fileNumber);
     }
 
-    public void addAllToClient(List<AddressBean> list) {
+    public void addAllParties(List<AddressBean> list, PartyTypeBean ptb) {
         for (AddressBean o : list) {
-            this.addToClient(o);
+            this.addParty(o, ptb);
         }
     }
 
-    public void addToClient(AddressBean ab) {
+    public void addParty(AddressBean ab, PartyTypeBean ptb) {
         if (ab == null) {
             return;
         }
-        if (!this.contextClients.contains(ab)) {
-            this.contextClients.add(ab);
-            this.cmbClient.addItem(ab);
-            if (!StringUtils.isEmpty(ab.getBeaSafeId())) {
-                this.addRecipientCandidate(ab, "Mandant");
-            }
-        }
-        this.contextClient = ab;
-        this.cmbClient.setSelectedItem(ab);
 
-        //this.txtTo.setText(ab.getEmail());
-    }
+        this.pnlParties.addParty(ab, ptb);
 
-    public void addAllToOpponent(List<AddressBean> list) {
-        for (AddressBean o : list) {
-            this.addToOpponent(o);
-        }
-    }
+        this.addRecipientCandidate(ab, ptb);
 
-    public void addToOpponent(AddressBean ab) {
-        if (ab == null) {
-            return;
-        }
-        if (!this.contextOpponents.contains(ab)) {
-            this.contextOpponents.add(ab);
-            if (!StringUtils.isEmpty(ab.getBeaSafeId())) {
-                this.addRecipientCandidate(ab, "Gegner");
-            }
-            this.cmbOpponent.addItem(ab);
-        }
-
-        this.contextOpponent = ab;
-        //this.txtTo.setText(ab.getEmail());
-        this.cmbOpponent.setSelectedItem(ab);
-
-    }
-
-    public void addAllToOpponentAttorney(List<AddressBean> list) {
-        for (AddressBean o : list) {
-            this.addToOpponentAttorney(o);
-        }
-    }
-
-    public void addToOpponentAttorney(AddressBean ab) {
-        if (ab == null) {
-            return;
-        }
-        if (!this.contextOppAttorneys.contains(ab)) {
-            this.contextOppAttorneys.add(ab);
-            this.cmbOpponentAtt.addItem(ab);
-            if (!StringUtils.isEmpty(ab.getBeaSafeId())) {
-                this.addRecipientCandidate(ab, "Dritte(r)");
-            }
-        }
-        this.contextOppAttorney = ab;
-        this.cmbOpponentAtt.setSelectedItem(ab);
-
-        //this.txtTo.setText(ab.getEmail());
     }
 
     public void setDictateSign(String dictateSign) {
@@ -1180,12 +1133,7 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
         jPanel1 = new javax.swing.JPanel();
         jLabel4 = new javax.swing.JLabel();
         cmbTemplates = new javax.swing.JComboBox();
-        cmbClient = new javax.swing.JComboBox();
-        cmbOpponent = new javax.swing.JComboBox();
-        cmbOpponentAtt = new javax.swing.JComboBox();
-        jLabel5 = new javax.swing.JLabel();
-        jLabel6 = new javax.swing.JLabel();
-        jLabel7 = new javax.swing.JLabel();
+        pnlParties = new com.jdimension.jlawyer.client.editors.files.PartiesPanel();
         contentPanel = new javax.swing.JPanel();
         jPanel2 = new javax.swing.JPanel();
         rdXjustiz = new javax.swing.JRadioButton();
@@ -1328,33 +1276,6 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
             }
         });
 
-        cmbClient.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
-        cmbClient.addItemListener(new java.awt.event.ItemListener() {
-            public void itemStateChanged(java.awt.event.ItemEvent evt) {
-                cmbClientItemStateChanged(evt);
-            }
-        });
-
-        cmbOpponent.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
-        cmbOpponent.addItemListener(new java.awt.event.ItemListener() {
-            public void itemStateChanged(java.awt.event.ItemEvent evt) {
-                cmbOpponentItemStateChanged(evt);
-            }
-        });
-
-        cmbOpponentAtt.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
-        cmbOpponentAtt.addItemListener(new java.awt.event.ItemListener() {
-            public void itemStateChanged(java.awt.event.ItemEvent evt) {
-                cmbOpponentAttItemStateChanged(evt);
-            }
-        });
-
-        jLabel5.setText("Dritte(r):");
-
-        jLabel6.setText("Gegner:");
-
-        jLabel7.setText("Mandant:");
-
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
@@ -1363,21 +1284,13 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
                 .addContainerGap()
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(cmbTemplates, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(jLabel7)
-                                    .addComponent(jLabel6)
-                                    .addComponent(jLabel5))
-                                .addGap(0, 0, Short.MAX_VALUE))
-                            .addComponent(cmbClient, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(cmbOpponent, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(cmbOpponentAtt, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                        .addContainerGap())
-                    .addGroup(jPanel1Layout.createSequentialGroup()
                         .addComponent(jLabel4)
-                        .addGap(0, 0, Short.MAX_VALUE))))
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(pnlParties, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(cmbTemplates, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addContainerGap())))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1386,19 +1299,9 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
                 .addComponent(jLabel4)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(cmbTemplates, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jLabel7)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(cmbClient, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jLabel6)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(cmbOpponent, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jLabel5)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(cmbOpponentAtt, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addComponent(pnlParties, javax.swing.GroupLayout.DEFAULT_SIZE, 165, Short.MAX_VALUE)
+                .addContainerGap())
         );
 
         contentPanel.addComponentListener(new java.awt.event.ComponentAdapter() {
@@ -1776,7 +1679,8 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(0, 0, Short.MAX_VALUE))
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(contentPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
@@ -1788,8 +1692,7 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
                                 .addComponent(cmdAttachmentDown)
                                 .addGap(0, 0, Short.MAX_VALUE)))))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(lblAttachmentSize)
-                .addContainerGap())
+                .addComponent(lblAttachmentSize))
         );
 
         pack();
@@ -1981,11 +1884,13 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
 
     }//GEN-LAST:event_cmdAttachActionPerformed
 
-    private void addRecipientCandidate(AddressBean ab, String suffix) {
+    private void addRecipientCandidate(AddressBean ab, PartyTypeBean ptb) {
         if (ab.getBeaSafeId() != null && !("".equals(ab.getBeaSafeId()))) {
             JCheckBoxMenuItem mi = new JCheckBoxMenuItem();
             mi.setState(false);
-            mi.setText(ab.toDisplayName() + " (" + suffix + ")");
+            mi.setText(ab.toDisplayName() + " (" + ptb.getName() + ")");
+            mi.setBackground(new Color(ptb.getColor()));
+            mi.setOpaque(true);
             mi.addActionListener(new RecipientsActionListener(this, ab.getBeaSafeId(), this.lstTo));
             this.popRecipients.add(mi);
 
@@ -1996,6 +1901,11 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
         this.popRecipients.show(this.cmdRecipients, 0, 0);
     }//GEN-LAST:event_cmdRecipientsActionPerformed
 
+    @Override
+    public void selectedPartiesUpdated() {
+        this.cmbTemplatesActionPerformed(null);
+    }
+    
     private void cmbTemplatesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbTemplatesActionPerformed
         Object selected = this.cmbTemplates.getSelectedItem();
         if (selected == null) {
@@ -2009,21 +1919,22 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
                 EmailTemplate tpl = locator.lookupIntegrationServiceRemote().getEmailTemplate(tplName);
-
-                ArrayList<String> placeHolderNames = EmailTemplateAccess.getPlaceHoldersInTemplate(tpl.getSubject());
+                
+                Hashtable<PartyTypeBean,AddressBean> selectedParties=this.pnlParties.getSelectedParties(new ArrayList(allPartyTypes));
+                ArrayList<String> placeHolderNames = EmailTemplateAccess.getPlaceHoldersInTemplate(tpl.getSubject(),allPartyTypesPlaceholders);
                 Hashtable<String, String> ht = new Hashtable<String, String>();
                 for (String ph : placeHolderNames) {
                     ht.put(ph, "");
                 }
-                Hashtable<String, String> htValues = PlaceHolderUtils.getPlaceHolderValues(ht, this.contextArchiveFile, this.caseInvolvements, this.contextClient, this.contextOpponent, this.contextOppAttorney, this.contextDictateSign, null);
+                Hashtable<String, String> htValues = PlaceHolderUtils.getPlaceHolderValues(ht, this.contextArchiveFile, this.caseInvolvements, selectedParties, this.contextDictateSign, null);
                 this.txtSubject.setText(EmailTemplateAccess.replacePlaceHolders(tpl.getSubject(), htValues));
 
-                placeHolderNames = EmailTemplateAccess.getPlaceHoldersInTemplate(tpl.getBody());
+                placeHolderNames = EmailTemplateAccess.getPlaceHoldersInTemplate(tpl.getBody(), new ArrayList(allPartyTypes));
                 ht = new Hashtable<String, String>();
                 for (String ph : placeHolderNames) {
                     ht.put(ph, "");
                 }
-                htValues = PlaceHolderUtils.getPlaceHolderValues(ht, this.contextArchiveFile, this.caseInvolvements, this.contextClient, this.contextOpponent, this.contextOppAttorney, this.contextDictateSign, null);
+                htValues = PlaceHolderUtils.getPlaceHolderValues(ht, this.contextArchiveFile, this.caseInvolvements, selectedParties, this.contextDictateSign, null);
                 //this.taBody.setText(EmailTemplateAccess.replacePlaceHolders(tpl.getBody(), htValues) + System.getProperty("line.separator") + System.getProperty("line.separator") + this.cu.getEmailSignature());
 
                 this.tp.setText(EmailTemplateAccess.replacePlaceHolders(tpl.getBody(), htValues) + System.getProperty("line.separator") + System.getProperty("line.separator") + EmailUtils.Html2Text(this.cu.getEmailSignature()));
@@ -2037,21 +1948,6 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
             }
         }
     }//GEN-LAST:event_cmbTemplatesActionPerformed
-
-    private void cmbClientItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cmbClientItemStateChanged
-        this.contextClient = (AddressBean) this.cmbClient.getSelectedItem();
-        this.cmbTemplatesActionPerformed(null);
-    }//GEN-LAST:event_cmbClientItemStateChanged
-
-    private void cmbOpponentItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cmbOpponentItemStateChanged
-        this.contextOpponent = (AddressBean) this.cmbOpponent.getSelectedItem();
-        this.cmbTemplatesActionPerformed(null);
-    }//GEN-LAST:event_cmbOpponentItemStateChanged
-
-    private void cmbOpponentAttItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cmbOpponentAttItemStateChanged
-        this.contextOppAttorney = (AddressBean) this.cmbOpponentAtt.getSelectedItem();
-        this.cmbTemplatesActionPerformed(null);
-    }//GEN-LAST:event_cmbOpponentAttItemStateChanged
 
     private void rdXjustizActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rdXjustizActionPerformed
         if (this.rdXjustiz.isSelected() && this.authority == null) {
@@ -2424,11 +2320,8 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
     private javax.swing.JCheckBox chkSaveAsDocument;
     private javax.swing.JCheckBox chkSignMessage;
     private javax.swing.JComboBox<String> cmbAzRecipient;
-    private javax.swing.JComboBox cmbClient;
     private javax.swing.JComboBox<String> cmbDocumentTag;
     private javax.swing.JComboBox<String> cmbFrom;
-    private javax.swing.JComboBox cmbOpponent;
-    private javax.swing.JComboBox cmbOpponentAtt;
     private javax.swing.JComboBox cmbReviewAssignee;
     private javax.swing.JComboBox cmbReviewReason;
     private javax.swing.JComboBox cmbTemplates;
@@ -2446,9 +2339,6 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
-    private javax.swing.JLabel jLabel5;
-    private javax.swing.JLabel jLabel6;
-    private javax.swing.JLabel jLabel7;
     private javax.swing.JLabel jLabel8;
     private javax.swing.JLabel jLabel9;
     private javax.swing.JPanel jPanel1;
@@ -2467,6 +2357,7 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
     private javax.swing.JMenuItem mnuRemoveRecipient;
     private javax.swing.JMenuItem mnuSearchRecipient;
     private javax.swing.JMenuItem mnuSearchRecipientInBea;
+    private com.jdimension.jlawyer.client.editors.files.PartiesPanel pnlParties;
     private javax.swing.JPopupMenu popAttachments;
     private javax.swing.JPopupMenu popRecipientList;
     private javax.swing.JPopupMenu popRecipients;

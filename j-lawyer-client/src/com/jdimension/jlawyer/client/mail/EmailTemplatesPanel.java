@@ -671,10 +671,12 @@ import com.jdimension.jlawyer.client.utils.PlaceHolderUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.documents.PlaceHolders;
 import com.jdimension.jlawyer.email.EmailTemplate;
+import com.jdimension.jlawyer.persistence.PartyTypeBean;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Component;
 import java.awt.Graphics;
 import java.awt.Image;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import javax.swing.*;
@@ -718,8 +720,25 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
         DefaultListModel lm=new DefaultListModel();
         this.lstPlaceHolders.setModel(lm);
         //((DefaultListModel)this.lstPlaceHolders.getModel()).removeAllElements();
-        for(String s: PlaceHolders.ALLPLACEHOLDERS)
-            ((DefaultListModel)this.lstPlaceHolders.getModel()).addElement(s);
+        
+        try {
+            //InitialContext context = new InitialContext(settings.getLookupProperties());
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
+            List<PartyTypeBean> allPartyTypes=locator.lookupArchiveFileServiceRemote().getAllPartyTypes();
+            List<String> placeHolders=new ArrayList<String>();
+            for(PartyTypeBean ptb: allPartyTypes) {
+                placeHolders.add(ptb.getPlaceHolder());
+            }
+            
+            for(String s: PlaceHolders.getAllPlaceHolders(placeHolders))
+                ((DefaultListModel)this.lstPlaceHolders.getModel()).addElement(s);
+        } catch (Exception ex) {
+            log.error("Error getting all party types", ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim Laden der Beteiligtentypen: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            EditorsRegistry.getInstance().clearStatus();
+        }
+        
+        
         
         DefaultComboBoxModel cm=new DefaultComboBoxModel();
         this.cmbPlaceHolderTarget.setModel(cm);

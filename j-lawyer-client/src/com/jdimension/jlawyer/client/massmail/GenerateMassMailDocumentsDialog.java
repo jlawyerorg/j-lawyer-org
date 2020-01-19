@@ -710,7 +710,7 @@ public class GenerateMassMailDocumentsDialog extends javax.swing.JDialog {
         this.campaign = campaign;
         this.addresses = addresses;
         initComponents();
-        
+
         ComponentUtils.decorateSplitPane(jSplitPane1);
 
         String[] colNames = new String[]{"Platzhalter", "Wert"};
@@ -961,9 +961,11 @@ public class GenerateMassMailDocumentsDialog extends javax.swing.JDialog {
                 public void run() {
                     DefaultMutableTreeNode tn = (DefaultMutableTreeNode) treeFolders.getSelectionPath().getLastPathComponent();
                     GenericNode gn = (GenericNode) tn.getUserObject();
-                    List<String> placeHolders=null;
+                    List<String> placeHolders = null;
+                    Collection<PartyTypeBean> allPartyTypes=null;
                     try {
                         placeHolders = locator.lookupSystemManagementRemote().getPlaceHoldersForTemplate(gn, lstTemplates.getSelectedValue().toString());
+                        allPartyTypes = locator.lookupSystemManagementRemote().getPartyTypes();
                     } catch (Exception ex) {
                         ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Ermitteln der Platzhalter: " + ex.getMessage(), "Fehler");
                         return;
@@ -986,7 +988,14 @@ public class GenerateMassMailDocumentsDialog extends javax.swing.JDialog {
                             for (String ph : placeHolders) {
                                 ht.put(ph, "");
                             }
-                            ht = PlaceHolderUtils.getPlaceHolderValues(ht, null, null, ad, null, null, null, null);
+
+                            
+                            Hashtable<PartyTypeBean, AddressBean> ht2 = new Hashtable<>();
+                            for (PartyTypeBean ptb : allPartyTypes) {
+                                ht2.put(ptb, ad);
+                            }
+
+                            ht = PlaceHolderUtils.getPlaceHolderValues(ht, null, null, ht2, null, null);
 
                             Enumeration htEn = ht.keys();
                             while (htEn.hasMoreElements()) {
@@ -1108,7 +1117,14 @@ public class GenerateMassMailDocumentsDialog extends javax.swing.JDialog {
                 for (String ph : placeHolders) {
                     ht.put(ph, "");
                 }
-                ht = PlaceHolderUtils.getPlaceHolderValues(ht, null, null, this.addresses.get(0), null, null, null, null);
+
+                Collection<PartyTypeBean> allPartyTypes = locator.lookupSystemManagementRemote().getPartyTypes();
+                Hashtable<PartyTypeBean, AddressBean> ht2 = new Hashtable<>();
+                for (PartyTypeBean ptb : allPartyTypes) {
+                    ht2.put(ptb, this.addresses.get(0));
+                }
+
+                ht = PlaceHolderUtils.getPlaceHolderValues(ht, null, null, ht2, null, null);
 
                 Enumeration htEn = ht.keys();
                 while (htEn.hasMoreElements()) {

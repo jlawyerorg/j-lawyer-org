@@ -671,6 +671,7 @@ import com.jdimension.jlawyer.client.editors.addresses.ContactTypeColors;
 import com.jdimension.jlawyer.client.editors.documents.SearchAndAssignDialog;
 import com.jdimension.jlawyer.client.editors.files.AddressBeanListCellRenderer;
 import com.jdimension.jlawyer.client.editors.files.OptionsComboBoxModel;
+import com.jdimension.jlawyer.client.editors.files.PartiesSelectionListener;
 import com.jdimension.jlawyer.client.events.AllDocumentTagsEvent;
 import com.jdimension.jlawyer.client.events.DocumentAddedEvent;
 import com.jdimension.jlawyer.client.events.EventBroker;
@@ -696,6 +697,7 @@ import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
+import com.jdimension.jlawyer.persistence.PartyTypeBean;
 import com.jdimension.jlawyer.services.AddressServiceRemote;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
@@ -717,29 +719,22 @@ import org.apache.log4j.Logger;
  *
  * @author jens
  */
-public class SendEmailDialog extends javax.swing.JDialog implements SendCommunicationDialog {
+public class SendEmailDialog extends javax.swing.JDialog implements SendCommunicationDialog, PartiesSelectionListener {
 
     private static final Logger log = Logger.getLogger(SendEmailDialog.class.getName());
     private AppUserBean cu = null;
     private Hashtable<String, String> attachments = new Hashtable<String, String>();
-    
+
     private ArchiveFileBean contextArchiveFile = null;
-    
-    private AddressBean contextClient = null;
-    private ArrayList<AddressBean> contextClients = new ArrayList<AddressBean>();
-    private AddressBean contextOpponent = null;
-    private ArrayList<AddressBean> contextOpponents = new ArrayList<AddressBean>();
-    private AddressBean contextOppAttorney = null;
-    private ArrayList<AddressBean> contextOppAttorneys = new ArrayList<AddressBean>();
-    
-    //private Hashtable<String,ArrayList<AddressBean>> contextParties=new Hashtable<String,ArrayList<AddressBean>>();
-    
-    
+
     private String contextDictateSign = null;
     private TextEditorPanel tp;
     private HtmlEditorPanel hp;
 
     private ArrayList<ArchiveFileAddressesBean> caseInvolvements = null;
+    
+    private Collection<PartyTypeBean> allPartyTypes = new ArrayList<PartyTypeBean>();
+    private List<String> allPartyTypesPlaceholders = new ArrayList<String>();
 
     /**
      * Creates new form SendEmailDialog
@@ -748,14 +743,8 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         super(parent, modal);
         initComponents();
 
-        this.cmbClient.removeAllItems();
-        this.cmbClient.setRenderer(new AddressBeanListCellRenderer());
-
-        this.cmbOpponent.removeAllItems();
-        this.cmbOpponent.setRenderer(new AddressBeanListCellRenderer());
-
-        this.cmbOpponentAtt.removeAllItems();
-        this.cmbOpponentAtt.setRenderer(new AddressBeanListCellRenderer());
+        this.pnlParties.initialize(new ArrayList<ArchiveFileAddressesBean>());
+        this.pnlParties.setListener(this);
 
         tp = new TextEditorPanel();
         hp = new HtmlEditorPanel();
@@ -800,7 +789,19 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Fehler beim Erstellen der Vorlage: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
         }
+        
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
+            this.allPartyTypes = locator.lookupSystemManagementRemote().getPartyTypes();
+            this.allPartyTypesPlaceholders = new ArrayList<String>();
+            for (PartyTypeBean ptb : allPartyTypes) {
+                allPartyTypesPlaceholders.add(ptb.getPlaceHolder());
+            }
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Fehler beim Ermitteln der Beteiligtentypen: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+        }
+        
         ComponentUtils.restoreDialogSize(this);
 
         this.txtTo.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "Enter");
@@ -954,6 +955,11 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
 
     }
 
+    @Override
+    public void selectedPartiesUpdated() {
+        this.cmbTemplatesActionPerformed(null);
+    }
+
     public void setInvolvedInCase(ArrayList<ArchiveFileAddressesBean> involved) {
         this.caseInvolvements = involved;
     }
@@ -983,68 +989,21 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         this.lblFrom.setText(f);
     }
 
-    public void addAllToOpponentAttorney(List<AddressBean> list) {
+    public void addAllParties(List<AddressBean> list, PartyTypeBean ptb) {
         for (AddressBean o : list) {
-            this.addToOpponentAttorney(o);
+            this.addParty(o, ptb);
         }
     }
 
-    public void addAllToOpponent(List<AddressBean> list) {
-        for (AddressBean o : list) {
-            this.addToOpponent(o);
-        }
-    }
-
-    public void addAllToClient(List<AddressBean> list) {
-        for (AddressBean o : list) {
-            this.addToClient(o);
-        }
-    }
-
-    public void addToClient(AddressBean ab) {
+    public void addParty(AddressBean ab, PartyTypeBean ptb) {
         if (ab == null) {
             return;
         }
-        if (!this.contextClients.contains(ab)) {
-            this.contextClients.add(ab);
-            this.cmbClient.addItem(ab);
-            this.addRecipientCandidate(ab, "Mandant", ContactTypeColors.CLIENT);
-        }
-        this.contextClient = ab;
-        this.cmbClient.setSelectedItem(ab);
 
-        //this.txtTo.setText(ab.getEmail());
-    }
+        this.pnlParties.addParty(ab, ptb);
 
-    public void addToOpponent(AddressBean ab) {
-        if (ab == null) {
-            return;
-        }
-        if (!this.contextOpponents.contains(ab)) {
-            this.contextOpponents.add(ab);
-            this.addRecipientCandidate(ab, "Gegner", ContactTypeColors.OPPONENT);
-            this.cmbOpponent.addItem(ab);
-        }
+        this.addRecipientCandidate(ab, ptb);
 
-        this.contextOpponent = ab;
-        //this.txtTo.setText(ab.getEmail());
-        this.cmbOpponent.setSelectedItem(ab);
-
-    }
-
-    public void addToOpponentAttorney(AddressBean ab) {
-        if (ab == null) {
-            return;
-        }
-        if (!this.contextOppAttorneys.contains(ab)) {
-            this.contextOppAttorneys.add(ab);
-            this.cmbOpponentAtt.addItem(ab);
-            this.addRecipientCandidate(ab, "Dritte(r)", ContactTypeColors.OTHER);
-        }
-        this.contextOppAttorney = ab;
-        this.cmbOpponentAtt.setSelectedItem(ab);
-
-        //this.txtTo.setText(ab.getEmail());
     }
 
     public void setDictateSign(String dictateSign) {
@@ -1147,7 +1106,10 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         jLabel9 = new javax.swing.JLabel();
         cmdRecipientsCc = new javax.swing.JButton();
         cmdRecipientsBcc = new javax.swing.JButton();
-        jPanel3 = new javax.swing.JPanel();
+        jPanel5 = new javax.swing.JPanel();
+        contentPanel = new javax.swing.JPanel();
+        jScrollPane2 = new javax.swing.JScrollPane();
+        lstAttachments = new javax.swing.JList();
         jPanel2 = new javax.swing.JPanel();
         text = new javax.swing.JRadioButton();
         html = new javax.swing.JRadioButton();
@@ -1157,15 +1119,6 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         chkSaveAsDocument = new javax.swing.JCheckBox();
         chkDocumentTagging = new javax.swing.JCheckBox();
         cmbDocumentTag = new javax.swing.JComboBox<>();
-        jPanel1 = new javax.swing.JPanel();
-        jLabel4 = new javax.swing.JLabel();
-        cmbTemplates = new javax.swing.JComboBox();
-        cmbClient = new javax.swing.JComboBox();
-        cmbOpponent = new javax.swing.JComboBox();
-        cmbOpponentAtt = new javax.swing.JComboBox();
-        jLabel5 = new javax.swing.JLabel();
-        jLabel6 = new javax.swing.JLabel();
-        jLabel7 = new javax.swing.JLabel();
         jPanel4 = new javax.swing.JPanel();
         cmbReviewReason = new javax.swing.JComboBox();
         jLabel12 = new javax.swing.JLabel();
@@ -1176,10 +1129,10 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         txtReviewDateField = new javax.swing.JTextField();
         cmbReviewAssignee = new javax.swing.JComboBox();
         radioReviewTypeNone = new javax.swing.JRadioButton();
-        jPanel5 = new javax.swing.JPanel();
-        contentPanel = new javax.swing.JPanel();
-        jScrollPane2 = new javax.swing.JScrollPane();
-        lstAttachments = new javax.swing.JList();
+        jPanel1 = new javax.swing.JPanel();
+        jLabel4 = new javax.swing.JLabel();
+        cmbTemplates = new javax.swing.JComboBox();
+        pnlParties = new com.jdimension.jlawyer.client.editors.files.PartiesPanel();
 
         mnuSearchRecipient.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/find.png"))); // NOI18N
         mnuSearchRecipient.setText("suchen");
@@ -1307,6 +1260,48 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
             }
         });
 
+        contentPanel.addComponentListener(new java.awt.event.ComponentAdapter() {
+            public void componentResized(java.awt.event.ComponentEvent evt) {
+                contentPanelComponentResized(evt);
+            }
+        });
+
+        javax.swing.GroupLayout contentPanelLayout = new javax.swing.GroupLayout(contentPanel);
+        contentPanel.setLayout(contentPanelLayout);
+        contentPanelLayout.setHorizontalGroup(
+            contentPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 0, Short.MAX_VALUE)
+        );
+        contentPanelLayout.setVerticalGroup(
+            contentPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 0, Short.MAX_VALUE)
+        );
+
+        lstAttachments.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                lstAttachmentsMousePressed(evt);
+            }
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                lstAttachmentsMouseClicked(evt);
+            }
+        });
+        jScrollPane2.setViewportView(lstAttachments);
+
+        javax.swing.GroupLayout jPanel5Layout = new javax.swing.GroupLayout(jPanel5);
+        jPanel5.setLayout(jPanel5Layout);
+        jPanel5Layout.setHorizontalGroup(
+            jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(jScrollPane2, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 627, Short.MAX_VALUE)
+            .addComponent(contentPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+        );
+        jPanel5Layout.setVerticalGroup(
+            jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel5Layout.createSequentialGroup()
+                .addComponent(contentPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 99, javax.swing.GroupLayout.PREFERRED_SIZE))
+        );
+
         jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder("Optionen"));
 
         buttonGroupTextHtml.add(text);
@@ -1410,89 +1405,6 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                 .addContainerGap())
         );
 
-        jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder("Vorlagedaten"));
-
-        jLabel4.setText("Vorlage:");
-
-        cmbTemplates.setMaximumRowCount(15);
-        cmbTemplates.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmbTemplatesActionPerformed(evt);
-            }
-        });
-
-        cmbClient.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
-        cmbClient.addItemListener(new java.awt.event.ItemListener() {
-            public void itemStateChanged(java.awt.event.ItemEvent evt) {
-                cmbClientItemStateChanged(evt);
-            }
-        });
-
-        cmbOpponent.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
-        cmbOpponent.addItemListener(new java.awt.event.ItemListener() {
-            public void itemStateChanged(java.awt.event.ItemEvent evt) {
-                cmbOpponentItemStateChanged(evt);
-            }
-        });
-
-        cmbOpponentAtt.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
-        cmbOpponentAtt.addItemListener(new java.awt.event.ItemListener() {
-            public void itemStateChanged(java.awt.event.ItemEvent evt) {
-                cmbOpponentAttItemStateChanged(evt);
-            }
-        });
-
-        jLabel5.setText("Dritte(r):");
-
-        jLabel6.setText("Gegner:");
-
-        jLabel7.setText("Mandant:");
-
-        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
-        jPanel1.setLayout(jPanel1Layout);
-        jPanel1Layout.setHorizontalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(cmbTemplates, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(jLabel7)
-                                    .addComponent(jLabel6)
-                                    .addComponent(jLabel5))
-                                .addGap(0, 0, Short.MAX_VALUE))
-                            .addComponent(cmbClient, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(cmbOpponent, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(cmbOpponentAtt, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                        .addContainerGap())
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(jLabel4)
-                        .addGap(0, 0, Short.MAX_VALUE))))
-        );
-        jPanel1Layout.setVerticalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(jLabel4)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(cmbTemplates, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jLabel7)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(cmbClient, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jLabel6)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(cmbOpponent, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jLabel5)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(cmbOpponentAtt, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-        );
-
         jPanel4.setBorder(javax.swing.BorderFactory.createTitledBorder("Wiedervorlage / Frist"));
 
         cmbReviewReason.setEditable(true);
@@ -1572,7 +1484,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                                 .addComponent(txtReviewDateField, javax.swing.GroupLayout.PREFERRED_SIZE, 135, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(cmdShowReviewSelector)
-                                .addGap(0, 0, Short.MAX_VALUE)))))
+                                .addGap(0, 56, Short.MAX_VALUE)))))
                 .addContainerGap())
         );
         jPanel4Layout.setVerticalGroup(
@@ -1596,68 +1508,43 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                     .addComponent(cmdShowReviewSelector)))
         );
 
-        javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
-        jPanel3.setLayout(jPanel3Layout);
-        jPanel3Layout.setHorizontalGroup(
-            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel3Layout.createSequentialGroup()
-                .addGap(0, 0, Short.MAX_VALUE)
-                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(jPanel2, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jPanel1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jPanel4, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+        jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder("Vorlagedaten"));
+
+        jLabel4.setText("Vorlage:");
+
+        cmbTemplates.setMaximumRowCount(15);
+        cmbTemplates.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmbTemplatesActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
+        jPanel1.setLayout(jPanel1Layout);
+        jPanel1Layout.setHorizontalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addComponent(jLabel4)
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(pnlParties, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+                            .addComponent(cmbTemplates, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addContainerGap())))
         );
-        jPanel3Layout.setVerticalGroup(
-            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel3Layout.createSequentialGroup()
-                .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+        jPanel1Layout.setVerticalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jLabel4)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(cmbTemplates, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(pnlParties, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addContainerGap())
-        );
-
-        contentPanel.addComponentListener(new java.awt.event.ComponentAdapter() {
-            public void componentResized(java.awt.event.ComponentEvent evt) {
-                contentPanelComponentResized(evt);
-            }
-        });
-
-        javax.swing.GroupLayout contentPanelLayout = new javax.swing.GroupLayout(contentPanel);
-        contentPanel.setLayout(contentPanelLayout);
-        contentPanelLayout.setHorizontalGroup(
-            contentPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 0, Short.MAX_VALUE)
-        );
-        contentPanelLayout.setVerticalGroup(
-            contentPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 0, Short.MAX_VALUE)
-        );
-
-        lstAttachments.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mousePressed(java.awt.event.MouseEvent evt) {
-                lstAttachmentsMousePressed(evt);
-            }
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                lstAttachmentsMouseClicked(evt);
-            }
-        });
-        jScrollPane2.setViewportView(lstAttachments);
-
-        javax.swing.GroupLayout jPanel5Layout = new javax.swing.GroupLayout(jPanel5);
-        jPanel5.setLayout(jPanel5Layout);
-        jPanel5Layout.setHorizontalGroup(
-            jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane2, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 689, Short.MAX_VALUE)
-            .addComponent(contentPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-        );
-        jPanel5Layout.setVerticalGroup(
-            jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel5Layout.createSequentialGroup()
-                .addComponent(contentPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 99, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
@@ -1668,78 +1555,79 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(jToolBar1, javax.swing.GroupLayout.PREFERRED_SIZE, 92, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(0, 0, Short.MAX_VALUE))
-                            .addGroup(layout.createSequentialGroup()
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(jLabel1)
-                                    .addComponent(jLabel2)
-                                    .addComponent(jLabel8)
-                                    .addComponent(jLabel9)
-                                    .addComponent(jLabel3))
-                                .addGap(18, 18, 18)
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addGroup(layout.createSequentialGroup()
-                                        .addComponent(lblFrom, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                        .addGap(7, 7, 7))
-                                    .addGroup(layout.createSequentialGroup()
-                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                            .addComponent(txtTo)
-                                            .addComponent(txtCc)
-                                            .addComponent(txtBcc)
-                                            .addComponent(txtSubject))
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                                            .addComponent(cmdRecipients)
-                                            .addComponent(cmdRecipientsCc)
-                                            .addComponent(cmdRecipientsBcc))))))
-                        .addGap(40, 40, 40))
+                        .addComponent(jToolBar1, javax.swing.GroupLayout.PREFERRED_SIZE, 92, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(0, 0, Short.MAX_VALUE))
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(jPanel5, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)))
-                .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabel1)
+                            .addComponent(jLabel2)
+                            .addComponent(jLabel8)
+                            .addComponent(jLabel9)
+                            .addComponent(jLabel3))
+                        .addGap(18, 18, 18)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(lblFrom, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addGroup(layout.createSequentialGroup()
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(txtCc)
+                                    .addComponent(txtTo, javax.swing.GroupLayout.Alignment.TRAILING)
+                                    .addComponent(txtSubject)
+                                    .addComponent(txtBcc, javax.swing.GroupLayout.Alignment.TRAILING))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                                    .addComponent(cmdRecipients)
+                                    .addComponent(cmdRecipientsCc)
+                                    .addComponent(cmdRecipientsBcc)))))
+                    .addComponent(jPanel5, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jPanel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addGap(12, 12, 12)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel1)
-                    .addComponent(lblFrom))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(cmdRecipients)
-                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(jLabel2)
-                        .addComponent(txtTo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(cmdRecipientsCc, javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(txtCc, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(jLabel8)))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(cmdRecipientsBcc)
-                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(txtBcc, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(jLabel9)))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel3)
-                    .addComponent(txtSubject, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jToolBar1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jPanel5, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(jLabel1)
+                            .addComponent(lblFrom))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(cmdRecipients)
+                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                .addComponent(jLabel2)
+                                .addComponent(txtTo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(cmdRecipientsCc, javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                .addComponent(txtCc, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(jLabel8)))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(cmdRecipientsBcc)
+                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                .addComponent(txtBcc, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(jLabel9)))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(jLabel3)
+                            .addComponent(txtSubject, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jToolBar1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(5, 5, 5)
+                        .addComponent(jPanel5, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap())
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(0, 0, Short.MAX_VALUE))
         );
 
         pack();
@@ -1928,8 +1816,9 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         try {
             //this.txtImportFile.setText(chooser.getSelectedFile().getCanonicalPath());
             File[] files = sad.getSelectedFiles();
-            if(files==null)
+            if (files == null) {
                 return;
+            }
             for (File f : files) {
                 byte[] data = FileUtils.readFile(f);
                 String tmpUrl = FileUtils.createTempFile(f.getName(), data);
@@ -1943,29 +1832,29 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
 
     }//GEN-LAST:event_cmdAttachActionPerformed
 
-    private void addRecipientCandidate(AddressBean ab, String suffix, Color background) {
+    private void addRecipientCandidate(AddressBean ab, PartyTypeBean ptb) {
         if (ab.getEmail() != null && !("".equals(ab.getEmail()))) {
             JCheckBoxMenuItem mi = new JCheckBoxMenuItem();
             mi.setState(false);
-            mi.setText(ab.toDisplayName() + " (" + suffix + ")");
+            mi.setText(ab.toDisplayName() + " (" + ptb.getName() + ")");
             mi.addActionListener(new RecipientsActionListener(ab.getEmail(), this.txtTo));
-            mi.setBackground(background);
+            mi.setBackground(new Color(ptb.getColor()));
             mi.setOpaque(true);
             this.popRecipients.add(mi);
 
             JCheckBoxMenuItem mi2 = new JCheckBoxMenuItem();
             mi2.setState(false);
-            mi2.setText(ab.toDisplayName() + " (" + suffix + ")");
+            mi2.setText(ab.toDisplayName() + " (" + ptb.getName() + ")");
             mi2.addActionListener(new RecipientsActionListener(ab.getEmail(), this.txtCc));
             mi2.setOpaque(true);
-            mi2.setBackground(background);
+            mi2.setBackground(new Color(ptb.getColor()));
             this.popRecipientsCc.add(mi2);
 
             JCheckBoxMenuItem mi3 = new JCheckBoxMenuItem();
             mi3.setState(false);
-            mi3.setText(ab.toDisplayName() + " (" + suffix + ")");
+            mi3.setText(ab.toDisplayName() + " (" + ptb.getName() + ")");
             mi3.addActionListener(new RecipientsActionListener(ab.getEmail(), this.txtBcc));
-            mi3.setBackground(background);
+            mi3.setBackground(new Color(ptb.getColor()));
             mi3.setOpaque(true);
             this.popRecipientsBcc.add(mi3);
 
@@ -1989,22 +1878,23 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
                 EmailTemplate tpl = locator.lookupIntegrationServiceRemote().getEmailTemplate(tplName);
-
-                ArrayList<String> placeHolderNames = EmailTemplateAccess.getPlaceHoldersInTemplate(tpl.getSubject());
+                
+                ArrayList<String> placeHolderNames = EmailTemplateAccess.getPlaceHoldersInTemplate(tpl.getSubject(), allPartyTypesPlaceholders);
                 Hashtable<String, String> ht = new Hashtable<String, String>();
                 for (String ph : placeHolderNames) {
                     ht.put(ph, "");
                 }
 
-                Hashtable<String, String> htValues = PlaceHolderUtils.getPlaceHolderValues(ht, this.contextArchiveFile, this.caseInvolvements, this.contextClient, this.contextOpponent, this.contextOppAttorney, this.contextDictateSign, null);
+                Hashtable<PartyTypeBean, AddressBean> selectedParties = this.pnlParties.getSelectedParties(new ArrayList(allPartyTypes));
+                Hashtable<String, String> htValues = PlaceHolderUtils.getPlaceHolderValues(ht, this.contextArchiveFile, this.caseInvolvements, selectedParties, this.contextDictateSign, null);
                 this.txtSubject.setText(EmailTemplateAccess.replacePlaceHolders(tpl.getSubject(), htValues));
 
-                placeHolderNames = EmailTemplateAccess.getPlaceHoldersInTemplate(tpl.getBody());
+                placeHolderNames = EmailTemplateAccess.getPlaceHoldersInTemplate(tpl.getBody(), new ArrayList(allPartyTypes));
                 ht = new Hashtable<String, String>();
                 for (String ph : placeHolderNames) {
                     ht.put(ph, "");
                 }
-                htValues = PlaceHolderUtils.getPlaceHolderValues(ht, this.contextArchiveFile, this.caseInvolvements, this.contextClient, this.contextOpponent, this.contextOppAttorney, this.contextDictateSign, null);
+                htValues = PlaceHolderUtils.getPlaceHolderValues(ht, this.contextArchiveFile, this.caseInvolvements, selectedParties, this.contextDictateSign, null);
                 //this.taBody.setText(EmailTemplateAccess.replacePlaceHolders(tpl.getBody(), htValues) + System.getProperty("line.separator") + System.getProperty("line.separator") + this.cu.getEmailSignature());
 
                 if (tpl.isText()) {
@@ -2040,21 +1930,6 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
             this.htmlActionPerformed(null);
         }
     }
-
-    private void cmbClientItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cmbClientItemStateChanged
-        this.contextClient = (AddressBean) this.cmbClient.getSelectedItem();
-        this.cmbTemplatesActionPerformed(null);
-    }//GEN-LAST:event_cmbClientItemStateChanged
-
-    private void cmbOpponentItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cmbOpponentItemStateChanged
-        this.contextOpponent = (AddressBean) this.cmbOpponent.getSelectedItem();
-        this.cmbTemplatesActionPerformed(null);
-    }//GEN-LAST:event_cmbOpponentItemStateChanged
-
-    private void cmbOpponentAttItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cmbOpponentAttItemStateChanged
-        this.contextOppAttorney = (AddressBean) this.cmbOpponentAtt.getSelectedItem();
-        this.cmbTemplatesActionPerformed(null);
-    }//GEN-LAST:event_cmbOpponentAttItemStateChanged
 
     private void textActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_textActionPerformed
         if (this.text.isSelected()) {
@@ -2361,10 +2236,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
     private javax.swing.JToggleButton chkEncryption;
     private javax.swing.JCheckBox chkReadReceipt;
     private javax.swing.JCheckBox chkSaveAsDocument;
-    private javax.swing.JComboBox cmbClient;
     private javax.swing.JComboBox<String> cmbDocumentTag;
-    private javax.swing.JComboBox cmbOpponent;
-    private javax.swing.JComboBox cmbOpponentAtt;
     private javax.swing.JComboBox cmbReviewAssignee;
     private javax.swing.JComboBox cmbReviewReason;
     private javax.swing.JComboBox cmbTemplates;
@@ -2382,14 +2254,10 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
-    private javax.swing.JLabel jLabel5;
-    private javax.swing.JLabel jLabel6;
-    private javax.swing.JLabel jLabel7;
     private javax.swing.JLabel jLabel8;
     private javax.swing.JLabel jLabel9;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
-    private javax.swing.JPanel jPanel3;
     private javax.swing.JPanel jPanel4;
     private javax.swing.JPanel jPanel5;
     private javax.swing.JScrollPane jScrollPane2;
@@ -2405,6 +2273,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
     private javax.swing.JMenuItem mnuSearchRecipient;
     private javax.swing.JMenuItem mnuSearchRecipientBcc;
     private javax.swing.JMenuItem mnuSearchRecipientCc;
+    private com.jdimension.jlawyer.client.editors.files.PartiesPanel pnlParties;
     private javax.swing.JPopupMenu popAttachments;
     private javax.swing.JPopupMenu popRecipients;
     private javax.swing.JPopupMenu popRecipientsBcc;

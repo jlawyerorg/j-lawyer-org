@@ -705,23 +705,20 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
     private static final Logger log = Logger.getLogger(AddDocumentFromTemplateDialog.class.getName());
     private JTable targetTable = null;
     private ArchiveFileBean aFile = null;
-    private AddressBean opp = null;
-    private AddressBean oppAtt = null;
-    private AddressBean cl = null;
     private boolean initializing = true;
     private JTable tblReviewReasons = null;
     private List<ArchiveFileAddressesBean> involved=null;
     private GenericCalculationTable calculationTable=null;
     private List<PartyTypeBean> allPartyTypes=null;
 
-    public AddDocumentFromTemplateDialog(java.awt.Frame parent, boolean modal, JTable targetTable, ArchiveFileBean aFile, List<ArchiveFileAddressesBean> involved, List<AddressBean> allCl, List<AddressBean> allOpp, List<AddressBean> allOppAtt, JTable tblReviewReasons) {
-        this(parent, modal, targetTable, aFile, involved, allCl, allOpp, allOppAtt, tblReviewReasons, null);
+    public AddDocumentFromTemplateDialog(java.awt.Frame parent, boolean modal, JTable targetTable, ArchiveFileBean aFile, List<ArchiveFileAddressesBean> involved, JTable tblReviewReasons) {
+        this(parent, modal, targetTable, aFile, involved, tblReviewReasons, null);
     }
     
     /**
      * Creates new form AddDocumentDialog
      */
-    public AddDocumentFromTemplateDialog(java.awt.Frame parent, boolean modal, JTable targetTable, ArchiveFileBean aFile, List<ArchiveFileAddressesBean> involved, List<AddressBean> allCl, List<AddressBean> allOpp, List<AddressBean> allOppAtt, JTable tblReviewReasons, GenericCalculationTable calculationTable) {
+    public AddDocumentFromTemplateDialog(java.awt.Frame parent, boolean modal, JTable targetTable, ArchiveFileBean aFile, List<ArchiveFileAddressesBean> involved, JTable tblReviewReasons, GenericCalculationTable calculationTable) {
         super(parent, modal);
         this.initializing = true;
         
@@ -734,36 +731,10 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
         initComponents();
         
         this.pnlPartiesPanel.initialize(involved);
+        this.pnlPartiesPanel.setListener(this);
         
         ComponentUtils.decorateSplitPane(jSplitPane1);
         ComponentUtils.decorateSplitPane(this.splitPlaceholders);
-
-        this.cmbClients.removeAllItems();
-        this.cmbClients.setRenderer(new AddressBeanListCellRenderer());
-        //this.cmbClients.addItem(null);
-        ComponentUtils.addAllItemsToCombobox(cmbClients, allCl);
-        //ComponentUtils.selectComboboxItem(cmbClients, this.cl);
-        if (this.cl == null && this.cmbClients.getItemCount() > 0) {
-            this.cl = (AddressBean) this.cmbClients.getItemAt(0);
-        }
-
-        this.cmbOpponents.removeAllItems();
-        this.cmbOpponents.setRenderer(new AddressBeanListCellRenderer());
-        //this.cmbOpponents.addItem(null);
-        ComponentUtils.addAllItemsToCombobox(cmbOpponents, allOpp);
-        //ComponentUtils.selectComboboxItem(cmbOpponents, this.opp);
-        if (this.opp == null && this.cmbOpponents.getItemCount() > 0) {
-            this.opp = (AddressBean) this.cmbOpponents.getItemAt(0);
-        }
-
-        this.cmbOpponentAttorneys.removeAllItems();
-        //this.cmbOpponentAttorneys.addItem(null);
-        this.cmbOpponentAttorneys.setRenderer(new AddressBeanListCellRenderer());
-        ComponentUtils.addAllItemsToCombobox(cmbOpponentAttorneys, allOppAtt);
-        //ComponentUtils.selectComboboxItem(cmbOpponentAttorneys, this.oppAtt);
-        if (this.oppAtt == null && this.cmbOpponentAttorneys.getItemCount() > 0) {
-            this.oppAtt = (AddressBean) this.cmbOpponentAttorneys.getItemAt(0);
-        }
 
         String[] colNames = new String[]{"Platzhalter", "Wert"};
         ArchiveFileTemplatePlaceHoldersTableModel model = new ArchiveFileTemplatePlaceHoldersTableModel(colNames, 0);
@@ -925,12 +896,6 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
         txtFileName = new javax.swing.JTextField();
         jLabel1 = new javax.swing.JLabel();
         jPanel2 = new javax.swing.JPanel();
-        jLabel4 = new javax.swing.JLabel();
-        cmbClients = new javax.swing.JComboBox();
-        jLabel5 = new javax.swing.JLabel();
-        cmbOpponents = new javax.swing.JComboBox();
-        jLabel6 = new javax.swing.JLabel();
-        cmbOpponentAttorneys = new javax.swing.JComboBox();
         splitPlaceholders = new javax.swing.JSplitPane();
         jScrollPane1 = new javax.swing.JScrollPane();
         tblPlaceHolders = new javax.swing.JTable();
@@ -1186,41 +1151,8 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
 
         jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder("Platzhalter"));
 
-        jLabel4.setText("Mandant:");
-
-        cmbClients.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
-        cmbClients.setMaximumSize(new java.awt.Dimension(200, 200));
-        cmbClients.setPrototypeDisplayValue("das ist etwas text");
-        cmbClients.addItemListener(new java.awt.event.ItemListener() {
-            public void itemStateChanged(java.awt.event.ItemEvent evt) {
-                cmbClientsItemStateChanged(evt);
-            }
-        });
-
-        jLabel5.setText("Gegner:");
-
-        cmbOpponents.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
-        cmbOpponents.setMaximumSize(new java.awt.Dimension(200, 200));
-        cmbOpponents.setPrototypeDisplayValue("das ist etwas text");
-        cmbOpponents.addItemListener(new java.awt.event.ItemListener() {
-            public void itemStateChanged(java.awt.event.ItemEvent evt) {
-                cmbOpponentsItemStateChanged(evt);
-            }
-        });
-
-        jLabel6.setText("Dritte(r):");
-
-        cmbOpponentAttorneys.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
-        cmbOpponentAttorneys.setMaximumSize(new java.awt.Dimension(200, 200));
-        cmbOpponentAttorneys.setPrototypeDisplayValue("das ist etwas text");
-        cmbOpponentAttorneys.addItemListener(new java.awt.event.ItemListener() {
-            public void itemStateChanged(java.awt.event.ItemEvent evt) {
-                cmbOpponentAttorneysItemStateChanged(evt);
-            }
-        });
-
         splitPlaceholders.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
-        splitPlaceholders.setResizeWeight(0.5);
+        splitPlaceholders.setResizeWeight(0.7);
 
         tblPlaceHolders.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
@@ -1245,37 +1177,14 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
             jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel2Layout.createSequentialGroup()
                 .addContainerGap()
-                .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(splitPlaceholders, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 484, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(jPanel2Layout.createSequentialGroup()
-                        .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                            .add(jLabel4)
-                            .add(jLabel5)
-                            .add(jLabel6))
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
-                            .add(org.jdesktop.layout.GroupLayout.LEADING, cmbOpponents, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .add(cmbOpponentAttorneys, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .add(org.jdesktop.layout.GroupLayout.LEADING, cmbClients, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 407, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))))
-                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .add(splitPlaceholders, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 484, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(15, Short.MAX_VALUE))
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel2Layout.createSequentialGroup()
-                .add(splitPlaceholders, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 597, Short.MAX_VALUE)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(jLabel4)
-                    .add(cmbClients, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(cmbOpponents, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(jLabel5))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(cmbOpponentAttorneys, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(jLabel6))
-                .add(18, 18, 18))
+                .add(splitPlaceholders, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 693, Short.MAX_VALUE)
+                .addContainerGap())
         );
 
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
@@ -1485,43 +1394,6 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
 //            this.highlightTree(search);
 
     }//GEN-LAST:event_txtTemplateFilterFocusLost
-
-    private void cmbClientsItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cmbClientsItemStateChanged
-        if (this.initializing) {
-            return;
-        }
-
-        this.cl = (AddressBean) this.cmbClients.getSelectedItem();
-
-        
-        this.updateFileName();
-
-        this.lstTemplatesMouseClicked(null);
-    }//GEN-LAST:event_cmbClientsItemStateChanged
-
-    private void cmbOpponentsItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cmbOpponentsItemStateChanged
-        if (this.initializing) {
-            return;
-        }
-
-        this.opp = (AddressBean) this.cmbOpponents.getSelectedItem();
-
-        this.updateFileName();
-
-        this.lstTemplatesMouseClicked(null);
-    }//GEN-LAST:event_cmbOpponentsItemStateChanged
-
-    private void cmbOpponentAttorneysItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cmbOpponentAttorneysItemStateChanged
-        if (this.initializing) {
-            return;
-        }
-
-        this.oppAtt = (AddressBean) this.cmbOpponentAttorneys.getSelectedItem();
-
-        this.updateFileName();
-
-        this.lstTemplatesMouseClicked(null);
-    }//GEN-LAST:event_cmbOpponentAttorneysItemStateChanged
 
     private void cmbDictateSignsItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cmbDictateSignsItemStateChanged
         if (!(this.tblPlaceHolders.getModel() instanceof ArchiveFileTemplatePlaceHoldersTableModel)) {
@@ -1743,16 +1615,13 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
         java.awt.EventQueue.invokeLater(new Runnable() {
 
             public void run() {
-                new AddDocumentFromTemplateDialog(new javax.swing.JFrame(), true, null, null, null, null, null, null, null).setVisible(true);
+                new AddDocumentFromTemplateDialog(new javax.swing.JFrame(), true, null, null, null, null).setVisible(true);
             }
         });
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.ButtonGroup btGrpReviews;
-    private javax.swing.JComboBox cmbClients;
     private javax.swing.JComboBox cmbDictateSigns;
-    private javax.swing.JComboBox cmbOpponentAttorneys;
-    private javax.swing.JComboBox cmbOpponents;
     private javax.swing.JComboBox cmbReviewAssignee;
     private javax.swing.JComboBox cmbReviewReason;
     private javax.swing.JButton cmdAddDocument;
@@ -1762,9 +1631,6 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel12;
     private javax.swing.JLabel jLabel3;
-    private javax.swing.JLabel jLabel4;
-    private javax.swing.JLabel jLabel5;
-    private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel7;
     private javax.swing.JLabel jLabel8;
     private javax.swing.JPanel jPanel1;

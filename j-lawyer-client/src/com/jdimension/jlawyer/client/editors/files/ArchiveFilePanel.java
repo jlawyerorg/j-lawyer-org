@@ -3199,7 +3199,18 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     private void cmdSearchClientActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSearchClientActionPerformed
         //AddAddressSearchDialog dlg = new AddAddressSearchDialog(EditorsRegistry.getInstance().getMainWindow(), true, ArchiveFileAddressesBean.REFERENCETYPE_CLIENT);
-        AddAddressSearchDialog dlg = new AddAddressSearchDialog(EditorsRegistry.getInstance().getMainWindow(), true, null);
+        
+        PartyTypeBean targetType=null;
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
+            ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
+            targetType=fileService.getAllPartyTypes().get(0);
+        } catch (Exception ex) {
+            log.error("Error getting target type for AddAddressSearchDialog", ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim Ermitteln der Beteiligtentypen: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+        }
+        
+        AddAddressSearchDialog dlg = new AddAddressSearchDialog(EditorsRegistry.getInstance().getMainWindow(), true, targetType);
         dlg.setTitle("Beteiligte hinzufügen");
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
@@ -3362,9 +3373,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     private void newDocumentActionPerformedImpl(GenericCalculationTable table) {
 
-        List<AddressBean> allCl = new ArrayList<AddressBean>();;
-        List<AddressBean> allOpp = new ArrayList<AddressBean>();;
-        List<AddressBean> allOppAtt = new ArrayList<AddressBean>();;
         List<ArchiveFileAddressesBean> involved = new ArrayList<ArchiveFileAddressesBean>();
 
         if (table == null) {
@@ -3399,7 +3407,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
         }
 
-        AddDocumentFromTemplateDialog dlg = new AddDocumentFromTemplateDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.tblDocuments, this.dto, involved, allCl, allOpp, allOppAtt, this.tblReviewReasons, table);
+        AddDocumentFromTemplateDialog dlg = new AddDocumentFromTemplateDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.tblDocuments, this.dto, involved, this.tblReviewReasons, table);
         dlg.setTitle("Dokument hinzufügen");
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
@@ -3429,16 +3437,10 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     private void newDocumentActionPerformedImpl(StyledCalculationTable table) {
 
-        List<AddressBean> allCl = new ArrayList<AddressBean>();;
-        List<AddressBean> allOpp = new ArrayList<AddressBean>();;
-        List<AddressBean> allOppAtt = new ArrayList<AddressBean>();;
         List<ArchiveFileAddressesBean> involved = new ArrayList<ArchiveFileAddressesBean>();
 
         if (table == null) {
             // not called from a plugin
-//            allCl = this.pnlInvolvedParties.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_CLIENT);
-//            allOpp = this.pnlInvolvedParties.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT);
-//            allOppAtt = this.pnlInvolvedParties.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_OPPONENTATTORNEY);
             involved = this.pnlInvolvedParties.getInvolvedParties();
 
         } else {
@@ -3452,21 +3454,13 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
                 addressesForCase = fileService.getAddressesForCase(this.dto.getId());
                 involved = fileService.getInvolvementDetailsForCase(this.dto.getId());
-//                for (ArchiveFileAddressesBean aab : involved) {
-//                    if (aab.getReferenceType() == ArchiveFileAddressesBean.REFERENCETYPE_CLIENT) {
-//                        allCl.add(aab.getAddressKey());
-//                    } else if (aab.getReferenceType() == ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT) {
-//                        allOpp.add(aab.getAddressKey());
-//                    } else if (aab.getReferenceType() == ArchiveFileAddressesBean.REFERENCETYPE_OPPONENTATTORNEY) {
-//                        allOppAtt.add(aab.getAddressKey());
-//                    }
-//                }
+
             } catch (Throwable t) {
                 log.error("Error loading parties", t);
             }
         }
 
-        AddDocumentFromTemplateDialog dlg = new AddDocumentFromTemplateDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.tblDocuments, this.dto, involved, allCl, allOpp, allOppAtt, this.tblReviewReasons, table);
+        AddDocumentFromTemplateDialog dlg = new AddDocumentFromTemplateDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.tblDocuments, this.dto, involved, this.tblReviewReasons, table);
         dlg.setTitle("Dokument hinzufügen");
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
@@ -3942,16 +3936,10 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         dlg.setArchiveFile(dto);
         dlg.setInvolvedInCase(this.pnlInvolvedParties.getInvolvedParties());
-//        for (AddressBean abean : this.pnlInvolvedParties.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_CLIENT)) {
-//            dlg.addToClient(abean);
-//        }
-//        for (AddressBean abean : this.pnlInvolvedParties.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT)) {
-//            dlg.addToOpponent(abean);
-//        }
-//        for (AddressBean abean : this.pnlInvolvedParties.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_OPPONENTATTORNEY)) {
-//            dlg.addToOpponentAttorney(abean);
-//        }
-        
+        for (ArchiveFileAddressesBean aab : this.pnlInvolvedParties.getInvolvedParties()) {
+            dlg.addParty(aab.getAddressKey(), aab.getReferenceType());
+        }
+
         try {
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
@@ -3981,16 +3969,10 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         //dlg.setTo(ab.getEmail());
 
         dlg.setArchiveFile(dto);
-//        for (AddressBean abean : this.pnlInvolvedParties.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_CLIENT)) {
-//            dlg.addToClient(abean);
-//        }
-//        for (AddressBean abean : this.pnlInvolvedParties.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT)) {
-//            dlg.addToOpponent(abean);
-//        }
-//        for (AddressBean abean : this.pnlInvolvedParties.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_OPPONENTATTORNEY)) {
-//            dlg.addToOpponentAttorney(abean);
-//        }
-        
+        for (ArchiveFileAddressesBean aab : this.pnlInvolvedParties.getInvolvedParties()) {
+            dlg.addParty(aab.getAddressKey(), aab.getReferenceType());
+        }
+
         ProgressIndicator pi = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
         pi.setShowCancelButton(true);
         SendPDFAction a = new SendPDFAction(pi, this.tblDocuments, dlg);
@@ -4040,17 +4022,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         if ("on".equalsIgnoreCase(mode)) {
             ArrayList<AddressBean> faxList = new ArrayList<AddressBean>();
 
-//            for (AddressBean abean : this.pnlInvolvedParties.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_CLIENT)) {
-//                faxList.add(abean);
-//            }
-//
-//            for (AddressBean abean : this.pnlInvolvedParties.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT)) {
-//                faxList.add(abean);
-//            }
-//
-//            for (AddressBean abean : this.pnlInvolvedParties.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_OPPONENTATTORNEY)) {
-//                faxList.add(abean);
-//            }
+            for (ArchiveFileAddressesBean aab : this.pnlInvolvedParties.getInvolvedParties()) {
+                faxList.add(aab.getAddressKey());
+            }
 
             if (faxList.size() == 0) {
                 JOptionPane.showMessageDialog(this, "Akte hat keine Beteiligte!", "Fehler", JOptionPane.ERROR_MESSAGE);
@@ -4095,18 +4069,14 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private void mnuCoverageActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuCoverageActionPerformed
 
         ArrayList<AddressBean> clients = new ArrayList<AddressBean>();
-//        for (AddressBean abean : this.pnlInvolvedParties.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_CLIENT)) {
-//            clients.add(abean);
-//        }
+        for (AddressBean abean : this.pnlInvolvedParties.getInvolvedPartiesAddress()) {
+            clients.add(abean);
+        }
 
         ArrayList<AddressBean> others = new ArrayList<AddressBean>();
-//        for (AddressBean abean : this.pnlInvolvedParties.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT)) {
-//            others.add(abean);
-//        }
-
-//        for (AddressBean abean : this.pnlInvolvedParties.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_OPPONENTATTORNEY)) {
-//            others.add(abean);
-//        }
+        for (AddressBean abean : this.pnlInvolvedParties.getInvolvedPartiesAddress()) {
+            others.add(abean);
+        }
 
         ArrayList<ArchiveFileDocumentsBean> docs = new ArrayList<ArchiveFileDocumentsBean>();
         ArrayList<ArchiveFileDocumentsBean> selDocs = new ArrayList<ArchiveFileDocumentsBean>();
@@ -4150,19 +4120,15 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private void mnuMotorCoverageActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuMotorCoverageActionPerformed
 
         ArrayList<AddressBean> clients = new ArrayList<AddressBean>();
-//        for (AddressBean abean : this.pnlInvolvedParties.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_CLIENT)) {
-//            clients.add(abean);
-//        }
+        for (AddressBean abean : this.pnlInvolvedParties.getInvolvedPartiesAddress()) {
+            clients.add(abean);
+        }
 
         ArrayList<AddressBean> others = new ArrayList<AddressBean>();
-//        for (AddressBean abean : this.pnlInvolvedParties.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT)) {
-//            others.add(abean);
-//        }
-
-//        for (AddressBean abean : this.pnlInvolvedParties.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_OPPONENTATTORNEY)) {
-//            others.add(abean);
-//        }
-
+        for (AddressBean abean : this.pnlInvolvedParties.getInvolvedPartiesAddress()) {
+            others.add(abean);
+        }
+        
         ArrayList<ArchiveFileDocumentsBean> docs = new ArrayList<ArchiveFileDocumentsBean>();
         ArrayList<ArchiveFileDocumentsBean> selDocs = new ArrayList<ArchiveFileDocumentsBean>();
         int[] selectedRows = this.tblDocuments.getSelectedRows();
@@ -4248,9 +4214,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private void mnuFreeTextMessageActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuFreeTextMessageActionPerformed
 
         ArrayList<AddressBean> clients = new ArrayList<AddressBean>();
-//        for (AddressBean abean : this.pnlInvolvedParties.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_CLIENT)) {
-//            clients.add(abean);
-//        }
+        for (AddressBean abean : this.pnlInvolvedParties.getInvolvedPartiesAddress()) {
+            clients.add(abean);
+        }
 
         ArrayList<ArchiveFileDocumentsBean> docs = new ArrayList<ArchiveFileDocumentsBean>();
         ArrayList<ArchiveFileDocumentsBean> selDocs = new ArrayList<ArchiveFileDocumentsBean>();
@@ -4621,18 +4587,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         dlg.setArchiveFile(dto);
         dlg.setInvolvedInCase(this.pnlInvolvedParties.getInvolvedParties());
-//        for (AddressBean abean : this.pnlInvolvedParties.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_CLIENT)) {
-//            dlg.addToClient(abean);
-//
-//        }
-//        for (AddressBean abean : this.pnlInvolvedParties.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT)) {
-//            dlg.addToOpponent(abean);
-//
-//        }
-//        for (AddressBean abean : this.pnlInvolvedParties.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_OPPONENTATTORNEY)) {
-//            dlg.addToOpponentAttorney(abean);
-//
-//        }
+        
+        
+        for (ArchiveFileAddressesBean aab : this.pnlInvolvedParties.getInvolvedParties()) {
+            dlg.addParty(aab.getAddressKey(), aab.getReferenceType());
+        }
 
         try {
             ClientSettings settings = ClientSettings.getInstance();
@@ -4671,19 +4630,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         dlg.setArchiveFile(dto);
         dlg.setInvolvedInCase(this.pnlInvolvedParties.getInvolvedParties());
-//        for (AddressBean abean : this.pnlInvolvedParties.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_CLIENT)) {
-//            dlg.addToClient(abean);
-//
-//        }
-//        for (AddressBean abean : this.pnlInvolvedParties.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT)) {
-//            dlg.addToOpponent(abean);
-//
-//        }
-//        for (AddressBean abean : this.pnlInvolvedParties.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_OPPONENTATTORNEY)) {
-//            dlg.addToOpponentAttorney(abean);
-//
-//        }
-        //dlg.addRecipientCandidates(convertArray(list));
+        for (ArchiveFileAddressesBean aab : this.pnlInvolvedParties.getInvolvedParties()) {
+            dlg.addParty(aab.getAddressKey(), aab.getReferenceType());
+        }
 
         ProgressIndicator pi = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
         pi.setShowCancelButton(true);
@@ -4858,15 +4807,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 }
 
                 PDFEncryptionDialog encDlg = new PDFEncryptionDialog(EditorsRegistry.getInstance().getMainWindow(), true, tmpUrl);
-//                for (AddressBean abean : this.pnlInvolvedParties.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_CLIENT)) {
-//                    encDlg.addRecipient(abean);
-//                }
-//                for (AddressBean abean : this.pnlInvolvedParties.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT)) {
-//                    encDlg.addRecipient(abean);
-//                }
-//                for (AddressBean abean : this.pnlInvolvedParties.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_OPPONENTATTORNEY)) {
-//                    encDlg.addRecipient(abean);
-//                }
+
+                for (ArchiveFileAddressesBean aab : this.pnlInvolvedParties.getInvolvedParties()) {
+                    encDlg.addRecipient(aab.getAddressKey());
+                }
+
                 FrameUtils.centerDialog(encDlg, EditorsRegistry.getInstance().getMainWindow());
                 encDlg.setVisible(true);
 
@@ -5572,32 +5517,13 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             return true;
         }
 
-//        List<AddressBean> clientEntries = this.pnlInvolvedParties.getInvolvedPartiesAddress(ArchiveFileAddressesBean.REFERENCETYPE_CLIENT);
-//        List<AddressBean> opponentEntries = this.pnlInvolvedParties.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT);
-//        List<AddressBean> opponentAttorneyEntries = this.pnlInvolvedParties.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_OPPONENTATTORNEY);
-
-        Collection clientsOnServer = null;
-        Collection opponentsOnServer = null;
-        Collection opponentAttorneysOnServer = null;
         try {
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
             ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
-//            clientsOnServer = fileService.getClients(this.dto.getId());
-//            opponentsOnServer = fileService.getOpponents(this.dto.getId());
-//            opponentAttorneysOnServer = fileService.getOpponentAttorneys(this.dto.getId());
             List<ArchiveFileAddressesBean> involved = fileService.getInvolvementDetailsForCase(this.dto.getId());
 
-//            if (!containsSameAddresses(clientsOnServer, clientEntries)) {
-//                return true;
-//            }
-//            if (!containsSameAddresses(opponentsOnServer, opponentEntries)) {
-//                return true;
-//            }
-//            if (!containsSameAddresses(opponentAttorneysOnServer, opponentAttorneyEntries)) {
-//                return true;
-//            }
             if (!containsSameInvolvements(involved, this.pnlInvolvedParties.getInvolvedParties())) {
                 return true;
             }
