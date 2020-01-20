@@ -721,7 +721,7 @@ public class PrintStubGenerator {
                 
                 
                 ArchiveFileAddressesBean ab = file.getArchiveFileAddressesBeanList().get(i);
-                s.getParties(ab.getReferenceType().getName()).add(getAddressDetail(ab.getAddressKey(), ab));
+                s.addParty(getAddressDetail(ab.getAddressKey(), ab));
                 
 
             }
@@ -794,6 +794,10 @@ public class PrintStubGenerator {
         
         if(roleInCase!=null)
             d.setReference(roleInCase.getReference());
+        
+        if(roleInCase!=null)
+            if(roleInCase.getReferenceType()!=null)
+                d.setPartyType(roleInCase.getReferenceType().getName());
         
         return d;
     }

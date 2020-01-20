@@ -9,9 +9,7 @@
         <parameter name="SubReportDir" class="java.lang.String" isForPrompting="false"/>
 
         <field name="fileNumber" class="java.lang.String"/>
-	<field name="clients" class="java.util.List"/>
-        <field name="opponents" class="java.util.List"/>
-        <field name="opponentAttorneys" class="java.util.List"/>
+	<field name="parties" class="java.util.List"/>
         <field name="reviews" class="java.util.List"/>
         <field name="name" class="java.lang.String"/>
 	<field name="notice" class="java.lang.String"/>
@@ -203,64 +201,24 @@
 				<text><![CDATA[Beteiligte:]]></text>
 			</staticText>
                         
-                        <staticText>
-				<reportElement positionType="Float" x="10" y="200" width="330" height="15"/>
-				<textElement>
-					<font size="10" isBold="true"/>
-				</textElement>
-				<text><![CDATA[Mandanten:]]></text>
-			</staticText>
                         <subreport>
-				<reportElement positionType="Float" x="14" y="215" width="515" height="15"/>
-				<dataSourceExpression><![CDATA[new net.sf.jasperreports.engine.data.JRBeanCollectionDataSource($F{clients})]]></dataSourceExpression>
+				<reportElement positionType="Float" x="14" y="200" width="515" height="15"/>
+				<dataSourceExpression><![CDATA[new net.sf.jasperreports.engine.data.JRBeanCollectionDataSource($F{parties})]]></dataSourceExpression>
 				<!-- subreportExpression class="java.lang.String"><![CDATA[$P{SUBREPORT_DIR} + "demo_address.jasper"]]></subreportExpression -->
                                 <!-- subreportExpression class="java.lang.String"><![CDATA[$P{SUBREPORT_DIR} + "demo_address.jasper"]]></subreportExpression -->
                                 <subreportExpression class="java.lang.String"><![CDATA[$P{SubReportDir} + "archivefile_address_detail.jasper"]]></subreportExpression>
 			</subreport>
-                        
-                        <staticText>
-				<reportElement positionType="Float" x="10" y="235" width="330" height="15"/>
-				<textElement>
-					<font size="10" isBold="true"/>
-				</textElement>
-				<text><![CDATA[Gegner:]]></text>
-			</staticText>
-                        <subreport>
-				<reportElement positionType="Float" x="14" y="250" width="515" height="15"/>
-				<dataSourceExpression><![CDATA[new net.sf.jasperreports.engine.data.JRBeanCollectionDataSource($F{opponents})]]></dataSourceExpression>
-				<!-- subreportExpression class="java.lang.String"><![CDATA[$P{SUBREPORT_DIR} + "demo_address.jasper"]]></subreportExpression -->
-                                <!-- subreportExpression class="java.lang.String"><![CDATA[$P{SUBREPORT_DIR} + "demo_address.jasper"]]></subreportExpression -->
-                                <subreportExpression class="java.lang.String"><![CDATA[$P{SubReportDir} + "archivefile_address_detail.jasper"]]></subreportExpression>
-			</subreport>
-                        
-                        <staticText>
-				<reportElement positionType="Float" x="10" y="270" width="330" height="15" isRemoveLineWhenBlank="true">
-                                    <printWhenExpression><![CDATA[$F{opponentAttorneys} != null && $F{opponentAttorneys}.size()>0]]></printWhenExpression>
-                                </reportElement>    
-				<textElement>
-					<font size="10" isBold="true"/>
-				</textElement>
-				<text><![CDATA[Dritte:]]></text>
-			</staticText>
-			<subreport>
-				<reportElement positionType="Float" x="14" y="285" width="515" height="15"/>
-				<dataSourceExpression><![CDATA[new net.sf.jasperreports.engine.data.JRBeanCollectionDataSource($F{opponentAttorneys})]]></dataSourceExpression>
-				<!-- subreportExpression class="java.lang.String"><![CDATA[$P{SUBREPORT_DIR} + "demo_address.jasper"]]></subreportExpression -->
-                                <!-- subreportExpression class="java.lang.String"><![CDATA[$P{SUBREPORT_DIR} + "demo_address.jasper"]]></subreportExpression -->
-                                <subreportExpression class="java.lang.String"><![CDATA[$P{SubReportDir} + "archivefile_address_detail.jasper"]]></subreportExpression>
-			</subreport>
-                        
                         
                         
                         <line>
-				<reportElement positionType="Float" x="10" y="305" width="515" height="1"/>
+				<reportElement positionType="Float" x="10" y="215" width="515" height="1"/>
 			</line>
                         
                         
                         
                         
                         <staticText>
-				<reportElement positionType="Float" x="10" y="319" width="390" height="17"/>
+				<reportElement positionType="Float" x="10" y="229" width="390" height="17"/>
 				<textElement>
 					<font size="12" isBold="true"/>
 				</textElement>
@@ -268,7 +226,7 @@
 			</staticText>
                         
                         <staticText>
-				<reportElement positionType="Float" x="283" y="319" width="80" height="17"/>
+				<reportElement positionType="Float" x="283" y="229" width="80" height="17"/>
 				<textElement>
 					<font size="12" isBold="true"/>
 				</textElement>
@@ -276,7 +234,7 @@
 			</staticText>
                         
                         <line>
-				<reportElement positionType="Float" x="10" y="335" width="515" height="1"/>
+				<reportElement positionType="Float" x="10" y="245" width="515" height="1"/>
 			</line>
                         <!-- line>
 				<reportElement positionType="Float" x="263" y="365" width="1" height="20"/>
@@ -287,14 +245,14 @@
                         
                         
                         <subreport>
-				<reportElement positionType="Float" x="10" y="336" width="515" height="1"/>
+				<reportElement positionType="Float" x="10" y="246" width="515" height="1"/>
 				<dataSourceExpression><![CDATA[new net.sf.jasperreports.engine.data.JRBeanCollectionDataSource($F{reviews})]]></dataSourceExpression>
 				<!-- subreportExpression class="java.lang.String"><![CDATA[$P{SUBREPORT_DIR} + "demo_address.jasper"]]></subreportExpression -->
                                 <!-- subreportExpression class="java.lang.String"><![CDATA[$P{SUBREPORT_DIR} + "demo_address.jasper"]]></subreportExpression -->
                                 <subreportExpression class="java.lang.String"><![CDATA[$P{SubReportDir} + "archivefile_review_detail.jasper"]]></subreportExpression>
 			</subreport>
                         <line>
-				<reportElement positionType="Float" x="263" y="337" width="1" height="200"/>
+				<reportElement positionType="Float" x="263" y="247" width="1" height="200"/>
 			</line>
 		</band>
                 

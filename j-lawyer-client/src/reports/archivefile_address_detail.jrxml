@@ -16,13 +16,24 @@
         <field name="fax" class="java.lang.String"/>
 	<field name="mobile" class="java.lang.String"/>
 	<field name="email" class="java.lang.String"/>
+        <field name="partyType" class="java.lang.String"/>
 	<background>
 		<band splitType="Stretch"/>
 	</background>
 	<detail>
-		<band height="86" splitType="Stretch">
-			<textField>
+		<band height="100" splitType="Stretch">
+                        <textField>
 				<reportElement x="0" y="0" width="480" height="14" isRemoveLineWhenBlank="true" >
+					<printWhenExpression><![CDATA[($F{partyType} != null &&
+$F{partyType}.trim().length()>0)]]></printWhenExpression>
+				</reportElement>
+				<textElement>
+					<font size="10" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{partyType} + ": "]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="0" y="14" width="480" height="14" isRemoveLineWhenBlank="true" >
 					<printWhenExpression><![CDATA[($F{company} != null &&
 $F{company}.trim().length()>0) || ($F{reference} != null &&
 $F{reference}.trim().length()>0)]]></printWhenExpression>
@@ -33,7 +44,7 @@ $F{reference}.trim().length()>0)]]></printWhenExpression>
 				<textFieldExpression><![CDATA[$F{reference} + $F{company}]]></textFieldExpression>
 			</textField>
 			<textField isStretchWithOverflow="true">
-				<reportElement positionType="Float" x="0" y="14" width="480" height="14" isRemoveLineWhenBlank="true">
+				<reportElement positionType="Float" x="0" y="28" width="480" height="14" isRemoveLineWhenBlank="true">
                                     <printWhenExpression><![CDATA[($F{name} != null &&
 $F{name}.trim().length()>0) || ($F{firstName} != null &&
 $F{firstName}.trim().length()>0)]]></printWhenExpression>
@@ -44,7 +55,7 @@ $F{firstName}.trim().length()>0)]]></printWhenExpression>
 				<textFieldExpression><![CDATA[$F{name} + " " + $F{firstName}]]></textFieldExpression>
 			</textField>
 			<textField isStretchWithOverflow="true">
-				<reportElement positionType="Float" x="0" y="28" width="480" height="14" isRemoveLineWhenBlank="true">
+				<reportElement positionType="Float" x="0" y="42" width="480" height="14" isRemoveLineWhenBlank="true">
                                     <printWhenExpression><![CDATA[($F{street} != null &&
 $F{street}.trim().length()>0) || ($F{city} != null &&
 $F{city}.trim().length()>0) || ($F{zipCode} != null &&
@@ -57,14 +68,14 @@ $F{zipCode}.trim().length()>0)]]></printWhenExpression>
 " " + $F{zipCode} + " " + $F{city}]]></textFieldExpression>
 			</textField>
 			<textField isStretchWithOverflow="true">
-				<reportElement positionType="Float" x="0" y="42" width="480" height="13" isRemoveLineWhenBlank="true" />
+				<reportElement positionType="Float" x="0" y="56" width="480" height="13" isRemoveLineWhenBlank="true" />
 				<textElement>
 					<font size="10"/>
 				</textElement>
 				<textFieldExpression><![CDATA["T: " + $F{phone} + "  M: " + $F{mobile} + "  F: " + $F{fax}]]></textFieldExpression>
 			</textField>
 			<textField isStretchWithOverflow="true">
-				<reportElement positionType="Float" x="0" y="55" width="480" height="13" isRemoveLineWhenBlank="true" />
+				<reportElement positionType="Float" x="0" y="69" width="480" height="13" isRemoveLineWhenBlank="true" />
 				<textElement>
 					<font size="10"/>
 				</textElement>
@@ -72,7 +83,7 @@ $F{zipCode}.trim().length()>0)]]></printWhenExpression>
 			</textField>
 
 			<staticText>
-				<reportElement positionType="Float" stretchType="RelativeToTallestObject" x="0" y="70" width="480" height="10" />
+				<reportElement positionType="Float" stretchType="RelativeToTallestObject" x="0" y="84" width="480" height="10" />
 				<textElement>
 					<font size="10" isBold="true"/>
 				</textElement>

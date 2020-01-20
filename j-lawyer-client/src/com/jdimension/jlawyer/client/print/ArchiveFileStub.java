@@ -686,7 +686,7 @@ public class ArchiveFileStub extends GenericStub {
     
     private List<ReviewsDetail> reviews = new ArrayList<ReviewsDetail>();
     
-    private Hashtable<String,List<AddressDetail>> parties=new Hashtable<String,List<AddressDetail>>();
+    private List<AddressDetail> parties=new ArrayList<AddressDetail>();
 
     public ArchiveFileStub() {
         super();
@@ -764,14 +764,16 @@ public class ArchiveFileStub extends GenericStub {
         this.claimValue = claimValue;
     }
 
-    public List<AddressDetail> getParties(String name) {
-        if(this.parties.containsKey(name))
-            return this.parties.get(name);
-        return new ArrayList<AddressDetail>();
+    public List<AddressDetail> getParties() {
+        return this.parties;
     }
 
-    public void setParties(List<AddressDetail> parties, String name) {
-        this.parties.put(name, parties);
+    public void setParties(List<AddressDetail> parties) {
+        this.parties.addAll(parties);
+    }
+    
+    public void addParty(AddressDetail ad) {
+        this.parties.add(ad);
     }
 
     public String getFileNumber() {
