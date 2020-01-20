@@ -677,7 +677,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 @NamedQueries({
     @NamedQuery(name = "ArchiveFileAddressesBean.findAll", query = "SELECT a FROM ArchiveFileAddressesBean a"),
     @NamedQuery(name = "ArchiveFileAddressesBean.findById", query = "SELECT a FROM ArchiveFileAddressesBean a WHERE a.id = :id"),
-    @NamedQuery(name = "ArchiveFileAddressesBean.findByArchiveFileKeyAndReferenceType", query = "SELECT a FROM ArchiveFileAddressesBean a WHERE a.id = :id and a.referenceType = :referenceType"),
+    //@NamedQuery(name = "ArchiveFileAddressesBean.findByArchiveFileKeyAndReferenceType", query = "SELECT a FROM ArchiveFileAddressesBean a WHERE a.id = :id and a.referenceType = :referenceType"),
     @NamedQuery(name = "ArchiveFileAddressesBean.findByReferenceType", query = "SELECT a FROM ArchiveFileAddressesBean a WHERE a.referenceType = :referenceType")})
 public class ArchiveFileAddressesBean implements Serializable {
 

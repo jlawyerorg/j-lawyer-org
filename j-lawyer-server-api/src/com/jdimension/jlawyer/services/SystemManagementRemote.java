@@ -788,5 +788,11 @@ public interface SystemManagementRemote {
     Collection<PartyTypeBean> getPartyTypes();
 
     Hashtable<String,PartyTypeBean> getPartyTypesTable();
+
+    PartyTypeBean addPartyType(PartyTypeBean partyType) throws Exception;
+    
+    PartyTypeBean updatePartyType(PartyTypeBean partyType) throws Exception;
+
+    void removePartyType(PartyTypeBean partyType) throws Exception;
     
 }

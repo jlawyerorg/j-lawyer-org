@@ -687,9 +687,11 @@ public interface ArchiveFileAddressesBeanFacadeLocal {
 
     int count();
     
-    List<ArchiveFileAddressesBean> findByArchiveFileKeyAndReferenceType(ArchiveFileBean archiveFileKey, int referenceType);
+//    List<ArchiveFileAddressesBean> findByArchiveFileKeyAndReferenceType(ArchiveFileBean archiveFileKey, int referenceType);
     
     List<ArchiveFileAddressesBean> findByArchiveFileKey(ArchiveFileBean archiveFileKey);
+    
+    List<ArchiveFileAddressesBean> findByReferenceType(PartyTypeBean partyType);
     
     List<ArchiveFileAddressesBean> findByAddressKey(AddressBean addressKey);
             

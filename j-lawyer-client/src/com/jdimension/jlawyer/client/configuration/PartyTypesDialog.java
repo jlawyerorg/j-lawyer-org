@@ -1,4 +1,5 @@
-/*                    GNU AFFERO GENERAL PUBLIC LICENSE
+/*
+                    GNU AFFERO GENERAL PUBLIC LICENSE
                        Version 3, 19 November 2007
 
  Copyright (C) 2007 Free Software Foundation, Inc. <https://fsf.org/>
@@ -660,124 +661,547 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.persistence;
+package com.jdimension.jlawyer.client.configuration;
 
-import java.io.Serializable;
-import javax.persistence.Basic;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.NamedQueries;
-import javax.persistence.NamedQuery;
-import javax.persistence.Table;
-import javax.xml.bind.annotation.XmlRootElement;
+import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.utils.ComponentUtils;
+import com.jdimension.jlawyer.client.utils.PlaceHolderUtils;
+import com.jdimension.jlawyer.persistence.PartyTypeBean;
+import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import com.jdimension.jlawyer.services.SystemManagementRemote;
+import java.awt.Color;
+import java.awt.event.MouseEvent;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import javax.swing.JButton;
+import javax.swing.JColorChooser;
+import javax.swing.JOptionPane;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.text.AbstractDocument;
+import javax.swing.text.AttributeSet;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.DocumentFilter;
+import javax.swing.text.NavigationFilter.FilterBypass;
+import org.apache.log4j.Logger;
+import themes.colors.DefaultColorTheme;
 
 /**
  *
  * @author jens
  */
-@Entity
-@Table(name = "party_types")
-@XmlRootElement
-@NamedQueries({
-    @NamedQuery(name = "PartyTypeBean.findAll", query = "SELECT p FROM PartyTypeBean p"),
-    @NamedQuery(name = "PartyTypeBean.findById", query = "SELECT p FROM PartyTypeBean p WHERE p.id = :id"),
-    @NamedQuery(name = "PartyTypeBean.findByName", query = "SELECT p FROM PartyTypeBean p WHERE p.name = :name")})
-public class PartyTypeBean implements Serializable {
+public class PartyTypesDialog extends javax.swing.JDialog {
 
-    private static final long serialVersionUID = 1L;
-    
-    @Id
-    @Basic(optional = false)
-    @Column(name = "id")
-    private String id;
-    
-    @Column(name = "name")
-    private String name;
-    
-    @Column(name = "placeholder")
-    private String placeHolder;
-    
-    @Column(name = "color")
-    private int color;
-    
-    
+    private static Logger log = Logger.getLogger(PartyTypesDialog.class.getName());
 
-    public String getId() {
-        return id;
-    }
+    /**
+     * Creates new form PartyTypesDialog
+     */
+    public PartyTypesDialog(java.awt.Frame parent, boolean modal) {
+        super(parent, modal);
+        initComponents();
 
-    public void setId(String id) {
-        this.id = id;
-    }
+        this.resetDetails();
 
-    @Override
-    public int hashCode() {
-        int hash = 0;
-        hash += (id != null ? id.hashCode() : 0);
-        return hash;
-    }
+        this.tblPartyTypes.setSelectionForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
 
-    @Override
-    public boolean equals(Object object) {
-        // TODO: Warning - this method won't work in the case the id fields are not set
-        if (!(object instanceof PartyTypeBean)) {
-            return false;
+        ((AbstractDocument) this.txtPlaceHolder.getDocument()).setDocumentFilter(new DocumentFilter() {
+            Pattern regEx = Pattern.compile("[A-Z0-9]+");
+
+            @Override
+            public void replace(FilterBypass fb, int offset, int length, String text, AttributeSet attrs) throws BadLocationException {
+                Matcher matcher = regEx.matcher(text);
+                if (!matcher.matches()) {
+                    return;
+                }
+                super.replace(fb, offset, length, text, attrs);
+            }
+        });
+
+        ClientSettings settings = ClientSettings.getInstance();
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+
+            //SystemManagementRemoteHome home = (SystemManagementRemoteHome)locator.getRemoteHome("ejb/SystemManagementBean", SystemManagementRemoteHome.class);
+            SystemManagementRemote mgmt = locator.lookupSystemManagementRemote();
+
+            Collection<PartyTypeBean> partyTypes = mgmt.getPartyTypes();
+
+            this.tblPartyTypes.setDefaultRenderer(Object.class, new PartyTypesTableCellRenderer());
+
+            for (PartyTypeBean pt : partyTypes) {
+                //mgmt.removeOptionGroup(((AppOptionGroupBean) this.lstOptions.getSelectedValues()[i]).getId());
+
+                ((DefaultTableModel) this.tblPartyTypes.getModel()).addRow(new Object[]{pt, pt.getPlaceHolder(), pt.getColor()});
+
+            }
+
+        } catch (Exception ex) {
+            log.error("Error connecting to server", ex);
+            //JOptionPane.showMessageDialog(this.owner, "Verbindungsfehler: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            return;
         }
-        PartyTypeBean other = (PartyTypeBean) object;
-        if ((this.id == null && other.id != null) || (this.id != null && !this.id.equals(other.id))) {
-            return false;
+
+        ComponentUtils.autoSizeColumns(tblPartyTypes);
+    }
+
+    private void resetDetails() {
+        this.cmdColor.setText("   ");
+        this.cmdColor.setBackground(new JButton().getBackground());
+        this.txtName.setText("");
+        this.txtPlaceHolder.setText("");
+        this.taPlaceHolders.setText("");
+
+    }
+
+    /**
+     * This method is called from within the constructor to initialize the form.
+     * WARNING: Do NOT modify this code. The content of this method is always
+     * regenerated by the Form Editor.
+     */
+    @SuppressWarnings("unchecked")
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
+    private void initComponents() {
+
+        jPanel1 = new javax.swing.JPanel();
+        jLabel1 = new javax.swing.JLabel();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        tblPartyTypes = new javax.swing.JTable();
+        jLabel2 = new javax.swing.JLabel();
+        jLabel3 = new javax.swing.JLabel();
+        cmdColor = new javax.swing.JButton();
+        txtPlaceHolder = new javax.swing.JTextField();
+        txtName = new javax.swing.JTextField();
+        cmdSave = new javax.swing.JButton();
+        cmdAdd = new javax.swing.JButton();
+        cmdRemove = new javax.swing.JButton();
+        cmdClose = new javax.swing.JButton();
+        jPanel2 = new javax.swing.JPanel();
+        jScrollPane2 = new javax.swing.JScrollPane();
+        taPlaceHolders = new javax.swing.JTextArea();
+
+        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+
+        jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder("Beteiligtentypen"));
+
+        jLabel1.setText("Bezeichnung:");
+
+        tblPartyTypes.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+
+            },
+            new String [] {
+                "Bezeichnung", "Platzhalter", "Farbe"
+            }
+        ) {
+            boolean[] canEdit = new boolean [] {
+                false, false, false
+            };
+
+            public boolean isCellEditable(int rowIndex, int columnIndex) {
+                return canEdit [columnIndex];
+            }
+        });
+        tblPartyTypes.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        tblPartyTypes.getTableHeader().setReorderingAllowed(false);
+        tblPartyTypes.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                tblPartyTypesMouseClicked(evt);
+            }
+        });
+        tblPartyTypes.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyPressed(java.awt.event.KeyEvent evt) {
+                tblPartyTypesKeyPressed(evt);
+            }
+            public void keyReleased(java.awt.event.KeyEvent evt) {
+                tblPartyTypesKeyReleased(evt);
+            }
+        });
+        jScrollPane1.setViewportView(tblPartyTypes);
+
+        jLabel2.setText("Platzhalter:");
+
+        jLabel3.setText("Markieren in:");
+
+        cmdColor.setText("jButton1");
+        cmdColor.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdColorActionPerformed(evt);
+            }
+        });
+
+        txtPlaceHolder.setText("jTextField1");
+
+        txtName.setText("jTextField2");
+
+        cmdSave.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png"))); // NOI18N
+        cmdSave.setText("Übernehmen");
+        cmdSave.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdSaveActionPerformed(evt);
+            }
+        });
+
+        cmdAdd.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit_add.png"))); // NOI18N
+        cmdAdd.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdAddActionPerformed(evt);
+            }
+        });
+
+        cmdRemove.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/trashcan_full.png"))); // NOI18N
+        cmdRemove.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdRemoveActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
+        jPanel1.setLayout(jPanel1Layout);
+        jPanel1Layout.setHorizontalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 431, Short.MAX_VALUE)
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(jPanel1Layout.createSequentialGroup()
+                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(jLabel2)
+                                    .addComponent(jLabel1))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                            .addGroup(jPanel1Layout.createSequentialGroup()
+                                .addGap(0, 0, Short.MAX_VALUE)
+                                .addComponent(jLabel3)
+                                .addGap(55, 55, 55)))
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(cmdColor)
+                            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                                .addComponent(cmdSave)
+                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                    .addComponent(txtName, javax.swing.GroupLayout.DEFAULT_SIZE, 282, Short.MAX_VALUE)
+                                    .addComponent(txtPlaceHolder))))))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(cmdAdd)
+                    .addComponent(cmdRemove))
+                .addContainerGap())
+        );
+        jPanel1Layout.setVerticalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addComponent(cmdAdd)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdRemove)
+                        .addGap(0, 205, Short.MAX_VALUE)))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(txtName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel1))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(txtPlaceHolder, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel2))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel3)
+                    .addComponent(cmdColor))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(cmdSave)
+                .addContainerGap())
+        );
+
+        cmdClose.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png"))); // NOI18N
+        cmdClose.setText("Schliessen");
+        cmdClose.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdCloseActionPerformed(evt);
+            }
+        });
+
+        jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder("Platzhalter"));
+
+        taPlaceHolders.setColumns(20);
+        taPlaceHolders.setRows(5);
+        jScrollPane2.setViewportView(taPlaceHolders);
+
+        javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
+        jPanel2.setLayout(jPanel2Layout);
+        jPanel2Layout.setHorizontalGroup(
+            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel2Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 269, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap())
+        );
+        jPanel2Layout.setVerticalGroup(
+            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel2Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jScrollPane2)
+                .addContainerGap())
+        );
+
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
+        getContentPane().setLayout(layout);
+        layout.setHorizontalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(cmdClose, javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap())
+        );
+        layout.setVerticalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(cmdClose)
+                .addContainerGap())
+        );
+
+        pack();
+    }// </editor-fold>//GEN-END:initComponents
+
+    private void cmdCloseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCloseActionPerformed
+        this.setVisible(false);
+        this.dispose();
+    }//GEN-LAST:event_cmdCloseActionPerformed
+
+    private void tblPartyTypesMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblPartyTypesMouseClicked
+        if (evt.getClickCount() == 1 && !evt.isConsumed()) {
+
+            int row = this.tblPartyTypes.getSelectedRow();
+
+            if (row < 0) {
+                this.resetDetails();
+            } else {
+
+                PartyTypeBean ptb = (PartyTypeBean) this.tblPartyTypes.getValueAt(row, 0);
+                this.txtName.setText(ptb.getName());
+                this.txtPlaceHolder.setText(ptb.getPlaceHolder());
+                this.cmdColor.setBackground(new Color(ptb.getColor()));
+                this.updatePlaceHolders();
+            }
+
         }
-        return true;
-    }
+    }//GEN-LAST:event_tblPartyTypesMouseClicked
 
-    @Override
-    public String toString() {
-        return this.getName();
-    }
+    private void cmdAddActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdAddActionPerformed
+        Object newNameObject = JOptionPane.showInputDialog(this, "Bezeichnung: ", "Neuen Beteiligtentyp anlegen", JOptionPane.QUESTION_MESSAGE, null, null, "neuer Beteiligtentyp");
+        if (newNameObject == null) {
+            return;
+        }
 
-    /**
-     * @return the name
-     */
-    public String getName() {
-        return name;
-    }
+        String placeHolder = newNameObject.toString().replaceAll("[^a-zA-Z0-9]", "").toUpperCase();
 
-    /**
-     * @param name the name to set
-     */
-    public void setName(String name) {
-        this.name = name;
-    }
+        ClientSettings settings = ClientSettings.getInstance();
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
-    /**
-     * @return the placeHolder
-     */
-    public String getPlaceHolder() {
-        return placeHolder;
-    }
+            //SystemManagementRemoteHome home = (SystemManagementRemoteHome)locator.getRemoteHome("ejb/SystemManagementBean", SystemManagementRemoteHome.class);
+            SystemManagementRemote mgmt = locator.lookupSystemManagementRemote();
 
-    /**
-     * @param placeHolder the placeHolder to set
-     */
-    public void setPlaceHolder(String placeHolder) {
-        this.placeHolder = placeHolder;
-    }
+            PartyTypeBean newParty = new PartyTypeBean();
+            newParty.setName(newNameObject.toString());
+            newParty.setPlaceHolder(placeHolder);
+            newParty.setColor(DefaultColorTheme.COLOR_LOGO_GREEN.getRGB());
+            PartyTypeBean savedParty = mgmt.addPartyType(newParty);
 
-    /**
-     * @return the color
-     */
-    public int getColor() {
-        return color;
-    }
+            ((DefaultTableModel) this.tblPartyTypes.getModel()).addRow(new Object[]{savedParty, savedParty.getPlaceHolder(), savedParty.getColor()});
 
-    /**
-     * @param color the color to set
-     */
-    public void setColor(int color) {
-        this.color = color;
+        } catch (Exception ex) {
+            log.error("Error creating new party type", ex);
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+    }//GEN-LAST:event_cmdAddActionPerformed
+
+    private void cmdSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveActionPerformed
+
+        int row = this.tblPartyTypes.getSelectedRow();
+
+        if (row < 0) {
+            return;
+        } else {
+
+            PartyTypeBean ptb = (PartyTypeBean) this.tblPartyTypes.getValueAt(row, 0);
+            ptb.setName(this.txtName.getText());
+            ptb.setPlaceHolder(this.txtPlaceHolder.getText());
+            ptb.setColor(this.cmdColor.getBackground().getRGB());
+
+            ClientSettings settings = ClientSettings.getInstance();
+            try {
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+
+                SystemManagementRemote mgmt = locator.lookupSystemManagementRemote();
+
+                PartyTypeBean savedParty = mgmt.updatePartyType(ptb);
+
+                ((DefaultTableModel) this.tblPartyTypes.getModel()).setValueAt(savedParty, row, 0);
+                ((DefaultTableModel) this.tblPartyTypes.getModel()).setValueAt(savedParty.getPlaceHolder(), row, 1);
+                ((DefaultTableModel) this.tblPartyTypes.getModel()).setValueAt(savedParty.getColor(), row, 2);
+                
+                this.updatePlaceHolders();
+
+            } catch (Exception ex) {
+                log.error("Error creating new party type", ex);
+                JOptionPane.showMessageDialog(this, ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+        }
+
+
+    }//GEN-LAST:event_cmdSaveActionPerformed
+
+    private void cmdRemoveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRemoveActionPerformed
+        int row = this.tblPartyTypes.getSelectedRow();
+
+        if (row < 0) {
+            return;
+        } else {
+
+            PartyTypeBean ptb = (PartyTypeBean) this.tblPartyTypes.getValueAt(row, 0);
+            ClientSettings settings = ClientSettings.getInstance();
+            try {
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+
+                SystemManagementRemote mgmt = locator.lookupSystemManagementRemote();
+
+                mgmt.removePartyType(ptb);
+                ((DefaultTableModel) this.tblPartyTypes.getModel()).removeRow(row);
+
+                this.resetDetails();
+                this.updatePlaceHolders();
+            } catch (Exception ex) {
+                log.error("Error creating new party type", ex);
+                JOptionPane.showMessageDialog(this, ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+        }
+    }//GEN-LAST:event_cmdRemoveActionPerformed
+
+    private void cmdColorActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdColorActionPerformed
+        JColorChooser lineColorChooser2 = new JColorChooser();
+        Color currentColor = lineColorChooser2.showDialog(this, "Farbe wählen", cmdColor.getBackground());
+        if (currentColor != null) {
+            cmdColor.setBackground(currentColor);
+
+        }
+    }//GEN-LAST:event_cmdColorActionPerformed
+
+    private void tblPartyTypesKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_tblPartyTypesKeyPressed
+        
+    }//GEN-LAST:event_tblPartyTypesKeyPressed
+
+    private void updatePlaceHolders() {
+        int row = this.tblPartyTypes.getSelectedRow();
+
+        if (row < 0) {
+            this.resetDetails();
+        } else {
+
+            this.taPlaceHolders.setText("");
+            PartyTypeBean ptb = (PartyTypeBean) this.tblPartyTypes.getValueAt(row, 0);
+            ArrayList<String> phList=new ArrayList<String>();
+            phList.add(ptb.getPlaceHolder());
+            ArrayList<String> placeHolders=PlaceHolderUtils.getAllPlaceHolders(phList);
+            for(String ph: placeHolders) {
+                this.taPlaceHolders.append(ph);
+                this.taPlaceHolders.append(System.lineSeparator());
+            }
+        }
     }
     
+    private void tblPartyTypesKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_tblPartyTypesKeyReleased
+        int row = this.tblPartyTypes.getSelectedRow();
+
+        if (row < 0) {
+            this.resetDetails();
+        } else {
+
+            PartyTypeBean ptb = (PartyTypeBean) this.tblPartyTypes.getValueAt(row, 0);
+            this.txtName.setText(ptb.getName());
+            this.txtPlaceHolder.setText(ptb.getPlaceHolder());
+            this.cmdColor.setBackground(new Color(ptb.getColor()));
+            this.updatePlaceHolders();
+        }
+    }//GEN-LAST:event_tblPartyTypesKeyReleased
+
+    /**
+     * @param args the command line arguments
+     */
+    public static void main(String args[]) {
+        /* Set the Nimbus look and feel */
+        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
+        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
+         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
+         */
+        try {
+            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
+                if ("Nimbus".equals(info.getName())) {
+                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
+                    break;
+                }
+            }
+        } catch (ClassNotFoundException ex) {
+            java.util.logging.Logger.getLogger(PartyTypesDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        } catch (InstantiationException ex) {
+            java.util.logging.Logger.getLogger(PartyTypesDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        } catch (IllegalAccessException ex) {
+            java.util.logging.Logger.getLogger(PartyTypesDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
+            java.util.logging.Logger.getLogger(PartyTypesDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        }
+        //</editor-fold>
+
+        /* Create and display the dialog */
+        java.awt.EventQueue.invokeLater(new Runnable() {
+            public void run() {
+                PartyTypesDialog dialog = new PartyTypesDialog(new javax.swing.JFrame(), true);
+                dialog.addWindowListener(new java.awt.event.WindowAdapter() {
+                    @Override
+                    public void windowClosing(java.awt.event.WindowEvent e) {
+                        System.exit(0);
+                    }
+                });
+                dialog.setVisible(true);
+            }
+        });
+    }
+
+    // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton cmdAdd;
+    private javax.swing.JButton cmdClose;
+    private javax.swing.JButton cmdColor;
+    private javax.swing.JButton cmdRemove;
+    private javax.swing.JButton cmdSave;
+    private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel jLabel3;
+    private javax.swing.JPanel jPanel1;
+    private javax.swing.JPanel jPanel2;
+    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JScrollPane jScrollPane2;
+    private javax.swing.JTextArea taPlaceHolders;
+    private javax.swing.JTable tblPartyTypes;
+    private javax.swing.JTextField txtName;
+    private javax.swing.JTextField txtPlaceHolder;
+    // End of variables declaration//GEN-END:variables
 }

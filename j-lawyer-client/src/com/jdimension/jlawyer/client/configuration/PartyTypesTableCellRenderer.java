@@ -661,53 +661,57 @@
  * For more information on this, and how to apply and follow the GNU AGPL, see
  * <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.persistence;
+package com.jdimension.jlawyer.client.configuration;
 
-import java.util.List;
-import javax.ejb.Stateless;
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
+import com.jdimension.jlawyer.client.bea.*;
+import com.jdimension.jlawyer.persistence.PartyTypeBean;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Font;
+import javax.swing.JLabel;
+import javax.swing.JTable;
+import javax.swing.table.DefaultTableCellRenderer;
+import org.apache.log4j.Logger;
+import org.jlawyer.bea.model.Message;
+import org.jlawyer.bea.model.MessageHeader;
+import themes.colors.DefaultColorTheme;
 
 /**
  *
  * @author jens
  */
-@Stateless
-public class ArchiveFileAddressesBeanFacade extends AbstractFacade<ArchiveFileAddressesBean> implements ArchiveFileAddressesBeanFacadeLocal {
-    @PersistenceContext(unitName = "j-lawyer-server-ejbPU")
-    private EntityManager em;
+public class PartyTypesTableCellRenderer extends DefaultTableCellRenderer {
+
+    private static final Logger log = Logger.getLogger(PartyTypesTableCellRenderer.class.getName());
 
     @Override
-    protected EntityManager getEntityManager() {
-        return em;
-    }
+    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
+            boolean hasFocus, int row, int column) {
 
-    public ArchiveFileAddressesBeanFacade() {
-        super(ArchiveFileAddressesBean.class);
+        PartyTypeBean ptb = (PartyTypeBean) table.getValueAt(row, 0);
+
+        Object returnRenderer = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+
+        if (column == 0) {
+            ((JLabel) ((Component) returnRenderer)).setText(ptb.getName());
+        } else if (column == 2) {
+            //((Component)returnRenderer).setFont(((Component)returnRenderer).getFont().deriveFont(Font.PLAIN));
+            ((JLabel) ((Component) returnRenderer)).setBackground(new Color(ptb.getColor()));
+            ((JLabel) ((Component) returnRenderer)).setText("");
+        }
+
+        if (isSelected) {
+            ((JLabel) ((Component) returnRenderer)).setForeground(Color.WHITE);
+            if (column != 2) {
+                ((JLabel) ((Component) returnRenderer)).setBackground(DefaultColorTheme.COLOR_LOGO_BLUE);
+            }
+        } else {
+            ((JLabel) ((Component) returnRenderer)).setForeground(Color.BLACK);
+            if (column != 2) {
+                ((JLabel) ((Component) returnRenderer)).setBackground(Color.WHITE);
+            }
+        }
+
+        return (Component) returnRenderer;
     }
-    
-//    @Override
-//    public List<ArchiveFileAddressesBean> findByArchiveFileKeyAndReferenceType(ArchiveFileBean archiveFileKey, int referenceType) {
-//        List<ArchiveFileAddressesBean> list = getEntityManager().createQuery("from ArchiveFileAddressesBean where archiveFileKey = ?1 and referenceType = ?2").setParameter(1, archiveFileKey).setParameter(2, referenceType).getResultList();
-//        return list;
-//    }
-    
-    @Override
-    public List<ArchiveFileAddressesBean> findByReferenceType(PartyTypeBean partyType) {
-        List<ArchiveFileAddressesBean> list = getEntityManager().createQuery("from ArchiveFileAddressesBean where referenceType = ?1").setParameter(1, partyType).getResultList();
-        return list;
-    }
-    
-    @Override
-    public List<ArchiveFileAddressesBean> findByArchiveFileKey(ArchiveFileBean archiveFileKey) {
-        List<ArchiveFileAddressesBean> list = getEntityManager().createQuery("from ArchiveFileAddressesBean where archiveFileKey = ?1").setParameter(1, archiveFileKey).getResultList();
-        return list;
-    }
-    
-    @Override
-    public List<ArchiveFileAddressesBean> findByAddressKey(AddressBean addressKey) {
-        List<ArchiveFileAddressesBean> list = getEntityManager().createQuery("from ArchiveFileAddressesBean where addressKey = ?1").setParameter(1, addressKey).getResultList();
-        return list;
-    }
-    
 }
