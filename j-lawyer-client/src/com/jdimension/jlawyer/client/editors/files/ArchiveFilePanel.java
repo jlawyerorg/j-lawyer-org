@@ -1198,6 +1198,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     public void setArchiveFileDTO(ArchiveFileBean inDto, String selectDocumentWithFileName) {
         this.dto = inDto;
         this.documentHits.clear();
+        
         this.documentCellRenderer.setDocumentHits(documentHits);
         lblDocumentHits.setText(" ");
         this.popDocumentFavorites.removeAll();
@@ -1255,6 +1256,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
 
         this.pnlInvolvedParties.removeAll();
+        
+        // clear the document preview panel
+        this.updateDocumentPreview();
 
         ProgressIndicator pi = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
         pi.setShowCancelButton(false);
