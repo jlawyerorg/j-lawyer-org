@@ -4924,7 +4924,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             String[] list = FileConverter.OUTPUTTYPES.toArray(new String[0]);
             JComboBox jcb = new JComboBox(list);
             jcb.setEditable(false);
-            JOptionPane.showMessageDialog(null, jcb, "Zielformat", JOptionPane.QUESTION_MESSAGE);
+            int returnValue=JOptionPane.showConfirmDialog(this, jcb, "Zielformat", JOptionPane.OK_CANCEL_OPTION);
+            if(returnValue==JOptionPane.CANCEL_OPTION || returnValue==JOptionPane.CLOSED_OPTION) {
+                return;
+            }
+            
             Object response = jcb.getSelectedItem();
             if (response == null) {
                 return;
