@@ -674,6 +674,7 @@ import com.jdimension.jlawyer.client.events.Event;
 import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.events.EventConsumer;
 import com.jdimension.jlawyer.client.mail.SendEmailDialog;
+import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
@@ -683,9 +684,13 @@ import com.jdimension.jlawyer.client.voip.SendSmsDialog;
 import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.persistence.PartyTypeBean;
+import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
+import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Color;
 import java.awt.Component;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import javax.swing.DefaultListModel;
 import javax.swing.JDialog;
@@ -710,6 +715,8 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
     private InvolvedPartiesPanel container=null;
     private ArchiveFilePanel casePanel=null;
     
+    private List<PartyTypeBean> partyTypes=new ArrayList<PartyTypeBean>();
+    
     /**
      * Creates new form HitPanel
      */
@@ -727,6 +734,26 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
         this.lblCustom2.setText(sset.getSetting(sset.DATA_CUSTOMFIELD_ARCHIVEFILE_INVOLVED_PREFIX + "2", "Eigenes Feld 2"));
         this.lblCustom3.setText(sset.getSetting(sset.DATA_CUSTOMFIELD_ARCHIVEFILE_INVOLVED_PREFIX + "3", "Eigenes Feld 3"));
         
+        try {
+                ClientSettings settings = ClientSettings.getInstance();
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                ArchiveFileServiceRemote afs=locator.lookupArchiveFileServiceRemote();
+                this.partyTypes=afs.getAllPartyTypes();
+                
+                this.cmbRefType.removeAllItems();
+                ArrayList<String> refTypeNames=new ArrayList<>();
+                for(PartyTypeBean p: this.partyTypes) {
+                    refTypeNames.add(p.getName());
+                }
+                Collections.sort(refTypeNames);
+                for(String s: refTypeNames) {
+                    this.cmbRefType.addItem(s);
+                }
+
+            } catch (Throwable t) {
+                log.error("Unable to get party types", t);
+            }
+        
         EventBroker b = EventBroker.getInstance();
         b.subscribeConsumer(this, Event.TYPE_CONTACTUPDATED);
             
@@ -742,13 +769,13 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
         this.afa.setCustom1(this.txtCustom1.getText());
         this.afa.setCustom2(this.txtCustom2.getText());
         this.afa.setCustom3(this.txtCustom3.getText());
-        if("Mandant".equalsIgnoreCase(this.cmbRefType.getSelectedItem().toString())) {
-            this.afa.setReferenceType(ArchiveFileAddressesBean.REFERENCETYPE_CLIENT);
-        } else if("Gegner".equalsIgnoreCase(this.cmbRefType.getSelectedItem().toString())) {
-            this.afa.setReferenceType(ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT);
-        } else if("Dritte".equalsIgnoreCase(this.cmbRefType.getSelectedItem().toString())) {
-            this.afa.setReferenceType(ArchiveFileAddressesBean.REFERENCETYPE_OPPONENTATTORNEY);
-        } 
+        PartyTypeBean pt=null;
+        for(PartyTypeBean ptb: this.partyTypes) {
+            if(ptb.getName().equals(this.cmbRefType.getSelectedItem().toString()))
+                pt=ptb;
+        }
+        this.afa.setReferenceType(pt);
+         
         return this.afa;
     }
 
@@ -996,7 +1023,7 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(txtReference)
                         .addGap(18, 18, 18)
-                        .addComponent(cmbRefType, javax.swing.GroupLayout.PREFERRED_SIZE, 91, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(cmbRefType, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cmdToAddress)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -1024,13 +1051,22 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
     }// </editor-fold>//GEN-END:initComponents
 
     private void cmbRefTypeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbRefTypeActionPerformed
-        if("Mandant".equalsIgnoreCase(cmbRefType.getSelectedItem().toString())) {
-            this.lblType.setBackground(ContactTypeColors.CLIENT);
-        } else if ("Gegner".equalsIgnoreCase(cmbRefType.getSelectedItem().toString())) {
-            this.lblType.setBackground(ContactTypeColors.OPPONENT);
-        }else if ("Dritte".equalsIgnoreCase(cmbRefType.getSelectedItem().toString())) {
-            this.lblType.setBackground(ContactTypeColors.OTHER);
+        if(cmbRefType.getSelectedItem()==null)
+            return;
+        
+        String refType=cmbRefType.getSelectedItem().toString();
+        PartyTypeBean ptb=null;
+        for(PartyTypeBean p: this.partyTypes) {
+            if(p.getName().equals(refType)) {
+                ptb=p;
+            }
         }
+        if(ptb==null)
+            return;
+        
+        Color c=new Color(ptb.getColor());
+        this.lblType.setBackground(c);
+        
     }//GEN-LAST:event_cmbRefTypeActionPerformed
 
     private void mnuRemovePartyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuRemovePartyActionPerformed
@@ -1054,9 +1090,10 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
                 dlg.setInvolvedInCase(this.container.getInvolvedParties());
                 dlg.setArchiveFile(this.caseDto);
                 dlg.setTo(this.a.getEmail());
-                dlg.addAllToClient(this.container.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_CLIENT));
-                dlg.addAllToOpponent(this.container.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT));
-                dlg.addAllToOpponentAttorney(this.container.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_OPPONENTATTORNEY));
+                ArrayList<ArchiveFileAddressesBean> involved=this.container.getInvolvedParties();
+                for(ArchiveFileAddressesBean aab: involved) {
+                    dlg.addParty(aab.getAddressKey(), aab.getReferenceType());
+                }
                 
                 FrameUtils.centerDialog(dlg, null);
                 dlg.setVisible(true);
@@ -1090,9 +1127,11 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
                 SendBeaMessageDialog dlg = new SendBeaMessageDialog(EditorsRegistry.getInstance().getMainWindow(), false);
                 dlg.setArchiveFile(this.caseDto);
                 dlg.setTo(iTo);
-                dlg.addAllToClient(this.container.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_CLIENT));
-                dlg.addAllToOpponent(this.container.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT));
-                dlg.addAllToOpponentAttorney(this.container.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_OPPONENTATTORNEY));
+                
+                ArrayList<ArchiveFileAddressesBean> involved=this.container.getInvolvedParties();
+                for(ArchiveFileAddressesBean aab: involved) {
+                    dlg.addParty(aab.getAddressKey(), aab.getReferenceType());
+                }
                 dlg.setAzRecipient(this.txtReference.getText());
                 FrameUtils.centerDialog(dlg, null);
                 dlg.setVisible(true);
@@ -1211,9 +1250,9 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
             ArrayList<AddressBean> faxList = new ArrayList<AddressBean>();
 
         
-            faxList.addAll(this.container.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_CLIENT));
-            faxList.addAll(this.container.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT));
-            faxList.addAll(this.container.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_OPPONENTATTORNEY));
+            faxList.addAll(this.container.getInvolvedPartiesAddress());
+//            faxList.addAll(this.container.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT));
+//            faxList.addAll(this.container.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_OPPONENTATTORNEY));
             
                 SendFaxDialog dlg = new SendFaxDialog(EditorsRegistry.getInstance().getMainWindow(), true, faxList, this.a, this.caseDto.getId());
                 FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());

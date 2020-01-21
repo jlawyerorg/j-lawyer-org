@@ -699,6 +699,7 @@ import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.ui.tagging.AddressTagActionListener;
 import com.jdimension.jlawyer.ui.tagging.TagToggleButton;
 import com.jdimension.jlawyer.ui.tagging.WrapLayout;
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Graphics;
 import java.awt.GridLayout;
@@ -707,6 +708,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Hashtable;
 import java.util.List;
 import javax.swing.AbstractAction;
 import javax.swing.DefaultComboBoxModel;
@@ -735,13 +737,13 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
     public AddressPanel() {
         this.dto = null;
         initComponents();
-        
+
         if (this.getClass().getName().equals(NewAddressPanel.class.getName())) {
             jLabel18.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/Icons2-19.png")));
         } else {
             jLabel18.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/vcard_big.png")));
         }
-        
+
         this.tagPanel.setLayout(new WrapLayout());
         this.cmbSalutation.setRenderer(new OptionGroupListCellRenderer());
         this.cmbComplimentaryClose.setRenderer(new OptionGroupListCellRenderer());
@@ -2253,22 +2255,20 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                 ArchiveFileServiceRemote afRem = locator.lookupArchiveFileServiceRemote();
                 Collection col = afRem.getArchiveFileAddressesForAddress(this.dto.getId());
-                List<ArchiveFileBean> clientFiles = new ArrayList<ArchiveFileBean>();
-                List<ArchiveFileBean> opponentFiles = new ArrayList<ArchiveFileBean>();
-                List<ArchiveFileBean> opponentAttFiles = new ArrayList<ArchiveFileBean>();
+                Hashtable<String, ArrayList<ArchiveFileBean>> casesByPartyType = new Hashtable<String, ArrayList<ArchiveFileBean>>();
+                Hashtable<String, PartyTypeBean> partyTypes = locator.lookupSystemManagementRemote().getPartyTypesTable();
                 for (Object o : col) {
                     ArchiveFileAddressesBean afb = (ArchiveFileAddressesBean) o;
-                    if (afb.getReferenceType() == ArchiveFileAddressesBean.REFERENCETYPE_CLIENT) {
-                        clientFiles.add(afb.getArchiveFileKey());
-                    } else if (afb.getReferenceType() == ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT) {
-                        opponentFiles.add(afb.getArchiveFileKey());
-                    } else if (afb.getReferenceType() == ArchiveFileAddressesBean.REFERENCETYPE_OPPONENTATTORNEY) {
-                        opponentAttFiles.add(afb.getArchiveFileKey());
+                    if (!casesByPartyType.containsKey(afb.getReferenceType().getName())) {
+                        ArrayList<ArchiveFileBean> cases = new ArrayList<ArchiveFileBean>();
+                        casesByPartyType.put(afb.getReferenceType().getName(), cases);
                     }
+                    casesByPartyType.get(afb.getReferenceType().getName()).add(afb.getArchiveFileKey());
+
                 }
-                String html = this.getArchiveFilesAsHTML(clientFiles, opponentFiles, opponentAttFiles);
+                //String html = this.getArchiveFilesAsHTML(casesByPartyType);
                 //this.lblArchiveFilesForAddress.setText(html);
-                this.fillCasesForContactPanel(clientFiles, opponentFiles, opponentAttFiles);
+                this.fillCasesForContactPanel(casesByPartyType, partyTypes);
             } catch (Exception ex) {
                 log.error("Error getting archive files for address", ex);
                 JOptionPane.showMessageDialog(this, "Fehler beim Laden der Akten zur Adresse: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
@@ -2281,10 +2281,18 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
     private void cmdSendEmailActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSendEmailActionPerformed
         SendEmailDialog dlg = new SendEmailDialog(EditorsRegistry.getInstance().getMainWindow(), false);
         dlg.setTo(this.txtEmail.getText());
-        // we do not know what role this person has - so put it as all three types
-        dlg.addToClient(dto);
-        dlg.addToOpponent(dto);
-        dlg.addToOpponentAttorney(dto);
+
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
+
+            // we do not know what role this person has - so put it as all three types
+            Collection<PartyTypeBean> allPartyTypes = locator.lookupSystemManagementRemote().getPartyTypes();
+            for (PartyTypeBean ptb : allPartyTypes) {
+                dlg.addParty(dto, ptb);
+            }
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Fehler beim Ermitteln der Beteiligtentypen: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+        }
 
         FrameUtils.centerDialog(dlg, null);
         dlg.setVisible(true);
@@ -2432,7 +2440,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
                 if (!StringUtils.isEmpty(i.getStreet())) {
                     this.txtStreet.setText(StringUtils.nonEmpty(i.getStreet()) + " " + StringUtils.nonEmpty(i.getStreetNumber()));
                 }
-                
+
                 if (!StringUtils.isEmpty(i.getOfficeName())) {
                     this.txtCompany.setText(StringUtils.nonEmpty(i.getOfficeName()));
                 }
@@ -2461,10 +2469,17 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
 
             SendBeaMessageDialog dlg = new SendBeaMessageDialog(EditorsRegistry.getInstance().getMainWindow(), false);
             dlg.setTo(i);
-            // we do not know what role this person has - so put it as all three types
-            dlg.addToClient(dto);
-            dlg.addToOpponent(dto);
-            dlg.addToOpponentAttorney(dto);
+            try {
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
+
+                // we do not know what role this person has - so put it as all three types
+                Collection<PartyTypeBean> allPartyTypes = locator.lookupSystemManagementRemote().getPartyTypes();
+                for (PartyTypeBean ptb : allPartyTypes) {
+                    dlg.addParty(dto, ptb);
+                }
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, "Fehler beim Ermitteln der Beteiligtentypen: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            }
 
             FrameUtils.centerDialog(dlg, null);
             dlg.setVisible(true);
@@ -2476,34 +2491,34 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
     }//GEN-LAST:event_cmdSendBeaActionPerformed
 
     private void chkEncryptionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkEncryptionActionPerformed
-        
-            String defaultValue=null;
-            if(this.encryptionPwd==null) {
+
+        String defaultValue = null;
+        if (this.encryptionPwd == null) {
             PasswordGenerator passwordGenerator = new PasswordGenerator.PasswordGeneratorBuilder()
                     .useDigits(true)
                     .useLower(true)
                     .useUpper(true)
                     .build();
-                defaultValue = passwordGenerator.generate(8);
-            } else {
-                defaultValue=this.encryptionPwd;
-            }
-            Object newPwd = JOptionPane.showInputDialog(this, "neues Passwort: ", "Verschlüsselungspasswort anlegen", JOptionPane.QUESTION_MESSAGE, null, null, defaultValue);
-            if (newPwd == null) {
-                // do nothing - user cancelled
-                this.cmdNewSmsWithEncryptionPassword.setEnabled(this.chkEncryption!=null);
-                this.chkEncryption.setSelected(this.chkEncryption!=null);
-            } else if("".equalsIgnoreCase(newPwd.toString().trim())) {
-                // reset to "no encryption"
-                this.chkEncryption.setSelected(false);
-                this.cmdNewSmsWithEncryptionPassword.setEnabled(false);
-                this.encryptionPwd=null;
-            } else {
-                this.chkEncryption.setSelected(true);
-                this.cmdNewSmsWithEncryptionPassword.setEnabled(true);
-                this.encryptionPwd = newPwd.toString();
-            }
-        
+            defaultValue = passwordGenerator.generate(8);
+        } else {
+            defaultValue = this.encryptionPwd;
+        }
+        Object newPwd = JOptionPane.showInputDialog(this, "neues Passwort: ", "Verschlüsselungspasswort anlegen", JOptionPane.QUESTION_MESSAGE, null, null, defaultValue);
+        if (newPwd == null) {
+            // do nothing - user cancelled
+            this.cmdNewSmsWithEncryptionPassword.setEnabled(this.chkEncryption != null);
+            this.chkEncryption.setSelected(this.chkEncryption != null);
+        } else if ("".equalsIgnoreCase(newPwd.toString().trim())) {
+            // reset to "no encryption"
+            this.chkEncryption.setSelected(false);
+            this.cmdNewSmsWithEncryptionPassword.setEnabled(false);
+            this.encryptionPwd = null;
+        } else {
+            this.chkEncryption.setSelected(true);
+            this.cmdNewSmsWithEncryptionPassword.setEnabled(true);
+            this.encryptionPwd = newPwd.toString();
+        }
+
     }//GEN-LAST:event_chkEncryptionActionPerformed
 
     private void chkEncryptionStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_chkEncryptionStateChanged
@@ -2560,121 +2575,100 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         }
     }
 
-    private void fillCasesForContactPanel(List<ArchiveFileBean> clientFiles, List<ArchiveFileBean> opponentFiles, List<ArchiveFileBean> opponentAttFiles) {
+    private void fillCasesForContactPanel(Hashtable<String, ArrayList<ArchiveFileBean>> casesByPartyType, Hashtable<String, PartyTypeBean> partyTypes) {
         this.pnlCasesForContact.removeAll();
-        GridLayout layout = new GridLayout(clientFiles.size() + opponentFiles.size() + opponentAttFiles.size(), 1);
+
+        int totalSize = 0;
+        for (ArrayList<ArchiveFileBean> list : casesByPartyType.values()) {
+            totalSize = totalSize + list.size();
+        }
+
+        GridLayout layout = new GridLayout(totalSize, 1);
         this.pnlCasesForContact.setLayout(layout);
         int i = 0;
-        for (ArchiveFileBean aFile : clientFiles) {
-            CaseForContactEntryPanel ep = new CaseForContactEntryPanel(this.getClass().getName());
-            if (i % 2 == 0) {
-                ep.setBackground(ep.getBackground().brighter());
-            }
-            CaseForContactEntry lce = new CaseForContactEntry();
-            lce.setFileNumber(aFile.getFileNumber());
-            lce.setId(aFile.getId());
-            lce.setRole(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/editors/addresses/CaseForContactEntryPanel").getString("role.client"));
-            lce.setName(aFile.getName());
-            lce.setReason(StringUtils.nonEmpty(aFile.getReason()));
-            lce.setArchived(aFile.getArchivedBoolean());
-            ep.setEntry(lce);
+        for (String key : casesByPartyType.keySet()) {
 
-            this.pnlCasesForContact.add(ep);
-            i++;
-            if (i == 25) {
-                layout.setRows(i);
-                return;
-            }
+            ArrayList<ArchiveFileBean> partyFiles = casesByPartyType.get(key);
+            for (ArchiveFileBean aFile : partyFiles) {
+                CaseForContactEntryPanel ep = new CaseForContactEntryPanel(this.getClass().getName());
+                if (i % 2 == 0) {
+                    ep.setBackground(ep.getBackground().brighter());
+                }
+                CaseForContactEntry lce = new CaseForContactEntry();
+                lce.setRoleForeground(new Color(partyTypes.get(key).getColor()));
+                lce.setFileNumber(aFile.getFileNumber());
+                lce.setId(aFile.getId());
+                //lce.setRole(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/editors/addresses/CaseForContactEntryPanel").getString("role.client"));
+                lce.setRole(key);
+                lce.setName(aFile.getName());
+                lce.setReason(StringUtils.nonEmpty(aFile.getReason()));
+                lce.setArchived(aFile.getArchivedBoolean());
+                ep.setEntry(lce);
 
+                this.pnlCasesForContact.add(ep);
+                i++;
+                if (i == 25) {
+                    layout.setRows(i);
+                    return;
+                }
+
+            }
         }
 
-        for (ArchiveFileBean aFile : opponentFiles) {
-            CaseForContactEntryPanel ep = new CaseForContactEntryPanel(this.getClass().getName());
-            if (i % 2 == 0) {
-                ep.setBackground(ep.getBackground().brighter());
-            }
-            CaseForContactEntry lce = new CaseForContactEntry();
-            lce.setFileNumber(aFile.getFileNumber());
-            lce.setId(aFile.getId());
-            lce.setRole(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/editors/addresses/CaseForContactEntryPanel").getString("role.opponent"));
-            lce.setName(aFile.getName());
-            lce.setReason(StringUtils.nonEmpty(aFile.getReason()));
-            lce.setArchived(aFile.getArchivedBoolean());
-            ep.setEntry(lce);
-
-            this.pnlCasesForContact.add(ep);
-            i++;
-            if (i == 25) {
-                layout.setRows(i);
-                return;
-            }
-
-        }
-
-        for (ArchiveFileBean aFile : opponentAttFiles) {
-            CaseForContactEntryPanel ep = new CaseForContactEntryPanel(this.getClass().getName());
-            if (i % 2 == 0) {
-                ep.setBackground(ep.getBackground().brighter());
-            }
-            CaseForContactEntry lce = new CaseForContactEntry();
-            lce.setFileNumber(aFile.getFileNumber());
-            lce.setId(aFile.getId());
-            lce.setRole(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/editors/addresses/CaseForContactEntryPanel").getString("role.third"));
-            lce.setName(aFile.getName());
-            lce.setReason(StringUtils.nonEmpty(aFile.getReason()));
-            lce.setArchived(aFile.getArchivedBoolean());
-            ep.setEntry(lce);
-
-            this.pnlCasesForContact.add(ep);
-            i++;
-            if (i == 25) {
-                layout.setRows(i);
-                return;
-            }
-
-        }
-
+//        for (ArchiveFileBean aFile : opponentFiles) {
+//            CaseForContactEntryPanel ep = new CaseForContactEntryPanel(this.getClass().getName());
+//            if (i % 2 == 0) {
+//                ep.setBackground(ep.getBackground().brighter());
+//            }
+//            CaseForContactEntry lce = new CaseForContactEntry();
+//            lce.setFileNumber(aFile.getFileNumber());
+//            lce.setId(aFile.getId());
+//            lce.setRole(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/editors/addresses/CaseForContactEntryPanel").getString("role.opponent"));
+//            lce.setName(aFile.getName());
+//            lce.setReason(StringUtils.nonEmpty(aFile.getReason()));
+//            lce.setArchived(aFile.getArchivedBoolean());
+//            ep.setEntry(lce);
+//
+//            this.pnlCasesForContact.add(ep);
+//            i++;
+//            if (i == 25) {
+//                layout.setRows(i);
+//                return;
+//            }
+//
+//        }
+//
+//        for (ArchiveFileBean aFile : opponentAttFiles) {
+//            CaseForContactEntryPanel ep = new CaseForContactEntryPanel(this.getClass().getName());
+//            if (i % 2 == 0) {
+//                ep.setBackground(ep.getBackground().brighter());
+//            }
+//            CaseForContactEntry lce = new CaseForContactEntry();
+//            lce.setFileNumber(aFile.getFileNumber());
+//            lce.setId(aFile.getId());
+//            lce.setRole(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/editors/addresses/CaseForContactEntryPanel").getString("role.third"));
+//            lce.setName(aFile.getName());
+//            lce.setReason(StringUtils.nonEmpty(aFile.getReason()));
+//            lce.setArchived(aFile.getArchivedBoolean());
+//            ep.setEntry(lce);
+//
+//            this.pnlCasesForContact.add(ep);
+//            i++;
+//            if (i == 25) {
+//                layout.setRows(i);
+//                return;
+//            }
+//
+//        }
         layout.setRows(i);
     }
 
-    public static String getArchiveFilesAsHTML(List<ArchiveFileBean> clientFiles, List<ArchiveFileBean> opponentFiles, List<ArchiveFileBean> opponentAttFiles) {
+    public static String getArchiveFilesAsHTML(Collection<ArchiveFileBean> partyFiles) {
         StringBuffer html = new StringBuffer();
         html.append("<html><body>");
-        if (clientFiles.size() > 0) {
-            html.append("Der Kontakt ist <b>Mandant</b> in<br/><ul>");
-            for (ArchiveFileBean af : clientFiles) {
-                html.append("<li>");
-                html.append(af.getFileNumber());
-                html.append(" - ");
-                html.append(af.getName());
-                if (af.getReason() != null) {
-                    html.append(" (wegen: ");
-                    html.append(af.getReason());
-                    html.append(")");
-                }
-                html.append("</li>");
-            }
-            html.append("</ul><br/><br/>");
-        }
-        if (opponentFiles.size() > 0) {
-            html.append("Der Kontakt ist <b>Gegner</b> in<br/><ul>");
-            for (ArchiveFileBean af : opponentFiles) {
-                html.append("<li>");
-                html.append(af.getFileNumber());
-                html.append(" - ");
-                html.append(af.getName());
-                if (af.getReason() != null) {
-                    html.append(" (wegen: ");
-                    html.append(af.getReason());
-                    html.append(")");
-                }
-                html.append("</li>");
-            }
-            html.append("</ul><br/><br/>");
-        }
-        if (opponentAttFiles.size() > 0) {
-            html.append("Der Kontakt ist <b>Dritte(r)</b> in<br/><ul>");
-            for (ArchiveFileBean af : opponentAttFiles) {
+        if (partyFiles.size() > 0) {
+            html.append("Der Kontakt ist Beteiligte(r) in<br/><ul>");
+            for (ArchiveFileBean af : partyFiles) {
                 html.append("<li>");
                 html.append(af.getFileNumber());
                 html.append(" - ");
@@ -3008,7 +3002,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
                 addressService.createAddress(this.dto);
             } else {
                 addressService.updateAddress(this.dto);
-                EventBroker eb=EventBroker.getInstance();
+                EventBroker eb = EventBroker.getInstance();
                 eb.publishEvent(new ContactUpdatedEvent(this.dto));
             }
             this.lblHeaderInfo.setText(this.dto.toDisplayName());

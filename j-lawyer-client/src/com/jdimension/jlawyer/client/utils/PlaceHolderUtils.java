@@ -668,6 +668,7 @@ import com.jdimension.jlawyer.documents.PlaceHolders;
 import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.persistence.PartyTypeBean;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -689,7 +690,7 @@ public class PlaceHolderUtils extends PlaceHolders {
 
     }
 
-    public static Hashtable getPlaceHolderValues(Hashtable placeHolders, ArchiveFileBean aFile, List<ArchiveFileAddressesBean> involved, AddressBean cl, AddressBean opp, AddressBean oppAtt, String dictateSign, GenericCalculationTable calculationTable) {
+    public static Hashtable getPlaceHolderValues(Hashtable placeHolders, ArchiveFileBean aFile, List<ArchiveFileAddressesBean> involved, Hashtable<PartyTypeBean,AddressBean> selectedParties, String dictateSign, GenericCalculationTable calculationTable) {
 
         NumberFormat currencyFormat = NumberFormat.getNumberInstance();
         currencyFormat.setMinimumFractionDigits(2);
@@ -775,401 +776,515 @@ public class PlaceHolderUtils extends PlaceHolders {
         }
         
 
-        // client information
-        if (cl != null) {
-            if (placeHolders.containsKey(MANDANT_NAME)) {
-                placeHolders.put(MANDANT_NAME, val(cl.getName()));
+        for(PartyTypeBean ptb: selectedParties.keySet()) {
+            AddressBean selected=selectedParties.get(ptb);
+            
+            if (placeHolders.containsKey(getPlaceHolderForType(_NAME, ptb.getPlaceHolder()))) {
+                placeHolders.put(getPlaceHolderForType(_NAME, ptb.getPlaceHolder()), val(selected.getName()));
             }
-            if (placeHolders.containsKey(MANDANT_VORNAME)) {
-                placeHolders.put(MANDANT_VORNAME, val(cl.getFirstName()));
+            if (placeHolders.containsKey(getPlaceHolderForType(_VORNAME, ptb.getPlaceHolder()))) {
+                placeHolders.put(getPlaceHolderForType(_VORNAME, ptb.getPlaceHolder()), val(selected.getFirstName()));
             }
-            if (placeHolders.containsKey(MANDANT_FIRMA)) {
-                placeHolders.put(MANDANT_FIRMA, val(cl.getCompany()));
+            if (placeHolders.containsKey(getPlaceHolderForType(_FIRMA, ptb.getPlaceHolder()))) {
+                placeHolders.put(getPlaceHolderForType(_FIRMA, ptb.getPlaceHolder()), val(selected.getCompany()));
             }
-            if (placeHolders.containsKey(MANDANT_ABTLG)) {
-                placeHolders.put(MANDANT_ABTLG, val(cl.getDepartment()));
+            if (placeHolders.containsKey(getPlaceHolderForType(_ABTLG, ptb.getPlaceHolder()))) {
+                placeHolders.put(getPlaceHolderForType(_ABTLG, ptb.getPlaceHolder()), val(selected.getDepartment()));
             }
-            if (placeHolders.containsKey(MANDANT_TITEL)) {
-                placeHolders.put(MANDANT_TITEL, val(cl.getTitle()));
+            if (placeHolders.containsKey(getPlaceHolderForType(_TITEL, ptb.getPlaceHolder()))) {
+                placeHolders.put(getPlaceHolderForType(_TITEL, ptb.getPlaceHolder()), val(selected.getTitle()));
             }
-            if (placeHolders.containsKey(MANDANT_ANREDE)) {
-                placeHolders.put(MANDANT_ANREDE, val(cl.getSalutation()));
+            if (placeHolders.containsKey(getPlaceHolderForType(_ANREDE, ptb.getPlaceHolder()))) {
+                placeHolders.put(getPlaceHolderForType(_ANREDE, ptb.getPlaceHolder()), val(selected.getSalutation()));
             }
-            if (placeHolders.containsKey(MANDANT_NACHTEXT)) {
-                placeHolders.put(MANDANT_NACHTEXT, val(cl.getComplimentaryClose()));
+            if (placeHolders.containsKey(getPlaceHolderForType(_NACHTEXT, ptb.getPlaceHolder()))) {
+                placeHolders.put(getPlaceHolderForType(_NACHTEXT, ptb.getPlaceHolder()), val(selected.getComplimentaryClose()));
             }
-            if (placeHolders.containsKey(MANDANT_STRASSE)) {
-                placeHolders.put(MANDANT_STRASSE, val(cl.getStreet()));
+            if (placeHolders.containsKey(getPlaceHolderForType(_STRASSE, ptb.getPlaceHolder()))) {
+                placeHolders.put(getPlaceHolderForType(_STRASSE, ptb.getPlaceHolder()), val(selected.getStreet()));
             }
-            if (placeHolders.containsKey(MANDANT_ORT)) {
-                placeHolders.put(MANDANT_ORT, val(cl.getCity()));
+            if (placeHolders.containsKey(getPlaceHolderForType(_ORT, ptb.getPlaceHolder()))) {
+                placeHolders.put(getPlaceHolderForType(_ORT, ptb.getPlaceHolder()), val(selected.getCity()));
             }
-            if (placeHolders.containsKey(MANDANT_PLZ)) {
-                placeHolders.put(MANDANT_PLZ, val(cl.getZipCode()));
+            if (placeHolders.containsKey(getPlaceHolderForType(_PLZ, ptb.getPlaceHolder()))) {
+                placeHolders.put(getPlaceHolderForType(_PLZ, ptb.getPlaceHolder()), val(selected.getZipCode()));
             }
-            if (placeHolders.containsKey(MANDANT_LAND)) {
-                placeHolders.put(MANDANT_LAND, val(cl.getCountry()));
+            if (placeHolders.containsKey(getPlaceHolderForType(_LAND, ptb.getPlaceHolder()))) {
+                placeHolders.put(getPlaceHolderForType(_LAND, ptb.getPlaceHolder()), val(selected.getCountry()));
             }
-            if (placeHolders.containsKey(MANDANT_TEL)) {
-                placeHolders.put(MANDANT_TEL, val(cl.getPhone()));
+            if (placeHolders.containsKey(getPlaceHolderForType(_TEL, ptb.getPlaceHolder()))) {
+                placeHolders.put(getPlaceHolderForType(_TEL, ptb.getPlaceHolder()), val(selected.getPhone()));
             }
-            if (placeHolders.containsKey(MANDANT_MOBIL)) {
-                placeHolders.put(MANDANT_MOBIL, val(cl.getMobile()));
+            if (placeHolders.containsKey(getPlaceHolderForType(_MOBIL, ptb.getPlaceHolder()))) {
+                placeHolders.put(getPlaceHolderForType(_MOBIL, ptb.getPlaceHolder()), val(selected.getMobile()));
             }
-            if (placeHolders.containsKey(MANDANT_FAX)) {
-                placeHolders.put(MANDANT_FAX, val(cl.getFax()));
+            if (placeHolders.containsKey(getPlaceHolderForType(_FAX, ptb.getPlaceHolder()))) {
+                placeHolders.put(getPlaceHolderForType(_FAX, ptb.getPlaceHolder()), val(selected.getFax()));
             }
-            if (placeHolders.containsKey(MANDANT_EMAIL)) {
-                placeHolders.put(MANDANT_EMAIL, val(cl.getEmail()));
+            if (placeHolders.containsKey(getPlaceHolderForType(_EMAIL, ptb.getPlaceHolder()))) {
+                placeHolders.put(getPlaceHolderForType(_EMAIL, ptb.getPlaceHolder()), val(selected.getEmail()));
             }
-            if (placeHolders.containsKey(MANDANT_WWW)) {
-                placeHolders.put(MANDANT_WWW, val(cl.getWebsite()));
+            if (placeHolders.containsKey(getPlaceHolderForType(_WWW, ptb.getPlaceHolder()))) {
+                placeHolders.put(getPlaceHolderForType(_WWW, ptb.getPlaceHolder()), val(selected.getWebsite()));
             }
-            if (placeHolders.containsKey(MANDANT_BANK)) {
-                placeHolders.put(MANDANT_BANK, val(cl.getBankName()));
+            if (placeHolders.containsKey(getPlaceHolderForType(_BANK, ptb.getPlaceHolder()))) {
+                placeHolders.put(getPlaceHolderForType(_BANK, ptb.getPlaceHolder()), val(selected.getBankName()));
             }
-            if (placeHolders.containsKey(MANDANT_BLZ)) {
-                placeHolders.put(MANDANT_BLZ, val(cl.getBankCode()));
+            if (placeHolders.containsKey(getPlaceHolderForType(_BLZ, ptb.getPlaceHolder()))) {
+                placeHolders.put(getPlaceHolderForType(_BLZ, ptb.getPlaceHolder()), val(selected.getBankCode()));
             }
-            if (placeHolders.containsKey(MANDANT_KONTONR)) {
-                placeHolders.put(MANDANT_KONTONR, val(cl.getBankAccount()));
+            if (placeHolders.containsKey(getPlaceHolderForType(_KONTONR, ptb.getPlaceHolder()))) {
+                placeHolders.put(getPlaceHolderForType(_KONTONR, ptb.getPlaceHolder()), val(selected.getBankAccount()));
             }
-            if (placeHolders.containsKey(MANDANT_RECHTSSCHUTZ)) {
-                placeHolders.put(MANDANT_RECHTSSCHUTZ, val(cl.getInsuranceNumber()));
+            if (placeHolders.containsKey(getPlaceHolderForType(_RECHTSSCHUTZ, ptb.getPlaceHolder()))) {
+                placeHolders.put(getPlaceHolderForType(_RECHTSSCHUTZ, ptb.getPlaceHolder()), val(selected.getInsuranceNumber()));
             }
-            if (placeHolders.containsKey(MANDANT_VRECHTSSCHUTZ)) {
-                placeHolders.put(MANDANT_VRECHTSSCHUTZ, val(cl.getTrafficInsuranceNumber()));
+            if (placeHolders.containsKey(getPlaceHolderForType(_VRECHTSSCHUTZ, ptb.getPlaceHolder()))) {
+                placeHolders.put(getPlaceHolderForType(_VRECHTSSCHUTZ, ptb.getPlaceHolder()), val(selected.getTrafficInsuranceNumber()));
             }
-            if (placeHolders.containsKey(MANDANT_KFZVERS)) {
-                placeHolders.put(MANDANT_KFZVERS, val(cl.getMotorInsuranceNumber()));
+            if (placeHolders.containsKey(getPlaceHolderForType(_KFZVERS, ptb.getPlaceHolder()))) {
+                placeHolders.put(getPlaceHolderForType(_KFZVERS, ptb.getPlaceHolder()), val(selected.getMotorInsuranceNumber()));
             }
-            if (placeHolders.containsKey(MANDANT_EIGENE1)) {
-                placeHolders.put(MANDANT_EIGENE1, val(cl.getCustom1()));
+            if (placeHolders.containsKey(getPlaceHolderForType(_EIGENE1, ptb.getPlaceHolder()))) {
+                placeHolders.put(getPlaceHolderForType(_EIGENE1, ptb.getPlaceHolder()), val(selected.getCustom1()));
             }
-            if (placeHolders.containsKey(MANDANT_EIGENE2)) {
-                placeHolders.put(MANDANT_EIGENE2, val(cl.getCustom2()));
+            if (placeHolders.containsKey(getPlaceHolderForType(_EIGENE2, ptb.getPlaceHolder()))) {
+                placeHolders.put(getPlaceHolderForType(_EIGENE2, ptb.getPlaceHolder()), val(selected.getCustom2()));
             }
-            if (placeHolders.containsKey(MANDANT_EIGENE3)) {
-                placeHolders.put(MANDANT_EIGENE3, val(cl.getCustom3()));
+            if (placeHolders.containsKey(getPlaceHolderForType(_EIGENE3, ptb.getPlaceHolder()))) {
+                placeHolders.put(getPlaceHolderForType(_EIGENE3, ptb.getPlaceHolder()), val(selected.getCustom3()));
             }
-            if (placeHolders.containsKey(MANDANT_GEB)) {
-                placeHolders.put(MANDANT_GEB, val(cl.getBirthDate()));
+            if (placeHolders.containsKey(getPlaceHolderForType(_GEB, ptb.getPlaceHolder()))) {
+                placeHolders.put(getPlaceHolderForType(_GEB, ptb.getPlaceHolder()), val(selected.getBirthDate()));
             }
-            ArchiveFileAddressesBean involvement = getInvolvement(cl, involved, ArchiveFileAddressesBean.REFERENCETYPE_CLIENT);
+            
+            
+            
+            //ArchiveFileAddressesBean involvement = getInvolvement(cl, involved, ArchiveFileAddressesBean.REFERENCETYPE_CLIENT);
+            ArchiveFileAddressesBean involvement = getInvolvement(selected, involved, null);
             if (involvement != null) {
-                if (placeHolders.containsKey(MANDANT_AKTE_KONTAKT)) {
-                    placeHolders.put(MANDANT_AKTE_KONTAKT, val(involvement.getContact()));
+                if (placeHolders.containsKey(getPlaceHolderForType(_AKTE_KONTAKT, ptb.getPlaceHolder()))) {
+                    placeHolders.put(getPlaceHolderForType(_AKTE_KONTAKT, ptb.getPlaceHolder()), val(involvement.getContact()));
                 }
-                if (placeHolders.containsKey(MANDANT_AKTE_ZEICHEN)) {
-                    placeHolders.put(MANDANT_AKTE_ZEICHEN, val(involvement.getReference()));
+                if (placeHolders.containsKey(getPlaceHolderForType(_AKTE_ZEICHEN, ptb.getPlaceHolder()))) {
+                    placeHolders.put(getPlaceHolderForType(_AKTE_ZEICHEN, ptb.getPlaceHolder()), val(involvement.getReference()));
                 }
-                if (placeHolders.containsKey(MANDANT_AKTE_EIGENE1)) {
-                    placeHolders.put(MANDANT_AKTE_EIGENE1, val(involvement.getCustom1()));
+                if (placeHolders.containsKey(getPlaceHolderForType(_AKTE_EIGENE1, ptb.getPlaceHolder()))) {
+                    placeHolders.put(getPlaceHolderForType(_AKTE_EIGENE1, ptb.getPlaceHolder()), val(involvement.getCustom1()));
                 }
-                if (placeHolders.containsKey(MANDANT_AKTE_EIGENE2)) {
-                    placeHolders.put(MANDANT_AKTE_EIGENE2, val(involvement.getCustom2()));
+                if (placeHolders.containsKey(getPlaceHolderForType(_AKTE_EIGENE2, ptb.getPlaceHolder()))) {
+                    placeHolders.put(getPlaceHolderForType(_AKTE_EIGENE2, ptb.getPlaceHolder()), val(involvement.getCustom2()));
                 }
-                if (placeHolders.containsKey(MANDANT_AKTE_EIGENE3)) {
-                    placeHolders.put(MANDANT_AKTE_EIGENE3, val(involvement.getCustom3()));
+                if (placeHolders.containsKey(getPlaceHolderForType(_AKTE_EIGENE3, ptb.getPlaceHolder()))) {
+                    placeHolders.put(getPlaceHolderForType(_AKTE_EIGENE3, ptb.getPlaceHolder()), val(involvement.getCustom3()));
                 }
             }
-
+            
+            
         }
-//        } else {
-//            placeHolders.put(MANDANT_NAME, "");
-//            placeHolders.put(MANDANT_VORNAME, "");
-//            placeHolders.put(MANDANT_FIRMA, "");
-//            placeHolders.put(MANDANT_ANREDE, "");
-//            placeHolders.put(MANDANT_NACHTEXT, "");
-//            placeHolders.put(MANDANT_STRASSE, "");
-//            placeHolders.put(MANDANT_ORT, "");
-//            placeHolders.put(MANDANT_PLZ, "");
-//            placeHolders.put(MANDANT_LAND, "");
-//            placeHolders.put(MANDANT_TEL, "");
-//            placeHolders.put(MANDANT_FAX, "");
-//            placeHolders.put(MANDANT_EMAIL, "");
-//            placeHolders.put(MANDANT_WWW, "");
-//            placeHolders.put(MANDANT_BANK, "");
-//            placeHolders.put(MANDANT_BLZ, "");
-//            placeHolders.put(MANDANT_KONTONR, "");
-//            placeHolders.put(MANDANT_RECHTSSCHUTZ, "");
+//        
+//        
+//        // client information
+//        if (cl != null) {
+//            if (placeHolders.containsKey(MANDANT_NAME)) {
+//                placeHolders.put(MANDANT_NAME, ptb.getPlaceHolder()), val(selected.getName()));
+//            }
+//            if (placeHolders.containsKey(MANDANT_VORNAME)) {
+//                placeHolders.put(MANDANT_VORNAME, val(cl.getFirstName()));
+//            }
+//            if (placeHolders.containsKey(MANDANT_FIRMA)) {
+//                placeHolders.put(MANDANT_FIRMA, val(cl.getCompany()));
+//            }
+//            if (placeHolders.containsKey(MANDANT_ABTLG)) {
+//                placeHolders.put(MANDANT_ABTLG, val(cl.getDepartment()));
+//            }
+//            if (placeHolders.containsKey(MANDANT_TITEL)) {
+//                placeHolders.put(MANDANT_TITEL, val(cl.getTitle()));
+//            }
+//            if (placeHolders.containsKey(MANDANT_ANREDE)) {
+//                placeHolders.put(MANDANT_ANREDE, val(cl.getSalutation()));
+//            }
+//            if (placeHolders.containsKey(MANDANT_NACHTEXT)) {
+//                placeHolders.put(MANDANT_NACHTEXT, val(cl.getComplimentaryClose()));
+//            }
+//            if (placeHolders.containsKey(MANDANT_STRASSE)) {
+//                placeHolders.put(MANDANT_STRASSE, val(cl.getStreet()));
+//            }
+//            if (placeHolders.containsKey(MANDANT_ORT)) {
+//                placeHolders.put(MANDANT_ORT, val(cl.getCity()));
+//            }
+//            if (placeHolders.containsKey(MANDANT_PLZ)) {
+//                placeHolders.put(MANDANT_PLZ, val(cl.getZipCode()));
+//            }
+//            if (placeHolders.containsKey(MANDANT_LAND)) {
+//                placeHolders.put(MANDANT_LAND, val(cl.getCountry()));
+//            }
+//            if (placeHolders.containsKey(MANDANT_TEL)) {
+//                placeHolders.put(MANDANT_TEL, val(cl.getPhone()));
+//            }
+//            if (placeHolders.containsKey(MANDANT_MOBIL)) {
+//                placeHolders.put(MANDANT_MOBIL, val(cl.getMobile()));
+//            }
+//            if (placeHolders.containsKey(MANDANT_FAX)) {
+//                placeHolders.put(MANDANT_FAX, val(cl.getFax()));
+//            }
+//            if (placeHolders.containsKey(MANDANT_EMAIL)) {
+//                placeHolders.put(MANDANT_EMAIL, val(cl.getEmail()));
+//            }
+//            if (placeHolders.containsKey(MANDANT_WWW)) {
+//                placeHolders.put(MANDANT_WWW, val(cl.getWebsite()));
+//            }
+//            if (placeHolders.containsKey(MANDANT_BANK)) {
+//                placeHolders.put(MANDANT_BANK, val(cl.getBankName()));
+//            }
+//            if (placeHolders.containsKey(MANDANT_BLZ)) {
+//                placeHolders.put(MANDANT_BLZ, val(cl.getBankCode()));
+//            }
+//            if (placeHolders.containsKey(MANDANT_KONTONR)) {
+//                placeHolders.put(MANDANT_KONTONR, val(cl.getBankAccount()));
+//            }
+//            if (placeHolders.containsKey(MANDANT_RECHTSSCHUTZ)) {
+//                placeHolders.put(MANDANT_RECHTSSCHUTZ, val(cl.getInsuranceNumber()));
+//            }
+//            if (placeHolders.containsKey(MANDANT_VRECHTSSCHUTZ)) {
+//                placeHolders.put(MANDANT_VRECHTSSCHUTZ, val(cl.getTrafficInsuranceNumber()));
+//            }
+//            if (placeHolders.containsKey(MANDANT_KFZVERS)) {
+//                placeHolders.put(MANDANT_KFZVERS, val(cl.getMotorInsuranceNumber()));
+//            }
+//            if (placeHolders.containsKey(MANDANT_EIGENE1)) {
+//                placeHolders.put(MANDANT_EIGENE1, val(cl.getCustom1()));
+//            }
+//            if (placeHolders.containsKey(MANDANT_EIGENE2)) {
+//                placeHolders.put(MANDANT_EIGENE2, val(cl.getCustom2()));
+//            }
+//            if (placeHolders.containsKey(MANDANT_EIGENE3)) {
+//                placeHolders.put(MANDANT_EIGENE3, val(cl.getCustom3()));
+//            }
+//            if (placeHolders.containsKey(MANDANT_GEB)) {
+//                placeHolders.put(MANDANT_GEB, val(cl.getBirthDate()));
+//            }
+//            
+//            
+//            
+//            //ArchiveFileAddressesBean involvement = getInvolvement(cl, involved, ArchiveFileAddressesBean.REFERENCETYPE_CLIENT);
+//            ArchiveFileAddressesBean involvement = getInvolvement(cl, involved, null);
+//            if (involvement != null) {
+//                if (placeHolders.containsKey(MANDANT_AKTE_KONTAKT)) {
+//                    placeHolders.put(MANDANT_AKTE_KONTAKT, val(involvement.getContact()));
+//                }
+//                if (placeHolders.containsKey(MANDANT_AKTE_ZEICHEN)) {
+//                    placeHolders.put(MANDANT_AKTE_ZEICHEN, val(involvement.getReference()));
+//                }
+//                if (placeHolders.containsKey(MANDANT_AKTE_EIGENE1)) {
+//                    placeHolders.put(MANDANT_AKTE_EIGENE1, val(involvement.getCustom1()));
+//                }
+//                if (placeHolders.containsKey(MANDANT_AKTE_EIGENE2)) {
+//                    placeHolders.put(MANDANT_AKTE_EIGENE2, val(involvement.getCustom2()));
+//                }
+//                if (placeHolders.containsKey(MANDANT_AKTE_EIGENE3)) {
+//                    placeHolders.put(MANDANT_AKTE_EIGENE3, val(involvement.getCustom3()));
+//                }
+//            }
+//
 //        }
-
-        // opponent information
-        if (opp != null) {
-            if (placeHolders.containsKey(GEGNER_NAME)) {
-                placeHolders.put(GEGNER_NAME, val(opp.getName()));
-            }
-            if (placeHolders.containsKey(GEGNER_VORNAME)) {
-                placeHolders.put(GEGNER_VORNAME, val(opp.getFirstName()));
-            }
-            if (placeHolders.containsKey(GEGNER_FIRMA)) {
-                placeHolders.put(GEGNER_FIRMA, val(opp.getCompany()));
-            }
-            if (placeHolders.containsKey(GEGNER_ABTLG)) {
-                placeHolders.put(GEGNER_ABTLG, val(opp.getDepartment()));
-            }
-            if (placeHolders.containsKey(GEGNER_TITEL)) {
-                placeHolders.put(GEGNER_TITEL, val(opp.getTitle()));
-            }
-            if (placeHolders.containsKey(GEGNER_ANREDE)) {
-                placeHolders.put(GEGNER_ANREDE, val(opp.getSalutation()));
-            }
-            if (placeHolders.containsKey(GEGNER_NACHTEXT)) {
-                placeHolders.put(GEGNER_NACHTEXT, val(opp.getComplimentaryClose()));
-            }
-            if (placeHolders.containsKey(GEGNER_STRASSE)) {
-                placeHolders.put(GEGNER_STRASSE, val(opp.getStreet()));
-            }
-            if (placeHolders.containsKey(GEGNER_ORT)) {
-                placeHolders.put(GEGNER_ORT, val(opp.getCity()));
-            }
-            if (placeHolders.containsKey(GEGNER_PLZ)) {
-                placeHolders.put(GEGNER_PLZ, val(opp.getZipCode()));
-            }
-            if (placeHolders.containsKey(GEGNER_LAND)) {
-                placeHolders.put(GEGNER_LAND, val(opp.getCountry()));
-            }
-            if (placeHolders.containsKey(GEGNER_TEL)) {
-                placeHolders.put(GEGNER_TEL, val(opp.getPhone()));
-            }
-            if (placeHolders.containsKey(GEGNER_MOBIL)) {
-                placeHolders.put(GEGNER_MOBIL, val(opp.getMobile()));
-            }
-            if (placeHolders.containsKey(GEGNER_FAX)) {
-                placeHolders.put(GEGNER_FAX, val(opp.getFax()));
-            }
-            if (placeHolders.containsKey(GEGNER_EMAIL)) {
-                placeHolders.put(GEGNER_EMAIL, val(opp.getEmail()));
-            }
-            if (placeHolders.containsKey(GEGNER_WWW)) {
-                placeHolders.put(GEGNER_WWW, val(opp.getWebsite()));
-            }
-            if (placeHolders.containsKey(GEGNER_BANK)) {
-                placeHolders.put(GEGNER_BANK, val(opp.getBankName()));
-            }
-            if (placeHolders.containsKey(GEGNER_BLZ)) {
-                placeHolders.put(GEGNER_BLZ, val(opp.getBankCode()));
-            }
-            if (placeHolders.containsKey(GEGNER_KONTONR)) {
-                placeHolders.put(GEGNER_KONTONR, val(opp.getBankAccount()));
-            }
-            if (placeHolders.containsKey(GEGNER_RECHTSSCHUTZ)) {
-                placeHolders.put(GEGNER_RECHTSSCHUTZ, val(opp.getInsuranceNumber()));
-            }
-            if (placeHolders.containsKey(GEGNER_VRECHTSSCHUTZ)) {
-                placeHolders.put(GEGNER_VRECHTSSCHUTZ, val(opp.getTrafficInsuranceNumber()));
-            }
-            if (placeHolders.containsKey(GEGNER_KFZVERS)) {
-                placeHolders.put(GEGNER_KFZVERS, val(opp.getMotorInsuranceNumber()));
-            }
-            if (placeHolders.containsKey(GEGNER_EIGENE1)) {
-                placeHolders.put(GEGNER_EIGENE1, val(opp.getCustom1()));
-            }
-            if (placeHolders.containsKey(GEGNER_EIGENE2)) {
-                placeHolders.put(GEGNER_EIGENE2, val(opp.getCustom2()));
-            }
-            if (placeHolders.containsKey(GEGNER_EIGENE3)) {
-                placeHolders.put(GEGNER_EIGENE3, val(opp.getCustom3()));
-            }
-            if (placeHolders.containsKey(GEGNER_GEB)) {
-                placeHolders.put(GEGNER_GEB, val(opp.getBirthDate()));
-            }
-            ArchiveFileAddressesBean involvement = getInvolvement(opp, involved, ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT);
-            if (involvement != null) {
-                if (placeHolders.containsKey(GEGNER_AKTE_KONTAKT)) {
-                    placeHolders.put(GEGNER_AKTE_KONTAKT, val(involvement.getContact()));
-                }
-                if (placeHolders.containsKey(GEGNER_AKTE_ZEICHEN)) {
-                    placeHolders.put(GEGNER_AKTE_ZEICHEN, val(involvement.getReference()));
-                }
-                if (placeHolders.containsKey(GEGNER_AKTE_EIGENE1)) {
-                    placeHolders.put(GEGNER_AKTE_EIGENE1, val(involvement.getCustom1()));
-                }
-                if (placeHolders.containsKey(GEGNER_AKTE_EIGENE2)) {
-                    placeHolders.put(GEGNER_AKTE_EIGENE2, val(involvement.getCustom2()));
-                }
-                if (placeHolders.containsKey(GEGNER_AKTE_EIGENE3)) {
-                    placeHolders.put(GEGNER_AKTE_EIGENE3, val(involvement.getCustom3()));
-                }
-            }
-        }
-//        } else {
-//            placeHolders.put(GEGNER_NAME, "");
-//            placeHolders.put(GEGNER_VORNAME, "");
-//            placeHolders.put(GEGNER_FIRMA, "");
-//            placeHolders.put(GEGNER_ANREDE, "");
-//            placeHolders.put(GEGNER_NACHTEXT, "");
-//            placeHolders.put(GEGNER_STRASSE, "");
-//            placeHolders.put(GEGNER_ORT, "");
-//            placeHolders.put(GEGNER_PLZ, "");
-//            placeHolders.put(GEGNER_LAND, "");
-//            placeHolders.put(GEGNER_TEL, "");
-//            placeHolders.put(GEGNER_FAX, "");
-//            placeHolders.put(GEGNER_EMAIL, "");
-//            placeHolders.put(GEGNER_WWW, "");
-//            placeHolders.put(GEGNER_BANK, "");
-//            placeHolders.put(GEGNER_BLZ, "");
-//            placeHolders.put(GEGNER_KONTONR, "");
-//            placeHolders.put(GEGNER_RECHTSSCHUTZ, "");
+////        } else {
+////            placeHolders.put(MANDANT_NAME, "");
+////            placeHolders.put(MANDANT_VORNAME, "");
+////            placeHolders.put(MANDANT_FIRMA, "");
+////            placeHolders.put(MANDANT_ANREDE, "");
+////            placeHolders.put(MANDANT_NACHTEXT, "");
+////            placeHolders.put(MANDANT_STRASSE, "");
+////            placeHolders.put(MANDANT_ORT, "");
+////            placeHolders.put(MANDANT_PLZ, "");
+////            placeHolders.put(MANDANT_LAND, "");
+////            placeHolders.put(MANDANT_TEL, "");
+////            placeHolders.put(MANDANT_FAX, "");
+////            placeHolders.put(MANDANT_EMAIL, "");
+////            placeHolders.put(MANDANT_WWW, "");
+////            placeHolders.put(MANDANT_BANK, "");
+////            placeHolders.put(MANDANT_BLZ, "");
+////            placeHolders.put(MANDANT_KONTONR, "");
+////            placeHolders.put(MANDANT_RECHTSSCHUTZ, "");
+////        }
+//
+//        // opponent information
+//        if (opp != null) {
+//            if (placeHolders.containsKey(GEGNER_NAME)) {
+//                placeHolders.put(GEGNER_NAME, val(opp.getName()));
+//            }
+//            if (placeHolders.containsKey(GEGNER_VORNAME)) {
+//                placeHolders.put(GEGNER_VORNAME, val(opp.getFirstName()));
+//            }
+//            if (placeHolders.containsKey(GEGNER_FIRMA)) {
+//                placeHolders.put(GEGNER_FIRMA, val(opp.getCompany()));
+//            }
+//            if (placeHolders.containsKey(GEGNER_ABTLG)) {
+//                placeHolders.put(GEGNER_ABTLG, val(opp.getDepartment()));
+//            }
+//            if (placeHolders.containsKey(GEGNER_TITEL)) {
+//                placeHolders.put(GEGNER_TITEL, val(opp.getTitle()));
+//            }
+//            if (placeHolders.containsKey(GEGNER_ANREDE)) {
+//                placeHolders.put(GEGNER_ANREDE, val(opp.getSalutation()));
+//            }
+//            if (placeHolders.containsKey(GEGNER_NACHTEXT)) {
+//                placeHolders.put(GEGNER_NACHTEXT, val(opp.getComplimentaryClose()));
+//            }
+//            if (placeHolders.containsKey(GEGNER_STRASSE)) {
+//                placeHolders.put(GEGNER_STRASSE, val(opp.getStreet()));
+//            }
+//            if (placeHolders.containsKey(GEGNER_ORT)) {
+//                placeHolders.put(GEGNER_ORT, val(opp.getCity()));
+//            }
+//            if (placeHolders.containsKey(GEGNER_PLZ)) {
+//                placeHolders.put(GEGNER_PLZ, val(opp.getZipCode()));
+//            }
+//            if (placeHolders.containsKey(GEGNER_LAND)) {
+//                placeHolders.put(GEGNER_LAND, val(opp.getCountry()));
+//            }
+//            if (placeHolders.containsKey(GEGNER_TEL)) {
+//                placeHolders.put(GEGNER_TEL, val(opp.getPhone()));
+//            }
+//            if (placeHolders.containsKey(GEGNER_MOBIL)) {
+//                placeHolders.put(GEGNER_MOBIL, val(opp.getMobile()));
+//            }
+//            if (placeHolders.containsKey(GEGNER_FAX)) {
+//                placeHolders.put(GEGNER_FAX, val(opp.getFax()));
+//            }
+//            if (placeHolders.containsKey(GEGNER_EMAIL)) {
+//                placeHolders.put(GEGNER_EMAIL, val(opp.getEmail()));
+//            }
+//            if (placeHolders.containsKey(GEGNER_WWW)) {
+//                placeHolders.put(GEGNER_WWW, val(opp.getWebsite()));
+//            }
+//            if (placeHolders.containsKey(GEGNER_BANK)) {
+//                placeHolders.put(GEGNER_BANK, val(opp.getBankName()));
+//            }
+//            if (placeHolders.containsKey(GEGNER_BLZ)) {
+//                placeHolders.put(GEGNER_BLZ, val(opp.getBankCode()));
+//            }
+//            if (placeHolders.containsKey(GEGNER_KONTONR)) {
+//                placeHolders.put(GEGNER_KONTONR, val(opp.getBankAccount()));
+//            }
+//            if (placeHolders.containsKey(GEGNER_RECHTSSCHUTZ)) {
+//                placeHolders.put(GEGNER_RECHTSSCHUTZ, val(opp.getInsuranceNumber()));
+//            }
+//            if (placeHolders.containsKey(GEGNER_VRECHTSSCHUTZ)) {
+//                placeHolders.put(GEGNER_VRECHTSSCHUTZ, val(opp.getTrafficInsuranceNumber()));
+//            }
+//            if (placeHolders.containsKey(GEGNER_KFZVERS)) {
+//                placeHolders.put(GEGNER_KFZVERS, val(opp.getMotorInsuranceNumber()));
+//            }
+//            if (placeHolders.containsKey(GEGNER_EIGENE1)) {
+//                placeHolders.put(GEGNER_EIGENE1, val(opp.getCustom1()));
+//            }
+//            if (placeHolders.containsKey(GEGNER_EIGENE2)) {
+//                placeHolders.put(GEGNER_EIGENE2, val(opp.getCustom2()));
+//            }
+//            if (placeHolders.containsKey(GEGNER_EIGENE3)) {
+//                placeHolders.put(GEGNER_EIGENE3, val(opp.getCustom3()));
+//            }
+//            if (placeHolders.containsKey(GEGNER_GEB)) {
+//                placeHolders.put(GEGNER_GEB, val(opp.getBirthDate()));
+//            }
+//            //ArchiveFileAddressesBean involvement = getInvolvement(opp, involved, ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT);
+//            ArchiveFileAddressesBean involvement = getInvolvement(cl, involved, null);
+//            if (involvement != null) {
+//                if (placeHolders.containsKey(GEGNER_AKTE_KONTAKT)) {
+//                    placeHolders.put(GEGNER_AKTE_KONTAKT, val(involvement.getContact()));
+//                }
+//                if (placeHolders.containsKey(GEGNER_AKTE_ZEICHEN)) {
+//                    placeHolders.put(GEGNER_AKTE_ZEICHEN, val(involvement.getReference()));
+//                }
+//                if (placeHolders.containsKey(GEGNER_AKTE_EIGENE1)) {
+//                    placeHolders.put(GEGNER_AKTE_EIGENE1, val(involvement.getCustom1()));
+//                }
+//                if (placeHolders.containsKey(GEGNER_AKTE_EIGENE2)) {
+//                    placeHolders.put(GEGNER_AKTE_EIGENE2, val(involvement.getCustom2()));
+//                }
+//                if (placeHolders.containsKey(GEGNER_AKTE_EIGENE3)) {
+//                    placeHolders.put(GEGNER_AKTE_EIGENE3, val(involvement.getCustom3()));
+//                }
+//            }
 //        }
-
-        // opponent attorney information
-        if (oppAtt != null) {
-            if (placeHolders.containsKey(DRITTE_NAME)) {
-                placeHolders.put(DRITTE_NAME, val(oppAtt.getName()));
-            }
-            if (placeHolders.containsKey(DRITTE_VORNAME)) {
-                placeHolders.put(DRITTE_VORNAME, val(oppAtt.getFirstName()));
-            }
-            if (placeHolders.containsKey(DRITTE_FIRMA)) {
-                placeHolders.put(DRITTE_FIRMA, val(oppAtt.getCompany()));
-            }
-            if (placeHolders.containsKey(DRITTE_ABTLG)) {
-                placeHolders.put(DRITTE_ABTLG, val(oppAtt.getDepartment()));
-            }
-            if (placeHolders.containsKey(DRITTE_TITEL)) {
-                placeHolders.put(DRITTE_TITEL, val(oppAtt.getTitle()));
-            }
-            if (placeHolders.containsKey(DRITTE_ANREDE)) {
-                placeHolders.put(DRITTE_ANREDE, val(oppAtt.getSalutation()));
-            }
-            if (placeHolders.containsKey(DRITTE_NACHTEXT)) {
-                placeHolders.put(DRITTE_NACHTEXT, val(oppAtt.getComplimentaryClose()));
-            }
-            if (placeHolders.containsKey(DRITTE_STRASSE)) {
-                placeHolders.put(DRITTE_STRASSE, val(oppAtt.getStreet()));
-            }
-            if (placeHolders.containsKey(DRITTE_ORT)) {
-                placeHolders.put(DRITTE_ORT, val(oppAtt.getCity()));
-            }
-            if (placeHolders.containsKey(DRITTE_PLZ)) {
-                placeHolders.put(DRITTE_PLZ, val(oppAtt.getZipCode()));
-            }
-            if (placeHolders.containsKey(DRITTE_LAND)) {
-                placeHolders.put(DRITTE_LAND, val(oppAtt.getCountry()));
-            }
-            if (placeHolders.containsKey(DRITTE_TEL)) {
-                placeHolders.put(DRITTE_TEL, val(oppAtt.getPhone()));
-            }
-            if (placeHolders.containsKey(DRITTE_MOBIL)) {
-                placeHolders.put(DRITTE_MOBIL, val(oppAtt.getMobile()));
-            }
-            if (placeHolders.containsKey(DRITTE_FAX)) {
-                placeHolders.put(DRITTE_FAX, val(oppAtt.getFax()));
-            }
-            if (placeHolders.containsKey(DRITTE_EMAIL)) {
-                placeHolders.put(DRITTE_EMAIL, val(oppAtt.getEmail()));
-            }
-            if (placeHolders.containsKey(DRITTE_WWW)) {
-                placeHolders.put(DRITTE_WWW, val(oppAtt.getWebsite()));
-            }
-            if (placeHolders.containsKey(DRITTE_BANK)) {
-                placeHolders.put(DRITTE_BANK, val(oppAtt.getBankName()));
-            }
-            if (placeHolders.containsKey(DRITTE_BLZ)) {
-                placeHolders.put(DRITTE_BLZ, val(oppAtt.getBankCode()));
-            }
-            if (placeHolders.containsKey(DRITTE_KONTONR)) {
-                placeHolders.put(DRITTE_KONTONR, val(oppAtt.getBankAccount()));
-            }
-            if (placeHolders.containsKey(DRITTE_RECHTSSCHUTZ)) {
-                placeHolders.put(DRITTE_RECHTSSCHUTZ, val(oppAtt.getInsuranceNumber()));
-            }
-            if (placeHolders.containsKey(DRITTE_VRECHTSSCHUTZ)) {
-                placeHolders.put(DRITTE_VRECHTSSCHUTZ, val(oppAtt.getTrafficInsuranceNumber()));
-            }
-            if (placeHolders.containsKey(DRITTE_KFZVERS)) {
-                placeHolders.put(DRITTE_KFZVERS, val(oppAtt.getMotorInsuranceNumber()));
-            }
-            if (placeHolders.containsKey(DRITTE_EIGENE1)) {
-                placeHolders.put(DRITTE_EIGENE1, val(oppAtt.getCustom1()));
-            }
-            if (placeHolders.containsKey(DRITTE_EIGENE2)) {
-                placeHolders.put(DRITTE_EIGENE2, val(oppAtt.getCustom2()));
-            }
-            if (placeHolders.containsKey(DRITTE_EIGENE3)) {
-                placeHolders.put(DRITTE_EIGENE3, val(oppAtt.getCustom3()));
-            }
-            if (placeHolders.containsKey(DRITTE_GEB)) {
-                placeHolders.put(DRITTE_GEB, val(oppAtt.getBirthDate()));
-            }
-            ArchiveFileAddressesBean involvement = getInvolvement(oppAtt, involved, ArchiveFileAddressesBean.REFERENCETYPE_OPPONENTATTORNEY);
-            if (involvement != null) {
-                if (placeHolders.containsKey(DRITTE_AKTE_KONTAKT)) {
-                    placeHolders.put(DRITTE_AKTE_KONTAKT, val(involvement.getContact()));
-                }
-                if (placeHolders.containsKey(DRITTE_AKTE_ZEICHEN)) {
-                    placeHolders.put(DRITTE_AKTE_ZEICHEN, val(involvement.getReference()));
-                }
-                if (placeHolders.containsKey(DRITTE_AKTE_EIGENE1)) {
-                    placeHolders.put(DRITTE_AKTE_EIGENE1, val(involvement.getCustom1()));
-                }
-                if (placeHolders.containsKey(DRITTE_AKTE_EIGENE2)) {
-                    placeHolders.put(DRITTE_AKTE_EIGENE2, val(involvement.getCustom2()));
-                }
-                if (placeHolders.containsKey(DRITTE_AKTE_EIGENE3)) {
-                    placeHolders.put(DRITTE_AKTE_EIGENE3, val(involvement.getCustom3()));
-                }
-            }
-
-            // look for aliases also
-            if (placeHolders.containsKey(aliasForPlaceHolder(DRITTE_NAME))) {
-                placeHolders.put(aliasForPlaceHolder(DRITTE_NAME), val(oppAtt.getName()));
-            }
-            if (placeHolders.containsKey(aliasForPlaceHolder(DRITTE_VORNAME))) {
-                placeHolders.put(aliasForPlaceHolder(DRITTE_VORNAME), val(oppAtt.getFirstName()));
-            }
-            if (placeHolders.containsKey(aliasForPlaceHolder(DRITTE_FIRMA))) {
-                placeHolders.put(aliasForPlaceHolder(DRITTE_FIRMA), val(oppAtt.getCompany()));
-            }
-            if (placeHolders.containsKey(aliasForPlaceHolder(DRITTE_ANREDE))) {
-                placeHolders.put(aliasForPlaceHolder(DRITTE_ANREDE), val(oppAtt.getSalutation()));
-            }
-            if (placeHolders.containsKey(aliasForPlaceHolder(DRITTE_NACHTEXT))) {
-                placeHolders.put(aliasForPlaceHolder(DRITTE_NACHTEXT), val(oppAtt.getComplimentaryClose()));
-            }
-            if (placeHolders.containsKey(aliasForPlaceHolder(DRITTE_STRASSE))) {
-                placeHolders.put(aliasForPlaceHolder(DRITTE_STRASSE), val(oppAtt.getStreet()));
-            }
-            if (placeHolders.containsKey(aliasForPlaceHolder(DRITTE_ORT))) {
-                placeHolders.put(aliasForPlaceHolder(DRITTE_ORT), val(oppAtt.getCity()));
-            }
-            if (placeHolders.containsKey(aliasForPlaceHolder(DRITTE_PLZ))) {
-                placeHolders.put(aliasForPlaceHolder(DRITTE_PLZ), val(oppAtt.getZipCode()));
-            }
-            if (placeHolders.containsKey(aliasForPlaceHolder(DRITTE_LAND))) {
-                placeHolders.put(aliasForPlaceHolder(DRITTE_LAND), val(oppAtt.getCountry()));
-            }
-            if (placeHolders.containsKey(aliasForPlaceHolder(DRITTE_TEL))) {
-                placeHolders.put(aliasForPlaceHolder(DRITTE_TEL), val(oppAtt.getPhone()));
-            }
-            if (placeHolders.containsKey(aliasForPlaceHolder(DRITTE_MOBIL))) {
-                placeHolders.put(aliasForPlaceHolder(DRITTE_MOBIL), val(oppAtt.getMobile()));
-            }
-            if (placeHolders.containsKey(aliasForPlaceHolder(DRITTE_FAX))) {
-                placeHolders.put(aliasForPlaceHolder(DRITTE_FAX), val(oppAtt.getFax()));
-            }
-            if (placeHolders.containsKey(aliasForPlaceHolder(DRITTE_EMAIL))) {
-                placeHolders.put(aliasForPlaceHolder(DRITTE_EMAIL), val(oppAtt.getEmail()));
-            }
-            if (placeHolders.containsKey(aliasForPlaceHolder(DRITTE_WWW))) {
-                placeHolders.put(aliasForPlaceHolder(DRITTE_WWW), val(oppAtt.getWebsite()));
-            }
-            if (placeHolders.containsKey(aliasForPlaceHolder(DRITTE_BANK))) {
-                placeHolders.put(aliasForPlaceHolder(DRITTE_BANK), val(oppAtt.getBankName()));
-            }
-            if (placeHolders.containsKey(aliasForPlaceHolder(DRITTE_BLZ))) {
-                placeHolders.put(aliasForPlaceHolder(DRITTE_BLZ), val(oppAtt.getBankCode()));
-            }
-            if (placeHolders.containsKey(aliasForPlaceHolder(DRITTE_KONTONR))) {
-                placeHolders.put(aliasForPlaceHolder(DRITTE_KONTONR), val(oppAtt.getBankAccount()));
-            }
-            if (placeHolders.containsKey(aliasForPlaceHolder(DRITTE_RECHTSSCHUTZ))) {
-                placeHolders.put(aliasForPlaceHolder(DRITTE_RECHTSSCHUTZ), val(oppAtt.getInsuranceNumber()));
-            }
-
-        }
+////        } else {
+////            placeHolders.put(GEGNER_NAME, "");
+////            placeHolders.put(GEGNER_VORNAME, "");
+////            placeHolders.put(GEGNER_FIRMA, "");
+////            placeHolders.put(GEGNER_ANREDE, "");
+////            placeHolders.put(GEGNER_NACHTEXT, "");
+////            placeHolders.put(GEGNER_STRASSE, "");
+////            placeHolders.put(GEGNER_ORT, "");
+////            placeHolders.put(GEGNER_PLZ, "");
+////            placeHolders.put(GEGNER_LAND, "");
+////            placeHolders.put(GEGNER_TEL, "");
+////            placeHolders.put(GEGNER_FAX, "");
+////            placeHolders.put(GEGNER_EMAIL, "");
+////            placeHolders.put(GEGNER_WWW, "");
+////            placeHolders.put(GEGNER_BANK, "");
+////            placeHolders.put(GEGNER_BLZ, "");
+////            placeHolders.put(GEGNER_KONTONR, "");
+////            placeHolders.put(GEGNER_RECHTSSCHUTZ, "");
+////        }
+//
+//        // opponent attorney information
+//        if (oppAtt != null) {
+//            if (placeHolders.containsKey(DRITTE_NAME)) {
+//                placeHolders.put(DRITTE_NAME, val(oppAtt.getName()));
+//            }
+//            if (placeHolders.containsKey(DRITTE_VORNAME)) {
+//                placeHolders.put(DRITTE_VORNAME, val(oppAtt.getFirstName()));
+//            }
+//            if (placeHolders.containsKey(DRITTE_FIRMA)) {
+//                placeHolders.put(DRITTE_FIRMA, val(oppAtt.getCompany()));
+//            }
+//            if (placeHolders.containsKey(DRITTE_ABTLG)) {
+//                placeHolders.put(DRITTE_ABTLG, val(oppAtt.getDepartment()));
+//            }
+//            if (placeHolders.containsKey(DRITTE_TITEL)) {
+//                placeHolders.put(DRITTE_TITEL, val(oppAtt.getTitle()));
+//            }
+//            if (placeHolders.containsKey(DRITTE_ANREDE)) {
+//                placeHolders.put(DRITTE_ANREDE, val(oppAtt.getSalutation()));
+//            }
+//            if (placeHolders.containsKey(DRITTE_NACHTEXT)) {
+//                placeHolders.put(DRITTE_NACHTEXT, val(oppAtt.getComplimentaryClose()));
+//            }
+//            if (placeHolders.containsKey(DRITTE_STRASSE)) {
+//                placeHolders.put(DRITTE_STRASSE, val(oppAtt.getStreet()));
+//            }
+//            if (placeHolders.containsKey(DRITTE_ORT)) {
+//                placeHolders.put(DRITTE_ORT, val(oppAtt.getCity()));
+//            }
+//            if (placeHolders.containsKey(DRITTE_PLZ)) {
+//                placeHolders.put(DRITTE_PLZ, val(oppAtt.getZipCode()));
+//            }
+//            if (placeHolders.containsKey(DRITTE_LAND)) {
+//                placeHolders.put(DRITTE_LAND, val(oppAtt.getCountry()));
+//            }
+//            if (placeHolders.containsKey(DRITTE_TEL)) {
+//                placeHolders.put(DRITTE_TEL, val(oppAtt.getPhone()));
+//            }
+//            if (placeHolders.containsKey(DRITTE_MOBIL)) {
+//                placeHolders.put(DRITTE_MOBIL, val(oppAtt.getMobile()));
+//            }
+//            if (placeHolders.containsKey(DRITTE_FAX)) {
+//                placeHolders.put(DRITTE_FAX, val(oppAtt.getFax()));
+//            }
+//            if (placeHolders.containsKey(DRITTE_EMAIL)) {
+//                placeHolders.put(DRITTE_EMAIL, val(oppAtt.getEmail()));
+//            }
+//            if (placeHolders.containsKey(DRITTE_WWW)) {
+//                placeHolders.put(DRITTE_WWW, val(oppAtt.getWebsite()));
+//            }
+//            if (placeHolders.containsKey(DRITTE_BANK)) {
+//                placeHolders.put(DRITTE_BANK, val(oppAtt.getBankName()));
+//            }
+//            if (placeHolders.containsKey(DRITTE_BLZ)) {
+//                placeHolders.put(DRITTE_BLZ, val(oppAtt.getBankCode()));
+//            }
+//            if (placeHolders.containsKey(DRITTE_KONTONR)) {
+//                placeHolders.put(DRITTE_KONTONR, val(oppAtt.getBankAccount()));
+//            }
+//            if (placeHolders.containsKey(DRITTE_RECHTSSCHUTZ)) {
+//                placeHolders.put(DRITTE_RECHTSSCHUTZ, val(oppAtt.getInsuranceNumber()));
+//            }
+//            if (placeHolders.containsKey(DRITTE_VRECHTSSCHUTZ)) {
+//                placeHolders.put(DRITTE_VRECHTSSCHUTZ, val(oppAtt.getTrafficInsuranceNumber()));
+//            }
+//            if (placeHolders.containsKey(DRITTE_KFZVERS)) {
+//                placeHolders.put(DRITTE_KFZVERS, val(oppAtt.getMotorInsuranceNumber()));
+//            }
+//            if (placeHolders.containsKey(DRITTE_EIGENE1)) {
+//                placeHolders.put(DRITTE_EIGENE1, val(oppAtt.getCustom1()));
+//            }
+//            if (placeHolders.containsKey(DRITTE_EIGENE2)) {
+//                placeHolders.put(DRITTE_EIGENE2, val(oppAtt.getCustom2()));
+//            }
+//            if (placeHolders.containsKey(DRITTE_EIGENE3)) {
+//                placeHolders.put(DRITTE_EIGENE3, val(oppAtt.getCustom3()));
+//            }
+//            if (placeHolders.containsKey(DRITTE_GEB)) {
+//                placeHolders.put(DRITTE_GEB, val(oppAtt.getBirthDate()));
+//            }
+//            //ArchiveFileAddressesBean involvement = getInvolvement(oppAtt, involved, ArchiveFileAddressesBean.REFERENCETYPE_OPPONENTATTORNEY);
+//            ArchiveFileAddressesBean involvement = getInvolvement(cl, involved, null);
+//            if (involvement != null) {
+//                if (placeHolders.containsKey(DRITTE_AKTE_KONTAKT)) {
+//                    placeHolders.put(DRITTE_AKTE_KONTAKT, val(involvement.getContact()));
+//                }
+//                if (placeHolders.containsKey(DRITTE_AKTE_ZEICHEN)) {
+//                    placeHolders.put(DRITTE_AKTE_ZEICHEN, val(involvement.getReference()));
+//                }
+//                if (placeHolders.containsKey(DRITTE_AKTE_EIGENE1)) {
+//                    placeHolders.put(DRITTE_AKTE_EIGENE1, val(involvement.getCustom1()));
+//                }
+//                if (placeHolders.containsKey(DRITTE_AKTE_EIGENE2)) {
+//                    placeHolders.put(DRITTE_AKTE_EIGENE2, val(involvement.getCustom2()));
+//                }
+//                if (placeHolders.containsKey(DRITTE_AKTE_EIGENE3)) {
+//                    placeHolders.put(DRITTE_AKTE_EIGENE3, val(involvement.getCustom3()));
+//                }
+//            }
+//
+//            // look for aliases also
+//            if (placeHolders.containsKey(aliasForPlaceHolder(DRITTE_NAME))) {
+//                placeHolders.put(aliasForPlaceHolder(DRITTE_NAME), val(oppAtt.getName()));
+//            }
+//            if (placeHolders.containsKey(aliasForPlaceHolder(DRITTE_VORNAME))) {
+//                placeHolders.put(aliasForPlaceHolder(DRITTE_VORNAME), val(oppAtt.getFirstName()));
+//            }
+//            if (placeHolders.containsKey(aliasForPlaceHolder(DRITTE_FIRMA))) {
+//                placeHolders.put(aliasForPlaceHolder(DRITTE_FIRMA), val(oppAtt.getCompany()));
+//            }
+//            if (placeHolders.containsKey(aliasForPlaceHolder(DRITTE_ANREDE))) {
+//                placeHolders.put(aliasForPlaceHolder(DRITTE_ANREDE), val(oppAtt.getSalutation()));
+//            }
+//            if (placeHolders.containsKey(aliasForPlaceHolder(DRITTE_NACHTEXT))) {
+//                placeHolders.put(aliasForPlaceHolder(DRITTE_NACHTEXT), val(oppAtt.getComplimentaryClose()));
+//            }
+//            if (placeHolders.containsKey(aliasForPlaceHolder(DRITTE_STRASSE))) {
+//                placeHolders.put(aliasForPlaceHolder(DRITTE_STRASSE), val(oppAtt.getStreet()));
+//            }
+//            if (placeHolders.containsKey(aliasForPlaceHolder(DRITTE_ORT))) {
+//                placeHolders.put(aliasForPlaceHolder(DRITTE_ORT), val(oppAtt.getCity()));
+//            }
+//            if (placeHolders.containsKey(aliasForPlaceHolder(DRITTE_PLZ))) {
+//                placeHolders.put(aliasForPlaceHolder(DRITTE_PLZ), val(oppAtt.getZipCode()));
+//            }
+//            if (placeHolders.containsKey(aliasForPlaceHolder(DRITTE_LAND))) {
+//                placeHolders.put(aliasForPlaceHolder(DRITTE_LAND), val(oppAtt.getCountry()));
+//            }
+//            if (placeHolders.containsKey(aliasForPlaceHolder(DRITTE_TEL))) {
+//                placeHolders.put(aliasForPlaceHolder(DRITTE_TEL), val(oppAtt.getPhone()));
+//            }
+//            if (placeHolders.containsKey(aliasForPlaceHolder(DRITTE_MOBIL))) {
+//                placeHolders.put(aliasForPlaceHolder(DRITTE_MOBIL), val(oppAtt.getMobile()));
+//            }
+//            if (placeHolders.containsKey(aliasForPlaceHolder(DRITTE_FAX))) {
+//                placeHolders.put(aliasForPlaceHolder(DRITTE_FAX), val(oppAtt.getFax()));
+//            }
+//            if (placeHolders.containsKey(aliasForPlaceHolder(DRITTE_EMAIL))) {
+//                placeHolders.put(aliasForPlaceHolder(DRITTE_EMAIL), val(oppAtt.getEmail()));
+//            }
+//            if (placeHolders.containsKey(aliasForPlaceHolder(DRITTE_WWW))) {
+//                placeHolders.put(aliasForPlaceHolder(DRITTE_WWW), val(oppAtt.getWebsite()));
+//            }
+//            if (placeHolders.containsKey(aliasForPlaceHolder(DRITTE_BANK))) {
+//                placeHolders.put(aliasForPlaceHolder(DRITTE_BANK), val(oppAtt.getBankName()));
+//            }
+//            if (placeHolders.containsKey(aliasForPlaceHolder(DRITTE_BLZ))) {
+//                placeHolders.put(aliasForPlaceHolder(DRITTE_BLZ), val(oppAtt.getBankCode()));
+//            }
+//            if (placeHolders.containsKey(aliasForPlaceHolder(DRITTE_KONTONR))) {
+//                placeHolders.put(aliasForPlaceHolder(DRITTE_KONTONR), val(oppAtt.getBankAccount()));
+//            }
+//            if (placeHolders.containsKey(aliasForPlaceHolder(DRITTE_RECHTSSCHUTZ))) {
+//                placeHolders.put(aliasForPlaceHolder(DRITTE_RECHTSSCHUTZ), val(oppAtt.getInsuranceNumber()));
+//            }
+//
+//        }
 //        } else {
 //            placeHolders.put(GEGNERVT_NAME, "");
 //            placeHolders.put(GEGNERVT_VORNAME, "");
@@ -1257,10 +1372,10 @@ public class PlaceHolderUtils extends PlaceHolders {
         return s;
     }
 
-    private static ArchiveFileAddressesBean getInvolvement(AddressBean cl, List<ArchiveFileAddressesBean> involved, int referenceType) {
+    private static ArchiveFileAddressesBean getInvolvement(AddressBean cl, List<ArchiveFileAddressesBean> involved, PartyTypeBean referenceType) {
         if (involved != null) {
             for (ArchiveFileAddressesBean i : involved) {
-                if (i.getReferenceType() == referenceType && cl.getId().equals(i.getAddressKey().getId())) {
+                if (i.getReferenceType().equals(referenceType) && cl.getId().equals(i.getAddressKey().getId())) {
                     return i;
                 }
             }

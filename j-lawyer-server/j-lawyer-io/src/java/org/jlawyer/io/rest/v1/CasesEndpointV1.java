@@ -670,9 +670,11 @@ import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileTagsBean;
+import com.jdimension.jlawyer.persistence.PartyTypeBean;
 import com.jdimension.jlawyer.security.Base64;
 import com.jdimension.jlawyer.services.AddressServiceLocal;
 import com.jdimension.jlawyer.services.ArchiveFileServiceLocal;
+import com.jdimension.jlawyer.services.SystemManagementLocal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -856,6 +858,8 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
         }
     }
 
+    
+    
     /**
      * Updates an existing case based on its ID
      *
@@ -1096,12 +1100,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
                 i.setCustom3(inv.getCustom3());
                 i.setAddressId(inv.getAddressKey().getId());
                 i.setReference(inv.getReference());
-                i.setInvolvementType(RestfulPartyV1.getTYPE_OTHER());
-                if (inv.getReferenceType() == ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT) {
-                    i.setInvolvementType(RestfulPartyV1.getTYPE_OPPONENT());
-                } else if (inv.getReferenceType() == ArchiveFileAddressesBean.REFERENCETYPE_CLIENT) {
-                    i.setInvolvementType(RestfulPartyV1.getTYPE_CLIENT());
-                }
+                i.setInvolvementType(inv.getReferenceType().getName());
                 invList.add(i);
             }
 
@@ -1211,6 +1210,8 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
         }
 
     }
+    
+    
 
     /**
      * Deletes a document based on its ID
@@ -1246,7 +1247,8 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
     /**
      * Creates a new party in a given case.
      *
-     * @param party The parties metadata. Use CLIENT | OPPONENT | OTHER for involvementType.
+     * @param party The parties metadata. Use CLIENT | OPPONENT | OTHER for
+     * involvementType.
      * @response 401 User not authorized
      * @response 403 User not authenticated
      */
@@ -1277,6 +1279,23 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
                 return res;
             }
 
+            SystemManagementLocal system = (SystemManagementLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/SystemManagement!com.jdimension.jlawyer.services.SystemManagementLocal");
+            PartyTypeBean partyType = system.getPartyType(party.getInvolvementType());
+            Collection<PartyTypeBean> partyTypes = system.getPartyTypes();
+            PartyTypeBean selectedPartyType = null;
+            for (PartyTypeBean p : partyTypes) {
+                if (p.getName().equals(party.getInvolvementType())) {
+                    selectedPartyType = p;
+                    break;
+                }
+
+            }
+            if (selectedPartyType == null) {
+                log.error("Unknown party type " + party.getInvolvementType());
+                Response res = Response.serverError().build();
+                return res;
+            }
+
             ArchiveFileAddressesBean newAab = new ArchiveFileAddressesBean();
             newAab.setContact(party.getContact());
             newAab.setCustom1(party.getCustom1());
@@ -1285,12 +1304,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
             newAab.setReference(party.getReference());
             newAab.setAddressKey(relevantAdr);
             newAab.setArchiveFileKey(relevantCase);
-            newAab.setReferenceType(ArchiveFileAddressesBean.REFERENCETYPE_CLIENT);
-            if (party.getInvolvementType().equals(RestfulPartyV1.TYPE_OPPONENT)) {
-                newAab.setReferenceType(ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT);
-            } else if (party.getInvolvementType().equals(RestfulPartyV1.TYPE_OTHER)) {
-                newAab.setReferenceType(ArchiveFileAddressesBean.REFERENCETYPE_OPPONENTATTORNEY);
-            }
+            newAab.setReferenceType(selectedPartyType);
 
             party.getAddressId();
 
@@ -1307,17 +1321,151 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
             newParty.setCustom3(newAab.getCustom3());
             newParty.setAddressId(newAab.getAddressKey().getId());
             newParty.setReference(newAab.getReference());
-            newParty.setInvolvementType(RestfulPartyV1.getTYPE_OTHER());
-            if (newAab.getReferenceType() == ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT) {
-                newParty.setInvolvementType(RestfulPartyV1.getTYPE_OPPONENT());
-            } else if (newAab.getReferenceType() == ArchiveFileAddressesBean.REFERENCETYPE_CLIENT) {
-                newParty.setInvolvementType(RestfulPartyV1.getTYPE_CLIENT());
-            }
+            newParty.setInvolvementType(newAab.getReferenceType().getName());
 
             Response res = Response.ok(newParty).build();
             return res;
         } catch (Exception ex) {
             log.error("can not create new party for address " + party.getAddressId(), ex);
+            Response res = Response.serverError().build();
+            return res;
+        }
+    }
+
+    /**
+     * Updates a party.
+     *
+     * @param party the parties new data
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @PUT
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/party/update")
+    @RolesAllowed({"writeArchiveFileRole"})
+    public Response updateParty(RestfulPartyV1 party) {
+        try {
+
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal");
+
+            List<ArchiveFileAddressesBean> parties = cases.getInvolvementDetailsForCase(party.getCaseId());
+            ArchiveFileAddressesBean relevantParty = null;
+            for (ArchiveFileAddressesBean aab : parties) {
+                if (aab.getId().equals(party.getId())) {
+                    relevantParty = aab;
+                    break;
+                }
+            }
+
+            if (relevantParty == null) {
+                log.error("party with id " + party.getId() + " does not exist");
+                Response res = Response.serverError().build();
+                return res;
+            }
+
+            SystemManagementLocal system = (SystemManagementLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/SystemManagement!com.jdimension.jlawyer.services.SystemManagementLocal");
+            Collection<PartyTypeBean> partyTypes = system.getPartyTypes();
+            PartyTypeBean selectedPartyType = null;
+            for (PartyTypeBean p : partyTypes) {
+                if (p.getName().equals(party.getInvolvementType())) {
+                    selectedPartyType = p;
+                    break;
+                }
+
+            }
+            if (selectedPartyType == null) {
+                log.error("Unknown party type " + party.getInvolvementType());
+                Response res = Response.serverError().build();
+                return res;
+            }
+
+            relevantParty.setCustom1(party.getCustom1());
+            relevantParty.setCustom2(party.getCustom2());
+            relevantParty.setCustom3(party.getCustom3());
+            relevantParty.setContact(party.getContact());
+            relevantParty.setReference(party.getReference());
+            relevantParty.setReferenceType(selectedPartyType);
+
+            ArchiveFileAddressesBean inv = cases.updateParty(party.getCaseId(), relevantParty);
+
+            RestfulPartyV1 i = new RestfulPartyV1();
+            i.setId(inv.getId());
+            i.setCaseId(party.getCaseId());
+            i.setContact(inv.getContact());
+            i.setCustom1(inv.getCustom1());
+            i.setCustom2(inv.getCustom2());
+            i.setCustom3(inv.getCustom3());
+            i.setAddressId(inv.getAddressKey().getId());
+            i.setReference(inv.getReference());
+            i.setInvolvementType(inv.getReferenceType().getName());
+
+            Response res = Response.ok(i).build();
+
+            return res;
+        } catch (Exception ex) {
+            log.error("can not update party " + party.getId(), ex);
+            Response res = Response.serverError().build();
+            return res;
+        }
+    }
+
+    /**
+     * Deletes a party from a case based on its ID
+     *
+     * @param id parties ID
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @DELETE
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/party/{id}/delete")
+    @RolesAllowed({"writeArchiveFileRole"})
+    public Response deleteParty(@PathParam("id") String id) {
+        try {
+
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal");
+
+            cases.removeParty(id);
+
+            Response res = Response.ok().build();
+
+            return res;
+        } catch (Exception ex) {
+            log.error("can not delete party " + id, ex);
+            Response res = Response.serverError().build();
+            return res;
+        }
+    }
+
+    /**
+     * Lists all party types as configured in the system
+     *
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/party/types")
+    @RolesAllowed({"loginRole"})
+    public Response getPartyTypes() {
+        try {
+
+            InitialContext ic = new InitialContext();
+            
+            SystemManagementLocal system = (SystemManagementLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/SystemManagement!com.jdimension.jlawyer.services.SystemManagementLocal");
+            Collection<PartyTypeBean> partyTypes = system.getPartyTypes();
+            
+            Response res = Response.ok(partyTypes).build();
+            return res;
+        } catch (Exception ex) {
+            log.error("can not list party types", ex);
             Response res = Response.serverError().build();
             return res;
         }

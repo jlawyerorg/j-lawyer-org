@@ -125,7 +125,7 @@
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="txtReference" max="32767" attributes="0"/>
                       <EmptySpace type="separate" max="-2" attributes="0"/>
-                      <Component id="cmbRefType" min="-2" pref="91" max="-2" attributes="0"/>
+                      <Component id="cmbRefType" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="cmdToAddress" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>

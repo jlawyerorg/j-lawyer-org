@@ -670,12 +670,14 @@ import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.persistence.AddressBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import javax.mail.*;
 import javax.mail.Message.RecipientType;
 import javax.mail.internet.MimeUtility;
@@ -955,17 +957,9 @@ public class ViewEmailDialog extends javax.swing.JDialog {
                 ClientSettings settings = ClientSettings.getInstance();
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                 ArchiveFileServiceRemote afs=locator.lookupArchiveFileServiceRemote();
-                Collection<AddressBean> list=afs.getClients(this.contextArchiveFile.getId());
-                for(AddressBean a: list) {
-                    dlg.addToClient(a);
-                }
-                list=afs.getOpponents(this.contextArchiveFile.getId());
-                for(AddressBean a: list) {
-                    dlg.addToOpponent(a);
-                }
-                list=afs.getOpponentAttorneys(this.contextArchiveFile.getId());
-                for(AddressBean a: list) {
-                    dlg.addToOpponentAttorney(a);
+                List<ArchiveFileAddressesBean> list=afs.getInvolvementDetailsForCase(this.contextArchiveFile.getId());
+                for(ArchiveFileAddressesBean aab: list) {
+                    dlg.addParty(aab.getAddressKey(), aab.getReferenceType());
                 }
             } catch (Throwable t) {
                 log.error("Unable to add recipient candidates", t);

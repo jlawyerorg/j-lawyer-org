@@ -666,6 +666,7 @@ package com.jdimension.jlawyer.client.editors.files;
 import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.persistence.PartyTypeBean;
 import java.awt.Component;
 import java.util.ArrayList;
 import java.util.List;
@@ -685,9 +686,9 @@ public class InvolvedPartiesPanel extends javax.swing.JPanel {
     
     public void updateInvolvedPartiesForCase(ArchiveFileBean aFile) {
         
-        aFile.removeAllClients();
-        aFile.removeAllOpponents();
-        aFile.removeAllOpponentAttorneys();
+        
+        aFile.removeAllParties();
+        //aFile.
         
         ArrayList<AddressBean> parties=new ArrayList<AddressBean>();
         for(Component c: this.getComponents()) {
@@ -701,25 +702,32 @@ public class InvolvedPartiesPanel extends javax.swing.JPanel {
                 aadto.setCustom2(ipep.getInvolvement().getCustom2());
                 aadto.setCustom3(ipep.getInvolvement().getCustom3());
                 aadto.setReference(ipep.getInvolvement().getReference());
-                if(ipep.getInvolvement().getReferenceType()==ArchiveFileAddressesBean.REFERENCETYPE_CLIENT) {
-                    aFile.addClient(aadto);
-                } else if(ipep.getInvolvement().getReferenceType()==ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT) {
-                    aFile.addOpponent(aadto);
-                } else if(ipep.getInvolvement().getReferenceType()==ArchiveFileAddressesBean.REFERENCETYPE_OPPONENTATTORNEY) {
-                    aFile.addOpponentAttorney(aadto);
-                }
+                aFile.addParty(aadto);
+                
                     
             }
         }
         
     }
     
-    public List<AddressBean> getInvolvedParties(int referenceType) {
+    public List<AddressBean> getInvolvedPartiesAddress(PartyTypeBean referenceType) {
         ArrayList<AddressBean> parties=new ArrayList<AddressBean>();
         for(Component c: this.getComponents()) {
             if(c instanceof InvolvedPartyEntryPanel) {
                 InvolvedPartyEntryPanel ipep=(InvolvedPartyEntryPanel)c;
-                if(ipep.getInvolvement().getReferenceType()==referenceType)
+                if(ipep.getInvolvement().getReferenceType().equals(referenceType))
+                    parties.add(ipep.getAdress());
+            }
+        }
+        return parties;
+    }
+    
+    public List<AddressBean> getInvolvedPartiesAddress() {
+        ArrayList<AddressBean> parties=new ArrayList<AddressBean>();
+        for(Component c: this.getComponents()) {
+            if(c instanceof InvolvedPartyEntryPanel) {
+                InvolvedPartyEntryPanel ipep=(InvolvedPartyEntryPanel)c;
+                
                     parties.add(ipep.getAdress());
             }
         }

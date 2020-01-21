@@ -665,6 +665,7 @@ package com.jdimension.jlawyer.documents;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 /**
  *
@@ -688,162 +689,75 @@ public class PlaceHolders {
     public static final String PROFIL_BANK = "{{PROFIL_BANK}}";
     public static final String PROFIL_KONTONR = "{{PROFIL_KONTONR}}";
     public static final String PROFIL_BLZ = "{{PROFIL_BLZ}}";
-    
+
     public static final String PROFIL_BANK_AK = "{{PROFIL_BANK_AK}}";
     public static final String PROFIL_KONTONR_AK = "{{PROFIL_KONTONR_AK}}";
     public static final String PROFIL_BLZ_AK = "{{PROFIL_BLZ_AK}}";
-    
+
     public static final String KURZDATUM = "{{KURZDATUM}}";
     public static final String LANGDATUM = "{{LANGDATUM}}";
-    public static final String MANDANT_NAME = "{{MANDANT_NAME}}";
-    public static final String MANDANT_VORNAME = "{{MANDANT_VORNAME}}";
-    public static final String MANDANT_FIRMA = "{{MANDANT_FIRMA}}";
-    public static final String MANDANT_ABTLG = "{{MANDANT_ABTLG}}";
-    public static final String MANDANT_TITEL = "{{MANDANT_TITEL}}";
-    public static final String MANDANT_ANREDE = "{{MANDANT_ANREDE}}";
-    public static final String MANDANT_NACHTEXT = "{{MANDANT_NACHTEXT}}";
-    public static final String MANDANT_STRASSE = "{{MANDANT_STRASSE}}";
-    public static final String MANDANT_ORT = "{{MANDANT_ORT}}";
-    public static final String MANDANT_PLZ = "{{MANDANT_PLZ}}";
-    public static final String MANDANT_LAND = "{{MANDANT_LAND}}";
-    public static final String MANDANT_TEL = "{{MANDANT_TEL}}";
-    public static final String MANDANT_MOBIL = "{{MANDANT_MOBIL}}";
-    public static final String MANDANT_FAX = "{{MANDANT_FAX}}";
-    public static final String MANDANT_EMAIL = "{{MANDANT_EMAIL}}";
-    public static final String MANDANT_WWW = "{{MANDANT_WWW}}";
-    public static final String MANDANT_BANK = "{{MANDANT_BANK}}";
-    public static final String MANDANT_BLZ = "{{MANDANT_BLZ}}";
-    public static final String MANDANT_KONTONR = "{{MANDANT_KONTONR}}";
-    public static final String MANDANT_RECHTSSCHUTZ = "{{MANDANT_RECHTSSCHUTZ}}";
-    public static final String MANDANT_VRECHTSSCHUTZ = "{{MANDANT_VRECHTSSCHUTZ}}";
-    public static final String MANDANT_KFZVERS = "{{MANDANT_KFZVERS}}";
-    public static final String MANDANT_EIGENE1 = "{{MANDANT_EIGENE1}}";
-    public static final String MANDANT_EIGENE2 = "{{MANDANT_EIGENE2}}";
-    public static final String MANDANT_EIGENE3 = "{{MANDANT_EIGENE3}}";
-    public static final String MANDANT_GEB = "{{MANDANT_GEB}}";
-    public static final String MANDANT_AKTE_ZEICHEN = "{{MANDANT_AKTE_ZEICHEN}}";
-    public static final String MANDANT_AKTE_KONTAKT = "{{MANDANT_AKTE_KONTAKT}}";
-    public static final String MANDANT_AKTE_EIGENE1 = "{{MANDANT_AKTE_EIGENE1}}";
-    public static final String MANDANT_AKTE_EIGENE2 = "{{MANDANT_AKTE_EIGENE2}}";
-    public static final String MANDANT_AKTE_EIGENE3 = "{{MANDANT_AKTE_EIGENE3}}";
-    public static final String GEGNER_NAME = "{{GEGNER_NAME}}";
-    public static final String GEGNER_VORNAME = "{{GEGNER_VORNAME}}";
-    public static final String GEGNER_FIRMA = "{{GEGNER_FIRMA}}";
-    public static final String GEGNER_ABTLG = "{{GEGNER_ABTLG}}";
-    public static final String GEGNER_TITEL = "{{GEGNER_TITEL}}";
-    public static final String GEGNER_ANREDE = "{{GEGNER_ANREDE}}";
-    public static final String GEGNER_NACHTEXT = "{{GEGNER_NACHTEXT}}";
-    public static final String GEGNER_STRASSE = "{{GEGNER_STRASSE}}";
-    public static final String GEGNER_ORT = "{{GEGNER_ORT}}";
-    public static final String GEGNER_PLZ = "{{GEGNER_PLZ}}";
-    public static final String GEGNER_LAND = "{{GEGNER_LAND}}";
-    public static final String GEGNER_TEL = "{{GEGNER_TEL}}";
-    public static final String GEGNER_MOBIL = "{{GEGNER_MOBIL}}";
-    public static final String GEGNER_FAX = "{{GEGNER_FAX}}";
-    public static final String GEGNER_EMAIL = "{{GEGNER_EMAIL}}";
-    public static final String GEGNER_WWW = "{{GEGNER_WWW}}";
-    public static final String GEGNER_BANK = "{{GEGNER_BANK}}";
-    public static final String GEGNER_BLZ = "{{GEGNER_BLZ}}";
-    public static final String GEGNER_KONTONR = "{{GEGNER_KONTONR}}";
-    public static final String GEGNER_RECHTSSCHUTZ = "{{GEGNER_RECHTSSCHUTZ}}";
-    public static final String GEGNER_VRECHTSSCHUTZ = "{{GEGNER_VRECHTSSCHUTZ}}";
-    public static final String GEGNER_KFZVERS = "{{GEGNER_KFZVERS}}";
-    public static final String GEGNER_EIGENE1 = "{{GEGNER_EIGENE1}}";
-    public static final String GEGNER_EIGENE2 = "{{GEGNER_EIGENE2}}";
-    public static final String GEGNER_EIGENE3 = "{{GEGNER_EIGENE3}}";
-    public static final String GEGNER_GEB = "{{GEGNER_GEB}}";
-    public static final String GEGNER_AKTE_ZEICHEN = "{{GEGNER_AKTE_ZEICHEN}}";
-    public static final String GEGNER_AKTE_KONTAKT = "{{GEGNER_AKTE_KONTAKT}}";
-    public static final String GEGNER_AKTE_EIGENE1 = "{{GEGNER_AKTE_EIGENE1}}";
-    public static final String GEGNER_AKTE_EIGENE2 = "{{GEGNER_AKTE_EIGENE2}}";
-    public static final String GEGNER_AKTE_EIGENE3 = "{{GEGNER_AKTE_EIGENE3}}";
-    
-    // starting with 1.5, GEGNERVT* is just an alias for backwards compatibility
-    // not contained in ALLPLACEHOLDERS anymore
-    public static final String GEGNERVT_NR = "{{GEGNERVT_NR}}";
-    public static final String GEGNERVT_NAME = "{{GEGNERVT_NAME}}";
-    public static final String GEGNERVT_VORNAME = "{{GEGNERVT_VORNAME}}";
-    public static final String GEGNERVT_FIRMA = "{{GEGNERVT_FIRMA}}";
-    public static final String GEGNERVT_ANREDE = "{{GEGNERVT_ANREDE}}";
-    public static final String GEGNERVT_NACHTEXT = "{{GEGNERVT_NACHTEXT}}";
-    public static final String GEGNERVT_STRASSE = "{{GEGNERVT_STRASSE}}";
-    public static final String GEGNERVT_ORT = "{{GEGNERVT_ORT}}";
-    public static final String GEGNERVT_PLZ = "{{GEGNERVT_PLZ}}";
-    public static final String GEGNERVT_LAND = "{{GEGNERVT_LAND}}";
-    public static final String GEGNERVT_TEL = "{{GEGNERVT_TEL}}";
-    public static final String GEGNERVT_MOBIL = "{{GEGNERVT_MOBIL}}";
-    public static final String GEGNERVT_FAX = "{{GEGNERVT_FAX}}";
-    public static final String GEGNERVT_EMAIL = "{{GEGNERVT_EMAIL}}";
-    public static final String GEGNERVT_WWW = "{{GEGNERVT_WWW}}";
-    public static final String GEGNERVT_BANK = "{{GEGNERVT_BANK}}";
-    public static final String GEGNERVT_BLZ = "{{GEGNERVT_BLZ}}";
-    public static final String GEGNERVT_KONTONR = "{{GEGNERVT_KONTONR}}";
-    public static final String GEGNERVT_RECHTSSCHUTZ = "{{GEGNERVT_RECHTSSCHUTZ}}";
-    
-    public static final String DRITTE_NR = "{{DRITTE_NR}}";
-    public static final String DRITTE_NAME = "{{DRITTE_NAME}}";
-    public static final String DRITTE_VORNAME = "{{DRITTE_VORNAME}}";
-    public static final String DRITTE_FIRMA = "{{DRITTE_FIRMA}}";
-    public static final String DRITTE_ABTLG = "{{DRITTE_ABTLG}}";
-    public static final String DRITTE_TITEL = "{{DRITTE_TITEL}}";
-    public static final String DRITTE_ANREDE = "{{DRITTE_ANREDE}}";
-    public static final String DRITTE_NACHTEXT = "{{DRITTE_NACHTEXT}}";
-    public static final String DRITTE_STRASSE = "{{DRITTE_STRASSE}}";
-    public static final String DRITTE_ORT = "{{DRITTE_ORT}}";
-    public static final String DRITTE_PLZ = "{{DRITTE_PLZ}}";
-    public static final String DRITTE_LAND = "{{DRITTE_LAND}}";
-    public static final String DRITTE_TEL = "{{DRITTE_TEL}}";
-    public static final String DRITTE_MOBIL = "{{DRITTE_MOBIL}}";
-    public static final String DRITTE_FAX = "{{DRITTE_FAX}}";
-    public static final String DRITTE_EMAIL = "{{DRITTE_EMAIL}}";
-    public static final String DRITTE_WWW = "{{DRITTE_WWW}}";
-    public static final String DRITTE_BANK = "{{DRITTE_BANK}}";
-    public static final String DRITTE_BLZ = "{{DRITTE_BLZ}}";
-    public static final String DRITTE_KONTONR = "{{DRITTE_KONTONR}}";
-    public static final String DRITTE_RECHTSSCHUTZ = "{{DRITTE_RECHTSSCHUTZ}}";
-    public static final String DRITTE_VRECHTSSCHUTZ = "{{DRITTE_VRECHTSSCHUTZ}}";
-    public static final String DRITTE_KFZVERS = "{{DRITTE_KFZVERS}}";
-    public static final String DRITTE_EIGENE1 = "{{DRITTE_EIGENE1}}";
-    public static final String DRITTE_EIGENE2 = "{{DRITTE_EIGENE2}}";
-    public static final String DRITTE_EIGENE3 = "{{DRITTE_EIGENE3}}";
-    public static final String DRITTE_GEB = "{{DRITTE_GEB}}";
-    public static final String DRITTE_AKTE_ZEICHEN = "{{DRITTE_AKTE_ZEICHEN}}";
-    public static final String DRITTE_AKTE_KONTAKT = "{{DRITTE_AKTE_KONTAKT}}";
-    public static final String DRITTE_AKTE_EIGENE1 = "{{DRITTE_AKTE_EIGENE1}}";
-    public static final String DRITTE_AKTE_EIGENE2 = "{{DRITTE_AKTE_EIGENE2}}";
-    public static final String DRITTE_AKTE_EIGENE3 = "{{DRITTE_AKTE_EIGENE3}}";
-    
+
+    public static final String _NAME = "{{###_NAME}}";
+    public static final String _VORNAME = "{{###_VORNAME}}";
+    public static final String _FIRMA = "{{###_FIRMA}}";
+    public static final String _ABTLG = "{{###_ABTLG}}";
+    public static final String _TITEL = "{{###_TITEL}}";
+    public static final String _ANREDE = "{{###_ANREDE}}";
+    public static final String _NACHTEXT = "{{###_NACHTEXT}}";
+    public static final String _STRASSE = "{{###_STRASSE}}";
+    public static final String _ORT = "{{###_ORT}}";
+    public static final String _PLZ = "{{###_PLZ}}";
+    public static final String _LAND = "{{###_LAND}}";
+    public static final String _TEL = "{{###_TEL}}";
+    public static final String _MOBIL = "{{###_MOBIL}}";
+    public static final String _FAX = "{{###_FAX}}";
+    public static final String _EMAIL = "{{###_EMAIL}}";
+    public static final String _WWW = "{{###_WWW}}";
+    public static final String _BANK = "{{###_BANK}}";
+    public static final String _BLZ = "{{###_BLZ}}";
+    public static final String _KONTONR = "{{###_KONTONR}}";
+    public static final String _RECHTSSCHUTZ = "{{###_RECHTSSCHUTZ}}";
+    public static final String _VRECHTSSCHUTZ = "{{###_VRECHTSSCHUTZ}}";
+    public static final String _KFZVERS = "{{###_KFZVERS}}";
+    public static final String _EIGENE1 = "{{###_EIGENE1}}";
+    public static final String _EIGENE2 = "{{###_EIGENE2}}";
+    public static final String _EIGENE3 = "{{###_EIGENE3}}";
+    public static final String _GEB = "{{###_GEB}}";
+    public static final String _AKTE_ZEICHEN = "{{###_AKTE_ZEICHEN}}";
+    public static final String _AKTE_KONTAKT = "{{###_AKTE_KONTAKT}}";
+    public static final String _AKTE_EIGENE1 = "{{###_AKTE_EIGENE1}}";
+    public static final String _AKTE_EIGENE2 = "{{###_AKTE_EIGENE2}}";
+    public static final String _AKTE_EIGENE3 = "{{###_AKTE_EIGENE3}}";
+
     public static final String AKTE_NR = "{{AKTE_NR}}";
     public static final String AKTE_ZEICHEN = "{{AKTE_ZEICHEN}}";
     public static final String AKTE_KURZRUBRUM = "{{AKTE_KURZRUBRUM}}";
     public static final String AKTE_NOTIZ = "{{AKTE_NOTIZ}}";
-    //public static final String AKTE_ERSTELLDATUM = "{{AKTE_ERSTELLDATUM}}";
-//    public static final String AKTE_DIKTATZEICHEN = "{{AKTE_DIKTATZEICHEN}}";
     public static final String AKTE_SCHADENNR = "{{AKTE_SCHADENNR}}";
     public static final String AKTE_GEGENSTANDSWERT = "{{AKTE_GEGENSTANDSWERT}}";
-    // since 1.2
     public static final String AKTE_WEGEN = "{{AKTE_WEGEN}}";
     public static final String AKTE_ANWALT = "{{AKTE_ANWALT}}";
     public static final String AKTE_SACHBEARBEITER = "{{AKTE_SACHBEARBEITER}}";
-    // since 1.3 
     public static final String DOK_DZ = "{{DOK_DZ}}";
-    // since 1.7
     public static final String AKTE_EIGENE1 = "{{AKTE_EIGENE1}}";
     public static final String AKTE_EIGENE2 = "{{AKTE_EIGENE2}}";
     public static final String AKTE_EIGENE3 = "{{AKTE_EIGENE3}}";
-    
+
     public static final String TABELLE_1 = "{{TABELLE_1}}";
-    
-    
-    public static final ArrayList<String> ALLPLACEHOLDERS = new ArrayList<String>();
-    
+
     public static final ArrayList<String> ALLTABLEPLACEHOLDERS = new ArrayList<String>();
     
-    private static HashMap<String,String> ph2alias=new HashMap<String,String>();
-    private static HashMap<String,String> alias2ph=new HashMap<String,String>();
-    
-
     static {
+        ALLTABLEPLACEHOLDERS.add(TABELLE_1);
+    }
+    
+    public static String getPlaceHolderForType(String genericPlaceHolder, String typeSpecificPrefix) {
+        return genericPlaceHolder.replaceAll("###", typeSpecificPrefix);
+    }
+
+    public static ArrayList<String> getAllPlaceHolders(List<String> allPartyTypesPlaceHolders) {
+        
+        ArrayList<String> ALLPLACEHOLDERS = new ArrayList<String>();
 
         ALLPLACEHOLDERS.add(PROFIL_FIRMA);
         ALLPLACEHOLDERS.add(PROFIL_STRASSE);
@@ -864,103 +778,46 @@ public class PlaceHolders {
         ALLPLACEHOLDERS.add(PROFIL_BANK_AK);
         ALLPLACEHOLDERS.add(PROFIL_KONTONR_AK);
         ALLPLACEHOLDERS.add(PROFIL_BLZ_AK);
-        
+
         ALLPLACEHOLDERS.add(KURZDATUM);
         ALLPLACEHOLDERS.add(LANGDATUM);
-        ALLPLACEHOLDERS.add(MANDANT_NAME);
-        ALLPLACEHOLDERS.add(MANDANT_VORNAME);
-        ALLPLACEHOLDERS.add(MANDANT_FIRMA);
-        ALLPLACEHOLDERS.add(MANDANT_ABTLG);
-        ALLPLACEHOLDERS.add(MANDANT_TITEL);
-        ALLPLACEHOLDERS.add(MANDANT_ANREDE);
-        ALLPLACEHOLDERS.add(MANDANT_NACHTEXT);
-        ALLPLACEHOLDERS.add(MANDANT_STRASSE);
-        ALLPLACEHOLDERS.add(MANDANT_ORT);
-        ALLPLACEHOLDERS.add(MANDANT_PLZ);
-        ALLPLACEHOLDERS.add(MANDANT_LAND);
-        ALLPLACEHOLDERS.add(MANDANT_TEL);
-        ALLPLACEHOLDERS.add(MANDANT_MOBIL);
-        ALLPLACEHOLDERS.add(MANDANT_FAX);
-        ALLPLACEHOLDERS.add(MANDANT_EMAIL);
-        ALLPLACEHOLDERS.add(MANDANT_WWW);
-        ALLPLACEHOLDERS.add(MANDANT_BANK);
-        ALLPLACEHOLDERS.add(MANDANT_BLZ);
-        ALLPLACEHOLDERS.add(MANDANT_KONTONR);
-        ALLPLACEHOLDERS.add(MANDANT_RECHTSSCHUTZ);
-        ALLPLACEHOLDERS.add(MANDANT_VRECHTSSCHUTZ);
-        ALLPLACEHOLDERS.add(MANDANT_KFZVERS);
-        ALLPLACEHOLDERS.add(MANDANT_EIGENE1);
-        ALLPLACEHOLDERS.add(MANDANT_EIGENE2);
-        ALLPLACEHOLDERS.add(MANDANT_EIGENE3);
-        ALLPLACEHOLDERS.add(MANDANT_GEB);
-        ALLPLACEHOLDERS.add(MANDANT_AKTE_EIGENE1);
-        ALLPLACEHOLDERS.add(MANDANT_AKTE_EIGENE2);
-        ALLPLACEHOLDERS.add(MANDANT_AKTE_EIGENE3);
-        ALLPLACEHOLDERS.add(MANDANT_AKTE_ZEICHEN);
-        ALLPLACEHOLDERS.add(MANDANT_AKTE_KONTAKT);
-        ALLPLACEHOLDERS.add(GEGNER_NAME);
-        ALLPLACEHOLDERS.add(GEGNER_VORNAME);
-        ALLPLACEHOLDERS.add(GEGNER_FIRMA);
-        ALLPLACEHOLDERS.add(GEGNER_ABTLG);
-        ALLPLACEHOLDERS.add(GEGNER_TITEL);
-        ALLPLACEHOLDERS.add(GEGNER_ANREDE);
-        ALLPLACEHOLDERS.add(GEGNER_NACHTEXT);
-        ALLPLACEHOLDERS.add(GEGNER_STRASSE);
-        ALLPLACEHOLDERS.add(GEGNER_ORT);
-        ALLPLACEHOLDERS.add(GEGNER_PLZ);
-        ALLPLACEHOLDERS.add(GEGNER_LAND);
-        ALLPLACEHOLDERS.add(GEGNER_TEL);
-        ALLPLACEHOLDERS.add(GEGNER_MOBIL);
-        ALLPLACEHOLDERS.add(GEGNER_FAX);
-        ALLPLACEHOLDERS.add(GEGNER_EMAIL);
-        ALLPLACEHOLDERS.add(GEGNER_WWW);
-        ALLPLACEHOLDERS.add(GEGNER_BANK);
-        ALLPLACEHOLDERS.add(GEGNER_BLZ);
-        ALLPLACEHOLDERS.add(GEGNER_KONTONR);
-        ALLPLACEHOLDERS.add(GEGNER_RECHTSSCHUTZ);
-        ALLPLACEHOLDERS.add(GEGNER_VRECHTSSCHUTZ);
-        ALLPLACEHOLDERS.add(GEGNER_KFZVERS);
-        ALLPLACEHOLDERS.add(GEGNER_EIGENE1);
-        ALLPLACEHOLDERS.add(GEGNER_EIGENE2);
-        ALLPLACEHOLDERS.add(GEGNER_EIGENE3);
-        ALLPLACEHOLDERS.add(GEGNER_GEB);
-        ALLPLACEHOLDERS.add(GEGNER_AKTE_EIGENE1);
-        ALLPLACEHOLDERS.add(GEGNER_AKTE_EIGENE2);
-        ALLPLACEHOLDERS.add(GEGNER_AKTE_EIGENE3);
-        ALLPLACEHOLDERS.add(GEGNER_AKTE_ZEICHEN);
-        ALLPLACEHOLDERS.add(GEGNER_AKTE_KONTAKT);
-        ALLPLACEHOLDERS.add(DRITTE_NR);
-        ALLPLACEHOLDERS.add(DRITTE_NAME);
-        ALLPLACEHOLDERS.add(DRITTE_VORNAME);
-        ALLPLACEHOLDERS.add(DRITTE_FIRMA);
-        ALLPLACEHOLDERS.add(DRITTE_ABTLG);
-        ALLPLACEHOLDERS.add(DRITTE_TITEL);
-        ALLPLACEHOLDERS.add(DRITTE_ANREDE);
-        ALLPLACEHOLDERS.add(DRITTE_NACHTEXT);
-        ALLPLACEHOLDERS.add(DRITTE_STRASSE);
-        ALLPLACEHOLDERS.add(DRITTE_ORT);
-        ALLPLACEHOLDERS.add(DRITTE_PLZ);
-        ALLPLACEHOLDERS.add(DRITTE_LAND);
-        ALLPLACEHOLDERS.add(DRITTE_TEL);
-        ALLPLACEHOLDERS.add(DRITTE_MOBIL);
-        ALLPLACEHOLDERS.add(DRITTE_FAX);
-        ALLPLACEHOLDERS.add(DRITTE_EMAIL);
-        ALLPLACEHOLDERS.add(DRITTE_WWW);
-        ALLPLACEHOLDERS.add(DRITTE_BANK);
-        ALLPLACEHOLDERS.add(DRITTE_BLZ);
-        ALLPLACEHOLDERS.add(DRITTE_KONTONR);
-        ALLPLACEHOLDERS.add(DRITTE_RECHTSSCHUTZ);
-        ALLPLACEHOLDERS.add(DRITTE_VRECHTSSCHUTZ);
-        ALLPLACEHOLDERS.add(DRITTE_KFZVERS);
-        ALLPLACEHOLDERS.add(DRITTE_EIGENE1);
-        ALLPLACEHOLDERS.add(DRITTE_EIGENE2);
-        ALLPLACEHOLDERS.add(DRITTE_EIGENE3);
-        ALLPLACEHOLDERS.add(DRITTE_GEB);
-        ALLPLACEHOLDERS.add(DRITTE_AKTE_EIGENE1);
-        ALLPLACEHOLDERS.add(DRITTE_AKTE_EIGENE2);
-        ALLPLACEHOLDERS.add(DRITTE_AKTE_EIGENE3);
-        ALLPLACEHOLDERS.add(DRITTE_AKTE_ZEICHEN);
-        ALLPLACEHOLDERS.add(DRITTE_AKTE_KONTAKT);
+
+        for (String typePlaceHolder : allPartyTypesPlaceHolders) {
+
+            ALLPLACEHOLDERS.add(_NAME.replaceAll("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_VORNAME.replaceAll("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_FIRMA.replaceAll("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_ABTLG.replaceAll("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_TITEL.replaceAll("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_ANREDE.replaceAll("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_NACHTEXT.replaceAll("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_STRASSE.replaceAll("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_ORT.replaceAll("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_PLZ.replaceAll("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_LAND.replaceAll("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_TEL.replaceAll("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_MOBIL.replaceAll("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_FAX.replaceAll("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_EMAIL.replaceAll("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_WWW.replaceAll("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_BANK.replaceAll("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_BLZ.replaceAll("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_KONTONR.replaceAll("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_RECHTSSCHUTZ.replaceAll("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_VRECHTSSCHUTZ.replaceAll("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_KFZVERS.replaceAll("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_EIGENE1.replaceAll("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_EIGENE2.replaceAll("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_EIGENE3.replaceAll("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_GEB.replaceAll("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_AKTE_EIGENE1.replaceAll("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_AKTE_EIGENE2.replaceAll("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_AKTE_EIGENE3.replaceAll("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_AKTE_ZEICHEN.replaceAll("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_AKTE_KONTAKT.replaceAll("###", typePlaceHolder));
+
+        }
+
         ALLPLACEHOLDERS.add(AKTE_NR);
         ALLPLACEHOLDERS.add(AKTE_ZEICHEN);
         ALLPLACEHOLDERS.add(AKTE_KURZRUBRUM);
@@ -975,40 +832,11 @@ public class PlaceHolders {
         ALLPLACEHOLDERS.add(AKTE_EIGENE1);
         ALLPLACEHOLDERS.add(AKTE_EIGENE2);
         ALLPLACEHOLDERS.add(AKTE_EIGENE3);
-        
 
         ALLPLACEHOLDERS.add(DOK_DZ);
-        
-        ph2alias.put(DRITTE_NR, GEGNERVT_NR);
-        ph2alias.put(DRITTE_NAME, GEGNERVT_NAME);
-        ph2alias.put(DRITTE_VORNAME, GEGNERVT_VORNAME);
-        ph2alias.put(DRITTE_FIRMA, GEGNERVT_FIRMA);
-        ph2alias.put(DRITTE_ANREDE, GEGNERVT_ANREDE);
-        ph2alias.put(DRITTE_NACHTEXT, GEGNERVT_NACHTEXT);
-        ph2alias.put(DRITTE_STRASSE, GEGNERVT_STRASSE);
-        ph2alias.put(DRITTE_ORT, GEGNERVT_ORT);
-        ph2alias.put(DRITTE_PLZ, GEGNERVT_PLZ);
-        ph2alias.put(DRITTE_LAND, GEGNERVT_LAND);
-        ph2alias.put(DRITTE_TEL, GEGNERVT_TEL);
-        ph2alias.put(DRITTE_MOBIL, GEGNERVT_MOBIL);
-        ph2alias.put(DRITTE_FAX, GEGNERVT_FAX);
-        ph2alias.put(DRITTE_EMAIL, GEGNERVT_EMAIL);
-        ph2alias.put(DRITTE_WWW, GEGNERVT_WWW);
-        ph2alias.put(DRITTE_BANK, GEGNERVT_BANK);
-        ph2alias.put(DRITTE_BLZ, GEGNERVT_BLZ);
-        ph2alias.put(DRITTE_KONTONR, GEGNERVT_KONTONR);
-        ph2alias.put(DRITTE_RECHTSSCHUTZ, GEGNERVT_RECHTSSCHUTZ);
-        
-        ALLTABLEPLACEHOLDERS.add(TABELLE_1);
-        
+
+        return ALLPLACEHOLDERS;
     }
-    
-    public static String aliasForPlaceHolder(String ph) {
-        if(ph2alias.containsKey(ph))
-            return ph2alias.get(ph);
-        else
-            return ph;
-        
-    }
-    
+
+
 }

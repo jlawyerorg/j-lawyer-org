@@ -1032,14 +1032,14 @@ public class LibreOfficeAccess {
         return newFont;
     }
 
-    public static java.util.List<String> getPlaceHolders(String file) throws Exception {
+    public static java.util.List<String> getPlaceHolders(String file, List<String> allPartyTypesPlaceHolders) throws Exception {
 
         if (file.toLowerCase().endsWith(".odt")) {
             TextDocument outputOdt;
             ArrayList<String> resultList = new ArrayList<String>();
             outputOdt = TextDocument.loadDocument(file);
 
-            for (String r : PlaceHolders.ALLPLACEHOLDERS) {
+            for (String r : PlaceHolders.getAllPlaceHolders(allPartyTypesPlaceHolders)) {
                 String key = r;
                 String regExKey = "\\{\\{" + key.substring(2, key.length() - 2) + "\\}\\}";
 
@@ -1049,15 +1049,15 @@ public class LibreOfficeAccess {
                 }
 
                 // search for the alias also 
-                key = PlaceHolders.aliasForPlaceHolder(r);
-                regExKey = "\\{\\{" + key.substring(2, key.length() - 2) + "\\}\\}";
-
-                search = new TextNavigation(regExKey, outputOdt);
-                if (search.hasNext()) {
-                    if (!resultList.contains(key)) {
-                        resultList.add(key);
-                    }
-                }
+//                key = PlaceHolders.aliasForPlaceHolder(r);
+//                regExKey = "\\{\\{" + key.substring(2, key.length() - 2) + "\\}\\}";
+//
+//                search = new TextNavigation(regExKey, outputOdt);
+//                if (search.hasNext()) {
+//                    if (!resultList.contains(key)) {
+//                        resultList.add(key);
+//                    }
+//                }
 
             }
 
@@ -1080,7 +1080,7 @@ public class LibreOfficeAccess {
             ArrayList<String> resultList = new ArrayList<String>();
 
             outputOds = SpreadsheetDocument.loadDocument(file);
-            for (String r : PlaceHolders.ALLPLACEHOLDERS) {
+            for (String r : PlaceHolders.getAllPlaceHolders(allPartyTypesPlaceHolders)) {
                 String key = r;
                 String regExKey = "\\{\\{" + key.substring(2, key.length() - 2) + "\\}\\}";
 
@@ -1089,14 +1089,6 @@ public class LibreOfficeAccess {
                     resultList.add(r);
                 }
 
-                // search for the alias also 
-                key = PlaceHolders.aliasForPlaceHolder(r);
-                regExKey = "\\{\\{" + key.substring(2, key.length() - 2) + "\\}\\}";
-
-                search = new TextNavigation(regExKey, outputOds);
-                if (search.hasNext()) {
-                    resultList.add(key);
-                }
 
             }
 
@@ -1105,7 +1097,7 @@ public class LibreOfficeAccess {
         } else if (file.toLowerCase().endsWith(".docx")) {
 
             
-            return new ArrayList(MicrosoftOfficeAccess.getPlaceHolders(file));
+            return new ArrayList(MicrosoftOfficeAccess.getPlaceHolders(file, allPartyTypesPlaceHolders));
 
         }
 
@@ -1113,8 +1105,8 @@ public class LibreOfficeAccess {
 
     }
 
-    private static void findPlaceHolders(String content, java.util.List<String> results) {
-        for (String r : PlaceHolders.ALLPLACEHOLDERS) {
+    private static void findPlaceHolders(List<String> allPartyTypesPlaceHolders, String content, java.util.List<String> results) {
+        for (String r : PlaceHolders.getAllPlaceHolders(allPartyTypesPlaceHolders)) {
             if (content.indexOf(r) > -1) {
                 if (!results.contains(r)) {
                     results.add(r);
@@ -1146,7 +1138,7 @@ public class LibreOfficeAccess {
         try {
 
             outputOds = SpreadsheetDocument.loadDocument("/home/jens/temp/j-lawyer.org/j-lawyer.ods");
-            for (String r : PlaceHolders.ALLPLACEHOLDERS) {
+            for (String r : PlaceHolders.getAllPlaceHolders(null)) {
                 String key = r;
                 String regExKey = "\\{\\{" + key.substring(2, key.length() - 2) + "\\}\\}";
 
@@ -1155,14 +1147,7 @@ public class LibreOfficeAccess {
                     resultList.add(r);
                 }
 
-                // search for the alias also 
-                key = PlaceHolders.aliasForPlaceHolder(r);
-                regExKey = "\\{\\{" + key.substring(2, key.length() - 2) + "\\}\\}";
-
-                search = new TextNavigation(regExKey, outputOds);
-                if (search.hasNext()) {
-                    resultList.add(key);
-                }
+                
 
             }
 

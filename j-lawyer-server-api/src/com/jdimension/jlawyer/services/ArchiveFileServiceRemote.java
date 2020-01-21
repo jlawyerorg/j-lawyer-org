@@ -685,11 +685,11 @@ public interface ArchiveFileServiceRemote {
 
     void removeArchiveFile(String id);
 
-    Collection getClients(String archiveFileKey);
-
-    Collection getOpponents(String archiveFileKey);
-
-    Collection getOpponentAttorneys(String archiveFileKey);
+//    Collection getClients(String archiveFileKey);
+//
+//    Collection getOpponents(String archiveFileKey);
+//
+//    Collection getOpponentAttorneys(String archiveFileKey);
 
     ArchiveFileHistoryBean[] getHistoryForArchiveFile(String archiveFileKey);
 
@@ -798,5 +798,7 @@ public interface ArchiveFileServiceRemote {
     void renameTag(String fromName, String toName) throws Exception;
 
     void renameDocumentTag(String fromName, String toName) throws Exception;
+
+    List<PartyTypeBean> getAllPartyTypes();
 
 }

@@ -718,14 +718,11 @@ public class PrintStubGenerator {
 
         if (file.getArchiveFileAddressesBeanList() != null) {
             for (int i = 0; i < file.getArchiveFileAddressesBeanList().size(); i++) {
+                
+                
                 ArchiveFileAddressesBean ab = file.getArchiveFileAddressesBeanList().get(i);
-                if (ab.getReferenceType() == ArchiveFileAddressesBean.REFERENCETYPE_CLIENT) {
-                    s.getClients().add(getAddressDetail(ab.getAddressKey(), ab));
-                } else if (ab.getReferenceType() == ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT) {
-                    s.getOpponents().add(getAddressDetail(ab.getAddressKey(), ab));
-                } else if (ab.getReferenceType() == ArchiveFileAddressesBean.REFERENCETYPE_OPPONENTATTORNEY) {
-                    s.getOpponentAttorneys().add(getAddressDetail(ab.getAddressKey(), ab));
-                }
+                s.addParty(getAddressDetail(ab.getAddressKey(), ab));
+                
 
             }
         }
@@ -797,6 +794,10 @@ public class PrintStubGenerator {
         
         if(roleInCase!=null)
             d.setReference(roleInCase.getReference());
+        
+        if(roleInCase!=null)
+            if(roleInCase.getReferenceType()!=null)
+                d.setPartyType(roleInCase.getReferenceType().getName());
         
         return d;
     }

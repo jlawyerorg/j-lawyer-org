@@ -669,6 +669,7 @@ import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileHistoryBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileTagsBean;
+import com.jdimension.jlawyer.persistence.PartyTypeBean;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -701,9 +702,9 @@ public interface ArchiveFileServiceLocal {
     
     public ArchiveFileHistoryBean[] getHistoryForArchiveFile(String archiveFileKey);
     
-    public Collection getClients(String archiveFileKey);
-    public Collection getOpponents(String archiveFileKey);
-    public Collection getOpponentAttorneys(String archiveFileKey);
+//    public Collection getClients(String archiveFileKey);
+//    public Collection getOpponents(String archiveFileKey);
+//    public Collection getOpponentAttorneys(String archiveFileKey);
     
     byte[] exportCaseToHtml(String caseId) throws Exception;
 
@@ -711,11 +712,11 @@ public interface ArchiveFileServiceLocal {
 
     ArchiveFileHistoryBean[] getHistoryForArchiveFileUnrestricted(String archiveFileKey);
 
-    Collection getClientsUnrestricted(String archiveFileKey);
-
-    Collection getOpponentsUnrestricted(String archiveFileKey);
-
-    Collection getOpponentAttorneysUnrestricted(String archiveFileKey);
+//    Collection getClientsUnrestricted(String archiveFileKey);
+//
+//    Collection getOpponentsUnrestricted(String archiveFileKey);
+//
+//    Collection getOpponentAttorneysUnrestricted(String archiveFileKey);
 
     Collection getReviewsUnrestricted(String archiveFileKey);
     
@@ -728,6 +729,8 @@ public interface ArchiveFileServiceLocal {
     Collection<ArchiveFileReviewsBean> getAllOpenReviewsUnrestricted();
     
     public List<ArchiveFileAddressesBean> getInvolvementDetailsForCase(String archiveFileKey);
+    
+    public List<ArchiveFileAddressesBean> getInvolvementDetailsForCaseUnrestricted(String archiveFileKey);
 
     boolean doesDocumentExist(String caseId, String documentName);
     
@@ -742,5 +745,11 @@ public interface ArchiveFileServiceLocal {
     public boolean setDocumentContent(String id, byte[] content) throws Exception;
 
     ArchiveFileAddressesBean addAddressToCase(ArchiveFileAddressesBean address) throws Exception;
+
+    List<PartyTypeBean> getAllPartyTypes();
+
+    ArchiveFileAddressesBean updateParty(String caseId, ArchiveFileAddressesBean party) throws Exception;
+
+    void removeParty(String id) throws Exception;
     
 }

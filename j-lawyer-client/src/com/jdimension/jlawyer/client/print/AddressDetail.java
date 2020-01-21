@@ -682,6 +682,7 @@ public class AddressDetail {
     private String email;
     private String website;
     private String reference;
+    private String partyType=null;
     
     public AddressDetail() {
     }
@@ -810,6 +811,20 @@ public class AddressDetail {
             if(reference.length()>0)
                 this.reference=this.reference + " ";
         }
+    }
+
+    /**
+     * @return the partyType
+     */
+    public String getPartyType() {
+        return partyType;
+    }
+
+    /**
+     * @param partyType the partyType to set
+     */
+    public void setPartyType(String partyType) {
+        this.partyType = partyType;
     }
 
     

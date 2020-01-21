@@ -684,6 +684,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Enumeration;
+import java.util.Hashtable;
 import java.util.List;
 import java.util.Properties;
 import javax.annotation.security.PermitAll;
@@ -739,6 +740,10 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     private AppRoleBeanFacadeLocal roleBeanFacade;
     @EJB
     private ServerSettingsBeanFacadeLocal settingsFacade;
+    @EJB
+    private PartyTypeBeanFacadeLocal partyTypesFacade;
+    @EJB
+    private ArchiveFileAddressesBeanFacadeLocal archiveFileAddressesFacade;
 
     @Override
     @RolesAllowed({"loginRole"})
@@ -748,8 +753,8 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
 
     }
 
-    // Add business logic below. (Right-click in editor and choose
-    // "Insert Code > Add Business Method")
+    
+    
     @Override
     @RolesAllowed({"loginRole"})
     public BankDataBean[] searchBankData(String query) {
@@ -1833,7 +1838,13 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
 
         localBaseDir = localBaseDir + "templates" + TreeNodeUtils.buildNodePath(folder) + System.getProperty("file.separator") + templateName;
 
-        return LibreOfficeAccess.getPlaceHolders(localBaseDir);
+        Collection<PartyTypeBean> partyTypes=this.getPartyTypes();
+        ArrayList<String> allPartyTypesPlaceholders=new ArrayList<String>();
+        for(PartyTypeBean ptb: partyTypes) {
+            allPartyTypesPlaceholders.add(ptb.getPlaceHolder());
+        }
+        
+        return LibreOfficeAccess.getPlaceHolders(localBaseDir, allPartyTypesPlaceholders);
     }
 
     @Override
@@ -1912,6 +1923,100 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         }
 
         fromFile.renameTo(new File(to));
+    }
+    
+    
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public Collection<PartyTypeBean> getPartyTypes() {
+        return this.partyTypesFacade.findAll();
+    }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public PartyTypeBean getPartyType(String id) {
+        return this.partyTypesFacade.find(id);
+    }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public Hashtable<String,PartyTypeBean> getPartyTypesTable() {
+        List<PartyTypeBean> allParties=this.partyTypesFacade.findAll();
+        Hashtable<String,PartyTypeBean> result=new Hashtable<String,PartyTypeBean>();
+        for(PartyTypeBean p: allParties) {
+            result.put(p.getName(), p);
+        }
+        return result;
+    }
+
+    @Override
+    public PartyTypeBean addPartyType(PartyTypeBean partyType) throws Exception {
+        List<PartyTypeBean> allTypes=this.partyTypesFacade.findAll();
+        for(PartyTypeBean ptb: allTypes) {
+            if(partyType.getName()==null || "".equals(partyType.getName().trim())) {
+                throw new Exception("Typ mit leerem Namen ist unzulässig!");
+            }
+            if(partyType.getPlaceHolder()==null || "".equals(partyType.getPlaceHolder().trim())) {
+                throw new Exception("Typ mit leerem Platzhalter ist unzulässig!");
+            }
+            
+            if(ptb.getName().equalsIgnoreCase(partyType.getName())) {
+                throw new Exception("Typ mit Namen " + partyType.getName() + " existiert bereits!");
+            }
+            if(ptb.getPlaceHolder().equalsIgnoreCase(partyType.getPlaceHolder())) {
+                throw new Exception("Typ mit Platzhalter " + partyType.getName() + " existiert bereits!");
+            }
+            
+        }
+        
+        partyType.setName(partyType.getName().trim());
+        partyType.setPlaceHolder(partyType.getPlaceHolder().trim());
+        StringGenerator idGen = new StringGenerator();
+        String id=idGen.getID().toString();
+        partyType.setId(id);
+        
+        this.partyTypesFacade.create(partyType);
+        return this.partyTypesFacade.find(id);
+        
+    }
+
+    @Override
+    public void removePartyType(PartyTypeBean partyType) throws Exception {
+        
+        List<ArchiveFileAddressesBean> list=this.archiveFileAddressesFacade.findByReferenceType(partyType);
+        if(list.size()>0) {
+            throw new Exception("Beteiligtentyp " + partyType.getName() + " wird noch benutzt und kann nicht gelöscht werden!");
+        }
+        
+        this.partyTypesFacade.remove(partyType);
+        
+    }
+    
+    public PartyTypeBean updatePartyType(PartyTypeBean partyType) throws Exception {
+        List<PartyTypeBean> allTypes=this.partyTypesFacade.findAll();
+        for(PartyTypeBean ptb: allTypes) {
+            if(partyType.getName()==null || "".equals(partyType.getName().trim())) {
+                throw new Exception("Typ mit leerem Namen ist unzulässig!");
+            }
+            if(partyType.getPlaceHolder()==null || "".equals(partyType.getPlaceHolder().trim())) {
+                throw new Exception("Typ mit leerem Platzhalter ist unzulässig!");
+            }
+            
+            if(ptb.getName().equalsIgnoreCase(partyType.getName()) && !partyType.getId().equals(ptb.getId())) {
+                throw new Exception("Typ mit Namen " + partyType.getName() + " existiert bereits!");
+            }
+            if(ptb.getPlaceHolder().equalsIgnoreCase(partyType.getPlaceHolder()) && !partyType.getId().equals(ptb.getId())) {
+                throw new Exception("Typ mit Platzhalter " + partyType.getName() + " existiert bereits!");
+            }
+            
+        }
+        
+        partyType.setName(partyType.getName().trim());
+        partyType.setPlaceHolder(partyType.getPlaceHolder().trim());
+        
+        this.partyTypesFacade.edit(partyType);
+        return this.partyTypesFacade.find(partyType.getId());
     }
 
 }

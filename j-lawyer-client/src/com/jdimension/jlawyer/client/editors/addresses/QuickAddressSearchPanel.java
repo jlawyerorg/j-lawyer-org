@@ -1059,20 +1059,13 @@ public class QuickAddressSearchPanel extends javax.swing.JPanel implements Theme
                     JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                     ArchiveFileServiceRemote afRem = locator.lookupArchiveFileServiceRemote();
                     Collection col = afRem.getArchiveFileAddressesForAddress(id.getAddressDTO().getId());
-                    List<ArchiveFileBean> clientFiles = new ArrayList<ArchiveFileBean>();
-                    List<ArchiveFileBean> opponentFiles = new ArrayList<ArchiveFileBean>();
-                    List<ArchiveFileBean> opponentAttFiles = new ArrayList<ArchiveFileBean>();
+                    List<ArchiveFileBean> partyFiles = new ArrayList<ArchiveFileBean>();
                     for (Object o : col) {
                         ArchiveFileAddressesBean afb = (ArchiveFileAddressesBean) o;
-                        if (afb.getReferenceType() == ArchiveFileAddressesBean.REFERENCETYPE_CLIENT) {
-                            clientFiles.add(afb.getArchiveFileKey());
-                        } else if (afb.getReferenceType() == ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT) {
-                            opponentFiles.add(afb.getArchiveFileKey());
-                        } else if (afb.getReferenceType() == ArchiveFileAddressesBean.REFERENCETYPE_OPPONENTATTORNEY) {
-                            opponentAttFiles.add(afb.getArchiveFileKey());
-                        }
+                            partyFiles.add(afb.getArchiveFileKey());
+                        
                     }
-                    String html = AddressPanel.getArchiveFilesAsHTML(clientFiles, opponentFiles, opponentAttFiles);
+                    String html = AddressPanel.getArchiveFilesAsHTML(partyFiles);
                     this.lblSummary.setText(html);
                 } catch (Exception ex) {
                     log.error("Error getting archive files for address", ex);
@@ -1111,21 +1104,14 @@ public class QuickAddressSearchPanel extends javax.swing.JPanel implements Theme
                 ClientSettings settings = ClientSettings.getInstance();
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                 ArchiveFileServiceRemote afRem = locator.lookupArchiveFileServiceRemote();
-                Collection col = afRem.getArchiveFileAddressesForAddress(id.getAddressDTO().getId());
-                List<ArchiveFileBean> clientFiles = new ArrayList<ArchiveFileBean>();
-                List<ArchiveFileBean> opponentFiles = new ArrayList<ArchiveFileBean>();
-                List<ArchiveFileBean> opponentAttFiles = new ArrayList<ArchiveFileBean>();
+                Collection<ArchiveFileAddressesBean> col = afRem.getArchiveFileAddressesForAddress(id.getAddressDTO().getId());
+                List<ArchiveFileBean> partyFiles = new ArrayList<ArchiveFileBean>();
                 for (Object o : col) {
                     ArchiveFileAddressesBean afb = (ArchiveFileAddressesBean) o;
-                    if (afb.getReferenceType() == ArchiveFileAddressesBean.REFERENCETYPE_CLIENT) {
-                        clientFiles.add(afb.getArchiveFileKey());
-                    } else if (afb.getReferenceType() == ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT) {
-                        opponentFiles.add(afb.getArchiveFileKey());
-                    } else if (afb.getReferenceType() == ArchiveFileAddressesBean.REFERENCETYPE_OPPONENTATTORNEY) {
-                        opponentAttFiles.add(afb.getArchiveFileKey());
-                    }
+                        partyFiles.add(afb.getArchiveFileKey());
+                    
                 }
-                String html = AddressPanel.getArchiveFilesAsHTML(clientFiles, opponentFiles, opponentAttFiles);
+                String html = AddressPanel.getArchiveFilesAsHTML(partyFiles);
                 this.lblSummary.setText(html);
             } catch (Exception ex) {
                 log.error("Error getting archive files for address", ex);

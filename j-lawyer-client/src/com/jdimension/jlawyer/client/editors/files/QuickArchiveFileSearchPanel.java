@@ -1192,13 +1192,8 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
                     newAab.setCustom2(aab.getCustom2());
                     newAab.setCustom3(aab.getCustom3());
                     newAab.setReferenceType(aab.getReferenceType());
-                    if(aab.getReferenceType()==ArchiveFileAddressesBean.REFERENCETYPE_CLIENT) {
-                        target.addClient(newAab);
-                    } else if(aab.getReferenceType()==ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT) {
-                        target.addOpponent(newAab);
-                    } else if (aab.getReferenceType()==ArchiveFileAddressesBean.REFERENCETYPE_OPPONENTATTORNEY) {
-                        target.addOpponentAttorney(newAab);
-                    } 
+                    target.addParty(newAab);
+                     
                 }
                 
                 fileService.updateArchiveFile(target);

@@ -677,22 +677,18 @@ import javax.xml.bind.annotation.XmlRootElement;
 @NamedQueries({
     @NamedQuery(name = "ArchiveFileAddressesBean.findAll", query = "SELECT a FROM ArchiveFileAddressesBean a"),
     @NamedQuery(name = "ArchiveFileAddressesBean.findById", query = "SELECT a FROM ArchiveFileAddressesBean a WHERE a.id = :id"),
-    @NamedQuery(name = "ArchiveFileAddressesBean.findByArchiveFileKeyAndReferenceType", query = "SELECT a FROM ArchiveFileAddressesBean a WHERE a.id = :id and a.referenceType = :referenceType"),
+    //@NamedQuery(name = "ArchiveFileAddressesBean.findByArchiveFileKeyAndReferenceType", query = "SELECT a FROM ArchiveFileAddressesBean a WHERE a.id = :id and a.referenceType = :referenceType"),
     @NamedQuery(name = "ArchiveFileAddressesBean.findByReferenceType", query = "SELECT a FROM ArchiveFileAddressesBean a WHERE a.referenceType = :referenceType")})
 public class ArchiveFileAddressesBean implements Serializable {
-
-    public static final int REFERENCETYPE_CLIENT = 10;
-    public static final int REFERENCETYPE_OPPONENT = 20;
-    public static final int REFERENCETYPE_OPPONENTATTORNEY = 30;
 
     private static final long serialVersionUID = 1L;
     @Id
     @Basic(optional = false)
     @Column(name = "id")
     private String id;
-    @Basic(optional = false)
-    @Column(name = "referenceType")
-    private int referenceType;
+    @JoinColumn(name = "referenceType", referencedColumnName = "id")
+    @ManyToOne
+    private PartyTypeBean referenceType;
     @JoinColumn(name = "addressKey", referencedColumnName = "id")
     @ManyToOne
     private AddressBean addressKey;
@@ -717,7 +713,7 @@ public class ArchiveFileAddressesBean implements Serializable {
         this.id = id;
     }
 
-    public ArchiveFileAddressesBean(String id, int referenceType) {
+    public ArchiveFileAddressesBean(String id, PartyTypeBean referenceType) {
         this.id = id;
         this.referenceType = referenceType;
     }
@@ -730,33 +726,18 @@ public class ArchiveFileAddressesBean implements Serializable {
         this.id = id;
     }
 
-    public int getReferenceType() {
+    public PartyTypeBean getReferenceType() {
         return referenceType;
     }
 
     public String getReferenceTypeAsString() {
-        if (referenceType == ArchiveFileAddressesBean.REFERENCETYPE_CLIENT) {
-            return "Mandant";
-        } else if (referenceType == ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT) {
-            return "Gegner";
-        } else if (referenceType == ArchiveFileAddressesBean.REFERENCETYPE_OPPONENTATTORNEY) {
-            return "Dritte";
+        if(referenceType!=null) {
+            return referenceType.getName();
         }
         return "unbekannt";
     }
     
-    public int getReferenceTypeAsInt(String refType) {
-        if ("Mandant".equals(refType) ) {
-            return ArchiveFileAddressesBean.REFERENCETYPE_CLIENT;
-        } else if ("Gegner".equals(refType)) {
-            return ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT;
-        } else if ("Dritte".equals(refType)) {
-            return ArchiveFileAddressesBean.REFERENCETYPE_OPPONENTATTORNEY;
-        }
-        return ArchiveFileAddressesBean.REFERENCETYPE_CLIENT;
-    }
-
-    public void setReferenceType(int referenceType) {
+    public void setReferenceType(PartyTypeBean referenceType) {
         this.referenceType = referenceType;
     }
 

@@ -702,5 +702,11 @@ public interface CasesEndpointLocalV1 {
 
     Response createParty(RestfulPartyV1 party);
 
+    Response updateParty(RestfulPartyV1 party);
+
+    Response deleteParty(String id);
+
+    Response getPartyTypes();
+
     
 }
