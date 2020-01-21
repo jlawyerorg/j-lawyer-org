@@ -684,6 +684,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Hashtable;
 import java.util.List;
 import javax.swing.AbstractAction;
 import javax.swing.DefaultListModel;
@@ -939,29 +940,24 @@ public class AddAddressSearchDialog extends javax.swing.JDialog {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             ArchiveFileServiceRemote afRem = locator.lookupArchiveFileServiceRemote();
             Collection col = afRem.getArchiveFileAddressesForAddress(id.getAddressDTO().getId());
-//            List<ArchiveFileBean> clientFiles = new ArrayList<ArchiveFileBean>();
-//            List<ArchiveFileBean> opponentFiles = new ArrayList<ArchiveFileBean>();
-//            List<ArchiveFileBean> opponentAttFiles = new ArrayList<ArchiveFileBean>();
-//            for (Object o : col) {
-//                ArchiveFileAddressesBean afb = (ArchiveFileAddressesBean) o;
-//                if (afb.getReferenceType() == ArchiveFileAddressesBean.REFERENCETYPE_CLIENT) {
-//                    clientFiles.add(afb.getArchiveFileKey());
-//                } else if (afb.getReferenceType() == ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT) {
-//                    opponentFiles.add(afb.getArchiveFileKey());
-//                } else if (afb.getReferenceType() == ArchiveFileAddressesBean.REFERENCETYPE_OPPONENTATTORNEY) {
-//                    opponentAttFiles.add(afb.getArchiveFileKey());
-//                }
-//            }
-            boolean conflict = false;
-//            if (this.targetReferenceType == ArchiveFileAddressesBean.REFERENCETYPE_CLIENT && opponentFiles.size() > 0) {
-//                conflict = true;
-//            }
-//            if (this.targetReferenceType == ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT && clientFiles.size() > 0) {
-//                conflict = true;
-//            }
-//            if (conflict) {
-//                JOptionPane.showMessageDialog(this, "Warnung: es könnte ein Interessenkonflikt vorliegen!\n(Beteiligter ist in verschiedenen Akten sowohl Mandant als auch Gegner)!", "Warnung", JOptionPane.WARNING_MESSAGE);
-//            }
+            Hashtable<PartyTypeBean, List<ArchiveFileBean>> casesWithDifferentPartyType=new Hashtable<PartyTypeBean, List<ArchiveFileBean>>();
+            for (Object o : col) {
+                ArchiveFileAddressesBean afb = (ArchiveFileAddressesBean) o;
+                if (!(afb.getReferenceType().getId().equals(targetReferenceType.getId()))) {
+                    if(!(casesWithDifferentPartyType.containsKey(afb.getReferenceType())))
+                        casesWithDifferentPartyType.put(afb.getReferenceType(), new ArrayList<ArchiveFileBean>());
+                    
+                    casesWithDifferentPartyType.get(afb.getReferenceType()).add(afb.getArchiveFileKey());
+                    
+                }
+            }
+            if(casesWithDifferentPartyType.size()>0) {
+                ConflictOfInterestDialog dlg=new ConflictOfInterestDialog(this, true, id.getAddressDTO(), targetReferenceType, casesWithDifferentPartyType);
+                FrameUtils.centerDialog(dlg, this);
+                dlg.setVisible(true);
+                
+            }
+
         } catch (Exception ex) {
             log.error("Error getting archive files for address", ex);
             JOptionPane.showMessageDialog(this, "Fehler beim Prüfen von Interessenkonflikten: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
