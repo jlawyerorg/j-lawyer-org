@@ -2538,18 +2538,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         String mode = set.getSetting(set.SERVERCONF_VOIPMODE, "on");
         if ("on".equalsIgnoreCase(mode)) {
 
-            ServerSettings serverSettings = ServerSettings.getInstance();
-            String company = "";
-            if (serverSettings.hasSetting(serverSettings.PROFILE_COMPANYNAME)) {
-                company = serverSettings.getSetting(serverSettings.PROFILE_COMPANYNAME, "");
-            }
-
-            String smsText = "";
-            if (!StringUtils.isEmpty(company)) {
-                smsText = "Passwort zum Entsperren empfangener Dokumente: " + this.encryptionPwd + " - Mit frdl. Gruessen, Ihre " + company;
-            } else {
-                smsText = "Passwort zum Entsperren empfangener Dokumente: " + this.encryptionPwd;
-            }
+            String smsText = "Passwort zum Entsperren empfangener Dokumente: " + this.encryptionPwd;
             SendSmsDialog dlg = new SendSmsDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.dto, smsText);
             FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
             dlg.setVisible(true);
