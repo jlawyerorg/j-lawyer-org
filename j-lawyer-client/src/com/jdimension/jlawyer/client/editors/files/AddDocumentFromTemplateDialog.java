@@ -949,6 +949,11 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
                 lstTemplatesMouseClicked(evt);
             }
         });
+        lstTemplates.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyReleased(java.awt.event.KeyEvent evt) {
+                lstTemplatesKeyReleased(evt);
+            }
+        });
         jScrollPane2.setViewportView(lstTemplates);
 
         jSplitPane1.setRightComponent(jScrollPane2);
@@ -1474,6 +1479,19 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
                     model.addRow(row);
                 }
                 ThreadUtils.setTableModel(this.tblPlaceHolders, model);
+                
+                ArrayList<PartyTypeBean> partiesInTemplate=new ArrayList<PartyTypeBean>();
+                for(PartyTypeBean p : this.allPartyTypes) {
+                    for (Object key : ht.keySet()) {
+                        String keyName=key.toString();
+                        if(keyName.indexOf("{{" + p.getPlaceHolder() + "_")>-1) {
+                            partiesInTemplate.add(p);
+                            break;
+                        }
+                    }
+                }
+                
+                this.pnlPartiesPanel.expandParties(partiesInTemplate);
 
             } catch (Exception ex) {
                 log.error("Error loading template names", ex);
@@ -1502,6 +1520,10 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
         this.highlightTree(this.txtTemplateFilter.getText());
 
     }//GEN-LAST:event_cmdClearFilterActionPerformed
+
+    private void lstTemplatesKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_lstTemplatesKeyReleased
+        this.lstTemplatesMouseClicked(null);
+    }//GEN-LAST:event_lstTemplatesKeyReleased
 
     private void traverseFolders(GenericNode current, DefaultMutableTreeNode currentNode) throws Exception {
 

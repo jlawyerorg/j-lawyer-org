@@ -689,9 +689,9 @@ import org.apache.log4j.Logger;
  * @author jens
  */
 public class PartiesPanel extends javax.swing.JPanel {
-    
+
     private static final Logger log = Logger.getLogger(PartiesPanel.class.getName());
-    
+
     private boolean ignoreTableChanges = false;
     private PartiesSelectionListener listener = null;
     private List<PartyTypeBean> partyTypes = null;
@@ -701,11 +701,10 @@ public class PartiesPanel extends javax.swing.JPanel {
      */
     public PartiesPanel() {
         initComponents();
-        
+
         //this.tblParties.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
-        
     }
-    
+
     public void setListener(PartiesSelectionListener l) {
         this.listener = l;
     }
@@ -742,13 +741,13 @@ public class PartiesPanel extends javax.swing.JPanel {
 //        
 //    }
     class PartyRenderer extends DefaultTableCellRenderer {
-        
+
         private List<AddressBean> parties = null;
-        
+
         public PartyRenderer(List<AddressBean> parties) {
             this.parties = parties;
         }
-        
+
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
@@ -763,13 +762,13 @@ public class PartiesPanel extends javax.swing.JPanel {
                 if (value instanceof AddressBean) {
                     ((JLabel) c).setText(((AddressBean) value).toDisplayName());
                 }
-                
+
             }
             return c;
-            
+
         }
     }
-    
+
     public void initialize(List<ArchiveFileAddressesBean> involved) {
         try {
             ClientSettings settings = ClientSettings.getInstance();
@@ -779,7 +778,7 @@ public class PartiesPanel extends javax.swing.JPanel {
             ArrayList<AddressBean> parties = new ArrayList<AddressBean>();
             // collect all addresses of relevant parties
             for (ArchiveFileAddressesBean aab : involved) {
-                parties.add(aab.getAddressKey());                
+                parties.add(aab.getAddressKey());
             }
 
             // display a column for EACH type, regardless of whether it is uses
@@ -789,7 +788,7 @@ public class PartiesPanel extends javax.swing.JPanel {
                     columnNames.add(ptb.getName());
                 }
             }
-            
+
             Collections.sort(columnNames);
             ArrayList<String> allColumnNames = new ArrayList<String>();
             allColumnNames.add("Beteiligte");
@@ -809,9 +808,9 @@ public class PartiesPanel extends javax.swing.JPanel {
                 this.tblParties.getColumnModel().getColumn(i).setMaxWidth(30);
                 this.tblParties.getColumnModel().getColumn(i).setMinWidth(30);
                 this.tblParties.getColumnModel().getColumn(i).setPreferredWidth(30);
-                
+
             }
-            
+
             for (ArchiveFileAddressesBean aab : involved) {
                 ArrayList row = new ArrayList();
                 row.add(aab.getAddressKey());
@@ -834,6 +833,8 @@ public class PartiesPanel extends javax.swing.JPanel {
                         return;
                     }
                     
+                    System.out.println("table model changed: " + evt.getType());
+
                     ignoreTableChanges = true;
                     if (evt.getColumn() > 0) {
                         Boolean newValue = (Boolean) tblParties.getValueAt(evt.getFirstRow(), evt.getColumn());
@@ -849,22 +850,22 @@ public class PartiesPanel extends javax.swing.JPanel {
                     }
                 }
             });
-            
+
         } catch (Exception ex) {
             log.error("Error initializing parties panel", ex);
             JOptionPane.showMessageDialog(this, "Fehler beim Laden der Beteiligtentypen: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
             EditorsRegistry.getInstance().clearStatus();
         }
     }
-    
+
     public void addParty(ArchiveFileAddressesBean aab) {
         this.addParty(aab.getAddressKey(), aab.getReferenceType());
     }
-    
+
     public void addParty(AddressBean party) {
         this.addParty(party, null);
     }
-    
+
     public void addParty(AddressBean party, PartyTypeBean ptb) {
         PartiesPanelTableModel model = (PartiesPanelTableModel) this.tblParties.getModel();
         ArrayList row = new ArrayList();
@@ -878,10 +879,10 @@ public class PartiesPanel extends javax.swing.JPanel {
             }
         }
         Object[] rowArray = row.toArray();
-        model.addRow(rowArray);        
-        
+        model.addRow(rowArray);
+
     }
-    
+
     public AddressBean getSelectedParty(PartyTypeBean ptb) {
         for (int i = 1; i < this.tblParties.getColumnCount(); i++) {
             String colName = this.tblParties.getColumnName(i);
@@ -898,7 +899,45 @@ public class PartiesPanel extends javax.swing.JPanel {
         }
         return null;
     }
-    
+
+    public void expandAllParties(boolean expanded) {
+        this.ignoreTableChanges=true;
+        for (int i = 1; i < this.tblParties.getColumnCount(); i++) {
+            
+            if (expanded) {
+                this.tblParties.getColumnModel().getColumn(i).setWidth(30);
+                this.tblParties.getColumnModel().getColumn(i).setMaxWidth(30);
+                this.tblParties.getColumnModel().getColumn(i).setMinWidth(30);
+                this.tblParties.getColumnModel().getColumn(i).setPreferredWidth(30);
+            } else {
+                this.tblParties.getColumnModel().getColumn(i).setWidth(0);
+                this.tblParties.getColumnModel().getColumn(i).setMaxWidth(0);
+                this.tblParties.getColumnModel().getColumn(i).setMinWidth(0);
+                this.tblParties.getColumnModel().getColumn(i).setPreferredWidth(0);
+            }
+        }
+        this.ignoreTableChanges=false;
+
+    }
+
+    public void expandParties(List<PartyTypeBean> parties) {
+        this.expandAllParties(false);
+        this.ignoreTableChanges=true;
+        for (PartyTypeBean p : parties) {
+            for (int i = 1; i < this.tblParties.getColumnCount(); i++) {
+                String colName = this.tblParties.getColumnName(i);
+                if (colName.equals(p.getName())) {
+                    this.tblParties.getColumnModel().getColumn(i).setWidth(30);
+                    this.tblParties.getColumnModel().getColumn(i).setMaxWidth(30);
+                    this.tblParties.getColumnModel().getColumn(i).setMinWidth(30);
+                    this.tblParties.getColumnModel().getColumn(i).setPreferredWidth(30);
+                    break;
+                }
+            }
+        }
+        this.ignoreTableChanges=false;
+    }
+
     public Hashtable<PartyTypeBean, AddressBean> getSelectedParties(List<PartyTypeBean> allPartyTypes) {
         Hashtable<PartyTypeBean, AddressBean> result = new Hashtable<PartyTypeBean, AddressBean>();
         for (PartyTypeBean ptb : allPartyTypes) {
@@ -909,7 +948,7 @@ public class PartiesPanel extends javax.swing.JPanel {
         }
         return result;
     }
-    
+
     private int getNumberOfSelected(int column) {
         int count = 0;
         for (int i = 0; i < this.tblParties.getRowCount(); i++) {
