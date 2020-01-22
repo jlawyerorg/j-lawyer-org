@@ -861,7 +861,7 @@ public class PlaceHolderUtils extends PlaceHolders {
             
             
             //ArchiveFileAddressesBean involvement = getInvolvement(cl, involved, ArchiveFileAddressesBean.REFERENCETYPE_CLIENT);
-            ArchiveFileAddressesBean involvement = getInvolvement(selected, involved, null);
+            ArchiveFileAddressesBean involvement = getInvolvement(selected, involved, ptb);
             if (involvement != null) {
                 if (placeHolders.containsKey(getPlaceHolderForType(_AKTE_KONTAKT, ptb.getPlaceHolder()))) {
                     placeHolders.put(getPlaceHolderForType(_AKTE_KONTAKT, ptb.getPlaceHolder()), val(involvement.getContact()));
