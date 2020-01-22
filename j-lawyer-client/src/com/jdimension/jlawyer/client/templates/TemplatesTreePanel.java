@@ -1451,8 +1451,17 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
     private void showPopupMenu(java.awt.event.MouseEvent evt) {
         if (evt.isPopupTrigger()) {
             int row = this.treeFolders.getRowForLocation(evt.getX(), evt.getY());
+            if(row<0)
+                return;
+            
             this.treeFolders.setSelectionRow(row);
 
+            if(this.treeFolders.getSelectionPath()==null)
+                return;
+            
+            if(this.treeFolders.getSelectionPath().getLastPathComponent()==null)
+                return;
+            
             DefaultMutableTreeNode tn = (DefaultMutableTreeNode) this.treeFolders.getSelectionPath().getLastPathComponent();
             GenericNode gn = (GenericNode) tn.getUserObject();
             if (gn.getParent() == null) {
