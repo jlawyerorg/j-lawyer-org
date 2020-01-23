@@ -942,7 +942,7 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
             }
 
             InvolvedPartyEntryPanel ep = new InvolvedPartyEntryPanel(this.caseDto, this.owner, this.contactsForCasePanel, this.getClass().getName(), this.beaEnabled);
-            ep.setEntry(address, afab);
+            ep.setEntry(address, afab, false);
             if (i % 2 == 0) {
                 ep.setBackground(ep.getBackground().brighter());
             }

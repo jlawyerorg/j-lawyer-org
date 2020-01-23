@@ -3226,7 +3226,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         afab.setArchiveFileKey(dto);
         InvolvedPartyEntryPanel ipep = new InvolvedPartyEntryPanel(dto, this, this.pnlInvolvedParties, this.getClass().getName(), BeaAccess.isBeaEnabled());
-        ipep.setEntry(adrb, afab);
+        ipep.setEntry(adrb, afab, false);
         ipep.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         //GridLayout layout = new GridLayout(this.pnlInvolvedParties.getComponentCount() + 1, 1);

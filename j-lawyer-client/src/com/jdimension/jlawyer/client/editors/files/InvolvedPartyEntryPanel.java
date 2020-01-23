@@ -668,6 +668,7 @@ import com.jdimension.jlawyer.client.bea.BeaLoginDialog;
 import com.jdimension.jlawyer.client.bea.IdentityPanel;
 import com.jdimension.jlawyer.client.bea.SendBeaMessageDialog;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import com.jdimension.jlawyer.client.editors.addresses.ConflictOfInterestUtils;
 import com.jdimension.jlawyer.client.editors.addresses.ContactTypeColors;
 import com.jdimension.jlawyer.client.events.ContactUpdatedEvent;
 import com.jdimension.jlawyer.client.events.Event;
@@ -716,11 +717,13 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
     private ArchiveFilePanel casePanel=null;
     
     private List<PartyTypeBean> partyTypes=new ArrayList<PartyTypeBean>();
+    private boolean initializing=false;
     
     /**
      * Creates new form HitPanel
      */
     public InvolvedPartyEntryPanel(ArchiveFileBean caseDto, ArchiveFilePanel casePanel, InvolvedPartiesPanel container, String openedFromClassName, boolean beaEnabled) {
+        this.initializing=true;
         initComponents();
         this.openedFromEditorClass=openedFromClassName;
         this.container=container;
@@ -757,6 +760,7 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
         EventBroker b = EventBroker.getInstance();
         b.subscribeConsumer(this, Event.TYPE_CONTACTUPDATED);
             
+        this.initializing=false;
     }
     
     public AddressBean getAdress() {
@@ -779,18 +783,25 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
         return this.afa;
     }
 
-    public void setEntry(AddressBean a, ArchiveFileAddressesBean afa) {
+    public void setEntry(AddressBean a, ArchiveFileAddressesBean afa, boolean checkForConflicts) {
         this.a = a;
         this.afa=afa;
         
         this.lblAddress.setText(this.a.toDisplayName());
         this.lblAddress.setToolTipText(this.a.toShortHtml());
+        if(checkForConflicts) {
+            
+        } else {
+            this.initializing=true;
+        }
         this.cmbRefType.setSelectedItem(afa.getReferenceTypeAsString());
+        this.initializing=false;
         this.txtContact.setText(afa.getContact());
         this.txtCustom1.setText(afa.getCustom1());
         this.txtCustom2.setText(afa.getCustom2());
         this.txtCustom3.setText(afa.getCustom3());
         this.txtReference.setText(afa.getReference());
+        
 
     }
 
@@ -1067,6 +1078,9 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
         Color c=new Color(ptb.getColor());
         this.lblType.setBackground(c);
         
+        if(!this.initializing)
+            ConflictOfInterestUtils.checkForConflicts(a, ptb, EditorsRegistry.getInstance().getMainWindow());
+        
     }//GEN-LAST:event_cmbRefTypeActionPerformed
 
     private void mnuRemovePartyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuRemovePartyActionPerformed
@@ -1329,7 +1343,7 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
                 if (this.a.getId() != null) {
                     AddressBean eventAddress = ((ContactUpdatedEvent) e).getAddress();
                     if (this.a.getId().equals(eventAddress.getId())) {
-                        this.setEntry(eventAddress, this.afa);
+                        this.setEntry(eventAddress, this.afa, false);
                     }
                 }
             }

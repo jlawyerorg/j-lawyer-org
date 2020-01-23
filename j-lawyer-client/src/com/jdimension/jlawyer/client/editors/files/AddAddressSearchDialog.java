@@ -664,6 +664,7 @@
 package com.jdimension.jlawyer.client.editors.files;
 
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import com.jdimension.jlawyer.client.editors.addresses.ConflictOfInterestUtils;
 import com.jdimension.jlawyer.client.editors.addresses.QuickAddressSearchRowIdentifier;
 import com.jdimension.jlawyer.client.editors.addresses.QuickAddressSearchTableModel;
 import com.jdimension.jlawyer.client.editors.addresses.QuickAddressSearchThread;
@@ -935,35 +936,8 @@ public class AddAddressSearchDialog extends javax.swing.JDialog {
 
         //DefaultListModel model = (DefaultListModel) this.targetListBox.getModel();
         //model.addElement(id.getAddressDTO());
-        try {
-            ClientSettings settings = ClientSettings.getInstance();
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            ArchiveFileServiceRemote afRem = locator.lookupArchiveFileServiceRemote();
-            Collection col = afRem.getArchiveFileAddressesForAddress(id.getAddressDTO().getId());
-            Hashtable<PartyTypeBean, List<ArchiveFileBean>> casesWithDifferentPartyType=new Hashtable<PartyTypeBean, List<ArchiveFileBean>>();
-            for (Object o : col) {
-                ArchiveFileAddressesBean afb = (ArchiveFileAddressesBean) o;
-                if (!(afb.getReferenceType().getId().equals(targetReferenceType.getId()))) {
-                    if(!(casesWithDifferentPartyType.containsKey(afb.getReferenceType())))
-                        casesWithDifferentPartyType.put(afb.getReferenceType(), new ArrayList<ArchiveFileBean>());
-                    
-                    casesWithDifferentPartyType.get(afb.getReferenceType()).add(afb.getArchiveFileKey());
-                    
-                }
-            }
-            if(casesWithDifferentPartyType.size()>0) {
-                ConflictOfInterestDialog dlg=new ConflictOfInterestDialog(this, true, id.getAddressDTO(), targetReferenceType, casesWithDifferentPartyType);
-                FrameUtils.centerDialog(dlg, this);
-                dlg.setVisible(true);
-                
-            }
-
-        } catch (Exception ex) {
-            log.error("Error getting archive files for address", ex);
-            JOptionPane.showMessageDialog(this, "Fehler beim Prüfen von Interessenkonflikten: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
-            EditorsRegistry.getInstance().clearStatus();
-            return;
-        }
+        
+        ConflictOfInterestUtils.checkForConflicts(id.getAddressDTO(), targetReferenceType, this);
 
         this.resultAddress = id.getAddressDTO();
         ArchiveFileAddressesBean afa = new ArchiveFileAddressesBean();
