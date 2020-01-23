@@ -704,7 +704,7 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
     @EJB
     private AddressTagsBeanFacadeLocal addressTagsFacade;
 
-    private static final String PS_SEARCHENHANCED_2="select id from contacts where ucase(name) like ? or ucase(firstname) like ? or ucase(company) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(email) like ? or ucase(beaSafeId) like ? or ucase(phone) like ? or ucase(mobile) like ?";
+    private static final String PS_SEARCHENHANCED_2="select id from contacts where ucase(name) like ? or ucase(firstname) like ? or ucase(company) like ? or ucase(department) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(email) like ? or ucase(beaSafeId) like ? or ucase(phone) like ? or ucase(mobile) like ?";
     
     @Override
     @RolesAllowed({"readAddressRole"})
@@ -781,7 +781,7 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
         ArrayList<AddressBean> list=new ArrayList<AddressBean>();
         try {
             con=utils.getConnection();
-            st=con.prepareStatement("select id from contacts where ucase(name) like ? or ucase(firstname) like ? or ucase(company) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(email) like ? or ucase(beaSafeId) like ? or ucase(phone) like ? or ucase(mobile) like ?");
+            st=con.prepareStatement("select id from contacts where ucase(name) like ? or ucase(firstname) like ? or ucase(department) like ? or ucase(company) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(email) like ? or ucase(beaSafeId) like ? or ucase(phone) like ? or ucase(mobile) like ?");
             String wildCard= "%" + StringUtils.germanToUpperCase(query) + "%";
             st.setString(1, wildCard);
             st.setString(2, wildCard);
@@ -793,6 +793,7 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
             st.setString(8, wildCard);
             st.setString(9, wildCard);
             st.setString(10, wildCard);
+            st.setString(11, wildCard);
             rs=st.executeQuery();
             
             //AddressLocalHome home=this.lookupAddressBean();
@@ -970,7 +971,7 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
             }
             inClause=inClause.replaceFirst(",", "");
                             
-                st = con.prepareStatement("select contacts.id from contacts, contact_tags where (ucase(name) like ? or ucase(firstname) like ? or ucase(company) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(email) like ? or ucase(beaSafeId) like ? or ucase(phone) like ? or ucase(mobile) like ?) and (contact_tags.tagName in (" + inClause + ") and contact_tags.addressKey=contacts.id)");
+                st = con.prepareStatement("select contacts.id from contacts, contact_tags where (ucase(name) like ? or ucase(firstname) like ? or ucase(department) like ? or ucase(company) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(email) like ? or ucase(beaSafeId) like ? or ucase(phone) like ? or ucase(mobile) like ?) and (contact_tags.tagName in (" + inClause + ") and contact_tags.addressKey=contacts.id)");
                 String wildCard = "%" + StringUtils.germanToUpperCase(query) + "%";
                 st.setString(1, wildCard);
                 st.setString(2, wildCard);
@@ -982,8 +983,9 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
                 st.setString(8, wildCard);
                 st.setString(9, wildCard);
                 st.setString(10, wildCard);
+                st.setString(11, wildCard);
                 //st.setString(10, tag);
-                int index=11;
+                int index=12;
             for(String t: tagName) {
                 st.setString(index, t);
                 index=index+1;
@@ -1001,6 +1003,7 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
                 st.setString(8, wildCard);
                 st.setString(9, wildCard);
                 st.setString(10, wildCard);
+                st.setString(11, wildCard);
                 
             }
             rs=st.executeQuery();
@@ -1070,7 +1073,7 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
             }
             inClause=inClause.replaceFirst(",", "");
                 
-                st = con.prepareStatement("select addressKey, tagName from contact_tags where addressKey in (" + "select contacts.id from contacts, contact_tags where (ucase(name) like ? or ucase(firstname) like ? or ucase(company) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(email) like ? or ucase(beaSafeId) like ? or ucase(phone) like ? or ucase(mobile) like ?) and (contact_tags.tagName in (" + inClause + ") and contact_tags.addressKey=contacts.id)" + ")");
+                st = con.prepareStatement("select addressKey, tagName from contact_tags where addressKey in (" + "select contacts.id from contacts, contact_tags where (ucase(name) like ? or ucase(firstname) like ? or ucase(company) like ? or ucase(department) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(email) like ? or ucase(beaSafeId) like ? or ucase(phone) like ? or ucase(mobile) like ?) and (contact_tags.tagName in (" + inClause + ") and contact_tags.addressKey=contacts.id)" + ")");
                 String wildCard = "%" + StringUtils.germanToUpperCase(query) + "%";
                 st.setString(1, wildCard);
                 st.setString(2, wildCard);
@@ -1082,8 +1085,9 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
                 st.setString(8, wildCard);
                 st.setString(9, wildCard);
                 st.setString(10, wildCard);
+                st.setString(11, wildCard);
                 //st.setString(10, tag);
-                int index=11;
+                int index=12;
             for(String t: tagName) {
                 st.setString(index, t);
                 index=index+1;
@@ -1101,6 +1105,7 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
                 st.setString(8, wildCard);
                 st.setString(9, wildCard);
                 st.setString(10, wildCard);
+                st.setString(11, wildCard);
                 
             }
             rs=st.executeQuery();
