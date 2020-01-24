@@ -796,6 +796,9 @@ public class PrintStubGenerator {
             d.setReference(roleInCase.getReference());
         
         if(roleInCase!=null)
+            d.setContact(roleInCase.getContact());
+        
+        if(roleInCase!=null)
             if(roleInCase.getReferenceType()!=null)
                 d.setPartyType(roleInCase.getReferenceType().getName());
         

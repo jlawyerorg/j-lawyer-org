@@ -672,6 +672,7 @@ public class AddressDetail {
     private String firstName;
     private String name;
     private String company;
+    private String contact;
     private String street;
     private String country;
     private String zipCode;
@@ -825,6 +826,20 @@ public class AddressDetail {
      */
     public void setPartyType(String partyType) {
         this.partyType = partyType;
+    }
+
+    /**
+     * @return the contact
+     */
+    public String getContact() {
+        return contact;
+    }
+
+    /**
+     * @param contact the contact to set
+     */
+    public void setContact(String contact) {
+        this.contact = contact;
     }
 
     
