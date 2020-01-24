@@ -3524,6 +3524,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                     int response = JOptionPane.NO_OPTION;
                     if (launcher.isDocumentOpen(value.getId())) {
                         response = JOptionPane.showConfirmDialog(EditorsRegistry.getInstance().getMainWindow(), "Dokument " + value.getName() + " ist bereits geöffnet. Trotzdem fortfahren?", "Dokument öffnen", JOptionPane.YES_NO_OPTION);
+                        if(response==JOptionPane.NO_OPTION)
+                            return;
                     }
                     launcher.launch(response == JOptionPane.YES_OPTION);
 
