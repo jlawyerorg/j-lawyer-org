@@ -786,7 +786,7 @@ public class FileConverter {
             
             //Process p = Runtime.getRuntime().exec(new String[]{"soffice.exe", "--headless", "--convert-to", "pdf", "--outdir", "\"" + tempPath + "\"", "\"" + url+ "\""});
             //Process p = Runtime.getRuntime().exec(new String[]{"soffice.exe", "--headless", "--convert-to", "pdf", "--outdir", tempPath, url});
-            Process p = Runtime.getRuntime().exec(new String[]{"python.exe", clientLocation + "unoconv-master\\unoconv", "-f", "pdf", url});
+            Process p = Runtime.getRuntime().exec(new String[]{"python.exe", clientLocation + "unoconv-master\\unoconv", "-eSelectPdfVersion=1", "-f", "pdf", url});
             //Process p = Runtime.getRuntime().exec(new String[]{"unoconv.bat", url});
             int exit = p.waitFor();
             if (exit != 0) {
@@ -845,7 +845,7 @@ public class FileConverter {
             if(!this.validateInputFormat(url))
                 throw new Exception ("Format nicht unterstützt: " + new File(url).getName());
             
-            Process p = Runtime.getRuntime().exec(new String[]{"unoconv", "-f", "pdf", url});
+            Process p = Runtime.getRuntime().exec(new String[]{"unoconv", "-eSelectPdfVersion=1", "-f", "pdf", url});
             int exit = p.waitFor();
             if (exit != 0) {
                 throw new Exception ("Konvertierung nach PDF fehlgeschlagen: " + exit);
@@ -899,7 +899,7 @@ public class FileConverter {
             if(!this.validateInputFormat(url))
                 throw new Exception ("Format nicht unterstützt: " + new File(url).getName());
             
-            Process p = Runtime.getRuntime().exec(new String[]{"/Applications/LibreOffice.app/Contents/MacOS/python", "unoconv-master/unoconv", "-f", "pdf", url});
+            Process p = Runtime.getRuntime().exec(new String[]{"/Applications/LibreOffice.app/Contents/MacOS/python", "unoconv-master/unoconv", "-eSelectPdfVersion=1", "-f", "pdf", url});
             int exit = p.waitFor();
             if (exit != 0) {
                 throw new Exception ("Konvertierung nach PDF fehlgeschlagen: " + exit);
