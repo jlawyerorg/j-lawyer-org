@@ -718,7 +718,7 @@ public class AddAddressSearchDialog extends javax.swing.JDialog {
 
         
         
-        String[] colNames = new String[]{"Name", "Vorname", "Firma", "PLZ", "Ort", "Strasse", "Land", "Etiketten"};
+        String[] colNames = new String[]{"Name", "Vorname", "Firma", "Abteilung", "PLZ", "Ort", "Strasse", "Land", "Etiketten"};
         QuickAddressSearchTableModel model = new QuickAddressSearchTableModel(colNames, 0);
         this.tblResults.setModel(model);
         ComponentUtils.autoSizeColumns(tblResults);
@@ -989,7 +989,7 @@ public class AddAddressSearchDialog extends javax.swing.JDialog {
         if (result != null) {
             QuickAddressSearchTableModel model = (QuickAddressSearchTableModel) this.tblResults.getModel();
             QuickAddressSearchRowIdentifier identifier = new QuickAddressSearchRowIdentifier(result);
-            Object[] row = new Object[]{identifier, result.getFirstName(), result.getCompany(), result.getZipCode(), result.getCity(), result.getStreet(), result.getCountry(), ""};
+            Object[] row = new Object[]{identifier, result.getFirstName(), result.getCompany(), result.getDepartment(), result.getZipCode(), result.getCity(), result.getStreet(), result.getCountry(), ""};
             model.addRow(row);
             int scrollToRow = getRowForObject(identifier);
             if (scrollToRow > -1) {
