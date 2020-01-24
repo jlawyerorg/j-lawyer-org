@@ -664,6 +664,7 @@
 package com.jdimension.jlawyer.client.bea;
 
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import com.jdimension.jlawyer.client.editors.files.DateStringComparator;
 import com.jdimension.jlawyer.client.processing.ProgressIndicator;
 import com.jdimension.jlawyer.client.processing.ProgressableAction;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
@@ -674,6 +675,8 @@ import java.util.ArrayList;
 import javax.swing.JTable;
 import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableModel;
+import javax.swing.table.TableRowSorter;
 import org.apache.log4j.Logger;
 import org.jlawyer.bea.BeaWrapperException;
 import org.jlawyer.bea.model.Folder;
@@ -794,6 +797,12 @@ public class LoadBeaFolderAction extends ProgressableAction {
 //                }
 //                final String subject=MimeUtility.decodeText(msg.getFrom()[0].toString());
                 final int currentIndex = i;
+                
+                if (f.getType() == Folder.TYPE_TRASH) {
+                    TableRowSorter<TableModel> sorter = new TableRowSorter<TableModel>(table.getModel());
+                    sorter.setComparator(9, new DateStringComparator());
+                    table.setRowSorter(sorter);
+                }
 
                 SwingUtilities.invokeLater(new Thread(new Runnable() {
 
@@ -861,6 +870,8 @@ public class LoadBeaFolderAction extends ProgressableAction {
 
             try {
                 table.getRowSorter().toggleSortOrder(this.sortCol);
+                
+                
 
             } catch (Throwable t) {
                 log.error("Error sorting mails", t);
