@@ -1587,7 +1587,12 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         cmdUploadDocument = new javax.swing.JButton();
         splitDocuments = new javax.swing.JSplitPane();
         tblDocumentsPane = new javax.swing.JScrollPane();
-        tblDocuments = new javax.swing.JTable();
+        tblDocuments = new javax.swing.JTable() {
+            @Override
+            public void changeSelection(int rowIndex, int columnIndex, boolean toggle, boolean extend) {
+                super.changeSelection(rowIndex, 0, toggle, extend);
+            }
+        };
         jScrollPane7 = new javax.swing.JScrollPane();
         pnlPreview = new javax.swing.JPanel();
         jLabel15 = new javax.swing.JLabel();
