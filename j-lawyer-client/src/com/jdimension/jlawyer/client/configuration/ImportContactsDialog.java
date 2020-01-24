@@ -759,14 +759,14 @@ public class ImportContactsDialog extends javax.swing.JDialog {
 
             },
             new String [] {
-                "Importieren", "Firma", "Name", "Vorname", "Land", "Ort", "PLZ", "Strasse", "Telefon", "Mobiltelefon", "Fax", "E-Mail"
+                "Importieren", "Firma", "Abteilung", "Name", "Vorname", "Land", "Ort", "PLZ", "Strasse", "Telefon", "Mobiltelefon", "Fax", "E-Mail"
             }
         ) {
             Class[] types = new Class [] {
-                java.lang.Boolean.class, java.lang.Object.class, java.lang.Object.class, java.lang.Object.class, java.lang.Object.class, java.lang.Object.class, java.lang.Object.class, java.lang.Object.class, java.lang.Object.class, java.lang.Object.class, java.lang.Object.class, java.lang.Object.class
+                java.lang.Boolean.class, java.lang.Object.class, java.lang.Object.class, java.lang.Object.class, java.lang.Object.class, java.lang.Object.class, java.lang.Object.class, java.lang.Object.class, java.lang.Object.class, java.lang.Object.class, java.lang.Object.class, java.lang.Object.class, java.lang.Object.class
             };
             boolean[] canEdit = new boolean [] {
-                true, false, false, false, false, false, false, false, false, false, false, false
+                true, false, false, false, false, false, false, false, false, false, false, false, false
             };
 
             public Class getColumnClass(int columnIndex) {
@@ -924,9 +924,15 @@ public class ImportContactsDialog extends javax.swing.JDialog {
                                 ab.setCompany(v.getOrganization().getValues().get(0).toString());
                             }
                         }
+                        if (v.getOrganization().getValues().size() > 1) {
+                            if(v.getOrganization().getValues().get(1)!=null) {
+                                ab.setDepartment(v.getOrganization().getValues().get(1).toString());
+                            }
+                        }
                     }
-
+                    
                     row.add(ab.getCompany());
+                    row.add(ab.getDepartment());
                     row.add(ab.getName());
                     row.add(ab.getFirstName());
 
