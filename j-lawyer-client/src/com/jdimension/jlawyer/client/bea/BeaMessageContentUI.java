@@ -1482,7 +1482,10 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
 
                 JFileChooser chooser = new JFileChooser(userHome);
                 chooser.setSelectedFile(new File(selected.toString()));
-                chooser.showSaveDialog(this);
+                int result=chooser.showSaveDialog(this);
+                if(result==JFileChooser.CANCEL_OPTION)
+                    continue;
+                
                 File f = chooser.getSelectedFile();
                 if (f == null) {
                     return;
