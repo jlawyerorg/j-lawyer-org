@@ -664,86 +664,60 @@
 package com.jdimension.jlawyer.persistence;
 
 import java.io.Serializable;
-import java.util.ArrayList;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 import javax.persistence.*;
 import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlTransient;
 
-/**
+/** 
  *
  * @author jens
  */
 @Entity
-@Table(name = "cases")
+@Table(name = "case_forms")
 @XmlRootElement
 @NamedQueries({
-    @NamedQuery(name = "ArchiveFileBean.findAll", query = "SELECT a FROM ArchiveFileBean a"),
-    @NamedQuery(name = "ArchiveFileBean.findById", query = "SELECT a FROM ArchiveFileBean a WHERE a.id = :id"),
-    @NamedQuery(name = "ArchiveFileBean.findByName", query = "SELECT a FROM ArchiveFileBean a WHERE a.name = :name"),
-    @NamedQuery(name = "ArchiveFileBean.findByFileNumber", query = "SELECT a FROM ArchiveFileBean a WHERE a.fileNumber = :fileNumber"),
-    @NamedQuery(name = "ArchiveFileBean.findByClaimNumber", query = "SELECT a FROM ArchiveFileBean a WHERE a.claimNumber = :claimNumber"),
-    @NamedQuery(name = "ArchiveFileBean.findByClaimValue", query = "SELECT a FROM ArchiveFileBean a WHERE a.claimValue = :claimValue"),
-    @NamedQuery(name = "ArchiveFileBean.findByArchived", query = "SELECT a FROM ArchiveFileBean a WHERE a.archived = :archived"),
-    @NamedQuery(name = "ArchiveFileBean.findByNotice", query = "SELECT a FROM ArchiveFileBean a WHERE a.notice = :notice")})
-public class ArchiveFileBean implements Serializable {
-    @OneToMany(cascade = CascadeType.REMOVE, mappedBy = "archiveFileKey")
-    private List<ArchiveFileReviewsBean> archiveFileReviewsBeanList;
+    @NamedQuery(name = "ArchiveFileFormsBean.findAll", query = "SELECT a FROM ArchiveFileFormsBean a"),
+    @NamedQuery(name = "ArchiveFileFormsBean.findById", query = "SELECT a FROM ArchiveFileFormsBean a WHERE a.id = :id"),
+    @NamedQuery(name = "ArchiveFileFormsBean.findByFormType", query = "SELECT a FROM ArchiveFileFormsBean a WHERE a.formType = :formType"),
+    @NamedQuery(name = "ArchiveFileFormsBean.findByArchiveFileKey", query = "SELECT a FROM ArchiveFileFormsBean a WHERE a.archiveFileKey = :archiveFileKey")})
+public class ArchiveFileFormsBean implements Serializable {
     private static final long serialVersionUID = 1L;
+    
     @Id
     @Basic(optional = false)
     @Column(name = "id")
     private String id;
-    @Column(name = "name")
-    private String name;
-    @Column(name = "fileNumber")
-    private String fileNumber;
-    @Column(name = "claimNumber")
-    private String claimNumber;
-    @Basic(optional = false)
-    @Column(name = "claimValue")
-    private float claimValue;
-    @Basic(optional = false)
-    @Column(name = "archived", columnDefinition = "TINYINT NOT NULL")
-    private short archived;
-    @Column(name = "notice")
-    private String notice;
-    @Column(name = "lawyer")
-    private String lawyer;
-    @Column(name = "assistant")
-    private String assistant;
-    @Column(name = "reason")
-    private String reason;
-    @Column(name = "subjectField")
-    private String subjectField;
-    @Column(name = "custom1")
-    private String custom1;
-    @Column(name = "custom2")
-    private String custom2;
-    @Column(name = "custom3")
-    private String custom3;
-    @OneToMany(cascade = CascadeType.REMOVE, mappedBy = "archiveFileKey")
-    private List<ArchiveFileAddressesBean> archiveFileAddressesBeanList;
-    @OneToMany(cascade = CascadeType.REMOVE, mappedBy = "archiveFileKey")
-    private List<ArchiveFileDocumentsBean> archiveFileDocumentsBeanList;
-    @OneToMany(cascade = CascadeType.REMOVE, mappedBy = "archiveFileKey")
-    private List<ArchiveFileHistoryBean> archiveFileHistoryBeanList;
-    @OneToMany(cascade = CascadeType.REMOVE, mappedBy = "archiveFileKey")
-    private List<ArchiveFileFormsBean> archiveFileFormsBeanList;
-    @OneToMany(cascade = CascadeType.REMOVE, mappedBy = "archiveFileKey")
+    
+    @JoinColumn(name = "case_id", referencedColumnName = "id")
+    @ManyToOne
+    private ArchiveFileBean archiveFileKey;
+    
+    @JoinColumn(name = "formtype", referencedColumnName = "id")
+    @ManyToOne
+    private FormTypeBean formType;
+    
+    @Column(name = "description")
+    private String description;
+    
+    @Column(name = "placeholder")
+    private String placeHolder;
+    
+    @Column(name = "creationdate")
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date creationDate;
+    
+    @OneToMany(cascade = CascadeType.REMOVE, mappedBy = "form")
     private List<ArchiveFileFormEntriesBean> archiveFileFormEntriesBeanList;
-
-    public ArchiveFileBean() {
+    
+    
+    
+    public ArchiveFileFormsBean() {
     }
 
-    public ArchiveFileBean(String id) {
+    public ArchiveFileFormsBean(String id) {
         this.id = id;
-    }
-
-    public ArchiveFileBean(String id, float claimValue, short archived) {
-        this.id = id;
-        this.claimValue = claimValue;
-        this.archived = archived;
     }
 
     public String getId() {
@@ -754,94 +728,12 @@ public class ArchiveFileBean implements Serializable {
         this.id = id;
     }
 
-    public String getName() {
-        return name;
+    public ArchiveFileBean getArchiveFileKey() {
+        return archiveFileKey;
     }
 
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getFileNumber() {
-        return fileNumber;
-    }
-
-    public void setFileNumber(String fileNumber) {
-        this.fileNumber = fileNumber;
-    }
-
-    public String getClaimNumber() {
-        return claimNumber;
-    }
-
-    public void setClaimNumber(String claimNumber) {
-        this.claimNumber = claimNumber;
-    }
-
-    public float getClaimValue() {
-        return claimValue;
-    }
-
-    public void setClaimValue(float claimValue) {
-        this.claimValue = claimValue;
-    }
-
-    public short getArchived() {
-        return archived;
-    }
-    
-    public boolean getArchivedBoolean() {
-        if(archived==1)
-            return true;
-        else
-            return false;
-                    
-    }
-
-    public void setArchived(short archived) {
-        this.archived = archived;
-    }
-    
-    public void setArchivedBoolean(boolean archived) {
-        if(archived)
-            this.archived=1;
-        else 
-            this.archived=0;
-    }
-
-    public String getNotice() {
-        return notice;
-    }
-
-    public void setNotice(String notice) {
-        this.notice = notice;
-    }
-
-    @XmlTransient
-    public List<ArchiveFileAddressesBean> getArchiveFileAddressesBeanList() {
-        return archiveFileAddressesBeanList;
-    }
-
-    public void setArchiveFileAddressesBeanList(List<ArchiveFileAddressesBean> archiveFileAddressesBeanList) {
-        this.archiveFileAddressesBeanList = archiveFileAddressesBeanList;
-    }
-
-    @XmlTransient
-    public List<ArchiveFileDocumentsBean> getArchiveFileDocumentsBeanList() {
-        return archiveFileDocumentsBeanList;
-    }
-
-    public void setArchiveFileDocumentsBeanList(List<ArchiveFileDocumentsBean> archiveFileDocumentsBeanList) {
-        this.archiveFileDocumentsBeanList = archiveFileDocumentsBeanList;
-    }
-
-    @XmlTransient
-    public List<ArchiveFileHistoryBean> getArchiveFileHistoryBeanList() {
-        return archiveFileHistoryBeanList;
-    }
-
-    public void setArchiveFileHistoryBeanList(List<ArchiveFileHistoryBean> archiveFileHistoryBeanList) {
-        this.archiveFileHistoryBeanList = archiveFileHistoryBeanList;
+    public void setArchiveFileKey(ArchiveFileBean archiveFileKey) {
+        this.archiveFileKey = archiveFileKey;
     }
 
     @Override
@@ -854,10 +746,10 @@ public class ArchiveFileBean implements Serializable {
     @Override
     public boolean equals(Object object) {
         // TODO: Warning - this method won't work in the case the id fields are not set
-        if (!(object instanceof ArchiveFileBean)) {
+        if (!(object instanceof ArchiveFileFormsBean)) {
             return false;
         }
-        ArchiveFileBean other = (ArchiveFileBean) object;
+        ArchiveFileFormsBean other = (ArchiveFileFormsBean) object;
         if ((this.id == null && other.id != null) || (this.id != null && !this.id.equals(other.id))) {
             return false;
         }
@@ -866,175 +758,65 @@ public class ArchiveFileBean implements Serializable {
 
     @Override
     public String toString() {
-        return "com.jdimension.jlawyer.persistence.ArchiveFileBean[ id=" + id + " ]";
-    }
-
-    @XmlTransient
-    public List<ArchiveFileReviewsBean> getArchiveFileReviewsBeanList() {
-        return archiveFileReviewsBeanList;
-    }
-
-    public void setArchiveFileReviewsBeanList(List<ArchiveFileReviewsBean> archiveFileReviewsBeanList) {
-        this.archiveFileReviewsBeanList = archiveFileReviewsBeanList;
-    }
-    
-    public void addParty(ArchiveFileAddressesBean dto) {
-        if(this.archiveFileAddressesBeanList==null)
-            this.archiveFileAddressesBeanList=new ArrayList<ArchiveFileAddressesBean>();
-        this.archiveFileAddressesBeanList.add(dto);
-    }
-    
-    public void addReview(ArchiveFileReviewsBean dto) {
-        if(this.archiveFileReviewsBeanList==null)
-            this.archiveFileReviewsBeanList=new ArrayList<ArchiveFileReviewsBean>();
-        this.archiveFileReviewsBeanList.add(dto);
-    }
-    
-    public void removeAllParties() {
-        if(this.archiveFileAddressesBeanList!=null) {
-        for(int i=this.archiveFileAddressesBeanList.size()-1;i>-1;i--) {
-            ArchiveFileAddressesBean b=this.archiveFileAddressesBeanList.get(i);
-            this.archiveFileAddressesBeanList.remove(i);
-            
-            
-        }
-        }
-    }
-//    
-//    public void removeAllOpponents() {
-//        if(this.archiveFileAddressesBeanList!=null) {
-//        for(int i=this.archiveFileAddressesBeanList.size()-1;i>-1;i--) {
-//            ArchiveFileAddressesBean b=this.archiveFileAddressesBeanList.get(i);
-//            if(b.getReferenceType()==b.REFERENCETYPE_OPPONENT) {
-//                this.archiveFileAddressesBeanList.remove(i);
-//            }
-//            
-//        }
-//        }
-//    }
-//    
-//    public void removeAllOpponentAttorneys() {
-//        if(this.archiveFileAddressesBeanList!=null) {
-//        for(int i=this.archiveFileAddressesBeanList.size()-1;i>-1;i--) {
-//            ArchiveFileAddressesBean b=this.archiveFileAddressesBeanList.get(i);
-//            if(b.getReferenceType()==b.REFERENCETYPE_OPPONENTATTORNEY) {
-//                this.archiveFileAddressesBeanList.remove(i);
-//            }
-//            
-//        }
-//        }
-//    }
-
-    /**
-     * @return the lawyer
-     */
-    public String getLawyer() {
-        return lawyer;
+        return "com.jdimension.jlawyer.persistence.ArchiveFileFormsBean[ id=" + id + " ]";
+        
+        
     }
 
     /**
-     * @param lawyer the lawyer to set
+     * @return the formType
      */
-    public void setLawyer(String lawyer) {
-        this.lawyer = lawyer;
+    public FormTypeBean getFormType() {
+        return formType;
     }
 
     /**
-     * @return the reason
+     * @param formType the formType to set
      */
-    public String getReason() {
-        return reason;
+    public void setFormType(FormTypeBean formType) {
+        this.formType = formType;
     }
 
     /**
-     * @param reason the reason to set
+     * @return the description
      */
-    public void setReason(String reason) {
-        this.reason = reason;
+    public String getDescription() {
+        return description;
     }
 
     /**
-     * @return the subjectField
+     * @param description the description to set
      */
-    public String getSubjectField() {
-        return subjectField;
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     /**
-     * @param subjectField the subjectField to set
+     * @return the placeHolder
      */
-    public void setSubjectField(String subjectField) {
-        this.subjectField = subjectField;
+    public String getPlaceHolder() {
+        return placeHolder;
     }
 
     /**
-     * @return the assistant
+     * @param placeHolder the placeHolder to set
      */
-    public String getAssistant() {
-        return assistant;
+    public void setPlaceHolder(String placeHolder) {
+        this.placeHolder = placeHolder;
     }
 
     /**
-     * @param assistant the assistant to set
+     * @return the creationDate
      */
-    public void setAssistant(String assistant) {
-        this.assistant = assistant;
+    public Date getCreationDate() {
+        return creationDate;
     }
 
     /**
-     * @return the custom1
+     * @param creationDate the creationDate to set
      */
-    public String getCustom1() {
-        return custom1;
-    }
-
-    /**
-     * @param custom1 the custom1 to set
-     */
-    public void setCustom1(String custom1) {
-        this.custom1 = custom1;
-    }
-
-    /**
-     * @return the custom2
-     */
-    public String getCustom2() {
-        return custom2;
-    }
-
-    /**
-     * @param custom2 the custom2 to set
-     */
-    public void setCustom2(String custom2) {
-        this.custom2 = custom2;
-    }
-
-    /**
-     * @return the custom3
-     */
-    public String getCustom3() {
-        return custom3;
-    }
-
-    /**
-     * @param custom3 the custom3 to set
-     */
-    public void setCustom3(String custom3) {
-        this.custom3 = custom3;
-    }
-
-    /**
-     * @return the archiveFileFormsBeanList
-     */
-    public List<ArchiveFileFormsBean> getArchiveFileFormsBeanList() {
-        return archiveFileFormsBeanList;
-    }
-
-    /**
-     * @param archiveFileFormsBeanList the archiveFileFormsBeanList to set
-     */
-    public void setArchiveFileFormsBeanList(List<ArchiveFileFormsBean> archiveFileFormsBeanList) {
-        this.archiveFileFormsBeanList = archiveFileFormsBeanList;
+    public void setCreationDate(Date creationDate) {
+        this.creationDate = creationDate;
     }
 
     /**
@@ -1050,5 +832,6 @@ public class ArchiveFileBean implements Serializable {
     public void setArchiveFileFormEntriesBeanList(List<ArchiveFileFormEntriesBean> archiveFileFormEntriesBeanList) {
         this.archiveFileFormEntriesBeanList = archiveFileFormEntriesBeanList;
     }
+
     
 }

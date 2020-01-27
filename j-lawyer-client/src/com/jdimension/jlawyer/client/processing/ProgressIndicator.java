@@ -756,6 +756,10 @@ public class ProgressIndicator extends javax.swing.JDialog {
             this.progress.setValue(this.progress.getValue()+1);
     }
     
+    public void setProgressString(String status) {
+        this.lblProgress.setText(status);
+    }
+    
     public void progress(String status) {
         this.lblProgress.setText(status);
         if(this.progress.getValue()<this.progress.getMaximum())

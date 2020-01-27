@@ -661,394 +661,304 @@
  * For more information on this, and how to apply and follow the GNU AGPL, see
  * <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.persistence;
+package com.jdimension.jlawyer.client.plugins.form;
 
-import java.io.Serializable;
+import com.jdimension.jlawyer.client.editors.files.*;
+import com.jdimension.jlawyer.client.bea.BeaAccess;
+import com.jdimension.jlawyer.client.bea.BeaLoginDialog;
+import com.jdimension.jlawyer.client.bea.IdentityPanel;
+import com.jdimension.jlawyer.client.bea.SendBeaMessageDialog;
+import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import com.jdimension.jlawyer.client.editors.addresses.ConflictOfInterestUtils;
+import com.jdimension.jlawyer.client.editors.addresses.ContactTypeColors;
+import com.jdimension.jlawyer.client.events.ContactUpdatedEvent;
+import com.jdimension.jlawyer.client.events.Event;
+import com.jdimension.jlawyer.client.events.EventBroker;
+import com.jdimension.jlawyer.client.events.EventConsumer;
+import com.jdimension.jlawyer.client.mail.SendEmailDialog;
+import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.settings.ServerSettings;
+import com.jdimension.jlawyer.client.utils.FrameUtils;
+import com.jdimension.jlawyer.client.utils.StringUtils;
+import com.jdimension.jlawyer.client.voip.PlaceCallDialog;
+import com.jdimension.jlawyer.client.voip.SendFaxDialog;
+import com.jdimension.jlawyer.client.voip.SendSmsDialog;
+import com.jdimension.jlawyer.persistence.AddressBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.persistence.PartyTypeBean;
+import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
+import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import java.awt.Color;
+import java.awt.Component;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import javax.persistence.*;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlTransient;
+import javax.swing.DefaultListModel;
+import javax.swing.JDialog;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import org.apache.log4j.Logger;
+import org.jlawyer.bea.model.Identity;
+import themes.colors.DefaultColorTheme;
 
 /**
  *
  * @author jens
  */
-@Entity
-@Table(name = "cases")
-@XmlRootElement
-@NamedQueries({
-    @NamedQuery(name = "ArchiveFileBean.findAll", query = "SELECT a FROM ArchiveFileBean a"),
-    @NamedQuery(name = "ArchiveFileBean.findById", query = "SELECT a FROM ArchiveFileBean a WHERE a.id = :id"),
-    @NamedQuery(name = "ArchiveFileBean.findByName", query = "SELECT a FROM ArchiveFileBean a WHERE a.name = :name"),
-    @NamedQuery(name = "ArchiveFileBean.findByFileNumber", query = "SELECT a FROM ArchiveFileBean a WHERE a.fileNumber = :fileNumber"),
-    @NamedQuery(name = "ArchiveFileBean.findByClaimNumber", query = "SELECT a FROM ArchiveFileBean a WHERE a.claimNumber = :claimNumber"),
-    @NamedQuery(name = "ArchiveFileBean.findByClaimValue", query = "SELECT a FROM ArchiveFileBean a WHERE a.claimValue = :claimValue"),
-    @NamedQuery(name = "ArchiveFileBean.findByArchived", query = "SELECT a FROM ArchiveFileBean a WHERE a.archived = :archived"),
-    @NamedQuery(name = "ArchiveFileBean.findByNotice", query = "SELECT a FROM ArchiveFileBean a WHERE a.notice = :notice")})
-public class ArchiveFileBean implements Serializable {
-    @OneToMany(cascade = CascadeType.REMOVE, mappedBy = "archiveFileKey")
-    private List<ArchiveFileReviewsBean> archiveFileReviewsBeanList;
-    private static final long serialVersionUID = 1L;
-    @Id
-    @Basic(optional = false)
-    @Column(name = "id")
-    private String id;
-    @Column(name = "name")
-    private String name;
-    @Column(name = "fileNumber")
-    private String fileNumber;
-    @Column(name = "claimNumber")
-    private String claimNumber;
-    @Basic(optional = false)
-    @Column(name = "claimValue")
-    private float claimValue;
-    @Basic(optional = false)
-    @Column(name = "archived", columnDefinition = "TINYINT NOT NULL")
-    private short archived;
-    @Column(name = "notice")
-    private String notice;
-    @Column(name = "lawyer")
-    private String lawyer;
-    @Column(name = "assistant")
-    private String assistant;
-    @Column(name = "reason")
-    private String reason;
-    @Column(name = "subjectField")
-    private String subjectField;
-    @Column(name = "custom1")
-    private String custom1;
-    @Column(name = "custom2")
-    private String custom2;
-    @Column(name = "custom3")
-    private String custom3;
-    @OneToMany(cascade = CascadeType.REMOVE, mappedBy = "archiveFileKey")
-    private List<ArchiveFileAddressesBean> archiveFileAddressesBeanList;
-    @OneToMany(cascade = CascadeType.REMOVE, mappedBy = "archiveFileKey")
-    private List<ArchiveFileDocumentsBean> archiveFileDocumentsBeanList;
-    @OneToMany(cascade = CascadeType.REMOVE, mappedBy = "archiveFileKey")
-    private List<ArchiveFileHistoryBean> archiveFileHistoryBeanList;
-    @OneToMany(cascade = CascadeType.REMOVE, mappedBy = "archiveFileKey")
-    private List<ArchiveFileFormsBean> archiveFileFormsBeanList;
-    @OneToMany(cascade = CascadeType.REMOVE, mappedBy = "archiveFileKey")
-    private List<ArchiveFileFormEntriesBean> archiveFileFormEntriesBeanList;
+public class FormPluginEntryPanel extends javax.swing.JPanel implements EventConsumer {
 
-    public ArchiveFileBean() {
+    private static final Logger log = Logger.getLogger(FormPluginEntryPanel.class.getName());
+    //DecimalFormat df = new DecimalFormat("0.00%");
+
+    private FormPluginsPanel container = null;
+    private FormPlugin plugin = null;
+    private int state = -1;
+
+    public static final int STATE_INSTALLED = 10;
+    public static final int STATE_INSTALLING = 11;
+    public static final int STATE_NOT_INSTALLED = 20;
+    public static final int STATE_INSTALLED_UPDATEAVAILABLE = 30;
+
+    /**
+     * Creates new form HitPanel
+     */
+    public FormPluginEntryPanel(FormPlugin plugin, FormPluginsPanel container) {
+        initComponents();
+        this.container = container;
+        this.plugin = plugin;
+
+        this.setEntry(plugin);
+
+//        EventBroker b = EventBroker.getInstance();
+//        b.subscribeConsumer(this, Event.TYPE_CONTACTUPDATED);
     }
 
-    public ArchiveFileBean(String id) {
-        this.id = id;
+    public void setState(int state) {
+        this.state = state;
+        switch (state) {
+            case STATE_INSTALLED:
+                this.lblState.setText("installiert");
+                this.lblState.setForeground(DefaultColorTheme.COLOR_LOGO_GREEN);
+                break;
+            case STATE_INSTALLING:
+                this.lblState.setText("wird installiert...");
+                this.lblState.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
+                break;
+            case STATE_INSTALLED_UPDATEAVAILABLE:
+                this.lblState.setText("Update verfügbar");
+                this.lblState.setForeground(DefaultColorTheme.COLOR_LOGO_RED);
+                break;
+            case STATE_NOT_INSTALLED:
+                this.lblState.setText("nicht installiert");
+                this.lblState.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
+
+                break;
+        }
+
     }
 
-    public ArchiveFileBean(String id, float claimValue, short archived) {
-        this.id = id;
-        this.claimValue = claimValue;
-        this.archived = archived;
+//    public AddressBean getAdress() {
+//        return this.a;
+//    }
+    public void setEntry(FormPlugin plugin) {
+        this.lblName.setText(plugin.getName());
+        this.lblDescription.setText(plugin.getDescription());
+        this.lblVersion.setText(plugin.getVersion());
     }
 
-    public String getId() {
-        return id;
-    }
+    /**
+     * This method is called from within the constructor to initialize the form.
+     * WARNING: Do NOT modify this code. The content of this method is always
+     * regenerated by the Form Editor.
+     */
+    @SuppressWarnings("unchecked")
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
+    private void initComponents() {
 
-    public void setId(String id) {
-        this.id = id;
-    }
+        actionPopup = new javax.swing.JPopupMenu();
+        mnuDownload = new javax.swing.JMenuItem();
+        mnuRemove = new javax.swing.JMenuItem();
+        lblName = new javax.swing.JLabel();
+        cmdActions = new javax.swing.JButton();
+        lblDescription = new javax.swing.JLabel();
+        lblVersion = new javax.swing.JLabel();
+        lblState = new javax.swing.JLabel();
 
-    public String getName() {
-        return name;
-    }
+        mnuDownload.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/fileimport.png"))); // NOI18N
+        mnuDownload.setText("installieren");
+        mnuDownload.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuDownloadActionPerformed(evt);
+            }
+        });
+        actionPopup.add(mnuDownload);
 
-    public void setName(String name) {
-        this.name = name;
-    }
+        mnuRemove.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editdelete.png"))); // NOI18N
+        mnuRemove.setText("löschen");
+        mnuRemove.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuRemoveActionPerformed(evt);
+            }
+        });
+        actionPopup.add(mnuRemove);
 
-    public String getFileNumber() {
-        return fileNumber;
-    }
+        lblName.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        lblName.setText("Pluginname");
+        lblName.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        lblName.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                lblNameMouseClicked(evt);
+            }
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                lblNameMouseExited(evt);
+            }
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                lblNameMouseEntered(evt);
+            }
+        });
 
-    public void setFileNumber(String fileNumber) {
-        this.fileNumber = fileNumber;
-    }
+        cmdActions.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/14_layer_lowerlayer.png"))); // NOI18N
+        cmdActions.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                cmdActionsMousePressed(evt);
+            }
+        });
+        cmdActions.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdActionsActionPerformed(evt);
+            }
+        });
 
-    public String getClaimNumber() {
-        return claimNumber;
-    }
+        lblDescription.setText("Beschreibung");
 
-    public void setClaimNumber(String claimNumber) {
-        this.claimNumber = claimNumber;
-    }
+        lblVersion.setText("Version");
 
-    public float getClaimValue() {
-        return claimValue;
-    }
+        lblState.setText("Status");
 
-    public void setClaimValue(float claimValue) {
-        this.claimValue = claimValue;
-    }
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
+        this.setLayout(layout);
+        layout.setHorizontalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(cmdActions)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(lblName)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(lblVersion))
+                            .addComponent(lblState))
+                        .addGap(0, 395, Short.MAX_VALUE))
+                    .addComponent(lblDescription, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
+        );
+        layout.setVerticalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(cmdActions)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(lblName)
+                            .addComponent(lblVersion))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(lblDescription)))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(lblState)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+    }// </editor-fold>//GEN-END:initComponents
 
-    public short getArchived() {
-        return archived;
-    }
-    
-    public boolean getArchivedBoolean() {
-        if(archived==1)
-            return true;
+    private void mnuRemoveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuRemoveActionPerformed
+
+        try {
+            this.plugin.remove();
+            this.setState(STATE_NOT_INSTALLED);
+            this.container.revalidate();
+            this.container.repaint();
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+    }//GEN-LAST:event_mnuRemoveActionPerformed
+
+
+    private void cmdActionsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdActionsActionPerformed
+
+    }//GEN-LAST:event_cmdActionsActionPerformed
+
+    private void cmdActionsMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdActionsMousePressed
+        if(this.state==STATE_INSTALLED)
+            this.mnuDownload.setEnabled(false);
         else
-            return false;
-                    
-    }
+            this.mnuDownload.setEnabled(true);
+        
+        if(this.state==STATE_INSTALLED || this.state==STATE_INSTALLED_UPDATEAVAILABLE)
+            this.mnuRemove.setEnabled(true);
+        else
+            this.mnuRemove.setEnabled(false);
+        
+        this.actionPopup.show(evt.getComponent(), evt.getX(), evt.getY());
+    }//GEN-LAST:event_cmdActionsMousePressed
 
-    public void setArchived(short archived) {
-        this.archived = archived;
-    }
-    
-    public void setArchivedBoolean(boolean archived) {
-        if(archived)
-            this.archived=1;
-        else 
-            this.archived=0;
-    }
+    private void lblNameMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblNameMouseEntered
+        this.lblName.setForeground(new Color(0, 0, 255));
+    }//GEN-LAST:event_lblNameMouseEntered
 
-    public String getNotice() {
-        return notice;
-    }
+    private void lblNameMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblNameMouseExited
+        this.lblName.setForeground(Color.BLACK);
+    }//GEN-LAST:event_lblNameMouseExited
 
-    public void setNotice(String notice) {
-        this.notice = notice;
-    }
+    private void lblNameMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblNameMouseClicked
+//        this.cmdToAddressActionPerformed(null);
+    }//GEN-LAST:event_lblNameMouseClicked
 
-    @XmlTransient
-    public List<ArchiveFileAddressesBean> getArchiveFileAddressesBeanList() {
-        return archiveFileAddressesBeanList;
-    }
+    private void mnuDownloadActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuDownloadActionPerformed
+        try {
 
-    public void setArchiveFileAddressesBeanList(List<ArchiveFileAddressesBean> archiveFileAddressesBeanList) {
-        this.archiveFileAddressesBeanList = archiveFileAddressesBeanList;
-    }
+            if (this.state == STATE_NOT_INSTALLED) {
+                this.setState(STATE_INSTALLING);
+                this.plugin.install();
+            } else if (state == STATE_INSTALLED_UPDATEAVAILABLE) {
+                this.setState(STATE_INSTALLING);
+                this.plugin.update();
+            }
+            this.setState(STATE_INSTALLED);
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Laden des Plugins: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+    }//GEN-LAST:event_mnuDownloadActionPerformed
 
-    @XmlTransient
-    public List<ArchiveFileDocumentsBean> getArchiveFileDocumentsBeanList() {
-        return archiveFileDocumentsBeanList;
-    }
-
-    public void setArchiveFileDocumentsBeanList(List<ArchiveFileDocumentsBean> archiveFileDocumentsBeanList) {
-        this.archiveFileDocumentsBeanList = archiveFileDocumentsBeanList;
-    }
-
-    @XmlTransient
-    public List<ArchiveFileHistoryBean> getArchiveFileHistoryBeanList() {
-        return archiveFileHistoryBeanList;
-    }
-
-    public void setArchiveFileHistoryBeanList(List<ArchiveFileHistoryBean> archiveFileHistoryBeanList) {
-        this.archiveFileHistoryBeanList = archiveFileHistoryBeanList;
-    }
+    // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JPopupMenu actionPopup;
+    private javax.swing.JButton cmdActions;
+    private javax.swing.JLabel lblDescription;
+    private javax.swing.JLabel lblName;
+    private javax.swing.JLabel lblState;
+    private javax.swing.JLabel lblVersion;
+    private javax.swing.JMenuItem mnuDownload;
+    private javax.swing.JMenuItem mnuRemove;
+    // End of variables declaration//GEN-END:variables
 
     @Override
-    public int hashCode() {
-        int hash = 0;
-        hash += (id != null ? id.hashCode() : 0);
-        return hash;
-    }
-
-    @Override
-    public boolean equals(Object object) {
-        // TODO: Warning - this method won't work in the case the id fields are not set
-        if (!(object instanceof ArchiveFileBean)) {
-            return false;
-        }
-        ArchiveFileBean other = (ArchiveFileBean) object;
-        if ((this.id == null && other.id != null) || (this.id != null && !this.id.equals(other.id))) {
-            return false;
-        }
-        return true;
-    }
-
-    @Override
-    public String toString() {
-        return "com.jdimension.jlawyer.persistence.ArchiveFileBean[ id=" + id + " ]";
-    }
-
-    @XmlTransient
-    public List<ArchiveFileReviewsBean> getArchiveFileReviewsBeanList() {
-        return archiveFileReviewsBeanList;
-    }
-
-    public void setArchiveFileReviewsBeanList(List<ArchiveFileReviewsBean> archiveFileReviewsBeanList) {
-        this.archiveFileReviewsBeanList = archiveFileReviewsBeanList;
-    }
-    
-    public void addParty(ArchiveFileAddressesBean dto) {
-        if(this.archiveFileAddressesBeanList==null)
-            this.archiveFileAddressesBeanList=new ArrayList<ArchiveFileAddressesBean>();
-        this.archiveFileAddressesBeanList.add(dto);
-    }
-    
-    public void addReview(ArchiveFileReviewsBean dto) {
-        if(this.archiveFileReviewsBeanList==null)
-            this.archiveFileReviewsBeanList=new ArrayList<ArchiveFileReviewsBean>();
-        this.archiveFileReviewsBeanList.add(dto);
-    }
-    
-    public void removeAllParties() {
-        if(this.archiveFileAddressesBeanList!=null) {
-        for(int i=this.archiveFileAddressesBeanList.size()-1;i>-1;i--) {
-            ArchiveFileAddressesBean b=this.archiveFileAddressesBeanList.get(i);
-            this.archiveFileAddressesBeanList.remove(i);
-            
-            
-        }
-        }
-    }
-//    
-//    public void removeAllOpponents() {
-//        if(this.archiveFileAddressesBeanList!=null) {
-//        for(int i=this.archiveFileAddressesBeanList.size()-1;i>-1;i--) {
-//            ArchiveFileAddressesBean b=this.archiveFileAddressesBeanList.get(i);
-//            if(b.getReferenceType()==b.REFERENCETYPE_OPPONENT) {
-//                this.archiveFileAddressesBeanList.remove(i);
+    public void onEvent(Event e) {
+//        if (e instanceof ContactUpdatedEvent) {
+//            if (this.a != null) {
+//                // can be null in subclass of ArchiveFilePanel
+//                if (this.a.getId() != null) {
+//                    AddressBean eventAddress = ((ContactUpdatedEvent) e).getAddress();
+//                    if (this.a.getId().equals(eventAddress.getId())) {
+//                        this.setEntry(eventAddress, this.afa, false);
+//                    }
+//                }
 //            }
-//            
 //        }
-//        }
-//    }
-//    
-//    public void removeAllOpponentAttorneys() {
-//        if(this.archiveFileAddressesBeanList!=null) {
-//        for(int i=this.archiveFileAddressesBeanList.size()-1;i>-1;i--) {
-//            ArchiveFileAddressesBean b=this.archiveFileAddressesBeanList.get(i);
-//            if(b.getReferenceType()==b.REFERENCETYPE_OPPONENTATTORNEY) {
-//                this.archiveFileAddressesBeanList.remove(i);
-//            }
-//            
-//        }
-//        }
-//    }
-
-    /**
-     * @return the lawyer
-     */
-    public String getLawyer() {
-        return lawyer;
     }
-
-    /**
-     * @param lawyer the lawyer to set
-     */
-    public void setLawyer(String lawyer) {
-        this.lawyer = lawyer;
-    }
-
-    /**
-     * @return the reason
-     */
-    public String getReason() {
-        return reason;
-    }
-
-    /**
-     * @param reason the reason to set
-     */
-    public void setReason(String reason) {
-        this.reason = reason;
-    }
-
-    /**
-     * @return the subjectField
-     */
-    public String getSubjectField() {
-        return subjectField;
-    }
-
-    /**
-     * @param subjectField the subjectField to set
-     */
-    public void setSubjectField(String subjectField) {
-        this.subjectField = subjectField;
-    }
-
-    /**
-     * @return the assistant
-     */
-    public String getAssistant() {
-        return assistant;
-    }
-
-    /**
-     * @param assistant the assistant to set
-     */
-    public void setAssistant(String assistant) {
-        this.assistant = assistant;
-    }
-
-    /**
-     * @return the custom1
-     */
-    public String getCustom1() {
-        return custom1;
-    }
-
-    /**
-     * @param custom1 the custom1 to set
-     */
-    public void setCustom1(String custom1) {
-        this.custom1 = custom1;
-    }
-
-    /**
-     * @return the custom2
-     */
-    public String getCustom2() {
-        return custom2;
-    }
-
-    /**
-     * @param custom2 the custom2 to set
-     */
-    public void setCustom2(String custom2) {
-        this.custom2 = custom2;
-    }
-
-    /**
-     * @return the custom3
-     */
-    public String getCustom3() {
-        return custom3;
-    }
-
-    /**
-     * @param custom3 the custom3 to set
-     */
-    public void setCustom3(String custom3) {
-        this.custom3 = custom3;
-    }
-
-    /**
-     * @return the archiveFileFormsBeanList
-     */
-    public List<ArchiveFileFormsBean> getArchiveFileFormsBeanList() {
-        return archiveFileFormsBeanList;
-    }
-
-    /**
-     * @param archiveFileFormsBeanList the archiveFileFormsBeanList to set
-     */
-    public void setArchiveFileFormsBeanList(List<ArchiveFileFormsBean> archiveFileFormsBeanList) {
-        this.archiveFileFormsBeanList = archiveFileFormsBeanList;
-    }
-
-    /**
-     * @return the archiveFileFormEntriesBeanList
-     */
-    public List<ArchiveFileFormEntriesBean> getArchiveFileFormEntriesBeanList() {
-        return archiveFileFormEntriesBeanList;
-    }
-
-    /**
-     * @param archiveFileFormEntriesBeanList the archiveFileFormEntriesBeanList to set
-     */
-    public void setArchiveFileFormEntriesBeanList(List<ArchiveFileFormEntriesBean> archiveFileFormEntriesBeanList) {
-        this.archiveFileFormEntriesBeanList = archiveFileFormEntriesBeanList;
-    }
-    
 }

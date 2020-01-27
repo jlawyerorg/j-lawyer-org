@@ -837,6 +837,17 @@ public class JLawyerServiceLocator {
             throw new RuntimeException(ne);
         }
     }
+    
+    public FormsServiceRemote lookupFormsServiceRemote() {
+        try {
+            //Context c = new InitialContext();
+            //return (SystemManagementRemote) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/SystemManagement!com.jdimension.jlawyer.services.SystemManagementRemote");
+            return (FormsServiceRemote) ic.lookup("ejb:j-lawyer-server/j-lawyer-server-ejb//FormsService!com.jdimension.jlawyer.services.FormsServiceRemote");
+        } catch (NamingException ne) {
+            Logger.getLogger(JLawyerServiceLocator.class.getName()).log(Level.SEVERE, "exception caught", ne);
+            throw new RuntimeException(ne);
+        }
+    }
 
     public Topic lookupJMSTopic(String name) {
         try {

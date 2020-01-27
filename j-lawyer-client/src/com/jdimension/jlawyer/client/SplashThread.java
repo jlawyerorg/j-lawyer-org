@@ -670,6 +670,7 @@ import com.jdimension.jlawyer.client.editors.StatusBarProvider;
 import com.jdimension.jlawyer.client.editors.ThemeableEditor;
 import com.jdimension.jlawyer.client.plugins.calculation.CalculationPlugin;
 import com.jdimension.jlawyer.client.plugins.calculation.CalculationPluginUtil;
+import com.jdimension.jlawyer.client.plugins.form.FormPluginUtil;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.settings.ThemeSettings;
@@ -679,12 +680,15 @@ import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.client.utils.VersionUtils;
 import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
 import com.jdimension.jlawyer.persistence.AppUserBean;
+import com.jdimension.jlawyer.persistence.FormTypeArtefactBean;
+import com.jdimension.jlawyer.persistence.FormTypeBean;
 import com.jdimension.jlawyer.server.constants.OptionConstants;
 //import com.jdimension.jkanzlei.server.services.AddressServiceRemote;
 //import com.jdimension.jkanzlei.server.services.AddressServiceRemoteHome;
 //import com.jdimension.jkanzlei.server.services.JKanzleiServiceLocator;
 import com.jdimension.jlawyer.server.modules.ModuleMetadata;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
+import com.jdimension.jlawyer.services.FormsServiceRemote;
 //import com.jdimension.jkanzlei.server.persistence.AppOptionGroupDTO;
 //import com.jdimension.jkanzlei.server.services.ArchiveFileServiceRemote;
 //import com.jdimension.jkanzlei.server.services.ArchiveFileServiceRemoteHome;
@@ -893,6 +897,27 @@ public class SplashThread implements Runnable {
             log.error("error loading help / plugins / reports", t);
         }
 
+        ExecutorService pool2 = Executors.newFixedThreadPool(3);
+        Runnable formsRunnable = new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.forms"), true);
+                    loadForms();
+                } catch (Throwable t) {
+                    log.error("Error loading forms", t);
+                }
+            }
+
+        };
+        pool2.execute(formsRunnable);
+        pool2.shutdown();
+        try {
+            pool2.awaitTermination(60, TimeUnit.SECONDS);
+        } catch (Throwable t) {
+            log.error("error loading help / plugins / reports / forms", t);
+        }
+
         //pool = Executors.newFixedThreadPool(3);
         updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.modules"), true);
         this.loadedMods = 0;
@@ -938,13 +963,12 @@ public class SplashThread implements Runnable {
                 ClientSettings cs = ClientSettings.getInstance();
                 gui.setTitle(gui.getTitle() + " " + VersionUtils.getFullClientVersion() + " [" + UserSettings.getInstance().getCurrentUser().getPrincipalId() + "@" + cs.getConfiguration(ClientSettings.CONF_LASTSERVER, "localhost") + "]");
                 gui.buildModuleBar();
-                
+
                 gui.pack();
                 gui.doLayout();
                 gui.setVisible(true);
-                
-                //gui.setDividerLocation(135);
 
+                //gui.setDividerLocation(135);
                 notifyEditorForStatus(ClientSettings.getInstance().getRootModule());
 
                 ServerSettings serverSettings = ServerSettings.getInstance();
@@ -1332,8 +1356,6 @@ public class SplashThread implements Runnable {
 
             remoteList = remoteDoc.getElementsByTagName("calculation");
 
-            System.out.println("test");
-
             // load from server when not in cache or when version has been updated
             String calcDir = CalculationPluginUtil.getLocalDirectory();
             File calcDirFile = new File(calcDir);
@@ -1401,6 +1423,99 @@ public class SplashThread implements Runnable {
                 p.download(forceDownload);
                 i++;
                 //this.updateProgress(false, calcPlugins.size() + 1, i, "");
+            }
+        } catch (Throwable t) {
+            log.error("Error downloading calculation plugins", t);
+            t.printStackTrace();
+        }
+//            }
+//
+//        }).start();
+
+    }
+
+    private void loadForms() throws Exception {
+        this.updateProgress(false, 1, 0, "");
+
+        try {
+
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            FormsServiceRemote formsSvc = locator.lookupFormsServiceRemote();
+
+            ArrayList<String> remoteForms = new ArrayList<String>();
+            List<FormTypeBean> allFormTypes = formsSvc.getAllFormTypes();
+            for (FormTypeBean ftb : allFormTypes) {
+                remoteForms.add(ftb.getName() + ftb.getVersion());
+            }
+
+            // load from server when not in cache or when version has been updated
+            String formsDir = FormPluginUtil.getLocalDirectory();
+            File formDirFile = new File(formsDir);
+            if (!formDirFile.exists()) {
+                formDirFile.mkdirs();
+            }
+
+            ExecutorService pluginPool = Executors.newFixedThreadPool(5);
+            Hashtable<String, String> localForms = new Hashtable<String, String>();
+            for (File c : formDirFile.listFiles()) {
+
+                Runnable r = new Runnable() {
+                    @Override
+                    public void run() {
+                        if (c.isFile()) {
+                            if (c.getName().toLowerCase().endsWith("_meta.groovy")) {
+                                String plugName = c.getName().substring(0, c.getName().indexOf("_meta"));
+                                String plugVersion = FormPluginUtil.checkVersion(c);
+
+                                localForms.put(plugName, plugVersion);
+                                if (!remoteForms.contains(plugName + plugVersion)) {
+                                    c.delete();
+                                }
+
+                            }
+                        }
+                    }
+
+                };
+                pluginPool.execute(r);
+
+            }
+            pluginPool.shutdown();
+            pluginPool.awaitTermination(60, TimeUnit.SECONDS);
+
+            //this.updateProgress(false, calcPlugins.size() + 1, 1, "");
+            int i = 1;
+            for (FormTypeBean p : allFormTypes) {
+                boolean force = false;
+                if (localForms.containsKey(p.getId()) && !(localForms.get(p.getId()).equals(p.getVersion()))) {
+                    force = true;
+                }
+                updateStatus("Plugin: neue Version für " + p.getName(), true);
+                
+                String localDir = FormPluginUtil.getLocalDirectory() + File.separator;
+                new File(localDir).mkdirs();
+
+                for (FormTypeArtefactBean artefact : formsSvc.getFormTypeArtefacts(p.getId())) {
+
+                    String f=artefact.getFileName();
+                    
+                    String localFileLocation = localDir + f;
+                    File localFile = new File(localFileLocation);
+
+                    if (!localFile.exists() || force) {
+
+                        byte[] content=artefact.getContent();
+
+                        FileOutputStream fw = new FileOutputStream(localFileLocation);
+                        fw.write(content);
+                        fw.close();
+
+                    }
+
+                }
+
+                i++;
             }
         } catch (Throwable t) {
             log.error("Error downloading calculation plugins", t);

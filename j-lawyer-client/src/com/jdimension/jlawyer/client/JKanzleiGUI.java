@@ -663,6 +663,7 @@
  */
 package com.jdimension.jlawyer.client;
 
+import com.jdimension.jlawyer.client.plugins.form.FormsManagementDialog;
 import com.jdimension.jlawyer.client.configuration.*;
 import com.jdimension.jlawyer.client.desktop.UpdateAddressTagsTask;
 import com.jdimension.jlawyer.client.desktop.UpdateArchiveFileTagsTask;
@@ -1038,6 +1039,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuArchiveFileCustomFields = new javax.swing.JMenuItem();
         mnuArchiveFileCustomFieldsInvolvements = new javax.swing.JMenuItem();
         mnuArchiveFileOptionsCaseNumbering = new javax.swing.JMenuItem();
+        mnuFormsManager = new javax.swing.JMenuItem();
         mnuDocumentOptions = new javax.swing.JMenu();
         mnuScanOptions = new javax.swing.JMenuItem();
         mnuSearchIndex = new javax.swing.JMenuItem();
@@ -1346,6 +1348,15 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             }
         });
         mnuArchiveFileOptions.add(mnuArchiveFileOptionsCaseNumbering);
+
+        mnuFormsManager.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/baseline_import_contacts_black_36dp.png"))); // NOI18N
+        mnuFormsManager.setText("Falldatenblätter");
+        mnuFormsManager.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuFormsManagerActionPerformed(evt);
+            }
+        });
+        mnuArchiveFileOptions.add(mnuFormsManager);
 
         mnuOptions.add(mnuArchiveFileOptions);
 
@@ -2177,6 +2188,26 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         }
     }//GEN-LAST:event_mnuPartyTypesActionPerformed
 
+    private void mnuFormsManagerActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuFormsManagerActionPerformed
+        ClientSettings settings = ClientSettings.getInstance();
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            boolean currentlyAdmin = locator.lookupSecurityServiceRemote().isAdmin();
+            if (currentlyAdmin) {
+                FormsManagementDialog dlg = new FormsManagementDialog(this, true);
+                //dlg.setTitle("Anreden");
+                //dlg.setOptionGroup(OptionConstants.OPTIONGROUP_SALUTATIONS);
+                FrameUtils.centerDialog(dlg, this);
+                dlg.setVisible(true);
+            } else {
+                JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.adminrequired"), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.hint"), JOptionPane.INFORMATION_MESSAGE);
+            }
+        } catch (Exception ex) {
+            log.error(ex);
+            JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("error.launchsettings") + ex.getMessage(), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.error"), JOptionPane.INFORMATION_MESSAGE);
+        }
+    }//GEN-LAST:event_mnuFormsManagerActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -2232,6 +2263,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     private javax.swing.JMenuItem mnuExit;
     private javax.swing.JMenu mnuFile;
     private javax.swing.JMenuItem mnuFontSize;
+    private javax.swing.JMenuItem mnuFormsManager;
     private javax.swing.JMenuItem mnuForum;
     private javax.swing.JMenu mnuHelp;
     private javax.swing.JMenuItem mnuOnlineHelp;

@@ -714,6 +714,15 @@ public abstract class ProgressableAction {
             }
         }));
     }
+    
+    public void setProgressString(final String status) {
+
+        SwingUtilities.invokeLater(new Thread(new Runnable() {
+            public void run() {
+                indicator.setProgressString(status);
+            }
+        }));
+    }
 
     /**
      * @return the infinite

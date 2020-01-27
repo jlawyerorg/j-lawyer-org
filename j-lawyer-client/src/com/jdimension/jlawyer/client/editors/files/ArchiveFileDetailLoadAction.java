@@ -670,6 +670,8 @@ import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.launcher.CaseDocumentStore;
 import com.jdimension.jlawyer.client.launcher.Launcher;
 import com.jdimension.jlawyer.client.launcher.LauncherFactory;
+import com.jdimension.jlawyer.client.plugins.form.FormInstancePanel;
+import com.jdimension.jlawyer.client.plugins.form.FormPlugin;
 import com.jdimension.jlawyer.client.processing.ProgressIndicator;
 import com.jdimension.jlawyer.client.processing.ProgressableAction;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
@@ -684,6 +686,7 @@ import com.jdimension.jlawyer.ui.tagging.ArchiveFileTagActionListener;
 import com.jdimension.jlawyer.ui.tagging.TagToggleButton;
 import com.jdimension.jlawyer.ui.tagging.TagUtils;
 import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -724,16 +727,19 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
     private String selectDocumentWithFileName;
     private JPopupMenu popDocumentFavorites;
     private JTextArea documentTagsOverview;
+    private JComboBox cmbFormTypes = null;
+    private JPanel formsPanel = null;
+    private JTabbedPane tabPaneForms=null;
 
     private SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy HH:mm");
 
-    public ArchiveFileDetailLoadAction(ProgressIndicator i, ArchiveFilePanel owner, String archiveFileKey, ArchiveFileBean caseDto, JTable historyTarget, JTable docTarget, InvolvedPartiesPanel contactsForCasePanel, JTable tblReviews, JPanel tagPanel, JPanel documentTagPanel, boolean readOnly, boolean beaEnabled, String selectDocumentWithFileName, JLabel lblArchivedSince, boolean isArchived, JPopupMenu popDocumentFavorites, JTextArea lblDocumentTags) {
+    public ArchiveFileDetailLoadAction(ProgressIndicator i, ArchiveFilePanel owner, String archiveFileKey, ArchiveFileBean caseDto, JTable historyTarget, JTable docTarget, InvolvedPartiesPanel contactsForCasePanel, JTable tblReviews, JPanel tagPanel, JPanel documentTagPanel, boolean readOnly, boolean beaEnabled, String selectDocumentWithFileName, JLabel lblArchivedSince, boolean isArchived, JPopupMenu popDocumentFavorites, JTextArea lblDocumentTags, JComboBox formTypes, JPanel formsPanel, JTabbedPane tabPaneForms) {
         super(i, false);
         //this.table = table;
         //this.dlg = dlg;
 
         this.popDocumentFavorites = popDocumentFavorites;
-        this.documentTagsOverview=lblDocumentTags;
+        this.documentTagsOverview = lblDocumentTags;
         this.archiveFileKey = archiveFileKey;
         this.caseDto = caseDto;
         this.owner = owner;
@@ -743,6 +749,9 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
         this.contactsForCasePanel = contactsForCasePanel;
         this.tblReviews = tblReviews;
         this.tagPanel = tagPanel;
+        this.cmbFormTypes = formTypes;
+        this.formsPanel = formsPanel;
+        this.tabPaneForms=tabPaneForms;
         this.documentTagPanel = documentTagPanel;
         this.lblArchivedSince = lblArchivedSince;
         this.isArchived = isArchived;
@@ -754,7 +763,7 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
 
     @Override
     public int getMax() {
-        return 18;
+        return 19;
     }
 
     @Override
@@ -766,8 +775,6 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
     public String getErrorMessageAndHints(String rootCause) {
         return "Laden der Akte fehlgeschlagen. Bitte Akte neu laden OHNE zu speichern!" + System.lineSeparator() + "Ursache: " + rootCause;
     }
-    
-    
 
     @Override
     public boolean execute() throws Exception {
@@ -792,6 +799,41 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
         try {
             settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+
+            this.progress("Lade Akte: Falldatenblätter...");
+            //this.
+            this.cmbFormTypes.removeAllItems();
+            List<FormTypeBean> formTypes = locator.lookupFormsServiceRemote().getAllFormTypes();
+            for (FormTypeBean ftb : formTypes) {
+                this.cmbFormTypes.addItem(ftb);
+            }
+            if (this.cmbFormTypes.getItemCount() > 0) {
+                this.cmbFormTypes.setSelectedIndex(0);
+            }
+
+            List<ArchiveFileFormsBean> caseForms = locator.lookupFormsServiceRemote().getFormsForCase(this.archiveFileKey);
+            SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
+            for (ArchiveFileFormsBean affb : caseForms) {
+                this.setProgressString("Lade Akte: Falldatenblatt " + affb.getFormType().getName() + " (" + affb.getPlaceHolder() + ")");
+                FormInstancePanel formInstance = new FormInstancePanel(this.tabPaneForms);
+                Dimension maxDimension = this.formsPanel.getSize();
+                maxDimension.setSize(maxDimension.getWidth() - 100, maxDimension.getHeight() - 60);
+                formInstance.setMaximumSize(maxDimension);
+                formInstance.setPreferredSize(maxDimension);
+                formInstance.setDescription(affb.getDescription());
+                formInstance.setForm(affb);
+                FormPlugin plugin = new FormPlugin();
+                plugin.setId(affb.getFormType().getId());
+                try {
+                    JPanel ui = plugin.getUi();
+                    formInstance.setUI(ui);
+
+                    tabPaneForms.addTab("<html><b>" + affb.getFormType().getName() + "</b><br/>" + df.format(affb.getCreationDate()) + "<br/>" + affb.getPlaceHolder() + "</html>", null, formInstance);
+                } catch (Throwable t) {
+                    log.error("Error loading form plugin", t);
+                    JOptionPane.showMessageDialog(this.owner, "Fehler beim Laden des Falldatenblattes: " + t.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+                }
+            }
 
             this.progress("Lade Akte: Historie...");
             fileService = locator.lookupArchiveFileServiceRemote();
@@ -929,7 +971,7 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
 
         this.contactsForCasePanel.removeAll();
         //GridLayout layout = new GridLayout(involvementForCase.size(), 1);
-        BoxLayout layout=new javax.swing.BoxLayout(this.contactsForCasePanel, javax.swing.BoxLayout.Y_AXIS);
+        BoxLayout layout = new javax.swing.BoxLayout(this.contactsForCasePanel, javax.swing.BoxLayout.Y_AXIS);
         this.contactsForCasePanel.setLayout(layout);
         int i = 0;
         for (ArchiveFileAddressesBean afab : involvementForCase) {
@@ -1033,7 +1075,7 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
 
         ThreadUtils.repaintComponent(tagPanel);
         //ThreadUtils.setTableModel(this.tblReviews, model3, rtrs, false);
-        
+
 //        Hashtable<String, ArrayList<String>> docTags=fileService.getDocumentTagsForCase(this.archiveFileKey);
 //        String docTagsHtml=TagUtils.getDocumentTagsOverviewAsHtml(docTags);
 //        this.documentTagsOverview.setText(docTagsHtml);
