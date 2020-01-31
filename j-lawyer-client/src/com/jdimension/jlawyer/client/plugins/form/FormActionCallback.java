@@ -1,4 +1,5 @@
-/*                    GNU AFFERO GENERAL PUBLIC LICENSE
+/*
+                    GNU AFFERO GENERAL PUBLIC LICENSE
                        Version 3, 19 November 2007
 
  Copyright (C) 2007 Free Software Foundation, Inc. <https://fsf.org/>
@@ -660,181 +661,16 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.persistence;
+package com.jdimension.jlawyer.client.plugins.form;
 
-import java.io.Serializable;
 import java.util.List;
-import javax.persistence.Basic;
-import javax.persistence.CascadeType;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.NamedQueries;
-import javax.persistence.NamedQuery;
-import javax.persistence.OneToMany;
-import javax.persistence.Table;
-import javax.xml.bind.annotation.XmlRootElement;
 
 /**
  *
  * @author jens
  */
-@Entity
-@Table(name = "form_types")
-@XmlRootElement
-@NamedQueries({
-    @NamedQuery(name = "FormTypeBean.findAll", query = "SELECT f FROM FormTypeBean f"),
-    @NamedQuery(name = "FormTypeBean.findById", query = "SELECT f FROM FormTypeBean f WHERE f.id = :id"),
-    @NamedQuery(name = "FormTypeBean.findByName", query = "SELECT f FROM FormTypeBean f WHERE f.name = :name")})
-public class FormTypeBean implements Serializable {
-
-    private static final long serialVersionUID = 1L;
+public interface FormActionCallback {
     
-    public static final String TYPE_PLUGIN="plugin";
-    public static final String TYPE_LIBRARY="library";
-    
-    @Id
-    @Basic(optional = false)
-    @Column(name = "id")
-    private String id;
-    
-    @Column(name = "name")
-    private String name;
-    
-    @Column(name = "placeholder")
-    private String placeHolder;
-    
-    @Column(name = "version")
-    private String version;
-    
-    @Column(name = "usagetype")
-    private String usageType;
-    
-    @OneToMany(cascade = CascadeType.REMOVE, mappedBy = "formType")
-    private List<ArchiveFileFormsBean> archiveFileFormsBeanList;
-    
-    @OneToMany(cascade = CascadeType.REMOVE, mappedBy = "formType")
-    private List<FormTypeArtefactBean> formTypeArtefactsBeanList;
-    
-    
-
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    @Override
-    public int hashCode() {
-        int hash = 0;
-        hash += (id != null ? id.hashCode() : 0);
-        return hash;
-    }
-
-    @Override
-    public boolean equals(Object object) {
-        // TODO: Warning - this method won't work in the case the id fields are not set
-        if (!(object instanceof FormTypeBean)) {
-            return false;
-        }
-        FormTypeBean other = (FormTypeBean) object;
-        if ((this.id == null && other.id != null) || (this.id != null && !this.id.equals(other.id))) {
-            return false;
-        }
-        return true;
-    }
-
-    @Override
-    public String toString() {
-        return this.getName();
-    }
-
-    /**
-     * @return the name
-     */
-    public String getName() {
-        return name;
-    }
-
-    /**
-     * @param name the name to set
-     */
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    /**
-     * @return the placeHolder
-     */
-    public String getPlaceHolder() {
-        return placeHolder;
-    }
-
-    /**
-     * @param placeHolder the placeHolder to set
-     */
-    public void setPlaceHolder(String placeHolder) {
-        this.placeHolder = placeHolder;
-    }
-
-    /**
-     * @return the version
-     */
-    public String getVersion() {
-        return version;
-    }
-
-    /**
-     * @param version the version to set
-     */
-    public void setVersion(String version) {
-        this.version = version;
-    }
-
-    /**
-     * @return the archiveFileFormsBeanList
-     */
-    public List<ArchiveFileFormsBean> getArchiveFileFormsBeanList() {
-        return archiveFileFormsBeanList;
-    }
-
-    /**
-     * @param archiveFileFormsBeanList the archiveFileFormsBeanList to set
-     */
-    public void setArchiveFileFormsBeanList(List<ArchiveFileFormsBean> archiveFileFormsBeanList) {
-        this.archiveFileFormsBeanList = archiveFileFormsBeanList;
-    }
-
-    /**
-     * @return the formTypeArtefactsBeanList
-     */
-    public List<FormTypeArtefactBean> getFormTypeArtefactsBeanList() {
-        return formTypeArtefactsBeanList;
-    }
-
-    /**
-     * @param formTypeArtefactsBeanList the formTypeArtefactsBeanList to set
-     */
-    public void setFormTypeArtefactsBeanList(List<FormTypeArtefactBean> formTypeArtefactsBeanList) {
-        this.formTypeArtefactsBeanList = formTypeArtefactsBeanList;
-    }
-
-    /**
-     * @return the usageType
-     */
-    public String getUsageType() {
-        return usageType;
-    }
-
-    /**
-     * @param usageType the usageType to set
-     */
-    public void setUsageType(String usageType) {
-        this.usageType = usageType;
-    }
+    public void installRequested(String pluginId, String[] dependsOnIds);
     
 }

@@ -714,6 +714,7 @@ public class FormPluginEntryPanel extends javax.swing.JPanel implements EventCon
     private FormPluginsPanel container = null;
     private FormPlugin plugin = null;
     private int state = -1;
+    private FormActionCallback callback=null;
 
     public static final int STATE_INSTALLED = 10;
     public static final int STATE_INSTALLING = 11;
@@ -723,10 +724,11 @@ public class FormPluginEntryPanel extends javax.swing.JPanel implements EventCon
     /**
      * Creates new form HitPanel
      */
-    public FormPluginEntryPanel(FormPlugin plugin, FormPluginsPanel container) {
+    public FormPluginEntryPanel(FormPlugin plugin, FormPluginsPanel container, FormActionCallback callback) {
         initComponents();
         this.container = container;
         this.plugin = plugin;
+        this.callback=callback;
 
         this.setEntry(plugin);
 
@@ -757,6 +759,10 @@ public class FormPluginEntryPanel extends javax.swing.JPanel implements EventCon
         }
 
     }
+    
+    public FormPlugin getEntry() {
+        return this.plugin;
+    }
 
 //    public AddressBean getAdress() {
 //        return this.a;
@@ -765,6 +771,13 @@ public class FormPluginEntryPanel extends javax.swing.JPanel implements EventCon
         this.lblName.setText(plugin.getName());
         this.lblDescription.setText(plugin.getDescription());
         this.lblVersion.setText(plugin.getVersion());
+        if(plugin.getType().equalsIgnoreCase(FormPlugin.TYPE_LIBRARY)) {
+            this.lblType.setText("Bibliothek");
+        } else if(plugin.getType().equalsIgnoreCase(FormPlugin.TYPE_PLUGIN)) {
+            this.lblType.setText("Plugin");
+        } else {
+            this.lblType.setText("");
+        }
     }
 
     /**
@@ -784,6 +797,7 @@ public class FormPluginEntryPanel extends javax.swing.JPanel implements EventCon
         lblDescription = new javax.swing.JLabel();
         lblVersion = new javax.swing.JLabel();
         lblState = new javax.swing.JLabel();
+        lblType = new javax.swing.JLabel();
 
         mnuDownload.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/fileimport.png"))); // NOI18N
         mnuDownload.setText("installieren");
@@ -836,6 +850,8 @@ public class FormPluginEntryPanel extends javax.swing.JPanel implements EventCon
 
         lblState.setText("Status");
 
+        lblType.setText("jLabel1");
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -846,14 +862,15 @@ public class FormPluginEntryPanel extends javax.swing.JPanel implements EventCon
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(lblName)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(lblVersion))
-                            .addComponent(lblState))
+                        .addComponent(lblName)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(lblVersion)
                         .addGap(0, 395, Short.MAX_VALUE))
-                    .addComponent(lblDescription, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(lblDescription, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(lblState)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(lblType)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -869,7 +886,9 @@ public class FormPluginEntryPanel extends javax.swing.JPanel implements EventCon
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(lblDescription)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(lblState)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(lblState)
+                    .addComponent(lblType))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -919,9 +938,16 @@ public class FormPluginEntryPanel extends javax.swing.JPanel implements EventCon
 //        this.cmdToAddressActionPerformed(null);
     }//GEN-LAST:event_lblNameMouseClicked
 
+    public void install() {
+        this.mnuDownloadActionPerformed(null);
+    }
+    
     private void mnuDownloadActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuDownloadActionPerformed
         try {
 
+            String[] depends=this.plugin.getDependsOn();
+            this.callback.installRequested(this.plugin.getId(), depends);
+            
             if (this.state == STATE_NOT_INSTALLED) {
                 this.setState(STATE_INSTALLING);
                 this.plugin.install();
@@ -942,6 +968,7 @@ public class FormPluginEntryPanel extends javax.swing.JPanel implements EventCon
     private javax.swing.JLabel lblDescription;
     private javax.swing.JLabel lblName;
     private javax.swing.JLabel lblState;
+    private javax.swing.JLabel lblType;
     private javax.swing.JLabel lblVersion;
     private javax.swing.JMenuItem mnuDownload;
     private javax.swing.JMenuItem mnuRemove;

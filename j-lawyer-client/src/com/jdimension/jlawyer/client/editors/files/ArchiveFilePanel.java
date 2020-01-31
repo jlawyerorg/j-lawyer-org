@@ -5156,17 +5156,17 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private void cmdAddFormActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdAddFormActionPerformed
         //tabPaneArchiveFile.addTab("allgemeine Daten", new javax.swing.ImageIcon(getClass().getResource("/icons/folder.png")), tabGeneralData);
         FormTypeBean ftb = (FormTypeBean) this.cmbFormType.getSelectedItem();
-        FormInstancePanel formInstance = new FormInstancePanel(this.tabPaneForms);
+        FormPlugin plugin = new FormPlugin();
+        plugin.setId(ftb.getId());
+        FormInstancePanel formInstance = new FormInstancePanel(this.tabPaneForms, plugin);
         Dimension maxDimension=this.pnlAddForms.getSize();
         maxDimension.setSize(maxDimension.getWidth()-100, maxDimension.getHeight()-60);
         formInstance.setMaximumSize(maxDimension);
         formInstance.setPreferredSize(maxDimension);
         formInstance.setDescription(this.txtFormDescription.getText());
-        FormPlugin plugin = new FormPlugin();
-        plugin.setId(ftb.getId());
+        
         try {
-            JPanel ui = plugin.getUi();
-            formInstance.setUI(ui);
+            formInstance.initialize();
             
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
             ArchiveFileFormsBean affb=new ArchiveFileFormsBean();

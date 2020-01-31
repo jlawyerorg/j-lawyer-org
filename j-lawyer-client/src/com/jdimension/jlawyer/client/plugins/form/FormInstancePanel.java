@@ -663,9 +663,13 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.plugins.form;
 
+import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileFormsBean;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import java.util.ArrayList;
+import java.util.Hashtable;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
@@ -681,17 +685,28 @@ public class FormInstancePanel extends javax.swing.JPanel {
     
     private ArchiveFileFormsBean form=null;
     private JTabbedPane container=null;
+    private FormPlugin plugin=null;
 
     /**
      * Creates new form FormInstancePanel
      */
-    public FormInstancePanel(JTabbedPane container) {
+    public FormInstancePanel(JTabbedPane container, FormPlugin plugin) {
         initComponents();
         this.container=container;
+        this.plugin=plugin;
     }
     
-    public void setUI(JPanel ui) {
-        this.scrollPlugin.setViewportView(ui);
+    public void initialize() throws Exception {
+        JPanel ui = new JPanel();
+        try {
+            ui=plugin.getUi();
+            this.scrollPlugin.setViewportView(ui);
+        } catch (Exception ex) {
+            log.error("Can not initialize plugin " + plugin.getId(), ex);
+            this.scrollPlugin.setViewportView(ui);
+            throw ex;
+        }
+        
     }
     
     public void setDescription(String description) {
@@ -723,6 +738,11 @@ public class FormInstancePanel extends javax.swing.JPanel {
 
         cmdShowPlaceHolders.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/help.png"))); // NOI18N
         cmdShowPlaceHolders.setToolTipText("Platzhalter anzeigen");
+        cmdShowPlaceHolders.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdShowPlaceHoldersActionPerformed(evt);
+            }
+        });
 
         scrollPlugin.setBorder(null);
 
@@ -745,25 +765,23 @@ public class FormInstancePanel extends javax.swing.JPanel {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(scrollPlugin)
                     .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(cmdRemoveForm)
-                            .addComponent(cmdShowPlaceHolders))
+                        .addComponent(cmdRemoveForm)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 672, Short.MAX_VALUE)))
+                        .addComponent(cmdShowPlaceHolders)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 612, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(cmdRemoveForm)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(cmdShowPlaceHolders))
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 66, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(cmdRemoveForm, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(cmdShowPlaceHolders, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(scrollPlugin, javax.swing.GroupLayout.DEFAULT_SIZE, 336, Short.MAX_VALUE)
+                .addComponent(scrollPlugin, javax.swing.GroupLayout.DEFAULT_SIZE, 372, Short.MAX_VALUE)
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -780,6 +798,15 @@ public class FormInstancePanel extends javax.swing.JPanel {
         
         
     }//GEN-LAST:event_cmdRemoveFormActionPerformed
+
+    private void cmdShowPlaceHoldersActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdShowPlaceHoldersActionPerformed
+        Hashtable placeHolders=this.plugin.getPlaceHolderValues();
+        FormPluginPlaceholderDialog dlg=new FormPluginPlaceholderDialog(EditorsRegistry.getInstance().getMainWindow(), true);
+        FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
+        dlg.setPlaceHolders(placeHolders);
+        dlg.setVisible(true);
+        
+    }//GEN-LAST:event_cmdShowPlaceHoldersActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

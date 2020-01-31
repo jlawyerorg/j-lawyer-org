@@ -673,6 +673,7 @@ import com.jdimension.jlawyer.persistence.FormTypeBean;
 import com.jdimension.jlawyer.services.FormsServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import groovy.lang.Binding;
+import groovy.swing.SwingBuilder;
 import groovy.util.GroovyScriptEngine;
 import java.io.File;
 import java.io.FileWriter;
@@ -681,6 +682,8 @@ import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
+import java.util.Hashtable;
+import java.util.List;
 import javax.swing.JPanel;
 import org.apache.log4j.Logger;
 
@@ -691,6 +694,10 @@ import org.apache.log4j.Logger;
 public class FormPlugin implements Comparable {
 
     private static final Logger log = Logger.getLogger(FormPlugin.class.getName());
+    
+    public static final String TYPE_PLUGIN="plugin";
+    public static final String TYPE_LIBRARY="library";
+    
 
     private String name = null;
     private String id = null;
@@ -699,26 +706,105 @@ public class FormPlugin implements Comparable {
     private String forVersion = null;
     private String description = null;
     private String placeHolder = null;
+    private String type=null;
+    private String[] dependsOn=new String[0];
     private ArrayList<String> files = new ArrayList<String>();
 
+    Class scriptClass=null;
+    Object scriptInstance=null;
+    private JPanel ui=null;
+    
     public FormPlugin() {
     }
 
+    public ArrayList<String> getPlaceHolders() {
+        try {
+
+            ArrayList<String> result=((FormPluginMethods)scriptInstance).getPlaceHolders(this.placeHolder);
+            
+            //Object result = scriptClass.getDeclaredMethod("getPlaceHolders", new Class[]{String.class}).invoke(scriptInstance, new Object[]{this.placeHolder});
+            
+            return result;
+//            System.out.println(result.toString());
+//            result = scriptClass.getDeclaredMethod("setResult", new Class[]{List.class}).invoke(scriptInstance, new Object[]{(List) result});
+//            System.out.println(result.toString());
+
+        } catch (Throwable t) {
+            t.printStackTrace();
+        }
+        return new ArrayList<String>();
+    }
+    
+    public Hashtable getPlaceHolderValues() {
+        try {
+
+            Hashtable result=((FormPluginMethods)scriptInstance).getPlaceHolderValues(this.placeHolder);
+            
+            return result;
+
+        } catch (Throwable t) {
+            t.printStackTrace();
+        }
+        return new Hashtable();
+    }
+    
     public JPanel getUi() throws Exception {
-        GroovyScriptEngine e = new GroovyScriptEngine(FormPluginUtil.getLocalDirectory() + File.separator);
-        Binding bind = new Binding();
-        bind.setVariable("callback", new GenericCalculationCallback());
-        e.run(getId() + "_ui.groovy", bind);
-        return (JPanel) bind.getVariable("SCRIPTPANEL");
+//        GroovyScriptEngine e = new GroovyScriptEngine(FormPluginUtil.getLocalDirectory() + File.separator);
+//        Binding bind = new Binding();
+//        bind.setVariable("callback", new GenericCalculationCallback());
+//        e.run(getId() + "_ui.groovy", bind);
+//        return (JPanel) bind.getVariable("SCRIPTPANEL");
+
+        if(ui!=null)
+            return ui;
+
+        try {
+
+            this.scriptClass = new GroovyScriptEngine(FormPluginUtil.getLocalDirectory() + File.separator).loadScriptByName(getId() + "_ui.groovy");
+            this.scriptInstance = scriptClass.newInstance();
+            Object result = scriptClass.getDeclaredMethod("getUi", new Class[]{}).invoke(scriptInstance, new Object[]{});
+            ArrayList list=new ArrayList();
+            list.add("schnuff");
+            list.add("bluff");
+            scriptClass.getDeclaredMethod("setResult", new Class[]{List.class}).invoke(scriptInstance, new Object[]{list});
+            
+            this.ui=(JPanel) result;
+            
+            return ui;
+//            System.out.println(result.toString());
+//            result = scriptClass.getDeclaredMethod("setResult", new Class[]{List.class}).invoke(scriptInstance, new Object[]{(List) result});
+//            System.out.println(result.toString());
+
+        } catch (Throwable t) {
+            t.printStackTrace();
+        }
+        return null;
     }
 
+//    }
     public JPanel getUi(ArchiveFileBean targetCase, float claimValue) throws Exception {
-        GroovyScriptEngine e = new GroovyScriptEngine(FormPluginUtil.getLocalDirectory() + File.separator);
-        Binding bind = new Binding();
-        bind.setVariable("callback", new GenericCalculationCallback(targetCase));
-        bind.setVariable("claimvalue", claimValue);
-        e.run(getId() + "_ui.groovy", bind);
-        return (JPanel) bind.getVariable("SCRIPTPANEL");
+//        GroovyScriptEngine e = new GroovyScriptEngine(FormPluginUtil.getLocalDirectory() + File.separator);
+//        Binding bind = new Binding();
+//        bind.setVariable("callback", new GenericCalculationCallback(targetCase));
+//        bind.setVariable("claimvalue", claimValue);
+//        e.run(getId() + "_ui.groovy", bind);
+//        return (JPanel) bind.getVariable("SCRIPTPANEL");
+
+        try {
+
+            Class scriptClass = new GroovyScriptEngine(FormPluginUtil.getLocalDirectory() + File.separator).loadScriptByName(getId() + "_ui.groovy");
+            Object scriptInstance = scriptClass.newInstance();
+            Object result = scriptClass.getDeclaredMethod("getUi", new Class[]{}).invoke(scriptInstance, new Object[]{});
+            return (JPanel) result;
+//            System.out.println(result.toString());
+//            result = scriptClass.getDeclaredMethod("setResult", new Class[]{List.class}).invoke(scriptInstance, new Object[]{(List) result});
+//            System.out.println(result.toString());
+
+        } catch (Throwable t) {
+            t.printStackTrace();
+        }
+        return null;
+
     }
 
     private FormTypeBean toFormTypeBean() {
@@ -727,6 +813,7 @@ public class FormPlugin implements Comparable {
         ftb.setPlaceHolder(this.placeHolder);
         ftb.setVersion(this.version);
         ftb.setName(this.name);
+        ftb.setUsageType(this.type);
         return ftb;
     }
 
@@ -736,13 +823,12 @@ public class FormPlugin implements Comparable {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             FormsServiceRemote forms = locator.lookupFormsServiceRemote();
 
-            
             FormTypeBean newFormType = forms.getFormType(this.id);
             newFormType.setName(this.name);
             newFormType.setPlaceHolder(this.placeHolder);
             newFormType.setVersion(this.version);
-            newFormType=forms.updateFormType(newFormType);
-            
+            newFormType = forms.updateFormType(newFormType);
+
             forms.removeFormTypeArtefacts(this.id);
 
             String localDir = FormPluginUtil.getLocalDirectory() + File.separator;
@@ -790,7 +876,7 @@ public class FormPlugin implements Comparable {
             throw new Exception("Plugin konnte nicht installiert werden: " + t.getMessage());
         }
     }
-    
+
     public void remove() throws Exception {
         try {
             ClientSettings settings = ClientSettings.getInstance();
@@ -798,8 +884,6 @@ public class FormPlugin implements Comparable {
             FormsServiceRemote forms = locator.lookupFormsServiceRemote();
 
             forms.removeFormType(this.id);
-
-            
 
         } catch (Throwable t) {
             log.error("Could not remove form plugin", t);
@@ -990,6 +1074,34 @@ public class FormPlugin implements Comparable {
      */
     public void setPlaceHolder(String placeHolder) {
         this.placeHolder = placeHolder;
+    }
+
+    /**
+     * @return the type
+     */
+    public String getType() {
+        return type;
+    }
+
+    /**
+     * @param type the type to set
+     */
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    /**
+     * @return the dependsOn
+     */
+    public String[] getDependsOn() {
+        return dependsOn;
+    }
+
+    /**
+     * @param dependsOn the dependsOn to set
+     */
+    public void setDependsOn(String[] dependsOn) {
+        this.dependsOn = dependsOn;
     }
 
 }

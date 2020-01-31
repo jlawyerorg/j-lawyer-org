@@ -668,6 +668,8 @@ import com.jdimension.jlawyer.persistence.ArchiveFileBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.ArchiveFileFormEntriesBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.ArchiveFileFormsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileFormsBeanFacadeLocal;
+import com.jdimension.jlawyer.persistence.ArchiveFileHistoryBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileHistoryBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.FormTypeArtefactBean;
 import com.jdimension.jlawyer.persistence.FormTypeArtefactBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.FormTypeBean;
@@ -677,8 +679,10 @@ import com.jdimension.jlawyer.server.utils.ServerStringUtils;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import javax.annotation.Resource;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.EJB;
+import javax.ejb.SessionContext;
 import javax.ejb.Stateless;
 import org.apache.log4j.Logger;
 import org.jboss.ejb3.annotation.SecurityDomain;
@@ -692,7 +696,8 @@ import org.jboss.ejb3.annotation.SecurityDomain;
 public class FormsService implements FormsServiceRemote, FormsServiceLocal {
     
     private static final Logger log=Logger.getLogger(FormsService.class.getName());
-    
+    @Resource
+    private SessionContext context;
     @EJB
     private ArchiveFileFormsBeanFacadeLocal caseFormsFacade;
     
@@ -707,6 +712,8 @@ public class FormsService implements FormsServiceRemote, FormsServiceLocal {
     
     @EJB
     private FormTypeArtefactBeanFacadeLocal formArtefactsFacade;
+    @EJB
+    private ArchiveFileHistoryBeanFacadeLocal archiveFileHistoryFacade;
 
     // Add business logic below. (Right-click in editor and choose
     // "Insert Code > Add Business Method")
@@ -812,6 +819,14 @@ public class FormsService implements FormsServiceRemote, FormsServiceLocal {
         form.setId(id);
         this.caseFormsFacade.create(form);
         
+        ArchiveFileHistoryBean newHistEntry = new ArchiveFileHistoryBean();
+        newHistEntry.setId(idGen.getID().toString());
+        newHistEntry.setArchiveFileKey(afb);
+        newHistEntry.setChangeDate(new Date());
+        newHistEntry.setChangeDescription("Falldaten hinzugefügt: " + form.getPlaceHolder());
+        newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
+        this.archiveFileHistoryFacade.create(newHistEntry);
+        
         return this.caseFormsFacade.find(id);
 
     }
@@ -849,6 +864,16 @@ public class FormsService implements FormsServiceRemote, FormsServiceLocal {
             throw new Exception("Falldatenblatt " + formId + " ist nicht vorhanden!");
         
         this.caseFormsFacade.remove(afb);
+        
+        StringGenerator idGen=new StringGenerator();
+        
+        ArchiveFileHistoryBean newHistEntry = new ArchiveFileHistoryBean();
+        newHistEntry.setId(idGen.getID().toString());
+        newHistEntry.setArchiveFileKey(afb.getArchiveFileKey());
+        newHistEntry.setChangeDate(new Date());
+        newHistEntry.setChangeDescription("Falldaten gelöscht: " + afb.getPlaceHolder());
+        newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
+        this.archiveFileHistoryFacade.create(newHistEntry);
     }
     
     

@@ -688,7 +688,7 @@ import org.xml.sax.InputSource;
  *
  * @author jens
  */
-public class FormsManagementDialog extends javax.swing.JDialog {
+public class FormsManagementDialog extends javax.swing.JDialog implements FormActionCallback {
     
     private static final Logger log=Logger.getLogger(FormsManagementDialog.class.getName());
 
@@ -757,8 +757,14 @@ public class FormsManagementDialog extends javax.swing.JDialog {
                     FormPlugin fp = new FormPlugin();
                     fp.setForVersion(n.getAttributes().getNamedItem("for").getNodeValue());
                     fp.setId(n.getAttributes().getNamedItem("id").getNodeValue());
+                    fp.setType(n.getAttributes().getNamedItem("type").getNodeValue());
                     fp.setVersion(n.getAttributes().getNamedItem("version").getNodeValue());
                     fp.setDescription(n.getAttributes().getNamedItem("description").getNodeValue());
+                    String depends="";
+                    if(n.getAttributes().getNamedItem("depends")!=null)
+                        depends=n.getAttributes().getNamedItem("depends").getNodeValue();
+                    String[] dependencies=depends.split(",");
+                    fp.setDependsOn(dependencies);
                     fp.setUrl(n.getAttributes().getNamedItem("url").getNodeValue());
                     fp.setName(n.getAttributes().getNamedItem("name").getNodeValue());
                     fp.setPlaceHolder(n.getAttributes().getNamedItem("placeholder").getNodeValue());
@@ -767,7 +773,7 @@ public class FormsManagementDialog extends javax.swing.JDialog {
                         fp.getFiles().add(f);
                     }
                     formPlugins.add(fp);
-                    FormPluginEntryPanel fpe=new FormPluginEntryPanel(fp, this.formPluginsPanel);
+                    FormPluginEntryPanel fpe=new FormPluginEntryPanel(fp, this.formPluginsPanel, this);
                     FormTypeBean onServer=this.findPlugin(serverFormPlugins, fp.getId());
                     if(onServer==null) {
                         fpe.setState(FormPluginEntryPanel.STATE_NOT_INSTALLED);
@@ -938,4 +944,17 @@ public class FormsManagementDialog extends javax.swing.JDialog {
     private com.jdimension.jlawyer.client.plugins.form.FormPluginsPanel formPluginsPanel;
     private javax.swing.JScrollPane jScrollPane2;
     // End of variables declaration//GEN-END:variables
+
+    @Override
+    public void installRequested(String pluginId, String[] dependsOnIds) {
+        for(String dep: dependsOnIds) {
+            for(int i=0;i<this.formPluginsPanel.getComponentCount();i++) {
+                FormPluginEntryPanel entry=(FormPluginEntryPanel)this.formPluginsPanel.getComponent(i);
+                FormPlugin p=entry.getEntry();
+                if(p.getId().equals(dep)) {
+                    entry.install();
+                }
+            }
+        }
+    }
 }

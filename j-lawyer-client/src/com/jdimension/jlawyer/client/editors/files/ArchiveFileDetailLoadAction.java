@@ -805,7 +805,9 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
             this.cmbFormTypes.removeAllItems();
             List<FormTypeBean> formTypes = locator.lookupFormsServiceRemote().getAllFormTypes();
             for (FormTypeBean ftb : formTypes) {
-                this.cmbFormTypes.addItem(ftb);
+                if (ftb.getUsageType().equals(FormTypeBean.TYPE_PLUGIN)) {
+                    this.cmbFormTypes.addItem(ftb);
+                }
             }
             if (this.cmbFormTypes.getItemCount() > 0) {
                 this.cmbFormTypes.setSelectedIndex(0);
@@ -815,18 +817,20 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
             SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
             for (ArchiveFileFormsBean affb : caseForms) {
                 this.setProgressString("Lade Akte: Falldatenblatt " + affb.getFormType().getName() + " (" + affb.getPlaceHolder() + ")");
-                FormInstancePanel formInstance = new FormInstancePanel(this.tabPaneForms);
+                FormPlugin plugin = new FormPlugin();
+                plugin.setId(affb.getFormType().getId());
+                plugin.setPlaceHolder(affb.getPlaceHolder());
+                FormInstancePanel formInstance = new FormInstancePanel(this.tabPaneForms, plugin);
                 Dimension maxDimension = this.formsPanel.getSize();
                 maxDimension.setSize(maxDimension.getWidth() - 100, maxDimension.getHeight() - 60);
                 formInstance.setMaximumSize(maxDimension);
                 formInstance.setPreferredSize(maxDimension);
                 formInstance.setDescription(affb.getDescription());
                 formInstance.setForm(affb);
-                FormPlugin plugin = new FormPlugin();
-                plugin.setId(affb.getFormType().getId());
+                
                 try {
-                    JPanel ui = plugin.getUi();
-                    formInstance.setUI(ui);
+                    
+                    formInstance.initialize();
 
                     tabPaneForms.addTab("<html><b>" + affb.getFormType().getName() + "</b><br/>" + df.format(affb.getCreationDate()) + "<br/>" + affb.getPlaceHolder() + "</html>", null, formInstance);
                 } catch (Throwable t) {

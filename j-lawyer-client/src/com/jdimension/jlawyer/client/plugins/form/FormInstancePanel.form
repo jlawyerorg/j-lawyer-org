@@ -21,12 +21,11 @@
               <Group type="103" groupAlignment="0" attributes="0">
                   <Component id="scrollPlugin" max="32767" attributes="0"/>
                   <Group type="102" attributes="0">
-                      <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="cmdRemoveForm" min="-2" max="-2" attributes="0"/>
-                          <Component id="cmdShowPlaceHolders" alignment="0" min="-2" max="-2" attributes="0"/>
-                      </Group>
+                      <Component id="cmdRemoveForm" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
-                      <Component id="jScrollPane1" pref="672" max="32767" attributes="0"/>
+                      <Component id="cmdShowPlaceHolders" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="jScrollPane1" pref="612" max="32767" attributes="0"/>
                   </Group>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
@@ -37,16 +36,13 @@
       <Group type="103" groupAlignment="0" attributes="0">
           <Group type="102" alignment="0" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
-              <Group type="103" groupAlignment="0" attributes="0">
-                  <Group type="102" attributes="0">
-                      <Component id="cmdRemoveForm" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace max="-2" attributes="0"/>
-                      <Component id="cmdShowPlaceHolders" min="-2" max="-2" attributes="0"/>
-                  </Group>
-                  <Component id="jScrollPane1" min="-2" pref="66" max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="0" max="-2" attributes="0">
+                  <Component id="cmdRemoveForm" max="32767" attributes="0"/>
+                  <Component id="cmdShowPlaceHolders" max="32767" attributes="0"/>
+                  <Component id="jScrollPane1" alignment="0" pref="0" max="32767" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
-              <Component id="scrollPlugin" pref="336" max="32767" attributes="0"/>
+              <Component id="scrollPlugin" pref="372" max="32767" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
           </Group>
       </Group>
@@ -71,6 +67,9 @@
         </Property>
         <Property name="toolTipText" type="java.lang.String" value="Platzhalter anzeigen"/>
       </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdShowPlaceHoldersActionPerformed"/>
+      </Events>
     </Component>
     <Container class="javax.swing.JScrollPane" name="scrollPlugin">
       <Properties>
