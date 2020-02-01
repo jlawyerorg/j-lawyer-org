@@ -666,10 +666,12 @@ package com.jdimension.jlawyer.client.plugins.form;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
+import com.jdimension.jlawyer.persistence.ArchiveFileFormEntriesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileFormsBean;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.util.ArrayList;
 import java.util.Hashtable;
+import java.util.List;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
@@ -705,6 +707,20 @@ public class FormInstancePanel extends javax.swing.JPanel {
             log.error("Can not initialize plugin " + plugin.getId(), ex);
             this.scrollPlugin.setViewportView(ui);
             throw ex;
+        }
+        
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
+            List<ArchiveFileFormEntriesBean> entries=locator.lookupFormsServiceRemote().getFormEntries(this.form.getId());
+            Hashtable placeHolderValues=new Hashtable();
+            for(ArchiveFileFormEntriesBean entry: entries) {
+                placeHolderValues.put(entry.getPlaceHolder(), entry.getStringValue());
+            }
+            this.plugin.setPlaceHolderValues(placeHolderValues);
+            
+        } catch (Throwable t) {
+            log.error("Error removing form", t);
+            JOptionPane.showMessageDialog(this, "Fehler beim Löschen des Falldatenblattes: " + t.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
         }
         
     }
@@ -808,7 +824,28 @@ public class FormInstancePanel extends javax.swing.JPanel {
         
     }//GEN-LAST:event_cmdShowPlaceHoldersActionPerformed
 
-
+    public void save() {
+        Hashtable placeHolders=this.plugin.getPlaceHolderValues();
+        ArrayList<ArchiveFileFormEntriesBean> formEntries=new ArrayList<ArchiveFileFormEntriesBean>();
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
+            for(Object key: placeHolders.keySet()) {
+                String keyString=key.toString();
+                String value=placeHolders.get(key).toString();
+                ArchiveFileFormEntriesBean formEntry=new ArchiveFileFormEntriesBean();
+                formEntry.setForm(form);
+                formEntry.setPlaceHolder(keyString);
+                formEntry.setStringValue(value);
+                formEntries.add(formEntry);
+            }
+            locator.lookupFormsServiceRemote().setFormEntries(this.form.getId(), formEntries);
+        } catch (Throwable t) {
+            log.error("Error saving form entries", t);
+            JOptionPane.showMessageDialog(this, "Fehler beim Speichern des Falldatenblattes: " + t.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+        }
+        
+    }
+    
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton cmdRemoveForm;
     private javax.swing.JButton cmdShowPlaceHolders;

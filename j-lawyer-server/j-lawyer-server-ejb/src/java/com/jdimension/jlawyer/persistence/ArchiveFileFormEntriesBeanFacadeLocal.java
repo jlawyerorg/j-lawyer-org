@@ -675,4 +675,16 @@ public interface ArchiveFileFormEntriesBeanFacadeLocal {
     
     List<ArchiveFileFormEntriesBean> findByArchiveFileKey(ArchiveFileBean archiveFileKey);
     
+    List<ArchiveFileFormEntriesBean> findByForm(ArchiveFileFormsBean form);
+    
+    List<ArchiveFileFormEntriesBean> findAll();
+    
+    void create(ArchiveFileFormEntriesBean form);
+    
+    ArchiveFileFormEntriesBean find(Object id);
+    
+    void edit(ArchiveFileFormEntriesBean form);
+
+    void remove(ArchiveFileFormEntriesBean form);
+    
 }

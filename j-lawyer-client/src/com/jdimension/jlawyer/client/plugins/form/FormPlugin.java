@@ -748,6 +748,17 @@ public class FormPlugin implements Comparable {
         return new Hashtable();
     }
     
+    public void setPlaceHolderValues(Hashtable placeHolders) {
+        try {
+
+            ((FormPluginMethods)scriptInstance).setPlaceHolderValues(this.placeHolder, placeHolders);
+            
+
+        } catch (Throwable t) {
+            t.printStackTrace();
+        }
+    }
+    
     public JPanel getUi() throws Exception {
 //        GroovyScriptEngine e = new GroovyScriptEngine(FormPluginUtil.getLocalDirectory() + File.separator);
 //        Binding bind = new Binding();
@@ -763,10 +774,10 @@ public class FormPlugin implements Comparable {
             this.scriptClass = new GroovyScriptEngine(FormPluginUtil.getLocalDirectory() + File.separator).loadScriptByName(getId() + "_ui.groovy");
             this.scriptInstance = scriptClass.newInstance();
             Object result = scriptClass.getDeclaredMethod("getUi", new Class[]{}).invoke(scriptInstance, new Object[]{});
-            ArrayList list=new ArrayList();
-            list.add("schnuff");
-            list.add("bluff");
-            scriptClass.getDeclaredMethod("setResult", new Class[]{List.class}).invoke(scriptInstance, new Object[]{list});
+//            ArrayList list=new ArrayList();
+//            list.add("schnuff");
+//            list.add("bluff");
+//            scriptClass.getDeclaredMethod("setResult", new Class[]{List.class}).invoke(scriptInstance, new Object[]{list});
             
             this.ui=(JPanel) result;
             

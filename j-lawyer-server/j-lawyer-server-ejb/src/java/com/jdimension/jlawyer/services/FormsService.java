@@ -665,6 +665,7 @@ package com.jdimension.jlawyer.services;
 
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBeanFacadeLocal;
+import com.jdimension.jlawyer.persistence.ArchiveFileFormEntriesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileFormEntriesBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.ArchiveFileFormsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileFormsBeanFacadeLocal;
@@ -791,6 +792,8 @@ public class FormsService implements FormsServiceRemote, FormsServiceLocal {
             this.formArtefactsFacade.remove(arte);
         }
     }
+    
+    
 
     @Override
     public ArchiveFileFormsBean addForm(String caseId, ArchiveFileFormsBean form) throws Exception {
@@ -874,6 +877,39 @@ public class FormsService implements FormsServiceRemote, FormsServiceLocal {
         newHistEntry.setChangeDescription("Falldaten gelöscht: " + afb.getPlaceHolder());
         newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
         this.archiveFileHistoryFacade.create(newHistEntry);
+    }
+
+    @Override
+    public void setFormEntries(String formId, List<ArchiveFileFormEntriesBean> formEntries) throws Exception {
+        
+        ArchiveFileFormsBean afb=this.caseFormsFacade.find(formId);
+        if(afb==null)
+            throw new Exception("Falldatenblatt " + formId + " ist nicht vorhanden!");
+        
+        List<ArchiveFileFormEntriesBean> existingEntries=this.caseFormEntriesFacade.findByForm(afb);
+        for(ArchiveFileFormEntriesBean existing: existingEntries) {
+            this.caseFormEntriesFacade.remove(existing);
+        }
+        
+        StringGenerator idGen=new StringGenerator();
+        for(ArchiveFileFormEntriesBean newEntry: formEntries) {
+            newEntry.setForm(afb);
+            newEntry.setArchiveFileKey(afb.getArchiveFileKey());
+            newEntry.setId(idGen.getID().toString());
+            newEntry.setEntryKey(newEntry.getPlaceHolder());
+            this.caseFormEntriesFacade.create(newEntry);
+        }
+        
+    }
+
+    @Override
+    public List<ArchiveFileFormEntriesBean> getFormEntries(String formId) throws Exception {
+        ArchiveFileFormsBean afb=this.caseFormsFacade.find(formId);
+        if(afb==null)
+            throw new Exception("Falldatenblatt " + formId + " ist nicht vorhanden!");
+        
+        List<ArchiveFileFormEntriesBean> existingEntries=this.caseFormEntriesFacade.findByForm(afb);
+        return existingEntries;
     }
     
     

@@ -663,6 +663,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.services;
 
+import com.jdimension.jlawyer.persistence.ArchiveFileFormEntriesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileFormsBean;
 import com.jdimension.jlawyer.persistence.FormTypeArtefactBean;
 import com.jdimension.jlawyer.persistence.FormTypeBean;
@@ -687,5 +688,9 @@ public interface FormsServiceLocal {
     void removeFormType(String formTypeId) throws Exception;
 
     void removeForm(String formId) throws Exception;
+
+    void setFormEntries(String formId, List<ArchiveFileFormEntriesBean> formEntries) throws Exception;
+
+    List<ArchiveFileFormEntriesBean> getFormEntries(String formId) throws Exception;
     
 }

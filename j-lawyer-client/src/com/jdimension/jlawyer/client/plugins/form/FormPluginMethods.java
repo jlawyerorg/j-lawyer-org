@@ -677,4 +677,6 @@ public interface FormPluginMethods {
     
     public Hashtable getPlaceHolderValues(String prefix);
     
+    public void setPlaceHolderValues(String prefix, Hashtable placeHolderValues);
+    
 }

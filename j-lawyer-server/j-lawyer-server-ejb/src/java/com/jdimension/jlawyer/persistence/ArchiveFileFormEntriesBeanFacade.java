@@ -689,6 +689,13 @@ public class ArchiveFileFormEntriesBeanFacade extends AbstractFacade<ArchiveFile
         List<ArchiveFileFormEntriesBean> list = getEntityManager().createQuery("from ArchiveFileFormEntriesBean where archiveFileKey = ?1").setParameter(1, archiveFileKey).getResultList();
         return list;
     }
+    
+    @Override
+    public List<ArchiveFileFormEntriesBean> findByForm(ArchiveFileFormsBean form) {
+        
+        List<ArchiveFileFormEntriesBean> list = getEntityManager().createQuery("from ArchiveFileFormEntriesBean where form = ?1").setParameter(1, form).getResultList();
+        return list;
+    }
 
     // Add business logic below. (Right-click in editor and choose
     // "Insert Code > Add Business Method")

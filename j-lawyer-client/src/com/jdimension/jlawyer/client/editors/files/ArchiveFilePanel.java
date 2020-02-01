@@ -5158,6 +5158,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         FormTypeBean ftb = (FormTypeBean) this.cmbFormType.getSelectedItem();
         FormPlugin plugin = new FormPlugin();
         plugin.setId(ftb.getId());
+        plugin.setPlaceHolder(this.txtFormPrefix.getText());
         FormInstancePanel formInstance = new FormInstancePanel(this.tabPaneForms, plugin);
         Dimension maxDimension=this.pnlAddForms.getSize();
         maxDimension.setSize(maxDimension.getWidth()-100, maxDimension.getHeight()-60);
@@ -5166,15 +5167,16 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         formInstance.setDescription(this.txtFormDescription.getText());
         
         try {
-            formInstance.initialize();
             
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
             ArchiveFileFormsBean affb=new ArchiveFileFormsBean();
             affb.setFormType(ftb);
+            affb.setArchiveFileKey(this.dto);
             affb.setDescription(this.txtFormDescription.getText());
             affb.setPlaceHolder(this.txtFormPrefix.getText());
             affb=locator.lookupFormsServiceRemote().addForm(this.dto.getId(), affb);
             formInstance.setForm(affb);
+            formInstance.initialize();
             SimpleDateFormat df= new SimpleDateFormat("dd.MM.yyyy");
             
             tabPaneForms.addTab("<html><b>" + ftb.getName() + "</b><br/>" + df.format(affb.getCreationDate()) + "<br/>" + affb.getPlaceHolder() + "</html>", null, formInstance);
@@ -5663,6 +5665,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         // plus setting this.dto to null
         if (this.dto == null) {
             return false;
+        }
+        
+        for(int f=1;f<this.tabPaneForms.getComponentCount();f++) {
+            FormInstancePanel fip=(FormInstancePanel) this.tabPaneForms.getComponentAt(f);
+            fip.save();
         }
 
         // todo: check all data here for changes
