@@ -661,25 +661,679 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package org.jlawyer.io.rest.v1;
+package org.jlawyer.io.rest.v1.pojo;
 
-import javax.ejb.Local;
-import javax.ws.rs.core.Response;
-import org.jlawyer.io.rest.v1.pojo.RestfulContactV1;
+import com.jdimension.jlawyer.persistence.AddressBean;
+import java.util.Date;
 
 /**
  *
  * @author jens
  */
-@Local
-public interface ContactsEndpointLocalV1 {
+public class RestfulContactV1 {
+    
+    private String id=null;
+    private String firstName=null;
+    private String name=null;
+    private String company=null;
+    private String department=null;
+    private short legalProtection=0;
+    private String insuranceNumber=null;
+    private String insuranceName=null;
+    
+    private short trafficLegalProtection=0;
+    private String trafficInsuranceNumber=null;
+    private String trafficInsuranceName=null;
+    
+    private String motorInsuranceNumber=null;
+    private String motorInsuranceName=null;
+    
+    private String title=null;
+    private String salutation=null;
+    private String complimentaryClose=null;
+    
+    private String street=null;
+    private String country=null;
+    private String zipCode=null;
+    private String city=null;
+    private String phone=null;
+    private String mobile=null;
+    private String fax=null;
+    private String bankName=null;
+    private String bankCode=null;
+    private String bankAccount=null;
+    private String email=null;
+    private String website=null;
+    private String creator=null;
+    private String lastModifier=null;
+    private Date creationDate=null;
+    private Date modificationDate=null;
+    private String birthDate=null;
+    private String custom1=null;
+    private String custom2=null;
+    private String custom3=null;
+    private String beaSafeId=null;
+    private String encryptionPwd=null;
+    
 
-    Response getContact(String id);
+    public RestfulContactV1() {
+    }
+    
+    public AddressBean toAddressBean(AddressBean ad) {
+        ad.setBankAccount(this.getBankAccount());
+        ad.setBankCode(this.getBankCode());
+        ad.setBankName(this.getBankName());
+        ad.setBeaSafeId(this.getBeaSafeId());
+        ad.setBirthDate(this.getBirthDate());
+        ad.setCity(this.getCity());
+        ad.setCompany(this.getCompany());
+        ad.setComplimentaryClose(this.getComplimentaryClose());
+        ad.setCountry(this.getCountry());
+        ad.setCreator(this.getCreator());
+        ad.setCustom1(this.getCustom1());
+        ad.setCustom2(this.getCustom2());
+        ad.setCustom3(this.getCustom3());
+        ad.setDepartment(this.getDepartment());
+        ad.setEmail(this.getEmail());
+        ad.setEncryptionPwd(this.getEncryptionPwd());
+        ad.setFax(this.getFax());
+        ad.setFirstName(this.getFirstName());
+        ad.setId(this.getId());
+        ad.setInsuranceName(this.getInsuranceName());
+        ad.setInsuranceNumber(this.getInsuranceNumber());
+        ad.setLastModifier(this.getLastModifier());
+        ad.setLegalProtection(this.getLegalProtection());
+        ad.setMobile(this.getMobile());
+        ad.setModificationDate(this.getModificationDate());
+        ad.setMotorInsuranceName(this.getMotorInsuranceName());
+        ad.setMotorInsuranceNumber(this.getMotorInsuranceNumber());
+        ad.setName(this.getName());
+        ad.setPhone(this.getPhone());
+        ad.setSalutation(this.getSalutation());
+        ad.setStreet(this.getStreet());
+        ad.setTitle(this.getTitle());
+        ad.setTrafficInsuranceName(this.getTrafficInsuranceName());
+        ad.setTrafficInsuranceNumber(this.getTrafficInsuranceNumber());
+        ad.setTrafficLegalProtection(this.getTrafficLegalProtection());
+        ad.setWebsite(this.getWebsite());
+        ad.setZipCode(this.getZipCode());
+        return ad;
+    }
+    
+    public static RestfulContactV1 fromAddressBean(AddressBean a) {
+        RestfulContactV1 ad=new RestfulContactV1();
+        ad.setBankAccount(a.getBankAccount());
+        ad.setBankCode(a.getBankCode());
+        ad.setBankName(a.getBankName());
+        ad.setBeaSafeId(a.getBeaSafeId());
+        ad.setBirthDate(a.getBirthDate());
+        ad.setCity(a.getCity());
+        ad.setCompany(a.getCompany());
+        ad.setComplimentaryClose(a.getComplimentaryClose());
+        ad.setCountry(a.getCountry());
+        ad.setCreator(a.getCreator());
+        ad.setCustom1(a.getCustom1());
+        ad.setCustom2(a.getCustom2());
+        ad.setCustom3(a.getCustom3());
+        ad.setDepartment(a.getDepartment());
+        ad.setEmail(a.getEmail());
+        ad.setEncryptionPwd(a.getEncryptionPwd());
+        ad.setFax(a.getFax());
+        ad.setFirstName(a.getFirstName());
+        ad.setId(a.getId());
+        ad.setInsuranceName(a.getInsuranceName());
+        ad.setInsuranceNumber(a.getInsuranceNumber());
+        ad.setLastModifier(a.getLastModifier());
+        ad.setLegalProtection(a.getLegalProtection());
+        ad.setMobile(a.getMobile());
+        ad.setModificationDate(a.getModificationDate());
+        ad.setMotorInsuranceName(a.getMotorInsuranceName());
+        ad.setMotorInsuranceNumber(a.getMotorInsuranceNumber());
+        ad.setName(a.getName());
+        ad.setPhone(a.getPhone());
+        ad.setSalutation(a.getSalutation());
+        ad.setStreet(a.getStreet());
+        ad.setTitle(a.getTitle());
+        ad.setTrafficInsuranceName(a.getTrafficInsuranceName());
+        ad.setTrafficInsuranceNumber(a.getTrafficInsuranceNumber());
+        ad.setTrafficLegalProtection(a.getTrafficLegalProtection());
+        ad.setWebsite(a.getWebsite());
+        ad.setZipCode(a.getZipCode());
+        return ad;
+    }
 
-    Response createContact(RestfulContactV1 contact);
+    /**
+     * @return the id
+     */
+    public String getId() {
+        return id;
+    }
 
-    Response listContacts();
+    /**
+     * @param id the id to set
+     */
+    public void setId(String id) {
+        this.id = id;
+    }
 
-    Response updateContact(RestfulContactV1 contact);
+    /**
+     * @return the firstName
+     */
+    public String getFirstName() {
+        return firstName;
+    }
+
+    /**
+     * @param firstName the firstName to set
+     */
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
+    }
+
+    /**
+     * @return the name
+     */
+    public String getName() {
+        return name;
+    }
+
+    /**
+     * @param name the name to set
+     */
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    /**
+     * @return the company
+     */
+    public String getCompany() {
+        return company;
+    }
+
+    /**
+     * @param company the company to set
+     */
+    public void setCompany(String company) {
+        this.company = company;
+    }
+
+    /**
+     * @return the department
+     */
+    public String getDepartment() {
+        return department;
+    }
+
+    /**
+     * @param department the department to set
+     */
+    public void setDepartment(String department) {
+        this.department = department;
+    }
+
+    /**
+     * @return the legalProtection
+     */
+    public short getLegalProtection() {
+        return legalProtection;
+    }
+
+    /**
+     * @param legalProtection the legalProtection to set
+     */
+    public void setLegalProtection(short legalProtection) {
+        this.legalProtection = legalProtection;
+    }
+
+    /**
+     * @return the insuranceNumber
+     */
+    public String getInsuranceNumber() {
+        return insuranceNumber;
+    }
+
+    /**
+     * @param insuranceNumber the insuranceNumber to set
+     */
+    public void setInsuranceNumber(String insuranceNumber) {
+        this.insuranceNumber = insuranceNumber;
+    }
+
+    /**
+     * @return the insuranceName
+     */
+    public String getInsuranceName() {
+        return insuranceName;
+    }
+
+    /**
+     * @param insuranceName the insuranceName to set
+     */
+    public void setInsuranceName(String insuranceName) {
+        this.insuranceName = insuranceName;
+    }
+
+    /**
+     * @return the trafficLegalProtection
+     */
+    public short getTrafficLegalProtection() {
+        return trafficLegalProtection;
+    }
+
+    /**
+     * @param trafficLegalProtection the trafficLegalProtection to set
+     */
+    public void setTrafficLegalProtection(short trafficLegalProtection) {
+        this.trafficLegalProtection = trafficLegalProtection;
+    }
+
+    /**
+     * @return the trafficInsuranceNumber
+     */
+    public String getTrafficInsuranceNumber() {
+        return trafficInsuranceNumber;
+    }
+
+    /**
+     * @param trafficInsuranceNumber the trafficInsuranceNumber to set
+     */
+    public void setTrafficInsuranceNumber(String trafficInsuranceNumber) {
+        this.trafficInsuranceNumber = trafficInsuranceNumber;
+    }
+
+    /**
+     * @return the trafficInsuranceName
+     */
+    public String getTrafficInsuranceName() {
+        return trafficInsuranceName;
+    }
+
+    /**
+     * @param trafficInsuranceName the trafficInsuranceName to set
+     */
+    public void setTrafficInsuranceName(String trafficInsuranceName) {
+        this.trafficInsuranceName = trafficInsuranceName;
+    }
+
+    /**
+     * @return the motorInsuranceNumber
+     */
+    public String getMotorInsuranceNumber() {
+        return motorInsuranceNumber;
+    }
+
+    /**
+     * @param motorInsuranceNumber the motorInsuranceNumber to set
+     */
+    public void setMotorInsuranceNumber(String motorInsuranceNumber) {
+        this.motorInsuranceNumber = motorInsuranceNumber;
+    }
+
+    /**
+     * @return the motorInsuranceName
+     */
+    public String getMotorInsuranceName() {
+        return motorInsuranceName;
+    }
+
+    /**
+     * @param motorInsuranceName the motorInsuranceName to set
+     */
+    public void setMotorInsuranceName(String motorInsuranceName) {
+        this.motorInsuranceName = motorInsuranceName;
+    }
+
+    /**
+     * @return the title
+     */
+    public String getTitle() {
+        return title;
+    }
+
+    /**
+     * @param title the title to set
+     */
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    /**
+     * @return the salutation
+     */
+    public String getSalutation() {
+        return salutation;
+    }
+
+    /**
+     * @param salutation the salutation to set
+     */
+    public void setSalutation(String salutation) {
+        this.salutation = salutation;
+    }
+
+    /**
+     * @return the complimentaryClose
+     */
+    public String getComplimentaryClose() {
+        return complimentaryClose;
+    }
+
+    /**
+     * @param complimentaryClose the complimentaryClose to set
+     */
+    public void setComplimentaryClose(String complimentaryClose) {
+        this.complimentaryClose = complimentaryClose;
+    }
+
+    /**
+     * @return the street
+     */
+    public String getStreet() {
+        return street;
+    }
+
+    /**
+     * @param street the street to set
+     */
+    public void setStreet(String street) {
+        this.street = street;
+    }
+
+    /**
+     * @return the country
+     */
+    public String getCountry() {
+        return country;
+    }
+
+    /**
+     * @param country the country to set
+     */
+    public void setCountry(String country) {
+        this.country = country;
+    }
+
+    /**
+     * @return the zipCode
+     */
+    public String getZipCode() {
+        return zipCode;
+    }
+
+    /**
+     * @param zipCode the zipCode to set
+     */
+    public void setZipCode(String zipCode) {
+        this.zipCode = zipCode;
+    }
+
+    /**
+     * @return the city
+     */
+    public String getCity() {
+        return city;
+    }
+
+    /**
+     * @param city the city to set
+     */
+    public void setCity(String city) {
+        this.city = city;
+    }
+
+    /**
+     * @return the phone
+     */
+    public String getPhone() {
+        return phone;
+    }
+
+    /**
+     * @param phone the phone to set
+     */
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+
+    /**
+     * @return the mobile
+     */
+    public String getMobile() {
+        return mobile;
+    }
+
+    /**
+     * @param mobile the mobile to set
+     */
+    public void setMobile(String mobile) {
+        this.mobile = mobile;
+    }
+
+    /**
+     * @return the fax
+     */
+    public String getFax() {
+        return fax;
+    }
+
+    /**
+     * @param fax the fax to set
+     */
+    public void setFax(String fax) {
+        this.fax = fax;
+    }
+
+    /**
+     * @return the bankName
+     */
+    public String getBankName() {
+        return bankName;
+    }
+
+    /**
+     * @param bankName the bankName to set
+     */
+    public void setBankName(String bankName) {
+        this.bankName = bankName;
+    }
+
+    /**
+     * @return the bankCode
+     */
+    public String getBankCode() {
+        return bankCode;
+    }
+
+    /**
+     * @param bankCode the bankCode to set
+     */
+    public void setBankCode(String bankCode) {
+        this.bankCode = bankCode;
+    }
+
+    /**
+     * @return the bankAccount
+     */
+    public String getBankAccount() {
+        return bankAccount;
+    }
+
+    /**
+     * @param bankAccount the bankAccount to set
+     */
+    public void setBankAccount(String bankAccount) {
+        this.bankAccount = bankAccount;
+    }
+
+    /**
+     * @return the email
+     */
+    public String getEmail() {
+        return email;
+    }
+
+    /**
+     * @param email the email to set
+     */
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    /**
+     * @return the website
+     */
+    public String getWebsite() {
+        return website;
+    }
+
+    /**
+     * @param website the website to set
+     */
+    public void setWebsite(String website) {
+        this.website = website;
+    }
+
+    /**
+     * @return the creator
+     */
+    public String getCreator() {
+        return creator;
+    }
+
+    /**
+     * @param creator the creator to set
+     */
+    public void setCreator(String creator) {
+        this.creator = creator;
+    }
+
+    /**
+     * @return the lastModifier
+     */
+    public String getLastModifier() {
+        return lastModifier;
+    }
+
+    /**
+     * @param lastModifier the lastModifier to set
+     */
+    public void setLastModifier(String lastModifier) {
+        this.lastModifier = lastModifier;
+    }
+
+    /**
+     * @return the creationDate
+     */
+    public Date getCreationDate() {
+        return creationDate;
+    }
+
+    /**
+     * @param creationDate the creationDate to set
+     */
+    public void setCreationDate(Date creationDate) {
+        this.creationDate = creationDate;
+    }
+
+    /**
+     * @return the modificationDate
+     */
+    public Date getModificationDate() {
+        return modificationDate;
+    }
+
+    /**
+     * @param modificationDate the modificationDate to set
+     */
+    public void setModificationDate(Date modificationDate) {
+        this.modificationDate = modificationDate;
+    }
+
+    /**
+     * @return the birthDate
+     */
+    public String getBirthDate() {
+        return birthDate;
+    }
+
+    /**
+     * @param birthDate the birthDate to set
+     */
+    public void setBirthDate(String birthDate) {
+        this.birthDate = birthDate;
+    }
+
+    /**
+     * @return the custom1
+     */
+    public String getCustom1() {
+        return custom1;
+    }
+
+    /**
+     * @param custom1 the custom1 to set
+     */
+    public void setCustom1(String custom1) {
+        this.custom1 = custom1;
+    }
+
+    /**
+     * @return the custom2
+     */
+    public String getCustom2() {
+        return custom2;
+    }
+
+    /**
+     * @param custom2 the custom2 to set
+     */
+    public void setCustom2(String custom2) {
+        this.custom2 = custom2;
+    }
+
+    /**
+     * @return the custom3
+     */
+    public String getCustom3() {
+        return custom3;
+    }
+
+    /**
+     * @param custom3 the custom3 to set
+     */
+    public void setCustom3(String custom3) {
+        this.custom3 = custom3;
+    }
+
+    /**
+     * @return the beaSafeId
+     */
+    public String getBeaSafeId() {
+        return beaSafeId;
+    }
+
+    /**
+     * @param beaSafeId the beaSafeId to set
+     */
+    public void setBeaSafeId(String beaSafeId) {
+        this.beaSafeId = beaSafeId;
+    }
+
+    /**
+     * @return the encryptionPwd
+     */
+    public String getEncryptionPwd() {
+        return encryptionPwd;
+    }
+
+    /**
+     * @param encryptionPwd the encryptionPwd to set
+     */
+    public void setEncryptionPwd(String encryptionPwd) {
+        this.encryptionPwd = encryptionPwd;
+    }
+    
+    
     
 }

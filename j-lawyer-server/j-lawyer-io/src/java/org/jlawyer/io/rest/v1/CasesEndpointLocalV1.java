@@ -663,9 +663,9 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package org.jlawyer.io.rest.v1;
 
-import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import javax.ejb.Local;
 import javax.ws.rs.core.Response;
+import org.jlawyer.io.rest.v1.pojo.RestfulCaseV1;
 import org.jlawyer.io.rest.v1.pojo.RestfulDocumentContentV1;
 import org.jlawyer.io.rest.v1.pojo.RestfulPartyV1;
 
@@ -682,9 +682,9 @@ public interface CasesEndpointLocalV1 {
     
     public Response getCaseTags(String id);
 
-    public Response createCase(ArchiveFileBean afb);
+    public Response createCase(RestfulCaseV1 afb);
     
-    public Response updateCase(ArchiveFileBean afb);
+    public Response updateCase(RestfulCaseV1 afb);
 
     Response getCaseDocuments(String id);
 

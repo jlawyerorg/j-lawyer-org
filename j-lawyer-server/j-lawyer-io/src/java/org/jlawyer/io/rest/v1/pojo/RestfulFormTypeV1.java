@@ -661,25 +661,109 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package org.jlawyer.io.rest.v1;
+package org.jlawyer.io.rest.v1.pojo;
 
-import javax.ejb.Local;
-import javax.ws.rs.core.Response;
-import org.jlawyer.io.rest.v1.pojo.RestfulContactV1;
+import com.jdimension.jlawyer.persistence.FormTypeBean;
 
 /**
  *
  * @author jens
  */
-@Local
-public interface ContactsEndpointLocalV1 {
+public class RestfulFormTypeV1 {
+    
+    private String id;
+    
+    private String name;
+    
+    private String placeHolder;
+    
+    private String version;
+    
+    private String usageType;
 
-    Response getContact(String id);
+    public RestfulFormTypeV1() {
+    }
+    
+    public static RestfulFormTypeV1 fromFormTypeBean(FormTypeBean ftb) {
+        RestfulFormTypeV1 ft=new RestfulFormTypeV1();
+        ft.setId(ftb.getId());
+        ft.setName(ftb.getName());
+        ft.setPlaceHolder(ftb.getPlaceHolder());
+        ft.setUsageType(ftb.getUsageType());
+        ft.setVersion(ftb.getVersion());
+        return ft;
+    }
 
-    Response createContact(RestfulContactV1 contact);
+    /**
+     * @return the id
+     */
+    public String getId() {
+        return id;
+    }
 
-    Response listContacts();
+    /**
+     * @param id the id to set
+     */
+    public void setId(String id) {
+        this.id = id;
+    }
 
-    Response updateContact(RestfulContactV1 contact);
+    /**
+     * @return the name
+     */
+    public String getName() {
+        return name;
+    }
+
+    /**
+     * @param name the name to set
+     */
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    /**
+     * @return the placeHolder
+     */
+    public String getPlaceHolder() {
+        return placeHolder;
+    }
+
+    /**
+     * @param placeHolder the placeHolder to set
+     */
+    public void setPlaceHolder(String placeHolder) {
+        this.placeHolder = placeHolder;
+    }
+
+    /**
+     * @return the version
+     */
+    public String getVersion() {
+        return version;
+    }
+
+    /**
+     * @param version the version to set
+     */
+    public void setVersion(String version) {
+        this.version = version;
+    }
+
+    /**
+     * @return the usageType
+     */
+    public String getUsageType() {
+        return usageType;
+    }
+
+    /**
+     * @param usageType the usageType to set
+     */
+    public void setUsageType(String usageType) {
+        this.usageType = usageType;
+    }
+    
+    
     
 }

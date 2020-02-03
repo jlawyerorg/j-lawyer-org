@@ -686,6 +686,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import org.jboss.logging.Logger;
 import org.jlawyer.io.rest.v1.pojo.RestfulFormEntryV1;
+import org.jlawyer.io.rest.v1.pojo.RestfulFormTypeV1;
 import org.jlawyer.io.rest.v1.pojo.RestfulFormV1;
 
 /**
@@ -717,12 +718,12 @@ public class FormsEndpointV1 implements FormsEndpointV1Local {
             InitialContext ic = new InitialContext();
             FormsServiceLocal forms = (FormsServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/FormsService!com.jdimension.jlawyer.services.FormsServiceLocal");
             List<FormTypeBean> types = forms.getAllFormTypes();
+            List<RestfulFormTypeV1> result=new ArrayList<>();
             // got lazy load errors when not doing this, even with @XmlTransient annotations on the getters of these lists
             for (FormTypeBean ft : types) {
-                ft.setArchiveFileFormsBeanList(new ArrayList<>());
-                ft.setFormTypeArtefactsBeanList(new ArrayList<>());
+                result.add(RestfulFormTypeV1.fromFormTypeBean(ft));
             }
-            Response res = Response.ok(types).build();
+            Response res = Response.ok(result).build();
             return res;
         } catch (Exception ex) {
             log.error("Can not list form types", ex);

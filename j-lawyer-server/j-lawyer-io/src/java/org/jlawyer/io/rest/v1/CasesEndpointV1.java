@@ -695,10 +695,12 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import org.jboss.logging.Logger;
 import org.jlawyer.io.rest.v1.pojo.RestfulCaseOverviewV1;
+import org.jlawyer.io.rest.v1.pojo.RestfulCaseV1;
 import org.jlawyer.io.rest.v1.pojo.RestfulDocumentV1;
 import org.jlawyer.io.rest.v1.pojo.RestfulDocumentContentV1;
 import org.jlawyer.io.rest.v1.pojo.RestfulDueDateV1;
 import org.jlawyer.io.rest.v1.pojo.RestfulFormV1;
+import org.jlawyer.io.rest.v1.pojo.RestfulPartyTypeV1;
 import org.jlawyer.io.rest.v1.pojo.RestfulPartyV1;
 import org.jlawyer.io.rest.v1.pojo.RestfulTagV1;
 
@@ -777,7 +779,22 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
             InitialContext ic = new InitialContext();
             ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal");
             ArchiveFileBean afb = cases.getArchiveFile(id);
-            Response res = Response.ok(afb).build();
+            RestfulCaseV1 c=new RestfulCaseV1();
+            c.setArchived(afb.getArchived());
+            c.setAssistant(afb.getAssistant());
+            c.setClaimNumber(afb.getClaimNumber());
+            c.setClaimValue(afb.getClaimValue());
+            c.setCustom1(afb.getCustom1());
+            c.setCustom2(afb.getCustom2());
+            c.setCustom3(afb.getCustom3());
+            c.setFileNumber(afb.getFileNumber());
+            c.setId(afb.getId());
+            c.setLawyer(afb.getLawyer());
+            c.setName(afb.getName());
+            c.setNotice(afb.getNotice());
+            c.setReason(afb.getReason());
+            c.setSubjectField(afb.getSubjectField());
+            Response res = Response.ok(c).build();
             return res;
         } catch (Exception ex) {
             log.error("can not get case " + id, ex);
@@ -842,7 +859,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/create")
     @RolesAllowed({"createArchiveFileRole"})
-    public Response createCase(ArchiveFileBean caseData) {
+    public Response createCase(RestfulCaseV1 caseData) {
 
         // curl -u admin:a -X PUT -H "Content-Type: application/json" -d '{"name":"via REST", "reason":"wegen REST", "subjectField":"Familienrecht", "notice":"notiz REST","assistant":"user", "lawyer":"admin", "claimNumber":"RESTcn","claimValue":"3.44","custom1":"RESTc1","custom2":"RESTc2","custom3":"RESTc3"}' http://localhost:8080/j-lawyer-io/rest/cases/create
         try {
@@ -854,8 +871,10 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
 
             InitialContext ic = new InitialContext();
             ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal");
-
-            caseData = cases.createArchiveFile(caseData);
+            ArchiveFileBean c=new ArchiveFileBean();
+            c=caseData.toArchiveFileBean(c);
+            c = cases.createArchiveFile(c);
+            caseData=RestfulCaseV1.fromArchiveFileBean(c);
             Response res = Response.ok(caseData).build();
             return res;
         } catch (Exception ex) {
@@ -879,7 +898,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/update")
     @RolesAllowed({"writeArchiveFileRole"})
-    public Response updateCase(ArchiveFileBean caseData) {
+    public Response updateCase(RestfulCaseV1 caseData) {
 
         // curl -u admin:a -X PUT -H "Content-Type: application/json" -d '{"id":"2187c30c7f0001011c78dd99d50cbd20", "name":"via REST", "reason":"wegen REST", "subjectField":"Familienrecht", "notice":"notiz REST","assistant":"user", "lawyer":"admin", "claimNumber":"RESTcn","claimValue":"3.44","custom1":"RESTc1","custom2":"RESTc2","custom3":"RESTc3"}' http://localhost:8080/j-lawyer-io/rest/cases/update
         try {
@@ -914,9 +933,9 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
             currentCase.setSubjectField(caseData.getSubjectField());
 
             cases.updateArchiveFile(currentCase);
-            caseData = cases.getArchiveFile(caseData.getId());
+            currentCase = cases.getArchiveFile(caseData.getId());
 
-            Response res = Response.ok(caseData).build();
+            Response res = Response.ok(RestfulCaseV1.fromArchiveFileBean(currentCase)).build();
             return res;
         } catch (Exception ex) {
             log.error("can not create new case " + caseData.getName(), ex);
@@ -1468,8 +1487,13 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
             
             SystemManagementLocal system = (SystemManagementLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/SystemManagement!com.jdimension.jlawyer.services.SystemManagementLocal");
             Collection<PartyTypeBean> partyTypes = system.getPartyTypes();
+            Collection<RestfulPartyTypeV1> result=new ArrayList<>();
+            for(PartyTypeBean p: partyTypes) {
+                result.add(RestfulPartyTypeV1.fromPartyTypeBean(p));
+            }
             
-            Response res = Response.ok(partyTypes).build();
+            
+            Response res = Response.ok(result).build();
             return res;
         } catch (Exception ex) {
             log.error("can not list party types", ex);

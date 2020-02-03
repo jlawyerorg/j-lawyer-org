@@ -679,6 +679,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import org.jboss.logging.Logger;
 import org.jlawyer.io.rest.v1.pojo.RestfulContactOverviewV1;
+import org.jlawyer.io.rest.v1.pojo.RestfulContactV1;
 
 /**
  *
@@ -713,7 +714,7 @@ public class ContactsEndpointV1 implements ContactsEndpointLocalV1 {
             InitialContext ic = new InitialContext();
             AddressServiceLocal addresses = (AddressServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/AddressService!com.jdimension.jlawyer.services.AddressServiceLocal");
             AddressBean adr=addresses.getAddress(id);
-            Response res = Response.ok(adr).build();
+            Response res = Response.ok(RestfulContactV1.fromAddressBean(adr)).build();
             return res;
         } catch (Exception ex) {
             log.error("can not get address " + id, ex);
@@ -734,14 +735,14 @@ public class ContactsEndpointV1 implements ContactsEndpointLocalV1 {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/create")
     @RolesAllowed({"createAddressRole"})
-    public Response createContact(AddressBean contact) {
+    public Response createContact(RestfulContactV1 contact) {
         try {
 
             InitialContext ic = new InitialContext();
             AddressServiceLocal addresses = (AddressServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/AddressService!com.jdimension.jlawyer.services.AddressServiceLocal");
-            
-            contact = addresses.createAddress(contact);
-            Response res = Response.ok(contact).build();
+            AddressBean a=new AddressBean();
+            a = addresses.createAddress(contact.toAddressBean(a));
+            Response res = Response.ok(RestfulContactV1.fromAddressBean(a)).build();
             return res;
         } catch (Exception ex) {
             log.error("can not create new address " + contact.toString(), ex);
@@ -802,7 +803,7 @@ public class ContactsEndpointV1 implements ContactsEndpointLocalV1 {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/update")
     @RolesAllowed({"writeAddressRole"})
-    public Response updateContact(AddressBean contact) {
+    public Response updateContact(RestfulContactV1 contact) {
         try {
 
             if (contact.getId() == null || "".equals(contact.getId())) {
@@ -858,10 +859,10 @@ public class ContactsEndpointV1 implements ContactsEndpointLocalV1 {
             addresses.updateAddress(currentContact);
             AddressBean addressData = addresses.getAddress(currentContact.getId());
 
-            Response res = Response.ok(addressData).build();
+            Response res = Response.ok(RestfulContactV1.fromAddressBean(addressData)).build();
             return res;
         } catch (Exception ex) {
-            log.error("can not update address " + contact.toDisplayName(), ex);
+            log.error("can not update address " + contact.getId(), ex);
             Response res = Response.serverError().build();
             return res;
         }

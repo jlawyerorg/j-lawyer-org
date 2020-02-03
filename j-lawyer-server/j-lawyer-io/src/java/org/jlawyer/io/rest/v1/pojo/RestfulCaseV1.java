@@ -661,25 +661,268 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package org.jlawyer.io.rest.v1;
+package org.jlawyer.io.rest.v1.pojo;
 
-import javax.ejb.Local;
-import javax.ws.rs.core.Response;
-import org.jlawyer.io.rest.v1.pojo.RestfulContactV1;
+import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 
 /**
  *
  * @author jens
  */
-@Local
-public interface ContactsEndpointLocalV1 {
+public class RestfulCaseV1 {
 
-    Response getContact(String id);
+    private String id=null;
+    private String name=null;
+    private String fileNumber=null;
+    private String claimNumber=null;
+    private float claimValue=0f;
+    private short archived=0;
 
-    Response createContact(RestfulContactV1 contact);
+    private String notice=null;
+    private String lawyer=null;
+    private String assistant=null;
+    private String reason=null;
+    private String subjectField=null;
+    private String custom1=null;
 
-    Response listContacts();
+    private String custom2=null;
 
-    Response updateContact(RestfulContactV1 contact);
+    private String custom3=null;
+
+    public RestfulCaseV1() {
+    }
     
+    public ArchiveFileBean toArchiveFileBean(ArchiveFileBean afb) {
+        afb.setArchived(this.archived);
+        afb.setAssistant(this.assistant);
+        afb.setClaimNumber(this.claimNumber);
+        afb.setClaimValue(this.claimValue);
+        afb.setCustom1(custom1);
+        afb.setCustom2(custom2);
+        afb.setCustom3(custom3);
+        afb.setFileNumber(fileNumber);
+        afb.setId(id);
+        afb.setLawyer(lawyer);
+        afb.setName(name);
+        afb.setNotice(notice);
+        afb.setReason(reason);
+        afb.setSubjectField(subjectField);
+        return afb;
+    }
+    
+    public static RestfulCaseV1 fromArchiveFileBean(ArchiveFileBean afb) {
+        RestfulCaseV1 c=new RestfulCaseV1();
+            c.setArchived(afb.getArchived());
+            c.setAssistant(afb.getAssistant());
+            c.setClaimNumber(afb.getClaimNumber());
+            c.setClaimValue(afb.getClaimValue());
+            c.setCustom1(afb.getCustom1());
+            c.setCustom2(afb.getCustom2());
+            c.setCustom3(afb.getCustom3());
+            c.setFileNumber(afb.getFileNumber());
+            c.setId(afb.getId());
+            c.setLawyer(afb.getLawyer());
+            c.setName(afb.getName());
+            c.setNotice(afb.getNotice());
+            c.setReason(afb.getReason());
+            c.setSubjectField(afb.getSubjectField());
+            return c;
+    }
+
+    /**
+     * @return the id
+     */
+    public String getId() {
+        return id;
+    }
+
+    /**
+     * @param id the id to set
+     */
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    /**
+     * @return the name
+     */
+    public String getName() {
+        return name;
+    }
+
+    /**
+     * @param name the name to set
+     */
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    /**
+     * @return the fileNumber
+     */
+    public String getFileNumber() {
+        return fileNumber;
+    }
+
+    /**
+     * @param fileNumber the fileNumber to set
+     */
+    public void setFileNumber(String fileNumber) {
+        this.fileNumber = fileNumber;
+    }
+
+    /**
+     * @return the claimNumber
+     */
+    public String getClaimNumber() {
+        return claimNumber;
+    }
+
+    /**
+     * @param claimNumber the claimNumber to set
+     */
+    public void setClaimNumber(String claimNumber) {
+        this.claimNumber = claimNumber;
+    }
+
+    /**
+     * @return the claimValue
+     */
+    public float getClaimValue() {
+        return claimValue;
+    }
+
+    /**
+     * @param claimValue the claimValue to set
+     */
+    public void setClaimValue(float claimValue) {
+        this.claimValue = claimValue;
+    }
+
+    /**
+     * @return the archived
+     */
+    public short getArchived() {
+        return archived;
+    }
+
+    /**
+     * @param archived the archived to set
+     */
+    public void setArchived(short archived) {
+        this.archived = archived;
+    }
+
+    /**
+     * @return the notice
+     */
+    public String getNotice() {
+        return notice;
+    }
+
+    /**
+     * @param notice the notice to set
+     */
+    public void setNotice(String notice) {
+        this.notice = notice;
+    }
+
+    /**
+     * @return the lawyer
+     */
+    public String getLawyer() {
+        return lawyer;
+    }
+
+    /**
+     * @param lawyer the lawyer to set
+     */
+    public void setLawyer(String lawyer) {
+        this.lawyer = lawyer;
+    }
+
+    /**
+     * @return the assistant
+     */
+    public String getAssistant() {
+        return assistant;
+    }
+
+    /**
+     * @param assistant the assistant to set
+     */
+    public void setAssistant(String assistant) {
+        this.assistant = assistant;
+    }
+
+    /**
+     * @return the reason
+     */
+    public String getReason() {
+        return reason;
+    }
+
+    /**
+     * @param reason the reason to set
+     */
+    public void setReason(String reason) {
+        this.reason = reason;
+    }
+
+    /**
+     * @return the subjectField
+     */
+    public String getSubjectField() {
+        return subjectField;
+    }
+
+    /**
+     * @param subjectField the subjectField to set
+     */
+    public void setSubjectField(String subjectField) {
+        this.subjectField = subjectField;
+    }
+
+    /**
+     * @return the custom1
+     */
+    public String getCustom1() {
+        return custom1;
+    }
+
+    /**
+     * @param custom1 the custom1 to set
+     */
+    public void setCustom1(String custom1) {
+        this.custom1 = custom1;
+    }
+
+    /**
+     * @return the custom2
+     */
+    public String getCustom2() {
+        return custom2;
+    }
+
+    /**
+     * @param custom2 the custom2 to set
+     */
+    public void setCustom2(String custom2) {
+        this.custom2 = custom2;
+    }
+
+    /**
+     * @return the custom3
+     */
+    public String getCustom3() {
+        return custom3;
+    }
+
+    /**
+     * @param custom3 the custom3 to set
+     */
+    public void setCustom3(String custom3) {
+        this.custom3 = custom3;
+    }
+
 }
