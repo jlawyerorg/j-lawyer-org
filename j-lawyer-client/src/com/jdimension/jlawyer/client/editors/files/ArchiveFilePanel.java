@@ -3583,6 +3583,13 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     private void newDocumentActionPerformedImpl(StyledCalculationTable table) {
 
+        // save all forms to have the latest data available for document creation
+        for(int f=1;f<this.tabPaneForms.getComponentCount();f++) {
+            FormInstancePanel fip=(FormInstancePanel) this.tabPaneForms.getComponentAt(f);
+            fip.save();
+        }
+        
+        
         List<ArchiveFileAddressesBean> involved = new ArrayList<ArchiveFileAddressesBean>();
 
         if (table == null) {

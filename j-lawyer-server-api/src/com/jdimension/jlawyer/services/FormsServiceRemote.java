@@ -667,6 +667,8 @@ import com.jdimension.jlawyer.persistence.ArchiveFileFormEntriesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileFormsBean;
 import com.jdimension.jlawyer.persistence.FormTypeArtefactBean;
 import com.jdimension.jlawyer.persistence.FormTypeBean;
+import java.util.Collection;
+import java.util.Hashtable;
 import java.util.List;
 import javax.ejb.Remote;
 
@@ -702,5 +704,9 @@ public interface FormsServiceRemote {
     void setFormEntries(String formId, List<ArchiveFileFormEntriesBean> formEntries) throws Exception;
 
     List<ArchiveFileFormEntriesBean> getFormEntries(String formId) throws Exception;
+
+    Collection<String> getPlaceHoldersForCase(String caseId) throws Exception;
+
+    Hashtable<String,String> getPlaceHolderValuesForCase(String caseId) throws Exception;
 
 }

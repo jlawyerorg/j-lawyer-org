@@ -678,7 +678,9 @@ import com.jdimension.jlawyer.persistence.FormTypeBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.utils.StringGenerator;
 import com.jdimension.jlawyer.server.utils.ServerStringUtils;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
+import java.util.Hashtable;
 import java.util.List;
 import javax.annotation.Resource;
 import javax.annotation.security.RolesAllowed;
@@ -927,6 +929,59 @@ public class FormsService implements FormsServiceRemote, FormsServiceLocal {
         
         return afb;
         
+    }
+
+    
+    
+    @Override
+    @RolesAllowed({"loginRole"})
+    public Collection<String> getPlaceHoldersForCase(String caseId) throws Exception {
+        ArchiveFileBean caseBean=this.caseFacade.find(caseId);
+        if(caseBean==null)
+            throw new Exception("Akte " + caseId + " ist nicht vorhanden!");
+        
+        ArrayList<ArchiveFileFormsBean> list=new ArrayList<>();
+        List<ArchiveFileFormsBean> forms=this.caseFormsFacade.findByArchiveFileKey(caseBean);
+        ArrayList<String> placeHolders=new ArrayList<>();
+        for(ArchiveFileFormsBean f: forms) {
+            List<ArchiveFileFormEntriesBean> entries=this.getFormEntries(f.getId());
+            for(ArchiveFileFormEntriesBean e: entries) {
+                String ph=e.getPlaceHolder();
+                if(!(ph.startsWith("{{")))
+                    ph="{{"+ph;
+                if(!(ph.endsWith("}}")))
+                    ph=ph+"}}";
+                if(!placeHolders.contains(ph))
+                    placeHolders.add(ph);
+            }
+        }
+        return placeHolders;
+        
+    }
+
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public Hashtable<String,String> getPlaceHolderValuesForCase(String caseId) throws Exception {
+        ArchiveFileBean caseBean=this.caseFacade.find(caseId);
+        if(caseBean==null)
+            throw new Exception("Akte " + caseId + " ist nicht vorhanden!");
+        
+        ArrayList<ArchiveFileFormsBean> list=new ArrayList<>();
+        List<ArchiveFileFormsBean> forms=this.caseFormsFacade.findByArchiveFileKey(caseBean);
+        Hashtable<String,String> placeHolders=new Hashtable<String,String>();
+        for(ArchiveFileFormsBean f: forms) {
+            List<ArchiveFileFormEntriesBean> entries=this.getFormEntries(f.getId());
+            for(ArchiveFileFormEntriesBean e: entries) {
+                String ph=e.getPlaceHolder();
+                if(!(ph.startsWith("{{")))
+                    ph="{{"+ph;
+                if(!(ph.endsWith("}}")))
+                    ph=ph+"}}";
+                if(!placeHolders.containsKey(ph))
+                    placeHolders.put(ph,e.getStringValue());
+            }
+        }
+        return placeHolders;
     }
     
     

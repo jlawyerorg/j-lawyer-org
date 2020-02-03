@@ -730,7 +730,7 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
                 placeHolders.add(ptb.getPlaceHolder());
             }
             
-            for(String s: PlaceHolders.getAllPlaceHolders(placeHolders))
+            for(String s: PlaceHolders.getAllPlaceHolders(placeHolders, new ArrayList<String>()))
                 ((DefaultListModel)this.lstPlaceHolders.getModel()).addElement(s);
         } catch (Exception ex) {
             log.error("Error getting all party types", ex);

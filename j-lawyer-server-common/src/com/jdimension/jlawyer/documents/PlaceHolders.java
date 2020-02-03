@@ -664,6 +664,7 @@
 package com.jdimension.jlawyer.documents;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 
@@ -755,9 +756,11 @@ public class PlaceHolders {
         return genericPlaceHolder.replaceAll("###", typeSpecificPrefix);
     }
 
-    public static ArrayList<String> getAllPlaceHolders(List<String> allPartyTypesPlaceHolders) {
+    public static ArrayList<String> getAllPlaceHolders(List<String> allPartyTypesPlaceHolders, Collection<String> formsPlaceHolders) {
         
         ArrayList<String> ALLPLACEHOLDERS = new ArrayList<String>();
+        
+        ALLPLACEHOLDERS.addAll(formsPlaceHolders);
 
         ALLPLACEHOLDERS.add(PROFIL_FIRMA);
         ALLPLACEHOLDERS.add(PROFIL_STRASSE);

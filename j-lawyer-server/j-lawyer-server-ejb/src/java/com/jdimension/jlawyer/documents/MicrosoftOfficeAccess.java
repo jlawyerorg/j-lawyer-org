@@ -666,6 +666,7 @@ package com.jdimension.jlawyer.documents;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.List;
@@ -750,7 +751,7 @@ public class MicrosoftOfficeAccess {
         }
     }
 
-    public static java.util.List<String> getPlaceHolders(String file, List<String> allPartyTypesPlaceHolders) throws Exception {
+    public static java.util.List<String> getPlaceHolders(String file, List<String> allPartyTypesPlaceHolders, Collection<String> formsPlaceHolders) throws Exception {
 
         if (file.toLowerCase().endsWith(".docx")) {
 
@@ -758,7 +759,7 @@ public class MicrosoftOfficeAccess {
             ArrayList<String> resultList = new ArrayList<String>();
             outputDocx = new XWPFDocument(new FileInputStream(file));
 
-            for (String r : PlaceHolders.getAllPlaceHolders(allPartyTypesPlaceHolders)) {
+            for (String r : PlaceHolders.getAllPlaceHolders(allPartyTypesPlaceHolders, formsPlaceHolders)) {
                 String key = r;
                 for (XWPFHeader header : outputDocx.getHeaderList()) {
                     findInBodyElements(key, header.getBodyElements(), resultList);
@@ -821,8 +822,8 @@ public class MicrosoftOfficeAccess {
         }
     }
 
-    private static void findPlaceHolders(List<String> allPartyTypesPlaceHolders, String content, java.util.List<String> results) {
-        for (String r : PlaceHolders.getAllPlaceHolders(allPartyTypesPlaceHolders)) {
+    private static void findPlaceHolders(List<String> allPartyTypesPlaceHolders, Collection<String> formsPlaceHolders, String content, java.util.List<String> results) {
+        for (String r : PlaceHolders.getAllPlaceHolders(allPartyTypesPlaceHolders, formsPlaceHolders)) {
             if (content.indexOf(r) > -1) {
                 if (!results.contains(r)) {
                     results.add(r);

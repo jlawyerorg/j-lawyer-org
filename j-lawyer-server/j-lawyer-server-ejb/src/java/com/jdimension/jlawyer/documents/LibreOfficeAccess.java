@@ -665,6 +665,7 @@ package com.jdimension.jlawyer.documents;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.List;
@@ -1032,14 +1033,14 @@ public class LibreOfficeAccess {
         return newFont;
     }
 
-    public static java.util.List<String> getPlaceHolders(String file, List<String> allPartyTypesPlaceHolders) throws Exception {
+    public static java.util.List<String> getPlaceHolders(String file, List<String> allPartyTypesPlaceHolders, Collection<String> formsPlaceHolders) throws Exception {
 
         if (file.toLowerCase().endsWith(".odt")) {
             TextDocument outputOdt;
             ArrayList<String> resultList = new ArrayList<String>();
             outputOdt = TextDocument.loadDocument(file);
 
-            for (String r : PlaceHolders.getAllPlaceHolders(allPartyTypesPlaceHolders)) {
+            for (String r : PlaceHolders.getAllPlaceHolders(allPartyTypesPlaceHolders, formsPlaceHolders)) {
                 String key = r;
                 String regExKey = "\\{\\{" + key.substring(2, key.length() - 2) + "\\}\\}";
 
@@ -1080,7 +1081,7 @@ public class LibreOfficeAccess {
             ArrayList<String> resultList = new ArrayList<String>();
 
             outputOds = SpreadsheetDocument.loadDocument(file);
-            for (String r : PlaceHolders.getAllPlaceHolders(allPartyTypesPlaceHolders)) {
+            for (String r : PlaceHolders.getAllPlaceHolders(allPartyTypesPlaceHolders, formsPlaceHolders)) {
                 String key = r;
                 String regExKey = "\\{\\{" + key.substring(2, key.length() - 2) + "\\}\\}";
 
@@ -1097,7 +1098,7 @@ public class LibreOfficeAccess {
         } else if (file.toLowerCase().endsWith(".docx")) {
 
             
-            return new ArrayList(MicrosoftOfficeAccess.getPlaceHolders(file, allPartyTypesPlaceHolders));
+            return new ArrayList(MicrosoftOfficeAccess.getPlaceHolders(file, allPartyTypesPlaceHolders, formsPlaceHolders));
 
         }
 
@@ -1105,8 +1106,8 @@ public class LibreOfficeAccess {
 
     }
 
-    private static void findPlaceHolders(List<String> allPartyTypesPlaceHolders, String content, java.util.List<String> results) {
-        for (String r : PlaceHolders.getAllPlaceHolders(allPartyTypesPlaceHolders)) {
+    private static void findPlaceHolders(List<String> allPartyTypesPlaceHolders, Collection<String> formsPlaceHolders, String content, java.util.List<String> results) {
+        for (String r : PlaceHolders.getAllPlaceHolders(allPartyTypesPlaceHolders, formsPlaceHolders)) {
             if (content.indexOf(r) > -1) {
                 if (!results.contains(r)) {
                     results.add(r);
@@ -1138,7 +1139,7 @@ public class LibreOfficeAccess {
         try {
 
             outputOds = SpreadsheetDocument.loadDocument("/home/jens/temp/j-lawyer.org/j-lawyer.ods");
-            for (String r : PlaceHolders.getAllPlaceHolders(null)) {
+            for (String r : PlaceHolders.getAllPlaceHolders(null, null)) {
                 String key = r;
                 String regExKey = "\\{\\{" + key.substring(2, key.length() - 2) + "\\}\\}";
 

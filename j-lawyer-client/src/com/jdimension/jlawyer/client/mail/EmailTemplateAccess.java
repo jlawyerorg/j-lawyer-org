@@ -679,7 +679,7 @@ public class EmailTemplateAccess {
         ArrayList<String> result=new ArrayList<String>();
         if(templateText==null)
             templateText="";
-        for (String r : PlaceHolders.getAllPlaceHolders(allPartyTypesPlaceHolders)) {
+        for (String r : PlaceHolders.getAllPlaceHolders(allPartyTypesPlaceHolders, new ArrayList<String>())) {
             String key = r;
             if(templateText.indexOf(r)>-1)
                 result.add(r);

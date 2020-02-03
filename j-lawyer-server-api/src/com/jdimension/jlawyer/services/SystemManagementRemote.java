@@ -777,7 +777,7 @@ public interface SystemManagementRemote {
 
     boolean addFromMasterTemplate(String fileName, String basedOnFileName, GenericNode folder) throws Exception;
 
-    List<String> getPlaceHoldersForTemplate(GenericNode folder, String templateName) throws Exception;
+    List<String> getPlaceHoldersForTemplate(GenericNode folder, String templateName, Collection<String> formsPlaceHolders) throws Exception;
 
     List<GenericNode> searchTemplateFolders(String query) throws Exception;
 

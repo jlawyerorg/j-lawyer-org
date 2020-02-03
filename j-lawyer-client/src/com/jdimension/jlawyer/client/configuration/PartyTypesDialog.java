@@ -1121,7 +1121,7 @@ public class PartyTypesDialog extends javax.swing.JDialog {
             PartyTypeBean ptb = (PartyTypeBean) this.tblPartyTypes.getValueAt(row, 0);
             ArrayList<String> phList=new ArrayList<String>();
             phList.add(ptb.getPlaceHolder());
-            ArrayList<String> placeHolders=PlaceHolderUtils.getAllPlaceHolders(phList);
+            ArrayList<String> placeHolders=PlaceHolderUtils.getAllPlaceHolders(phList, new ArrayList<String>());
             for(String ph: placeHolders) {
                 this.taPlaceHolders.append(ph);
                 this.taPlaceHolders.append(System.lineSeparator());

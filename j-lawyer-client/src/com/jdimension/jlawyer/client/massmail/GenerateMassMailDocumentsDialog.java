@@ -964,7 +964,7 @@ public class GenerateMassMailDocumentsDialog extends javax.swing.JDialog {
                     List<String> placeHolders = null;
                     Collection<PartyTypeBean> allPartyTypes=null;
                     try {
-                        placeHolders = locator.lookupSystemManagementRemote().getPlaceHoldersForTemplate(gn, lstTemplates.getSelectedValue().toString());
+                        placeHolders = locator.lookupSystemManagementRemote().getPlaceHoldersForTemplate(gn, lstTemplates.getSelectedValue().toString(), new ArrayList<String>());
                         allPartyTypes = locator.lookupSystemManagementRemote().getPartyTypes();
                     } catch (Exception ex) {
                         ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Ermitteln der Platzhalter: " + ex.getMessage(), "Fehler");
@@ -995,7 +995,7 @@ public class GenerateMassMailDocumentsDialog extends javax.swing.JDialog {
                                 ht2.put(ptb, ad);
                             }
 
-                            ht = PlaceHolderUtils.getPlaceHolderValues(ht, null, null, ht2, null, null);
+                            ht = PlaceHolderUtils.getPlaceHolderValues(ht, null, null, ht2, null, null, new Hashtable<String,String>());
 
                             Enumeration htEn = ht.keys();
                             while (htEn.hasMoreElements()) {
@@ -1108,7 +1108,7 @@ public class GenerateMassMailDocumentsDialog extends javax.swing.JDialog {
 
                 //InitialContext context = new InitialContext(settings.getLookupProperties());
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                List<String> placeHolders = locator.lookupSystemManagementRemote().getPlaceHoldersForTemplate(gn, this.lstTemplates.getSelectedValue().toString());
+                List<String> placeHolders = locator.lookupSystemManagementRemote().getPlaceHoldersForTemplate(gn, this.lstTemplates.getSelectedValue().toString(), new ArrayList<String>());
                 String[] colNames = new String[]{"Platzhalter", "Wert"};
                 ArchiveFileTemplatePlaceHoldersTableModel model = new ArchiveFileTemplatePlaceHoldersTableModel(colNames, 0);
 
@@ -1124,7 +1124,7 @@ public class GenerateMassMailDocumentsDialog extends javax.swing.JDialog {
                     ht2.put(ptb, this.addresses.get(0));
                 }
 
-                ht = PlaceHolderUtils.getPlaceHolderValues(ht, null, null, ht2, null, null);
+                ht = PlaceHolderUtils.getPlaceHolderValues(ht, null, null, ht2, null, null, new Hashtable<String,String>());
 
                 Enumeration htEn = ht.keys();
                 while (htEn.hasMoreElements()) {

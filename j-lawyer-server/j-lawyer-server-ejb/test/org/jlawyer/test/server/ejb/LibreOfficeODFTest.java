@@ -722,7 +722,7 @@ public class LibreOfficeODFTest {
             allPartyTypesPlaceholders.add("MANDANT");
             allPartyTypesPlaceholders.add("GEGNER");
             allPartyTypesPlaceholders.add("DRITTE");
-            ArrayList l = new ArrayList(LibreOfficeAccess.getPlaceHolders("test/data/template.odt", allPartyTypesPlaceholders));
+            ArrayList l = new ArrayList(LibreOfficeAccess.getPlaceHolders("test/data/template.odt", allPartyTypesPlaceholders, new ArrayList<String>()));
             Assert.assertEquals(3, l.size());
         } catch (Throwable t) {
             Assert.fail(t.getMessage());

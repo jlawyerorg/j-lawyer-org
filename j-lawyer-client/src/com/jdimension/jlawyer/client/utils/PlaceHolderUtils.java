@@ -690,7 +690,7 @@ public class PlaceHolderUtils extends PlaceHolders {
 
     }
 
-    public static Hashtable getPlaceHolderValues(Hashtable placeHolders, ArchiveFileBean aFile, List<ArchiveFileAddressesBean> involved, Hashtable<PartyTypeBean,AddressBean> selectedParties, String dictateSign, GenericCalculationTable calculationTable) {
+    public static Hashtable getPlaceHolderValues(Hashtable placeHolders, ArchiveFileBean aFile, List<ArchiveFileAddressesBean> involved, Hashtable<PartyTypeBean,AddressBean> selectedParties, String dictateSign, GenericCalculationTable calculationTable, Hashtable<String,String> formsPlaceHolderValues) {
 
         NumberFormat currencyFormat = NumberFormat.getNumberInstance();
         currencyFormat.setMinimumFractionDigits(2);
@@ -773,6 +773,12 @@ public class PlaceHolderUtils extends PlaceHolders {
         }
         if (placeHolders.containsKey(PROFIL_KONTONR_AK)) {
             placeHolders.put(PROFIL_KONTONR_AK, set.getSetting(set.PROFILE_COMPANYACCOUNTNO_AK, ""));
+        }
+        
+        for(String formPh: formsPlaceHolderValues.keySet()) {
+            if(placeHolders.containsKey(formPh)) {
+                placeHolders.put(formPh, formsPlaceHolderValues.get(formPh));
+            }
         }
         
 

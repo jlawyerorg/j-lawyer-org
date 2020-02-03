@@ -710,6 +710,8 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
     private List<ArchiveFileAddressesBean> involved=null;
     private GenericCalculationTable calculationTable=null;
     private List<PartyTypeBean> allPartyTypes=null;
+    private Collection<String> formPlaceHolders=new ArrayList<>();
+    private Hashtable<String,String> formPlaceHolderValues=new Hashtable<>();
 
     public AddDocumentFromTemplateDialog(java.awt.Frame parent, boolean modal, JTable targetTable, ArchiveFileBean aFile, List<ArchiveFileAddressesBean> involved, JTable tblReviewReasons) {
         this(parent, modal, targetTable, aFile, involved, tblReviewReasons, null);
@@ -805,6 +807,8 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
             //InitialContext context = new InitialContext(settings.getLookupProperties());
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             this.allPartyTypes=locator.lookupArchiveFileServiceRemote().getAllPartyTypes();
+            this.formPlaceHolders=locator.lookupFormsServiceRemote().getPlaceHoldersForCase(aFile.getId());
+            this.formPlaceHolderValues=locator.lookupFormsServiceRemote().getPlaceHolderValuesForCase(aFile.getId());
 
         } catch (Exception ex) {
             log.error("Error getting all party types", ex);
@@ -1508,7 +1512,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
 
                 //InitialContext context = new InitialContext(settings.getLookupProperties());
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                List<String> placeHolders = locator.lookupSystemManagementRemote().getPlaceHoldersForTemplate(gn, this.lstTemplates.getSelectedValue().toString());
+                List<String> placeHolders = locator.lookupSystemManagementRemote().getPlaceHoldersForTemplate(gn, this.lstTemplates.getSelectedValue().toString(), this.formPlaceHolders);
                 String[] colNames = new String[]{"Platzhalter", "Wert"};
                 ArchiveFileTemplatePlaceHoldersTableModel model = new ArchiveFileTemplatePlaceHoldersTableModel(colNames, 0);
 
@@ -1518,7 +1522,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
                     ht.put(ph, "");
                 }
                 Hashtable<PartyTypeBean,AddressBean> selectedParties=this.pnlPartiesPanel.getSelectedParties(this.allPartyTypes);
-                ht = PlaceHolderUtils.getPlaceHolderValues(ht, aFile, involved, selectedParties, this.cmbDictateSigns.getSelectedItem().toString(), this.calculationTable);
+                ht = PlaceHolderUtils.getPlaceHolderValues(ht, aFile, involved, selectedParties, this.cmbDictateSigns.getSelectedItem().toString(), this.calculationTable, this.formPlaceHolderValues);
 
                 Enumeration htEn = ht.keys();
                 while (htEn.hasMoreElements()) {

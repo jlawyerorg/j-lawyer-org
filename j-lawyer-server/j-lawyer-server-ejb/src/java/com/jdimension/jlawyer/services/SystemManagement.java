@@ -1829,7 +1829,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
 
     @Override
     @RolesAllowed({"loginRole"})
-    public List<String> getPlaceHoldersForTemplate(GenericNode folder, String templateName) throws Exception {
+    public List<String> getPlaceHoldersForTemplate(GenericNode folder, String templateName, Collection<String> formsPlaceHolders) throws Exception {
         String localBaseDir = System.getProperty("jlawyer.server.basedirectory");
         localBaseDir = localBaseDir.trim();
         if (!localBaseDir.endsWith(System.getProperty("file.separator"))) {
@@ -1844,7 +1844,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
             allPartyTypesPlaceholders.add(ptb.getPlaceHolder());
         }
         
-        return LibreOfficeAccess.getPlaceHolders(localBaseDir, allPartyTypesPlaceholders);
+        return LibreOfficeAccess.getPlaceHolders(localBaseDir, allPartyTypesPlaceholders, formsPlaceHolders);
     }
 
     @Override

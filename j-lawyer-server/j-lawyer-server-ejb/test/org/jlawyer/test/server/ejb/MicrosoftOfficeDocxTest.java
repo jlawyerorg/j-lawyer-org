@@ -722,7 +722,7 @@ public class MicrosoftOfficeDocxTest {
             allPartyTypesPlaceholders.add("MANDANT");
             allPartyTypesPlaceholders.add("GEGNER");
             allPartyTypesPlaceholders.add("DRITTE");
-            ArrayList l = new ArrayList(LibreOfficeAccess.getPlaceHolders("test/data/template.docx", allPartyTypesPlaceholders));
+            ArrayList l = new ArrayList(LibreOfficeAccess.getPlaceHolders("test/data/template.docx", allPartyTypesPlaceholders, new ArrayList<String>()));
             Assert.assertEquals(3, l.size());
         } catch (Throwable t) {
             Assert.fail(t.getMessage());
@@ -738,7 +738,7 @@ public class MicrosoftOfficeDocxTest {
             allPartyTypesPlaceholders.add("MANDANT");
             allPartyTypesPlaceholders.add("GEGNER");
             allPartyTypesPlaceholders.add("DRITTE");
-            ArrayList l = new ArrayList(LibreOfficeAccess.getPlaceHolders("test/data/textfield.docx", allPartyTypesPlaceholders));
+            ArrayList l = new ArrayList(LibreOfficeAccess.getPlaceHolders("test/data/textfield.docx", allPartyTypesPlaceholders, new ArrayList<String>()));
             Assert.assertEquals(13, l.size());
         } catch (Throwable t) {
             Assert.fail(t.getMessage());
