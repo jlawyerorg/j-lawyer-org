@@ -1026,6 +1026,7 @@ public class ArchiveFileBean implements Serializable {
     /**
      * @return the archiveFileFormsBeanList
      */
+    @XmlTransient
     public List<ArchiveFileFormsBean> getArchiveFileFormsBeanList() {
         return archiveFileFormsBeanList;
     }
@@ -1040,6 +1041,7 @@ public class ArchiveFileBean implements Serializable {
     /**
      * @return the archiveFileFormEntriesBeanList
      */
+    @XmlTransient
     public List<ArchiveFileFormEntriesBean> getArchiveFileFormEntriesBeanList() {
         return archiveFileFormEntriesBeanList;
     }

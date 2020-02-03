@@ -796,6 +796,7 @@ public class FormsService implements FormsServiceRemote, FormsServiceLocal {
     
 
     @Override
+    @RolesAllowed({"writeArchiveFileRole"})
     public ArchiveFileFormsBean addForm(String caseId, ArchiveFileFormsBean form) throws Exception {
         
         ArchiveFileBean afb=this.caseFacade.find(caseId);
@@ -835,6 +836,7 @@ public class FormsService implements FormsServiceRemote, FormsServiceLocal {
     }
 
     @Override
+    @RolesAllowed({"readArchiveFileRole"})
     public List<ArchiveFileFormsBean> getFormsForCase(String caseId) {
         ArchiveFileBean afb=this.caseFacade.find(caseId);
         ArrayList<ArchiveFileFormsBean> list=new ArrayList<>();
@@ -844,6 +846,7 @@ public class FormsService implements FormsServiceRemote, FormsServiceLocal {
     }
 
     @Override
+    @RolesAllowed({"adminRole"})
     public void removeFormType(String formTypeId) throws Exception {
         
         FormTypeBean ftb=this.formTypesFacade.find(formTypeId);
@@ -861,6 +864,7 @@ public class FormsService implements FormsServiceRemote, FormsServiceLocal {
     }
 
     @Override
+    @RolesAllowed({"writeArchiveFileRole"})
     public void removeForm(String formId) throws Exception {
         ArchiveFileFormsBean afb=this.caseFormsFacade.find(formId);
         if(afb==null)
@@ -880,6 +884,7 @@ public class FormsService implements FormsServiceRemote, FormsServiceLocal {
     }
 
     @Override
+    @RolesAllowed({"writeArchiveFileRole"})
     public void setFormEntries(String formId, List<ArchiveFileFormEntriesBean> formEntries) throws Exception {
         
         ArchiveFileFormsBean afb=this.caseFormsFacade.find(formId);
@@ -903,6 +908,7 @@ public class FormsService implements FormsServiceRemote, FormsServiceLocal {
     }
 
     @Override
+    @RolesAllowed({"readArchiveFileRole"})
     public List<ArchiveFileFormEntriesBean> getFormEntries(String formId) throws Exception {
         ArchiveFileFormsBean afb=this.caseFormsFacade.find(formId);
         if(afb==null)
@@ -910,6 +916,17 @@ public class FormsService implements FormsServiceRemote, FormsServiceLocal {
         
         List<ArchiveFileFormEntriesBean> existingEntries=this.caseFormEntriesFacade.findByForm(afb);
         return existingEntries;
+    }
+
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public ArchiveFileFormsBean getForm(String formId) throws Exception {
+        ArchiveFileFormsBean afb=this.caseFormsFacade.find(formId);
+        if(afb==null)
+            throw new Exception("Falldatenblatt " + formId + " ist nicht vorhanden!");
+        
+        return afb;
+        
     }
     
     

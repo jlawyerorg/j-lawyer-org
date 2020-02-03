@@ -54,4 +54,10 @@
         <local>com.jdimension.jlawyer.services.ArchiveFileServiceLocal</local>
         <ejb-link>j-lawyer-server-ejb.jar#ArchiveFileService</ejb-link>
     </ejb-local-ref>
+    <ejb-local-ref>
+        <ejb-ref-name>FormsService</ejb-ref-name>
+        <ejb-ref-type>Session</ejb-ref-type>
+        <local>com.jdimension.jlawyer.services.FormsServiceLocal</local>
+        <ejb-link>j-lawyer-server-ejb.jar#FormsService</ejb-link>
+    </ejb-local-ref>
 </web-app>

@@ -660,24 +660,30 @@ specific requirements.
 if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
-*/
+ */
 package org.jlawyer.io.rest.v1;
 
-import java.util.HashSet;
-import java.util.Set;
-import javax.ws.rs.ApplicationPath;
-import javax.ws.rs.core.Application;
+import java.util.List;
+import javax.ejb.Local;
+import javax.ws.rs.core.Response;
+import org.jlawyer.io.rest.v1.pojo.RestfulFormEntryV1;
+import org.jlawyer.io.rest.v1.pojo.RestfulFormV1;
 
-@ApplicationPath("/rest")
-public class EndpointServiceLocator extends Application
-{
-    public Set<Class<?>> getClasses()
-    {
-        Set<Class<?>> s = new HashSet<Class<?>>();
-        s.add(SecurityEndpointV1.class);
-        s.add(CasesEndpointV1.class);
-        s.add(ContactsEndpointV1.class);
-        s.add(FormsEndpointV1.class);
-        return s;
-    }
+/**
+ *
+ * @author jens
+ */
+@Local
+public interface FormsEndpointV1Local {
+
+    Response listFormTypes();
+
+    Response getFormEntries(String parameter);
+
+    Response setFormEntries(List<RestfulFormEntryV1> formEntries);
+
+    Response deleteForm(String formId);
+
+    Response createForm(RestfulFormV1 form);
+    
 }

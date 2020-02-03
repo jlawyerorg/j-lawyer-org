@@ -708,5 +708,7 @@ public interface CasesEndpointLocalV1 {
 
     Response getPartyTypes();
 
+    Response getCaseForms(String id);
+
     
 }

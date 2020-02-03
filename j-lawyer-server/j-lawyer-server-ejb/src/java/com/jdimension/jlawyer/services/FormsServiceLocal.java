@@ -692,5 +692,7 @@ public interface FormsServiceLocal {
     void setFormEntries(String formId, List<ArchiveFileFormEntriesBean> formEntries) throws Exception;
 
     List<ArchiveFileFormEntriesBean> getFormEntries(String formId) throws Exception;
+
+    ArchiveFileFormsBean getForm(String id) throws Exception;
     
 }

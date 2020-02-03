@@ -668,12 +668,14 @@ import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileFormsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileTagsBean;
 import com.jdimension.jlawyer.persistence.PartyTypeBean;
 import com.jdimension.jlawyer.security.Base64;
 import com.jdimension.jlawyer.services.AddressServiceLocal;
 import com.jdimension.jlawyer.services.ArchiveFileServiceLocal;
+import com.jdimension.jlawyer.services.FormsServiceLocal;
 import com.jdimension.jlawyer.services.SystemManagementLocal;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -696,6 +698,7 @@ import org.jlawyer.io.rest.v1.pojo.RestfulCaseOverviewV1;
 import org.jlawyer.io.rest.v1.pojo.RestfulDocumentV1;
 import org.jlawyer.io.rest.v1.pojo.RestfulDocumentContentV1;
 import org.jlawyer.io.rest.v1.pojo.RestfulDueDateV1;
+import org.jlawyer.io.rest.v1.pojo.RestfulFormV1;
 import org.jlawyer.io.rest.v1.pojo.RestfulPartyV1;
 import org.jlawyer.io.rest.v1.pojo.RestfulTagV1;
 
@@ -711,6 +714,10 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
 
     private static final Logger log = Logger.getLogger(CasesEndpointV1.class.getName());
 
+    // when seeing something like
+    //  com.fasterxml.jackson.databind.JsonMappingException: failed to lazily initialize a collection of role: com.jdimension.jlawyer.persistence.ArchiveFileBean.archiveFileFormsBeanList, could not initialize proxy - no Session
+    // it is not necessarily an issue with fetch type eager or lazy, just put @XmlTransient to the getter of the list in the entity
+    
     @EJB
     private ArchiveFileServiceLocal archiveFileSvc;
 
@@ -1466,6 +1473,55 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
             return res;
         } catch (Exception ex) {
             log.error("can not list party types", ex);
+            Response res = Response.serverError().build();
+            return res;
+        }
+    }
+
+    /**
+     * Returns a list of forms for a given case
+     *
+     * @param id case ID
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/{id}/forms")
+    @RolesAllowed({"readArchiveFileRole"})
+    public Response getCaseForms(@PathParam("id") String id) {
+        try {
+
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal");
+            FormsServiceLocal forms = (FormsServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/FormsService!com.jdimension.jlawyer.services.FormsServiceLocal");
+            
+            ArchiveFileBean currentCase = cases.getArchiveFile(id);
+            if (currentCase == null) {
+                log.error("case with id " + id + " does not exist");
+                Response res = Response.serverError().build();
+                return res;
+            }
+
+            Collection<ArchiveFileFormsBean> caseForms = forms.getFormsForCase(id);
+            ArrayList<RestfulFormV1> formList = new ArrayList<RestfulFormV1>();
+            for (ArchiveFileFormsBean form : caseForms) {
+                RestfulFormV1 f = new RestfulFormV1();
+                f.setId(form.getId());
+                f.setCaseId(id);
+                f.setCreationDate(form.getCreationDate());
+                f.setDescription(form.getDescription());
+                f.setFormType(form.getFormType().getId());
+                f.setPlaceHolder(form.getPlaceHolder());
+                formList.add(f);
+            }
+
+            Response res = Response.ok(formList).build();
+            return res;
+        } catch (Exception ex) {
+            log.error("can not get case " + id, ex);
             Response res = Response.serverError().build();
             return res;
         }

@@ -660,24 +660,312 @@ specific requirements.
 if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
-*/
+ */
 package org.jlawyer.io.rest.v1;
 
-import java.util.HashSet;
-import java.util.Set;
-import javax.ws.rs.ApplicationPath;
-import javax.ws.rs.core.Application;
+import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileFormEntriesBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileFormsBean;
+import com.jdimension.jlawyer.persistence.FormTypeBean;
+import com.jdimension.jlawyer.services.ArchiveFileServiceLocal;
+import com.jdimension.jlawyer.services.FormsServiceLocal;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import javax.annotation.security.RolesAllowed;
+import javax.ejb.Stateless;
+import javax.naming.InitialContext;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import org.jboss.logging.Logger;
+import org.jlawyer.io.rest.v1.pojo.RestfulFormEntryV1;
+import org.jlawyer.io.rest.v1.pojo.RestfulFormV1;
 
-@ApplicationPath("/rest")
-public class EndpointServiceLocator extends Application
-{
-    public Set<Class<?>> getClasses()
-    {
-        Set<Class<?>> s = new HashSet<Class<?>>();
-        s.add(SecurityEndpointV1.class);
-        s.add(CasesEndpointV1.class);
-        s.add(ContactsEndpointV1.class);
-        s.add(FormsEndpointV1.class);
-        return s;
+/**
+ *
+ * @author jens
+ */
+@Stateless
+@Path("/v1/forms")
+@Consumes({"application/json"})
+@Produces({"application/json"})
+public class FormsEndpointV1 implements FormsEndpointV1Local {
+
+    private static final Logger log = Logger.getLogger(FormsEndpointV1.class.getName());
+
+    /**
+     * Lists all form types
+     *
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/types/list")
+    @RolesAllowed({"loginRole"})
+    public Response listFormTypes() {
+        try {
+
+            InitialContext ic = new InitialContext();
+            FormsServiceLocal forms = (FormsServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/FormsService!com.jdimension.jlawyer.services.FormsServiceLocal");
+            List<FormTypeBean> types = forms.getAllFormTypes();
+            // got lazy load errors when not doing this, even with @XmlTransient annotations on the getters of these lists
+            for (FormTypeBean ft : types) {
+                ft.setArchiveFileFormsBeanList(new ArrayList<>());
+                ft.setFormTypeArtefactsBeanList(new ArrayList<>());
+            }
+            Response res = Response.ok(types).build();
+            return res;
+        } catch (Exception ex) {
+            log.error("Can not list form types", ex);
+            Response res = Response.serverError().build();
+            return res;
+        }
     }
+
+    /**
+     * Returns all form entries based on a forms ID
+     *
+     * @param id form ID
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/{id}/entries")
+    @RolesAllowed({"readArchiveFileRole"})
+    public Response getFormEntries(@PathParam("id") String id) {
+        try {
+
+            List<ArchiveFileFormEntriesBean> entries = this.getFormEntriesImpl(id);
+            List<RestfulFormEntryV1> formEntries = new ArrayList<>();
+            for (ArchiveFileFormEntriesBean e : entries) {
+                RestfulFormEntryV1 entry = new RestfulFormEntryV1();
+                entry.setEntryKey(e.getEntryKey());
+                entry.setFormId(id);
+                entry.setId(e.getId());
+                entry.setPlaceHolder(e.getPlaceHolder());
+                entry.setStringValue(e.getStringValue());
+                formEntries.add(entry);
+            }
+            Response res = Response.ok(formEntries).build();
+            return res;
+        } catch (Exception ex) {
+            log.error("Can not list form types", ex);
+            Response res = Response.serverError().build();
+            return res;
+        }
+    }
+
+    private List<ArchiveFileFormEntriesBean> getFormEntriesImpl(String formId) throws Exception {
+
+        InitialContext ic = new InitialContext();
+        FormsServiceLocal forms = (FormsServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/FormsService!com.jdimension.jlawyer.services.FormsServiceLocal");
+
+        ArchiveFileFormsBean form = forms.getForm(formId);
+        if (form == null) {
+            log.error("form with id " + formId + " does not exist");
+            throw new Exception("form with id " + formId + " does not exist");
+        }
+
+        List<ArchiveFileFormEntriesBean> entries = forms.getFormEntries(formId);
+
+        return entries;
+
+    }
+
+    /**
+     * Updates ALL entries for an existing form. A client must provide ALL
+     * entries for the form. Updating a subset of entries is not supported. The
+     * services can be used to either create an initial set of entries for a
+     * form or to update exinsting entries.
+     *
+     * @param formEntries the forms new entries
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @PUT
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/{id}/entries/update")
+    @RolesAllowed({"writeArchiveFileRole"})
+    public Response setFormEntries(List<RestfulFormEntryV1> formEntries) {
+        try {
+
+            if (formEntries == null) {
+                log.error("list of form entries to update must not be null");
+                Response res = Response.serverError().build();
+                return res;
+            }
+
+            if (formEntries.size() == 0) {
+                log.error("list of form entries to update must not be empty");
+                Response res = Response.serverError().build();
+                return res;
+            }
+
+            String formId = formEntries.get(0).getFormId();
+
+            InitialContext ic = new InitialContext();
+            FormsServiceLocal forms = (FormsServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/FormsService!com.jdimension.jlawyer.services.FormsServiceLocal");
+
+            ArchiveFileFormsBean form = forms.getForm(formId);
+            if (form == null) {
+                log.error("form with id " + formId + " does not exist");
+                Response res = Response.serverError().build();
+                return res;
+            }
+
+            List<ArchiveFileFormEntriesBean> entryList = new ArrayList<>();
+            for (RestfulFormEntryV1 formEntry : formEntries) {
+                ArchiveFileFormEntriesBean e = new ArchiveFileFormEntriesBean();
+                e.setArchiveFileKey(form.getArchiveFileKey());
+                e.setEntryKey(formEntry.getEntryKey());
+                e.setForm(form);
+                e.setId(formEntry.getId());
+                e.setPlaceHolder(formEntry.getPlaceHolder());
+                e.setStringValue(formEntry.getStringValue());
+                entryList.add(e);
+            }
+            forms.setFormEntries(formId, entryList);
+
+            entryList = this.getFormEntriesImpl(formId);
+            formEntries = new ArrayList<>();
+            for (ArchiveFileFormEntriesBean e : entryList) {
+                RestfulFormEntryV1 entry = new RestfulFormEntryV1();
+                entry.setEntryKey(e.getEntryKey());
+                entry.setFormId(formId);
+                entry.setId(e.getId());
+                entry.setPlaceHolder(e.getPlaceHolder());
+                entry.setStringValue(e.getStringValue());
+                formEntries.add(entry);
+            }
+            Response res = Response.ok(formEntries).build();
+
+            return res;
+        } catch (Exception ex) {
+            log.error("Can not list form types", ex);
+            Response res = Response.serverError().build();
+            return res;
+        }
+    }
+
+    /**
+     * Deletes a document based on its ID
+     *
+     * @param id document ID
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @DELETE
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/{id}/delete")
+    @RolesAllowed({"writeArchiveFileRole"})
+    public Response deleteForm(String id) {
+
+        try {
+            InitialContext ic = new InitialContext();
+            FormsServiceLocal forms = (FormsServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/FormsService!com.jdimension.jlawyer.services.FormsServiceLocal");
+
+            ArchiveFileFormsBean form = forms.getForm(id);
+            if (form == null) {
+                log.error("form with id " + id + " does not exist");
+                Response res = Response.serverError().build();
+                return res;
+            }
+
+            forms.removeForm(id);
+
+            Response res = Response.ok().build();
+            return res;
+        } catch (Exception ex) {
+            log.error("Can not delete form", ex);
+            Response res = Response.serverError().build();
+            return res;
+        }
+    }
+
+    /**
+     * Creates a new form within an existing case. An ID for the form is not
+     * required in the request. The value for placeholder must be unique within
+     * the cases forms, you cannot have two different forms with the same
+     * placeholder. Creating a form does not create empty dummy values for it. A
+     * client needs to explicityly set the entries or rely on a user editing it
+     * through the UI.
+     *
+     * @param form form data
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @PUT
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/create")
+    @RolesAllowed({"writeArchiveFileRole"})
+    public Response createForm(RestfulFormV1 form) {
+
+        try {
+            InitialContext ic = new InitialContext();
+            FormsServiceLocal forms = (FormsServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/FormsService!com.jdimension.jlawyer.services.FormsServiceLocal");
+
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal");
+            ArchiveFileBean afb = cases.getArchiveFile(form.getCaseId());
+            if (afb == null) {
+                log.error("case " + form.getCaseId() + " for new form does not exist");
+                Response res = Response.serverError().build();
+                return res;
+            }
+
+            List<FormTypeBean> formTypes = forms.getAllFormTypes();
+            FormTypeBean relevantType = null;
+            for (FormTypeBean ftb : formTypes) {
+                if (ftb.getId().equals(form.getFormType())) {
+                    relevantType = ftb;
+                }
+            }
+            if (relevantType == null) {
+                log.error("form type " + form.getFormType() + " for new form does not exist");
+                Response res = Response.serverError().build();
+                return res;
+            }
+
+            ArchiveFileFormsBean affb = new ArchiveFileFormsBean();
+            affb.setArchiveFileKey(afb);
+            affb.setCreationDate(new Date());
+            affb.setDescription(form.getDescription());
+            affb.setFormType(relevantType);
+            affb.setPlaceHolder(form.getPlaceHolder());
+
+            affb = forms.addForm(afb.getId(), affb);
+
+            RestfulFormV1 f = new RestfulFormV1();
+            f.setId(affb.getId());
+            f.setCaseId(afb.getId());
+            f.setCreationDate(affb.getCreationDate());
+            f.setDescription(affb.getDescription());
+            f.setFormType(affb.getFormType().getId());
+            f.setPlaceHolder(affb.getPlaceHolder());
+
+            Response res = Response.ok(f).build();
+            return res;
+        } catch (Exception ex) {
+            log.error("Can not create form", ex);
+            Response res = Response.serverError().build();
+            return res;
+        }
+
+    }
+
 }

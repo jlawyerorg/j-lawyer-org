@@ -676,6 +676,7 @@ import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlTransient;
 
 /**
  *
@@ -796,8 +797,9 @@ public class FormTypeBean implements Serializable {
     }
 
     /**
-     * @return the archiveFileFormsBeanList
+     * @return the archiveFileFormsBeanList 
      */
+    @XmlTransient
     public List<ArchiveFileFormsBean> getArchiveFileFormsBeanList() {
         return archiveFileFormsBeanList;
     }
@@ -812,6 +814,7 @@ public class FormTypeBean implements Serializable {
     /**
      * @return the formTypeArtefactsBeanList
      */
+    @XmlTransient
     public List<FormTypeArtefactBean> getFormTypeArtefactsBeanList() {
         return formTypeArtefactsBeanList;
     }

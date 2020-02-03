@@ -660,24 +660,97 @@ specific requirements.
 if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
-*/
-package org.jlawyer.io.rest.v1;
+ */
+package org.jlawyer.io.rest.v1.pojo;
 
-import java.util.HashSet;
-import java.util.Set;
-import javax.ws.rs.ApplicationPath;
-import javax.ws.rs.core.Application;
+/**
+ *
+ * @author jens
+ */
+public class RestfulFormEntryV1 {
 
-@ApplicationPath("/rest")
-public class EndpointServiceLocator extends Application
-{
-    public Set<Class<?>> getClasses()
-    {
-        Set<Class<?>> s = new HashSet<Class<?>>();
-        s.add(SecurityEndpointV1.class);
-        s.add(CasesEndpointV1.class);
-        s.add(ContactsEndpointV1.class);
-        s.add(FormsEndpointV1.class);
-        return s;
+    private String id;
+    
+    private String formId;
+    
+    private String placeHolder;
+    
+    private String entryKey;
+    
+    private String stringValue;
+    
+    
+    public RestfulFormEntryV1() {
     }
+
+    /**
+     * @return the id
+     */
+    public String getId() {
+        return id;
+    }
+
+    /**
+     * @param id the id to set
+     */
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    /**
+     * @return the formId
+     */
+    public String getFormId() {
+        return formId;
+    }
+
+    /**
+     * @param formId the formId to set
+     */
+    public void setFormId(String formId) {
+        this.formId = formId;
+    }
+
+    /**
+     * @return the placeHolder
+     */
+    public String getPlaceHolder() {
+        return placeHolder;
+    }
+
+    /**
+     * @param placeHolder the placeHolder to set
+     */
+    public void setPlaceHolder(String placeHolder) {
+        this.placeHolder = placeHolder;
+    }
+
+    /**
+     * @return the entryKey
+     */
+    public String getEntryKey() {
+        return entryKey;
+    }
+
+    /**
+     * @param entryKey the entryKey to set
+     */
+    public void setEntryKey(String entryKey) {
+        this.entryKey = entryKey;
+    }
+
+    /**
+     * @return the stringValue
+     */
+    public String getStringValue() {
+        return stringValue;
+    }
+
+    /**
+     * @param stringValue the stringValue to set
+     */
+    public void setStringValue(String stringValue) {
+        this.stringValue = stringValue;
+    }
+    
 }

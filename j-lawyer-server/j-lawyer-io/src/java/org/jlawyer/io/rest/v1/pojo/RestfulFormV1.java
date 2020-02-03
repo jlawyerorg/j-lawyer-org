@@ -660,24 +660,117 @@ specific requirements.
 if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
-*/
-package org.jlawyer.io.rest.v1;
+ */
+package org.jlawyer.io.rest.v1.pojo;
 
-import java.util.HashSet;
-import java.util.Set;
-import javax.ws.rs.ApplicationPath;
-import javax.ws.rs.core.Application;
+import java.util.Date;
 
-@ApplicationPath("/rest")
-public class EndpointServiceLocator extends Application
-{
-    public Set<Class<?>> getClasses()
-    {
-        Set<Class<?>> s = new HashSet<Class<?>>();
-        s.add(SecurityEndpointV1.class);
-        s.add(CasesEndpointV1.class);
-        s.add(ContactsEndpointV1.class);
-        s.add(FormsEndpointV1.class);
-        return s;
+/**
+ *
+ * @author jens
+ */
+public class RestfulFormV1 {
+    
+    private String id;
+    private String caseId;
+    
+    
+    private String formType;
+    
+    
+   private String description;
+    
+    private String placeHolder;
+    
+    private Date creationDate;
+
+    public RestfulFormV1() {
     }
+
+    /**
+     * @return the id
+     */
+    public String getId() {
+        return id;
+    }
+
+    /**
+     * @param id the id to set
+     */
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    /**
+     * @return the formType
+     */
+    public String getFormType() {
+        return formType;
+    }
+
+    /**
+     * @param formType the formType to set
+     */
+    public void setFormType(String formType) {
+        this.formType = formType;
+    }
+
+    /**
+     * @return the description
+     */
+    public String getDescription() {
+        return description;
+    }
+
+    /**
+     * @param description the description to set
+     */
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    /**
+     * @return the placeHolder
+     */
+    public String getPlaceHolder() {
+        return placeHolder;
+    }
+
+    /**
+     * @param placeHolder the placeHolder to set
+     */
+    public void setPlaceHolder(String placeHolder) {
+        this.placeHolder = placeHolder;
+    }
+
+    /**
+     * @return the creationDate
+     */
+    public Date getCreationDate() {
+        return creationDate;
+    }
+
+    /**
+     * @param creationDate the creationDate to set
+     */
+    public void setCreationDate(Date creationDate) {
+        this.creationDate = creationDate;
+    }
+
+    /**
+     * @return the caseId
+     */
+    public String getCaseId() {
+        return caseId;
+    }
+
+    /**
+     * @param caseId the caseId to set
+     */
+    public void setCaseId(String caseId) {
+        this.caseId = caseId;
+    }
+    
+    
+    
 }
