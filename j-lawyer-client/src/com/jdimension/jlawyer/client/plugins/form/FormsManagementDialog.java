@@ -664,6 +664,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.client.plugins.form;
 
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.utils.DesktopUtils;
 import com.jdimension.jlawyer.client.utils.VersionUtils;
 import com.jdimension.jlawyer.persistence.FormTypeBean;
 import com.jdimension.jlawyer.services.FormsServiceRemote;
@@ -683,6 +684,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
+import themes.colors.DefaultColorTheme;
 
 /**
  *
@@ -698,6 +700,8 @@ public class FormsManagementDialog extends javax.swing.JDialog implements FormAc
     public FormsManagementDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
+        
+        lblGitHubLink.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
         
         List<FormTypeBean> serverFormPlugins=new ArrayList<>();
         try {
@@ -852,6 +856,8 @@ public class FormsManagementDialog extends javax.swing.JDialog implements FormAc
         cmdClose = new javax.swing.JButton();
         jScrollPane2 = new javax.swing.JScrollPane();
         formPluginsPanel = new com.jdimension.jlawyer.client.plugins.form.FormPluginsPanel();
+        jLabel1 = new javax.swing.JLabel();
+        lblGitHubLink = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Falldatenblätter verwalten");
@@ -866,6 +872,24 @@ public class FormsManagementDialog extends javax.swing.JDialog implements FormAc
 
         jScrollPane2.setViewportView(formPluginsPanel);
 
+        jLabel1.setFont(new java.awt.Font("Dialog", 0, 10)); // NOI18N
+        jLabel1.setText("Verbesserungsvorschläge / neue Falldatenblätter anfragen:");
+
+        lblGitHubLink.setFont(new java.awt.Font("Dialog", 1, 10)); // NOI18N
+        lblGitHubLink.setText("https://github.com/jlawyerorg/j-lawyer-forms/issues");
+        lblGitHubLink.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        lblGitHubLink.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                lblGitHubLinkMouseClicked(evt);
+            }
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                lblGitHubLinkMouseExited(evt);
+            }
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                lblGitHubLinkMouseEntered(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -874,7 +898,10 @@ public class FormsManagementDialog extends javax.swing.JDialog implements FormAc
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addGap(0, 662, Short.MAX_VALUE)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(lblGitHubLink)
+                            .addComponent(jLabel1))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 388, Short.MAX_VALUE)
                         .addComponent(cmdClose))
                     .addComponent(jScrollPane2))
                 .addContainerGap())
@@ -883,9 +910,14 @@ public class FormsManagementDialog extends javax.swing.JDialog implements FormAc
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 423, Short.MAX_VALUE)
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 447, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(cmdClose)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(cmdClose)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jLabel1)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(lblGitHubLink)))
                 .addContainerGap())
         );
 
@@ -896,6 +928,18 @@ public class FormsManagementDialog extends javax.swing.JDialog implements FormAc
         this.setVisible(false);
         this.dispose();
     }//GEN-LAST:event_cmdCloseActionPerformed
+
+    private void lblGitHubLinkMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblGitHubLinkMouseEntered
+        lblGitHubLink.setForeground(DefaultColorTheme.COLOR_LOGO_GREEN);
+    }//GEN-LAST:event_lblGitHubLinkMouseEntered
+
+    private void lblGitHubLinkMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblGitHubLinkMouseExited
+        lblGitHubLink.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
+    }//GEN-LAST:event_lblGitHubLinkMouseExited
+
+    private void lblGitHubLinkMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblGitHubLinkMouseClicked
+        DesktopUtils.openBrowser(this.lblGitHubLink.getText());
+    }//GEN-LAST:event_lblGitHubLinkMouseClicked
 
     /**
      * @param args the command line arguments
@@ -942,7 +986,9 @@ public class FormsManagementDialog extends javax.swing.JDialog implements FormAc
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton cmdClose;
     private com.jdimension.jlawyer.client.plugins.form.FormPluginsPanel formPluginsPanel;
+    private javax.swing.JLabel jLabel1;
     private javax.swing.JScrollPane jScrollPane2;
+    private javax.swing.JLabel lblGitHubLink;
     // End of variables declaration//GEN-END:variables
 
     @Override

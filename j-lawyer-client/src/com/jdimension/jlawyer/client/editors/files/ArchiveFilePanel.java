@@ -701,6 +701,7 @@ import com.jdimension.jlawyer.client.plugins.calculation.CalculationPluginUtil;
 import com.jdimension.jlawyer.client.plugins.form.FormInstancePanel;
 import com.jdimension.jlawyer.client.plugins.form.FormPlugin;
 import com.jdimension.jlawyer.client.plugins.form.FormPluginUtil;
+import com.jdimension.jlawyer.client.plugins.form.FormsManagementDialog;
 import org.jlawyer.plugins.calculation.CalculationTable;
 import com.jdimension.jlawyer.client.print.ArchiveFileStub;
 import com.jdimension.jlawyer.client.print.PrintStubGenerator;
@@ -1676,6 +1677,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         jLabel18 = new javax.swing.JLabel();
         jLabel19 = new javax.swing.JLabel();
         txtFormDescription = new javax.swing.JTextField();
+        cmdFormsManager = new javax.swing.JButton();
         tabHistory = new javax.swing.JPanel();
         jPanel10 = new javax.swing.JPanel();
         jScrollPane4 = new javax.swing.JScrollPane();
@@ -2782,6 +2784,14 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         jLabel19.setText("Beschreibung:");
 
+        cmdFormsManager.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/package_system.png"))); // NOI18N
+        cmdFormsManager.setToolTipText("weitere Falldatenblätter herunterladen");
+        cmdFormsManager.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdFormsManagerActionPerformed(evt);
+            }
+        });
+
         org.jdesktop.layout.GroupLayout pnlAddFormsLayout = new org.jdesktop.layout.GroupLayout(pnlAddForms);
         pnlAddForms.setLayout(pnlAddFormsLayout);
         pnlAddFormsLayout.setHorizontalGroup(
@@ -2791,7 +2801,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 .add(pnlAddFormsLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(pnlAddFormsLayout.createSequentialGroup()
                         .add(jLabel16)
-                        .add(0, 0, Short.MAX_VALUE))
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .add(cmdFormsManager))
                     .add(pnlAddFormsLayout.createSequentialGroup()
                         .add(pnlAddFormsLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                             .add(jLabel18)
@@ -2812,8 +2823,13 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         pnlAddFormsLayout.setVerticalGroup(
             pnlAddFormsLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(pnlAddFormsLayout.createSequentialGroup()
-                .add(25, 25, 25)
-                .add(jLabel16)
+                .add(pnlAddFormsLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(pnlAddFormsLayout.createSequentialGroup()
+                        .add(25, 25, 25)
+                        .add(jLabel16))
+                    .add(pnlAddFormsLayout.createSequentialGroup()
+                        .addContainerGap()
+                        .add(cmdFormsManager)))
                 .add(18, 18, 18)
                 .add(pnlAddFormsLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(jLabel17)
@@ -4320,6 +4336,34 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         data.put("documents.documentbeans", docs);
         data.put("documents.documentbeans.selected", selDocs);
 
+        ClientSettings settings = ClientSettings.getInstance();
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
+            List<ArchiveFileFormsBean> forms = locator.lookupFormsServiceRemote().getFormsForCase(this.dto.getId());
+            for (ArchiveFileFormsBean f : forms) {
+                if ("verkehr01".equalsIgnoreCase(f.getFormType().getId())) {
+                    List<ArchiveFileFormEntriesBean> formEntries = locator.lookupFormsServiceRemote().getFormEntries(f.getId());
+                    for(ArchiveFileFormEntriesBean fe: formEntries) {
+                        if(fe.getEntryKey().endsWith("_KENNZEICHEN")) {
+                            data.put("_KENNZEICHEN",fe.getStringValue());
+                        } else if(fe.getEntryKey().endsWith("_UNFALLDATUM")) {
+                            data.put("_UNFALLDATUM",fe.getStringValue());
+                        } else if(fe.getEntryKey().endsWith("_UNFALLORT")) {
+                            data.put("_UNFALLORT",fe.getStringValue());
+                        } else if(fe.getEntryKey().endsWith("_POLAUFGEN")) {
+                            data.put("_POLAUFGEN",fe.getStringValue());
+                        }
+                    }
+                    break;
+                }
+            }
+
+        } catch (Exception ex) {
+            log.error("Error loading form entries", ex);
+
+        }
+
         dlg.setSteps(steps);
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
@@ -5204,6 +5248,26 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
     }//GEN-LAST:event_cmbFormTypeActionPerformed
 
+    private void cmdFormsManagerActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdFormsManagerActionPerformed
+        ClientSettings settings = ClientSettings.getInstance();
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            boolean currentlyAdmin = locator.lookupSecurityServiceRemote().isAdmin();
+            if (currentlyAdmin) {
+                FormsManagementDialog dlg = new FormsManagementDialog(EditorsRegistry.getInstance().getMainWindow(), true);
+                //dlg.setTitle("Anreden");
+                //dlg.setOptionGroup(OptionConstants.OPTIONGROUP_SALUTATIONS);
+                FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
+                dlg.setVisible(true);
+            } else {
+                JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.adminrequired"), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.hint"), JOptionPane.INFORMATION_MESSAGE);
+            }
+        } catch (Exception ex) {
+            log.error(ex);
+            JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("error.launchsettings") + ex.getMessage(), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.error"), JOptionPane.INFORMATION_MESSAGE);
+        }
+    }//GEN-LAST:event_cmdFormsManagerActionPerformed
+
     private AddressBean[] convertArray(Object[] in) {
         if (in != null) {
             AddressBean[] out = new AddressBean[in.length];
@@ -5520,6 +5584,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JButton cmdDrebis;
     private javax.swing.JButton cmdExportHtml;
     private javax.swing.JButton cmdFavoriteDocuments;
+    private javax.swing.JButton cmdFormsManager;
     private javax.swing.JButton cmdHeaderAddNote;
     private javax.swing.JButton cmdNewDocument;
     private javax.swing.JButton cmdNewReview;

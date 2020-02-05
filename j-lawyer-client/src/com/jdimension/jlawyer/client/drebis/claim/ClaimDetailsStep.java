@@ -1102,6 +1102,23 @@ public class ClaimDetailsStep extends javax.swing.JPanel implements WizardStepIn
             // user navigated back - do not reset but use what is there
         } else {
             // initial display
+            Object o1=data.get("_KENNZEICHEN");
+            if(o1!=null) {
+                this.txtLicensePlate.setText(o1.toString());
+            }
+            o1=data.get("_UNFALLDATUM");
+            if(o1!=null) {
+                this.txtClaimDate.setText(o1.toString());
+            }
+            o1=data.get("_UNFALLORT");
+            if(o1!=null) {
+                this.txtClaimCity.setText(o1.toString());
+            }
+            o1=data.get("_POLAUFGEN");
+            if(o1!=null) {
+                this.chkRegistered.setSelected(o1.equals("1") || o1.equals("ja"));
+            }
+            
             ArrayList<InsuranceInfo> ins = (ArrayList<InsuranceInfo>) data.get("insurances");
             this.cmbInsurances.removeAllItems();
             this.cmbInsurances.addItem("");
@@ -1126,20 +1143,6 @@ public class ClaimDetailsStep extends javax.swing.JPanel implements WizardStepIn
                 if (t != null && !("".equalsIgnoreCase(t))) {
                     this.cmbInsurance.addItem(t);
                 }
-
-//                Vector row = new Vector();
-//                row.add(new Boolean(true));
-//                row.add(oth.getName());
-//                row.add(oth.getFirstName());
-//                row.add(oth.getCompany());
-//                row.add(oth.getStreet());
-//                row.add(oth.getZipCode());
-//                row.add(oth.getCity());
-//                row.add(DrebisUtils.getCountryCode(cl.getCountry()));
-//                row.add(oth.getPhone());
-//                row.add(oth.getFax());
-//                row.add(oth.getEmail());
-//                ((DefaultTableModel)this.tblClients.getModel()).addRow(row);
 
                 if (i == 0) {
                 }
