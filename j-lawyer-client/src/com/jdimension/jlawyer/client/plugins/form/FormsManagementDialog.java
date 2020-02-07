@@ -778,10 +778,14 @@ public class FormsManagementDialog extends javax.swing.JDialog implements FormAc
                     }
                     formPlugins.add(fp);
                     FormPluginEntryPanel fpe=new FormPluginEntryPanel(fp, this.formPluginsPanel, this);
+                    
                     FormTypeBean onServer=this.findPlugin(serverFormPlugins, fp.getId());
+                    
                     if(onServer==null) {
                         fpe.setState(FormPluginEntryPanel.STATE_NOT_INSTALLED);
+                        fpe.setVersionOnServer("");
                     } else {
+                        fpe.setVersionOnServer(onServer.getVersion());
                         if(onServer.getVersion().equals(fp.getVersion())) {
                             fpe.setState(FormPluginEntryPanel.STATE_INSTALLED);
                         } else {

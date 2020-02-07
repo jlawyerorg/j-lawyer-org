@@ -759,8 +759,6 @@ public class MassMailPanel extends javax.swing.JPanel implements ThemeableEditor
         lblPanelTitle = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
         tblResults = new javax.swing.JTable();
-        jPanel2 = new javax.swing.JPanel();
-        cmdRefresh = new javax.swing.JButton();
         cmbCampaign = new javax.swing.JComboBox<>();
         jLabel1 = new javax.swing.JLabel();
         cmdAddCampaign = new javax.swing.JButton();
@@ -768,6 +766,7 @@ public class MassMailPanel extends javax.swing.JPanel implements ThemeableEditor
         lblFolder = new javax.swing.JLabel();
         cmdAddContacts = new javax.swing.JButton();
         cmdGenerateDocs = new javax.swing.JButton();
+        cmdRefresh = new javax.swing.JButton();
 
         mnuRemoveFromCampaign.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editdelete.png"))); // NOI18N
         mnuRemoveFromCampaign.setText("aus Serie entfernen");
@@ -810,34 +809,6 @@ public class MassMailPanel extends javax.swing.JPanel implements ThemeableEditor
             }
         });
         jScrollPane1.setViewportView(tblResults);
-
-        jPanel2.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(255, 255, 255), 2, true));
-        jPanel2.setOpaque(false);
-
-        cmdRefresh.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/reload.png"))); // NOI18N
-        cmdRefresh.setToolTipText("Aktualisieren");
-        cmdRefresh.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdRefreshActionPerformed(evt);
-            }
-        });
-
-        org.jdesktop.layout.GroupLayout jPanel2Layout = new org.jdesktop.layout.GroupLayout(jPanel2);
-        jPanel2.setLayout(jPanel2Layout);
-        jPanel2Layout.setHorizontalGroup(
-            jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(jPanel2Layout.createSequentialGroup()
-                .addContainerGap()
-                .add(cmdRefresh)
-                .addContainerGap())
-        );
-        jPanel2Layout.setVerticalGroup(
-            jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(jPanel2Layout.createSequentialGroup()
-                .addContainerGap()
-                .add(cmdRefresh)
-                .addContainerGap())
-        );
 
         cmbCampaign.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
         cmbCampaign.addActionListener(new java.awt.event.ActionListener() {
@@ -882,6 +853,14 @@ public class MassMailPanel extends javax.swing.JPanel implements ThemeableEditor
             }
         });
 
+        cmdRefresh.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_refresh_blue_36dp.png"))); // NOI18N
+        cmdRefresh.setToolTipText("Aktualisieren");
+        cmdRefresh.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdRefreshActionPerformed(evt);
+            }
+        });
+
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -890,17 +869,18 @@ public class MassMailPanel extends javax.swing.JPanel implements ThemeableEditor
                 .addContainerGap()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 894, Short.MAX_VALUE)
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, lblFolder, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .add(layout.createSequentialGroup()
-                        .add(jPanel2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .add(18, 18, 18)
-                        .add(jLabel18)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .add(layout.createSequentialGroup()
-                        .add(jLabel1)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                             .add(layout.createSequentialGroup()
+                                .add(cmdRefresh)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                                .add(jLabel18)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(lblPanelTitle))
+                            .add(layout.createSequentialGroup()
+                                .add(jLabel1)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                                 .add(cmbCampaign, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                                 .add(cmdDeleteCampaign)
@@ -909,9 +889,8 @@ public class MassMailPanel extends javax.swing.JPanel implements ThemeableEditor
                                 .add(18, 18, 18)
                                 .add(cmdAddContacts)
                                 .add(18, 18, 18)
-                                .add(cmdGenerateDocs)
-                                .add(0, 0, Short.MAX_VALUE))
-                            .add(lblFolder, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                                .add(cmdGenerateDocs)))
+                        .add(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -919,11 +898,11 @@ public class MassMailPanel extends javax.swing.JPanel implements ThemeableEditor
             .add(layout.createSequentialGroup()
                 .addContainerGap()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jPanel2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
                         .add(org.jdesktop.layout.GroupLayout.LEADING, lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .add(org.jdesktop.layout.GroupLayout.LEADING, jLabel18, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                        .add(org.jdesktop.layout.GroupLayout.LEADING, jLabel18, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .add(cmdRefresh))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
                     .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                         .add(org.jdesktop.layout.GroupLayout.TRAILING, cmdAddCampaign)
@@ -936,7 +915,7 @@ public class MassMailPanel extends javax.swing.JPanel implements ThemeableEditor
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(lblFolder)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 357, Short.MAX_VALUE)
+                .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 377, Short.MAX_VALUE)
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -1106,7 +1085,6 @@ public class MassMailPanel extends javax.swing.JPanel implements ThemeableEditor
     private javax.swing.JButton cmdRefresh;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel18;
-    private javax.swing.JPanel jPanel2;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JLabel lblFolder;
     protected javax.swing.JLabel lblPanelTitle;

@@ -1100,16 +1100,6 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         jMenuItem1 = new javax.swing.JMenuItem();
         jLabel18 = new javax.swing.JLabel();
         lblPanelTitle = new javax.swing.JLabel();
-        jToolBar1 = new javax.swing.JToolBar();
-        cmdNew = new javax.swing.JButton();
-        jSeparator1 = new javax.swing.JToolBar.Separator();
-        cmdReply = new javax.swing.JButton();
-        jSeparator2 = new javax.swing.JToolBar.Separator();
-        cmdReplyAll = new javax.swing.JButton();
-        jSeparator3 = new javax.swing.JToolBar.Separator();
-        cmdForward = new javax.swing.JButton();
-        jSeparator4 = new javax.swing.JToolBar.Separator();
-        cmdDelete = new javax.swing.JButton();
         jSplitPane2 = new javax.swing.JSplitPane();
         jScrollPane2 = new javax.swing.JScrollPane();
         treeFolders = new javax.swing.JTree();
@@ -1127,9 +1117,18 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         cmbCaseTag = new javax.swing.JComboBox<>();
         chkDocumentTagging = new javax.swing.JCheckBox();
         cmbDocumentTag = new javax.swing.JComboBox<>();
-        jPanel1 = new javax.swing.JPanel();
-        cmdRefresh = new javax.swing.JButton();
         cmbDownloadMails = new javax.swing.JComboBox<>();
+        jToolBar1 = new javax.swing.JToolBar();
+        cmdNew = new javax.swing.JButton();
+        jSeparator1 = new javax.swing.JToolBar.Separator();
+        cmdReply = new javax.swing.JButton();
+        jSeparator2 = new javax.swing.JToolBar.Separator();
+        cmdReplyAll = new javax.swing.JButton();
+        jSeparator3 = new javax.swing.JToolBar.Separator();
+        cmdForward = new javax.swing.JButton();
+        jSeparator4 = new javax.swing.JToolBar.Separator();
+        cmdDelete = new javax.swing.JButton();
+        cmdRefresh = new javax.swing.JButton();
 
         mnuNewFolder.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit_add.png"))); // NOI18N
         mnuNewFolder.setText("neuer Ordner");
@@ -1221,78 +1220,6 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         lblPanelTitle.setFont(new java.awt.Font("Dialog", 1, 24)); // NOI18N
         lblPanelTitle.setForeground(new java.awt.Color(255, 255, 255));
         lblPanelTitle.setText("Posteingang");
-
-        jToolBar1.setFloatable(false);
-        jToolBar1.setRollover(true);
-        jToolBar1.setOpaque(false);
-
-        cmdNew.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/mail_post_to3.png"))); // NOI18N
-        cmdNew.setToolTipText("neue E-Mail schreiben");
-        cmdNew.setFocusable(false);
-        cmdNew.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        cmdNew.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        cmdNew.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdNewActionPerformed(evt);
-            }
-        });
-        jToolBar1.add(cmdNew);
-        jToolBar1.add(jSeparator1);
-
-        cmdReply.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/mail_reply.png"))); // NOI18N
-        cmdReply.setToolTipText("Beantworten");
-        cmdReply.setEnabled(false);
-        cmdReply.setFocusable(false);
-        cmdReply.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        cmdReply.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        cmdReply.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdReplyActionPerformed(evt);
-            }
-        });
-        jToolBar1.add(cmdReply);
-        jToolBar1.add(jSeparator2);
-
-        cmdReplyAll.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/mail_replyall.png"))); // NOI18N
-        cmdReplyAll.setToolTipText("Allen antworten");
-        cmdReplyAll.setEnabled(false);
-        cmdReplyAll.setFocusable(false);
-        cmdReplyAll.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        cmdReplyAll.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        cmdReplyAll.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdReplyAllActionPerformed(evt);
-            }
-        });
-        jToolBar1.add(cmdReplyAll);
-        jToolBar1.add(jSeparator3);
-
-        cmdForward.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/mail_forward.png"))); // NOI18N
-        cmdForward.setToolTipText("Weiterleiten");
-        cmdForward.setEnabled(false);
-        cmdForward.setFocusable(false);
-        cmdForward.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        cmdForward.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        cmdForward.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdForwardActionPerformed(evt);
-            }
-        });
-        jToolBar1.add(cmdForward);
-        jToolBar1.add(jSeparator4);
-
-        cmdDelete.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/agt_stop1.png"))); // NOI18N
-        cmdDelete.setToolTipText("Löschen");
-        cmdDelete.setEnabled(false);
-        cmdDelete.setFocusable(false);
-        cmdDelete.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-        cmdDelete.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-        cmdDelete.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdDeleteActionPerformed(evt);
-            }
-        });
-        jToolBar1.add(cmdDelete);
 
         treeFolders.setDropMode(javax.swing.DropMode.ON);
         treeFolders.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -1437,45 +1364,97 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                         .add(cmbCaseTag, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .add(chkDeleteAfterAction)))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jSplitPane3, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 296, Short.MAX_VALUE))
+                .add(jSplitPane3, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 360, Short.MAX_VALUE))
         );
 
         jSplitPane1.setRightComponent(jPanel2);
 
         jSplitPane2.setRightComponent(jSplitPane1);
 
-        jPanel1.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(255, 255, 255), 2, true));
-        jPanel1.setOpaque(false);
-
-        cmdRefresh.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/reload.png"))); // NOI18N
-        cmdRefresh.setToolTipText("Aktualisieren");
-        cmdRefresh.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdRefreshActionPerformed(evt);
-            }
-        });
-
-        org.jdesktop.layout.GroupLayout jPanel1Layout = new org.jdesktop.layout.GroupLayout(jPanel1);
-        jPanel1.setLayout(jPanel1Layout);
-        jPanel1Layout.setHorizontalGroup(
-            jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(jPanel1Layout.createSequentialGroup()
-                .addContainerGap()
-                .add(cmdRefresh)
-                .addContainerGap())
-        );
-        jPanel1Layout.setVerticalGroup(
-            jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(jPanel1Layout.createSequentialGroup()
-                .addContainerGap()
-                .add(cmdRefresh)
-                .addContainerGap())
-        );
-
         cmbDownloadMails.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
         cmbDownloadMails.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmbDownloadMailsActionPerformed(evt);
+            }
+        });
+
+        jToolBar1.setFloatable(false);
+        jToolBar1.setRollover(true);
+        jToolBar1.setOpaque(false);
+
+        cmdNew.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/mail_post_to3.png"))); // NOI18N
+        cmdNew.setToolTipText("neue E-Mail schreiben");
+        cmdNew.setFocusable(false);
+        cmdNew.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        cmdNew.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        cmdNew.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdNewActionPerformed(evt);
+            }
+        });
+        jToolBar1.add(cmdNew);
+        jToolBar1.add(jSeparator1);
+
+        cmdReply.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/mail_reply.png"))); // NOI18N
+        cmdReply.setToolTipText("Beantworten");
+        cmdReply.setEnabled(false);
+        cmdReply.setFocusable(false);
+        cmdReply.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        cmdReply.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        cmdReply.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdReplyActionPerformed(evt);
+            }
+        });
+        jToolBar1.add(cmdReply);
+        jToolBar1.add(jSeparator2);
+
+        cmdReplyAll.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/mail_replyall.png"))); // NOI18N
+        cmdReplyAll.setToolTipText("Allen antworten");
+        cmdReplyAll.setEnabled(false);
+        cmdReplyAll.setFocusable(false);
+        cmdReplyAll.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        cmdReplyAll.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        cmdReplyAll.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdReplyAllActionPerformed(evt);
+            }
+        });
+        jToolBar1.add(cmdReplyAll);
+        jToolBar1.add(jSeparator3);
+
+        cmdForward.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/mail_forward.png"))); // NOI18N
+        cmdForward.setToolTipText("Weiterleiten");
+        cmdForward.setEnabled(false);
+        cmdForward.setFocusable(false);
+        cmdForward.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        cmdForward.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        cmdForward.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdForwardActionPerformed(evt);
+            }
+        });
+        jToolBar1.add(cmdForward);
+        jToolBar1.add(jSeparator4);
+
+        cmdDelete.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/agt_stop1.png"))); // NOI18N
+        cmdDelete.setToolTipText("Löschen");
+        cmdDelete.setEnabled(false);
+        cmdDelete.setFocusable(false);
+        cmdDelete.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        cmdDelete.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        cmdDelete.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdDeleteActionPerformed(evt);
+            }
+        });
+        jToolBar1.add(cmdDelete);
+
+        cmdRefresh.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_refresh_blue_36dp.png"))); // NOI18N
+        cmdRefresh.setToolTipText("Aktualisieren");
+        cmdRefresh.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdRefreshActionPerformed(evt);
             }
         });
 
@@ -1487,15 +1466,15 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                 .addContainerGap()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(jSplitPane2)
-                    .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
-                        .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(layout.createSequentialGroup()
+                        .add(cmdRefresh)
                         .add(18, 18, 18)
+                        .add(jToolBar1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                         .add(jLabel18)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .add(layout.createSequentialGroup()
-                        .add(jToolBar1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(lblPanelTitle)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .add(cmbDownloadMails, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap())
         );
@@ -1504,16 +1483,14 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
             .add(layout.createSequentialGroup()
                 .addContainerGap()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
-                        .add(org.jdesktop.layout.GroupLayout.LEADING, lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .add(org.jdesktop.layout.GroupLayout.LEADING, jLabel18, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                    .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
+                        .add(org.jdesktop.layout.GroupLayout.TRAILING, jLabel18, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .add(org.jdesktop.layout.GroupLayout.TRAILING, lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .add(jToolBar1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .add(cmbDownloadMails, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 46, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                    .add(cmdRefresh))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(cmbDownloadMails, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(jToolBar1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jSplitPane2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 459, Short.MAX_VALUE)
+                .add(jSplitPane2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 523, Short.MAX_VALUE)
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -2935,7 +2912,6 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
     private javax.swing.JButton cmdReplyAll;
     private javax.swing.JLabel jLabel18;
     private javax.swing.JMenuItem jMenuItem1;
-    private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;

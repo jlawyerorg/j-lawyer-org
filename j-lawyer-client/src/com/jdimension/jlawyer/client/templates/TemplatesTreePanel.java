@@ -894,8 +894,6 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
         lblPanelTitle = new javax.swing.JLabel();
         cmdNewODT = new javax.swing.JButton();
         cmdNewODS = new javax.swing.JButton();
-        jPanel1 = new javax.swing.JPanel();
-        cmdRefresh = new javax.swing.JButton();
         cmdAddExisting = new javax.swing.JButton();
         jSplitPane2 = new javax.swing.JSplitPane();
         pnlPreview = new javax.swing.JPanel();
@@ -904,6 +902,7 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
         lstTemplates = new javax.swing.JList();
         jScrollPane2 = new javax.swing.JScrollPane();
         treeFolders = new javax.swing.JTree();
+        cmdRefresh = new javax.swing.JButton();
 
         mnuNewFolder.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit_add.png"))); // NOI18N
         mnuNewFolder.setText("neuer Ordner");
@@ -990,34 +989,6 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
             }
         });
 
-        jPanel1.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(255, 255, 255), 2, true));
-        jPanel1.setOpaque(false);
-
-        cmdRefresh.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/reload.png"))); // NOI18N
-        cmdRefresh.setToolTipText("Aktualisieren");
-        cmdRefresh.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdRefreshActionPerformed(evt);
-            }
-        });
-
-        org.jdesktop.layout.GroupLayout jPanel1Layout = new org.jdesktop.layout.GroupLayout(jPanel1);
-        jPanel1.setLayout(jPanel1Layout);
-        jPanel1Layout.setHorizontalGroup(
-            jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(jPanel1Layout.createSequentialGroup()
-                .addContainerGap()
-                .add(cmdRefresh)
-                .addContainerGap())
-        );
-        jPanel1Layout.setVerticalGroup(
-            jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(jPanel1Layout.createSequentialGroup()
-                .addContainerGap()
-                .add(cmdRefresh)
-                .addContainerGap())
-        );
-
         cmdAddExisting.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit_add.png"))); // NOI18N
         cmdAddExisting.setText("Hinzufügen");
         cmdAddExisting.addActionListener(new java.awt.event.ActionListener() {
@@ -1078,6 +1049,14 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
 
         jSplitPane2.setLeftComponent(jSplitPane1);
 
+        cmdRefresh.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_refresh_blue_36dp.png"))); // NOI18N
+        cmdRefresh.setToolTipText("Aktualisieren");
+        cmdRefresh.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdRefreshActionPerformed(evt);
+            }
+        });
+
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -1087,18 +1066,19 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
                     .add(jSplitPane2)
                     .add(layout.createSequentialGroup()
-                        .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .add(18, 18, 18)
-                        .add(jLabel18)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 737, Short.MAX_VALUE))
-                    .add(layout.createSequentialGroup()
-                        .add(0, 0, Short.MAX_VALUE)
+                        .add(0, 450, Short.MAX_VALUE)
                         .add(cmdAddExisting)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(cmdNewODS)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(cmdNewODT)))
+                        .add(cmdNewODT))
+                    .add(layout.createSequentialGroup()
+                        .add(cmdRefresh)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                        .add(jLabel18)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(lblPanelTitle)
+                        .add(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -1106,12 +1086,12 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
             .add(layout.createSequentialGroup()
                 .addContainerGap()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
                         .add(org.jdesktop.layout.GroupLayout.LEADING, lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .add(org.jdesktop.layout.GroupLayout.LEADING, jLabel18, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                        .add(org.jdesktop.layout.GroupLayout.LEADING, jLabel18, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .add(cmdRefresh))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jSplitPane2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 398, Short.MAX_VALUE)
+                .add(jSplitPane2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 414, Short.MAX_VALUE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(cmdNewODT)
@@ -1666,7 +1646,6 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
     private javax.swing.JButton cmdNewODT;
     private javax.swing.JButton cmdRefresh;
     private javax.swing.JLabel jLabel18;
-    private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JSplitPane jSplitPane1;

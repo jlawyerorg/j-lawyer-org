@@ -763,6 +763,10 @@ public class FormPluginEntryPanel extends javax.swing.JPanel implements EventCon
     public FormPlugin getEntry() {
         return this.plugin;
     }
+    
+    public void setVersionOnServer(String version) {
+        this.lblVersionInstalled.setText(version);
+    }
 
 //    public AddressBean getAdress() {
 //        return this.a;
@@ -770,7 +774,7 @@ public class FormPluginEntryPanel extends javax.swing.JPanel implements EventCon
     public void setEntry(FormPlugin plugin) {
         this.lblName.setText(plugin.getName());
         this.lblDescription.setText(plugin.getDescription());
-        this.lblVersion.setText(plugin.getVersion());
+        this.lblVersionAvailable.setText(plugin.getVersion());
         if(plugin.getType().equalsIgnoreCase(FormPlugin.TYPE_LIBRARY)) {
             this.lblType.setText("Bibliothek");
         } else if(plugin.getType().equalsIgnoreCase(FormPlugin.TYPE_PLUGIN)) {
@@ -795,9 +799,12 @@ public class FormPluginEntryPanel extends javax.swing.JPanel implements EventCon
         lblName = new javax.swing.JLabel();
         cmdActions = new javax.swing.JButton();
         lblDescription = new javax.swing.JLabel();
-        lblVersion = new javax.swing.JLabel();
+        lblVersionAvailable = new javax.swing.JLabel();
         lblState = new javax.swing.JLabel();
         lblType = new javax.swing.JLabel();
+        lblUpdated = new javax.swing.JLabel();
+        jLabel1 = new javax.swing.JLabel();
+        lblVersionInstalled = new javax.swing.JLabel();
 
         mnuDownload.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/fileimport.png"))); // NOI18N
         mnuDownload.setText("installieren");
@@ -846,11 +853,17 @@ public class FormPluginEntryPanel extends javax.swing.JPanel implements EventCon
 
         lblDescription.setText("Beschreibung");
 
-        lblVersion.setText("Version");
+        lblVersionAvailable.setText("Version");
 
         lblState.setText("Status");
 
         lblType.setText("jLabel1");
+
+        lblUpdated.setText("installiert:");
+
+        jLabel1.setText("verfügbar:");
+
+        lblVersionInstalled.setText("jLabel2");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -864,8 +877,14 @@ public class FormPluginEntryPanel extends javax.swing.JPanel implements EventCon
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(lblName)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(lblVersion)
-                        .addGap(0, 395, Short.MAX_VALUE))
+                        .addComponent(jLabel1)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(lblVersionAvailable)
+                        .addGap(18, 18, 18)
+                        .addComponent(lblUpdated)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(lblVersionInstalled)
+                        .addGap(0, 166, Short.MAX_VALUE))
                     .addComponent(lblDescription, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(lblState)
@@ -882,7 +901,10 @@ public class FormPluginEntryPanel extends javax.swing.JPanel implements EventCon
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(lblName)
-                            .addComponent(lblVersion))
+                            .addComponent(lblVersionAvailable)
+                            .addComponent(lblUpdated)
+                            .addComponent(jLabel1)
+                            .addComponent(lblVersionInstalled))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(lblDescription)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -938,6 +960,10 @@ public class FormPluginEntryPanel extends javax.swing.JPanel implements EventCon
 //        this.cmdToAddressActionPerformed(null);
     }//GEN-LAST:event_lblNameMouseClicked
 
+    public void setLastUpdated(String updated) {
+        this.lblUpdated.setText(updated);
+    }
+    
     public void install() {
         this.mnuDownloadActionPerformed(null);
     }
@@ -951,9 +977,11 @@ public class FormPluginEntryPanel extends javax.swing.JPanel implements EventCon
             if (this.state == STATE_NOT_INSTALLED) {
                 this.setState(STATE_INSTALLING);
                 this.plugin.install();
+                this.lblVersionInstalled.setText(this.lblVersionAvailable.getText());
             } else if (state == STATE_INSTALLED_UPDATEAVAILABLE) {
                 this.setState(STATE_INSTALLING);
                 this.plugin.update();
+                this.lblVersionInstalled.setText(this.lblVersionAvailable.getText());
             }
             this.setState(STATE_INSTALLED);
         } catch (Exception ex) {
@@ -965,11 +993,14 @@ public class FormPluginEntryPanel extends javax.swing.JPanel implements EventCon
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPopupMenu actionPopup;
     private javax.swing.JButton cmdActions;
+    private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel lblDescription;
     private javax.swing.JLabel lblName;
     private javax.swing.JLabel lblState;
     private javax.swing.JLabel lblType;
-    private javax.swing.JLabel lblVersion;
+    private javax.swing.JLabel lblUpdated;
+    private javax.swing.JLabel lblVersionAvailable;
+    private javax.swing.JLabel lblVersionInstalled;
     private javax.swing.JMenuItem mnuDownload;
     private javax.swing.JMenuItem mnuRemove;
     // End of variables declaration//GEN-END:variables

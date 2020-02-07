@@ -56,11 +56,11 @@
           <Group type="102" alignment="0" attributes="0">
               <EmptySpace min="-2" max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Component id="desktopWidgetPanel2" alignment="0" min="-2" max="-2" attributes="0"/>
                   <Component id="messagesWidget" alignment="0" min="-2" max="-2" attributes="0"/>
                   <Component id="lblDay" min="-2" max="-2" attributes="0"/>
+                  <Component id="desktopWidgetPanel2" min="-2" max="-2" attributes="0"/>
               </Group>
-              <EmptySpace max="-2" attributes="0"/>
+              <EmptySpace min="-2" pref="8" max="-2" attributes="0"/>
               <Component id="jSplitPane1" max="32767" attributes="0"/>
               <EmptySpace min="-2" pref="4" max="-2" attributes="0"/>
               <Component id="systemInformationWidget" min="-2" max="-2" attributes="0"/>
@@ -820,7 +820,7 @@
                       <Component id="lblUserIcon" max="32767" attributes="0"/>
                       <Component id="lblUserName" max="32767" attributes="0"/>
                   </Group>
-                  <EmptySpace pref="14" max="32767" attributes="0"/>
+                  <EmptySpace max="32767" attributes="0"/>
               </Group>
           </Group>
         </DimensionLayout>
