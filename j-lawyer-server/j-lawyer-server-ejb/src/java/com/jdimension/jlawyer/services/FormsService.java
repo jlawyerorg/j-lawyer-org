@@ -917,6 +917,9 @@ public class FormsService implements FormsServiceRemote, FormsServiceLocal {
             throw new Exception("Falldatenblatt " + formId + " ist nicht vorhanden!");
         
         List<ArchiveFileFormEntriesBean> existingEntries=this.caseFormEntriesFacade.findByForm(afb);
+        if(existingEntries==null) {
+            existingEntries=new ArrayList<ArchiveFileFormEntriesBean>();
+        }
         return existingEntries;
     }
 
