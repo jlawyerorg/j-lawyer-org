@@ -714,7 +714,12 @@ public class FormInstancePanel extends javax.swing.JPanel {
             List<ArchiveFileFormEntriesBean> entries=locator.lookupFormsServiceRemote().getFormEntries(this.form.getId());
             Hashtable placeHolderValues=new Hashtable();
             for(ArchiveFileFormEntriesBean entry: entries) {
-                placeHolderValues.put(entry.getPlaceHolder(), entry.getStringValue());
+                if(entry.getPlaceHolder()==null || "".equals(entry.getPlaceHolder())) {
+                    log.warn("Form with id " + this.form.getId() + " has an entry with a null placeholder, which is invalid!");
+                } else {
+                    placeHolderValues.put(entry.getPlaceHolder(), entry.getStringValue());
+                }
+                
             }
             this.plugin.setPlaceHolderValues(placeHolderValues);
             
