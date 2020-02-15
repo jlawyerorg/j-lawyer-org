@@ -720,7 +720,7 @@ public class FormInstancePanel extends javax.swing.JPanel {
             
         } catch (Throwable t) {
             log.error("Error removing form", t);
-            JOptionPane.showMessageDialog(this, "Fehler beim Löschen des Falldatenblattes: " + t.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Fehler beim Laden des Falldatenblattes: " + t.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
         }
         
     }
