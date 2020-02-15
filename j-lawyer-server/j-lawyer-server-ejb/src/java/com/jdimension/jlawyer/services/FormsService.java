@@ -889,6 +889,23 @@ public class FormsService implements FormsServiceRemote, FormsServiceLocal {
     @RolesAllowed({"writeArchiveFileRole"})
     public void setFormEntries(String formId, List<ArchiveFileFormEntriesBean> formEntries) throws Exception {
         
+        if(formId==null) {
+            log.error("Form id cannot be null when setting form entries");
+            throw new Exception ("Form id cannot be null when setting form entries");
+        }
+        
+        if(formEntries==null) {
+            log.error("List of form entries to update for form id " + formId + " is empty. Skipping...");
+            throw new Exception("List of form entries to update for form id " + formId + " is empty. Skipping...");
+        }
+        
+        for(ArchiveFileFormEntriesBean newEntry: formEntries) {
+            if(newEntry.getPlaceHolder()==null || "".equals(newEntry.getPlaceHolder())) {
+                log.error("At least one entry has an empty placeholder when updating form entries for form " + formId);
+                throw new Exception("At least one entry has an empty placeholder when updating form entries for form " + formId);
+            }
+        }
+        
         ArchiveFileFormsBean afb=this.caseFormsFacade.find(formId);
         if(afb==null)
             throw new Exception("Falldatenblatt " + formId + " ist nicht vorhanden!");
