@@ -779,6 +779,11 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
             InitialContext ic = new InitialContext();
             ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal");
             ArchiveFileBean afb = cases.getArchiveFile(id);
+            if(afb==null) {
+                log.error("There is no case with id " + id);
+                Response res = Response.serverError().build();
+                return res;
+            }
             RestfulCaseV1 c=new RestfulCaseV1();
             c.setArchived(afb.getArchived());
             c.setAssistant(afb.getAssistant());
