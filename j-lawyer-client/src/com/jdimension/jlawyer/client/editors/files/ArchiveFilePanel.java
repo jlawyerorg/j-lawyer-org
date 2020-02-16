@@ -3843,6 +3843,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                     return;
                 }
             }
+        } else {
+            if(this.cmdSave.isEnabled()) {
+                this.save(false);
+                this.setArchiveFileDTO(this.dto);
+            }
         }
     }//GEN-LAST:event_chkArchivedItemStateChanged
 
@@ -5845,10 +5850,15 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
 
         return true;
+    
     }
-
     @Override
     public boolean save() {
+        return this.save(true);
+    }
+
+    
+    public boolean save(boolean checkForOpenReviews) {
         if (this.txtName.getText() == null || "".equals(this.txtName.getText())) {
             JOptionPane.showMessageDialog(this, "Es muß mindestens ein Kurzrubrum angegeben werden, um eine Akte zu speichern.", "Akten - Gültigkeitsprüfung", JOptionPane.INFORMATION_MESSAGE);
             return false;
@@ -5905,12 +5915,14 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 }
             }
 
-            // reviews need to be valid for NON-archived cases only
-            if (!reviewsValid && !this.chkArchived.isSelected()) {
-                int response = JOptionPane.showOptionDialog(this, "Keine Wiedervorlage oder keine offene Wiedervorlage in der Zukunft - trotzdem speichern?", "Akten - Gültigkeitsprüfung", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, null, null, null);
-                if (response == JOptionPane.NO_OPTION) {
-                    EditorsRegistry.getInstance().clearStatus();
-                    return false;
+            if (checkForOpenReviews) {
+                // reviews need to be valid for NON-archived cases only
+                if (!reviewsValid && !this.chkArchived.isSelected()) {
+                    int response = JOptionPane.showOptionDialog(this, "Keine Wiedervorlage oder keine offene Wiedervorlage in der Zukunft - trotzdem speichern?", "Akten - Gültigkeitsprüfung", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, null, null, null);
+                    if (response == JOptionPane.NO_OPTION) {
+                        EditorsRegistry.getInstance().clearStatus();
+                        return false;
+                    }
                 }
             }
 
