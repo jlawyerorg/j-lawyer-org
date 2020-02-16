@@ -914,7 +914,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
         for (PostBox pb : inboxes) {
             EditorsRegistry.getInstance().updateStatus("Lade beA-Postfach" + pb.getSafeId() + "...");
             Identity identity = bea.getIdentity(pb.getSafeId());
-            DefaultMutableTreeNode pbNode = new DefaultMutableTreeNode(identity);
+            SortedBeaFolderNode pbNode = new SortedBeaFolderNode(identity);
             rootNode.add(pbNode);
             Collection<org.jlawyer.bea.model.Folder> folders = bea.getFolderStructure(pb.getSafeId());
             Hashtable folderTable = new Hashtable();
@@ -925,7 +925,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                     inboxFolders.put(pb.getSafeId(), f);
                 }
                 folderTable.put(f.getId(), f);
-                nodeTable.put(f.getId(), new DefaultMutableTreeNode(f));
+                nodeTable.put(f.getId(), new SortedBeaFolderNode(f));
 //                for (Object key : folderTable.keySet()) {
 //                    DefaultMutableTreeNode currentNode = (DefaultMutableTreeNode) nodeTable.get(key);
 //                    org.jlawyer.bea.model.Folder currentFolder = (org.jlawyer.bea.model.Folder) folderTable.get(key);
@@ -1628,7 +1628,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
             BeaAccess bea = BeaAccess.getInstance();
             org.jlawyer.bea.model.Folder newFolder = bea.addFolder(newNameObject.toString(), f.getId());
 
-            DefaultMutableTreeNode newTn = new DefaultMutableTreeNode(newFolder);
+            SortedBeaFolderNode newTn = new SortedBeaFolderNode(newFolder);
             //tn.add(newTn);
             DefaultTreeModel dm = (DefaultTreeModel) this.treeFolders.getModel();
             dm.insertNodeInto(newTn, tn, 0);
