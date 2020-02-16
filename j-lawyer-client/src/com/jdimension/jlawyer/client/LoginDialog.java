@@ -681,6 +681,7 @@ import java.io.InputStream;
 import java.util.Properties;
 import javax.ejb.EJBAccessException;
 import javax.naming.Context;
+import javax.swing.DefaultComboBoxModel;
 import javax.swing.ImageIcon;
 import javax.swing.JOptionPane;
 import javax.swing.event.DocumentEvent;
@@ -763,13 +764,13 @@ public class LoginDialog extends javax.swing.JFrame {
             this.jLabel13.setFont(font.deriveFont(Font.BOLD, 14));
             this.jLabel14.setFont(font.deriveFont(Font.BOLD, 14));
             
-            this.txtServer.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
+            this.cmbServer.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
             this.txtPort.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
             this.txtHttpPort.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
             this.txtBoxPassword.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
             this.txtCurrentHost.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
             
-            this.txtServer.setFont(font.deriveFont(Font.BOLD, 12));
+            this.cmbServer.setFont(font.deriveFont(Font.BOLD, 12));
             this.txtPort.setFont(font.deriveFont(Font.BOLD, 12));
             this.txtHttpPort.setFont(font.deriveFont(Font.BOLD, 12));
             this.txtBoxPassword.setFont(font.deriveFont(Font.BOLD, 12));
@@ -781,42 +782,24 @@ public class LoginDialog extends javax.swing.JFrame {
         
         this.boxProgress.setVisible(false);
 
-        this.txtServer.getDocument().addDocumentListener(new DocumentListener() {
-            public void changedUpdate(DocumentEvent e) {
-                warnDemoConnection();
-            }
-
-            public void removeUpdate(DocumentEvent e) {
-                warnDemoConnection();
-            }
-
-            public void insertUpdate(DocumentEvent e) {
-                warnDemoConnection();
-            }
-
-            public void warnDemoConnection() {
-                if (!SystemUtils.launchedThroughWebstart()) {
-                    if ("www.j-lawyer.org".equalsIgnoreCase(txtServer.getText()) || "j-lawyer.org".equalsIgnoreCase(txtServer.getText())) {
-                        lblHint.setText(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/LoginDialog").getString("msg.warning.demosystem"));
-                    } else {
-                        lblHint.setText("");
-                    }
-                }
-            }
-        });
-
         this.initialStatus = initialStatus;
         ClientSettings settings = ClientSettings.getInstance();
-        this.txtServer.setText(settings.getConfiguration(settings.CONF_LASTSERVER, "localhost"));
+        String allServers=settings.getConfiguration(settings.CONF_LASTSERVERLIST, "localhost");
+        DefaultComboBoxModel allServersModel=new DefaultComboBoxModel();
+        for(String s: allServers.split(",")) {
+            allServersModel.addElement(s);
+        }
+        this.cmbServer.setModel(allServersModel);
+        this.cmbServer.setSelectedItem(settings.getConfiguration(settings.CONF_LASTSERVER, "localhost"));
         this.txtPort.setText(settings.getConfiguration(settings.CONF_LASTPORT, "8080"));
         this.txtHttpPort.setText(settings.getConfiguration(settings.CONF_LASTHTTPPORT, "8080"));
         this.txtUser.setText(settings.getConfiguration(settings.CONF_LASTUSER, ""));
 
         BoxAccess box = new BoxAccess(this.txtBoxPassword.getText());
-        box.checkReachable(jTabbedPane1, 2, this.txtServer.getText());
+        box.checkReachable(jTabbedPane1, 2, this.cmbServer.getSelectedItem().toString());
 
         if (cmdHost != null && cmdPort != null && cmdHttpPort != null && cmdUser != null && cmdPassword != null) {
-            this.txtServer.setText(cmdHost);
+            this.cmbServer.setSelectedItem(cmdHost);
             this.txtPort.setText(cmdPort);
             this.txtHttpPort.setText(cmdHttpPort);
             this.txtUser.setText(cmdUser);
@@ -853,10 +836,10 @@ public class LoginDialog extends javax.swing.JFrame {
         jPanel2 = new javax.swing.JPanel();
         jLabel1 = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
-        txtServer = new javax.swing.JTextField();
         txtPort = new javax.swing.JTextField();
         jLabel5 = new javax.swing.JLabel();
         txtHttpPort = new javax.swing.JTextField();
+        cmbServer = new javax.swing.JComboBox<>();
         jPanel3 = new javax.swing.JPanel();
         jLabel6 = new javax.swing.JLabel();
         txtBoxPassword = new javax.swing.JPasswordField();
@@ -992,19 +975,19 @@ public class LoginDialog extends javax.swing.JFrame {
         jLabel2.setForeground(new java.awt.Color(255, 255, 255));
         jLabel2.setText(bundle.getString("label.port.jndi")); // NOI18N
 
-        txtServer.setText("localhost");
-        txtServer.addFocusListener(new java.awt.event.FocusAdapter() {
-            public void focusLost(java.awt.event.FocusEvent evt) {
-                txtServerFocusLost(evt);
-            }
-        });
-
         txtPort.setText("8080");
 
         jLabel5.setForeground(new java.awt.Color(255, 255, 255));
         jLabel5.setText(bundle.getString("label.port.http")); // NOI18N
 
         txtHttpPort.setText("8080");
+
+        cmbServer.setEditable(true);
+        cmbServer.addFocusListener(new java.awt.event.FocusAdapter() {
+            public void focusLost(java.awt.event.FocusEvent evt) {
+                cmbServerFocusLost(evt);
+            }
+        });
 
         org.jdesktop.layout.GroupLayout jPanel2Layout = new org.jdesktop.layout.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
@@ -1019,17 +1002,17 @@ public class LoginDialog extends javax.swing.JFrame {
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(txtPort, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 477, Short.MAX_VALUE)
-                    .add(txtServer, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 477, Short.MAX_VALUE)
-                    .add(txtHttpPort, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 477, Short.MAX_VALUE))
+                    .add(txtHttpPort, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 477, Short.MAX_VALUE)
+                    .add(cmbServer, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel2Layout.createSequentialGroup()
-                .add(48, 48, 48)
+                .add(45, 45, 45)
                 .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(jLabel1)
-                    .add(txtServer, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                    .add(cmbServer, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(jLabel2)
@@ -1038,7 +1021,7 @@ public class LoginDialog extends javax.swing.JFrame {
                 .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(jLabel5)
                     .add(txtHttpPort, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(214, Short.MAX_VALUE))
+                .addContainerGap(212, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab(bundle.getString("tab.title.connection"), jPanel2); // NOI18N
@@ -1283,12 +1266,12 @@ public class LoginDialog extends javax.swing.JFrame {
         }
 
         BoxAccess box = new BoxAccess(this.txtBoxPassword.getText());
-        box.restore(lblBoxOutput, boxProgress, this.txtServer.getText(), dbPassword.toString(), encPassword.toString());
+        box.restore(lblBoxOutput, boxProgress, this.cmbServer.getSelectedItem().toString(), dbPassword.toString(), encPassword.toString());
     }//GEN-LAST:event_cmdRestoreActionPerformed
 
     private void cmdBoxShutdownActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdBoxShutdownActionPerformed
         BoxAccess box = new BoxAccess(this.txtBoxPassword.getText());
-        box.boxReboot(lblBoxOutput, boxProgress, this.txtServer.getText());
+        box.boxReboot(lblBoxOutput, boxProgress, this.cmbServer.getSelectedItem().toString());
     }//GEN-LAST:event_cmdBoxShutdownActionPerformed
 
     private void cmdScanNetworkActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdScanNetworkActionPerformed
@@ -1297,28 +1280,24 @@ public class LoginDialog extends javax.swing.JFrame {
     }//GEN-LAST:event_cmdScanNetworkActionPerformed
 
     private void cmdMgmtConsoleActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdMgmtConsoleActionPerformed
-        DesktopUtils.openBrowser(BoxAccess.getManagementConsoleUrl(this.txtServer.getText()));
+        DesktopUtils.openBrowser(BoxAccess.getManagementConsoleUrl(this.cmbServer.getSelectedItem().toString()));
     }//GEN-LAST:event_cmdMgmtConsoleActionPerformed
 
     private void cmdBoxRebootActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdBoxRebootActionPerformed
         BoxAccess box = new BoxAccess(this.txtBoxPassword.getText());
-        box.boxReboot(lblBoxOutput, boxProgress, this.txtServer.getText());
+        box.boxReboot(lblBoxOutput, boxProgress, this.cmbServer.getSelectedItem().toString());
     }//GEN-LAST:event_cmdBoxRebootActionPerformed
 
     private void cmdBoxServiceRestartActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdBoxServiceRestartActionPerformed
         BoxAccess box = new BoxAccess(this.txtBoxPassword.getText());
-        box.serviceRestart(lblBoxOutput, boxProgress, this.txtServer.getText());
+        box.serviceRestart(lblBoxOutput, boxProgress, this.cmbServer.getSelectedItem().toString());
     }//GEN-LAST:event_cmdBoxServiceRestartActionPerformed
 
     private void cmdBoxCheckActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdBoxCheckActionPerformed
         BoxAccess box = new BoxAccess(this.txtBoxPassword.getText());
 
-        box.serviceCheck(lblBoxOutput, boxProgress, this.txtServer.getText());
+        box.serviceCheck(lblBoxOutput, boxProgress, this.cmbServer.getSelectedItem().toString());
     }//GEN-LAST:event_cmdBoxCheckActionPerformed
-
-    private void txtServerFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtServerFocusLost
-        txtServer.setText(txtServer.getText().trim());
-    }//GEN-LAST:event_txtServerFocusLost
 
     private void pwPasswordKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_pwPasswordKeyPressed
         if (evt.getKeyCode() == evt.VK_ENTER) {
@@ -1351,7 +1330,7 @@ public class LoginDialog extends javax.swing.JFrame {
         // begin: for JMS only
         properties.put(Context.INITIAL_CONTEXT_FACTORY, "org.wildfly.naming.client.WildFlyInitialContextFactory");
         //properties.put(Context.INITIAL_CONTEXT_FACTORY, "org.wildfly.naming.client.WildFlyInitialContextFactory");
-        properties.put(Context.PROVIDER_URL, "http-remoting://" + this.txtServer.getText() + ":" + this.txtPort.getText());
+        properties.put(Context.PROVIDER_URL, "http-remoting://" + this.cmbServer.getSelectedItem().toString() + ":" + this.txtPort.getText());
         properties.put(Context.SECURITY_PRINCIPAL, this.txtUser.getText());
         properties.put(Context.SECURITY_CREDENTIALS, this.pwPassword.getText());
         properties.put("jboss.naming.client.connect.options.org.xnio.Options.SASL_POLICY_NOPLAINTEXT", "false");
@@ -1418,7 +1397,14 @@ public class LoginDialog extends javax.swing.JFrame {
 
         settings.setConfiguration(settings.CONF_LASTPORT, this.txtPort.getText());
         settings.setConfiguration(settings.CONF_LASTHTTPPORT, this.txtHttpPort.getText());
-        settings.setConfiguration(settings.CONF_LASTSERVER, this.txtServer.getText());
+        
+        String allServers=settings.getConfiguration(settings.CONF_LASTSERVERLIST, "localhost");
+        if(allServers.indexOf(this.cmbServer.getSelectedItem().toString())<0) {
+            allServers=allServers+","+this.cmbServer.getSelectedItem().toString();
+        }
+        
+        settings.setConfiguration(settings.CONF_LASTSERVERLIST, allServers);
+        settings.setConfiguration(settings.CONF_LASTSERVER, this.cmbServer.getSelectedItem().toString());
         settings.setConfiguration(settings.CONF_LASTUSER, this.txtUser.getText());
 
         String serverVersion = VersionUtils.getServerVersion();
@@ -1451,6 +1437,10 @@ public class LoginDialog extends javax.swing.JFrame {
         System.exit(0);
     }//GEN-LAST:event_cmdCancelActionPerformed
 
+    private void cmbServerFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_cmbServerFocusLost
+        cmbServer.setSelectedItem(cmbServer.getSelectedItem().toString().trim());
+    }//GEN-LAST:event_cmbServerFocusLost
+
     /**
      * @param args the command line arguments
      */
@@ -1465,6 +1455,7 @@ public class LoginDialog extends javax.swing.JFrame {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private com.jdimension.jlawyer.client.StyledPanel bgPanel;
     private javax.swing.JProgressBar boxProgress;
+    private javax.swing.JComboBox<String> cmbServer;
     private javax.swing.JButton cmdBoxCheck;
     private javax.swing.JButton cmdBoxReboot;
     private javax.swing.JButton cmdBoxServiceRestart;
@@ -1500,7 +1491,6 @@ public class LoginDialog extends javax.swing.JFrame {
     private javax.swing.JTextField txtCurrentHost;
     private javax.swing.JTextField txtHttpPort;
     private javax.swing.JTextField txtPort;
-    private javax.swing.JTextField txtServer;
     private javax.swing.JTextField txtUser;
     // End of variables declaration//GEN-END:variables
 

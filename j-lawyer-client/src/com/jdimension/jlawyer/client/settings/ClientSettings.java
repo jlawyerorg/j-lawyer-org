@@ -682,6 +682,7 @@ import org.apache.log4j.Logger;
 public class ClientSettings {
     
     public static final String CONF_LASTSERVER="connection.lastserver";
+    public static final String CONF_LASTSERVERLIST="connection.lastserverlist";
     public static final String CONF_LASTPORT="connection.lastport";
     public static final String CONF_LASTHTTPPORT="connection.lasthttpport";
     public static final String CONF_LASTUSER="connection.lastuser";
