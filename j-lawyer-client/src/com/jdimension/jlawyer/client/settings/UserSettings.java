@@ -690,7 +690,7 @@ public class UserSettings {
     public static final String ROLE_READADDRESS = "readAddressRole";
     public static final String ROLE_WRITEADDRESS = "writeAddressRole";
     
-    public static final String CONF_SEARCH_WITHARCHIVE="false";
+    public static final String CONF_SEARCH_WITHARCHIVE="user.conf.search.witharchive";
 
     private static final Logger log = Logger.getLogger(UserSettings.class.getName());
     private static UserSettings instance = null;
