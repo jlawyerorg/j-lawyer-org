@@ -669,7 +669,6 @@ import com.jdimension.jlawyer.client.configuration.UserListCellRenderer;
 import com.jdimension.jlawyer.client.mail.*;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.documents.SearchAndAssignDialog;
-import com.jdimension.jlawyer.client.editors.files.AddressBeanListCellRenderer;
 import com.jdimension.jlawyer.client.editors.files.OptionsComboBoxModel;
 import com.jdimension.jlawyer.client.editors.files.PartiesSelectionListener;
 import com.jdimension.jlawyer.client.events.EventBroker;
@@ -687,6 +686,7 @@ import com.jdimension.jlawyer.client.utils.PlaceHolderUtils;
 import com.jdimension.jlawyer.client.utils.SelectAttachmentDialog;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.client.utils.TableUtils;
+import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.email.EmailTemplate;
 import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
@@ -698,6 +698,14 @@ import com.jdimension.jlawyer.persistence.PartyTypeBean;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Color;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
+import java.awt.dnd.DnDConstants;
+import java.awt.dnd.DropTarget;
+import java.awt.dnd.DropTargetDragEvent;
+import java.awt.dnd.DropTargetDropEvent;
+import java.awt.dnd.DropTargetEvent;
+import java.awt.dnd.DropTargetListener;
 import java.awt.event.ActionEvent;
 import java.io.File;
 import java.text.DecimalFormat;
@@ -708,6 +716,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.Hashtable;
 import java.util.List;
+import java.util.TooManyListenersException;
 import javax.swing.*;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
@@ -735,9 +744,12 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
     private BeaListItem authority = null;
 
     private ArrayList<ArchiveFileAddressesBean> caseInvolvements = null;
-    
+
     private Collection<PartyTypeBean> allPartyTypes = new ArrayList<PartyTypeBean>();
     private List<String> allPartyTypesPlaceholders = new ArrayList<String>();
+
+    private DropTarget dropTarget;
+    private DropTargetHandler dropTargetHandler;
 
     /**
      * Creates new form SendEmailDialog
@@ -745,9 +757,9 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
     public SendBeaMessageDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
-        
+
         ComponentUtils.decorateSplitPane(jSplitPane1);
-        
+
         this.pnlParties.initialize(new ArrayList<ArchiveFileAddressesBean>());
         this.pnlParties.setListener(this);
 
@@ -829,7 +841,7 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Fehler beim Erstellen der Vorlage: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
         }
-        
+
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
@@ -924,6 +936,14 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
                 //System.out.println("" + evt.getColumn() + " " + evt.getFirstRow() + " " + evt.getLastRow());
             }
         });
+
+        try {
+            getMyDropTarget().addDropTargetListener(getDropTargetHandler());
+        } catch (TooManyListenersException ex) {
+            log.error(ex);
+        }
+        // required to be able to drop on an empty table
+        this.tblAttachments.setFillsViewportHeight(true);
 
     }
 
@@ -1312,6 +1332,7 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
                 return canEdit [columnIndex];
             }
         });
+        tblAttachments.setDragEnabled(true);
         tblAttachments.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mousePressed(java.awt.event.MouseEvent evt) {
                 tblAttachmentsMousePressed(evt);
@@ -1796,16 +1817,17 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
         for (int i = 0; i < this.tblAttachments.getRowCount(); i++) {
             String name = this.tblAttachments.getValueAt(i, 5).toString();
             String alias = this.tblAttachments.getValueAt(i, 4).toString();
-            Boolean schriftsatz=(Boolean)this.tblAttachments.getValueAt(i, 0);
+            Boolean schriftsatz = (Boolean) this.tblAttachments.getValueAt(i, 0);
             for (String fileName : this.attachments.keySet()) {
                 if (name.equals(fileName)) {
                     BeaAttachmentMetadata meta = new BeaAttachmentMetadata();
                     meta.setUrl(this.attachments.get(fileName));
                     meta.setAlias(alias);
-                    if(schriftsatz)
+                    if (schriftsatz) {
                         meta.setType(Attachment.TYPE_SCHRIFTSATZ);
-                    else
+                    } else {
                         meta.setType(Attachment.TYPE_ATTACHMENT);
+                    }
                     attachmentMetadata.add(meta);
                 }
             }
@@ -1882,24 +1904,6 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
     }
 
     private void cmdAttachActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdAttachActionPerformed
-//        JFileChooser chooser = new JFileChooser();
-//        chooser.setMultiSelectionEnabled(true);
-//        int returnVal = chooser.showOpenDialog(this);
-//        if (returnVal == JFileChooser.APPROVE_OPTION) {
-//            try {
-//                //this.txtImportFile.setText(chooser.getSelectedFile().getCanonicalPath());
-//                File[] files = chooser.getSelectedFiles();
-//                for (File f : files) {
-//                    byte[] data = FileUtils.readFile(f);
-//                    String tmpUrl = FileUtils.createTempFile(f.getName(), data);
-//                    this.addAttachment(tmpUrl, null);
-//                }
-//
-//            } catch (Exception ioe) {
-//                log.error("Error attaching document", ioe);
-//                JOptionPane.showMessageDialog(this, "Fehler beim Laden der Datei: " + ioe.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
-//            }
-//        }
 
         String caseId = null;
         if (this.contextArchiveFile != null) {
@@ -1912,8 +1916,9 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
         try {
             //this.txtImportFile.setText(chooser.getSelectedFile().getCanonicalPath());
             File[] files = sad.getSelectedFiles();
-            if(files==null)
+            if (files == null) {
                 return;
+            }
             for (File f : files) {
                 byte[] data = FileUtils.readFile(f);
                 String tmpUrl = FileUtils.createTempFile(f.getName(), data);
@@ -1948,7 +1953,7 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
     public void selectedPartiesUpdated() {
         this.cmbTemplatesActionPerformed(null);
     }
-    
+
     private void cmbTemplatesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbTemplatesActionPerformed
         Object selected = this.cmbTemplates.getSelectedItem();
         if (selected == null) {
@@ -1962,14 +1967,14 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
                 EmailTemplate tpl = locator.lookupIntegrationServiceRemote().getEmailTemplate(tplName);
-                
-                Hashtable<PartyTypeBean,AddressBean> selectedParties=this.pnlParties.getSelectedParties(new ArrayList(allPartyTypes));
-                ArrayList<String> placeHolderNames = EmailTemplateAccess.getPlaceHoldersInTemplate(tpl.getSubject(),allPartyTypesPlaceholders);
+
+                Hashtable<PartyTypeBean, AddressBean> selectedParties = this.pnlParties.getSelectedParties(new ArrayList(allPartyTypes));
+                ArrayList<String> placeHolderNames = EmailTemplateAccess.getPlaceHoldersInTemplate(tpl.getSubject(), allPartyTypesPlaceholders);
                 Hashtable<String, String> ht = new Hashtable<String, String>();
                 for (String ph : placeHolderNames) {
                     ht.put(ph, "");
                 }
-                Hashtable<String, String> htValues = PlaceHolderUtils.getPlaceHolderValues(ht, this.contextArchiveFile, this.caseInvolvements, selectedParties, this.contextDictateSign, null, new Hashtable<String,String>());
+                Hashtable<String, String> htValues = PlaceHolderUtils.getPlaceHolderValues(ht, this.contextArchiveFile, this.caseInvolvements, selectedParties, this.contextDictateSign, null, new Hashtable<String, String>());
                 this.txtSubject.setText(EmailTemplateAccess.replacePlaceHolders(tpl.getSubject(), htValues));
 
                 placeHolderNames = EmailTemplateAccess.getPlaceHoldersInTemplate(tpl.getBody(), allPartyTypesPlaceholders);
@@ -1977,7 +1982,7 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
                 for (String ph : placeHolderNames) {
                     ht.put(ph, "");
                 }
-                htValues = PlaceHolderUtils.getPlaceHolderValues(ht, this.contextArchiveFile, this.caseInvolvements, selectedParties, this.contextDictateSign, null, new Hashtable<String,String>());
+                htValues = PlaceHolderUtils.getPlaceHolderValues(ht, this.contextArchiveFile, this.caseInvolvements, selectedParties, this.contextDictateSign, null, new Hashtable<String, String>());
                 //this.taBody.setText(EmailTemplateAccess.replacePlaceHolders(tpl.getBody(), htValues) + System.getProperty("line.separator") + System.getProperty("line.separator") + this.cu.getEmailSignature());
 
                 this.tp.setText(EmailTemplateAccess.replacePlaceHolders(tpl.getBody(), htValues) + System.getProperty("line.separator") + System.getProperty("line.separator") + EmailUtils.Html2Text(this.cu.getEmailSignature()));
@@ -2356,6 +2361,100 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
             }
         });
     }
+
+    protected DropTarget getMyDropTarget() {
+        if (dropTarget == null) {
+            dropTarget = new DropTarget(this.tblAttachments, DnDConstants.ACTION_COPY_OR_MOVE, null);
+        }
+        return dropTarget;
+    }
+
+    protected DropTargetHandler getDropTargetHandler() {
+        if (dropTargetHandler == null) {
+            dropTargetHandler = new DropTargetHandler(this.tblAttachments);
+        }
+        return dropTargetHandler;
+    }
+
+    protected class DropTargetHandler implements DropTargetListener {
+
+        private JTable p = null;
+
+        public DropTargetHandler(JTable p) {
+            this.p = p;
+        }
+
+        protected void processDrag(DropTargetDragEvent dtde) {
+            if (dtde.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
+                dtde.acceptDrag(DnDConstants.ACTION_COPY_OR_MOVE);
+            } else {
+                dtde.rejectDrag();
+            }
+        }
+
+        @Override
+        public void dragEnter(DropTargetDragEvent dtde) {
+            processDrag(dtde);
+            //SwingUtilities.invokeLater(new DragUpdate(true, dtde.getLocation()));
+            repaint();
+        }
+
+        @Override
+        public void dragOver(DropTargetDragEvent dtde) {
+            processDrag(dtde);
+            //SwingUtilities.invokeLater(new DragUpdate(true, dtde.getLocation()));
+            repaint();
+        }
+
+        @Override
+        public void dropActionChanged(DropTargetDragEvent dtde) {
+        }
+
+        @Override
+        public void dragExit(DropTargetEvent dte) {
+            //SwingUtilities.invokeLater(new DragUpdate(false, null));
+            repaint();
+        }
+
+        @Override
+        public void drop(DropTargetDropEvent dtde) {
+
+            //SwingUtilities.invokeLater(new DragUpdate(false, null));
+            Transferable transferable = dtde.getTransferable();
+            if (dtde.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
+                dtde.acceptDrop(dtde.getDropAction());
+                try {
+
+                    List transferData = (List) transferable.getTransferData(DataFlavor.javaFileListFlavor);
+                    if (transferData != null && transferData.size() > 0) {
+
+                        ThreadUtils.setWaitCursor(p);
+
+                        ArrayList<File> files = new ArrayList<File>();
+                        for (Object fo : transferData) {
+                            if (fo instanceof File) {
+                                files.add((File) fo);
+
+                            }
+                        }
+
+                        for(File f: files) {
+                            addAttachment(f.getPath(), null);
+                        }
+                        
+                        dtde.dropComplete(true);
+                        ThreadUtils.setDefaultCursor(p);
+                    }
+
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            } else {
+                dtde.rejectDrop();
+            }
+        }
+    }
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.ButtonGroup btGroupReviews;
     private javax.swing.ButtonGroup buttonGroupTextHtml;

@@ -407,6 +407,7 @@
                         <Column editable="false" title="Dateiname" type="java.lang.String"/>
                       </Table>
                     </Property>
+                    <Property name="dragEnabled" type="boolean" value="true"/>
                   </Properties>
                   <Events>
                     <EventHandler event="mousePressed" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="tblAttachmentsMousePressed"/>
