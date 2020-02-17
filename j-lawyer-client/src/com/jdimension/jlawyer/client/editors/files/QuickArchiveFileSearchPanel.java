@@ -701,11 +701,13 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
 
     private String detailsEditorClass;
     private Image backgroundImage = null;
+    private boolean initializing = false;
 
     /**
      * Creates new form QuickArchiveFileSearchPanel
      */
     public QuickArchiveFileSearchPanel() {
+        this.initializing = true;
         initComponents();
         UserSettings userSet = UserSettings.getInstance();
         //this.detailsEditorClass=detailsEditorClass;
@@ -713,6 +715,13 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
             this.detailsEditorClass = EditArchiveFileDetailsPanel.class.getName();
         } else {
             this.detailsEditorClass = ViewArchiveFileDetailsPanel.class.getName();
+        }
+        
+        String temp = userSet.getSetting(UserSettings.CONF_SEARCH_WITHARCHIVE, "false");
+        boolean archiveSearch = false;
+        if ("true".equalsIgnoreCase(temp)) {
+            archiveSearch = true;
+            this.chkIncludeArchive.setSelected(true);
         }
 
         String[] colNames = new String[]{"Aktenzeichen", "Kurzrubrum", "wegen", "archiviert", "Anwalt", "Etiketten"};
@@ -731,6 +740,7 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
 
         /*RowSorter<TableModel> sorter = new TableRowSorter<TableModel>(model);
         this.tblResults.setRowSorter(sorter);*/
+        this.initializing = false;
     }
 
     public void populateTags(List<String> tags) {
@@ -887,7 +897,13 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
 
         jLabel2.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/Icons2-13.png"))); // NOI18N
 
+        chkIncludeArchive.setForeground(new java.awt.Color(255, 255, 255));
         chkIncludeArchive.setText("Archivsuche");
+        chkIncludeArchive.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                chkIncludeArchiveActionPerformed(evt);
+            }
+        });
 
         jPanel1.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(255, 255, 255), 2, true));
         jPanel1.setOpaque(false);
@@ -1227,6 +1243,17 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
     private void cmdDocumentTagFilterActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdDocumentTagFilterActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_cmdDocumentTagFilterActionPerformed
+
+    private void chkIncludeArchiveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkIncludeArchiveActionPerformed
+        if (this.initializing) {
+            return;
+        }
+
+        UserSettings settings = UserSettings.getInstance();
+
+        boolean includeArchive = this.chkIncludeArchive.isSelected();
+        settings.setSetting(UserSettings.CONF_SEARCH_WITHARCHIVE, "" + includeArchive);
+    }//GEN-LAST:event_chkIncludeArchiveActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

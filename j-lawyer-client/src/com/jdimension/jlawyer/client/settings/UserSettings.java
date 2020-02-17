@@ -689,6 +689,8 @@ public class UserSettings {
     public static final String ROLE_WRITECASE = "writeArchiveFileRole";
     public static final String ROLE_READADDRESS = "readAddressRole";
     public static final String ROLE_WRITEADDRESS = "writeAddressRole";
+    
+    public static final String CONF_SEARCH_WITHARCHIVE="false";
 
     private static final Logger log = Logger.getLogger(UserSettings.class.getName());
     private static UserSettings instance = null;
