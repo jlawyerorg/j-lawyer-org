@@ -995,7 +995,16 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
                 sb.append("Ihr AZ " + this.cmbAzRecipient.getSelectedItem().toString()).append("_");
             }
 
-            sb.append(this.tblAttachments.getValueAt(i, 5));
+            // assume user has already changed the alias
+            int lastUnderScore=this.tblAttachments.getValueAt(i, 4).toString().lastIndexOf("_");
+            if(lastUnderScore>0) {
+                String lastPart=this.tblAttachments.getValueAt(i, 4).toString().substring(lastUnderScore+1);
+                sb.append(lastPart);
+            } else {
+                // user has removed all underscores - use filename
+                sb.append(this.tblAttachments.getValueAt(i, 5));
+            }
+            
             this.tblAttachments.setValueAt(sb.toString(), i, 4);
 
         }
