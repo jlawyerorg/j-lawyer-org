@@ -670,6 +670,7 @@ import com.jdimension.jlawyer.persistence.FormTypeBean;
 import com.jdimension.jlawyer.services.FormsServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.StringReader;
@@ -796,48 +797,101 @@ public class FormsManagementDialog extends javax.swing.JDialog implements FormAc
                 }
             }
 
-//            ExecutorService pluginPool = Executors.newFixedThreadPool(5);
-//            Hashtable<String, String> localCalcs = new Hashtable<String, String>();
-//            for (File c : formDirFile.listFiles()) {
-//
-//                Runnable r = new Runnable() {
-//                    @Override
-//                    public void run() {
-//                        if (c.isFile()) {
-//                            if (c.getName().toLowerCase().endsWith("_meta.groovy")) {
-//                                String plugName = c.getName().substring(0, c.getName().indexOf("_meta"));
-//                                String plugVersion = CalculationPluginUtil.checkVersion(c);
-//
-//                                localCalcs.put(plugName, plugVersion);
-//                                if (!remoteForms.contains(plugName + plugVersion)) {
-//                                    c.delete();
-//                                }
-//
-//                            }
-//                        }
-//                    }
-//
-//                };
-//                pluginPool.execute(r);
-//
-//            }
-//            pluginPool.shutdown();
-//            pluginPool.awaitTermination(60, TimeUnit.SECONDS);
-//
-//            int i = 1;
-//            for (FormPlugin p : formPlugins) {
-//                boolean forceDownload = false;
-//                if (localCalcs.containsKey(p.getId()) && !(localCalcs.get(p.getId()).equals(p.getVersion()))) {
-//                    forceDownload = true;
-//                }
-//                p.install(forceDownload);
-//                i++;
-//                
-//            }
         } catch (Throwable t) {
             log.error("Error downloading calculation plugins", t);
             t.printStackTrace();
         }
+        
+        
+        // check for local plugins
+        try {
+            
+            File internalXml=new File(FormPluginUtil.getLocalDirectoryInternalPlugins() + File.separator+"j-lawyer-forms-internal.xml");
+            if(!internalXml.exists())
+                return;
+            
+            
+            InputStream is = new FileInputStream(internalXml);
+            InputStreamReader reader = new InputStreamReader(is, "UTF-8");
+
+            char[] buffer = new char[1024];
+            int len = 0;
+            StringBuffer sb = new StringBuffer();
+            while ((len = reader.read(buffer)) > -1) {
+                sb.append(buffer, 0, len);
+            }
+            reader.close();
+            is.close();
+            String formsContent = sb.toString();
+
+            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+            DocumentBuilder remoteDb = dbf.newDocumentBuilder();
+            InputSource inSrc1 = new InputSource(new StringReader(formsContent));
+            inSrc1.setEncoding("UTF-8");
+            Document remoteDoc = remoteDb.parse(inSrc1);
+
+            NodeList remoteList = remoteDoc.getElementsByTagName("forms");
+
+            remoteList = remoteDoc.getElementsByTagName("form");
+
+            // load from server when not in cache or when version has been updated
+            String formsDir = FormPluginUtil.getLocalDirectory();
+            File formDirFile = new File(formsDir);
+            if (!formDirFile.exists()) {
+                formDirFile.mkdirs();
+            }
+
+            ArrayList<String> remoteForms = new ArrayList<String>();
+            ArrayList<FormPlugin> formPlugins = new ArrayList<FormPlugin>();
+            for (int i = 0; i < remoteList.getLength(); i++) {
+                Node n = remoteList.item(i);
+                String forVersion = n.getAttributes().getNamedItem("for").getNodeValue();
+                if (forVersion.contains(VersionUtils.getFullClientVersion())) {
+                    remoteForms.add(n.getAttributes().getNamedItem("name").getNodeValue() + n.getAttributes().getNamedItem("version").getNodeValue());
+                    FormPlugin fp = new FormPlugin();
+                    fp.setForVersion(n.getAttributes().getNamedItem("for").getNodeValue());
+                    fp.setId(n.getAttributes().getNamedItem("id").getNodeValue());
+                    fp.setType(n.getAttributes().getNamedItem("type").getNodeValue());
+                    fp.setVersion(n.getAttributes().getNamedItem("version").getNodeValue());
+                    fp.setDescription(n.getAttributes().getNamedItem("description").getNodeValue());
+                    String depends="";
+                    if(n.getAttributes().getNamedItem("depends")!=null)
+                        depends=n.getAttributes().getNamedItem("depends").getNodeValue();
+                    String[] dependencies=depends.split(",");
+                    fp.setDependsOn(dependencies);
+                    fp.setUrl(n.getAttributes().getNamedItem("url").getNodeValue());
+                    fp.setName(n.getAttributes().getNamedItem("name").getNodeValue());
+                    fp.setPlaceHolder(n.getAttributes().getNamedItem("placeholder").getNodeValue());
+                    String files = n.getAttributes().getNamedItem("files").getNodeValue();
+                    for (String f : files.split(",")) {
+                        fp.getFiles().add(f);
+                    }
+                    formPlugins.add(fp);
+                    FormPluginEntryPanel fpe=new FormPluginEntryPanel(fp, this.formPluginsPanel, this);
+                    
+                    FormTypeBean onServer=this.findPlugin(serverFormPlugins, fp.getId());
+                    
+                    if(onServer==null) {
+                        fpe.setState(FormPluginEntryPanel.STATE_NOT_INSTALLED);
+                        fpe.setVersionOnServer("");
+                    } else {
+                        fpe.setVersionOnServer(onServer.getVersion());
+                        if(onServer.getVersion().equals(fp.getVersion())) {
+                            fpe.setState(FormPluginEntryPanel.STATE_INSTALLED);
+                        } else {
+                            fpe.setState(FormPluginEntryPanel.STATE_INSTALLED_UPDATEAVAILABLE);
+                        }
+                    }
+                    this.formPluginsPanel.add(fpe);
+                }
+            }
+
+        } catch (Throwable t) {
+            log.error("Error downloading calculation plugins", t);
+            t.printStackTrace();
+        }
+        
+        
     }
     
     private FormTypeBean findPlugin(List<FormTypeBean> plugins, String id) {

@@ -684,6 +684,10 @@ public class FormPluginUtil {
     public static String getLocalDirectory() {
         return System.getProperty("user.home") + System.getProperty("file.separator") + ".j-lawyer-client" + System.getProperty("file.separator") + "forms" + File.separator + VersionUtils.getFullClientVersion();
     }
+    
+    public static String getLocalDirectoryInternalPlugins() {
+        return System.getProperty("user.home") + System.getProperty("file.separator") + ".j-lawyer-client" + System.getProperty("file.separator") + "forms-internal";
+    }
 
     public static synchronized ArrayList<FormPlugin> loadLocalPlugins() {
 
