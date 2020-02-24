@@ -4350,8 +4350,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 if ("verkehr01".equalsIgnoreCase(f.getFormType().getId())) {
                     List<ArchiveFileFormEntriesBean> formEntries = locator.lookupFormsServiceRemote().getFormEntries(f.getId());
                     for(ArchiveFileFormEntriesBean fe: formEntries) {
-                        if(fe.getEntryKey().endsWith("_KENNZEICHEN")) {
-                            data.put("_KENNZEICHEN",fe.getStringValue());
+                        if(fe.getEntryKey().endsWith("_G_KENNZEICHEN")) {
+                            data.put("_G_KENNZEICHEN",fe.getStringValue());
                         } else if(fe.getEntryKey().endsWith("_UNFALLDATUM")) {
                             data.put("_UNFALLDATUM",fe.getStringValue());
                         } else if(fe.getEntryKey().endsWith("_UNFALLORT")) {
