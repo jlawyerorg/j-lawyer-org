@@ -1102,7 +1102,7 @@ public class ClaimDetailsStep extends javax.swing.JPanel implements WizardStepIn
             // user navigated back - do not reset but use what is there
         } else {
             // initial display
-            Object o1=data.get("_KENNZEICHEN");
+            Object o1=data.get("_G_KENNZEICHEN");
             if(o1!=null) {
                 this.txtLicensePlate.setText(o1.toString());
             }
