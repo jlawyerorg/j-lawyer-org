@@ -695,6 +695,8 @@ import com.jdimension.jlawyer.client.utils.DesktopUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.NavigationUtils;
 import com.jdimension.jlawyer.client.utils.SystrayUtils;
+import com.jdimension.jlawyer.client.utils.ThreadUtils;
+import com.jdimension.jlawyer.client.utils.VersionUtils;
 import com.jdimension.jlawyer.server.constants.MonitoringConstants;
 import com.jdimension.jlawyer.server.constants.OptionConstants;
 import com.jdimension.jlawyer.server.modules.ModuleMetadata;
@@ -703,6 +705,11 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.net.URL;
+import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Timer;
@@ -724,9 +731,8 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
 
     private static final Logger log = Logger.getLogger(JKanzleiGUI.class.getName());
     private boolean initializing = false;
-    
-    //private ModuleBar moduleBar=new ModuleBar();
 
+    //private ModuleBar moduleBar=new ModuleBar();
     /**
      * Creates new form JKanzleiGUI
      */
@@ -774,15 +780,10 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
 //        this.treeModules.setModel(model);
 
 //        this.treeModules.setCellRenderer(new ModuleTreeCellRenderer());
-
 //        NavigationUtils navUtils = NavigationUtils.getInstance();
 //        navUtils.setTreeModules(this.treeModules);
-
 //        this.treeModules.setSelectionPath(treeModules.getPathForRow(1).getParentPath());
 //        ComponentUtils.expandTree(this.treeModules);
-        
-        
-        
 //        this.moduleBar.addModule(rootModule);
 //        for(int i=0;i<rootModule.getChildCount();i++) {
 //            ModuleMetadata folderMod=(ModuleMetadata)rootModule.getChildAt(i);
@@ -794,8 +795,6 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
 //        
 //        this.scrollModules.add(this.moduleBar);
 //        this.scrollModules.doLayout();
-        
-
 //        EditorsRegistry registry = EditorsRegistry.getInstance();
 //        registry.setMainEditorsPane(this.scrollMain);
         registry.setStatusLabel(this.statusLabel);
@@ -818,19 +817,19 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         Timer timer = new Timer();
         TimerTask monitorStateTask = new MonitoringStateTimerTask();
         timer.schedule(monitorStateTask, 5500, 60000 * 10);
-        
-        ArrayList<CalculationPlugin> plugins=CalculationPluginUtil.loadLocalPlugins();
+
+        ArrayList<CalculationPlugin> plugins = CalculationPluginUtil.loadLocalPlugins();
         Collections.sort(plugins);
-        for(CalculationPlugin cp: plugins) {
-            JMenuItem mi=new JMenuItem();
+        for (CalculationPlugin cp : plugins) {
+            JMenuItem mi = new JMenuItem();
             mi.setText(cp.getName());
             mi.setToolTipText(cp.getDescription());
             mi.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     try {
-                        JPanel ui=cp.getUi(null, 0f);
-                        CalculationPluginDialog dlg=new CalculationPluginDialog(EditorsRegistry.getInstance().getMainWindow(), false, ui);
+                        JPanel ui = cp.getUi(null, 0f);
+                        CalculationPluginDialog dlg = new CalculationPluginDialog(EditorsRegistry.getInstance().getMainWindow(), false, ui);
                         dlg.setTitle("Plugin: " + cp.getName() + " " + cp.getVersion());
                         dlg.setHeader(cp.getDescription());
                         dlg.setFooter("Autor: " + cp.getAuthor() + " - zuletzt aktualisiert: " + cp.getUpdated());
@@ -841,7 +840,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
                         JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Plugin kann nicht gestartet werden: " + ex.getMessage(), "Pluginfehler", JOptionPane.ERROR_MESSAGE);
                     }
                 }
-                
+
             });
             this.mnuCalculations.add(mi);
         }
@@ -864,25 +863,23 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
 //            ThreadUtils.showErrorDialog(this, java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("error.jms.systemmonitoring"), new Object[]{ex.getMessage()}), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.error"));
 //        }
     }
-    
+
     public void buildModuleBar() {
         ModuleMetadata rootModule = ClientSettings.getInstance().getRootModule();
 
-        
         this.moduleBar.addModule(rootModule);
-        for(int i=0;i<rootModule.getChildCount();i++) {
-            ModuleMetadata folderMod=(ModuleMetadata)rootModule.getChildAt(i);
-            for(int k=0;k<folderMod.getChildCount();k++) {
-                this.moduleBar.addModule((ModuleMetadata)folderMod.getChildAt(k));
+        for (int i = 0; i < rootModule.getChildCount(); i++) {
+            ModuleMetadata folderMod = (ModuleMetadata) rootModule.getChildAt(i);
+            for (int k = 0; k < folderMod.getChildCount(); k++) {
+                this.moduleBar.addModule((ModuleMetadata) folderMod.getChildAt(k));
             }
         }
         this.moduleBar.doLayout();
         this.moduleBar.initializeHotKeys();
-        
+
         // activate Desktop module
         this.moduleBar.actionPerformed(0);
-        
-        
+
     }
 
     @Override
@@ -1062,6 +1059,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuDocumentMonitor = new javax.swing.JMenuItem();
         mnuOnlineHelp = new javax.swing.JMenuItem();
         mnuForum = new javax.swing.JMenuItem();
+        mnuXjustizViewer = new javax.swing.JMenuItem();
         mnuAbout = new javax.swing.JMenuItem();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DO_NOTHING_ON_CLOSE);
@@ -1511,13 +1509,22 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuHelp.add(mnuOnlineHelp);
 
         mnuForum.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/irc_protocol.png"))); // NOI18N
-        mnuForum.setText(bundle.getString("menu.?.forum")); // NOI18N
+        mnuForum.setText("Anwenderforum");
         mnuForum.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 mnuForumActionPerformed(evt);
             }
         });
         mnuHelp.add(mnuForum);
+
+        mnuXjustizViewer.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/fileimport.png"))); // NOI18N
+        mnuXjustizViewer.setText("XJustizViewer herunterladen");
+        mnuXjustizViewer.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuXjustizViewerActionPerformed(evt);
+            }
+        });
+        mnuHelp.add(mnuXjustizViewer);
 
         mnuAbout.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/info.png"))); // NOI18N
         mnuAbout.setText(bundle.getString("menu.?.about")); // NOI18N
@@ -1635,31 +1642,30 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             FrameUtils.centerDialog(moni, EditorsRegistry.getInstance().getMainWindow());
             moni.setVisible(true);
             cancelled = moni.hasUserCancelled();
-            
 
         }
-        
+
         if (!cancelled) {
-                ClientSettings settings = ClientSettings.getInstance();
-                try {
-                    log.debug("storing client configuration");
-                    settings.saveConfiguration();
-                } catch (Exception ex) {
-                    log.error("Error saving client configuration", ex);
-                    JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("error.savingsettings") + ex.getMessage(), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.error"), JOptionPane.ERROR_MESSAGE);
-                }
-
-                try {
-                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                    locator.lookupSearchServiceRemote().reOpenIndex();
-
-                } catch (Throwable ex) {
-                    log.error("Error re-opening search index", ex);
-                }
-                this.setVisible(false);
-                this.dispose();
-                System.exit(0);
+            ClientSettings settings = ClientSettings.getInstance();
+            try {
+                log.debug("storing client configuration");
+                settings.saveConfiguration();
+            } catch (Exception ex) {
+                log.error("Error saving client configuration", ex);
+                JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("error.savingsettings") + ex.getMessage(), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.error"), JOptionPane.ERROR_MESSAGE);
             }
+
+            try {
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                locator.lookupSearchServiceRemote().reOpenIndex();
+
+            } catch (Throwable ex) {
+                log.error("Error re-opening search index", ex);
+            }
+            this.setVisible(false);
+            this.dispose();
+            System.exit(0);
+        }
 
 
     }//GEN-LAST:event_formWindowClosing
@@ -1904,15 +1910,15 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             boolean currentlyAdmin = locator.lookupSecurityServiceRemote().isAdmin();
             if (currentlyAdmin) {
-                OptionGroupCaseTagRename ren=new OptionGroupCaseTagRename();
+                OptionGroupCaseTagRename ren = new OptionGroupCaseTagRename();
                 OptionGroupConfigurationDialog dlg = new OptionGroupConfigurationDialog(this, ren, true);
                 dlg.setTitle(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("dialog.title.casetags"));
                 dlg.setOptionGroup(OptionConstants.OPTIONGROUP_ARCHIVEFILETAGS);
                 FrameUtils.centerDialog(dlg, this);
                 dlg.setVisible(true);
-                
+
                 try {
-                    Timer timer=new Timer();
+                    Timer timer = new Timer();
                     TimerTask tagsTask = new UpdateArchiveFileTagsTask(this, (EditArchiveFilePanel) EditorsRegistry.getInstance().getEditor(EditArchiveFilePanel.class.getName()));
                     timer.schedule(tagsTask, 500);
 
@@ -1965,7 +1971,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             boolean currentlyAdmin = locator.lookupSecurityServiceRemote().isAdmin();
             if (currentlyAdmin) {
-                OptionGroupAddressTagRename ren=new OptionGroupAddressTagRename();
+                OptionGroupAddressTagRename ren = new OptionGroupAddressTagRename();
                 OptionGroupConfigurationDialog dlg = new OptionGroupConfigurationDialog(this, ren, true);
                 dlg.setTitle(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("dialog.title.addresstags"));
                 dlg.setOptionGroup(OptionConstants.OPTIONGROUP_ADDRESSTAGS);
@@ -2125,15 +2131,15 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             boolean currentlyAdmin = locator.lookupSecurityServiceRemote().isAdmin();
             if (currentlyAdmin) {
-                OptionGroupCaseDocumentTagRename ren= new OptionGroupCaseDocumentTagRename();
+                OptionGroupCaseDocumentTagRename ren = new OptionGroupCaseDocumentTagRename();
                 OptionGroupConfigurationDialog dlg = new OptionGroupConfigurationDialog(this, ren, true);
                 dlg.setTitle("Dokumenten-Etiketten");
                 dlg.setOptionGroup(OptionConstants.OPTIONGROUP_DOCUMENTTAGS);
                 FrameUtils.centerDialog(dlg, this);
                 dlg.setVisible(true);
-                
+
                 try {
-                    Timer timer=new Timer();
+                    Timer timer = new Timer();
                     TimerTask tagsTask = new UpdateDocumentTagsTask(this, (EditArchiveFilePanel) EditorsRegistry.getInstance().getEditor(EditArchiveFilePanel.class.getName()));
                     timer.schedule(tagsTask, 500);
 
@@ -2208,6 +2214,59 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         }
     }//GEN-LAST:event_mnuFormsManagerActionPerformed
 
+    private void mnuXjustizViewerActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuXjustizViewerActionPerformed
+        String downloadUrl = ClientSettings.getInstance().getUrlXjustiz();
+        if (downloadUrl == null) {
+            log.warn("download url for XJustiz Viewer is null");
+            return;
+        }
+        try {
+            String home = System.getProperty("user.home");
+            File dir = new File(home + "/Downloads/");
+            dir.mkdirs();
+
+            File file = new File(home + "/Downloads/xjustiz.exe");
+            if (file.exists()) {
+                file.delete();
+            }
+
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        ThreadUtils.showInformationDialog(EditorsRegistry.getInstance().getMainWindow(), "XJustiz-Viewer wird im Hintergrund heruntergeladen...", "Download gestartet");
+                        URL updateURL = new URL(downloadUrl);
+                        URLConnection urlCon = updateURL.openConnection();
+                        urlCon.setRequestProperty("User-Agent", "j-lawyer Client v" + VersionUtils.getFullClientVersion());
+
+                        FileOutputStream fout = new FileOutputStream(file);
+                        InputStream is = urlCon.getInputStream();
+
+                        byte[] buffer = new byte[1024];
+                        int len = 0;
+                        StringBuffer sb = new StringBuffer();
+                        while ((len = is.read(buffer)) > -1) {
+                            fout.write(buffer, 0, len);
+                        }
+                        is.close();
+                        ThreadUtils.showInformationDialog(EditorsRegistry.getInstance().getMainWindow(), "XJustiz-Viewer zur Installation verfügbar: " + file.getAbsolutePath(), "Download abgeschlossen");
+
+                    } catch (Exception ex) {
+                        log.error(ex);
+                        ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Herunterladen des XJustiz-Viewers", "Download-Fehler");
+
+                    }
+                }
+
+            }).start();
+
+        } catch (Exception ex) {
+            log.error(ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim Herunterladen des XJustiz-Viewers", "Download-Fehler", JOptionPane.INFORMATION_MESSAGE);
+
+        }
+    }//GEN-LAST:event_mnuXjustizViewerActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -2276,6 +2335,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     private javax.swing.JMenuItem mnuUserProfile;
     private javax.swing.JMenuItem mnuUsers;
     private javax.swing.JMenuItem mnuVoipSettings;
+    private javax.swing.JMenuItem mnuXjustizViewer;
     private javax.swing.JMenuItem mnuZipCodeImport;
     private com.jdimension.jlawyer.client.modulebar.ModuleBar moduleBar;
     private javax.swing.JScrollPane scrollMain;

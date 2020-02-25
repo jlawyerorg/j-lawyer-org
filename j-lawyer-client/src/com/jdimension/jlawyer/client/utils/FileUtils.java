@@ -858,6 +858,17 @@ public class FileUtils extends ServerFileUtils {
     public static String createTempFile(String fileName, byte[] content) throws Exception {
         return createTempFile(fileName, content, false);
     }
+    
+    public static String createTempDirectory() throws Exception {
+        String tmpDir = System.getProperty("java.io.tmpdir");
+        if (!tmpDir.endsWith(System.getProperty("file.separator"))) {
+            tmpDir = tmpDir + System.getProperty("file.separator");
+        }
+        StringGenerator idGen = new StringGenerator();
+        tmpDir = tmpDir + idGen.getID().toString() + System.getProperty("file.separator");
+        new File(tmpDir).mkdirs();
+        return tmpDir;
+    }
 
     public static String createTempFile(String fileName, byte[] content, boolean readOnly) throws Exception {
         String tmpDir = System.getProperty("java.io.tmpdir");

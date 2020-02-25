@@ -661,153 +661,205 @@
  * For more information on this, and how to apply and follow the GNU AGPL, see
  * <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.client.editors.documents.viewer;
+package com.jdimension.jlawyer.client.editors.files;
 
-import com.jdimension.jlawyer.client.launcher.LauncherFactory;
-import com.jdimension.jlawyer.client.mail.MessageContainer;
-import com.jdimension.jlawyer.client.utils.FileUtils;
-import java.awt.Dimension;
-import java.io.ByteArrayInputStream;
+import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import com.jdimension.jlawyer.client.processing.ProgressIndicator;
+import com.jdimension.jlawyer.client.processing.ProgressableAction;
+import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.utils.ThreadUtils;
+import com.jdimension.jlawyer.persistence.*;
+import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
+import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import java.awt.Component;
+import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.InputStream;
-import java.io.OutputStream;
-import javax.mail.Flags.Flag;
-import javax.mail.internet.MimeMessage;
-import javax.swing.JComponent;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import javax.swing.*;
+import javax.swing.filechooser.FileFilter;
 import org.apache.log4j.Logger;
 
 /**
  *
  * @author jens
  */
-public class DocumentViewerFactory {
+public class DownloadDocumentsAction extends ProgressableAction {
 
-    private static Logger log = Logger.getLogger(DocumentViewerFactory.class.getName());
+    private static final Logger log = Logger.getLogger(DownloadDocumentsAction.class.getName());
+    //private JTable table = null;
+    //private SendEmailDialog dlg = null;
 
-    public static JComponent getDocumentViewer(String id, String fileName, boolean readOnly, String previewContent, byte[] content, int width, int height) {
+    private String archiveFileKey;
+    private Component owner;
+    private File targetDir = null;
+    private List<String> files;
 
-        if (fileName.toLowerCase().endsWith(".pdf")) {
-           PdfImagePanel pdfP=new PdfImagePanel(content);
-           pdfP.setSize(new Dimension(width, height));
-           pdfP.showContent(content);
-           return pdfP;
-           
-        } else if (fileName.toLowerCase().endsWith(".jpg") || fileName.toLowerCase().endsWith(".jpeg") || fileName.toLowerCase().endsWith(".gif") || fileName.toLowerCase().endsWith(".png")) {
-            GifJpegPngImagePanel ip=new GifJpegPngImagePanel(content);
-            ip.setSize(width, height);
-            ip.showContent(content);
-            return ip;
-            
-        } else if (fileName.toLowerCase().endsWith(".bmp") || fileName.toLowerCase().endsWith(".tif") || fileName.toLowerCase().endsWith(".tiff")) {
-            BmpTiffImagePanel ip=new BmpTiffImagePanel(content);
-            ip.setSize(width, height);
-            ip.showContent(content);
-            return ip;
-        } else if(fileName.toLowerCase().endsWith(".txt")) {
-            PlaintextPanel ptp = new PlaintextPanel();
-            ptp.showContent(previewContent.getBytes());
-            return ptp;
-        } else if (fileName.toLowerCase().endsWith(".html") || fileName.toLowerCase().endsWith(".htm")) {
-            HtmlPanel hp = new HtmlPanel(id, readOnly);
-            hp.showContent(content);
-            return hp;
-        } else if(fileName.toLowerCase().endsWith(".xml") && (fileName.toLowerCase().contains("xjustiz"))) {
-            XjustizPanel xjp = new XjustizPanel(id, fileName);
-            xjp.showContent(content);
-            return xjp;
-        } else if (fileName.toLowerCase().endsWith(".eml")) {
-            try {
-                InputStream source = new ByteArrayInputStream(content);
-                MimeMessage message = new MimeMessage(null, source);
-                // need to set this to avoid sending read receipts
-                message.setFlag(Flag.SEEN, true);
-                EmailPanel ep = new EmailPanel();
-                ep.setMessage(new MessageContainer(message, message.getSubject(), true));
-                return ep;
-            } catch (Throwable t) {
-                EmailPanel ep = new EmailPanel();
-                ep.showStatus("Vorschau kann nicht geladen werden.");
-                return ep;
-            }
-//        } else if (fileName.toLowerCase().endsWith(".odt") || fileName.toLowerCase().endsWith(".ods")) {
-//            try {
-//                String tempPath=FileUtils.createTempFile(fileName, content);
-//                InputStream in = new FileInputStream(tempPath);
-//                OdfDocument document = OdfDocument.loadDocument(in);
-//
-//                PdfOptions options = PdfOptions.create();
-//
-//                File tempPdf=File.createTempFile("" + System.currentTimeMillis(), ".pdf");
-//                OutputStream out = new FileOutputStream(tempPdf);
-//                PdfConverter.getInstance().convert(document, out, options);
-//                
-//                byte[] pdfContent=FileUtils.readFile(tempPdf);
-//                FileUtils.cleanupTempFile(tempPath);
-//                FileUtils.cleanupTempFile(tempPdf.getPath());
-//                PdfImagePanel pdfP = new PdfImagePanel(pdfContent);
-//                pdfP.setSize(new Dimension(width, height));
-//                pdfP.showContent(pdfContent);
-//                return pdfP;
-//            } catch (Throwable t) {
-//                log.error("could not convert file to PDF: " + fileName, t);
-//            }
-        } else if (fileName.toLowerCase().endsWith(".bea")) {
-            try {
-                BeaPanel bp = new BeaPanel(id);
-                bp.showContent(content);
-                return bp;
-            } catch (Throwable t) {
-                log.error(t);
-                BeaPanel bp = new BeaPanel(null);
-                bp.showStatus("Vorschau kann nicht geladen werden.");
-                return bp;
-            }
-        } else if (LauncherFactory.supportedByLibreOffice(fileName)) {
-            
-            // double clicking the documents table will fire the mouse event twice - one with clickount=1, then with clickcount=2
-            // this cases LO to launch twice, which seems to fail...
-            
-//            try {
-//                FileConverter conv=FileConverter.getInstance();
-//                String tempPath=FileUtils.createTempFile(fileName, content);
-//                
-//                try {
-//                    Thread.sleep(1500);
-//                } catch (Throwable t) {
-//
-//                }
-//                
-//                String tempPdfPath=conv.convertToPDF(tempPath);
-//                byte[] pdfContent=FileUtils.readFile(new File(tempPdfPath));
-//                FileUtils.cleanupTempFile(tempPath);
-//                FileUtils.cleanupTempFile(tempPdfPath);
-//                PdfImagePanel pdfP = new PdfImagePanel(pdfContent);
-//                pdfP.setSize(new Dimension(width, height));
-//                pdfP.showContent(pdfContent);
-//                return pdfP;
-//            } catch (Throwable t) {
-//                log.error(t);
-//                // fall back to text preview 
-//            }
-            
+    public DownloadDocumentsAction(ProgressIndicator i, Component owner, String archiveFileKey, List<String> fileNames, String targetDir) {
+        super(i, false);
+
+        this.archiveFileKey = archiveFileKey;
+        this.owner = owner;
+        this.files = fileNames;
+        this.targetDir = new File(targetDir);
+        if (!this.targetDir.exists()) {
+            this.targetDir.mkdirs();
+            this.targetDir.deleteOnExit();
         }
-            // plain text preview is default
-            PlaintextPanel ptp = new PlaintextPanel();
-            
-                //ptp.showStatus("Vorschau wird geladen...");
-                // we just reuse the showStatus method because it is doing the same thing
-                //ptp.showStatus(previewContent);
-            
-            ptp.showContent(previewContent.getBytes());
-            
-            return ptp;
-        
-        
 
     }
-    
-    
 
+    @Override
+    public int getMax() {
+        return files.size();
+    }
+
+    @Override
+    public int getMin() {
+        return 0;
+    }
+
+    @Override
+    public boolean execute() throws Exception {
+
+        try {
+
+            //if(this.isCancelled())
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            ArchiveFileServiceRemote caseSvc = locator.lookupArchiveFileServiceRemote();
+            Collection documents = caseSvc.getDocuments(this.archiveFileKey);
+
+            for (Object doc : documents) {
+                ArchiveFileDocumentsBean document = (ArchiveFileDocumentsBean) doc;
+                for (String f : this.files) {
+                    if (!this.isCancelled()) {
+                        if (document.getName().equals(f)) {
+                            this.progress("Bereitstellen von " + f + "...");
+
+                            byte[] docContent = caseSvc.getDocumentContent(document.getId());
+                            String newFileName = this.targetDir.getAbsolutePath();
+                            if (!newFileName.endsWith(File.separator)) {
+                                newFileName = newFileName + File.separator;
+                            }
+                            newFileName = newFileName + f;
+                            File newFile = new File(newFileName);
+                            newFile.createNewFile();
+                            newFile.deleteOnExit();
+                            FileOutputStream fout = new FileOutputStream(newFile);
+                            fout.write(docContent);
+                            fout.close();
+                            break;
+                        }
+                    }
+                }
+            }
+
+            new Thread(new Runnable() {
+                public void run() {
+                    ClientSettings settings = ClientSettings.getInstance();
+                    String xjustizPath = settings.getConfiguration(ClientSettings.CONF_APPS_XJUSTIZVIEWER_PATH, "");
+                    try {
+
+                        ArrayList<String> execParams = new ArrayList<>();
+                        if (xjustizPath.isEmpty()) {
+                            execParams.add(System.getenv("ProgramFiles(X86)") + File.separator + "ervjustiz.de" + File.separator + "XJustiz Aktenviewer" + File.separator + "eAkteXJustiz.exe");
+                        } else {
+                            if (!(xjustizPath.endsWith(File.separator))) {
+                                xjustizPath = xjustizPath + File.separator;
+                            }
+                            execParams.add(xjustizPath + "eAkteXJustiz.exe");
+                        }
+
+                        execParams.add(targetDir.getAbsolutePath() + File.separator + files.get(files.size() - 1));
+                        log.info("Launching XJustiz Viewer with params (excluding secret token): " + execParams.toString());
+                        execParams.add("j-lawyer ist besser");
+
+                        Runtime.getRuntime().exec(execParams.toArray(new String[0]));
+
+                    } catch (IOException ioe) {
+                        log.error("Could not launch XJustiz Viewer: ", ioe);
+                        SwingUtilities.invokeLater(new Runnable() {
+                            @Override
+                            public void run() {
+                                JFileChooser chooser = new JFileChooser();
+                                chooser.setDialogTitle("XJustiz-Viewer suchen...");
+                                ExeFilter filter = new ExeFilter();
+                                chooser.setFileFilter(filter);
+                                int returnVal = chooser.showOpenDialog(EditorsRegistry.getInstance().getMainWindow());
+                                if (returnVal == JFileChooser.APPROVE_OPTION) {
+
+                                    File exe = chooser.getSelectedFile();
+                                    File path = exe.getParentFile();
+                                    String dir = path.getAbsolutePath();
+                                    settings.setConfiguration(ClientSettings.CONF_APPS_XJUSTIZVIEWER_PATH, dir);
+
+                                    ArrayList<String> execParams = new ArrayList<>();
+
+                                    if (!(dir.endsWith(File.separator))) {
+                                        dir = dir + File.separator;
+                                    }
+                                    execParams.add(dir + "eAkteXJustiz.exe");
+                                    execParams.add(targetDir.getAbsolutePath() + File.separator + files.get(files.size() - 1));
+                                    log.info("Launching XJustiz Viewer with params (excluding secret token): " + execParams.toString());
+                                    execParams.add("j-lawyer ist besser");
+
+                                    try {
+                                        Runtime.getRuntime().exec(execParams.toArray(new String[0]));
+                                    } catch (Throwable t) {
+                                        log.error("Could not launch XJustiz Viewer, giving up.", t);
+                                    }
+                                }
+                            }
+
+                        });
+
+                    }
+                }
+
+            }).start();
+
+        } catch (Exception ex) {
+            log.error("Error connecting to server", ex);
+            JOptionPane.showMessageDialog(this.indicator, ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            EditorsRegistry.getInstance().clearStatus(true);
+            ThreadUtils.setDefaultCursor(this.owner);
+
+            //ThreadUtils.showErrorDialog(this.owner, ex.getMessage(), "Fehler");
+            return true;
+        }
+
+        EditorsRegistry.getInstance().clearStatus(true);
+        ThreadUtils.setDefaultCursor(this.owner);
+
+        return true;
+
+    }
+}
+
+final class ExeFilter extends FileFilter {
+
+    public ExeFilter() {
+        super();
+    }
+
+    public boolean accept(File file) {
+        if (file.isDirectory()) {
+            return true;
+        }
+
+        String fileName = file.getName().toLowerCase();
+        if (fileName.equals("eaktexjustiz.exe")) {
+            return true;
+        }
+        return false;
+    }
+
+    public String getDescription() {
+        return "eAkteXJustiz.exe (XJustiz-Viewer)";
+    }
 }

@@ -694,6 +694,16 @@ public class ThreadUtils {
         });
     }
     
+    public static void showInformationDialog(final Component owner, final String msg, final String title) {
+        SwingUtilities.invokeLater(
+                new Runnable() {
+
+            public void run() {
+                JOptionPane.showMessageDialog(owner, msg, title, JOptionPane.INFORMATION_MESSAGE);
+            }
+        });
+    }
+    
     public static void requestFocus(final JComponent c) {
         SwingUtilities.invokeLater(
                 new Runnable() {

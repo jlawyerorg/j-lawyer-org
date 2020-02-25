@@ -711,7 +711,7 @@ public class BeaEebDisplayDialog extends javax.swing.JDialog {
         cmdClose = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
-        setTitle("beA elektronische Empfangsbekenntnis");
+        setTitle("XJustiz-Strukturdatensatz");
 
         editorPane.setContentType("text/html"); // NOI18N
         jScrollPane1.setViewportView(editorPane);

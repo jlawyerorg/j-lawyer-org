@@ -724,6 +724,8 @@ public interface ArchiveFileServiceRemote {
     boolean setDocumentContent(String id, byte[] content) throws Exception;
 
     byte[] getDocumentContent(String id) throws Exception;
+    
+    ArchiveFileDocumentsBean getDocument(String id) throws Exception;
 
     Collection<ArchiveFileAddressesBean> getArchiveFileAddressesForAddress(String adressId);
 

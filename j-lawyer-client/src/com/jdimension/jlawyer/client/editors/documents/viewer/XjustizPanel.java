@@ -663,151 +663,192 @@
  */
 package com.jdimension.jlawyer.client.editors.documents.viewer;
 
-import com.jdimension.jlawyer.client.launcher.LauncherFactory;
-import com.jdimension.jlawyer.client.mail.MessageContainer;
+import com.jdimension.jlawyer.client.bea.BeaAccess;
+import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import com.jdimension.jlawyer.client.editors.files.DownloadDocumentsAction;
+import com.jdimension.jlawyer.client.editors.files.UploadDocumentsAction;
+import com.jdimension.jlawyer.client.processing.ProgressIndicator;
+import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.FileUtils;
-import java.awt.Dimension;
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.InputStream;
-import java.io.OutputStream;
-import javax.mail.Flags.Flag;
-import javax.mail.internet.MimeMessage;
-import javax.swing.JComponent;
+import com.jdimension.jlawyer.client.utils.ThreadUtils;
+import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
+import com.jdimension.jlawyer.server.utils.ServerFileUtils;
+import com.jdimension.jlawyer.services.AddressServiceRemote;
+import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
+import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import java.util.ArrayList;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import javax.swing.SwingUtilities;
+import javax.swing.text.StyledEditorKit;
+import javax.swing.text.html.HTMLDocument;
 import org.apache.log4j.Logger;
 
 /**
  *
  * @author jens
  */
-public class DocumentViewerFactory {
+public class XjustizPanel extends javax.swing.JPanel implements PreviewPanel {
 
-    private static Logger log = Logger.getLogger(DocumentViewerFactory.class.getName());
+    private static final Logger log = Logger.getLogger(XjustizPanel.class.getName());
 
-    public static JComponent getDocumentViewer(String id, String fileName, boolean readOnly, String previewContent, byte[] content, int width, int height) {
+    private String docId = null;
+    private String docName = null;
+    private String xml = null;
 
-        if (fileName.toLowerCase().endsWith(".pdf")) {
-           PdfImagePanel pdfP=new PdfImagePanel(content);
-           pdfP.setSize(new Dimension(width, height));
-           pdfP.showContent(content);
-           return pdfP;
-           
-        } else if (fileName.toLowerCase().endsWith(".jpg") || fileName.toLowerCase().endsWith(".jpeg") || fileName.toLowerCase().endsWith(".gif") || fileName.toLowerCase().endsWith(".png")) {
-            GifJpegPngImagePanel ip=new GifJpegPngImagePanel(content);
-            ip.setSize(width, height);
-            ip.showContent(content);
-            return ip;
-            
-        } else if (fileName.toLowerCase().endsWith(".bmp") || fileName.toLowerCase().endsWith(".tif") || fileName.toLowerCase().endsWith(".tiff")) {
-            BmpTiffImagePanel ip=new BmpTiffImagePanel(content);
-            ip.setSize(width, height);
-            ip.showContent(content);
-            return ip;
-        } else if(fileName.toLowerCase().endsWith(".txt")) {
-            PlaintextPanel ptp = new PlaintextPanel();
-            ptp.showContent(previewContent.getBytes());
-            return ptp;
-        } else if (fileName.toLowerCase().endsWith(".html") || fileName.toLowerCase().endsWith(".htm")) {
-            HtmlPanel hp = new HtmlPanel(id, readOnly);
-            hp.showContent(content);
-            return hp;
-        } else if(fileName.toLowerCase().endsWith(".xml") && (fileName.toLowerCase().contains("xjustiz"))) {
-            XjustizPanel xjp = new XjustizPanel(id, fileName);
-            xjp.showContent(content);
-            return xjp;
-        } else if (fileName.toLowerCase().endsWith(".eml")) {
-            try {
-                InputStream source = new ByteArrayInputStream(content);
-                MimeMessage message = new MimeMessage(null, source);
-                // need to set this to avoid sending read receipts
-                message.setFlag(Flag.SEEN, true);
-                EmailPanel ep = new EmailPanel();
-                ep.setMessage(new MessageContainer(message, message.getSubject(), true));
-                return ep;
-            } catch (Throwable t) {
-                EmailPanel ep = new EmailPanel();
-                ep.showStatus("Vorschau kann nicht geladen werden.");
-                return ep;
-            }
-//        } else if (fileName.toLowerCase().endsWith(".odt") || fileName.toLowerCase().endsWith(".ods")) {
-//            try {
-//                String tempPath=FileUtils.createTempFile(fileName, content);
-//                InputStream in = new FileInputStream(tempPath);
-//                OdfDocument document = OdfDocument.loadDocument(in);
-//
-//                PdfOptions options = PdfOptions.create();
-//
-//                File tempPdf=File.createTempFile("" + System.currentTimeMillis(), ".pdf");
-//                OutputStream out = new FileOutputStream(tempPdf);
-//                PdfConverter.getInstance().convert(document, out, options);
-//                
-//                byte[] pdfContent=FileUtils.readFile(tempPdf);
-//                FileUtils.cleanupTempFile(tempPath);
-//                FileUtils.cleanupTempFile(tempPdf.getPath());
-//                PdfImagePanel pdfP = new PdfImagePanel(pdfContent);
-//                pdfP.setSize(new Dimension(width, height));
-//                pdfP.showContent(pdfContent);
-//                return pdfP;
-//            } catch (Throwable t) {
-//                log.error("could not convert file to PDF: " + fileName, t);
-//            }
-        } else if (fileName.toLowerCase().endsWith(".bea")) {
-            try {
-                BeaPanel bp = new BeaPanel(id);
-                bp.showContent(content);
-                return bp;
-            } catch (Throwable t) {
-                log.error(t);
-                BeaPanel bp = new BeaPanel(null);
-                bp.showStatus("Vorschau kann nicht geladen werden.");
-                return bp;
-            }
-        } else if (LauncherFactory.supportedByLibreOffice(fileName)) {
-            
-            // double clicking the documents table will fire the mouse event twice - one with clickount=1, then with clickcount=2
-            // this cases LO to launch twice, which seems to fail...
-            
-//            try {
-//                FileConverter conv=FileConverter.getInstance();
-//                String tempPath=FileUtils.createTempFile(fileName, content);
-//                
-//                try {
-//                    Thread.sleep(1500);
-//                } catch (Throwable t) {
-//
-//                }
-//                
-//                String tempPdfPath=conv.convertToPDF(tempPath);
-//                byte[] pdfContent=FileUtils.readFile(new File(tempPdfPath));
-//                FileUtils.cleanupTempFile(tempPath);
-//                FileUtils.cleanupTempFile(tempPdfPath);
-//                PdfImagePanel pdfP = new PdfImagePanel(pdfContent);
-//                pdfP.setSize(new Dimension(width, height));
-//                pdfP.showContent(pdfContent);
-//                return pdfP;
-//            } catch (Throwable t) {
-//                log.error(t);
-//                // fall back to text preview 
-//            }
-            
+    /**
+     * Creates new form PlaintextPanel
+     */
+    public XjustizPanel(String docId, String docName) {
+        initComponents();
+        this.docId = docId;
+        this.docName=docName;
+        
+        String osName = System.getProperty("os.name").toLowerCase();
+        if (osName.indexOf("win") > -1) {
+            this.cmdOpenXjustizViewer.setEnabled(true);
+        } else {
+            this.cmdOpenXjustizViewer.setEnabled(false);
         }
-            // plain text preview is default
-            PlaintextPanel ptp = new PlaintextPanel();
+    }
+
+    /**
+     * This method is called from within the constructor to initialize the form.
+     * WARNING: Do NOT modify this code. The content of this method is always
+     * regenerated by the Form Editor.
+     */
+    @SuppressWarnings("unchecked")
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
+    private void initComponents() {
+
+        jLabel1 = new javax.swing.JLabel();
+        cmdOpenXjustizViewer = new javax.swing.JButton();
+        jScrollPane2 = new javax.swing.JScrollPane();
+        editorPane = new javax.swing.JEditorPane();
+
+        jLabel1.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        jLabel1.setText("XJustiz-Strukturdatensatz");
+
+        cmdOpenXjustizViewer.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/fileicons/file_type_xml.png"))); // NOI18N
+        cmdOpenXjustizViewer.setText("XJustiz-Viewer");
+        cmdOpenXjustizViewer.setToolTipText("XJustiz-Viewer öffnen");
+        cmdOpenXjustizViewer.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdOpenXjustizViewerActionPerformed(evt);
+            }
+        });
+
+        editorPane.setEditable(false);
+        editorPane.setContentType("text/html"); // NOI18N
+        jScrollPane2.setViewportView(editorPane);
+
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
+        this.setLayout(layout);
+        layout.setHorizontalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(jScrollPane2)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jLabel1)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 270, Short.MAX_VALUE)
+                        .addComponent(cmdOpenXjustizViewer)))
+                .addContainerGap())
+        );
+        layout.setVerticalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel1)
+                    .addComponent(cmdOpenXjustizViewer))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 330, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+    }// </editor-fold>//GEN-END:initComponents
+
+    private void cmdOpenXjustizViewerActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdOpenXjustizViewerActionPerformed
+        String regex = "<[a-zA-Z0-9]*:dateiname>([\\s\\S]*?)</";
+        Pattern p = Pattern.compile(regex);
+        Matcher matcher = p.matcher(this.xml);
+        ArrayList<String> fileNames = new ArrayList<>();
+        while (matcher.find()) {
+            String group = matcher.group(1);
+            fileNames.add(group);
+        }
+        fileNames.add(this.docName);
+
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+
+            ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
+            ArchiveFileDocumentsBean doc = fileService.getDocument(docId);
+            String caseId = doc.getArchiveFileKey().getId();
+
+            ThreadUtils.setWaitCursor(this);
+            ProgressIndicator pi = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
+            pi.setShowCancelButton(true);
             
-                //ptp.showStatus("Vorschau wird geladen...");
-                // we just reuse the showStatus method because it is doing the same thing
-                //ptp.showStatus(previewContent);
-            
-            ptp.showContent(previewContent.getBytes());
-            
-            return ptp;
-        
-        
+            DownloadDocumentsAction a = new DownloadDocumentsAction(pi, this, caseId, fileNames, FileUtils.createTempDirectory());
+
+            a.start();
+
+        } catch (Throwable t) {
+            log.error("Error getting case id for document " + this.docId, t);
+        }
+
+    }//GEN-LAST:event_cmdOpenXjustizViewerActionPerformed
+
+
+    // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton cmdOpenXjustizViewer;
+    private javax.swing.JEditorPane editorPane;
+    private javax.swing.JLabel jLabel1;
+    private javax.swing.JScrollPane jScrollPane2;
+    // End of variables declaration//GEN-END:variables
+
+    @Override
+    public void showStatus(String text) {
 
     }
-    
-    
+
+    @Override
+    public void showContent(byte[] content) {
+        this.xml = new String(content);
+
+        String html = null;
+        try {
+            html = BeaAccess.getEebAsHtml(new String(content));
+
+        } catch (Exception ex) {
+            html = "<html>XJustiz-Strukturdatensatz kann nicht geladen werden.</html>";
+        }
+
+        final String htmlContent = html;
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                editorPane.setEditorKit(new StyledEditorKit());
+                editorPane.setContentType("text/html");
+
+                String tdRule = "th { color: #FFFFFF; }";
+
+                ((HTMLDocument) editorPane.getDocument()).getStyleSheet().addRule(tdRule);
+                //html = this.cleanUpHTML(html);
+
+                // do this AFTER setContentType and BEFORE setText!!!
+                editorPane.getDocument().putProperty("IgnoreCharsetDirective", Boolean.TRUE);
+                //this.jEditorPane1.setDocument(doc);
+
+                //html.replaceAll("#DDD", "grey");
+                editorPane.setText(htmlContent);
+            }
+
+        });
+
+    }
 
 }
