@@ -769,7 +769,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
         this.initializing = true;
 
         initComponents();
-        
+
         ComponentUtils.decorateSplitPane(jSplitPane1);
         ComponentUtils.decorateSplitPane(this.mainSplitter);
         ComponentUtils.decorateSplitPane(this.splitterFolderDetails);
@@ -913,43 +913,35 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
         Hashtable<String, Folder> inboxFolders = new Hashtable<String, Folder>();
         for (PostBox pb : inboxes) {
             EditorsRegistry.getInstance().updateStatus("Lade beA-Postfach" + pb.getSafeId() + "...");
-            Identity identity = bea.getIdentity(pb.getSafeId());
-            SortedBeaFolderNode pbNode = new SortedBeaFolderNode(identity);
-            rootNode.add(pbNode);
-            Collection<org.jlawyer.bea.model.Folder> folders = bea.getFolderStructure(pb.getSafeId());
-            Hashtable folderTable = new Hashtable();
-            Hashtable nodeTable = new Hashtable();
-            for (org.jlawyer.bea.model.Folder f : folders) {
-                // collect all inbox folders for later
-                if (f.getType().equals(Folder.TYPE_INBOX)) {
-                    inboxFolders.put(pb.getSafeId(), f);
+            try {
+                Identity identity = bea.getIdentity(pb.getSafeId());
+                SortedBeaFolderNode pbNode = new SortedBeaFolderNode(identity);
+                rootNode.add(pbNode);
+                Collection<org.jlawyer.bea.model.Folder> folders = bea.getFolderStructure(pb.getSafeId());
+                Hashtable folderTable = new Hashtable();
+                Hashtable nodeTable = new Hashtable();
+                for (org.jlawyer.bea.model.Folder f : folders) {
+                    // collect all inbox folders for later
+                    if (f.getType().equals(Folder.TYPE_INBOX)) {
+                        inboxFolders.put(pb.getSafeId(), f);
+                    }
+                    folderTable.put(f.getId(), f);
+                    nodeTable.put(f.getId(), new SortedBeaFolderNode(f));
                 }
-                folderTable.put(f.getId(), f);
-                nodeTable.put(f.getId(), new SortedBeaFolderNode(f));
-//                for (Object key : folderTable.keySet()) {
-//                    DefaultMutableTreeNode currentNode = (DefaultMutableTreeNode) nodeTable.get(key);
-//                    org.jlawyer.bea.model.Folder currentFolder = (org.jlawyer.bea.model.Folder) folderTable.get(key);
-//                    if (currentFolder.getParentId() == null) {
-//                        pbNode.add(currentNode);
-//                    } else {
-//                        Long parentId = currentFolder.getParentId();
-//                        DefaultMutableTreeNode parent = (DefaultMutableTreeNode) nodeTable.get(parentId);
-//                        parent.add(currentNode);
-//                    }
-//                }
 
-            }
-
-            for (Object key : folderTable.keySet()) {
-                DefaultMutableTreeNode currentNode = (DefaultMutableTreeNode) nodeTable.get(key);
-                org.jlawyer.bea.model.Folder currentFolder = (org.jlawyer.bea.model.Folder) folderTable.get(key);
-                if (currentFolder.getParentId() == null) {
-                    pbNode.add(currentNode);
-                } else {
-                    Long parentId = currentFolder.getParentId();
-                    DefaultMutableTreeNode parent = (DefaultMutableTreeNode) nodeTable.get(parentId);
-                    parent.add(currentNode);
+                for (Object key : folderTable.keySet()) {
+                    DefaultMutableTreeNode currentNode = (DefaultMutableTreeNode) nodeTable.get(key);
+                    org.jlawyer.bea.model.Folder currentFolder = (org.jlawyer.bea.model.Folder) folderTable.get(key);
+                    if (currentFolder.getParentId() == null) {
+                        pbNode.add(currentNode);
+                    } else {
+                        Long parentId = currentFolder.getParentId();
+                        DefaultMutableTreeNode parent = (DefaultMutableTreeNode) nodeTable.get(parentId);
+                        parent.add(currentNode);
+                    }
                 }
+            } catch (Throwable t) {
+                log.error("Unable to load postbox " + pb.getSafeId() + ", probably due to missing privileges", t);
             }
         }
 
@@ -989,14 +981,15 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                                 EditorsRegistry.getInstance().updateStatus("Nachrichtenübersicht wird geladen für " + inbox.getName() + "...");
                                 ArrayList<MessageHeader> messages = BeaAccess.getInstance().getFolderOverview(inbox);
                                 EditorsRegistry.getInstance().clearStatus();
-                                int unread=0;
+                                int unread = 0;
                                 for (MessageHeader mh : messages) {
                                     EditorsRegistry.getInstance().updateStatus("beA-Nachricht wird geladen: " + StringUtils.nonNull(mh.getSubject()));
                                     BeaAccess.getInstance().getMessage(mh.getId(), safeId);
-                                    if(!mh.isRead())
-                                        unread=unread+1;
+                                    if (!mh.isRead()) {
+                                        unread = unread + 1;
+                                    }
                                 }
-                                BeaStatusEvent e=new BeaStatusEvent(unread);
+                                BeaStatusEvent e = new BeaStatusEvent(unread);
                                 EventBroker.getInstance().publishEvent(e);
                             }
                         }
@@ -2646,8 +2639,8 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                     }
                     DefaultMutableTreeNode tn = (DefaultMutableTreeNode) this.treeFolders.getSelectionPath().getLastPathComponent();
                     org.jlawyer.bea.model.Folder sourceFolder = (org.jlawyer.bea.model.Folder) tn.getUserObject();
-                    Folder importedFolder=BeaAccess.getInstance().getImportedFolder(sourceFolder.getSafeId());
-                    if (importedFolder!=null) {
+                    Folder importedFolder = BeaAccess.getInstance().getImportedFolder(sourceFolder.getSafeId());
+                    if (importedFolder != null) {
                         BeaAccess.getInstance().moveMessageToFolder(mh.getId(), sourceFolder.getId(), importedFolder.getId());
                         try {
                             this.treeFoldersValueChangedImpl(new TreeSelectionEvent(this.tblMails, this.treeFolders.getSelectionPath(), false, null, null), sortCol, scrollToRow);
