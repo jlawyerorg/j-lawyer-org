@@ -1047,6 +1047,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuUserProfile = new javax.swing.JMenuItem();
         mnuProfileInfo = new javax.swing.JMenuItem();
         mnuUsers = new javax.swing.JMenuItem();
+        mnuGroups = new javax.swing.JMenuItem();
         jSeparator4 = new javax.swing.JPopupMenu.Separator();
         mnuVoipSettings = new javax.swing.JMenuItem();
         mnuBeaSettings = new javax.swing.JMenuItem();
@@ -1420,13 +1421,22 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuOptions.add(mnuProfileInfo);
 
         mnuUsers.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_forum.png"))); // NOI18N
-        mnuUsers.setText(bundle.getString("menu.settings.users")); // NOI18N
+        mnuUsers.setText("Nutzer");
         mnuUsers.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 mnuUsersActionPerformed(evt);
             }
         });
         mnuOptions.add(mnuUsers);
+
+        mnuGroups.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_forum.png"))); // NOI18N
+        mnuGroups.setText("Gruppen");
+        mnuGroups.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuGroupsActionPerformed(evt);
+            }
+        });
+        mnuOptions.add(mnuGroups);
         mnuOptions.add(jSeparator4);
 
         mnuVoipSettings.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/sipphone.png"))); // NOI18N
@@ -2267,6 +2277,24 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         }
     }//GEN-LAST:event_mnuXjustizViewerActionPerformed
 
+    private void mnuGroupsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuGroupsActionPerformed
+        ClientSettings settings = ClientSettings.getInstance();
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            boolean currentlyAdmin = locator.lookupSecurityServiceRemote().isAdmin();
+            if (currentlyAdmin) {
+                GroupAdministrationDialog dlg = new GroupAdministrationDialog(this, true);
+                FrameUtils.centerDialog(dlg, this);
+                dlg.setVisible(true);
+            } else {
+                JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.adminrequired"), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.hint"), JOptionPane.INFORMATION_MESSAGE);
+            }
+        } catch (Exception ex) {
+            log.error(ex);
+            JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("error.launchsettings") + ex.getMessage(), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.error"), JOptionPane.INFORMATION_MESSAGE);
+        }
+    }//GEN-LAST:event_mnuGroupsActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -2324,6 +2352,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     private javax.swing.JMenuItem mnuFontSize;
     private javax.swing.JMenuItem mnuFormsManager;
     private javax.swing.JMenuItem mnuForum;
+    private javax.swing.JMenuItem mnuGroups;
     private javax.swing.JMenu mnuHelp;
     private javax.swing.JMenuItem mnuOnlineHelp;
     private javax.swing.JMenu mnuOptions;

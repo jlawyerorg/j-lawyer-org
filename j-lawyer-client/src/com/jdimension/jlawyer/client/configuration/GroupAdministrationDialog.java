@@ -661,456 +661,400 @@
  * For more information on this, and how to apply and follow the GNU AGPL, see
  * <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.persistence;
+package com.jdimension.jlawyer.client.configuration;
 
-import java.io.Serializable;
-import javax.persistence.*;
-import javax.xml.bind.annotation.XmlRootElement;
+//import bsh.This;
+import com.jdimension.jlawyer.calendar.CalendarRegion;
+import com.jdimension.jlawyer.client.bea.BeaAccess;
+import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.persistence.AppRoleBean;
+import com.jdimension.jlawyer.persistence.AppUserBean;
+import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import com.jdimension.jlawyer.services.SystemManagementRemote;
+import java.util.ArrayList;
+import java.util.List;
+//import com.jdimension.jkanzlei.server.persistence.AppOptionGroupDTO;
+//import com.jdimension.jkanzlei.server.services.JKanzleiServiceLocator;
+//import com.jdimension.jkanzlei.server.services.SystemManagementRemote;
+//import com.jdimension.jkanzlei.server.services.SystemManagementRemoteHome;
+import javax.swing.JOptionPane;
+import org.apache.log4j.Logger;
+import com.jdimension.jlawyer.client.calendar.CalendarUtils;
+import com.jdimension.jlawyer.client.settings.UserSettings;
+import com.jdimension.jlawyer.client.utils.FileUtils;
+import com.jdimension.jlawyer.persistence.Group;
+import com.jdimension.jlawyer.services.SecurityServiceRemote;
+import java.io.File;
+import java.util.Collection;
+import java.util.Enumeration;
+import java.util.Hashtable;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.JFileChooser;
 
 /**
  *
  * @author jens
  */
-@Entity
-@Table(name = "security_users")
-@XmlRootElement
-@NamedQueries({
-    @NamedQuery(name = "AppUserBean.findAll", query = "SELECT a FROM AppUserBean a"),
-    @NamedQuery(name = "AppUserBean.findByPrincipalId", query = "SELECT a FROM AppUserBean a WHERE a.principalId = :principalId"),
-    @NamedQuery(name = "AppUserBean.findByPassword", query = "SELECT a FROM AppUserBean a WHERE a.password = :password")})
-public class AppUserBean implements Serializable {
-    private static final long serialVersionUID = 1L;
-    @Id
-    @Basic(optional = false)
-    @Column(name = "principalId")
-    private String principalId;
-    @Column(name = "password")
-    private String password;
-    @Column(name = "lawyer", columnDefinition = "TINYINT")
-    private boolean lawyer;
-    @Column(name = "countryCode")
-    private String countryCode;
-    @Column(name = "areaCode")
-    private String areaCode;
-    
-    @Column(name = "emailAddress")
-    private String emailAddress;
-    @Column(name = "emailInType")
-    private String emailInType;
-    @Column(name = "emailInServer")
-    private String emailInServer;
-    @Column(name = "emailInUser")
-    private String emailInUser;
-    @Column(name = "emailInPwd")
-    private String emailInPwd;
-    @Column(name = "emailOutServer")
-    private String emailOutServer;
-    @Column(name = "emailOutUser")
-    private String emailOutUser;
-    @Column(name = "emailOutPwd")
-    private String emailOutPwd;
-    @Column(name = "emailOutPort")
-    private String emailOutPort;
-    @Column(name = "emailSenderName")
-    private String emailSenderName;
-    @Column(name = "emailSignature")
-    private String emailSignature;
-    @Column(name = "emailInSsl", columnDefinition = "TINYINT")
-    private boolean emailInSsl;
-    @Column(name = "emailOutSsl", columnDefinition = "TINYINT")
-    private boolean emailOutSsl;
-    @Column(name = "emailStartTls", columnDefinition = "TINYINT")
-    private boolean emailStartTls;
-    
-    @Column(name = "settings", columnDefinition = "MEDIUMBLOB")
-    private byte[] settings;
-    
-    @Column(name = "beaCertificate", columnDefinition = "MEDIUMBLOB")
-    private byte[] beaCertificate;
-    @Column(name = "beaCertificatePassword")
-    private String beaCertificatePassword;
-    @Column(name = "beaCertificateAutoLogin", columnDefinition = "TINYINT")
-    private boolean beaCertificateAutoLogin;
-    
-    @Column(name = "abbreviation")
-    private String abbreviation;
-    
-    //@Column(name = "primary_group")
-    @JoinColumn(name = "primary_group", referencedColumnName = "id")
-    @ManyToOne
-    private Group primaryGroup;
-    
-    
-    public AppUserBean() {
-    }
+public class GroupAdministrationDialog extends javax.swing.JDialog {
 
-    public AppUserBean(String principalId) {
-        this.principalId = principalId;
-    }
+    private static Logger log = Logger.getLogger(GroupAdministrationDialog.class.getName());
 
-    public String getPrincipalId() {
-        return principalId;
-    }
+    private String optionGroup = null;
 
-    public void setPrincipalId(String principalId) {
-        this.principalId = principalId;
-    }
+    private ArrayList<CalendarRegion> countries = null;
 
-    public String getPassword() {
-        return password;
-    }
+    private byte[] currentCertificate = null;
 
-    public void setPassword(String password) {
-        this.password = password;
-    }
+    /**
+     * Creates new form OptionGroupConfigurationDialog
+     */
+    public GroupAdministrationDialog(java.awt.Frame parent, boolean modal) {
+        super(parent, modal);
+        initComponents();
+        this.lstGroups.setCellRenderer(new GroupListCellRenderer());
+        GroupListModel m = new GroupListModel();
+        this.lstGroups.setModel(m);
 
-    @Override
-    public int hashCode() {
-        int hash = 0;
-        hash += (principalId != null ? principalId.hashCode() : 0);
-        return hash;
-    }
+        ClientSettings settings = ClientSettings.getInstance();
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
-    @Override
-    public boolean equals(Object object) {
-        // TODO: Warning - this method won't work in the case the id fields are not set
-        if (!(object instanceof AppUserBean)) {
-            return false;
+            SecurityServiceRemote mgmt = locator.lookupSecurityServiceRemote();
+            Collection<Group> allGroups = mgmt.getAllGroups();
+            for (Group g : allGroups) {
+                m.addElement(g);
+            }
+
+            
+
+        } catch (Exception ex) {
+            log.error("Error connecting to server", ex);
+            //JOptionPane.showMessageDialog(this.owner, "Verbindungsfehler: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            return;
         }
-        AppUserBean other = (AppUserBean) object;
-        if ((this.principalId == null && other.principalId != null) || (this.principalId != null && !this.principalId.equals(other.principalId))) {
-            return false;
+
+    }
+
+    /**
+     * This method is called from within the constructor to initialize the form.
+     * WARNING: Do NOT modify this code. The content of this method is always
+     * regenerated by the Form Editor.
+     */
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
+    private void initComponents() {
+
+        popDelete = new javax.swing.JPopupMenu();
+        mnuDelete = new javax.swing.JMenuItem();
+        btGrpAutoLogin = new javax.swing.ButtonGroup();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        lstGroups = new javax.swing.JList();
+        cmdClose = new javax.swing.JButton();
+        cmdAdd = new javax.swing.JButton();
+        txtGroup = new javax.swing.JTextField();
+        cmdSave = new javax.swing.JButton();
+        jLabel1 = new javax.swing.JLabel();
+        jLabel2 = new javax.swing.JLabel();
+        txtAbbreviation = new javax.swing.JTextField();
+
+        mnuDelete.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editdelete.png"))); // NOI18N
+        mnuDelete.setText("Löschen");
+        mnuDelete.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuDeleteActionPerformed(evt);
+            }
+        });
+        popDelete.add(mnuDelete);
+
+        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        setTitle("Nutzerverwaltung");
+
+        lstGroups.setModel(new javax.swing.AbstractListModel() {
+            String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" };
+            public int getSize() { return strings.length; }
+            public Object getElementAt(int i) { return strings[i]; }
+        });
+        lstGroups.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                lstGroupsMousePressed(evt);
+            }
+        });
+        lstGroups.addListSelectionListener(new javax.swing.event.ListSelectionListener() {
+            public void valueChanged(javax.swing.event.ListSelectionEvent evt) {
+                lstGroupsValueChanged(evt);
+            }
+        });
+        jScrollPane1.setViewportView(lstGroups);
+
+        cmdClose.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png"))); // NOI18N
+        cmdClose.setText("Schliessen");
+        cmdClose.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdCloseActionPerformed(evt);
+            }
+        });
+
+        cmdAdd.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png"))); // NOI18N
+        cmdAdd.setText("Hinzufügen");
+        cmdAdd.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdAddActionPerformed(evt);
+            }
+        });
+
+        txtGroup.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyPressed(java.awt.event.KeyEvent evt) {
+                txtGroupKeyPressed(evt);
+            }
+        });
+
+        cmdSave.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/filesave.png"))); // NOI18N
+        cmdSave.setText("Speichern");
+        cmdSave.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdSaveActionPerformed(evt);
+            }
+        });
+
+        jLabel1.setText("Gruppenname:");
+
+        jLabel2.setText("Kürzel:");
+
+        txtAbbreviation.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyPressed(java.awt.event.KeyEvent evt) {
+                txtAbbreviationKeyPressed(evt);
+            }
+        });
+
+        org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
+        getContentPane().setLayout(layout);
+        layout.setHorizontalGroup(
+            layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(layout.createSequentialGroup()
+                .addContainerGap()
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(jScrollPane1)
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
+                        .add(0, 546, Short.MAX_VALUE)
+                        .add(cmdSave)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(cmdClose))
+                    .add(layout.createSequentialGroup()
+                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            .add(jLabel1)
+                            .add(jLabel2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 92, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            .add(layout.createSequentialGroup()
+                                .add(txtAbbreviation, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 108, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                .add(0, 0, Short.MAX_VALUE))
+                            .add(layout.createSequentialGroup()
+                                .add(txtGroup)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(cmdAdd)))))
+                .addContainerGap())
+        );
+        layout.setVerticalGroup(
+            layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
+                .addContainerGap()
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(txtGroup, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(cmdAdd)
+                    .add(jLabel1))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(txtAbbreviation, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(jLabel2))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                .add(jScrollPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 256, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(cmdClose)
+                    .add(cmdSave))
+                .addContainerGap())
+        );
+
+        pack();
+    }// </editor-fold>//GEN-END:initComponents
+
+    private void txtGroupKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtGroupKeyPressed
+        if (evt.getKeyCode() == evt.VK_ENTER) {
+            this.cmdAddActionPerformed(null);
         }
-        return true;
-    }
+    }//GEN-LAST:event_txtGroupKeyPressed
 
-    @Override
-    public String toString() {
-        return "com.jdimension.jlawyer.persistence.AppUserBean[ principalId=" + principalId + " ]";
-    }
+    private void mnuDeleteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuDeleteActionPerformed
+        if (this.lstGroups.getSelectedValues().length > 0) {
 
-    /**
-     * @return the lawyer
-     */
-    public boolean isLawyer() {
-        return lawyer;
-    }
+            ClientSettings settings = ClientSettings.getInstance();
+            try {
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
-    /**
-     * @param lawyer the lawyer to set
-     */
-    public void setLawyer(boolean lawyer) {
-        this.lawyer = lawyer;
-    }
+                SecurityServiceRemote mgmt = locator.lookupSecurityServiceRemote();
+                Object[] delGroups = this.lstGroups.getSelectedValues();
+                for (Object o : delGroups) {
+                    Group dg = (Group) o;
+                    mgmt.deleteGroup(dg.getId());
+                    ((GroupListModel) this.lstGroups.getModel()).removeElement(o);
+                }
+                this.txtAbbreviation.setText("");
+                this.txtGroup.setText("");
+            } catch (Exception ex) {
+                log.error("Error connecting to server", ex);
+                //JOptionPane.showMessageDialog(this.owner, "Verbindungsfehler: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }//GEN-LAST:event_mnuDeleteActionPerformed
 
-    /**
-     * @return the countryCode
-     */
-    public String getCountryCode() {
-        return countryCode;
-    }
+    private void cmdAddActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdAddActionPerformed
 
-    /**
-     * @param countryCode the countryCode to set
-     */
-    public void setCountryCode(String countryCode) {
-        this.countryCode = countryCode;
-    }
+        boolean valid = true;
+        if ("".equals(this.txtGroup.getText().trim()) || "".equals(this.txtAbbreviation.getText().trim())) {
+            valid = false;
+        }
 
-    /**
-     * @return the areaCode
-     */
-    public String getAreaCode() {
-        return areaCode;
-    }
+        if (this.txtGroup.getText().length() < 4) {
+            valid = false;
+        }
 
-    /**
-     * @param areaCode the areaCode to set
-     */
-    public void setAreaCode(String areaCode) {
-        this.areaCode = areaCode;
-    }
+        if (!valid) {
+            JOptionPane.showMessageDialog(this, "Gruppenname und Kürzel dürfen nicht leer, Gruppenname nicht kürzer als 4 Zeichen sein.", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
 
-    /**
-     * @return the emailAddress
-     */
-    public String getEmailAddress() {
-        return emailAddress;
-    }
+        ClientSettings settings = ClientSettings.getInstance();
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
-    /**
-     * @param emailAddress the emailAddress to set
-     */
-    public void setEmailAddress(String emailAddress) {
-        this.emailAddress = emailAddress;
-    }
+            //SystemManagementRemoteHome home = (SystemManagementRemoteHome)locator.getRemoteHome("ejb/SystemManagementBean", SystemManagementRemoteHome.class);
+            SecurityServiceRemote mgmt = locator.lookupSecurityServiceRemote();
+            Group g=new Group();
+            g.setAbbreviation(this.txtAbbreviation.getText());
+            g.setName(this.txtGroup.getText());
+            
+            Group newGroup = mgmt.createGroup(g);
+            ((GroupListModel) this.lstGroups.getModel()).addElement(newGroup);
+            this.lstGroups.setSelectedIndex(this.lstGroups.getMaxSelectionIndex());
+        } catch (Exception ex) {
+            log.error("Error connecting to server", ex);
+            //JOptionPane.showMessageDialog(this.owner, "Verbindungsfehler: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        this.txtGroup.setText("");
+        this.txtAbbreviation.setText("");
+        this.txtGroup.requestFocus();
+    }//GEN-LAST:event_cmdAddActionPerformed
 
-    /**
-     * @return the emailInType
-     */
-    public String getEmailInType() {
-        return emailInType;
-    }
+    private void lstGroupsMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lstGroupsMousePressed
+        if (evt.getModifiers() == evt.BUTTON2_MASK || evt.getModifiers() == evt.BUTTON2_DOWN_MASK || evt.getModifiers() == evt.BUTTON3_MASK || evt.getModifiers() == evt.BUTTON3_DOWN_MASK) {
+            if (this.lstGroups.getSelectedValues().length > 0) {
+                this.popDelete.show(this.lstGroups, evt.getX(), evt.getY());
+            }
+        }
+    }//GEN-LAST:event_lstGroupsMousePressed
 
-    /**
-     * @param emailInType the emailInType to set
-     */
-    public void setEmailInType(String emailInType) {
-        this.emailInType = emailInType;
-    }
+    private void cmdCloseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCloseActionPerformed
+        this.setVisible(false);
+        this.dispose();
+    }//GEN-LAST:event_cmdCloseActionPerformed
 
-    /**
-     * @return the emailInServer
-     */
-    public String getEmailInServer() {
-        return emailInServer;
-    }
+    private void lstGroupsValueChanged(javax.swing.event.ListSelectionEvent evt) {//GEN-FIRST:event_lstGroupsValueChanged
+        Group g = (Group) this.lstGroups.getSelectedValue();
+        if (g != null) {
+            ClientSettings settings = ClientSettings.getInstance();
+            try {
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                SecurityServiceRemote mgmt = locator.lookupSecurityServiceRemote();
 
-    /**
-     * @param emailInServer the emailInServer to set
-     */
-    public void setEmailInServer(String emailInServer) {
-        this.emailInServer = emailInServer;
-    }
+                this.txtGroup.setText(g.getName());
+                this.txtAbbreviation.setText(g.getAbbreviation());
+                
+            } catch (Exception ex) {
+                log.error("Error connecting to server", ex);
+                //JOptionPane.showMessageDialog(this.owner, "Verbindungsfehler: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+        }
+    }//GEN-LAST:event_lstGroupsValueChanged
 
-    /**
-     * @return the emailInUser
-     */
-    public String getEmailInUser() {
-        return emailInUser;
-    }
+    private void cmdSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveActionPerformed
+        boolean valid=true;
+        if ("".equals(this.txtGroup.getText().trim()) || this.txtGroup.getText().length()<4) {
+            valid=false;
+        }
 
-    /**
-     * @param emailInUser the emailInUser to set
-     */
-    public void setEmailInUser(String emailInUser) {
-        this.emailInUser = emailInUser;
-    }
+        if (this.txtAbbreviation.getText().length() == 0) {
+            valid=false;
+        }
 
-    /**
-     * @return the emailInPwd
-     */
-    public String getEmailInPwd() {
-        return emailInPwd;
-    }
+        if (!valid) {
+            JOptionPane.showMessageDialog(this, "Gruppenname oder Kürzel sind leer / zu kurz", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
 
-    /**
-     * @param emailInPwd the emailInPwd to set
-     */
-    public void setEmailInPwd(String emailInPwd) {
-        this.emailInPwd = emailInPwd;
-    }
+        ClientSettings settings = ClientSettings.getInstance();
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
-    /**
-     * @return the emailOutServer
-     */
-    public String getEmailOutServer() {
-        return emailOutServer;
-    }
+            //SystemManagementRemoteHome home = (SystemManagementRemoteHome)locator.getRemoteHome("ejb/SystemManagementBean", SystemManagementRemoteHome.class);
+            SecurityServiceRemote mgmt = locator.lookupSecurityServiceRemote();
+            Group g = (Group) this.lstGroups.getSelectedValue();
+            if (g != null) {
+                g.setAbbreviation(this.txtAbbreviation.getText());
+                g.setName(this.txtGroup.getText());
+                
+                Group newGroup = mgmt.updateGroup(g);
+                ((GroupListModel) this.lstGroups.getModel()).set(this.lstGroups.getSelectedIndex(), newGroup);
 
-    /**
-     * @param emailOutServer the emailOutServer to set
-     */
-    public void setEmailOutServer(String emailOutServer) {
-        this.emailOutServer = emailOutServer;
-    }
+            }
 
-    /**
-     * @return the emailOutUser
-     */
-    public String getEmailOutUser() {
-        return emailOutUser;
-    }
+        } catch (Exception ex) {
+            log.error("Error connecting to server", ex);
+            //JOptionPane.showMessageDialog(this.owner, "Verbindungsfehler: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        this.txtGroup.setText("");
+        this.txtAbbreviation.setText("");
 
-    /**
-     * @param emailOutUser the emailOutUser to set
-     */
-    public void setEmailOutUser(String emailOutUser) {
-        this.emailOutUser = emailOutUser;
-    }
+        this.txtGroup.requestFocus();
+    }//GEN-LAST:event_cmdSaveActionPerformed
 
-    /**
-     * @return the emailOutPwd
-     */
-    public String getEmailOutPwd() {
-        return emailOutPwd;
-    }
+    private void txtAbbreviationKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtAbbreviationKeyPressed
+        if (evt.getKeyCode() == evt.VK_ENTER) {
+            this.cmdAddActionPerformed(null);
+        }
+    }//GEN-LAST:event_txtAbbreviationKeyPressed
+
 
     /**
-     * @param emailOutPwd the emailOutPwd to set
+     * @param args the command line arguments
      */
-    public void setEmailOutPwd(String emailOutPwd) {
-        this.emailOutPwd = emailOutPwd;
+    public static void main(String args[]) {
+        java.awt.EventQueue.invokeLater(new Runnable() {
+            public void run() {
+                new GroupAdministrationDialog(new javax.swing.JFrame(), true).setVisible(true);
+            }
+        });
     }
 
-    /**
-     * @return the emailSenderName
-     */
-    public String getEmailSenderName() {
-        return emailSenderName;
-    }
+    // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.ButtonGroup btGrpAutoLogin;
+    private javax.swing.JButton cmdAdd;
+    private javax.swing.JButton cmdClose;
+    private javax.swing.JButton cmdSave;
+    private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel2;
+    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JList lstGroups;
+    private javax.swing.JMenuItem mnuDelete;
+    private javax.swing.JPopupMenu popDelete;
+    private javax.swing.JTextField txtAbbreviation;
+    private javax.swing.JTextField txtGroup;
+    // End of variables declaration//GEN-END:variables
 
-    /**
-     * @param emailSenderName the emailSenderName to set
-     */
-    public void setEmailSenderName(String emailSenderName) {
-        this.emailSenderName = emailSenderName;
-    }
-
-    /**
-     * @return the emailSignature
-     */
-    public String getEmailSignature() {
-        return emailSignature;
-    }
-
-    /**
-     * @param emailSignature the emailSignature to set
-     */
-    public void setEmailSignature(String emailSignature) {
-        this.emailSignature = emailSignature;
-    }
-
-    /**
-     * @return the emailInSsl
-     */
-    public boolean isEmailInSsl() {
-        return emailInSsl;
-    }
-
-    /**
-     * @param emailInSsl the emailInSsl to set
-     */
-    public void setEmailInSsl(boolean emailInSsl) {
-        this.emailInSsl = emailInSsl;
-    }
-
-    /**
-     * @return the emailOutSsl
-     */
-    public boolean isEmailOutSsl() {
-        return emailOutSsl;
-    }
-
-    /**
-     * @param emailOutSsl the emailOutSsl to set
-     */
-    public void setEmailOutSsl(boolean emailOutSsl) {
-        this.emailOutSsl = emailOutSsl;
-    }
-
-    /**
-     * @return the emailStartTls
-     */
-    public boolean isEmailStartTls() {
-        return emailStartTls;
-    }
-
-    /**
-     * @param emailStartTls the emailStartTls to set
-     */
-    public void setEmailStartTls(boolean emailStartTls) {
-        this.emailStartTls = emailStartTls;
-    }
-
-    /**
-     * @return the settings
-     */
-    public byte[] getSettings() {
-        return settings;
-    }
-
-    /**
-     * @param settings the settings to set
-     */
-    public void setSettings(byte[] settings) {
-        this.settings = settings;
-    }
-
-    /**
-     * @return the beaCertificate
-     */
-    public byte[] getBeaCertificate() {
-        return beaCertificate;
-    }
-
-    /**
-     * @param beaCertificate the beaCertificate to set
-     */
-    public void setBeaCertificate(byte[] beaCertificate) {
-        this.beaCertificate = beaCertificate;
-    }
-
-    /**
-     * @return the beaCertificatePassword
-     */
-    public String getBeaCertificatePassword() {
-        return beaCertificatePassword;
-    }
-
-    /**
-     * @param beaCertificatePassword the beaCertificatePassword to set
-     */
-    public void setBeaCertificatePassword(String beaCertificatePassword) {
-        this.beaCertificatePassword = beaCertificatePassword;
-    }
-
-    /**
-     * @return the beaCertificateAutoLogin
-     */
-    public boolean isBeaCertificateAutoLogin() {
-        return beaCertificateAutoLogin;
-    }
-
-    /**
-     * @param beaCertificateAutoLogin the beaCertificateAutoLogin to set
-     */
-    public void setBeaCertificateAutoLogin(boolean beaCertificateAutoLogin) {
-        this.beaCertificateAutoLogin = beaCertificateAutoLogin;
-    }
-
-    /**
-     * @return the emailOutPort
-     */
-    public String getEmailOutPort() {
-        return emailOutPort;
-    }
-
-    /**
-     * @param emailOutPort the emailOutPort to set
-     */
-    public void setEmailOutPort(String emailOutPort) {
-        this.emailOutPort = emailOutPort;
-    }
-
-    /**
-     * @return the abbreviation
-     */
-    public String getAbbreviation() {
-        return abbreviation;
-    }
-
-    /**
-     * @param abbreviation the abbreviation to set
-     */
-    public void setAbbreviation(String abbreviation) {
-        this.abbreviation = abbreviation;
-    }
-
-    /**
-     * @return the primaryGroup
-     */
-    public Group getPrimaryGroup() {
-        return primaryGroup;
-    }
-
-    /**
-     * @param primaryGroup the primaryGroup to set
-     */
-    public void setPrimaryGroup(Group primaryGroup) {
-        this.primaryGroup = primaryGroup;
-    }
-    
-    
-    
 }

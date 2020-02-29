@@ -663,6 +663,10 @@
  */
 package com.jdimension.jlawyer.services;
 
+import com.jdimension.jlawyer.persistence.Group;
+import com.jdimension.jlawyer.persistence.GroupMembership;
+import java.util.Collection;
+import java.util.List;
 import javax.ejb.Local;
 
 /**
@@ -671,5 +675,9 @@ import javax.ejb.Local;
  */
 @Local
 public interface SecurityServiceLocal {
+
+    Collection<Group> getAllGroups();
+
+    List<GroupMembership> getGroupsForUser(String principalId) throws Exception;
     
 }

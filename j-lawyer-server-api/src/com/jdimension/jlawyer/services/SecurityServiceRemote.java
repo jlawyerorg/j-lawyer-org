@@ -663,6 +663,10 @@
  */
 package com.jdimension.jlawyer.services;
 
+import com.jdimension.jlawyer.persistence.Group;
+import com.jdimension.jlawyer.persistence.GroupMembership;
+import java.util.Collection;
+import java.util.List;
 import javax.ejb.Remote;
 
 /**
@@ -675,5 +679,19 @@ public interface SecurityServiceRemote {
     boolean login(String principalId, String password);
 
     boolean isAdmin();
+
+    Collection<Group> getAllGroups();
+
+    Group createGroup(Group group) throws Exception;
+
+    boolean deleteGroup(String groupId) throws Exception;
+
+    Group updateGroup(Group group) throws Exception;
+
+    boolean addUserToGroup(String principalId, String groupId) throws Exception;
+
+    boolean removeUserFromGroup(String principalId, String groupId) throws Exception;
+    
+    List<GroupMembership> getGroupsForUser(String principalId) throws Exception;
     
 }

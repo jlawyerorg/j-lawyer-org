@@ -680,13 +680,23 @@ import java.util.List;
 import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
 import com.jdimension.jlawyer.client.calendar.CalendarUtils;
+import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.settings.UserSettings;
+import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FileUtils;
+import com.jdimension.jlawyer.client.utils.TableUtils;
+import com.jdimension.jlawyer.persistence.Group;
+import com.jdimension.jlawyer.persistence.GroupMembership;
+import com.jdimension.jlawyer.services.SecurityServiceRemote;
+import java.awt.Point;
 import java.io.File;
+import java.util.Collection;
 import java.util.Enumeration;
 import java.util.Hashtable;
 import javax.swing.DefaultComboBoxModel;
+import javax.swing.DefaultListModel;
 import javax.swing.JFileChooser;
+import javax.swing.table.DefaultTableModel;
 
 /**
  *
@@ -732,6 +742,19 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
             DefaultComboBoxModel countryModel = new DefaultComboBoxModel(countryNames.toArray());
             this.cmbCountry.setModel(countryModel);
             this.cmbCountryItemStateChanged(null);
+            
+            this.cmbPrimaryGroup.removeAllItems();
+            this.cmbPrimaryGroup.addItem("");
+            String[] colNames3 = new String[]{"", "Gruppe"};
+            GroupMembershipsTableModel model = new GroupMembershipsTableModel(colNames3, 0);
+            this.tblGroups.setModel(model);
+            //((DefaultTableModel)this.tblGroups.getModel())
+            Collection<Group> allGroups=locator.lookupSecurityServiceRemote().getAllGroups();
+            for(Group g: allGroups) {
+                ((DefaultComboBoxModel)this.cmbPrimaryGroup.getModel()).addElement(g);
+                ((DefaultTableModel)this.tblGroups.getModel()).addRow(new Object[]{true, g});
+            }
+            ComponentUtils.autoSizeColumns(tblGroups);
 
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);
@@ -824,6 +847,14 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         rdManualLogin = new javax.swing.JRadioButton();
         cmdSelectCertificate = new javax.swing.JButton();
         cmdRemoveCertificate = new javax.swing.JButton();
+        jPanel9 = new javax.swing.JPanel();
+        jLabel18 = new javax.swing.JLabel();
+        cmbPrimaryGroup = new javax.swing.JComboBox<>();
+        jLabel19 = new javax.swing.JLabel();
+        jScrollPane4 = new javax.swing.JScrollPane();
+        tblGroups = new javax.swing.JTable();
+        jLabel20 = new javax.swing.JLabel();
+        txtAbbreviation = new javax.swing.JTextField();
 
         mnuDelete.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editdelete.png"))); // NOI18N
         mnuDelete.setText("Löschen");
@@ -1060,7 +1091,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                     .add(jPanel3, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(jPanel2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(260, Short.MAX_VALUE))
+                .addContainerGap(325, Short.MAX_VALUE))
         );
 
         jPanel1.getAccessibleContext().setAccessibleName("");
@@ -1106,7 +1137,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 .add(jPanel6Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(jLabel4)
                     .add(cmbArea, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(350, Short.MAX_VALUE))
+                .addContainerGap(416, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("Kalender", jPanel6);
@@ -1257,7 +1288,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(jLabel12)
                     .add(htmlEmailSig, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 205, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(13, Short.MAX_VALUE))
+                .addContainerGap(78, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("E-Mail", jPanel7);
@@ -1344,10 +1375,86 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 .add(rdAutoLogin)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(rdManualLogin)
-                .addContainerGap(248, Short.MAX_VALUE))
+                .addContainerGap(313, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("beA", jPanel8);
+
+        jLabel18.setText("Primäre Gruppe:");
+
+        cmbPrimaryGroup.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+
+        jLabel19.setText("Mitglied in:");
+
+        tblGroups.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+                {null, null},
+                {null, null},
+                {null, null},
+                {null, null}
+            },
+            new String [] {
+                "", "Gruppe"
+            }
+        ) {
+            Class[] types = new Class [] {
+                java.lang.Boolean.class, java.lang.Object.class
+            };
+
+            public Class getColumnClass(int columnIndex) {
+                return types [columnIndex];
+            }
+        });
+        tblGroups.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                tblGroupsMouseClicked(evt);
+            }
+        });
+        jScrollPane4.setViewportView(tblGroups);
+
+        jLabel20.setText("Nutzerkürzel:");
+
+        org.jdesktop.layout.GroupLayout jPanel9Layout = new org.jdesktop.layout.GroupLayout(jPanel9);
+        jPanel9.setLayout(jPanel9Layout);
+        jPanel9Layout.setHorizontalGroup(
+            jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jPanel9Layout.createSequentialGroup()
+                .addContainerGap()
+                .add(jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(jPanel9Layout.createSequentialGroup()
+                        .add(jLabel19)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 49, Short.MAX_VALUE)
+                        .add(jScrollPane4, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 658, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                    .add(jPanel9Layout.createSequentialGroup()
+                        .add(jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            .add(jLabel18)
+                            .add(jLabel20))
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
+                            .add(cmbPrimaryGroup, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .add(txtAbbreviation))
+                        .add(0, 0, Short.MAX_VALUE)))
+                .addContainerGap())
+        );
+        jPanel9Layout.setVerticalGroup(
+            jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jPanel9Layout.createSequentialGroup()
+                .addContainerGap()
+                .add(jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(jLabel20)
+                    .add(txtAbbreviation, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(cmbPrimaryGroup, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(jLabel18))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                .add(jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(jScrollPane4, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 356, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(jLabel19))
+                .addContainerGap(53, Short.MAX_VALUE))
+        );
+
+        jTabbedPane1.addTab("Kürzel und Gruppen", jPanel9);
 
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -1481,6 +1588,8 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         this.chkEmailInSsl.setSelected(true);
         this.chkEmailOutSsl.setSelected(true);
         this.chkEmailStartTls.setSelected(false);
+        this.txtAbbreviation.setText("");
+        this.cmbPrimaryGroup.setSelectedIndex(0);
         this.txtUser.requestFocus();
     }//GEN-LAST:event_cmdAddActionPerformed
 
@@ -1553,6 +1662,8 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 this.chkEmailInSsl.setSelected(u.isEmailInSsl());
                 this.chkEmailOutSsl.setSelected(u.isEmailOutSsl());
                 this.chkEmailStartTls.setSelected(u.isEmailStartTls());
+                this.txtAbbreviation.setText(u.getAbbreviation());
+                this.cmbPrimaryGroup.setSelectedItem(u.getPrimaryGroup());
 
                 if (u.isBeaCertificateAutoLogin()) {
                     this.rdAutoLogin.setSelected(true);
@@ -1571,6 +1682,18 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                     Hashtable ht = BeaAccess.getCertificateInformation(u.getBeaCertificate(), u.getBeaCertificatePassword());
                     for (Object key : ht.keySet()) {
                         this.taBeaCertificate.setText(this.taBeaCertificate.getText() + key.toString() + ": " + ht.get(key).toString() + System.getProperty("line.separator"));
+                    }
+                }
+                
+                List<GroupMembership> groups=locator.lookupSecurityServiceRemote().getGroupsForUser(u.getPrincipalId());
+                for(int i=0;i<this.tblGroups.getRowCount();i++) {
+                    Group g=(Group)this.tblGroups.getValueAt(i, 1);
+                    this.tblGroups.setValueAt(false, i, 0);
+                    for(GroupMembership gm: groups) {
+                        if(g.getId().equals(gm.getGroupId())) {
+                            this.tblGroups.setValueAt(true, i, 0);
+                            break;
+                        }
                     }
                 }
 
@@ -1620,6 +1743,8 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
             if (u != null) {
                 u.setPassword(this.txtPassword.getText());
                 u.setLawyer(this.chkLawyer.isSelected());
+                u.setAbbreviation(this.txtAbbreviation.getText());
+                u.setPrimaryGroup((Group)this.cmbPrimaryGroup.getSelectedItem());
 
                 String countryName = this.cmbCountry.getSelectedItem().toString();
                 Object regionNameO = this.cmbArea.getSelectedItem();
@@ -1708,6 +1833,8 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         this.rdAutoLogin.setSelected(true);
         this.rdManualLogin.setSelected(false);
         this.taBeaCertificate.setText("");
+        this.txtAbbreviation.setText("");
+        this.cmbPrimaryGroup.setSelectedIndex(0);
 
         this.txtUser.requestFocus();
     }//GEN-LAST:event_cmdSaveActionPerformed
@@ -1785,6 +1912,42 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         this.taBeaCertificate.setText("");
         this.pwdBeaCertificatePassword.setText("");
     }//GEN-LAST:event_cmdRemoveCertificateActionPerformed
+
+    private void tblGroupsMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblGroupsMouseClicked
+        if (evt.getClickCount() == 1 && !evt.isPopupTrigger() && evt.getComponent().isEnabled()) {
+            
+            AppUserBean u = (AppUserBean) this.lstUsers.getSelectedValue();
+            if(u==null)
+                return;
+            
+            Point p = evt.getPoint();
+            int col = this.tblGroups.columnAtPoint(p);
+            if (col == 0) {
+                // click on checkbox in table
+                int row = this.tblGroups.rowAtPoint(p);
+                Group g = (Group) this.tblGroups.getValueAt(row, 1);
+                Boolean newValue=!((Boolean)this.tblGroups.getValueAt(row, 0));
+                
+                ClientSettings settings = ClientSettings.getInstance();
+                try {
+                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                    SecurityServiceRemote svc = locator.lookupSecurityServiceRemote();
+                    if(newValue) {
+                        svc.addUserToGroup(u.getPrincipalId(), g.getId());
+                    } else {
+                        svc.removeUserFromGroup(u.getPrincipalId(), g.getId());
+                    }
+                } catch (Exception ex) {
+                    log.error("Error updating group membership", ex);
+                    JOptionPane.showMessageDialog(this, "Fehler beim Speichern: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+                    EditorsRegistry.getInstance().clearStatus();
+                    return;
+                }
+
+                this.tblGroups.setValueAt(newValue, row, col);
+            }
+        }
+    }//GEN-LAST:event_tblGroupsMouseClicked
 
     private List<AppRoleBean> getRolesFromUI(String principalId) {
         List<AppRoleBean> result = new ArrayList<AppRoleBean>();
@@ -2038,6 +2201,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
     private javax.swing.JComboBox cmbAccountType;
     private javax.swing.JComboBox cmbArea;
     private javax.swing.JComboBox cmbCountry;
+    private javax.swing.JComboBox<String> cmbPrimaryGroup;
     private javax.swing.JButton cmdAdd;
     private javax.swing.JButton cmdClose;
     private javax.swing.JButton cmdRemoveCertificate;
@@ -2053,7 +2217,10 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
     private javax.swing.JLabel jLabel15;
     private javax.swing.JLabel jLabel16;
     private javax.swing.JLabel jLabel17;
+    private javax.swing.JLabel jLabel18;
+    private javax.swing.JLabel jLabel19;
     private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel jLabel20;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
@@ -2069,8 +2236,10 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
     private javax.swing.JPanel jPanel6;
     private javax.swing.JPanel jPanel7;
     private javax.swing.JPanel jPanel8;
+    private javax.swing.JPanel jPanel9;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
+    private javax.swing.JScrollPane jScrollPane4;
     private javax.swing.JTabbedPane jTabbedPane1;
     private javax.swing.JList lstUsers;
     private javax.swing.JMenuItem mnuDelete;
@@ -2081,6 +2250,8 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
     private javax.swing.JRadioButton rdAutoLogin;
     private javax.swing.JRadioButton rdManualLogin;
     private javax.swing.JTextArea taBeaCertificate;
+    private javax.swing.JTable tblGroups;
+    private javax.swing.JTextField txtAbbreviation;
     private javax.swing.JTextField txtAddress;
     private javax.swing.JTextField txtEmailSender;
     private javax.swing.JTextField txtInServer;
