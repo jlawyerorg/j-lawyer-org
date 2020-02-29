@@ -2654,6 +2654,8 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                         } catch (Throwable t) {
                             log.error("Unable to refresh beA folder after moving message to imported", t);
                         }
+                    } else {
+                        ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Verschieben der beA-Nachricht - Importordner existiert nicht!", "Fehler");
                     }
 
                 }
