@@ -678,6 +678,8 @@ public interface SecurityServiceLocal {
 
     Collection<Group> getAllGroups();
 
-    List<GroupMembership> getGroupsForUser(String principalId) throws Exception;
+    List<GroupMembership> getGroupMembershipsForUser(String principalId) throws Exception;
+
+    List<Group> getGroupsForUser(String principalId) throws Exception;
     
 }

@@ -803,4 +803,6 @@ public interface ArchiveFileServiceRemote {
 
     List<PartyTypeBean> getAllPartyTypes();
 
+    List<ArchiveFileGroupsBean> getAllowedGroups(String caseId) throws Exception;
+
 }

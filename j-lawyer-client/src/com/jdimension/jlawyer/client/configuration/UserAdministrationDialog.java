@@ -1685,7 +1685,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                     }
                 }
                 
-                List<GroupMembership> groups=locator.lookupSecurityServiceRemote().getGroupsForUser(u.getPrincipalId());
+                List<GroupMembership> groups=locator.lookupSecurityServiceRemote().getGroupMembershipsForUser(u.getPrincipalId());
                 for(int i=0;i<this.tblGroups.getRowCount();i++) {
                     Group g=(Group)this.tblGroups.getValueAt(i, 1);
                     this.tblGroups.setValueAt(false, i, 0);

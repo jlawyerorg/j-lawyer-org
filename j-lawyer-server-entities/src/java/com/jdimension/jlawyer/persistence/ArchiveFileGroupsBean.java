@@ -661,39 +661,106 @@
  * For more information on this, and how to apply and follow the GNU AGPL, see
  * <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.services;
+package com.jdimension.jlawyer.persistence;
 
-import com.jdimension.jlawyer.persistence.Group;
-import com.jdimension.jlawyer.persistence.GroupMembership;
-import java.util.Collection;
+import java.io.Serializable;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
-import javax.ejb.Remote;
+import javax.persistence.*;
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlTransient;
 
-/**
+/** 
  *
  * @author jens
  */
-@Remote
-public interface SecurityServiceRemote {
-
-    boolean login(String principalId, String password);
-
-    boolean isAdmin();
-
-    Collection<Group> getAllGroups();
-
-    Group createGroup(Group group) throws Exception;
-
-    boolean deleteGroup(String groupId) throws Exception;
-
-    Group updateGroup(Group group) throws Exception;
-
-    boolean addUserToGroup(String principalId, String groupId) throws Exception;
-
-    boolean removeUserFromGroup(String principalId, String groupId) throws Exception;
+@Entity
+@Table(name = "case_groups")
+@XmlRootElement
+@NamedQueries({
+    @NamedQuery(name = "ArchiveFileGroupsBean.findAll", query = "SELECT a FROM ArchiveFileGroupsBean a"),
+    @NamedQuery(name = "ArchiveFileGroupsBean.findById", query = "SELECT a FROM ArchiveFileGroupsBean a WHERE a.id = :id"),
+    @NamedQuery(name = "ArchiveFileGroupsBean.findByGroup", query = "SELECT a FROM ArchiveFileGroupsBean a WHERE a.allowedGroup = :allowedGroup"),
+    @NamedQuery(name = "ArchiveFileGroupsBean.findByArchiveFileKey", query = "SELECT a FROM ArchiveFileGroupsBean a WHERE a.archiveFileKey = :archiveFileKey")})
+public class ArchiveFileGroupsBean implements Serializable {
+    private static final long serialVersionUID = 1L;
     
-    List<GroupMembership> getGroupMembershipsForUser(String principalId) throws Exception;
+    @Id
+    @Basic(optional = false)
+    @Column(name = "id")
+    private String id;
+    
+    @JoinColumn(name = "case_id", referencedColumnName = "id")
+    @ManyToOne
+    private ArchiveFileBean archiveFileKey;
+    
+    @JoinColumn(name = "group_id", referencedColumnName = "id")
+    @ManyToOne
+    private Group allowedGroup;
+    
+    public ArchiveFileGroupsBean() {
+    }
 
-    List<Group> getGroupsForUser(String principalId) throws Exception;
+    public ArchiveFileGroupsBean(String id) {
+        this.id = id;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public ArchiveFileBean getArchiveFileKey() {
+        return archiveFileKey;
+    }
+
+    public void setArchiveFileKey(ArchiveFileBean archiveFileKey) {
+        this.archiveFileKey = archiveFileKey;
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 0;
+        hash += (id != null ? id.hashCode() : 0);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        // TODO: Warning - this method won't work in the case the id fields are not set
+        if (!(object instanceof ArchiveFileGroupsBean)) {
+            return false;
+        }
+        ArchiveFileGroupsBean other = (ArchiveFileGroupsBean) object;
+        if ((this.id == null && other.id != null) || (this.id != null && !this.id.equals(other.id))) {
+            return false;
+        }
+        return true;
+    }
+
+    @Override
+    public String toString() {
+        return "com.jdimension.jlawyer.persistence.ArchiveFileGroupsBean[ id=" + id + " ]";
+        
+        
+    }
+
+    /**
+     * @return the allowed group
+     */
+    public Group getAllowedGroup() {
+        return this.allowedGroup;
+    }
+
+    /**
+     * @param allowedGroup the allowed group to set
+     */
+    public void setFormType(Group allowedGroup) {
+        this.allowedGroup = allowedGroup;
+    }
     
 }

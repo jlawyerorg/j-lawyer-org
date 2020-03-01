@@ -731,6 +731,8 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     @EJB
     private PartyTypeBeanFacadeLocal partyTypeFacade;
     @EJB
+    private ArchiveFileGroupsBeanFacadeLocal caseGroupsFacade;
+    @EJB
     private ServerSettingsBeanFacadeLocal settingsFacade;
 
     private static final String PS_SEARCHENHANCED_2 = "select id from cases where ucase(name) like ? or ucase(fileNumber) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(subjectField) like ?";
@@ -3649,6 +3651,17 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         this.archiveFileHistoryFacade.create(newHistEntry);
 
         this.archiveFileAddressesFacade.remove(db);
+        
+    }
+
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public List<ArchiveFileGroupsBean> getAllowedGroups(String caseId) throws Exception {
+        ArchiveFileBean archiveFile=this.archiveFileFacade.find(caseId);
+        if(archiveFile==null) {
+            return new ArrayList<ArchiveFileGroupsBean>();
+        }
+        return this.caseGroupsFacade.findByCase(archiveFile);
         
     }
     

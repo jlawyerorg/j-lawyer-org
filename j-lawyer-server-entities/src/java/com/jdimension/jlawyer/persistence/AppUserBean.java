@@ -737,7 +737,7 @@ public class AppUserBean implements Serializable {
     
     //@Column(name = "primary_group")
     @JoinColumn(name = "primary_group", referencedColumnName = "id")
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER)
     private Group primaryGroup;
     
     

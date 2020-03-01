@@ -675,6 +675,7 @@ import com.jdimension.jlawyer.client.plugins.form.FormPlugin;
 import com.jdimension.jlawyer.client.processing.ProgressIndicator;
 import com.jdimension.jlawyer.client.processing.ProgressableAction;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
@@ -763,7 +764,7 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
 
     @Override
     public int getMax() {
-        return 19;
+        return 20;
     }
 
     @Override
@@ -842,6 +843,15 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
             this.progress("Lade Akte: Historie...");
             fileService = locator.lookupArchiveFileServiceRemote();
             dtos = fileService.getHistoryForArchiveFile(this.archiveFileKey);
+            
+            this.progress("Lade Akte: Berechtigungen...");
+            Collection<Group> allGroups=locator.lookupSecurityServiceRemote().getAllGroups();
+            Collection<Group> userGroups=locator.lookupSecurityServiceRemote().getGroupsForUser(UserSettings.getInstance().getCurrentUser().getPrincipalId());
+            if(this.caseDto.getGroup()!=null && !userGroups.contains(this.caseDto.getGroup())) {
+                userGroups.add(this.caseDto.getGroup());
+            }
+            Collection<ArchiveFileGroupsBean> allowedGroups=fileService.getAllowedGroups(this.archiveFileKey);
+            
             this.progress("Lade Akte: Beteiligte...");
             //clients = fileService.getClients(this.archiveFileKey);
 

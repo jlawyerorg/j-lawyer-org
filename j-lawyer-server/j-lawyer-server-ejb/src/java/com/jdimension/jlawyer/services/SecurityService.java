@@ -668,6 +668,7 @@ import com.jdimension.jlawyer.persistence.GroupFacadeLocal;
 import com.jdimension.jlawyer.persistence.GroupMembership;
 import com.jdimension.jlawyer.persistence.GroupMembershipFacadeLocal;
 import com.jdimension.jlawyer.persistence.utils.StringGenerator;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import javax.annotation.Resource;
@@ -685,27 +686,24 @@ import org.jboss.ejb3.annotation.SecurityDomain;
 @SecurityDomain("j-lawyer-security")
 public class SecurityService implements SecurityServiceRemote, SecurityServiceLocal {
 
-    @Resource   
-    private SessionContext sessionContext;  
-    
+    @Resource
+    private SessionContext sessionContext;
+
     @EJB
     private GroupFacadeLocal groupFacade;
-    
+
     @EJB
     private GroupMembershipFacadeLocal groupMembershipFacade;
-    
+
     @Override
     @RolesAllowed({"loginRole"})
     public boolean login(String principalId, String password) {
         //System.out.println(sessionContext.isCallerInRole("loginRole"));
         return false;
     }
-    
-    
 
     // Add business logic below. (Right-click in editor and choose
     // "Insert Code > Add Business Method")
-
     @Override
     @RolesAllowed({"loginRole"})
     public boolean isAdmin() {
@@ -721,17 +719,17 @@ public class SecurityService implements SecurityServiceRemote, SecurityServiceLo
     @Override
     @RolesAllowed({"adminRole"})
     public Group createGroup(Group group) throws Exception {
-        
-        Collection<Group> groups=this.getAllGroups();
-        for(Group g: groups) {
-            if(g.getAbbreviation().equalsIgnoreCase(group.getAbbreviation())) {
+
+        Collection<Group> groups = this.getAllGroups();
+        for (Group g : groups) {
+            if (g.getAbbreviation().equalsIgnoreCase(group.getAbbreviation())) {
                 throw new Exception("Es existiert bereits eine Gruppe mit diesem Kürzel!");
             } else if (g.getName().equalsIgnoreCase(group.getName())) {
                 throw new Exception("Es existiert bereits eine Gruppe mit diesem Namen!");
             }
         }
-        
-        String id=new StringGenerator().getID().toString();
+
+        String id = new StringGenerator().getID().toString();
         group.setId(id);
         this.groupFacade.create(group);
         return this.groupFacade.find(id);
@@ -754,10 +752,10 @@ public class SecurityService implements SecurityServiceRemote, SecurityServiceLo
     @Override
     @RolesAllowed({"adminRole"})
     public boolean addUserToGroup(String principalId, String groupId) throws Exception {
-        GroupMembership gm=this.groupMembershipFacade.findByUserAndGroup(principalId, groupId);
-        if(gm==null) {
-            String id=new StringGenerator().getID().toString();
-            GroupMembership newGm=new GroupMembership();
+        GroupMembership gm = this.groupMembershipFacade.findByUserAndGroup(principalId, groupId);
+        if (gm == null) {
+            String id = new StringGenerator().getID().toString();
+            GroupMembership newGm = new GroupMembership();
             newGm.setId(id);
             newGm.setGroupId(groupId);
             newGm.setPrincipalId(principalId);
@@ -769,8 +767,8 @@ public class SecurityService implements SecurityServiceRemote, SecurityServiceLo
     @Override
     @RolesAllowed({"adminRole"})
     public boolean removeUserFromGroup(String principalId, String groupId) throws Exception {
-        GroupMembership gm=this.groupMembershipFacade.findByUserAndGroup(principalId, groupId);
-        if(gm!=null) {
+        GroupMembership gm = this.groupMembershipFacade.findByUserAndGroup(principalId, groupId);
+        if (gm != null) {
             this.groupMembershipFacade.remove(gm);
         }
         return true;
@@ -778,10 +776,21 @@ public class SecurityService implements SecurityServiceRemote, SecurityServiceLo
 
     @Override
     @RolesAllowed({"loginRole"})
-    public List<GroupMembership> getGroupsForUser(String principalId) throws Exception {
+    public List<GroupMembership> getGroupMembershipsForUser(String principalId) throws Exception {
         return this.groupMembershipFacade.findByUser(principalId);
     }
-    
-    
-    
+
+    @Override
+    public List<Group> getGroupsForUser(String principalId) throws Exception {
+        List<GroupMembership> memberships = this.groupMembershipFacade.findByUser(principalId);
+        ArrayList<Group> groups = new ArrayList<>();
+        for (GroupMembership m : memberships) {
+            Group g = this.groupFacade.find(m.getGroupId());
+            if (g != null) {
+                groups.add(g);
+            }
+        }
+        return groups;
+    }
+
 }

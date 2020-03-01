@@ -732,6 +732,9 @@ public class ArchiveFileBean implements Serializable {
     private List<ArchiveFileFormsBean> archiveFileFormsBeanList;
     @OneToMany(cascade = CascadeType.REMOVE, mappedBy = "archiveFileKey")
     private List<ArchiveFileFormEntriesBean> archiveFileFormEntriesBeanList;
+    @JoinColumn(name = "owner_group", referencedColumnName = "id")
+    @OneToOne(fetch = FetchType.EAGER)
+    private Group group;
 
     public ArchiveFileBean() {
     }
@@ -1051,6 +1054,20 @@ public class ArchiveFileBean implements Serializable {
      */
     public void setArchiveFileFormEntriesBeanList(List<ArchiveFileFormEntriesBean> archiveFileFormEntriesBeanList) {
         this.archiveFileFormEntriesBeanList = archiveFileFormEntriesBeanList;
+    }
+
+    /**
+     * @return the group
+     */
+    public Group getGroup() {
+        return group;
+    }
+
+    /**
+     * @param group the group to set
+     */
+    public void setGroup(Group group) {
+        this.group = group;
     }
     
 }
