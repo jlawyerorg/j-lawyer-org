@@ -805,4 +805,6 @@ public interface ArchiveFileServiceRemote {
 
     List<ArchiveFileGroupsBean> getAllowedGroups(String caseId) throws Exception;
 
+    void updateAllowedGroups(String caseId, Collection<Group> allowedGroups) throws Exception;
+
 }

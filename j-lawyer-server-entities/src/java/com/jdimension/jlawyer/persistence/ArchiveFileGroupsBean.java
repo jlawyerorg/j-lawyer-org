@@ -759,7 +759,7 @@ public class ArchiveFileGroupsBean implements Serializable {
     /**
      * @param allowedGroup the allowed group to set
      */
-    public void setFormType(Group allowedGroup) {
+    public void setAllowedGroup(Group allowedGroup) {
         this.allowedGroup = allowedGroup;
     }
     

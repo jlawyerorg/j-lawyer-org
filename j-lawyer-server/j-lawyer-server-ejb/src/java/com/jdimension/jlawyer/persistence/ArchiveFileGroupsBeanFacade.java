@@ -694,4 +694,11 @@ public class ArchiveFileGroupsBeanFacade extends AbstractFacade<ArchiveFileGroup
         return list;
     }
     
+    @Override
+    public List<ArchiveFileGroupsBean> findByGroup(Group group) {
+        
+        List<ArchiveFileGroupsBean> list = getEntityManager().createNamedQuery("ArchiveFileGroupsBean.findByGroup").setParameter("allowedGroup", group).getResultList();
+        return list;
+    }
+    
 }

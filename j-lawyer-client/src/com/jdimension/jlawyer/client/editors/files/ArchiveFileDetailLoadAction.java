@@ -663,6 +663,7 @@
  */
 package com.jdimension.jlawyer.client.editors.files;
 
+import com.jdimension.jlawyer.client.configuration.GroupMembershipsTableModel;
 import com.jdimension.jlawyer.comparator.DocumentsComparator;
 import com.jdimension.jlawyer.comparator.ReviewsComparator;
 import com.jdimension.jlawyer.client.configuration.UserTableCellRenderer;
@@ -700,6 +701,7 @@ import java.util.Hashtable;
 import java.util.List;
 import java.util.Locale;
 import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableRowSorter;
 import org.apache.log4j.Logger;
 
@@ -730,11 +732,13 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
     private JTextArea documentTagsOverview;
     private JComboBox cmbFormTypes = null;
     private JPanel formsPanel = null;
-    private JTabbedPane tabPaneForms=null;
+    private JTabbedPane tabPaneForms = null;
+    private JComboBox cmbGroups = null;
+    private JTable tblGroups = null;
 
     private SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy HH:mm");
 
-    public ArchiveFileDetailLoadAction(ProgressIndicator i, ArchiveFilePanel owner, String archiveFileKey, ArchiveFileBean caseDto, JTable historyTarget, JTable docTarget, InvolvedPartiesPanel contactsForCasePanel, JTable tblReviews, JPanel tagPanel, JPanel documentTagPanel, boolean readOnly, boolean beaEnabled, String selectDocumentWithFileName, JLabel lblArchivedSince, boolean isArchived, JPopupMenu popDocumentFavorites, JTextArea lblDocumentTags, JComboBox formTypes, JPanel formsPanel, JTabbedPane tabPaneForms) {
+    public ArchiveFileDetailLoadAction(ProgressIndicator i, ArchiveFilePanel owner, String archiveFileKey, ArchiveFileBean caseDto, JTable historyTarget, JTable docTarget, InvolvedPartiesPanel contactsForCasePanel, JTable tblReviews, JPanel tagPanel, JPanel documentTagPanel, boolean readOnly, boolean beaEnabled, String selectDocumentWithFileName, JLabel lblArchivedSince, boolean isArchived, JPopupMenu popDocumentFavorites, JTextArea lblDocumentTags, JComboBox formTypes, JPanel formsPanel, JTabbedPane tabPaneForms, JComboBox cmbGroups, JTable tblGroups) {
         super(i, false);
         //this.table = table;
         //this.dlg = dlg;
@@ -752,13 +756,15 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
         this.tagPanel = tagPanel;
         this.cmbFormTypes = formTypes;
         this.formsPanel = formsPanel;
-        this.tabPaneForms=tabPaneForms;
+        this.tabPaneForms = tabPaneForms;
         this.documentTagPanel = documentTagPanel;
         this.lblArchivedSince = lblArchivedSince;
         this.isArchived = isArchived;
         this.readOnly = readOnly;
         this.beaEnabled = beaEnabled;
         this.selectDocumentWithFileName = selectDocumentWithFileName;
+        this.cmbGroups = cmbGroups;
+        this.tblGroups = tblGroups;
 
     }
 
@@ -828,9 +834,9 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
                 formInstance.setPreferredSize(maxDimension);
                 formInstance.setDescription(affb.getDescription());
                 formInstance.setForm(affb);
-                
+
                 try {
-                    
+
                     formInstance.initialize();
 
                     tabPaneForms.addTab("<html><b>" + affb.getFormType().getName() + "</b><br/>" + df.format(affb.getCreationDate()) + "<br/>" + affb.getPlaceHolder() + "</html>", null, formInstance);
@@ -843,15 +849,59 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
             this.progress("Lade Akte: Historie...");
             fileService = locator.lookupArchiveFileServiceRemote();
             dtos = fileService.getHistoryForArchiveFile(this.archiveFileKey);
-            
+
             this.progress("Lade Akte: Berechtigungen...");
-            Collection<Group> allGroups=locator.lookupSecurityServiceRemote().getAllGroups();
-            Collection<Group> userGroups=locator.lookupSecurityServiceRemote().getGroupsForUser(UserSettings.getInstance().getCurrentUser().getPrincipalId());
-            if(this.caseDto.getGroup()!=null && !userGroups.contains(this.caseDto.getGroup())) {
+            Collection<Group> allGroups = locator.lookupSecurityServiceRemote().getAllGroups();
+            Collection<Group> userGroups = locator.lookupSecurityServiceRemote().getGroupsForUser(UserSettings.getInstance().getCurrentUser().getPrincipalId());
+            boolean userIsInOwnerGroup=false;
+            if(this.caseDto.getGroup()==null) {
+                userIsInOwnerGroup=true;
+            } else {
+                userIsInOwnerGroup=userGroups.contains(this.caseDto.getGroup());
+            }
+            if (this.caseDto.getGroup() != null && !userGroups.contains(this.caseDto.getGroup())) {
                 userGroups.add(this.caseDto.getGroup());
             }
-            Collection<ArchiveFileGroupsBean> allowedGroups=fileService.getAllowedGroups(this.archiveFileKey);
+            Collection<ArchiveFileGroupsBean> allowedGroups = fileService.getAllowedGroups(this.archiveFileKey);
+
+            this.cmbGroups.removeAllItems();
+            this.cmbGroups.addItem("");
+            String[] colNames3 = new String[]{"", "Gruppe"};
+            GroupMembershipsTableModel model = new GroupMembershipsTableModel(colNames3, 0);
+            this.tblGroups.setModel(model);
+            //add all groups to table
+            for (Group g : allGroups) {
+                ((DefaultTableModel) this.tblGroups.getModel()).addRow(new Object[]{true, g});
+            }
+            // add all groups to owner groups combobox
+            if (this.caseDto.getGroup() != null) {
+                if (!(userGroups.contains(this.caseDto.getGroup()))) {
+                    userGroups.add(this.caseDto.getGroup());
+                }
+            }
+            for (Group g : userGroups) {
+                ((DefaultComboBoxModel) this.cmbGroups.getModel()).addElement(g);
+            }
+            if (this.caseDto.getGroup() != null) {
+                this.cmbGroups.setSelectedItem(this.caseDto.getGroup());
+            }
             
+
+            // set selected checkbox when group is allowed for this case
+            for (int i = 0; i < this.tblGroups.getRowCount(); i++) {
+                Group g = (Group) this.tblGroups.getValueAt(i, 1);
+                this.tblGroups.setValueAt(false, i, 0);
+                for (ArchiveFileGroupsBean gm : allowedGroups) {
+                    if (g.getId().equals(gm.getAllowedGroup().getId())) {
+                        this.tblGroups.setValueAt(true, i, 0);
+                        break;
+                    }
+                }
+            }
+            this.tblGroups.setEnabled(userIsInOwnerGroup);
+            this.cmbGroups.setEnabled(userIsInOwnerGroup);
+            ComponentUtils.autoSizeColumns(tblGroups);
+
             this.progress("Lade Akte: Beteiligte...");
             //clients = fileService.getClients(this.archiveFileKey);
 

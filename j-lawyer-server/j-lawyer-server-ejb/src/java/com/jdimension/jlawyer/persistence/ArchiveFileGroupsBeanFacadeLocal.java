@@ -689,4 +689,6 @@ public interface ArchiveFileGroupsBeanFacadeLocal {
     
     List<ArchiveFileGroupsBean> findByCase(ArchiveFileBean archiveFile);
     
+    List<ArchiveFileGroupsBean> findByGroup(Group group);
+    
 }

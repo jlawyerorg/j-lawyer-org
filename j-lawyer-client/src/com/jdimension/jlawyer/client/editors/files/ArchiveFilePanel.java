@@ -720,6 +720,7 @@ import com.jdimension.jlawyer.persistence.*;
 import com.jdimension.jlawyer.services.AddressServiceRemote;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import com.jdimension.jlawyer.services.SecurityServiceRemote;
 import com.jdimension.jlawyer.ui.tagging.ArchiveFileTagActionListener;
 import com.jdimension.jlawyer.ui.tagging.DocumentTagActionListener;
 import com.jdimension.jlawyer.ui.tagging.TagSelectedAction;
@@ -806,6 +807,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private DocumentTableCellRenderer documentCellRenderer = null;
 
     private boolean initializing = false;
+    private boolean groupPrivilegesChanged=false;
 
     /**
      * Creates new form ArchiveFilePanel
@@ -1119,6 +1121,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         //this.cmbDictateSign.setEnabled(!readOnly);
         this.cmbLawyer.setEnabled(!readOnly);
         this.cmbAssistant.setEnabled(!readOnly);
+        this.cmbGroup.setEnabled(!readOnly);
+        this.tblGroups.setEnabled(!readOnly);
         this.cmbReviewAssignee.setEnabled(!readOnly);
         this.radioReviewTypeFollowUp.setEnabled(!readOnly);
         this.radioReviewTypeRespite.setEnabled(!readOnly);
@@ -1204,7 +1208,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     public void setArchiveFileDTO(ArchiveFileBean inDto, String selectDocumentWithFileName) {
         this.dto = inDto;
+        this.groupPrivilegesChanged=false;
         this.documentHits.clear();
+        this.tabPrivileges.setSelectedIndex(0);
 
         this.documentCellRenderer.setDocumentHits(documentHits);
         lblDocumentHits.setText(" ");
@@ -1275,7 +1281,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         ProgressIndicator pi = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
         pi.setShowCancelButton(false);
-        ArchiveFileDetailLoadAction a = new ArchiveFileDetailLoadAction(pi, this, dto.getId(), this.dto, this.tblHistory, this.tblDocuments, this.pnlInvolvedParties, this.tblReviewReasons, this.tagPanel, this.documentTagPanel, !this.cmdSave.isEnabled(), BeaAccess.isBeaEnabled(), selectDocumentWithFileName, this.lblArchivedSince, dto.getArchivedBoolean(), this.popDocumentFavorites, this.taDocumentTags, this.cmbFormType, this.pnlAddForms, this.tabPaneForms);
+        ArchiveFileDetailLoadAction a = new ArchiveFileDetailLoadAction(pi, this, dto.getId(), this.dto, this.tblHistory, this.tblDocuments, this.pnlInvolvedParties, this.tblReviewReasons, this.tagPanel, this.documentTagPanel, !this.cmdSave.isEnabled(), BeaAccess.isBeaEnabled(), selectDocumentWithFileName, this.lblArchivedSince, dto.getArchivedBoolean(), this.popDocumentFavorites, this.taDocumentTags, this.cmbFormType, this.pnlAddForms, this.tabPaneForms, this.cmbGroup, this.tblGroups);
 
         a.start();
 
@@ -1298,7 +1304,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     public void reset() {
         this.clearInputs();
-
+        this.groupPrivilegesChanged=false;
     }
 
     public void clearInputs() {
@@ -1316,6 +1322,10 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         //this.cmbDictateSign.setSelectedItem("");
         this.cmbLawyer.setSelectedItem("");
         this.cmbAssistant.setSelectedItem("");
+        this.cmbGroup.setSelectedIndex(0);
+        for(int r=0;r<this.tblGroups.getRowCount();r++) {
+            this.tblGroups.setValueAt(false, r, 0);
+        }
         this.cmbReviewAssignee.setSelectedItem("");
         this.radioReviewTypeFollowUp.setSelected(true);
         this.cmbSubjectField.setSelectedItem("");
@@ -1602,7 +1612,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         chkArchived = new javax.swing.JCheckBox();
         lblArchivedSince = new javax.swing.JLabel();
         jSeparator7 = new javax.swing.JSeparator();
-        jTabbedPane1 = new javax.swing.JTabbedPane();
+        tabPrivileges = new javax.swing.JTabbedPane();
         jPanel12 = new javax.swing.JPanel();
         cmbGroup = new javax.swing.JComboBox<>();
         cmbLawyer = new javax.swing.JComboBox();
@@ -1612,7 +1622,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         jLabel10 = new javax.swing.JLabel();
         jPanel6 = new javax.swing.JPanel();
         jScrollPane3 = new javax.swing.JScrollPane();
-        jTable1 = new javax.swing.JTable();
+        tblGroups = new javax.swing.JTable();
         tabParties = new javax.swing.JPanel();
         cmdSearchClient = new javax.swing.JButton();
         jScrollPane8 = new javax.swing.JScrollPane();
@@ -2079,8 +2089,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         jSeparator7.setOrientation(javax.swing.SwingConstants.VERTICAL);
 
-        jTabbedPane1.setTabPlacement(javax.swing.JTabbedPane.BOTTOM);
-        jTabbedPane1.setFont(new java.awt.Font("Dialog", 1, 10)); // NOI18N
+        tabPrivileges.setTabPlacement(javax.swing.JTabbedPane.BOTTOM);
+        tabPrivileges.setFont(new java.awt.Font("Dialog", 1, 10)); // NOI18N
 
         cmbGroup.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
 
@@ -2133,11 +2143,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 .addContainerGap())
         );
 
-        jTabbedPane1.addTab("Eigentümer", jPanel12);
+        tabPrivileges.addTab("Eigentümer", jPanel12);
 
         jScrollPane3.setMaximumSize(new java.awt.Dimension(200, 32767));
 
-        jTable1.setModel(new javax.swing.table.DefaultTableModel(
+        tblGroups.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
                 {null, null},
                 {null, null},
@@ -2163,8 +2173,13 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 return canEdit [columnIndex];
             }
         });
-        jTable1.setMaximumSize(new java.awt.Dimension(200, 64));
-        jScrollPane3.setViewportView(jTable1);
+        tblGroups.setMaximumSize(new java.awt.Dimension(200, 64));
+        tblGroups.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                tblGroupsMouseClicked(evt);
+            }
+        });
+        jScrollPane3.setViewportView(tblGroups);
 
         org.jdesktop.layout.GroupLayout jPanel6Layout = new org.jdesktop.layout.GroupLayout(jPanel6);
         jPanel6.setLayout(jPanel6Layout);
@@ -2183,7 +2198,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 .addContainerGap())
         );
 
-        jTabbedPane1.addTab("Berechtigte", jPanel6);
+        tabPrivileges.addTab("Berechtigte", jPanel6);
 
         org.jdesktop.layout.GroupLayout jPanel1Layout = new org.jdesktop.layout.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
@@ -2211,7 +2226,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 .add(12, 12, 12)
                 .add(jSeparator7, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jTabbedPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 291, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .add(tabPrivileges, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 291, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
         jPanel1Layout.setVerticalGroup(
@@ -2240,7 +2255,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(jSeparator7)
                     .add(jPanel1Layout.createSequentialGroup()
-                        .add(jTabbedPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .add(tabPrivileges, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .add(0, 2, Short.MAX_VALUE)))
                 .addContainerGap())
         );
@@ -3678,12 +3693,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private void newDocumentActionPerformedImpl(StyledCalculationTable table) {
 
         // save all forms to have the latest data available for document creation
-        for(int f=1;f<this.tabPaneForms.getComponentCount();f++) {
-            FormInstancePanel fip=(FormInstancePanel) this.tabPaneForms.getComponentAt(f);
+        for (int f = 1; f < this.tabPaneForms.getComponentCount(); f++) {
+            FormInstancePanel fip = (FormInstancePanel) this.tabPaneForms.getComponentAt(f);
             fip.save();
         }
-        
-        
+
         List<ArchiveFileAddressesBean> involved = new ArrayList<ArchiveFileAddressesBean>();
 
         if (table == null) {
@@ -3922,7 +3936,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 }
             }
         } else {
-            if(this.cmdSave.isEnabled()) {
+            if (this.cmdSave.isEnabled()) {
                 this.save(false);
                 this.setArchiveFileDTO(this.dto);
             }
@@ -4427,15 +4441,15 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             for (ArchiveFileFormsBean f : forms) {
                 if ("verkehr01".equalsIgnoreCase(f.getFormType().getId())) {
                     List<ArchiveFileFormEntriesBean> formEntries = locator.lookupFormsServiceRemote().getFormEntries(f.getId());
-                    for(ArchiveFileFormEntriesBean fe: formEntries) {
-                        if(fe.getEntryKey().endsWith("_G_KENNZEICHEN")) {
-                            data.put("_G_KENNZEICHEN",fe.getStringValue());
-                        } else if(fe.getEntryKey().endsWith("_UNFALLDATUM")) {
-                            data.put("_UNFALLDATUM",fe.getStringValue());
-                        } else if(fe.getEntryKey().endsWith("_UNFALLORT")) {
-                            data.put("_UNFALLORT",fe.getStringValue());
-                        } else if(fe.getEntryKey().endsWith("_POLAUFGEN")) {
-                            data.put("_POLAUFGEN",fe.getStringValue());
+                    for (ArchiveFileFormEntriesBean fe : formEntries) {
+                        if (fe.getEntryKey().endsWith("_G_KENNZEICHEN")) {
+                            data.put("_G_KENNZEICHEN", fe.getStringValue());
+                        } else if (fe.getEntryKey().endsWith("_UNFALLDATUM")) {
+                            data.put("_UNFALLDATUM", fe.getStringValue());
+                        } else if (fe.getEntryKey().endsWith("_UNFALLORT")) {
+                            data.put("_UNFALLORT", fe.getStringValue());
+                        } else if (fe.getEntryKey().endsWith("_POLAUFGEN")) {
+                            data.put("_POLAUFGEN", fe.getStringValue());
                         }
                     }
                     break;
@@ -5294,38 +5308,38 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         plugin.setId(ftb.getId());
         plugin.setPlaceHolder(this.txtFormPrefix.getText());
         FormInstancePanel formInstance = new FormInstancePanel(this.tabPaneForms, plugin);
-        Dimension maxDimension=this.pnlAddForms.getSize();
-        maxDimension.setSize(maxDimension.getWidth()-100, maxDimension.getHeight()-60);
+        Dimension maxDimension = this.pnlAddForms.getSize();
+        maxDimension.setSize(maxDimension.getWidth() - 100, maxDimension.getHeight() - 60);
         formInstance.setMaximumSize(maxDimension);
         formInstance.setPreferredSize(maxDimension);
         formInstance.setDescription(this.txtFormDescription.getText());
-        
+
         try {
-            
+
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
-            ArchiveFileFormsBean affb=new ArchiveFileFormsBean();
+            ArchiveFileFormsBean affb = new ArchiveFileFormsBean();
             affb.setFormType(ftb);
             affb.setArchiveFileKey(this.dto);
             affb.setDescription(this.txtFormDescription.getText());
             affb.setPlaceHolder(this.txtFormPrefix.getText());
-            affb=locator.lookupFormsServiceRemote().addForm(this.dto.getId(), affb);
+            affb = locator.lookupFormsServiceRemote().addForm(this.dto.getId(), affb);
             formInstance.setForm(affb);
             formInstance.initialize();
-            SimpleDateFormat df= new SimpleDateFormat("dd.MM.yyyy");
-            
+            SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
+
             tabPaneForms.addTab("<html><b>" + ftb.getName() + "</b><br/>" + df.format(affb.getCreationDate()) + "<br/>" + affb.getPlaceHolder() + "</html>", null, formInstance);
         } catch (Throwable t) {
             log.error("Error loading form plugin", t);
             JOptionPane.showMessageDialog(this, "Fehler beim Laden des Falldatenblattes: " + t.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
         }
-        
+
 
     }//GEN-LAST:event_cmdAddFormActionPerformed
 
     private void cmbFormTypeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbFormTypeActionPerformed
-        if(this.cmbFormType.getSelectedItem()!=null) {
-            if(this.cmbFormType.getSelectedItem() instanceof FormTypeBean) {
-                String placeHolder=((FormTypeBean)this.cmbFormType.getSelectedItem()).getPlaceHolder();
+        if (this.cmbFormType.getSelectedItem() != null) {
+            if (this.cmbFormType.getSelectedItem() instanceof FormTypeBean) {
+                String placeHolder = ((FormTypeBean) this.cmbFormType.getSelectedItem()).getPlaceHolder();
                 this.txtFormPrefix.setText(placeHolder);
             }
         }
@@ -5350,6 +5364,44 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("error.launchsettings") + ex.getMessage(), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.error"), JOptionPane.INFORMATION_MESSAGE);
         }
     }//GEN-LAST:event_cmdFormsManagerActionPerformed
+
+    private void tblGroupsMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblGroupsMouseClicked
+        if (this.cmdSave.isEnabled()) {
+            if (evt.getClickCount() == 1 && !evt.isPopupTrigger() && evt.getComponent().isEnabled()) {
+
+                Point p = evt.getPoint();
+                int col = this.tblGroups.columnAtPoint(p);
+                if (col == 0) {
+                    // click on checkbox in table
+                    this.groupPrivilegesChanged=true;
+                    int row = this.tblGroups.rowAtPoint(p);
+                    Group g = (Group) this.tblGroups.getValueAt(row, 1);
+                    Boolean newValue = !((Boolean) this.tblGroups.getValueAt(row, 0));
+                    this.tblGroups.setValueAt(newValue, row, col);
+                }
+
+//
+//                    ClientSettings settings = ClientSettings.getInstance();
+//                    try {
+//                        JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+//                        SecurityServiceRemote svc = locator.lookupSecurityServiceRemote();
+//                        if (newValue) {
+//                            svc.addUserToGroup(u.getPrincipalId(), g.getId());
+//                        } else {
+//                            svc.removeUserFromGroup(u.getPrincipalId(), g.getId());
+//                        }
+//                    } catch (Exception ex) {
+//                        log.error("Error updating group membership", ex);
+//                        JOptionPane.showMessageDialog(this, "Fehler beim Speichern: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+//                        EditorsRegistry.getInstance().clearStatus();
+//                        return;
+//                    }
+//
+//                    this.tblGroups.setValueAt(newValue, row, col);
+//                }
+            }
+        }
+    }//GEN-LAST:event_tblGroupsMouseClicked
 
     private AddressBean[] convertArray(Object[] in) {
         if (in != null) {
@@ -5440,6 +5492,14 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             aFile.setLawyer(this.cmbLawyer.getSelectedItem().toString());
         } else {
             aFile.setLawyer(null);
+        }
+        
+        if(this.cmbGroup.getSelectedItem()!=null) {
+            if(this.cmbGroup.getSelectedItem() instanceof Group) {
+                aFile.setGroup((Group)this.cmbGroup.getSelectedItem());
+            } else {
+                aFile.setGroup(null);
+            }
         }
 
         if (this.cmbAssistant.getSelectedItem() != null) {
@@ -5731,8 +5791,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JPopupMenu.Separator jSeparator5;
     private javax.swing.JPopupMenu.Separator jSeparator6;
     private javax.swing.JSeparator jSeparator7;
-    private javax.swing.JTabbedPane jTabbedPane1;
-    private javax.swing.JTable jTable1;
     protected javax.swing.JLabel lblArchivedSince;
     private javax.swing.JLabel lblCustom1;
     private javax.swing.JLabel lblCustom2;
@@ -5792,10 +5850,12 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JTabbedPane tabPaneForms;
     private javax.swing.JPanel tabParties;
     private javax.swing.JPanel tabPrint;
+    private javax.swing.JTabbedPane tabPrivileges;
     private javax.swing.JPanel tabReviews;
     private javax.swing.JPanel tagPanel;
     private javax.swing.JTable tblDocuments;
     private javax.swing.JScrollPane tblDocumentsPane;
+    private javax.swing.JTable tblGroups;
     private javax.swing.JTable tblHistory;
     private javax.swing.JTable tblReviewReasons;
     private javax.swing.JScrollPane tblReviewReasonsPane;
@@ -5828,9 +5888,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         if (this.dto == null) {
             return false;
         }
-        
-        for(int f=1;f<this.tabPaneForms.getComponentCount();f++) {
-            FormInstancePanel fip=(FormInstancePanel) this.tabPaneForms.getComponentAt(f);
+
+        for (int f = 1; f < this.tabPaneForms.getComponentCount(); f++) {
+            FormInstancePanel fip = (FormInstancePanel) this.tabPaneForms.getComponentAt(f);
             fip.save();
         }
 
@@ -5858,6 +5918,21 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         if (!StringUtils.equals(dto.getLawyer(), (String) this.cmbLawyer.getSelectedItem())) {
             return true;
         }
+        if(dto.getGroup()==null) {
+            if(this.cmbGroup.getSelectedIndex()>0)
+                return true;
+        } else {
+            if(this.cmbGroup.getSelectedItem() instanceof String) {
+                // case has a grou set, but user reset it to an empty value
+                return true;
+            } else {
+                if(!(((Group)this.cmbGroup.getSelectedItem()).equals(this.dto.getGroup())))
+                    return true;
+            }
+        }
+        if(this.groupPrivilegesChanged)
+            return true;
+        
         if (!StringUtils.equals(dto.getAssistant(), (String) this.cmbAssistant.getSelectedItem())) {
             return true;
         }
@@ -5935,14 +6010,14 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
 
         return true;
-    
+
     }
+
     @Override
     public boolean save() {
         return this.save(true);
     }
 
-    
     public boolean save(boolean checkForOpenReviews) {
         if (this.txtName.getText() == null || "".equals(this.txtName.getText())) {
             JOptionPane.showMessageDialog(this, "Es muß mindestens ein Kurzrubrum angegeben werden, um eine Akte zu speichern.", "Akten - Gültigkeitsprüfung", JOptionPane.INFORMATION_MESSAGE);
@@ -6011,11 +6086,13 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 }
             }
 
+            String caseId=null;
             if (id == null) {
-                fileService.createArchiveFile(this.dto);
+                ArchiveFileBean newCase=fileService.createArchiveFile(this.dto);
+                caseId=newCase.getId();
             } else {
                 fileService.updateArchiveFile(this.dto);
-
+                caseId=this.dto.getId();
                 // in case of updates we need to reload the reviews
                 // they are getting removed and re-added by #updateArchiveFile
                 Collection reviews = fileService.getReviews(id);
@@ -6050,6 +6127,15 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                             }
                         }));
 
+            }
+            if(this.groupPrivilegesChanged) {
+                ArrayList<Group> allowedGroups=new ArrayList<>();
+                for(int r=0;r<this.tblGroups.getRowCount();r++) {
+                    if(this.tblGroups.getValueAt(r, 0).equals(Boolean.TRUE)) {
+                        allowedGroups.add(((Group)this.tblGroups.getValueAt(r, 1)));
+                    }
+                }
+                fileService.updateAllowedGroups(caseId, allowedGroups);
             }
 
             this.lblHeaderInfo.setText(this.dto.getFileNumber() + " " + StringUtils.nonEmpty(this.dto.getName()) + " " + StringUtils.nonEmpty(this.dto.getReason()));

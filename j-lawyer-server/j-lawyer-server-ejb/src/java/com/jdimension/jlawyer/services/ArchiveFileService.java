@@ -3664,6 +3664,30 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         return this.caseGroupsFacade.findByCase(archiveFile);
         
     }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public void updateAllowedGroups(String caseId, Collection<Group> allowedGroups) throws Exception {
+        
+        ArchiveFileBean aFile=this.archiveFileFacade.find(caseId);
+        if(aFile==null) {
+            log.error("Case " + caseId + " not found - updating allowed groups failed.");
+            throw new Exception ("Akte nicht vorhanden!");
+        }
+        List<ArchiveFileGroupsBean> currentGroups=this.caseGroupsFacade.findByCase(aFile);
+        for(ArchiveFileGroupsBean g: currentGroups) {
+            this.caseGroupsFacade.remove(g);
+        }
+        
+        for(Group g: allowedGroups) {
+            ArchiveFileGroupsBean newGroup=new ArchiveFileGroupsBean();
+            newGroup.setArchiveFileKey(aFile);
+            newGroup.setAllowedGroup(g);
+            newGroup.setId(new StringGenerator().getID().toString());
+            this.caseGroupsFacade.create(newGroup);
+        }
+        
+    }
     
     
 

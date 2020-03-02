@@ -686,6 +686,8 @@ public interface ArchiveFileBeanFacadeLocal {
     List<ArchiveFileBean> findRange(int[] range);
 
     List<ArchiveFileBean> findByFileNumber(String fileNumber);
+    
+    List<ArchiveFileBean> findByGroup(Group g);
 
     int count();
     

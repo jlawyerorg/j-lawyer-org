@@ -663,6 +663,8 @@
  */
 package com.jdimension.jlawyer.services;
 
+import com.jdimension.jlawyer.persistence.ArchiveFileBeanFacadeLocal;
+import com.jdimension.jlawyer.persistence.ArchiveFileGroupsBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.Group;
 import com.jdimension.jlawyer.persistence.GroupFacadeLocal;
 import com.jdimension.jlawyer.persistence.GroupMembership;
@@ -694,6 +696,12 @@ public class SecurityService implements SecurityServiceRemote, SecurityServiceLo
 
     @EJB
     private GroupMembershipFacadeLocal groupMembershipFacade;
+    
+    @EJB
+    private ArchiveFileGroupsBeanFacadeLocal caseGroupsFacade;
+    
+    @EJB
+    private ArchiveFileBeanFacadeLocal archiveFileFacade;
 
     @Override
     @RolesAllowed({"loginRole"})
@@ -738,7 +746,16 @@ public class SecurityService implements SecurityServiceRemote, SecurityServiceLo
     @Override
     @RolesAllowed({"adminRole"})
     public boolean deleteGroup(String groupId) throws Exception {
-        this.groupFacade.remove(this.groupFacade.find(groupId));
+        Group g=this.groupFacade.find(groupId);
+        Collection c=this.caseGroupsFacade.findByGroup(g);
+        if(c.size()>0) {
+            throw new Exception("Gruppe " + g.getName() + " wird noch in " + c.size() + " Akten verwendet (berechtigte Gruppe).");
+        }
+        c=this.archiveFileFacade.findByGroup(g);
+        if(c.size()>0) {
+            throw new Exception("Gruppe " + g.getName() + " wird noch in " + c.size() + " Akten verwendet (Eigentümergruppe).");
+        }
+        this.groupFacade.remove(g);
         return true;
     }
 

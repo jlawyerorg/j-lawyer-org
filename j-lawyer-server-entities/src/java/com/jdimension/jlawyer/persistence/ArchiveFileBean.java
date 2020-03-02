@@ -681,6 +681,7 @@ import javax.xml.bind.annotation.XmlTransient;
     @NamedQuery(name = "ArchiveFileBean.findAll", query = "SELECT a FROM ArchiveFileBean a"),
     @NamedQuery(name = "ArchiveFileBean.findById", query = "SELECT a FROM ArchiveFileBean a WHERE a.id = :id"),
     @NamedQuery(name = "ArchiveFileBean.findByName", query = "SELECT a FROM ArchiveFileBean a WHERE a.name = :name"),
+    @NamedQuery(name = "ArchiveFileBean.findByGroup", query = "SELECT a FROM ArchiveFileBean a WHERE a.group = :group"),
     @NamedQuery(name = "ArchiveFileBean.findByFileNumber", query = "SELECT a FROM ArchiveFileBean a WHERE a.fileNumber = :fileNumber"),
     @NamedQuery(name = "ArchiveFileBean.findByClaimNumber", query = "SELECT a FROM ArchiveFileBean a WHERE a.claimNumber = :claimNumber"),
     @NamedQuery(name = "ArchiveFileBean.findByClaimValue", query = "SELECT a FROM ArchiveFileBean a WHERE a.claimValue = :claimValue"),

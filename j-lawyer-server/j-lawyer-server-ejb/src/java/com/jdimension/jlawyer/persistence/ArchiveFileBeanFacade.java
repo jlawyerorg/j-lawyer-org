@@ -692,4 +692,10 @@ public class ArchiveFileBeanFacade extends AbstractFacade<ArchiveFileBean> imple
         return l;
     }
     
+    @Override
+    public List<ArchiveFileBean> findByGroup(Group g) {
+        List<ArchiveFileBean> l=(List<ArchiveFileBean>)em.createNamedQuery("ArchiveFileBean.findByGroup").setParameter("group", g).getResultList();
+        return l;
+    }
+    
 }
