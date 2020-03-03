@@ -687,10 +687,10 @@ public interface ArchiveFileServiceLocal {
     public ArchiveFileDocumentsBean addDocument(String archiveFileId, String fileName, byte[] data, String dictateSign) throws Exception;
     
     public ArchiveFileBean createArchiveFile(ArchiveFileBean dto) throws Exception;
-    public void updateArchiveFile(ArchiveFileBean dto);
+    public void updateArchiveFile(ArchiveFileBean dto) throws Exception;
     
     public int getArchiveFileCount();
-    public ArchiveFileBean getArchiveFile(String id);
+    public ArchiveFileBean getArchiveFile(String id) throws Exception;
     public ArrayList<String> getAllArchiveFileIds();
     public Date getLastChangedForArchiveFile(String archiveFileKey);
     
@@ -699,9 +699,9 @@ public interface ArchiveFileServiceLocal {
     public Collection getDocuments(String archiveFileKey);
     public byte[] getDocumentContent(String id) throws Exception;
     
-    public Collection getReviews(String archiveFileKey);
+    public Collection getReviews(String archiveFileKey) throws Exception;
     
-    public ArchiveFileHistoryBean[] getHistoryForArchiveFile(String archiveFileKey);
+    public ArchiveFileHistoryBean[] getHistoryForArchiveFile(String archiveFileKey) throws Exception;
     
 //    public Collection getClients(String archiveFileKey);
 //    public Collection getOpponents(String archiveFileKey);
@@ -711,7 +711,7 @@ public interface ArchiveFileServiceLocal {
 
     ArchiveFileBean getArchiveFileUnrestricted(String archiveFileKey);
 
-    ArchiveFileHistoryBean[] getHistoryForArchiveFileUnrestricted(String archiveFileKey);
+    ArchiveFileHistoryBean[] getHistoryForArchiveFileUnrestricted(String archiveFileKey) throws Exception;
 
 //    Collection getClientsUnrestricted(String archiveFileKey);
 //
@@ -719,9 +719,9 @@ public interface ArchiveFileServiceLocal {
 //
 //    Collection getOpponentAttorneysUnrestricted(String archiveFileKey);
 
-    Collection getReviewsUnrestricted(String archiveFileKey);
+    Collection getReviewsUnrestricted(String archiveFileKey) throws Exception;
     
-    public Collection<ArchiveFileTagsBean> getTags(String archiveFileId);
+    public Collection<ArchiveFileTagsBean> getTags(String archiveFileId) throws Exception;
 
     Collection getDocumentsUnrestricted(String archiveFileKey);
 

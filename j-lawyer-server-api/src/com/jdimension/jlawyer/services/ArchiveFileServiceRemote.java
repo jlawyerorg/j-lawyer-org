@@ -683,7 +683,7 @@ public interface ArchiveFileServiceRemote {
 
     ArchiveFileBean[] searchSimple(String query);
 
-    void removeArchiveFile(String id);
+    void removeArchiveFile(String id) throws Exception;
 
 //    Collection getClients(String archiveFileKey);
 //
@@ -691,17 +691,17 @@ public interface ArchiveFileServiceRemote {
 //
 //    Collection getOpponentAttorneys(String archiveFileKey);
 
-    ArchiveFileHistoryBean[] getHistoryForArchiveFile(String archiveFileKey);
+    ArchiveFileHistoryBean[] getHistoryForArchiveFile(String archiveFileKey) throws Exception;
 
-    Collection getReviews(String archiveFileKey);
+    Collection getReviews(String archiveFileKey) throws Exception;
 
     ArchiveFileBean createArchiveFile(ArchiveFileBean dto) throws Exception;
 
-    void updateArchiveFile(ArchiveFileBean dto);
+    void updateArchiveFile(ArchiveFileBean dto) throws Exception;
 
     List<ArchiveFileBean> getLastChanged(String lastChangeUser, boolean userOnly, int limit);
 
-    ArchiveFileBean getArchiveFile(String id);
+    ArchiveFileBean getArchiveFile(String id) throws Exception;
 
     Collection<ArchiveFileReviewsBean> getAllOpenReviews();
 
@@ -739,15 +739,15 @@ public interface ArchiveFileServiceRemote {
 
     ArchiveFileBean getArchiveFileByFileNumber(String fileNumber) throws Exception;
 
-    ArchiveFileHistoryBean addHistory(String archiveFileId, ArchiveFileHistoryBean history);
+    ArchiveFileHistoryBean addHistory(String archiveFileId, ArchiveFileHistoryBean history) throws Exception;
 
     void setTag(String archiveFileId, ArchiveFileTagsBean tag, boolean active) throws Exception;
     
     void setDocumentTag(String documentId, DocumentTagsBean tag, boolean active) throws Exception;
 
-    Collection<ArchiveFileTagsBean> getTags(String archiveFileId);
+    Collection<ArchiveFileTagsBean> getTags(String archiveFileId) throws Exception;
     
-    Collection<DocumentTagsBean> getDocumentTags(String documentId);
+    Collection<DocumentTagsBean> getDocumentTags(String documentId) throws Exception;
 
     List<String> searchTagsInUse();
     
@@ -783,7 +783,7 @@ public interface ArchiveFileServiceRemote {
 
     ArchiveFileDocumentsBean addDocumentFromTemplate(String archiveFileId, String fileName, GenericNode templateFolder, String templateName, Hashtable placeHolderValues, String dictateSign) throws Exception;
 
-    List<AddressBean> getAddressesForCase(String archiveFileKey);
+    List<AddressBean> getAddressesForCase(String archiveFileKey) throws Exception;
 
     List<ArchiveFileAddressesBean> getInvolvementDetailsForCase(String archiveFileKey);
 

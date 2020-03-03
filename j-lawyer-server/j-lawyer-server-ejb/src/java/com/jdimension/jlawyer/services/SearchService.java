@@ -663,9 +663,17 @@
  */
 package com.jdimension.jlawyer.services;
 
+import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBeanFacadeLocal;
+import com.jdimension.jlawyer.persistence.Group;
 import java.util.ArrayList;
+import java.util.Hashtable;
+import java.util.List;
+import javax.annotation.Resource;
+import javax.annotation.security.RolesAllowed;
 import javax.ejb.EJB;
+import javax.ejb.SessionContext;
 import javax.ejb.Stateless;
 import javax.jms.ConnectionFactory;
 import javax.jms.MessageProducer;
@@ -685,36 +693,78 @@ import org.jlawyer.search.SearchIndexRequest;
 @Stateless
 public class SearchService implements SearchServiceRemote, SearchServiceLocal {
 
-    private static final Logger log=Logger.getLogger(SearchService.class.getName());
-    
+    private static final Logger log = Logger.getLogger(SearchService.class.getName());
+
+    @Resource
+    private SessionContext context;
+
+    @EJB
+    private SecurityServiceLocal securityFacade;
+    @EJB
+    private ArchiveFileBeanFacadeLocal archiveFileFacade;
+
     @Override
+    @RolesAllowed({"readArchiveFileRole"})
     public ArrayList<SearchHit> search(String queryString, int maxDocs) throws SearchException {
-        return SearchAPI.getInstance().search(queryString, maxDocs);
-        
+
+        List<Group> userGroups = new ArrayList<Group>();
+        try {
+            userGroups = this.securityFacade.getGroupsForUser(context.getCallerPrincipal().getName());
+        } catch (Throwable t) {
+            log.error("Unable to determine groups for user " + context.getCallerPrincipal().getName(), t);
+        }
+
+        ArrayList<SearchHit> hits = SearchAPI.getInstance().search(queryString, maxDocs * 5);
+        ArrayList<SearchHit> returnList = new ArrayList<>();
+        Hashtable<String, ArchiveFileBean> caseCache = new Hashtable<String, ArchiveFileBean>();
+        for (SearchHit h : hits) {
+
+            if (!caseCache.containsKey(h.getArchiveFileId())) {
+                ArchiveFileBean afb = this.archiveFileFacade.find(h.getArchiveFileId());
+                if (afb != null) {
+                    caseCache.put(h.getArchiveFileId(), afb);
+                }
+            }
+            ArchiveFileBean aFile = caseCache.get(h.getArchiveFileId());
+            if (aFile != null) {
+                Group owner = aFile.getGroup();
+                if (owner != null) {
+                    for (Group g : userGroups) {
+                        if (g.equals(owner)) {
+                            returnList.add(h);
+                            break;
+                        }
+                    }
+                } else {
+                    returnList.add(h);
+                }
+            }
+
+            if (returnList.size() == maxDocs) {
+                break;
+            }
+
+        }
+
+        return returnList;
+
     }
-    
-    
 
     // Add business logic below. (Right-click in editor and choose
     // "Insert Code > Add Business Method")
-
     @Override
     public void reIndexAll() {
-        
+
         try {
-            SearchIndexRequest req=new SearchIndexRequest(SearchIndexRequest.ACTION_REINDEXALL);
-            
+            SearchIndexRequest req = new SearchIndexRequest(SearchIndexRequest.ACTION_REINDEXALL);
+
             this.publishSearchIndexRequest(req);
         } catch (Throwable t) {
             log.error("Error publishing search index request REINDEXALL", t);
         }
-        
-        
-        
+
     }
-    
-    
-    
+
     private void publishSearchIndexRequest(SearchIndexRequest req) {
         try {
             InitialContext ic = new InitialContext();
@@ -746,7 +796,5 @@ public class SearchService implements SearchServiceRemote, SearchServiceLocal {
     public int getNumberOfDocs() throws SearchException {
         return SearchAPI.getInstance().getNumberOfDocs();
     }
-    
-    
-    
+
 }
