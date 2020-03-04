@@ -920,15 +920,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 String id = rs.getString(1);
                 //ArchiveFileLocal file = home.findByPrimaryKey(id);
                 ArchiveFileBean dto = this.archiveFileFacade.find(id);
-                Group owner = dto.getGroup();
-                if (owner != null) {
-                    for (Group g : userGroups) {
-                        if (g.equals(owner)) {
-                            list.add(dto);
-                            break;
-                        }
-                    }
-                } else {
+                if (this.checkGroupsForCase(context.getCallerPrincipal().getName(), userGroups, dto)) {
                     list.add(dto);
                 }
 
@@ -986,14 +978,54 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         if (owner != null) {
             for (Group g : userGroups) {
                 if (g.equals(owner)) {
-                    isAllowed = true;
-                    break;
+                    return;
                 }
             }
         }
-        if (!isAllowed) {
-            throw new Exception("Nutzer " + principalId + " ist für diese Akte nicht zugriffsberechtigt!");
+
+        List<ArchiveFileGroupsBean> caseGroups = new ArrayList<>();
+        try {
+            caseGroups = this.getAllowedGroups(aFile.getId());
+        } catch (Throwable t) {
+            log.error("Unable to determine allowed groups for case " + aFile.getFileNumber(), t);
         }
+        for (Group g : userGroups) {
+            for (ArchiveFileGroupsBean cg : caseGroups) {
+                if (g.equals(cg.getAllowedGroup())) {
+                    return;
+                }
+            }
+        }
+
+        throw new Exception("Nutzer " + principalId + " ist für diese Akte nicht zugriffsberechtigt!");
+
+    }
+
+    private boolean checkGroupsForCase(String principalId, List<Group> userGroups, ArchiveFileBean aFile) {
+        Group owner = aFile.getGroup();
+        if (owner == null) {
+            return true;
+        }
+
+        if (owner != null) {
+            for (Group g : userGroups) {
+                if (g.equals(owner)) {
+                    return true;
+                }
+            }
+        }
+
+        List<ArchiveFileGroupsBean> caseGroups = this.getAllowedGroups(aFile.getId());
+        for (Group g : userGroups) {
+            for (ArchiveFileGroupsBean cg : caseGroups) {
+                if (g.equals(cg.getAllowedGroup())) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+
     }
 
     @Override
@@ -1071,8 +1103,9 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
     private Collection getReviewsImpl(String archiveFileKey, String principalId) throws Exception {
         ArchiveFileBean aFile = this.archiveFileFacade.find(archiveFileKey);
-        if(principalId!=null)
+        if (principalId != null) {
             this.checkGroupsForCase(principalId, aFile);
+        }
 
         List resultList = this.archiveFileReviewsFacade.findByArchiveFileKey(aFile);
         return resultList;
@@ -1260,15 +1293,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             while (rs.next()) {
                 String id = rs.getString(1);
                 ArchiveFileBean aFile = this.archiveFileFacade.find(id);
-                Group owner = aFile.getGroup();
-                if (owner != null) {
-                    for (Group g : userGroups) {
-                        if (g.equals(owner)) {
-                            returnList.add(aFile);
-                            break;
-                        }
-                    }
-                } else {
+                if (this.checkGroupsForCase(context.getCallerPrincipal().getName(), userGroups, aFile)) {
                     returnList.add(aFile);
                 }
 
@@ -1338,15 +1363,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
                 boolean allowed = false;
                 if (principalId != null) {
-                    Group owner = dto.getGroup();
-                    if (owner != null) {
-                        for (Group g : userGroups) {
-                            if (g.equals(owner)) {
-                                allowed = true;
-                                break;
-                            }
-                        }
-                    } else {
+                    if (this.checkGroupsForCase(context.getCallerPrincipal().getName(), userGroups, dto)) {
                         allowed = true;
                     }
                 } else {
@@ -1409,16 +1426,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             } catch (Throwable t) {
                 log.error("Unable to determine groups for user " + principalId, t);
             }
-            Group owner = aFile.getGroup();
-
-            if (owner != null) {
-                for (Group g : userGroups) {
-                    if (g.equals(owner)) {
-                        allowed = true;
-                        break;
-                    }
-                }
-            } else {
+            if (this.checkGroupsForCase(context.getCallerPrincipal().getName(), userGroups, aFile)) {
                 allowed = true;
             }
         } else {
@@ -1862,15 +1870,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         ArrayList<ArchiveFileAddressesBean> l2 = new ArrayList<>();
         for (ArchiveFileAddressesBean aab : l) {
 
-            Group owner = aab.getArchiveFileKey().getGroup();
-            if (owner != null) {
-                for (Group g : userGroups) {
-                    if (g.equals(owner)) {
-                        l2.add(aab);
-                        break;
-                    }
-                }
-            } else {
+            if (this.checkGroupsForCase(context.getCallerPrincipal().getName(), userGroups, aab.getArchiveFileKey())) {
                 l2.add(aab);
             }
 
@@ -2411,17 +2411,10 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 String id = rs.getString(1);
                 //ArchiveFileLocal file = home.findByPrimaryKey(id);
                 ArchiveFileBean dto = this.archiveFileFacade.find(id);
-                Group owner = dto.getGroup();
-                if (owner != null) {
-                    for (Group g : userGroups) {
-                        if (g.equals(owner)) {
-                            list.add(dto);
-                            break;
-                        }
-                    }
-                } else {
+                if (this.checkGroupsForCase(context.getCallerPrincipal().getName(), userGroups, dto)) {
                     list.add(dto);
                 }
+
             }
         } catch (SQLException sqle) {
             log.error("Error finding archive files", sqle);
@@ -2534,16 +2527,9 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 ArchiveFileReviewsBean rev = this.archiveFileReviewsFacade.find(id);
                 String archiveFileKey = rs.getString(2);
                 ArchiveFileBean dto = this.archiveFileFacade.find(archiveFileKey);
-                Group owner = dto.getGroup();
+
                 boolean allowed = false;
-                if (owner != null) {
-                    for (Group g : userGroups) {
-                        if (g.equals(owner)) {
-                            allowed = true;
-                            break;
-                        }
-                    }
-                } else {
+                if (this.checkGroupsForCase(context.getCallerPrincipal().getName(), userGroups, dto)) {
                     allowed = true;
                 }
 
@@ -2669,17 +2655,11 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
         ArrayList<ArchiveFileHistoryBean> outputList = new ArrayList<>();
         for (ArchiveFileHistoryBean h : inputList) {
-            Group owner = h.getArchiveFileKey().getGroup();
-            if (owner != null) {
-                for (Group g : userGroups) {
-                    if (g.equals(owner)) {
-                        outputList.add(h);
-                        break;
-                    }
-                }
-            } else {
+
+            if (this.checkGroupsForCase(context.getCallerPrincipal().getName(), userGroups, h.getArchiveFileKey())) {
                 outputList.add(h);
             }
+
         }
         return outputList;
     }
@@ -2710,17 +2690,11 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             while (rs.next()) {
                 String id = rs.getString(1);
                 ArchiveFileBean aFile = this.archiveFileFacade.find(id);
-                Group owner = aFile.getGroup();
-                if (owner != null) {
-                    for (Group g : userGroups) {
-                        if (g.equals(owner)) {
-                            returnList.add(aFile);
-                            break;
-                        }
-                    }
-                } else {
+
+                if (this.checkGroupsForCase(context.getCallerPrincipal().getName(), userGroups, aFile)) {
                     returnList.add(aFile);
                 }
+
                 if (returnList.size() == limit) {
                     break;
                 }
@@ -2815,15 +2789,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 String id = rs.getString(1);
                 ArchiveFileBean dto = this.archiveFileFacade.find(id);
 
-                Group owner = dto.getGroup();
-                if (owner != null) {
-                    for (Group g : userGroups) {
-                        if (g.equals(owner)) {
-                            list.add(dto);
-                            break;
-                        }
-                    }
-                } else {
+                if (this.checkGroupsForCase(context.getCallerPrincipal().getName(), userGroups, dto)) {
                     list.add(dto);
                 }
 
@@ -3008,10 +2974,10 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         ResultSet rs = null;
         PreparedStatement st = null;
         List<ArchiveFileBean> returnList = new ArrayList<ArchiveFileBean>();
-        
-        List<Group> userGroups=new ArrayList<Group>();
+
+        List<Group> userGroups = new ArrayList<Group>();
         try {
-            userGroups=this.securityFacade.getGroupsForUser(context.getCallerPrincipal().getName());
+            userGroups = this.securityFacade.getGroupsForUser(context.getCallerPrincipal().getName());
         } catch (Throwable t) {
             log.error("Unable to determine groups for user " + context.getCallerPrincipal().getName(), t);
         }
@@ -3087,7 +3053,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 }
             }
 
-            st.setInt(index, 5*limit);
+            st.setInt(index, 5 * limit);
             rs = st.executeQuery();
             ArrayList<String> keyCache = new ArrayList<String>();
             while (rs.next()) {
@@ -3095,23 +3061,17 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 // there might be duplicate cases in the result set
                 if (!keyCache.contains(id)) {
                     keyCache.add(id);
-                    
-                    ArchiveFileBean dto=this.archiveFileFacade.find(id);
-                    Group owner=dto.getGroup();
-                if(owner!=null) {
-                    for(Group g: userGroups) {
-                        if(g.equals(owner)) {
-                            returnList.add(this.archiveFileFacade.find(id));
-                            break;
-                        }
+
+                    ArchiveFileBean dto = this.archiveFileFacade.find(id);
+
+                    if (this.checkGroupsForCase(context.getCallerPrincipal().getName(), userGroups, dto)) {
+                        returnList.add(dto);
                     }
-                } else {
-                    returnList.add(this.archiveFileFacade.find(id));
-                }
-                    if(returnList.size()==limit) {
+
+                    if (returnList.size() == limit) {
                         break;
                     }
-                    
+
                 }
             }
 
@@ -3604,13 +3564,13 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         PreparedStatement st = null;
         List<ArchiveFileDocumentsBean> returnList = new ArrayList<ArchiveFileDocumentsBean>();
 
-        List<Group> userGroups=new ArrayList<Group>();
+        List<Group> userGroups = new ArrayList<Group>();
         try {
-            userGroups=this.securityFacade.getGroupsForUser(context.getCallerPrincipal().getName());
+            userGroups = this.securityFacade.getGroupsForUser(context.getCallerPrincipal().getName());
         } catch (Throwable t) {
             log.error("Unable to determine groups for user " + context.getCallerPrincipal().getName(), t);
         }
-        
+
         try {
             con = utils.getConnection();
 
@@ -3642,22 +3602,12 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 // there might be duplicate cases in the result set
                 if (!keyCache.contains(id)) {
                     keyCache.add(id);
-                    ArchiveFileDocumentsBean docb=this.archiveFileDocumentsFacade.find(id);
-                    
-                    Group owner=docb.getArchiveFileKey().getGroup();
-                if(owner!=null) {
-                    for(Group g: userGroups) {
-                        if(g.equals(owner)) {
-                            returnList.add(docb);
-                            break;
-                        }
+                    ArchiveFileDocumentsBean docb = this.archiveFileDocumentsFacade.find(id);
+
+                    if (this.checkGroupsForCase(context.getCallerPrincipal().getName(), userGroups, docb.getArchiveFileKey())) {
+                        returnList.add(docb);
                     }
-                } else {
-                    returnList.add(docb);
-                }
-                    
-                    
-                    
+
                 }
             }
 
@@ -3807,7 +3757,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         StringGenerator idGen = new StringGenerator();
         String id = idGen.getID().toString();
         address.setId(id);
-        
+
         this.checkGroupsForCase(context.getCallerPrincipal().getName(), address.getArchiveFileKey());
 
         this.archiveFileAddressesFacade.create(address);
@@ -3879,7 +3829,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
     @Override
     @RolesAllowed({"readArchiveFileRole"})
-    public List<ArchiveFileGroupsBean> getAllowedGroups(String caseId) throws Exception {
+    public List<ArchiveFileGroupsBean> getAllowedGroups(String caseId) {
         ArchiveFileBean archiveFile = this.archiveFileFacade.find(caseId);
         if (archiveFile == null) {
             return new ArrayList<ArchiveFileGroupsBean>();
