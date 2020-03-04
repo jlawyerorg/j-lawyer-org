@@ -985,7 +985,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
         List<ArchiveFileGroupsBean> caseGroups = new ArrayList<>();
         try {
-            caseGroups = this.getAllowedGroups(aFile.getId());
+            caseGroups = this.getAllowedGroups(aFile);
         } catch (Throwable t) {
             log.error("Unable to determine allowed groups for case " + aFile.getFileNumber(), t);
         }
@@ -1015,7 +1015,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             }
         }
 
-        List<ArchiveFileGroupsBean> caseGroups = this.getAllowedGroups(aFile.getId());
+        List<ArchiveFileGroupsBean> caseGroups = this.getAllowedGroups(aFile);
         for (Group g : userGroups) {
             for (ArchiveFileGroupsBean cg : caseGroups) {
                 if (g.equals(cg.getAllowedGroup())) {
@@ -3831,6 +3831,11 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     @RolesAllowed({"readArchiveFileRole"})
     public List<ArchiveFileGroupsBean> getAllowedGroups(String caseId) {
         ArchiveFileBean archiveFile = this.archiveFileFacade.find(caseId);
+        return this.getAllowedGroups(archiveFile);
+
+    }
+    
+    private List<ArchiveFileGroupsBean> getAllowedGroups(ArchiveFileBean archiveFile) {
         if (archiveFile == null) {
             return new ArrayList<ArchiveFileGroupsBean>();
         }

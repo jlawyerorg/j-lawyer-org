@@ -666,6 +666,8 @@ package com.jdimension.jlawyer.services;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBeanFacadeLocal;
+import com.jdimension.jlawyer.persistence.ArchiveFileGroupsBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileGroupsBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.Group;
 import java.util.ArrayList;
 import java.util.Hashtable;
@@ -702,6 +704,8 @@ public class SearchService implements SearchServiceRemote, SearchServiceLocal {
     private SecurityServiceLocal securityFacade;
     @EJB
     private ArchiveFileBeanFacadeLocal archiveFileFacade;
+    @EJB
+    private ArchiveFileGroupsBeanFacadeLocal caseGroupsFacade;
 
     @Override
     @RolesAllowed({"readArchiveFileRole"})
@@ -727,17 +731,11 @@ public class SearchService implements SearchServiceRemote, SearchServiceLocal {
             }
             ArchiveFileBean aFile = caseCache.get(h.getArchiveFileId());
             if (aFile != null) {
-                Group owner = aFile.getGroup();
-                if (owner != null) {
-                    for (Group g : userGroups) {
-                        if (g.equals(owner)) {
-                            returnList.add(h);
-                            break;
-                        }
-                    }
-                } else {
+                
+                if(this.checkGroupsForCase(context.getCallerPrincipal().getName(), userGroups, aFile)) {
                     returnList.add(h);
                 }
+                
             }
 
             if (returnList.size() == maxDocs) {
@@ -747,6 +745,41 @@ public class SearchService implements SearchServiceRemote, SearchServiceLocal {
         }
 
         return returnList;
+
+    }
+    
+    private List<ArchiveFileGroupsBean> getAllowedGroups(ArchiveFileBean archiveFile) {
+        if (archiveFile == null) {
+            return new ArrayList<ArchiveFileGroupsBean>();
+        }
+        return this.caseGroupsFacade.findByCase(archiveFile);
+
+    }
+    
+    private boolean checkGroupsForCase(String principalId, List<Group> userGroups, ArchiveFileBean aFile) {
+        Group owner = aFile.getGroup();
+        if (owner == null) {
+            return true;
+        }
+
+        if (owner != null) {
+            for (Group g : userGroups) {
+                if (g.equals(owner)) {
+                    return true;
+                }
+            }
+        }
+
+        List<ArchiveFileGroupsBean> caseGroups = this.getAllowedGroups(aFile);
+        for (Group g : userGroups) {
+            for (ArchiveFileGroupsBean cg : caseGroups) {
+                if (g.equals(cg.getAllowedGroup())) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
 
     }
 
