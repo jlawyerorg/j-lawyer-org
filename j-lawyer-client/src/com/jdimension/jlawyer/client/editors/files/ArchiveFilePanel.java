@@ -670,6 +670,7 @@ import com.jdimension.jlawyer.client.bea.IdentityPanel;
 import com.jdimension.jlawyer.client.bea.SendBeaMessageDialog;
 import com.jdimension.jlawyer.client.drebis.coverage.DrebisCoverageWizardDialog;
 import com.jdimension.jlawyer.client.components.MultiCalDialog;
+import com.jdimension.jlawyer.client.configuration.GroupMembershipsTableModel;
 import com.jdimension.jlawyer.client.configuration.OptionGroupListCellRenderer;
 import com.jdimension.jlawyer.client.configuration.PopulateOptionsEditor;
 import com.jdimension.jlawyer.client.configuration.UserListCellRenderer;
@@ -807,7 +808,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private DocumentTableCellRenderer documentCellRenderer = null;
 
     private boolean initializing = false;
-    private boolean groupPrivilegesChanged=false;
+    private boolean groupPrivilegesChanged = false;
 
     /**
      * Creates new form ArchiveFilePanel
@@ -1208,7 +1209,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     public void setArchiveFileDTO(ArchiveFileBean inDto, String selectDocumentWithFileName) {
         this.dto = inDto;
-        this.groupPrivilegesChanged=false;
+        this.groupPrivilegesChanged = false;
         this.documentHits.clear();
         this.tabPrivileges.setSelectedIndex(0);
 
@@ -1304,7 +1305,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     public void reset() {
         this.clearInputs();
-        this.groupPrivilegesChanged=false;
+        this.groupPrivilegesChanged = false;
     }
 
     public void clearInputs() {
@@ -1323,7 +1324,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.cmbLawyer.setSelectedItem("");
         this.cmbAssistant.setSelectedItem("");
         this.cmbGroup.setSelectedIndex(0);
-        for(int r=0;r<this.tblGroups.getRowCount();r++) {
+        for (int r = 0; r < this.tblGroups.getRowCount(); r++) {
             this.tblGroups.setValueAt(false, r, 0);
         }
         this.cmbReviewAssignee.setSelectedItem("");
@@ -1404,6 +1405,32 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         for (int t = this.tabPaneForms.getTabCount() - 1; t > 0; t--) {
             this.tabPaneForms.remove(t);
+        }
+
+        this.cmbGroup.removeAllItems();
+        this.cmbGroup.addItem("");
+        String[] colNames3 = new String[]{"", "Gruppe"};
+        GroupMembershipsTableModel model = new GroupMembershipsTableModel(colNames3, 0);
+        this.tblGroups.setModel(model);
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
+            Collection<Group> allGroups = locator.lookupSecurityServiceRemote().getAllGroups();
+            Collection<Group> userGroups = locator.lookupSecurityServiceRemote().getGroupsForUser(UserSettings.getInstance().getCurrentUser().getPrincipalId());
+
+            //add all groups to table
+            for (Group g : allGroups) {
+                ((DefaultTableModel) this.tblGroups.getModel()).addRow(new Object[]{false, g});
+            }
+            for (Group g : userGroups) {
+                ((DefaultComboBoxModel) this.cmbGroup.getModel()).addElement(g);
+            }
+            this.cmbGroup.setSelectedIndex(0);
+
+            this.tblGroups.setEnabled(true);
+            this.cmbGroup.setEnabled(true);
+            ComponentUtils.autoSizeColumns(tblGroups);
+        } catch (Throwable t) {
+            log.error("Unable to load privilege groups", t);
         }
 
     }
@@ -5373,10 +5400,17 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 int col = this.tblGroups.columnAtPoint(p);
                 if (col == 0) {
                     // click on checkbox in table
-                    this.groupPrivilegesChanged=true;
+                    this.groupPrivilegesChanged = true;
                     int row = this.tblGroups.rowAtPoint(p);
                     Group g = (Group) this.tblGroups.getValueAt(row, 1);
                     Boolean newValue = !((Boolean) this.tblGroups.getValueAt(row, 0));
+                    if(newValue) {
+                        if(this.cmbGroup.getSelectedIndex()==0) {
+                            JOptionPane.showMessageDialog(this, "Um Zugriffsrechte zu aktivieren, muss zuerst eine Eigentümergruppe gesetzt werden!", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
+                            this.tabPrivileges.setSelectedIndex(0);
+                            return;
+                        }
+                    }
                     this.tblGroups.setValueAt(newValue, row, col);
                 }
 
@@ -5493,10 +5527,10 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         } else {
             aFile.setLawyer(null);
         }
-        
-        if(this.cmbGroup.getSelectedItem()!=null) {
-            if(this.cmbGroup.getSelectedItem() instanceof Group) {
-                aFile.setGroup((Group)this.cmbGroup.getSelectedItem());
+
+        if (this.cmbGroup.getSelectedItem() != null) {
+            if (this.cmbGroup.getSelectedItem() instanceof Group) {
+                aFile.setGroup((Group) this.cmbGroup.getSelectedItem());
             } else {
                 aFile.setGroup(null);
             }
@@ -5918,21 +5952,24 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         if (!StringUtils.equals(dto.getLawyer(), (String) this.cmbLawyer.getSelectedItem())) {
             return true;
         }
-        if(dto.getGroup()==null) {
-            if(this.cmbGroup.getSelectedIndex()>0)
+        if (dto.getGroup() == null) {
+            if (this.cmbGroup.getSelectedIndex() > 0) {
                 return true;
+            }
         } else {
-            if(this.cmbGroup.getSelectedItem() instanceof String) {
+            if (this.cmbGroup.getSelectedItem() instanceof String) {
                 // case has a grou set, but user reset it to an empty value
                 return true;
             } else {
-                if(!(((Group)this.cmbGroup.getSelectedItem()).equals(this.dto.getGroup())))
+                if (!(((Group) this.cmbGroup.getSelectedItem()).equals(this.dto.getGroup()))) {
                     return true;
+                }
             }
         }
-        if(this.groupPrivilegesChanged)
+        if (this.groupPrivilegesChanged) {
             return true;
-        
+        }
+
         if (!StringUtils.equals(dto.getAssistant(), (String) this.cmbAssistant.getSelectedItem())) {
             return true;
         }
@@ -6086,13 +6123,13 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 }
             }
 
-            String caseId=null;
+            String caseId = null;
             if (id == null) {
-                ArchiveFileBean newCase=fileService.createArchiveFile(this.dto);
-                caseId=newCase.getId();
+                ArchiveFileBean newCase = fileService.createArchiveFile(this.dto);
+                caseId = newCase.getId();
             } else {
                 fileService.updateArchiveFile(this.dto);
-                caseId=this.dto.getId();
+                caseId = this.dto.getId();
                 // in case of updates we need to reload the reviews
                 // they are getting removed and re-added by #updateArchiveFile
                 Collection reviews = fileService.getReviews(id);
@@ -6128,11 +6165,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                         }));
 
             }
-            if(this.groupPrivilegesChanged) {
-                ArrayList<Group> allowedGroups=new ArrayList<>();
-                for(int r=0;r<this.tblGroups.getRowCount();r++) {
-                    if(this.tblGroups.getValueAt(r, 0).equals(Boolean.TRUE)) {
-                        allowedGroups.add(((Group)this.tblGroups.getValueAt(r, 1)));
+            if (this.groupPrivilegesChanged) {
+                ArrayList<Group> allowedGroups = new ArrayList<>();
+                for (int r = 0; r < this.tblGroups.getRowCount(); r++) {
+                    if (this.tblGroups.getValueAt(r, 0).equals(Boolean.TRUE)) {
+                        allowedGroups.add(((Group) this.tblGroups.getValueAt(r, 1)));
                     }
                 }
                 fileService.updateAllowedGroups(caseId, allowedGroups);
