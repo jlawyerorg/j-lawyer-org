@@ -717,6 +717,7 @@ public class Main {
         String cmdHost = null;
         String cmdPort = null;
         String cmdHttpPort = null;
+        String cmdSsl="0";
 
         try {
             BeaWrapper.preInit();
@@ -733,6 +734,13 @@ public class Main {
             cmdHttpPort = args[2];
             cmdUser = args[3];
             cmdPassword = args[4];
+        } else if(args.length == 6) {
+            cmdHost = args[0];
+            cmdPort = args[1];
+            cmdHttpPort = args[2];
+            cmdUser = args[3];
+            cmdPassword = args[4];
+            cmdSsl=args[5];
         } else if (args.length == 0) {
             // this is the default
         } else {
@@ -740,19 +748,19 @@ public class Main {
             System.out.println("Invalid arguments! Launch with");
             System.out.println("  (1) zero arguments to bring up a login dialog");
             System.out.println("  (2) five arguments to bring launch directly into the desktop view:");
-            System.out.println("      <host> <port> <http-port> <user> <password>");
-            System.out.println("      e.g. \"localhost 8080 8080 admin a");
+            System.out.println("      <host> <port> <http-port> <user> <password> <sslenabled 1|0>");
+            System.out.println("      e.g. \"localhost 8080 8080 admin a 0");
             System.exit(1);
         }
 
         System.setProperty("http.agent", "j-lawyer Client v" + VersionUtils.getFullClientVersion());
         System.setProperty("javax.net.ssl.keyStorePassword", cmdLineSwitch);
         Main main = new Main();
-        main.showSplash(cmdHost, cmdPort, cmdHttpPort, cmdUser, cmdPassword);
+        main.showSplash(cmdHost, cmdPort, cmdHttpPort, cmdUser, cmdPassword, cmdSsl);
 
     }
 
-    private void showSplash(String cmdHost, String cmdPort, String cmdHttpPort, String cmdUser, String cmdPassword) {
+    private void showSplash(String cmdHost, String cmdPort, String cmdHttpPort, String cmdUser, String cmdPassword, String cmdSsl) {
 
         FlatIntelliJLaf.install();
 
@@ -1189,7 +1197,7 @@ public class Main {
         this.splash.dispose();
         this.splash = null;
 
-        LoginDialog login = new LoginDialog(lastStatus, cmdHost, cmdPort, cmdHttpPort, cmdUser, cmdPassword);
+        LoginDialog login = new LoginDialog(lastStatus, cmdHost, cmdPort, cmdHttpPort, cmdUser, cmdPassword, cmdSsl);
         FrameUtils.centerFrame(login, null);
 
         if (cmdHost == null && cmdPort == null && cmdHttpPort == null && cmdUser == null && cmdPassword == null) {

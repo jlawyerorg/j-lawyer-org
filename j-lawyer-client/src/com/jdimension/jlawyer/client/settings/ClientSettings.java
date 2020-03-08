@@ -686,6 +686,7 @@ public class ClientSettings {
     public static final String CONF_LASTPORT="connection.lastport";
     public static final String CONF_LASTHTTPPORT="connection.lasthttpport";
     public static final String CONF_LASTUSER="connection.lastuser";
+    public static final String CONF_LASTSERVERSSL="connection.lastserverssl";
     
     public static final String CONF_THEME="client.theme";
     

@@ -707,38 +707,38 @@ public class LoginDialog extends javax.swing.JFrame {
     /**
      * Creates new form LoginDialog
      */
-    public LoginDialog(String initialStatus, String cmdHost, String cmdPort, String cmdHttpPort, String cmdUser, String cmdPassword) {
+    public LoginDialog(String initialStatus, String cmdHost, String cmdPort, String cmdHttpPort, String cmdUser, String cmdPassword, String cmdSsl) {
         initComponents();
-        
+
         // begin: required so the tabbed pane is transparent on macOS. reason unknown.
         this.jTabbedPane1.setOpaque(false);
         this.jTabbedPane1.putClientProperty("TabbedPane.contentOpaque", Boolean.FALSE);
         this.jTabbedPane1.putClientProperty("TabbedPane.tabsOpaque", Boolean.FALSE);
         // end
-        
+
         ImageIcon image = new ImageIcon(getClass().getResource("/images/login-background-dark.jpg"));
         this.bgPanel.setBackgroundImage(image.getImage());
-        
+
         try {
             InputStream is = StartupSplashFrame.class.getResourceAsStream("/fonts/exo2/exo2-bold.ttf");
             Font font = Font.createFont(Font.TRUETYPE_FONT, is);
-            
+
             this.lblPassword.setFont(font.deriveFont(Font.BOLD, 18));
             this.lblPassword.setForeground(Color.WHITE);
-            
+
             this.lblUser.setFont(font.deriveFont(Font.BOLD, 18));
             this.lblUser.setForeground(Color.WHITE);
-            
+
             this.txtUser.setFont(font.deriveFont(Font.BOLD, 14));
             this.txtUser.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
-            
+
             this.pwPassword.setFont(font.deriveFont(Font.BOLD, 14));
             this.pwPassword.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
-            
+
             this.cmdLogin.setFont(font.deriveFont(Font.BOLD, 20));
-            
+
             this.cmdCancel.setFont(font.deriveFont(Font.BOLD, 20));
-            
+
             this.jTabbedPane1.setFont(font.deriveFont(Font.BOLD, 14));
             //this.jTabbedPane1.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
             this.jTabbedPane1.setForegroundAt(0, DefaultColorTheme.COLOR_LOGO_BLUE);
@@ -748,45 +748,46 @@ public class LoginDialog extends javax.swing.JFrame {
 //            this.jPanel1.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
 //            this.jPanel1.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
 
-
             this.jLabel1.setFont(font.deriveFont(Font.BOLD, 16));
             this.jLabel2.setFont(font.deriveFont(Font.BOLD, 16));
             this.jLabel5.setFont(font.deriveFont(Font.BOLD, 16));
             this.jLabel6.setFont(font.deriveFont(Font.BOLD, 16));
             this.jLabel15.setFont(font.deriveFont(Font.BOLD, 16));
-            
+
             this.lblBoxOutput.setFont(font.deriveFont(Font.BOLD, 16));
-            
+
             this.jLabel9.setFont(font.deriveFont(Font.BOLD, 14));
             this.jLabel10.setFont(font.deriveFont(Font.BOLD, 14));
             this.jLabel11.setFont(font.deriveFont(Font.BOLD, 14));
             this.jLabel12.setFont(font.deriveFont(Font.BOLD, 14));
             this.jLabel13.setFont(font.deriveFont(Font.BOLD, 14));
             this.jLabel14.setFont(font.deriveFont(Font.BOLD, 14));
-            
+
             this.cmbServer.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
             this.txtPort.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
             this.txtHttpPort.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
             this.txtBoxPassword.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
             this.txtCurrentHost.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
-            
+            this.chkSsl.setForeground(Color.WHITE);
+
             this.cmbServer.setFont(font.deriveFont(Font.BOLD, 12));
             this.txtPort.setFont(font.deriveFont(Font.BOLD, 12));
             this.txtHttpPort.setFont(font.deriveFont(Font.BOLD, 12));
             this.txtBoxPassword.setFont(font.deriveFont(Font.BOLD, 12));
             this.txtCurrentHost.setFont(font.deriveFont(Font.BOLD, 12));
-            
+            this.chkSsl.setFont(font.deriveFont(Font.BOLD, 12));
+
         } catch (Throwable t) {
             t.printStackTrace();
         }
-        
+
         this.boxProgress.setVisible(false);
 
         this.initialStatus = initialStatus;
         ClientSettings settings = ClientSettings.getInstance();
-        String allServers=settings.getConfiguration(settings.CONF_LASTSERVERLIST, "localhost");
-        DefaultComboBoxModel allServersModel=new DefaultComboBoxModel();
-        for(String s: allServers.split(",")) {
+        String allServers = settings.getConfiguration(settings.CONF_LASTSERVERLIST, "localhost");
+        DefaultComboBoxModel allServersModel = new DefaultComboBoxModel();
+        for (String s : allServers.split(",")) {
             allServersModel.addElement(s);
         }
         this.cmbServer.setModel(allServersModel);
@@ -794,6 +795,13 @@ public class LoginDialog extends javax.swing.JFrame {
         this.txtPort.setText(settings.getConfiguration(settings.CONF_LASTPORT, "8080"));
         this.txtHttpPort.setText(settings.getConfiguration(settings.CONF_LASTHTTPPORT, "8080"));
         this.txtUser.setText(settings.getConfiguration(settings.CONF_LASTUSER, ""));
+
+        String ssl = settings.getConfiguration(settings.CONF_LASTSERVERSSL, "0");
+        if ("1".equalsIgnoreCase(ssl)) {
+            this.chkSsl.setSelected(true);
+        } else {
+            this.chkSsl.setSelected(false);
+        }
 
         BoxAccess box = new BoxAccess(this.txtBoxPassword.getText());
         box.checkReachable(jTabbedPane1, 2, this.cmbServer.getSelectedItem().toString());
@@ -804,12 +812,17 @@ public class LoginDialog extends javax.swing.JFrame {
             this.txtHttpPort.setText(cmdHttpPort);
             this.txtUser.setText(cmdUser);
             this.pwPassword.setText(cmdPassword);
+            if ("1".equalsIgnoreCase(cmdSsl)) {
+                this.chkSsl.setSelected(true);
+            } else {
+                this.chkSsl.setSelected(false);
+            }
             this.cmdLoginActionPerformed(null);
 
         }
 
     }
-    
+
     public void setFocusToPasswordField() {
         this.pwPassword.requestFocus();
     }
@@ -840,6 +853,7 @@ public class LoginDialog extends javax.swing.JFrame {
         jLabel5 = new javax.swing.JLabel();
         txtHttpPort = new javax.swing.JTextField();
         cmbServer = new javax.swing.JComboBox<>();
+        chkSsl = new javax.swing.JCheckBox();
         jPanel3 = new javax.swing.JPanel();
         jLabel6 = new javax.swing.JLabel();
         txtBoxPassword = new javax.swing.JPasswordField();
@@ -989,6 +1003,9 @@ public class LoginDialog extends javax.swing.JFrame {
             }
         });
 
+        chkSsl.setForeground(new java.awt.Color(255, 255, 255));
+        chkSsl.setText("Server unterstützt SSL-Verschlüsselung");
+
         org.jdesktop.layout.GroupLayout jPanel2Layout = new org.jdesktop.layout.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
@@ -1003,7 +1020,10 @@ public class LoginDialog extends javax.swing.JFrame {
                 .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(txtPort, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 477, Short.MAX_VALUE)
                     .add(txtHttpPort, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 477, Short.MAX_VALUE)
-                    .add(cmbServer, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .add(cmbServer, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(jPanel2Layout.createSequentialGroup()
+                        .add(chkSsl)
+                        .add(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         jPanel2Layout.setVerticalGroup(
@@ -1021,7 +1041,9 @@ public class LoginDialog extends javax.swing.JFrame {
                 .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(jLabel5)
                     .add(txtHttpPort, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(212, Short.MAX_VALUE))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                .add(chkSsl)
+                .addContainerGap(181, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab(bundle.getString("tab.title.connection"), jPanel2); // NOI18N
@@ -1262,7 +1284,7 @@ public class LoginDialog extends javax.swing.JFrame {
 
         Object encPassword = JOptionPane.showInputDialog(this, "optional: Passwort mit welchem verschlüsselt wurde: ", "Verschlüsselungspasswort", JOptionPane.QUESTION_MESSAGE, null, null, "");
         if (encPassword == null || "".equals(encPassword)) {
-            encPassword="***empty***";
+            encPassword = "***empty***";
         }
 
         BoxAccess box = new BoxAccess(this.txtBoxPassword.getText());
@@ -1309,47 +1331,73 @@ public class LoginDialog extends javax.swing.JFrame {
 
         ClientSettings settings = ClientSettings.getInstance();
 
-        //        Properties props = new Properties();
-        //        props.put("remote.connections", "default");
-        //        props.put("remote.connection.default.port", this.txtPort.getText());
-        //        props.put("remote.connection.default.host", this.txtServer.getText());
-        //        props.put("remote.connection.default.username", this.txtUser.getText());
-        //        props.put("remote.connection.default.password", this.pwPassword.getText());
-        //        props.put("remote.connection.default.connect.options.org.xnio.Options.SASL_POLICY_NOANONYMOUS", "false");
-        //        props.put("remote.connection.default.connect.options.org.xnio.Options.SASL_POLICY_NOPLAINTEXT", "false");
-        //        props.put("remote.connectionprovider.create.options.org.xnio.Options.SSL_ENABLED", "false");
-        //
-        //        EJBClientConfiguration ejbClientConfiguration = new PropertiesBasedEJBClientConfiguration(props);
-        //        ContextSelector<EJBClientContext> contextSelector = new ConfigBasedEJBClientContextSelector(ejbClientConfiguration);
-        //        EJBClientContext.setSelector(contextSelector);
-
         Properties properties = new Properties();
-        //properties.put(Context.URL_PKG_PREFIXES, "org.jboss.ejb.client.naming");
-        properties.put("jboss.naming.client.ejb.context", true);
+        if (this.chkSsl.isSelected()) {
+            //properties.put(Context.URL_PKG_PREFIXES, "org.jboss.ejb.client.naming");
+            properties.put("jboss.naming.client.ejb.context", true);
 
-        // begin: for JMS only
-        properties.put(Context.INITIAL_CONTEXT_FACTORY, "org.wildfly.naming.client.WildFlyInitialContextFactory");
-        //properties.put(Context.INITIAL_CONTEXT_FACTORY, "org.wildfly.naming.client.WildFlyInitialContextFactory");
-        properties.put(Context.PROVIDER_URL, "http-remoting://" + this.cmbServer.getSelectedItem().toString() + ":" + this.txtPort.getText());
-        properties.put(Context.SECURITY_PRINCIPAL, this.txtUser.getText());
-        properties.put(Context.SECURITY_CREDENTIALS, this.pwPassword.getText());
-        properties.put("jboss.naming.client.connect.options.org.xnio.Options.SASL_POLICY_NOPLAINTEXT", "false");
-        properties.put("jboss.naming.client.connect.options.org.xnio.Options.SASL_POLICY_NOANONYMOUS", "false");
-        properties.put("jboss.naming.client.connect.options.org.xnio.Options.SSL_ENABLED", "false");
+            // begin: for JMS only
+            properties.put(Context.INITIAL_CONTEXT_FACTORY, "org.wildfly.naming.client.WildFlyInitialContextFactory");
+            //properties.put(Context.INITIAL_CONTEXT_FACTORY, "org.wildfly.naming.client.WildFlyInitialContextFactory");
+            properties.put(Context.PROVIDER_URL, "https-remoting://" + this.cmbServer.getSelectedItem().toString() + ":" + this.txtPort.getText());
+            properties.put(Context.SECURITY_PRINCIPAL, this.txtUser.getText());
+            properties.put(Context.SECURITY_CREDENTIALS, this.pwPassword.getText());
+            properties.put("jboss.naming.client.connect.options.org.xnio.Options.SASL_POLICY_NOPLAINTEXT", "false");
+            properties.put("jboss.naming.client.connect.options.org.xnio.Options.SASL_POLICY_NOANONYMOUS", "false");
+            //properties.put("jboss.naming.client.connect.options.org.xnio.Options.SSL_ENABLED", "false");
+            properties.put("jboss.naming.client.connect.options.org.xnio.Options.SSL_ENABLED", "true");
+            properties.put("jboss.naming.client.connect.options.org.xnio.Options.SSL_STARTTLS", "true");
+        } else {
+            //properties.put(Context.URL_PKG_PREFIXES, "org.jboss.ejb.client.naming");
+            properties.put("jboss.naming.client.ejb.context", true);
 
+            // begin: for JMS only
+            properties.put(Context.INITIAL_CONTEXT_FACTORY, "org.wildfly.naming.client.WildFlyInitialContextFactory");
+            //properties.put(Context.INITIAL_CONTEXT_FACTORY, "org.wildfly.naming.client.WildFlyInitialContextFactory");
+            properties.put(Context.PROVIDER_URL, "http-remoting://" + this.cmbServer.getSelectedItem().toString() + ":" + this.txtPort.getText());
+            properties.put(Context.SECURITY_PRINCIPAL, this.txtUser.getText());
+            properties.put(Context.SECURITY_CREDENTIALS, this.pwPassword.getText());
+            properties.put("jboss.naming.client.connect.options.org.xnio.Options.SASL_POLICY_NOPLAINTEXT", "false");
+            properties.put("jboss.naming.client.connect.options.org.xnio.Options.SASL_POLICY_NOANONYMOUS", "false");
+            
+        }
+
+        //properties.put("", "false");
+//        properties.put("", "false");
+//        properties.put("", "false");
+//        properties.put("", "false");
+//        properties.put("", "false");
+//        properties.put("", "false");
+//        properties.put("", "false");
+//        properties.put("", "false");
+//        properties.put("", "false");
+//        properties.put("", "false");
+//        properties.put("", "false");
+//        
+//        remote.connections=default
+//remote.connection.default.host=localhost
+//remote.connection.default.port=8443
+//remote.connection.default.protocol=https-remoting
+//remote.connection.default.username=ejbUserOne
+//remote.connection.default.password=ejbPasswordOne@123
+// 
+//remote.connection.default.connect.options.org.xnio.Options.SASL_POLICY_NOPLAINTEXT=false
+//remote.connection.default.connect.options.org.xnio.Options.SASL_POLICY_NOANONYMOUS=false
+//remote.connection.default.connect.options.org.xnio.Options.SSL_STARTTLS=true
+//remote.connection.default.connect.options.org.xnio.Options.SSL_PROTOCOL=TLSv1.2
+//remote.connectionprovider.create.options.org.xnio.Options.SSL_ENABLED=true
         //        properties = new Properties();
         //          properties.put(Context.URL_PKG_PREFIXES, "org.jboss.ejb.client.naming");
         //  properties.put(Context.INITIAL_CONTEXT_FACTORY, "org.wildfly.naming.client.WildFlyInitialContextFactory");
         //  properties.put(Context.PROVIDER_URL, "remote+http://" + this.txtServer.getText() + ":" + this.txtPort.getText());
         //  properties.put(Context.SECURITY_PRINCIPAL, this.txtUser.getText());
         //  properties.put(Context.SECURITY_CREDENTIALS, this.pwPassword.getText());
-
         // end: for JMS only
         //        Properties properties = new Properties();
         //        properties.put("java.naming.factory.initial",
-            //                "org.jnp.interfaces.NamingContextFactory");
+        //                "org.jnp.interfaces.NamingContextFactory");
         //        properties.put("java.naming.factory.url.pkgs",
-            //                "org.jboss.naming:org.jnp.interfaces");
+        //                "org.jboss.naming:org.jnp.interfaces");
         //        properties.put("java.naming.provider.url", "jnp://" + this.txtServer.getText() + ":" + this.txtPort.getText());
         //        properties.put("jnp.disableDiscovery", "true");
         //        properties.put(InitialContext.SECURITY_PRINCIPAL, this.txtUser.getText());
@@ -1360,14 +1408,14 @@ public class LoginDialog extends javax.swing.JFrame {
 
         //SecurityClientCallbackHandler callbackHandler = new SecurityClientCallbackHandler(this.txtUser.getText(), this.pwPassword.getText());
         //        try {
-            //            LoginContext loginContext = new LoginContext("j-lawyer-security", callbackHandler);
-            //            loginContext.login();
-            //
-            //        } catch (LoginException loginEx) {
-            //            log.error("Error logging in", loginEx);
-            //            JOptionPane.showMessageDialog(this, java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/LoginDialog").getString("msg.error.loginfailed"), new Object[]{loginEx.getMessage()}), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/LoginDialog").getString("msg.error"), JOptionPane.ERROR_MESSAGE);
-            //            return;
-            //        }
+        //            LoginContext loginContext = new LoginContext("j-lawyer-security", callbackHandler);
+        //            loginContext.login();
+        //
+        //        } catch (LoginException loginEx) {
+        //            log.error("Error logging in", loginEx);
+        //            JOptionPane.showMessageDialog(this, java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/LoginDialog").getString("msg.error.loginfailed"), new Object[]{loginEx.getMessage()}), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/LoginDialog").getString("msg.error"), JOptionPane.ERROR_MESSAGE);
+        //            return;
+        //        }
         // try connecting to see whether the loginContext.login succeeded
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
@@ -1384,7 +1432,7 @@ public class LoginDialog extends javax.swing.JFrame {
             //simple.remove();
         } catch (EJBAccessException ex) {
             log.error("Invalid user credentials", ex);
-            JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/LoginDialog").getString("msg.loginfailed") + System.lineSeparator() +  ex.getMessage(), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/LoginDialog").getString("msg.error"), JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/LoginDialog").getString("msg.loginfailed") + System.lineSeparator() + ex.getMessage(), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/LoginDialog").getString("msg.error"), JOptionPane.ERROR_MESSAGE);
             this.txtUser.setForeground(Color.RED);
             this.pwPassword.setForeground(Color.RED);
             System.exit(1);
@@ -1397,12 +1445,17 @@ public class LoginDialog extends javax.swing.JFrame {
 
         settings.setConfiguration(settings.CONF_LASTPORT, this.txtPort.getText());
         settings.setConfiguration(settings.CONF_LASTHTTPPORT, this.txtHttpPort.getText());
-        
-        String allServers=settings.getConfiguration(settings.CONF_LASTSERVERLIST, "localhost");
-        if(allServers.indexOf(this.cmbServer.getSelectedItem().toString())<0) {
-            allServers=allServers+","+this.cmbServer.getSelectedItem().toString();
+        if(this.chkSsl.isSelected()) {
+            settings.setConfiguration(settings.CONF_LASTSERVERSSL, "1");
+        } else {
+            settings.setConfiguration(settings.CONF_LASTSERVERSSL, "0");
         }
-        
+
+        String allServers = settings.getConfiguration(settings.CONF_LASTSERVERLIST, "localhost");
+        if (allServers.indexOf(this.cmbServer.getSelectedItem().toString()) < 0) {
+            allServers = allServers + "," + this.cmbServer.getSelectedItem().toString();
+        }
+
         settings.setConfiguration(settings.CONF_LASTSERVERLIST, allServers);
         settings.setConfiguration(settings.CONF_LASTSERVER, this.cmbServer.getSelectedItem().toString());
         settings.setConfiguration(settings.CONF_LASTUSER, this.txtUser.getText());
@@ -1447,7 +1500,7 @@ public class LoginDialog extends javax.swing.JFrame {
     public static void main(String args[]) {
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                new LoginDialog("", null, null, null, null, null).setVisible(true);
+                new LoginDialog("", null, null, null, null, null, "0").setVisible(true);
             }
         });
     }
@@ -1455,6 +1508,7 @@ public class LoginDialog extends javax.swing.JFrame {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private com.jdimension.jlawyer.client.StyledPanel bgPanel;
     private javax.swing.JProgressBar boxProgress;
+    private javax.swing.JCheckBox chkSsl;
     private javax.swing.JComboBox<String> cmbServer;
     private javax.swing.JButton cmdBoxCheck;
     private javax.swing.JButton cmdBoxReboot;
