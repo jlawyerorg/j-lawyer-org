@@ -663,6 +663,7 @@
  */
 package com.jdimension.jlawyer.client.utils;
 
+import com.jdimension.jlawyer.client.editors.files.PartiesPanelEntry;
 import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.documents.PlaceHolders;
 import com.jdimension.jlawyer.persistence.AddressBean;
@@ -690,7 +691,7 @@ public class PlaceHolderUtils extends PlaceHolders {
 
     }
 
-    public static Hashtable getPlaceHolderValues(Hashtable placeHolders, ArchiveFileBean aFile, List<ArchiveFileAddressesBean> involved, Hashtable<PartyTypeBean,AddressBean> selectedParties, String dictateSign, GenericCalculationTable calculationTable, Hashtable<String,String> formsPlaceHolderValues) {
+    public static Hashtable getPlaceHolderValues(Hashtable placeHolders, ArchiveFileBean aFile, List<PartiesPanelEntry> selectedParties, String dictateSign, GenericCalculationTable calculationTable, Hashtable<String,String> formsPlaceHolderValues) {
 
         NumberFormat currencyFormat = NumberFormat.getNumberInstance();
         currencyFormat.setMinimumFractionDigits(2);
@@ -782,8 +783,9 @@ public class PlaceHolderUtils extends PlaceHolders {
         }
         
 
-        for(PartyTypeBean ptb: selectedParties.keySet()) {
-            AddressBean selected=selectedParties.get(ptb);
+        for(PartiesPanelEntry ppe: selectedParties) {
+            AddressBean selected=ppe.getAddress();
+            PartyTypeBean ptb=ppe.getReferenceType();
             
             if (placeHolders.containsKey(getPlaceHolderForType(_NAME, ptb.getPlaceHolder()))) {
                 placeHolders.put(getPlaceHolderForType(_NAME, ptb.getPlaceHolder()), val(selected.getName()));
@@ -866,8 +868,8 @@ public class PlaceHolderUtils extends PlaceHolders {
             
             
             
-            //ArchiveFileAddressesBean involvement = getInvolvement(cl, involved, ArchiveFileAddressesBean.REFERENCETYPE_CLIENT);
-            ArchiveFileAddressesBean involvement = getInvolvement(selected, involved, ptb);
+            //ArchiveFileAddressesBean involvement = getInvolvement(selected, involved, ptb);
+            ArchiveFileAddressesBean involvement = ppe.getInvolvement();
             if (involvement != null) {
                 if (placeHolders.containsKey(getPlaceHolderForType(_AKTE_KONTAKT, ptb.getPlaceHolder()))) {
                     placeHolders.put(getPlaceHolderForType(_AKTE_KONTAKT, ptb.getPlaceHolder()), val(involvement.getContact()));
@@ -1378,14 +1380,14 @@ public class PlaceHolderUtils extends PlaceHolders {
         return s;
     }
 
-    private static ArchiveFileAddressesBean getInvolvement(AddressBean cl, List<ArchiveFileAddressesBean> involved, PartyTypeBean referenceType) {
-        if (involved != null) {
-            for (ArchiveFileAddressesBean i : involved) {
-                if (i.getReferenceType().equals(referenceType) && cl.getId().equals(i.getAddressKey().getId())) {
-                    return i;
-                }
-            }
-        }
-        return null;
-    }
+//    private static ArchiveFileAddressesBean getInvolvement(AddressBean cl, List<ArchiveFileAddressesBean> involved, PartyTypeBean referenceType) {
+//        if (involved != null) {
+//            for (ArchiveFileAddressesBean i : involved) {
+//                if (i.getReferenceType().equals(referenceType) && cl.getId().equals(i.getAddressKey().getId())) {
+//                    return i;
+//                }
+//            }
+//        }
+//        return null;
+//    }
 }

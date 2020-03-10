@@ -670,6 +670,7 @@ import com.jdimension.jlawyer.client.mail.*;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.documents.SearchAndAssignDialog;
 import com.jdimension.jlawyer.client.editors.files.OptionsComboBoxModel;
+import com.jdimension.jlawyer.client.editors.files.PartiesPanelEntry;
 import com.jdimension.jlawyer.client.editors.files.PartiesSelectionListener;
 import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.events.ReviewAddedEvent;
@@ -1061,20 +1062,39 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
         this.txtAzSender.setText(fileNumber);
     }
 
-    public void addAllParties(List<AddressBean> list, PartyTypeBean ptb) {
-        for (AddressBean o : list) {
-            this.addParty(o, ptb);
-        }
+//    public void addAllParties(List<AddressBean> list, PartyTypeBean ptb) {
+//        for (AddressBean o : list) {
+//            this.addParty(o, ptb);
+//        }
+//    }
+//
+//    public void addParty(AddressBean ab, PartyTypeBean ptb) {
+//        if (ab == null) {
+//            return;
+//        }
+//
+//        this.pnlParties.addParty(ab, ptb);
+//
+//        this.addRecipientCandidate(ab, ptb);
+//
+//    }
+    
+    public void addParty(AddressBean addr, PartyTypeBean ptb) {
+        
+        this.pnlParties.addParty(new PartiesPanelEntry(addr, ptb));
+        
+        this.addRecipientCandidate(addr, ptb);
+        
     }
-
-    public void addParty(AddressBean ab, PartyTypeBean ptb) {
-        if (ab == null) {
+    
+    public void addParty(ArchiveFileAddressesBean aab) {
+        if (aab == null) {
             return;
         }
 
-        this.pnlParties.addParty(ab, ptb);
+        this.pnlParties.addParty(new PartiesPanelEntry(aab));
 
-        this.addRecipientCandidate(ab, ptb);
+        this.addRecipientCandidate(aab.getAddressKey(), aab.getReferenceType());
 
     }
 
@@ -1978,13 +1998,13 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
 
                 EmailTemplate tpl = locator.lookupIntegrationServiceRemote().getEmailTemplate(tplName);
 
-                Hashtable<PartyTypeBean, AddressBean> selectedParties = this.pnlParties.getSelectedParties(new ArrayList(allPartyTypes));
+                List<PartiesPanelEntry> selectedParties = this.pnlParties.getSelectedParties(new ArrayList(allPartyTypes));
                 ArrayList<String> placeHolderNames = EmailTemplateAccess.getPlaceHoldersInTemplate(tpl.getSubject(), allPartyTypesPlaceholders);
                 Hashtable<String, String> ht = new Hashtable<String, String>();
                 for (String ph : placeHolderNames) {
                     ht.put(ph, "");
                 }
-                Hashtable<String, String> htValues = PlaceHolderUtils.getPlaceHolderValues(ht, this.contextArchiveFile, this.caseInvolvements, selectedParties, this.contextDictateSign, null, new Hashtable<String, String>());
+                Hashtable<String, String> htValues = PlaceHolderUtils.getPlaceHolderValues(ht, this.contextArchiveFile, selectedParties, this.contextDictateSign, null, new Hashtable<String, String>());
                 this.txtSubject.setText(EmailTemplateAccess.replacePlaceHolders(tpl.getSubject(), htValues));
 
                 placeHolderNames = EmailTemplateAccess.getPlaceHoldersInTemplate(tpl.getBody(), allPartyTypesPlaceholders);
@@ -1992,7 +2012,7 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
                 for (String ph : placeHolderNames) {
                     ht.put(ph, "");
                 }
-                htValues = PlaceHolderUtils.getPlaceHolderValues(ht, this.contextArchiveFile, this.caseInvolvements, selectedParties, this.contextDictateSign, null, new Hashtable<String, String>());
+                htValues = PlaceHolderUtils.getPlaceHolderValues(ht, this.contextArchiveFile, selectedParties, this.contextDictateSign, null, new Hashtable<String, String>());
                 //this.taBody.setText(EmailTemplateAccess.replacePlaceHolders(tpl.getBody(), htValues) + System.getProperty("line.separator") + System.getProperty("line.separator") + this.cu.getEmailSignature());
 
                 this.tp.setText(EmailTemplateAccess.replacePlaceHolders(tpl.getBody(), htValues) + System.getProperty("line.separator") + System.getProperty("line.separator") + EmailUtils.Html2Text(this.cu.getEmailSignature()));

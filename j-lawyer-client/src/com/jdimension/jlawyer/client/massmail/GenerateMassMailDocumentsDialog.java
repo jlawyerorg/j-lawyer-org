@@ -990,12 +990,12 @@ public class GenerateMassMailDocumentsDialog extends javax.swing.JDialog {
                             }
 
                             
-                            Hashtable<PartyTypeBean, AddressBean> ht2 = new Hashtable<>();
+                            List<PartiesPanelEntry> ht2=new ArrayList<PartiesPanelEntry>();
                             for (PartyTypeBean ptb : allPartyTypes) {
-                                ht2.put(ptb, ad);
+                                ht2.add(new PartiesPanelEntry(ad, ptb));
                             }
 
-                            ht = PlaceHolderUtils.getPlaceHolderValues(ht, null, null, ht2, null, null, new Hashtable<String,String>());
+                            ht = PlaceHolderUtils.getPlaceHolderValues(ht, null, ht2, null, null, new Hashtable<String,String>());
 
                             Enumeration htEn = ht.keys();
                             while (htEn.hasMoreElements()) {
@@ -1119,12 +1119,12 @@ public class GenerateMassMailDocumentsDialog extends javax.swing.JDialog {
                 }
 
                 Collection<PartyTypeBean> allPartyTypes = locator.lookupSystemManagementRemote().getPartyTypes();
-                Hashtable<PartyTypeBean, AddressBean> ht2 = new Hashtable<>();
+                List<PartiesPanelEntry> ht2 = new ArrayList<>();
                 for (PartyTypeBean ptb : allPartyTypes) {
-                    ht2.put(ptb, this.addresses.get(0));
+                    ht2.add(new PartiesPanelEntry(this.addresses.get(0), ptb));
                 }
 
-                ht = PlaceHolderUtils.getPlaceHolderValues(ht, null, null, ht2, null, null, new Hashtable<String,String>());
+                ht = PlaceHolderUtils.getPlaceHolderValues(ht, null, ht2, null, null, new Hashtable<String,String>());
 
                 Enumeration htEn = ht.keys();
                 while (htEn.hasMoreElements()) {

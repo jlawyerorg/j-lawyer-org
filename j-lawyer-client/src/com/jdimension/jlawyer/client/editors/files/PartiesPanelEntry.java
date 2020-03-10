@@ -663,368 +663,42 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.editors.files;
 
-import com.jdimension.jlawyer.client.controls.VerticalTableHeaderCellRenderer;
-import com.jdimension.jlawyer.client.editors.EditorsRegistry;
-import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
 import com.jdimension.jlawyer.persistence.PartyTypeBean;
-import com.jdimension.jlawyer.services.JLawyerServiceLocator;
-import java.awt.Component;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Hashtable;
-import java.util.List;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JTable;
-import javax.swing.event.TableModelEvent;
-import javax.swing.event.TableModelListener;
-import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.TableCellRenderer;
-import org.apache.log4j.Logger;
 
 /**
  *
  * @author jens
  */
-public class PartiesPanel extends javax.swing.JPanel {
-
-    private static final Logger log = Logger.getLogger(PartiesPanel.class.getName());
-
-    private boolean ignoreTableChanges = false;
-    private PartiesSelectionListener listener = null;
-    private List<PartyTypeBean> partyTypes = null;
-
-    /**
-     * Creates new form PartiesPanel
-     */
-    public PartiesPanel() {
-        initComponents();
-
-        //this.tblParties.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
-    }
-
-    public void setListener(PartiesSelectionListener l) {
-        this.listener = l;
-    }
-
-//    class PartyEditor extends DefaultCellEditor {
-//
-//        private List<AddressBean> parties = null;
-//
-//        public PartyEditor(List<AddressBean> parties) {
-//            super(new JComboBox());
-//            this.parties = parties;
-//            
-//            
-//            
-//        }
-//
-//        @Override
-//        public Component getTableCellEditorComponent(JTable jtable, Object o, boolean bln, int i, int i1) {
-//            JComboBox combo = new JComboBox();
-//            combo.setRenderer(new AddressBeanListCellRenderer());
-//            for (AddressBean a : this.parties) {
-//                combo.addItem(a);
-//            }
-//            combo.setSelectedItem(o);
-//            return combo;
-//        }
-//
-//        @Override
-//        public Object getCellEditorValue() {
-//            return super.getCellEditorValue(); //To change body of generated methods, choose Tools | Templates.
-//        }
-//        
-//        
-//        
-//    }
-    class PartyRenderer extends DefaultTableCellRenderer {
-
-        public PartyRenderer() {
-            
-        }
-
-        @Override
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-//            JComboBox combo = new JComboBox();
-//            combo.setRenderer(new AddressBeanListCellRenderer());
-//            for (AddressBean a : this.parties) {
-//                combo.addItem(a);
-//            }
-//            combo.setSelectedItem(value);
-//            return comboreturn ;
-            if (c instanceof JLabel) {
-                if (value instanceof PartiesPanelEntry) {
-                    ((JLabel) c).setText(((AddressBean) ((PartiesPanelEntry) value).getAddress()).toDisplayName());
-                    if(((PartiesPanelEntry)value).getInvolvement()!=null) {
-                        String s=((PartiesPanelEntry)value).getInvolvement().getReference();
-                        if(s!=null && s.length()>0)
-                            ((JLabel) c).setToolTipText("Zeichen: " + s);
-                    } else {
-                        ((JLabel) c).setToolTipText(null);
-                    }
-                }
-
-            }
-            return c;
-
-        }
-    }
-
-    public void initialize(List<ArchiveFileAddressesBean> involved) {
-        try {
-            ClientSettings settings = ClientSettings.getInstance();
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            this.partyTypes = locator.lookupArchiveFileServiceRemote().getAllPartyTypes();
-            ArrayList<String> columnNames = new ArrayList<String>();
-            //ArrayList<AddressBean> parties = new ArrayList<AddressBean>();
-            // collect all addresses of relevant parties
-//            for (ArchiveFileAddressesBean aab : involved) {
-//                parties.add(aab.getAddressKey());
-//            }
-
-            // display a column for EACH type, regardless of whether it is uses
-            // this is required because we do not know which placeholders are used in the template the user selected, and we allow to use an address for ANY type
-            for (PartyTypeBean ptb : partyTypes) {
-                if (!columnNames.contains(ptb.getName())) {
-                    columnNames.add(ptb.getName());
-                }
-            }
-
-            Collections.sort(columnNames);
-            ArrayList<String> allColumnNames = new ArrayList<String>();
-            allColumnNames.add("Beteiligte");
-            allColumnNames.addAll(columnNames);
-            String[] colNames = allColumnNames.toArray(new String[0]);
-            PartiesPanelTableModel model = new PartiesPanelTableModel(colNames, 0);
-
-            //this.tblParties.getColumnModel().getColumn(0).setCellRenderer(tcr);
-            this.tblParties.setModel(model);
-            this.tblParties.getColumnModel().getColumn(0).setCellRenderer(new PartyRenderer());
-            //this.tblParties.getColumnModel().getColumn(0).setCellEditor(new PartyEditor(parties));
-
-            TableCellRenderer headerRenderer = new VerticalTableHeaderCellRenderer();
-            for (int i = 1; i < this.tblParties.getColumnCount(); i++) {
-                this.tblParties.getColumnModel().getColumn(i).setHeaderRenderer(headerRenderer);
-                this.tblParties.getColumnModel().getColumn(i).setWidth(30);
-                this.tblParties.getColumnModel().getColumn(i).setMaxWidth(30);
-                this.tblParties.getColumnModel().getColumn(i).setMinWidth(30);
-                this.tblParties.getColumnModel().getColumn(i).setPreferredWidth(30);
-
-            }
-
-            for (ArchiveFileAddressesBean aab : involved) {
-                ArrayList row = new ArrayList();
-                row.add(new PartiesPanelEntry(aab));
-                for (int i = 1; i < this.tblParties.getColumnCount(); i++) {
-                    String colName = this.tblParties.getColumnName(i);
-                    row.add(colName.equals(aab.getReferenceType().getName()) && getNumberOfSelected(i) == 0);
-                }
-                Object[] rowArray = row.toArray();
-                model.addRow(rowArray);
-            }
-
-//            int partyColumnWidth=this.tblParties.getWidth()-(this.tblParties.getColumnCount()*20);
-//            if(partyColumnWidth<50)
-//                partyColumnWidth=50;
-//            this.tblParties.getColumnModel().getColumn(0).setWidth(partyColumnWidth);
-            this.tblParties.getModel().addTableModelListener(
-                    new TableModelListener() {
-                public void tableChanged(TableModelEvent evt) {
-                    if (ignoreTableChanges) {
-                        return;
-                    }
-                    
-                    System.out.println("table model changed: " + evt.getType());
-
-                    ignoreTableChanges = true;
-                    if (evt.getColumn() > 0) {
-                        Boolean newValue = (Boolean) tblParties.getValueAt(evt.getFirstRow(), evt.getColumn());
-                        if (newValue == true) {
-                            for (int i = 0; i < tblParties.getRowCount(); i++) {
-                                tblParties.setValueAt((i == evt.getFirstRow()), i, evt.getColumn());
-                            }
-                        }
-                    }
-                    ignoreTableChanges = false;
-                    if (listener != null) {
-                        listener.selectedPartiesUpdated();
-                    }
-                }
-            });
-
-        } catch (Exception ex) {
-            log.error("Error initializing parties panel", ex);
-            JOptionPane.showMessageDialog(this, "Fehler beim Laden der Beteiligtentypen: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
-            EditorsRegistry.getInstance().clearStatus();
-        }
-    }
-
-//    public void addParty(ArchiveFileAddressesBean aab) {
-//        this.addParty(aab.getAddressKey(), aab.getReferenceType());
-//    }
-//
-//    public void addParty(AddressBean party) {
-//        this.addParty(party, null);
-//    }
-
-//    public void addParty(AddressBean party, PartyTypeBean ptb) {
-//        PartiesPanelTableModel model = (PartiesPanelTableModel) this.tblParties.getModel();
-//        ArrayList row = new ArrayList();
-//        row.add(party);
-//        for (int i = 1; i < this.tblParties.getColumnCount(); i++) {
-//            String colName = this.tblParties.getColumnName(i);
-//            if (ptb != null) {
-//                row.add(colName.equals(ptb.getName()) && getNumberOfSelected(i) == 0);
-//            } else {
-//                row.add(getNumberOfSelected(i) == 0);
-//            }
-//        }
-//        Object[] rowArray = row.toArray();
-//        model.addRow(rowArray);
-//
-//    }
+public class PartiesPanelEntry {
     
-    public void addParty(PartiesPanelEntry entry) {
-        PartiesPanelTableModel model = (PartiesPanelTableModel) this.tblParties.getModel();
-        ArrayList row = new ArrayList();
-        row.add(entry);
-        for (int i = 1; i < this.tblParties.getColumnCount(); i++) {
-            String colName = this.tblParties.getColumnName(i);
-            if (entry.getReferenceType() != null) {
-                row.add(colName.equals(entry.getReferenceType().getName()) && getNumberOfSelected(i) == 0);
-            } else {
-                row.add(getNumberOfSelected(i) == 0);
-            }
-        }
-        Object[] rowArray = row.toArray();
-        model.addRow(rowArray);
-
+    private ArchiveFileAddressesBean entry=null;
+    private AddressBean address=null;
+    private PartyTypeBean referenceType=null;
+    
+    public PartiesPanelEntry(AddressBean addr, PartyTypeBean refType) {
+        this.address=addr;
+        this.referenceType=refType;
+    }
+    
+    public PartiesPanelEntry(ArchiveFileAddressesBean aab) {
+        this.entry=aab;
+        this.address=aab.getAddressKey();
+        this.referenceType=aab.getReferenceType();
     }
 
-    public PartiesPanelEntry getSelectedParty(PartyTypeBean ptb) {
-        for (int i = 1; i < this.tblParties.getColumnCount(); i++) {
-            String colName = this.tblParties.getColumnName(i);
-            if (colName.equals(ptb.getName())) {
-                // found the right column, now get the selected party
-                for (int k = 0; k < this.tblParties.getRowCount(); k++) {
-                    Boolean value = (Boolean) tblParties.getValueAt(k, i);
-                    if (value == true) {
-                        PartiesPanelEntry ab = (PartiesPanelEntry) this.tblParties.getValueAt(k, 0);
-                        return ab;
-                    }
-                }
-            }
-        }
-        return null;
+    public AddressBean getAddress() {
+        
+        return this.address;
     }
-
-    public void expandAllParties(boolean expanded) {
-        this.ignoreTableChanges=true;
-        for (int i = 1; i < this.tblParties.getColumnCount(); i++) {
-            
-            if (expanded) {
-                this.tblParties.getColumnModel().getColumn(i).setWidth(30);
-                this.tblParties.getColumnModel().getColumn(i).setMaxWidth(30);
-                this.tblParties.getColumnModel().getColumn(i).setMinWidth(30);
-                this.tblParties.getColumnModel().getColumn(i).setPreferredWidth(30);
-            } else {
-                this.tblParties.getColumnModel().getColumn(i).setWidth(0);
-                this.tblParties.getColumnModel().getColumn(i).setMaxWidth(0);
-                this.tblParties.getColumnModel().getColumn(i).setMinWidth(0);
-                this.tblParties.getColumnModel().getColumn(i).setPreferredWidth(0);
-            }
-        }
-        this.ignoreTableChanges=false;
-
+    
+    public PartyTypeBean getReferenceType() {
+        return this.referenceType;
     }
-
-    public void expandParties(List<PartyTypeBean> parties) {
-        this.expandAllParties(false);
-        this.ignoreTableChanges=true;
-        for (PartyTypeBean p : parties) {
-            for (int i = 1; i < this.tblParties.getColumnCount(); i++) {
-                String colName = this.tblParties.getColumnName(i);
-                if (colName.equals(p.getName())) {
-                    this.tblParties.getColumnModel().getColumn(i).setWidth(30);
-                    this.tblParties.getColumnModel().getColumn(i).setMaxWidth(30);
-                    this.tblParties.getColumnModel().getColumn(i).setMinWidth(30);
-                    this.tblParties.getColumnModel().getColumn(i).setPreferredWidth(30);
-                    break;
-                }
-            }
-        }
-        this.ignoreTableChanges=false;
+    
+    public ArchiveFileAddressesBean getInvolvement() {
+        return entry;
     }
-
-    public List<PartiesPanelEntry> getSelectedParties(List<PartyTypeBean> allPartyTypes) {
-        List<PartiesPanelEntry> result = new ArrayList<PartiesPanelEntry>();
-        for (PartyTypeBean ptb : allPartyTypes) {
-            PartiesPanelEntry selected = this.getSelectedParty(ptb);
-            if (selected != null) {
-                result.add(selected);
-            }
-        }
-        return result;
-    }
-
-    private int getNumberOfSelected(int column) {
-        int count = 0;
-        for (int i = 0; i < this.tblParties.getRowCount(); i++) {
-            Object o = this.tblParties.getValueAt(i, column);
-            if (o instanceof Boolean) {
-                if (((Boolean) o).equals(Boolean.TRUE)) {
-                    count = count + 1;
-                }
-            }
-        }
-        return count;
-    }
-
-    /**
-     * This method is called from within the constructor to initialize the form.
-     * WARNING: Do NOT modify this code. The content of this method is always
-     * regenerated by the Form Editor.
-     */
-    @SuppressWarnings("unchecked")
-    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
-    private void initComponents() {
-
-        jScrollPane1 = new javax.swing.JScrollPane();
-        tblParties = new javax.swing.JTable();
-
-        tblParties.setModel(new javax.swing.table.DefaultTableModel(
-            new Object [][] {
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null}
-            },
-            new String [] {
-                "Title 1", "Title 2", "Title 3", "Title 4"
-            }
-        ));
-        tblParties.getTableHeader().setReorderingAllowed(false);
-        jScrollPane1.setViewportView(tblParties);
-
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
-        this.setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 400, Short.MAX_VALUE)
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 94, Short.MAX_VALUE)
-        );
-    }// </editor-fold>//GEN-END:initComponents
-
-
-    // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JTable tblParties;
-    // End of variables declaration//GEN-END:variables
+    
 }

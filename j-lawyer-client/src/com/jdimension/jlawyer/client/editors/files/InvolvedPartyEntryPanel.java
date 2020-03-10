@@ -1106,7 +1106,7 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
                 dlg.setTo(this.a.getEmail());
                 ArrayList<ArchiveFileAddressesBean> involved=this.container.getInvolvedParties();
                 for(ArchiveFileAddressesBean aab: involved) {
-                    dlg.addParty(aab.getAddressKey(), aab.getReferenceType());
+                    dlg.addParty(aab);
                 }
                 
                 FrameUtils.centerDialog(dlg, null);

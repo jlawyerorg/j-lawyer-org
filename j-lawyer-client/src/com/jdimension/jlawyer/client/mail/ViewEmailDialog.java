@@ -959,7 +959,7 @@ public class ViewEmailDialog extends javax.swing.JDialog {
                 ArchiveFileServiceRemote afs=locator.lookupArchiveFileServiceRemote();
                 List<ArchiveFileAddressesBean> list=afs.getInvolvementDetailsForCase(this.contextArchiveFile.getId());
                 for(ArchiveFileAddressesBean aab: list) {
-                    dlg.addParty(aab.getAddressKey(), aab.getReferenceType());
+                    dlg.addParty(aab);
                 }
             } catch (Throwable t) {
                 log.error("Unable to add recipient candidates", t);

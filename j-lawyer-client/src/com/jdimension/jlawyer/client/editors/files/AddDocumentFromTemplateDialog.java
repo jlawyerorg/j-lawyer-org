@@ -839,9 +839,9 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
         name = df.format(new Date()) + "_" + templateFileName;
 
         for(PartyTypeBean ptb: this.allPartyTypes) {
-            AddressBean party=this.pnlPartiesPanel.getSelectedParty(ptb);
+            PartiesPanelEntry party=this.pnlPartiesPanel.getSelectedParty(ptb);
             if(party!=null) {
-                String contactName = party.toDisplayName();
+                String contactName = party.getAddress().toDisplayName();
                 contactName = StringUtils.removeSonderzeichen(contactName);
                 name = name.replaceAll(ptb.getPlaceHolder(), contactName);
             }
@@ -1521,8 +1521,8 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
                 for (String ph : placeHolders) {
                     ht.put(ph, "");
                 }
-                Hashtable<PartyTypeBean,AddressBean> selectedParties=this.pnlPartiesPanel.getSelectedParties(this.allPartyTypes);
-                ht = PlaceHolderUtils.getPlaceHolderValues(ht, aFile, involved, selectedParties, this.cmbDictateSigns.getSelectedItem().toString(), this.calculationTable, this.formPlaceHolderValues);
+                List<PartiesPanelEntry> selectedParties=this.pnlPartiesPanel.getSelectedParties(this.allPartyTypes);
+                ht = PlaceHolderUtils.getPlaceHolderValues(ht, aFile, selectedParties, this.cmbDictateSigns.getSelectedItem().toString(), this.calculationTable, this.formPlaceHolderValues);
 
                 Enumeration htEn = ht.keys();
                 while (htEn.hasMoreElements()) {

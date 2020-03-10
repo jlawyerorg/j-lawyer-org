@@ -671,6 +671,7 @@ import com.jdimension.jlawyer.client.editors.addresses.ContactTypeColors;
 import com.jdimension.jlawyer.client.editors.documents.SearchAndAssignDialog;
 import com.jdimension.jlawyer.client.editors.files.AddressBeanListCellRenderer;
 import com.jdimension.jlawyer.client.editors.files.OptionsComboBoxModel;
+import com.jdimension.jlawyer.client.editors.files.PartiesPanelEntry;
 import com.jdimension.jlawyer.client.editors.files.PartiesSelectionListener;
 import com.jdimension.jlawyer.client.events.AllDocumentTagsEvent;
 import com.jdimension.jlawyer.client.events.DocumentAddedEvent;
@@ -991,22 +992,40 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         this.lblFrom.setText(f);
     }
 
-    public void addAllParties(List<AddressBean> list, PartyTypeBean ptb) {
-        for (AddressBean o : list) {
-            this.addParty(o, ptb);
-        }
-    }
+//    public void addAllParties(List<AddressBean> list, PartyTypeBean ptb) {
+//        for (AddressBean o : list) {
+//            this.addParty(o, ptb);
+//        }
+//    }
 
-    public void addParty(AddressBean ab, PartyTypeBean ptb) {
-        if (ab == null) {
+    public void addParty(AddressBean addr, PartyTypeBean ptb) {
+        
+        this.pnlParties.addParty(new PartiesPanelEntry(addr, ptb));
+        
+        this.addRecipientCandidate(addr, ptb);
+        
+    }
+    
+    public void addParty(ArchiveFileAddressesBean p) {
+        if(p==null)
             return;
-        }
-
-        this.pnlParties.addParty(ab, ptb);
-
-        this.addRecipientCandidate(ab, ptb);
-
+        
+        this.pnlParties.addParty(new PartiesPanelEntry(p));
+        
+        this.addRecipientCandidate(p.getAddressKey(), p.getReferenceType());
+        
     }
+    
+//    public void addParty(AddressBean ab, PartyTypeBean ptb) {
+//        if (ab == null) {
+//            return;
+//        }
+//
+//        this.pnlParties.addParty(ab, ptb);
+//
+//        this.addRecipientCandidate(ab, ptb);
+//
+//    }
 
     public void setDictateSign(String dictateSign) {
         this.contextDictateSign = dictateSign;
@@ -1918,8 +1937,8 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                     ht.put(ph, "");
                 }
 
-                Hashtable<PartyTypeBean, AddressBean> selectedParties = this.pnlParties.getSelectedParties(new ArrayList(allPartyTypes));
-                Hashtable<String, String> htValues = PlaceHolderUtils.getPlaceHolderValues(ht, this.contextArchiveFile, this.caseInvolvements, selectedParties, this.contextDictateSign, null, new Hashtable<String,String>());
+                List<PartiesPanelEntry> selectedParties = this.pnlParties.getSelectedParties(new ArrayList(allPartyTypes));
+                Hashtable<String, String> htValues = PlaceHolderUtils.getPlaceHolderValues(ht, this.contextArchiveFile, selectedParties, this.contextDictateSign, null, new Hashtable<String,String>());
                 this.txtSubject.setText(EmailTemplateAccess.replacePlaceHolders(tpl.getSubject(), htValues));
 
                 placeHolderNames = EmailTemplateAccess.getPlaceHoldersInTemplate(tpl.getBody(), allPartyTypesPlaceholders);
@@ -1927,7 +1946,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                 for (String ph : placeHolderNames) {
                     ht.put(ph, "");
                 }
-                htValues = PlaceHolderUtils.getPlaceHolderValues(ht, this.contextArchiveFile, this.caseInvolvements, selectedParties, this.contextDictateSign, null, new Hashtable<String,String>());
+                htValues = PlaceHolderUtils.getPlaceHolderValues(ht, this.contextArchiveFile, selectedParties, this.contextDictateSign, null, new Hashtable<String,String>());
                 //this.taBody.setText(EmailTemplateAccess.replacePlaceHolders(tpl.getBody(), htValues) + System.getProperty("line.separator") + System.getProperty("line.separator") + this.cu.getEmailSignature());
 
                 if (tpl.isText()) {
