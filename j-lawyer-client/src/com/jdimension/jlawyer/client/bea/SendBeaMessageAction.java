@@ -833,6 +833,9 @@ public class SendBeaMessageAction extends ProgressableAction {
                 if (newName.trim().length() == 0) {
                     newName = "beA-Nachricht";
                 }
+                if (newName.length() > 230) {
+                    newName = newName.substring(0, 229);
+                }
 
                 if (!newName.toLowerCase().endsWith(".bea")) {
                     newName = newName + ".bea";

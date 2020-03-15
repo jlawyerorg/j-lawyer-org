@@ -703,16 +703,16 @@ public class SaveBeaMessageAction extends ProgressableAction {
     private ArrayList<String> attachments = null;
     private AppUserBean cu = null;
     private boolean readReceipt = false;
-    private BeaListItem authority=null;
+    private BeaListItem authority = null;
     private Enumeration to = null;
     private String subject = "";
     private String body = "";
     private String fromSafeId = "";
     private ArchiveFileBean archiveFile = null;
     private String documentTag = null;
-    
-    private String azSender=null;
-    private String azRecipient=null;
+
+    private String azSender = null;
+    private String azRecipient = null;
 
     public SaveBeaMessageAction(ProgressIndicator i, JDialog cleanAfter, String fromSafeId, ArrayList<String> attachments, AppUserBean cu, boolean readReceipt, BeaListItem authority, Enumeration to, String subject, String body, String documentTag, String azSender, String azRecipient) {
         super(i, false, cleanAfter);
@@ -724,10 +724,10 @@ public class SaveBeaMessageAction extends ProgressableAction {
         this.body = body;
         this.fromSafeId = fromSafeId;
         this.documentTag = documentTag;
-        this.readReceipt=readReceipt;
-        this.authority=authority;
-        this.azSender=azSender;
-        this.azRecipient=azRecipient;
+        this.readReceipt = readReceipt;
+        this.authority = authority;
+        this.azSender = azSender;
+        this.azRecipient = azRecipient;
     }
 
     public SaveBeaMessageAction(ProgressIndicator i, JDialog cleanAfter, String fromSafeId, ArrayList<String> attachments, AppUserBean cu, boolean readReceipt, BeaListItem authority, Enumeration to, String subject, String body, ArchiveFileBean af, String documentTag, String azSender, String azRecipient) {
@@ -759,11 +759,13 @@ public class SaveBeaMessageAction extends ProgressableAction {
 
             msg.setSubject(subject);
             msg.setBody(body);
-            if(this.azSender!=null && !("".equals(this.azSender)))
-            msg.setReferenceNumber(this.azSender);
-            
-            if(this.azRecipient!=null && !("".equals(this.azRecipient)))
-            msg.setReferenceJustice(this.azRecipient);
+            if (this.azSender != null && !("".equals(this.azSender))) {
+                msg.setReferenceNumber(this.azSender);
+            }
+
+            if (this.azRecipient != null && !("".equals(this.azRecipient))) {
+                msg.setReferenceJustice(this.azRecipient);
+            }
 
             if (this.archiveFile != null) {
                 msg.setReferenceNumber(this.archiveFile.getFileNumber());
@@ -789,15 +791,16 @@ public class SaveBeaMessageAction extends ProgressableAction {
                 att.setContent(FileUtils.readFileToByteArray(f));
                 msg.getAttachments().add(att);
             }
-            
-            if(this.readReceipt)
+
+            if (this.readReceipt) {
                 msg.setEebRequested(true);
-            else
+            } else {
                 msg.setEebRequested(false);
+            }
 
             this.progress("Speichere als Entwurf...");
             sentId = bea.saveMessageToDrafts(msg, senderSafeId, recipients, this.authority);
-            
+
         } catch (BeaWrapperException ex) {
             log.error(ex);
             JOptionPane.showMessageDialog(this.indicator, "Nachricht konnte nicht als Entwurf gespeichert werden: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
@@ -827,6 +830,9 @@ public class SaveBeaMessageAction extends ProgressableAction {
 
                 if (newName.trim().length() == 0) {
                     newName = "beA-Nachricht";
+                }
+                if (newName.length() > 230) {
+                    newName = newName.substring(0, 229);
                 }
 
                 if (!newName.toLowerCase().endsWith(".bea")) {
