@@ -1121,7 +1121,7 @@ public class BeaAccess {
 
     public Collection<Identity> searchIdentity(String firstName, String surName, String userName, String city, String zipCode, String officeName) throws BeaWrapperException {
         this.checkValidBeaClient();
-        return this.wrapper.searchIdentity(firstName, surName, userName, city, zipCode, officeName, null);
+        return this.wrapper.searchIdentity(firstName, surName, userName, city, zipCode, officeName);
     }
 
     public ProcessCard getProcessCards(String postBoxSafeId, long messageId) throws BeaWrapperException {
