@@ -710,10 +710,11 @@ public class ViewBeaDialog extends javax.swing.JDialog {
     }
 
     public void setMessage(Message msg) {
-        if(this.odoc!=null)
+        if (this.odoc != null) {
             this.content.setMessage(msg, this.odoc.getStore().getDocumentIdentifier());
-        else
+        } else {
             this.content.setMessage(msg, null);
+        }
         this.msg = msg;
     }
 
@@ -810,15 +811,21 @@ public class ViewBeaDialog extends javax.swing.JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void cmdReplyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdReplyActionPerformed
-        
+
         if (!BeaAccess.hasInstance()) {
-            BeaLoginDialog loginPanel = new BeaLoginDialog(EditorsRegistry.getInstance().getMainWindow(), true, null);
+            BeaLoginCallback callback = null;
+            try {
+                callback = (BeaLoginCallback) EditorsRegistry.getInstance().getEditor(BeaInboxPanel.class.getName());
+            } catch (Throwable t) {
+                log.error(t);
+            }
+            BeaLoginDialog loginPanel = new BeaLoginDialog(EditorsRegistry.getInstance().getMainWindow(), true, callback);
             loginPanel.setVisible(true);
             if (!BeaAccess.hasInstance()) {
                 return;
             }
         }
-        
+
         SendBeaMessageDialog dlg = new SendBeaMessageDialog(EditorsRegistry.getInstance().getMainWindow(), false);
         dlg.setArchiveFile(this.contextArchiveFile);
 
@@ -826,7 +833,7 @@ public class ViewBeaDialog extends javax.swing.JDialog {
         try {
             String replyToSafeId = msgC.getSenderSafeId();
             dlg.setAzRecipient(msgC.getReferenceNumber());
-            Identity replyToIdentity=BeaAccess.getInstance().getIdentity(replyToSafeId);
+            Identity replyToIdentity = BeaAccess.getInstance().getIdentity(replyToSafeId);
             try {
                 dlg.setTo(replyToIdentity);
             } catch (Throwable t) {
@@ -860,14 +867,20 @@ public class ViewBeaDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_cmdReplyActionPerformed
 
     private void cmdReplyAllActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdReplyAllActionPerformed
-if (!BeaAccess.hasInstance()) {
-            BeaLoginDialog loginPanel = new BeaLoginDialog(EditorsRegistry.getInstance().getMainWindow(), true, null);
+        if (!BeaAccess.hasInstance()) {
+            BeaLoginCallback callback = null;
+            try {
+                callback = (BeaLoginCallback) EditorsRegistry.getInstance().getEditor(BeaInboxPanel.class.getName());
+            } catch (Throwable t) {
+                log.error(t);
+            }
+            BeaLoginDialog loginPanel = new BeaLoginDialog(EditorsRegistry.getInstance().getMainWindow(), true, callback);
             loginPanel.setVisible(true);
             if (!BeaAccess.hasInstance()) {
                 return;
             }
         }
-        
+
         SendBeaMessageDialog dlg = new SendBeaMessageDialog(EditorsRegistry.getInstance().getMainWindow(), false);
         dlg.setArchiveFile(this.contextArchiveFile);
 
@@ -875,7 +888,7 @@ if (!BeaAccess.hasInstance()) {
         try {
             String replyToSafeId = msgC.getSenderSafeId();
             dlg.setAzRecipient(msgC.getReferenceNumber());
-            Identity replyToIdentity=BeaAccess.getInstance().getIdentity(replyToSafeId);
+            Identity replyToIdentity = BeaAccess.getInstance().getIdentity(replyToSafeId);
             try {
                 dlg.setTo(replyToIdentity);
             } catch (Throwable t) {
@@ -883,11 +896,11 @@ if (!BeaAccess.hasInstance()) {
                 JOptionPane.showMessageDialog(this, "Fehler beim Ermitteln der Daten zu Safe-ID " + replyToSafeId + ": " + t.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
                 return;
             }
-            
-            ArrayList<Recipient> recipients=msgC.getRecipients();
-            for(Recipient rec: recipients) {
-                String s=rec.getSafeId();
-                Identity i=BeaAccess.getInstance().getIdentity(s);
+
+            ArrayList<Recipient> recipients = msgC.getRecipients();
+            for (Recipient rec : recipients) {
+                String s = rec.getSafeId();
+                Identity i = BeaAccess.getInstance().getIdentity(s);
                 dlg.addTo(i);
             }
 
@@ -918,21 +931,27 @@ if (!BeaAccess.hasInstance()) {
     private void cmdForwardActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdForwardActionPerformed
 
         if (!BeaAccess.hasInstance()) {
-            BeaLoginDialog loginPanel = new BeaLoginDialog(EditorsRegistry.getInstance().getMainWindow(), true, null);
+            BeaLoginCallback callback=null;
+            try {
+                callback=(BeaLoginCallback)EditorsRegistry.getInstance().getEditor(BeaInboxPanel.class.getName());
+            } catch (Throwable t) {
+                log.error(t);
+            }
+            BeaLoginDialog loginPanel = new BeaLoginDialog(EditorsRegistry.getInstance().getMainWindow(), true, callback);
             loginPanel.setVisible(true);
             if (!BeaAccess.hasInstance()) {
                 return;
             }
         }
-        
+
         SendBeaMessageDialog dlg = new SendBeaMessageDialog(EditorsRegistry.getInstance().getMainWindow(), false);
         dlg.setArchiveFile(this.contextArchiveFile);
 
         Message msgC = this.msg;
         try {
-            
+
             dlg.setAzRecipient(msgC.getReferenceNumber());
-            
+
             String subject = msgC.getSubject();
             if (subject == null) {
                 subject = "";
@@ -942,14 +961,14 @@ if (!BeaAccess.hasInstance()) {
             }
             dlg.setSubject(subject);
             dlg.setBody(EmailUtils.getQuotedBody(this.content.getBody(), "text/plain", msgC.getSenderName(), msgC.getReceptionTime()));
-            
-            for(Attachment att: msgC.getAttachments()) {
-                byte[] data=att.getContent();
-                    if(data!=null) {
-                        String attachmentUrl=FileUtils.createTempFile(att.getFileName(), data);
-                        new File(attachmentUrl).deleteOnExit();
-                        dlg.addAttachment(attachmentUrl, "");
-                    }
+
+            for (Attachment att : msgC.getAttachments()) {
+                byte[] data = att.getContent();
+                if (data != null) {
+                    String attachmentUrl = FileUtils.createTempFile(att.getFileName(), data);
+                    new File(attachmentUrl).deleteOnExit();
+                    dlg.addAttachment(attachmentUrl, "");
+                }
             }
 
         } catch (Throwable ex) {

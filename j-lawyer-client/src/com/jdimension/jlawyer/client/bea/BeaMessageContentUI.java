@@ -726,7 +726,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
      */
     public BeaMessageContentUI() {
         initComponents();
-        
+
         ComponentUtils.decorateSplitPane(jSplitPane1);
 
         this.jScrollPane1.setPreferredSize(new Dimension((int) this.jScrollPane1.getSize().getWidth(), (int) this.jScrollPane1.getSize().getHeight()));
@@ -745,10 +745,10 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
         TableRowSorter<TableModel> sorter = new TableRowSorter<TableModel>(tm);
         sorter.setComparator(4, new DescendingDateTimeStringComparator());
         this.tblJournal.setRowSorter(sorter);
-        
+
         DefaultTableModel tm2 = new DefaultTableModel(new String[]{"Code", "Text"}, 0);
         this.tblProcessCard.setModel(tm2);
-        
+
     }
 
     public void clear() {
@@ -839,7 +839,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
 //            }
 //        }
 
-        if(msg.getReceptionTime()==null) {
+        if (msg.getReceptionTime() == null) {
             log.warn("beA mesage " + msg.getId() + " - " + msg.getSubject() + " does not have a reception time yet!");
             lblSentDate.setText("");
         } else {
@@ -850,7 +850,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
         lblFrom.setText(msg.getSenderName());
         lblCaseNumber.setText(msg.getReferenceNumber());
         lblReferenceJustice.setText(msg.getReferenceJustice());
-        if(msg.isEebRequested()) {
+        if (msg.isEebRequested()) {
             lblEeb.setEnabled(true);
             lblEeb.setToolTipText("Es wurde ein eEB angefordert!");
         } else {
@@ -1047,12 +1047,12 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
 
             }
         }
-        
+
         DefaultTableModel tm2 = new DefaultTableModel(new String[]{"Code", "Text"}, 0);
         processCardTable.setModel(tm2);
         tabs.setIconAt(2, null);
-        if(msg.getProcessCard()!=null) {
-            if(msg.getProcessCard().getEntries().size()>0) {
+        if (msg.getProcessCard() != null) {
+            if (msg.getProcessCard().getEntries().size() > 0) {
                 tabs.setIconAt(2, new javax.swing.ImageIcon(BeaMessageContentUI.class.getResource("/icons/messagebox_warning.png")));
             }
             for (ProcessCardEntry e : msg.getProcessCard().getEntries()) {
@@ -1446,7 +1446,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
         if (evt.getClickCount() == 2 && this.lstAttachments.getSelectedValue() != null) {
             try {
                 byte[] data = ((Attachment) this.lstAttachments.getSelectedValue()).getContent();
-                String fileName=((Attachment) this.lstAttachments.getSelectedValue()).getFileName();
+                String fileName = ((Attachment) this.lstAttachments.getSelectedValue()).getFileName();
                 //String tmpFile = FileUtils.createTempFile(this.lstAttachments.getSelectedValue().toString(), data);
                 ReadOnlyDocumentStore store = new ReadOnlyDocumentStore("beaattachment-" + fileName, fileName);
                 Launcher launcher = LauncherFactory.getLauncher(fileName, data, store);
@@ -1482,10 +1482,11 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
 
                 JFileChooser chooser = new JFileChooser(userHome);
                 chooser.setSelectedFile(new File(selected.toString()));
-                int result=chooser.showSaveDialog(this);
-                if(result==JFileChooser.CANCEL_OPTION)
+                int result = chooser.showSaveDialog(this);
+                if (result == JFileChooser.CANCEL_OPTION) {
                     continue;
-                
+                }
+
                 File f = chooser.getSelectedFile();
                 if (f == null) {
                     return;
@@ -1534,8 +1535,8 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
                         return;
                     }
 
-                    ArchiveFileDocumentsBean newDoc=afs.addDocument(sel.getId(), newName, data, "");
-                    
+                    ArchiveFileDocumentsBean newDoc = afs.addDocument(sel.getId(), newName, data, "");
+
                     EventBroker eb = EventBroker.getInstance();
                     eb.publishEvent(new DocumentAddedEvent(newDoc));
 
@@ -1556,7 +1557,14 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
         try {
 
             if (!BeaAccess.hasInstance()) {
-                BeaLoginDialog loginPanel = new BeaLoginDialog(EditorsRegistry.getInstance().getMainWindow(), true, null);
+                BeaLoginCallback callback = null;
+                try {
+                    callback = (BeaLoginCallback) EditorsRegistry.getInstance().getEditor(BeaInboxPanel.class.getName());
+                } catch (Throwable t) {
+                    log.error(t);
+                }
+
+                BeaLoginDialog loginPanel = new BeaLoginDialog(EditorsRegistry.getInstance().getMainWindow(), true, callback);
                 loginPanel.setVisible(true);
                 if (!BeaAccess.hasInstance()) {
                     ThreadUtils.showErrorDialog(this, "beA-Login fehlgeschlagen", "Fehler");
@@ -1588,7 +1596,14 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
         try {
 
             if (!BeaAccess.hasInstance()) {
-                BeaLoginDialog loginPanel = new BeaLoginDialog(EditorsRegistry.getInstance().getMainWindow(), true, null);
+                BeaLoginCallback callback = null;
+                try {
+                    callback = (BeaLoginCallback) EditorsRegistry.getInstance().getEditor(BeaInboxPanel.class.getName());
+                } catch (Throwable t) {
+                    log.error(t);
+                }
+
+                BeaLoginDialog loginPanel = new BeaLoginDialog(EditorsRegistry.getInstance().getMainWindow(), true, callback);
                 loginPanel.setVisible(true);
                 if (!BeaAccess.hasInstance()) {
                     ThreadUtils.showErrorDialog(this, "beA-Login fehlgeschlagen", "Fehler");
@@ -1601,12 +1616,12 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
                 if (msgContainer.getSenderSafeId().equals(pb.getSafeId())) {
                     ProcessCard pc = BeaAccess.getInstance().getProcessCards(msgContainer.getSenderSafeId(), Long.parseLong(msgContainer.getId()));
                     // only replace if not empty! process cards cannot be downloaded after the message has been moved to the SENT folder
-                    if(pc!=null) {
-                        if(pc.getEntries().size()>0) {
+                    if (pc != null) {
+                        if (pc.getEntries().size() > 0) {
                             msgContainer.setProcessCard(pc);
                         }
                     }
-                    
+
                 }
             }
             if (this.documentId != null) {

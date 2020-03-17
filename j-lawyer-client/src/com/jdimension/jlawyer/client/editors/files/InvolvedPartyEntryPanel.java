@@ -664,6 +664,8 @@
 package com.jdimension.jlawyer.client.editors.files;
 
 import com.jdimension.jlawyer.client.bea.BeaAccess;
+import com.jdimension.jlawyer.client.bea.BeaInboxPanel;
+import com.jdimension.jlawyer.client.bea.BeaLoginCallback;
 import com.jdimension.jlawyer.client.bea.BeaLoginDialog;
 import com.jdimension.jlawyer.client.bea.IdentityPanel;
 import com.jdimension.jlawyer.client.bea.SendBeaMessageDialog;
@@ -1118,7 +1120,13 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
     private void mnuSendBeaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSendBeaActionPerformed
         
         if (!BeaAccess.hasInstance()) {
-            BeaLoginDialog loginPanel = new BeaLoginDialog(EditorsRegistry.getInstance().getMainWindow(), true, null);
+            BeaLoginCallback callback=null;
+            try {
+                callback=(BeaLoginCallback)EditorsRegistry.getInstance().getEditor(BeaInboxPanel.class.getName());
+            } catch (Throwable t) {
+                log.error(t);
+            }
+            BeaLoginDialog loginPanel = new BeaLoginDialog(EditorsRegistry.getInstance().getMainWindow(), true, callback);
             loginPanel.setVisible(true);
             if (!BeaAccess.hasInstance()) {
                 return;
@@ -1156,7 +1164,13 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
     private void mnuShowBeaIdentityActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuShowBeaIdentityActionPerformed
         
         if (!BeaAccess.hasInstance()) {
-            BeaLoginDialog loginPanel = new BeaLoginDialog(EditorsRegistry.getInstance().getMainWindow(), true, null);
+            BeaLoginCallback callback=null;
+            try {
+                callback=(BeaLoginCallback)EditorsRegistry.getInstance().getEditor(BeaInboxPanel.class.getName());
+            } catch (Throwable t) {
+                log.error(t);
+            }
+            BeaLoginDialog loginPanel = new BeaLoginDialog(EditorsRegistry.getInstance().getMainWindow(), true, callback);
             loginPanel.setVisible(true);
             if (!BeaAccess.hasInstance()) {
                 return;

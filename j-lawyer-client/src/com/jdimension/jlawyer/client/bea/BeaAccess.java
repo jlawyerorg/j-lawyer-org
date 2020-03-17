@@ -854,6 +854,10 @@ public class BeaAccess {
         }
         return instance;
     }
+    
+    public static boolean isEgvpPostBox(String safeId) {
+        return BeaWrapper.isEgvpPostBox(safeId);
+    }
 
     public static boolean isBeaEnabled() {
         ServerSettings set = ServerSettings.getInstance();
@@ -1079,9 +1083,9 @@ public class BeaAccess {
         return success;
     }
 
-    public MessageExport exportMessage(String messageId, String safeId) throws BeaWrapperException {
+    public MessageExport exportMessage(String messageId, String safeId, long maxWaitForProcessCard) throws BeaWrapperException {
         this.checkValidBeaClient();
-        return this.wrapper.exportMessage(messageId, safeId);
+        return this.wrapper.exportMessage(messageId, safeId, maxWaitForProcessCard);
     }
 
     public static MessageExport exportMessage(Message msg) throws BeaWrapperException {
