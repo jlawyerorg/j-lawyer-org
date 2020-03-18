@@ -663,6 +663,8 @@
  */
 package com.jdimension.jlawyer.client.mail;
 
+import javax.swing.KeyStroke;
+
 /**
  *
  * @author Kutschke
@@ -674,6 +676,9 @@ public class TextEditorPanel extends javax.swing.JPanel implements EditorImpleme
      */
     public TextEditorPanel() {
         initComponents();
+        
+        this.jScrollPane2.getInputMap().put(KeyStroke.getKeyStroke("UP"), "none");
+        this.jScrollPane2.getInputMap().put(KeyStroke.getKeyStroke("DOWN"), "none");
     }
 
     /**
