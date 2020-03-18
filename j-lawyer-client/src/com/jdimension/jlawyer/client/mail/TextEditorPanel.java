@@ -677,6 +677,7 @@ public class TextEditorPanel extends javax.swing.JPanel implements EditorImpleme
     public TextEditorPanel() {
         initComponents();
         
+        // this is required because the scroll pane was stealing those key strokes from its jtextarea, making it impossible to scroll using the keys
         this.jScrollPane2.getInputMap().put(KeyStroke.getKeyStroke("UP"), "none");
         this.jScrollPane2.getInputMap().put(KeyStroke.getKeyStroke("DOWN"), "none");
     }
