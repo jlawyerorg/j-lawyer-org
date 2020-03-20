@@ -738,9 +738,10 @@ public class EmailUtils {
     public static ArrayList<String> getAttachmentNames(Object partObject) throws Exception {
 
         ArrayList<String> attachmentNames = new ArrayList<String>();
-        
-        if(partObject==null)
+
+        if (partObject == null) {
             return attachmentNames;
+        }
 
         if (partObject instanceof Multipart) {
             Multipart mp = (Multipart) partObject;
@@ -751,26 +752,29 @@ public class EmailUtils {
             }
         } else {
 
-            Part part = (Part) partObject;
-            String disposition = part.getDisposition();
+            if (partObject instanceof Part) {
 
-            if (disposition == null) {
-                MimeBodyPart mimePart = (MimeBodyPart) part;
+                Part part = (Part) partObject;
+                String disposition = part.getDisposition();
 
-                if (mimePart.getContent() instanceof Multipart) {
-                    attachmentNames.addAll(getAttachmentNames(mimePart.getContent()));
+                if (disposition == null) {
+                    MimeBodyPart mimePart = (MimeBodyPart) part;
+
+                    if (mimePart.getContent() instanceof Multipart) {
+                        attachmentNames.addAll(getAttachmentNames(mimePart.getContent()));
+
+                    }
+
+                } else if (disposition.equalsIgnoreCase(Part.ATTACHMENT)) {
+                    //Anhang wird in ein Verzeichnis gespeichert
+                    //saveFile(part.getFileName(), part.getInputStream());
+                    attachmentNames.add(EmailUtils.decodeText(part.getFileName()));
+                } else if (disposition.equalsIgnoreCase(Part.INLINE)) {
+                    //Anhang wird in ein Verzeichnis gespeichert
+                    //saveFile(part.getFileName(), part.getInputStream());
+                    attachmentNames.add(EmailUtils.decodeText(part.getFileName()));
 
                 }
-
-            } else if (disposition.equalsIgnoreCase(Part.ATTACHMENT)) {
-                //Anhang wird in ein Verzeichnis gespeichert
-                //saveFile(part.getFileName(), part.getInputStream());
-                attachmentNames.add(EmailUtils.decodeText(part.getFileName()));
-            } else if (disposition.equalsIgnoreCase(Part.INLINE)) {
-                //Anhang wird in ein Verzeichnis gespeichert
-                //saveFile(part.getFileName(), part.getInputStream());
-                attachmentNames.add(EmailUtils.decodeText(part.getFileName()));
-
             }
         }
         return attachmentNames;
@@ -964,7 +968,7 @@ public class EmailUtils {
     public static void closeIfIMAP(Folder f) {
         try {
             if (isIMAP(f)) {
-                if(f.isOpen()) {
+                if (f.isOpen()) {
                     f.close(true);
                 }
             }
@@ -978,7 +982,7 @@ public class EmailUtils {
             decodedTo = decodedTo.replaceAll("<", "&lt;");
             decodedTo = decodedTo.replaceAll(">", "&gt;");
             decodedTo = decodedTo.replaceAll("\"", "&quot;");
-            if(date!=null) {
+            if (date != null) {
                 SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy HH:mm");
                 return "<br/><br/>*** " + decodedTo + " schrieb am " + df.format(date) + ": ***<br/><br/><div><blockquote style=\"border-left: #ccc 2px solid; margin: 0px 0px 0px 0.8ex; padding-left: 1ex\"><br/><br/>" + body + "<br/><br/></blockquote></div>";
             } else {
@@ -986,13 +990,13 @@ public class EmailUtils {
             }
         } else {
             // plain text
-            if(date!=null) {
+            if (date != null) {
                 SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy HH:mm");
                 return System.getProperty("line.separator") + System.getProperty("line.separator") + "*** " + decodedTo + " schrieb am " + df.format(date) + ": ***" + System.getProperty("line.separator") + System.getProperty("line.separator") + body;
             } else {
                 return System.getProperty("line.separator") + System.getProperty("line.separator") + "*** " + decodedTo + " schrieb: ***" + System.getProperty("line.separator") + System.getProperty("line.separator") + body;
             }
-            
+
         }
     }
 
@@ -1006,13 +1010,13 @@ public class EmailUtils {
         }
         return result;
     }
-    
+
     public static ArrayList<String> getAllMailAddressesFromString(String s) {
-        ArrayList<String> mails=new ArrayList<String>();
+        ArrayList<String> mails = new ArrayList<String>();
         //Pattern pattern = Pattern.compile("[\\w.]+@[\\w.]+");
         Pattern pattern = Pattern.compile("[a-zA-Z0-9-_.]+@[a-zA-Z0-9-_.]+");
         Matcher matcher = pattern.matcher(s);
-        while(matcher.find()){
+        while (matcher.find()) {
             String group = matcher.group();
             mails.add(group);
         }
@@ -1062,10 +1066,10 @@ public class EmailUtils {
         if (cu.isEmailStartTls()) {
             props.put("mail.smtp.starttls.enable", "true");
         }
-        
-        if(cu.getEmailOutPort()!=null && !("".equalsIgnoreCase(cu.getEmailOutPort()))) {
+
+        if (cu.getEmailOutPort() != null && !("".equalsIgnoreCase(cu.getEmailOutPort()))) {
             try {
-                int testInt=Integer.parseInt(cu.getEmailOutPort());
+                int testInt = Integer.parseInt(cu.getEmailOutPort());
                 props.put("mail.smtp.port", cu.getEmailOutPort());
                 props.put("mail.smtps.port", cu.getEmailOutPort());
             } catch (Throwable t) {
