@@ -661,307 +661,105 @@
  * For more information on this, and how to apply and follow the GNU AGPL, see
  * <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.client.utils;
+package com.jdimension.jlawyer.client.launcher;
 
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
-import com.jdimension.jlawyer.client.launcher.LauncherFactory;
-import com.jdimension.jlawyer.server.utils.ServerFileUtils;
-import java.awt.Component;
+import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
+import java.awt.Desktop;
 import java.io.File;
-import java.io.FileOutputStream;
-import java.text.SimpleDateFormat;
-import java.util.Hashtable;
-import javax.swing.Icon;
-import javax.swing.ImageIcon;
-import javax.swing.JDialog;
 import javax.swing.JOptionPane;
-import javax.swing.JRootPane;
-import javax.swing.WindowConstants;
-import javax.swing.filechooser.FileSystemView;
+import javax.swing.SwingUtilities;
 import org.apache.log4j.Logger;
 
 /**
  *
  * @author jens
  */
-public class FileUtils extends ServerFileUtils {
+public class MacMicrosoftOfficeLauncher extends OfficeLauncher {
 
-    private static FileUtils instance = null;
-    private static final Logger log = Logger.getLogger(FileUtils.class.getName());
-    private static final SimpleDateFormat datePrefix = new SimpleDateFormat("yyyy-MM-dd_HH-mm_");
-    private Hashtable<String, Icon> iconCache = null;
+    private static final Logger log = Logger.getLogger(MacMicrosoftOfficeLauncher.class.getName());
+    private static String winwordBinary = "/Applications/Microsoft Word.app/Contents/MacOS/Microsoft Word";
 
-    public static synchronized FileUtils getInstance() {
-        if (instance == null) {
-            instance = new FileUtils();
-        }
-
-        return instance;
+    public MacMicrosoftOfficeLauncher(String url, ObservedDocumentStore store) {
+        super(url, store);
     }
 
-    private FileUtils() {
-        super();
-        iconCache = new Hashtable<String, Icon>();
+    @Override
+    public void launch(boolean autoCloseExistingDocument) throws Exception {
 
-    }
+        
+        // winword.exe does not reliably close, so we allow opening the same document
+//        if (isDocumentOpen(store.getDocumentIdentifier())) {
+//            log.debug("Dokument " + store.getFileName() + "ist bereits geöffnet");
+//            throw new Exception("Dokument " + store.getFileName() + "ist bereits geöffnet");
+//        }
 
-    public Icon getFileTypeIcon(String fileName) {
+        final Launcher thisLauncher = this;
 
-        if (fileName == null) {
-            return null;
-        }
+        new Thread(new Runnable() {
 
-        int lastDot = fileName.lastIndexOf('.');
-        String fileExt = ".odt";
-        if (lastDot > -1) {
-            fileExt = fileName.substring(lastDot);
-        }
+            public void run() {
 
-        if (this.iconCache.containsKey(fileExt)) {
-            return this.iconCache.get(fileExt);
-        }
-
-        try {
-
-            String osName = System.getProperty("os.name").toLowerCase();
-
-            if (osName.indexOf("linux") > -1 || osName.startsWith("mac")) {
-
-                if(fileExt.startsWith("."))
-                    fileExt=fileExt.substring(1,fileExt.length());
-                fileExt=fileExt.toLowerCase();
-                ImageIcon image = null;
                 try {
-                    image=new ImageIcon(getClass().getResource("/icons16/fileicons/file_type_" + fileExt + ".png"));
-                } catch (Throwable t) {
-                    log.warn("no file type icon for " + fileExt);
+
+                    ObservedMicrosoftOfficeDocument odoc = new ObservedMicrosoftOfficeDocument(url, store, thisLauncher);
+                    DocumentObserver observer = DocumentObserver.getInstance();
+                    log.debug("observer status launching " + odoc.getName());
+                    odoc.setStatus(ObservedDocument.STATUS_LAUNCHING);
+                    observer.addDocument(odoc);
+
+                    Process p = null;
+                    try {
+                        if (store.isReadOnly()) {
+                            p = Runtime.getRuntime().exec(new String[]{winwordBinary, url});
+                        } else {
+                            p = Runtime.getRuntime().exec(new String[]{winwordBinary, url});
+                        }
+                        log.debug("using " + winwordBinary + " for " + odoc.getName());
+
+                    } catch (Throwable ex) {
+                        log.error("error starting winword" + ex.getMessage());
+
+                    }
+
+                    log.debug("observer status open " + odoc.getName());
+                    odoc.setStatus(ObservedDocument.STATUS_OPEN);
+
+                    log.debug("waitFor");
+                    int exit = p.waitFor();
+                    log.debug("exit code: " + exit);
+                    if (exit == 0) {
+
+                        //log.debug("observer status closed " + odoc.getName());
+                        //odoc.setClosed(true);
+                        log.debug("process returned exit code 0. keeping file open, relying on lock file");
+
+                    } else {
+                        log.error("observer NOT closing due to exit code " + exit);
+
+                    }
+
+                } catch (final Throwable t) {
+                    SwingUtilities.invokeLater(new Runnable() {
+
+                        public void run() {
+                            String errorMsg="";
+                            if(t.getMessage()!=null)
+                                errorMsg="Fehler beim Öffnen des Dokuments: " + t.getMessage() + "; Pfad zu winword.exe im PATH vorhanden?";
+                            else
+                                errorMsg="Fehler beim Öffnen des Dokuments.";
+                            JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), errorMsg, "Fehler", JOptionPane.ERROR_MESSAGE);
+                        }
+                    });
                 }
-                if (image != null) {
-                    this.iconCache.put(fileExt, image);
-                    return image;
-                } else {
-                    //Create a temporary file with the specified extension
-                    File file = File.createTempFile("icon", fileExt);
-
-                    FileSystemView view = FileSystemView.getFileSystemView();
-                    Icon icon = view.getSystemIcon(file);
-                    this.iconCache.put(fileExt, icon);
-
-                    //Delete the temporary file
-                    file.delete();
-                    return icon;
-                }
-//            } else if (osName.startsWith("mac")) {
-
-// this was not working - maybe macOS needs a "real" file, not just an empty one?
-
-//
-//                //Create a temporary file with the specified extension
-//                File file = File.createTempFile("icon", fileExt);
-//
-//                final javax.swing.JFileChooser fc = new javax.swing.JFileChooser();
-//                Icon icon = fc.getUI().getFileView(fc).getIcon(file);
-//                
-//                if (icon != null) {
-//                    this.iconCache.put(fileExt, icon);
-//                }
-//
-//                //Delete the temporary file
-//                file.delete();
-//                return icon;
-
-            } else {
-                // Windows behaviour is default
-                //Create a temporary file with the specified extension
-                File file = File.createTempFile("icon", fileExt);
-
-                FileSystemView view = FileSystemView.getFileSystemView();
-                Icon icon = view.getSystemIcon(file);
-                this.iconCache.put(fileExt, icon);
-
-                //Delete the temporary file
-                file.delete();
-                return icon;
             }
-
-        } catch (Throwable t) {
-            log.error("Could not determine default file type icon for " + fileName, t);
-            return null;
-        }
+        }).start();
     }
 
-    public static String getNewFileName(String currentFileName, boolean datetimePrefix) {
-        return getNewFileName(currentFileName, datetimePrefix, new java.util.Date());
+    @Override
+    public String getType() {
+        return "Microsoft Office macOS Launcher";
     }
 
-    public static String getNewFileName(String currentFileName, boolean datetimePrefix, java.util.Date d) {
-
-        return getNewFileName(currentFileName, datetimePrefix, d, EditorsRegistry.getInstance().getMainWindow(), "Datei umbenennen");
-
-    }
-
-    public static String getNewFileName(String currentFileName, boolean datetimePrefix, java.util.Date d, Component parent) {
-
-        return getNewFileName(currentFileName, datetimePrefix, d, parent, "Datei umbenennen");
-
-    }
-
-    public static String sanitizeFileName(String fileName) {
-        String name = fileName;
-        name = name.replaceAll(",", " ");
-        name = name.replaceAll("\"", "");
-        name = name.replaceAll("§", " ");
-        name = name.replaceAll("%", " ");
-        name = name.replaceAll("&", "_");
-        name = name.replaceAll("/", "_");
-        name = name.replaceAll("=", "_");
-        name = name.replaceAll("\\?", " ");
-        name = name.replaceAll("\\{", "(");
-        name = name.replaceAll("\\}", ")");
-        name = name.replaceAll("\\[", "(");
-        name = name.replaceAll("\\]", ")");
-        name = name.replaceAll("\\\\", "_");
-        name = name.replaceAll("\\*", "-");
-        name = name.replaceAll("#", "-");
-        name = name.replaceAll("'", "");
-        name = name.replaceAll(":", " ");
-        name = name.replaceAll(";", " ");
-        name = name.replaceAll(">", "");
-        name = name.replaceAll("<", "");
-        name = name.replaceAll("\\|", "_");
-        return name.trim();
-    }
-
-    public static String preserveExtension(String currentFileName, String newFileName) {
-
-        String currentExt = "";
-        for (String ext : LauncherFactory.OFFICEFILETYPES) {
-            ext = ext.toLowerCase();
-            if (currentFileName.toLowerCase().endsWith(ext)) {
-                currentExt = ext;
-            }
-        }
-        if (currentFileName.toLowerCase().endsWith(".pdf")) {
-            currentExt = ".pdf";
-        } else if (currentFileName.toLowerCase().endsWith(".eml")) {
-            currentExt = ".eml";
-        }
-
-        if (!newFileName.endsWith(currentExt)) {
-            newFileName = newFileName + currentExt;
-        }
-
-        return newFileName;
-
-    }
-
-    public static String createTempFile(String fileName, byte[] content) throws Exception {
-        return createTempFile(fileName, content, false);
-    }
-    
-    public static String createTempDirectory() throws Exception {
-        String tmpDir = System.getProperty("java.io.tmpdir");
-        if (!tmpDir.endsWith(System.getProperty("file.separator"))) {
-            tmpDir = tmpDir + System.getProperty("file.separator");
-        }
-        StringGenerator idGen = new StringGenerator();
-        tmpDir = tmpDir + idGen.getID().toString() + System.getProperty("file.separator");
-        new File(tmpDir).mkdirs();
-        return tmpDir;
-    }
-
-    public static String createTempFile(String fileName, byte[] content, boolean readOnly) throws Exception {
-        
-        String osName = System.getProperty("os.name").toLowerCase();
-        String tmpDir = System.getProperty("java.io.tmpdir");
-        if (osName.startsWith("mac")) {
-            // otherwise mac os 10.15+ will give a warning and user needs to grant access manually
-            tmpDir="/Users/" + System.getProperty("user.name") + "/Library/Group Containers/UBF8T346G9.Office";
-            if(!(new File(tmpDir).exists()) || !(new File(tmpDir).isDirectory())) {
-                throw new Exception("Ungültiges temporäres Verzeichnis: " + tmpDir);
-            }
-            //tmpDir=System.getProperty("user.home");
-        }
-        
-        
-        if (!tmpDir.endsWith(System.getProperty("file.separator"))) {
-            tmpDir = tmpDir + System.getProperty("file.separator");
-        }
-        
-//        if (osName.startsWith("mac")) {
-//            tmpDir=tmpDir + ".j-lawyer-client" + System.getProperty("file.separator") + "macos-tmp" + System.getProperty("file.separator");
-//        }
-        
-        StringGenerator idGen = new StringGenerator();
-        tmpDir = tmpDir + idGen.getID().toString() + System.getProperty("file.separator");
-        new File(tmpDir).mkdirs();
-        String tmpFile = tmpDir + fileName;
-        FileOutputStream fos = new FileOutputStream(new File(tmpFile), false);
-        fos.write(content);
-        fos.close();
-
-        if (readOnly) {
-            try {
-                new File(tmpFile).setReadOnly();
-            } catch (Throwable t) {
-                log.error("Could not set document readonly: " + tmpFile + " (" + t.getMessage() + ")");
-            }
-        }
-
-        cleanupTempFile(tmpFile);
-        
-        return tmpFile;
-    }
-
-    public static void cleanupTempFile(String url) {
-        File f = new File(url);
-//        boolean deleted = f.delete();
-//        if (!deleted) {
-//            log.error("could not delete temporary file " + url);
-//            return;
-//        }
-
-        f.deleteOnExit();
-
-        String dir = url.substring(0, url.lastIndexOf(System.getProperty("file.separator")));
-        File remDir = new File(dir);
-        remDir.deleteOnExit();
-
-    }
-
-    public static String getNewFileName(String currentFileName, boolean datetimePrefix, java.util.Date d, Component parent, String title) {
-
-        String dtPrefix = "";
-        if (datetimePrefix) {
-            dtPrefix = datePrefix.format(d);
-        }
-
-        if (parent == null) {
-            parent = EditorsRegistry.getInstance().getMainWindow();
-        }
-
-        NewFilenameOptionPanel p = new NewFilenameOptionPanel();
-        p.setFilename(dtPrefix + currentFileName);
-        JOptionPane pane = new JOptionPane(p, JOptionPane.QUESTION_MESSAGE);
-        JDialog dialog = pane.createDialog(parent, title);
-        dialog.doLayout();
-        dialog.setSize(dialog.getWidth(), dialog.getHeight()+50);
-        //dialog.getRootPane().setWindowDecorationStyle(JRootPane.PLAIN_DIALOG);
-        // prevent user from using the 'X' button to close the dialog
-        dialog.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
-        dialog.setVisible(true);
-        if (p.getFilename() != null) {
-
-            String newName = p.getFilename();
-            if ("".equalsIgnoreCase(newName)) {
-                return null;
-            }
-
-            newName = FileUtils.preserveExtension(currentFileName, newName);
-
-            return FileUtils.sanitizeFileName(newName);
-        }
-
-        return null;
-    }
 }

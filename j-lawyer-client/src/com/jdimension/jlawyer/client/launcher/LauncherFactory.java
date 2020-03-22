@@ -700,6 +700,10 @@ public class LauncherFactory {
             log.debug(new java.util.Date().toString() + " launching Microsoft Office on Windows");
             WindowsMicrosoftOfficeLauncher wl = new WindowsMicrosoftOfficeLauncher(url, store);
             return wl;
+        } else if (osName.startsWith("mac")) {
+            log.debug(new java.util.Date().toString() + " launching Microsoft Office on macOS");
+            MacMicrosoftOfficeLauncher ml = new MacMicrosoftOfficeLauncher(url, store);
+            return ml;
         } else {
             throw new Exception("Microsoft Office Launcher ist nur auf Microsoft Windows verfügbar!");
         }
@@ -779,7 +783,7 @@ public class LauncherFactory {
 
     public static boolean isMicrosoftOfficeSupported() {
         String osName = System.getProperty("os.name").toLowerCase();
-        if (osName.indexOf("win") > -1) {
+        if (osName.indexOf("win") > -1 || osName.startsWith("mac")) {
             return true;
         }
         return false;
