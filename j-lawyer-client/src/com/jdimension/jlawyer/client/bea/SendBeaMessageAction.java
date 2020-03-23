@@ -691,6 +691,7 @@ import org.jlawyer.bea.model.Identity;
 import org.jlawyer.bea.model.BeaListItem;
 import org.jlawyer.bea.model.Message;
 import org.jlawyer.bea.model.MessageExport;
+import org.jlawyer.bea.model.ProcessCard;
 
 /**
  *
@@ -703,16 +704,16 @@ public class SendBeaMessageAction extends ProgressableAction {
     ArrayList<BeaAttachmentMetadata> attachments = null;
     private AppUserBean cu = null;
     private boolean readReceipt = false;
-    private BeaListItem authority=null;
+    private BeaListItem authority = null;
     private Enumeration to = null;
     private String subject = "";
     private String body = "";
     private String fromSafeId = "";
     private ArchiveFileBean archiveFile = null;
     private String documentTag = null;
-    
-    private String azSender=null;
-    private String azRecipient=null;
+
+    private String azSender = null;
+    private String azRecipient = null;
 
     public SendBeaMessageAction(ProgressIndicator i, JDialog cleanAfter, String fromSafeId, ArrayList<BeaAttachmentMetadata> attachmentMetadata, AppUserBean cu, boolean readReceipt, BeaListItem authority, Enumeration to, String subject, String body, String documentTag, String azSender, String azRecipient) {
         super(i, false, cleanAfter);
@@ -724,10 +725,10 @@ public class SendBeaMessageAction extends ProgressableAction {
         this.body = body;
         this.fromSafeId = fromSafeId;
         this.documentTag = documentTag;
-        this.readReceipt=readReceipt;
-        this.authority=authority;
-        this.azSender=azSender;
-        this.azRecipient=azRecipient;
+        this.readReceipt = readReceipt;
+        this.authority = authority;
+        this.azSender = azSender;
+        this.azRecipient = azRecipient;
     }
 
     public SendBeaMessageAction(ProgressIndicator i, JDialog cleanAfter, String fromSafeId, ArrayList<BeaAttachmentMetadata> attachmentMetadata, AppUserBean cu, boolean readReceipt, BeaListItem authority, Enumeration to, String subject, String body, ArchiveFileBean af, String documentTag, String azSender, String azRecipient) {
@@ -737,7 +738,7 @@ public class SendBeaMessageAction extends ProgressableAction {
 
     @Override
     public int getMax() {
-        return 6;
+        return 8;
     }
 
     @Override
@@ -750,8 +751,10 @@ public class SendBeaMessageAction extends ProgressableAction {
 
         this.progress("Verbinde...");
         BeaAccess bea = BeaAccess.getInstance();
-        long sentId = -1;
+        //long sentId = -1;
+        Message sentMessage = null;
         Message msg = new Message();
+        ArrayList<String> recipients = new ArrayList<String>();
         StringBuffer recipientsText = new StringBuffer();
 
         try {
@@ -759,17 +762,18 @@ public class SendBeaMessageAction extends ProgressableAction {
 
             msg.setSubject(subject);
             msg.setBody(body);
-            if(this.azSender!=null && !("".equals(this.azSender)))
-            msg.setReferenceNumber(this.azSender);
-            
-            if(this.azRecipient!=null && !("".equals(this.azRecipient)))
-            msg.setReferenceJustice(this.azRecipient);
+            if (this.azSender != null && !("".equals(this.azSender))) {
+                msg.setReferenceNumber(this.azSender);
+            }
+
+            if (this.azRecipient != null && !("".equals(this.azRecipient))) {
+                msg.setReferenceJustice(this.azRecipient);
+            }
 
             if (this.archiveFile != null) {
                 msg.setReferenceNumber(this.archiveFile.getFileNumber());
             }
 
-            ArrayList<String> recipients = new ArrayList<String>();
             while (this.to.hasMoreElements()) {
                 Object o = this.to.nextElement();
                 if (o instanceof Identity) {
@@ -791,15 +795,16 @@ public class SendBeaMessageAction extends ProgressableAction {
                 att.setType(meta.getType());
                 msg.getAttachments().add(att);
             }
-            
-            if(this.readReceipt)
+
+            if (this.readReceipt) {
                 msg.setEebRequested(true);
-            else
+            } else {
                 msg.setEebRequested(false);
+            }
 
             this.progress("Sende...");
-            sentId = bea.sendMessage(msg, senderSafeId, recipients, this.authority);
-            System.out.println("sent message " + sentId);
+            sentMessage = bea.sendAndRetrieveMessage(msg, senderSafeId, recipients, this.authority);
+            System.out.println("sent message " + sentMessage.getId());
 
         } catch (BeaWrapperException ex) {
             log.error(ex);
@@ -816,45 +821,82 @@ public class SendBeaMessageAction extends ProgressableAction {
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                 ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
 
-                this.progress("Speichern in Akte " + this.archiveFile.getFileNumber());
+                this.progress("Laden der Nachricht...");
 
-                Message msgEx = bea.getMessage("" + sentId, fromSafeId);
-                MessageExport mex = bea.exportMessage(msgEx);
+                //Message msgEx = bea.getMessage("" + sentId, fromSafeId);
+                Message msgEx = sentMessage;
 
-                java.util.Date receivedPrefix = msg.getReceptionTime();
-                if (receivedPrefix == null) {
-                    receivedPrefix = new java.util.Date();
+                this.progress("Warten auf EGVP-Laufzettel...");
+                boolean containsEgvpRecipient = false;
+                for (String s : recipients) {
+                    boolean egvp = BeaAccess.isEgvpPostBox(s);
+                    if (egvp) {
+                        containsEgvpRecipient = true;
+                        break;
+                    }
                 }
-                String newName = com.jdimension.jlawyer.client.utils.FileUtils.getNewFileName(mex.getFileName(), true, receivedPrefix, this.indicator);
-                if (newName == null) {
-                    return false;
+                if (containsEgvpRecipient && sentMessage.getProcessCard()==null) {
+                    long maxWaitTime = 120000l;
+                    long start = System.currentTimeMillis();
+                    long waited = 0;
+                    ProcessCard p = null;
+                    while (p == null && waited < maxWaitTime) {
+                        if (this.isCancelled()) {
+                            break;
+                        }
+                        p = bea.getProcessCards(fromSafeId, Long.parseLong(sentMessage.getId()));
+                        if (p != null) {
+                            msgEx.setProcessCard(p);
+                            break;
+                        } else {
+                            waited = System.currentTimeMillis() - start;
+                            try {
+                                Thread.sleep(1000l);
+                            } catch (Throwable t) {
+
+                            }
+                        }
+                    }
                 }
 
-                if (newName.trim().length() == 0) {
-                    newName = "beA-Nachricht";
+                if (!this.isCancelled()) {
+                    this.progress("Speichern in Akte " + this.archiveFile.getFileNumber());
+                    MessageExport mex = bea.exportMessage(msgEx);
+
+                    java.util.Date receivedPrefix = msg.getReceptionTime();
+                    if (receivedPrefix == null) {
+                        receivedPrefix = new java.util.Date();
+                    }
+                    String newName = com.jdimension.jlawyer.client.utils.FileUtils.getNewFileName(mex.getFileName(), true, receivedPrefix, this.indicator);
+                    if (newName == null) {
+                        return false;
+                    }
+
+                    if (newName.trim().length() == 0) {
+                        newName = "beA-Nachricht";
+                    }
+                    if (newName.length() > 230) {
+                        newName = newName.substring(0, 229);
+                    }
+
+                    if (!newName.toLowerCase().endsWith(".bea")) {
+                        newName = newName + ".bea";
+                    }
+
+                    ArchiveFileDocumentsBean newDoc = afs.addDocument(this.archiveFile.getId(), newName, mex.getContent(), "");
+
+                    if (this.documentTag != null && !("".equals(this.documentTag))) {
+                        afs.setDocumentTag(newDoc.getId(), new DocumentTagsBean(newDoc.getId(), this.documentTag), true);
+                    }
+
+                    ArchiveFileHistoryBean historyDto = new ArchiveFileHistoryBean();
+                    historyDto.setChangeDate(new Date());
+                    historyDto.setChangeDescription("beA-Nachricht gesendet an " + recipientsText.toString() + ": " + msg.getSubject());
+                    afs.addHistory(this.archiveFile.getId(), historyDto);
+
+                    EventBroker eb = EventBroker.getInstance();
+                    eb.publishEvent(new DocumentAddedEvent(newDoc));
                 }
-                if (newName.length() > 230) {
-                    newName = newName.substring(0, 229);
-                }
-
-                if (!newName.toLowerCase().endsWith(".bea")) {
-                    newName = newName + ".bea";
-                }
-
-                ArchiveFileDocumentsBean newDoc = afs.addDocument(this.archiveFile.getId(), newName, mex.getContent(), "");
-
-                if (this.documentTag != null && !("".equals(this.documentTag))) {
-                    afs.setDocumentTag(newDoc.getId(), new DocumentTagsBean(newDoc.getId(), this.documentTag), true);
-                }
-
-                ArchiveFileHistoryBean historyDto = new ArchiveFileHistoryBean();
-                historyDto.setChangeDate(new Date());
-                historyDto.setChangeDescription("beA-Nachricht gesendet an " + recipientsText.toString() + ": " + msg.getSubject());
-                afs.addHistory(this.archiveFile.getId(), historyDto);
-
-                EventBroker eb = EventBroker.getInstance();
-                eb.publishEvent(new DocumentAddedEvent(newDoc));
-
             } else {
                 this.progress("Überspringe Speichern in Akte...");
             }

@@ -1098,6 +1098,17 @@ public class BeaAccess {
         this.folderOverviewCache.clear();
         return this.wrapper.sendMessage(msg, senderSafeId, recipientSafeIds, authority);
     }
+    
+    public Message sendAndRetrieveMessage(Message msg, String senderSafeId, ArrayList<String> recipientSafeIds, BeaListItem authority) throws BeaWrapperException {
+        this.checkValidBeaClient();
+        // todo: need to only remove folder overview for sent folder
+        this.folderOverviewCache.clear();
+        Message sentMessage=this.wrapper.sendAndRetrieveMessage(msg, senderSafeId, recipientSafeIds, authority);
+        if (!this.messageCache.containsKey(sentMessage.getId())) {
+            this.messageCache.put(sentMessage.getId(), sentMessage);
+        }
+        return sentMessage;
+    }
 
     public long saveMessageToDrafts(Message msg, String senderSafeId, ArrayList<String> recipientSafeIds, BeaListItem authority) throws BeaWrapperException {
         this.checkValidBeaClient();

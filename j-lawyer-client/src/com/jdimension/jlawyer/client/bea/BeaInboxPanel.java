@@ -1556,19 +1556,21 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                 return;
             }
 
-            // check whether it is a message sent from any local postbox
-            String senderSafeId = msg.getSenderSafeId();
-            ProcessCard pc = null;
-            try {
-                Collection<PostBox> inboxes = BeaAccess.getInstance().getPostBoxes();
-                for (PostBox pb : inboxes) {
-                    if (senderSafeId.equals(pb.getSafeId())) {
-                        pc = BeaAccess.getInstance().getProcessCards(senderSafeId, Long.parseLong(msgC.getId()));
-                        msg.setProcessCard(pc);
+            if (msg.getProcessCard() == null) {
+                // check whether it is a message sent from any local postbox
+                String senderSafeId = msg.getSenderSafeId();
+                ProcessCard pc = null;
+                try {
+                    Collection<PostBox> inboxes = BeaAccess.getInstance().getPostBoxes();
+                    for (PostBox pb : inboxes) {
+                        if (senderSafeId.equals(pb.getSafeId())) {
+                            pc = BeaAccess.getInstance().getProcessCards(senderSafeId, Long.parseLong(msgC.getId()));
+                            msg.setProcessCard(pc);
+                        }
                     }
+                } catch (Throwable t) {
+                    log.error("Error getting process card", t);
                 }
-            } catch (Throwable t) {
-                log.error("Error getting process card", t);
             }
 
             ViewBeaDialog view = new ViewBeaDialog(EditorsRegistry.getInstance().getMainWindow(), false, null);
@@ -2073,19 +2075,21 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
             return;
         }
 
-        // check whether it is a message sent from any local postbox
-        String senderSafeId = msg.getSenderSafeId();
-        ProcessCard pc = null;
-        try {
-            Collection<PostBox> inboxes = BeaAccess.getInstance().getPostBoxes();
-            for (PostBox pb : inboxes) {
-                if (senderSafeId.equals(pb.getSafeId())) {
-                    pc = BeaAccess.getInstance().getProcessCards(senderSafeId, Long.parseLong(msg.getId()));
-                    msg.setProcessCard(pc);
+        if (msg.getProcessCard() == null) {
+            // check whether it is a message sent from any local postbox
+            String senderSafeId = msg.getSenderSafeId();
+            ProcessCard pc = null;
+            try {
+                Collection<PostBox> inboxes = BeaAccess.getInstance().getPostBoxes();
+                for (PostBox pb : inboxes) {
+                    if (senderSafeId.equals(pb.getSafeId())) {
+                        pc = BeaAccess.getInstance().getProcessCards(senderSafeId, Long.parseLong(msg.getId()));
+                        msg.setProcessCard(pc);
+                    }
                 }
+            } catch (Throwable t) {
+                log.error("Error getting process card", t);
             }
-        } catch (Throwable t) {
-            log.error("Error getting process card", t);
         }
 
         // aktiv bis 03.03.2015
