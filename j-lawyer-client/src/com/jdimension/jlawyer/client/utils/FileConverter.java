@@ -880,7 +880,7 @@ public class FileConverter {
                 throw new Exception("Konvertierung nach " + targetFileExtension + " ist nicht verfügbar!");
             }
             
-            Process p = Runtime.getRuntime().exec(new String[]{"/Applications/LibreOffice.app/Contents/MacOS/python", "unoconv-master/unoconv", "-f", targetFileExtension, url});
+            Process p = Runtime.getRuntime().exec(new String[]{"/Applications/LibreOffice.app/Contents/Resources/python", "unoconv-master/unoconv", "-f", targetFileExtension, url});
             int exit = p.waitFor();
             if (exit != 0) {
                 throw new Exception ("Konvertierung nach " + targetFileExtension + " fehlgeschlagen: " + exit);
@@ -899,7 +899,7 @@ public class FileConverter {
             if(!this.validateInputFormat(url))
                 throw new Exception ("Format nicht unterstützt: " + new File(url).getName());
             
-            Process p = Runtime.getRuntime().exec(new String[]{"/Applications/LibreOffice.app/Contents/MacOS/python", "unoconv-master/unoconv", "-eSelectPdfVersion=1", "-f", "pdf", url});
+            Process p = Runtime.getRuntime().exec(new String[]{"/Applications/LibreOffice.app/Contents/Resources/python", "unoconv-master/unoconv", "-eSelectPdfVersion=1", "-f", "pdf", url});
             int exit = p.waitFor();
             if (exit != 0) {
                 throw new Exception ("Konvertierung nach PDF fehlgeschlagen: " + exit);
