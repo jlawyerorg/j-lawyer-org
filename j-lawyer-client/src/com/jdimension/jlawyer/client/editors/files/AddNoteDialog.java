@@ -1010,7 +1010,7 @@ public class AddNoteDialog extends javax.swing.JDialog {
             return false;
         }
         s = s.toLowerCase();
-        for (String ext : LauncherFactory.OFFICEFILETYPES) {
+        for (String ext : LauncherFactory.LO_OFFICEFILETYPES) {
             if (s.endsWith(ext.toLowerCase())) {
                 return true;
             }

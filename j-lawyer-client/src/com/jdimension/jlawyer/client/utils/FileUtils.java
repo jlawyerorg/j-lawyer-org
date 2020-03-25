@@ -835,7 +835,7 @@ public class FileUtils extends ServerFileUtils {
     public static String preserveExtension(String currentFileName, String newFileName) {
 
         String currentExt = "";
-        for (String ext : LauncherFactory.OFFICEFILETYPES) {
+        for (String ext : LauncherFactory.LO_OFFICEFILETYPES) {
             ext = ext.toLowerCase();
             if (currentFileName.toLowerCase().endsWith(ext)) {
                 currentExt = ext;

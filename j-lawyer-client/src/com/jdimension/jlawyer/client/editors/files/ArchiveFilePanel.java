@@ -1585,8 +1585,10 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         mnuRemoveReview = new javax.swing.JMenuItem();
         documentsPopup = new javax.swing.JPopupMenu();
         mnuOpenDocument = new javax.swing.JMenuItem();
-        mnuSaveDocumentsLocally = new javax.swing.JMenuItem();
+        mnuOpenDocumentWith = new javax.swing.JMenu();
         mnuOpenDocumentMicrosoftOffice = new javax.swing.JMenuItem();
+        mnuOpenDocumentLibreOffice = new javax.swing.JMenuItem();
+        mnuSaveDocumentsLocally = new javax.swing.JMenuItem();
         mnuDuplicateDocument = new javax.swing.JMenuItem();
         mnuDuplicateDocumentAsPdf = new javax.swing.JMenuItem();
         mnuDuplicateDocumentAs = new javax.swing.JMenuItem();
@@ -1810,6 +1812,29 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         });
         documentsPopup.add(mnuOpenDocument);
 
+        mnuOpenDocumentWith.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editcopy.png"))); // NOI18N
+        mnuOpenDocumentWith.setText("öffnen mit...");
+
+        mnuOpenDocumentMicrosoftOffice.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/exec_wine.png"))); // NOI18N
+        mnuOpenDocumentMicrosoftOffice.setText("Microsoft Office");
+        mnuOpenDocumentMicrosoftOffice.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuOpenDocumentMicrosoftOfficeActionPerformed(evt);
+            }
+        });
+        mnuOpenDocumentWith.add(mnuOpenDocumentMicrosoftOffice);
+
+        mnuOpenDocumentLibreOffice.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editcopy.png"))); // NOI18N
+        mnuOpenDocumentLibreOffice.setText("LibreOffice");
+        mnuOpenDocumentLibreOffice.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuOpenDocumentLibreOfficeActionPerformed(evt);
+            }
+        });
+        mnuOpenDocumentWith.add(mnuOpenDocumentLibreOffice);
+
+        documentsPopup.add(mnuOpenDocumentWith);
+
         mnuSaveDocumentsLocally.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/filesave.png"))); // NOI18N
         mnuSaveDocumentsLocally.setText("lokal speichern");
         mnuSaveDocumentsLocally.addActionListener(new java.awt.event.ActionListener() {
@@ -1818,15 +1843,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
         });
         documentsPopup.add(mnuSaveDocumentsLocally);
-
-        mnuOpenDocumentMicrosoftOffice.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/exec_wine.png"))); // NOI18N
-        mnuOpenDocumentMicrosoftOffice.setText("öffnen (Microsoft Office)");
-        mnuOpenDocumentMicrosoftOffice.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                mnuOpenDocumentMicrosoftOfficeActionPerformed(evt);
-            }
-        });
-        documentsPopup.add(mnuOpenDocumentMicrosoftOffice);
 
         mnuDuplicateDocument.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editcopy.png"))); // NOI18N
         mnuDuplicateDocument.setText("duplizieren");
@@ -4773,7 +4789,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             for (int i = selectedRows.length - 1; i > -1; i--) {
                 ArchiveFileDocumentsBean doc = (ArchiveFileDocumentsBean) this.tblDocuments.getValueAt(selectedRows[i], 0);
                 String currentExt = "";
-                for (String ext : LauncherFactory.OFFICEFILETYPES) {
+                for (String ext : LauncherFactory.LO_OFFICEFILETYPES) {
                     ext = ext.toLowerCase();
                     if (doc.getName().toLowerCase().endsWith(ext)) {
                         currentExt = ext;
@@ -5277,7 +5293,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             for (int i = selectedRows.length - 1; i > -1; i--) {
                 ArchiveFileDocumentsBean doc = (ArchiveFileDocumentsBean) this.tblDocuments.getValueAt(selectedRows[i], 0);
                 String currentExt = "";
-                for (String ext : LauncherFactory.OFFICEFILETYPES) {
+                for (String ext : LauncherFactory.LO_OFFICEFILETYPES) {
                     ext = ext.toLowerCase();
                     if (doc.getName().toLowerCase().endsWith(ext)) {
                         currentExt = ext;
@@ -5452,6 +5468,42 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
         }
     }//GEN-LAST:event_tblGroupsMouseClicked
+
+    private void mnuOpenDocumentLibreOfficeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuOpenDocumentLibreOfficeActionPerformed
+        // this.openSelectedDocument(tblDocuments.getSelectedRows());
+        
+        try {
+            int row = this.tblDocuments.getSelectedRow();
+            if (row < 0) {
+                return;
+            }
+
+            ArchiveFileDocumentsBean value = (ArchiveFileDocumentsBean) this.tblDocuments.getValueAt(row, 0);
+
+            if (value != null) {
+                boolean readOnly = !this.cmdSave.isEnabled();
+                ClientSettings settings = ClientSettings.getInstance();
+                String tmpUrl = null;
+                byte[] content = null;
+                try {
+                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                    content = locator.lookupArchiveFileServiceRemote().getDocumentContent(value.getId());
+                    //tmpUrl = appLauncher.createTempFile(value.getName(), content);
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(this, "Fehler beim Laden des Dokuments: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+                CaseDocumentStore store = new CaseDocumentStore(value.getId(), value.getName(), readOnly, value, dto);
+                Launcher launcher = LauncherFactory.getLibreOfficeLauncher(value.getName(), content, store);
+                launcher.launch(false);
+
+            }
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Fehler beim Öffnen des Dokuments: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+        }
+        
+    }//GEN-LAST:event_mnuOpenDocumentLibreOfficeActionPerformed
 
     private AddressBean[] convertArray(Object[] in) {
         if (in != null) {
@@ -5859,7 +5911,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JMenuItem mnuFreeTextMessage;
     private javax.swing.JMenuItem mnuMotorCoverage;
     private javax.swing.JMenuItem mnuOpenDocument;
+    private javax.swing.JMenuItem mnuOpenDocumentLibreOffice;
     private javax.swing.JMenuItem mnuOpenDocumentMicrosoftOffice;
+    private javax.swing.JMenu mnuOpenDocumentWith;
     private javax.swing.JMenuItem mnuOpenInExternalMailer;
     private javax.swing.JMenuItem mnuPostponeReview;
     private javax.swing.JMenuItem mnuRemoveDocument;

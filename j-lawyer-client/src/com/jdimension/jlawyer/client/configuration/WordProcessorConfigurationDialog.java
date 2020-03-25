@@ -661,305 +661,201 @@
  * For more information on this, and how to apply and follow the GNU AGPL, see
  * <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.client.launcher;
+package com.jdimension.jlawyer.client.configuration;
 
-import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+//import bsh.This;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
-import com.jdimension.jlawyer.client.utils.FileUtils;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import com.jdimension.jlawyer.client.settings.ServerSettings;
+import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
+import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import com.jdimension.jlawyer.services.SystemManagementRemote;
+import java.net.URL;
+//import com.jdimension.jkanzlei.server.persistence.AppOptionGroupDTO;
+//import com.jdimension.jkanzlei.server.services.JKanzleiServiceLocator;
+//import com.jdimension.jkanzlei.server.services.SystemManagementRemote;
+//import com.jdimension.jkanzlei.server.services.SystemManagementRemoteHome;
 import javax.swing.JOptionPane;
-import javax.swing.SwingUtilities;
 import org.apache.log4j.Logger;
 
 /**
  *
- * @author jens
+ * @author  jens
  */
-public class LauncherFactory {
-
-    public static final List<String> LO_OFFICEFILETYPES = Arrays.asList(".fodt", ".fods", ".fodp", ".odt", ".ott", ".oth", ".ods", ".odp", ".ots", ".sxc", ".stc", ".odm", ".sxw", ".stw", ".sxg", ".doc", ".docx", ".dot", ".docm", ".dotx", ".dotm", ".wpd", ".wps", ".rtf", ".txt", ".csv", ".xls", ".xlw", ".xlt", ".xlsx", ".xlsm", ".xltx", ".xltm", ".ppt", ".pps", ".pot", ".pptx", ".pptm", ".potx", ".potm", ".bmp", ".dxf", ".emf", ".eps", ".gif", ".jpeg", ".jpg", ".pcx", ".png", ".psd", ".tif", ".tiff", ".wmf", ".html");
-    public static final List<String> MS_OFFICEFILETYPES = Arrays.asList(".doc", ".docx", ".dotx", ".dot", ".rtf", ".txt", ".htm", ".xml", ".docm", ".dotm", ".mht", ".odt");
-    public static final List<String> OFFICE_ADDITIONALPRINTTYPES = Arrays.asList(".pdf");
-
-    private static final Logger log = Logger.getLogger(LauncherFactory.class.getName());
-
-//    public static Launcher getLauncher(String fileName, byte[] content, boolean readOnly) throws Exception {
-//        return getLauncher(fileName, content, readOnly, null, null);
-//    }
-    public static Launcher getMicrosoftOfficeLauncher(String fileName, byte[] content, ObservedDocumentStore store) throws Exception {
-        String url = createTempFile(fileName, content, store.isReadOnly());
-
-        // first checsk for internal launchers
-        String lowerFileName = fileName.toLowerCase();
-
-        String osName = System.getProperty("os.name").toLowerCase();
-        // then use LibreOffice launcher
-
-        if (osName.indexOf("win") > -1) {
-            log.debug(new java.util.Date().toString() + " launching Microsoft Office on Windows");
-            WindowsMicrosoftOfficeLauncher wl = new WindowsMicrosoftOfficeLauncher(url, store);
-            return wl;
-        } else if (osName.startsWith("mac")) {
-            log.debug(new java.util.Date().toString() + " launching Microsoft Office on macOS");
-            MacMicrosoftOfficeLauncher ml = new MacMicrosoftOfficeLauncher(url, store);
-            return ml;
+public class WordProcessorConfigurationDialog extends javax.swing.JDialog {
+    
+    private static Logger log=Logger.getLogger(WordProcessorConfigurationDialog.class.getName());
+    
+    private String categoryKey=null;
+    
+    /** Creates new form OptionGroupConfigurationDialog */
+    public WordProcessorConfigurationDialog(java.awt.Frame parent, boolean modal) {
+        super(parent, modal);
+        initComponents();
+        
+        URL libre=getClass().getResource("/icons16/fileicons/file_type_odt.png");
+        URL word=getClass().getResource("/icons16/fileicons/file_type_docx.png");
+        this.rdLibreOffice.setText("<html><body><img src='" + libre.toString() +"'/> Libre Office</body></html>");
+        this.rdMicrosoftOffice.setText("<html><body><img src='" + word.toString() +"'/> Microsoft Word</body></html>");
+        
+        ClientSettings set=ClientSettings.getInstance();
+        String wordprocessor=set.getConfiguration(ClientSettings.CONF_APPS_WORDPROCESSOR_KEY, "libreoffice");
+        if(ClientSettings.CONF_APPS_WORDPROCESSOR_VALUE_LO.equals(wordprocessor)) {
+            this.rdLibreOffice.setSelected(true);
+            this.rdMicrosoftOffice.setSelected(false);
         } else {
-            throw new Exception("Microsoft Office Launcher ist nur auf Microsoft Windows verfügbar!");
+            this.rdLibreOffice.setSelected(false);
+            this.rdMicrosoftOffice.setSelected(true);
         }
-
+        
     }
+    
+    /** This method is called from within the constructor to
+     * initialize the form.
+     * WARNING: Do NOT modify this code. The content of this method is
+     * always regenerated by the Form Editor.
+     */
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
+    private void initComponents() {
 
-    public static Launcher getLibreOfficeLauncher(String fileName, byte[] content, ObservedDocumentStore store) throws Exception {
-        String url = createTempFile(fileName, content, store.isReadOnly());
+        btnGrpOffice = new javax.swing.ButtonGroup();
+        cmdClose = new javax.swing.JButton();
+        lblCaption = new javax.swing.JLabel();
+        cmdSave = new javax.swing.JButton();
+        jLabel4 = new javax.swing.JLabel();
+        rdLibreOffice = new javax.swing.JRadioButton();
+        rdMicrosoftOffice = new javax.swing.JRadioButton();
 
-        // first checsk for internal launchers
-        String lowerFileName = fileName.toLowerCase();
+        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        setTitle("Textverarbeitung auswählen");
 
-        String osName = System.getProperty("os.name").toLowerCase();
-        // then use LibreOffice launcher
-
-        if (osName.indexOf("win") > -1) {
-            log.debug(new java.util.Date().toString() + " launching LO on Windows");
-            WindowsOfficeLauncher wl = new WindowsOfficeLauncher(url, store);
-            return wl;
-        } else if (osName.indexOf("linux") > -1) {
-            log.debug(new java.util.Date().toString() + " launching LO on Linux");
-            LinuxOfficeLauncher ll = new LinuxOfficeLauncher(url, store);
-            return ll;
-        } else if (osName.startsWith("mac")) {
-            log.debug(new java.util.Date().toString() + " launching LO on Mac");
-            MacOfficeLauncher ml = new MacOfficeLauncher(url, store);
-            return ml;
-        } else {
-            throw new Exception("Libre Office Launcher ist auf diesem System nicht verfügbar: " + osName);
-        }
-
-    }
-
-    public static Launcher getLauncher(String fileName, byte[] content, ObservedDocumentStore store) throws Exception {
-        String url = createTempFile(fileName, content, store.isReadOnly());
-
-        ClientSettings set = ClientSettings.getInstance();
-        String wordProcessor = set.getConfiguration(ClientSettings.CONF_APPS_WORDPROCESSOR_KEY, ClientSettings.CONF_APPS_WORDPROCESSOR_VALUE_LO);
-        boolean wordProcessorLibre = ClientSettings.CONF_APPS_WORDPROCESSOR_VALUE_LO.equalsIgnoreCase(wordProcessor);
-        boolean wordProcessorMicrosoft = ClientSettings.CONF_APPS_WORDPROCESSOR_VALUE_MSO.equalsIgnoreCase(wordProcessor);
-
-        // first check for internal launchers
-        String lowerFileName = fileName.toLowerCase();
-
-        if (lowerFileName.equalsIgnoreCase("xjustiz_nachricht.xml")) {
-            XjustizLauncher xjl = new XjustizLauncher(url, store);
-            xjl.setContent(new String(content));
-            return xjl;
-        }
-
-        if (lowerFileName.endsWith(".eml") && !(store.getDocumentIdentifier().startsWith("externalmaillaunch-"))) {
-            return new EMLInternalLauncher(url, store);
-        }
-
-        if (lowerFileName.endsWith(".bea")) {
-            return new BEAInternalLauncher(url, store);
-        }
-
-        // then for custom launchers
-        String extension = getExtension(lowerFileName);
-        if (hasCustomLauncher(extension)) {
-            return new CustomLauncher(url, store);
-        }
-
-        String osName = System.getProperty("os.name").toLowerCase();
-
-        // first check if MS Office is requested
-        if (wordProcessorMicrosoft && supportedByMicrosoftOffice(url) && (osName.indexOf("win") > -1 || osName.startsWith("mac"))) {
-            if (osName.indexOf("win") > -1) {
-                log.debug(new java.util.Date().toString() + " launching Microsoft Office on Windows");
-                WindowsMicrosoftOfficeLauncher wl = new WindowsMicrosoftOfficeLauncher(url, store);
-                return wl;
-            } else if (osName.startsWith("mac")) {
-                log.debug(new java.util.Date().toString() + " launching Microsoft Office on macOS");
-                MacMicrosoftOfficeLauncher ml = new MacMicrosoftOfficeLauncher(url, store);
-                return ml;
+        cmdClose.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png"))); // NOI18N
+        java.util.ResourceBundle bundle = java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/configuration/CustomFieldConfigurationDialog"); // NOI18N
+        cmdClose.setText(bundle.getString("button.close")); // NOI18N
+        cmdClose.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdCloseActionPerformed(evt);
             }
-        }
+        });
 
-        // then use LibreOffice launcher
-        if (supportedByLibreOffice(url)) {
+        lblCaption.setText("Primäre Textverarbeitung auf diesem Gerät:");
 
-            if (osName.indexOf("win") > -1) {
-                log.debug(new java.util.Date().toString() + " launching LO on Windows");
-                WindowsOfficeLauncher wl = new WindowsOfficeLauncher(url, store);
-                return wl;
-            } else if (osName.indexOf("linux") > -1) {
-                log.debug(new java.util.Date().toString() + " launching LO on Linux");
-                LinuxOfficeLauncher ll = new LinuxOfficeLauncher(url, store);
-                return ll;
-            } else if (osName.startsWith("mac")) {
-                log.debug(new java.util.Date().toString() + " launching LO on Mac");
-                MacOfficeLauncher ml = new MacOfficeLauncher(url, store);
-                return ml;
+        cmdSave.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png"))); // NOI18N
+        cmdSave.setText(bundle.getString("button.save")); // NOI18N
+        cmdSave.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdSaveActionPerformed(evt);
             }
+        });
 
+        jLabel4.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/info.png"))); // NOI18N
+        jLabel4.setToolTipText("Primär zu verwendende Textverarbeitung auswählen.\n\nDie Einstellung ist spezifisch für dieses Gerät und den dort angemeldeten Nutzer.");
+
+        btnGrpOffice.add(rdLibreOffice);
+        rdLibreOffice.setSelected(true);
+        rdLibreOffice.setText("Libre Office");
+
+        btnGrpOffice.add(rdMicrosoftOffice);
+        rdMicrosoftOffice.setText("Microsoft Office");
+
+        org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
+        getContentPane().setLayout(layout);
+        layout.setHorizontalGroup(
+            layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(layout.createSequentialGroup()
+                .addContainerGap()
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(layout.createSequentialGroup()
+                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            .add(layout.createSequentialGroup()
+                                .add(lblCaption, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 383, Short.MAX_VALUE)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(jLabel4))
+                            .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
+                                .add(0, 0, Short.MAX_VALUE)
+                                .add(cmdSave)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(cmdClose)))
+                        .addContainerGap())
+                    .add(layout.createSequentialGroup()
+                        .add(12, 12, 12)
+                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            .add(rdMicrosoftOffice)
+                            .add(rdLibreOffice))
+                        .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+        );
+        layout.setVerticalGroup(
+            layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
+                .addContainerGap()
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(lblCaption)
+                    .add(jLabel4))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                .add(rdLibreOffice)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                .add(rdMicrosoftOffice)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(cmdClose)
+                    .add(cmdSave))
+                .addContainerGap())
+        );
+
+        lblCaption.getAccessibleContext().setAccessibleName("Primäre Textverarbeitung auf diesem Gerät:");
+
+        pack();
+    }// </editor-fold>//GEN-END:initComponents
+                
+    private void cmdCloseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCloseActionPerformed
+        this.setVisible(false);
+        this.dispose();
+    }//GEN-LAST:event_cmdCloseActionPerformed
+
+    private void cmdSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveActionPerformed
+//        ServerSettings set=ServerSettings.getInstance();
+//        set.setSetting(this.categoryKey+"1", this.txtCustom1.getText());
+//        set.setSetting(this.categoryKey+"2", this.txtCustom2.getText());
+//        set.setSetting(this.categoryKey+"3", this.txtCustom3.getText());
+
+        String wordProcessor=ClientSettings.CONF_APPS_WORDPROCESSOR_VALUE_LO;
+        if(this.rdMicrosoftOffice.isSelected()) { 
+            wordProcessor=ClientSettings.CONF_APPS_WORDPROCESSOR_VALUE_MSO;
         }
 
-        // if all fails, use Desktop API
-        if (osName.indexOf("win") > -1) {
-            return new WindowsNativeLauncher(url, store);
-        } else if (osName.indexOf("linux") > -1) {
-            return new LinuxNativeLauncher(url, store);
-        } else if (osName.startsWith("mac")) {
-            return new MacNativeLauncher(url, store);
-        } else {
-            return new NativeLauncher(url, store);
-        }
-
-    }
-
-    private static String createTempFile(String fileName, byte[] content, boolean readOnly) throws Exception {
-        return FileUtils.createTempFile(fileName, content, readOnly);
-    }
-
-    private static String getExtension(String url) {
-        int index = url.lastIndexOf('.');
-        if (index > -1 && index < url.length()) {
-            return url.substring(index + 1);
-        }
-        return "url-with-no-extension";
-    }
-
-    public static boolean isMicrosoftOfficeSupported() {
-        String osName = System.getProperty("os.name").toLowerCase();
-        if (osName.indexOf("win") > -1 || osName.startsWith("mac")) {
-            return true;
-        }
-        return false;
-    }
-
-    private static boolean hasCustomLauncher(String extension) {
-        if (extension != null) {
-            if (!"".equals(extension)) {
-                ClientSettings settings = ClientSettings.getInstance();
-                String executable = settings.getConfiguration("customlaunch." + extension.toLowerCase() + ".executable", "");
-                String paramsRw = settings.getConfiguration("customlaunch." + extension.toLowerCase() + ".params-rw", "");
-                String paramsRo = settings.getConfiguration("customlaunch." + extension.toLowerCase() + ".params-ro", "");
-                if ("".equals(paramsRo)) {
-                    paramsRo = paramsRw;
-                }
-                return (executable.length() > 0 && paramsRw.length() > 0 && paramsRo.length() > 0);
-            }
-        }
-        return false;
-    }
-
-    public static boolean supportedByLibreOffice(String url) {
-        String lcaseUrl = url.toLowerCase();
-        for (String ext : LO_OFFICEFILETYPES) {
-            if (lcaseUrl.endsWith(ext)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public static boolean supportedByMicrosoftOffice(String url) {
-        String lcaseUrl = url.toLowerCase();
-        for (String ext : MS_OFFICEFILETYPES) {
-            if (lcaseUrl.endsWith(ext)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public static boolean printSupportedByLibreOffice(String url) {
-
-        String lcaseUrl = url.toLowerCase();
-        if (supportedByLibreOffice(url)) {
-            return true;
-        } else {
-            for (String ext : OFFICE_ADDITIONALPRINTTYPES) {
-                if (lcaseUrl.endsWith(ext)) {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-    }
-
-    public static void cleanupTempFile(String url) throws Exception {
-        FileUtils.cleanupTempFile(url);
-        return;
-    }
-
-    public static void directPrint(List<String> urls) throws Exception {
-
-        final ArrayList<String> cmdLine = new ArrayList<String>();
-        cmdLine.add("soffice");
-        cmdLine.add("-p");
-        cmdLine.add("-nologo");
-        for (String u : urls) {
-            //cmdLine.add("\"" + u + "\"");
-            cmdLine.add(u);
-        }
-
-        new Thread(new Runnable() {
-
+        ClientSettings.getInstance().setConfiguration(ClientSettings.CONF_APPS_WORDPROCESSOR_KEY, wordProcessor);
+//        
+        this.setVisible(false);
+        this.dispose();
+    }//GEN-LAST:event_cmdSaveActionPerformed
+    
+    /**
+     * @param args the command line arguments
+     */
+    public static void main(String args[]) {
+        java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-
-                try {
-
-                    Thread.sleep(100);
-
-                    Process p = null;
-                    boolean libreOffice = false;
-                    try {
-                        cmdLine.set(0, "libreoffice");
-                        p = Runtime.getRuntime().exec(cmdLine.toArray(new String[0]));
-
-                        libreOffice = true;
-                    } catch (Throwable ex) {
-                        log.error("error starting libreoffice" + ex.getMessage());
-                        libreOffice = false;
-                    }
-
-                    if (libreOffice) {
-                        int exit = p.waitFor();
-                        if (exit == 0) {
-                            libreOffice = true;
-                        } else {
-                            libreOffice = false;
-                        }
-                    }
-
-                    if (!libreOffice) {
-                        try {
-
-                            cmdLine.set(0, "soffice");
-                            p = Runtime.getRuntime().exec(cmdLine.toArray(new String[0]));
-
-                            int exit = p.waitFor();
-                            if (exit != 0) {
-                                throw new Exception("LibreOffice / OpenOffice nicht installiert!");
-                            }
-                        } catch (Throwable ex) {
-                            log.error("error starting soffice", ex);
-                            throw new Exception("LibreOffice / OpenOffice nicht installiert oder PATH nicht gesetzt: " + ex.getMessage());
-                        }
-
-                    }
-
-                } catch (final Throwable t) {
-                    SwingUtilities.invokeLater(new Runnable() {
-
-                        public void run() {
-                            JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Drucken des Dokuments: " + t.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
-                        }
-                    });
-                }
+                new WordProcessorConfigurationDialog(new javax.swing.JFrame(), true).setVisible(true);
             }
-        }).start();
+        });
     }
-
+    
+    // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.ButtonGroup btnGrpOffice;
+    private javax.swing.JButton cmdClose;
+    private javax.swing.JButton cmdSave;
+    private javax.swing.JLabel jLabel4;
+    javax.swing.JLabel lblCaption;
+    private javax.swing.JRadioButton rdLibreOffice;
+    private javax.swing.JRadioButton rdMicrosoftOffice;
+    // End of variables declaration//GEN-END:variables
+    
+    
+    @Override
+    public void setTitle(String string) {
+        super.setTitle(string);
+        this.lblCaption.setText(string);
+    }
+    
+    
+    
 }

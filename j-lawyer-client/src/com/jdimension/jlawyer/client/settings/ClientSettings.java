@@ -776,6 +776,10 @@ public class ClientSettings {
     
     public static final String CONF_APPS_XJUSTIZVIEWER_PATH="client.apps.xjustiz.path";
     
+    public static final String CONF_APPS_WORDPROCESSOR_KEY="client.apps.wordprocessor";
+    public static final String CONF_APPS_WORDPROCESSOR_VALUE_LO="libreoffice";
+    public static final String CONF_APPS_WORDPROCESSOR_VALUE_MSO="msoffice";
+    
     private static String ARRAY_DELIMITER="#####";
     
     private static final Logger log=Logger.getLogger(ClientSettings.class.getName());

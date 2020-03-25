@@ -1199,7 +1199,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
                 ArrayList proposedAssignmentFiles = new ArrayList();
 
                 // todo: strip extension
-                ArrayList<String> extensions = new ArrayList<String>(LauncherFactory.OFFICEFILETYPES);
+                ArrayList<String> extensions = new ArrayList<String>(LauncherFactory.LO_OFFICEFILETYPES);
                 extensions.add(".pdf");
                 String fileNameNoExt = fileName;
                 for (String ext : extensions) {

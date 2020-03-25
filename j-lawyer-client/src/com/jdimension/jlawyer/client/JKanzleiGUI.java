@@ -1039,6 +1039,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuFormsManager = new javax.swing.JMenuItem();
         mnuDocumentOptions = new javax.swing.JMenu();
         mnuScanOptions = new javax.swing.JMenuItem();
+        mnuWordProcessor = new javax.swing.JMenuItem();
         mnuSearchIndex = new javax.swing.JMenuItem();
         mnuCustomLauncherOptions = new javax.swing.JMenuItem();
         jSeparator1 = new javax.swing.JSeparator();
@@ -1370,6 +1371,15 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             }
         });
         mnuDocumentOptions.add(mnuScanOptions);
+
+        mnuWordProcessor.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editcopy.png"))); // NOI18N
+        mnuWordProcessor.setText("Textverarbeitung");
+        mnuWordProcessor.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuWordProcessorActionPerformed(evt);
+            }
+        });
+        mnuDocumentOptions.add(mnuWordProcessor);
 
         mnuSearchIndex.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/kfind.png"))); // NOI18N
         mnuSearchIndex.setText(bundle.getString("menu.settings.documents.search")); // NOI18N
@@ -2295,6 +2305,12 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         }
     }//GEN-LAST:event_mnuGroupsActionPerformed
 
+    private void mnuWordProcessorActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuWordProcessorActionPerformed
+        WordProcessorConfigurationDialog dlg = new WordProcessorConfigurationDialog(this, true);
+        FrameUtils.centerDialog(dlg, this);
+        dlg.setVisible(true);
+    }//GEN-LAST:event_mnuWordProcessorActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -2364,6 +2380,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     private javax.swing.JMenuItem mnuUserProfile;
     private javax.swing.JMenuItem mnuUsers;
     private javax.swing.JMenuItem mnuVoipSettings;
+    private javax.swing.JMenuItem mnuWordProcessor;
     private javax.swing.JMenuItem mnuXjustizViewer;
     private javax.swing.JMenuItem mnuZipCodeImport;
     private com.jdimension.jlawyer.client.modulebar.ModuleBar moduleBar;

@@ -1299,7 +1299,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
             return false;
         }
         s = s.toLowerCase();
-        for (String ext : LauncherFactory.OFFICEFILETYPES) {
+        for (String ext : LauncherFactory.LO_OFFICEFILETYPES) {
             if (s.endsWith(ext.toLowerCase())) {
                 return true;
             }
