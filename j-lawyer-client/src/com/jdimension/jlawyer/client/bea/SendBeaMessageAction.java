@@ -683,6 +683,7 @@ import java.util.Date;
 import java.util.Enumeration;
 import javax.swing.JDialog;
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
 import org.jlawyer.bea.BeaWrapperException;
@@ -692,6 +693,7 @@ import org.jlawyer.bea.model.BeaListItem;
 import org.jlawyer.bea.model.Message;
 import org.jlawyer.bea.model.MessageExport;
 import org.jlawyer.bea.model.ProcessCard;
+import themes.colors.DefaultColorTheme;
 
 /**
  *
@@ -811,7 +813,15 @@ public class SendBeaMessageAction extends ProgressableAction {
             JOptionPane.showMessageDialog(this.indicator, "Nachricht kann nicht gesendet werden: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
         }
 
-        System.out.println("TODO: gesendete bea in akte speichern");
+        ProcessCard p = sentMessage.getProcessCard();
+        boolean containsEgvpRecipient = false;
+        for (String s : recipients) {
+            boolean egvp = BeaAccess.isEgvpPostBox(s);
+            if (egvp) {
+                containsEgvpRecipient = true;
+                break;
+            }
+        }
 
         Throwable storeException = null;
         try {
@@ -827,19 +837,12 @@ public class SendBeaMessageAction extends ProgressableAction {
                 Message msgEx = sentMessage;
 
                 this.progress("Warten auf EGVP-Laufzettel...");
-                boolean containsEgvpRecipient = false;
-                for (String s : recipients) {
-                    boolean egvp = BeaAccess.isEgvpPostBox(s);
-                    if (egvp) {
-                        containsEgvpRecipient = true;
-                        break;
-                    }
-                }
-                if (containsEgvpRecipient && sentMessage.getProcessCard()==null) {
+
+                
+                if (containsEgvpRecipient && p == null) {
                     long maxWaitTime = 120000l;
                     long start = System.currentTimeMillis();
                     long waited = 0;
-                    ProcessCard p = null;
                     while (p == null && waited < maxWaitTime) {
                         if (this.isCancelled()) {
                             break;
@@ -906,6 +909,38 @@ public class SendBeaMessageAction extends ProgressableAction {
             storeException = t;
         }
 
+        boolean egvpError=false;
+        final ProcessCard pCheck=p;
+        if (containsEgvpRecipient && p == null) {
+            egvpError=true;
+            SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                    indicator.setProgressStringError("Nachricht ohne EGVP-Laufzettel - bitte prüfen!");
+                }
+
+            });
+            Thread.sleep(3000);
+        } else if (containsEgvpRecipient && p != null) {
+            if(!(p.isSuccess())) {
+                egvpError=true;
+            }
+            SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                    if(pCheck.isSuccess()) {
+                        indicator.setProgressStringSuccess("Nachricht erfolgreich verschickt.");
+                    } else {
+                        indicator.setProgressStringError("EGVP-Laufzettel: fehlerhafter Nachrichtenversand!");
+                    }
+                    
+                }
+
+            });
+            Thread.sleep(5000);
+
+        }
+
         for (BeaAttachmentMetadata meta : this.attachments) {
             File f = new File(meta.getUrl());
             if (f.exists()) {
@@ -915,6 +950,10 @@ public class SendBeaMessageAction extends ProgressableAction {
 
         if (storeException != null) {
             throw new Exception("Fehler beim Speichern: " + storeException.getMessage());
+        }
+        
+        if(egvpError) {
+            throw new Exception("Nachricht enthielt keinen EGVP-Laufzettel oder der Laufzettel enthielt Fehler - bitte Nachrichtenversand im beA prüfen.");
         }
 
         return true;

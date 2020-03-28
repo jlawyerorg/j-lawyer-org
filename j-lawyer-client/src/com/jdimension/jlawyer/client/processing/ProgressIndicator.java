@@ -663,8 +663,10 @@
  */
 package com.jdimension.jlawyer.client.processing;
 
+import java.awt.Font;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
+import themes.colors.DefaultColorTheme;
 
 /**
  *
@@ -758,6 +760,18 @@ public class ProgressIndicator extends javax.swing.JDialog {
     
     public void setProgressString(String status) {
         this.lblProgress.setText(status);
+    }
+    
+    public void setProgressStringSuccess(String status) {
+        this.lblProgress.setText(status);
+        this.lblProgress.setForeground(DefaultColorTheme.COLOR_LOGO_GREEN);
+        this.lblProgress.setFont(this.lblProgress.getFont().deriveFont(Font.BOLD));
+    }
+    
+    public void setProgressStringError(String status) {
+        this.lblProgress.setText(status);
+        this.lblProgress.setForeground(DefaultColorTheme.COLOR_LOGO_RED);
+        this.lblProgress.setFont(this.lblProgress.getFont().deriveFont(Font.BOLD));
     }
     
     public void progress(String status) {
