@@ -678,6 +678,7 @@ import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.sip.SipUtils;
 import java.awt.Graphics;
 import java.awt.Image;
+import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -787,7 +788,8 @@ public class FaxStatusPanel extends javax.swing.JPanel implements ThemeableEdito
                     locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                     
                     BalanceInformation bi = locator.lookupVoipServiceRemote().getBalance();
-                    ThreadUtils.updateLabel(lblBalance, bi.getCurrency() + " " + bi.getTotal());
+                    NumberFormat nf=NumberFormat.getCurrencyInstance();
+                    ThreadUtils.updateLabel(lblBalance, nf.format(bi.getTotal()));
                     
                 } catch (Exception ex) {
                     log.error("Error retrieving Sipgate balance", ex);

@@ -673,6 +673,7 @@ import com.jdimension.jlawyer.fax.SipUri;
 import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.sip.SipUtils;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.SwingUtilities;
@@ -748,7 +749,8 @@ public class SendSmsDialog extends javax.swing.JDialog {
                     
                     SwingUtilities.invokeLater(new Runnable() {
                         public void run() {
-                            lblBalance.setText("Guthaben: " + bi.getTotal() + bi.getCurrency());
+                            NumberFormat nf=NumberFormat.getCurrencyInstance();
+                            lblBalance.setText("Guthaben: " + nf.format(bi.getTotal()));
                         }
                     });
                     

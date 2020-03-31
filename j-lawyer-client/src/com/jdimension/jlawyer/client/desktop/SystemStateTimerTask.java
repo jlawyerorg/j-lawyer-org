@@ -672,6 +672,7 @@ import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.services.VoipServiceRemote;
 import java.awt.Component;
+import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import javax.swing.JLabel;
 import org.apache.log4j.Logger;
@@ -689,6 +690,7 @@ public class SystemStateTimerTask extends java.util.TimerTask {
     private JLabel archiveFileArchivedLabel;
     private JLabel documentLabel;
     private JLabel voipLabel;
+    private DecimalFormat dfCurrency=new DecimalFormat("0.00");
     
     /** Creates a new instance of SystemStateTimerTask */
     public SystemStateTimerTask(Component owner, JLabel addressCountLabel, JLabel archiveFileCountLabel, JLabel archiveFileArchivedLabel, JLabel documentLabel, JLabel voipLabel) {
