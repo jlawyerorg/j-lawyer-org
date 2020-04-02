@@ -702,7 +702,8 @@ public class MicrosoftOfficeAccess {
 
             XWPFDocument outputDocx;
             ArrayList<String> resultList = new ArrayList<String>();
-            outputDocx = new XWPFDocument(new FileInputStream(file));
+            FileInputStream fileIn=new FileInputStream(file);
+            outputDocx = new XWPFDocument(fileIn);
 
             Enumeration en = values.keys();
             while (en.hasMoreElements()) {
@@ -745,6 +746,8 @@ public class MicrosoftOfficeAccess {
 
             }
 
+            
+            fileIn.close();
             FileOutputStream out = new FileOutputStream(file);
             outputDocx.write(out);
             out.close();
@@ -757,7 +760,8 @@ public class MicrosoftOfficeAccess {
 
             XWPFDocument outputDocx;
             ArrayList<String> resultList = new ArrayList<String>();
-            outputDocx = new XWPFDocument(new FileInputStream(file));
+            FileInputStream fileIn=new FileInputStream(file);
+            outputDocx = new XWPFDocument(fileIn);
 
             for (String r : PlaceHolders.getAllPlaceHolders(allPartyTypesPlaceHolders, formsPlaceHolders)) {
                 String key = r;
@@ -776,6 +780,7 @@ public class MicrosoftOfficeAccess {
             for (String r : PlaceHolders.ALLTABLEPLACEHOLDERS) {
 
             }
+            fileIn.close();
 
             return resultList;
 
