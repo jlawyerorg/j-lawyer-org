@@ -669,6 +669,7 @@ import com.jdimension.jlawyer.client.utils.VersionUtils;
 import com.jdimension.jlawyer.persistence.FormTypeBean;
 import com.jdimension.jlawyer.services.FormsServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import java.awt.Component;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
@@ -677,7 +678,10 @@ import java.io.StringReader;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import org.apache.log4j.Logger;
@@ -692,8 +696,8 @@ import themes.colors.DefaultColorTheme;
  * @author jens
  */
 public class FormsManagementDialog extends javax.swing.JDialog implements FormActionCallback {
-    
-    private static final Logger log=Logger.getLogger(FormsManagementDialog.class.getName());
+
+    private static final Logger log = Logger.getLogger(FormsManagementDialog.class.getName());
 
     /**
      * Creates new form FormsManagementDialog
@@ -701,20 +705,19 @@ public class FormsManagementDialog extends javax.swing.JDialog implements FormAc
     public FormsManagementDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
-        
+
         lblGitHubLink.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
-        
-        List<FormTypeBean> serverFormPlugins=new ArrayList<>();
+
+        List<FormTypeBean> serverFormPlugins = new ArrayList<>();
         try {
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            FormsServiceRemote forms=locator.lookupFormsServiceRemote();
-            serverFormPlugins=forms.getAllFormTypes();
+            FormsServiceRemote forms = locator.lookupFormsServiceRemote();
+            serverFormPlugins = forms.getAllFormTypes();
         } catch (Throwable t) {
             log.error("Could not load forms plugins", t);
         }
-        
-        
+
         try {
             URL updateURL = new URL("https://www.j-lawyer.org/downloads/j-lawyer-forms.xml");
             URLConnection urlCon = updateURL.openConnection();
@@ -752,23 +755,23 @@ public class FormsManagementDialog extends javax.swing.JDialog implements FormAc
                 formDirFile.mkdirs();
             }
 
-            ArrayList<String> remoteForms = new ArrayList<String>();
-            ArrayList<FormPlugin> formPlugins = new ArrayList<FormPlugin>();
+            TreeMap<String, FormPluginEntryPanel> formPlugins = new TreeMap<String, FormPluginEntryPanel>();
             for (int i = 0; i < remoteList.getLength(); i++) {
                 Node n = remoteList.item(i);
                 String forVersion = n.getAttributes().getNamedItem("for").getNodeValue();
                 if (forVersion.contains(VersionUtils.getFullClientVersion())) {
-                    remoteForms.add(n.getAttributes().getNamedItem("name").getNodeValue() + n.getAttributes().getNamedItem("version").getNodeValue());
+                    //remoteForms.add(n.getAttributes().getNamedItem("name").getNodeValue() + n.getAttributes().getNamedItem("version").getNodeValue());
                     FormPlugin fp = new FormPlugin();
                     fp.setForVersion(n.getAttributes().getNamedItem("for").getNodeValue());
                     fp.setId(n.getAttributes().getNamedItem("id").getNodeValue());
                     fp.setType(n.getAttributes().getNamedItem("type").getNodeValue());
                     fp.setVersion(n.getAttributes().getNamedItem("version").getNodeValue());
                     fp.setDescription(n.getAttributes().getNamedItem("description").getNodeValue());
-                    String depends="";
-                    if(n.getAttributes().getNamedItem("depends")!=null)
-                        depends=n.getAttributes().getNamedItem("depends").getNodeValue();
-                    String[] dependencies=depends.split(",");
+                    String depends = "";
+                    if (n.getAttributes().getNamedItem("depends") != null) {
+                        depends = n.getAttributes().getNamedItem("depends").getNodeValue();
+                    }
+                    String[] dependencies = depends.split(",");
                     fp.setDependsOn(dependencies);
                     fp.setUrl(n.getAttributes().getNamedItem("url").getNodeValue());
                     fp.setName(n.getAttributes().getNamedItem("name").getNodeValue());
@@ -777,40 +780,45 @@ public class FormsManagementDialog extends javax.swing.JDialog implements FormAc
                     for (String f : files.split(",")) {
                         fp.getFiles().add(f);
                     }
-                    formPlugins.add(fp);
-                    FormPluginEntryPanel fpe=new FormPluginEntryPanel(fp, this.formPluginsPanel, this);
-                    
-                    FormTypeBean onServer=this.findPlugin(serverFormPlugins, fp.getId());
-                    
-                    if(onServer==null) {
+                    //formPlugins.add(fp);
+                    FormPluginEntryPanel fpe = new FormPluginEntryPanel(fp, this.formPluginsPanel, this);
+
+                    FormTypeBean onServer = this.findPlugin(serverFormPlugins, fp.getId());
+
+                    if (onServer == null) {
                         fpe.setState(FormPluginEntryPanel.STATE_NOT_INSTALLED);
                         fpe.setVersionOnServer("");
                     } else {
                         fpe.setVersionOnServer(onServer.getVersion());
-                        if(onServer.getVersion().equals(fp.getVersion())) {
+                        if (onServer.getVersion().equals(fp.getVersion())) {
                             fpe.setState(FormPluginEntryPanel.STATE_INSTALLED);
                         } else {
                             fpe.setState(FormPluginEntryPanel.STATE_INSTALLED_UPDATEAVAILABLE);
                         }
                     }
-                    this.formPluginsPanel.add(fpe);
+                    formPlugins.put(fp.getName(), fpe);
+                    //this.formPluginsPanel.add(fpe);
                 }
+            }
+            Iterator i = formPlugins.entrySet().iterator();
+            while (i.hasNext()) {
+                Map.Entry me=(Map.Entry)i.next();
+                this.formPluginsPanel.add((Component)me.getValue());
             }
 
         } catch (Throwable t) {
             log.error("Error downloading calculation plugins", t);
             t.printStackTrace();
         }
-        
-        
+
         // check for local plugins
         try {
-            
-            File internalXml=new File(FormPluginUtil.getLocalDirectoryInternalPlugins() + File.separator+"j-lawyer-forms-internal.xml");
-            if(!internalXml.exists())
+
+            File internalXml = new File(FormPluginUtil.getLocalDirectoryInternalPlugins() + File.separator + "j-lawyer-forms-internal.xml");
+            if (!internalXml.exists()) {
                 return;
-            
-            
+            }
+
             InputStream is = new FileInputStream(internalXml);
             InputStreamReader reader = new InputStreamReader(is, "UTF-8");
 
@@ -854,10 +862,11 @@ public class FormsManagementDialog extends javax.swing.JDialog implements FormAc
                     fp.setType(n.getAttributes().getNamedItem("type").getNodeValue());
                     fp.setVersion(n.getAttributes().getNamedItem("version").getNodeValue());
                     fp.setDescription(n.getAttributes().getNamedItem("description").getNodeValue());
-                    String depends="";
-                    if(n.getAttributes().getNamedItem("depends")!=null)
-                        depends=n.getAttributes().getNamedItem("depends").getNodeValue();
-                    String[] dependencies=depends.split(",");
+                    String depends = "";
+                    if (n.getAttributes().getNamedItem("depends") != null) {
+                        depends = n.getAttributes().getNamedItem("depends").getNodeValue();
+                    }
+                    String[] dependencies = depends.split(",");
                     fp.setDependsOn(dependencies);
                     fp.setUrl(n.getAttributes().getNamedItem("url").getNodeValue());
                     fp.setName(n.getAttributes().getNamedItem("name").getNodeValue());
@@ -867,16 +876,16 @@ public class FormsManagementDialog extends javax.swing.JDialog implements FormAc
                         fp.getFiles().add(f);
                     }
                     formPlugins.add(fp);
-                    FormPluginEntryPanel fpe=new FormPluginEntryPanel(fp, this.formPluginsPanel, this);
-                    
-                    FormTypeBean onServer=this.findPlugin(serverFormPlugins, fp.getId());
-                    
-                    if(onServer==null) {
+                    FormPluginEntryPanel fpe = new FormPluginEntryPanel(fp, this.formPluginsPanel, this);
+
+                    FormTypeBean onServer = this.findPlugin(serverFormPlugins, fp.getId());
+
+                    if (onServer == null) {
                         fpe.setState(FormPluginEntryPanel.STATE_NOT_INSTALLED);
                         fpe.setVersionOnServer("");
                     } else {
                         fpe.setVersionOnServer(onServer.getVersion());
-                        if(onServer.getVersion().equals(fp.getVersion())) {
+                        if (onServer.getVersion().equals(fp.getVersion())) {
                             fpe.setState(FormPluginEntryPanel.STATE_INSTALLED);
                         } else {
                             fpe.setState(FormPluginEntryPanel.STATE_INSTALLED_UPDATEAVAILABLE);
@@ -890,14 +899,14 @@ public class FormsManagementDialog extends javax.swing.JDialog implements FormAc
             log.error("Error downloading calculation plugins", t);
             t.printStackTrace();
         }
-        
-        
+
     }
-    
+
     private FormTypeBean findPlugin(List<FormTypeBean> plugins, String id) {
-        for(FormTypeBean fp: plugins) {
-            if(fp.getId().equals(id))
+        for (FormTypeBean fp : plugins) {
+            if (fp.getId().equals(id)) {
                 return fp;
+            }
         }
         return null;
     }
@@ -1051,11 +1060,11 @@ public class FormsManagementDialog extends javax.swing.JDialog implements FormAc
 
     @Override
     public void installRequested(String pluginId, String[] dependsOnIds) {
-        for(String dep: dependsOnIds) {
-            for(int i=0;i<this.formPluginsPanel.getComponentCount();i++) {
-                FormPluginEntryPanel entry=(FormPluginEntryPanel)this.formPluginsPanel.getComponent(i);
-                FormPlugin p=entry.getEntry();
-                if(p.getId().equals(dep)) {
+        for (String dep : dependsOnIds) {
+            for (int i = 0; i < this.formPluginsPanel.getComponentCount(); i++) {
+                FormPluginEntryPanel entry = (FormPluginEntryPanel) this.formPluginsPanel.getComponent(i);
+                FormPlugin p = entry.getEntry();
+                if (p.getId().equals(dep)) {
                     entry.install();
                 }
             }
