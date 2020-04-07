@@ -677,6 +677,8 @@ import com.jdimension.jlawyer.client.configuration.OptionGroupListCellRenderer;
 import com.jdimension.jlawyer.client.configuration.PopulateOptionsEditor;
 import com.jdimension.jlawyer.client.configuration.UserListCellRenderer;
 import com.jdimension.jlawyer.client.configuration.UserTableCellRenderer;
+import com.jdimension.jlawyer.client.controls.CheckboxListCellRenderer;
+import com.jdimension.jlawyer.client.controls.CheckboxListItem;
 import com.jdimension.jlawyer.client.drebis.*;
 import com.jdimension.jlawyer.client.drebis.claim.DrebisClaimWizardDialog;
 import com.jdimension.jlawyer.client.drebis.freetext.DrebisFreeTextWizardDialog;
@@ -694,6 +696,7 @@ import com.jdimension.jlawyer.client.events.Event;
 import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.events.ReviewAddedEvent;
 import com.jdimension.jlawyer.client.launcher.CaseDocumentStore;
+import com.jdimension.jlawyer.client.launcher.DocumentObserver;
 import com.jdimension.jlawyer.client.launcher.Launcher;
 import com.jdimension.jlawyer.client.launcher.LauncherFactory;
 import com.jdimension.jlawyer.client.launcher.ReadOnlyDocumentStore;
@@ -709,6 +712,7 @@ import org.jlawyer.plugins.calculation.CalculationTable;
 import com.jdimension.jlawyer.client.print.ArchiveFileStub;
 import com.jdimension.jlawyer.client.print.PrintStubGenerator;
 import com.jdimension.jlawyer.client.processing.ProgressIndicator;
+import com.jdimension.jlawyer.client.processing.ProgressableActionCallback;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
@@ -751,6 +755,7 @@ import java.awt.dnd.DropTargetListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
@@ -761,6 +766,11 @@ import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -871,7 +881,19 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         ArchiveFileReviewReasonsTableModel model3 = new ArchiveFileReviewReasonsTableModel(colNames3, 0);
         this.tblReviewReasons.setModel(model3);
 
-        this.cmbReviewReason.setRenderer(new OptionGroupListCellRenderer());
+        this.lstReviewReasons.setCellRenderer(new CheckboxListCellRenderer());
+        this.lstReviewReasons.addMouseListener(new MouseAdapter() {
+            public void mouseClicked(MouseEvent event) {
+                JList list = (JList) event.getSource();
+                // Get index of item clicked
+                int index = list.locationToIndex(event.getPoint());
+                CheckboxListItem item = (CheckboxListItem) list.getModel().getElementAt(index);
+                // Toggle selected state
+                item.setSelected(!item.isSelected());
+                // Repaint cell
+                list.repaint(list.getCellBounds(index, index));
+            }
+        });
 
         if (DrebisUtils.isDrebisEnabled()) {
             this.mnuCoverage.setEnabled(true);
@@ -1131,7 +1153,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.radioReviewTypeRespite.setEnabled(!readOnly);
         this.cmbSubjectField.setEnabled(!readOnly);
         this.txtReason.setEnabled(!readOnly);
-        this.cmbReviewReason.setEnabled(!readOnly);
+        this.txtReviewReason.setEnabled(!readOnly);
+        this.lstReviewReasons.setEnabled(!readOnly);
         this.cmdNewDocument.setEnabled(!readOnly);
         this.cmdAddNote.setEnabled(!readOnly);
         this.cmdHeaderAddNote.setEnabled(!readOnly);
@@ -1310,6 +1333,29 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.groupPrivilegesChanged = false;
     }
 
+    private boolean isOpenForWrite(String docId) {
+        DocumentObserver observer = DocumentObserver.getInstance();
+        if (observer.isDocumentOpen(docId)) {
+            return !(observer.isDocumentReadOnly(docId));
+        }
+        return false;
+
+    }
+
+    private void waitForOpenDocument(ArchiveFileDocumentsBean doc, ProgressableActionCallback callback) {
+
+        if (!this.isOpenForWrite(doc.getId())) {
+            callback.actionFinished();
+        } else {
+
+            ProgressIndicator pi = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
+            WaitForDocumentAction a = new WaitForDocumentAction(pi, doc);
+            a.setCallback(callback);
+            a.start();
+        }
+
+    }
+
     public void clearInputs() {
         this.dto = null;
         this.documentHits.clear();
@@ -1475,7 +1521,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         AppUserBean[] allUsers = UserSettings.getInstance().getAllUsers();
 
 //        Object[] dictateSignItems = new Object[dictateSigns.length + 1];
-        String[] reviewReasonItems = new String[reviewReasons.length + 1];
+        String[] reviewReasonItems = new String[reviewReasons.length];
         String[] subjectFieldItems = new String[subjectFields.length + 1];
         String[] lawyerItems = new String[lawyerUsers.length + 1];
         String[] assistItems = new String[assistUsers.length + 1];
@@ -1486,10 +1532,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 //            AppOptionGroupBean aogb = (AppOptionGroupBean) dictateSigns[i];
 //            dictateSignItems[i + 1] = aogb.getValue();
 //        }
-        reviewReasonItems[0] = "";
         for (int i = 0; i < reviewReasons.length; i++) {
             AppOptionGroupBean aogb = (AppOptionGroupBean) reviewReasons[i];
-            reviewReasonItems[i + 1] = aogb.getValue();
+            reviewReasonItems[i] = aogb.getValue();
             //reviewReasonItems[i+1]=reviewReasons[i];
         }
         StringUtils.sortIgnoreCase(reviewReasonItems);
@@ -1522,15 +1567,17 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
         StringUtils.sortIgnoreCase(allUserItems);
 
-        //OptionsComboBoxModel dictateSignModel = new OptionsComboBoxModel(dictateSignItems);
-        OptionsComboBoxModel reviewReasonModel = new OptionsComboBoxModel(reviewReasonItems);
         OptionsComboBoxModel subjectFieldModel = new OptionsComboBoxModel(subjectFieldItems);
         OptionsComboBoxModel lawyerModel = new OptionsComboBoxModel(lawyerItems);
         OptionsComboBoxModel assistModel = new OptionsComboBoxModel(assistItems);
         OptionsComboBoxModel allUserModel = new OptionsComboBoxModel(allUserItems);
 
-        //this.cmbDictateSign.setModel(dictateSignModel);
-        this.cmbReviewReason.setModel(reviewReasonModel);
+        DefaultListModel listMod = new DefaultListModel();
+        for (String entry : reviewReasonItems) {
+            listMod.addElement(new CheckboxListItem(entry));
+        }
+        this.lstReviewReasons.setModel(listMod);
+
         this.cmbSubjectField.setModel(subjectFieldModel);
         this.cmbLawyer.setModel(lawyerModel);
         this.cmbLawyer.setRenderer(new UserListCellRenderer());
@@ -1696,7 +1743,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         jPanel9 = new javax.swing.JPanel();
         cmdNewReview = new javax.swing.JButton();
         jLabel7 = new javax.swing.JLabel();
-        cmbReviewReason = new javax.swing.JComboBox();
         tblReviewReasonsPane = new javax.swing.JScrollPane();
         tblReviewReasons = new javax.swing.JTable();
         txtReviewDateField = new javax.swing.JTextField();
@@ -1705,6 +1751,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         cmbReviewAssignee = new javax.swing.JComboBox();
         radioReviewTypeRespite = new javax.swing.JRadioButton();
         radioReviewTypeFollowUp = new javax.swing.JRadioButton();
+        jScrollPane9 = new javax.swing.JScrollPane();
+        lstReviewReasons = new javax.swing.JList<>();
+        txtReviewReason = new javax.swing.JTextField();
         jPanel11 = new javax.swing.JPanel();
         lblCustom1 = new javax.swing.JLabel();
         txtCustom1 = new javax.swing.JTextField();
@@ -2698,10 +2747,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         jLabel7.setText("Datum:");
 
-        cmbReviewReason.setEditable(true);
-        cmbReviewReason.setMaximumRowCount(30);
-        cmbReviewReason.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
-
         tblReviewReasons.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
                 {null, null, null, null},
@@ -2750,59 +2795,74 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         radioReviewTypeFollowUp.setSelected(true);
         radioReviewTypeFollowUp.setText("Wiedervorlage");
 
+        lstReviewReasons.setModel(new javax.swing.AbstractListModel<String>() {
+            String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" };
+            public int getSize() { return strings.length; }
+            public String getElementAt(int i) { return strings[i]; }
+        });
+        lstReviewReasons.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_INTERVAL_SELECTION);
+        lstReviewReasons.setLayoutOrientation(javax.swing.JList.HORIZONTAL_WRAP);
+        lstReviewReasons.setVisibleRowCount(-1);
+        jScrollPane9.setViewportView(lstReviewReasons);
+
         org.jdesktop.layout.GroupLayout jPanel9Layout = new org.jdesktop.layout.GroupLayout(jPanel9);
         jPanel9.setLayout(jPanel9Layout);
         jPanel9Layout.setHorizontalGroup(
             jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel9Layout.createSequentialGroup()
+            .add(jPanel9Layout.createSequentialGroup()
                 .addContainerGap()
-                .add(jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
-                    .add(org.jdesktop.layout.GroupLayout.LEADING, tblReviewReasonsPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 911, Short.MAX_VALUE)
-                    .add(cmbReviewReason, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .add(jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(tblReviewReasonsPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 919, Short.MAX_VALUE)
                     .add(jPanel9Layout.createSequentialGroup()
-                        .add(jLabel7)
-                        .add(69, 69, 69)
-                        .add(jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
-                            .add(txtReviewDateField)
-                            .add(cmdNewReview, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(cmdShowReviewSelector)
-                        .add(0, 620, Short.MAX_VALUE))
-                    .add(org.jdesktop.layout.GroupLayout.LEADING, jPanel9Layout.createSequentialGroup()
-                        .add(jLabel12)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            .add(jLabel12)
+                            .add(jLabel7))
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
+                            .add(jPanel9Layout.createSequentialGroup()
+                                .add(txtReviewDateField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 145, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(cmdShowReviewSelector))
                             .add(jPanel9Layout.createSequentialGroup()
                                 .add(radioReviewTypeFollowUp)
                                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                .add(radioReviewTypeRespite)
+                                .add(radioReviewTypeRespite))
+                            .add(cmbReviewAssignee, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .add(18, 18, 18)
+                        .add(jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            .add(jScrollPane9)
+                            .add(jPanel9Layout.createSequentialGroup()
+                                .add(cmdNewReview)
                                 .add(0, 0, Short.MAX_VALUE))
-                            .add(cmbReviewAssignee, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                            .add(org.jdesktop.layout.GroupLayout.TRAILING, txtReviewReason))))
                 .addContainerGap())
         );
         jPanel9Layout.setVerticalGroup(
             jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel9Layout.createSequentialGroup()
-                .add(cmbReviewReason, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                .add(jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(cmbReviewAssignee, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(jLabel12))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                .add(jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(radioReviewTypeFollowUp)
-                    .add(radioReviewTypeRespite))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+            .add(jPanel9Layout.createSequentialGroup()
+                .addContainerGap()
                 .add(jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(jPanel9Layout.createSequentialGroup()
+                        .add(jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
+                            .add(jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                                .add(jLabel7)
+                                .add(txtReviewDateField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                            .add(cmdShowReviewSelector))
+                        .add(7, 7, 7)
                         .add(jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                            .add(txtReviewDateField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                            .add(jLabel7))
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(cmdNewReview))
-                    .add(cmdShowReviewSelector))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                .add(tblReviewReasonsPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 444, Short.MAX_VALUE)
+                            .add(cmbReviewAssignee, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                            .add(jLabel12))
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                        .add(jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                            .add(radioReviewTypeFollowUp)
+                            .add(radioReviewTypeRespite)))
+                    .add(jScrollPane9, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 110, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(txtReviewReason, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(cmdNewReview)
+                .add(18, 18, 18)
+                .add(tblReviewReasonsPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 407, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -2938,9 +2998,10 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 .addContainerGap()
                 .add(pnlAddFormsLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(pnlAddFormsLayout.createSequentialGroup()
+                        .add(cmdFormsManager)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(jLabel16)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .add(cmdFormsManager))
+                        .add(0, 0, Short.MAX_VALUE))
                     .add(pnlAddFormsLayout.createSequentialGroup()
                         .add(pnlAddFormsLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                             .add(jLabel18)
@@ -2951,23 +3012,20 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                             .add(txtFormDescription)
                             .add(pnlAddFormsLayout.createSequentialGroup()
                                 .add(pnlAddFormsLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                                    .add(cmdAddForm)
                                     .add(pnlAddFormsLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
                                         .add(cmbFormType, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                        .add(txtFormPrefix))
-                                    .add(cmdAddForm))
+                                        .add(txtFormPrefix)))
                                 .add(0, 546, Short.MAX_VALUE)))))
                 .addContainerGap())
         );
         pnlAddFormsLayout.setVerticalGroup(
             pnlAddFormsLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(pnlAddFormsLayout.createSequentialGroup()
-                .add(pnlAddFormsLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(pnlAddFormsLayout.createSequentialGroup()
-                        .add(25, 25, 25)
-                        .add(jLabel16))
-                    .add(pnlAddFormsLayout.createSequentialGroup()
-                        .addContainerGap()
-                        .add(cmdFormsManager)))
+                .addContainerGap()
+                .add(pnlAddFormsLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
+                    .add(cmdFormsManager)
+                    .add(jLabel16))
                 .add(18, 18, 18)
                 .add(pnlAddFormsLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(jLabel17)
@@ -2982,7 +3040,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                     .add(txtFormDescription, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(cmdAddForm)
-                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(465, Short.MAX_VALUE))
         );
 
         tabPaneForms.addTab("<html><b>Falldaten</b><br/>hinzuf&uuml;gen</html>", pnlAddForms);
@@ -3445,25 +3503,21 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 log.error(t);
                 return;
             }
-
-            ArchiveFileReviewsBean reviewDto = new ArchiveFileReviewsBean();
-            reviewDto.setReviewType(reviewDto.REVIEWTYPE_FOLLOWUP);
-            if (this.radioReviewTypeRespite.isSelected()) {
-                reviewDto.setReviewType(reviewDto.REVIEWTYPE_RESPITE);
-            }
-            reviewDto.setDoneBoolean(false);
-            reviewDto.setReviewDate(d);
-            reviewDto.setAssignee(this.cmbReviewAssignee.getSelectedItem().toString());
-            reviewDto.setReviewReason(this.cmbReviewReason.getModel().getSelectedItem().toString());
-
-            ClientSettings settings = ClientSettings.getInstance();
             EditorsRegistry.getInstance().updateStatus("Wiedervorlage/Frist wird gespeichert...");
-            try {
-                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
 
-                reviewDto = fileService.addReview(this.dto.getId(), reviewDto);
-                EditorsRegistry.getInstance().updateStatus("Wiedervorlage/Frist gespeichert.", 5000);
+            try {
+                if (!StringUtils.isEmpty(this.txtReviewReason.getText())) {
+                    this.addReview(this.txtReviewReason.getText(), d);
+                }
+                for (int i = 0; i < ((DefaultListModel) this.lstReviewReasons.getModel()).size(); i++) {
+                    CheckboxListItem item = (CheckboxListItem) ((DefaultListModel) this.lstReviewReasons.getModel()).getElementAt(i);
+                    if (item.isSelected()) {
+                        this.addReview(item.toString(), d);
+                    }
+                    item.setSelected(false);
+
+                    this.lstReviewReasons.repaint(this.lstReviewReasons.getCellBounds(i, i));
+                }
 
             } catch (Exception ex) {
                 log.error("Error adding review", ex);
@@ -3472,17 +3526,10 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 return;
             }
 
-            ArchiveFileReviewReasonsTableModel model = (ArchiveFileReviewReasonsTableModel) this.tblReviewReasons.getModel();
-            Object[] row = new Object[5];
-            row[0] = reviewDto;
-            row[1] = reviewDto.getReviewTypeName();
-            row[2] = reviewDto.getReviewReason();
-            row[3] = new Boolean(reviewDto.getDoneBoolean());
-            row[4] = reviewDto.getAssignee();
-            model.addRow(row);
+            EditorsRegistry.getInstance().updateStatus("Wiedervorlage/Frist gespeichert.", 5000);
+
             this.txtReviewDateField.setText("");
-            // index 0 is the empty string
-            this.cmbReviewReason.setSelectedIndex(0);
+            this.txtReviewReason.setText("");
             this.chkArchived.setSelected(false);
             this.lblArchivedSince.setText("");
             this.cmbReviewAssignee.setSelectedIndex(0);
@@ -3492,6 +3539,34 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         }
     }//GEN-LAST:event_cmdNewReviewActionPerformed
+
+    private void addReview(String reason, Date d) throws Exception {
+        ArchiveFileReviewsBean reviewDto = new ArchiveFileReviewsBean();
+        reviewDto.setReviewType(reviewDto.REVIEWTYPE_FOLLOWUP);
+        if (this.radioReviewTypeRespite.isSelected()) {
+            reviewDto.setReviewType(reviewDto.REVIEWTYPE_RESPITE);
+        }
+        reviewDto.setDoneBoolean(false);
+        reviewDto.setReviewDate(d);
+        reviewDto.setAssignee(this.cmbReviewAssignee.getSelectedItem().toString());
+        reviewDto.setReviewReason(reason);
+
+        ClientSettings settings = ClientSettings.getInstance();
+
+        JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+        ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
+
+        reviewDto = fileService.addReview(this.dto.getId(), reviewDto);
+
+        ArchiveFileReviewReasonsTableModel model = (ArchiveFileReviewReasonsTableModel) this.tblReviewReasons.getModel();
+        Object[] row = new Object[5];
+        row[0] = reviewDto;
+        row[1] = reviewDto.getReviewTypeName();
+        row[2] = reviewDto.getReviewReason();
+        row[3] = new Boolean(reviewDto.getDoneBoolean());
+        row[4] = reviewDto.getAssignee();
+        model.addRow(row);
+    }
 
     private String getToolTipForAddress(AddressBean adr) {
         return adr.toShortHtml();
@@ -4780,6 +4855,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             JOptionPane.showMessageDialog(this, "Bitte warten Sie bis die Dokumentvorschau abgeschlossen ist.", "Hinweis", JOptionPane.PLAIN_MESSAGE);
             return;
         }
+
         try {
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
@@ -4796,37 +4872,51 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                     }
                 }
 
-                byte[] content = remote.getDocumentContent(doc.getId());
-                String newName = doc.getName().substring(0, doc.getName().length() - currentExt.length()) + ".pdf";
-                newName = newName.replaceAll(" ", "-");
-                if (newName.length() == 0) {
-                    JOptionPane.showMessageDialog(this, "Dateiname darf nicht leer sein.", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
-                    return;
-                }
+                final String curExt = currentExt;
+                ProgressableActionCallback callback = new ProgressableActionCallback() {
+                    @Override
+                    public void actionFinished() {
+                        try {
+                            byte[] content = remote.getDocumentContent(doc.getId());
+                            String newName = doc.getName().substring(0, doc.getName().length() - curExt.length()) + ".pdf";
+                            newName = newName.replaceAll(" ", "-");
+                            if (newName.length() == 0) {
+                                JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Dateiname darf nicht leer sein.", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
+                                return;
+                            }
 
-                boolean documentExists = remote.doesDocumentExist(this.dto.getId(), newName);
-                while (documentExists) {
+                            boolean documentExists = remote.doesDocumentExist(dto.getId(), newName);
+                            while (documentExists) {
 
-                    newName = FileUtils.getNewFileName(newName, false, new Date(), this, "neuer Name für PDF-Dokument");
-                    if (newName == null || "".equals(newName)) {
-                        return;
+                                newName = FileUtils.getNewFileName(newName, false, new Date(), EditorsRegistry.getInstance().getMainWindow(), "neuer Name für PDF-Dokument");
+                                if (newName == null || "".equals(newName)) {
+                                    return;
+                                }
+                                documentExists = remote.doesDocumentExist(dto.getId(), newName);
+
+                            }
+
+                            FileConverter conv = FileConverter.getInstance();
+                            String tempPath = FileUtils.createTempFile(doc.getName(), content);
+                            String tempPdfPath = conv.convertToPDF(tempPath);
+                            byte[] pdfContent = FileUtils.readFile(new File(tempPdfPath));
+                            FileUtils.cleanupTempFile(tempPath);
+                            FileUtils.cleanupTempFile(tempPdfPath);
+
+                            ArchiveFileDocumentsBean newDoc = remote.addDocument(dto.getId(), newName, pdfContent, doc.getDictateSign());
+
+                            ArchiveFileDocumentsTableModel m = (ArchiveFileDocumentsTableModel) tblDocuments.getModel();
+                            //m.addRow(new Object[]{df.format(doc.getCreationDate()), doc.getName()});
+                            m.addRow(new Object[]{newDoc, newDoc.isFavorite(), newDoc.getName(), newDoc.getDictateSign(), new Long(pdfContent.length)});
+
+                        } catch (Throwable t) {
+                            log.error("Could not convert document to PDF", t);
+                            JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Konvertierungsfehler: " + t.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+                        }
                     }
-                    documentExists = remote.doesDocumentExist(this.dto.getId(), newName);
+                };
 
-                }
-
-                FileConverter conv = FileConverter.getInstance();
-                String tempPath = FileUtils.createTempFile(doc.getName(), content);
-                String tempPdfPath = conv.convertToPDF(tempPath);
-                byte[] pdfContent = FileUtils.readFile(new File(tempPdfPath));
-                FileUtils.cleanupTempFile(tempPath);
-                FileUtils.cleanupTempFile(tempPdfPath);
-
-                ArchiveFileDocumentsBean newDoc = remote.addDocument(this.dto.getId(), newName, pdfContent, doc.getDictateSign());
-
-                ArchiveFileDocumentsTableModel m = (ArchiveFileDocumentsTableModel) this.tblDocuments.getModel();
-                //m.addRow(new Object[]{df.format(doc.getCreationDate()), doc.getName()});
-                m.addRow(new Object[]{newDoc, newDoc.isFavorite(), newDoc.getName(), newDoc.getDictateSign(), new Long(pdfContent.length)});
+                this.waitForOpenDocument(doc, callback);
 
                 // we only support duplication of one document at a time
                 break;
@@ -4917,9 +5007,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     private void mnuSendBeaDocumentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSendBeaDocumentActionPerformed
         if (!BeaAccess.hasInstance()) {
-            BeaLoginCallback callback=null;
+            BeaLoginCallback callback = null;
             try {
-                callback=(BeaLoginCallback)EditorsRegistry.getInstance().getEditor(BeaInboxPanel.class.getName());
+                callback = (BeaLoginCallback) EditorsRegistry.getInstance().getEditor(BeaInboxPanel.class.getName());
             } catch (Throwable t) {
                 log.error(t);
             }
@@ -4964,15 +5054,15 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     }//GEN-LAST:event_mnuSendBeaDocumentActionPerformed
 
     private void mnuSendBeaDocumentPDFActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSendBeaDocumentPDFActionPerformed
-        
+
         if (!BeaAccess.hasInstance()) {
-            BeaLoginCallback callback=null;
+            BeaLoginCallback callback = null;
             try {
-                callback=(BeaLoginCallback)EditorsRegistry.getInstance().getEditor(BeaInboxPanel.class.getName());
+                callback = (BeaLoginCallback) EditorsRegistry.getInstance().getEditor(BeaInboxPanel.class.getName());
             } catch (Throwable t) {
                 log.error(t);
             }
-            
+
             BeaLoginDialog loginPanel = new BeaLoginDialog(EditorsRegistry.getInstance().getMainWindow(), true, callback);
             loginPanel.setVisible(true);
             if (!BeaAccess.hasInstance()) {
@@ -5436,8 +5526,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                     int row = this.tblGroups.rowAtPoint(p);
                     Group g = (Group) this.tblGroups.getValueAt(row, 1);
                     Boolean newValue = !((Boolean) this.tblGroups.getValueAt(row, 0));
-                    if(newValue) {
-                        if(this.cmbGroup.getSelectedIndex()==0) {
+                    if (newValue) {
+                        if (this.cmbGroup.getSelectedIndex() == 0) {
                             JOptionPane.showMessageDialog(this, "Um Zugriffsrechte zu aktivieren, muss zuerst eine Eigentümergruppe gesetzt werden!", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
                             this.tabPrivileges.setSelectedIndex(0);
                             return;
@@ -5471,7 +5561,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     private void mnuOpenDocumentLibreOfficeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuOpenDocumentLibreOfficeActionPerformed
         // this.openSelectedDocument(tblDocuments.getSelectedRows());
-        
+
         try {
             int row = this.tblDocuments.getSelectedRow();
             if (row < 0) {
@@ -5502,7 +5592,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Fehler beim Öffnen des Dokuments: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
         }
-        
+
     }//GEN-LAST:event_mnuOpenDocumentLibreOfficeActionPerformed
 
     private AddressBean[] convertArray(Object[] in) {
@@ -5819,7 +5909,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JComboBox cmbHistoryTime;
     protected javax.swing.JComboBox cmbLawyer;
     private javax.swing.JComboBox cmbReviewAssignee;
-    private javax.swing.JComboBox cmbReviewReason;
     protected javax.swing.JComboBox cmbSubjectField;
     private javax.swing.JButton cmdAddForm;
     private javax.swing.JButton cmdAddHistory;
@@ -5886,6 +5975,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JScrollPane jScrollPane6;
     private javax.swing.JScrollPane jScrollPane7;
     private javax.swing.JScrollPane jScrollPane8;
+    private javax.swing.JScrollPane jScrollPane9;
     private javax.swing.JPopupMenu.Separator jSeparator1;
     private javax.swing.JPopupMenu.Separator jSeparator2;
     private javax.swing.JPopupMenu.Separator jSeparator3;
@@ -5900,6 +5990,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JLabel lblDocumentHits;
     private javax.swing.JLabel lblHeaderInfo;
     protected javax.swing.JLabel lblPanelTitle;
+    private javax.swing.JList<String> lstReviewReasons;
     private javax.swing.JMenuItem mnuCopyDocumentToOtherCase;
     private javax.swing.JMenuItem mnuCoverage;
     private javax.swing.JMenuItem mnuDirectPrint;
@@ -5977,6 +6068,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JScrollPane txtNoticePane;
     protected javax.swing.JTextField txtReason;
     private javax.swing.JTextField txtReviewDateField;
+    private javax.swing.JTextField txtReviewReason;
     private javax.swing.JTextField txtSearchDocumentNames;
     // End of variables declaration//GEN-END:variables
 
