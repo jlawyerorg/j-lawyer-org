@@ -2269,6 +2269,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
                             fout.write(buffer, 0, len);
                         }
                         is.close();
+                        fout.close();
                         ThreadUtils.showInformationDialog(EditorsRegistry.getInstance().getMainWindow(), "XJustiz-Viewer zur Installation verfügbar: " + file.getAbsolutePath(), "Download abgeschlossen");
 
                     } catch (Exception ex) {
