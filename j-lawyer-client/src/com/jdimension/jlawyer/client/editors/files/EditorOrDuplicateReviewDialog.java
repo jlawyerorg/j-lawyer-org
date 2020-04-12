@@ -664,11 +664,14 @@
 package com.jdimension.jlawyer.client.editors.files;
 
 import com.jdimension.jlawyer.client.components.MultiCalDialog;
+import com.jdimension.jlawyer.client.configuration.OptionGroupListCellRenderer;
 import com.jdimension.jlawyer.client.configuration.UserListCellRenderer;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
+import com.jdimension.jlawyer.client.utils.StringUtils;
+import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
 import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
@@ -721,11 +724,7 @@ public class EditorOrDuplicateReviewDialog extends javax.swing.JDialog {
         this.cmbAssignee.setModel(allUserModel);
         this.cmbAssignee.setRenderer(new UserListCellRenderer());
 
-        if (rev.getReviewReason() != null) {
-            this.txtRevievReason.setText(rev.getReviewReason());
-        } else {
-            this.txtRevievReason.setText("");
-        }
+        
 //        if(rev.getReviewDate()!=null)
 //            this.jCal.setDate(rev.getReviewDate());
 
@@ -747,6 +746,25 @@ public class EditorOrDuplicateReviewDialog extends javax.swing.JDialog {
             targetReview.setDoneBoolean(false);
 
         }
+        
+        this.cmbReviewReason.setRenderer(new OptionGroupListCellRenderer());
+        AppOptionGroupBean[] reviewReasons = settings.getReviewReasonDtos();
+        String[] reviewReasonItems = new String[reviewReasons.length + 1];
+        reviewReasonItems[0] = "";
+        for (int i = 0; i < reviewReasons.length; i++) {
+            AppOptionGroupBean aogb = (AppOptionGroupBean) reviewReasons[i];
+            reviewReasonItems[i + 1] = aogb.getValue();
+            //reviewReasonItems[i+1]=reviewReasons[i];
+        }
+        StringUtils.sortIgnoreCase(reviewReasonItems);
+        OptionsComboBoxModel reviewReasonModel = new OptionsComboBoxModel(reviewReasonItems);
+        this.cmbReviewReason.setModel(reviewReasonModel);
+        
+        if (rev.getReviewReason() != null) {
+            this.cmbReviewReason.setSelectedItem(rev.getReviewReason());
+        } else {
+            this.cmbReviewReason.setSelectedItem(0);
+        }
 
     }
 
@@ -761,13 +779,13 @@ public class EditorOrDuplicateReviewDialog extends javax.swing.JDialog {
 
         jLabel1 = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
-        txtRevievReason = new javax.swing.JTextField();
         txtReviewDate = new javax.swing.JTextField();
         cmdOK = new javax.swing.JButton();
         cmdCancel = new javax.swing.JButton();
         jLabel3 = new javax.swing.JLabel();
         cmbAssignee = new javax.swing.JComboBox();
         cmdShowReviewSelector = new javax.swing.JButton();
+        cmbReviewReason = new javax.swing.JComboBox();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Wiedervorlage/Frist bearbeiten oder duplizieren");
@@ -777,8 +795,6 @@ public class EditorOrDuplicateReviewDialog extends javax.swing.JDialog {
         jLabel1.setText("Grund:");
 
         jLabel2.setText("Fälligkeitsdatum:");
-
-        txtRevievReason.setText("jTextField1");
 
         txtReviewDate.setEnabled(false);
 
@@ -812,6 +828,9 @@ public class EditorOrDuplicateReviewDialog extends javax.swing.JDialog {
             }
         });
 
+        cmbReviewReason.setEditable(true);
+        cmbReviewReason.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -819,7 +838,12 @@ public class EditorOrDuplicateReviewDialog extends javax.swing.JDialog {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(txtRevievReason)
+                    .addComponent(cmbReviewReason, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addGap(0, 237, Short.MAX_VALUE)
+                        .addComponent(cmdOK)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdCancel))
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jLabel1)
@@ -831,12 +855,7 @@ public class EditorOrDuplicateReviewDialog extends javax.swing.JDialog {
                                     .addComponent(cmbAssignee, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(cmdShowReviewSelector)))
-                        .addGap(0, 286, Short.MAX_VALUE))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addGap(0, 0, Short.MAX_VALUE)
-                        .addComponent(cmdOK)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(cmdCancel)))
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -845,7 +864,7 @@ public class EditorOrDuplicateReviewDialog extends javax.swing.JDialog {
                 .addContainerGap()
                 .addComponent(jLabel1)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(txtRevievReason, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(cmbReviewReason, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jLabel2)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -885,7 +904,7 @@ public class EditorOrDuplicateReviewDialog extends javax.swing.JDialog {
 
         targetReview.setDoneBoolean(false);
         targetReview.setReviewDate(d);
-        targetReview.setReviewReason(this.txtRevievReason.getText());
+        targetReview.setReviewReason(this.cmbReviewReason.getSelectedItem().toString());
         targetReview.setAssignee(this.cmbAssignee.getSelectedItem().toString());
 
         ClientSettings settings = ClientSettings.getInstance();
@@ -994,13 +1013,13 @@ public class EditorOrDuplicateReviewDialog extends javax.swing.JDialog {
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JComboBox cmbAssignee;
+    private javax.swing.JComboBox cmbReviewReason;
     private javax.swing.JButton cmdCancel;
     private javax.swing.JButton cmdOK;
     private javax.swing.JButton cmdShowReviewSelector;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
-    private javax.swing.JTextField txtRevievReason;
     private javax.swing.JTextField txtReviewDate;
     // End of variables declaration//GEN-END:variables
 }
