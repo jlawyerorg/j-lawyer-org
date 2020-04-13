@@ -826,6 +826,7 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
                 this.setProgressString("Lade Akte: Falldatenblatt " + affb.getFormType().getName() + " (" + affb.getPlaceHolder() + ")");
                 FormPlugin plugin = new FormPlugin();
                 plugin.setId(affb.getFormType().getId());
+                plugin.setCaseDto(this.caseDto);
                 plugin.setPlaceHolder(affb.getPlaceHolder());
                 FormInstancePanel formInstance = new FormInstancePanel(this.tabPaneForms, plugin);
                 Dimension maxDimension = this.formsPanel.getSize();

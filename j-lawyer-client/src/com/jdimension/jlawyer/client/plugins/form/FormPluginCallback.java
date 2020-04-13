@@ -663,22 +663,138 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.plugins.form;
 
+import com.jdimension.jlawyer.client.plugins.calculation.*;
+import org.jlawyer.plugins.calculation.CalculationTable;
+import com.jdimension.jlawyer.client.configuration.PopulateOptionsEditor;
+import com.jdimension.jlawyer.client.desktop.DesktopPanel;
+import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import com.jdimension.jlawyer.client.editors.ThemeableEditor;
+import com.jdimension.jlawyer.client.editors.documents.SearchAndAssignDialog;
+import com.jdimension.jlawyer.client.editors.files.ArchiveFilePanel;
+import com.jdimension.jlawyer.client.editors.files.EditArchiveFileDetailsPanel;
+import com.jdimension.jlawyer.client.utils.FrameUtils;
+import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Toolkit;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
+import java.awt.datatransfer.UnsupportedFlavorException;
+import java.io.InputStream;
+import java.io.Reader;
+import java.io.StringBufferInputStream;
+import java.io.StringReader;
 import java.util.ArrayList;
-import java.util.Hashtable;
-import javax.swing.JPanel;
+import javax.swing.JDialog;
+import javax.swing.JOptionPane;
+import org.apache.log4j.Logger;
+import org.jlawyer.plugins.calculation.GenericCalculationTable;
+import org.jlawyer.plugins.calculation.StyledCalculationTable;
 
 /**
  *
  * @author jens
  */
-public interface FormPluginMethods {
-    
-    public ArrayList<String> getPlaceHolders(String prefix);
-    
-    public Hashtable getPlaceHolderValues(String prefix);
-    
-    public void setPlaceHolderValues(String prefix, Hashtable placeHolderValues);
-    
-    public void setCallback(FormPluginCallback callback);
-    
+public class FormPluginCallback {
+
+    private static Logger log = Logger.getLogger(FormPluginCallback.class.getName());
+
+    private ArchiveFileBean selectedCase = null;
+
+    public FormPluginCallback(ArchiveFileBean caseDto) {
+        this.selectedCase = caseDto;
+    }
+
+    public void processResultToClipboard(Object r) {
+        System.out.println("received result: " + r.toString());
+
+        HtmlSelection stsel = new HtmlSelection(r.toString());
+        Clipboard system = Toolkit.getDefaultToolkit().getSystemClipboard();
+        system.setContents(stsel, null);
+    }
+
+    public void processResultToDocument(GenericCalculationTable table, Container c) {
+        if (table != null) {
+
+            Container pluginDlg = FrameUtils.getDialogOfComponent(c);
+
+            try {
+
+                if (EditorsRegistry.getInstance().getCurrentEditor() instanceof ArchiveFilePanel) {
+                    Object editor = EditorsRegistry.getInstance().getCurrentEditor();
+                    ((ArchiveFilePanel) editor).newDocumentDialog(table);
+                }
+
+            } catch (Exception ex) {
+                log.error("Error creating editor from class " + EditArchiveFileDetailsPanel.class.getName(), ex);
+                JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Laden des Editors: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
+    private static class HtmlSelection implements Transferable {
+
+        private static ArrayList htmlFlavors = new ArrayList();
+
+        static {
+
+            try {
+
+                htmlFlavors.add(new DataFlavor("text/html;class=java.lang.String"));
+
+                htmlFlavors.add(new DataFlavor("text/html;class=java.io.Reader"));
+
+                htmlFlavors.add(new DataFlavor("text/html;charset=unicode;class=java.io.InputStream"));
+
+            } catch (ClassNotFoundException ex) {
+
+                ex.printStackTrace();
+
+            }
+
+        }
+
+        private String html;
+
+        public HtmlSelection(String html) {
+
+            this.html = html;
+
+        }
+
+        public DataFlavor[] getTransferDataFlavors() {
+
+            return (DataFlavor[]) htmlFlavors.toArray(new DataFlavor[htmlFlavors.size()]);
+
+        }
+
+        public boolean isDataFlavorSupported(DataFlavor flavor) {
+
+            return htmlFlavors.contains(flavor);
+
+        }
+
+        public Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException {
+
+            if (String.class.equals(flavor.getRepresentationClass())) {
+
+                return html;
+
+            } else if (Reader.class.equals(flavor.getRepresentationClass())) {
+
+                return new StringReader(html);
+
+            } else if (InputStream.class.equals(flavor.getRepresentationClass())) {
+
+                return new StringBufferInputStream(html);
+
+            }
+
+            throw new UnsupportedFlavorException(flavor);
+
+        }
+
+    }
+
 }

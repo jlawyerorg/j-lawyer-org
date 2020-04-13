@@ -694,36 +694,35 @@ import org.apache.log4j.Logger;
 public class FormPlugin implements Comparable {
 
     private static final Logger log = Logger.getLogger(FormPlugin.class.getName());
-    
-    public static final String TYPE_PLUGIN="plugin";
-    public static final String TYPE_LIBRARY="library";
-    
+
+    public static final String TYPE_PLUGIN = "plugin";
+    public static final String TYPE_LIBRARY = "library";
 
     private String name = null;
     private String id = null;
+    private ArchiveFileBean caseDto = null;
     private String version = null;
     private String url = null;
     private String forVersion = null;
     private String description = null;
     private String placeHolder = null;
-    private String type=null;
-    private String[] dependsOn=new String[0];
+    private String type = null;
+    private String[] dependsOn = new String[0];
     private ArrayList<String> files = new ArrayList<String>();
 
-    Class scriptClass=null;
-    Object scriptInstance=null;
-    private JPanel ui=null;
-    
+    Class scriptClass = null;
+    Object scriptInstance = null;
+    private JPanel ui = null;
+
     public FormPlugin() {
     }
 
     public ArrayList<String> getPlaceHolders() {
         try {
 
-            ArrayList<String> result=((FormPluginMethods)scriptInstance).getPlaceHolders(this.placeHolder);
-            
+            ArrayList<String> result = ((FormPluginMethods) scriptInstance).getPlaceHolders(this.placeHolder);
+
             //Object result = scriptClass.getDeclaredMethod("getPlaceHolders", new Class[]{String.class}).invoke(scriptInstance, new Object[]{this.placeHolder});
-            
             return result;
 //            System.out.println(result.toString());
 //            result = scriptClass.getDeclaredMethod("setResult", new Class[]{List.class}).invoke(scriptInstance, new Object[]{(List) result});
@@ -734,12 +733,12 @@ public class FormPlugin implements Comparable {
         }
         return new ArrayList<String>();
     }
-    
+
     public Hashtable getPlaceHolderValues() {
         try {
 
-            Hashtable result=((FormPluginMethods)scriptInstance).getPlaceHolderValues(this.placeHolder);
-            
+            Hashtable result = ((FormPluginMethods) scriptInstance).getPlaceHolderValues(this.placeHolder);
+
             return result;
 
         } catch (Throwable t) {
@@ -747,18 +746,17 @@ public class FormPlugin implements Comparable {
         }
         return new Hashtable();
     }
-    
+
     public void setPlaceHolderValues(Hashtable placeHolders) {
         try {
 
-            ((FormPluginMethods)scriptInstance).setPlaceHolderValues(this.placeHolder, placeHolders);
-            
+            ((FormPluginMethods) scriptInstance).setPlaceHolderValues(this.placeHolder, placeHolders);
 
         } catch (Throwable t) {
             t.printStackTrace();
         }
     }
-    
+
     public JPanel getUi() throws Exception {
 //        GroovyScriptEngine e = new GroovyScriptEngine(FormPluginUtil.getLocalDirectory() + File.separator);
 //        Binding bind = new Binding();
@@ -766,8 +764,9 @@ public class FormPlugin implements Comparable {
 //        e.run(getId() + "_ui.groovy", bind);
 //        return (JPanel) bind.getVariable("SCRIPTPANEL");
 
-        if(ui!=null)
+        if (ui != null) {
             return ui;
+        }
 
         try {
 
@@ -778,9 +777,17 @@ public class FormPlugin implements Comparable {
 //            list.add("schnuff");
 //            list.add("bluff");
 //            scriptClass.getDeclaredMethod("setResult", new Class[]{List.class}).invoke(scriptInstance, new Object[]{list});
-            
-            this.ui=(JPanel) result;
-            
+
+            this.ui = (JPanel) result;
+
+            try {
+
+                ((FormPluginMethods) scriptInstance).setCallback(new FormPluginCallback(caseDto));
+
+            } catch (Throwable t) {
+                t.printStackTrace();
+            }
+
             return ui;
 //            System.out.println(result.toString());
 //            result = scriptClass.getDeclaredMethod("setResult", new Class[]{List.class}).invoke(scriptInstance, new Object[]{(List) result});
@@ -792,7 +799,7 @@ public class FormPlugin implements Comparable {
         return null;
     }
 
-//    }
+    /*
     public JPanel getUi(ArchiveFileBean targetCase, float claimValue) throws Exception {
 //        GroovyScriptEngine e = new GroovyScriptEngine(FormPluginUtil.getLocalDirectory() + File.separator);
 //        Binding bind = new Binding();
@@ -817,7 +824,7 @@ public class FormPlugin implements Comparable {
         return null;
 
     }
-
+     */
     private FormTypeBean toFormTypeBean() {
         FormTypeBean ftb = new FormTypeBean();
         ftb.setId(this.id);
@@ -1113,6 +1120,20 @@ public class FormPlugin implements Comparable {
      */
     public void setDependsOn(String[] dependsOn) {
         this.dependsOn = dependsOn;
+    }
+
+    /**
+     * @return the caseDto
+     */
+    public ArchiveFileBean getCaseDto() {
+        return caseDto;
+    }
+
+    /**
+     * @param caseDto the caseDto to set
+     */
+    public void setCaseDto(ArchiveFileBean caseDto) {
+        this.caseDto = caseDto;
     }
 
 }
