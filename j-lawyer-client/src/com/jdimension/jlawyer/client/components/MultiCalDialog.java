@@ -723,6 +723,41 @@ public class MultiCalDialog extends javax.swing.JDialog {
         
     }
     
+    /**
+     * Creates new form MultiCalDialog
+     */
+    public MultiCalDialog(JTextField target, java.awt.Dialog parent, boolean modal) {
+        // last param is required so that the dialog inherits some graphics settings from its parent
+        // otherwise, it might e.g. be opened on a different screen in a multi monitor setup
+        super(parent, "", modal, parent.getGraphicsConfiguration());
+        this.initializing=true;
+        this.target=target;
+        initComponents();     
+        
+        //c1.se
+        
+        c1Cal=Calendar.getInstance();
+        c1.setCalendar(c1Cal);
+        c1.setAlwaysFireDayProperty(true);
+        
+        c2Cal=Calendar.getInstance();
+        c2Cal.add(Calendar.MONTH, 1);
+        c2.setCalendar(c2Cal);
+        c2.setAlwaysFireDayProperty(true);
+        
+        c3Cal=Calendar.getInstance();
+        c3Cal.add(Calendar.MONTH, 2);
+        c3.setCalendar(c3Cal);
+        c3.setAlwaysFireDayProperty(true);
+        
+        
+        this.updateMonthLabels();
+        this.initializing=false;
+        
+        
+        
+    }
+    
     private void updateMonthLabels() {
         SimpleDateFormat df=new SimpleDateFormat("MMM yyyy");
         this.lblC1.setText(df.format(c1Cal.getTime()));

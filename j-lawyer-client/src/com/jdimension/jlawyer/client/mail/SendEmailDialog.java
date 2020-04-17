@@ -2177,7 +2177,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
 
     private void cmdShowReviewSelectorActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdShowReviewSelectorActionPerformed
 
-        MultiCalDialog dlg = new MultiCalDialog(this.txtReviewDateField, EditorsRegistry.getInstance().getMainWindow(), true);
+        MultiCalDialog dlg = new MultiCalDialog(this.txtReviewDateField, this, true);
         //dlg.setLocation(this.getX() + this.cmdShowReviewSelector.getX(), this.getY() + this.cmdShowReviewSelector.getY());
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);

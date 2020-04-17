@@ -955,7 +955,7 @@ public class EditorOrDuplicateReviewDialog extends javax.swing.JDialog {
 
     private void cmdShowReviewSelectorActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdShowReviewSelectorActionPerformed
 
-        MultiCalDialog dlg = new MultiCalDialog(this.txtReviewDate, EditorsRegistry.getInstance().getMainWindow(), true);
+        MultiCalDialog dlg = new MultiCalDialog(this.txtReviewDate, this, true);
         FrameUtils.centerDialog(dlg, this);
         //dlg.setLocation(this.getX() + this.cmdShowReviewSelector.getX(), this.getY() + this.cmdShowReviewSelector.getY());
         dlg.setVisible(true);
