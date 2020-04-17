@@ -5455,6 +5455,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         FormTypeBean ftb = (FormTypeBean) this.cmbFormType.getSelectedItem();
         FormPlugin plugin = new FormPlugin();
         plugin.setId(ftb.getId());
+        plugin.setCaseDto(dto);
         plugin.setPlaceHolder(this.txtFormPrefix.getText());
         FormInstancePanel formInstance = new FormInstancePanel(this.tabPaneForms, plugin);
         Dimension maxDimension = this.pnlAddForms.getSize();
