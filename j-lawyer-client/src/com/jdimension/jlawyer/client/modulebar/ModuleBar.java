@@ -785,12 +785,13 @@ public class ModuleBar extends javax.swing.JPanel {
             ModuleButton b = new ModuleButton(m);
             buttonPane.add(b);
             if (m.getHotKey() != null) {
-                this.hotKeyActions.put(m.getHotKey(), new AbstractAction(m.getEditorClass()) {
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        b.actionPerformed();
-                    }
-                });
+                // temporarily disabled because users didn't like a module opening when hitting F2 to rename a document
+//                this.hotKeyActions.put(m.getHotKey(), new AbstractAction(m.getEditorClass()) {
+//                    @Override
+//                    public void actionPerformed(ActionEvent e) {
+//                        b.actionPerformed();
+//                    }
+//                });
             }
 
         }
