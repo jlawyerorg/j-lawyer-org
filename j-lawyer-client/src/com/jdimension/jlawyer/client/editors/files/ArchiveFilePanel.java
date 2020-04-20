@@ -1341,6 +1341,18 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         return false;
 
     }
+    
+    private ArrayList<String> getDocumentsOpenForWrite(int[] selectedRows) {
+        ArrayList<String> openDocs = new ArrayList<String>();
+
+        for (int i = selectedRows.length - 1; i > -1; i--) {
+            ArchiveFileDocumentsBean doc = (ArchiveFileDocumentsBean) this.tblDocuments.getValueAt(selectedRows[i], 0);
+            if(isOpenForWrite(doc.getId()))
+                openDocs.add(doc.getName());
+        }
+        return openDocs;
+
+    }
 
     private void waitForOpenDocument(ArchiveFileDocumentsBean doc, ProgressableActionCallback callback) {
 
@@ -4180,25 +4192,38 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             for (int i = selectedRows.length - 1; i > -1; i--) {
                 ArchiveFileDocumentsBean doc = (ArchiveFileDocumentsBean) this.tblDocuments.getValueAt(selectedRows[i], 0);
 
-                byte[] content = remote.getDocumentContent(doc.getId());
-                String newName = FileUtils.getNewFileName(doc.getName(), false, new Date(), this, "Dokument duplizieren");
+                ProgressableActionCallback callback = new ProgressableActionCallback() {
+                    @Override
+                    public void actionFinished() {
+                        try {
 
-                //Object newNameObject = JOptionPane.showInputDialog(this, "Dateiname mit Erweiterung: ", "Dokument duplizieren", JOptionPane.QUESTION_MESSAGE, null, null, doc.getName());
-                if (newName == null || "".equals(newName)) {
-                    return;
-                }
+                            byte[] content = remote.getDocumentContent(doc.getId());
+                            String newName = FileUtils.getNewFileName(doc.getName(), false, new Date(), EditorsRegistry.getInstance().getMainWindow(), "Dokument duplizieren");
 
-                newName = newName.replaceAll(" ", "-");
-                if (newName.length() == 0) {
-                    JOptionPane.showMessageDialog(this, "Dateiname darf nicht leer sein.", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
-                    return;
-                }
-                ArchiveFileDocumentsBean newDoc = remote.addDocument(this.dto.getId(), newName, content, doc.getDictateSign());
+                            //Object newNameObject = JOptionPane.showInputDialog(this, "Dateiname mit Erweiterung: ", "Dokument duplizieren", JOptionPane.QUESTION_MESSAGE, null, null, doc.getName());
+                            if (newName == null || "".equals(newName)) {
+                                return;
+                            }
 
-                ArchiveFileDocumentsTableModel m = (ArchiveFileDocumentsTableModel) this.tblDocuments.getModel();
-                //m.addRow(new Object[]{df.format(doc.getCreationDate()), doc.getName()});
-                m.addRow(new Object[]{newDoc, newDoc.isFavorite(), newDoc.getName(), newDoc.getDictateSign(), new Long(content.length)});
+                            newName = newName.replaceAll(" ", "-");
+                            if (newName.length() == 0) {
+                                JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Dateiname darf nicht leer sein.", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
+                                return;
+                            }
+                            ArchiveFileDocumentsBean newDoc = remote.addDocument(dto.getId(), newName, content, doc.getDictateSign());
 
+                            ArchiveFileDocumentsTableModel m = (ArchiveFileDocumentsTableModel) tblDocuments.getModel();
+                            //m.addRow(new Object[]{df.format(doc.getCreationDate()), doc.getName()});
+                            m.addRow(new Object[]{newDoc, newDoc.isFavorite(), newDoc.getName(), newDoc.getDictateSign(), new Long(content.length)});
+
+                        } catch (Exception ioe) {
+                            log.error("Error duplicating document", ioe);
+                            JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Duplizieren des Dokuments: " + ioe.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+                        }
+                    }
+                };
+
+                this.waitForOpenDocument(doc, callback);
                 // we only support duplication of one document at a time
                 break;
 
@@ -4320,6 +4345,20 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     private void mnuSendDocumentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSendDocumentActionPerformed
 
+        int[] selectedRows = this.tblDocuments.getSelectedRows();
+        ArrayList<String> open = this.getDocumentsOpenForWrite(selectedRows);
+        if (open.size() > 0) {
+            String question = "<html>Soll die Aktion auf geöffnete Dokumente ausgeführt werden? Es besteht das Risiko fehlender / inkonsistenter Inhalte.<br/><ul>";
+            for (String o : open) {
+                question = question + "<li>" + o + "</li>";
+            }
+            question = question + "</ul></html>";
+            int response = JOptionPane.showConfirmDialog(this, question, "Aktion auf offene Dokumente ausführen", JOptionPane.YES_NO_OPTION);
+            if (response == JOptionPane.NO_OPTION) {
+                return;
+            }
+        }
+        
         SendEmailDialog dlg = new SendEmailDialog(EditorsRegistry.getInstance().getMainWindow(), false);
         //dlg.setTo(ab.getEmail());
 
@@ -4333,7 +4372,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
-            int[] selectedRows = this.tblDocuments.getSelectedRows();
             DefaultTableModel tModel = (DefaultTableModel) this.tblDocuments.getModel();
             for (int i = selectedRows.length - 1; i > -1; i--) {
                 ArchiveFileDocumentsBean doc = (ArchiveFileDocumentsBean) this.tblDocuments.getValueAt(selectedRows[i], 0);
@@ -4353,6 +4391,21 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     }//GEN-LAST:event_mnuSendDocumentActionPerformed
 
     private void mnuSendDocumentPDFActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSendDocumentPDFActionPerformed
+        
+        int[] selectedRows = this.tblDocuments.getSelectedRows();
+        ArrayList<String> open = this.getDocumentsOpenForWrite(selectedRows);
+        if (open.size() > 0) {
+            String question = "<html>Soll die Aktion auf geöffnete Dokumente ausgeführt werden? Es besteht das Risiko fehlender / inkonsistenter Inhalte.<br/><ul>";
+            for (String o : open) {
+                question = question + "<li>" + o + "</li>";
+            }
+            question = question + "</ul></html>";
+            int response = JOptionPane.showConfirmDialog(this, question, "Aktion auf offene Dokumente ausführen", JOptionPane.YES_NO_OPTION);
+            if (response == JOptionPane.NO_OPTION) {
+                return;
+            }
+        }
+        
         SendEmailDialog dlg = new SendEmailDialog(EditorsRegistry.getInstance().getMainWindow(), false);
         dlg.setInvolvedInCase(this.pnlInvolvedParties.getInvolvedParties());
         //dlg.setTo(ab.getEmail());
@@ -4435,6 +4488,17 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 DefaultTableModel tModel = (DefaultTableModel) this.tblDocuments.getModel();
 
                 ArchiveFileDocumentsBean doc = (ArchiveFileDocumentsBean) this.tblDocuments.getValueAt(selectedRows[0], 0);
+                
+                if (this.isOpenForWrite(doc.getId())) {
+                    String question = "<html>Soll die Aktion auf geöffnete Dokumente ausgeführt werden? Es besteht das Risiko fehlender / inkonsistenter Inhalte.<br/><ul>";
+                    question = question + "<li>" + doc.getName() + "</li>";
+                    question = question + "</ul></html>";
+                    int response = JOptionPane.showConfirmDialog(this, question, "Aktion auf offene Dokumente ausführen", JOptionPane.YES_NO_OPTION);
+                    if (response == JOptionPane.NO_OPTION) {
+                        return;
+                    }
+                }
+                
                 byte[] content = locator.lookupArchiveFileServiceRemote().getDocumentContent(doc.getId());
                 String tmpUrl = FileUtils.createTempFile(doc.getName(), content);
                 faxFile = new File(tmpUrl);
@@ -4822,18 +4886,31 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
                 ArchiveFileDocumentsBean doc = (ArchiveFileDocumentsBean) this.tblDocuments.getValueAt(selectedRows[i], 0);
 
-                byte[] content = remote.getDocumentContent(doc.getId());
-                String newName = FileUtils.getNewFileName(doc.getName(), false, new Date(), this, "Dokument kopieren");
-                if (newName == null || "".equalsIgnoreCase(newName)) {
-                    return;
-                }
-                newName = newName.replaceAll(" ", "-");
-                if (newName.length() == 0) {
-                    JOptionPane.showMessageDialog(this, "Dateiname darf nicht leer sein.", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
-                    return;
-                }
+                ProgressableActionCallback callback = new ProgressableActionCallback() {
+                    @Override
+                    public void actionFinished() {
+                        try {
 
-                ArchiveFileDocumentsBean newDoc = remote.addDocument(sel.getId(), newName, content, doc.getDictateSign());
+                            byte[] content = remote.getDocumentContent(doc.getId());
+                            String newName = FileUtils.getNewFileName(doc.getName(), false, new Date(), EditorsRegistry.getInstance().getMainWindow(), "Dokument kopieren");
+                            if (newName == null || "".equalsIgnoreCase(newName)) {
+                                return;
+                            }
+                            newName = newName.replaceAll(" ", "-");
+                            if (newName.length() == 0) {
+                                JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Dateiname darf nicht leer sein.", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
+                                return;
+                            }
+
+                            ArchiveFileDocumentsBean newDoc = remote.addDocument(sel.getId(), newName, content, doc.getDictateSign());
+                        } catch (Exception ioe) {
+                            log.error("Error duplicating document", ioe);
+                            JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Kopieren des Dokuments: " + ioe.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+                        }
+                    }
+                };
+
+                this.waitForOpenDocument(doc, callback);
 
                 // we only support duplication of one document at a time
                 break;
@@ -5006,6 +5083,20 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     }
 
     private void mnuSendBeaDocumentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSendBeaDocumentActionPerformed
+        int[] selectedRows = this.tblDocuments.getSelectedRows();
+        ArrayList<String> open = this.getDocumentsOpenForWrite(selectedRows);
+        if (open.size() > 0) {
+            String question = "<html>Soll die Aktion auf geöffnete Dokumente ausgeführt werden? Es besteht das Risiko fehlender / inkonsistenter Inhalte.<br/><ul>";
+            for (String o : open) {
+                question = question + "<li>" + o + "</li>";
+            }
+            question = question + "</ul></html>";
+            int response = JOptionPane.showConfirmDialog(this, question, "Aktion auf offene Dokumente ausführen", JOptionPane.YES_NO_OPTION);
+            if (response == JOptionPane.NO_OPTION) {
+                return;
+            }
+        }
+        
         if (!BeaAccess.hasInstance()) {
             BeaLoginCallback callback = null;
             try {
@@ -5034,7 +5125,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
-            int[] selectedRows = this.tblDocuments.getSelectedRows();
             DefaultTableModel tModel = (DefaultTableModel) this.tblDocuments.getModel();
             for (int i = selectedRows.length - 1; i > -1; i--) {
                 ArchiveFileDocumentsBean doc = (ArchiveFileDocumentsBean) this.tblDocuments.getValueAt(selectedRows[i], 0);
@@ -5055,6 +5145,20 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     private void mnuSendBeaDocumentPDFActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSendBeaDocumentPDFActionPerformed
 
+        int[] selectedRows = this.tblDocuments.getSelectedRows();
+        ArrayList<String> open = this.getDocumentsOpenForWrite(selectedRows);
+        if (open.size() > 0) {
+            String question = "<html>Soll die Aktion auf geöffnete Dokumente ausgeführt werden? Es besteht das Risiko fehlender / inkonsistenter Inhalte.<br/><ul>";
+            for (String o : open) {
+                question = question + "<li>" + o + "</li>";
+            }
+            question = question + "</ul></html>";
+            int response = JOptionPane.showConfirmDialog(this, question, "Aktion auf offene Dokumente ausführen", JOptionPane.YES_NO_OPTION);
+            if (response == JOptionPane.NO_OPTION) {
+                return;
+            }
+        }
+        
         if (!BeaAccess.hasInstance()) {
             BeaLoginCallback callback = null;
             try {
@@ -5332,6 +5436,20 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             if (selectedRows == null || selectedRows.length == 0) {
                 return;
             }
+            
+            ArrayList<String> open = this.getDocumentsOpenForWrite(selectedRows);
+            if (open.size() > 0) {
+                String question="<html>Soll die Aktion auf geöffnete Dokumente ausgeführt werden? Es besteht das Risiko fehlender / inkonsistenter Inhalte.<br/><ul>";
+                for(String o: open) {
+                    question=question+"<li>" + o + "</li>";
+                }
+                question=question+"</ul></html>";
+                int response = JOptionPane.showConfirmDialog(this, question, "Aktion auf offene Dokumente ausführen", JOptionPane.YES_NO_OPTION);
+                if (response == JOptionPane.NO_OPTION) {
+                    return;
+                }
+            }
+            
             DefaultTableModel tModel = (DefaultTableModel) this.tblDocuments.getModel();
             ArrayList<ArchiveFileDocumentsBean> docs2local = new ArrayList<ArchiveFileDocumentsBean>();
             for (int i = selectedRows.length - 1; i > -1; i--) {
@@ -5390,36 +5508,52 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                     }
                 }
 
-                byte[] content = remote.getDocumentContent(doc.getId());
-                String newName = doc.getName().substring(0, doc.getName().length() - currentExt.length()) + "." + targetFormat;
-                newName = newName.replaceAll(" ", "-");
-                if (newName.length() == 0) {
-                    JOptionPane.showMessageDialog(this, "Dateiname darf nicht leer sein.", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
-                    return;
-                }
+                final String curExt = currentExt;
+                ProgressableActionCallback callback = new ProgressableActionCallback() {
+                    @Override
+                    public void actionFinished() {
+                        try {
 
-                FileConverter conv = FileConverter.getInstance();
-                String tempPath = FileUtils.createTempFile(doc.getName(), content);
-                String tempTargetPath = conv.convertTo(tempPath, targetFormat);
-                byte[] targetContent = FileUtils.readFile(new File(tempTargetPath));
-                FileUtils.cleanupTempFile(tempPath);
-                FileUtils.cleanupTempFile(tempTargetPath);
+                            byte[] content = remote.getDocumentContent(doc.getId());
+                            String newName = doc.getName().substring(0, doc.getName().length() - curExt.length()) + "." + targetFormat;
+                            newName = newName.replaceAll(" ", "-");
+                            if (newName.length() == 0) {
+                                JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Dateiname darf nicht leer sein.", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
+                                return;
+                            }
 
-                ArchiveFileDocumentsBean newDoc = remote.addDocument(this.dto.getId(), newName, targetContent, doc.getDictateSign());
+                            FileConverter conv = FileConverter.getInstance();
+                            String tempPath = FileUtils.createTempFile(doc.getName(), content);
+                            String tempTargetPath = conv.convertTo(tempPath, targetFormat);
+                            byte[] targetContent = FileUtils.readFile(new File(tempTargetPath));
+                            FileUtils.cleanupTempFile(tempPath);
+                            FileUtils.cleanupTempFile(tempTargetPath);
 
-                ArchiveFileDocumentsTableModel m = (ArchiveFileDocumentsTableModel) this.tblDocuments.getModel();
-                //m.addRow(new Object[]{df.format(doc.getCreationDate()), doc.getName()});
-                m.addRow(new Object[]{newDoc, newDoc.isFavorite(), newDoc.getName(), newDoc.getDictateSign(), new Long(targetContent.length)});
+                            ArchiveFileDocumentsBean newDoc = remote.addDocument(dto.getId(), newName, targetContent, doc.getDictateSign());
 
-                // we only support duplication of one document at a time
+                            ArchiveFileDocumentsTableModel m = (ArchiveFileDocumentsTableModel) tblDocuments.getModel();
+                            //m.addRow(new Object[]{df.format(doc.getCreationDate()), doc.getName()});
+                            m.addRow(new Object[]{newDoc, newDoc.isFavorite(), newDoc.getName(), newDoc.getDictateSign(), new Long(targetContent.length)});
+
+                            // we only support duplication of one document at a time
+                        } catch (Exception ioe) {
+                            log.error("Error duplicating document", ioe);
+                            JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Konvertieren des Dokuments: " + ioe.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+                        }
+                    }
+                };
+
+                this.waitForOpenDocument(doc, callback);
+
                 break;
 
             }
-
         } catch (Exception ioe) {
             log.error("Error duplicating document", ioe);
-            JOptionPane.showMessageDialog(this, "Fehler beim Duplizieren des Dokuments: " + ioe.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Fehler beim Konvertieren des Dokuments: " + ioe.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
         }
+
+
     }//GEN-LAST:event_mnuDuplicateDocumentAsActionPerformed
 
     private void cmdDocumentTagFilterMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdDocumentTagFilterMousePressed

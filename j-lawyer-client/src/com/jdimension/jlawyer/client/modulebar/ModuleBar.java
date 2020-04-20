@@ -721,8 +721,9 @@ public class ModuleBar extends javax.swing.JPanel {
             //mi.setForeground(new java.awt.Color(102, 102, 102));
             mi.setForeground(Color.BLACK);
             mi.setSelectedIcon(m.getRolloverIcon());
-            //mi.putClientProperty("Menu.selectionForeground", Color.WHITE);
-            //mi.putClientProperty("MenuItem[MouseOver].textForeground", Color.WHITE);
+            
+//            mi.putClientProperty("Menu.selectionForeground", Color.WHITE);
+//            mi.putClientProperty("MenuItem[MouseOver].textForeground", Color.WHITE);
             
             JPanel caller = this;
             mi.addActionListener(new ActionListener() {
