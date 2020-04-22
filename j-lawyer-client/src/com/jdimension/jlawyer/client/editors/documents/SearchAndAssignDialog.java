@@ -692,6 +692,38 @@ public class SearchAndAssignDialog extends javax.swing.JDialog {
     /**
      * Creates new form SearchAndAssignDialog
      */
+    public SearchAndAssignDialog(java.awt.Dialog parent, boolean modal) {
+        super(parent, modal);
+        initComponents();
+        FrameUtils.centerDialog(this, EditorsRegistry.getInstance().getMainWindow());
+
+        String[] colNames = new String[]{"Aktenzeichen", "Kurzrubrum", "wegen", "archiviert", "Anwalt"};
+        QuickArchiveFileSearchTableModel model = new QuickArchiveFileSearchTableModel(colNames, 0);
+        this.tblResults.setModel(model);
+
+        this.tblResults.setDefaultRenderer(Object.class, new QuickArchiveFileSearchCellRenderer());
+
+        ClientSettings s = ClientSettings.getInstance();
+        List<String> tags = s.getArchiveFileTagsInUse();
+        List<String> documentTags = s.getDocumentTagsInUse();
+        TagUtils.populateTags(tags, cmdTagFilter, popTagFilter, null);
+        TagUtils.populateTags(documentTags, cmdDocumentTagFilter, popDocumentTagFilter, null);
+
+        ComponentUtils.restoreDialogSize(this);
+
+        this.tblResults.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "Enter");
+        this.tblResults.getActionMap().put("Enter", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent ae) {
+                useSelection();
+            }
+        });
+
+    }
+    
+    /**
+     * Creates new form SearchAndAssignDialog
+     */
     public SearchAndAssignDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
