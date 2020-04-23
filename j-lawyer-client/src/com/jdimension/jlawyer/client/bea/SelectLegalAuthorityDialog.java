@@ -757,7 +757,7 @@ public class SelectLegalAuthorityDialog extends javax.swing.JDialog {
         });
 
         cmdUnknown.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/help_index.png"))); // NOI18N
-        cmdUnknown.setText("Unbekannt");
+        cmdUnknown.setText("Keine auswählen");
         cmdUnknown.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmdUnknownActionPerformed(evt);
@@ -774,7 +774,6 @@ public class SelectLegalAuthorityDialog extends javax.swing.JDialog {
                     .addComponent(jScrollPane1)
                     .addComponent(txtSearch)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(cmdCancel)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cmdUnknown)

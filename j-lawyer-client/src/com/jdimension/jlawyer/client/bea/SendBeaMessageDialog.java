@@ -1813,6 +1813,11 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
             //JOptionPane.showMessageDialog(this, "Für den Versand mit eEB muss eine Justizbehörde ausgewählt sein!", "Versand mit eEB", JOptionPane.WARNING_MESSAGE);
             //return;
             this.rdXjustizActionPerformed(null);
+            
+            if(this.authority==null) {
+                // user hit cancel
+                return;
+            }
         }
 
         String createDocumentTag = null;
