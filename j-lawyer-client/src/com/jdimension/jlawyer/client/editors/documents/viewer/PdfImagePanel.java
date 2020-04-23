@@ -681,22 +681,22 @@ import org.apache.pdfbox.rendering.PDFRenderer;
  */
 public class PdfImagePanel extends javax.swing.JPanel implements PreviewPanel {
 
-    private static final Logger log=Logger.getLogger(PdfImagePanel.class.getName());
-    
-    BufferedImage orgImage=null;
-    int currentPage=0;
-    private byte[] content=null;
-    private int totalPages=1;
-    
+    private static final Logger log = Logger.getLogger(PdfImagePanel.class.getName());
+
+    BufferedImage orgImage = null;
+    int currentPage = 0;
+    private byte[] content = null;
+    private int totalPages = 1;
+    private String fileName = null;
+
     /**
      * Creates new form PlaintextPanel
      */
-    public PdfImagePanel(byte[] content) {
+    public PdfImagePanel(String fileName, byte[] content) {
         initComponents();
+        this.fileName = fileName;
         ThreadUtils.updateLabel(this.lblContent, "");
-        
-        
-        
+
     }
 
     /**
@@ -807,22 +807,22 @@ public class PdfImagePanel extends javax.swing.JPanel implements PreviewPanel {
     }//GEN-LAST:event_formComponentResized
 
     private void cmdPageBackwardActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdPageBackwardActionPerformed
-        this.currentPage=this.currentPage-1;
+        this.currentPage = this.currentPage - 1;
         this.showPage(this.content, this.currentPage);
     }//GEN-LAST:event_cmdPageBackwardActionPerformed
 
     private void cmdPageForwardActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdPageForwardActionPerformed
-        this.currentPage=this.currentPage+1;
+        this.currentPage = this.currentPage + 1;
         this.showPage(this.content, this.currentPage);
     }//GEN-LAST:event_cmdPageForwardActionPerformed
 
     private void cmdFirstPageActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdFirstPageActionPerformed
-        this.currentPage=0;
+        this.currentPage = 0;
         this.showPage(this.content, this.currentPage);
     }//GEN-LAST:event_cmdFirstPageActionPerformed
 
     private void cmdLastPageActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdLastPageActionPerformed
-        this.currentPage=this.totalPages-1;
+        this.currentPage = this.totalPages - 1;
         this.showPage(this.content, this.currentPage);
     }//GEN-LAST:event_cmdLastPageActionPerformed
 
@@ -843,68 +843,76 @@ public class PdfImagePanel extends javax.swing.JPanel implements PreviewPanel {
     }
 
     private void showPage(byte[] content, int page) {
-        this.content=content;
+        this.content = content;
         try {
-        //File PDF_Path = new File("/home/jens/j-lawyer-vorlage.pdf");
-        //PDDocument inputPDF = PDDocument.load(PDF_Path);
-        PDDocument inputPDF = PDDocument.load(new ByteArrayInputStream(content));
-        PDFRenderer pdfRenderer = new PDFRenderer(inputPDF);
-        PDPageTree allPages = inputPDF.getDocumentCatalog().getPages();
-        
-        this.totalPages=inputPDF.getNumberOfPages();
-        
-        if(page==0)
-            this.cmdPageBackward.setEnabled(false);
-        else
-            this.cmdPageBackward.setEnabled(true);
-        this.cmdFirstPage.setEnabled(this.cmdPageBackward.isEnabled());
-        
-        if(page<(this.totalPages-1))
-            this.cmdPageForward.setEnabled(true);
-        else
-            this.cmdPageForward.setEnabled(false);
-        this.cmdLastPage.setEnabled(this.cmdPageForward.isEnabled());
+            if (content != null) {
+                if (content.length > 5000000) {
+                    log.info("Rendering large PDF " + this.fileName + " with " + content.length + " bytes.");
+                }
+            }
+                        
+            //File PDF_Path = new File("/home/jens/j-lawyer-vorlage.pdf");
+            //PDDocument inputPDF = PDDocument.load(PDF_Path);
+            PDDocument inputPDF = PDDocument.load(new ByteArrayInputStream(content));
+            PDFRenderer pdfRenderer = new PDFRenderer(inputPDF);
+            PDPageTree allPages = inputPDF.getDocumentCatalog().getPages();
 
-        if(page>(this.totalPages-1))
-            page=(this.totalPages-1);
-        
-        this.lblCurrentPage.setText("Seite " + (page+1) + "/" + this.totalPages);
-        
-        PDPage testPage = (PDPage) inputPDF.getPage(page);
-        this.orgImage = pdfRenderer.renderImageWithDPI(page, 100, ImageType.RGB);
-        //this.orgImage=testPage.convertToImage();
-        //int height=Math.max(this.getHeight(), 200);
-        int height=Math.max(this.getHeight(), 400);
-        float scaleFactor=(float)height/(float)this.orgImage.getHeight();
-        int width=(int)((float)this.orgImage.getWidth()*scaleFactor);
-        Image bi2=this.orgImage.getScaledInstance(width,height,Image.SCALE_SMOOTH);
-        //label=new JLabel(new ImageIcon(bi2));
-        //label.setBounds(0,0,this.getWidth(),this.getHeight());
-       // this.jScrollPane1.add(label);
-        //this.add(label);
-        //this.lblContent.setIcon(new ImageIcon(bi2));
+            this.totalPages = inputPDF.getNumberOfPages();
 
-        //PDFPagePanel pdfPanel = new PDFPagePanel();
-        //pdfPanel.setPage(testPage);
-        //this.jPanel1.add(pdfPanel);
-        
-        inputPDF.close();
-        
-        ThreadUtils.updateLabelIcon(this.lblContent, new ImageIcon(bi2));
-        
+            if (page == 0) {
+                this.cmdPageBackward.setEnabled(false);
+            } else {
+                this.cmdPageBackward.setEnabled(true);
+            }
+            this.cmdFirstPage.setEnabled(this.cmdPageBackward.isEnabled());
+
+            if (page < (this.totalPages - 1)) {
+                this.cmdPageForward.setEnabled(true);
+            } else {
+                this.cmdPageForward.setEnabled(false);
+            }
+            this.cmdLastPage.setEnabled(this.cmdPageForward.isEnabled());
+
+            if (page > (this.totalPages - 1)) {
+                page = (this.totalPages - 1);
+            }
+
+            this.lblCurrentPage.setText("Seite " + (page + 1) + "/" + this.totalPages);
+
+            PDPage testPage = (PDPage) inputPDF.getPage(page);
+            this.orgImage = pdfRenderer.renderImageWithDPI(page, 100, ImageType.RGB);
+            //this.orgImage=testPage.convertToImage();
+            //int height=Math.max(this.getHeight(), 200);
+            int height = Math.max(this.getHeight(), 400);
+            float scaleFactor = (float) height / (float) this.orgImage.getHeight();
+            int width = (int) ((float) this.orgImage.getWidth() * scaleFactor);
+            Image bi2 = this.orgImage.getScaledInstance(width, height, Image.SCALE_SMOOTH);
+            //label=new JLabel(new ImageIcon(bi2));
+            //label.setBounds(0,0,this.getWidth(),this.getHeight());
+            // this.jScrollPane1.add(label);
+            //this.add(label);
+            //this.lblContent.setIcon(new ImageIcon(bi2));
+
+            //PDFPagePanel pdfPanel = new PDFPagePanel();
+            //pdfPanel.setPage(testPage);
+            //this.jPanel1.add(pdfPanel);
+            inputPDF.close();
+
+            ThreadUtils.updateLabelIcon(this.lblContent, new ImageIcon(bi2));
+
         } catch (Throwable t) {
-            log.error("error rendering PDF preview", t);
-            if(page==0)
+            log.error("error rendering PDF preview for " + this.fileName, t);
+            if (page == 0) {
                 showStatus("Vorschau nicht verfügbar");
+            }
         }
     }
-    
+
     @Override
     public void showContent(byte[] content) {
-        this.currentPage=0;
+        this.currentPage = 0;
         this.showPage(content, 0);
-        
+
     }
-    
-    
+
 }
