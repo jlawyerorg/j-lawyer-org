@@ -801,6 +801,8 @@ public class LoadBeaFolderAction extends ProgressableAction {
                 if (f.getType() == Folder.TYPE_TRASH) {
                     TableRowSorter<TableModel> sorter = new TableRowSorter<TableModel>(table.getModel());
                     sorter.setComparator(9, new DateStringComparator());
+                    // "dd.MM.yyyy, HH:mm"
+                    sorter.setComparator(6, new DateStringComparator("dd.MM.yyyy, HH:mm"));
                     table.setRowSorter(sorter);
                 }
 
