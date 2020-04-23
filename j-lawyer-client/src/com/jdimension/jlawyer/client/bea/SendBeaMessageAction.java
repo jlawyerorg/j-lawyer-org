@@ -772,9 +772,9 @@ public class SendBeaMessageAction extends ProgressableAction {
                 msg.setReferenceJustice(this.azRecipient);
             }
 
-            if (this.archiveFile != null) {
-                msg.setReferenceNumber(this.archiveFile.getFileNumber());
-            }
+//            if (this.archiveFile != null) {
+//                msg.setReferenceNumber(this.archiveFile.getFileNumber());
+//            }
 
             while (this.to.hasMoreElements()) {
                 Object o = this.to.nextElement();
