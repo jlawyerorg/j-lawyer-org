@@ -748,6 +748,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
 
         DefaultTableModel tm2 = new DefaultTableModel(new String[]{"Code", "Text"}, 0);
         this.tblProcessCard.setModel(tm2);
+        this.cmdShowProcessCard.setEnabled(false);
 
     }
 
@@ -796,6 +797,11 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
 
         this.msgContainer = msg;
         this.documentId = documentId;
+        if(this.msgContainer.getProcessCard()!=null && this.msgContainer.getProcessCard().getOsciMessage()!=null) {
+            this.cmdShowProcessCard.setEnabled(true);
+        } else {
+            this.cmdShowProcessCard.setEnabled(false);
+        }
         try {
 
             if (msg == null) {
@@ -1133,6 +1139,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
         jScrollPane4 = new javax.swing.JScrollPane();
         tblProcessCard = new javax.swing.JTable();
         cmdRefreshProcessCard = new javax.swing.JButton();
+        cmdShowProcessCard = new javax.swing.JButton();
 
         mnuSave.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/filesave.png"))); // NOI18N
         mnuSave.setText("Speichern");
@@ -1390,6 +1397,14 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
             }
         });
 
+        cmdShowProcessCard.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/kfind.png"))); // NOI18N
+        cmdShowProcessCard.setText("Rohdaten anzeigen");
+        cmdShowProcessCard.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdShowProcessCardActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel5Layout = new javax.swing.GroupLayout(jPanel5);
         jPanel5.setLayout(jPanel5Layout);
         jPanel5Layout.setHorizontalGroup(
@@ -1400,14 +1415,17 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
                     .addComponent(jScrollPane4, javax.swing.GroupLayout.DEFAULT_SIZE, 816, Short.MAX_VALUE)
                     .addGroup(jPanel5Layout.createSequentialGroup()
                         .addComponent(cmdRefreshProcessCard)
-                        .addGap(0, 0, Short.MAX_VALUE)))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(cmdShowProcessCard)))
                 .addContainerGap())
         );
         jPanel5Layout.setVerticalGroup(
             jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel5Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(cmdRefreshProcessCard)
+                .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(cmdRefreshProcessCard)
+                    .addComponent(cmdShowProcessCard))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane4, javax.swing.GroupLayout.DEFAULT_SIZE, 415, Short.MAX_VALUE)
                 .addContainerGap())
@@ -1642,9 +1660,17 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
         }
     }//GEN-LAST:event_cmdRefreshProcessCardActionPerformed
 
+    private void cmdShowProcessCardActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdShowProcessCardActionPerformed
+        String osciMsg=this.msgContainer.getProcessCard().getOsciMessage();
+        OsciMessageViewer v=new OsciMessageViewer(EditorsRegistry.getInstance().getMainWindow(), true, "" +this.msgContainer.getProcessCard().getMessageId(), osciMsg);
+        FrameUtils.centerDialog(v, EditorsRegistry.getInstance().getMainWindow());
+        v.setVisible(true);
+    }//GEN-LAST:event_cmdShowProcessCardActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton cmdRefreshJournal;
     private javax.swing.JButton cmdRefreshProcessCard;
+    private javax.swing.JButton cmdShowProcessCard;
     private javax.swing.JEditorPane editBody;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
