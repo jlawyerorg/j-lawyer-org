@@ -698,7 +698,47 @@ public class PartiesPanelEntry {
     }
     
     public ArchiveFileAddressesBean getInvolvement() {
+        return getEntry();
+    }
+
+    /**
+     * @param referenceType the referenceType to set
+     */
+    public void setReferenceType(PartyTypeBean referenceType) {
+        this.referenceType = referenceType;
+    }
+
+    @Override
+    protected Object clone() { // throws CloneNotSupportedException {
+        PartiesPanelEntry e=new PartiesPanelEntry(this.getEntry());
+        e.setReferenceType(getReferenceType());
+        e.setAddress(address);
+        e.setEntry(entry);
+        
+        return e;
+    }
+
+    /**
+     * @return the entry
+     */
+    public ArchiveFileAddressesBean getEntry() {
         return entry;
     }
+
+    /**
+     * @param entry the entry to set
+     */
+    public void setEntry(ArchiveFileAddressesBean entry) {
+        this.entry = entry;
+    }
+
+    /**
+     * @param address the address to set
+     */
+    public void setAddress(AddressBean address) {
+        this.address = address;
+    }
+    
+    
     
 }

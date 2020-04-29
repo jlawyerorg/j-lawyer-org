@@ -965,7 +965,12 @@ public class PartiesPanel extends javax.swing.JPanel {
         for (PartyTypeBean ptb : allPartyTypes) {
             PartiesPanelEntry selected = this.getSelectedParty(ptb);
             if (selected != null) {
-                result.add(selected);
+                // need to clone it because otherwise it might be overwritten
+                PartiesPanelEntry clone=(PartiesPanelEntry)selected.clone();
+                
+                // update its reference type, because the user might have changed it
+                clone.setReferenceType(ptb);
+                result.add(clone);
             }
         }
         return result;
