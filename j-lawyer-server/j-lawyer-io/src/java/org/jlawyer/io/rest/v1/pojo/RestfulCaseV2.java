@@ -669,49 +669,22 @@ import com.jdimension.jlawyer.persistence.ArchiveFileBean;
  *
  * @author jens
  */
-public class RestfulCaseV1 {
+public class RestfulCaseV2 extends RestfulCaseV1 {
 
-    private String id=null;
-    private String name=null;
-    private String fileNumber=null;
-    private String claimNumber=null;
-    private float claimValue=0f;
-    private short archived=0;
+    private String group=null;
 
-    private String notice=null;
-    private String lawyer=null;
-    private String assistant=null;
-    private String reason=null;
-    private String subjectField=null;
-    private String custom1=null;
-
-    private String custom2=null;
-
-    private String custom3=null;
-
-    public RestfulCaseV1() {
+    public RestfulCaseV2() {
     }
     
     public ArchiveFileBean toArchiveFileBean(ArchiveFileBean afb) {
-        afb.setArchived(this.archived);
-        afb.setAssistant(this.assistant);
-        afb.setClaimNumber(this.claimNumber);
-        afb.setClaimValue(this.claimValue);
-        afb.setCustom1(custom1);
-        afb.setCustom2(custom2);
-        afb.setCustom3(custom3);
-        afb.setFileNumberMain(fileNumber);
-        afb.setId(id);
-        afb.setLawyer(lawyer);
-        afb.setName(name);
-        afb.setNotice(notice);
-        afb.setReason(reason);
-        afb.setSubjectField(subjectField);
-        return afb;
+        ArchiveFileBean result= super.toArchiveFileBean(afb);
+        
+        return result;
+        
     }
     
-    public static RestfulCaseV1 fromArchiveFileBean(ArchiveFileBean afb) {
-        RestfulCaseV1 c=new RestfulCaseV1();
+    public static RestfulCaseV2 fromArchiveFileBean(ArchiveFileBean afb) {
+        RestfulCaseV2 c=new RestfulCaseV2();
             c.setArchived(afb.getArchived());
             c.setAssistant(afb.getAssistant());
             c.setClaimNumber(afb.getClaimNumber());
@@ -726,203 +699,27 @@ public class RestfulCaseV1 {
             c.setNotice(afb.getNotice());
             c.setReason(afb.getReason());
             c.setSubjectField(afb.getSubjectField());
+            if(afb.getGroup()!=null) {
+                c.setGroup(afb.getGroup().getName());
+            }
+            
             return c;
     }
 
     /**
-     * @return the id
+     * @return the group
      */
-    public String getId() {
-        return id;
+    public String getGroup() {
+        return group;
     }
 
     /**
-     * @param id the id to set
+     * @param group the group to set
      */
-    public void setId(String id) {
-        this.id = id;
+    public void setGroup(String group) {
+        this.group = group;
     }
 
-    /**
-     * @return the name
-     */
-    public String getName() {
-        return name;
-    }
-
-    /**
-     * @param name the name to set
-     */
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    /**
-     * @return the fileNumber
-     */
-    public String getFileNumber() {
-        return fileNumber;
-    }
-
-    /**
-     * @param fileNumber the fileNumber to set
-     */
-    public void setFileNumber(String fileNumber) {
-        this.fileNumber = fileNumber;
-    }
-
-    /**
-     * @return the claimNumber
-     */
-    public String getClaimNumber() {
-        return claimNumber;
-    }
-
-    /**
-     * @param claimNumber the claimNumber to set
-     */
-    public void setClaimNumber(String claimNumber) {
-        this.claimNumber = claimNumber;
-    }
-
-    /**
-     * @return the claimValue
-     */
-    public float getClaimValue() {
-        return claimValue;
-    }
-
-    /**
-     * @param claimValue the claimValue to set
-     */
-    public void setClaimValue(float claimValue) {
-        this.claimValue = claimValue;
-    }
-
-    /**
-     * @return the archived
-     */
-    public short getArchived() {
-        return archived;
-    }
-
-    /**
-     * @param archived the archived to set
-     */
-    public void setArchived(short archived) {
-        this.archived = archived;
-    }
-
-    /**
-     * @return the notice
-     */
-    public String getNotice() {
-        return notice;
-    }
-
-    /**
-     * @param notice the notice to set
-     */
-    public void setNotice(String notice) {
-        this.notice = notice;
-    }
-
-    /**
-     * @return the lawyer
-     */
-    public String getLawyer() {
-        return lawyer;
-    }
-
-    /**
-     * @param lawyer the lawyer to set
-     */
-    public void setLawyer(String lawyer) {
-        this.lawyer = lawyer;
-    }
-
-    /**
-     * @return the assistant
-     */
-    public String getAssistant() {
-        return assistant;
-    }
-
-    /**
-     * @param assistant the assistant to set
-     */
-    public void setAssistant(String assistant) {
-        this.assistant = assistant;
-    }
-
-    /**
-     * @return the reason
-     */
-    public String getReason() {
-        return reason;
-    }
-
-    /**
-     * @param reason the reason to set
-     */
-    public void setReason(String reason) {
-        this.reason = reason;
-    }
-
-    /**
-     * @return the subjectField
-     */
-    public String getSubjectField() {
-        return subjectField;
-    }
-
-    /**
-     * @param subjectField the subjectField to set
-     */
-    public void setSubjectField(String subjectField) {
-        this.subjectField = subjectField;
-    }
-
-    /**
-     * @return the custom1
-     */
-    public String getCustom1() {
-        return custom1;
-    }
-
-    /**
-     * @param custom1 the custom1 to set
-     */
-    public void setCustom1(String custom1) {
-        this.custom1 = custom1;
-    }
-
-    /**
-     * @return the custom2
-     */
-    public String getCustom2() {
-        return custom2;
-    }
-
-    /**
-     * @param custom2 the custom2 to set
-     */
-    public void setCustom2(String custom2) {
-        this.custom2 = custom2;
-    }
-
-    /**
-     * @return the custom3
-     */
-    public String getCustom3() {
-        return custom3;
-    }
-
-    /**
-     * @param custom3 the custom3 to set
-     */
-    public void setCustom3(String custom3) {
-        this.custom3 = custom3;
-    }
+   
 
 }

@@ -5810,8 +5810,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
 
         aFile.setClaimValue(claimValueFloat);
-        //aFile.setDictateSign(this.cmbDictateSign.getSelectedItem().toString());
-        aFile.setFileNumber(this.txtFileNumber.getText());
+        //aFile.setFileNumberMain(this.txtFileNumber.getText());
         aFile.setName(this.txtName.getText());
         aFile.setNotice(this.txtNotice.getText());
 
@@ -6369,13 +6368,19 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
 
             String id = null;
+            String fileNumberMain=null;
+            String fileNumberExt=null;
             if (this.dto != null) {
                 id = this.dto.getId();
+                fileNumberMain=this.dto.getFileNumberMain();
+                fileNumberExt=this.dto.getFileNumberExtension();
             }
 
             this.dto = new ArchiveFileBean();
             if (id != null) {
                 this.dto.setId(id);
+                this.dto.setFileNumberMain(fileNumberMain);
+                this.dto.setFileNumberExtension(fileNumberExt);
             }
 
             this.fillDTO(this.dto, true);
@@ -6472,7 +6477,10 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 fileService.updateAllowedGroups(caseId, allowedGroups);
             }
 
-            this.lblHeaderInfo.setText(this.dto.getFileNumber() + " " + StringUtils.nonEmpty(this.dto.getName()) + " " + StringUtils.nonEmpty(this.dto.getReason()));
+            String fileNumber=fileService.getFileNumber(caseId);
+            
+            this.lblHeaderInfo.setText(fileNumber + " " + StringUtils.nonEmpty(this.dto.getName()) + " " + StringUtils.nonEmpty(this.dto.getReason()));
+            this.txtFileNumber.setText(fileNumber);
             //fileService.remove();
 
             // we need to update the search tables because they pass their cached DTOs to the editors

@@ -676,6 +676,7 @@ public class EndpointServiceLocator extends Application
         Set<Class<?>> s = new HashSet<Class<?>>();
         s.add(SecurityEndpointV1.class);
         s.add(CasesEndpointV1.class);
+        s.add(CasesEndpointV2.class);
         s.add(ContactsEndpointV1.class);
         s.add(FormsEndpointV1.class);
         return s;

@@ -776,6 +776,48 @@ public class CaseNumberGenerator {
         return next(allExisting, pattern, date, startFromIndex);
     }
     
+    public static String getExtension(boolean extension, String dividerMain, String dividerExt, boolean bPrefix, String prefix, boolean bSuffix, String suffix, boolean bUserAbbr, String userAbbr, boolean bGroupAbbr, String groupAbbr) throws Exception {
+        
+        if(extension) {
+            StringBuffer sb=new StringBuffer();
+            sb.append(dividerMain);
+            if(bPrefix) {
+                if(prefix==null || "".equals(prefix))
+                    throw new Exception("Es wird ein erweitertes Aktenzeichen mit Präfix verwendet, aber der Präfix ist leer!");
+                sb.append(prefix);
+                sb.append(dividerExt);
+            }
+            if(bUserAbbr) {
+                
+                if(userAbbr==null || "".equals(userAbbr))
+                    throw new Exception("Es wird ein erweitertes Aktenzeichen mit Anwaltskürzel verwendet, aber das Kürzel ist leer!");
+                
+                sb.append(userAbbr);
+                sb.append(dividerExt);
+            }
+            if(bGroupAbbr) {
+                if(groupAbbr==null || "".equals(groupAbbr))
+                    throw new Exception("Es wird ein erweitertes Aktenzeichen mit Gruppenkürzel verwendet, aber das Kürzel ist leer!");
+                
+                sb.append(groupAbbr);
+                sb.append(dividerExt);
+            }
+            if(bSuffix) {
+                if(suffix==null || "".equals(suffix))
+                    throw new Exception("Es wird ein erweitertes Aktenzeichen mit Suffix verwendet, aber das Suffix ist leer!");
+                
+                sb.append(suffix);
+                sb.append(dividerExt);
+            }
+            String result=sb.toString();
+            if(result.endsWith(dividerExt)) {
+                result=result.substring(0, result.length()-dividerExt.length());
+            }
+            return result;
+        }
+        return "";
+    }
+    
     private static synchronized String next(ArrayList<String> allExisting, String pattern, int startFromIndex) throws InvalidCaseNumberPatternException {
         return next(allExisting, pattern, new Date(), startFromIndex);
     }

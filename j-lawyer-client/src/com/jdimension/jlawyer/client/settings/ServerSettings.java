@@ -765,6 +765,16 @@ public class ServerSettings {
     public static final String SERVERCONF_CASENUMBERING_PATTERN="jlawyer.server.numbering.pattern";
     public static final String SERVERCONF_CASENUMBERING_STARTFROM="jlawyer.server.numbering.startfrom";
     
+    public static final String SERVERCONF_CASENUMBERING_EXT_ENABLED="jlawyer.server.numbering.ext.enabled";
+    public static final String SERVERCONF_CASENUMBERING_EXT_DIVIDER_MAIN="jlawyer.server.numbering.ext.divider.main";
+    public static final String SERVERCONF_CASENUMBERING_EXT_DIVIDER_EXT="jlawyer.server.numbering.ext.divider.ext";
+    public static final String SERVERCONF_CASENUMBERING_EXT_PREFIX_ENABLED="jlawyer.server.numbering.ext.prefix.enabled";
+    public static final String SERVERCONF_CASENUMBERING_EXT_PREFIX="jlawyer.server.numbering.ext.prefix";
+    public static final String SERVERCONF_CASENUMBERING_EXT_SUFFIX_ENABLED="jlawyer.server.numbering.ext.suffix.enabled";
+    public static final String SERVERCONF_CASENUMBERING_EXT_SUFFIX="jlawyer.server.numbering.ext.suffix";
+    public static final String SERVERCONF_CASENUMBERING_EXT_GROUP_ENABLED="jlawyer.server.numbering.ext.group.enabled";
+    public static final String SERVERCONF_CASENUMBERING_EXT_LAWYER_ENABLED="jlawyer.server.numbering.ext.lawyer.enabled";
+    
     public static final String SERVERCONF_SCANNER_SERVERDIR="jlawyer.server.observe.directory";
     
     public static final String DATA_CUSTOMFIELD_ADDRESS_PREFIX="data.customfields.address.";
@@ -816,6 +826,10 @@ public class ServerSettings {
     
     public boolean setSetting(String key, String value) {
         return this.mgmt.setSetting(key, value);
+    }
+    
+    public boolean setSettingAsBoolean(String key, boolean value) {
+        return this.mgmt.setSetting(key, "" + value);
     }
     
     public boolean hasSetting(String key) {

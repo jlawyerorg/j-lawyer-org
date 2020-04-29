@@ -682,7 +682,7 @@ import javax.xml.bind.annotation.XmlTransient;
     @NamedQuery(name = "ArchiveFileBean.findById", query = "SELECT a FROM ArchiveFileBean a WHERE a.id = :id"),
     @NamedQuery(name = "ArchiveFileBean.findByName", query = "SELECT a FROM ArchiveFileBean a WHERE a.name = :name"),
     @NamedQuery(name = "ArchiveFileBean.findByGroup", query = "SELECT a FROM ArchiveFileBean a WHERE a.group = :group"),
-    @NamedQuery(name = "ArchiveFileBean.findByFileNumber", query = "SELECT a FROM ArchiveFileBean a WHERE a.fileNumber = :fileNumber"),
+    @NamedQuery(name = "ArchiveFileBean.findByFileNumber", query = "SELECT a FROM ArchiveFileBean a WHERE a.fileNumberMain = :fileNumber"),
     @NamedQuery(name = "ArchiveFileBean.findByClaimNumber", query = "SELECT a FROM ArchiveFileBean a WHERE a.claimNumber = :claimNumber"),
     @NamedQuery(name = "ArchiveFileBean.findByClaimValue", query = "SELECT a FROM ArchiveFileBean a WHERE a.claimValue = :claimValue"),
     @NamedQuery(name = "ArchiveFileBean.findByArchived", query = "SELECT a FROM ArchiveFileBean a WHERE a.archived = :archived"),
@@ -698,7 +698,9 @@ public class ArchiveFileBean implements Serializable {
     @Column(name = "name")
     private String name;
     @Column(name = "fileNumber")
-    private String fileNumber;
+    private String fileNumberMain;
+    @Column(name = "filenumberext")
+    private String fileNumberExtension;
     @Column(name = "claimNumber")
     private String claimNumber;
     @Basic(optional = false)
@@ -766,12 +768,20 @@ public class ArchiveFileBean implements Serializable {
         this.name = name;
     }
 
+    public String getFileNumberMain() {
+        return fileNumberMain;
+    }
+    
     public String getFileNumber() {
-        return fileNumber;
+        if(this.fileNumberExtension!=null && this.fileNumberExtension.length()>0) {
+            return this.fileNumberMain + this.fileNumberExtension;
+        } else {
+            return this.fileNumberMain;
+        }
     }
 
-    public void setFileNumber(String fileNumber) {
-        this.fileNumber = fileNumber;
+    public void setFileNumberMain(String fileNumber) {
+        this.fileNumberMain = fileNumber;
     }
 
     public String getClaimNumber() {
@@ -1069,6 +1079,20 @@ public class ArchiveFileBean implements Serializable {
      */
     public void setGroup(Group group) {
         this.group = group;
+    }
+
+    /**
+     * @return the fileNumberExtension
+     */
+    public String getFileNumberExtension() {
+        return fileNumberExtension;
+    }
+
+    /**
+     * @param fileNumberExtension the fileNumberExtension to set
+     */
+    public void setFileNumberExtension(String fileNumberExtension) {
+        this.fileNumberExtension = fileNumberExtension;
     }
     
 }

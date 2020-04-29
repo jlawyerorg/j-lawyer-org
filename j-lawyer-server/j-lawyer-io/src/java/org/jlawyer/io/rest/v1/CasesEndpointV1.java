@@ -892,7 +892,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
     
     
     /**
-     * Updates an existing case based on its ID
+     * Updates an existing case based on its ID. The file number is immutable. 
      *
      * @param caseData case data
      * @response 401 User not authorized
@@ -922,6 +922,10 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
                 Response res = Response.serverError().build();
                 return res;
             }
+            Collection reviews=cases.getReviews(caseData.getId());
+            currentCase.setArchiveFileReviewsBeanList((List<ArchiveFileReviewsBean>)reviews);
+            List<ArchiveFileAddressesBean> adds=cases.getInvolvementDetailsForCase(caseData.getId());
+            currentCase.setArchiveFileAddressesBeanList(adds);
             // file number must not be changed
 
             currentCase.setArchived(caseData.getArchived());
@@ -943,7 +947,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
             Response res = Response.ok(RestfulCaseV1.fromArchiveFileBean(currentCase)).build();
             return res;
         } catch (Exception ex) {
-            log.error("can not create new case " + caseData.getName(), ex);
+            log.error("can not update case " + caseData.getName(), ex);
             Response res = Response.serverError().build();
             return res;
         }

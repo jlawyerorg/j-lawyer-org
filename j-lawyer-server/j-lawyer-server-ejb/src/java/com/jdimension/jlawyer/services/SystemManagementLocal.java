@@ -663,6 +663,7 @@
  */
 package com.jdimension.jlawyer.services;
 
+import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.PartyTypeBean;
 import com.jdimension.jlawyer.server.services.MonitoringSnapshot;
 import java.util.Collection;
@@ -687,4 +688,6 @@ public interface SystemManagementLocal {
     Collection<PartyTypeBean> getPartyTypes();
 
     PartyTypeBean getPartyType(String id);
+    
+    AppUserBean getUser(String principalId);
 }

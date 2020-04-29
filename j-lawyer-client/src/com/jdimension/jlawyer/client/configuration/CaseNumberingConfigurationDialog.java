@@ -669,6 +669,7 @@ import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.event.ItemEvent;
 import javax.swing.DefaultListModel;
 import javax.swing.JOptionPane;
+import themes.colors.DefaultColorTheme;
 
 /**
  *
@@ -684,6 +685,7 @@ public class CaseNumberingConfigurationDialog extends javax.swing.JDialog {
     public CaseNumberingConfigurationDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
+        this.lblHint.setForeground(DefaultColorTheme.COLOR_LOGO_RED);
         
         this.lstPreview.setModel(new DefaultListModel());
         
@@ -706,6 +708,17 @@ public class CaseNumberingConfigurationDialog extends javax.swing.JDialog {
         this.txtStartFrom.setText(startFrom);
         
         this.selectePattern=pattern;
+        
+        this.chkExtension.setSelected(set.getSettingAsBoolean(ServerSettings.SERVERCONF_CASENUMBERING_EXT_ENABLED, false));
+        this.txtDividerMain.setText(set.getSetting(ServerSettings.SERVERCONF_CASENUMBERING_EXT_DIVIDER_MAIN, ""));
+        this.txtDividerExt.setText(set.getSetting(ServerSettings.SERVERCONF_CASENUMBERING_EXT_DIVIDER_EXT, ""));
+        this.chkExtPrefix.setSelected(set.getSettingAsBoolean(ServerSettings.SERVERCONF_CASENUMBERING_EXT_PREFIX_ENABLED, false));
+        this.txtExtPrefix.setText(set.getSetting(ServerSettings.SERVERCONF_CASENUMBERING_EXT_PREFIX, ""));
+        this.chkExtSuffix.setSelected(set.getSettingAsBoolean(ServerSettings.SERVERCONF_CASENUMBERING_EXT_SUFFIX_ENABLED, false));
+        this.txtExtSuffix.setText(set.getSetting(ServerSettings.SERVERCONF_CASENUMBERING_EXT_SUFFIX, ""));
+        this.chkExtUserAbbrev.setSelected(set.getSettingAsBoolean(ServerSettings.SERVERCONF_CASENUMBERING_EXT_GROUP_ENABLED, false));
+        this.chkExtGroupAbbrev.setSelected(set.getSettingAsBoolean(ServerSettings.SERVERCONF_CASENUMBERING_EXT_LAWYER_ENABLED, false));
+        
         this.updatePreview();
         
         
@@ -737,7 +750,7 @@ public class CaseNumberingConfigurationDialog extends javax.swing.JDialog {
         ClientSettings settings = ClientSettings.getInstance();
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            String[] preview = locator.lookupArchiveFileServiceRemote().previewCaseNumbering(this.selectePattern, start);
+            String[] preview = locator.lookupArchiveFileServiceRemote().previewCaseNumbering(this.selectePattern, start,this.chkExtension.isSelected(), this.txtDividerMain.getText(), this.txtDividerExt.getText(), this.chkExtPrefix.isSelected(), this.txtExtPrefix.getText(), this.chkExtSuffix.isSelected(), this.txtExtSuffix.getText(), this.chkExtUserAbbrev.isSelected(), this.chkExtGroupAbbrev.isSelected());
             
             for(String p: preview) {
                 dm.addElement(p);
@@ -762,24 +775,68 @@ public class CaseNumberingConfigurationDialog extends javax.swing.JDialog {
     private void initComponents() {
 
         caseNumberPattern = new javax.swing.ButtonGroup();
-        jLabel1 = new javax.swing.JLabel();
-        opt_nnnnnYY = new javax.swing.JRadioButton();
-        opt_NNNNNYYYY = new javax.swing.JRadioButton();
         cmdCancel = new javax.swing.JButton();
         cmdSave = new javax.swing.JButton();
         jLabel5 = new javax.swing.JLabel();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        lstPreview = new javax.swing.JList<>();
+        lblError = new javax.swing.JLabel();
+        jPanel1 = new javax.swing.JPanel();
+        jLabel1 = new javax.swing.JLabel();
+        opt_nnnnnYY = new javax.swing.JRadioButton();
+        opt_NNNNNYYYY = new javax.swing.JRadioButton();
         opt_YYMMDDRRRRR = new javax.swing.JRadioButton();
         opt_CCCCC = new javax.swing.JRadioButton();
         opt_custom = new javax.swing.JRadioButton();
         txtCustom = new javax.swing.JTextField();
-        jScrollPane1 = new javax.swing.JScrollPane();
-        lstPreview = new javax.swing.JList<>();
-        txtStartFrom = new javax.swing.JTextField();
         jLabel2 = new javax.swing.JLabel();
-        lblError = new javax.swing.JLabel();
+        txtStartFrom = new javax.swing.JTextField();
+        jPanel2 = new javax.swing.JPanel();
+        chkExtension = new javax.swing.JCheckBox();
+        jLabel3 = new javax.swing.JLabel();
+        txtDividerMain = new javax.swing.JTextField();
+        jLabel4 = new javax.swing.JLabel();
+        txtDividerExt = new javax.swing.JTextField();
+        chkExtPrefix = new javax.swing.JCheckBox();
+        chkExtUserAbbrev = new javax.swing.JCheckBox();
+        chkExtGroupAbbrev = new javax.swing.JCheckBox();
+        chkExtSuffix = new javax.swing.JCheckBox();
+        txtExtPrefix = new javax.swing.JTextField();
+        txtExtSuffix = new javax.swing.JTextField();
+        lblHint = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Aktenzeichen-Einstellungen");
+
+        cmdCancel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png"))); // NOI18N
+        cmdCancel.setText("Schliessen");
+        cmdCancel.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdCancelActionPerformed(evt);
+            }
+        });
+
+        cmdSave.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/filesave.png"))); // NOI18N
+        cmdSave.setText("Speichern");
+        cmdSave.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdSaveActionPerformed(evt);
+            }
+        });
+
+        jLabel5.setText("Vorschau:");
+
+        lstPreview.setModel(new javax.swing.AbstractListModel<String>() {
+            String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" };
+            public int getSize() { return strings.length; }
+            public String getElementAt(int i) { return strings[i]; }
+        });
+        jScrollPane1.setViewportView(lstPreview);
+
+        lblError.setForeground(new java.awt.Color(204, 51, 0));
+        lblError.setText(" ");
+
+        jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder("Aktenzeichen"));
 
         jLabel1.setText("Schema:");
 
@@ -800,24 +857,6 @@ public class CaseNumberingConfigurationDialog extends javax.swing.JDialog {
                 opt_NNNNNYYYYItemStateChanged(evt);
             }
         });
-
-        cmdCancel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png"))); // NOI18N
-        cmdCancel.setText("Schliessen");
-        cmdCancel.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdCancelActionPerformed(evt);
-            }
-        });
-
-        cmdSave.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/filesave.png"))); // NOI18N
-        cmdSave.setText("Speichern");
-        cmdSave.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdSaveActionPerformed(evt);
-            }
-        });
-
-        jLabel5.setText("Vorschau:");
 
         caseNumberPattern.add(opt_YYMMDDRRRRR);
         opt_YYMMDDRRRRR.setText("YYMMDD/RRRRR (2-stellige Jahreszahl, Monat, Tag, 5-stellige Zufallszahl)");
@@ -856,12 +895,7 @@ public class CaseNumberingConfigurationDialog extends javax.swing.JDialog {
             }
         });
 
-        lstPreview.setModel(new javax.swing.AbstractListModel<String>() {
-            String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" };
-            public int getSize() { return strings.length; }
-            public String getElementAt(int i) { return strings[i]; }
-        });
-        jScrollPane1.setViewportView(lstPreview);
+        jLabel2.setText("Start:");
 
         txtStartFrom.setText("1");
         txtStartFrom.addKeyListener(new java.awt.event.KeyAdapter() {
@@ -873,55 +907,38 @@ public class CaseNumberingConfigurationDialog extends javax.swing.JDialog {
             }
         });
 
-        jLabel2.setText("Start:");
-
-        lblError.setForeground(new java.awt.Color(204, 51, 0));
-        lblError.setText(" ");
-
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
-        getContentPane().setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addContainerGap()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addGap(11, 11, 11)
-                                .addComponent(jLabel1))
-                            .addComponent(jLabel2)
-                            .addComponent(jLabel5, javax.swing.GroupLayout.PREFERRED_SIZE, 71, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                                    .addGroup(layout.createSequentialGroup()
-                                        .addComponent(opt_custom)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(txtCustom))
-                                    .addComponent(opt_CCCCC, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                    .addComponent(opt_YYMMDDRRRRR, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                    .addComponent(opt_NNNNNYYYY, javax.swing.GroupLayout.DEFAULT_SIZE, 720, Short.MAX_VALUE)
-                                    .addComponent(txtStartFrom))
-                                .addGap(0, 0, Short.MAX_VALUE))
-                            .addComponent(opt_nnnnnYY, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(jScrollPane1)))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addGap(95, 95, 95)
-                        .addComponent(lblError, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addGap(0, 0, Short.MAX_VALUE)
-                        .addComponent(cmdSave)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(cmdCancel)))
-                .addContainerGap())
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
+        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
+        jPanel1.setLayout(jPanel1Layout);
+        jPanel1Layout.setHorizontalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addGap(11, 11, 11)
+                        .addComponent(jLabel1))
+                    .addComponent(jLabel2))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(opt_nnnnnYY, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addGroup(jPanel1Layout.createSequentialGroup()
+                                .addComponent(opt_custom)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(txtCustom))
+                            .addComponent(opt_CCCCC, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(opt_YYMMDDRRRRR, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(opt_NNNNNYYYY, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(txtStartFrom, javax.swing.GroupLayout.PREFERRED_SIZE, 720, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGap(0, 0, Short.MAX_VALUE)))
+                .addGap(4, 4, 4))
+        );
+        jPanel1Layout.setVerticalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel1)
                     .addComponent(opt_nnnnnYY))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -931,24 +948,206 @@ public class CaseNumberingConfigurationDialog extends javax.swing.JDialog {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(opt_CCCCC)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(opt_custom)
                     .addComponent(txtCustom, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(txtStartFrom, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel2))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+
+        jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder("Erweiterung"));
+
+        chkExtension.setText("Aktenzeichen um weitere Angaben erweitern");
+        chkExtension.addItemListener(new java.awt.event.ItemListener() {
+            public void itemStateChanged(java.awt.event.ItemEvent evt) {
+                chkExtensionItemStateChanged(evt);
+            }
+        });
+        chkExtension.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                chkExtensionActionPerformed(evt);
+            }
+        });
+
+        jLabel3.setText("Erweiterung trennen durch:");
+
+        txtDividerMain.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyReleased(java.awt.event.KeyEvent evt) {
+                txtDividerMainKeyReleased(evt);
+            }
+        });
+
+        jLabel4.setText("Erweiterungsfelder trennen durch:");
+
+        txtDividerExt.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyReleased(java.awt.event.KeyEvent evt) {
+                txtDividerExtKeyReleased(evt);
+            }
+        });
+
+        chkExtPrefix.setText("fixe Angabe (Präfix):");
+        chkExtPrefix.addItemListener(new java.awt.event.ItemListener() {
+            public void itemStateChanged(java.awt.event.ItemEvent evt) {
+                chkExtPrefixItemStateChanged(evt);
+            }
+        });
+        chkExtPrefix.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                chkExtPrefixActionPerformed(evt);
+            }
+        });
+
+        chkExtUserAbbrev.setText("Anwaltskürzel");
+        chkExtUserAbbrev.addItemListener(new java.awt.event.ItemListener() {
+            public void itemStateChanged(java.awt.event.ItemEvent evt) {
+                chkExtUserAbbrevItemStateChanged(evt);
+            }
+        });
+
+        chkExtGroupAbbrev.setText("Gruppenkürzel");
+        chkExtGroupAbbrev.addItemListener(new java.awt.event.ItemListener() {
+            public void itemStateChanged(java.awt.event.ItemEvent evt) {
+                chkExtGroupAbbrevItemStateChanged(evt);
+            }
+        });
+
+        chkExtSuffix.setText("fixe Angabe (Suffix):");
+        chkExtSuffix.addItemListener(new java.awt.event.ItemListener() {
+            public void itemStateChanged(java.awt.event.ItemEvent evt) {
+                chkExtSuffixItemStateChanged(evt);
+            }
+        });
+        chkExtSuffix.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                chkExtSuffixActionPerformed(evt);
+            }
+        });
+
+        txtExtPrefix.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyReleased(java.awt.event.KeyEvent evt) {
+                txtExtPrefixKeyReleased(evt);
+            }
+        });
+
+        txtExtSuffix.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyReleased(java.awt.event.KeyEvent evt) {
+                txtExtSuffixKeyReleased(evt);
+            }
+        });
+
+        lblHint.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        lblHint.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
+        lblHint.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/info.png"))); // NOI18N
+        lblHint.setText("Hinweise");
+        lblHint.setToolTipText("<html>\n<b>Hinweise:</b>\nBei Aktivierung der AZ-Erweiterung <b><i>m&uuml;ssen</i></b> die in der Erweiterung<br/>\ngew&uuml;nschten Daten zwingend vorhanden sein, um eine Akte anlegen oder speichern zu<br/>\nkönnen. Stellen Sie also bspw. sicher, dass jeder Nutzer in der Nutzerverwaltung ein K&uuml;rzel hat, <br/>\nund dass neue und veränderte Akten eine Eigentümergruppe haben.\n</html>");
+
+        javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
+        jPanel2.setLayout(jPanel2Layout);
+        jPanel2Layout.setHorizontalGroup(
+            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel2Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel2Layout.createSequentialGroup()
+                        .addGap(21, 21, 21)
+                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabel4)
+                            .addComponent(jLabel3)
+                            .addComponent(chkExtPrefix)
+                            .addComponent(chkExtUserAbbrev)
+                            .addComponent(chkExtGroupAbbrev)
+                            .addComponent(chkExtSuffix))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(txtExtSuffix)
+                            .addComponent(txtExtPrefix)
+                            .addComponent(txtDividerExt)
+                            .addComponent(txtDividerMain)))
+                    .addComponent(chkExtension))
+                .addGap(368, 368, 368)
+                .addComponent(lblHint)
+                .addContainerGap())
+        );
+        jPanel2Layout.setVerticalGroup(
+            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel2Layout.createSequentialGroup()
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel2Layout.createSequentialGroup()
+                        .addContainerGap()
+                        .addComponent(chkExtension))
+                    .addComponent(lblHint))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel5)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 124, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel3)
+                    .addComponent(txtDividerMain, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(lblError)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel4)
+                    .addComponent(txtDividerExt, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(chkExtPrefix)
+                    .addComponent(txtExtPrefix, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(chkExtUserAbbrev)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(chkExtGroupAbbrev)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(chkExtSuffix)
+                    .addComponent(txtExtSuffix, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
+        getContentPane().setLayout(layout);
+        layout.setHorizontalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(cmdSave)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(cmdCancel))
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(jLabel5, javax.swing.GroupLayout.PREFERRED_SIZE, 71, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 746, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(lblError, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addGap(0, 0, Short.MAX_VALUE))))
+        );
+        layout.setVerticalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(92, 92, 92)
+                        .addComponent(lblError))
+                    .addGroup(layout.createSequentialGroup()
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabel5)
+                            .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 124, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(cmdCancel)
                     .addComponent(cmdSave))
-                .addContainerGap())
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         pack();
@@ -973,6 +1172,16 @@ public class CaseNumberingConfigurationDialog extends javax.swing.JDialog {
         }
         
         set.setSetting(ServerSettings.SERVERCONF_CASENUMBERING_STARTFROM, ""+start);
+        
+        set.setSettingAsBoolean(ServerSettings.SERVERCONF_CASENUMBERING_EXT_ENABLED, this.chkExtension.isSelected());
+        set.setSetting(ServerSettings.SERVERCONF_CASENUMBERING_EXT_DIVIDER_MAIN, this.txtDividerMain.getText());
+        set.setSetting(ServerSettings.SERVERCONF_CASENUMBERING_EXT_DIVIDER_EXT, this.txtDividerExt.getText());
+        set.setSettingAsBoolean(ServerSettings.SERVERCONF_CASENUMBERING_EXT_PREFIX_ENABLED, this.chkExtPrefix.isSelected());
+        set.setSetting(ServerSettings.SERVERCONF_CASENUMBERING_EXT_PREFIX, this.txtExtPrefix.getText());
+        set.setSettingAsBoolean(ServerSettings.SERVERCONF_CASENUMBERING_EXT_SUFFIX_ENABLED, this.chkExtSuffix.isSelected());
+        set.setSetting(ServerSettings.SERVERCONF_CASENUMBERING_EXT_SUFFIX, this.txtExtSuffix.getText());
+        set.setSettingAsBoolean(ServerSettings.SERVERCONF_CASENUMBERING_EXT_GROUP_ENABLED, this.chkExtUserAbbrev.isSelected());
+        set.setSettingAsBoolean(ServerSettings.SERVERCONF_CASENUMBERING_EXT_LAWYER_ENABLED, this.chkExtGroupAbbrev.isSelected());
         
         
         this.setVisible(false);
@@ -1052,6 +1261,64 @@ public class CaseNumberingConfigurationDialog extends javax.swing.JDialog {
         this.updatePreview();
     }//GEN-LAST:event_txtStartFromKeyReleased
 
+    private void chkExtPrefixActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkExtPrefixActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_chkExtPrefixActionPerformed
+
+    private void chkExtSuffixActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkExtSuffixActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_chkExtSuffixActionPerformed
+
+    private void chkExtensionItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_chkExtensionItemStateChanged
+        this.chkExtGroupAbbrev.setEnabled(this.chkExtension.isSelected());
+        this.chkExtPrefix.setEnabled(this.chkExtension.isSelected());
+        this.chkExtSuffix.setEnabled(this.chkExtension.isSelected());
+        this.chkExtUserAbbrev.setEnabled(this.chkExtension.isSelected());
+        this.txtDividerExt.setEnabled(this.chkExtension.isSelected());
+        this.txtDividerMain.setEnabled(this.chkExtension.isSelected());
+        this.txtExtPrefix.setEnabled(this.chkExtension.isSelected());
+        this.txtExtSuffix.setEnabled(this.chkExtension.isSelected());
+        
+        this.updatePreview();
+        
+    }//GEN-LAST:event_chkExtensionItemStateChanged
+
+    private void chkExtensionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkExtensionActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_chkExtensionActionPerformed
+
+    private void txtDividerMainKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtDividerMainKeyReleased
+        this.updatePreview();
+    }//GEN-LAST:event_txtDividerMainKeyReleased
+
+    private void txtDividerExtKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtDividerExtKeyReleased
+        this.updatePreview();
+    }//GEN-LAST:event_txtDividerExtKeyReleased
+
+    private void txtExtPrefixKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtExtPrefixKeyReleased
+        this.updatePreview();
+    }//GEN-LAST:event_txtExtPrefixKeyReleased
+
+    private void txtExtSuffixKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtExtSuffixKeyReleased
+        this.updatePreview();
+    }//GEN-LAST:event_txtExtSuffixKeyReleased
+
+    private void chkExtPrefixItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_chkExtPrefixItemStateChanged
+        this.updatePreview();
+    }//GEN-LAST:event_chkExtPrefixItemStateChanged
+
+    private void chkExtUserAbbrevItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_chkExtUserAbbrevItemStateChanged
+        this.updatePreview();
+    }//GEN-LAST:event_chkExtUserAbbrevItemStateChanged
+
+    private void chkExtGroupAbbrevItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_chkExtGroupAbbrevItemStateChanged
+        this.updatePreview();
+    }//GEN-LAST:event_chkExtGroupAbbrevItemStateChanged
+
+    private void chkExtSuffixItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_chkExtSuffixItemStateChanged
+        this.updatePreview();
+    }//GEN-LAST:event_chkExtSuffixItemStateChanged
+
     /**
      * @param args the command line arguments
      */
@@ -1104,13 +1371,23 @@ public class CaseNumberingConfigurationDialog extends javax.swing.JDialog {
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.ButtonGroup caseNumberPattern;
+    private javax.swing.JCheckBox chkExtGroupAbbrev;
+    private javax.swing.JCheckBox chkExtPrefix;
+    private javax.swing.JCheckBox chkExtSuffix;
+    private javax.swing.JCheckBox chkExtUserAbbrev;
+    private javax.swing.JCheckBox chkExtension;
     private javax.swing.JButton cmdCancel;
     private javax.swing.JButton cmdSave;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel jLabel3;
+    private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
+    private javax.swing.JPanel jPanel1;
+    private javax.swing.JPanel jPanel2;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JLabel lblError;
+    private javax.swing.JLabel lblHint;
     private javax.swing.JList<String> lstPreview;
     private javax.swing.JRadioButton opt_CCCCC;
     private javax.swing.JRadioButton opt_NNNNNYYYY;
@@ -1118,6 +1395,10 @@ public class CaseNumberingConfigurationDialog extends javax.swing.JDialog {
     private javax.swing.JRadioButton opt_custom;
     private javax.swing.JRadioButton opt_nnnnnYY;
     private javax.swing.JTextField txtCustom;
+    private javax.swing.JTextField txtDividerExt;
+    private javax.swing.JTextField txtDividerMain;
+    private javax.swing.JTextField txtExtPrefix;
+    private javax.swing.JTextField txtExtSuffix;
     private javax.swing.JTextField txtStartFrom;
     // End of variables declaration//GEN-END:variables
 }

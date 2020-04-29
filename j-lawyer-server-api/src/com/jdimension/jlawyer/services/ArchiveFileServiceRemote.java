@@ -767,7 +767,7 @@ public interface ArchiveFileServiceRemote {
 
     List<ArchiveFileBean> getLastChanged(int limit);
 
-    String[] previewCaseNumbering(String pattern, int startFrom) throws Exception;
+    String[] previewCaseNumbering(String pattern, int startFrom, boolean extension, String dividerMain, String dividerExt, boolean bPrefix, String prefix, boolean bSuffix, String suffix, boolean userAbbr, boolean groupAbbr) throws Exception;
 
     Collection<ArchiveFileBean> getAllWithMissingReviews();
 
@@ -806,5 +806,7 @@ public interface ArchiveFileServiceRemote {
     List<ArchiveFileGroupsBean> getAllowedGroups(String caseId) throws Exception;
 
     void updateAllowedGroups(String caseId, Collection<Group> allowedGroups) throws Exception;
+
+    String getFileNumber(String id);
 
 }
