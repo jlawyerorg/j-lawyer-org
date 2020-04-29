@@ -849,6 +849,11 @@ public class PdfImagePanel extends javax.swing.JPanel implements PreviewPanel {
                 if (content.length > 5000000) {
                     log.info("Rendering large PDF " + this.fileName + " with " + content.length + " bytes.");
                 }
+                if (content.length > 15000000) {
+                    log.info("Skipping rendering of very large PDF " + this.fileName + " with " + content.length + " bytes.");
+                    this.showStatus("PDF-Dokument ist zu groß für eine Vorschau.");
+                    return;
+                }
             }
                         
             //File PDF_Path = new File("/home/jens/j-lawyer-vorlage.pdf");
