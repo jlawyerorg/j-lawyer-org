@@ -3483,7 +3483,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                     this.mnuOpenInExternalMailer.setEnabled(true);
                 }
 
-                if (value.getName().toLowerCase().endsWith(".odt") || value.getName().toLowerCase().endsWith(".ods")) {
+                if (value.getName().toLowerCase().endsWith(".odt") || value.getName().toLowerCase().endsWith(".ods") || value.getName().toLowerCase().endsWith(".docx")) {
                     this.mnuUseDocumentAsTemplate.setEnabled(true);
                 } else {
                     this.mnuUseDocumentAsTemplate.setEnabled(false);
