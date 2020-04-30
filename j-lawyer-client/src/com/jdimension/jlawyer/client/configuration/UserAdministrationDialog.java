@@ -1383,6 +1383,11 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         jLabel18.setText("Primäre Gruppe:");
 
         cmbPrimaryGroup.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+        cmbPrimaryGroup.addItemListener(new java.awt.event.ItemListener() {
+            public void itemStateChanged(java.awt.event.ItemEvent evt) {
+                cmbPrimaryGroupItemStateChanged(evt);
+            }
+        });
 
         jLabel19.setText("Mitglied in:");
 
@@ -1948,6 +1953,27 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
             }
         }
     }//GEN-LAST:event_tblGroupsMouseClicked
+
+    private void cmbPrimaryGroupItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cmbPrimaryGroupItemStateChanged
+        
+        
+        Object selectedGroup=this.cmbPrimaryGroup.getSelectedItem();
+        if(selectedGroup==null)
+            return;
+        if(!(selectedGroup instanceof Group))
+            return;
+        
+        Group selection=(Group)selectedGroup;
+        
+        
+        
+        for(int i=0;i<this.tblGroups.getRowCount();i++) {
+            Group tableGroup=(Group)this.tblGroups.getValueAt(i, 1);
+            if(tableGroup.equals(selection)) {
+                this.tblGroups.setValueAt(true, i, 0);
+            }
+        }
+    }//GEN-LAST:event_cmbPrimaryGroupItemStateChanged
 
     private List<AppRoleBean> getRolesFromUI(String principalId) {
         List<AppRoleBean> result = new ArrayList<AppRoleBean>();
