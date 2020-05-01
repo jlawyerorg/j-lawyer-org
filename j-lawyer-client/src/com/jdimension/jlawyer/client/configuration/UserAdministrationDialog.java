@@ -1973,6 +1973,25 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 this.tblGroups.setValueAt(true, i, 0);
             }
         }
+        
+        AppUserBean u = (AppUserBean) this.lstUsers.getSelectedValue();
+        if (u == null) {
+            return;
+        }
+
+        ClientSettings settings = ClientSettings.getInstance();
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            SecurityServiceRemote svc = locator.lookupSecurityServiceRemote();
+            svc.addUserToGroup(u.getPrincipalId(), selection.getId());
+
+        } catch (Exception ex) {
+            log.error("Error updating group membership", ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim Speichern: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            EditorsRegistry.getInstance().clearStatus();
+            return;
+        }
+        
     }//GEN-LAST:event_cmbPrimaryGroupItemStateChanged
 
     private List<AppRoleBean> getRolesFromUI(String principalId) {
