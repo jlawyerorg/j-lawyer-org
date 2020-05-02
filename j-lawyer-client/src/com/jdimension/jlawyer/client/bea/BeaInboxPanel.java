@@ -2410,7 +2410,8 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                             try {
                                 refreshFolders(true);
                             } catch (Throwable t) {
-                                t.printStackTrace();
+                                log.error(t);
+                                ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), t.getMessage(), "Fehler");
                             }
                         }
 
