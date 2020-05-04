@@ -743,7 +743,13 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
             ArrayList<String> ids = cases.getAllArchiveFileIds();
             ArrayList<RestfulCaseOverviewV1> rcoList = new ArrayList<RestfulCaseOverviewV1>();
             for (String id : ids) {
-                ArchiveFileBean afb = cases.getArchiveFile(id);
+                ArchiveFileBean afb=null;
+                try {
+                    afb = cases.getArchiveFile(id);
+                } catch (Throwable t) {
+                    log.error("Case not accessible: " + id, t);
+                    continue;
+                }
                 RestfulCaseOverviewV1 rco = new RestfulCaseOverviewV1();
                 rco.setId(id);
                 rco.setName(afb.getName());
