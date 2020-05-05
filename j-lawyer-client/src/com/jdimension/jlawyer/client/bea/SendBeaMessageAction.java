@@ -816,7 +816,7 @@ public class SendBeaMessageAction extends ProgressableAction {
         ProcessCard p = sentMessage.getProcessCard();
         boolean containsEgvpRecipient = false;
         for (String s : recipients) {
-            boolean egvp = BeaAccess.isEgvpPostBox(s);
+            boolean egvp = BeaAccess.isEgvpPostBoxBySafeId(s);
             if (egvp) {
                 containsEgvpRecipient = true;
                 break;

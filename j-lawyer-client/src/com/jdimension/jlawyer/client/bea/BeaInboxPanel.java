@@ -2708,10 +2708,10 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                             log.error(t);
                         }
 
-                        if (mh.getSender().equals(inbox.getSafeId()) || mh.getSender().equals(senderName)) {
-                            ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Ein eEB kann nicht für selbst verschickte Nachrichten abgegeben werden.", "Fehler");
-                            return false;
-                        }
+//                        if (mh.getSender().equals(inbox.getSafeId()) || mh.getSender().equals(senderName)) {
+//                            ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Ein eEB kann nicht für selbst verschickte Nachrichten abgegeben werden.", "Fehler");
+//                            return false;
+//                        }
                     }
                 }
 
@@ -2740,7 +2740,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                 ArrayList<String> recipients = new ArrayList<String>();
                 recipients.add(m.getSenderSafeId());
 
-                long sentMessageId = BeaAccess.getInstance().sendEebConfirmation(m, senderSafeId, recipients, abgabeDate);
+                Message sentMessage = BeaAccess.getInstance().sendEebConfirmation(m, senderSafeId, recipients, abgabeDate);
 
                 return true;
 
@@ -2791,10 +2791,10 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                             log.error(t);
                         }
 
-                        if (mh.getSender().equals(inbox.getSafeId()) || mh.getSender().equals(senderName)) {
-                            ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Ein eEB kann nicht für selbst verschickte Nachrichten verweigert werden.", "Fehler");
-                            return false;
-                        }
+//                        if (mh.getSender().equals(inbox.getSafeId()) || mh.getSender().equals(senderName)) {
+//                            ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Ein eEB kann nicht für selbst verschickte Nachrichten verweigert werden.", "Fehler");
+//                            return false;
+//                        }
                     }
                 }
 
@@ -2816,7 +2816,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                 ArrayList<String> recipients = new ArrayList<String>();
                 recipients.add(m.getSenderSafeId());
 
-                long sentMessageId = BeaAccess.getInstance().sendEebRejection(m, senderSafeId, recipients, code, comment);
+                Message sentMessage = BeaAccess.getInstance().sendEebRejection(m, senderSafeId, recipients, code, comment);
 
                 return true;
 

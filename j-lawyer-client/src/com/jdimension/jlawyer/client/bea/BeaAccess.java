@@ -855,8 +855,12 @@ public class BeaAccess {
         return instance;
     }
     
-    public static boolean isEgvpPostBox(String safeId) {
-        return BeaWrapper.isEgvpPostBox(safeId);
+    public static boolean isEgvpPostBoxBySafeId(String safeId) {
+        return BeaWrapper.isEgvpPostBoxBySafeId(safeId);
+    }
+    
+    public static boolean isEgvpPostBoxByUserName(String userName) {
+        return BeaWrapper.isEgvpPostBoxByUserName(userName);
     }
 
     public static boolean isBeaEnabled() {
@@ -1092,12 +1096,12 @@ public class BeaAccess {
         return BeaWrapper.exportMessage(msg);
     }
 
-    public long sendMessage(Message msg, String senderSafeId, ArrayList<String> recipientSafeIds, BeaListItem authority) throws BeaWrapperException {
-        this.checkValidBeaClient();
-        // todo: need to only remove folder overview for sent folder
-        this.folderOverviewCache.clear();
-        return this.wrapper.sendMessage(msg, senderSafeId, recipientSafeIds, authority);
-    }
+//    public long sendMessage(Message msg, String senderSafeId, ArrayList<String> recipientSafeIds, BeaListItem authority) throws BeaWrapperException {
+//        this.checkValidBeaClient();
+//        // todo: need to only remove folder overview for sent folder
+//        this.folderOverviewCache.clear();
+//        return this.wrapper.sendMessage(msg, senderSafeId, recipientSafeIds, authority);
+//    }
     
     public Message sendAndRetrieveMessage(Message msg, String senderSafeId, ArrayList<String> recipientSafeIds, BeaListItem authority) throws BeaWrapperException {
         this.checkValidBeaClient();
@@ -1117,13 +1121,13 @@ public class BeaAccess {
         return this.wrapper.saveMessageToDrafts(msg, senderSafeId, recipientSafeIds, authority);
     }
 
-    public long sendEebConfirmation(Message incomingMessage, String senderSafeId, ArrayList<String> recipientSafeIds, Date abgabeDate) throws BeaWrapperException {
+    public Message sendEebConfirmation(Message incomingMessage, String senderSafeId, ArrayList<String> recipientSafeIds, Date abgabeDate) throws BeaWrapperException {
         this.checkValidBeaClient();
         this.folderOverviewCache.clear();
         return this.wrapper.sendEebConfirmation(incomingMessage, senderSafeId, recipientSafeIds, abgabeDate);
     }
 
-    public long sendEebRejection(Message incomingMessage, String senderSafeId, ArrayList<String> recipientSafeIds, String code, String comment) throws BeaWrapperException {
+    public Message sendEebRejection(Message incomingMessage, String senderSafeId, ArrayList<String> recipientSafeIds, String code, String comment) throws BeaWrapperException {
         this.checkValidBeaClient();
         this.folderOverviewCache.clear();
         return this.wrapper.sendEebRejection(incomingMessage, senderSafeId, recipientSafeIds, code, comment);
