@@ -2185,9 +2185,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         chkArchived.setText("archivierte Akte");
         chkArchived.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 0, 0, 0));
         chkArchived.setMargin(new java.awt.Insets(0, 0, 0, 0));
-        chkArchived.addItemListener(new java.awt.event.ItemListener() {
-            public void itemStateChanged(java.awt.event.ItemEvent evt) {
-                chkArchivedItemStateChanged(evt);
+        chkArchived.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                chkArchivedActionPerformed(evt);
             }
         });
 
@@ -3692,6 +3692,13 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             try {
                 ArchiveFileBean printFile = new ArchiveFileBean();
                 this.fillDTO(printFile, true);
+                if(this.dto!=null) {
+                    printFile.setFileNumberExtension(this.dto.getFileNumberExtension());
+                    printFile.setFileNumberMain(this.dto.getFileNumberMain());
+                } else {
+                    printFile.setFileNumberExtension("");
+                    printFile.setFileNumberMain("");
+                }
                 ArchiveFileStub printStub = PrintStubGenerator.getStub(printFile);
                 JRBeanCollectionDataSource colIn = new JRBeanCollectionDataSource(Arrays.asList(printStub));
 
@@ -4035,6 +4042,13 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         try {
             ArchiveFileBean printFile = new ArchiveFileBean();
             this.fillDTO(printFile, true);
+            if(this.dto != null) {
+                printFile.setFileNumberExtension(this.dto.getFileNumberExtension());
+                printFile.setFileNumberMain(this.dto.getFileNumberMain());
+            } else {
+                printFile.setFileNumberExtension("");
+                printFile.setFileNumberMain("");
+            }
             ArchiveFileStub printStub = PrintStubGenerator.getStub(printFile);
             JRBeanCollectionDataSource colIn = new JRBeanCollectionDataSource(Arrays.asList(printStub));
 
@@ -4054,26 +4068,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             JOptionPane.showMessageDialog(this, "Fehler beim Drucken der Wiedervorlagen: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
         }
     }//GEN-LAST:event_cmdPrintActionPerformed
-
-    private void chkArchivedItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_chkArchivedItemStateChanged
-        if (chkArchived.isSelected()) {
-            ArchiveFileReviewReasonsTableModel reviewsModel = (ArchiveFileReviewReasonsTableModel) this.tblReviewReasons.getModel();
-            for (int i = 0; i < reviewsModel.getRowCount(); i++) {
-                Object row = reviewsModel.getValueAt(i, 0);
-                ArchiveFileReviewsBean reviewDTO = (ArchiveFileReviewsBean) row;
-                if (!reviewDTO.getDoneBoolean()) {
-                    JOptionPane.showMessageDialog(this, "Akte kann nur archiviert werden, wenn alle Wiedervorlagen und Fristen geschlossen sind.", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
-                    chkArchived.setSelected(false);
-                    return;
-                }
-            }
-        } else {
-            if (this.cmdSave.isEnabled()) {
-                this.save(false);
-                this.setArchiveFileDTO(this.dto);
-            }
-        }
-    }//GEN-LAST:event_chkArchivedItemStateChanged
 
     private void cmdUploadDocumentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdUploadDocumentActionPerformed
         JFileChooser chooser = new JFileChooser();
@@ -5729,6 +5723,26 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
 
     }//GEN-LAST:event_mnuOpenDocumentLibreOfficeActionPerformed
+
+    private void chkArchivedActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkArchivedActionPerformed
+        if (chkArchived.isSelected()) {
+            ArchiveFileReviewReasonsTableModel reviewsModel = (ArchiveFileReviewReasonsTableModel) this.tblReviewReasons.getModel();
+            for (int i = 0; i < reviewsModel.getRowCount(); i++) {
+                Object row = reviewsModel.getValueAt(i, 0);
+                ArchiveFileReviewsBean reviewDTO = (ArchiveFileReviewsBean) row;
+                if (!reviewDTO.getDoneBoolean()) {
+                    JOptionPane.showMessageDialog(this, "Akte kann nur archiviert werden, wenn alle Wiedervorlagen und Fristen geschlossen sind.", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
+                    chkArchived.setSelected(false);
+                    return;
+                }
+            }
+        } else {
+            if (this.cmdSave.isEnabled()) {
+                this.save(false);
+                this.setArchiveFileDTO(this.dto);
+            }
+        }
+    }//GEN-LAST:event_chkArchivedActionPerformed
 
     private AddressBean[] convertArray(Object[] in) {
         if (in != null) {
