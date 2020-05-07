@@ -798,7 +798,11 @@ public class UserProfileDialog extends javax.swing.JDialog {
         
         AppUserBean cu=UserSettings.getInstance().getCurrentUser();
         this.lblAbbreviation.setText(cu.getAbbreviation());
-        this.lblGroup.setText(cu.getPrimaryGroup().getName());
+        if(cu.getPrimaryGroup()!=null) {
+            this.lblGroup.setText(cu.getPrimaryGroup().getName());
+        } else {
+            this.lblGroup.setText("");
+        }
         
         
     }
