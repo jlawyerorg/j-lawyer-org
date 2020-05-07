@@ -179,7 +179,7 @@
                           </Group>
                       </Group>
                       <Group type="102" alignment="1" attributes="0">
-                          <EmptySpace min="0" pref="215" max="32767" attributes="0"/>
+                          <EmptySpace min="0" pref="224" max="32767" attributes="0"/>
                           <Component id="selectAllToggle" min="-2" max="-2" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
                           <Component id="cmdDelete" min="-2" max="-2" attributes="0"/>
@@ -327,7 +327,7 @@
             <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
               <Image iconType="3" name="/icons/agt_update_misc.png"/>
             </Property>
-            <Property name="text" type="java.lang.String" value="Alle waehlen"/>
+            <Property name="text" type="java.lang.String" value="Alle w&#xe4;hlen"/>
             <Property name="actionCommand" type="java.lang.String" value="selectAll"/>
             <Property name="autoscrolls" type="boolean" value="true"/>
           </Properties>

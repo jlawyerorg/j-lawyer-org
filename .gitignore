@@ -50,3 +50,5 @@
 /j-lawyer-server/j-lawyer-io/dist/
 /j-lawyer-server/j-lawyer-io/web/swagger-ui/swagger.json
 /j-lawyer-server/j-lawyer-io/jaxrs-analyzer-error.log
+/j-lawyer-server/j-lawyer-server-ejb/test/data/template-run.ods
+/j-lawyer-server/j-lawyer-server-ejb/test/data/template-run.odt

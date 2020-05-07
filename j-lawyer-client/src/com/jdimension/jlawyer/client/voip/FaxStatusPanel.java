@@ -938,7 +938,7 @@ public class FaxStatusPanel extends javax.swing.JPanel implements ThemeableEdito
         });
 
         selectAllToggle.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_update_misc.png"))); // NOI18N
-        selectAllToggle.setText("Alle waehlen");
+        selectAllToggle.setText("Alle wählen");
         selectAllToggle.setActionCommand("selectAll");
         selectAllToggle.setAutoscrolls(true);
         selectAllToggle.addActionListener(new java.awt.event.ActionListener() {
@@ -976,7 +976,7 @@ public class FaxStatusPanel extends javax.swing.JPanel implements ThemeableEdito
                                     .add(org.jdesktop.layout.GroupLayout.TRAILING, lblArchiveFile, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                     .add(lblTo, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))))
                     .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel1Layout.createSequentialGroup()
-                        .add(0, 215, Short.MAX_VALUE)
+                        .add(0, 224, Short.MAX_VALUE)
                         .add(selectAllToggle)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(cmdDelete)
@@ -1176,10 +1176,10 @@ public class FaxStatusPanel extends javax.swing.JPanel implements ThemeableEdito
     private void selectAll(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_selectAll
         if (this.selectAllToggle.isSelected()) {
             this.tblQueue.selectAll();
-            this.selectAllToggle.setText("Auwahl aufheben");
+            this.selectAllToggle.setText("Auswahl aufheben");
         } else {
             this.tblQueue.clearSelection();
-            this.selectAllToggle.setText("Alle auswaehlen");
+            this.selectAllToggle.setText("Alle auswählen");
         }
     }//GEN-LAST:event_selectAll
 
