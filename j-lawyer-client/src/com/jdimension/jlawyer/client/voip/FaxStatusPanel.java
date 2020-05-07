@@ -673,6 +673,7 @@ import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.fax.BalanceInformation;
+import com.jdimension.jlawyer.fax.SipgateException;
 import com.jdimension.jlawyer.persistence.FaxQueueBean;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.sip.SipUtils;
@@ -681,9 +682,11 @@ import java.awt.Image;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.stream.Collectors;
 import javax.swing.Icon;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
@@ -698,15 +701,15 @@ public class FaxStatusPanel extends javax.swing.JPanel implements ThemeableEdito
     private static final Logger log = Logger.getLogger(FaxStatusPanel.class.getName());
     private Image backgroundImage = null;
     private SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss");
-    private ArrayList<FaxQueueBean> lastFaxList=new ArrayList<FaxQueueBean>();
+    private ArrayList<FaxQueueBean> lastFaxList = new ArrayList<FaxQueueBean>();
 
     @Override
     public void notifyStatusBarReady() {
-        
+
         EventBroker eb = EventBroker.getInstance();
         eb.publishEvent(new FaxStatusEvent(this.lastFaxList));
     }
-    
+
     @Override
     public Image getBackgroundImage() {
         return this.backgroundImage;
@@ -714,15 +717,15 @@ public class FaxStatusPanel extends javax.swing.JPanel implements ThemeableEdito
 
     @Override
     public void onEvent(Event e) {
-        if(e instanceof FaxStatusEvent) {
+        if (e instanceof FaxStatusEvent) {
             this.clearDetails();
-            
-                    DefaultTableModel tm = buildTable(((FaxStatusEvent) e).getFaxList());
-                    //ThreadUtils.setTableModel(tblQueue, tm);
-                    this.tblQueue.setModel(tm);
-                   ComponentUtils.autoSizeColumns(tblQueue); 
-             this.lastFaxList=((FaxStatusEvent) e).getFaxList();
-                    
+
+            DefaultTableModel tm = buildTable(((FaxStatusEvent) e).getFaxList());
+            //ThreadUtils.setTableModel(tblQueue, tm);
+            this.tblQueue.setModel(tm);
+            ComponentUtils.autoSizeColumns(tblQueue);
+            this.lastFaxList = ((FaxStatusEvent) e).getFaxList();
+
         }
     }
 
@@ -732,24 +735,22 @@ public class FaxStatusPanel extends javax.swing.JPanel implements ThemeableEdito
     public FaxStatusPanel() {
 
         initComponents();
-        
-        EventBroker eb=EventBroker.getInstance();
+
+        EventBroker eb = EventBroker.getInstance();
         eb.subscribeConsumer(this, Event.TYPE_FAXSTATUS);
 
         this.clearDetails();
 
         this.tblQueue.setDefaultRenderer(Object.class, new FaxStatusTableRenderer());
 
-
         this.refreshList();
-        
+
         Timer timer = new Timer();
         TimerTask faxTask = new FaxQueueTimerTask();
         timer.schedule(faxTask, 7500, 14000);
 
-
     }
-    
+
     private void clearDetails() {
         this.lblArchiveFile.setText("");
         this.lblSent.setText("");
@@ -757,6 +758,7 @@ public class FaxStatusPanel extends javax.swing.JPanel implements ThemeableEdito
         this.lblStatus.setText("");
         this.lblStatus.setIcon(null);
         this.lblTo.setText("");
+        this.selectAllToggle.setSelected(false);
     }
 
     private DefaultTableModel buildTable(List<FaxQueueBean> list) {
@@ -781,28 +783,26 @@ public class FaxStatusPanel extends javax.swing.JPanel implements ThemeableEdito
 
             new Thread(new Runnable() {
 
-            public void run() {
-                ClientSettings settings = ClientSettings.getInstance();
-                JLawyerServiceLocator locator = null;
-                try {
-                    locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                    
-                    BalanceInformation bi = locator.lookupVoipServiceRemote().getBalance();
-                    NumberFormat nf=NumberFormat.getCurrencyInstance();
-                    ThreadUtils.updateLabel(lblBalance, nf.format(bi.getTotal()));
-                    
-                } catch (Exception ex) {
-                    log.error("Error retrieving Sipgate balance", ex);
-                    //JOptionPane.showMessageDialog(this, "Fehler beim Laden der Versicherungen: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
-                    //EditorsRegistry.getInstance().
+                public void run() {
+                    ClientSettings settings = ClientSettings.getInstance();
+                    JLawyerServiceLocator locator = null;
+                    try {
+                        locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+
+                        BalanceInformation bi = locator.lookupVoipServiceRemote().getBalance();
+                        NumberFormat nf = NumberFormat.getCurrencyInstance();
+                        ThreadUtils.updateLabel(lblBalance, nf.format(bi.getTotal()));
+
+                    } catch (Exception ex) {
+                        log.error("Error retrieving Sipgate balance", ex);
+                        //JOptionPane.showMessageDialog(this, "Fehler beim Laden der Versicherungen: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+                        //EditorsRegistry.getInstance().
+                    }
                 }
-            }
-        }).start();
-            
-            
+            }).start();
 
             ArrayList<FaxQueueBean> qList = locator.lookupVoipServiceRemote().queueList();
-            EventBroker eb=EventBroker.getInstance();
+            EventBroker eb = EventBroker.getInstance();
             eb.publishEvent(new FaxStatusEvent(qList));
 
         } catch (Exception ex) {
@@ -814,7 +814,6 @@ public class FaxStatusPanel extends javax.swing.JPanel implements ThemeableEdito
     public void setBackgroundImage(Image image) {
         this.backgroundImage = image;
         //this.jPanel1.setOpaque(false);
-
 
     }
 
@@ -853,6 +852,7 @@ public class FaxStatusPanel extends javax.swing.JPanel implements ThemeableEdito
         cmdResend = new javax.swing.JButton();
         cmdSaveReport = new javax.swing.JButton();
         cmdDelete = new javax.swing.JButton();
+        selectAllToggle = new javax.swing.JToggleButton();
         cmdRefresh = new javax.swing.JButton();
 
         jLabel18.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/fax_big.png"))); // NOI18N
@@ -881,7 +881,7 @@ public class FaxStatusPanel extends javax.swing.JPanel implements ThemeableEdito
                 "Title 1", "Title 2", "Title 3", "Title 4"
             }
         ));
-        tblQueue.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        tblQueue.setSelectionMode(javax.swing.ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         tblQueue.getTableHeader().setReorderingAllowed(false);
         tblQueue.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
@@ -937,6 +937,16 @@ public class FaxStatusPanel extends javax.swing.JPanel implements ThemeableEdito
             }
         });
 
+        selectAllToggle.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_update_misc.png"))); // NOI18N
+        selectAllToggle.setText("Alle waehlen");
+        selectAllToggle.setActionCommand("selectAll");
+        selectAllToggle.setAutoscrolls(true);
+        selectAllToggle.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                selectAll(evt);
+            }
+        });
+
         org.jdesktop.layout.GroupLayout jPanel1Layout = new org.jdesktop.layout.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
@@ -966,7 +976,9 @@ public class FaxStatusPanel extends javax.swing.JPanel implements ThemeableEdito
                                     .add(org.jdesktop.layout.GroupLayout.TRAILING, lblArchiveFile, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                     .add(lblTo, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))))
                     .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel1Layout.createSequentialGroup()
-                        .add(0, 370, Short.MAX_VALUE)
+                        .add(0, 215, Short.MAX_VALUE)
+                        .add(selectAllToggle)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(cmdDelete)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(cmdSaveReport)
@@ -1000,13 +1012,16 @@ public class FaxStatusPanel extends javax.swing.JPanel implements ThemeableEdito
                 .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(jLabel7)
                     .add(lblArchiveFile))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 29, Short.MAX_VALUE)
                 .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(cmdResend)
                     .add(cmdSaveReport)
-                    .add(cmdDelete))
+                    .add(cmdDelete)
+                    .add(selectAllToggle, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 30, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap())
         );
+
+        selectAllToggle.getAccessibleContext().setAccessibleDescription("Selektiert alle Eintraege in der Liste");
 
         cmdRefresh.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_refresh_blue_36dp.png"))); // NOI18N
         cmdRefresh.setToolTipText("Aktualisieren");
@@ -1049,12 +1064,28 @@ public class FaxStatusPanel extends javax.swing.JPanel implements ThemeableEdito
                         .add(org.jdesktop.layout.GroupLayout.LEADING, lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .add(org.jdesktop.layout.GroupLayout.LEADING, jLabel18, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 249, Short.MAX_VALUE)
+                .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 226, Short.MAX_VALUE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
+
+    /**
+     * Extract entry id from selected elements in table.
+     *
+     * @return Fax IDs from selected table items
+     */
+    private List<String> getSelectedEntriesIDs() {
+        int[] selectedRows = this.tblQueue.getSelectedRows();
+        List ids = new ArrayList<String>();
+        // Convert array to list. Extract fax session ids.
+        Arrays.stream(selectedRows).boxed().collect(Collectors.toList()).forEach(rowId -> {
+            FaxQueueBean fb = (FaxQueueBean) this.tblQueue.getValueAt(rowId, 0);
+            ids.add(fb.getSessionId());
+        });
+        return ids;
+    }
 
     private void cmdRefreshActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRefreshActionPerformed
         this.refreshList();
@@ -1092,50 +1123,65 @@ public class FaxStatusPanel extends javax.swing.JPanel implements ThemeableEdito
     }//GEN-LAST:event_tblQueueMouseClicked
 
     private void cmdDeleteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdDeleteActionPerformed
-        
+
         int response = JOptionPane.showConfirmDialog(this, "Status bestätigen ohne Bericht zu speichern?", "Status bestätigen", JOptionPane.YES_NO_OPTION, JOptionPane.YES_OPTION);
-                if (response == JOptionPane.NO_OPTION) {
-                    return;
-                }
-        
+        if (response == JOptionPane.NO_OPTION) {
+            return;
+        }
+
         ClientSettings settings = ClientSettings.getInstance();
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            ArrayList<String> ids=new ArrayList<String>();
-            ids.add(lblSession.getText());
+            List<String> ids = this.getSelectedEntriesIDs();
             locator.lookupVoipServiceRemote().deleteQueueEntries(ids);
-            this.clearDetails();
         } catch (Exception ex) {
             log.error(ex);
             ThreadUtils.showErrorDialog(this, "Fehler beim Löschen des Eintrages: " + ex.getMessage(), "Fehler");
+
         }
+        this.clearDetails();
     }//GEN-LAST:event_cmdDeleteActionPerformed
 
     private void cmdSaveReportActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveReportActionPerformed
         ClientSettings settings = ClientSettings.getInstance();
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            
-            locator.lookupVoipServiceRemote().saveFaxReport(lblSession.getText());
-            this.clearDetails();
+            List<String> ids = this.getSelectedEntriesIDs();
+            for (String id : ids) {
+                locator.lookupVoipServiceRemote().saveFaxReport(id);
+            }
         } catch (Exception ex) {
             log.error(ex);
             ThreadUtils.showErrorDialog(this, "Fehler beim Erstellen des Reports: " + ex.getMessage(), "Fehler");
         }
+        this.clearDetails();
     }//GEN-LAST:event_cmdSaveReportActionPerformed
 
     private void cmdResendActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdResendActionPerformed
         ClientSettings settings = ClientSettings.getInstance();
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            
-            locator.lookupVoipServiceRemote().reInitiateFax(lblSession.getText());
-            this.clearDetails();
+
+            List<String> ids = this.getSelectedEntriesIDs();
+            for (String id : ids) {
+                locator.lookupVoipServiceRemote().reInitiateFax(id);
+            }
         } catch (Exception ex) {
             log.error(ex);
             ThreadUtils.showErrorDialog(this, "Fehler beim erneuten Senden: " + ex.getMessage(), "Fehler");
         }
+        this.clearDetails();
     }//GEN-LAST:event_cmdResendActionPerformed
+
+    private void selectAll(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_selectAll
+        if (this.selectAllToggle.isSelected()) {
+            this.tblQueue.selectAll();
+            this.selectAllToggle.setText("Auwahl aufheben");
+        } else {
+            this.tblQueue.clearSelection();
+            this.selectAllToggle.setText("Alle auswaehlen");
+        }
+    }//GEN-LAST:event_selectAll
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton cmdDelete;
@@ -1158,6 +1204,7 @@ public class FaxStatusPanel extends javax.swing.JPanel implements ThemeableEdito
     private javax.swing.JLabel lblSession;
     private javax.swing.JLabel lblStatus;
     private javax.swing.JLabel lblTo;
+    private javax.swing.JToggleButton selectAllToggle;
     private javax.swing.JTable tblQueue;
     // End of variables declaration//GEN-END:variables
 }
