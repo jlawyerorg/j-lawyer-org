@@ -1009,7 +1009,7 @@ public class VoipService implements VoipServiceRemote, VoipServiceLocal {
 
         try {
             SimpleDateFormat df = new SimpleDateFormat("dd-MM-yyyy_HH-mm-ss");
-            String fileName="Faxbericht_" + df.format(new Date()) + ".txt";
+            String fileName="Faxbericht_" + df.format(new Date()) + "_" + sessionId + ".txt";
             this.fileSvc.addDocument(afb.getId(), fileName, this.getReport(fb).getBytes(), "");
         } catch (Exception ex) {
             throw new SipgateException(ex);
