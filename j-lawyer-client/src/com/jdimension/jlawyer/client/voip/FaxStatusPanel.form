@@ -51,7 +51,7 @@
                   </Group>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
-              <Component id="jScrollPane1" pref="249" max="32767" attributes="0"/>
+              <Component id="jScrollPane1" pref="226" max="32767" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="jPanel1" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
@@ -122,7 +122,7 @@
               </Table>
             </Property>
             <Property name="selectionModel" type="javax.swing.ListSelectionModel" editor="org.netbeans.modules.form.editors2.JTableSelectionModelEditor">
-              <JTableSelectionModel selectionMode="0"/>
+              <JTableSelectionModel selectionMode="2"/>
             </Property>
             <Property name="tableHeader" type="javax.swing.table.JTableHeader" editor="org.netbeans.modules.form.editors2.JTableHeaderEditor">
               <TableHeader reorderingAllowed="false" resizingAllowed="true"/>
@@ -179,7 +179,9 @@
                           </Group>
                       </Group>
                       <Group type="102" alignment="1" attributes="0">
-                          <EmptySpace min="0" pref="370" max="32767" attributes="0"/>
+                          <EmptySpace min="0" pref="215" max="32767" attributes="0"/>
+                          <Component id="selectAllToggle" min="-2" max="-2" attributes="0"/>
+                          <EmptySpace max="-2" attributes="0"/>
                           <Component id="cmdDelete" min="-2" max="-2" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
                           <Component id="cmdSaveReport" min="-2" max="-2" attributes="0"/>
@@ -223,11 +225,12 @@
                       <Component id="jLabel7" alignment="3" min="-2" max="-2" attributes="0"/>
                       <Component id="lblArchiveFile" alignment="3" min="-2" max="-2" attributes="0"/>
                   </Group>
-                  <EmptySpace max="32767" attributes="0"/>
+                  <EmptySpace pref="29" max="32767" attributes="0"/>
                   <Group type="103" groupAlignment="3" attributes="0">
                       <Component id="cmdResend" alignment="3" min="-2" max="-2" attributes="0"/>
                       <Component id="cmdSaveReport" alignment="3" min="-2" max="-2" attributes="0"/>
                       <Component id="cmdDelete" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="selectAllToggle" alignment="3" min="-2" pref="30" max="-2" attributes="0"/>
                   </Group>
                   <EmptySpace max="-2" attributes="0"/>
               </Group>
@@ -317,6 +320,22 @@
           </Properties>
           <Events>
             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdDeleteActionPerformed"/>
+          </Events>
+        </Component>
+        <Component class="javax.swing.JToggleButton" name="selectAllToggle">
+          <Properties>
+            <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+              <Image iconType="3" name="/icons/agt_update_misc.png"/>
+            </Property>
+            <Property name="text" type="java.lang.String" value="Alle waehlen"/>
+            <Property name="actionCommand" type="java.lang.String" value="selectAll"/>
+            <Property name="autoscrolls" type="boolean" value="true"/>
+          </Properties>
+          <AccessibilityProperties>
+            <Property name="AccessibleContext.accessibleDescription" type="java.lang.String" value="Selektiert alle Eintraege in der Liste"/>
+          </AccessibilityProperties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="selectAll"/>
           </Events>
         </Component>
       </SubComponents>
