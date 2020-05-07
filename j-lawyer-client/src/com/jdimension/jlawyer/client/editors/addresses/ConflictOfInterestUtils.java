@@ -704,6 +704,7 @@ public class ConflictOfInterestUtils {
             ArchiveFileServiceRemote afRem = locator.lookupArchiveFileServiceRemote();
             Collection col = afRem.getArchiveFileAddressesForAddress(address.getId());
             Hashtable<PartyTypeBean, List<ArchiveFileBean>> casesWithDifferentPartyType=new Hashtable<PartyTypeBean, List<ArchiveFileBean>>();
+            ArrayList<String> caseIds=new ArrayList<>();
             for (Object o : col) {
                 ArchiveFileAddressesBean afb = (ArchiveFileAddressesBean) o;
                 if (!(afb.getReferenceType().getId().equals(selectedType.getId()))) {
@@ -711,10 +712,16 @@ public class ConflictOfInterestUtils {
                         casesWithDifferentPartyType.put(afb.getReferenceType(), new ArrayList<ArchiveFileBean>());
                     
                     casesWithDifferentPartyType.get(afb.getReferenceType()).add(afb.getArchiveFileKey());
+                    if(!caseIds.contains(afb.getArchiveFileKey().getId())) {
+                        caseIds.add(afb.getArchiveFileKey().getId());
+                    }
                     
                 }
             }
-            if(casesWithDifferentPartyType.size()>0) {
+            
+            
+            // if caseIds.size = 1 that is okay - the person is in different roles, but within the same case
+            if(casesWithDifferentPartyType.size()>0 && caseIds.size()>1) {
                 ConflictOfInterestDialog dlg=null;
                 if(parent instanceof JDialog) {
                     dlg=new ConflictOfInterestDialog((JDialog)parent, true, address, selectedType, casesWithDifferentPartyType);
