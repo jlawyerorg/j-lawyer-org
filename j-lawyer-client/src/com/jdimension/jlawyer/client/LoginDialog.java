@@ -709,6 +709,7 @@ public class LoginDialog extends javax.swing.JFrame {
      */
     public LoginDialog(String initialStatus, String cmdHost, String cmdPort, String cmdHttpPort, String cmdUser, String cmdPassword, String cmdSsl) {
         initComponents();
+        this.setTitle(this.getTitle() + " | Version " + VersionUtils.getFullClientVersion());
 
         // begin: required so the tabbed pane is transparent on macOS. reason unknown.
         this.jTabbedPane1.setOpaque(false);
