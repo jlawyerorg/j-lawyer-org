@@ -698,7 +698,7 @@ public class SipgateApiTest {
     
     @Before
     public void setUp() {
-        
+        // when run on Travis CI, those will be null for pull requests. need to skip tests in that case.
         this.user=System.getenv("sipuser");
         this.pwd=System.getenv("sippassword");
         System.out.println("using sip account " + this.user + ":" + this.pwd);
@@ -710,6 +710,11 @@ public class SipgateApiTest {
 
     @Test
     public void testLogin() {
+        
+        if(user==null || pwd==null) {
+            System.out.println("Sipgate credentials are null, skipping test.");
+            return;
+        }
         
         SipgateAPI api=new SipgateAPI(user,pwd,"j-lawyer Client", "1.8");
         try {
@@ -723,6 +728,11 @@ public class SipgateApiTest {
     
     @Test
     public void testGetBalance() {
+        
+        if(user==null || pwd==null) {
+            System.out.println("Sipgate credentials are null, skipping test.");
+            return;
+        }
         
         SipgateAPI api=new SipgateAPI(user,pwd,"j-lawyer Client", "1.8");
         try {
@@ -738,6 +748,11 @@ public class SipgateApiTest {
     @Test
     public void testGetOwnUris() {
         
+        if(user==null || pwd==null) {
+            System.out.println("Sipgate credentials are null, skipping test.");
+            return;
+        }
+        
         SipgateAPI api=new SipgateAPI(user,pwd,"j-lawyer Client", "1.8");
         try {
             api.login();
@@ -752,6 +767,11 @@ public class SipgateApiTest {
     @Test
     public void testGetTypesOfService() {
         
+        if(user==null || pwd==null) {
+            System.out.println("Sipgate credentials are null, skipping test.");
+            return;
+        }
+        
         SipgateAPI api=new SipgateAPI(user,pwd,"j-lawyer Client", "1.8");
         try {
             api.login();
@@ -765,6 +785,11 @@ public class SipgateApiTest {
     
     @Test
     public void testGetSessionStatus() {
+        
+        if(user==null || pwd==null) {
+            System.out.println("Sipgate credentials are null, skipping test.");
+            return;
+        }
         
         SipgateAPI api=new SipgateAPI(user,pwd,"j-lawyer Client", "1.8");
         try {
@@ -785,6 +810,11 @@ public class SipgateApiTest {
     
     @Test
     public void testInitiateSms() {
+        
+        if(user==null || pwd==null) {
+            System.out.println("Sipgate credentials are null, skipping test.");
+            return;
+        }
         
         SipgateAPI api=new SipgateAPI(user,pwd,"j-lawyer Client", "1.8");
         //SipgateAPI api=new SipgateAPI("http://127.0.0.1:8000/RPC2", user,pwd,"j-lawyer Client", "1.8");
