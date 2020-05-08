@@ -686,7 +686,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javax.swing.Icon;
 import javax.swing.JOptionPane;
