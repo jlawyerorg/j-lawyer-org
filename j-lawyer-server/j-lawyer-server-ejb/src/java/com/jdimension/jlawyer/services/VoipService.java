@@ -709,7 +709,6 @@ public class VoipService implements VoipServiceRemote, VoipServiceLocal {
     private SystemManagementLocal sysMan;
     @EJB
     private SingletonServiceLocal singleton;
-    
 
     @Override
     @RolesAllowed({"loginRole"})
@@ -788,14 +787,13 @@ public class VoipService implements VoipServiceRemote, VoipServiceLocal {
         String sessionId = sip.initiateFax(localUri, remoteUri, pdfData);
 
         String localBaseDir = System.getProperty("jlawyer.server.basedirectory");
-        localBaseDir=localBaseDir.trim();
+        localBaseDir = localBaseDir.trim();
         if (!localBaseDir.endsWith(System.getProperty("file.separator"))) {
             localBaseDir = localBaseDir + System.getProperty("file.separator");
         }
         String dst = localBaseDir + "faxqueue" + System.getProperty("file.separator");
         File dstDir = new File(dst);
         dstDir.mkdirs();
-
 
         StringGenerator idGen = new StringGenerator();
         String queueFile = idGen.getID().toString();
@@ -845,7 +843,7 @@ public class VoipService implements VoipServiceRemote, VoipServiceLocal {
 //            Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
 //            MessageProducer producer = session.createProducer(observerTopic);
 //            connection.start();
-            
+
             ArrayList<FaxQueueBean> list = new ArrayList<FaxQueueBean>();
             list.addAll(this.faxFacade.findAll());
             singleton.setFaxQueue(list);
@@ -892,9 +890,10 @@ public class VoipService implements VoipServiceRemote, VoipServiceLocal {
 
         boolean removed = false;
         for (String id : sessionIds) {
-            if(id==null)
+            if (id == null) {
                 continue;
-            
+            }
+
             FaxQueueBean fb = this.faxFacade.find(id);
             if (fb != null) {
                 String qFile = fb.getPdfQueueFile();
@@ -906,14 +905,13 @@ public class VoipService implements VoipServiceRemote, VoipServiceLocal {
                 removed = true;
 
                 String localBaseDir = System.getProperty("jlawyer.server.basedirectory");
-                localBaseDir=localBaseDir.trim();
+                localBaseDir = localBaseDir.trim();
                 if (!localBaseDir.endsWith(System.getProperty("file.separator"))) {
                     localBaseDir = localBaseDir + System.getProperty("file.separator");
                 }
                 String dst = localBaseDir + "faxqueue" + System.getProperty("file.separator");
                 File dstDir = new File(dst);
                 dstDir.mkdirs();
-
 
                 String queueFile = qFile;
                 dst = dst + queueFile;
@@ -951,14 +949,13 @@ public class VoipService implements VoipServiceRemote, VoipServiceLocal {
         }
 
         String localBaseDir = System.getProperty("jlawyer.server.basedirectory");
-        localBaseDir=localBaseDir.trim();
+        localBaseDir = localBaseDir.trim();
         if (!localBaseDir.endsWith(System.getProperty("file.separator"))) {
             localBaseDir = localBaseDir + System.getProperty("file.separator");
         }
         String dst = localBaseDir + "faxqueue" + System.getProperty("file.separator");
         File dstDir = new File(dst);
         dstDir.mkdirs();
-
 
         String queueFile = fb.getPdfQueueFile();
         dst = dst + queueFile;
@@ -1006,10 +1003,9 @@ public class VoipService implements VoipServiceRemote, VoipServiceLocal {
             throw new SipgateException("Fax " + sessionId + " wurde nicht aus einer Akte heraus verschickt!");
         }
 
-
         try {
             SimpleDateFormat df = new SimpleDateFormat("dd-MM-yyyy_HH-mm-ss");
-            String fileName="Faxbericht_" + df.format(new Date()) + "_" + sessionId + ".txt";
+            String fileName = "Faxbericht_" + df.format(new Date()) + "_" + sessionId.trim().subSequence(0, sessionId.length() > 5 ? 5 : sessionId.length()) + ".txt";
             this.fileSvc.addDocument(afb.getId(), fileName, this.getReport(fb).getBytes(), "");
         } catch (Exception ex) {
             throw new SipgateException(ex);
@@ -1037,7 +1033,6 @@ public class VoipService implements VoipServiceRemote, VoipServiceLocal {
         sb.append("letzter Status: ").append(SipUtils.getDisplayableStatus(fb.getLastStatus())).append(" vom ").append(df.format(fb.getLastStatusDate()));
 
         return sb.toString();
-
 
     }
 }
