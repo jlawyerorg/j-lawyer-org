@@ -5112,7 +5112,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         dlg.setInvolvedInCase(this.pnlInvolvedParties.getInvolvedParties());
 
         for (ArchiveFileAddressesBean aab : this.pnlInvolvedParties.getInvolvedParties()) {
-            dlg.addParty(aab.getAddressKey(), aab.getReferenceType());
+            //dlg.addParty(aab.getAddressKey(), aab.getReferenceType());
+            dlg.addParty(aab);
         }
 
         try {
@@ -5174,7 +5175,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         dlg.setArchiveFile(dto);
         dlg.setInvolvedInCase(this.pnlInvolvedParties.getInvolvedParties());
         for (ArchiveFileAddressesBean aab : this.pnlInvolvedParties.getInvolvedParties()) {
-            dlg.addParty(aab.getAddressKey(), aab.getReferenceType());
+            //dlg.addParty(aab.getAddressKey(), aab.getReferenceType());
+            dlg.addParty(aab);
         }
 
         ProgressIndicator pi = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);

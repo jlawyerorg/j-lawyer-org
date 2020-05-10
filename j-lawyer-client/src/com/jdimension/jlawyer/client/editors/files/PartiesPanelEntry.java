@@ -678,6 +678,9 @@ public class PartiesPanelEntry {
     private PartyTypeBean referenceType=null;
     
     public PartiesPanelEntry(AddressBean addr, PartyTypeBean refType) {
+        this.entry=new ArchiveFileAddressesBean();
+        this.entry.setAddressKey(addr);
+        this.entry.setReferenceType(refType);
         this.address=addr;
         this.referenceType=refType;
     }
