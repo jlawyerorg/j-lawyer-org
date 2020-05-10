@@ -677,6 +677,7 @@ import org.apache.poi.xwpf.usermodel.IRunBody;
 import org.apache.poi.xwpf.usermodel.PositionInParagraph;
 import org.apache.poi.xwpf.usermodel.TextSegment;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
+import org.apache.poi.xwpf.usermodel.XWPFFooter;
 import org.apache.poi.xwpf.usermodel.XWPFHeader;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
 import org.apache.poi.xwpf.usermodel.XWPFRun;
@@ -728,6 +729,10 @@ public class MicrosoftOfficeAccess {
                         }
                         // REPLACE BODY
                         replaceInBodyElements(trailKey, value, outputDocx.getBodyElements());
+                        
+                        for (XWPFFooter footer : outputDocx.getFooterList()) {
+                            replaceInBodyElements(trailKey, value, footer.getBodyElements());
+                        }
 
                     }
 
@@ -738,6 +743,10 @@ public class MicrosoftOfficeAccess {
                     // REPLACE BODY
                     replaceInBodyElements(key, value, outputDocx.getBodyElements());
 
+                    for (XWPFFooter footer : outputDocx.getFooterList()) {
+                        replaceInBodyElements(key, value, footer.getBodyElements());
+                    }
+                    
                 } else if (values.get(key) instanceof CalculationTable) {
 
                 } else if (values.get(key) instanceof StyledCalculationTable) {
@@ -765,6 +774,8 @@ public class MicrosoftOfficeAccess {
 
             for (String r : PlaceHolders.getAllPlaceHolders(allPartyTypesPlaceHolders, formsPlaceHolders)) {
                 String key = r;
+                
+                // header
                 for (XWPFHeader header : outputDocx.getHeaderList()) {
                     findInBodyElements(key, header.getBodyElements(), resultList);
                     if (resultList.contains(key)) {
@@ -774,6 +785,13 @@ public class MicrosoftOfficeAccess {
                 // REPLACE BODY
                 findInBodyElements(key, outputDocx.getBodyElements(), resultList);
                 
+                // footer
+                for (XWPFFooter footer : outputDocx.getFooterList()) {
+                    findInBodyElements(key, footer.getBodyElements(), resultList);
+                    if (resultList.contains(key)) {
+                        continue;
+                    }
+                }
             }
 
             //List<Table> allTables = outputOdt.getTableList();
