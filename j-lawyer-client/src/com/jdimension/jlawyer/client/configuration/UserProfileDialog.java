@@ -667,10 +667,16 @@ import com.jdimension.jlawyer.client.desktop.DesktopPanel;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.persistence.AppUserBean;
+import java.awt.Component;
 import java.util.Arrays;
 import javax.swing.DefaultComboBoxModel;
+import javax.swing.DefaultListCellRenderer;
 import javax.swing.ImageIcon;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.UIManager;
 import org.apache.log4j.Logger;
+import themes.colors.DefaultColorTheme;
 
 
 /**
@@ -791,9 +797,35 @@ public class UserProfileDialog extends javax.swing.JDialog {
             
         };
         this.cmbAvatar.setModel(new DefaultComboBoxModel(items));
+        this.cmbAvatar.setRenderer(new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(JList<?> jlist, Object o, int i, boolean selected, boolean cellHasFocus) {
+//                JLabel label=new JLabel();
+//                label.setText("");
+
+                this.setText("");
+                this.setOpaque(true);
+                if(o instanceof ImageIcon) {
+                    this.setIcon(((ImageIcon)o));
+                }
+                if(cellHasFocus) {
+                    this.setBackground(DefaultColorTheme.COLOR_LOGO_BLUE);
+                } else {
+                    this.setBackground(UIManager.getColor("List.background"));
+                }
+                
+                if(selected) {
+                    this.setBackground(DefaultColorTheme.COLOR_LOGO_GREEN);
+                }
+                
+                return this;
+            }
+            
+        });
         
         String currentIcon=UserSettings.getInstance().getSetting(UserSettings.USER_AVATAR, "identity.png");
-        int selectedIndex=Arrays.binarySearch(names, currentIcon);
+        //int selectedIndex=Arrays.binarySearch(names, currentIcon);
+        int selectedIndex=new java.util.ArrayList(Arrays.asList(names)).indexOf(currentIcon);
         this.cmbAvatar.setSelectedIndex(Math.max(0, selectedIndex));
         
         AppUserBean cu=UserSettings.getInstance().getCurrentUser();
