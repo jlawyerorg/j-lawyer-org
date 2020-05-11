@@ -829,7 +829,8 @@ public class SendAction extends ProgressableAction {
                 MimeBodyPart att = new MimeBodyPart();
                 FileDataSource attFile = new FileDataSource(url);
                 att.setDataHandler(new DataHandler(attFile));
-                att.setFileName(attFile.getName());
+                att.setFileName(MimeUtility.encodeText(attFile.getName()));
+                att.addHeader("Content-Transfer-Encoding", "base64");
                 attachmentNames = attachmentNames + attFile.getName() + " ";
                 multiPart.addBodyPart(att);
             }
