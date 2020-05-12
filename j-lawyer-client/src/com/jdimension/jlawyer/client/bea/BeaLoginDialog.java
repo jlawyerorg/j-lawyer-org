@@ -681,56 +681,55 @@ import themes.colors.DefaultColorTheme;
  * @author Kutschke
  */
 public class BeaLoginDialog extends javax.swing.JDialog {
-    
-    private static final Logger log=Logger.getLogger(BeaLoginDialog.class.getName());
 
-    private JFrame fParent=null;
-    private JDialog dParent=null;
-    private GlassPane glass=null;
-    private ProgressableAction action=null;
-    private BeaLoginCallback callback=null;
+    private static final Logger log = Logger.getLogger(BeaLoginDialog.class.getName());
+
+    private JFrame fParent = null;
+    private JDialog dParent = null;
+    private GlassPane glass = null;
+    private ProgressableAction action = null;
+    private BeaLoginCallback callback = null;
 //    private boolean clearParent=false;
-    
+
     /**
      * Creates new form ProgressIndicator
      */
     public BeaLoginDialog(JFrame parent, boolean modal, BeaLoginCallback callback) {
         super(parent, modal);
         initComponents();
-        
+
         this.lblPanelTitle.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
-        
+
         this.setLocationRelativeTo(null);
-        
-        this.fParent=parent;
-        this.glass=new GlassPane();
+
+        this.fParent = parent;
+        this.glass = new GlassPane();
         this.glass.setLayout(null);
         this.glass.setOpaque(false);
         this.glass.setSize(parent.getSize());
         this.fParent.setGlassPane(this.glass);
         this.lblCardLogin.setText(" ");
         this.lblCertLogin.setText(" ");
-        this.callback=callback;
-        
+        this.callback = callback;
+
         AppUserBean cu = UserSettings.getInstance().getCurrentUser();
-        if(cu.getBeaCertificate()==null || StringUtils.isEmpty(cu.getBeaCertificatePassword())) {
+        if (cu.getBeaCertificate() == null || StringUtils.isEmpty(cu.getBeaCertificatePassword())) {
             this.cmdCertificateLogin.setEnabled(false);
             this.lblCertificateLogin.setText("<html>F&uuml;r den Nutzer ist kein Zertifikat hinterlegt.</html>");
             this.lblCertificateLogin.setForeground(DefaultColorTheme.COLOR_LOGO_RED);
         } else {
             this.cmdCertificateLogin.setEnabled(true);
-            
+
         }
         //this.glass.setVisible(true);
-        
+
 //        new Thread(new Runnable() { 
 //            public void run() {
 //                action.execute();
 //            }
 //        }).start();
-        
     }
-    
+
 //    public ProgressIndicator(JFrame parent, boolean modal, boolean clearParent) {
 //        this(parent, modal);
 //        this.clearParent=clearParent;
@@ -740,66 +739,65 @@ public class BeaLoginDialog extends javax.swing.JDialog {
 //        this(parent, modal);
 //        this.clearParent=clearParent;
 //    }
-    
     /**
      * Creates new form ProgressIndicator
      */
     public BeaLoginDialog(JDialog parent, boolean modal, BeaLoginCallback callback) {
         super(parent, modal);
         initComponents();
-        
+
         this.lblPanelTitle.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
-        
+
         this.setLocationRelativeTo(null);
-        
-        this.dParent=parent;
-        this.glass=new GlassPane();
+
+        this.dParent = parent;
+        this.glass = new GlassPane();
         this.glass.setLayout(null);
         this.glass.setOpaque(false);
         this.glass.setSize(parent.getSize());
         this.dParent.setGlassPane(this.glass);
-        
-        this.callback=callback;
-        
+
+        this.callback = callback;
+
         AppUserBean cu = UserSettings.getInstance().getCurrentUser();
-        if(cu.getBeaCertificate()==null || StringUtils.isEmpty(cu.getBeaCertificatePassword())) {
+        if (cu.getBeaCertificate() == null || StringUtils.isEmpty(cu.getBeaCertificatePassword())) {
             this.cmdCertificateLogin.setEnabled(false);
             this.lblCertificateLogin.setText("Für den Nutzer ist kein Zertifikat hinterlegt.");
             this.lblCertificateLogin.setForeground(Color.red.darker());
         } else {
             this.cmdCertificateLogin.setEnabled(true);
-            
+
         }
-        
+
     }
-    
+
     public void setAction(ProgressableAction a) {
-        this.action=a;
+        this.action = a;
     }
-    
-    
+
     public void setShowCancelButton(boolean show) {
-        if(!show)
+        if (!show) {
             this.remove(this.cmdCancel);
+        }
     }
-    
+
     public void setGlassPaneVisible() {
         this.glass.setVisible(true);
     }
 
     @Override
     public void setVisible(boolean b) {
-        
-        if(this.glass.isVisible()!=b)
+
+        if (this.glass.isVisible() != b) {
             this.glass.setVisible(b);
-            
-        
+        }
+
         super.setVisible(b);
 //        if(this.fParent!=null)
 //            this.fParent.setVisible(false);
 //        if(this.dParent!=null)
 //            this.dParent.setVisible(false);
-        
+
     }
 
 //    @Override
@@ -811,7 +809,6 @@ public class BeaLoginDialog extends javax.swing.JDialog {
 //        if(this.dParent!=null)
 //            this.dParent.dispose();
 //    }
-    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -959,92 +956,95 @@ public class BeaLoginDialog extends javax.swing.JDialog {
 //        Object editor=EditorsRegistry.getInstance().getCurrentEditor();
 //        if(editor instanceof BeaInboxPanel) {
 //            BeaInboxPanel beain=(BeaInboxPanel)editor;
-            try {
-                this.lblCertLogin.setText("Verbinde zum beA...");
-                
-                        prgCertLogin.setIndeterminate(true);
-                
-                SwingUtilities.invokeLater(new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            lblCertLogin.setText("Verbinde zum beA... einloggen...");
+        try {
+            this.lblCertLogin.setText("Verbinde zum beA...");
 
-                            AppUserBean cu = UserSettings.getInstance().getCurrentUser();
-                            BeaAccess bea = BeaAccess.getInstance(cu.getBeaCertificate(), cu.getBeaCertificatePassword());
-                            bea.login();
-                            //beain.initWithCertificate();
-                            lblCertLogin.setText("Verbinde zum beA... laden...");
-                            if (callback != null) {
-                                callback.loginSuccess();
-                            }
-                            //beain.refreshFolders(true);
-                            lblCertLogin.setText("Verbinde zum beA... fertig.");
-                        } catch (Throwable t) {
-                            log.error(t);
-                            if (callback != null) {
-                                callback.loginFailure(t.getMessage());
-                            }
+            prgCertLogin.setIndeterminate(true);
+
+            SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        lblCertLogin.setText("Verbinde zum beA... einloggen...");
+
+                        AppUserBean cu = UserSettings.getInstance().getCurrentUser();
+                        BeaAccess bea = BeaAccess.getInstance(cu.getBeaCertificate(), cu.getBeaCertificatePassword());
+                        bea.login();
+                        //beain.initWithCertificate();
+                        lblCertLogin.setText("Verbinde zum beA... laden...");
+                        if (callback != null) {
+                            callback.loginSuccess();
                         }
-                        setVisible(false);
-                        dispose();
+                        //beain.refreshFolders(true);
+                        lblCertLogin.setText("Verbinde zum beA... fertig.");
+                    } catch (Throwable t) {
+                        log.error(t);
+                        if (callback != null) {
+                            callback.loginFailure(t.getMessage());
+                        }
                     }
-                });
-            //beain.initWithCertificate();
-            //beain.refreshFolders(true);
-            //this.prgCertLogin.setIndeterminate(false);
-            } catch (Exception ex) {
-                this.lblCertLogin.setText("Verbinde zum beA... fehlgeschlagen: " + ex.getMessage());
-                log.error(ex);
-                ThreadUtils.showErrorDialog(this, "Fehler beim beA-Login: " + ex.getMessage(), "Fehler");
-            }
-            
-        //}
-    }//GEN-LAST:event_cmdCertificateLoginActionPerformed
-
-    private void cmdCardLoginActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCardLoginActionPerformed
-//        Object editor=EditorsRegistry.getInstance().getCurrentEditor();
-//        if(editor instanceof BeaInboxPanel) {
-//            BeaInboxPanel beain=(BeaInboxPanel)editor;
-            try {
-            this.lblCardLogin.setText("Verbinde zum beA...");
-
-            setVisible(false);
-//                SwingUtilities.invokeLater(new Runnable() {
-//                    @Override
-//                    public void run() {
-            try {
-                //lblCardLogin.setText("Verbinde zum beA... Karten-PIN...");
-                BeaAccess bea = BeaAccess.getInstance();
-                bea.login();
-                //beain.initWithCard();
-                if (callback != null) {
-                    callback.loginSuccess();
+                    setVisible(false);
+                    dispose();
                 }
-
-                //lblCardLogin.setText("Verbinde zum beA... laden...");
-                //beain.refreshFolders(true);
-                //lblCardLogin.setText("Verbinde zum beA... fertig.");
-            } catch (Throwable t) {
-                log.error(t);
-                if (callback != null) {
-                    callback.loginFailure(t.getMessage());
-                }
-            }
-
-            dispose();
-//                    }
-//                });
+            });
             //beain.initWithCertificate();
             //beain.refreshFolders(true);
             //this.prgCertLogin.setIndeterminate(false);
         } catch (Exception ex) {
-            setVisible(true);
-            this.lblCardLogin.setText("Verbinde zum beA... fehlgeschlagen: " + ex.getMessage());
+            this.lblCertLogin.setText("Verbinde zum beA... fehlgeschlagen: " + ex.getMessage());
             log.error(ex);
             ThreadUtils.showErrorDialog(this, "Fehler beim beA-Login: " + ex.getMessage(), "Fehler");
         }
+
         //}
+    }//GEN-LAST:event_cmdCertificateLoginActionPerformed
+
+    private void cmdCardLoginActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCardLoginActionPerformed
+
+        
+        BeaFxLauncher l = new BeaFxLauncher(null, false);
+        l.setVisible(true);
+        if (l.isLoggedIn()) {
+            if (callback != null) {
+                callback.loginSuccess();
+
+            }
+        } else {
+            if (callback != null) {
+                callback.loginFailure(l.getError());
+            }
+        }
+        l.dispose();
+
+        setVisible(false);
+        
+        dispose();
+
+//        try {
+//            this.lblCardLogin.setText("Verbinde zum beA...");
+//
+//            setVisible(false);
+//            try {
+//                BeaAccess bea = BeaAccess.getInstance();
+//                bea.login();
+//                if (callback != null) {
+//                    callback.loginSuccess();
+//                }
+//
+//            } catch (Throwable t) {
+//                log.error(t);
+//                if (callback != null) {
+//                    callback.loginFailure(t.getMessage());
+//                }
+//            }
+//
+//            dispose();
+//        } catch (Exception ex) {
+//            setVisible(true);
+//            this.lblCardLogin.setText("Verbinde zum beA... fehlgeschlagen: " + ex.getMessage());
+//            log.error(ex);
+//            ThreadUtils.showErrorDialog(this, "Fehler beim beA-Login: " + ex.getMessage(), "Fehler");
+//        }
     }//GEN-LAST:event_cmdCardLoginActionPerformed
 
     /**
