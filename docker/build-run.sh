@@ -1,0 +1,7 @@
+docker build -t="j-dimension/jlawyerdb" mysql/.
+docker build -t="j-dimension/jlawyersrv" wildfly/.
+# docker run --name mysql -v /var/docker_data/mysql/data/:/var/lib/mysql -d -p 3307:3306 j-dimension/jlawyerdb
+# auf dem host: mysql --host=127.0.0.1 --port=3307 -u jlawyer -p
+
+# docker stop mysql
+# docker container rm mysql

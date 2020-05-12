@@ -1,0 +1,27 @@
+version: '3.1'
+
+services:
+
+    db:
+        image: j-dimension/jlawyerdb
+        restart: always
+        volumes:
+            - /var/docker_data/j-lawyer-db/:/var/lib/mysql
+        environment:
+            MYSQL_USER: jlawyer
+            MYSQL_PASSWORD: jlawyer
+        healthcheck:
+            test: mysqladmin ping -h 127.0.0.1 -u $$MYSQL_USER --password=$$MYSQL_PASSWORD
+            interval: 10s
+            timeout: 10s
+            retries: 3
+
+    server:
+        image: j-dimension/jlawyersrv
+        restart: always
+        volumes:
+            - /var/docker_data/j-lawyer-data/:/opt/jboss/j-lawyer-data
+        ports:
+            - 8000:8080
+        depends_on:
+            - "db"
