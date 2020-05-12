@@ -1264,7 +1264,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuAddressOptions.add(mnuAddressCustomFields);
 
         mnuPartyTypes.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_forum.png"))); // NOI18N
-        mnuPartyTypes.setText(bundle.getString("menu.settings.users")); // NOI18N
+        mnuPartyTypes.setText("Beteiligtentypen");
         mnuPartyTypes.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 mnuPartyTypesActionPerformed(evt);
