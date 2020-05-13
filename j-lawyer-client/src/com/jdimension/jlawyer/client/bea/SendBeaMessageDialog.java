@@ -2475,7 +2475,9 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
                         }
 
                         for(File f: files) {
-                            addAttachment(f.getPath(), null);
+                            String tfname=FileUtils.createTempFile(f.getName(), FileUtils.readFile(f));
+                            File tf=new File(tfname);
+                            addAttachment(tf.getPath(), null);
                         }
                         
                         dtde.dropComplete(true);
