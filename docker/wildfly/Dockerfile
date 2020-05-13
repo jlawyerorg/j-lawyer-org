@@ -16,6 +16,7 @@ RUN mkdir -p /opt/jboss/j-lawyer-data/archivefiles
 RUN mkdir -p /opt/jboss/j-lawyer-data/searchindex
 RUN mkdir -p /opt/jboss/j-lawyer-data/faxqueue
 RUN chmod -R 777 /opt/jboss/j-lawyer-data
+RUN yum -y install mysql
 
 # ugly as hell
 # ADD sleep.sh /tmp/sleep.sh
@@ -32,12 +33,19 @@ RUN cd $HOME \
     && chown -R jboss:0 ${JBOSS_HOME} \
     && chmod -R g+rw ${JBOSS_HOME}
 
+RUN chown -R jboss:0 /opt/jboss
+RUN chmod -R g+rw /opt/jboss
+
 # Ensure signals are forwarded to the JVM process correctly for graceful shutdown
 ENV LAUNCH_JBOSS_IN_BACKGROUND true
 
+COPY ./startup.sh /opt/jboss/startup.sh
+RUN chmod 777 /opt/jboss/startup.sh
+
+
 USER jboss
 
-
+COPY j-lawyer-data/ /opt/jboss/j-lawyer-data/
 
 COPY ./standalone.xml /opt/jboss/wildfly/standalone/configuration/standalone.xml
 COPY ./j-lawyer-server.ear /opt/jboss/wildfly/standalone/deployments/j-lawyer-server.ear
@@ -47,9 +55,14 @@ COPY ./mysql/main/* /opt/jboss/wildfly/modules/system/layers/base/com/mysql/main
 # Expose the ports we're interested in
 EXPOSE 8080
 
+VOLUME /opt/jboss/j-lawyer-data
+
+
+
+ENTRYPOINT ["/opt/jboss/startup.sh"]
 
 # CMD ["/tmp/sleep.sh"]
 
 # Set the default command to run on boot
 # This will boot WildFly in the standalone mode and bind to all interface
-CMD ["/opt/jboss/wildfly/bin/standalone.sh", "-b", "0.0.0.0"]
+# CMD ["/opt/jboss/wildfly/bin/standalone.sh", "-b", "0.0.0.0"]
