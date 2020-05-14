@@ -1,3 +1,4 @@
+#! /bin/bash
 sudo mkdir -p /var/docker_data/j-lawyer-data/
 sudo mkdir -p /var/docker_data/j-lawyer-data/templates
 sudo mkdir -p /var/docker_data/j-lawyer-data/emailtemplates

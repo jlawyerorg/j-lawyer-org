@@ -3,7 +3,7 @@ version: '3.1'
 services:
 
     db:
-        image: j-dimension/jlawyerdb
+        image: jlawyerorg/jlawyer-db:latest
         restart: always
         volumes:
             - /var/docker_data/j-lawyer-db/:/var/lib/mysql
@@ -17,7 +17,7 @@ services:
             retries: 3
 
     server:
-        image: j-dimension/jlawyersrv
+        image: jlawyerorg/jlawyer-srv:latest
         restart: always
         volumes:
             - /var/docker_data/j-lawyer-data/:/opt/jboss/j-lawyer-data
