@@ -1,6 +1,6 @@
 #! /bin/bash
 
-# docker login --username=yourhubusername --email=youremail@company.com
+# docker login --username=yourhubusername --password=whatever
 
 jlversion=`bash getversion.sh`
 

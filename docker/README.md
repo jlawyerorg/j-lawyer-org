@@ -6,10 +6,17 @@ It can be used like this:
 
 ```
 wget https://raw.githubusercontent.com/jlawyerorg/j-lawyer-org/master/docker/docker-compose.yaml
-docker-compose up
+wget https://raw.githubusercontent.com/jlawyerorg/j-lawyer-org/master/docker/run.sh
+sh run.sh
 ```
 
-The container(s) expose port 8000.
+The container(s) expose port 8000. 
+The database schema is named "jlawyerdb" and can be accessed by a user jlawyer:jlawyer.
+
+There are two volumes that are kept on the host:
+
+* /var/docker_data/j-lawyer-data/ contains documents, templates etc.
+* /var/docker_data/j-lawyer-db/ contains the MySQL database
 
 ## Health Check
 
