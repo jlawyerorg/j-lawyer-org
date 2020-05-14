@@ -1,7 +1,7 @@
 #! /bin/bash
 
-# cp ../j-lawyer-server/dist/j-lawyer-server.ear ./wildfly/
-cp /home/travis/build/[secure]org/j-lawyer-org/j-lawyer-server/dist/j-lawyer-server.ear ./wildfly/
+cp ../j-lawyer-server/dist/j-lawyer-server.ear ./wildfly/
+# cp /home/travis/build/[secure]org/j-lawyer-org/j-lawyer-server/dist/j-lawyer-server.ear ./wildfly/
 
 
 jlversion=`bash getversion.sh`
