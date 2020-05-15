@@ -25,8 +25,11 @@ To check whether the container is running, try to launch the status / welcome pa
 ## Swagger UI
 
 The applications REST API can be browsed and used directly from within the browser: http://localhost:8000/j-lawyer-io/swagger-ui/
+For authentication, use user "admin" with password "a".
 
 ## Using the Client
 
 Use the official installers for Windows, Linux or macOS on https://www.j-lawyer.org
 Then connect to the docker container using "localhost" and port 8000.
+
+For authentication, use user "admin" with password "a".
