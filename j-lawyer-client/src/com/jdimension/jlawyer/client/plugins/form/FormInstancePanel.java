@@ -831,6 +831,12 @@ public class FormInstancePanel extends javax.swing.JPanel {
 
     public void save() {
         Hashtable placeHolders=this.plugin.getPlaceHolderValues();
+        if(placeHolders==null) {
+            // this happens e.g. when the form had compile issues and did not load.
+            // in that case, do NOT overwrite existing values with an empty set - it would mean data loss for this form!
+            return;
+        }
+        
         ArrayList<ArchiveFileFormEntriesBean> formEntries=new ArrayList<ArchiveFileFormEntriesBean>();
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());

@@ -743,8 +743,8 @@ public class FormPlugin implements Comparable {
 
         } catch (Throwable t) {
             t.printStackTrace();
+            return null;
         }
-        return new Hashtable();
     }
 
     public void setPlaceHolderValues(Hashtable placeHolders) {
