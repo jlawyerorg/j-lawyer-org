@@ -762,6 +762,9 @@ public class Main {
 
     private void showSplash(String cmdHost, String cmdPort, String cmdHttpPort, String cmdUser, String cmdPassword, String cmdSsl) {
 
+        System.setProperty("apple.laf.useScreenMenuBar", "true");
+        System.setProperty("com.apple.mrj.application.apple.menu.about.name", "j-lawyer.org Client");
+        
         FlatIntelliJLaf.install();
 
         //FlatDarculaLaf.install();

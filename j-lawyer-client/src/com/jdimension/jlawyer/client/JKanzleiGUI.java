@@ -845,6 +845,24 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             this.mnuCalculations.add(mi);
         }
 
+        String osName = System.getProperty("os.name").toLowerCase();
+        if (osName.startsWith("mac")) {
+            // this is required because the macOS native menu integration provides a menu entry to quit the client
+            // using this button, no #formClosing event is sent, which is where the settings are stored.
+            Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        ClientSettings settings = ClientSettings.getInstance();
+                        settings.saveConfiguration();
+                    } catch (Throwable t) {
+                        log.error("Error storing client settings", t);
+                    }
+                }
+
+            }));
+        }
+
 //        try {
 //            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 //
@@ -2235,13 +2253,13 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     }//GEN-LAST:event_mnuFormsManagerActionPerformed
 
     private void mnuXjustizViewerActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuXjustizViewerActionPerformed
-        
+
         String osName = System.getProperty("os.name").toLowerCase();
         if (!(osName.contains("win"))) {
             JOptionPane.showMessageDialog(this, "Der XJustiz-Viewer ist aktuell nur für Windowssysteme verfügbar.", "XJustiz-Viewer herunterladen", JOptionPane.INFORMATION_MESSAGE);
             return;
         }
-        
+
         String downloadUrl = ClientSettings.getInstance().getUrlXjustiz();
         if (downloadUrl == null) {
             log.warn("download url for XJustiz Viewer is null");
