@@ -1831,6 +1831,7 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
         }
 
         ProgressIndicator dlg = new ProgressIndicator(this, true);
+        dlg.setShowCancelButton(false);
         //SendAction a=new SendAction(dlg, this, this.attachments, this.cu, this.chkReadReceipt.isSelected(), this.txtTo.getText(), this.txtCc.getText(), this.txtBcc.getText(), this.txtSubject.getText(), this.taBody.getText());
         EditorImplementation ed = (EditorImplementation) this.contentPanel.getComponent(0);
         String contentType = ed.getContentType();
