@@ -2168,6 +2168,42 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     @Override
     @RolesAllowed({"readArchiveFileRole"})
     public ArchiveFileBean getArchiveFileByFileNumber(String fileNumber) throws Exception {
+        
+        boolean extension = false;
+        String dividerMain = null;
+        ServerSettingsBean s = this.settingsFacade.find("jlawyer.server.numbering.ext.enabled");
+        if (s != null) {
+            try {
+                extension = Boolean.parseBoolean(s.getSettingValue());
+            } catch (Throwable t) {
+                log.error("non-boolean value for jlawyer.server.numbering.ext.enabled: " + s.getSettingValue());
+            }
+
+            // extension is enabled
+            if (extension) {
+                s = this.settingsFacade.find("jlawyer.server.numbering.ext.divider.main");
+                if (s != null) {
+                    dividerMain = s.getSettingValue();
+                    if("".equals(dividerMain))
+                        dividerMain=null;
+                }
+            }
+
+        }
+
+        try {
+            if (dividerMain != null) {
+                int i = fileNumber.lastIndexOf(dividerMain);
+                if (i > -1) {
+                    fileNumber = fileNumber.substring(0, i);
+                }
+            }
+        } catch (Throwable t) {
+            log.error("Error getting file number from " + fileNumber + " and divider " + dividerMain);
+        }
+        
+        
+        
         List<ArchiveFileBean> result = this.archiveFileFacade.findByFileNumber(fileNumber);
         if (result == null) {
             return null;
