@@ -831,8 +831,8 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
 
         } catch (Exception ex) {
             log.error("Error getting contents of IMAP message", ex);
-            JOptionPane.showMessageDialog(this, "Fehler Öffnen der Nachricht: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
-            //EditorsRegistry.getInstance().clearStatus();
+            //JOptionPane.showMessageDialog(this, "Fehler Öffnen der Nachricht: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            this.setErrorMessage("Fehler beim Laden der Nachricht: " + ex.getMessage());
         }
     }
 
