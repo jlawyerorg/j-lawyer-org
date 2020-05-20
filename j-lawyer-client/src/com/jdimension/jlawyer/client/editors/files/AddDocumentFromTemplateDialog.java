@@ -838,7 +838,33 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
         //name=templateFileName + "_" + df.format(new Date());
         name = df.format(new Date()) + "_" + templateFileName;
 
-        for(PartyTypeBean ptb: this.allPartyTypes) {
+        // avoid ANWALT being replaced before ANWALT2 --> start with longest placeholders first
+        ArrayList<PartyTypeBean> apt=new ArrayList(this.allPartyTypes);
+        Comparator<PartyTypeBean> prefixLengthComparator=new Comparator<PartyTypeBean>() {
+            @Override
+            public int compare(PartyTypeBean t1, PartyTypeBean t2) {
+                String prefix1=null;
+                String prefix2=null;
+                if(t1!=null)
+                    prefix1=t1.getPlaceHolder();
+                if(t2!=null)
+                    prefix2=t2.getPlaceHolder();
+                
+                int l1=0;
+                if(prefix1!=null)
+                    l1=prefix1.length();
+                int l2=0;
+                if(prefix2!=null)
+                    l2=prefix2.length();
+                
+                return new Integer(l1).compareTo(new Integer(l2));
+                    
+            }
+        };
+        Collections.sort(apt, prefixLengthComparator);
+        Collections.reverse(apt);
+        
+        for(PartyTypeBean ptb: apt) {
             PartiesPanelEntry party=this.pnlPartiesPanel.getSelectedParty(ptb);
             if(party!=null) {
                 String contactName = party.getAddress().toDisplayName();
