@@ -763,7 +763,12 @@ public class Main {
     private void showSplash(String cmdHost, String cmdPort, String cmdHttpPort, String cmdUser, String cmdPassword, String cmdSsl) {
 
         System.setProperty("apple.laf.useScreenMenuBar", "true");
-        System.setProperty("com.apple.mrj.application.apple.menu.about.name", "j-lawyer.org Client");
+        
+        // common approach, in addition to command line parameter 
+        System.setProperty("com.apple.mrj.application.apple.menu.about.name", "j-lawyer.org");
+        // for newer JDK versions
+        System.setProperty("apple.awt.application.name", "j-lawyer.org");
+        
         
         FlatIntelliJLaf.install();
 
