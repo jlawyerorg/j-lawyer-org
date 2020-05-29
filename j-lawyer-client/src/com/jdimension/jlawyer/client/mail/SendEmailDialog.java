@@ -1703,7 +1703,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         mails.addAll(EmailUtils.getAllMailAddressesFromString(this.txtBcc.getText()));
 
         if (mails.size() == 0) {
-            ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Liste der Empfänger kann nicht leer sein.", "Fehler");
+            ThreadUtils.showErrorDialog(this, "Liste der Empfänger kann nicht leer sein.", "Fehler");
             return;
         }
 
@@ -1736,7 +1736,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                 try {
                     crypto = this.cryptoRecipients(mails);
                 } catch (Throwable t) {
-                    ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler: " + t.getMessage(), "Fehler");
+                    ThreadUtils.showErrorDialog(this, "Fehler: " + t.getMessage(), "Fehler");
                     return;
                 }
                 if (crypto < mails.size()) {
@@ -1755,7 +1755,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
             try {
                 crypto = this.cryptoRecipients(mails);
             } catch (Throwable t) {
-                ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler: " + t.getMessage(), "Fehler");
+                ThreadUtils.showErrorDialog(this, "Fehler: " + t.getMessage(), "Fehler");
                 return;
             }
             if (crypto < mails.size()) {
