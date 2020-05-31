@@ -738,6 +738,10 @@ public interface SystemManagementRemote {
     MonitoringSnapshot getMonitoringSnapshot();
 
     void statusMail(String subject, String body);
+    
+    void testSendMail(String smtpHost, int smtpPort, String smtpUser, String smtpPwd, boolean smtpSsl, boolean smtpStartTls, String mailAddress) throws Exception;
+    
+    void testReceiveMail(String mailAddress, String host, String protocol, boolean ssl, String user, String pwd) throws Exception;
 
     boolean validateFileOnServer(File file, boolean isDirectory);
 

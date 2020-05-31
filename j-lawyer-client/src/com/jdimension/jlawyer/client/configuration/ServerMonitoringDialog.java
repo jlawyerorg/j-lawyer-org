@@ -667,6 +667,7 @@ import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.server.services.MonitoringSnapshot;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import com.jdimension.jlawyer.services.SystemManagementRemote;
 import java.awt.Color;
 import java.text.DecimalFormat;
 import javax.swing.JOptionPane;
@@ -697,6 +698,7 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
             currentlyAdmin = locator.lookupSecurityServiceRemote().isAdmin();
             if (!currentlyAdmin) {
                 this.cmdSave.setEnabled(false);
+                this.cmdTestMail.setEnabled(false);
                 this.cmbCpuError.setEnabled(false);
                 this.cmbCpuWarn.setEnabled(false);
                 this.cmbDiskError.setEnabled(false);
@@ -910,6 +912,7 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
         chkEmailStartTls = new javax.swing.JCheckBox();
         jLabel21 = new javax.swing.JLabel();
         txtSmtpPort = new javax.swing.JTextField();
+        cmdTestMail = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Servermonitoring");
@@ -1005,7 +1008,7 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jLabel5)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 260, Short.MAX_VALUE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 295, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -1166,6 +1169,13 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
 
         jLabel21.setText("Port (optional):");
 
+        cmdTestMail.setText("Einstellungen testen");
+        cmdTestMail.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdTestMailActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
         jPanel4.setLayout(jPanel4Layout);
         jPanel4Layout.setHorizontalGroup(
@@ -1190,14 +1200,17 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
                             .addComponent(txtUser)
                             .addComponent(txtPassword)
                             .addComponent(txtSenderName)
+                            .addComponent(txtSmtpPort)
                             .addGroup(jPanel4Layout.createSequentialGroup()
-                                .addComponent(txtSmtp, javax.swing.GroupLayout.PREFERRED_SIZE, 289, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(chkEmailStartTls)
-                                .addGap(2, 2, 2)
-                                .addComponent(chkSsl)
-                                .addGap(0, 0, Short.MAX_VALUE))
-                            .addComponent(txtSmtpPort))))
+                                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(cmdTestMail)
+                                    .addGroup(jPanel4Layout.createSequentialGroup()
+                                        .addComponent(txtSmtp, javax.swing.GroupLayout.PREFERRED_SIZE, 289, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(chkEmailStartTls)
+                                        .addGap(2, 2, 2)
+                                        .addComponent(chkSsl)))
+                                .addGap(0, 0, Short.MAX_VALUE)))))
                 .addContainerGap())
         );
         jPanel4Layout.setVerticalGroup(
@@ -1230,6 +1243,8 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
                 .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel19)
                     .addComponent(txtRecipient, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(cmdTestMail)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
@@ -1275,7 +1290,7 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jTabbedPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 442, Short.MAX_VALUE)
+                .addComponent(jTabbedPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 477, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(cmdCancel)
@@ -1350,6 +1365,25 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
         this.dispose();
     }//GEN-LAST:event_cmdCancelActionPerformed
 
+    private void cmdTestMailActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdTestMailActionPerformed
+        ClientSettings settings = ClientSettings.getInstance();
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            SystemManagementRemote sysMan=locator.lookupSystemManagementRemote();
+            int port=-1;
+            if(!("".equals(this.txtSmtpPort.getText()))) {
+                port=Integer.parseInt(this.txtSmtpPort.getText());
+            }
+            sysMan.testSendMail(this.txtSmtp.getText(), port, this.txtUser.getText(), new String(this.txtPassword.getPassword()), this.chkSsl.isSelected(), this.chkEmailStartTls.isSelected(), this.txtRecipient.getText());
+            JOptionPane.showMessageDialog(this, "Testnachricht erfolgreich  verschickt - bitte Posteingang prüfen", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
+        } catch (Exception ex) {
+            String exMsg=ex.getMessage();
+            if(ex.getCause()!=null)
+                exMsg=exMsg + "; " + ex.getCause().getMessage();
+            JOptionPane.showMessageDialog(this, "E-Mail-Einstellungen nicht korrekt: " + exMsg, "Fehler", JOptionPane.WARNING_MESSAGE);
+        }
+    }//GEN-LAST:event_cmdTestMailActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -1418,6 +1452,7 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
     private javax.swing.JComboBox cmbVMMemWarn;
     private javax.swing.JButton cmdCancel;
     private javax.swing.JButton cmdSave;
+    private javax.swing.JButton cmdTestMail;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel11;
