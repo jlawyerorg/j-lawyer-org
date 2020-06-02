@@ -681,6 +681,7 @@ import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
 import com.jdimension.jlawyer.client.calendar.CalendarUtils;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import com.jdimension.jlawyer.client.processing.ProgressIndicator;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FileUtils;
@@ -718,6 +719,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
     public UserAdministrationDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
+        this.lblTestProgress.setText("");
         this.lstUsers.setCellRenderer(new UserListCellRenderer());
         UserListModel m = new UserListModel();
         this.lstUsers.setModel(m);
@@ -837,6 +839,8 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         pwdOutPassword = new javax.swing.JPasswordField();
         jLabel17 = new javax.swing.JLabel();
         txtOutPort = new javax.swing.JTextField();
+        cmdTestMail = new javax.swing.JButton();
+        lblTestProgress = new javax.swing.JLabel();
         jPanel8 = new javax.swing.JPanel();
         jLabel15 = new javax.swing.JLabel();
         jScrollPane2 = new javax.swing.JScrollPane();
@@ -1174,6 +1178,15 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
 
         jLabel17.setText("Port (optional):");
 
+        cmdTestMail.setText("Einstellungen testen");
+        cmdTestMail.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdTestMailActionPerformed(evt);
+            }
+        });
+
+        lblTestProgress.setText("jLabel21");
+
         org.jdesktop.layout.GroupLayout jPanel7Layout = new org.jdesktop.layout.GroupLayout(jPanel7);
         jPanel7.setLayout(jPanel7Layout);
         jPanel7Layout.setHorizontalGroup(
@@ -1233,15 +1246,20 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                             .add(jLabel12))
                         .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                             .add(jPanel7Layout.createSequentialGroup()
+                                .add(20, 20, 20)
+                                .add(txtAddress))
+                            .add(jPanel7Layout.createSequentialGroup()
                                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                                 .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                                     .add(txtEmailSender)
-                                    .add(jPanel7Layout.createSequentialGroup()
-                                        .add(htmlEmailSig, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                                        .add(0, 0, Short.MAX_VALUE))))
-                            .add(jPanel7Layout.createSequentialGroup()
-                                .add(20, 20, 20)
-                                .add(txtAddress)))))
+                                    .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                                        .add(jPanel7Layout.createSequentialGroup()
+                                            .add(cmdTestMail)
+                                            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                            .add(lblTestProgress, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                                        .add(jPanel7Layout.createSequentialGroup()
+                                            .add(htmlEmailSig, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                            .add(0, 0, Short.MAX_VALUE))))))))
                 .addContainerGap())
         );
         jPanel7Layout.setVerticalGroup(
@@ -1288,7 +1306,11 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(jLabel12)
                     .add(htmlEmailSig, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 205, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(78, Short.MAX_VALUE))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(cmdTestMail)
+                    .add(lblTestProgress))
+                .addContainerGap(41, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("E-Mail", jPanel7);
@@ -1994,6 +2016,41 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         
     }//GEN-LAST:event_cmbPrimaryGroupItemStateChanged
 
+    private void cmdTestMailActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdTestMailActionPerformed
+        
+        ProgressIndicator pi = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
+        pi.setShowCancelButton(false);
+        MailSettingsTestAction a = new MailSettingsTestAction(pi, this, this.cmdTestMail, this.txtAddress.getText(), this.txtOutServer.getText(), this.txtOutPort.getText(), this.txtOutUsername.getText(), new String(this.pwdOutPassword.getPassword()), this.chkEmailOutSsl.isSelected(), this.chkEmailStartTls.isSelected(), this.txtInServer.getText(), this.txtInUser.getText(), new String(this.pwdInPassword.getPassword()), this.chkEmailInSsl.isSelected(), this.cmbAccountType.getSelectedItem().toString());
+
+        a.start();
+        
+        
+//        this.lblTestProgress.setText("E-Mail-Einstellungen werden getestet...");
+//        this.cmdTestMail.setEnabled(false);
+//        ClientSettings settings = ClientSettings.getInstance();
+//        try {
+//            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+//            SystemManagementRemote sysMan=locator.lookupSystemManagementRemote();
+//            int port=-1;
+//            if(!("".equals(this.txtOutPort.getText()))) {
+//                port=Integer.parseInt(this.txtOutPort.getText());
+//            }
+//            this.lblTestProgress.setText("Test läuft (Versand)...");
+//            sysMan.testSendMail(this.txtOutServer.getText(), port, this.txtOutUsername.getText(), new String(this.pwdOutPassword.getPassword()), this.chkEmailOutSsl.isSelected(), this.chkEmailStartTls.isSelected(), this.txtAddress.getText());
+//            JOptionPane.showMessageDialog(this, "VERSAND: Testnachricht erfolgreich  verschickt - bitte Posteingang prüfen", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
+//            this.lblTestProgress.setText("Test läuft (Empfang)...");
+//            sysMan.testReceiveMail(this.txtAddress.getText(), this.txtInServer.getText(), this.cmbAccountType.getSelectedItem().toString(), this.chkEmailInSsl.isSelected(), this.txtInUser.getText(), new String(this.pwdInPassword.getPassword()));
+//            JOptionPane.showMessageDialog(this, "EMPFANG: Posteingang erfolgreich geprüft", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
+//        } catch (Exception ex) {
+//            String exMsg=ex.getMessage();
+//            if(ex.getCause()!=null)
+//                exMsg=exMsg + "; " + ex.getCause().getMessage();
+//            JOptionPane.showMessageDialog(this, "E-Mail-Einstellungen nicht korrekt: " + exMsg, "Fehler", JOptionPane.WARNING_MESSAGE);
+//        }
+//        this.lblTestProgress.setText("");
+//        this.cmdTestMail.setEnabled(true);
+    }//GEN-LAST:event_cmdTestMailActionPerformed
+
     private List<AppRoleBean> getRolesFromUI(String principalId) {
         List<AppRoleBean> result = new ArrayList<AppRoleBean>();
 
@@ -2252,6 +2309,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
     private javax.swing.JButton cmdRemoveCertificate;
     private javax.swing.JButton cmdSave;
     private javax.swing.JButton cmdSelectCertificate;
+    private javax.swing.JButton cmdTestMail;
     private com.jdimension.jlawyer.client.mail.HtmlEditorPanel htmlEmailSig;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
@@ -2286,6 +2344,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane4;
     private javax.swing.JTabbedPane jTabbedPane1;
+    private javax.swing.JLabel lblTestProgress;
     private javax.swing.JList lstUsers;
     private javax.swing.JMenuItem mnuDelete;
     private javax.swing.JPopupMenu popDelete;
