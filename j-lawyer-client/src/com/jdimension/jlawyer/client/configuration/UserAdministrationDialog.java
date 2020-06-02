@@ -2025,30 +2025,6 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         a.start();
         
         
-//        this.lblTestProgress.setText("E-Mail-Einstellungen werden getestet...");
-//        this.cmdTestMail.setEnabled(false);
-//        ClientSettings settings = ClientSettings.getInstance();
-//        try {
-//            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-//            SystemManagementRemote sysMan=locator.lookupSystemManagementRemote();
-//            int port=-1;
-//            if(!("".equals(this.txtOutPort.getText()))) {
-//                port=Integer.parseInt(this.txtOutPort.getText());
-//            }
-//            this.lblTestProgress.setText("Test läuft (Versand)...");
-//            sysMan.testSendMail(this.txtOutServer.getText(), port, this.txtOutUsername.getText(), new String(this.pwdOutPassword.getPassword()), this.chkEmailOutSsl.isSelected(), this.chkEmailStartTls.isSelected(), this.txtAddress.getText());
-//            JOptionPane.showMessageDialog(this, "VERSAND: Testnachricht erfolgreich  verschickt - bitte Posteingang prüfen", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
-//            this.lblTestProgress.setText("Test läuft (Empfang)...");
-//            sysMan.testReceiveMail(this.txtAddress.getText(), this.txtInServer.getText(), this.cmbAccountType.getSelectedItem().toString(), this.chkEmailInSsl.isSelected(), this.txtInUser.getText(), new String(this.pwdInPassword.getPassword()));
-//            JOptionPane.showMessageDialog(this, "EMPFANG: Posteingang erfolgreich geprüft", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
-//        } catch (Exception ex) {
-//            String exMsg=ex.getMessage();
-//            if(ex.getCause()!=null)
-//                exMsg=exMsg + "; " + ex.getCause().getMessage();
-//            JOptionPane.showMessageDialog(this, "E-Mail-Einstellungen nicht korrekt: " + exMsg, "Fehler", JOptionPane.WARNING_MESSAGE);
-//        }
-//        this.lblTestProgress.setText("");
-//        this.cmdTestMail.setEnabled(true);
     }//GEN-LAST:event_cmdTestMailActionPerformed
 
     private List<AppRoleBean> getRolesFromUI(String principalId) {
