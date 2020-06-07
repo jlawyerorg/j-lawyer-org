@@ -2073,7 +2073,7 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
     }//GEN-LAST:event_rdXjustizEebActionPerformed
 
     private void mnuSearchRecipientInBeaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSearchRecipientInBeaActionPerformed
-        BeaIdentitySearchDialog dlg = new BeaIdentitySearchDialog(EditorsRegistry.getInstance().getMainWindow(), true, null, null, null, null, null, null);
+        BeaIdentitySearchDialog dlg = new BeaIdentitySearchDialog(this, true, null, null, null, null, null, null);
         //dlg.setSize(ip.getPreferredSize());
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);

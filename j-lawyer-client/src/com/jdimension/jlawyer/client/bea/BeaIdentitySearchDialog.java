@@ -669,10 +669,12 @@ import com.jdimension.jlawyer.client.editors.addresses.QuickAddressSearchTableMo
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.persistence.AddressBean;
+import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import javax.swing.AbstractAction;
 import javax.swing.JComponent;
+import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JTextField;
 import javax.swing.KeyStroke;
@@ -687,12 +689,12 @@ import org.jlawyer.bea.model.Identity;
 public class BeaIdentitySearchDialog extends javax.swing.JDialog {
 
     private static final Logger log = Logger.getLogger(BeaIdentitySearchDialog.class.getName());
-    private JFrame parent=null;
+    private Window parent=null;
     private JComponent nextFocus=null;
     private Identity selection=null;
 
     /**
-     * Creates new form AddAddressSearchDialog
+     * Creates new form BeaIdentitySearchDialog
      */
     public BeaIdentitySearchDialog(JFrame parent, boolean modal, Identity target, JComponent nextFocus, String firstName, String surName, String zipCode, String city) {
         super(parent, modal);
@@ -718,14 +720,6 @@ public class BeaIdentitySearchDialog extends javax.swing.JDialog {
         
         ComponentUtils.restoreDialogSize(this);
 
-//        this.tableKeyListener = new java.awt.event.KeyAdapter() {
-//            public void keyPressed(java.awt.event.KeyEvent evt) {
-//                if (evt.getKeyCode() == evt.VK_ENTER) {
-//                    useSelection();
-//                }
-//            }
-//        };
-        //this.tableKeyListener = null;
         this.tblResults.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "Enter");
         this.tblResults.getActionMap().put("Enter", new AbstractAction() {
             @Override
@@ -734,6 +728,42 @@ public class BeaIdentitySearchDialog extends javax.swing.JDialog {
             }
         });
 
+    }
+    
+    /**
+     * Creates new form BeaIdentitySearchDialog
+     */
+    public BeaIdentitySearchDialog(JDialog parent, boolean modal, Identity target, JComponent nextFocus, String firstName, String surName, String zipCode, String city) {
+        super(parent, modal);
+        this.parent=parent;
+        this.nextFocus=nextFocus;
+        this.selection=target;
+        initComponents();
+        String[] colNames = new String[]{"Name", "Vorname", "Firma", "PLZ", "Ort", "E-Mail"};
+        QuickAddressSearchTableModel model = new QuickAddressSearchTableModel(colNames, 0);
+        this.tblResults.setModel(model);
+
+        this.lblError.setText(" ");
+        
+        if(!StringUtils.isEmpty(firstName))
+            this.txtFirstname.setText(firstName);
+        if(!StringUtils.isEmpty(surName))
+            this.txtName.setText(surName);
+        if(!StringUtils.isEmpty(city))
+            this.txtCity.setText(city);
+        if(!StringUtils.isEmpty(zipCode))
+            this.txtZipCode.setText(zipCode);
+        
+        
+        ComponentUtils.restoreDialogSize(this);
+
+        this.tblResults.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "Enter");
+        this.tblResults.getActionMap().put("Enter", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent ae) {
+                useSelection();
+            }
+        });
 
     }
 
@@ -1027,7 +1057,7 @@ public class BeaIdentitySearchDialog extends javax.swing.JDialog {
         java.awt.EventQueue.invokeLater(new Runnable() {
 
             public void run() {
-                new BeaIdentitySearchDialog(null, true, null, null, "", "", "", "").setVisible(true);
+                new BeaIdentitySearchDialog((JFrame)null, true, null, null, "", "", "", "").setVisible(true);
                 //new AddRecipientSearchDialog(new javax.swing.JFrame(), true, null).setVisible(true);
             }
         });
