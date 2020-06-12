@@ -1114,7 +1114,7 @@ public class BeaAccess {
         return sentMessage;
     }
 
-    public long saveMessageToDrafts(Message msg, String senderSafeId, ArrayList<String> recipientSafeIds, BeaListItem authority) throws BeaWrapperException {
+    public String saveMessageToDrafts(Message msg, String senderSafeId, ArrayList<String> recipientSafeIds, BeaListItem authority) throws BeaWrapperException {
         this.checkValidBeaClient();
         // todo: need to only remove folder overview for sent folder
         this.folderOverviewCache.clear();
