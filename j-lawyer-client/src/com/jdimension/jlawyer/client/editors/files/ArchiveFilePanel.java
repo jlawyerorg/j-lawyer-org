@@ -5306,7 +5306,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             DefaultTableModel tModel = (DefaultTableModel) this.tblDocuments.getModel();
             for (int i = selectedRows.length - 1; i > -1; i--) {
                 ArchiveFileDocumentsBean doc = (ArchiveFileDocumentsBean) this.tblDocuments.getValueAt(selectedRows[i], 0);
-                if (doc.getName().toLowerCase().endsWith(".ods") || doc.getName().toLowerCase().endsWith(".odt")) {
+                if (doc.getName().toLowerCase().endsWith(".ods") || doc.getName().toLowerCase().endsWith(".odt") || doc.getName().toLowerCase().endsWith(".docx")) {
                     byte[] content = remote.getDocumentContent(doc.getId());
                     String newName = FileUtils.getNewFileName(doc.getName(), false, new Date(), this, "Dokument als Vorlage speichern");
 
