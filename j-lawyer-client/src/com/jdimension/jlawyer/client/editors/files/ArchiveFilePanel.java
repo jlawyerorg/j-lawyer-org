@@ -2964,7 +2964,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             .add(0, 658, Short.MAX_VALUE)
         );
 
-        tabPaneArchiveFile.addTab("Drucken", new javax.swing.ImageIcon(getClass().getResource("/icons/printer.png")), tabPrint); // NOI18N
+        tabPaneArchiveFile.addTab("Handakte", new javax.swing.ImageIcon(getClass().getResource("/icons/printer.png")), tabPrint); // NOI18N
 
         jPanel5.setName("Falldaten"); // NOI18N
 
@@ -2988,9 +2988,12 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
         });
 
+        txtFormPrefix.setToolTipText("Der hier eingegebene Wert wird den Vorlagenplatzhaltern in diesem Blatt vorangestellt. In der Regel kann die Voreinstellung ohne Änderung übernommen werden.");
+
         jLabel17.setText("Falldatenblatt:");
 
         jLabel18.setText("Platzhalterpräfix:");
+        jLabel18.setToolTipText("Der hier eingegebene Wert wird den Vorlagenplatzhaltern in diesem Blatt vorangestellt. In der Regel kann die Voreinstellung ohne Änderung übernommen werden.");
 
         jLabel19.setText("Beschreibung:");
 
@@ -3216,7 +3219,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         });
 
         cmdPrint.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/printer.png"))); // NOI18N
-        cmdPrint.setToolTipText("Drucken");
+        cmdPrint.setToolTipText("Deckblatt für Handakte drucken");
         cmdPrint.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmdPrintActionPerformed(evt);

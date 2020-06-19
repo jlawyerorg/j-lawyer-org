@@ -1905,8 +1905,8 @@
           </Events>
           <Constraints>
             <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout" value="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout$JTabbedPaneConstraintsDescription">
-              <JTabbedPaneConstraints tabName="Drucken">
-                <Property name="tabTitle" type="java.lang.String" value="Drucken"/>
+              <JTabbedPaneConstraints tabName="Handakte">
+                <Property name="tabTitle" type="java.lang.String" value="Handakte"/>
                 <Property name="tabIcon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
                   <Image iconType="3" name="/icons/printer.png"/>
                 </Property>
@@ -2084,6 +2084,9 @@
                       </AuxValues>
                     </Component>
                     <Component class="javax.swing.JTextField" name="txtFormPrefix">
+                      <Properties>
+                        <Property name="toolTipText" type="java.lang.String" value="Der hier eingegebene Wert wird den Vorlagenplatzhaltern in diesem Blatt vorangestellt. In der Regel kann die Voreinstellung ohne &#xc4;nderung &#xfc;bernommen werden."/>
+                      </Properties>
                     </Component>
                     <Component class="javax.swing.JLabel" name="jLabel17">
                       <Properties>
@@ -2093,6 +2096,7 @@
                     <Component class="javax.swing.JLabel" name="jLabel18">
                       <Properties>
                         <Property name="text" type="java.lang.String" value="Platzhalterpr&#xe4;fix:"/>
+                        <Property name="toolTipText" type="java.lang.String" value="Der hier eingegebene Wert wird den Vorlagenplatzhaltern in diesem Blatt vorangestellt. In der Regel kann die Voreinstellung ohne &#xc4;nderung &#xfc;bernommen werden."/>
                       </Properties>
                     </Component>
                     <Component class="javax.swing.JLabel" name="jLabel19">
@@ -2434,7 +2438,7 @@
             <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
               <Image iconType="3" name="/icons/printer.png"/>
             </Property>
-            <Property name="toolTipText" type="java.lang.String" value="Drucken"/>
+            <Property name="toolTipText" type="java.lang.String" value="Deckblatt f&#xfc;r Handakte drucken"/>
           </Properties>
           <Events>
             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdPrintActionPerformed"/>
