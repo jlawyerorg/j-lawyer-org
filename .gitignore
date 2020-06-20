@@ -53,3 +53,4 @@
 /j-lawyer-server/j-lawyer-server-ejb/test/data/template-run.ods
 /j-lawyer-server/j-lawyer-server-ejb/test/data/template-run.odt
 /docker/wildfly/j-lawyer-server.ear
+/j-lawyer-ide/target/
