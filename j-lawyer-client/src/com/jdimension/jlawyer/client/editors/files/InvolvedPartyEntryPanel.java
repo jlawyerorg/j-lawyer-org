@@ -788,6 +788,7 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
     public void setEntry(AddressBean a, ArchiveFileAddressesBean afa, boolean checkForConflicts) {
         this.a = a;
         this.afa=afa;
+        this.afa.setAddressKey(a);
         
         this.lblAddress.setText(this.a.toDisplayName());
         this.lblAddress.setToolTipText(this.a.toShortHtml());
