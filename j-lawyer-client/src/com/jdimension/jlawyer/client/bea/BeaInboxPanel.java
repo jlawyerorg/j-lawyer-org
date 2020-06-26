@@ -2738,7 +2738,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
 
                 Message m = BeaAccess.getInstance().getMessage(mh.getId(), BeaAccess.getInstance().getLoggedInSafeId());
                 log.info("eEB ID of the incoming message from " + m.getSenderSafeId() + " / " + m.getSenderName() + " is : " + m.getEebId());
-                if(m.getEebId() == null || "".equals(m.getEebId())) {
+                if (m.getEebId() == null || "".equals(m.getEebId())) {
                     JOptionPane.showMessageDialog(this, "Eingehende eEB-ID ist leer - eEB bitte über beA im Browser abgeben!", "eEB abgeben", JOptionPane.WARNING_MESSAGE);
                     return false;
                 }
@@ -2875,8 +2875,10 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                 if (!BeaAccess.isBeaEnabled()) {
                     return;
                 }
-                BeaAccess bea = BeaAccess.getInstance();
-                bea.logout();
+                if (BeaAccess.hasInstance()) {
+                    BeaAccess bea = BeaAccess.getInstance();
+                    bea.logout();
+                }
 
             } catch (Exception ex) {
                 log.error(ex);
