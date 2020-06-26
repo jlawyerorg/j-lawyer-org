@@ -676,8 +676,13 @@ import java.awt.Color;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.net.URI;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Predicate;
@@ -926,16 +931,38 @@ public class Main {
         } else {
             root.setBackgroundImage(null);
             try {
-                
+
+                URI uri = Main.class.getResource("/themes/default/backgroundsrandom").toURI();
+                Path path;
+                if (uri.getScheme().equals("jar")) {
+                    FileSystem fileSystem = FileSystems.newFileSystem(uri, Collections.<String, Object>emptyMap());
+                    path = fileSystem.getPath("/themes/default/backgroundsrandom");
+                } else {
+                    path = Paths.get(uri);
+                }
+//                Stream<Path> walk = Files.walk(myPath, 1);
+//                for (Iterator<Path> it = walk.iterator(); it.hasNext();) {
+//                    System.out.println(it.next());
+//                }
+
                 Predicate<String> con1 = s -> s.endsWith(".jpg");
                 Predicate<String> con2 = s -> s.endsWith(".png");
-    
-                Path path = new File(Main.class.getResource("/themes/default/backgroundsrandom").toURI()).toPath();
+
                 List<String> backgroundFileNames = Files.walk(path)
                         .map(Path::getFileName)
                         .map(Path::toString)
                         .filter(con1.or(con2))
                         .collect(Collectors.toList());
+
+//                Predicate<String> con1 = s -> s.endsWith(".jpg");
+//                Predicate<String> con2 = s -> s.endsWith(".png");
+//                //Path path = new File(Main.class.getResource("/themes/default/backgroundsrandom").toURI()).toPath();
+//                Path path = new File(Main.class.getResource("/themes/default/backgroundsrandom").toExternalForm()).toPath();
+//                List<String> backgroundFileNames = Files.walk(path)
+//                        .map(Path::getFileName)
+//                        .map(Path::toString)
+//                        .filter(con1.or(con2))
+//                        .collect(Collectors.toList());
                 int randomNum = ThreadLocalRandom.current().nextInt(0, backgroundFileNames.size());
                 root.setRandomBackgroundImage(backgroundFileNames.get(randomNum));
             } catch (Throwable t) {
