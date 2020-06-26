@@ -722,6 +722,7 @@ import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import javax.swing.tree.DefaultTreeModel;
 import org.apache.log4j.Logger;
+import themes.colors.DefaultColorTheme;
 
 /**
  *
@@ -739,6 +740,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     public JKanzleiGUI() {
         this.initializing = true;
         initComponents();
+        this.lblNewsStatus.setForeground(DefaultColorTheme.COLOR_LOGO_RED);
         this.initializing = false;
 
         EventBroker b = EventBroker.getInstance();
@@ -758,6 +760,12 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
 //        this.scrollTree.getHorizontalScrollBar().setUnitIncrement(16);
 
         ClientSettings settings = ClientSettings.getInstance();
+        String randomBackgrounds = settings.getConfiguration(ClientSettings.CONF_DESKTOP_RANDOM_BACKGROUND, "1");
+        if("0".equalsIgnoreCase(randomBackgrounds)) {
+            this.mnuChkRandomBackground.setSelected(false);
+        } else {
+            this.mnuChkRandomBackground.setSelected(true);
+        }
 //        String h = settings.getConfiguration(ClientSettings.CONF_HEIGHT, "600");
 //        String w = settings.getConfiguration(ClientSettings.CONF_WIDTH, "900");
 //        double wd = Double.parseDouble(w);
@@ -905,12 +913,12 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         //System.out.println("Consumed event with type " + e.getType());
         if (e instanceof AutoUpdateEvent) {
 
-            this.lblUpdateStatus.setIcon(((AutoUpdateEvent) e).getIcon());
+            this.lblUpdateStatus.setIcon(((AutoUpdateEvent) e).getSmallIcon());
             this.lblUpdateStatus.setToolTipText(((AutoUpdateEvent) e).getLongDescriptionHtml());
             this.lblUpdateStatus.addMouseListener(((AutoUpdateEvent) e).getMouseListener());
             this.lblUpdateStatus.setText(((AutoUpdateEvent) e).getDescription());
         } else if (e instanceof NewsEvent) {
-            this.lblNewsStatus.setIcon(((NewsEvent) e).getIcon());
+            this.lblNewsStatus.setIcon(((NewsEvent) e).getSmallIcon());
             this.lblNewsStatus.setToolTipText(((NewsEvent) e).getLongDescriptionHtml());
             this.lblNewsStatus.addMouseListener(((NewsEvent) e).getMouseListener());
             this.lblNewsStatus.setText(((NewsEvent) e).getDescription());
@@ -965,7 +973,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
 
                 String failedFaxesCaption = java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/editors/EditorsRegistry").getString("caption.failedfaxes");
                 this.lblFaxStatus.setToolTipText("<html><p align=\"center\">" + failedFaxesCaption + "</p></html>");
-                this.lblFaxStatus.setForeground(Color.red);
+                this.lblFaxStatus.setForeground(DefaultColorTheme.COLOR_LOGO_RED);
 
             } else {
                 this.lblFaxStatus.setToolTipText("");
@@ -1037,6 +1045,8 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuBeaCourtAddressImport = new javax.swing.JMenuItem();
         jSeparator3 = new javax.swing.JSeparator();
         mnuExit = new javax.swing.JMenuItem();
+        mnuView = new javax.swing.JMenu();
+        mnuChkRandomBackground = new javax.swing.JCheckBoxMenuItem();
         mnuOptions = new javax.swing.JMenu();
         mnuAddressOptions = new javax.swing.JMenu();
         mnuAddressOptionsSalutation = new javax.swing.JMenuItem();
@@ -1230,6 +1240,20 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuFile.add(mnuExit);
 
         jMenuBar1.add(mnuFile);
+
+        mnuView.setText("Ansicht");
+
+        mnuChkRandomBackground.setSelected(true);
+        mnuChkRandomBackground.setText("zufälliger Desktophintergrund");
+        mnuChkRandomBackground.setToolTipText("");
+        mnuChkRandomBackground.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuChkRandomBackgroundActionPerformed(evt);
+            }
+        });
+        mnuView.add(mnuChkRandomBackground);
+
+        jMenuBar1.add(mnuView);
 
         mnuOptions.setText(bundle.getString("menu.settings")); // NOI18N
 
@@ -2337,6 +2361,17 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         dlg.setVisible(true);
     }//GEN-LAST:event_mnuWordProcessorActionPerformed
 
+    private void mnuChkRandomBackgroundActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuChkRandomBackgroundActionPerformed
+        ClientSettings settings = ClientSettings.getInstance();
+        if(this.mnuChkRandomBackground.isSelected()) {
+            settings.setConfiguration(ClientSettings.CONF_DESKTOP_RANDOM_BACKGROUND, "1");
+        } else {
+            settings.setConfiguration(ClientSettings.CONF_DESKTOP_RANDOM_BACKGROUND, "0");
+        }
+        JOptionPane.showMessageDialog(this, "Die Einstellung erfordert einen Neustart des j-lawyer.org Clients.", "Neustart erforderlich", JOptionPane.INFORMATION_MESSAGE);
+        
+    }//GEN-LAST:event_mnuChkRandomBackgroundActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -2384,6 +2419,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     private javax.swing.JMenuItem mnuBeaCourtAddressImport;
     private javax.swing.JMenuItem mnuBeaSettings;
     private javax.swing.JMenu mnuCalculations;
+    private javax.swing.JCheckBoxMenuItem mnuChkRandomBackground;
     private javax.swing.JMenuItem mnuCustomLauncherOptions;
     private javax.swing.JMenuItem mnuDocumentMonitor;
     private javax.swing.JMenu mnuDocumentOptions;
@@ -2405,6 +2441,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     private javax.swing.JMenuItem mnuServerMonitor;
     private javax.swing.JMenuItem mnuUserProfile;
     private javax.swing.JMenuItem mnuUsers;
+    private javax.swing.JMenu mnuView;
     private javax.swing.JMenuItem mnuVoipSettings;
     private javax.swing.JMenuItem mnuWordProcessor;
     private javax.swing.JMenuItem mnuXjustizViewer;

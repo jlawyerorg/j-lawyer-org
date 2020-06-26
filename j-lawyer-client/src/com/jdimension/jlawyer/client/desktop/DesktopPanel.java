@@ -663,6 +663,7 @@
  */
 package com.jdimension.jlawyer.client.desktop;
 
+import com.jdimension.jlawyer.client.StartupSplashFrame;
 import com.jdimension.jlawyer.client.bea.BeaCheckTimerTask;
 import com.jdimension.jlawyer.client.configuration.UserProfileDialog;
 import com.jdimension.jlawyer.client.drebis.DrebisCheckTimerTask;
@@ -688,9 +689,11 @@ import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.FaxQueueBean;
 import java.awt.Color;
+import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.event.ItemEvent;
+import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -724,6 +727,29 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
     public DesktopPanel() {
         this.initializing = true;
         initComponents();
+        this.lblNewsStatus.setText(" ");
+        this.lblUpdateStatus.setText(" ");
+        
+        try {
+            InputStream is = DesktopPanel.class.getResourceAsStream("/fonts/exo2/exo2-bold.ttf");
+            Font font = Font.createFont(Font.TRUETYPE_FONT, is);
+            lblDay.setFont(font.deriveFont(Font.BOLD, 24));
+            lblScans.setFont(font.deriveFont(Font.BOLD, 24));
+            lblUnreadBea.setFont(font.deriveFont(Font.BOLD, 24));
+            lblUnreadMail.setFont(font.deriveFont(Font.BOLD, 24));
+            lblUnreadDrebis.setFont(font.deriveFont(Font.BOLD, 24));
+            lblFaxStatus.setFont(font.deriveFont(Font.BOLD, 24));
+            lblNewsStatus.setFont(font.deriveFont(Font.BOLD, 24));
+            lblUserName.setFont(font.deriveFont(Font.BOLD, 24));
+            lblUpdateStatus.setFont(font.deriveFont(Font.BOLD, 24));
+            lblUserName.setFont(font.deriveFont(Font.BOLD, 24));
+        } catch (Throwable t) {
+            log.error("Unable to load font Exo 2", t);
+        }
+        
+        this.jScrollPane3.getViewport().setOpaque(false);
+        this.jScrollPane1.getViewport().setOpaque(false);
+        this.jScrollPane4.getViewport().setOpaque(false);
         
         ComponentUtils.decorateSplitPane(jSplitPane1, Color.WHITE);
         ComponentUtils.decorateSplitPane(jSplitPane2, Color.WHITE);
@@ -958,6 +984,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         java.util.ResourceBundle bundle = java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/DesktopPanel"); // NOI18N
         jLabel6.setText(bundle.getString("label.due")); // NOI18N
 
+        jScrollPane1.setBorder(null);
         jScrollPane1.setOpaque(false);
 
         pnlRevDue.setOpaque(false);
@@ -994,7 +1021,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
             .add(jPanel2Layout.createSequentialGroup()
                 .addContainerGap()
                 .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 338, Short.MAX_VALUE)
+                    .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 350, Short.MAX_VALUE)
                     .add(jPanel2Layout.createSequentialGroup()
                         .add(cmdRefreshRevDue)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
@@ -1029,6 +1056,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         jLabel5.setForeground(java.awt.Color.white);
         jLabel5.setText(bundle.getString("label.lastchanged")); // NOI18N
 
+        jScrollPane3.setBorder(null);
         jScrollPane3.setOpaque(false);
 
         pnlLastChanged.setOpaque(false);
@@ -1109,6 +1137,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         jLabel9.setForeground(java.awt.Color.white);
         jLabel9.setText(bundle.getString("label.tagged")); // NOI18N
 
+        jScrollPane4.setBorder(null);
         jScrollPane4.setOpaque(false);
 
         pnlTagged.setOpaque(false);
@@ -1227,14 +1256,14 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         lblUnreadMail.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
         lblUnreadMail.setForeground(java.awt.Color.white);
         lblUnreadMail.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        lblUnreadMail.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_email_white_36dp.png"))); // NOI18N
+        lblUnreadMail.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/Icons2-30.png"))); // NOI18N
         lblUnreadMail.setText("0");
         lblUnreadMail.setEnabled(false);
 
         lblUnreadBea.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
         lblUnreadBea.setForeground(java.awt.Color.white);
         lblUnreadBea.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        lblUnreadBea.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/beadesktop16.png"))); // NOI18N
+        lblUnreadBea.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/Icons2-16.png"))); // NOI18N
         lblUnreadBea.setText("?");
         lblUnreadBea.setToolTipText("noch nicht eingeloggt");
         lblUnreadBea.setEnabled(false);
@@ -1242,30 +1271,30 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         lblScans.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
         lblScans.setForeground(java.awt.Color.white);
         lblScans.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        lblScans.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_scanner_white_36dp.png"))); // NOI18N
+        lblScans.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/scanner_big.png"))); // NOI18N
         lblScans.setText("0");
         lblScans.setEnabled(false);
 
         lblUnreadDrebis.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
         lblUnreadDrebis.setForeground(java.awt.Color.white);
         lblUnreadDrebis.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        lblUnreadDrebis.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/drebisdesktop16.png"))); // NOI18N
+        lblUnreadDrebis.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/Icons2-17.png"))); // NOI18N
         lblUnreadDrebis.setText("?");
         lblUnreadDrebis.setEnabled(false);
 
         lblUpdateStatus.setFont(new java.awt.Font("Dialog", 0, 12)); // NOI18N
         lblUpdateStatus.setForeground(java.awt.Color.white);
         lblUpdateStatus.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
-        lblUpdateStatus.setText(" ");
+        lblUpdateStatus.setText("???");
 
         lblNewsStatus.setFont(new java.awt.Font("Dialog", 0, 12)); // NOI18N
         lblNewsStatus.setForeground(java.awt.Color.white);
         lblNewsStatus.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
-        lblNewsStatus.setText(" ");
+        lblNewsStatus.setText("???");
 
         lblFaxStatus.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
         lblFaxStatus.setForeground(new java.awt.Color(255, 0, 0));
-        lblFaxStatus.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_print_white_36dp.png"))); // NOI18N
+        lblFaxStatus.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/fax_big.png"))); // NOI18N
         lblFaxStatus.setText("?");
         lblFaxStatus.setEnabled(false);
 
@@ -1275,9 +1304,9 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
             messagesWidgetLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(messagesWidgetLayout.createSequentialGroup()
                 .add(lblUnreadMail)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(18, 18, 18)
                 .add(lblScans)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(18, 18, 18)
                 .add(lblFaxStatus)
                 .add(18, 18, 18)
                 .add(lblUnreadDrebis, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 64, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
@@ -1297,8 +1326,8 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
                 .add(lblFaxStatus)
                 .add(lblUnreadDrebis)
                 .add(lblUnreadBea)
-                .add(lblUpdateStatus)
-                .add(lblNewsStatus))
+                .add(lblUpdateStatus, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 40, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .add(lblNewsStatus, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 40, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
         );
 
         lblArchiveFileCount.setForeground(java.awt.Color.white);
@@ -1402,12 +1431,12 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
                 .addContainerGap()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(layout.createSequentialGroup()
-                        .add(lblDay)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(messagesWidget, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(lblDay, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(desktopWidgetPanel2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                    .add(jSplitPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 972, Short.MAX_VALUE)
+                    .add(jSplitPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 984, Short.MAX_VALUE)
                     .add(systemInformationWidget, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
@@ -1416,9 +1445,10 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
             .add(layout.createSequentialGroup()
                 .addContainerGap()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(messagesWidget, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(lblDay)
-                    .add(desktopWidgetPanel2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                    .add(desktopWidgetPanel2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
+                        .add(org.jdesktop.layout.GroupLayout.LEADING, lblDay, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .add(org.jdesktop.layout.GroupLayout.LEADING, messagesWidget, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                 .add(8, 8, 8)
                 .add(jSplitPane1)
                 .add(4, 4, 4)
@@ -1608,7 +1638,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
             this.lblNewsStatus.setText("News");
             this.lblNewsStatus.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         } else if (e instanceof ScannerStatusEvent) {
-            this.lblScans.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_scanner_white_36dp.png")));
+            //this.lblScans.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/scanner_big.png")));
             this.lblScans.setText("" + ((ScannerStatusEvent) e).getFileNames().size());
             this.lblScans.setToolTipText(((ScannerStatusEvent) e).getFileNames().size() + " " + java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/editors/EditorsRegistry").getString("status.scansfound"));
             if(((ScannerStatusEvent) e).getFileNames().size()>0)
@@ -1621,7 +1651,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         } else if (e instanceof FaxStatusEvent) {
 
             this.lblFaxStatus.setText(" " + ((FaxStatusEvent) e).getFaxList().size());
-            this.lblFaxStatus.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_print_white_36dp.png")));
+            //this.lblFaxStatus.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/fax_big.png")));
             if (((FaxStatusEvent) e).getFailed() > 0) {
 
                 String failedFaxesCaption = java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/editors/EditorsRegistry").getString("caption.failedfaxes");
@@ -1640,17 +1670,17 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
                 this.lblFaxStatus.setEnabled(false);
 
         } else if (e instanceof EmailStatusEvent) {
-            this.lblUnreadMail.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_email_white_36dp.png")));
+            //this.lblUnreadMail.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/Icons2-30.png")));
             this.lblUnreadMail.setText("" + ((EmailStatusEvent) e).getUnread());
             this.lblUnreadMail.setToolTipText(((EmailStatusEvent) e).getUnread() + " " + java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/editors/EditorsRegistry").getString("status.unreadmails"));
             this.lblUnreadMail.setEnabled(true);
         } else if(e instanceof BeaStatusEvent) {
             this.lblUnreadBea.setEnabled(true);
             if(((BeaStatusEvent) e).getUnread()>0) {
-                this.lblUnreadBea.setText("(*)");
+                this.lblUnreadBea.setText("!");
                 this.lblUnreadBea.setToolTipText("es gibt ungelesene beA-Nachrichten");
             } else {
-                this.lblUnreadBea.setText("-");
+                this.lblUnreadBea.setText("");
                 this.lblUnreadBea.setToolTipText("keine ungelesenen beA-Nachrichten");
             }
         } else if(e instanceof DrebisStatusEvent) {
@@ -1660,7 +1690,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
                 this.lblUnreadDrebis.setText("" + ((DrebisStatusEvent) e).getMessages());
                 this.lblUnreadDrebis.setToolTipText("es gibt ungelesene Drebis-Nachrichten");
             } else {
-                this.lblUnreadDrebis.setText("-");
+                this.lblUnreadDrebis.setText("");
                 this.lblUnreadDrebis.setToolTipText("keine ungelesenen Drebis-Nachrichten");
             }
         }

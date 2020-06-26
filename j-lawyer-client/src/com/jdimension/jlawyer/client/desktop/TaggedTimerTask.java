@@ -675,6 +675,7 @@ import com.jdimension.jlawyer.persistence.ArchiveFileTagsBean;
 import com.jdimension.jlawyer.persistence.DocumentTagsBean;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
@@ -690,6 +691,7 @@ import java.util.TimerTask;
 import java.util.logging.Level;
 import javax.swing.*;
 import org.apache.log4j.Logger;
+import themes.colors.DefaultColorTheme;
 
 /**
  *
@@ -698,7 +700,7 @@ import org.apache.log4j.Logger;
 public class TaggedTimerTask extends java.util.TimerTask {
 
     private static final Logger log = Logger.getLogger(TaggedTimerTask.class.getName());
-    private static boolean running=false;
+    private static boolean running = false;
     private Component owner;
     private JPanel resultUI;
     private JSplitPane split;
@@ -724,7 +726,7 @@ public class TaggedTimerTask extends java.util.TimerTask {
         this.tagMenu = tagMenu;
         this.tagDocumentMenu = tagDocumentMenu;
     }
-    
+
     public TaggedTimerTask(Component owner, JPanel resultPanel, JSplitPane split, JButton tagMenu, JButton tagDocumentMenu, JPopupMenu popTags, JPopupMenu popDocumentTags, boolean ignoreCurrentEditorParam) {
         this(owner, resultPanel, split, tagMenu, tagDocumentMenu, popTags, popDocumentTags, ignoreCurrentEditorParam, true);
     }
@@ -772,7 +774,7 @@ public class TaggedTimerTask extends java.util.TimerTask {
                     @Override
                     public void actionPerformed(ActionEvent e) {
                         boolean selected = false;
-                        System.out.println("source: " + ((JCheckBoxMenuItem)e.getSource()).getText() +((JCheckBoxMenuItem)e.getSource()).isSelected());
+                        System.out.println("source: " + ((JCheckBoxMenuItem) e.getSource()).getText() + ((JCheckBoxMenuItem) e.getSource()).isSelected());
                         System.out.println("10");
                         ArrayList<String> al = new ArrayList<String>();
                         for (MenuElement me : popup.getSubElements()) {
@@ -793,7 +795,7 @@ public class TaggedTimerTask extends java.util.TimerTask {
                         ClientSettings.getInstance().setConfigurationArray(clientSettingsKey, al.toArray(new String[al.size()]));
                         TimerTask taggedTask = new TaggedTimerTask(EditorsRegistry.getInstance().getMainWindow(), resultUI, split, tagMenu, tagDocumentMenu, popTags, popDocumentTags, true, false);
                         new java.util.Timer().schedule(taggedTask, 1000);
-                        
+
                     }
 
                 });
@@ -803,21 +805,21 @@ public class TaggedTimerTask extends java.util.TimerTask {
     }
 
     public void run() {
-        
-        if(running==true)
+
+        if (running == true) {
             return;
-        
-        running=true;
+        }
+
+        running = true;
 
         List<ArchiveFileBean> myNewList = new ArrayList<ArchiveFileBean>();
         List<ArchiveFileBean> filteredList = new ArrayList<ArchiveFileBean>();
         Hashtable<String, List<ArchiveFileTagsBean>> tags = new Hashtable<String, List<ArchiveFileTagsBean>>();
-        
+
         List<ArchiveFileDocumentsBean> myNewDocumentList = new ArrayList<ArchiveFileDocumentsBean>();
         List<ArchiveFileDocumentsBean> filteredDocumentList = new ArrayList<ArchiveFileDocumentsBean>();
         Hashtable<String, List<DocumentTagsBean>> documentTags = new Hashtable<String, List<DocumentTagsBean>>();
-        
-        
+
         try {
             //System.out.println("TaggedTimerTask#run @ " + System.currentTimeMillis() + " from " + source);
             ClientSettings settings = ClientSettings.getInstance();
@@ -825,38 +827,40 @@ public class TaggedTimerTask extends java.util.TimerTask {
 
             String[] lastFilterTags = settings.getConfigurationArray(ClientSettings.CONF_DESKTOP_LASTFILTERTAG, new String[]{""});
             List<String> caseTagsInUse = settings.getArchiveFileTagsInUse();
-            AppOptionGroupBean[] allCaseTags=settings.getArchiveFileTagDtos();
-            List<String> allCaseTagsAsString=new ArrayList<String>();
-            for(AppOptionGroupBean aog: allCaseTags) {
+            AppOptionGroupBean[] allCaseTags = settings.getArchiveFileTagDtos();
+            List<String> allCaseTagsAsString = new ArrayList<String>();
+            for (AppOptionGroupBean aog : allCaseTags) {
                 allCaseTagsAsString.add(aog.getValue());
             }
-            for(String t: caseTagsInUse) {
-                if(!allCaseTagsAsString.contains(t))
+            for (String t : caseTagsInUse) {
+                if (!allCaseTagsAsString.contains(t)) {
                     allCaseTagsAsString.add(t);
+                }
             }
-            if(this.rebuildPopup && !(this.popTags.isVisible())) {
+            if (this.rebuildPopup && !(this.popTags.isVisible())) {
                 //this.buildPopup(this.tagMenu, this.popTags, tagsInUse, lastFilterTags, settings.CONF_DESKTOP_LASTFILTERTAG);
                 this.buildPopup(this.tagMenu, this.popTags, allCaseTagsAsString, lastFilterTags, settings.CONF_DESKTOP_LASTFILTERTAG);
             }
 
             String[] lastFilterDocumentTags = settings.getConfigurationArray(ClientSettings.CONF_DESKTOP_LASTFILTERDOCUMENTTAG, new String[]{""});
             List<String> docTagsInUse = settings.getDocumentTagsInUse();
-            AppOptionGroupBean[] allDocTags=settings.getDocumentTagDtos();
-            List<String> allDocTagsAsString=new ArrayList<String>();
-            for(AppOptionGroupBean aog: allDocTags) {
+            AppOptionGroupBean[] allDocTags = settings.getDocumentTagDtos();
+            List<String> allDocTagsAsString = new ArrayList<String>();
+            for (AppOptionGroupBean aog : allDocTags) {
                 allDocTagsAsString.add(aog.getValue());
             }
-            for(String t: docTagsInUse) {
-                if(!allDocTagsAsString.contains(t))
+            for (String t : docTagsInUse) {
+                if (!allDocTagsAsString.contains(t)) {
                     allDocTagsAsString.add(t);
+                }
             }
-            if(this.rebuildPopup && !(this.popDocumentTags.isVisible())) {
+            if (this.rebuildPopup && !(this.popDocumentTags.isVisible())) {
                 //this.buildPopup(this.tagDocumentMenu, this.popDocumentTags, tagsInUse, lastFilterDocumentTags, settings.CONF_DESKTOP_LASTFILTERDOCUMENTTAG);
                 this.buildPopup(this.tagDocumentMenu, this.popDocumentTags, allDocTagsAsString, lastFilterDocumentTags, settings.CONF_DESKTOP_LASTFILTERDOCUMENTTAG);
             }
 
             if (lastFilterTags.length == 0 && lastFilterDocumentTags.length == 0) {
-                running=false;
+                running = false;
                 return;
             }
 
@@ -864,7 +868,7 @@ public class TaggedTimerTask extends java.util.TimerTask {
             if (reg.isEditorActive(DesktopPanel.class.getName()) && resultUI.getComponentCount() > 0) {
                 if (!this.ignoreCurrentEditor) {
                     // do not refresh if desktop is active - this might interrupt user interactions
-                    running=false;
+                    running = false;
                     return;
                 }
             }
@@ -887,8 +891,8 @@ public class TaggedTimerTask extends java.util.TimerTask {
                 Collection<ArchiveFileTagsBean> xTags = fileService.getTags(a.getId());
                 tags.put(a.getId(), (List<ArchiveFileTagsBean>) xTags);
             }
-            
-            myNewDocumentList=fileService.getTaggedDocuments(lastFilterDocumentTags, 50);
+
+            myNewDocumentList = fileService.getTaggedDocuments(lastFilterDocumentTags, 50);
             if ("true".equalsIgnoreCase(temp)) {
                 String principalId = UserSettings.getInstance().getCurrentUser().getPrincipalId();
                 for (ArchiveFileDocumentsBean x : myNewDocumentList) {
@@ -909,7 +913,7 @@ public class TaggedTimerTask extends java.util.TimerTask {
             log.error("Error connecting to server", ex);
             //JOptionPane.showMessageDialog(this.owner, "Verbindungsfehler: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
             ThreadUtils.showErrorDialog(this.owner, java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/TaggedTimerTask").getString("msg.connectionerror"), new Object[]{ex.getMessage()}), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/TaggedTimerTask").getString("msg.error"));
-            running=false;
+            running = false;
             return;
         }
 
@@ -921,8 +925,7 @@ public class TaggedTimerTask extends java.util.TimerTask {
                     new Runnable() {
                 public void run() {
 
-                    split.setDividerLocation(0.5d);
-
+                    //split.setDividerLocation(0.5d);
                     resultUI.removeAll();
                     //GridLayout layout = new GridLayout(l1.size(), 1);
                     BoxLayout layout = new BoxLayout(resultUI, BoxLayout.Y_AXIS);
@@ -930,10 +933,12 @@ public class TaggedTimerTask extends java.util.TimerTask {
                     int i = 0;
                     //ArrayList containedIds = new ArrayList();
                     for (ArchiveFileBean aFile : l1) {
-                        TaggedEntryPanel ep = new TaggedEntryPanel();
+                        Color background = DefaultColorTheme.DESKTOP_ENTRY_BACKGROUND;
                         if (i % 2 == 0) {
-                            ep.setBackground(ep.getBackground().brighter());
+                            background = background.brighter();
                         }
+                        TaggedEntryPanel ep = new TaggedEntryPanel(background);
+                        
                         TaggedEntry lce = new TaggedEntry();
                         lce.setFileNumber(aFile.getFileNumber());
                         lce.setCaseId(aFile.getId());
@@ -955,18 +960,19 @@ public class TaggedTimerTask extends java.util.TimerTask {
                         i++;
                         if (i == 50) {
                             //layout.setRows(i);
-                            running=false;
+                            running = false;
                             return;
                         }
                         //    containedIds.add(lce.getId());
                         //}
                     }
-                    
+
                     for (ArchiveFileDocumentsBean aDoc : l2) {
-                        TaggedEntryPanel ep = new TaggedEntryPanel();
-                        if (i % 2 == 0) {
-                            ep.setBackground(ep.getBackground().brighter());
-                        }
+                        Color background = DefaultColorTheme.DESKTOP_ENTRY_BACKGROUND;
+                            if (i % 2 == 0) {
+                                background = background.brighter();
+                            }
+                        TaggedEntryPanel ep = new TaggedEntryPanel(background);
                         TaggedEntry lce = new TaggedEntry();
                         lce.setFileNumber(aDoc.getArchiveFileKey().getFileNumber());
                         lce.setCaseId(aDoc.getArchiveFileKey().getId());
@@ -990,21 +996,23 @@ public class TaggedTimerTask extends java.util.TimerTask {
                         i++;
                         if (i == 50) {
                             //layout.setRows(i);
-                            running=false;
+                            running = false;
                             return;
                         }
                         //    containedIds.add(lce.getId());
                         //}
                     }
 
-                    split.setDividerLocation(0.5d);
+                    //split.setDividerLocation(0.5d);
+                    split.setDividerLocation(split.getDividerLocation() + 1);
+                    split.setDividerLocation(split.getDividerLocation() - 1);
 
                 }
             });
-            running=false;
+            running = false;
         } catch (Throwable t) {
             log.error(t);
-            running=false;
+            running = false;
         }
 
     }

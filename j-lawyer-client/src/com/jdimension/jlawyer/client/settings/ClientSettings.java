@@ -729,6 +729,8 @@ public class ClientSettings {
     public static final String CONF_DESKTOP_TIPOFDAY_Y="client.desktop.tipofday.y";
     public static final String CONF_DESKTOP_TIPOFDAY_EXSTATE="client.desktop.tipofday.exstate";
     
+    public static final String CONF_DESKTOP_RANDOM_BACKGROUND="client.desktop.background.random";
+    
     public static final String CONF_DESKTOP_ONLYMYCASES="client.desktop.onlymycases";
     public static final String CONF_DESKTOP_ONLYMYREVIEWS="client.desktop.onlymyreviews";
     public static final String CONF_DESKTOP_ONLYMYTAGGED="client.desktop.onlymytagged";

@@ -671,6 +671,7 @@ import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileTagsBean;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.GridLayout;
 import java.util.ArrayList;
@@ -680,6 +681,7 @@ import java.util.Hashtable;
 import java.util.List;
 import javax.swing.*;
 import org.apache.log4j.Logger;
+import themes.colors.DefaultColorTheme;
 
 /**
  *
@@ -764,7 +766,7 @@ public class LastChangedTimerTask extends java.util.TimerTask {
                     new Runnable() {
                 public void run() {
 
-                    split.setDividerLocation(0.5d);
+                    //split.setDividerLocation(0.5d);
 
                     resultUI.removeAll();
                     //GridLayout layout = new GridLayout(l1.size(), 1);
@@ -773,10 +775,12 @@ public class LastChangedTimerTask extends java.util.TimerTask {
                     int i = 0;
                     //ArrayList containedIds = new ArrayList();
                     for (ArchiveFileBean aFile : l1) {
-                        LastChangedEntryPanel ep = new LastChangedEntryPanel();
+                        
+                        Color background=DefaultColorTheme.DESKTOP_ENTRY_BACKGROUND;
                         if (i % 2 == 0) {
-                            ep.setBackground(ep.getBackground().brighter());
+                            background=background.brighter();
                         }
+                        LastChangedEntryPanel ep = new LastChangedEntryPanel(background);
                         LastChangedEntry lce = new LastChangedEntry();
                         lce.setFileNumber(aFile.getFileNumber());
                         lce.setId(aFile.getId());
@@ -828,7 +832,9 @@ public class LastChangedTimerTask extends java.util.TimerTask {
 //                            }
 //                        }
                     //layout.setRows(i);
-                    split.setDividerLocation(0.5d);
+                    //split.setDividerLocation(0.5d);
+                    split.setDividerLocation(split.getDividerLocation()+1);
+                    split.setDividerLocation(split.getDividerLocation()-1);
 
 //                        SwingUtilities.invokeLater(
 //                                new Runnable() {

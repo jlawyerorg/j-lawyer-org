@@ -676,7 +676,13 @@ import java.awt.Color;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.Predicate;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import javax.swing.KeyStroke;
 
 import javax.swing.SwingUtilities;
@@ -717,7 +723,7 @@ public class Main {
         String cmdHost = null;
         String cmdPort = null;
         String cmdHttpPort = null;
-        String cmdSsl="0";
+        String cmdSsl = "0";
 
         try {
             BeaWrapper.preInit();
@@ -734,13 +740,13 @@ public class Main {
             cmdHttpPort = args[2];
             cmdUser = args[3];
             cmdPassword = args[4];
-        } else if(args.length == 6) {
+        } else if (args.length == 6) {
             cmdHost = args[0];
             cmdPort = args[1];
             cmdHttpPort = args[2];
             cmdUser = args[3];
             cmdPassword = args[4];
-            cmdSsl=args[5];
+            cmdSsl = args[5];
         } else if (args.length == 0) {
             // this is the default
         } else {
@@ -763,23 +769,21 @@ public class Main {
     private void showSplash(String cmdHost, String cmdPort, String cmdHttpPort, String cmdUser, String cmdPassword, String cmdSsl) {
 
         System.setProperty("apple.laf.useScreenMenuBar", "true");
-        
+
         // common approach, in addition to command line parameter 
         System.setProperty("com.apple.mrj.application.apple.menu.about.name", "j-lawyer.org");
         // for newer JDK versions
         System.setProperty("apple.awt.application.name", "j-lawyer.org");
-        
-        
+
         FlatIntelliJLaf.install();
 
         //FlatDarculaLaf.install();
         // https://www.formdev.com/flatlaf/customizing/
         UIManager.put("ScrollBar.width", 14);
         UIManager.put("ScrollBar.showButtons", true);
-        UIManager.put( "ScrollPane.smoothScrolling", true );
-        UIManager.put( "Table.showHorizontalLines", true );
+        UIManager.put("ScrollPane.smoothScrolling", true);
+        UIManager.put("Table.showHorizontalLines", true);
         //UIManager.put( "Table.showVerticalLines", true );
-        
 
 //        Object selColor=UIManager.get("TabbedPane.selectedBackground");
 //        if(selColor!=null) {
@@ -910,8 +914,38 @@ public class Main {
         this.updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Main").getString("status.modules.available"), true);
         // todo: load this from the server
         ModuleMetadata root = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.mydesktop"));
-        //root.setIcon("mydesktop.png");
-        root.setBackgroundImage("mydesktop.jpg");
+
+        String randomBackgrounds = settings.getConfiguration(ClientSettings.CONF_DESKTOP_RANDOM_BACKGROUND, "1");
+        if ("0".equalsIgnoreCase(randomBackgrounds)) {
+
+            //root.setIcon("mydesktop.png");
+            //root.setBackgroundImage("mydesktop.jpg");
+            root.setBackgroundImage("archivefiles.jpg");
+            root.setRandomBackgroundImage(null);
+            //root.setBackgroundImage("Neuseeland_0617.jpg");
+        } else {
+            root.setBackgroundImage(null);
+            try {
+                
+                Predicate<String> con1 = s -> s.endsWith(".jpg");
+                Predicate<String> con2 = s -> s.endsWith(".png");
+    
+                Path path = new File(Main.class.getResource("/themes/default/backgroundsrandom").toURI()).toPath();
+                List<String> backgroundFileNames = Files.walk(path)
+                        .map(Path::getFileName)
+                        .map(Path::toString)
+                        .filter(con1.or(con2))
+                        .collect(Collectors.toList());
+                int randomNum = ThreadLocalRandom.current().nextInt(0, backgroundFileNames.size());
+                root.setRandomBackgroundImage(backgroundFileNames.get(randomNum));
+            } catch (Throwable t) {
+                log.error("unable to get random background image", t);
+                root.setBackgroundImage("archivefiles.jpg");
+                root.setRandomBackgroundImage(null);
+            }
+
+        }
+
         //root.setEditorClass("com.jdimension.jlawyer.client.editors.MainPanel");
         root.setEditorClass("com.jdimension.jlawyer.client.desktop.DesktopPanel");
         root.setFullName("Mein Desktop");
@@ -931,7 +965,7 @@ public class Main {
         ModuleMetadata filesNew = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.cases.new"));
         filesNew.setEditorClass("com.jdimension.jlawyer.client.editors.files.NewArchiveFilePanel");
         //filesNew.setIcon("archivefiles_new.png");
-        filesNew.setBackgroundImage("archivefiles.jpg");
+        filesNew.setBackgroundImage("mydesktop.jpg");
         files.addChildModule(filesNew);
         filesNew.setFullName("neue Akte anlegen");
         filesNew.setEditorName("neu");
@@ -947,7 +981,7 @@ public class Main {
         ModuleMetadata filesEdit = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.cases.edit"));
         filesEdit.setEditorClass("com.jdimension.jlawyer.client.editors.files.EditArchiveFilePanel");
         //filesEdit.setIcon("archivefiles_update.png");
-        filesEdit.setBackgroundImage("archivefiles.jpg");
+        filesEdit.setBackgroundImage("mydesktop.jpg");
         filesEdit.setFullName("vorhandene Akte suchen");
         filesEdit.setEditorName("suchen");
         filesEdit.setModuleName("Akten");

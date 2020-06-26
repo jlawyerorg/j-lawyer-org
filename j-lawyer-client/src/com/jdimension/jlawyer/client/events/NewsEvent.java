@@ -706,6 +706,10 @@ public class NewsEvent extends Event {
     }
     
     public ImageIcon getIcon() {
+        return new javax.swing.ImageIcon(getClass().getResource("/icons/baseline_feedback_white_48dp.png"));
+    }
+    
+    public ImageIcon getSmallIcon() {
         return new javax.swing.ImageIcon(getClass().getResource("/icons16/konqsidebar_news.png"));
     }
     

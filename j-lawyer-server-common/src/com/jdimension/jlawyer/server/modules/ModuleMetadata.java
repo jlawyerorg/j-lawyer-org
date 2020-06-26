@@ -679,6 +679,7 @@ import javax.swing.tree.TreeNode;
 public class ModuleMetadata implements TreeNode {
     
     private String backgroundImage=null;
+    private String randomBackgroundImage=null;
     private Icon defaultIcon=null;
     private Icon rolloverIcon=null;
     private String moduleName="";
@@ -959,6 +960,20 @@ public class ModuleMetadata implements TreeNode {
      */
     public void setHotKeyName(String hotKeyName) {
         this.hotKeyName = hotKeyName;
+    }
+
+    /**
+     * @return the randomBackgroundImage
+     */
+    public String getRandomBackgroundImage() {
+        return randomBackgroundImage;
+    }
+
+    /**
+     * @param randomBackgroundImage the randomBackgroundImage to set
+     */
+    public void setRandomBackgroundImage(String randomBackgroundImage) {
+        this.randomBackgroundImage = randomBackgroundImage;
     }
     
 }

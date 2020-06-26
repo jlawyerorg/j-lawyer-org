@@ -1159,6 +1159,18 @@ public class SplashThread implements Runnable {
                 log.error(ex);
             }
         }
+        if (module.getRandomBackgroundImage() != null) {
+            //updateStatus("   Hintergrund " + module.getBackgroundImage() + "...", true);
+
+            try {
+
+                //Image image=javax.imageio.ImageIO.read(new java.net.URL("http://" + server + ":" + port + "/j-lawyer-server-war/themes/" + themeName + "/backgrounds/" + module.getBackgroundImage()));
+                ImageIcon image = new ImageIcon(getClass().getResource("/themes/" + themeName + "/backgroundsrandom/" + module.getRandomBackgroundImage()));
+                theme.addBackground(module, image.getImage());
+            } catch (Exception ex) {
+                log.error(ex);
+            }
+        }
         if (module.getIcon() != null) {
             //updateStatus("   Icon " + module.getIcon() + "...", true);
             //updateStatus(".", false);
@@ -1198,7 +1210,7 @@ public class SplashThread implements Runnable {
                         public void run() {
                             try {
                                 Object editor = EditorsRegistry.getInstance().getEditor(editorClass);
-                                if (module.getBackgroundImage() != null) {
+                                if (module.getBackgroundImage() != null || module.getRandomBackgroundImage() != null) {
                                     if (editor instanceof ThemeableEditor) {
                                         Image image = theme.getBackground(module);
                                         if (image != null) {
@@ -1218,7 +1230,7 @@ public class SplashThread implements Runnable {
 
                 } else {
                     Object editor = EditorsRegistry.getInstance().getEditor(editorClass);
-                    if (module.getBackgroundImage() != null) {
+                    if (module.getBackgroundImage() != null || module.getRandomBackgroundImage() != null) {
                         if (editor instanceof ThemeableEditor) {
                             Image image = theme.getBackground(module);
                             if (image != null) {

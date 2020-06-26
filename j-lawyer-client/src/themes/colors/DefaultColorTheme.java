@@ -678,4 +678,8 @@ public class DefaultColorTheme {
     public static Color COLOR_DARK_GREY=new Color(102, 102, 102);
     public static Color COLOR_LIGHT_GREY=new Color(102, 102, 102).brighter().brighter();
     
+    public static final float DESKTOP_ALPHA_DEFAULT=0.6f;
+    public static final float DESKTOP_ALPHA_HIGHLIGHT=0.9f;
+    public static final Color DESKTOP_ENTRY_BACKGROUND=new Color(238,238,238);
+    
 }
