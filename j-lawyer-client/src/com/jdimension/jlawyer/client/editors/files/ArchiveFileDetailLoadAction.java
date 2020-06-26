@@ -839,8 +839,16 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
                 try {
 
                     formInstance.initialize();
-
-                    tabPaneForms.addTab("<html><b>" + affb.getFormType().getName() + "</b><br/>" + df.format(affb.getCreationDate()) + "<br/>" + affb.getPlaceHolder() + "</html>", null, formInstance);
+                    //String tabTitle="<html><p style=\"text-align: left; width: 230px\"><b>" + affb.getFormType().getName() + "</b><br/>" + df.format(affb.getCreationDate()) + "<br/>" + affb.getPlaceHolder() + "</p></html>";
+                    String tabTitle="<html><p style=\"text-align: left; width: 130px\"><b>" + affb.getFormType().getName() + "</b><br/>" + df.format(affb.getCreationDate()) + "<br/>" + affb.getPlaceHolder() + "</p></html>";
+                    tabPaneForms.addTab(tabTitle, null, formInstance);
+                    
+//                    tabPaneForms.addTab(null, formInstance);
+//                    JLabel tabTitleLabel=new JLabel();
+//                    tabTitleLabel.setText(tabTitle);
+//                    tabTitleLabel.setHorizontalAlignment(JLabel.LEADING);
+//                    tabPaneForms.setTabComponentAt(tabPaneForms.getTabCount()-1, tabTitleLabel);
+                    
                 } catch (Throwable t) {
                     log.error("Error loading form plugin", t);
                     JOptionPane.showMessageDialog(this.owner, "Fehler beim Laden des Falldatenblattes: " + t.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
