@@ -820,6 +820,8 @@ public class LoginDialog extends javax.swing.JFrame {
             }
             this.cmdLoginActionPerformed(null);
 
+        } else {
+            this.setFocusToPasswordField();
         }
 
     }
