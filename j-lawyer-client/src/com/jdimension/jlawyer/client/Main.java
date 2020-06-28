@@ -920,7 +920,7 @@ public class Main {
         // todo: load this from the server
         ModuleMetadata root = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.mydesktop"));
 
-        String randomBackgrounds = settings.getConfiguration(ClientSettings.CONF_DESKTOP_RANDOM_BACKGROUND, "1");
+        String randomBackgrounds = settings.getConfiguration(ClientSettings.CONF_DESKTOP_RANDOM_BACKGROUND, "0");
         if ("0".equalsIgnoreCase(randomBackgrounds)) {
 
             //root.setIcon("mydesktop.png");
