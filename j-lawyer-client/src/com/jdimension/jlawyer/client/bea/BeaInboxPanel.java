@@ -1424,7 +1424,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
 
     private void cmdRefreshActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRefreshActionPerformed
         try {
-            this.reset();
+            this.reset(true);
         } catch (Exception ex) {
             log.error(ex);
             ex.printStackTrace();
@@ -2356,6 +2356,10 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
 
     @Override
     public void reset() {
+        this.reset(false);
+    }
+    
+    public void reset(boolean force) {
 
         boolean needsReset = !BeaAccess.hasInstance();
         if (!needsReset) {
@@ -2374,6 +2378,15 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                 return;
             }
         }
+        
+        if(force) {
+            try {
+                this.refreshFolders(true);
+            } catch (Throwable t) {
+                log.error("Error during forced refresh: " + t.getMessage(), t);
+            }
+        }
+        
         //this.loginSuccess();
 //        BeaLoginDialog loginPanel=new BeaLoginDialog(EditorsRegistry.getInstance().getMainWindow(), true, this);
 //        loginPanel.setVisible(true);
