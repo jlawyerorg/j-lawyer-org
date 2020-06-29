@@ -694,8 +694,6 @@ public class NewsEvent extends Event {
     public String getLongDescriptionHtml() {
         StringBuffer newsBuff=new StringBuffer();
                             newsBuff.append("<html><p align=\"center\">");
-                            newsBuff.append(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/editors/EditorsRegistry").getString("status.news.tooltip"));
-                            newsBuff.append(":<br/> ");
                             newsBuff.append(summary);
                             newsBuff.append(" (");
                             newsBuff.append(published);
