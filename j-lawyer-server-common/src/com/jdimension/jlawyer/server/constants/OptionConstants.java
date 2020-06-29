@@ -671,6 +671,14 @@ public interface OptionConstants {
     public static final String OPTIONGROUP_SALUTATIONS="address.salutation";
     public static final String OPTIONGROUP_COMPLIMENTARYCLOSE="address.complimentaryclose";
     
+    public static final String OPTIONGROUP_NATIONALITY="address.nationality";
+    public static final String OPTIONGROUP_LEGALFORM="address.legalform";
+    public static final String OPTIONGROUP_COUNTRY="address.country";
+    public static final String OPTIONGROUP_DEGREEPREFIX="address.degreeprefix";
+    public static final String OPTIONGROUP_DEGREESUFFIX="address.degreesuffix";
+    public static final String OPTIONGROUP_PROFESSION="address.profession";
+    public static final String OPTIONGROUP_ROLE="address.role";
+    
     public static final String OPTIONGROUP_DICTATESIGNS="archiveFile.dictateSign";
     public static final String OPTIONGROUP_REVIEWREASONS="archiveFile.reviewReason";
     public static final String OPTIONGROUP_SUBJECTFIELDS="archiveFile.subjectField";

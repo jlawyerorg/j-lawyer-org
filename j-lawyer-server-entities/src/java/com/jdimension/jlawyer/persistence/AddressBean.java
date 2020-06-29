@@ -706,6 +706,12 @@ public class AddressBean implements Serializable {
 
     private static final long serialVersionUID = 1L;
     
+    public static final String GENDER_MALE="MALE";
+    public static final String GENDER_FEMALE="FEMALE";
+    public static final String GENDER_OTHER="OTHER"; // divers
+    public static final String GENDER_LEGALENTITY="LEGALENTITY"; // juristische Person
+    public static final String GENDER_UNDEFINED="UNDEFINED";
+    
     @OneToMany(mappedBy = "addressKey")
     private List<CampaignAddress> campaignAddressesList;
     
@@ -794,6 +800,45 @@ public class AddressBean implements Serializable {
     private String beaSafeId;
     @Column(name = "encryptionPwd")
     private String encryptionPwd;
+    
+    @Column(name = "district")
+    private String district;
+    @Column(name = "notice")
+    private String notice;
+    @Column(name = "nationality")
+    private String nationality;
+    @Column(name = "birthName")
+    private String birthName;
+    @Column(name = "placeOfBirth")
+    private String placeOfBirth;
+    @Column(name = "dateOfDeath")
+    private String dateOfDeath;
+    @Column(name = "vatId")
+    private String vatId;
+    @Column(name = "tin") // tax identification number
+    private String tin;
+    @Column(name = "legalForm")
+    private String legalForm;
+    @Column(name = "companyRegNr")
+    private String companyRegistrationNumber;
+    @Column(name = "companyRegCourt")
+    private String companyRegistrationCourt;
+    @Column(name = "gender") // M, F, D, ORG, ...
+    private String gender;
+    @Column(name = "streetNumber")
+    private String streetNumber;
+    @Column(name = "initials")
+    private String initials;
+    @Column(name = "degreePrefix")
+    private String degreePrefix; // first part of "Dipl-Ing Walter"
+    @Column(name = "degreeSuffix")
+    private String degreeSuffix; // last part of "Dipl-Ing Walter (TU)"
+    @Column(name = "profession")
+    private String profession;
+    @Column(name = "role") // bspw. "1. Vorsitzender"
+    private String role;
+    @Column(name = "adjunct") // Adresszusatz
+    private String adjunct;
     
     @OneToMany(mappedBy = "addressKey")
     private List<ArchiveFileAddressesBean> archiveFileAddressesBeanList;
@@ -1328,6 +1373,272 @@ public class AddressBean implements Serializable {
      */
     public void setDepartment(String department) {
         this.department = department;
+    }
+
+    /**
+     * @return the district
+     */
+    public String getDistrict() {
+        return district;
+    }
+
+    /**
+     * @param district the district to set
+     */
+    public void setDistrict(String district) {
+        this.district = district;
+    }
+
+    /**
+     * @return the notice
+     */
+    public String getNotice() {
+        return notice;
+    }
+
+    /**
+     * @param notice the notice to set
+     */
+    public void setNotice(String notice) {
+        this.notice = notice;
+    }
+
+    /**
+     * @return the nationality
+     */
+    public String getNationality() {
+        return nationality;
+    }
+
+    /**
+     * @param nationality the nationality to set
+     */
+    public void setNationality(String nationality) {
+        this.nationality = nationality;
+    }
+
+    /**
+     * @return the birthName
+     */
+    public String getBirthName() {
+        return birthName;
+    }
+
+    /**
+     * @param birthName the birthName to set
+     */
+    public void setBirthName(String birthName) {
+        this.birthName = birthName;
+    }
+
+    /**
+     * @return the placeOfBirth
+     */
+    public String getPlaceOfBirth() {
+        return placeOfBirth;
+    }
+
+    /**
+     * @param placeOfBirth the placeOfBirth to set
+     */
+    public void setPlaceOfBirth(String placeOfBirth) {
+        this.placeOfBirth = placeOfBirth;
+    }
+
+    /**
+     * @return the dateOfDeath
+     */
+    public String getDateOfDeath() {
+        return dateOfDeath;
+    }
+
+    /**
+     * @param dateOfDeath the dateOfDeath to set
+     */
+    public void setDateOfDeath(String dateOfDeath) {
+        this.dateOfDeath = dateOfDeath;
+    }
+
+    /**
+     * @return the vatId
+     */
+    public String getVatId() {
+        return vatId;
+    }
+
+    /**
+     * @param vatId the vatId to set
+     */
+    public void setVatId(String vatId) {
+        this.vatId = vatId;
+    }
+
+    /**
+     * @return the tin
+     */
+    public String getTin() {
+        return tin;
+    }
+
+    /**
+     * @param tin the tin to set
+     */
+    public void setTin(String tin) {
+        this.tin = tin;
+    }
+
+    /**
+     * @return the legalForm
+     */
+    public String getLegalForm() {
+        return legalForm;
+    }
+
+    /**
+     * @param legalForm the legalForm to set
+     */
+    public void setLegalForm(String legalForm) {
+        this.legalForm = legalForm;
+    }
+
+    /**
+     * @return the companyRegistrationNumber
+     */
+    public String getCompanyRegistrationNumber() {
+        return companyRegistrationNumber;
+    }
+
+    /**
+     * @param companyRegistrationNumber the companyRegistrationNumber to set
+     */
+    public void setCompanyRegistrationNumber(String companyRegistrationNumber) {
+        this.companyRegistrationNumber = companyRegistrationNumber;
+    }
+
+    /**
+     * @return the companyRegistrationCourt
+     */
+    public String getCompanyRegistrationCourt() {
+        return companyRegistrationCourt;
+    }
+
+    /**
+     * @param companyRegistrationCourt the companyRegistrationCourt to set
+     */
+    public void setCompanyRegistrationCourt(String companyRegistrationCourt) {
+        this.companyRegistrationCourt = companyRegistrationCourt;
+    }
+
+    /**
+     * @return the gender
+     */
+    public String getGender() {
+        return gender;
+    }
+
+    /**
+     * @param gender the gender to set
+     */
+    public void setGender(String gender) {
+        this.gender = gender;
+    }
+
+    /**
+     * @return the streetNumber
+     */
+    public String getStreetNumber() {
+        return streetNumber;
+    }
+
+    /**
+     * @param streetNumber the streetNumber to set
+     */
+    public void setStreetNumber(String streetNumber) {
+        this.streetNumber = streetNumber;
+    }
+
+    /**
+     * @return the initials
+     */
+    public String getInitials() {
+        return initials;
+    }
+
+    /**
+     * @param initials the initials to set
+     */
+    public void setInitials(String initials) {
+        this.initials = initials;
+    }
+
+    /**
+     * @return the degreePrefix
+     */
+    public String getDegreePrefix() {
+        return degreePrefix;
+    }
+
+    /**
+     * @param degreePrefix the degreePrefix to set
+     */
+    public void setDegreePrefix(String degreePrefix) {
+        this.degreePrefix = degreePrefix;
+    }
+
+    /**
+     * @return the degreeSuffix
+     */
+    public String getDegreeSuffix() {
+        return degreeSuffix;
+    }
+
+    /**
+     * @param degreeSuffix the degreeSuffix to set
+     */
+    public void setDegreeSuffix(String degreeSuffix) {
+        this.degreeSuffix = degreeSuffix;
+    }
+
+    /**
+     * @return the profession
+     */
+    public String getProfession() {
+        return profession;
+    }
+
+    /**
+     * @param profession the profession to set
+     */
+    public void setProfession(String profession) {
+        this.profession = profession;
+    }
+
+    /**
+     * @return the role
+     */
+    public String getRole() {
+        return role;
+    }
+
+    /**
+     * @param role the role to set
+     */
+    public void setRole(String role) {
+        this.role = role;
+    }
+
+    /**
+     * @return the adjunct
+     */
+    public String getAdjunct() {
+        return adjunct;
+    }
+
+    /**
+     * @param adjunct the adjunct to set
+     */
+    public void setAdjunct(String adjunct) {
+        this.adjunct = adjunct;
     }
     
 }

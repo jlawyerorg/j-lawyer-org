@@ -1052,6 +1052,13 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuAddressOptionsSalutation = new javax.swing.JMenuItem();
         mnuAddressOptionsComplimentaryClose = new javax.swing.JMenuItem();
         mnuAddressOptionsTitle = new javax.swing.JMenuItem();
+        mnuAddressOptionsCountry = new javax.swing.JMenuItem();
+        mnuAddressOptionsNationality = new javax.swing.JMenuItem();
+        mnuAddressOptionsLegalForm = new javax.swing.JMenuItem();
+        mnuAddressOptionsDegreePrefix = new javax.swing.JMenuItem();
+        mnuAddressOptionsDegreeSuffix = new javax.swing.JMenuItem();
+        mnuAddressOptionsBeruf = new javax.swing.JMenuItem();
+        mnuAddressOptionsRole = new javax.swing.JMenuItem();
         mnuAddressTags = new javax.swing.JMenuItem();
         mnuAddressCustomFields = new javax.swing.JMenuItem();
         mnuPartyTypes = new javax.swing.JMenuItem();
@@ -1286,6 +1293,69 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             }
         });
         mnuAddressOptions.add(mnuAddressOptionsTitle);
+
+        mnuAddressOptionsCountry.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/file_doc.png"))); // NOI18N
+        mnuAddressOptionsCountry.setText("Länder");
+        mnuAddressOptionsCountry.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuAddressOptionsCountryActionPerformed(evt);
+            }
+        });
+        mnuAddressOptions.add(mnuAddressOptionsCountry);
+
+        mnuAddressOptionsNationality.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/file_doc.png"))); // NOI18N
+        mnuAddressOptionsNationality.setText("Staatsangehörigkeiten");
+        mnuAddressOptionsNationality.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuAddressOptionsNationalityActionPerformed(evt);
+            }
+        });
+        mnuAddressOptions.add(mnuAddressOptionsNationality);
+
+        mnuAddressOptionsLegalForm.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/file_doc.png"))); // NOI18N
+        mnuAddressOptionsLegalForm.setText("Rechtsformen");
+        mnuAddressOptionsLegalForm.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuAddressOptionsLegalFormActionPerformed(evt);
+            }
+        });
+        mnuAddressOptions.add(mnuAddressOptionsLegalForm);
+
+        mnuAddressOptionsDegreePrefix.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/file_doc.png"))); // NOI18N
+        mnuAddressOptionsDegreePrefix.setText("akademische Grade (vor dem Namen)");
+        mnuAddressOptionsDegreePrefix.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuAddressOptionsDegreePrefixActionPerformed(evt);
+            }
+        });
+        mnuAddressOptions.add(mnuAddressOptionsDegreePrefix);
+
+        mnuAddressOptionsDegreeSuffix.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/file_doc.png"))); // NOI18N
+        mnuAddressOptionsDegreeSuffix.setText("akademische Grade (nach dem Namen)");
+        mnuAddressOptionsDegreeSuffix.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuAddressOptionsDegreeSuffixActionPerformed(evt);
+            }
+        });
+        mnuAddressOptions.add(mnuAddressOptionsDegreeSuffix);
+
+        mnuAddressOptionsBeruf.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/file_doc.png"))); // NOI18N
+        mnuAddressOptionsBeruf.setText("Berufe");
+        mnuAddressOptionsBeruf.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuAddressOptionsBerufActionPerformed(evt);
+            }
+        });
+        mnuAddressOptions.add(mnuAddressOptionsBeruf);
+
+        mnuAddressOptionsRole.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/file_doc.png"))); // NOI18N
+        mnuAddressOptionsRole.setText("Rollen / Funktionen");
+        mnuAddressOptionsRole.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuAddressOptionsRoleActionPerformed(evt);
+            }
+        });
+        mnuAddressOptions.add(mnuAddressOptionsRole);
 
         mnuAddressTags.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/favorites.png"))); // NOI18N
         mnuAddressTags.setText(bundle.getString("menu.settings.addresses.tags")); // NOI18N
@@ -2372,6 +2442,62 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         
     }//GEN-LAST:event_mnuChkRandomBackgroundActionPerformed
 
+    private void mnuAddressOptionsNationalityActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuAddressOptionsNationalityActionPerformed
+        OptionGroupConfigurationDialog dlg = new OptionGroupConfigurationDialog(this, true);
+        dlg.setTitle("Staatsangehörigkeiten");
+        dlg.setOptionGroup(OptionConstants.OPTIONGROUP_NATIONALITY);
+        FrameUtils.centerDialog(dlg, this);
+        dlg.setVisible(true);
+    }//GEN-LAST:event_mnuAddressOptionsNationalityActionPerformed
+
+    private void mnuAddressOptionsLegalFormActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuAddressOptionsLegalFormActionPerformed
+        OptionGroupConfigurationDialog dlg = new OptionGroupConfigurationDialog(this, true);
+        dlg.setTitle("Rechtsformen");
+        dlg.setOptionGroup(OptionConstants.OPTIONGROUP_LEGALFORM);
+        FrameUtils.centerDialog(dlg, this);
+        dlg.setVisible(true);
+    }//GEN-LAST:event_mnuAddressOptionsLegalFormActionPerformed
+
+    private void mnuAddressOptionsDegreePrefixActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuAddressOptionsDegreePrefixActionPerformed
+        OptionGroupConfigurationDialog dlg = new OptionGroupConfigurationDialog(this, true);
+        dlg.setTitle("akademische Grade (vor dem Namen)");
+        dlg.setOptionGroup(OptionConstants.OPTIONGROUP_DEGREEPREFIX);
+        FrameUtils.centerDialog(dlg, this);
+        dlg.setVisible(true);
+    }//GEN-LAST:event_mnuAddressOptionsDegreePrefixActionPerformed
+
+    private void mnuAddressOptionsDegreeSuffixActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuAddressOptionsDegreeSuffixActionPerformed
+        OptionGroupConfigurationDialog dlg = new OptionGroupConfigurationDialog(this, true);
+        dlg.setTitle("akademische Grade (nach dem Namen)");
+        dlg.setOptionGroup(OptionConstants.OPTIONGROUP_DEGREESUFFIX);
+        FrameUtils.centerDialog(dlg, this);
+        dlg.setVisible(true);
+    }//GEN-LAST:event_mnuAddressOptionsDegreeSuffixActionPerformed
+
+    private void mnuAddressOptionsBerufActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuAddressOptionsBerufActionPerformed
+        OptionGroupConfigurationDialog dlg = new OptionGroupConfigurationDialog(this, true);
+        dlg.setTitle("Berufe");
+        dlg.setOptionGroup(OptionConstants.OPTIONGROUP_PROFESSION);
+        FrameUtils.centerDialog(dlg, this);
+        dlg.setVisible(true);
+    }//GEN-LAST:event_mnuAddressOptionsBerufActionPerformed
+
+    private void mnuAddressOptionsRoleActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuAddressOptionsRoleActionPerformed
+        OptionGroupConfigurationDialog dlg = new OptionGroupConfigurationDialog(this, true);
+        dlg.setTitle("Rolle / Funktion");
+        dlg.setOptionGroup(OptionConstants.OPTIONGROUP_ROLE);
+        FrameUtils.centerDialog(dlg, this);
+        dlg.setVisible(true);
+    }//GEN-LAST:event_mnuAddressOptionsRoleActionPerformed
+
+    private void mnuAddressOptionsCountryActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuAddressOptionsCountryActionPerformed
+        OptionGroupConfigurationDialog dlg = new OptionGroupConfigurationDialog(this, true);
+        dlg.setTitle("Länder");
+        dlg.setOptionGroup(OptionConstants.OPTIONGROUP_COUNTRY);
+        FrameUtils.centerDialog(dlg, this);
+        dlg.setVisible(true);
+    }//GEN-LAST:event_mnuAddressOptionsCountryActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -2401,7 +2527,14 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     private javax.swing.JMenuItem mnuAddressCustomFields;
     private javax.swing.JMenuItem mnuAddressImport;
     private javax.swing.JMenu mnuAddressOptions;
+    private javax.swing.JMenuItem mnuAddressOptionsBeruf;
     private javax.swing.JMenuItem mnuAddressOptionsComplimentaryClose;
+    private javax.swing.JMenuItem mnuAddressOptionsCountry;
+    private javax.swing.JMenuItem mnuAddressOptionsDegreePrefix;
+    private javax.swing.JMenuItem mnuAddressOptionsDegreeSuffix;
+    private javax.swing.JMenuItem mnuAddressOptionsLegalForm;
+    private javax.swing.JMenuItem mnuAddressOptionsNationality;
+    private javax.swing.JMenuItem mnuAddressOptionsRole;
     private javax.swing.JMenuItem mnuAddressOptionsSalutation;
     private javax.swing.JMenuItem mnuAddressOptionsTitle;
     private javax.swing.JMenuItem mnuAddressTags;

@@ -802,6 +802,13 @@ public class ClientSettings {
     private AppOptionGroupBean[] adrTagDtos=null;
     private AppOptionGroupBean[] docTagDtos=null;
     private AppOptionGroupBean[] titles=null;
+    private AppOptionGroupBean[] countries=null;
+    private AppOptionGroupBean[] nationalities=null;
+    private AppOptionGroupBean[] legalForms=null;
+    private AppOptionGroupBean[] degreePrefixes=null;
+    private AppOptionGroupBean[] degreeSuffixes=null;
+    private AppOptionGroupBean[] professions=null;
+    private AppOptionGroupBean[] roles=null; // "Funktion" an einer Adresse
     
     private List<String>afTagsInUse=new ArrayList<String>();
     private List<String>adrTagsInUse=new ArrayList<String>();
@@ -1093,6 +1100,104 @@ public class ClientSettings {
     
     public void setUrlXjustiz(String url) {
         this.urlXjustiz=url;
+    }
+
+    /**
+     * @return the countries
+     */
+    public AppOptionGroupBean[] getCountries() {
+        return countries;
+    }
+
+    /**
+     * @param countries the countries to set
+     */
+    public void setCountries(AppOptionGroupBean[] countries) {
+        this.countries = countries;
+    }
+
+    /**
+     * @return the nationalities
+     */
+    public AppOptionGroupBean[] getNationalities() {
+        return nationalities;
+    }
+
+    /**
+     * @param nationalities the nationalities to set
+     */
+    public void setNationalities(AppOptionGroupBean[] nationalities) {
+        this.nationalities = nationalities;
+    }
+
+    /**
+     * @return the legalForms
+     */
+    public AppOptionGroupBean[] getLegalForms() {
+        return legalForms;
+    }
+
+    /**
+     * @param legalForms the legalForms to set
+     */
+    public void setLegalForms(AppOptionGroupBean[] legalForms) {
+        this.legalForms = legalForms;
+    }
+
+    /**
+     * @return the degreePrefixes
+     */
+    public AppOptionGroupBean[] getDegreePrefixes() {
+        return degreePrefixes;
+    }
+
+    /**
+     * @param degreePrefixes the degreePrefixes to set
+     */
+    public void setDegreePrefixes(AppOptionGroupBean[] degreePrefixes) {
+        this.degreePrefixes = degreePrefixes;
+    }
+
+    /**
+     * @return the degreeSuffixes
+     */
+    public AppOptionGroupBean[] getDegreeSuffixes() {
+        return degreeSuffixes;
+    }
+
+    /**
+     * @param degreeSuffixes the degreeSuffixes to set
+     */
+    public void setDegreeSuffixes(AppOptionGroupBean[] degreeSuffixes) {
+        this.degreeSuffixes = degreeSuffixes;
+    }
+
+    /**
+     * @return the professions
+     */
+    public AppOptionGroupBean[] getProfessions() {
+        return professions;
+    }
+
+    /**
+     * @param professions the professions to set
+     */
+    public void setProfessions(AppOptionGroupBean[] professions) {
+        this.professions = professions;
+    }
+
+    /**
+     * @return the roles
+     */
+    public AppOptionGroupBean[] getRoles() {
+        return roles;
+    }
+
+    /**
+     * @param roles the roles to set
+     */
+    public void setRoles(AppOptionGroupBean[] roles) {
+        this.roles = roles;
     }
  
     

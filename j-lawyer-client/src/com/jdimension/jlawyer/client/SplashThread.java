@@ -778,6 +778,14 @@ public class SplashThread implements Runnable {
         AppOptionGroupBean[] adrTagDtos = null;
         AppOptionGroupBean[] docTagDtos = null;
         AppOptionGroupBean[] titles = null;
+        AppOptionGroupBean[] countries = null;
+        AppOptionGroupBean[] nationalities = null;
+        AppOptionGroupBean[] legalForms = null;
+        AppOptionGroupBean[] degreePrefixes = null;
+        AppOptionGroupBean[] degreeSuffixes = null;
+        AppOptionGroupBean[] professions = null;
+        AppOptionGroupBean[] roles = null;
+
         AppUserBean[] lawyerUsers = null;
         AppUserBean[] assistUsers = null;
         AppUserBean[] allUsers = null;
@@ -831,6 +839,13 @@ public class SplashThread implements Runnable {
             this.updateProgress(false, 9, 9, "");
             updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.option.9"), true);
             titles = mgmt.getOptionGroup(OptionConstants.OPTIONGROUP_TITLES);
+            countries = mgmt.getOptionGroup(OptionConstants.OPTIONGROUP_COUNTRY);
+            nationalities = mgmt.getOptionGroup(OptionConstants.OPTIONGROUP_NATIONALITY);
+            legalForms = mgmt.getOptionGroup(OptionConstants.OPTIONGROUP_LEGALFORM);
+            degreePrefixes = mgmt.getOptionGroup(OptionConstants.OPTIONGROUP_DEGREEPREFIX);
+            degreeSuffixes = mgmt.getOptionGroup(OptionConstants.OPTIONGROUP_DEGREESUFFIX);
+            professions = mgmt.getOptionGroup(OptionConstants.OPTIONGROUP_PROFESSION);
+            roles = mgmt.getOptionGroup(OptionConstants.OPTIONGROUP_ROLE);
 
             //mgmt.remove();
         } catch (Exception ex) {
@@ -850,6 +865,13 @@ public class SplashThread implements Runnable {
         UserSettings.getInstance().setAssistantUsers(assistUsers);
         UserSettings.getInstance().setAllUsers(allUsers);
         settings.setTitles(titles);
+        settings.setCountries(countries);
+        settings.setNationalities(nationalities);
+        settings.setLegalForms(legalForms);
+        settings.setDegreePrefixes(degreePrefixes);
+        settings.setDegreeSuffixes(degreeSuffixes);
+        settings.setProfessions(professions);
+        settings.setRoles(roles);
 
         updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.loadingdesign"), true);
         this.countModules(settings.getRootModule());
