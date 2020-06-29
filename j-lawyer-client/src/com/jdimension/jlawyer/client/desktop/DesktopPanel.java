@@ -765,7 +765,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         //this.lblMonth.setText(dfMonth.format(now));
         SimpleDateFormat dfDay = new SimpleDateFormat("dd");
         //this.lblDay.setText(dfDay.format(now) + ".");
-        this.lblDay.setText(dfWeekday.format(now) + " " + dfDay.format(now) + ". " + dfMonth.format(now) + ": ");
+        this.lblDay.setText(dfWeekday.format(now) + " " + dfDay.format(now) + ". " + dfMonth.format(now));
 
         this.jSplitPane1.setDividerLocation(0.5d);
 
