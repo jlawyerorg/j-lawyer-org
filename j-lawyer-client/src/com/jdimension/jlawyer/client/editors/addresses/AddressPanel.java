@@ -3138,7 +3138,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
     private javax.swing.JCheckBox chkLegalProtection;
     private javax.swing.JCheckBox chkTrafficLegalProtection;
     protected javax.swing.JComboBox cmbComplimentaryClose;
-    private javax.swing.JComboBox<String> cmbCountry;
+    protected javax.swing.JComboBox<String> cmbCountry;
     private javax.swing.JComboBox<String> cmbDegreePrefix;
     private javax.swing.JComboBox<String> cmbDegreeSuffix;
     protected javax.swing.JComboBox cmbInsurance;
