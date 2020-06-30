@@ -790,7 +790,7 @@ public class OthersSelectionStep extends javax.swing.JPanel implements WizardSte
 
             },
             new String [] {
-                "übertragen", "Nachname", "Vorname", "Firma", "Strasse", "PLZ", "Ort", "LKZ", "Telefon", "Fax", "E-Mail", "Rolle"
+                "übertragen", "Nachname", "Vorname", "Unternehmen", "Strasse", "PLZ", "Ort", "LKZ", "Telefon", "Fax", "E-Mail", "Rolle"
             }
         ) {
             Class[] types = new Class [] {

@@ -840,6 +840,9 @@ public class AddressBean implements Serializable {
     @Column(name = "adjunct") // Adresszusatz
     private String adjunct;
     
+    @Column(name = "titleInAddress") // "Herrn" statt "Herr"
+    private String titleInAddress;
+    
     @OneToMany(mappedBy = "addressKey")
     private List<ArchiveFileAddressesBean> archiveFileAddressesBeanList;
 
@@ -1639,6 +1642,20 @@ public class AddressBean implements Serializable {
      */
     public void setAdjunct(String adjunct) {
         this.adjunct = adjunct;
+    }
+
+    /**
+     * @return the titleInAddress
+     */
+    public String getTitleInAddress() {
+        return titleInAddress;
+    }
+
+    /**
+     * @param titleInAddress the titleInAddress to set
+     */
+    public void setTitleInAddress(String titleInAddress) {
+        this.titleInAddress = titleInAddress;
     }
     
 }

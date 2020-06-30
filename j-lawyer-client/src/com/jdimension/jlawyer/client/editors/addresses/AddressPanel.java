@@ -749,6 +749,13 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         this.cmbSalutation.setRenderer(new OptionGroupListCellRenderer());
         this.cmbComplimentaryClose.setRenderer(new OptionGroupListCellRenderer());
         this.cmbTitle.setRenderer(new OptionGroupListCellRenderer());
+        this.cmbTitleInAddress.setRenderer(new OptionGroupListCellRenderer());
+        this.cmbNationality.setRenderer(new OptionGroupListCellRenderer());
+        this.cmbLegalForm.setRenderer(new OptionGroupListCellRenderer());
+        this.cmbDegreePrefix.setRenderer(new OptionGroupListCellRenderer());
+        this.cmbDegreeSuffix.setRenderer(new OptionGroupListCellRenderer());
+        this.cmbProfession.setRenderer(new OptionGroupListCellRenderer());
+        this.cmbRole.setRenderer(new OptionGroupListCellRenderer());
         this.lblHeaderInfo.setText("");
         this.txtCustom1.setDocument(new JTextFieldLimit(249));
         this.txtCustom2.setDocument(new JTextFieldLimit(249));
@@ -849,6 +856,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         this.txtDepartment.setEnabled(!readOnly);
         this.cmbComplimentaryClose.setEnabled(!readOnly);
         this.cmbTitle.setEnabled(!readOnly);
+        this.cmbTitleInAddress.setEnabled(!readOnly);
         this.cmbCountry.setEnabled(!readOnly);
         this.txtEmail.setEnabled(!readOnly);
         this.txtFax.setEnabled(!readOnly);
@@ -930,6 +938,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         this.txtDepartment.setText(dto.getDepartment());
         this.cmbComplimentaryClose.setSelectedItem(dto.getComplimentaryClose());
         this.cmbTitle.setSelectedItem(dto.getTitle());
+        this.cmbTitleInAddress.setSelectedItem(dto.getTitleInAddress());
         this.cmbCountry.setSelectedItem(dto.getCountry());
         this.txtEmail.setText(dto.getEmail());
         this.enableEmailButton();
@@ -1142,6 +1151,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         this.txtDepartment.setText("");
         this.cmbComplimentaryClose.setSelectedItem("");
         this.cmbTitle.setSelectedItem("");
+        this.cmbTitleInAddress.setSelectedItem("");
         this.cmbCountry.setSelectedItem("");
         this.txtEmail.setText("");
         this.enableEmailButton();
@@ -1243,6 +1253,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         AppOptionGroupBean[] salutations = settings.getSalutationDtos();
         AppOptionGroupBean[] complimentaryCloses = settings.getComplimentaryCloseDtos();
         AppOptionGroupBean[] titles = settings.getTitles();
+        AppOptionGroupBean[] titlesInAddress = settings.getTitlesInAddress();
         AppOptionGroupBean[] countries = settings.getCountries();
         AppOptionGroupBean[] nationalities = settings.getNationalities();
         AppOptionGroupBean[] legalForms = settings.getLegalForms();
@@ -1254,6 +1265,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         populateOptionsCombobox(salutations, this.cmbSalutation);
         populateOptionsCombobox(complimentaryCloses, this.cmbComplimentaryClose);
         populateOptionsCombobox(titles, this.cmbTitle);
+        populateOptionsCombobox(titlesInAddress, this.cmbTitleInAddress);
         populateOptionsCombobox(nationalities, this.cmbNationality);
         populateOptionsCombobox(countries, this.cmbCountry);
         populateOptionsCombobox(legalForms, this.cmbLegalForm);
@@ -1320,6 +1332,8 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         cmbRole = new javax.swing.JComboBox<>();
         jLabel45 = new javax.swing.JLabel();
         jSeparator1 = new javax.swing.JSeparator();
+        jLabel47 = new javax.swing.JLabel();
+        cmbTitleInAddress = new javax.swing.JComboBox<>();
         jPanel19 = new javax.swing.JPanel();
         txtNoticePane = new javax.swing.JScrollPane();
         txtNotice = new javax.swing.JTextArea();
@@ -1454,11 +1468,13 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
 
         jLabel2.setText("Vorname:");
 
-        jLabel25.setText("Titel:");
+        jLabel25.setText("Anrede:");
+        jLabel25.setToolTipText("z.B. \"Herr\"");
 
         cmbTitle.setEditable(true);
         cmbTitle.setMaximumRowCount(30);
         cmbTitle.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+        cmbTitle.setToolTipText("z.B. \"Herr\"");
 
         jLabel29.setText("geboren:");
 
@@ -1470,6 +1486,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
             }
         });
 
+        cmbNationality.setEditable(true);
         cmbNationality.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
 
         jLabel30.setText("Staatsangehörigkeit:");
@@ -1490,6 +1507,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
 
         jLabel40.setText("Initialen:");
 
+        cmbDegreePrefix.setEditable(true);
         cmbDegreePrefix.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
 
         jLabel41.setText("akademischer Grad:");
@@ -1498,17 +1516,27 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
 
         jLabel43.setText("nach dem Namen:");
 
+        cmbDegreeSuffix.setEditable(true);
         cmbDegreeSuffix.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
 
+        cmbProfession.setEditable(true);
         cmbProfession.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
 
         jLabel44.setText("Beruf:");
 
+        cmbRole.setEditable(true);
         cmbRole.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
 
         jLabel45.setText("Funktion:");
 
         jSeparator1.setOrientation(javax.swing.SwingConstants.VERTICAL);
+
+        jLabel47.setText("Anrede Briefkopf:");
+        jLabel47.setToolTipText("z.B. \"Herrn\"");
+
+        cmbTitleInAddress.setEditable(true);
+        cmbTitleInAddress.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+        cmbTitleInAddress.setToolTipText("z.B. \"Herrn\"");
 
         org.jdesktop.layout.GroupLayout jPanel1Layout = new org.jdesktop.layout.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
@@ -1518,125 +1546,139 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
                 .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(jPanel1Layout.createSequentialGroup()
                         .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                            .add(jLabel1)
-                            .add(jLabel25)
-                            .add(jLabel31)
-                            .add(jLabel2))
-                        .add(63, 63, 63)
+                            .add(jPanel1Layout.createSequentialGroup()
+                                .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                                    .add(jLabel1)
+                                    .add(jLabel31)
+                                    .add(jLabel2))
+                                .add(63, 63, 63)
+                                .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                                    .add(txtName)
+                                    .add(org.jdesktop.layout.GroupLayout.TRAILING, txtBirthName)
+                                    .add(txtFirstName)))
+                            .add(jPanel1Layout.createSequentialGroup()
+                                .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                                    .add(jLabel25)
+                                    .add(jLabel47))
+                                .add(40, 40, 40)
+                                .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                                    .add(cmbTitleInAddress, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                    .add(cmbTitle, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                            .add(jPanel1Layout.createSequentialGroup()
+                                .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                                    .add(jLabel45)
+                                    .add(jLabel30, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 152, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                    .add(jLabel40, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 65, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                                    .add(cmbNationality, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                    .add(jPanel1Layout.createSequentialGroup()
+                                        .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                                            .add(txtInitials, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 64, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                            .add(cmbRole, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                            .add(jPanel1Layout.createSequentialGroup()
+                                                .add(jLabel42)
+                                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                                .add(cmbDegreePrefix, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                                                .add(jLabel43)
+                                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                                .add(cmbDegreeSuffix, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                                            .add(cmbProfession, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                                        .add(0, 0, Short.MAX_VALUE)))))
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(jSeparator1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                            .add(cmbTitle, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .add(txtName)
-                            .add(org.jdesktop.layout.GroupLayout.TRAILING, txtBirthName)
-                            .add(txtFirstName)))
+                            .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                                .add(jPanel1Layout.createSequentialGroup()
+                                    .add(jLabel29)
+                                    .add(26, 26, 26)
+                                    .add(txtBirthDate, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 75, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                    .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                    .add(cmdSelectBirthday))
+                                .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel1Layout.createSequentialGroup()
+                                    .add(jLabel32)
+                                    .add(73, 73, 73)
+                                    .add(txtPlaceOfBirth, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 115, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
+                            .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel1Layout.createSequentialGroup()
+                                .add(jLabel33)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(txtDeathDate, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 75, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(cmdSelectDeathday))))
                     .add(jPanel1Layout.createSequentialGroup()
                         .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                             .add(jLabel41)
-                            .add(jLabel44)
-                            .add(jLabel45)
-                            .add(jLabel40, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 65, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                            .add(jLabel30, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 152, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                            .add(cmbNationality, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .add(jPanel1Layout.createSequentialGroup()
-                                .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                                    .add(cmbProfession, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                                    .add(cmbRole, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                                    .add(txtInitials, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 64, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                                    .add(jPanel1Layout.createSequentialGroup()
-                                        .add(jLabel42)
-                                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                        .add(cmbDegreePrefix, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                                        .add(jLabel43)
-                                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                        .add(cmbDegreeSuffix, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
-                                .add(0, 0, Short.MAX_VALUE)))))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jSeparator1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jPanel1Layout.createSequentialGroup()
-                        .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                            .add(jLabel32)
-                            .add(jLabel29))
-                        .add(26, 26, 26)
-                        .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
-                            .add(jPanel1Layout.createSequentialGroup()
-                                .add(txtBirthDate, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 75, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                .add(cmdSelectBirthday))
-                            .add(txtPlaceOfBirth, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 115, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
-                    .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel1Layout.createSequentialGroup()
-                        .add(jLabel33)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(txtDeathDate, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 75, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(cmdSelectDeathday)))
+                            .add(jLabel44))
+                        .add(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel1Layout.createSequentialGroup()
-                .addContainerGap()
-                .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
+                .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, cmdSelectBirthday)
+                    .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                        .add(cmbTitle, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .add(jLabel25)
+                        .add(txtBirthDate, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .add(jLabel29)))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(jPanel1Layout.createSequentialGroup()
-                        .add(jSeparator1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 137, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                            .add(cmbTitleInAddress, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                            .add(jLabel47))
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            .add(jLabel1)
+                            .add(txtName, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
                     .add(jPanel1Layout.createSequentialGroup()
+                        .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                            .add(txtPlaceOfBirth, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                            .add(jLabel32))
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                            .add(org.jdesktop.layout.GroupLayout.TRAILING, cmdSelectBirthday)
+                            .add(org.jdesktop.layout.GroupLayout.TRAILING, cmdSelectDeathday)
                             .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                                .add(cmbTitle, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                                .add(jLabel25)
-                                .add(txtBirthDate, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                                .add(jLabel29)))
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                            .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                                .add(jLabel1)
-                                .add(txtPlaceOfBirth, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                                .add(jLabel32))
-                            .add(txtName, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                            .add(jPanel1Layout.createSequentialGroup()
-                                .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                                    .add(txtBirthName, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                                    .add(jLabel31))
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                                    .add(txtFirstName, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                                    .add(jLabel2)))
-                            .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                                .add(org.jdesktop.layout.GroupLayout.TRAILING, cmdSelectDeathday)
-                                .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                                    .add(txtDeathDate, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                                    .add(jLabel33))))
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                            .add(cmbNationality, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                            .add(jLabel30))
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                            .add(txtInitials, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                            .add(jLabel40))
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                            .add(jLabel42)
-                            .add(cmbDegreePrefix, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                            .add(jLabel43)
-                            .add(cmbDegreeSuffix, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                            .add(jLabel41))
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                            .add(cmbProfession, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                            .add(jLabel44))
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                            .add(cmbRole, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                            .add(jLabel45))
-                        .add(33, 33, 33))))
+                                .add(txtDeathDate, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                .add(jLabel33)))))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(txtBirthName, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(jLabel31))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(txtFirstName, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(jLabel2))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(cmbNationality, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(jLabel30))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(txtInitials, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(jLabel40))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(jLabel42)
+                    .add(cmbDegreePrefix, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(jLabel43)
+                    .add(cmbDegreeSuffix, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(jLabel41))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(cmbProfession, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(jLabel44))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(cmbRole, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(jLabel45))
+                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .add(jPanel1Layout.createSequentialGroup()
+                .add(jSeparator1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 173, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         jPanel19.setBorder(javax.swing.BorderFactory.createTitledBorder("Notizen"));
@@ -1661,16 +1703,17 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         jPanel19Layout.setVerticalGroup(
             jPanel19Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel19Layout.createSequentialGroup()
-                .add(txtNoticePane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 156, Short.MAX_VALUE)
+                .add(txtNoticePane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 160, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
         jPanel20.setBorder(javax.swing.BorderFactory.createTitledBorder("Juristische Person"));
 
-        jLabel3.setText("Firma:");
+        jLabel3.setText("Unternehmensbezeichnung:");
 
         jLabel27.setText("Abteilung:");
 
+        cmbLegalForm.setEditable(true);
         cmbLegalForm.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
 
         jLabel36.setText("Rechtsform:");
@@ -1698,7 +1741,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                         .add(jLabel38)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(txtRegCourt))
+                        .add(txtRegCourt, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 321, Short.MAX_VALUE))
                     .add(cmbLegalForm, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
@@ -1807,6 +1850,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
 
         jLabel46.setText("Zusatz:");
 
+        cmbCountry.setEditable(true);
         cmbCountry.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
 
         org.jdesktop.layout.GroupLayout jPanel2Layout = new org.jdesktop.layout.GroupLayout(jPanel2);
@@ -2075,7 +2119,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
                 .add(jPanel3, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel17, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(208, Short.MAX_VALUE))
+                .addContainerGap(215, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("Kontakt", new javax.swing.ImageIcon(getClass().getResource("/icons16/baseline_home_black_48dp.png")), jPanel18); // NOI18N
@@ -2313,16 +2357,16 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
                 .add(jPanel11, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel12, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(167, Short.MAX_VALUE))
+                .addContainerGap(174, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("Bank / Versicherung", new javax.swing.ImageIcon(getClass().getResource("/icons/money.png")), jPanel8); // NOI18N
 
         jPanel6.setBorder(javax.swing.BorderFactory.createTitledBorder(javax.swing.BorderFactory.createTitledBorder("Dokumente")));
 
-        jLabel16.setText("Anrede:");
+        jLabel16.setText("Begrüßung:");
 
-        jLabel17.setText("Grußformel:");
+        jLabel17.setText("Nachtext / Grußformel:");
 
         cmbSalutation.setEditable(true);
         cmbSalutation.setMaximumRowCount(30);
@@ -2342,7 +2386,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
                     .add(jLabel16))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel6Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
-                    .add(cmbSalutation, 0, 827, Short.MAX_VALUE)
+                    .add(cmbSalutation, 0, 752, Short.MAX_VALUE)
                     .add(cmbComplimentaryClose, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
@@ -2373,7 +2417,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
             .add(jPanel9Layout.createSequentialGroup()
                 .addContainerGap()
                 .add(jPanel6, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(578, Short.MAX_VALUE))
+                .addContainerGap(585, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("Textbausteine", new javax.swing.ImageIcon(getClass().getResource("/icons/folder_documents.png")), jPanel9); // NOI18N
@@ -2411,7 +2455,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         );
         jPanel13Layout.setVerticalGroup(
             jPanel13Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(0, 691, Short.MAX_VALUE)
+            .add(0, 698, Short.MAX_VALUE)
             .add(jPanel13Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                 .add(jPanel13Layout.createSequentialGroup()
                     .addContainerGap()
@@ -2468,7 +2512,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
                 .add(lblCustom3)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jScrollPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(476, Short.MAX_VALUE))
+                .addContainerGap(483, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("Eigene", new javax.swing.ImageIcon(getClass().getResource("/icons16/kate.png")), jPanel15); // NOI18N
@@ -2481,7 +2525,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         );
         pnlCasesForContactLayout.setVerticalGroup(
             pnlCasesForContactLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(0, 664, Short.MAX_VALUE)
+            .add(0, 671, Short.MAX_VALUE)
         );
 
         jScrollPane2.setViewportView(pnlCasesForContact);
@@ -3149,6 +3193,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
     private javax.swing.JComboBox<String> cmbRole;
     protected javax.swing.JComboBox cmbSalutation;
     protected javax.swing.JComboBox cmbTitle;
+    private javax.swing.JComboBox<String> cmbTitleInAddress;
     protected javax.swing.JButton cmdBackToSearch;
     private javax.swing.JButton cmdChooseBank;
     private javax.swing.JButton cmdChooseCity;
@@ -3207,6 +3252,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
     private javax.swing.JLabel jLabel44;
     private javax.swing.JLabel jLabel45;
     private javax.swing.JLabel jLabel46;
+    private javax.swing.JLabel jLabel47;
     private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel7;
@@ -3322,6 +3368,9 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
             return true;
         }
         if (!StringUtils.equals(dto.getTitle(), (String) this.cmbTitle.getSelectedItem())) {
+            return true;
+        }
+        if (!StringUtils.equals(dto.getTitleInAddress(), (String) this.cmbTitleInAddress.getSelectedItem())) {
             return true;
         }
         if (!StringUtils.equals(dto.getCountry(), this.cmbCountry.getSelectedItem().toString())) {
@@ -3488,6 +3537,11 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         } else {
             adr.setTitle("");
         }
+        if (this.cmbTitleInAddress.getSelectedItem() != null) {
+            adr.setTitleInAddress(this.cmbTitleInAddress.getSelectedItem().toString());
+        } else {
+            adr.setTitleInAddress("");
+        }
         adr.setCountry(this.cmbCountry.getSelectedItem().toString());
         adr.setEmail(this.txtEmail.getText());
         adr.setFax(this.txtFax.getText());
@@ -3533,13 +3587,21 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         
         adr.setDistrict(this.txtDistrict.getText());
         adr.setNotice(this.txtNotice.getText());
-        adr.setNationality(this.cmbNationality.getSelectedItem().toString());
+        if (this.cmbNationality.getSelectedItem() != null) {
+            adr.setNationality(this.cmbNationality.getSelectedItem().toString());
+        } else {
+            adr.setNationality("");
+        }
         adr.setBirthName(this.txtBirthName.getText());
         adr.setPlaceOfBirth(this.txtPlaceOfBirth.getText());
         adr.setDateOfDeath(this.txtDeathDate.getText());
         adr.setVatId(this.txtVatId.getText());
         adr.setTin(this.txtTin.getText());
-        adr.setLegalForm(this.cmbLegalForm.getSelectedItem().toString());
+        if (this.cmbLegalForm.getSelectedItem() != null) {
+            adr.setLegalForm(this.cmbLegalForm.getSelectedItem().toString());
+        } else {
+            adr.setLegalForm("");
+        }
         adr.setCompanyRegistrationCourt(this.txtRegCourt.getText());
         adr.setCompanyRegistrationNumber(this.txtRegNr.getText());
         
@@ -3556,10 +3618,26 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         
         adr.setStreetNumber(this.txtStreetNr.getText());
         adr.setInitials(this.txtInitials.getText());
-        adr.setDegreePrefix(this.cmbDegreePrefix.getSelectedItem().toString());
-        adr.setDegreeSuffix(this.cmbDegreeSuffix.getSelectedItem().toString());
-        adr.setProfession(this.cmbProfession.getSelectedItem().toString());
-        adr.setRole(this.cmbRole.getSelectedItem().toString());
+        if (this.cmbDegreePrefix.getSelectedItem() != null) {
+            adr.setDegreePrefix(this.cmbDegreePrefix.getSelectedItem().toString());
+        } else {
+            adr.setDegreePrefix("");
+        }
+        if (this.cmbDegreeSuffix.getSelectedItem() != null) {
+            adr.setDegreeSuffix(this.cmbDegreeSuffix.getSelectedItem().toString());
+        } else {
+            adr.setDegreeSuffix("");
+        }
+        if (this.cmbProfession.getSelectedItem() != null) {
+            adr.setProfession(this.cmbProfession.getSelectedItem().toString());
+        } else {
+            adr.setProfession("");
+        }
+        if (this.cmbRole.getSelectedItem() != null) {
+            adr.setRole(this.cmbRole.getSelectedItem().toString());
+        } else {
+            adr.setRole("");
+        }
         adr.setAdjunct(this.txtAdjunct.getText());
         
     }

@@ -802,6 +802,7 @@ public class ClientSettings {
     private AppOptionGroupBean[] adrTagDtos=null;
     private AppOptionGroupBean[] docTagDtos=null;
     private AppOptionGroupBean[] titles=null;
+    private AppOptionGroupBean[] titlesInAddress=null;
     private AppOptionGroupBean[] countries=null;
     private AppOptionGroupBean[] nationalities=null;
     private AppOptionGroupBean[] legalForms=null;
@@ -1198,6 +1199,20 @@ public class ClientSettings {
      */
     public void setRoles(AppOptionGroupBean[] roles) {
         this.roles = roles;
+    }
+
+    /**
+     * @return the titlesInAddress
+     */
+    public AppOptionGroupBean[] getTitlesInAddress() {
+        return titlesInAddress;
+    }
+
+    /**
+     * @param titlesInAddress the titlesInAddress to set
+     */
+    public void setTitlesInAddress(AppOptionGroupBean[] titlesInAddress) {
+        this.titlesInAddress = titlesInAddress;
     }
  
     

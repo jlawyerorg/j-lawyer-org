@@ -687,5 +687,6 @@ public interface OptionConstants {
     public static final String OPTIONGROUP_ADDRESSTAGS="address.tags";
     
     public static final String OPTIONGROUP_TITLES="address.title";
+    public static final String OPTIONGROUP_TITLESINADDRESS="address.titleinaddress";
     
 }

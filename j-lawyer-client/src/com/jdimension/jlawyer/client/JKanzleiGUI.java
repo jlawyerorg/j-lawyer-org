@@ -1052,6 +1052,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuAddressOptionsSalutation = new javax.swing.JMenuItem();
         mnuAddressOptionsComplimentaryClose = new javax.swing.JMenuItem();
         mnuAddressOptionsTitle = new javax.swing.JMenuItem();
+        mnuAddressOptionsTitleInAddress = new javax.swing.JMenuItem();
         mnuAddressOptionsCountry = new javax.swing.JMenuItem();
         mnuAddressOptionsNationality = new javax.swing.JMenuItem();
         mnuAddressOptionsLegalForm = new javax.swing.JMenuItem();
@@ -1286,13 +1287,22 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuAddressOptions.add(mnuAddressOptionsComplimentaryClose);
 
         mnuAddressOptionsTitle.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/file_doc.png"))); // NOI18N
-        mnuAddressOptionsTitle.setText(bundle.getString("menu.settings.addresses.titles")); // NOI18N
+        mnuAddressOptionsTitle.setText("Titel");
         mnuAddressOptionsTitle.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 mnuAddressOptionsTitleActionPerformed(evt);
             }
         });
         mnuAddressOptions.add(mnuAddressOptionsTitle);
+
+        mnuAddressOptionsTitleInAddress.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/file_doc.png"))); // NOI18N
+        mnuAddressOptionsTitleInAddress.setText("Titel (Briefkopf)");
+        mnuAddressOptionsTitleInAddress.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuAddressOptionsTitleInAddressActionPerformed(evt);
+            }
+        });
+        mnuAddressOptions.add(mnuAddressOptionsTitleInAddress);
 
         mnuAddressOptionsCountry.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/file_doc.png"))); // NOI18N
         mnuAddressOptionsCountry.setText("Länder");
@@ -2498,6 +2508,14 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         dlg.setVisible(true);
     }//GEN-LAST:event_mnuAddressOptionsCountryActionPerformed
 
+    private void mnuAddressOptionsTitleInAddressActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuAddressOptionsTitleInAddressActionPerformed
+        OptionGroupConfigurationDialog dlg = new OptionGroupConfigurationDialog(this, true);
+        dlg.setTitle("Titel (Briefkopf)");
+        dlg.setOptionGroup(OptionConstants.OPTIONGROUP_TITLESINADDRESS);
+        FrameUtils.centerDialog(dlg, this);
+        dlg.setVisible(true);
+    }//GEN-LAST:event_mnuAddressOptionsTitleInAddressActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -2537,6 +2555,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     private javax.swing.JMenuItem mnuAddressOptionsRole;
     private javax.swing.JMenuItem mnuAddressOptionsSalutation;
     private javax.swing.JMenuItem mnuAddressOptionsTitle;
+    private javax.swing.JMenuItem mnuAddressOptionsTitleInAddress;
     private javax.swing.JMenuItem mnuAddressTags;
     private javax.swing.JMenuItem mnuAdminConsole;
     private javax.swing.JMenuItem mnuArchiveFileCustomFields;

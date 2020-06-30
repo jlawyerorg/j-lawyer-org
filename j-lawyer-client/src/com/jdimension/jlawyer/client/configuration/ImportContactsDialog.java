@@ -759,7 +759,7 @@ public class ImportContactsDialog extends javax.swing.JDialog {
 
             },
             new String [] {
-                "Importieren", "Firma", "Abteilung", "Name", "Vorname", "Land", "Ort", "PLZ", "Strasse", "Telefon", "Mobiltelefon", "Fax", "E-Mail"
+                "Importieren", "Unternehmen", "Abteilung", "Name", "Vorname", "Land", "Ort", "PLZ", "Strasse", "Telefon", "Mobiltelefon", "Fax", "E-Mail"
             }
         ) {
             Class[] types = new Class [] {
@@ -908,6 +908,13 @@ public class ImportContactsDialog extends javax.swing.JDialog {
                             log.error("Could not import birth date for " + v.getStructuredName().getFamily(), t);
                         }
                     }
+                    if (v.getDeathdate() != null) {
+                        try {
+                            ab.setDateOfDeath(df.format(v.getDeathdate().getDate()));
+                        } catch (Throwable t) {
+                            log.error("Could not import death date for " + v.getStructuredName().getFamily(), t);
+                        }
+                    }
 
                     //ab.setCompany(v.getOrganization()); // firma?
                     if (v.getStructuredName() != null) {
@@ -928,6 +935,20 @@ public class ImportContactsDialog extends javax.swing.JDialog {
                             if(v.getOrganization().getValues().get(1)!=null) {
                                 ab.setDepartment(v.getOrganization().getValues().get(1).toString());
                             }
+                        }
+                    }
+                    if(v.getBirthplace()!=null) {
+                        if(v.getBirthplace().getText()!=null) {
+                            ab.setPlaceOfBirth(v.getBirthplace().getText());
+                        }
+                    }
+                    if(v.getGender()!=null) {
+                        if(v.getGender().isFemale()) {
+                            ab.setGender(AddressBean.GENDER_FEMALE);
+                        } else if(v.getGender().isMale()) {
+                            ab.setGender(AddressBean.GENDER_MALE);
+                        }else {
+                            ab.setGender(AddressBean.GENDER_UNDEFINED);
                         }
                     }
                     

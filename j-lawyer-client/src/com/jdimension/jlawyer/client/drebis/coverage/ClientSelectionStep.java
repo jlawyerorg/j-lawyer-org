@@ -868,7 +868,7 @@ public class ClientSelectionStep extends javax.swing.JPanel implements WizardSte
 
             },
             new String [] {
-                "übertragen", "Nachname", "Vorname", "Firma", "Strasse", "PLZ", "Ort", "LKZ", "Telefon", "Fax", "E-Mail"
+                "übertragen", "Nachname", "Vorname", "Unternehmen", "Strasse", "PLZ", "Ort", "LKZ", "Telefon", "Fax", "E-Mail"
             }
         ) {
             Class[] types = new Class [] {

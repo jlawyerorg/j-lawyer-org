@@ -67,7 +67,7 @@
                 <Column editable="true" title="&#xfc;bertragen" type="java.lang.Boolean"/>
                 <Column editable="true" title="Nachname" type="java.lang.Object"/>
                 <Column editable="true" title="Vorname" type="java.lang.Object"/>
-                <Column editable="true" title="Firma" type="java.lang.Object"/>
+                <Column editable="true" title="Unternehmen" type="java.lang.Object"/>
                 <Column editable="true" title="Strasse" type="java.lang.Object"/>
                 <Column editable="true" title="PLZ" type="java.lang.Object"/>
                 <Column editable="true" title="Ort" type="java.lang.Object"/>
