@@ -1538,6 +1538,20 @@ public class AddressBean implements Serializable {
     public String getGender() {
         return gender;
     }
+    
+    public String getGenderDisplayValue() {
+        if(GENDER_FEMALE.equalsIgnoreCase(this.gender)) {
+            return "weiblich";
+        } else if(GENDER_MALE.equalsIgnoreCase(this.gender)) {
+            return "männlich";
+        } else if(GENDER_LEGALENTITY.equalsIgnoreCase(this.gender)) {
+            return "juristische Person";
+        } else if(GENDER_OTHER.equalsIgnoreCase(this.gender)) {
+            return "divers";
+        } else {
+            return "undefiniert";
+        }
+    }
 
     /**
      * @param gender the gender to set
