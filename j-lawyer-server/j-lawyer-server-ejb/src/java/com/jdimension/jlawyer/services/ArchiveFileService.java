@@ -2048,6 +2048,10 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         }
         File dbFileNew = new File(dstNew);
         
+        if(dbFileNew.exists()) {
+            throw new Exception("Ein Dokument mit dem Namen " + newName + " existiert bereits in der Akte!");
+        }
+        
         boolean renamed = dbFile.renameTo(dbFileNew);
         if (!renamed) {
             throw new Exception("Dokument " + dst + " konnte nicht umbenannt werden!");
