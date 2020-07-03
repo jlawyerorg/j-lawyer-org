@@ -732,6 +732,7 @@ public class LastChangedEntryPanel extends javax.swing.JPanel {
 
         Graphics2D g2d = (Graphics2D) g.create();
         g2d.setComposite(AlphaComposite.SrcOver.derive(this.alpha));
+        //g2d.setComposite(AlphaComposite.Src.derive(this.alpha));
         g2d.setColor(getBackground());
         g2d.fillRect(0, 0, getWidth(), getHeight());
         g2d.dispose();
