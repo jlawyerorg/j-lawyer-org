@@ -85,7 +85,6 @@
           <SubComponents>
             <MenuItem class="javax.swing.JCheckBoxMenuItem" name="mnuChkRandomBackground">
               <Properties>
-                <Property name="selected" type="boolean" value="true"/>
                 <Property name="text" type="java.lang.String" value="zuf&#xe4;lliger Desktophintergrund"/>
                 <Property name="toolTipText" type="java.lang.String" value=""/>
               </Properties>

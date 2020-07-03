@@ -1251,7 +1251,6 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
 
         mnuView.setText("Ansicht");
 
-        mnuChkRandomBackground.setSelected(true);
         mnuChkRandomBackground.setText("zufälliger Desktophintergrund");
         mnuChkRandomBackground.setToolTipText("");
         mnuChkRandomBackground.addActionListener(new java.awt.event.ActionListener() {

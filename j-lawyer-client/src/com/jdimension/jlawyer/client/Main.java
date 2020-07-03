@@ -667,6 +667,7 @@ import com.formdev.flatlaf.FlatDarculaLaf;
 import com.formdev.flatlaf.FlatIntelliJLaf;
 import com.jdimension.jlawyer.client.events.Event;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.utils.FontUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.VersionUtils;
@@ -921,7 +922,14 @@ public class Main {
         ModuleMetadata root = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.mydesktop"));
 
         String randomBackgrounds = settings.getConfiguration(ClientSettings.CONF_DESKTOP_RANDOM_BACKGROUND, "0");
-        if ("0".equalsIgnoreCase(randomBackgrounds)) {
+        
+        // webswing did not like the large images and displayed an empty frame instead of the application
+        String demoSystem=settings.getConfiguration("runtime.isdemosystem", "0");
+        boolean isDemoSystem=false;
+        if(demoSystem!=null && "1".equalsIgnoreCase(demoSystem)) {
+            isDemoSystem=true;
+        }
+        if ("0".equalsIgnoreCase(randomBackgrounds) || isDemoSystem) {
 
             //root.setIcon("mydesktop.png");
             //root.setBackgroundImage("mydesktop.jpg");
