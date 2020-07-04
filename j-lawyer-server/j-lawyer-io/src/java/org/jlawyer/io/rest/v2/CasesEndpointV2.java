@@ -660,28 +660,247 @@ specific requirements.
 if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
-*/
-package org.jlawyer.io.rest.v1;
+ */
+package org.jlawyer.io.rest.v2;
 
-import org.jlawyer.io.rest.v2.CasesEndpointV2;
-import java.util.HashSet;
-import java.util.Set;
-import javax.ws.rs.ApplicationPath;
-import javax.ws.rs.core.Application;
-import org.jlawyer.io.rest.v2.ContactsEndpointV2;
+import com.jdimension.jlawyer.persistence.AddressBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBeanFacadeLocal;
+import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileFormsBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileTagsBean;
+import com.jdimension.jlawyer.persistence.Group;
+import com.jdimension.jlawyer.persistence.PartyTypeBean;
+import com.jdimension.jlawyer.security.Base64;
+import com.jdimension.jlawyer.services.AddressServiceLocal;
+import com.jdimension.jlawyer.services.ArchiveFileServiceLocal;
+import com.jdimension.jlawyer.services.FormsServiceLocal;
+import com.jdimension.jlawyer.services.SecurityServiceLocal;
+import com.jdimension.jlawyer.services.SystemManagementLocal;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import javax.annotation.security.RolesAllowed;
+import javax.ejb.EJB;
+import javax.ejb.Stateless;
+import javax.naming.InitialContext;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import org.jboss.logging.Logger;
+import org.jlawyer.io.rest.v1.pojo.RestfulCaseOverviewV1;
+import org.jlawyer.io.rest.v1.pojo.RestfulCaseV2;
+import org.jlawyer.io.rest.v1.pojo.RestfulDocumentV1;
+import org.jlawyer.io.rest.v1.pojo.RestfulDocumentContentV1;
+import org.jlawyer.io.rest.v1.pojo.RestfulDueDateV1;
+import org.jlawyer.io.rest.v1.pojo.RestfulFormV1;
+import org.jlawyer.io.rest.v1.pojo.RestfulPartyTypeV1;
+import org.jlawyer.io.rest.v1.pojo.RestfulPartyV1;
+import org.jlawyer.io.rest.v1.pojo.RestfulTagV1;
 
-@ApplicationPath("/rest")
-public class EndpointServiceLocator extends Application
-{
-    public Set<Class<?>> getClasses()
-    {
-        Set<Class<?>> s = new HashSet<Class<?>>();
-        s.add(SecurityEndpointV1.class);
-        s.add(CasesEndpointV1.class);
-        s.add(CasesEndpointV2.class);
-        s.add(ContactsEndpointV1.class);
-        s.add(ContactsEndpointV2.class);
-        s.add(FormsEndpointV1.class);
-        return s;
+/**
+ *
+ * http://localhost:8080/j-lawyer-io/rest/cases/list
+ */
+@Stateless
+@Path("/v2/cases")
+@Consumes({"application/json"})
+@Produces({"application/json"})
+public class CasesEndpointV2 implements CasesEndpointLocalV2 {
+
+    private static final Logger log = Logger.getLogger(CasesEndpointV2.class.getName());
+
+    // when seeing something like
+    //  com.fasterxml.jackson.databind.JsonMappingException: failed to lazily initialize a collection of role: com.jdimension.jlawyer.persistence.ArchiveFileBean.archiveFileFormsBeanList, could not initialize proxy - no Session
+    // it is not necessarily an issue with fetch type eager or lazy, just put @XmlTransient to the getter of the list in the entity
+    
+    /**
+     * Returns all case metadata based on its ID. This service supports extended file numbers (including prefix, suffix, group and user).
+     *
+     * @param id case ID
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/{id}")
+    @RolesAllowed({"readArchiveFileRole"})
+    public Response getCase(@PathParam("id") String id) {
+        // http://localhost:8080/j-lawyer-io/rest/cases/2c851dc47f0001011cdef6be8abaddee
+        try {
+
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal");
+            ArchiveFileBean afb = cases.getArchiveFile(id);
+            if(afb==null) {
+                log.error("There is no case with id " + id);
+                Response res = Response.serverError().build();
+                return res;
+            }
+            RestfulCaseV2 c=new RestfulCaseV2();
+            c.setArchived(afb.getArchived());
+            c.setAssistant(afb.getAssistant());
+            c.setClaimNumber(afb.getClaimNumber());
+            c.setClaimValue(afb.getClaimValue());
+            c.setCustom1(afb.getCustom1());
+            c.setCustom2(afb.getCustom2());
+            c.setCustom3(afb.getCustom3());
+            c.setFileNumber(afb.getFileNumber());
+            c.setId(afb.getId());
+            c.setLawyer(afb.getLawyer());
+            c.setName(afb.getName());
+            c.setNotice(afb.getNotice());
+            c.setReason(afb.getReason());
+            c.setSubjectField(afb.getSubjectField());
+            
+            if(afb.getGroup()!=null) {
+                c.setGroup(afb.getGroup().getName());
+            }
+            
+            Response res = Response.ok(c).build();
+            return res;
+        } catch (Exception ex) {
+            log.error("can not get case " + id, ex);
+            Response res = Response.serverError().build();
+            return res;
+        }
     }
+
+    /**
+     * Creates a new case. This service supports extended file numbers (including prefix, suffix, group and user).
+     *
+     * @param caseData case data
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @PUT
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/create")
+    @RolesAllowed({"createArchiveFileRole"})
+    public Response createCase(RestfulCaseV2 caseData) {
+
+        // curl -u admin:a -X PUT -H "Content-Type: application/json" -d '{"name":"via REST", "reason":"wegen REST", "subjectField":"Familienrecht", "notice":"notiz REST","assistant":"user", "lawyer":"admin", "claimNumber":"RESTcn","claimValue":"3.44","custom1":"RESTc1","custom2":"RESTc2","custom3":"RESTc3"}' http://localhost:8080/j-lawyer-io/rest/cases/create
+        try {
+
+            if (caseData.getName() == null || "".equals(caseData.getName())) {
+                log.error("Can not create new case - no case number given");
+                return Response.serverError().build();
+            }
+
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal");
+            SecurityServiceLocal security = (SecurityServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/SecurityService!com.jdimension.jlawyer.services.SecurityServiceLocal");
+
+            ArchiveFileBean c=new ArchiveFileBean();
+            c=caseData.toArchiveFileBean(c);
+            if(caseData.getGroup()!=null) {
+                String groupName=caseData.getGroup();
+                for(Group g: security.getAllGroups()) {
+                    if(g.getName().equals(groupName)) {
+                        c.setGroup(g);
+                        break;
+                    }
+                }
+            }
+            
+            c = cases.createArchiveFile(c);
+            caseData=RestfulCaseV2.fromArchiveFileBean(c);
+            
+            Response res = Response.ok(caseData).build();
+            return res;
+        } catch (Exception ex) {
+            log.error("can not create new case " + caseData.getName(), ex);
+            Response res = Response.serverError().build();
+            return res;
+        }
+    }
+
+    
+    
+    /**
+     * Updates an existing case based on its ID. The file number is immutable. This service supports extended file numbers (including prefix, suffix, group and user).
+     *
+     * @param caseData case data
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @PUT
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/update")
+    @RolesAllowed({"writeArchiveFileRole"})
+    public Response updateCase(RestfulCaseV2 caseData) {
+
+        // curl -u admin:a -X PUT -H "Content-Type: application/json" -d '{"id":"2187c30c7f0001011c78dd99d50cbd20", "name":"via REST", "reason":"wegen REST", "subjectField":"Familienrecht", "notice":"notiz REST","assistant":"user", "lawyer":"admin", "claimNumber":"RESTcn","claimValue":"3.44","custom1":"RESTc1","custom2":"RESTc2","custom3":"RESTc3"}' http://localhost:8080/j-lawyer-io/rest/cases/update
+        try {
+
+            if (caseData.getId() == null || "".equals(caseData.getId())) {
+                log.error("Can update case - no case id given");
+                return Response.serverError().build();
+            }
+
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal");
+            
+            SecurityServiceLocal security = (SecurityServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/SecurityService!com.jdimension.jlawyer.services.SecurityServiceLocal");
+
+            ArchiveFileBean currentCase = cases.getArchiveFile(caseData.getId());
+            if (currentCase == null) {
+                log.error("case with id " + caseData.getId() + " does not exist - skipping update");
+                Response res = Response.serverError().build();
+                return res;
+            }
+            Collection reviews=cases.getReviews(caseData.getId());
+            currentCase.setArchiveFileReviewsBeanList((List<ArchiveFileReviewsBean>)reviews);
+            List<ArchiveFileAddressesBean> adds=cases.getInvolvementDetailsForCase(caseData.getId());
+            currentCase.setArchiveFileAddressesBeanList(adds);
+            // file number must not be changed
+
+            currentCase.setArchived(caseData.getArchived());
+            currentCase.setAssistant(caseData.getAssistant());
+            currentCase.setClaimNumber(caseData.getClaimNumber());
+            currentCase.setClaimValue(caseData.getClaimValue());
+            currentCase.setCustom1(caseData.getCustom1());
+            currentCase.setCustom2(caseData.getCustom2());
+            currentCase.setCustom3(caseData.getCustom3());
+            currentCase.setLawyer(caseData.getLawyer());
+            currentCase.setName(caseData.getName());
+            currentCase.setNotice(caseData.getNotice());
+            currentCase.setReason(caseData.getReason());
+            currentCase.setSubjectField(caseData.getSubjectField());
+
+            if(caseData.getGroup()!=null) {
+                String groupName=caseData.getGroup();
+                for(Group g: security.getAllGroups()) {
+                    if(g.getName().equals(groupName)) {
+                        currentCase.setGroup(g);
+                        break;
+                    }
+                }
+            }
+            
+            cases.updateArchiveFile(currentCase);
+            currentCase = cases.getArchiveFile(caseData.getId());
+            
+            
+
+            Response res = Response.ok(RestfulCaseV2.fromArchiveFileBean(currentCase)).build();
+            return res;
+        } catch (Exception ex) {
+            log.error("can not update case " + caseData.getName(), ex);
+            Response res = Response.serverError().build();
+            return res;
+        }
+    }
+
 }

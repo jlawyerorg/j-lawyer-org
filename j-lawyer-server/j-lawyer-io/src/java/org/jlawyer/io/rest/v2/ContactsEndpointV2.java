@@ -660,28 +660,191 @@ specific requirements.
 if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
-*/
-package org.jlawyer.io.rest.v1;
+ */
+package org.jlawyer.io.rest.v2;
 
-import org.jlawyer.io.rest.v2.CasesEndpointV2;
-import java.util.HashSet;
-import java.util.Set;
-import javax.ws.rs.ApplicationPath;
-import javax.ws.rs.core.Application;
-import org.jlawyer.io.rest.v2.ContactsEndpointV2;
+import com.jdimension.jlawyer.persistence.AddressBean;
+import com.jdimension.jlawyer.services.AddressServiceLocal;
+import java.util.ArrayList;
+import javax.annotation.security.RolesAllowed;
+import javax.ejb.Stateless;
+import javax.naming.InitialContext;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import org.jboss.logging.Logger;
+import org.jlawyer.io.rest.v2.pojo.RestfulContactV2;
 
-@ApplicationPath("/rest")
-public class EndpointServiceLocator extends Application
-{
-    public Set<Class<?>> getClasses()
-    {
-        Set<Class<?>> s = new HashSet<Class<?>>();
-        s.add(SecurityEndpointV1.class);
-        s.add(CasesEndpointV1.class);
-        s.add(CasesEndpointV2.class);
-        s.add(ContactsEndpointV1.class);
-        s.add(ContactsEndpointV2.class);
-        s.add(FormsEndpointV1.class);
-        return s;
+/**
+ *
+ * http://localhost:8080/j-lawyer-io/rest/contacts
+ */
+@Stateless
+@Path("/v2/contacts")
+@Consumes({"application/json"})
+@Produces({"application/json"})
+public class ContactsEndpointV2 implements ContactsEndpointLocalV2 {
+
+    private static final Logger log = Logger.getLogger(ContactsEndpointV2.class.getName());
+
+    /**
+     * Returns a contacts metadata given its ID
+     *
+     * @param id contact ID
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/{id}")
+    @RolesAllowed({"readAddressRole"})
+    public Response getContact(@PathParam("id") String id) {
+        // http://localhost:8080/j-lawyer-io/rest/contacts/0c617d4e7f0001012eebc10d402e8a74
+        try {
+
+            InitialContext ic = new InitialContext();
+            AddressServiceLocal addresses = (AddressServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/AddressService!com.jdimension.jlawyer.services.AddressServiceLocal");
+            AddressBean adr = addresses.getAddress(id);
+            Response res = Response.ok(RestfulContactV2.fromAddressBean(adr)).build();
+            return res;
+        } catch (Exception ex) {
+            log.error("can not get address " + id, ex);
+            Response res = Response.serverError().build();
+            return res;
+        }
     }
+
+    /**
+     * Creates a new contact
+     *
+     * @param contact contact data
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @PUT
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/create")
+    @RolesAllowed({"createAddressRole"})
+    public Response createContact(RestfulContactV2 contact) {
+        try {
+
+            InitialContext ic = new InitialContext();
+            AddressServiceLocal addresses = (AddressServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/AddressService!com.jdimension.jlawyer.services.AddressServiceLocal");
+            AddressBean a = new AddressBean();
+            a = addresses.createAddress(contact.toAddressBean(a));
+            Response res = Response.ok(RestfulContactV2.fromAddressBean(a)).build();
+            return res;
+        } catch (Exception ex) {
+            log.error("can not create new address " + contact.toString(), ex);
+            Response res = Response.serverError().build();
+            return res;
+        }
+
+    }
+
+    /**
+     * Updates an existing contact based on its ID
+     *
+     * @param contact the contacts data
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @PUT
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/update")
+    @RolesAllowed({"writeAddressRole"})
+    public Response updateContact(RestfulContactV2 contact) {
+        try {
+
+            if (contact.getId() == null || "".equals(contact.getId())) {
+                log.error("Can update contact - no contact id given");
+                return Response.serverError().build();
+            }
+
+            InitialContext ic = new InitialContext();
+            AddressServiceLocal addresses = (AddressServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/AddressService!com.jdimension.jlawyer.services.AddressServiceLocal");
+
+            AddressBean currentContact = addresses.getAddress(contact.getId());
+            if (currentContact == null) {
+                log.error("contact with id " + contact.getId() + " does not exist - skipping update");
+                Response res = Response.serverError().build();
+                return res;
+            }
+            // file number must not be changed
+
+            currentContact.setBankAccount(contact.getBankAccount());
+            currentContact.setBankCode(contact.getBankCode());
+            currentContact.setBankName(contact.getBankName());
+            currentContact.setBeaSafeId(contact.getBeaSafeId());
+            currentContact.setBirthDate(contact.getBirthDate());
+            currentContact.setCity(contact.getCity());
+            currentContact.setCompany(contact.getCompany());
+            currentContact.setComplimentaryClose(contact.getComplimentaryClose());
+            currentContact.setCountry(contact.getCountry());
+            currentContact.setCustom1(contact.getCustom1());
+            currentContact.setCustom2(contact.getCustom2());
+            currentContact.setCustom3(contact.getCustom3());
+            currentContact.setDepartment(contact.getDepartment());
+            currentContact.setEmail(contact.getEmail());
+            currentContact.setEncryptionPwd(contact.getEncryptionPwd());
+            currentContact.setFax(contact.getFax());
+            currentContact.setFirstName(contact.getFirstName());
+            currentContact.setInsuranceName(contact.getInsuranceName());
+            currentContact.setInsuranceNumber(contact.getInsuranceNumber());
+            currentContact.setLegalProtection(contact.getLegalProtection());
+            currentContact.setMobile(contact.getMobile());
+            currentContact.setMotorInsuranceName(contact.getMotorInsuranceName());
+            currentContact.setMotorInsuranceNumber(contact.getMotorInsuranceNumber());
+            currentContact.setName(contact.getName());
+            currentContact.setPhone(contact.getPhone());
+            currentContact.setSalutation(contact.getSalutation());
+            currentContact.setStreet(contact.getStreet());
+            currentContact.setTitle(contact.getTitle());
+            currentContact.setTrafficInsuranceName(contact.getTrafficInsuranceName());
+            currentContact.setTrafficInsuranceNumber(contact.getTrafficInsuranceNumber());
+            currentContact.setTrafficLegalProtection(contact.getTrafficLegalProtection());
+            currentContact.setWebsite(contact.getWebsite());
+            currentContact.setZipCode(contact.getZipCode());
+
+            currentContact.setDistrict(contact.getDistrict());
+            currentContact.setNotice(contact.getNotice());
+            currentContact.setNationality(contact.getNationality());
+            currentContact.setBirthDate(contact.getBirthDate());
+            currentContact.setPlaceOfBirth(contact.getPlaceOfBirth());
+            currentContact.setDateOfDeath(contact.getDateOfDeath());
+            currentContact.setVatId(contact.getVatId());
+            currentContact.setTin(contact.getTin());
+            currentContact.setLegalForm(contact.getLegalForm());
+            currentContact.setCompanyRegistrationNumber(contact.getCompanyRegistrationNumber());
+            currentContact.setCompanyRegistrationCourt(contact.getCompanyRegistrationCourt());
+            currentContact.setGender(contact.getGender());
+            currentContact.setStreetNumber(contact.getStreetNumber());
+            currentContact.setInitials(contact.getInitials());
+            currentContact.setDegreePrefix(contact.getDegreePrefix());
+            currentContact.setDegreeSuffix(contact.getDegreeSuffix());
+            currentContact.setProfession(contact.getProfession());
+            currentContact.setRole(contact.getRole());
+            currentContact.setAdjunct(contact.getAdjunct());
+            currentContact.setTitleInAddress(contact.getTitleInAddress());
+
+            addresses.updateAddress(currentContact);
+            AddressBean addressData = addresses.getAddress(currentContact.getId());
+
+            Response res = Response.ok(RestfulContactV2.fromAddressBean(addressData)).build();
+            return res;
+        } catch (Exception ex) {
+            log.error("can not update address " + contact.getId(), ex);
+            Response res = Response.serverError().build();
+            return res;
+        }
+    }
+
 }

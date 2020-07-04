@@ -661,246 +661,1021 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package org.jlawyer.io.rest.v1;
+package org.jlawyer.io.rest.v2.pojo;
 
+import org.jlawyer.io.rest.v1.pojo.*;
 import com.jdimension.jlawyer.persistence.AddressBean;
-import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
-import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBeanFacadeLocal;
-import com.jdimension.jlawyer.persistence.ArchiveFileBean;
-import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
-import com.jdimension.jlawyer.persistence.ArchiveFileFormsBean;
-import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
-import com.jdimension.jlawyer.persistence.ArchiveFileTagsBean;
-import com.jdimension.jlawyer.persistence.Group;
-import com.jdimension.jlawyer.persistence.PartyTypeBean;
-import com.jdimension.jlawyer.security.Base64;
-import com.jdimension.jlawyer.services.AddressServiceLocal;
-import com.jdimension.jlawyer.services.ArchiveFileServiceLocal;
-import com.jdimension.jlawyer.services.FormsServiceLocal;
-import com.jdimension.jlawyer.services.SecurityServiceLocal;
-import com.jdimension.jlawyer.services.SystemManagementLocal;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import javax.annotation.security.RolesAllowed;
-import javax.ejb.EJB;
-import javax.ejb.Stateless;
-import javax.naming.InitialContext;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import org.jboss.logging.Logger;
-import org.jlawyer.io.rest.v1.pojo.RestfulCaseOverviewV1;
-import org.jlawyer.io.rest.v1.pojo.RestfulCaseV2;
-import org.jlawyer.io.rest.v1.pojo.RestfulDocumentV1;
-import org.jlawyer.io.rest.v1.pojo.RestfulDocumentContentV1;
-import org.jlawyer.io.rest.v1.pojo.RestfulDueDateV1;
-import org.jlawyer.io.rest.v1.pojo.RestfulFormV1;
-import org.jlawyer.io.rest.v1.pojo.RestfulPartyTypeV1;
-import org.jlawyer.io.rest.v1.pojo.RestfulPartyV1;
-import org.jlawyer.io.rest.v1.pojo.RestfulTagV1;
+import java.util.Date;
 
 /**
  *
- * http://localhost:8080/j-lawyer-io/rest/cases/list
+ * @author jens
  */
-@Stateless
-@Path("/v2/cases")
-@Consumes({"application/json"})
-@Produces({"application/json"})
-public class CasesEndpointV2 implements CasesEndpointLocalV2 {
-
-    private static final Logger log = Logger.getLogger(CasesEndpointV2.class.getName());
-
-    // when seeing something like
-    //  com.fasterxml.jackson.databind.JsonMappingException: failed to lazily initialize a collection of role: com.jdimension.jlawyer.persistence.ArchiveFileBean.archiveFileFormsBeanList, could not initialize proxy - no Session
-    // it is not necessarily an issue with fetch type eager or lazy, just put @XmlTransient to the getter of the list in the entity
+public class RestfulContactV2 {
     
-    /**
-     * Returns all case metadata based on its ID. This service supports extended file numbers (including prefix, suffix, group and user).
-     *
-     * @param id case ID
-     * @response 401 User not authorized
-     * @response 403 User not authenticated
-     */
-    @Override
-    @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    @Path("/{id}")
-    @RolesAllowed({"readArchiveFileRole"})
-    public Response getCase(@PathParam("id") String id) {
-        // http://localhost:8080/j-lawyer-io/rest/cases/2c851dc47f0001011cdef6be8abaddee
-        try {
+    private String id=null;
+    private String firstName=null;
+    private String name=null;
+    private String company=null;
+    private String department=null;
+    private short legalProtection=0;
+    private String insuranceNumber=null;
+    private String insuranceName=null;
+    
+    private short trafficLegalProtection=0;
+    private String trafficInsuranceNumber=null;
+    private String trafficInsuranceName=null;
+    
+    private String motorInsuranceNumber=null;
+    private String motorInsuranceName=null;
+    
+    private String title=null;
+    private String salutation=null;
+    private String complimentaryClose=null;
+    
+    private String street=null;
+    private String country=null;
+    private String zipCode=null;
+    private String city=null;
+    private String phone=null;
+    private String mobile=null;
+    private String fax=null;
+    private String bankName=null;
+    private String bankCode=null;
+    private String bankAccount=null;
+    private String email=null;
+    private String website=null;
+    private String creator=null;
+    private String lastModifier=null;
+    private Date creationDate=null;
+    private Date modificationDate=null;
+    private String birthDate=null;
+    private String custom1=null;
+    private String custom2=null;
+    private String custom3=null;
+    private String beaSafeId=null;
+    private String encryptionPwd=null;
+    
+    private String district;
+    private String notice;
+    private String nationality;
+    private String birthName;
+    private String placeOfBirth;
+    private String dateOfDeath;
+    private String vatId;
+    private String tin;
+    private String legalForm;
+    private String companyRegistrationNumber;
+    private String companyRegistrationCourt;
+    private String gender;
+    private String streetNumber;
+    private String initials;
+    private String degreePrefix; // first part of "Dipl-Ing Walter"
+    private String degreeSuffix; // last part of "Dipl-Ing Walter (TU)"
+    private String profession;
+    private String role;
+    private String adjunct;
+    private String titleInAddress;
+    
 
-            InitialContext ic = new InitialContext();
-            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal");
-            ArchiveFileBean afb = cases.getArchiveFile(id);
-            if(afb==null) {
-                log.error("There is no case with id " + id);
-                Response res = Response.serverError().build();
-                return res;
-            }
-            RestfulCaseV2 c=new RestfulCaseV2();
-            c.setArchived(afb.getArchived());
-            c.setAssistant(afb.getAssistant());
-            c.setClaimNumber(afb.getClaimNumber());
-            c.setClaimValue(afb.getClaimValue());
-            c.setCustom1(afb.getCustom1());
-            c.setCustom2(afb.getCustom2());
-            c.setCustom3(afb.getCustom3());
-            c.setFileNumber(afb.getFileNumber());
-            c.setId(afb.getId());
-            c.setLawyer(afb.getLawyer());
-            c.setName(afb.getName());
-            c.setNotice(afb.getNotice());
-            c.setReason(afb.getReason());
-            c.setSubjectField(afb.getSubjectField());
-            
-            if(afb.getGroup()!=null) {
-                c.setGroup(afb.getGroup().getName());
-            }
-            
-            Response res = Response.ok(c).build();
-            return res;
-        } catch (Exception ex) {
-            log.error("can not get case " + id, ex);
-            Response res = Response.serverError().build();
-            return res;
-        }
+    public RestfulContactV2() {
+    }
+    
+    public AddressBean toAddressBean(AddressBean ad) {
+        ad.setBankAccount(this.getBankAccount());
+        ad.setBankCode(this.getBankCode());
+        ad.setBankName(this.getBankName());
+        ad.setBeaSafeId(this.getBeaSafeId());
+        ad.setBirthDate(this.getBirthDate());
+        ad.setCity(this.getCity());
+        ad.setCompany(this.getCompany());
+        ad.setComplimentaryClose(this.getComplimentaryClose());
+        ad.setCountry(this.getCountry());
+        ad.setCreator(this.getCreator());
+        ad.setCustom1(this.getCustom1());
+        ad.setCustom2(this.getCustom2());
+        ad.setCustom3(this.getCustom3());
+        ad.setDepartment(this.getDepartment());
+        ad.setEmail(this.getEmail());
+        ad.setEncryptionPwd(this.getEncryptionPwd());
+        ad.setFax(this.getFax());
+        ad.setFirstName(this.getFirstName());
+        ad.setId(this.getId());
+        ad.setInsuranceName(this.getInsuranceName());
+        ad.setInsuranceNumber(this.getInsuranceNumber());
+        ad.setLastModifier(this.getLastModifier());
+        ad.setLegalProtection(this.getLegalProtection());
+        ad.setMobile(this.getMobile());
+        ad.setModificationDate(this.getModificationDate());
+        ad.setMotorInsuranceName(this.getMotorInsuranceName());
+        ad.setMotorInsuranceNumber(this.getMotorInsuranceNumber());
+        ad.setName(this.getName());
+        ad.setPhone(this.getPhone());
+        ad.setSalutation(this.getSalutation());
+        ad.setStreet(this.getStreet());
+        ad.setTitle(this.getTitle());
+        ad.setTrafficInsuranceName(this.getTrafficInsuranceName());
+        ad.setTrafficInsuranceNumber(this.getTrafficInsuranceNumber());
+        ad.setTrafficLegalProtection(this.getTrafficLegalProtection());
+        ad.setWebsite(this.getWebsite());
+        ad.setZipCode(this.getZipCode());
+        ad.setDistrict(this.getDistrict());
+        ad.setNotice(this.getNotice());
+        ad.setNationality(this.getNationality());
+        ad.setBirthDate(this.getBirthDate());
+        ad.setPlaceOfBirth(this.getPlaceOfBirth());
+        ad.setDateOfDeath(this.getDateOfDeath());
+        ad.setVatId(this.getVatId());
+        ad.setTin(this.getTin());
+        ad.setLegalForm(this.getLegalForm());
+        ad.setCompanyRegistrationNumber(this.getCompanyRegistrationNumber());
+        ad.setCompanyRegistrationCourt(this.getCompanyRegistrationCourt());
+        ad.setGender(this.getGender());
+        ad.setStreetNumber(this.getStreetNumber());
+        ad.setInitials(this.getInitials());
+        ad.setDegreePrefix(this.getDegreePrefix());
+        ad.setDegreeSuffix(this.getDegreeSuffix());
+        ad.setProfession(this.getProfession());
+        ad.setRole(this.getRole());
+        ad.setAdjunct(this.getAdjunct());
+        ad.setTitleInAddress(this.getTitleInAddress());
+        return ad;
+    }
+    
+    public static RestfulContactV2 fromAddressBean(AddressBean a) {
+        RestfulContactV2 ad=new RestfulContactV2();
+        ad.setBankAccount(a.getBankAccount());
+        ad.setBankCode(a.getBankCode());
+        ad.setBankName(a.getBankName());
+        ad.setBeaSafeId(a.getBeaSafeId());
+        ad.setBirthDate(a.getBirthDate());
+        ad.setCity(a.getCity());
+        ad.setCompany(a.getCompany());
+        ad.setComplimentaryClose(a.getComplimentaryClose());
+        ad.setCountry(a.getCountry());
+        ad.setCreator(a.getCreator());
+        ad.setCustom1(a.getCustom1());
+        ad.setCustom2(a.getCustom2());
+        ad.setCustom3(a.getCustom3());
+        ad.setDepartment(a.getDepartment());
+        ad.setEmail(a.getEmail());
+        ad.setEncryptionPwd(a.getEncryptionPwd());
+        ad.setFax(a.getFax());
+        ad.setFirstName(a.getFirstName());
+        ad.setId(a.getId());
+        ad.setInsuranceName(a.getInsuranceName());
+        ad.setInsuranceNumber(a.getInsuranceNumber());
+        ad.setLastModifier(a.getLastModifier());
+        ad.setLegalProtection(a.getLegalProtection());
+        ad.setMobile(a.getMobile());
+        ad.setModificationDate(a.getModificationDate());
+        ad.setMotorInsuranceName(a.getMotorInsuranceName());
+        ad.setMotorInsuranceNumber(a.getMotorInsuranceNumber());
+        ad.setName(a.getName());
+        ad.setPhone(a.getPhone());
+        ad.setSalutation(a.getSalutation());
+        ad.setStreet(a.getStreet());
+        ad.setTitle(a.getTitle());
+        ad.setTrafficInsuranceName(a.getTrafficInsuranceName());
+        ad.setTrafficInsuranceNumber(a.getTrafficInsuranceNumber());
+        ad.setTrafficLegalProtection(a.getTrafficLegalProtection());
+        ad.setWebsite(a.getWebsite());
+        ad.setZipCode(a.getZipCode());
+        ad.setDistrict(a.getDistrict());
+        ad.setNotice(a.getNotice());
+        ad.setNationality(a.getNationality());
+        ad.setBirthDate(a.getBirthDate());
+        ad.setPlaceOfBirth(a.getPlaceOfBirth());
+        ad.setDateOfDeath(a.getDateOfDeath());
+        ad.setVatId(a.getVatId());
+        ad.setTin(a.getTin());
+        ad.setLegalForm(a.getLegalForm());
+        ad.setCompanyRegistrationNumber(a.getCompanyRegistrationNumber());
+        ad.setCompanyRegistrationCourt(a.getCompanyRegistrationCourt());
+        ad.setGender(a.getGender());
+        ad.setStreetNumber(a.getStreetNumber());
+        ad.setInitials(a.getInitials());
+        ad.setDegreePrefix(a.getDegreePrefix());
+        ad.setDegreeSuffix(a.getDegreeSuffix());
+        ad.setProfession(a.getProfession());
+        ad.setRole(a.getRole());
+        ad.setAdjunct(a.getAdjunct());
+        ad.setTitleInAddress(a.getTitleInAddress());
+        return ad;
     }
 
     /**
-     * Creates a new case. This service supports extended file numbers (including prefix, suffix, group and user).
-     *
-     * @param caseData case data
-     * @response 401 User not authorized
-     * @response 403 User not authenticated
+     * @return the id
      */
-    @Override
-    @PUT
-    @Produces(MediaType.APPLICATION_JSON)
-    @Path("/create")
-    @RolesAllowed({"createArchiveFileRole"})
-    public Response createCase(RestfulCaseV2 caseData) {
-
-        // curl -u admin:a -X PUT -H "Content-Type: application/json" -d '{"name":"via REST", "reason":"wegen REST", "subjectField":"Familienrecht", "notice":"notiz REST","assistant":"user", "lawyer":"admin", "claimNumber":"RESTcn","claimValue":"3.44","custom1":"RESTc1","custom2":"RESTc2","custom3":"RESTc3"}' http://localhost:8080/j-lawyer-io/rest/cases/create
-        try {
-
-            if (caseData.getName() == null || "".equals(caseData.getName())) {
-                log.error("Can not create new case - no case number given");
-                return Response.serverError().build();
-            }
-
-            InitialContext ic = new InitialContext();
-            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal");
-            SecurityServiceLocal security = (SecurityServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/SecurityService!com.jdimension.jlawyer.services.SecurityServiceLocal");
-
-            ArchiveFileBean c=new ArchiveFileBean();
-            c=caseData.toArchiveFileBean(c);
-            if(caseData.getGroup()!=null) {
-                String groupName=caseData.getGroup();
-                for(Group g: security.getAllGroups()) {
-                    if(g.getName().equals(groupName)) {
-                        c.setGroup(g);
-                        break;
-                    }
-                }
-            }
-            
-            c = cases.createArchiveFile(c);
-            caseData=RestfulCaseV2.fromArchiveFileBean(c);
-            
-            Response res = Response.ok(caseData).build();
-            return res;
-        } catch (Exception ex) {
-            log.error("can not create new case " + caseData.getName(), ex);
-            Response res = Response.serverError().build();
-            return res;
-        }
+    public String getId() {
+        return id;
     }
 
-    
-    
     /**
-     * Updates an existing case based on its ID. The file number is immutable. This service supports extended file numbers (including prefix, suffix, group and user).
-     *
-     * @param caseData case data
-     * @response 401 User not authorized
-     * @response 403 User not authenticated
+     * @param id the id to set
      */
-    @Override
-    @PUT
-    @Produces(MediaType.APPLICATION_JSON)
-    @Path("/update")
-    @RolesAllowed({"writeArchiveFileRole"})
-    public Response updateCase(RestfulCaseV2 caseData) {
-
-        // curl -u admin:a -X PUT -H "Content-Type: application/json" -d '{"id":"2187c30c7f0001011c78dd99d50cbd20", "name":"via REST", "reason":"wegen REST", "subjectField":"Familienrecht", "notice":"notiz REST","assistant":"user", "lawyer":"admin", "claimNumber":"RESTcn","claimValue":"3.44","custom1":"RESTc1","custom2":"RESTc2","custom3":"RESTc3"}' http://localhost:8080/j-lawyer-io/rest/cases/update
-        try {
-
-            if (caseData.getId() == null || "".equals(caseData.getId())) {
-                log.error("Can update case - no case id given");
-                return Response.serverError().build();
-            }
-
-            InitialContext ic = new InitialContext();
-            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal");
-            
-            SecurityServiceLocal security = (SecurityServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/SecurityService!com.jdimension.jlawyer.services.SecurityServiceLocal");
-
-            ArchiveFileBean currentCase = cases.getArchiveFile(caseData.getId());
-            if (currentCase == null) {
-                log.error("case with id " + caseData.getId() + " does not exist - skipping update");
-                Response res = Response.serverError().build();
-                return res;
-            }
-            Collection reviews=cases.getReviews(caseData.getId());
-            currentCase.setArchiveFileReviewsBeanList((List<ArchiveFileReviewsBean>)reviews);
-            List<ArchiveFileAddressesBean> adds=cases.getInvolvementDetailsForCase(caseData.getId());
-            currentCase.setArchiveFileAddressesBeanList(adds);
-            // file number must not be changed
-
-            currentCase.setArchived(caseData.getArchived());
-            currentCase.setAssistant(caseData.getAssistant());
-            currentCase.setClaimNumber(caseData.getClaimNumber());
-            currentCase.setClaimValue(caseData.getClaimValue());
-            currentCase.setCustom1(caseData.getCustom1());
-            currentCase.setCustom2(caseData.getCustom2());
-            currentCase.setCustom3(caseData.getCustom3());
-            currentCase.setLawyer(caseData.getLawyer());
-            currentCase.setName(caseData.getName());
-            currentCase.setNotice(caseData.getNotice());
-            currentCase.setReason(caseData.getReason());
-            currentCase.setSubjectField(caseData.getSubjectField());
-
-            if(caseData.getGroup()!=null) {
-                String groupName=caseData.getGroup();
-                for(Group g: security.getAllGroups()) {
-                    if(g.getName().equals(groupName)) {
-                        currentCase.setGroup(g);
-                        break;
-                    }
-                }
-            }
-            
-            cases.updateArchiveFile(currentCase);
-            currentCase = cases.getArchiveFile(caseData.getId());
-            
-            
-
-            Response res = Response.ok(RestfulCaseV2.fromArchiveFileBean(currentCase)).build();
-            return res;
-        } catch (Exception ex) {
-            log.error("can not update case " + caseData.getName(), ex);
-            Response res = Response.serverError().build();
-            return res;
-        }
+    public void setId(String id) {
+        this.id = id;
     }
 
+    /**
+     * @return the firstName
+     */
+    public String getFirstName() {
+        return firstName;
+    }
+
+    /**
+     * @param firstName the firstName to set
+     */
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
+    }
+
+    /**
+     * @return the name
+     */
+    public String getName() {
+        return name;
+    }
+
+    /**
+     * @param name the name to set
+     */
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    /**
+     * @return the company
+     */
+    public String getCompany() {
+        return company;
+    }
+
+    /**
+     * @param company the company to set
+     */
+    public void setCompany(String company) {
+        this.company = company;
+    }
+
+    /**
+     * @return the department
+     */
+    public String getDepartment() {
+        return department;
+    }
+
+    /**
+     * @param department the department to set
+     */
+    public void setDepartment(String department) {
+        this.department = department;
+    }
+
+    /**
+     * @return the legalProtection
+     */
+    public short getLegalProtection() {
+        return legalProtection;
+    }
+
+    /**
+     * @param legalProtection the legalProtection to set
+     */
+    public void setLegalProtection(short legalProtection) {
+        this.legalProtection = legalProtection;
+    }
+
+    /**
+     * @return the insuranceNumber
+     */
+    public String getInsuranceNumber() {
+        return insuranceNumber;
+    }
+
+    /**
+     * @param insuranceNumber the insuranceNumber to set
+     */
+    public void setInsuranceNumber(String insuranceNumber) {
+        this.insuranceNumber = insuranceNumber;
+    }
+
+    /**
+     * @return the insuranceName
+     */
+    public String getInsuranceName() {
+        return insuranceName;
+    }
+
+    /**
+     * @param insuranceName the insuranceName to set
+     */
+    public void setInsuranceName(String insuranceName) {
+        this.insuranceName = insuranceName;
+    }
+
+    /**
+     * @return the trafficLegalProtection
+     */
+    public short getTrafficLegalProtection() {
+        return trafficLegalProtection;
+    }
+
+    /**
+     * @param trafficLegalProtection the trafficLegalProtection to set
+     */
+    public void setTrafficLegalProtection(short trafficLegalProtection) {
+        this.trafficLegalProtection = trafficLegalProtection;
+    }
+
+    /**
+     * @return the trafficInsuranceNumber
+     */
+    public String getTrafficInsuranceNumber() {
+        return trafficInsuranceNumber;
+    }
+
+    /**
+     * @param trafficInsuranceNumber the trafficInsuranceNumber to set
+     */
+    public void setTrafficInsuranceNumber(String trafficInsuranceNumber) {
+        this.trafficInsuranceNumber = trafficInsuranceNumber;
+    }
+
+    /**
+     * @return the trafficInsuranceName
+     */
+    public String getTrafficInsuranceName() {
+        return trafficInsuranceName;
+    }
+
+    /**
+     * @param trafficInsuranceName the trafficInsuranceName to set
+     */
+    public void setTrafficInsuranceName(String trafficInsuranceName) {
+        this.trafficInsuranceName = trafficInsuranceName;
+    }
+
+    /**
+     * @return the motorInsuranceNumber
+     */
+    public String getMotorInsuranceNumber() {
+        return motorInsuranceNumber;
+    }
+
+    /**
+     * @param motorInsuranceNumber the motorInsuranceNumber to set
+     */
+    public void setMotorInsuranceNumber(String motorInsuranceNumber) {
+        this.motorInsuranceNumber = motorInsuranceNumber;
+    }
+
+    /**
+     * @return the motorInsuranceName
+     */
+    public String getMotorInsuranceName() {
+        return motorInsuranceName;
+    }
+
+    /**
+     * @param motorInsuranceName the motorInsuranceName to set
+     */
+    public void setMotorInsuranceName(String motorInsuranceName) {
+        this.motorInsuranceName = motorInsuranceName;
+    }
+
+    /**
+     * @return the title
+     */
+    public String getTitle() {
+        return title;
+    }
+
+    /**
+     * @param title the title to set
+     */
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    /**
+     * @return the salutation
+     */
+    public String getSalutation() {
+        return salutation;
+    }
+
+    /**
+     * @param salutation the salutation to set
+     */
+    public void setSalutation(String salutation) {
+        this.salutation = salutation;
+    }
+
+    /**
+     * @return the complimentaryClose
+     */
+    public String getComplimentaryClose() {
+        return complimentaryClose;
+    }
+
+    /**
+     * @param complimentaryClose the complimentaryClose to set
+     */
+    public void setComplimentaryClose(String complimentaryClose) {
+        this.complimentaryClose = complimentaryClose;
+    }
+
+    /**
+     * @return the street
+     */
+    public String getStreet() {
+        return street;
+    }
+
+    /**
+     * @param street the street to set
+     */
+    public void setStreet(String street) {
+        this.street = street;
+    }
+
+    /**
+     * @return the country
+     */
+    public String getCountry() {
+        return country;
+    }
+
+    /**
+     * @param country the country to set
+     */
+    public void setCountry(String country) {
+        this.country = country;
+    }
+
+    /**
+     * @return the zipCode
+     */
+    public String getZipCode() {
+        return zipCode;
+    }
+
+    /**
+     * @param zipCode the zipCode to set
+     */
+    public void setZipCode(String zipCode) {
+        this.zipCode = zipCode;
+    }
+
+    /**
+     * @return the city
+     */
+    public String getCity() {
+        return city;
+    }
+
+    /**
+     * @param city the city to set
+     */
+    public void setCity(String city) {
+        this.city = city;
+    }
+
+    /**
+     * @return the phone
+     */
+    public String getPhone() {
+        return phone;
+    }
+
+    /**
+     * @param phone the phone to set
+     */
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+
+    /**
+     * @return the mobile
+     */
+    public String getMobile() {
+        return mobile;
+    }
+
+    /**
+     * @param mobile the mobile to set
+     */
+    public void setMobile(String mobile) {
+        this.mobile = mobile;
+    }
+
+    /**
+     * @return the fax
+     */
+    public String getFax() {
+        return fax;
+    }
+
+    /**
+     * @param fax the fax to set
+     */
+    public void setFax(String fax) {
+        this.fax = fax;
+    }
+
+    /**
+     * @return the bankName
+     */
+    public String getBankName() {
+        return bankName;
+    }
+
+    /**
+     * @param bankName the bankName to set
+     */
+    public void setBankName(String bankName) {
+        this.bankName = bankName;
+    }
+
+    /**
+     * @return the bankCode
+     */
+    public String getBankCode() {
+        return bankCode;
+    }
+
+    /**
+     * @param bankCode the bankCode to set
+     */
+    public void setBankCode(String bankCode) {
+        this.bankCode = bankCode;
+    }
+
+    /**
+     * @return the bankAccount
+     */
+    public String getBankAccount() {
+        return bankAccount;
+    }
+
+    /**
+     * @param bankAccount the bankAccount to set
+     */
+    public void setBankAccount(String bankAccount) {
+        this.bankAccount = bankAccount;
+    }
+
+    /**
+     * @return the email
+     */
+    public String getEmail() {
+        return email;
+    }
+
+    /**
+     * @param email the email to set
+     */
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    /**
+     * @return the website
+     */
+    public String getWebsite() {
+        return website;
+    }
+
+    /**
+     * @param website the website to set
+     */
+    public void setWebsite(String website) {
+        this.website = website;
+    }
+
+    /**
+     * @return the creator
+     */
+    public String getCreator() {
+        return creator;
+    }
+
+    /**
+     * @param creator the creator to set
+     */
+    public void setCreator(String creator) {
+        this.creator = creator;
+    }
+
+    /**
+     * @return the lastModifier
+     */
+    public String getLastModifier() {
+        return lastModifier;
+    }
+
+    /**
+     * @param lastModifier the lastModifier to set
+     */
+    public void setLastModifier(String lastModifier) {
+        this.lastModifier = lastModifier;
+    }
+
+    /**
+     * @return the creationDate
+     */
+    public Date getCreationDate() {
+        return creationDate;
+    }
+
+    /**
+     * @param creationDate the creationDate to set
+     */
+    public void setCreationDate(Date creationDate) {
+        this.creationDate = creationDate;
+    }
+
+    /**
+     * @return the modificationDate
+     */
+    public Date getModificationDate() {
+        return modificationDate;
+    }
+
+    /**
+     * @param modificationDate the modificationDate to set
+     */
+    public void setModificationDate(Date modificationDate) {
+        this.modificationDate = modificationDate;
+    }
+
+    /**
+     * @return the birthDate
+     */
+    public String getBirthDate() {
+        return birthDate;
+    }
+
+    /**
+     * @param birthDate the birthDate to set
+     */
+    public void setBirthDate(String birthDate) {
+        this.birthDate = birthDate;
+    }
+
+    /**
+     * @return the custom1
+     */
+    public String getCustom1() {
+        return custom1;
+    }
+
+    /**
+     * @param custom1 the custom1 to set
+     */
+    public void setCustom1(String custom1) {
+        this.custom1 = custom1;
+    }
+
+    /**
+     * @return the custom2
+     */
+    public String getCustom2() {
+        return custom2;
+    }
+
+    /**
+     * @param custom2 the custom2 to set
+     */
+    public void setCustom2(String custom2) {
+        this.custom2 = custom2;
+    }
+
+    /**
+     * @return the custom3
+     */
+    public String getCustom3() {
+        return custom3;
+    }
+
+    /**
+     * @param custom3 the custom3 to set
+     */
+    public void setCustom3(String custom3) {
+        this.custom3 = custom3;
+    }
+
+    /**
+     * @return the beaSafeId
+     */
+    public String getBeaSafeId() {
+        return beaSafeId;
+    }
+
+    /**
+     * @param beaSafeId the beaSafeId to set
+     */
+    public void setBeaSafeId(String beaSafeId) {
+        this.beaSafeId = beaSafeId;
+    }
+
+    /**
+     * @return the encryptionPwd
+     */
+    public String getEncryptionPwd() {
+        return encryptionPwd;
+    }
+
+    /**
+     * @param encryptionPwd the encryptionPwd to set
+     */
+    public void setEncryptionPwd(String encryptionPwd) {
+        this.encryptionPwd = encryptionPwd;
+    }
+
+    /**
+     * @return the district
+     */
+    public String getDistrict() {
+        return district;
+    }
+
+    /**
+     * @param district the district to set
+     */
+    public void setDistrict(String district) {
+        this.district = district;
+    }
+
+    /**
+     * @return the notice
+     */
+    public String getNotice() {
+        return notice;
+    }
+
+    /**
+     * @param notice the notice to set
+     */
+    public void setNotice(String notice) {
+        this.notice = notice;
+    }
+
+    /**
+     * @return the nationality
+     */
+    public String getNationality() {
+        return nationality;
+    }
+
+    /**
+     * @param nationality the nationality to set
+     */
+    public void setNationality(String nationality) {
+        this.nationality = nationality;
+    }
+
+    /**
+     * @return the birthName
+     */
+    public String getBirthName() {
+        return birthName;
+    }
+
+    /**
+     * @param birthName the birthName to set
+     */
+    public void setBirthName(String birthName) {
+        this.birthName = birthName;
+    }
+
+    /**
+     * @return the placeOfBirth
+     */
+    public String getPlaceOfBirth() {
+        return placeOfBirth;
+    }
+
+    /**
+     * @param placeOfBirth the placeOfBirth to set
+     */
+    public void setPlaceOfBirth(String placeOfBirth) {
+        this.placeOfBirth = placeOfBirth;
+    }
+
+    /**
+     * @return the dateOfDeath
+     */
+    public String getDateOfDeath() {
+        return dateOfDeath;
+    }
+
+    /**
+     * @param dateOfDeath the dateOfDeath to set
+     */
+    public void setDateOfDeath(String dateOfDeath) {
+        this.dateOfDeath = dateOfDeath;
+    }
+
+    /**
+     * @return the vatId
+     */
+    public String getVatId() {
+        return vatId;
+    }
+
+    /**
+     * @param vatId the vatId to set
+     */
+    public void setVatId(String vatId) {
+        this.vatId = vatId;
+    }
+
+    /**
+     * @return the tin
+     */
+    public String getTin() {
+        return tin;
+    }
+
+    /**
+     * @param tin the tin to set
+     */
+    public void setTin(String tin) {
+        this.tin = tin;
+    }
+
+    /**
+     * @return the legalForm
+     */
+    public String getLegalForm() {
+        return legalForm;
+    }
+
+    /**
+     * @param legalForm the legalForm to set
+     */
+    public void setLegalForm(String legalForm) {
+        this.legalForm = legalForm;
+    }
+
+    /**
+     * @return the companyRegistrationNumber
+     */
+    public String getCompanyRegistrationNumber() {
+        return companyRegistrationNumber;
+    }
+
+    /**
+     * @param companyRegistrationNumber the companyRegistrationNumber to set
+     */
+    public void setCompanyRegistrationNumber(String companyRegistrationNumber) {
+        this.companyRegistrationNumber = companyRegistrationNumber;
+    }
+
+    /**
+     * @return the companyRegistrationCourt
+     */
+    public String getCompanyRegistrationCourt() {
+        return companyRegistrationCourt;
+    }
+
+    /**
+     * @param companyRegistrationCourt the companyRegistrationCourt to set
+     */
+    public void setCompanyRegistrationCourt(String companyRegistrationCourt) {
+        this.companyRegistrationCourt = companyRegistrationCourt;
+    }
+
+    /**
+     * @return the gender
+     */
+    public String getGender() {
+        return gender;
+    }
+
+    /**
+     * @param gender the gender to set
+     */
+    public void setGender(String gender) {
+        this.gender = gender;
+    }
+
+    /**
+     * @return the streetNumber
+     */
+    public String getStreetNumber() {
+        return streetNumber;
+    }
+
+    /**
+     * @param streetNumber the streetNumber to set
+     */
+    public void setStreetNumber(String streetNumber) {
+        this.streetNumber = streetNumber;
+    }
+
+    /**
+     * @return the initials
+     */
+    public String getInitials() {
+        return initials;
+    }
+
+    /**
+     * @param initials the initials to set
+     */
+    public void setInitials(String initials) {
+        this.initials = initials;
+    }
+
+    /**
+     * @return the degreePrefix
+     */
+    public String getDegreePrefix() {
+        return degreePrefix;
+    }
+
+    /**
+     * @param degreePrefix the degreePrefix to set
+     */
+    public void setDegreePrefix(String degreePrefix) {
+        this.degreePrefix = degreePrefix;
+    }
+
+    /**
+     * @return the degreeSuffix
+     */
+    public String getDegreeSuffix() {
+        return degreeSuffix;
+    }
+
+    /**
+     * @param degreeSuffix the degreeSuffix to set
+     */
+    public void setDegreeSuffix(String degreeSuffix) {
+        this.degreeSuffix = degreeSuffix;
+    }
+
+    /**
+     * @return the profession
+     */
+    public String getProfession() {
+        return profession;
+    }
+
+    /**
+     * @param profession the profession to set
+     */
+    public void setProfession(String profession) {
+        this.profession = profession;
+    }
+
+    /**
+     * @return the role
+     */
+    public String getRole() {
+        return role;
+    }
+
+    /**
+     * @param role the role to set
+     */
+    public void setRole(String role) {
+        this.role = role;
+    }
+
+    /**
+     * @return the adjunct
+     */
+    public String getAdjunct() {
+        return adjunct;
+    }
+
+    /**
+     * @param adjunct the adjunct to set
+     */
+    public void setAdjunct(String adjunct) {
+        this.adjunct = adjunct;
+    }
+
+    /**
+     * @return the titleInAddress
+     */
+    public String getTitleInAddress() {
+        return titleInAddress;
+    }
+
+    /**
+     * @param titleInAddress the titleInAddress to set
+     */
+    public void setTitleInAddress(String titleInAddress) {
+        this.titleInAddress = titleInAddress;
+    }
+    
+    
+    
 }
