@@ -752,6 +752,7 @@ public class PlaceHolders {
     public static final String _FKT = "{{###_FKT}}";
     public static final String _ZUSATZ = "{{###_ZUSATZ}}";
     public static final String _ANREDE2 = "{{###_ANREDE2}}";
+    public static final String _ALTER = "{{###_ALTER}}";
 
     public static final String AKTE_NR = "{{AKTE_NR}}";
     public static final String AKTE_ZEICHEN = "{{AKTE_ZEICHEN}}";
@@ -864,6 +865,7 @@ public class PlaceHolders {
             ALLPLACEHOLDERS.add(_FKT.replaceAll("###", typePlaceHolder));
             ALLPLACEHOLDERS.add(_ZUSATZ.replaceAll("###", typePlaceHolder));
             ALLPLACEHOLDERS.add(_ANREDE2.replaceAll("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_ALTER.replaceAll("###", typePlaceHolder));
 
         }
 

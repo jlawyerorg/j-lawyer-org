@@ -664,6 +664,10 @@
 package com.jdimension.jlawyer.persistence;
 
 import java.io.Serializable;
+import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.Period;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import javax.persistence.*;
@@ -856,6 +860,30 @@ public class AddressBean implements Serializable {
     public AddressBean(String id, short legalProtection) {
         this.id = id;
         this.legalProtection = legalProtection;
+    }
+    
+    public static int calculateAge(String dateOfBirth) {
+        int age = -1;
+        SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
+        if (dateOfBirth != null && !("".equalsIgnoreCase(dateOfBirth.trim()))) {
+            try {
+                Date bDate = df.parse(dateOfBirth);
+                if (bDate.before(new Date())) {
+                    Calendar c = Calendar.getInstance();
+                    c.setTime(bDate);
+                    int year = c.get(Calendar.YEAR);
+                    int month = c.get(Calendar.MONTH) + 1;
+                    int date = c.get(Calendar.DATE);
+                    LocalDate l1 = LocalDate.of(year, month, date);
+                    LocalDate now1 = LocalDate.now();
+                    Period diff1 = Period.between(l1, now1);
+                    age=diff1.getYears();
+                }
+            } catch (Throwable t) {
+
+            }
+        }
+        return age;
     }
 
     public String getId() {

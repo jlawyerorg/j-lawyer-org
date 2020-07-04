@@ -935,7 +935,13 @@ public class PlaceHolderUtils extends PlaceHolders {
             if (placeHolders.containsKey(getPlaceHolderForType(_ANREDE2, ptb.getPlaceHolder()))) {
                 placeHolders.put(getPlaceHolderForType(_ANREDE2, ptb.getPlaceHolder()), val(selected.getTitleInAddress()));
             }
-            
+            if (placeHolders.containsKey(getPlaceHolderForType(_ALTER, ptb.getPlaceHolder()))) {
+                int age=AddressBean.calculateAge(selected.getBirthDate());
+                if(age>-1)
+                    placeHolders.put(getPlaceHolderForType(_ALTER, ptb.getPlaceHolder()), val("" + age));
+                else
+                    placeHolders.put(getPlaceHolderForType(_ALTER, ptb.getPlaceHolder()), val("?"));
+            }
             
             
             
