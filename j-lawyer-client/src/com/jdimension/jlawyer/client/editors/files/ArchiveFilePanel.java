@@ -1669,6 +1669,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         mnuSendDocumentFax = new javax.swing.JMenuItem();
         mnuDirectPrint = new javax.swing.JMenuItem();
         jSeparator4 = new javax.swing.JPopupMenu.Separator();
+        mnuDrebis = new javax.swing.JMenu();
         mnuCoverage = new javax.swing.JMenuItem();
         mnuMotorCoverage = new javax.swing.JMenuItem();
         mnuFreeTextMessage = new javax.swing.JMenuItem();
@@ -2054,6 +2055,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         documentsPopup.add(mnuDirectPrint);
         documentsPopup.add(jSeparator4);
 
+        mnuDrebis.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/drebis16.png"))); // NOI18N
+        mnuDrebis.setText("Drebis");
+
         mnuCoverage.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/drebis16.png"))); // NOI18N
         mnuCoverage.setText("Deckungsanfrage");
         mnuCoverage.addActionListener(new java.awt.event.ActionListener() {
@@ -2061,7 +2065,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 mnuCoverageActionPerformed(evt);
             }
         });
-        documentsPopup.add(mnuCoverage);
+        mnuDrebis.add(mnuCoverage);
 
         mnuMotorCoverage.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/drebis16.png"))); // NOI18N
         mnuMotorCoverage.setText("Kfz-Schadenmeldung");
@@ -2070,7 +2074,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 mnuMotorCoverageActionPerformed(evt);
             }
         });
-        documentsPopup.add(mnuMotorCoverage);
+        mnuDrebis.add(mnuMotorCoverage);
 
         mnuFreeTextMessage.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/drebis16.png"))); // NOI18N
         mnuFreeTextMessage.setText("Freitext senden");
@@ -2079,7 +2083,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 mnuFreeTextMessageActionPerformed(evt);
             }
         });
-        documentsPopup.add(mnuFreeTextMessage);
+        mnuDrebis.add(mnuFreeTextMessage);
+
+        documentsPopup.add(mnuDrebis);
         documentsPopup.add(jSeparator5);
 
         mnuUseDocumentAsTemplate.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editcopy.png"))); // NOI18N
@@ -6147,6 +6153,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JMenuItem mnuCopyDocumentToOtherCase;
     private javax.swing.JMenuItem mnuCoverage;
     private javax.swing.JMenuItem mnuDirectPrint;
+    private javax.swing.JMenu mnuDrebis;
     private javax.swing.JMenuItem mnuDuplicateDocument;
     private javax.swing.JMenuItem mnuDuplicateDocumentAs;
     private javax.swing.JMenuItem mnuDuplicateDocumentAsPdf;

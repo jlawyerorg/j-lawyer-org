@@ -2,6 +2,8 @@
 
 # requires: sudo apt-get install openjfx
 
+mvn -f j-lawyer-cloud/pom.xml clean
+
 ant -buildfile j-lawyer-fax/build.xml clean
 ant -Dj2ee.server.home=/home/travis -buildfile j-lawyer-server-entities/build.xml clean
 ant -buildfile j-lawyer-server-common/build.xml clean
