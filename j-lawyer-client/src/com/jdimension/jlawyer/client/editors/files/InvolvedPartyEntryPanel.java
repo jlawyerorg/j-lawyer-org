@@ -701,6 +701,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import org.apache.log4j.Logger;
 import org.jlawyer.bea.model.Identity;
+import themes.colors.DefaultColorTheme;
 
 /**
  *
@@ -711,101 +712,116 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
     private static final Logger log = Logger.getLogger(InvolvedPartyEntryPanel.class.getName());
     //DecimalFormat df = new DecimalFormat("0.00%");
     private AddressBean a = null;
-    private ArchiveFileAddressesBean afa=null;
-    private ArchiveFileBean caseDto=null;
-    
-    private String openedFromEditorClass=null;
-    private InvolvedPartiesPanel container=null;
-    private ArchiveFilePanel casePanel=null;
-    
-    private List<PartyTypeBean> partyTypes=new ArrayList<PartyTypeBean>();
-    private boolean initializing=false;
-    
+    private ArchiveFileAddressesBean afa = null;
+    private ArchiveFileBean caseDto = null;
+
+    private String openedFromEditorClass = null;
+    private InvolvedPartiesPanel container = null;
+    private ArchiveFilePanel casePanel = null;
+
+    private List<PartyTypeBean> partyTypes = new ArrayList<PartyTypeBean>();
+    private boolean initializing = false;
+
     /**
      * Creates new form HitPanel
      */
     public InvolvedPartyEntryPanel(ArchiveFileBean caseDto, ArchiveFilePanel casePanel, InvolvedPartiesPanel container, String openedFromClassName, boolean beaEnabled) {
-        this.initializing=true;
+        this.initializing = true;
         initComponents();
-        this.openedFromEditorClass=openedFromClassName;
-        this.container=container;
-        this.casePanel=casePanel;
-        this.caseDto=caseDto;
-        
+        this.openedFromEditorClass = openedFromClassName;
+        this.container = container;
+        this.casePanel = casePanel;
+        this.caseDto = caseDto;
+
         this.mnuSendBea.setEnabled(beaEnabled);
-        
+
         ServerSettings sset = ServerSettings.getInstance();
         this.lblCustom1.setText(sset.getSetting(sset.DATA_CUSTOMFIELD_ARCHIVEFILE_INVOLVED_PREFIX + "1", "Eigenes Feld 1"));
         this.lblCustom2.setText(sset.getSetting(sset.DATA_CUSTOMFIELD_ARCHIVEFILE_INVOLVED_PREFIX + "2", "Eigenes Feld 2"));
         this.lblCustom3.setText(sset.getSetting(sset.DATA_CUSTOMFIELD_ARCHIVEFILE_INVOLVED_PREFIX + "3", "Eigenes Feld 3"));
-        
-        try {
-                ClientSettings settings = ClientSettings.getInstance();
-                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                ArchiveFileServiceRemote afs=locator.lookupArchiveFileServiceRemote();
-                this.partyTypes=afs.getAllPartyTypes();
-                
-                this.cmbRefType.removeAllItems();
-                ArrayList<String> refTypeNames=new ArrayList<>();
-                for(PartyTypeBean p: this.partyTypes) {
-                    refTypeNames.add(p.getName());
-                }
-                Collections.sort(refTypeNames);
-                for(String s: refTypeNames) {
-                    this.cmbRefType.addItem(s);
-                }
 
-            } catch (Throwable t) {
-                log.error("Unable to get party types", t);
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
+            this.partyTypes = afs.getAllPartyTypes();
+
+            this.cmbRefType.removeAllItems();
+            ArrayList<String> refTypeNames = new ArrayList<>();
+            for (PartyTypeBean p : this.partyTypes) {
+                refTypeNames.add(p.getName());
             }
-        
+            Collections.sort(refTypeNames);
+            for (String s : refTypeNames) {
+                this.cmbRefType.addItem(s);
+            }
+
+        } catch (Throwable t) {
+            log.error("Unable to get party types", t);
+        }
+
         EventBroker b = EventBroker.getInstance();
         b.subscribeConsumer(this, Event.TYPE_CONTACTUPDATED);
-            
-        this.initializing=false;
+
+        this.initializing = false;
     }
-    
+
     public AddressBean getAdress() {
         return this.a;
     }
-    
+
     public ArchiveFileAddressesBean getInvolvement() {
         this.afa.setReference(this.txtReference.getText());
         this.afa.setContact(this.txtContact.getText());
         this.afa.setCustom1(this.txtCustom1.getText());
         this.afa.setCustom2(this.txtCustom2.getText());
         this.afa.setCustom3(this.txtCustom3.getText());
-        PartyTypeBean pt=null;
-        for(PartyTypeBean ptb: this.partyTypes) {
-            if(ptb.getName().equals(this.cmbRefType.getSelectedItem().toString()))
-                pt=ptb;
+        PartyTypeBean pt = null;
+        for (PartyTypeBean ptb : this.partyTypes) {
+            if (ptb.getName().equals(this.cmbRefType.getSelectedItem().toString())) {
+                pt = ptb;
+            }
         }
         this.afa.setReferenceType(pt);
-         
+
         return this.afa;
     }
 
     public void setEntry(AddressBean a, ArchiveFileAddressesBean afa, boolean checkForConflicts) {
         this.a = a;
-        this.afa=afa;
+        this.afa = afa;
         this.afa.setAddressKey(a);
-        
+
         this.lblAddress.setText(this.a.toDisplayName());
         this.lblAddress.setToolTipText(this.a.toShortHtml());
-        if(checkForConflicts) {
-            
+        if (checkForConflicts) {
+
         } else {
-            this.initializing=true;
+            this.initializing = true;
         }
         this.cmbRefType.setSelectedItem(afa.getReferenceTypeAsString());
-        this.initializing=false;
+        this.initializing = false;
         this.txtContact.setText(afa.getContact());
         this.txtCustom1.setText(afa.getCustom1());
         this.txtCustom2.setText(afa.getCustom2());
         this.txtCustom3.setText(afa.getCustom3());
         this.txtReference.setText(afa.getReference());
-        
 
+        this.lblUnderage.setIcon(null);
+        this.lblUnderage.setText("");
+        this.lblUnderage.setToolTipText("");
+        this.lblUnderage.setForeground(DefaultColorTheme.COLOR_LOGO_RED);
+        if (a != null) {
+            if (a.getBirthDate() != null) {
+                int age=AddressBean.calculateAge(a.getBirthDate());
+                if (age < 18 && age > -1) {
+                    this.lblUnderage.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_child_care_black_20.png")));
+                    this.lblUnderage.setText("U18");
+                    this.lblUnderage.setToolTipText("Beteiligte(r) ist minderjährig");
+                }
+            }
+        }
+        
     }
 
     /**
@@ -842,6 +858,7 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
         txtCustom1 = new javax.swing.JTextField();
         txtCustom2 = new javax.swing.JTextField();
         txtCustom3 = new javax.swing.JTextField();
+        lblUnderage = new javax.swing.JLabel();
 
         mnuSendEmail.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/mail_send.png"))); // NOI18N
         mnuSendEmail.setText("E-Mail verfassen");
@@ -1022,6 +1039,8 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
+        lblUnderage.setText("jLabel1");
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -1032,6 +1051,8 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(lblAddress)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(lblUnderage)
                         .addGap(18, 18, 18)
                         .addComponent(jLabel3)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -1057,7 +1078,8 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
                         .addComponent(cmbRefType, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addComponent(lblAddress)
                         .addComponent(txtReference, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(jLabel3)))
+                        .addComponent(jLabel3)
+                        .addComponent(lblUnderage)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jXTaskPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
@@ -1065,25 +1087,28 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
     }// </editor-fold>//GEN-END:initComponents
 
     private void cmbRefTypeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbRefTypeActionPerformed
-        if(cmbRefType.getSelectedItem()==null)
+        if (cmbRefType.getSelectedItem() == null) {
             return;
-        
-        String refType=cmbRefType.getSelectedItem().toString();
-        PartyTypeBean ptb=null;
-        for(PartyTypeBean p: this.partyTypes) {
-            if(p.getName().equals(refType)) {
-                ptb=p;
+        }
+
+        String refType = cmbRefType.getSelectedItem().toString();
+        PartyTypeBean ptb = null;
+        for (PartyTypeBean p : this.partyTypes) {
+            if (p.getName().equals(refType)) {
+                ptb = p;
             }
         }
-        if(ptb==null)
+        if (ptb == null) {
             return;
-        
-        Color c=new Color(ptb.getColor());
+        }
+
+        Color c = new Color(ptb.getColor());
         this.lblType.setBackground(c);
-        
-        if(!this.initializing)
+
+        if (!this.initializing) {
             ConflictOfInterestUtils.checkForConflicts(a, ptb, EditorsRegistry.getInstance().getMainWindow());
-        
+        }
+
     }//GEN-LAST:event_cmbRefTypeActionPerformed
 
     private void mnuRemovePartyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuRemovePartyActionPerformed
@@ -1091,39 +1116,38 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
         this.casePanel.removeInvolvedParty(this);
         this.container.revalidate();
         this.container.repaint();
-        
+
 
     }//GEN-LAST:event_mnuRemovePartyActionPerformed
 
-    
-    
-    private void mnuSendEmailActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSendEmailActionPerformed
-        
-            if (this.a.getEmail() == null || "".equals(this.a.getEmail())) {
-                JOptionPane.showMessageDialog(this, "Zu diesem Kontakt ist keine E-Mail-Adresse erfasst.", "Fehler", JOptionPane.ERROR_MESSAGE);
 
-            } else {
-                SendEmailDialog dlg = new SendEmailDialog(EditorsRegistry.getInstance().getMainWindow(), false);
-                dlg.setInvolvedInCase(this.container.getInvolvedParties());
-                dlg.setArchiveFile(this.caseDto);
-                dlg.setTo(this.a.getEmail());
-                ArrayList<ArchiveFileAddressesBean> involved=this.container.getInvolvedParties();
-                for(ArchiveFileAddressesBean aab: involved) {
-                    dlg.addParty(aab);
-                }
-                
-                FrameUtils.centerDialog(dlg, null);
-                dlg.setVisible(true);
+    private void mnuSendEmailActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSendEmailActionPerformed
+
+        if (this.a.getEmail() == null || "".equals(this.a.getEmail())) {
+            JOptionPane.showMessageDialog(this, "Zu diesem Kontakt ist keine E-Mail-Adresse erfasst.", "Fehler", JOptionPane.ERROR_MESSAGE);
+
+        } else {
+            SendEmailDialog dlg = new SendEmailDialog(EditorsRegistry.getInstance().getMainWindow(), false);
+            dlg.setInvolvedInCase(this.container.getInvolvedParties());
+            dlg.setArchiveFile(this.caseDto);
+            dlg.setTo(this.a.getEmail());
+            ArrayList<ArchiveFileAddressesBean> involved = this.container.getInvolvedParties();
+            for (ArchiveFileAddressesBean aab : involved) {
+                dlg.addParty(aab);
             }
-        
+
+            FrameUtils.centerDialog(dlg, null);
+            dlg.setVisible(true);
+        }
+
     }//GEN-LAST:event_mnuSendEmailActionPerformed
 
     private void mnuSendBeaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSendBeaActionPerformed
-        
+
         if (!BeaAccess.hasInstance()) {
-            BeaLoginCallback callback=null;
+            BeaLoginCallback callback = null;
             try {
-                callback=(BeaLoginCallback)EditorsRegistry.getInstance().getEditor(BeaInboxPanel.class.getName());
+                callback = (BeaLoginCallback) EditorsRegistry.getInstance().getEditor(BeaInboxPanel.class.getName());
             } catch (Throwable t) {
                 log.error(t);
             }
@@ -1134,41 +1158,41 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
             }
         }
 
-            if (this.a.getBeaSafeId() == null || "".equals(this.a.getBeaSafeId())) {
-                JOptionPane.showMessageDialog(this, "Zu diesem Kontakt ist keine beA-Adresse erfasst.", "Fehler", JOptionPane.ERROR_MESSAGE);
+        if (this.a.getBeaSafeId() == null || "".equals(this.a.getBeaSafeId())) {
+            JOptionPane.showMessageDialog(this, "Zu diesem Kontakt ist keine beA-Adresse erfasst.", "Fehler", JOptionPane.ERROR_MESSAGE);
 
-            } else {
-                Identity iTo = null;
-                try {
-                    BeaAccess bea = BeaAccess.getInstance();
-                    iTo = bea.getIdentity(this.a.getBeaSafeId());
-                } catch (Throwable t) {
-                    log.error(t);
-                    JOptionPane.showMessageDialog(this, "Identität des beA-Teilnehmers kann nicht ermittelt werden", "Fehler", JOptionPane.ERROR_MESSAGE);
-                    return;
-                }
-                SendBeaMessageDialog dlg = new SendBeaMessageDialog(EditorsRegistry.getInstance().getMainWindow(), false);
-                dlg.setArchiveFile(this.caseDto);
-                dlg.setTo(iTo);
-                
-                ArrayList<ArchiveFileAddressesBean> involved=this.container.getInvolvedParties();
-                for(ArchiveFileAddressesBean aab: involved) {
-                    //dlg.addParty(aab.getAddressKey(), aab.getReferenceType());
-                    dlg.addParty(aab);
-                }
-                dlg.setAzRecipient(this.txtReference.getText());
-                FrameUtils.centerDialog(dlg, null);
-                dlg.setVisible(true);
+        } else {
+            Identity iTo = null;
+            try {
+                BeaAccess bea = BeaAccess.getInstance();
+                iTo = bea.getIdentity(this.a.getBeaSafeId());
+            } catch (Throwable t) {
+                log.error(t);
+                JOptionPane.showMessageDialog(this, "Identität des beA-Teilnehmers kann nicht ermittelt werden", "Fehler", JOptionPane.ERROR_MESSAGE);
+                return;
             }
-        
+            SendBeaMessageDialog dlg = new SendBeaMessageDialog(EditorsRegistry.getInstance().getMainWindow(), false);
+            dlg.setArchiveFile(this.caseDto);
+            dlg.setTo(iTo);
+
+            ArrayList<ArchiveFileAddressesBean> involved = this.container.getInvolvedParties();
+            for (ArchiveFileAddressesBean aab : involved) {
+                //dlg.addParty(aab.getAddressKey(), aab.getReferenceType());
+                dlg.addParty(aab);
+            }
+            dlg.setAzRecipient(this.txtReference.getText());
+            FrameUtils.centerDialog(dlg, null);
+            dlg.setVisible(true);
+        }
+
     }//GEN-LAST:event_mnuSendBeaActionPerformed
 
     private void mnuShowBeaIdentityActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuShowBeaIdentityActionPerformed
-        
+
         if (!BeaAccess.hasInstance()) {
-            BeaLoginCallback callback=null;
+            BeaLoginCallback callback = null;
             try {
-                callback=(BeaLoginCallback)EditorsRegistry.getInstance().getEditor(BeaInboxPanel.class.getName());
+                callback = (BeaLoginCallback) EditorsRegistry.getInstance().getEditor(BeaInboxPanel.class.getName());
             } catch (Throwable t) {
                 log.error(t);
             }
@@ -1179,98 +1203,97 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
             }
         }
 
-        
-            if (this.a.getBeaSafeId() == null || "".equals(this.a.getBeaSafeId())) {
-                JOptionPane.showMessageDialog(this, "Zu diesem Kontakt ist keine beA-Adresse erfasst.", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
+        if (this.a.getBeaSafeId() == null || "".equals(this.a.getBeaSafeId())) {
+            JOptionPane.showMessageDialog(this, "Zu diesem Kontakt ist keine beA-Adresse erfasst.", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
 
-            } else {
-                Identity iTo = null;
-                try {
-                    BeaAccess bea = BeaAccess.getInstance();
-                    iTo = bea.getIdentity(this.a.getBeaSafeId());
+        } else {
+            Identity iTo = null;
+            try {
+                BeaAccess bea = BeaAccess.getInstance();
+                iTo = bea.getIdentity(this.a.getBeaSafeId());
 
-                    JDialog dlg = new JDialog(EditorsRegistry.getInstance().getMainWindow(), true);
-                    IdentityPanel ip = new IdentityPanel();
-                    ip.setIdentity(iTo);
-                    ip.doLayout();
-                    dlg.add(ip);
-                    dlg.setSize(700, 250);
-                    dlg.setTitle("beA Identität zur Safe ID " + iTo.getSafeId());
-                    //dlg.setSize(ip.getPreferredSize());
-                    FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
-                    dlg.setVisible(true);
+                JDialog dlg = new JDialog(EditorsRegistry.getInstance().getMainWindow(), true);
+                IdentityPanel ip = new IdentityPanel();
+                ip.setIdentity(iTo);
+                ip.doLayout();
+                dlg.add(ip);
+                dlg.setSize(700, 250);
+                dlg.setTitle("beA Identität zur Safe ID " + iTo.getSafeId());
+                //dlg.setSize(ip.getPreferredSize());
+                FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
+                dlg.setVisible(true);
 
-                } catch (Throwable t) {
-                    log.error(t);
-                    JOptionPane.showMessageDialog(this, "Identität des beA-Teilnehmers kann nicht ermittelt werden", "Fehler", JOptionPane.ERROR_MESSAGE);
-                    return;
-                }
-
+            } catch (Throwable t) {
+                log.error(t);
+                JOptionPane.showMessageDialog(this, "Identität des beA-Teilnehmers kann nicht ermittelt werden", "Fehler", JOptionPane.ERROR_MESSAGE);
+                return;
             }
-        
+
+        }
+
     }//GEN-LAST:event_mnuShowBeaIdentityActionPerformed
 
     private void mnuSendSmsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSendSmsActionPerformed
-            if (this.a.getMobile() == null || "".equals(this.a.getMobile())) {
-                JOptionPane.showMessageDialog(this, "Zu diesem Kontakt ist keine Mobilnummer erfasst.", "Fehler", JOptionPane.ERROR_MESSAGE);
+        if (this.a.getMobile() == null || "".equals(this.a.getMobile())) {
+            JOptionPane.showMessageDialog(this, "Zu diesem Kontakt ist keine Mobilnummer erfasst.", "Fehler", JOptionPane.ERROR_MESSAGE);
 
+        } else {
+
+            ServerSettings set = ServerSettings.getInstance();
+            String mode = set.getSetting(set.SERVERCONF_VOIPMODE, "on");
+            if ("on".equalsIgnoreCase(mode)) {
+                SendSmsDialog dlg = new SendSmsDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.a);
+                FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
+                dlg.setVisible(true);
             } else {
-
-                ServerSettings set = ServerSettings.getInstance();
-                String mode = set.getSetting(set.SERVERCONF_VOIPMODE, "on");
-                if ("on".equalsIgnoreCase(mode)) {
-                    SendSmsDialog dlg = new SendSmsDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.a);
-                    FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
-                    dlg.setVisible(true);
-                } else {
-                    JOptionPane.showMessageDialog(this, "Voice-over-IP - Integration ist nicht aktiviert!", "SMS senden", JOptionPane.INFORMATION_MESSAGE);
-
-                }
+                JOptionPane.showMessageDialog(this, "Voice-over-IP - Integration ist nicht aktiviert!", "SMS senden", JOptionPane.INFORMATION_MESSAGE);
 
             }
-        
+
+        }
+
     }//GEN-LAST:event_mnuSendSmsActionPerformed
 
     private void mnuCallMobileActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuCallMobileActionPerformed
-            if (this.a.getMobile() == null || "".equals(this.a.getMobile())) {
-                JOptionPane.showMessageDialog(this, "Zu diesem Kontakt ist keine Mobilnummer erfasst.", "Fehler", JOptionPane.ERROR_MESSAGE);
+        if (this.a.getMobile() == null || "".equals(this.a.getMobile())) {
+            JOptionPane.showMessageDialog(this, "Zu diesem Kontakt ist keine Mobilnummer erfasst.", "Fehler", JOptionPane.ERROR_MESSAGE);
 
+        } else {
+
+            ServerSettings set = ServerSettings.getInstance();
+            String mode = set.getSetting(set.SERVERCONF_VOIPMODE, "on");
+            if ("on".equalsIgnoreCase(mode)) {
+                PlaceCallDialog dlg = new PlaceCallDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.a, this.a.getMobile());
+                FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
+                dlg.setVisible(true);
             } else {
-
-                ServerSettings set = ServerSettings.getInstance();
-                String mode = set.getSetting(set.SERVERCONF_VOIPMODE, "on");
-                if ("on".equalsIgnoreCase(mode)) {
-                    PlaceCallDialog dlg = new PlaceCallDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.a, this.a.getMobile());
-                    FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
-                    dlg.setVisible(true);
-                } else {
-                    JOptionPane.showMessageDialog(this, "Voice-over-IP - Integration ist nicht aktiviert!", "Anruf tätigen", JOptionPane.INFORMATION_MESSAGE);
-
-                }
+                JOptionPane.showMessageDialog(this, "Voice-over-IP - Integration ist nicht aktiviert!", "Anruf tätigen", JOptionPane.INFORMATION_MESSAGE);
 
             }
-        
+
+        }
+
     }//GEN-LAST:event_mnuCallMobileActionPerformed
 
     private void mnuCallPhoneActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuCallPhoneActionPerformed
-            if (this.a.getPhone() == null || "".equals(this.a.getPhone())) {
-                JOptionPane.showMessageDialog(this, "Zu diesem Kontakt ist keine Festnetznummer erfasst.", "Fehler", JOptionPane.ERROR_MESSAGE);
+        if (this.a.getPhone() == null || "".equals(this.a.getPhone())) {
+            JOptionPane.showMessageDialog(this, "Zu diesem Kontakt ist keine Festnetznummer erfasst.", "Fehler", JOptionPane.ERROR_MESSAGE);
 
+        } else {
+
+            ServerSettings set = ServerSettings.getInstance();
+            String mode = set.getSetting(set.SERVERCONF_VOIPMODE, "on");
+            if ("on".equalsIgnoreCase(mode)) {
+                PlaceCallDialog dlg = new PlaceCallDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.a, this.a.getPhone());
+                FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
+                dlg.setVisible(true);
             } else {
-
-                ServerSettings set = ServerSettings.getInstance();
-                String mode = set.getSetting(set.SERVERCONF_VOIPMODE, "on");
-                if ("on".equalsIgnoreCase(mode)) {
-                    PlaceCallDialog dlg = new PlaceCallDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.a, this.a.getPhone());
-                    FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
-                    dlg.setVisible(true);
-                } else {
-                    JOptionPane.showMessageDialog(this, "Voice-over-IP - Integration ist nicht aktiviert!", "Anruf tätigen", JOptionPane.INFORMATION_MESSAGE);
-
-                }
+                JOptionPane.showMessageDialog(this, "Voice-over-IP - Integration ist nicht aktiviert!", "Anruf tätigen", JOptionPane.INFORMATION_MESSAGE);
 
             }
-        
+
+        }
+
     }//GEN-LAST:event_mnuCallPhoneActionPerformed
 
     private void mnuSendFaxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSendFaxActionPerformed
@@ -1279,15 +1302,13 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
         if ("on".equalsIgnoreCase(mode)) {
             ArrayList<AddressBean> faxList = new ArrayList<AddressBean>();
 
-        
             faxList.addAll(this.container.getInvolvedPartiesAddress());
 //            faxList.addAll(this.container.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_OPPONENT));
 //            faxList.addAll(this.container.getInvolvedParties(ArchiveFileAddressesBean.REFERENCETYPE_OPPONENTATTORNEY));
-            
-                SendFaxDialog dlg = new SendFaxDialog(EditorsRegistry.getInstance().getMainWindow(), true, faxList, this.a, this.caseDto.getId());
-                FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
-                dlg.setVisible(true);
-            
+
+            SendFaxDialog dlg = new SendFaxDialog(EditorsRegistry.getInstance().getMainWindow(), true, faxList, this.a, this.caseDto.getId());
+            FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
+            dlg.setVisible(true);
 
         } else {
             JOptionPane.showMessageDialog(this, "Voice-over-IP - Integration ist nicht aktiviert!", "Fax senden", JOptionPane.INFORMATION_MESSAGE);
@@ -1296,7 +1317,7 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
     }//GEN-LAST:event_mnuSendFaxActionPerformed
 
     private void cmdActionsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdActionsActionPerformed
-        
+
     }//GEN-LAST:event_cmdActionsActionPerformed
 
     private void cmdActionsMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdActionsMousePressed
@@ -1335,6 +1356,7 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
     private javax.swing.JLabel lblCustom2;
     private javax.swing.JLabel lblCustom3;
     private javax.swing.JLabel lblType;
+    private javax.swing.JLabel lblUnderage;
     private javax.swing.JMenuItem mnuCallMobile;
     private javax.swing.JMenuItem mnuCallPhone;
     private javax.swing.JMenuItem mnuRemoveParty;

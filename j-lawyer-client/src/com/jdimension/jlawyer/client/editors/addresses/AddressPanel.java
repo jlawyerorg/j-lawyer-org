@@ -3153,8 +3153,13 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
             }
         }
         int age = AddressBean.calculateAge(this.txtBirthDate.getText());
+        this.lblAge.setIcon(null);
         if(dead) {
-            this.lblAge.setText("<html><b>verstorben</b></html>");
+            if(age>-1) {
+                this.lblAge.setText("<html><b>verstorben (" + age + " J.)</b></html>");
+            } else {
+                this.lblAge.setText("<html><b>verstorben</b></html>");
+            }
             this.lblAge.setFont(this.lblAge.getFont().deriveFont(Font.BOLD));
         } else if(age>-1) {
             StringBuffer sb=new StringBuffer();
@@ -3162,6 +3167,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
             sb.append("<b>").append("Alter: "+age).append(" Jahre</b><br/>");
             if(age<18) {
                 sb.append("<font color=\"red\">minderj&auml;hrig</font>");
+                this.lblAge.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_child_care_black_20.png")));
             }
             sb.append("</html>");
             this.lblAge.setText(sb.toString());
