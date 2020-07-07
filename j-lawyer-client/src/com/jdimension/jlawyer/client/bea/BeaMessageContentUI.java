@@ -1489,16 +1489,20 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
         }
 
         try {
-
+            String userHome = System.getProperty("user.home");
+            if (!userHome.endsWith(File.separator)) {
+                userHome = userHome + File.separator;
+            }
+            String selectedFolder = null;
             for (Object selected : this.lstAttachments.getSelectedValuesList()) {
 
                 byte[] data = ((Attachment) selected).getContent();
-                String userHome = System.getProperty("user.home");
-                if (!userHome.endsWith(File.separator)) {
-                    userHome = userHome + File.separator;
+                
+                String useFolder=userHome;
+                if (selectedFolder != null) {
+                    useFolder=selectedFolder;
                 }
-
-                JFileChooser chooser = new JFileChooser(userHome);
+                JFileChooser chooser = new JFileChooser(useFolder);
                 chooser.setSelectedFile(new File(selected.toString()));
                 int result = chooser.showSaveDialog(this);
                 if (result == JFileChooser.CANCEL_OPTION) {
@@ -1513,6 +1517,8 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
                 if (!f.exists()) {
                     f.createNewFile();
                 }
+                selectedFolder = f.getParentFile().getAbsolutePath();
+
                 FileOutputStream fOut = new FileOutputStream(f);
                 fOut.write(data);
                 fOut.close();

@@ -1519,16 +1519,20 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
         }
 
         try {
-
+            String userHome = System.getProperty("user.home");
+            if (!userHome.endsWith(File.separator)) {
+                userHome = userHome + File.separator;
+            }
+            String selectedFolder = null;
             for (Object selected : this.lstAttachments.getSelectedValuesList()) {
 
                 byte[] data = EmailUtils.getAttachmentBytes(selected.toString(), this.msgContainer);
-                String userHome = System.getProperty("user.home");
-                if (!userHome.endsWith(File.separator)) {
-                    userHome = userHome + File.separator;
-                }
 
-                JFileChooser chooser = new JFileChooser(userHome);
+                String useFolder=userHome;
+                if (selectedFolder != null) {
+                    useFolder=selectedFolder;
+                }
+                JFileChooser chooser = new JFileChooser(useFolder);
                 chooser.setSelectedFile(new File(selected.toString()));
                 chooser.showSaveDialog(this);
                 File f = chooser.getSelectedFile();
@@ -1539,9 +1543,12 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
                 if (!f.exists()) {
                     f.createNewFile();
                 }
+                selectedFolder = f.getParentFile().getAbsolutePath();
+
                 FileOutputStream fOut = new FileOutputStream(f);
                 fOut.write(data);
                 fOut.close();
+
             }
 
         } catch (Exception ex) {
@@ -1579,8 +1586,8 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
                         return;
                     }
 
-                    ArchiveFileDocumentsBean newDoc=afs.addDocument(sel.getId(), newName, data, "");
-                    
+                    ArchiveFileDocumentsBean newDoc = afs.addDocument(sel.getId(), newName, data, "");
+
                     EventBroker eb = EventBroker.getInstance();
                     eb.publishEvent(new DocumentAddedEvent(newDoc));
 
