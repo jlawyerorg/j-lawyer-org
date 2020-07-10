@@ -694,6 +694,7 @@ public class DocumentSearchPanel extends javax.swing.JPanel implements Themeable
      */
     public DocumentSearchPanel() {
         initComponents();
+        this.scrollResults.getVerticalScrollBar().setUnitIncrement(16);
         String[] colNames = new String[]{"Suchergebnisse"};
         DefaultTableModel model = new DefaultTableModel(colNames, 0);
         ((JLabel)this.cmbMaxDocs.getRenderer()).setHorizontalAlignment(SwingConstants.RIGHT);
