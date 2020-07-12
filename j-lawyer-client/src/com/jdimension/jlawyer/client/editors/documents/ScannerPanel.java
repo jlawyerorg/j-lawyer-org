@@ -842,6 +842,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
         
         ComponentUtils.decorateSplitPane(this.splitMain);
         ComponentUtils.decorateSplitPane(this.splitTop);
+        ComponentUtils.decorateSplitPane(this.splitTop);
         
         ClientSettings settings=ClientSettings.getInstance();
         String temp = settings.getConfiguration(ClientSettings.CONF_SCANS_TAGGINGENABLED, "false");
@@ -899,9 +900,11 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
         DefaultTableModel model = new DefaultTableModel(colNames, 0);
         ThreadUtils.setTableModel(this.tblActions, model);
         
-        //this.splitMain.setDividerLocation(0.5d);
-        this.splitMain.setDividerLocation(300);
-        ThreadUtils.setSplitDividerLocation(splitTop, (int) tblDirContent.getPreferredSize().getWidth());
+        this.splitTop.setDividerLocation(0.5d);
+        this.splitMain.setDividerLocation(0.5d);
+        //this.splitMain.setDividerLocation(300);
+        //ThreadUtils.setSplitDividerLocation(splitTop, (int) tblDirContent.getPreferredSize().getWidth());
+        //ThreadUtils.setSplitDividerLocation(this.splitTop, (int) tblDirContent.getPreferredSize().getWidth());
         
         Timer timer = new Timer();
         TimerTask scannerTask = new ScannerDocumentsTimerTask();
@@ -965,11 +968,11 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
 
         jLabel18 = new javax.swing.JLabel();
         lblPanelTitle = new javax.swing.JLabel();
-        splitMain = new javax.swing.JSplitPane();
+        cmdRefresh = new javax.swing.JButton();
         splitTop = new javax.swing.JSplitPane();
+        splitMain = new javax.swing.JSplitPane();
         jScrollPane2 = new javax.swing.JScrollPane();
         tblDirContent = new javax.swing.JTable();
-        pnlPreview = new javax.swing.JPanel();
         jPanel2 = new javax.swing.JPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
         tblActions = new javax.swing.JTable();
@@ -978,13 +981,21 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
         chkDeleteAfterAction = new javax.swing.JCheckBox();
         chkDocumentTagging = new javax.swing.JCheckBox();
         cmbDocumentTag = new javax.swing.JComboBox<>();
-        cmdRefresh = new javax.swing.JButton();
+        pnlPreview = new javax.swing.JPanel();
 
         jLabel18.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/scanner_big.png"))); // NOI18N
 
         lblPanelTitle.setFont(new java.awt.Font("Dialog", 1, 24)); // NOI18N
         lblPanelTitle.setForeground(new java.awt.Color(255, 255, 255));
         lblPanelTitle.setText("Scans");
+
+        cmdRefresh.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_refresh_blue_36dp.png"))); // NOI18N
+        cmdRefresh.setToolTipText("Aktualisieren");
+        cmdRefresh.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdRefreshActionPerformed(evt);
+            }
+        });
 
         splitMain.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
 
@@ -1012,12 +1023,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
         });
         jScrollPane2.setViewportView(tblDirContent);
 
-        splitTop.setLeftComponent(jScrollPane2);
-
-        pnlPreview.setLayout(new java.awt.BorderLayout());
-        splitTop.setRightComponent(pnlPreview);
-
-        splitMain.setTopComponent(splitTop);
+        splitMain.setLeftComponent(jScrollPane2);
 
         tblActions.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
@@ -1079,7 +1085,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
             jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 1068, Short.MAX_VALUE)
+            .add(jScrollPane1)
             .add(jPanel2Layout.createSequentialGroup()
                 .addContainerGap()
                 .add(chkDeleteAfterAction)
@@ -1106,18 +1112,15 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
                         .add(cmbCaseTag, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .add(chkDeleteAfterAction)))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 647, Short.MAX_VALUE))
+                .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 395, Short.MAX_VALUE))
         );
 
         splitMain.setRightComponent(jPanel2);
 
-        cmdRefresh.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_refresh_blue_36dp.png"))); // NOI18N
-        cmdRefresh.setToolTipText("Aktualisieren");
-        cmdRefresh.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdRefreshActionPerformed(evt);
-            }
-        });
+        splitTop.setLeftComponent(splitMain);
+
+        pnlPreview.setLayout(new java.awt.BorderLayout());
+        splitTop.setRightComponent(pnlPreview);
 
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(this);
         this.setLayout(layout);
@@ -1126,14 +1129,13 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
             .add(layout.createSequentialGroup()
                 .addContainerGap()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(splitMain)
+                    .add(splitTop)
                     .add(layout.createSequentialGroup()
                         .add(cmdRefresh)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                         .add(jLabel18)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(lblPanelTitle)
-                        .add(0, 0, Short.MAX_VALUE)))
+                        .add(lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 951, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -1145,7 +1147,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
                     .add(jLabel18)
                     .add(cmdRefresh))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(splitMain, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 729, Short.MAX_VALUE)
+                .add(splitTop, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 477, Short.MAX_VALUE)
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
