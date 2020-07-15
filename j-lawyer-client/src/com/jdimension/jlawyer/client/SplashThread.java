@@ -1021,7 +1021,8 @@ public class SplashThread implements Runnable {
                     dialogContent.append("<li>W&auml;hlen Sie 'Ja' wenn diese Installation aktiv genutzt werden soll</li>");
                     dialogContent.append("</ul>");
                     dialogContent.append("</html>");
-                    int response = JOptionPane.showConfirmDialog(EditorsRegistry.getInstance().getMainWindow(), dialogContent.toString(), "j-lawyer.BOX Replikation", JOptionPane.YES_NO_OPTION);
+                    // int response = JOptionPane.showConfirmDialog(EditorsRegistry.getInstance().getMainWindow(), dialogContent.toString(), "j-lawyer.BOX Replikation", JOptionPane.YES_NO_OPTION);
+                    int response=JOptionPane.showOptionDialog(EditorsRegistry.getInstance().getMainWindow(), dialogContent.toString(), "j-lawyer.BOX Replikation", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, null, new String[]{"Ja", "Nein"}, "Nein");
                     if (response == JOptionPane.YES_OPTION) {
                         serverSettings.setSetting(ServerSettings.SERVERCONF_REPLICATION_ISTARGET, "0");
                     }
