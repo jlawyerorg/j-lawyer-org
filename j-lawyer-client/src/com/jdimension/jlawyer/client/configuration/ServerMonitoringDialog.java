@@ -673,6 +673,7 @@ import java.text.DecimalFormat;
 import javax.swing.JOptionPane;
 import javax.swing.JProgressBar;
 import org.apache.log4j.Logger;
+import themes.colors.DefaultColorTheme;
 
 /**
  *
@@ -799,7 +800,7 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             MonitoringSnapshot s=locator.lookupSystemManagementRemote().getMonitoringSnapshot();
             this.taStatus.setText(s.getLastStatus());
-            this.prgCpu.setBackground(Color.GREEN);
+            this.prgCpu.setBackground(DefaultColorTheme.COLOR_LIGHT_GREY);
             this.prgCpu.setMaximum(100);
             this.prgCpu.setMinimum(0);
             int value=(int)s.getCpuAverage();
@@ -807,21 +808,21 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
             this.prgCpu.setString(value + "%");
             this.setForeground(prgCpu, cpuE, cpuW, value);
             
-            this.prgDisk.setBackground(Color.GREEN);
+            this.prgDisk.setBackground(DefaultColorTheme.COLOR_LIGHT_GREY);
             this.prgDisk.setMinimum(0);
             this.prgDisk.setMaximum(100);
             this.prgDisk.setValue((int)(s.getDiskUse()/(s.getDiskMax()/100)));
             this.prgDisk.setString(diskFormat.format(s.getDiskUse()/(1024*1024*1024)) + "GB / " + diskFormat.format(s.getDiskMax()/(1024*1024*1024)) + "GB");
             this.setForeground(prgDisk, diskE, diskW, prgDisk.getValue());
             
-            this.prgMemory.setBackground(Color.GREEN);
+            this.prgMemory.setBackground(DefaultColorTheme.COLOR_LIGHT_GREY);
             this.prgMemory.setMinimum(0);
             this.prgMemory.setMaximum(100);
             this.prgMemory.setValue((int)(s.getMemoryUse()/(s.getMemoryMax()/100)));
             this.prgMemory.setString(diskFormat.format(s.getMemoryUse()/(1024*1024)) + "MB / " + diskFormat.format(s.getMemoryMax()/(1024*1024)) + "MB");
             this.setForeground(prgMemory, memE, memW, prgMemory.getValue());
             
-            this.prgVMMemory.setBackground(Color.GREEN);
+            this.prgVMMemory.setBackground(DefaultColorTheme.COLOR_LIGHT_GREY);
             this.prgVMMemory.setMinimum(0);
             this.prgVMMemory.setMaximum(100);
             this.prgVMMemory.setValue((int)(s.getVmMemoryUse()/(s.getVmMemoryMax()/100)));
@@ -840,11 +841,11 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
         int e=Integer.parseInt(errorLevel);
         int w=Integer.parseInt(warnLevel);
         if(value>=e)
-            b.setForeground(Color.RED);
+            b.setForeground(DefaultColorTheme.COLOR_LOGO_RED);
         else if(value>=w)
-            b.setForeground(Color.ORANGE);
+            b.setForeground(Color.ORANGE.darker().darker());
         else
-            b.setForeground(Color.GREEN.darker().darker());
+            b.setForeground(DefaultColorTheme.COLOR_LOGO_GREEN);
     }
 
     /**
@@ -934,6 +935,7 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
             }
         });
 
+        prgVMMemory.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
         prgVMMemory.setValue(50);
         prgVMMemory.setString("blubb");
         prgVMMemory.setStringPainted(true);
@@ -946,10 +948,13 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
 
         jLabel4.setText("Disk:");
 
+        prgDisk.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
         prgDisk.setStringPainted(true);
 
+        prgMemory.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
         prgMemory.setStringPainted(true);
 
+        prgCpu.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
         prgCpu.setStringPainted(true);
 
         jLabel5.setText("letzter Status:");
@@ -1008,7 +1013,7 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jLabel5)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 295, Short.MAX_VALUE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 283, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -1290,7 +1295,7 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jTabbedPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 477, Short.MAX_VALUE)
+                .addComponent(jTabbedPane1)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(cmdCancel)
