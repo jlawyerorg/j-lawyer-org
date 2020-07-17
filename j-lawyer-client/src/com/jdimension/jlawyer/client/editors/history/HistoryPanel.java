@@ -707,6 +707,7 @@ public class HistoryPanel extends javax.swing.JPanel implements ThemeableEditor 
     public HistoryPanel() {
 
         initComponents();
+        this.jScrollPane1.getVerticalScrollBar().setUnitIncrement(16);
 
         if (this.chkOnlyMine.isSelected()) {
             this.principalId = UserSettings.getInstance().getCurrentUser().getPrincipalId();
