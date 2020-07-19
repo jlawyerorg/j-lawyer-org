@@ -663,6 +663,7 @@
  */
 package com.jdimension.jlawyer.client;
 
+import com.jdimension.jlawyer.client.cloud.CloudInstance;
 import com.jdimension.jlawyer.client.plugins.form.FormsManagementDialog;
 import com.jdimension.jlawyer.client.configuration.*;
 import com.jdimension.jlawyer.client.desktop.UpdateAddressTagsTask;
@@ -690,6 +691,7 @@ import com.jdimension.jlawyer.client.plugins.calculation.CalculationPluginDialog
 import com.jdimension.jlawyer.client.plugins.calculation.CalculationPluginUtil;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.ServerSettings;
+import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.DesktopUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
@@ -870,6 +872,21 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
 
             }));
         }
+       
+        Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    if (CloudInstance.hasInstance()) {
+                        CloudInstance.getInstance(UserSettings.getInstance().getCurrentUser()).shutdown();
+                    }
+                } catch (Throwable t) {
+                    log.error("Error disposing cloud connection instance", t);
+                }
+            }
+
+        }));
+        
 
 //        try {
 //            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());

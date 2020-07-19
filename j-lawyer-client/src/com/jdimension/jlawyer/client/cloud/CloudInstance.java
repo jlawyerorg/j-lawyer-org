@@ -698,7 +698,7 @@ public class CloudInstance {
         return instance;
     }
     
-    public boolean hasInstance() {
+    public static boolean hasInstance() {
         return instance!=null;
     }
     

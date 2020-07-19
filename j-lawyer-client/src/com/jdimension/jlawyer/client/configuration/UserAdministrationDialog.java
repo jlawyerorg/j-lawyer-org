@@ -851,6 +851,16 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         rdManualLogin = new javax.swing.JRadioButton();
         cmdSelectCertificate = new javax.swing.JButton();
         cmdRemoveCertificate = new javax.swing.JButton();
+        jPanel10 = new javax.swing.JPanel();
+        jLabel21 = new javax.swing.JLabel();
+        txtCloudHost = new javax.swing.JTextField();
+        jLabel22 = new javax.swing.JLabel();
+        txtCloudPort = new javax.swing.JTextField();
+        chkCloudSsl = new javax.swing.JCheckBox();
+        txtCloudUser = new javax.swing.JTextField();
+        jLabel23 = new javax.swing.JLabel();
+        jLabel24 = new javax.swing.JLabel();
+        pwCloudPassword = new javax.swing.JPasswordField();
         jPanel9 = new javax.swing.JPanel();
         jLabel18 = new javax.swing.JLabel();
         cmbPrimaryGroup = new javax.swing.JComboBox<>();
@@ -1397,6 +1407,71 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
 
         jTabbedPane1.addTab("beA", jPanel8);
 
+        jLabel21.setText("Servername:");
+
+        txtCloudHost.setToolTipText("Servername ohne Protokoll (ohne http/https)");
+
+        jLabel22.setText("Port:");
+
+        txtCloudPort.setText("443");
+        txtCloudPort.setToolTipText("in der Regel 443 bei SSL, ansonsten 80");
+
+        chkCloudSsl.setSelected(true);
+        chkCloudSsl.setText("SSL");
+
+        jLabel23.setText("Nutzername:");
+
+        jLabel24.setText("Passwort:");
+
+        org.jdesktop.layout.GroupLayout jPanel10Layout = new org.jdesktop.layout.GroupLayout(jPanel10);
+        jPanel10.setLayout(jPanel10Layout);
+        jPanel10Layout.setHorizontalGroup(
+            jPanel10Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jPanel10Layout.createSequentialGroup()
+                .addContainerGap()
+                .add(jPanel10Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(jLabel21)
+                    .add(jLabel22)
+                    .add(jLabel23)
+                    .add(jLabel24))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel10Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(txtCloudHost)
+                    .add(jPanel10Layout.createSequentialGroup()
+                        .add(jPanel10Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            .add(chkCloudSsl)
+                            .add(txtCloudPort, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 165, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                        .add(0, 493, Short.MAX_VALUE))
+                    .add(txtCloudUser)
+                    .add(pwCloudPassword))
+                .addContainerGap())
+        );
+        jPanel10Layout.setVerticalGroup(
+            jPanel10Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jPanel10Layout.createSequentialGroup()
+                .addContainerGap()
+                .add(jPanel10Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(jLabel21)
+                    .add(txtCloudHost, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel10Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(jLabel22)
+                    .add(txtCloudPort, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(chkCloudSsl)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                .add(jPanel10Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(txtCloudUser, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(jLabel23))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel10Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(jLabel24)
+                    .add(pwCloudPassword, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(332, Short.MAX_VALUE))
+        );
+
+        jTabbedPane1.addTab("Nextcloud", jPanel10);
+
         jLabel18.setText("Primäre Gruppe:");
 
         cmbPrimaryGroup.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
@@ -1601,6 +1676,8 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
 
             AppUserBean newUser = mgmt.createUser(u, this.getInitialRolesForUser(u.getPrincipalId()));
             newUser.setLawyer(true);
+            newUser.setCloudPort(443);
+            newUser.setCloudSsl(true);
             //mgmt.remove();
             ((UserListModel) this.lstUsers.getModel()).addElement(newUser);
             this.lstUsers.setSelectedIndex(this.lstUsers.getMaxSelectionIndex());
@@ -1617,6 +1694,11 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         this.chkEmailStartTls.setSelected(false);
         this.txtAbbreviation.setText("");
         this.cmbPrimaryGroup.setSelectedIndex(0);
+        this.txtCloudHost.setText("");
+        this.txtCloudPort.setText(""+443);
+        this.txtCloudUser.setText("");
+        this.pwCloudPassword.setText("");
+        this.chkCloudSsl.setSelected(true);
         this.txtUser.requestFocus();
     }//GEN-LAST:event_cmdAddActionPerformed
 
@@ -1691,6 +1773,12 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 this.chkEmailStartTls.setSelected(u.isEmailStartTls());
                 this.txtAbbreviation.setText(u.getAbbreviation());
                 this.cmbPrimaryGroup.setSelectedItem(u.getPrimaryGroup());
+                
+                this.txtCloudHost.setText(u.getCloudHost());
+                this.txtCloudPort.setText(""+u.getCloudPort());
+                this.txtCloudUser.setText(u.getCloudUser());
+                this.pwCloudPassword.setText(u.getCloudPassword());
+                this.chkCloudSsl.setSelected(u.isCloudSsl());
 
                 if (u.isBeaCertificateAutoLogin()) {
                     this.rdAutoLogin.setSelected(true);
@@ -1759,6 +1847,13 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
             JOptionPane.showMessageDialog(this, "beA-Zertifikatpasswort darf nicht leer und nicht kürzer als 4 Zeichen sein.", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
             return;
         }
+        
+        try {
+            int cloudPort=Integer.parseInt(this.txtCloudPort.getText());
+        } catch (Throwable t) {
+            JOptionPane.showMessageDialog(this, this.txtCloudPort.getText() + " ist keine gültige Port-Angabe für Nextcloud", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
 
         ClientSettings settings = ClientSettings.getInstance();
         try {
@@ -1818,6 +1913,12 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 u.setBeaCertificate(this.currentCertificate);
                 u.setBeaCertificatePassword(this.pwdBeaCertificatePassword.getText().trim());
                 u.setBeaCertificateAutoLogin(this.rdAutoLogin.isSelected());
+                
+                u.setCloudHost(this.txtCloudHost.getText());
+                u.setCloudPassword(new String(this.pwCloudPassword.getPassword()));
+                u.setCloudPort(Integer.parseInt(this.txtCloudPort.getText()));
+                u.setCloudSsl(this.chkCloudSsl.isSelected());
+                u.setCloudUser(this.txtCloudUser.getText());
 
                 AppUserBean newUser = mgmt.updateUser(u, this.getRolesFromUI(u.getPrincipalId()));
                 //mgmt.remove();
@@ -1862,6 +1963,12 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         this.taBeaCertificate.setText("");
         this.txtAbbreviation.setText("");
         this.cmbPrimaryGroup.setSelectedIndex(0);
+        
+        this.txtCloudHost.setText("");
+        this.txtCloudPort.setText("443");
+        this.txtCloudUser.setText("");
+        this.pwCloudPassword.setText("");
+        this.chkCloudSsl.setSelected(true);
 
         this.txtUser.requestFocus();
     }//GEN-LAST:event_cmdSaveActionPerformed
@@ -2259,6 +2366,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.ButtonGroup btGrpAutoLogin;
     private javax.swing.JCheckBox chkAdmin;
+    private javax.swing.JCheckBox chkCloudSsl;
     private javax.swing.JCheckBox chkCreateAddress;
     private javax.swing.JCheckBox chkCreateFile;
     private javax.swing.JCheckBox chkCreateOption;
@@ -2300,6 +2408,10 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
     private javax.swing.JLabel jLabel19;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel20;
+    private javax.swing.JLabel jLabel21;
+    private javax.swing.JLabel jLabel22;
+    private javax.swing.JLabel jLabel23;
+    private javax.swing.JLabel jLabel24;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
@@ -2308,6 +2420,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
     private javax.swing.JLabel jLabel8;
     private javax.swing.JLabel jLabel9;
     private javax.swing.JPanel jPanel1;
+    private javax.swing.JPanel jPanel10;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
     private javax.swing.JPanel jPanel4;
@@ -2324,6 +2437,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
     private javax.swing.JList lstUsers;
     private javax.swing.JMenuItem mnuDelete;
     private javax.swing.JPopupMenu popDelete;
+    private javax.swing.JPasswordField pwCloudPassword;
     private javax.swing.JPasswordField pwdBeaCertificatePassword;
     private javax.swing.JPasswordField pwdInPassword;
     private javax.swing.JPasswordField pwdOutPassword;
@@ -2333,6 +2447,9 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
     private javax.swing.JTable tblGroups;
     private javax.swing.JTextField txtAbbreviation;
     private javax.swing.JTextField txtAddress;
+    private javax.swing.JTextField txtCloudHost;
+    private javax.swing.JTextField txtCloudPort;
+    private javax.swing.JTextField txtCloudUser;
     private javax.swing.JTextField txtEmailSender;
     private javax.swing.JTextField txtInServer;
     private javax.swing.JTextField txtInUser;
