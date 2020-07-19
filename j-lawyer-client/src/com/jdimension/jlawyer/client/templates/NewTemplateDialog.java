@@ -720,10 +720,12 @@ public class NewTemplateDialog extends javax.swing.JDialog {
                 this.cmbTemplates.setSelectedItem(newName);
         }
         
-        if(newName!=null) {
-        if(newName.toLowerCase().endsWith(".ods") || newName.toLowerCase().endsWith(".odt")) {
-            newName=newName.substring(0,newName.length()-4);
-        }
+        if (newName != null) {
+            if (newName.toLowerCase().endsWith(".ods") || newName.toLowerCase().endsWith(".odt")) {
+                newName = newName.substring(0, newName.length() - 4);
+            } else if (newName.toLowerCase().endsWith(".docx")) {
+                newName = newName.substring(0, newName.length() - 5);
+            }
         }
         
         this.txtFileName.setText(newName);
@@ -833,8 +835,10 @@ public class NewTemplateDialog extends javax.swing.JDialog {
         
         if(this.cmbTemplates.getSelectedItem().toString().toLowerCase().endsWith(".odt")) {
             fileName = fileName + ".odt";
-        } else {
+        } else if(this.cmbTemplates.getSelectedItem().toString().toLowerCase().endsWith(".ods")) {
             fileName = fileName + ".ods";
+        } else if(this.cmbTemplates.getSelectedItem().toString().toLowerCase().endsWith(".docx")) {
+            fileName = fileName + ".docx";
         }
         fileName = fileName.trim();
         if (fileName.length() <= 4) {
