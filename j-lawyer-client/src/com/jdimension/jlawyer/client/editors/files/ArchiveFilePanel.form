@@ -367,6 +367,19 @@
         </Menu>
         <Component class="javax.swing.JPopupMenu$Separator" name="jSeparator5">
         </Component>
+        <MenuItem class="javax.swing.JMenuItem" name="mnuShareNextcloud">
+          <Properties>
+            <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+              <Image iconType="3" name="/icons16/material/baseline_share_black_48dp.png"/>
+            </Property>
+            <Property name="text" type="java.lang.String" value="Freigabe senden"/>
+          </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuShareNextcloudActionPerformed"/>
+          </Events>
+        </MenuItem>
+        <Component class="javax.swing.JPopupMenu$Separator" name="jSeparator8">
+        </Component>
         <MenuItem class="javax.swing.JMenuItem" name="mnuUseDocumentAsTemplate">
           <Properties>
             <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">

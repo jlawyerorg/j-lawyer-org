@@ -740,6 +740,21 @@ public class AppUserBean implements Serializable {
     @ManyToOne(fetch = FetchType.EAGER)
     private Group primaryGroup;
     
+    @Column(name = "cloudHost")
+    private String cloudHost;
+    
+    @Column(name = "cloudPort")
+    private int cloudPort=443;
+    
+    @Column(name = "cloudSsl", columnDefinition = "TINYINT")
+    private boolean cloudSsl=true;
+    
+    @Column(name = "cloudUser")
+    private String cloudUser;
+    
+    @Column(name = "cloudPassword")
+    private String cloudPassword;
+    
     
     public AppUserBean() {
     }
@@ -1109,6 +1124,76 @@ public class AppUserBean implements Serializable {
      */
     public void setPrimaryGroup(Group primaryGroup) {
         this.primaryGroup = primaryGroup;
+    }
+
+    /**
+     * @return the cloudHost
+     */
+    public String getCloudHost() {
+        return cloudHost;
+    }
+
+    /**
+     * @param cloudHost the cloudHost to set
+     */
+    public void setCloudHost(String cloudHost) {
+        this.cloudHost = cloudHost;
+    }
+
+    /**
+     * @return the cloudPort
+     */
+    public int getCloudPort() {
+        return cloudPort;
+    }
+
+    /**
+     * @param cloudPort the cloudPort to set
+     */
+    public void setCloudPort(int cloudPort) {
+        this.cloudPort = cloudPort;
+    }
+
+    /**
+     * @return the cloudSsl
+     */
+    public boolean isCloudSsl() {
+        return cloudSsl;
+    }
+
+    /**
+     * @param cloudSsl the cloudSsl to set
+     */
+    public void setCloudSsl(boolean cloudSsl) {
+        this.cloudSsl = cloudSsl;
+    }
+
+    /**
+     * @return the cloudUser
+     */
+    public String getCloudUser() {
+        return cloudUser;
+    }
+
+    /**
+     * @param cloudUser the cloudUser to set
+     */
+    public void setCloudUser(String cloudUser) {
+        this.cloudUser = cloudUser;
+    }
+
+    /**
+     * @return the cloudPassword
+     */
+    public String getCloudPassword() {
+        return cloudPassword;
+    }
+
+    /**
+     * @param cloudPassword the cloudPassword to set
+     */
+    public void setCloudPassword(String cloudPassword) {
+        this.cloudPassword = cloudPassword;
     }
     
     

@@ -670,6 +670,7 @@ import com.jdimension.jlawyer.client.bea.BeaLoginCallback;
 import com.jdimension.jlawyer.client.bea.BeaLoginDialog;
 import com.jdimension.jlawyer.client.bea.IdentityPanel;
 import com.jdimension.jlawyer.client.bea.SendBeaMessageDialog;
+import com.jdimension.jlawyer.client.cloud.SendCloudShare;
 import com.jdimension.jlawyer.client.drebis.coverage.DrebisCoverageWizardDialog;
 import com.jdimension.jlawyer.client.components.MultiCalDialog;
 import com.jdimension.jlawyer.client.configuration.GroupMembershipsTableModel;
@@ -1341,14 +1342,15 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         return false;
 
     }
-    
+
     private ArrayList<String> getDocumentsOpenForWrite(int[] selectedRows) {
         ArrayList<String> openDocs = new ArrayList<String>();
 
         for (int i = selectedRows.length - 1; i > -1; i--) {
             ArchiveFileDocumentsBean doc = (ArchiveFileDocumentsBean) this.tblDocuments.getValueAt(selectedRows[i], 0);
-            if(isOpenForWrite(doc.getId()))
+            if (isOpenForWrite(doc.getId())) {
                 openDocs.add(doc.getName());
+            }
         }
         return openDocs;
 
@@ -1674,6 +1676,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         mnuMotorCoverage = new javax.swing.JMenuItem();
         mnuFreeTextMessage = new javax.swing.JMenuItem();
         jSeparator5 = new javax.swing.JPopupMenu.Separator();
+        mnuShareNextcloud = new javax.swing.JMenuItem();
+        jSeparator8 = new javax.swing.JPopupMenu.Separator();
         mnuUseDocumentAsTemplate = new javax.swing.JMenuItem();
         btGrpReviewType = new javax.swing.ButtonGroup();
         popDocumentFavorites = new javax.swing.JPopupMenu();
@@ -2087,6 +2091,16 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         documentsPopup.add(mnuDrebis);
         documentsPopup.add(jSeparator5);
+
+        mnuShareNextcloud.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_share_black_48dp.png"))); // NOI18N
+        mnuShareNextcloud.setText("Freigabe senden");
+        mnuShareNextcloud.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuShareNextcloudActionPerformed(evt);
+            }
+        });
+        documentsPopup.add(mnuShareNextcloud);
+        documentsPopup.add(jSeparator8);
 
         mnuUseDocumentAsTemplate.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editcopy.png"))); // NOI18N
         mnuUseDocumentAsTemplate.setText("als Vorlage speichern");
@@ -3701,7 +3715,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             try {
                 ArchiveFileBean printFile = new ArchiveFileBean();
                 this.fillDTO(printFile, true);
-                if(this.dto!=null) {
+                if (this.dto != null) {
                     printFile.setFileNumberExtension(this.dto.getFileNumberExtension());
                     printFile.setFileNumberMain(this.dto.getFileNumberMain());
                 } else {
@@ -4051,7 +4065,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         try {
             ArchiveFileBean printFile = new ArchiveFileBean();
             this.fillDTO(printFile, true);
-            if(this.dto != null) {
+            if (this.dto != null) {
                 printFile.setFileNumberExtension(this.dto.getFileNumberExtension());
                 printFile.setFileNumberMain(this.dto.getFileNumberMain());
             } else {
@@ -4361,7 +4375,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 return;
             }
         }
-        
+
         SendEmailDialog dlg = new SendEmailDialog(EditorsRegistry.getInstance().getMainWindow(), false);
         //dlg.setTo(ab.getEmail());
 
@@ -4394,7 +4408,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     }//GEN-LAST:event_mnuSendDocumentActionPerformed
 
     private void mnuSendDocumentPDFActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSendDocumentPDFActionPerformed
-        
+
         int[] selectedRows = this.tblDocuments.getSelectedRows();
         ArrayList<String> open = this.getDocumentsOpenForWrite(selectedRows);
         if (open.size() > 0) {
@@ -4408,7 +4422,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 return;
             }
         }
-        
+
         SendEmailDialog dlg = new SendEmailDialog(EditorsRegistry.getInstance().getMainWindow(), false);
         dlg.setInvolvedInCase(this.pnlInvolvedParties.getInvolvedParties());
         //dlg.setTo(ab.getEmail());
@@ -4491,7 +4505,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 DefaultTableModel tModel = (DefaultTableModel) this.tblDocuments.getModel();
 
                 ArchiveFileDocumentsBean doc = (ArchiveFileDocumentsBean) this.tblDocuments.getValueAt(selectedRows[0], 0);
-                
+
                 if (this.isOpenForWrite(doc.getId())) {
                     String question = "<html>Soll die Aktion auf geöffnete Dokumente ausgeführt werden? Es besteht das Risiko fehlender / inkonsistenter Inhalte.<br/><ul>";
                     question = question + "<li>" + doc.getName() + "</li>";
@@ -4501,7 +4515,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                         return;
                     }
                 }
-                
+
                 byte[] content = locator.lookupArchiveFileServiceRemote().getDocumentContent(doc.getId());
                 String tmpUrl = FileUtils.createTempFile(doc.getName(), content);
                 faxFile = new File(tmpUrl);
@@ -5099,7 +5113,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 return;
             }
         }
-        
+
         if (!BeaAccess.hasInstance()) {
             BeaLoginCallback callback = null;
             try {
@@ -5162,7 +5176,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 return;
             }
         }
-        
+
         if (!BeaAccess.hasInstance()) {
             BeaLoginCallback callback = null;
             try {
@@ -5441,20 +5455,20 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             if (selectedRows == null || selectedRows.length == 0) {
                 return;
             }
-            
+
             ArrayList<String> open = this.getDocumentsOpenForWrite(selectedRows);
             if (open.size() > 0) {
-                String question="<html>Soll die Aktion auf geöffnete Dokumente ausgeführt werden? Es besteht das Risiko fehlender / inkonsistenter Inhalte.<br/><ul>";
-                for(String o: open) {
-                    question=question+"<li>" + o + "</li>";
+                String question = "<html>Soll die Aktion auf geöffnete Dokumente ausgeführt werden? Es besteht das Risiko fehlender / inkonsistenter Inhalte.<br/><ul>";
+                for (String o : open) {
+                    question = question + "<li>" + o + "</li>";
                 }
-                question=question+"</ul></html>";
+                question = question + "</ul></html>";
                 int response = JOptionPane.showConfirmDialog(this, question, "Aktion auf offene Dokumente ausführen", JOptionPane.YES_NO_OPTION);
                 if (response == JOptionPane.NO_OPTION) {
                     return;
                 }
             }
-            
+
             DefaultTableModel tModel = (DefaultTableModel) this.tblDocuments.getModel();
             ArrayList<ArchiveFileDocumentsBean> docs2local = new ArrayList<ArchiveFileDocumentsBean>();
             for (int i = selectedRows.length - 1; i > -1; i--) {
@@ -5754,6 +5768,15 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
         }
     }//GEN-LAST:event_chkArchivedActionPerformed
+
+    private void mnuShareNextcloudActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuShareNextcloudActionPerformed
+
+        SendCloudShare dlg = new SendCloudShare(EditorsRegistry.getInstance().getMainWindow(), true);
+        dlg.setTitle("Freigabe senden");
+        FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
+        dlg.setVisible(true);
+
+    }//GEN-LAST:event_mnuShareNextcloudActionPerformed
 
     private AddressBean[] convertArray(Object[] in) {
         if (in != null) {
@@ -6142,6 +6165,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JPopupMenu.Separator jSeparator5;
     private javax.swing.JPopupMenu.Separator jSeparator6;
     private javax.swing.JSeparator jSeparator7;
+    private javax.swing.JPopupMenu.Separator jSeparator8;
     protected javax.swing.JLabel lblArchivedSince;
     private javax.swing.JLabel lblCustom1;
     private javax.swing.JLabel lblCustom2;
@@ -6183,6 +6207,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JMenuItem mnuSetDocumentDate;
     private javax.swing.JMenuItem mnuSetReviewDone;
     private javax.swing.JMenuItem mnuSetReviewOpen;
+    private javax.swing.JMenuItem mnuShareNextcloud;
     private javax.swing.JMenuItem mnuToggleFavorite;
     private javax.swing.JMenuItem mnuUseDocumentAsTemplate;
     private javax.swing.JPanel pnlAddForms;
@@ -6394,12 +6419,12 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
 
             String id = null;
-            String fileNumberMain=null;
-            String fileNumberExt=null;
+            String fileNumberMain = null;
+            String fileNumberExt = null;
             if (this.dto != null) {
                 id = this.dto.getId();
-                fileNumberMain=this.dto.getFileNumberMain();
-                fileNumberExt=this.dto.getFileNumberExtension();
+                fileNumberMain = this.dto.getFileNumberMain();
+                fileNumberExt = this.dto.getFileNumberExtension();
             }
 
             this.dto = new ArchiveFileBean();
@@ -6503,8 +6528,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 fileService.updateAllowedGroups(caseId, allowedGroups);
             }
 
-            String fileNumber=fileService.getFileNumber(caseId);
-            
+            String fileNumber = fileService.getFileNumber(caseId);
+
             this.lblHeaderInfo.setText(fileNumber + " " + StringUtils.nonEmpty(this.dto.getName()) + " " + StringUtils.nonEmpty(this.dto.getReason()));
             this.txtFileNumber.setText(fileNumber);
             //fileService.remove();
