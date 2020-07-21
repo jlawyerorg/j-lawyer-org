@@ -5771,10 +5771,32 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     private void mnuShareNextcloudActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuShareNextcloudActionPerformed
 
-        SendCloudShare dlg = new SendCloudShare(EditorsRegistry.getInstance().getMainWindow(), true);
-        dlg.setTitle("Freigabe senden");
-        FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
-        dlg.setVisible(true);
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
+            int[] selectedRows = this.tblDocuments.getSelectedRows();
+
+            if (selectedRows.length == 0) {
+                return;
+            }
+
+            ArrayList<ArchiveFileDocumentsBean> shareDocs=new ArrayList<>();
+            DefaultTableModel tModel = (DefaultTableModel) this.tblDocuments.getModel();
+            for (int i = selectedRows.length - 1; i > -1; i--) {
+                ArchiveFileDocumentsBean doc = (ArchiveFileDocumentsBean) this.tblDocuments.getValueAt(selectedRows[i], 0);
+                shareDocs.add(doc);
+            }
+
+            SendCloudShare dlg = new SendCloudShare(EditorsRegistry.getInstance().getMainWindow(), true, shareDocs);
+            dlg.setTitle("Freigabe senden");
+            FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
+            dlg.setVisible(true);
+
+        } catch (Exception ioe) {
+            log.error("Error removing document", ioe);
+            JOptionPane.showMessageDialog(this, "Fehler beim Löschen des Dokuments: " + ioe.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+        }
 
     }//GEN-LAST:event_mnuShareNextcloudActionPerformed
 

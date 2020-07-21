@@ -664,9 +664,14 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.client.cloud;
 
 import com.jdimension.jlawyer.persistence.AppUserBean;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import org.aarboard.nextcloud.api.NextcloudConnector;
 import org.aarboard.nextcloud.api.filesharing.Share;
+import org.aarboard.nextcloud.api.webdav.ResourceProperties;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -674,44 +679,91 @@ import org.aarboard.nextcloud.api.filesharing.Share;
  */
 public class CloudInstance {
     
-    private static CloudInstance instance=null;
-    private NextcloudConnector con=null;
-    
+    private static final Logger log=Logger.getLogger(CloudInstance.class.getName());
+
+    private static CloudInstance instance = null;
+    private NextcloudConnector con = null;
+
     private CloudInstance(String serverName, boolean useHTTPS, int port, String userName, String password) {
-        this.con=new NextcloudConnector(serverName, useHTTPS, port, userName, password);
+        this.con = new NextcloudConnector(serverName, useHTTPS, port, userName, password);
     }
-    
+
     public static CloudInstance getInstance(AppUserBean user) {
-        if(instance==null) {
-            if(user.getCloudHost()==null || "".equals(user.getCloudHost()))
+        if (instance == null) {
+            if (user.getCloudHost() == null || "".equals(user.getCloudHost())) {
                 return null;
-            if(user.getCloudUser()==null || "".equals(user.getCloudUser()))
+            }
+            if (user.getCloudUser() == null || "".equals(user.getCloudUser())) {
                 return null;
-            if(user.getCloudPassword()==null || "".equals(user.getCloudPassword()))
+            }
+            if (user.getCloudPassword() == null || "".equals(user.getCloudPassword())) {
                 return null;
-            if(user.getCloudPort()<0)
+            }
+            if (user.getCloudPort() < 0) {
                 return null;
-            
-            
-            instance=new CloudInstance(user.getCloudHost(), user.isCloudSsl(), user.getCloudPort(), user.getCloudUser(), user.getCloudPassword());
+            }
+
+            instance = new CloudInstance(user.getCloudHost(), user.isCloudSsl(), user.getCloudPort(), user.getCloudUser(), user.getCloudPassword());
         }
         return instance;
     }
-    
+
     public static boolean hasInstance() {
-        return instance!=null;
+        return instance != null;
     }
-    
+
     public boolean deleteShare(int shareId) {
         return this.con.deleteShare(shareId);
     }
-    
+
     public List<Share> getShares() {
         return this.con.getShares();
     }
+
+    public List<String> listFolderContent(String path) {
+        return this.con.listFolderContent(path);
+    }
     
+    public boolean folderExists(String path) {
+        return this.con.folderExists(path);
+    }
+    
+    public void createFolder(String path) {
+        this.con.createFolder(path);
+    }
+    
+    public void uploadFile(File f, String remotePath) {
+        this.con.uploadFile(f, remotePath);
+    }
+
+    public List<String> listFolders(String path) {
+        List<String> content = this.con.listFolderContent(path);
+        ArrayList<String> folders = new ArrayList<String>();
+        for (int i=1;i<content.size();i++) {
+            // skip the first one because it is the parent folder itself
+            String s=content.get(i);
+            
+            String p = path;
+            if (!(p.endsWith("/"))) {
+                p = p + "/";
+            }
+            p = p + s;
+            try {
+                ResourceProperties props = this.con.getProperties(p, false);
+                if("httpd/unix-directory".equalsIgnoreCase(props.getContentType()) || props.getContentLength()<0) {
+                    folders.add(s);
+                }
+            } catch (Throwable ioe) {
+                log.warn("unable to determine properties for " + p, ioe);
+            }
+//            if(this.con.folderExists(p))
+//                folders.add(s);
+        }
+        return folders;
+    }
+
     public void shutdown() throws Exception {
         this.con.shutdown();
     }
-    
+
 }

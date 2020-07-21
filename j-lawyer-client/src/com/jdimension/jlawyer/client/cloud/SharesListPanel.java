@@ -680,6 +680,10 @@ public class SharesListPanel extends javax.swing.JPanel {
         initComponents();
     }
     
+    public ShareInfoPanel getSelectedPanel() {
+        return this.selectedPanel;
+    }
+    
     public void setSelectedPanel(ShareInfoPanel p) {
         this.selectedPanel=p;
         for(int i=0;i<this.getComponentCount();i++) {

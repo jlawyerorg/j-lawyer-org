@@ -663,18 +663,17 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.cloud;
 
-import com.jdimension.jlawyer.client.editors.EditorsRegistry;
-import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
+import com.jdimension.jlawyer.client.utils.DesktopUtils;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
-import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.time.ZoneId;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
-import org.aarboard.nextcloud.api.NextcloudConnector;
+import javax.swing.JDialog;
 import org.aarboard.nextcloud.api.filesharing.Share;
 import org.aarboard.nextcloud.api.filesharing.ShareType;
 import org.apache.log4j.Logger;
@@ -689,17 +688,22 @@ public class ShareInfoPanel extends javax.swing.JPanel {
     private static Logger log = Logger.getLogger(ShareInfoPanel.class.getName());
 
     private SharesListPanel parent = null;
+    private JDialog parentDialog=null;
     private Share share = null;
 
     /**
      * Creates new form ShareInfoPanel
      */
-    public ShareInfoPanel(Share s, SharesListPanel parent) {
+    public ShareInfoPanel(Share s, SharesListPanel parent, JDialog parentDialog) {
 
         initComponents();
+        this.cmbFolder.removeAllItems();
+        this.cmbFolder.addItem("");
         this.share = s;
+        this.parentDialog=parentDialog;
         this.parent = parent;
         this.cmdCopyLinkToClipboard.setEnabled(s.getShareType().equals(ShareType.PUBLIC_LINK));
+        this.cmdBrowser.setEnabled(s.getShareType().equals(ShareType.PUBLIC_LINK));
         if (this.cmdCopyLinkToClipboard.isEnabled()) {
             this.cmdCopyLinkToClipboard.setToolTipText("<html>Freigabelink in die Zwischenablage kopieren<br/>" + this.share.getUrl() + "</html>");
         }
@@ -737,10 +741,23 @@ public class ShareInfoPanel extends javax.swing.JPanel {
             shareType = "Link-Freigabe";
         }
         this.lblShareType.setText(shareType);
+        
+        CloudInstance cloud = CloudInstance.getInstance(UserSettings.getInstance().getCurrentUser());
+        if (cloud != null) {
+            List<String> subFolders=cloud.listFolders(this.share.getPath());
+            Collections.sort(subFolders);
+            for(String f : subFolders) {
+                this.cmbFolder.addItem(f);
+            }
+        }
     }
 
     public Share getShare() {
         return this.share;
+    }
+    
+    public String getSubfolder() {
+        return this.cmbFolder.getSelectedItem().toString();
     }
 
     public void setSelected(boolean selected) {
@@ -773,6 +790,9 @@ public class ShareInfoPanel extends javax.swing.JPanel {
         lblExpiration = new javax.swing.JLabel();
         cmdCopyLinkToClipboard = new javax.swing.JButton();
         cmdDeleteShare = new javax.swing.JButton();
+        cmdBrowser = new javax.swing.JButton();
+        jLabel5 = new javax.swing.JLabel();
+        cmbFolder = new javax.swing.JComboBox<>();
 
         jLabel1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_share_black_48dp.png"))); // NOI18N
 
@@ -822,6 +842,19 @@ public class ShareInfoPanel extends javax.swing.JPanel {
             }
         });
 
+        cmdBrowser.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/web.png"))); // NOI18N
+        cmdBrowser.setToolTipText("im Browser öffnen");
+        cmdBrowser.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdBrowserActionPerformed(evt);
+            }
+        });
+
+        jLabel5.setText("Ordner:");
+
+        cmbFolder.setEditable(true);
+        cmbFolder.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -838,7 +871,9 @@ public class ShareInfoPanel extends javax.swing.JPanel {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cmdDeleteShare)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(cmdCopyLinkToClipboard))
+                        .addComponent(cmdCopyLinkToClipboard)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdBrowser))
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(layout.createSequentialGroup()
@@ -855,31 +890,46 @@ public class ShareInfoPanel extends javax.swing.JPanel {
                                 .addComponent(jLabel3)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(lblShareTime)))
-                        .addGap(0, 373, Short.MAX_VALUE)))
+                        .addGap(0, 115, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jLabel5)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmbFolder, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(cmdCopyLinkToClipboard, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(rdSelectShare)
-                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                        .addComponent(lblPath)
-                        .addComponent(jLabel1))
-                    .addComponent(cmdDeleteShare, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(rdSelectShare)
+                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                                .addComponent(lblPath)
+                                .addComponent(jLabel1)))
+                        .addGap(15, 15, 15)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(lblShareType)
+                            .addComponent(jLabel2)
+                            .addComponent(lblOwner)
+                            .addComponent(jLabel3)
+                            .addComponent(lblShareTime))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(jLabel4)
+                            .addComponent(lblExpiration)))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(3, 3, 3)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(cmdBrowser)
+                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                .addComponent(cmdCopyLinkToClipboard, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addComponent(cmdDeleteShare)))))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(lblShareType)
-                    .addComponent(jLabel2)
-                    .addComponent(lblOwner)
-                    .addComponent(jLabel3)
-                    .addComponent(lblShareTime))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel4)
-                    .addComponent(lblExpiration))
+                    .addComponent(jLabel5)
+                    .addComponent(cmbFolder, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -924,14 +974,22 @@ public class ShareInfoPanel extends javax.swing.JPanel {
         }
     }//GEN-LAST:event_cmdDeleteShareActionPerformed
 
+    private void cmdBrowserActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdBrowserActionPerformed
+        String str = this.share.getUrl();
+        DesktopUtils.openBrowserFromDialog(str, this.parentDialog);
+    }//GEN-LAST:event_cmdBrowserActionPerformed
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JComboBox<String> cmbFolder;
+    private javax.swing.JButton cmdBrowser;
     private javax.swing.JButton cmdCopyLinkToClipboard;
     private javax.swing.JButton cmdDeleteShare;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
+    private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel lblExpiration;
     private javax.swing.JLabel lblOwner;
     private javax.swing.JLabel lblPath;

@@ -831,6 +831,10 @@ public class FileUtils extends ServerFileUtils {
         name = name.replaceAll("\\|", "_");
         return name.trim();
     }
+    
+    public static String sanitizeFolderName(String folderName) {
+        return sanitizeFileName(folderName);
+    }
 
     public static String preserveExtension(String currentFileName, String newFileName) {
 

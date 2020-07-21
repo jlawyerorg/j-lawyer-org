@@ -663,13 +663,15 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.cloud;
 
+import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import com.jdimension.jlawyer.client.processing.ProgressIndicator;
 import com.jdimension.jlawyer.client.settings.UserSettings;
-import java.io.IOException;
+import com.jdimension.jlawyer.client.utils.FileUtils;
+import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import org.aarboard.nextcloud.api.NextcloudConnector;
 import org.aarboard.nextcloud.api.filesharing.ItemType;
 import org.aarboard.nextcloud.api.filesharing.Share;
 import org.apache.log4j.Logger;
@@ -683,14 +685,16 @@ public class SendCloudShare extends javax.swing.JDialog {
     private static final Logger log = Logger.getLogger(SendCloudShare.class.getName());
 
     List<Share> currentShares = null;
+    ArrayList<ArchiveFileDocumentsBean> shareDocs = null;
 
     /**
      * Creates new form SendShare
      */
-    public SendCloudShare(java.awt.Frame parent, boolean modal) {
+    public SendCloudShare(java.awt.Frame parent, boolean modal, ArrayList<ArchiveFileDocumentsBean> shareDocs) {
         super(parent, modal);
         initComponents();
         this.jScrollPane1.getVerticalScrollBar().setUnitIncrement(16);
+        this.shareDocs = shareDocs;
 
         CloudInstance cloud = CloudInstance.getInstance(UserSettings.getInstance().getCurrentUser());
         if (cloud == null) {
@@ -720,7 +724,7 @@ public class SendCloudShare extends javax.swing.JDialog {
             ShareInfoPanel initialSelection = null;
             for (Share s : folderShares) {
 
-                ShareInfoPanel p = new ShareInfoPanel(s, this.pnlSharesList);
+                ShareInfoPanel p = new ShareInfoPanel(s, this.pnlSharesList, this);
                 this.pnlSharesList.add(p);
                 if (initialSelection == null) {
                     initialSelection = p;
@@ -747,6 +751,7 @@ public class SendCloudShare extends javax.swing.JDialog {
         pnlSharesList = new com.jdimension.jlawyer.client.cloud.SharesListPanel();
         txtFilter = new javax.swing.JTextField();
         cmdNewShare = new javax.swing.JButton();
+        cmdDoShare = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
@@ -770,17 +775,30 @@ public class SendCloudShare extends javax.swing.JDialog {
             }
         });
 
+        cmdDoShare.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_share_black_48dp.png"))); // NOI18N
+        cmdDoShare.setText("Freigeben");
+        cmdDoShare.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdDoShareActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane1)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(txtFilter, javax.swing.GroupLayout.DEFAULT_SIZE, 757, Short.MAX_VALUE)
-                .addGap(18, 18, 18)
-                .addComponent(cmdNewShare)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(txtFilter, javax.swing.GroupLayout.DEFAULT_SIZE, 548, Short.MAX_VALUE)
+                        .addGap(18, 18, 18)
+                        .addComponent(cmdNewShare))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addComponent(cmdDoShare)))
                 .addContainerGap())
+            .addComponent(jScrollPane1)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -789,8 +807,11 @@ public class SendCloudShare extends javax.swing.JDialog {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(txtFilter, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(cmdNewShare))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 437, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 395, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(cmdDoShare)
+                .addContainerGap())
         );
 
         pack();
@@ -807,7 +828,7 @@ public class SendCloudShare extends javax.swing.JDialog {
             ShareInfoPanel initialSelection = null;
             for (Share s : this.currentShares) {
                 if (s.getPath().toLowerCase().indexOf(this.txtFilter.getText().toLowerCase()) > -1) {
-                    ShareInfoPanel p = new ShareInfoPanel(s, this.pnlSharesList);
+                    ShareInfoPanel p = new ShareInfoPanel(s, this.pnlSharesList, this);
                     this.pnlSharesList.add(p);
                     if (initialSelection == null) {
                         initialSelection = p;
@@ -819,7 +840,7 @@ public class SendCloudShare extends javax.swing.JDialog {
         } else {
             ShareInfoPanel initialSelection = null;
             for (Share s : this.currentShares) {
-                ShareInfoPanel p = new ShareInfoPanel(s, this.pnlSharesList);
+                ShareInfoPanel p = new ShareInfoPanel(s, this.pnlSharesList, this);
                 this.pnlSharesList.add(p);
                 if (initialSelection == null) {
                     initialSelection = p;
@@ -833,8 +854,28 @@ public class SendCloudShare extends javax.swing.JDialog {
     }//GEN-LAST:event_txtFilterKeyReleased
 
     private void cmdNewShareActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdNewShareActionPerformed
-        
+
     }//GEN-LAST:event_cmdNewShareActionPerformed
+
+    private void cmdDoShareActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdDoShareActionPerformed
+
+        ShareInfoPanel shareInfo = this.pnlSharesList.getSelectedPanel();
+        if (shareInfo != null) {
+            Share share=shareInfo.getShare();
+            String subfolder=shareInfo.getSubfolder();
+            String fullFolder=share.getPath();
+            if(subfolder.trim().length()>0) {
+                if(!(fullFolder.endsWith("/"))) {
+                    fullFolder=fullFolder+ "/";
+                }
+                fullFolder=fullFolder+FileUtils.sanitizeFolderName(subfolder.trim());
+                
+            }
+            ProgressIndicator dlg = new ProgressIndicator(this, true);
+            ShareDocumentsToCloudAction a = new ShareDocumentsToCloudAction(dlg, this.shareDocs, fullFolder);
+            a.start();
+        }
+    }//GEN-LAST:event_cmdDoShareActionPerformed
 
     /**
      * @param args the command line arguments
@@ -867,7 +908,7 @@ public class SendCloudShare extends javax.swing.JDialog {
         /* Create and display the dialog */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                SendCloudShare dialog = new SendCloudShare(new javax.swing.JFrame(), true);
+                SendCloudShare dialog = new SendCloudShare(new javax.swing.JFrame(), true, null);
                 dialog.addWindowListener(new java.awt.event.WindowAdapter() {
                     @Override
                     public void windowClosing(java.awt.event.WindowEvent e) {
@@ -880,6 +921,7 @@ public class SendCloudShare extends javax.swing.JDialog {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton cmdDoShare;
     private javax.swing.JButton cmdNewShare;
     private javax.swing.JScrollPane jScrollPane1;
     private com.jdimension.jlawyer.client.cloud.SharesListPanel pnlSharesList;
