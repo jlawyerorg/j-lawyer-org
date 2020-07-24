@@ -666,6 +666,7 @@ package com.jdimension.jlawyer.client.editors.documents;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.launcher.LauncherFactory;
 import com.jdimension.jlawyer.client.utils.FileUtils;
+import java.util.Date;
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
 
@@ -697,7 +698,7 @@ public abstract class ScanAction {
     
     public String getNewFileName(String currentFileName) {
         
-        return FileUtils.getNewFileName(currentFileName, false);
+        return FileUtils.getNewFileName(currentFileName, true);
         
     }
     
