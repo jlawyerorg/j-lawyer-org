@@ -5781,7 +5781,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 return;
             }
 
-            ArrayList<ArchiveFileDocumentsBean> shareDocs=new ArrayList<>();
+            ArrayList<ArchiveFileDocumentsBean> shareDocs = new ArrayList<>();
             DefaultTableModel tModel = (DefaultTableModel) this.tblDocuments.getModel();
             for (int i = selectedRows.length - 1; i > -1; i--) {
                 ArchiveFileDocumentsBean doc = (ArchiveFileDocumentsBean) this.tblDocuments.getValueAt(selectedRows[i], 0);
@@ -6100,6 +6100,16 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 }
             } else {
                 dtde.rejectDrop();
+                try {
+                    log.error("drop not supported: " + dtde.getTransferable().getTransferDataFlavors());
+                    if (dtde.getTransferable().getTransferDataFlavors() != null) {
+                        for (int i = 0; i < dtde.getTransferable().getTransferDataFlavors().length; i++) {
+                            DataFlavor df=dtde.getTransferable().getTransferDataFlavors()[i];
+                            log.error("  " + df.getHumanPresentableName() + " - " + df.getDefaultRepresentationClassAsString() + " - " + df.getMimeType());
+                        }
+                    }
+                } catch (Throwable th) {
+                }
             }
         }
     }
