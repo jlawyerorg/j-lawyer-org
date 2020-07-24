@@ -888,8 +888,8 @@ public class SendEncryptedAction extends ProgressableAction {
                         if (attachmentNames.trim().length() > 0) {
                             newName = currentRecipientMail + " - " + attachmentNames.trim() + " per E-Mail";
                         }
-                        if (newName.length() > 230) {
-                            newName = newName.substring(0, 229);
+                        if (newName.length() > 200) {
+                            newName = newName.substring(0, 199);
                         }
                         newName = newName + ".eml";
                         newName = FileUtils.sanitizeFileName(newName);
