@@ -679,7 +679,6 @@ public class FileConverter {
     public static final List<String> INPUTTYPES = Arrays.asList(".xml", ".html", ".doc", ".docx", ".odt", ".txt", ".rtf", ".sdw", ".eps", ".gif", ".jpg", ".odd", ".png", ".tiff", ".bmp", ".csv", ".xls", ".xlsx", ".ods", ".sdc", ".odp", ".ppt", ".pptx", ".sda", ".fodp", ".fodt");
     public static final List<String> OUTPUTTYPES = Arrays.asList("bmp", "csv", "doc", "docx", "jpg", "odp", "ods", "odt", "pdf", "png", "ppt", "pptx", "rtf", "tiff", "txt", "xls", "xlsx");
 
-    
     public static FileConverter getInstance() {
         String osName = System.getProperty("os.name").toLowerCase();
         if (osName.indexOf("win") > -1) {
@@ -688,8 +687,8 @@ public class FileConverter {
         } else if (osName.indexOf("linux") > -1) {
             LinuxFileConverter lfc = new LinuxFileConverter();
             return lfc;
-        } else if(osName.startsWith("mac")) {
-            MacFileConverter mfc=new MacFileConverter();
+        } else if (osName.startsWith("mac")) {
+            MacFileConverter mfc = new MacFileConverter();
             return mfc;
         }
         FileConverter fc = new FileConverter();
@@ -700,16 +699,17 @@ public class FileConverter {
     public String convertToPDF(String file) throws Exception {
         return null;
     }
-    
+
     public String convertTo(String file, String targetFileExtension) throws Exception {
         return null;
     }
-    
+
     protected boolean validateInputFormat(String url) {
-        String lUrl=url.toLowerCase();
-        for(String s: INPUTTYPES) {
-            if(lUrl.endsWith(s))
+        String lUrl = url.toLowerCase();
+        for (String s : INPUTTYPES) {
+            if (lUrl.endsWith(s)) {
                 return true;
+            }
         }
         return false;
     }
@@ -721,87 +721,112 @@ public class FileConverter {
 
         private WindowsFileConverter() {
         }
-        
+
         @Override
         public String convertTo(String url, String targetFileExtension) throws Exception {
-            if(!this.validateInputFormat(url))
-                throw new Exception ("Format nicht unterstützt: " + new File(url).getName());
-           
-            if(targetFileExtension==null)
+            if (!this.validateInputFormat(url)) {
+                throw new Exception("Format nicht unterstützt: " + new File(url).getName());
+            }
+
+            if (targetFileExtension == null) {
                 throw new Exception("Es muss ein Zielformat angegeben werden");
-            
-            targetFileExtension=targetFileExtension.toLowerCase();
-            targetFileExtension=targetFileExtension.replaceAll("\\.", "");
-            
-            if(!OUTPUTTYPES.contains(targetFileExtension)) {
+            }
+
+            targetFileExtension = targetFileExtension.toLowerCase();
+            targetFileExtension = targetFileExtension.replaceAll("\\.", "");
+
+            if (!OUTPUTTYPES.contains(targetFileExtension)) {
                 throw new Exception("Konvertierung nach " + targetFileExtension + " ist nicht verfügbar!");
             }
-            
-            String tempPath=url.substring(0, url.length()-new File(url).getName().length());
-            
+
+            String tempPath = url.substring(0, url.length() - new File(url).getName().length());
+
             // String clientLocation=System.getProperty("client.location");
-            String clientLocation=System.getenv("JLAWYERCLIENTHOME");
-            if(clientLocation==null) {
+            String clientLocation = System.getenv("JLAWYERCLIENTHOME");
+            if (clientLocation == null) {
                 log.error("JLAWYERCLIENTHOME environment variable not set - document conversion not possible");
-                throw new Exception ("Umgebungsvariable JLAWYERCLIENTHOME nicht gesetzt - Dokumentkonvertierung nicht möglich.");
+                throw new Exception("Umgebungsvariable JLAWYERCLIENTHOME nicht gesetzt - Dokumentkonvertierung nicht möglich.");
             }
-                
-            if(!clientLocation.endsWith(File.separator))
-                clientLocation=clientLocation + File.separator;
-            
+
+            if (!clientLocation.endsWith(File.separator)) {
+                clientLocation = clientLocation + File.separator;
+            }
+
             Process p = Runtime.getRuntime().exec(new String[]{"python.exe", clientLocation + "unoconv-master\\unoconv", "-f", targetFileExtension, url});
             int exit = p.waitFor();
             if (exit != 0) {
                 log.error("Conversion failed with exit code " + exit + ", command line was 'python.exe " + clientLocation + "unoconv-master\\unoconv -f " + targetFileExtension + " " + url);
-                throw new Exception ("Konvertierung fehlgeschlagen: " + exit);
+                throw new Exception("Konvertierung fehlgeschlagen: " + exit);
             }
-            
-            File org=new File(url);
-            String orgName=org.getName();
-            String path=url.substring(0, url.indexOf(orgName));
-            String newPath=path + orgName.substring(0, orgName.lastIndexOf('.')) + "." + targetFileExtension;
-            if(!(new File(newPath).exists()))
-                throw new Exception ("Konvertierung kann nur durchgeführt werden wenn kein soffice.exe/soffice.bin läuft!");
-            
+
+            File org = new File(url);
+            String orgName = org.getName();
+            String path = url.substring(0, url.indexOf(orgName));
+            String newPath = path + orgName.substring(0, orgName.lastIndexOf('.')) + "." + targetFileExtension;
+            if (!(new File(newPath).exists())) {
+                throw new Exception("Konvertierung kann nur durchgeführt werden wenn kein soffice.exe/soffice.bin läuft!");
+            }
+
             return newPath;
-            
+
         }
 
         @Override
         public String convertToPDF(String url) throws Exception {
-            if(!this.validateInputFormat(url))
-                throw new Exception ("Format nicht unterstützt: " + new File(url).getName());
-            
-            String tempPath=url.substring(0, url.length()-new File(url).getName().length());
-            
+            if (!this.validateInputFormat(url)) {
+                throw new Exception("Format nicht unterstützt: " + new File(url).getName());
+            }
+
+            String tempPath = url.substring(0, url.length() - new File(url).getName().length());
+
             // String clientLocation=System.getProperty("client.location");
-            String clientLocation=System.getenv("JLAWYERCLIENTHOME");
-            if(clientLocation==null) {
+            String clientLocation = System.getenv("JLAWYERCLIENTHOME");
+            if (clientLocation == null) {
                 log.error("JLAWYERCLIENTHOME environment variable not set - PDF conversion not possible");
-                throw new Exception ("Umgebungsvariable JLAWYERCLIENTHOME nicht gesetzt - PDF-Konvertierung nicht möglich.");
+                throw new Exception("Umgebungsvariable JLAWYERCLIENTHOME nicht gesetzt - PDF-Konvertierung nicht möglich.");
             }
-                
-            if(!clientLocation.endsWith(File.separator))
-                clientLocation=clientLocation + File.separator;
-            
-            //Process p = Runtime.getRuntime().exec(new String[]{"soffice.exe", "--headless", "--convert-to", "pdf", "--outdir", "\"" + tempPath + "\"", "\"" + url+ "\""});
-            //Process p = Runtime.getRuntime().exec(new String[]{"soffice.exe", "--headless", "--convert-to", "pdf", "--outdir", tempPath, url});
-            Process p = Runtime.getRuntime().exec(new String[]{"python.exe", clientLocation + "unoconv-master\\unoconv", "-eSelectPdfVersion=1", "-f", "pdf", url});
-            //Process p = Runtime.getRuntime().exec(new String[]{"unoconv.bat", url});
-            int exit = p.waitFor();
-            if (exit != 0) {
-                log.error("PDF conversion failed with exit code " + exit + ", command line was 'python.exe " + clientLocation + "unoconv-master\\unoconv -f pdf " + url);
-                throw new Exception ("Konvertierung nach PDF fehlgeschlagen: " + exit);
+
+            if (!clientLocation.endsWith(File.separator)) {
+                clientLocation = clientLocation + File.separator;
             }
-            
-            File org=new File(url);
-            String orgName=org.getName();
-            String path=url.substring(0, url.indexOf(orgName));
-            String pdf=path + orgName.substring(0, orgName.lastIndexOf('.')) + ".pdf";
-            if(!(new File(pdf).exists()))
-                throw new Exception ("Konvertierung kann nur durchgeführt werden wenn kein soffice.exe/soffice.bin läuft!");
-            
-            return pdf;
+
+            boolean isRetry = false;
+            for (int i = 0; i < 2; i++) {
+                //Process p = Runtime.getRuntime().exec(new String[]{"soffice.exe", "--headless", "--convert-to", "pdf", "--outdir", "\"" + tempPath + "\"", "\"" + url+ "\""});
+                //Process p = Runtime.getRuntime().exec(new String[]{"soffice.exe", "--headless", "--convert-to", "pdf", "--outdir", tempPath, url});
+                Process p = Runtime.getRuntime().exec(new String[]{"python.exe", clientLocation + "unoconv-master\\unoconv", "-eSelectPdfVersion=1", "-f", "pdf", url});
+                //Process p = Runtime.getRuntime().exec(new String[]{"unoconv.bat", url});
+                int exit = p.waitFor();
+
+                if (exit != 0) {
+                    if (isRetry) {
+                        log.error("PDF conversion failed with exit code " + exit + ", command line was 'python.exe " + clientLocation + "unoconv-master\\unoconv -f pdf " + url);
+                        throw new Exception("Konvertierung nach PDF fehlgeschlagen: " + exit);
+                    } else {
+                        isRetry = true;
+                        log.warn("PDF conversion failed with exit code " + exit + " - retrying... (" + url + ")");
+                        try {
+                            Thread.sleep(1000);
+                        } catch (Throwable t) {
+
+                        }
+                        continue;
+                    }
+                }
+
+                File org = new File(url);
+                String orgName = org.getName();
+                String path = url.substring(0, url.indexOf(orgName));
+                String pdf = path + orgName.substring(0, orgName.lastIndexOf('.')) + ".pdf";
+                if (!(new File(pdf).exists())) {
+                    throw new Exception("Konvertierung kann nur durchgeführt werden wenn kein soffice.exe/soffice.bin läuft!");
+                }
+
+                return pdf;
+            }
+
+            // should never be reached
+            throw new Exception("Konvertierung nach PDF fehlgeschlagen (2 Versuche)");
         }
     }
 
@@ -812,104 +837,145 @@ public class FileConverter {
 
         @Override
         public String convertTo(String url, String targetFileExtension) throws Exception {
-            if(!this.validateInputFormat(url))
-                throw new Exception ("Format nicht unterstützt: " + new File(url).getName());
-            
-            if(targetFileExtension==null)
+            if (!this.validateInputFormat(url)) {
+                throw new Exception("Format nicht unterstützt: " + new File(url).getName());
+            }
+
+            if (targetFileExtension == null) {
                 throw new Exception("Es muss ein Zielformat angegeben werden");
-            
-            targetFileExtension=targetFileExtension.toLowerCase();
-            
-            targetFileExtension=targetFileExtension.replaceAll("\\.", "");
-            
-            if(!OUTPUTTYPES.contains(targetFileExtension)) {
+            }
+
+            targetFileExtension = targetFileExtension.toLowerCase();
+
+            targetFileExtension = targetFileExtension.replaceAll("\\.", "");
+
+            if (!OUTPUTTYPES.contains(targetFileExtension)) {
                 throw new Exception("Konvertierung nach " + targetFileExtension + " ist nicht verfügbar!");
             }
-            
+
             Process p = Runtime.getRuntime().exec(new String[]{"unoconv", "-f", targetFileExtension, url});
             int exit = p.waitFor();
             if (exit != 0) {
-                throw new Exception ("Konvertierung nach " + targetFileExtension + " fehlgeschlagen: " + exit);
+                throw new Exception("Konvertierung nach " + targetFileExtension + " fehlgeschlagen: " + exit);
             }
-            
-            File org=new File(url);
-            String orgName=org.getName();
-            String path=url.substring(0, url.indexOf(orgName));
+
+            File org = new File(url);
+            String orgName = org.getName();
+            String path = url.substring(0, url.indexOf(orgName));
             return path + orgName.substring(0, orgName.lastIndexOf('.')) + "." + targetFileExtension;
-          
+
         }
-        
+
         @Override
         public String convertToPDF(String url) throws Exception {
-            
-            if(!this.validateInputFormat(url))
-                throw new Exception ("Format nicht unterstützt: " + new File(url).getName());
-            
-            Process p = Runtime.getRuntime().exec(new String[]{"unoconv", "-eSelectPdfVersion=1", "-f", "pdf", url});
-            int exit = p.waitFor();
-            if (exit != 0) {
-                throw new Exception ("Konvertierung nach PDF fehlgeschlagen: " + exit);
+
+            if (!this.validateInputFormat(url)) {
+                throw new Exception("Format nicht unterstützt: " + new File(url).getName());
             }
-            
-            File org=new File(url);
-            String orgName=org.getName();
-            String path=url.substring(0, url.indexOf(orgName));
-            return path + orgName.substring(0, orgName.lastIndexOf('.')) + ".pdf";
-            
+
+            boolean isRetry = false;
+            for (int i = 0; i < 2; i++) {
+                Process p = Runtime.getRuntime().exec(new String[]{"unoconv", "-eSelectPdfVersion=1", "-f", "pdf", url});
+                int exit = p.waitFor();
+                if (exit != 0) {
+                    if (isRetry) {
+                        log.error("PDF conversion failed with exit code " + exit);
+                        throw new Exception("Konvertierung nach PDF fehlgeschlagen: " + exit);
+                    } else {
+                        isRetry = true;
+                        log.warn("PDF conversion failed with exit code " + exit + " - retrying... (" + url + ")");
+                        try {
+                            Thread.sleep(1000);
+                        } catch (Throwable t) {
+
+                        }
+                        continue;
+                    }
+                }
+
+                File org = new File(url);
+                String orgName = org.getName();
+                String path = url.substring(0, url.indexOf(orgName));
+                return path + orgName.substring(0, orgName.lastIndexOf('.')) + ".pdf";
+            }
+
+            // should never be reached
+            throw new Exception("Konvertierung nach PDF fehlgeschlagen (2 Versuche)");
         }
     }
-    
+
     public static class MacFileConverter extends FileConverter {
 
         private MacFileConverter() {
         }
-        
+
         @Override
         public String convertTo(String url, String targetFileExtension) throws Exception {
-            if(!this.validateInputFormat(url))
-                throw new Exception ("Format nicht unterstützt: " + new File(url).getName());
-            
-            if(targetFileExtension==null)
+            if (!this.validateInputFormat(url)) {
+                throw new Exception("Format nicht unterstützt: " + new File(url).getName());
+            }
+
+            if (targetFileExtension == null) {
                 throw new Exception("Es muss ein Zielformat angegeben werden");
-            
-            targetFileExtension=targetFileExtension.toLowerCase();
-            
-            targetFileExtension=targetFileExtension.replaceAll("\\.", "");
-            
-            if(!OUTPUTTYPES.contains(targetFileExtension)) {
+            }
+
+            targetFileExtension = targetFileExtension.toLowerCase();
+
+            targetFileExtension = targetFileExtension.replaceAll("\\.", "");
+
+            if (!OUTPUTTYPES.contains(targetFileExtension)) {
                 throw new Exception("Konvertierung nach " + targetFileExtension + " ist nicht verfügbar!");
             }
-            
+
             Process p = Runtime.getRuntime().exec(new String[]{"/Applications/LibreOffice.app/Contents/Resources/python", "unoconv-master/unoconv", "-f", targetFileExtension, url});
             int exit = p.waitFor();
             if (exit != 0) {
-                throw new Exception ("Konvertierung nach " + targetFileExtension + " fehlgeschlagen: " + exit);
+                throw new Exception("Konvertierung nach " + targetFileExtension + " fehlgeschlagen: " + exit);
             }
-            
-            File org=new File(url);
-            String orgName=org.getName();
-            String path=url.substring(0, url.indexOf(orgName));
+
+            File org = new File(url);
+            String orgName = org.getName();
+            String path = url.substring(0, url.indexOf(orgName));
             return path + orgName.substring(0, orgName.lastIndexOf('.')) + "." + targetFileExtension;
-          
+
         }
 
         @Override
         public String convertToPDF(String url) throws Exception {
-            
-            if(!this.validateInputFormat(url))
-                throw new Exception ("Format nicht unterstützt: " + new File(url).getName());
-            
-            Process p = Runtime.getRuntime().exec(new String[]{"/Applications/LibreOffice.app/Contents/Resources/python", "unoconv-master/unoconv", "-eSelectPdfVersion=1", "-f", "pdf", url});
-            int exit = p.waitFor();
-            if (exit != 0) {
-                throw new Exception ("Konvertierung nach PDF fehlgeschlagen: " + exit);
+
+            if (!this.validateInputFormat(url)) {
+                throw new Exception("Format nicht unterstützt: " + new File(url).getName());
             }
-            
-            File org=new File(url);
-            String orgName=org.getName();
-            String path=url.substring(0, url.indexOf(orgName));
-            return path + orgName.substring(0, orgName.lastIndexOf('.')) + ".pdf";
-            
+
+            boolean isRetry = false;
+            for (int i = 0; i < 2; i++) {
+                Process p = Runtime.getRuntime().exec(new String[]{"/Applications/LibreOffice.app/Contents/Resources/python", "unoconv-master/unoconv", "-eSelectPdfVersion=1", "-f", "pdf", url});
+                int exit = p.waitFor();
+                
+                if (exit != 0) {
+                    if(isRetry) {
+                        log.error("PDF conversion failed with exit code " + exit);
+                        throw new Exception("Konvertierung nach PDF fehlgeschlagen: " + exit);
+                    } else {
+                        isRetry=true;
+                        log.warn("PDF conversion failed with exit code " + exit + " - retrying... (" + url + ")");
+                        try {
+                            Thread.sleep(1000);
+                        } catch (Throwable t) {
+                            
+                        }
+                        continue;
+                    }
+                }
+                
+                File org = new File(url);
+                String orgName = org.getName();
+                String path = url.substring(0, url.indexOf(orgName));
+                return path + orgName.substring(0, orgName.lastIndexOf('.')) + ".pdf";
+            }
+
+            // should never be reached
+            throw new Exception("Konvertierung nach PDF fehlgeschlagen (2 Versuche)");
         }
     }
 }
