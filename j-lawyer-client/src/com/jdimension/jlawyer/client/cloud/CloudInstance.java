@@ -663,14 +663,16 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.cloud;
 
+import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.persistence.AppUserBean;
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import org.aarboard.nextcloud.api.NextcloudConnector;
 import org.aarboard.nextcloud.api.filesharing.Share;
-import org.aarboard.nextcloud.api.webdav.ResourceProperties;
+import org.aarboard.nextcloud.api.filesharing.SharePermissions;
+import org.aarboard.nextcloud.api.filesharing.SharePermissions.SingleRight;
+import org.aarboard.nextcloud.api.filesharing.ShareType;
 import org.apache.log4j.Logger;
 
 /**
@@ -679,7 +681,14 @@ import org.apache.log4j.Logger;
  */
 public class CloudInstance {
     
-    private static final Logger log=Logger.getLogger(CloudInstance.class.getName());
+    // 1 = read; 2 = update; 4 = create; 8 = delete; 16 = share; 31 = all (default: 31, for public shares: 1
+    public static final SingleRight PERMISSION_READ=SingleRight.READ;
+    public static final SingleRight PERMISSION_UPDATE=SingleRight.UPDATE;
+    public static final SingleRight PERMISSION_CREATE=SingleRight.CREATE;
+    public static final SingleRight PERMISSION_DELETE=SingleRight.DELETE;
+    public static final SingleRight PERMISSION_SHARE=SingleRight.SHARE;
+
+    private static final Logger log = Logger.getLogger(CloudInstance.class.getName());
 
     private static CloudInstance instance = null;
     private NextcloudConnector con = null;
@@ -723,43 +732,70 @@ public class CloudInstance {
     public List<String> listFolderContent(String path) {
         return this.con.listFolderContent(path);
     }
-    
+
     public boolean folderExists(String path) {
         return this.con.folderExists(path);
     }
-    
+
     public void createFolder(String path) {
-        this.con.createFolder(path);
+        String[] hierarchy = path.split("/");
+        String currentPath = "";
+        for (String h : hierarchy) {
+            String current=currentPath + FileUtils.sanitizeFolderName(h);
+            if (!this.con.folderExists(current)) {
+                this.con.createFolder(current);
+            }
+            currentPath = current + "/";
+        }
     }
-    
+
     public void uploadFile(File f, String remotePath) {
         this.con.uploadFile(f, remotePath);
     }
 
     public List<String> listFolders(String path) {
-        List<String> content = this.con.listFolderContent(path);
+        List<String> content = this.con.listFolderContent(path, -1, false, false);
         ArrayList<String> folders = new ArrayList<String>();
-        for (int i=1;i<content.size();i++) {
+        for (int i = 1; i < content.size(); i++) {
             // skip the first one because it is the parent folder itself
-            String s=content.get(i);
-            
-            String p = path;
-            if (!(p.endsWith("/"))) {
-                p = p + "/";
+            String s = content.get(i);
+            if (s.endsWith("/")) {
+                folders.add(s);
             }
-            p = p + s;
-            try {
-                ResourceProperties props = this.con.getProperties(p, false);
-                if("httpd/unix-directory".equalsIgnoreCase(props.getContentType()) || props.getContentLength()<0) {
-                    folders.add(s);
-                }
-            } catch (Throwable ioe) {
-                log.warn("unable to determine properties for " + p, ioe);
-            }
-//            if(this.con.folderExists(p))
-//                folders.add(s);
+
+//            String p = path;
+//            if (!(p.endsWith("/"))) {
+//                p = p + "/";
+//            }
+//            p = p + s;
+//            try {
+//                ResourceProperties props = this.con.getProperties(p, false);
+//                if("httpd/unix-directory".equalsIgnoreCase(props.getContentType()) || props.getContentLength()<0) {
+//                    folders.add(s);
+//                }
+//            } catch (Throwable ioe) {
+//                log.warn("unable to determine properties for " + p, ioe);
+//            }
         }
         return folders;
+    }
+
+    public List<String> listFullFolders(String path, int depth) {
+        List<String> content = this.con.listFolderContent(path, depth, false, true);
+        ArrayList<String> folders = new ArrayList<String>();
+        for (int i = 1; i < content.size(); i++) {
+            // skip the first one because it is the parent folder itself
+            String s = content.get(i);
+            if (s.endsWith("/")) {
+                folders.add(s);
+            }
+
+        }
+        return folders;
+    }
+
+    public Share doShare(String path, ShareType shareType, String shareWithUserOrGroupId, boolean publicUpload, String password, SharePermissions permissions) {
+        return this.con.doShare(path, shareType, shareWithUserOrGroupId, publicUpload, password, permissions);
     }
 
     public void shutdown() throws Exception {

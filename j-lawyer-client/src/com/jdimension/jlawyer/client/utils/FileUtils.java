@@ -833,7 +833,10 @@ public class FileUtils extends ServerFileUtils {
     }
     
     public static String sanitizeFolderName(String folderName) {
-        return sanitizeFileName(folderName);
+        String sanitized=sanitizeFileName(folderName);
+        sanitized=sanitized.replaceAll("  ", " ");
+        sanitized=sanitized.replaceAll("  ", " ");
+        return sanitized;
     }
 
     public static String preserveExtension(String currentFileName, String newFileName) {

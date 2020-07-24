@@ -813,6 +813,16 @@ public class ThreadUtils {
             }
         });
     }
+    
+    public static void selectRadioButton(final JRadioButton radio, boolean selected) {
+        SwingUtilities.invokeLater(
+                new Runnable() {
+
+            public void run() {
+                radio.setSelected(selected);
+            }
+        });
+    }
 
     public static void updateTextField(final JTextField textField, final String text) {
         SwingUtilities.invokeLater(
@@ -1040,6 +1050,16 @@ public class ThreadUtils {
 
             public void run() {
                 parent.add(newChild, flags);
+            }
+        });
+    }
+    
+    public static void addComboBoxItem(final JComboBox cmb, Object item) {
+        SwingUtilities.invokeLater(
+                new Runnable() {
+
+            public void run() {
+                cmb.addItem(item);
             }
         });
     }

@@ -667,6 +667,9 @@ import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.processing.ProgressIndicator;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.FileUtils;
+import com.jdimension.jlawyer.client.utils.FrameUtils;
+import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -686,15 +689,21 @@ public class SendCloudShare extends javax.swing.JDialog {
 
     List<Share> currentShares = null;
     ArrayList<ArchiveFileDocumentsBean> shareDocs = null;
+    ArchiveFileBean caseDto=null;
+    ArrayList<ArchiveFileAddressesBean> parties=null;
 
     /**
      * Creates new form SendShare
      */
-    public SendCloudShare(java.awt.Frame parent, boolean modal, ArrayList<ArchiveFileDocumentsBean> shareDocs) {
+    public SendCloudShare(java.awt.Frame parent, boolean modal, ArchiveFileBean caseDto, ArrayList<ArchiveFileAddressesBean> parties, ArrayList<ArchiveFileDocumentsBean> shareDocs) {
         super(parent, modal);
         initComponents();
         this.jScrollPane1.getVerticalScrollBar().setUnitIncrement(16);
         this.shareDocs = shareDocs;
+        this.caseDto=caseDto;
+        this.parties=parties;
+        
+        
 
         CloudInstance cloud = CloudInstance.getInstance(UserSettings.getInstance().getCurrentUser());
         if (cloud == null) {
@@ -722,10 +731,12 @@ public class SendCloudShare extends javax.swing.JDialog {
             });
 
             ShareInfoPanel initialSelection = null;
+            ArrayList<ShareInfoPanel> allPanels=new ArrayList<>();
             for (Share s : folderShares) {
 
                 ShareInfoPanel p = new ShareInfoPanel(s, this.pnlSharesList, this);
                 this.pnlSharesList.add(p);
+                allPanels.add(p);
                 if (initialSelection == null) {
                     initialSelection = p;
                     p.setSelected(true);
@@ -734,6 +745,24 @@ public class SendCloudShare extends javax.swing.JDialog {
             }
 
             this.currentShares = folderShares;
+            
+            
+            // check folders for all shares can be time consuming - doing it in an extra thread 
+            // so the user gets a dialog more quickly
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                    for(ShareInfoPanel p: allPanels) {
+                        
+                        p.loadFolders();
+                    }
+                    } catch (Throwable t) {
+                        log.error(t);
+                    }
+                }
+                
+            }).start(); 
         }
 
     }
@@ -752,6 +781,7 @@ public class SendCloudShare extends javax.swing.JDialog {
         txtFilter = new javax.swing.JTextField();
         cmdNewShare = new javax.swing.JButton();
         cmdDoShare = new javax.swing.JButton();
+        jButton1 = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
@@ -776,17 +806,23 @@ public class SendCloudShare extends javax.swing.JDialog {
         });
 
         cmdDoShare.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_share_black_48dp.png"))); // NOI18N
-        cmdDoShare.setText("Freigeben");
+        cmdDoShare.setText("Freigeben (Zwischenablage)");
+        cmdDoShare.setToolTipText("Freigabe wird erstellt und Link in die Zwischenablage kopiert");
         cmdDoShare.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmdDoShareActionPerformed(evt);
             }
         });
 
+        jButton1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/mail_generic.png"))); // NOI18N
+        jButton1.setText("Freigeben (E-Mail)");
+        jButton1.setToolTipText("Freigabe wird erstellt und Link per E-Mail verschickt");
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(jScrollPane1)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -794,11 +830,12 @@ public class SendCloudShare extends javax.swing.JDialog {
                         .addComponent(txtFilter, javax.swing.GroupLayout.DEFAULT_SIZE, 548, Short.MAX_VALUE)
                         .addGap(18, 18, 18)
                         .addComponent(cmdNewShare))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                    .addGroup(layout.createSequentialGroup()
                         .addGap(0, 0, Short.MAX_VALUE)
-                        .addComponent(cmdDoShare)))
+                        .addComponent(cmdDoShare)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jButton1)))
                 .addContainerGap())
-            .addComponent(jScrollPane1)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -810,7 +847,9 @@ public class SendCloudShare extends javax.swing.JDialog {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 395, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(cmdDoShare)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(cmdDoShare)
+                    .addComponent(jButton1))
                 .addContainerGap())
         );
 
@@ -854,7 +893,9 @@ public class SendCloudShare extends javax.swing.JDialog {
     }//GEN-LAST:event_txtFilterKeyReleased
 
     private void cmdNewShareActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdNewShareActionPerformed
-
+        CreateCloudShare dlg=new CreateCloudShare(this, true, this.caseDto, this.parties, this.currentShares);
+        FrameUtils.centerDialog(dlg, this);
+        dlg.setVisible(true);
     }//GEN-LAST:event_cmdNewShareActionPerformed
 
     private void cmdDoShareActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdDoShareActionPerformed
@@ -868,12 +909,13 @@ public class SendCloudShare extends javax.swing.JDialog {
                 if(!(fullFolder.endsWith("/"))) {
                     fullFolder=fullFolder+ "/";
                 }
-                fullFolder=fullFolder+FileUtils.sanitizeFolderName(subfolder.trim());
+                fullFolder=fullFolder+subfolder.trim();
                 
             }
             ProgressIndicator dlg = new ProgressIndicator(this, true);
             ShareDocumentsToCloudAction a = new ShareDocumentsToCloudAction(dlg, this.shareDocs, fullFolder);
             a.start();
+            
         }
     }//GEN-LAST:event_cmdDoShareActionPerformed
 
@@ -908,7 +950,7 @@ public class SendCloudShare extends javax.swing.JDialog {
         /* Create and display the dialog */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                SendCloudShare dialog = new SendCloudShare(new javax.swing.JFrame(), true, null);
+                SendCloudShare dialog = new SendCloudShare(new javax.swing.JFrame(), true, null, null, null);
                 dialog.addWindowListener(new java.awt.event.WindowAdapter() {
                     @Override
                     public void windowClosing(java.awt.event.WindowEvent e) {
@@ -923,6 +965,7 @@ public class SendCloudShare extends javax.swing.JDialog {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton cmdDoShare;
     private javax.swing.JButton cmdNewShare;
+    private javax.swing.JButton jButton1;
     private javax.swing.JScrollPane jScrollPane1;
     private com.jdimension.jlawyer.client.cloud.SharesListPanel pnlSharesList;
     private javax.swing.JTextField txtFilter;

@@ -51,7 +51,7 @@
                               <Component id="lblShareTime" min="-2" max="-2" attributes="0"/>
                           </Group>
                       </Group>
-                      <EmptySpace min="0" pref="115" max="32767" attributes="0"/>
+                      <EmptySpace min="0" pref="168" max="32767" attributes="0"/>
                   </Group>
                   <Group type="102" alignment="0" attributes="0">
                       <Component id="jLabel5" min="-2" max="-2" attributes="0"/>
@@ -141,36 +141,57 @@
     </Component>
     <Component class="javax.swing.JLabel" name="lblShareType">
       <Properties>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+          <Font name="Dialog" size="10" style="1"/>
+        </Property>
         <Property name="text" type="java.lang.String" value="Geteilter Link"/>
       </Properties>
     </Component>
     <Component class="javax.swing.JLabel" name="jLabel2">
       <Properties>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+          <Font name="Dialog" size="10" style="1"/>
+        </Property>
         <Property name="text" type="java.lang.String" value="von"/>
       </Properties>
     </Component>
     <Component class="javax.swing.JLabel" name="lblOwner">
       <Properties>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+          <Font name="Dialog" size="10" style="1"/>
+        </Property>
         <Property name="text" type="java.lang.String" value="Eigent&#xfc;mer"/>
       </Properties>
     </Component>
     <Component class="javax.swing.JLabel" name="jLabel3">
       <Properties>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+          <Font name="Dialog" size="10" style="1"/>
+        </Property>
         <Property name="text" type="java.lang.String" value="vom"/>
       </Properties>
     </Component>
     <Component class="javax.swing.JLabel" name="lblShareTime">
       <Properties>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+          <Font name="Dialog" size="10" style="1"/>
+        </Property>
         <Property name="text" type="java.lang.String" value="01.01.2020"/>
       </Properties>
     </Component>
     <Component class="javax.swing.JLabel" name="jLabel4">
       <Properties>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+          <Font name="Dialog" size="10" style="1"/>
+        </Property>
         <Property name="text" type="java.lang.String" value="G&#xfc;ltig bis"/>
       </Properties>
     </Component>
     <Component class="javax.swing.JLabel" name="lblExpiration">
       <Properties>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+          <Font name="Dialog" size="10" style="1"/>
+        </Property>
         <Property name="text" type="java.lang.String" value="unbegrenzt"/>
       </Properties>
     </Component>

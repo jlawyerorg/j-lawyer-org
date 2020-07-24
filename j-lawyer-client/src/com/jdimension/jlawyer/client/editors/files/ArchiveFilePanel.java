@@ -5788,7 +5788,12 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 shareDocs.add(doc);
             }
 
-            SendCloudShare dlg = new SendCloudShare(EditorsRegistry.getInstance().getMainWindow(), true, shareDocs);
+            ArrayList<ArchiveFileAddressesBean> parties = new ArrayList<>();
+            for (ArchiveFileAddressesBean aab : this.pnlInvolvedParties.getInvolvedParties()) {
+                parties.add(aab);
+            }
+            
+            SendCloudShare dlg = new SendCloudShare(EditorsRegistry.getInstance().getMainWindow(), true, dto, parties, shareDocs);
             dlg.setTitle("Freigabe senden");
             FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
             dlg.setVisible(true);

@@ -665,6 +665,7 @@ package com.jdimension.jlawyer.client.cloud;
 
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.DesktopUtils;
+import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
@@ -674,6 +675,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import javax.swing.JDialog;
+import javax.swing.SwingUtilities;
 import org.aarboard.nextcloud.api.filesharing.Share;
 import org.aarboard.nextcloud.api.filesharing.ShareType;
 import org.apache.log4j.Logger;
@@ -742,12 +744,22 @@ public class ShareInfoPanel extends javax.swing.JPanel {
         }
         this.lblShareType.setText(shareType);
         
+        
+    }
+    
+    public void loadFolders() {
         CloudInstance cloud = CloudInstance.getInstance(UserSettings.getInstance().getCurrentUser());
         if (cloud != null) {
-            List<String> subFolders=cloud.listFolders(this.share.getPath());
+            List<String> subFolders=cloud.listFullFolders(this.share.getPath(),-1);
             Collections.sort(subFolders);
             for(String f : subFolders) {
-                this.cmbFolder.addItem(f);
+                f=f.substring(this.share.getPath().length(),f.length()-1);
+                if(SwingUtilities.isEventDispatchThread()) {
+                    this.cmbFolder.addItem(f);
+                } else {
+                    ThreadUtils.addComboBoxItem(cmbFolder, f);
+                }
+                
             }
         }
     }
@@ -812,18 +824,25 @@ public class ShareInfoPanel extends javax.swing.JPanel {
             }
         });
 
+        lblShareType.setFont(new java.awt.Font("Dialog", 1, 10)); // NOI18N
         lblShareType.setText("Geteilter Link");
 
+        jLabel2.setFont(new java.awt.Font("Dialog", 1, 10)); // NOI18N
         jLabel2.setText("von");
 
+        lblOwner.setFont(new java.awt.Font("Dialog", 1, 10)); // NOI18N
         lblOwner.setText("Eigentümer");
 
+        jLabel3.setFont(new java.awt.Font("Dialog", 1, 10)); // NOI18N
         jLabel3.setText("vom");
 
+        lblShareTime.setFont(new java.awt.Font("Dialog", 1, 10)); // NOI18N
         lblShareTime.setText("01.01.2020");
 
+        jLabel4.setFont(new java.awt.Font("Dialog", 1, 10)); // NOI18N
         jLabel4.setText("Gültig bis");
 
+        lblExpiration.setFont(new java.awt.Font("Dialog", 1, 10)); // NOI18N
         lblExpiration.setText("unbegrenzt");
 
         cmdCopyLinkToClipboard.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/editpaste.png"))); // NOI18N
@@ -890,7 +909,7 @@ public class ShareInfoPanel extends javax.swing.JPanel {
                                 .addComponent(jLabel3)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(lblShareTime)))
-                        .addGap(0, 115, Short.MAX_VALUE))
+                        .addGap(0, 168, Short.MAX_VALUE))
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(jLabel5)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
