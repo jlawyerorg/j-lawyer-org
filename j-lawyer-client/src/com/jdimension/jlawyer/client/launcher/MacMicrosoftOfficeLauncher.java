@@ -746,7 +746,7 @@ public class MacMicrosoftOfficeLauncher extends OfficeLauncher {
                         public void run() {
                             String errorMsg="";
                             if(t.getMessage()!=null)
-                                errorMsg="Fehler beim Öffnen des Dokuments: " + t.getMessage() + "; Pfad zu winword.exe im PATH vorhanden?";
+                                errorMsg="Fehler beim Öffnen des Dokuments: " + t.getMessage();
                             else
                                 errorMsg="Fehler beim Öffnen des Dokuments.";
                             JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), errorMsg, "Fehler", JOptionPane.ERROR_MESSAGE);
