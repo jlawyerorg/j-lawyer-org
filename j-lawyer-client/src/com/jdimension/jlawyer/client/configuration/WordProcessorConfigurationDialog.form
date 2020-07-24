@@ -97,11 +97,8 @@
     </Component>
     <Component class="javax.swing.JLabel" name="lblCaption">
       <Properties>
-        <Property name="text" type="java.lang.String" value="Prim&#xe4;re Textverarbeitung auf diesem Ger&#xe4;t:"/>
+        <Property name="text" type="java.lang.String" value="Prim&#xe4;re Office-Suite auf diesem Ger&#xe4;t:"/>
       </Properties>
-      <AccessibilityProperties>
-        <Property name="AccessibleContext.accessibleName" type="java.lang.String" value="Prim&#xe4;re Textverarbeitung auf diesem Ger&#xe4;t:"/>
-      </AccessibilityProperties>
       <AuxValues>
         <AuxValue name="JavaCodeGenerator_VariableModifier" type="java.lang.Integer" value="0"/>
       </AuxValues>

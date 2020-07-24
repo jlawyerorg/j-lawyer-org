@@ -1511,7 +1511,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuDocumentOptions.add(mnuScanOptions);
 
         mnuWordProcessor.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editcopy.png"))); // NOI18N
-        mnuWordProcessor.setText("Textverarbeitung");
+        mnuWordProcessor.setText("Office-Suite");
         mnuWordProcessor.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 mnuWordProcessorActionPerformed(evt);

@@ -680,7 +680,9 @@ import org.apache.log4j.Logger;
 public class LauncherFactory {
 
     public static final List<String> LO_OFFICEFILETYPES = Arrays.asList(".fodt", ".fods", ".fodp", ".odt", ".ott", ".oth", ".ods", ".odp", ".ots", ".sxc", ".stc", ".odm", ".sxw", ".stw", ".sxg", ".doc", ".docx", ".dot", ".docm", ".dotx", ".dotm", ".wpd", ".wps", ".rtf", ".txt", ".csv", ".xls", ".xlw", ".xlt", ".xlsx", ".xlsm", ".xltx", ".xltm", ".ppt", ".pps", ".pot", ".pptx", ".pptm", ".potx", ".potm", ".bmp", ".dxf", ".emf", ".eps", ".gif", ".jpeg", ".jpg", ".pcx", ".png", ".psd", ".tif", ".tiff", ".wmf", ".html");
-    public static final List<String> MS_OFFICEFILETYPES = Arrays.asList(".doc", ".docx", ".dotx", ".dot", ".rtf", ".txt", ".htm", ".xml", ".docm", ".dotm", ".mht", ".odt");
+    public static final List<String> MS_OFFICEFILETYPES_WORD = Arrays.asList(".doc", ".docx", ".dotx", ".dot", ".rtf", ".txt", ".htm", ".xml", ".docm", ".dotm", ".mht", ".odt");
+    public static final List<String> MS_OFFICEFILETYPES_POWERPOINT = Arrays.asList(".ppt", ".pptx", ".potx", ".pot", ".odp", ".pps", ".ppsx", ".pptm", ".potm", ".ppsm");
+    public static final List<String> MS_OFFICEFILETYPES_EXCEL = Arrays.asList(".xls", ".xlsx", ".csv", ".xltx", ".xlt", ".xlsm", ".xlsb", ".ods");
     public static final List<String> OFFICE_ADDITIONALPRINTTYPES = Arrays.asList(".pdf");
 
     private static final Logger log = Logger.getLogger(LauncherFactory.class.getName());
@@ -863,8 +865,32 @@ public class LauncherFactory {
     }
 
     public static boolean supportedByMicrosoftOffice(String url) {
+        return (supportedByMicrosoftOfficeWord(url) || supportedByMicrosoftOfficeExcel(url) || supportedByMicrosoftOfficePowerPoint(url));
+    }
+    
+    public static boolean supportedByMicrosoftOfficeWord(String url) {
         String lcaseUrl = url.toLowerCase();
-        for (String ext : MS_OFFICEFILETYPES) {
+        for (String ext : MS_OFFICEFILETYPES_WORD) {
+            if (lcaseUrl.endsWith(ext)) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    public static boolean supportedByMicrosoftOfficePowerPoint(String url) {
+        String lcaseUrl = url.toLowerCase();
+        for (String ext : MS_OFFICEFILETYPES_POWERPOINT) {
+            if (lcaseUrl.endsWith(ext)) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    public static boolean supportedByMicrosoftOfficeExcel(String url) {
+        String lcaseUrl = url.toLowerCase();
+        for (String ext : MS_OFFICEFILETYPES_EXCEL) {
             if (lcaseUrl.endsWith(ext)) {
                 return true;
             }

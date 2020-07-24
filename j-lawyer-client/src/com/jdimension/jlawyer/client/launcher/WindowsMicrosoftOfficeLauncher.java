@@ -680,6 +680,8 @@ public class WindowsMicrosoftOfficeLauncher extends OfficeLauncher {
 
     private static final Logger log = Logger.getLogger(WindowsMicrosoftOfficeLauncher.class.getName());
     private static String winwordBinary = "winword.exe";
+    private static String powerpointBinary = "powerpnt.exe";
+    private static String excelBinary = "excel.exe";
 
     public WindowsMicrosoftOfficeLauncher(String url, ObservedDocumentStore store) {
         super(url, store);
@@ -711,12 +713,20 @@ public class WindowsMicrosoftOfficeLauncher extends OfficeLauncher {
 
                     Process p = null;
                     try {
+                        String binary=winwordBinary;
+                        if(LauncherFactory.supportedByMicrosoftOfficeWord(url))
+                            binary=winwordBinary;
+                        else if(LauncherFactory.supportedByMicrosoftOfficeExcel(url))
+                            binary=excelBinary;
+                        else if(LauncherFactory.supportedByMicrosoftOfficePowerPoint(url))
+                            binary=powerpointBinary;
+                        
                         if (store.isReadOnly()) {
-                            p = Runtime.getRuntime().exec(new String[]{winwordBinary, url});
+                            p = Runtime.getRuntime().exec(new String[]{binary, url});
                         } else {
-                            p = Runtime.getRuntime().exec(new String[]{winwordBinary, url});
+                            p = Runtime.getRuntime().exec(new String[]{binary, url});
                         }
-                        log.debug("using " + winwordBinary + " for " + odoc.getName());
+                        log.debug("using " + binary + " for " + odoc.getName());
 
                     } catch (Throwable ex) {
                         log.error("error starting winword" + ex.getMessage());
