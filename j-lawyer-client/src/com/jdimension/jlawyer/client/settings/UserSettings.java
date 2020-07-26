@@ -684,13 +684,28 @@ import org.apache.log4j.Logger;
 public class UserSettings {
 
     public static final String USER_AVATAR = "user.avatar";
-    
+
     public static final String ROLE_READCASE = "readArchiveFileRole";
     public static final String ROLE_WRITECASE = "writeArchiveFileRole";
     public static final String ROLE_READADDRESS = "readAddressRole";
     public static final String ROLE_WRITEADDRESS = "writeAddressRole";
-    
-    public static final String CONF_SEARCH_WITHARCHIVE="user.conf.search.witharchive";
+
+    // key
+    public static final String CLOUD_SHARE_FOLDERTEMPLATE = "cloud.share.foldertemplate";
+    // values
+    public static final String CLOUD_SHARE_FOLDERTEMPLATE_CASE = "case";
+    public static final String CLOUD_SHARE_FOLDERTEMPLATE_ADDRESS = "address";
+    public static final String CLOUD_SHARE_FOLDERTEMPLATE_CASEADDRESS = "case-address";
+    public static final String CLOUD_SHARE_FOLDERTEMPLATE_ADDRESSCASE = "address-case";
+
+    // key
+    public static final String CLOUD_SHARE_PERMISSIONS = "cloud.share.permissions";
+    // values
+    public static final String CLOUD_SHARE_PERMISSIONS_READONLY = "readonly";
+    public static final String CLOUD_SHARE_PERMISSIONS_UPLOAD = "upload";
+    public static final String CLOUD_SHARE_PERMISSIONS_UPLOADEDIT = "uploadedit";
+
+    public static final String CONF_SEARCH_WITHARCHIVE = "user.conf.search.witharchive";
 
     private static final Logger log = Logger.getLogger(UserSettings.class.getName());
     private static UserSettings instance = null;
@@ -710,8 +725,8 @@ public class UserSettings {
     private Hashtable<String, ImageIcon> userIconsSmall = new Hashtable<String, ImageIcon>();
     private Hashtable<String, ImageIcon> userIconsBig = new Hashtable<String, ImageIcon>();
     private Hashtable<String, List<String>> userRoles = new Hashtable<String, List<String>>();
-    
-    private ArrayList<String> invalidUsers=new ArrayList<String>();
+
+    private ArrayList<String> invalidUsers = new ArrayList<String>();
 
     /**
      * Creates a new instance of ClientSettings
@@ -775,9 +790,15 @@ public class UserSettings {
             this.userIconsSmall.clear();
         }
         this.loadCache();
-        this.settingCache.setProperty(key, value);
-
-        this.mgmt.setUserSettings(currentUser, settingCache);
+        if (!this.settingCache.containsKey(key)) {
+            this.settingCache.setProperty(key, value);
+            this.mgmt.setUserSettings(currentUser, settingCache);
+        } else {
+            if (!(this.settingCache.getProperty(key).equals(value))) {
+                this.settingCache.setProperty(key, value);
+                this.mgmt.setUserSettings(currentUser, settingCache);
+            }
+        }
 
     }
 
@@ -889,10 +910,10 @@ public class UserSettings {
     }
 
     public boolean isCurrentUserInRole(String role) {
-        boolean inRole=getUserRoles(getCurrentUser().getPrincipalId()).contains(role);
+        boolean inRole = getUserRoles(getCurrentUser().getPrincipalId()).contains(role);
         return inRole;
     }
-    
+
     public List<String> getUserRoles(String principalId) {
         if (principalId == null) {
             return new ArrayList();
@@ -908,8 +929,8 @@ public class UserSettings {
                     // user might have been removed
                     return new ArrayList();
                 }
-                ArrayList roleList=new ArrayList();
-                for(AppRoleBean arb: roles) {
+                ArrayList roleList = new ArrayList();
+                for (AppRoleBean arb : roles) {
                     roleList.add(arb.getRole());
                 }
                 this.userRoles.put(principalId, roleList);
@@ -926,7 +947,7 @@ public class UserSettings {
         if (principalId == null) {
             return;
         }
-        if(this.invalidUsers.contains(principalId)) {
+        if (this.invalidUsers.contains(principalId)) {
             return;
         }
 
@@ -936,7 +957,7 @@ public class UserSettings {
             mgmt = locator.lookupSystemManagementRemote();
             AppUserBean aub = null;
             try {
-                aub=mgmt.getUser(principalId);
+                aub = mgmt.getUser(principalId);
             } catch (Throwable nre) {
                 // not found
             }

@@ -690,20 +690,20 @@ public class ShareInfoPanel extends javax.swing.JPanel {
     private static Logger log = Logger.getLogger(ShareInfoPanel.class.getName());
 
     private SharesListPanel parent = null;
-    private JDialog parentDialog=null;
     private Share share = null;
+    private ShareListener listener=null;
 
     /**
      * Creates new form ShareInfoPanel
      */
-    public ShareInfoPanel(Share s, SharesListPanel parent, JDialog parentDialog) {
+    public ShareInfoPanel(Share s, SharesListPanel parent, ShareListener listener) {
 
         initComponents();
         this.cmbFolder.removeAllItems();
         this.cmbFolder.addItem("");
         this.share = s;
-        this.parentDialog=parentDialog;
         this.parent = parent;
+        this.listener=listener;
         this.cmdCopyLinkToClipboard.setEnabled(s.getShareType().equals(ShareType.PUBLIC_LINK));
         this.cmdBrowser.setEnabled(s.getShareType().equals(ShareType.PUBLIC_LINK));
         if (this.cmdCopyLinkToClipboard.isEnabled()) {
@@ -986,16 +986,14 @@ public class ShareInfoPanel extends javax.swing.JPanel {
         CloudInstance cloud = CloudInstance.getInstance(UserSettings.getInstance().getCurrentUser());
         if (cloud != null) {
             cloud.deleteShare(this.share.getId());
-            this.parent.remove(this);
-            this.parent.revalidate();
-            this.parent.doLayout();
-            this.parent.updateUI();
+            this.listener.shareRemoved(this.share);
+            
         }
     }//GEN-LAST:event_cmdDeleteShareActionPerformed
 
     private void cmdBrowserActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdBrowserActionPerformed
         String str = this.share.getUrl();
-        DesktopUtils.openBrowserFromDialog(str, this.parentDialog);
+        DesktopUtils.openBrowserFromDialog(str, (JDialog)this.listener);
     }//GEN-LAST:event_cmdBrowserActionPerformed
 
 

@@ -703,6 +703,7 @@ import com.jdimension.jlawyer.services.AddressServiceRemote;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Color;
+import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.io.File;
@@ -736,12 +737,28 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
     
     private Collection<PartyTypeBean> allPartyTypes = new ArrayList<PartyTypeBean>();
     private List<String> allPartyTypesPlaceholders = new ArrayList<String>();
+    
+    // can be set by code that constructs the SendEmailDialog to "inject" a recently created link to a Nextcloud share
+    // will be made available as a placeholder
+    private String cloudLink=null;
 
     /**
      * Creates new form SendEmailDialog
      */
-    public SendEmailDialog(java.awt.Frame parent, boolean modal) {
+    public SendEmailDialog(JDialog parent, boolean modal) {
         super(parent, modal);
+        this.initialize();
+    }
+    
+    /**
+     * Creates new form SendEmailDialog
+     */
+    public SendEmailDialog(JFrame parent, boolean modal) {
+        super(parent, modal);
+        this.initialize();
+    }
+    
+    private void initialize() {
         initComponents();
         
         ComponentUtils.decorateSplitPane(jSplitPane1);
@@ -956,6 +973,10 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
             this.chkDocumentTagging.setSelected(true);
         }
 
+    }
+    
+    public void setCloudLink(String link) {
+        this.cloudLink=link;
     }
 
     @Override
@@ -1949,6 +1970,9 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                 htValues = PlaceHolderUtils.getPlaceHolderValues(ht, this.contextArchiveFile, selectedParties, this.contextDictateSign, null, new Hashtable<String,String>());
                 //this.taBody.setText(EmailTemplateAccess.replacePlaceHolders(tpl.getBody(), htValues) + System.getProperty("line.separator") + System.getProperty("line.separator") + this.cu.getEmailSignature());
 
+                if(this.cloudLink!=null)
+                    htValues.put("{{CLOUD_LINK}}", this.cloudLink);
+                
                 if (tpl.isText()) {
                     this.tp.setText(EmailTemplateAccess.replacePlaceHolders(tpl.getBody(), htValues) + System.getProperty("line.separator") + System.getProperty("line.separator") + EmailUtils.Html2Text(this.cu.getEmailSignature()));
                     this.hp.setText("");

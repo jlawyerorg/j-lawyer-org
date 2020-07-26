@@ -34,9 +34,9 @@
                   </Group>
                   <Group type="102" alignment="0" attributes="0">
                       <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
-                      <Component id="cmdDoShare" min="-2" max="-2" attributes="0"/>
+                      <Component id="cmdDoShareClipboard" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
-                      <Component id="jButton1" min="-2" max="-2" attributes="0"/>
+                      <Component id="cmdDoShareMail" min="-2" max="-2" attributes="0"/>
                   </Group>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
@@ -55,8 +55,8 @@
               <Component id="jScrollPane1" pref="395" max="32767" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
-                  <Component id="cmdDoShare" alignment="3" min="-2" max="-2" attributes="0"/>
-                  <Component id="jButton1" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="cmdDoShareClipboard" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="cmdDoShareMail" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
           </Group>
@@ -98,7 +98,7 @@
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdNewShareActionPerformed"/>
       </Events>
     </Component>
-    <Component class="javax.swing.JButton" name="cmdDoShare">
+    <Component class="javax.swing.JButton" name="cmdDoShareClipboard">
       <Properties>
         <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
           <Image iconType="3" name="/icons16/material/baseline_share_black_48dp.png"/>
@@ -107,10 +107,10 @@
         <Property name="toolTipText" type="java.lang.String" value="Freigabe wird erstellt und Link in die Zwischenablage kopiert"/>
       </Properties>
       <Events>
-        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdDoShareActionPerformed"/>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdDoShareClipboardActionPerformed"/>
       </Events>
     </Component>
-    <Component class="javax.swing.JButton" name="jButton1">
+    <Component class="javax.swing.JButton" name="cmdDoShareMail">
       <Properties>
         <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
           <Image iconType="3" name="/icons/mail_generic.png"/>
@@ -118,6 +118,9 @@
         <Property name="text" type="java.lang.String" value="Freigeben (E-Mail)"/>
         <Property name="toolTipText" type="java.lang.String" value="Freigabe wird erstellt und Link per E-Mail verschickt"/>
       </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdDoShareMailActionPerformed"/>
+      </Events>
     </Component>
   </SubComponents>
 </Form>

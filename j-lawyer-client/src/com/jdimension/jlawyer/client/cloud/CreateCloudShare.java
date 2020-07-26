@@ -677,6 +677,7 @@ import java.util.List;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JDialog;
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 import org.aarboard.nextcloud.api.filesharing.Share;
 import org.aarboard.nextcloud.api.filesharing.SharePermissions;
 import org.aarboard.nextcloud.api.filesharing.SharePermissions.SingleRight;
@@ -697,6 +698,7 @@ public class CreateCloudShare extends javax.swing.JDialog {
     List<Share> shares = null;
     Share createdShare = null;
     String createdSharePassword = null;
+    AddressBean recipient = null;
 
     /**
      * Creates new form SendShare
@@ -704,6 +706,9 @@ public class CreateCloudShare extends javax.swing.JDialog {
     public CreateCloudShare(JDialog parent, boolean modal, ArchiveFileBean caseDto, ArrayList<ArchiveFileAddressesBean> parties, List<Share> shares) {
         super(parent, modal);
         initComponents();
+
+        this.restoreSettings();
+
         this.caseDto = caseDto;
         this.parties = parties;
         this.shares = shares;
@@ -732,7 +737,14 @@ public class CreateCloudShare extends javax.swing.JDialog {
                         for (String f : folders) {
                             ThreadUtils.addComboBoxItem(cmbFolder, f);
                         }
-                        ThreadUtils.selectRadioButton(rdFolderPartyCase, true);
+                        SwingUtilities.invokeLater(new Runnable() {
+                            @Override
+                            public void run() {
+                                updateFolder();
+                            }
+                            
+                        });
+                        
                     }
                 } catch (Throwable t) {
                     log.error(t);
@@ -1052,7 +1064,52 @@ public class CreateCloudShare extends javax.swing.JDialog {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
+    private void restoreSettings() {
+        UserSettings us = UserSettings.getInstance();
+
+        this.rdReadOnly.setSelected(true);
+        String permSetting = us.getSetting(UserSettings.CLOUD_SHARE_PERMISSIONS, UserSettings.CLOUD_SHARE_PERMISSIONS_READONLY);
+        if (UserSettings.CLOUD_SHARE_PERMISSIONS_UPLOAD.equals(permSetting)) {
+            this.rdUpload.setSelected(true);
+        } else if (UserSettings.CLOUD_SHARE_PERMISSIONS_UPLOADEDIT.equals(permSetting)) {
+            this.rdUploadEdit.setSelected(true);
+        }
+
+        this.rdFolderPartyCase.setSelected(true);
+        String folderSetting = us.getSetting(UserSettings.CLOUD_SHARE_FOLDERTEMPLATE, UserSettings.CLOUD_SHARE_FOLDERTEMPLATE_ADDRESSCASE);
+        if (UserSettings.CLOUD_SHARE_FOLDERTEMPLATE_ADDRESS.equals(folderSetting)) {
+            this.rdFolderParty.setSelected(true);
+        } else if (UserSettings.CLOUD_SHARE_FOLDERTEMPLATE_CASE.equals(folderSetting)) {
+            this.rdFolderCase.setSelected(true);
+        } else if (UserSettings.CLOUD_SHARE_FOLDERTEMPLATE_CASEADDRESS.equals(folderSetting)) {
+            this.rdFolderCaseParty.setSelected(true);
+        }
+
+    }
+
+    private void saveSettings() {
+        String permSetting = UserSettings.CLOUD_SHARE_PERMISSIONS_READONLY;
+        if (this.rdUpload.isSelected()) {
+            permSetting = UserSettings.CLOUD_SHARE_PERMISSIONS_UPLOAD;
+        } else if (this.rdUploadEdit.isSelected()) {
+            permSetting = UserSettings.CLOUD_SHARE_PERMISSIONS_UPLOADEDIT;
+        }
+        UserSettings.getInstance().setSetting(UserSettings.CLOUD_SHARE_PERMISSIONS, permSetting);
+
+        String folderSetting = UserSettings.CLOUD_SHARE_FOLDERTEMPLATE_ADDRESSCASE;
+        if (this.rdFolderCase.isSelected()) {
+            folderSetting = UserSettings.CLOUD_SHARE_FOLDERTEMPLATE_CASE;
+        } else if (this.rdFolderParty.isSelected()) {
+            folderSetting = UserSettings.CLOUD_SHARE_FOLDERTEMPLATE_ADDRESS;
+        } else if (this.rdFolderCaseParty.isSelected()) {
+            folderSetting = UserSettings.CLOUD_SHARE_FOLDERTEMPLATE_CASEADDRESS;
+        }
+        UserSettings.getInstance().setSetting(UserSettings.CLOUD_SHARE_FOLDERTEMPLATE, folderSetting);
+
+    }
+
     private void cmdDoShareActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdDoShareActionPerformed
+        this.saveSettings();
         CloudInstance cloud = CloudInstance.getInstance(UserSettings.getInstance().getCurrentUser());
         if (cloud != null) {
             try {
@@ -1070,13 +1127,24 @@ public class CreateCloudShare extends javax.swing.JDialog {
 
                 this.createdShare = cloud.doShare(folder, ShareType.PUBLIC_LINK, "", this.rdUpload.isSelected() || this.rdUploadEdit.isSelected(), this.txtPassword.getText(), perms);
                 this.createdSharePassword = this.txtPassword.getText();
+                Object selectedParty = this.cmbParty.getSelectedItem();
+                if (selectedParty != null) {
+                    this.recipient = (AddressBean) selectedParty;
+                }
+                this.setVisible(false);
+                this.dispose();
+
             } catch (Throwable t) {
                 log.error("Error creating share", t);
-                JOptionPane.showMessageDialog(this, "Fehler beim Erstellen der Freigabe: " + t.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+                String msg = "Fehler beim Erstellen der Freigabe: " + t.getMessage();
+                if (t.getMessage().contains("401") && this.txtPassword.getText().length() > 0) {
+                    msg = msg + System.lineSeparator();
+                    msg = msg + "Evtl. erfüllt das Passwort nicht die Mindestanforderungen der Nextcloud-Installation.";
+                }
+                JOptionPane.showMessageDialog(this, msg, "Fehler", JOptionPane.ERROR_MESSAGE);
             }
         }
-        this.setVisible(false);
-        this.dispose();
+
 
     }//GEN-LAST:event_cmdDoShareActionPerformed
 
@@ -1086,6 +1154,10 @@ public class CreateCloudShare extends javax.swing.JDialog {
 
     public String getNewSharePassword() {
         return this.createdSharePassword;
+    }
+
+    public AddressBean getNewShareRecipient() {
+        return this.recipient;
     }
 
     private void cmdCancelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCancelActionPerformed

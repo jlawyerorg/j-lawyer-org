@@ -663,18 +663,19 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.cloud;
 
-import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.processing.ProgressIndicator;
 import com.jdimension.jlawyer.client.settings.UserSettings;
-import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
+import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
+import java.awt.Component;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import javax.swing.JScrollBar;
 import org.aarboard.nextcloud.api.filesharing.ItemType;
 import org.aarboard.nextcloud.api.filesharing.Share;
 import org.apache.log4j.Logger;
@@ -683,14 +684,15 @@ import org.apache.log4j.Logger;
  *
  * @author jens
  */
-public class SendCloudShare extends javax.swing.JDialog {
+public class SendCloudShare extends javax.swing.JDialog implements ShareListener {
 
     private static final Logger log = Logger.getLogger(SendCloudShare.class.getName());
 
     List<Share> currentShares = null;
     ArrayList<ArchiveFileDocumentsBean> shareDocs = null;
-    ArchiveFileBean caseDto=null;
-    ArrayList<ArchiveFileAddressesBean> parties=null;
+    ArchiveFileBean caseDto = null;
+    ArrayList<ArchiveFileAddressesBean> parties = null;
+    AddressBean recipient=null;
 
     /**
      * Creates new form SendShare
@@ -700,10 +702,8 @@ public class SendCloudShare extends javax.swing.JDialog {
         initComponents();
         this.jScrollPane1.getVerticalScrollBar().setUnitIncrement(16);
         this.shareDocs = shareDocs;
-        this.caseDto=caseDto;
-        this.parties=parties;
-        
-        
+        this.caseDto = caseDto;
+        this.parties = parties;
 
         CloudInstance cloud = CloudInstance.getInstance(UserSettings.getInstance().getCurrentUser());
         if (cloud == null) {
@@ -731,7 +731,7 @@ public class SendCloudShare extends javax.swing.JDialog {
             });
 
             ShareInfoPanel initialSelection = null;
-            ArrayList<ShareInfoPanel> allPanels=new ArrayList<>();
+            ArrayList<ShareInfoPanel> allPanels = new ArrayList<>();
             for (Share s : folderShares) {
 
                 ShareInfoPanel p = new ShareInfoPanel(s, this.pnlSharesList, this);
@@ -740,12 +740,12 @@ public class SendCloudShare extends javax.swing.JDialog {
                 if (initialSelection == null) {
                     initialSelection = p;
                     p.setSelected(true);
+                    this.pnlSharesList.setSelectedPanel(p);
                 }
 
             }
 
             this.currentShares = folderShares;
-            
             
             // check folders for all shares can be time consuming - doing it in an extra thread 
             // so the user gets a dialog more quickly
@@ -753,16 +753,16 @@ public class SendCloudShare extends javax.swing.JDialog {
                 @Override
                 public void run() {
                     try {
-                    for(ShareInfoPanel p: allPanels) {
-                        
-                        p.loadFolders();
-                    }
+                        for (ShareInfoPanel p : allPanels) {
+
+                            p.loadFolders();
+                        }
                     } catch (Throwable t) {
                         log.error(t);
                     }
                 }
-                
-            }).start(); 
+
+            }).start();
         }
 
     }
@@ -780,8 +780,8 @@ public class SendCloudShare extends javax.swing.JDialog {
         pnlSharesList = new com.jdimension.jlawyer.client.cloud.SharesListPanel();
         txtFilter = new javax.swing.JTextField();
         cmdNewShare = new javax.swing.JButton();
-        cmdDoShare = new javax.swing.JButton();
-        jButton1 = new javax.swing.JButton();
+        cmdDoShareClipboard = new javax.swing.JButton();
+        cmdDoShareMail = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
@@ -805,18 +805,23 @@ public class SendCloudShare extends javax.swing.JDialog {
             }
         });
 
-        cmdDoShare.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_share_black_48dp.png"))); // NOI18N
-        cmdDoShare.setText("Freigeben (Zwischenablage)");
-        cmdDoShare.setToolTipText("Freigabe wird erstellt und Link in die Zwischenablage kopiert");
-        cmdDoShare.addActionListener(new java.awt.event.ActionListener() {
+        cmdDoShareClipboard.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_share_black_48dp.png"))); // NOI18N
+        cmdDoShareClipboard.setText("Freigeben (Zwischenablage)");
+        cmdDoShareClipboard.setToolTipText("Freigabe wird erstellt und Link in die Zwischenablage kopiert");
+        cmdDoShareClipboard.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdDoShareActionPerformed(evt);
+                cmdDoShareClipboardActionPerformed(evt);
             }
         });
 
-        jButton1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/mail_generic.png"))); // NOI18N
-        jButton1.setText("Freigeben (E-Mail)");
-        jButton1.setToolTipText("Freigabe wird erstellt und Link per E-Mail verschickt");
+        cmdDoShareMail.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/mail_generic.png"))); // NOI18N
+        cmdDoShareMail.setText("Freigeben (E-Mail)");
+        cmdDoShareMail.setToolTipText("Freigabe wird erstellt und Link per E-Mail verschickt");
+        cmdDoShareMail.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdDoShareMailActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -832,9 +837,9 @@ public class SendCloudShare extends javax.swing.JDialog {
                         .addComponent(cmdNewShare))
                     .addGroup(layout.createSequentialGroup()
                         .addGap(0, 0, Short.MAX_VALUE)
-                        .addComponent(cmdDoShare)
+                        .addComponent(cmdDoShareClipboard)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton1)))
+                        .addComponent(cmdDoShareMail)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -848,8 +853,8 @@ public class SendCloudShare extends javax.swing.JDialog {
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 395, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(cmdDoShare)
-                    .addComponent(jButton1))
+                    .addComponent(cmdDoShareClipboard)
+                    .addComponent(cmdDoShareMail))
                 .addContainerGap())
         );
 
@@ -893,31 +898,68 @@ public class SendCloudShare extends javax.swing.JDialog {
     }//GEN-LAST:event_txtFilterKeyReleased
 
     private void cmdNewShareActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdNewShareActionPerformed
-        CreateCloudShare dlg=new CreateCloudShare(this, true, this.caseDto, this.parties, this.currentShares);
+        CreateCloudShare dlg = new CreateCloudShare(this, true, this.caseDto, this.parties, this.currentShares);
         FrameUtils.centerDialog(dlg, this);
         dlg.setVisible(true);
+        Share createdShare = dlg.getNewShare();
+        this.recipient=dlg.getNewShareRecipient();
+        if (createdShare != null) {
+            this.currentShares.add(createdShare);
+            ShareInfoPanel p = new ShareInfoPanel(createdShare, this.pnlSharesList, this);
+            this.pnlSharesList.add(p);
+            
+
+            JScrollBar vertical = this.jScrollPane1.getVerticalScrollBar();
+            vertical.setValue(vertical.getMaximum());
+            this.pnlSharesList.revalidate();
+            this.pnlSharesList.doLayout();
+            this.pnlSharesList.updateUI();
+            
+            p.setSelected(true);
+            this.pnlSharesList.setSelectedPanel(p);
+        }
     }//GEN-LAST:event_cmdNewShareActionPerformed
 
-    private void cmdDoShareActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdDoShareActionPerformed
+    private void cmdDoShareClipboardActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdDoShareClipboardActionPerformed
 
         ShareInfoPanel shareInfo = this.pnlSharesList.getSelectedPanel();
         if (shareInfo != null) {
-            Share share=shareInfo.getShare();
-            String subfolder=shareInfo.getSubfolder();
-            String fullFolder=share.getPath();
-            if(subfolder.trim().length()>0) {
-                if(!(fullFolder.endsWith("/"))) {
-                    fullFolder=fullFolder+ "/";
+            Share share = shareInfo.getShare();
+            String subfolder = shareInfo.getSubfolder();
+            String fullFolder = share.getPath();
+            if (subfolder.trim().length() > 0) {
+                if (!(fullFolder.endsWith("/"))) {
+                    fullFolder = fullFolder + "/";
                 }
-                fullFolder=fullFolder+subfolder.trim();
-                
+                fullFolder = fullFolder + subfolder.trim();
+
             }
             ProgressIndicator dlg = new ProgressIndicator(this, true);
-            ShareDocumentsToCloudAction a = new ShareDocumentsToCloudAction(dlg, this.shareDocs, fullFolder);
+            ShareDocumentsToCloudAction a = new ShareDocumentsToCloudAction(dlg, this, this.shareDocs, fullFolder, share, ShareDocumentsToCloudAction.POST_ACTION_CLIPBOARD,null, null, null);
             a.start();
-            
+
         }
-    }//GEN-LAST:event_cmdDoShareActionPerformed
+    }//GEN-LAST:event_cmdDoShareClipboardActionPerformed
+
+    private void cmdDoShareMailActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdDoShareMailActionPerformed
+        ShareInfoPanel shareInfo = this.pnlSharesList.getSelectedPanel();
+        if (shareInfo != null) {
+            Share share = shareInfo.getShare();
+            String subfolder = shareInfo.getSubfolder();
+            String fullFolder = share.getPath();
+            if (subfolder.trim().length() > 0) {
+                if (!(fullFolder.endsWith("/"))) {
+                    fullFolder = fullFolder + "/";
+                }
+                fullFolder = fullFolder + subfolder.trim();
+
+            }
+            ProgressIndicator dlg = new ProgressIndicator(this, true);
+            ShareDocumentsToCloudAction a = new ShareDocumentsToCloudAction(dlg, this, this.shareDocs, fullFolder, share, ShareDocumentsToCloudAction.POST_ACTION_EMAIL, recipient, this.caseDto, this.parties);
+            a.start();
+
+        }
+    }//GEN-LAST:event_cmdDoShareMailActionPerformed
 
     /**
      * @param args the command line arguments
@@ -963,11 +1005,34 @@ public class SendCloudShare extends javax.swing.JDialog {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton cmdDoShare;
+    private javax.swing.JButton cmdDoShareClipboard;
+    private javax.swing.JButton cmdDoShareMail;
     private javax.swing.JButton cmdNewShare;
-    private javax.swing.JButton jButton1;
     private javax.swing.JScrollPane jScrollPane1;
     private com.jdimension.jlawyer.client.cloud.SharesListPanel pnlSharesList;
     private javax.swing.JTextField txtFilter;
     // End of variables declaration//GEN-END:variables
+
+    @Override
+    public void shareRemoved(Share s) {
+        for (Component c : this.pnlSharesList.getComponents()) {
+            if (c instanceof ShareInfoPanel) {
+                Share panelShare = ((ShareInfoPanel) c).getShare();
+                if (panelShare.getId() == s.getId()) {
+                    this.pnlSharesList.remove(c);
+                    this.pnlSharesList.revalidate();
+                    this.pnlSharesList.doLayout();
+                    this.pnlSharesList.updateUI();
+                    break;
+                }
+            }
+        }
+        this.currentShares.remove(s);
+
+    }
+
+    @Override
+    public void shareAdded(Share s) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
 }

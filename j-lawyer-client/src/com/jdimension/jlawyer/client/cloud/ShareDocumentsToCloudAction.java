@@ -663,38 +663,32 @@
  */
 package com.jdimension.jlawyer.client.cloud;
 
-import com.jdimension.jlawyer.client.bea.*;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
-import com.jdimension.jlawyer.client.editors.files.DateStringComparator;
-import com.jdimension.jlawyer.client.launcher.CaseDocumentStore;
-import com.jdimension.jlawyer.client.launcher.Launcher;
-import com.jdimension.jlawyer.client.launcher.LauncherFactory;
+import com.jdimension.jlawyer.client.mail.SendEmailDialog;
 import com.jdimension.jlawyer.client.processing.ProgressIndicator;
 import com.jdimension.jlawyer.client.processing.ProgressableAction;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
-import com.jdimension.jlawyer.client.utils.ComponentUtils;
+import com.jdimension.jlawyer.client.utils.DesktopUtils;
 import com.jdimension.jlawyer.client.utils.FileUtils;
-import com.jdimension.jlawyer.client.utils.StringUtils;
+import com.jdimension.jlawyer.client.utils.FrameUtils;
+import com.jdimension.jlawyer.client.utils.ThreadUtils;
+import com.jdimension.jlawyer.persistence.AddressBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
-import java.awt.Rectangle;
+import java.awt.Toolkit;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.StringSelection;
 import java.io.File;
 import java.text.DecimalFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import javax.swing.JOptionPane;
-import javax.swing.JTable;
+import javax.swing.JDialog;
 import javax.swing.SwingUtilities;
-import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableModel;
-import javax.swing.table.TableRowSorter;
+import org.aarboard.nextcloud.api.filesharing.Share;
 import org.apache.log4j.Logger;
-import org.jlawyer.bea.BeaWrapperException;
-import org.jlawyer.bea.model.Folder;
-import org.jlawyer.bea.model.Message;
-import org.jlawyer.bea.model.MessageHeader;
 
 /**
  *
@@ -702,18 +696,33 @@ import org.jlawyer.bea.model.MessageHeader;
  */
 public class ShareDocumentsToCloudAction extends ProgressableAction {
 
+    public static int POST_ACTION_NONE = 1;
+    public static int POST_ACTION_CLIPBOARD = 1;
+    public static int POST_ACTION_EMAIL = 2;
+
     private static final Logger log = Logger.getLogger(ShareDocumentsToCloudAction.class.getName());
     private int max = 1;
     private ArrayList<ArchiveFileDocumentsBean> shareDocs = null;
     private DecimalFormat megaBytes = new DecimalFormat("0.0");
-    private String remotePath=null;
+    private String remotePath = null;
+    private int postAction = POST_ACTION_NONE;
+    private Share share = null;
+    private JDialog parent = null;
+    private AddressBean recipient = null;
+    private ArchiveFileBean caseDto = null;
+    private ArrayList<ArchiveFileAddressesBean> parties = null;
 
-    public ShareDocumentsToCloudAction(ProgressIndicator i, ArrayList<ArchiveFileDocumentsBean> shareDocs, String remotePath) {
+    public ShareDocumentsToCloudAction(ProgressIndicator i, JDialog parent, ArrayList<ArchiveFileDocumentsBean> shareDocs, String remotePath, Share s, int postAction, AddressBean recipient, ArchiveFileBean caseDto, ArrayList<ArchiveFileAddressesBean> parties) {
         super(i, false);
-
+        this.postAction = postAction;
         this.max = shareDocs.size();
         this.shareDocs = shareDocs;
-        this.remotePath=remotePath;
+        this.remotePath = remotePath;
+        this.share = s;
+        this.parent = parent;
+        this.recipient = recipient;
+        this.caseDto = caseDto;
+        this.parties = parties;
     }
 
     @Override
@@ -741,10 +750,11 @@ public class ShareDocumentsToCloudAction extends ProgressableAction {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             ArchiveFileServiceRemote svc = locator.lookupArchiveFileServiceRemote();
             CloudInstance cloud = CloudInstance.getInstance(UserSettings.getInstance().getCurrentUser());
-            if(cloud==null)
+            if (cloud == null) {
                 throw new Exception("Für den aktuellen Nutzer ist keine Cloudverbindung eingerichtet");
-            
-            if(!(cloud.folderExists(remotePath))) {
+            }
+
+            if (!(cloud.folderExists(remotePath))) {
                 cloud.createFolder(remotePath);
             }
 
@@ -773,21 +783,77 @@ public class ShareDocumentsToCloudAction extends ProgressableAction {
                 EditorsRegistry.getInstance().updateStatus("Cloud-Upload: " + this.shareDocs.get(i).getName() + " (" + sizeString + ")");
 
                 byte[] content = svc.getDocumentContent(this.shareDocs.get(i).getId());
-                String tmpUrl=FileUtils.createTempFile(this.shareDocs.get(i).getName(), content, true);
-                String fullFilePath=remotePath;
-                if(!(fullFilePath.endsWith("/"))) {
-                    fullFilePath=fullFilePath+"/";
+                String tmpUrl = FileUtils.createTempFile(this.shareDocs.get(i).getName(), content, true);
+                String fullFilePath = remotePath;
+                if (!(fullFilePath.endsWith("/"))) {
+                    fullFilePath = fullFilePath + "/";
                 }
-                fullFilePath=fullFilePath+this.shareDocs.get(i).getName();
+                fullFilePath = fullFilePath + this.shareDocs.get(i).getName();
                 cloud.uploadFile(new File(tmpUrl), fullFilePath);
             }
 
             //ComponentUtils.autoSizeColumns(table);
             EditorsRegistry.getInstance().clearStatus(true);
 
+            if (this.postAction == POST_ACTION_CLIPBOARD && this.share.getUrl() != null && !("".equals(this.share.getUrl()))) {
+                Toolkit toolkit = Toolkit.getDefaultToolkit();
+                Clipboard clipboard = toolkit.getSystemClipboard();
+                StringSelection strSel = new StringSelection(this.share.getUrl());
+                clipboard.setContents(strSel, null);
+                DesktopUtils.openBrowserFromDialog(this.share.getUrl(), this.indicator);
+            } else if (this.postAction == POST_ACTION_EMAIL && this.share.getUrl() != null && !("".equals(this.share.getUrl()))) {
+                SwingUtilities.invokeLater(new Runnable() {
+
+                    @Override
+                    public void run() {
+                        SendEmailDialog dlg = new SendEmailDialog(EditorsRegistry.getInstance().getMainWindow(), false);
+                        // make share link available for use via placeholder {{CLOUD_LINK}}
+                        dlg.setCloudLink(share.getUrl());
+                        if (parties != null) {
+                            dlg.setInvolvedInCase(parties);
+                        }
+                        if (caseDto != null) {
+                            dlg.setArchiveFile(caseDto);
+                        }
+                        if (recipient != null) {
+                            dlg.setTo(recipient.getEmail());
+                        }
+                        if (parties != null) {
+                            ArrayList<ArchiveFileAddressesBean> involved = parties;
+                            for (ArchiveFileAddressesBean aab : involved) {
+                                dlg.addParty(aab);
+                            }
+                        }
+
+                        FrameUtils.centerDialog(dlg, null);
+                        dlg.setVisible(true);
+                    }
+
+                });
+
+            }
+            SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                    parent.setVisible(false);
+                    parent.dispose();
+                }
+
+            });
+//            this.parent.setVisible(false);
+//            this.parent.dispose();
+
         } catch (Exception ex) {
             log.error(ex);
-            EditorsRegistry.getInstance().clearStatus();
+            ThreadUtils.showErrorDialog(parent, "Fehler beim Hochladen der Dateien: " + ex.getMessage(), "Fehler");
+            SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                    EditorsRegistry.getInstance().clearStatus();
+                }
+
+            });
+
             return false;
         }
         return true;
