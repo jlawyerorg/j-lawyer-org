@@ -668,6 +668,7 @@ import com.jdimension.jlawyer.client.configuration.ProfileDialog;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.StatusBarProvider;
 import com.jdimension.jlawyer.client.editors.ThemeableEditor;
+import com.jdimension.jlawyer.client.launcher.LauncherFactory;
 import com.jdimension.jlawyer.client.plugins.calculation.CalculationPlugin;
 import com.jdimension.jlawyer.client.plugins.calculation.CalculationPluginUtil;
 import com.jdimension.jlawyer.client.plugins.form.FormPluginUtil;
@@ -969,7 +970,8 @@ public class SplashThread implements Runnable {
 //        }
 
         updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.done"), true);
-
+        LauncherFactory.cleanupTempDocuments();
+        
         splash.setVisible(false);
         splash.dispose();
         splash = null;

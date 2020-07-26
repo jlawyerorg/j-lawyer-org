@@ -757,12 +757,14 @@ public class CaseDocumentStore extends ObservedDocumentStore {
             }
         }
 
-        File f = new File(path);
-        f.deleteOnExit();
-
-        String dir = path.substring(0, path.lastIndexOf(System.getProperty("file.separator")));
-        File remDir = new File(dir);
-        remDir.deleteOnExit();
+        
+        // no longer required, we keep documents for x days and delete temporary files on startup of the client
+//        File f = new File(path);
+//        f.deleteOnExit();
+//
+//        String dir = path.substring(0, path.lastIndexOf(System.getProperty("file.separator")));
+//        File remDir = new File(dir);
+//        remDir.deleteOnExit();
     }
 
     @Override

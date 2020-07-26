@@ -818,8 +818,12 @@ public class LauncherFactory {
 
     }
 
+    public static void cleanupTempDocuments() {
+        FileUtils.cleanupTempFilesWithRetentionTime();
+    }
+    
     private static String createTempFile(String fileName, byte[] content, boolean readOnly) throws Exception {
-        return FileUtils.createTempFile(fileName, content, readOnly);
+        return FileUtils.createTempFile(fileName, content, readOnly,false,7l);
     }
 
     private static String getExtension(String url) {
