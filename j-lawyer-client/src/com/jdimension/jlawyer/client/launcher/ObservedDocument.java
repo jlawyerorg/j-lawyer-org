@@ -681,6 +681,8 @@ public class ObservedDocument {
     public static int STATUS_OPENLOCKED=30;
     public static int STATUS_CLOSING=40;
     public static int STATUS_SAVING=50;
+    // applies to documents opened in system native application without proper process monitoring
+    public static int STATUS_MONITORING=60;
     
     protected ObservedDocumentStore store=null;
     
@@ -690,6 +692,8 @@ public class ObservedDocument {
     private long lastSaved=-1;
     private String launcherType=null;
     private boolean closed=false;
+    // applies to documents opened in system native application without proper process monitoring
+    private boolean monitoringMode=false;
     
     public ObservedDocument(String path, ObservedDocumentStore store, Launcher l) {
         this.path=path;
@@ -720,6 +724,8 @@ public class ObservedDocument {
             return "schliesst";
         else if(STATUS_SAVING==this.status)
             return "speichert";
+        else if(STATUS_MONITORING==this.status)
+            return "wird überwacht";
         else
             return "unbekannt";
     }
@@ -750,11 +756,13 @@ public class ObservedDocument {
     }
     
     public void setClosed(boolean newClosedStatus) {
+        //if(!this.monitoringMode) {
         if(this.closed && newClosedStatus==false)
             log.debug("file unlocked: " + path);
         this.closed=newClosedStatus;
         if(closed)
             this.setStatus(STATUS_CLOSING);
+        //}
     }
 
     /**
@@ -803,7 +811,11 @@ public class ObservedDocument {
      * @param status the status to set
      */
     public void setStatus(int status) {
-        this.status = status;
+        if(this.monitoringMode && status==STATUS_CLOSING) {
+            // do nothing
+        } else { 
+            this.status = status;
+        }
     }
 
     /**
@@ -832,6 +844,20 @@ public class ObservedDocument {
      */
     public void setLauncherType(String launcherType) {
         this.launcherType = launcherType;
+    }
+
+    /**
+     * @return the monitoringMode
+     */
+    public boolean isMonitoringMode() {
+        return monitoringMode;
+    }
+
+    /**
+     * @param monitoringMode the monitoringMode to set
+     */
+    public void setMonitoringMode(boolean monitoringMode) {
+        this.monitoringMode = monitoringMode;
     }
     
 }

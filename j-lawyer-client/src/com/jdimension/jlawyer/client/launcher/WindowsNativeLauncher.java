@@ -703,6 +703,7 @@ public class WindowsNativeLauncher extends NativeLauncher {
                 odoc = new ObservedDocument(url, store, thisLauncher);
                 DocumentObserver observer = DocumentObserver.getInstance();
                 odoc.setStatus(ObservedDocument.STATUS_LAUNCHING);
+                odoc.setMonitoringMode(true);
                 observer.addDocument(odoc);
 
                 try {
@@ -714,13 +715,17 @@ public class WindowsNativeLauncher extends NativeLauncher {
                         odoc.setClosed(true);
                         throw new Exception("Datei kann nicht geöffnet werden: Desktop API wird nicht unterstützt!");
                     }
-                    odoc.setStatus(ObservedDocument.STATUS_OPEN);
+                    odoc.setStatus(ObservedDocument.STATUS_MONITORING);
+                    long launched=System.currentTimeMillis();
                     if (store.isReadOnly()) {
                         d.open(new File(url));
                     } else {
                         //d.edit(new File(url));
                         d.open(new File(url));
                     }
+                    long launchDuration=System.currentTimeMillis()-launched;
+                    if(launchDuration>30000)
+                        odoc.setClosed(true);
 
                 } catch (final Exception ex) {
 
@@ -734,7 +739,7 @@ public class WindowsNativeLauncher extends NativeLauncher {
 
                 }
 
-                odoc.setClosed(true);
+                //odoc.setClosed(true);
 
             }
         }).start();

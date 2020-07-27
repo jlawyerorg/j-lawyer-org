@@ -696,14 +696,13 @@ public class CustomLauncher extends Launcher {
         new Thread(new Runnable() {
 
             public void run() {
-
+                ObservedCustomDocument odoc = null;
                 try {
-
-                    ObservedCustomDocument odoc = null;
 
                     odoc = new ObservedCustomDocument(url, store, thisLauncher);
                     DocumentObserver observer = DocumentObserver.getInstance();
                     odoc.setStatus(ObservedDocument.STATUS_LAUNCHING);
+                    odoc.setMonitoringMode(true);
                     observer.addDocument(odoc);
 
                     String extension = "?";
@@ -731,10 +730,12 @@ public class CustomLauncher extends Launcher {
 
                         }
 
+                        long launched=System.currentTimeMillis();
                         ProcessBuilder pb = new ProcessBuilder(execParams);
                         pb.redirectErrorStream(true);
 
-                        odoc.setStatus(ObservedDocument.STATUS_OPEN);
+                        //odoc.setStatus(ObservedDocument.STATUS_OPEN);
+                        odoc.setStatus(ObservedDocument.STATUS_MONITORING);
                         Process process = pb.start();
                         BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
                         String line;
@@ -743,11 +744,13 @@ public class CustomLauncher extends Launcher {
                         }
 
                         process.waitFor();
+                        
+                        long launchDuration=System.currentTimeMillis()-launched;
 
                         // many applications - mainly under Windows - "share" the same process (MDI applications)
                         // only set document closed if all documents of that type are closed
                         int openDocs=observer.countOpenDocumentsWithExtension(extension);
-                        if(openDocs<=1) {
+                        if(openDocs<=1 && launchDuration>30000) {
                             odoc.setClosed(true);
                         } else {
                             log.debug("There are " + openDocs + " open documents with extension " + extension + "; therefore leaving document " + odoc.getName() + " open because it might have just opened in an already existing process.");
@@ -759,6 +762,7 @@ public class CustomLauncher extends Launcher {
                     }
 
                 } catch (final Throwable t) {
+                    odoc.setClosed(true);
                     SwingUtilities.invokeLater(new Runnable() {
 
                         public void run() {
