@@ -666,6 +666,7 @@ package com.jdimension.jlawyer.ui.folders;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.util.ArrayList;
+import java.util.Locale;
 import javax.swing.JTree;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
@@ -676,40 +677,67 @@ import javax.swing.tree.TreePath;
  * @author jens
  */
 public class FoldersTree extends JTree {
-    
+
     public FoldersTree() {
         super();
-        
+
         setPreferredSize(new Dimension(200, 300));
-    //setRootVisible(false);
-    setRowHeight(35);
-    setBackground(Color.BLUE);
-    setUI(new FoldersTreeUI());
-    setCellRenderer(new FolderCellRenderer());
-    
-    setEditable(true);
+        //setRootVisible(false);
+        setRowHeight(35);
+        setBackground(Color.BLUE);
+        setUI(new FoldersTreeUI());
+        setCellRenderer(new FolderCellRenderer());
+
+        setEditable(true);
         setCellEditor(new FolderCellEditor());
-    
-//    addTreeSelectionListener(new javax.swing.event.TreeSelectionListener() {
-//            public void valueChanged(javax.swing.event.TreeSelectionEvent evt) {
-//                if(ignoreSelections)
-//                    return;
-//                clearSelection();
-//                updateUI();
-//                ignoreSelections=true;
-//                TreePath[] selected=evt.getPaths();
-//                ArrayList<TreePath> list=new ArrayList<TreePath>();
-//                for(TreePath p: selected) {
-//                    DefaultMutableTreeNode node=(DefaultMutableTreeNode)p.getLastPathComponent();
-//                    list.addAll(getSubTree(node));
-//                }
-//                setSelectionPaths(list.toArray(new TreePath[0]));
-//                ignoreSelections=false;
-//            }
-//        });
-    
-    } 
-    
+        
+        setSelectionModel(new FoldersTreeSelectionModel());
+
+    }
+
+    @Override
+    public void setSelectionPath(TreePath path) {
+
+        System.out.println("MLDebugJTree: setSelectionPath(" + path + ")");
+
+        addSelectionPath(path);
+
+        return;
+        //super.setSelectionPath(path);
+    }
+
+    @Override
+    public void setSelectionPaths(TreePath[] paths) {
+
+        System.out.println("MLDebugJTree: setSelectionPaths(" + paths + ")");
+
+        addSelectionPaths(paths);
+
+        return;
+    }
+
+    @Override
+    public void setSelectionRow(int row) {
+
+        System.out.println("MLDebugJTree: setSelectionRow(" + row + ")");
+
+        addSelectionRow(row);
+
+        return;
+        //super.setSelectionRow(row);
+    }
+
+    @Override
+    public void setSelectionRows(int[] rows) {
+
+        System.out.println("MLDebugJTree: setSelectionRows(" + rows + ")");
+
+        addSelectionRows(rows);
+
+        return;
+        //super.setSelectionRows(rows);
+    }
+
 //    private ArrayList<TreePath> getSubTree(DefaultMutableTreeNode node) {
 //        ArrayList<TreePath> list=new ArrayList<TreePath>();
 //        list.add(new TreePath(node.getPath()));
@@ -720,5 +748,4 @@ public class FoldersTree extends JTree {
 //        
 //        return list;
 //    }
-    
 }

@@ -663,12 +663,13 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.ui.folders;
 
-import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Insets;
 import java.awt.Rectangle;
+import java.awt.event.MouseEvent;
 import javax.swing.Icon;
 import javax.swing.JComponent;
+import javax.swing.SwingUtilities;
 import javax.swing.plaf.basic.BasicTreeUI;
 import javax.swing.tree.TreePath;
 import themes.colors.DefaultColorTheme;
@@ -677,37 +678,38 @@ import themes.colors.DefaultColorTheme;
  *
  * @author jens
  */
-public class FoldersTreeUI extends BasicTreeUI
-{
-  @Override
-  public Icon getExpandedIcon()
-  {
-    return null;
-  }
+public class FoldersTreeUI extends BasicTreeUI {
 
-  @Override
-  public Icon getCollapsedIcon()
-  {
-    return null;
-  }
-
-  @Override
-  protected void paintVerticalLine(Graphics g, JComponent c, int x, int top, int bottom)
-  {}
-
-  @Override
-  protected void paintHorizontalLine(Graphics g, JComponent c, int y, int left, int right)
-  {}
-
-  @Override
-  protected void paintRow(Graphics g, Rectangle clipBounds, Insets insets, Rectangle bounds, TreePath path, int row, boolean isExpanded, boolean hasBeenExpanded, boolean isLeaf)
-  {
-    if(tree.isRowSelected(row))
-    {
-      g.setColor(DefaultColorTheme.COLOR_LOGO_GREEN);
-      g.fillRect(0, row * tree.getRowHeight(), tree.getWidth(), tree.getRowHeight());
+    @Override
+    public Icon getExpandedIcon() {
+        return null;
     }
 
-    super.paintRow(g, clipBounds, insets, bounds, path, row, isExpanded, hasBeenExpanded, isLeaf);
-  }
+    @Override
+    public Icon getCollapsedIcon() {
+        return null;
+    }
+
+    @Override
+    protected void paintVerticalLine(Graphics g, JComponent c, int x, int top, int bottom) {
+    }
+
+    @Override
+    protected void paintHorizontalLine(Graphics g, JComponent c, int y, int left, int right) {
+    }
+
+    @Override
+    protected void paintRow(Graphics g, Rectangle clipBounds, Insets insets, Rectangle bounds, TreePath path, int row, boolean isExpanded, boolean hasBeenExpanded, boolean isLeaf) {
+        if (tree.isRowSelected(row)) {
+            g.setColor(DefaultColorTheme.COLOR_LOGO_GREEN);
+            g.fillRect(0, row * tree.getRowHeight(), tree.getWidth(), tree.getRowHeight());
+        }
+
+        super.paintRow(g, clipBounds, insets, bounds, path, row, isExpanded, hasBeenExpanded, isLeaf);
+    }
+
+    @Override
+    protected boolean isToggleSelectionEvent(MouseEvent event) {
+        return SwingUtilities.isLeftMouseButton(event);
+    }
 }
