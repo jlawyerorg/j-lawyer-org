@@ -809,4 +809,14 @@ public interface ArchiveFileServiceRemote {
 
     String getFileNumber(String id);
 
+    List<DocumentFolderTemplate> getAllFolderTemplates();
+
+    void addFolderTemplate(DocumentFolderTemplate template);
+
+    void removeFolderTemplate(String name);
+
+    void updateFolderTemplate(DocumentFolderTemplate template);
+
+    DocumentFolderTemplate getFolderTemplate(String name);
+
 }

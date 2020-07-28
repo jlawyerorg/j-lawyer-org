@@ -1090,6 +1090,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuArchiveFileCustomFieldsInvolvements = new javax.swing.JMenuItem();
         mnuArchiveFileOptionsCaseNumbering = new javax.swing.JMenuItem();
         mnuFormsManager = new javax.swing.JMenuItem();
+        mnuDocumentFolderTemplates = new javax.swing.JMenuItem();
         mnuDocumentOptions = new javax.swing.JMenu();
         mnuScanOptions = new javax.swing.JMenuItem();
         mnuWordProcessor = new javax.swing.JMenuItem();
@@ -1495,6 +1496,15 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             }
         });
         mnuArchiveFileOptions.add(mnuFormsManager);
+
+        mnuDocumentFolderTemplates.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_account_tree_black_48dp.png"))); // NOI18N
+        mnuDocumentFolderTemplates.setText("Dokumentordner");
+        mnuDocumentFolderTemplates.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuDocumentFolderTemplatesActionPerformed(evt);
+            }
+        });
+        mnuArchiveFileOptions.add(mnuDocumentFolderTemplates);
 
         mnuOptions.add(mnuArchiveFileOptions);
 
@@ -2532,6 +2542,24 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         dlg.setVisible(true);
     }//GEN-LAST:event_mnuAddressOptionsTitleInAddressActionPerformed
 
+    private void mnuDocumentFolderTemplatesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuDocumentFolderTemplatesActionPerformed
+        ClientSettings settings = ClientSettings.getInstance();
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            boolean currentlyAdmin = locator.lookupSecurityServiceRemote().isAdmin();
+            if (currentlyAdmin) {
+                DocumentFolderTemplatesDialog dlg = new DocumentFolderTemplatesDialog(this, true);
+                FrameUtils.centerDialog(dlg, this);
+                dlg.setVisible(true);
+            } else {
+                JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.adminrequired"), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.hint"), JOptionPane.INFORMATION_MESSAGE);
+            }
+        } catch (Exception ex) {
+            log.error(ex);
+            JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("error.launchsettings") + ex.getMessage(), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.error"), JOptionPane.INFORMATION_MESSAGE);
+        }
+    }//GEN-LAST:event_mnuDocumentFolderTemplatesActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -2589,6 +2617,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     private javax.swing.JMenu mnuCalculations;
     private javax.swing.JCheckBoxMenuItem mnuChkRandomBackground;
     private javax.swing.JMenuItem mnuCustomLauncherOptions;
+    private javax.swing.JMenuItem mnuDocumentFolderTemplates;
     private javax.swing.JMenuItem mnuDocumentMonitor;
     private javax.swing.JMenu mnuDocumentOptions;
     private javax.swing.JMenuItem mnuDocumentTags;
