@@ -1840,7 +1840,7 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
 
         if (this.chkSaveAsDocument.isSelected() || !(this.radioReviewTypeNone.isSelected())) {
             if (this.contextArchiveFile == null) {
-                SearchAndAssignDialog saDlg = new SearchAndAssignDialog(this, true);
+                SearchAndAssignDialog saDlg = new SearchAndAssignDialog(this, true, ""+this.cmbAzRecipient.getEditor().getItem().toString()+this.txtAzSender.getText()+this.txtSubject.getText());
                 saDlg.setVisible(true);
                 this.contextArchiveFile = saDlg.getSelection();
 
@@ -2227,7 +2227,7 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
 
         if (this.chkSaveAsDocument.isSelected() || !(this.radioReviewTypeNone.isSelected())) {
             if (this.contextArchiveFile == null) {
-                SearchAndAssignDialog saDlg = new SearchAndAssignDialog(this, true);
+                SearchAndAssignDialog saDlg = new SearchAndAssignDialog(this, true, ""+this.cmbAzRecipient.getEditor().getItem().toString()+this.txtAzSender.getText()+this.txtSubject.getText());
                 saDlg.setVisible(true);
                 this.contextArchiveFile = saDlg.getSelection();
 

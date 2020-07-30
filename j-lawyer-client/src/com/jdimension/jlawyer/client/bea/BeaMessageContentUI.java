@@ -1537,7 +1537,11 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
             return;
         }
 
-        SearchAndAssignDialog dlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true);
+        String searchContext=null;
+        if(this.msgContainer!=null) {
+            searchContext=""+msgContainer.getReferenceJustice()+msgContainer.getReferenceNumber()+msgContainer.getSubject()+msgContainer.getBody();
+        }
+        SearchAndAssignDialog dlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true, searchContext);
         dlg.setVisible(true);
         ArchiveFileBean sel = dlg.getSelection();
 

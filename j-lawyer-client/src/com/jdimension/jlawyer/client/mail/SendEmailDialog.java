@@ -1730,7 +1730,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
 
         if (this.chkSaveAsDocument.isSelected() || !(this.radioReviewTypeNone.isSelected())) {
             if (this.contextArchiveFile == null) {
-                SearchAndAssignDialog saDlg = new SearchAndAssignDialog(this, true);
+                SearchAndAssignDialog saDlg = new SearchAndAssignDialog(this, true, ""+this.txtSubject.getText()+ed.getText());
                 saDlg.setVisible(true);
                 this.contextArchiveFile = saDlg.getSelection();
 
