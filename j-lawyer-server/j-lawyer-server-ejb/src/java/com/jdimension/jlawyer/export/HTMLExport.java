@@ -1003,6 +1003,18 @@ public class HTMLExport {
                 //sb.append("<tr valign=\"top\"><td><p class=\"post_info\">");
                 sb.append("<p class=\"post_info\">");
                 sb.append(toHtml4(ab.toDisplayName() + " (" + pt.getName() + ")"));
+                if(ab.getStreet()!=null && ab.getZipCode()!=null && ab.getCity()!=null) {
+                    if(!("".equals(ab.getStreet())) && !("".equals(ab.getZipCode())) && !("".equals(ab.getCity()))) {
+                        sb.append(toHtml4(", " + ab.getStreet()));
+                        if(ab.getStreetNumber()!=null && !"".equals(ab.getStreetNumber()))
+                            sb.append(toHtml4(" "+ab.getStreetNumber()));
+                        sb.append(toHtml4(", " + ab.getZipCode() + " " + ab.getCity()));
+                    }
+                }
+                if(ab.getPhone()!=null)
+                    sb.append(", Tel: " + ab.getPhone());
+                if(ab.getMobile()!=null)
+                    sb.append(", Mob: " + ab.getMobile());
 //                sb.append("</p></td><td><p class=\"post_info\">");
 //                sb.append(rb.getReviewReason());
                 //sb.append("</p></td></tr>");
