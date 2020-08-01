@@ -4135,4 +4135,67 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         return this.folderTemplateFacade.findByName(name);
     }
 
+    @Override
+    public DocumentFolder addFolderToTemplate(String templateName, DocumentFolder folder) throws Exception {
+        
+        DocumentFolderTemplate t=this.folderTemplateFacade.findByName(templateName);
+        if(t==null)
+            throw new Exception("Ordnerstruktur " + templateName + " existiert nicht!");
+        
+        if(folder==null)
+            throw new Exception("Ordner kann nicht erstellt werden (leer)!");
+
+        if(folder.getName()==null || "".equals(folder.getName().trim()))
+            throw new Exception("Ordnername darf nicht leer sein!");
+        
+        if(folder.getParentId()==null || "".equals(folder.getParentId()))
+            throw new Exception("Übergeordneter Ordner darf nicht leer sein!");
+
+        DocumentFolder parent=this.folderFacade.find(folder.getParentId());
+        if(parent==null)
+            throw new Exception("Übergeordneter Ordner kann nicht gefunden werden!");
+        
+        StringGenerator idGen = new StringGenerator();
+        folder.setId(idGen.getID().toString());
+        this.folderFacade.create(folder);
+        return folder;
+        
+    }
+
+    @Override
+    public void removeFolderFromTemplate(String folderId) throws Exception {
+        
+        if(folderId==null || "".equals(folderId))
+            throw new Exception("Ordner-ID darf nicht leer sein!");
+        
+        DocumentFolder df=this.folderFacade.find(folderId);
+        if(df==null)
+            throw new Exception("Ordner kann nicht gefunden werden!");
+        
+        this.folderFacade.remove(df);
+        
+    }
+
+    @Override
+    public void cloneFolderTemplate(String sourceTemplateName, String targetTemplateName) throws Exception {
+        DocumentFolderTemplate source= this.getFolderTemplate(sourceTemplateName);
+        DocumentFolderTemplate target=new DocumentFolderTemplate();
+        target.setName(targetTemplateName);
+        this.addFolderTemplate(target);
+        target=this.getFolderTemplate(targetTemplateName);
+        DocumentFolder sourceRoot=source.getRootFolder();
+        DocumentFolder targetRoot=target.getRootFolder();
+        this.cloneFolderTemplateRecursive(targetTemplateName, sourceRoot, targetRoot);
+    }
+    
+    private void cloneFolderTemplateRecursive(String targetTemplateName, DocumentFolder from, DocumentFolder to) throws Exception {
+        for(DocumentFolder child: from.getChildren()) {
+            DocumentFolder newChild=new DocumentFolder();
+            newChild.setName(child.getName());
+            newChild.setParentId(to.getId());
+            this.addFolderToTemplate(targetTemplateName, newChild);
+            this.cloneFolderTemplateRecursive(targetTemplateName, child, newChild);
+        }
+    }
+
 }

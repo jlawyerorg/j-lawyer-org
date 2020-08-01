@@ -819,4 +819,10 @@ public interface ArchiveFileServiceRemote {
 
     DocumentFolderTemplate getFolderTemplate(String name);
 
+    DocumentFolder addFolderToTemplate(String templateName, DocumentFolder folder) throws Exception;
+
+    void removeFolderFromTemplate(String folderId) throws Exception;
+
+    void cloneFolderTemplate(String sourceTemplateName, String targetTemplateName) throws Exception;
+
 }

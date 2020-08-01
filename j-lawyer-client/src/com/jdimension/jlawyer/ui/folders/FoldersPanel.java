@@ -663,6 +663,9 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.ui.folders;
 
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
+
 /**
  *
  * @author jens
@@ -674,6 +677,14 @@ public class FoldersPanel extends javax.swing.JPanel {
      */
     public FoldersPanel() {
         initComponents();
+        
+        DefaultMutableTreeNode root=new DefaultMutableTreeNode("Dokumente");
+        DefaultMutableTreeNode sub1=new DefaultMutableTreeNode("Unterordner 1");
+        root.add(sub1);
+        sub1.add(new DefaultMutableTreeNode("UUordner 1"));
+        root.add(new DefaultMutableTreeNode("Unterordner 2"));
+        root.add(new DefaultMutableTreeNode("Unterordner 3"));
+        this.treeFolders.setModel(new DefaultTreeModel(root));
     }
 
     /**

@@ -664,10 +664,18 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.client.configuration;
 
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.utils.ComponentUtils;
+import com.jdimension.jlawyer.persistence.DocumentFolder;
 import com.jdimension.jlawyer.persistence.DocumentFolderTemplate;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import javax.swing.JOptionPane;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.MutableTreeNode;
+import javax.swing.tree.TreePath;
 import org.apache.log4j.Logger;
 
 /**
@@ -690,8 +698,13 @@ public class DocumentFolderTemplatesDialog extends javax.swing.JDialog {
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             List<DocumentFolderTemplate> allTemplates = locator.lookupArchiveFileServiceRemote().getAllFolderTemplates();
+            ArrayList<String> templateNames=new ArrayList<>();
             for (DocumentFolderTemplate t : allTemplates) {
-                this.cmbTemplates.addItem(t.getName());
+                templateNames.add(t.getName());
+            }
+            Collections.sort(templateNames);
+            for(String tName: templateNames) {
+                this.cmbTemplates.addItem(tName);
             }
 
         } catch (Exception ex) {
@@ -711,20 +724,55 @@ public class DocumentFolderTemplatesDialog extends javax.swing.JDialog {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        popFolders = new javax.swing.JPopupMenu();
+        mnuNewFolder = new javax.swing.JMenuItem();
+        mnuRemoveFolder = new javax.swing.JMenuItem();
         cmbTemplates = new javax.swing.JComboBox<>();
         jScrollPane1 = new javax.swing.JScrollPane();
-        jTree1 = new javax.swing.JTree();
+        treeFolders = new javax.swing.JTree();
         cmdAdd = new javax.swing.JButton();
         cmdRemove = new javax.swing.JButton();
         cmdClose = new javax.swing.JButton();
         cmdEdit = new javax.swing.JButton();
+        cmdCloneTemplate = new javax.swing.JButton();
+
+        mnuNewFolder.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit_add.png"))); // NOI18N
+        mnuNewFolder.setText("neuer Ordner");
+        mnuNewFolder.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuNewFolderActionPerformed(evt);
+            }
+        });
+        popFolders.add(mnuNewFolder);
+
+        mnuRemoveFolder.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editdelete.png"))); // NOI18N
+        mnuRemoveFolder.setText("Ordner löschen");
+        mnuRemoveFolder.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuRemoveFolderActionPerformed(evt);
+            }
+        });
+        popFolders.add(mnuRemoveFolder);
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Dokumentordner");
 
         cmbTemplates.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+        cmbTemplates.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmbTemplatesActionPerformed(evt);
+            }
+        });
 
-        jScrollPane1.setViewportView(jTree1);
+        treeFolders.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                treeFoldersMousePressed(evt);
+            }
+            public void mouseReleased(java.awt.event.MouseEvent evt) {
+                treeFoldersMouseReleased(evt);
+            }
+        });
+        jScrollPane1.setViewportView(treeFolders);
 
         cmdAdd.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit_add.png"))); // NOI18N
         cmdAdd.addActionListener(new java.awt.event.ActionListener() {
@@ -755,6 +803,14 @@ public class DocumentFolderTemplatesDialog extends javax.swing.JDialog {
             }
         });
 
+        cmdCloneTemplate.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/tooloptions.png"))); // NOI18N
+        cmdCloneTemplate.setToolTipText("Struktur duplizieren");
+        cmdCloneTemplate.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdCloneTemplateActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -768,7 +824,9 @@ public class DocumentFolderTemplatesDialog extends javax.swing.JDialog {
                         .addComponent(cmdRemove)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cmdEdit)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 319, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdCloneTemplate)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 259, Short.MAX_VALUE)
                         .addComponent(cmdAdd))
                     .addComponent(jScrollPane1)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
@@ -781,12 +839,14 @@ public class DocumentFolderTemplatesDialog extends javax.swing.JDialog {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(cmdAdd)
-                        .addComponent(cmdRemove)
-                        .addComponent(cmbTemplates))
+                    .addComponent(cmbTemplates)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(cmdEdit)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                .addComponent(cmdAdd)
+                                .addComponent(cmdRemove))
+                            .addComponent(cmdEdit)
+                            .addComponent(cmdCloneTemplate))
                         .addGap(0, 0, Short.MAX_VALUE)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 381, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -872,6 +932,148 @@ public class DocumentFolderTemplatesDialog extends javax.swing.JDialog {
         }
     }//GEN-LAST:event_cmdEditActionPerformed
 
+    private void cmbTemplatesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbTemplatesActionPerformed
+        ClientSettings settings = ClientSettings.getInstance();
+        try {
+            if (this.cmbTemplates.getSelectedItem() == null) {
+                return;
+            }
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            DocumentFolderTemplate template = locator.lookupArchiveFileServiceRemote().getFolderTemplate(this.cmbTemplates.getSelectedItem().toString());
+            if (template == null) {
+                return;
+            }
+            DefaultMutableTreeNode root = new DefaultMutableTreeNode(template.getName());
+            DefaultTreeModel tm = new DefaultTreeModel(buildTree(template.getRootFolder()));
+            this.treeFolders.setModel(tm);
+            ComponentUtils.expandTree(treeFolders);
+        } catch (Exception ex) {
+            log.error("Error connecting to server", ex);
+            //JOptionPane.showMessageDialog(this.owner, "Verbindungsfehler: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+    }//GEN-LAST:event_cmbTemplatesActionPerformed
+
+    private void mnuNewFolderActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuNewFolderActionPerformed
+        DefaultMutableTreeNode tn = (DefaultMutableTreeNode) this.treeFolders.getSelectionPath().getLastPathComponent();
+        DocumentFolder gn = (DocumentFolder) tn.getUserObject();
+
+        ClientSettings settings = ClientSettings.getInstance();
+        String newFolderName = "Neuer Ordner";
+        Object newNameObject = JOptionPane.showInputDialog(this, "Name des Ordners: ", "Neuen Ordner anlegen", JOptionPane.QUESTION_MESSAGE, null, null, "neuer Ordner");
+        if (newNameObject == null) {
+            return;
+        }
+        newFolderName = newNameObject.toString();
+        //EditorsRegistry.getInstance().updateStatus("Adresse wird gespeichert...");
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            DocumentFolder newFld = new DocumentFolder();
+            newFld.setName(newFolderName);
+            newFld.setParentId(gn.getId());
+            DocumentFolder newFolderNode = locator.lookupArchiveFileServiceRemote().addFolderToTemplate(this.cmbTemplates.getSelectedItem().toString(), newFld);
+            DefaultMutableTreeNode newTn = new DefaultMutableTreeNode(newFolderNode);
+
+            DefaultTreeModel dm = (DefaultTreeModel) this.treeFolders.getModel();
+            dm.insertNodeInto(newTn, tn, 0);
+            this.cmbTemplatesActionPerformed(null);
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Fehler beim Erstellen des Ordners: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+        }
+    }//GEN-LAST:event_mnuNewFolderActionPerformed
+
+    private void mnuRemoveFolderActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuRemoveFolderActionPerformed
+
+        DefaultMutableTreeNode tn = (DefaultMutableTreeNode) this.treeFolders.getSelectionPath().getLastPathComponent();
+        DocumentFolder gn = (DocumentFolder) tn.getUserObject();
+
+        ClientSettings settings = ClientSettings.getInstance();
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            locator.lookupArchiveFileServiceRemote().removeFolderFromTemplate(gn.getId());
+
+            this.treeFolders.setSelectionPath(new TreePath(((DefaultMutableTreeNode) tn.getParent()).getPath()));
+            DefaultTreeModel dm = (DefaultTreeModel) this.treeFolders.getModel();
+            dm.removeNodeFromParent(tn);
+            this.cmbTemplatesActionPerformed(null);
+
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Fehler beim Erstellen des Ordners: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+        }
+    }//GEN-LAST:event_mnuRemoveFolderActionPerformed
+
+    private void treeFoldersMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_treeFoldersMousePressed
+        this.showPopupMenu(evt);
+    }//GEN-LAST:event_treeFoldersMousePressed
+
+    private void treeFoldersMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_treeFoldersMouseReleased
+        this.showPopupMenu(evt);
+    }//GEN-LAST:event_treeFoldersMouseReleased
+
+    private void cmdCloneTemplateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCloneTemplateActionPerformed
+        String name = JOptionPane.showInputDialog(this, "Name der Ordnerstruktur: ", "");
+        if (name == null || "".equals(name)) {
+            return;
+        }
+
+        ClientSettings settings = ClientSettings.getInstance();
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            String sourceName = this.cmbTemplates.getSelectedItem().toString();
+            DocumentFolderTemplate t = locator.lookupArchiveFileServiceRemote().getFolderTemplate(sourceName);
+            if (t != null) {
+                locator.lookupArchiveFileServiceRemote().cloneFolderTemplate(sourceName, name);
+                this.cmbTemplates.addItem(name);
+                this.cmbTemplates.setSelectedItem(name);
+            }
+        } catch (Exception ex) {
+            log.error("Error connecting to server", ex);
+            //JOptionPane.showMessageDialog(this.owner, "Verbindungsfehler: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+    }//GEN-LAST:event_cmdCloneTemplateActionPerformed
+
+    private void showPopupMenu(java.awt.event.MouseEvent evt) {
+        if (evt.isPopupTrigger()) {
+            int row = this.treeFolders.getRowForLocation(evt.getX(), evt.getY());
+            if (row < 0) {
+                return;
+            }
+
+            this.treeFolders.setSelectionRow(row);
+
+            if (this.treeFolders.getSelectionPath() == null) {
+                return;
+            }
+
+            if (this.treeFolders.getSelectionPath().getLastPathComponent() == null) {
+                return;
+            }
+
+            DefaultMutableTreeNode tn = (DefaultMutableTreeNode) this.treeFolders.getSelectionPath().getLastPathComponent();
+            DocumentFolder df = (DocumentFolder) tn.getUserObject();
+            if (df.getParentId() == null) {
+                this.mnuRemoveFolder.setEnabled(false);
+//                this.mnuRenameFolder.setEnabled(false);
+            } else {
+                this.mnuRemoveFolder.setEnabled(true);
+//                this.mnuRenameFolder.setEnabled(true);
+            }
+
+            this.popFolders.show(evt.getComponent(), evt.getX(), evt.getY());
+        }
+    }
+
+    private MutableTreeNode buildTree(DocumentFolder df) {
+        DefaultMutableTreeNode node = new DefaultMutableTreeNode(df);
+        for (DocumentFolder child : df.getChildren()) {
+            node.add(buildTree(child));
+        }
+        return node;
+    }
+
     /**
      * @param args the command line arguments
      */
@@ -917,10 +1119,14 @@ public class DocumentFolderTemplatesDialog extends javax.swing.JDialog {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JComboBox<String> cmbTemplates;
     private javax.swing.JButton cmdAdd;
+    private javax.swing.JButton cmdCloneTemplate;
     private javax.swing.JButton cmdClose;
     private javax.swing.JButton cmdEdit;
     private javax.swing.JButton cmdRemove;
     private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JTree jTree1;
+    private javax.swing.JMenuItem mnuNewFolder;
+    private javax.swing.JMenuItem mnuRemoveFolder;
+    private javax.swing.JPopupMenu popFolders;
+    private javax.swing.JTree treeFolders;
     // End of variables declaration//GEN-END:variables
 }

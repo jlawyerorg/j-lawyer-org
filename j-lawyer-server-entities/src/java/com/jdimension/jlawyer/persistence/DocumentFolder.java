@@ -676,8 +676,8 @@ import javax.xml.bind.annotation.XmlRootElement;
 @Table(name = "document_folders")
 @XmlRootElement
 @NamedQueries({
-    @NamedQuery(name = "DocumentFolder.findAll", query = "SELECT a FROM DocumentFolderTemplate a"),
-    @NamedQuery(name = "DocumentFolder.findById", query = "SELECT a FROM DocumentFolderTemplate a WHERE a.id = :id")})
+    @NamedQuery(name = "DocumentFolder.findAll", query = "SELECT a FROM DocumentFolder a"),
+    @NamedQuery(name = "DocumentFolder.findById", query = "SELECT a FROM DocumentFolder a WHERE a.id = :id")})
 public class DocumentFolder implements Serializable {
     
     private static final long serialVersionUID = 1L;
@@ -759,6 +759,11 @@ public class DocumentFolder implements Serializable {
      */
     public void setChildren(List<DocumentFolder> children) {
         this.children = children;
+    }
+
+    @Override
+    public String toString() {
+        return name;
     }
 
     

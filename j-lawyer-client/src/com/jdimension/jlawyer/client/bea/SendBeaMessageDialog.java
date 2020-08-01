@@ -1213,9 +1213,9 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
         chkDocumentTagging = new javax.swing.JCheckBox();
         jPanel2 = new javax.swing.JPanel();
         rdXjustiz = new javax.swing.JRadioButton();
-        chkSignMessage = new javax.swing.JCheckBox();
         rdXjustizEeb = new javax.swing.JRadioButton();
         cmbMessageType = new javax.swing.JComboBox<>();
+        jLabel5 = new javax.swing.JLabel();
         jPanel1 = new javax.swing.JPanel();
         jLabel4 = new javax.swing.JLabel();
         cmbTemplates = new javax.swing.JComboBox();
@@ -1617,19 +1617,6 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
             }
         });
 
-        chkSignMessage.setText("signieren");
-        chkSignMessage.setEnabled(false);
-        chkSignMessage.addChangeListener(new javax.swing.event.ChangeListener() {
-            public void stateChanged(javax.swing.event.ChangeEvent evt) {
-                chkSignMessageStateChanged(evt);
-            }
-        });
-        chkSignMessage.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                chkSignMessageActionPerformed(evt);
-            }
-        });
-
         buttonGroupTextHtml.add(rdXjustizEeb);
         rdXjustizEeb.setText("Zustellung gegen Empfangsbekenntnis");
         rdXjustizEeb.addActionListener(new java.awt.event.ActionListener() {
@@ -1640,6 +1627,10 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
 
         cmbMessageType.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Allgemeine Nachricht", "Mahnantrag", "Testnachricht" }));
 
+        jLabel5.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/fileicons/file_type_p7s.png"))); // NOI18N
+        jLabel5.setToolTipText("Nachricht wird nicht qualifiziert signiert");
+        jLabel5.setEnabled(false);
+
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
@@ -1649,11 +1640,14 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel2Layout.createSequentialGroup()
                         .addComponent(cmbMessageType, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(18, 18, 18)
-                        .addComponent(chkSignMessage))
-                    .addComponent(rdXjustiz)
-                    .addComponent(rdXjustizEeb))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jLabel5))
+                    .addGroup(jPanel2Layout.createSequentialGroup()
+                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(rdXjustiz)
+                            .addComponent(rdXjustizEeb))
+                        .addGap(0, 0, Short.MAX_VALUE)))
+                .addContainerGap())
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1662,9 +1656,9 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(rdXjustizEeb)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addComponent(cmbMessageType, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(chkSignMessage))
+                    .addComponent(jLabel5))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
@@ -2135,14 +2129,6 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
         settings.setConfiguration(ClientSettings.CONF_BEASEND_LASTDOCUMENTTAG, lastTag);
     }//GEN-LAST:event_cmbDocumentTagActionPerformed
 
-    private void chkSignMessageStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_chkSignMessageStateChanged
-
-    }//GEN-LAST:event_chkSignMessageStateChanged
-
-    private void chkSignMessageActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkSignMessageActionPerformed
-
-    }//GEN-LAST:event_chkSignMessageActionPerformed
-
     private void mnuRemoveAttachmentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuRemoveAttachmentActionPerformed
         if (this.tblAttachments.getSelectedRow() > -1) {
             int[] selectedRows = this.tblAttachments.getSelectedRows();
@@ -2514,7 +2500,6 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
     private javax.swing.ButtonGroup buttonGroupTextHtml;
     private javax.swing.JCheckBox chkDocumentTagging;
     private javax.swing.JCheckBox chkSaveAsDocument;
-    private javax.swing.JCheckBox chkSignMessage;
     private javax.swing.JComboBox<String> cmbAzRecipient;
     private javax.swing.JComboBox<String> cmbDocumentTag;
     private javax.swing.JComboBox<String> cmbFrom;
@@ -2536,6 +2521,7 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
+    private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel8;
     private javax.swing.JLabel jLabel9;
     private javax.swing.JPanel jPanel1;
