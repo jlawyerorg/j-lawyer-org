@@ -685,6 +685,7 @@ public class SortButton extends JButton {
     
     private static ImageIcon ICON_ASC=new javax.swing.ImageIcon(SortButton.class.getResource("/icons16/material/baseline_expand_less_white_48dp.png"));
     private static ImageIcon ICON_DESC=new javax.swing.ImageIcon(SortButton.class.getResource("/icons16/material/baseline_expand_more_white_48dp.png"));
+    private static ImageIcon ICON_NONE=new javax.swing.ImageIcon(SortButton.class.getResource("/icons16/material/empty_20_1px.png"));
 
     private int sortState = SORT_NONE;
 
@@ -711,25 +712,48 @@ public class SortButton extends JButton {
 
         this.setBackground(DefaultColorTheme.COLOR_LIGHT_GREY);
         this.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
+        setIcon(ICON_NONE);
     }
 
     private void buttonClicked(MouseEvent evt) {
-        if (this.sortState == SORT_NONE) {
-            this.sortState = SORT_ASC;
+        if (this.getSortState() == SORT_NONE) {
+            this.setSortState(SORT_ASC);
+        } else if (this.getSortState() == SORT_ASC) {
+            this.setSortState(SORT_DESC);
+            
+        } else if (this.getSortState() == SORT_DESC) {
+            this.setSortState(SORT_NONE);
+            
+        }
+    }
+
+    /**
+     * @return the sortState
+     */
+    public int getSortState() {
+        return sortState;
+    }
+
+    /**
+     * @param sortState the sortState to set
+     */
+    public void setSortState(int sortState) {
+        this.sortState = sortState;
+        
+        if (this.getSortState() == SORT_ASC) {
             this.setBackground(DefaultColorTheme.COLOR_LOGO_GREEN);
             this.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
             setIcon(ICON_ASC);
-        } else if (this.sortState == SORT_ASC) {
-            this.sortState = SORT_DESC;
+        } else if (this.getSortState() == SORT_DESC) {
             this.setBackground(DefaultColorTheme.COLOR_LOGO_BLUE);
             this.setForeground(DefaultColorTheme.COLOR_LIGHT_GREY);
             setIcon(ICON_DESC);
-        } else if (this.sortState == SORT_DESC) {
-            this.sortState = SORT_NONE;
+        } else if (this.getSortState() == SORT_NONE) {
             this.setBackground(DefaultColorTheme.COLOR_LIGHT_GREY);
             this.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
-            setIcon(null);
+            setIcon(ICON_NONE);
         }
+        
     }
 
 }

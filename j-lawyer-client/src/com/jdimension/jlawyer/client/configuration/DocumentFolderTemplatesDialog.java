@@ -665,6 +665,7 @@ package com.jdimension.jlawyer.client.configuration;
 
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
+import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.persistence.DocumentFolder;
 import com.jdimension.jlawyer.persistence.DocumentFolderTemplate;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
@@ -702,7 +703,7 @@ public class DocumentFolderTemplatesDialog extends javax.swing.JDialog {
             for (DocumentFolderTemplate t : allTemplates) {
                 templateNames.add(t.getName());
             }
-            Collections.sort(templateNames);
+            StringUtils.sortIgnoreCase(templateNames);
             for(String tName: templateNames) {
                 this.cmbTemplates.addItem(tName);
             }

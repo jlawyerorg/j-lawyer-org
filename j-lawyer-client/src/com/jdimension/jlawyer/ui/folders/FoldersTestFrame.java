@@ -665,6 +665,7 @@ package com.jdimension.jlawyer.ui.folders;
 
 import com.formdev.flatlaf.FlatIntelliJLaf;
 import java.awt.Color;
+import java.awt.Dimension;
 import javax.swing.UIManager;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
@@ -690,6 +691,20 @@ public class FoldersTestFrame extends javax.swing.JFrame {
         root.add(new DefaultMutableTreeNode("Unterordner 2"));
         root.add(new DefaultMutableTreeNode("Unterordner 3"));
         this.foldersTree1.setModel(new DefaultTreeModel(root));
+        
+//        //setPreferredSize(new Dimension(200, 300));
+//        //setRootVisible(false);
+//        this.foldersTree1.setRowHeight(35);
+//        this.foldersTree1.setBackground(Color.BLUE);
+//        this.foldersTree1.setUI(new FoldersTreeUI());
+//        this.foldersTree1.setCellRenderer(new FolderCellRenderer());
+//
+//        this.foldersTree1.setEditable(true);
+//        this.foldersTree1.setCellEditor(new FolderCellEditor());
+//        
+//        this.foldersTree1.setRootVisible(true);
+//        
+//        this.foldersTree1.setSelectionModel(new FoldersTreeSelectionModel());
         
         //this.foldersTree1.getSelectionModel().setSelectionMode(TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION);
         

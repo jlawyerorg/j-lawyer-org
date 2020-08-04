@@ -691,6 +691,8 @@ public class FoldersTree extends JTree {
         setEditable(true);
         setCellEditor(new FolderCellEditor());
         
+        this.setRootVisible(true);
+        
         setSelectionModel(new FoldersTreeSelectionModel());
 
     }

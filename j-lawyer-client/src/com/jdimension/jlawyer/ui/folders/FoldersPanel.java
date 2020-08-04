@@ -696,33 +696,29 @@ public class FoldersPanel extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jScrollPane2 = new javax.swing.JScrollPane();
-        treeFolders = new javax.swing.JTree();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        treeFolders = new com.jdimension.jlawyer.ui.folders.FoldersTree();
 
         setOpaque(false);
 
-        jScrollPane2.setBorder(null);
-        jScrollPane2.setOpaque(false);
-
         treeFolders.setOpaque(false);
-        treeFolders.setRootVisible(false);
-        jScrollPane2.setViewportView(treeFolders);
+        jScrollPane1.setViewportView(treeFolders);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane2)
+            .addComponent(jScrollPane1)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane2)
+            .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 328, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JScrollPane jScrollPane2;
-    private javax.swing.JTree treeFolders;
+    private javax.swing.JScrollPane jScrollPane1;
+    private com.jdimension.jlawyer.ui.folders.FoldersTree treeFolders;
     // End of variables declaration//GEN-END:variables
 }

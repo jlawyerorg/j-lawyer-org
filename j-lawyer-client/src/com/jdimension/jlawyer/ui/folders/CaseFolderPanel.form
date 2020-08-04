@@ -23,20 +23,8 @@
               </Group>
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Group type="102" attributes="0">
-                      <Component id="sortButton1" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace max="-2" attributes="0"/>
-                      <Component id="sortButton2" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace max="-2" attributes="0"/>
-                      <Component id="sortButton3" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace max="-2" attributes="0"/>
-                      <Component id="sortButton4" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace max="-2" attributes="0"/>
-                      <Component id="Diktatzeichen" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace max="-2" attributes="0"/>
-                      <Component id="jPanel2" max="32767" attributes="0"/>
-                  </Group>
-                  <Component id="jPanel3" max="32767" attributes="0"/>
+                  <Component id="jPanel3" pref="927" max="32767" attributes="0"/>
+                  <Component id="jPanel2" max="32767" attributes="0"/>
               </Group>
           </Group>
       </Group>
@@ -44,20 +32,13 @@
     <DimensionLayout dim="1">
       <Group type="103" groupAlignment="0" attributes="0">
           <Group type="102" attributes="0">
-              <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                  <Component id="jPanel1" max="32767" attributes="0"/>
-                  <Component id="jPanel2" max="32767" attributes="0"/>
-                  <Group type="103" alignment="1" groupAlignment="3" attributes="0">
-                      <Component id="sortButton1" alignment="3" min="-2" max="-2" attributes="0"/>
-                      <Component id="sortButton2" alignment="3" min="-2" max="-2" attributes="0"/>
-                      <Component id="sortButton3" alignment="3" min="-2" max="-2" attributes="0"/>
-                      <Component id="sortButton4" alignment="3" min="-2" max="-2" attributes="0"/>
-                      <Component id="Diktatzeichen" alignment="3" min="-2" max="-2" attributes="0"/>
-                  </Group>
+              <Group type="103" groupAlignment="0" attributes="0">
+                  <Component id="jPanel1" min="-2" max="-2" attributes="0"/>
+                  <Component id="jPanel2" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Component id="foldersPanel1" pref="435" max="32767" attributes="0"/>
+                  <Component id="foldersPanel1" pref="425" max="32767" attributes="0"/>
                   <Component id="jPanel3" max="32767" attributes="0"/>
               </Group>
           </Group>
@@ -70,9 +51,9 @@
       <Layout>
         <DimensionLayout dim="0">
           <Group type="103" groupAlignment="0" attributes="0">
-              <Group type="102" alignment="1" attributes="0">
-                  <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+              <Group type="102" alignment="0" attributes="0">
                   <Component id="jButton1" min="-2" max="-2" attributes="0"/>
+                  <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
               </Group>
           </Group>
         </DimensionLayout>
@@ -102,46 +83,98 @@
       <Layout>
         <DimensionLayout dim="0">
           <Group type="103" groupAlignment="0" attributes="0">
-              <EmptySpace min="0" pref="166" max="32767" attributes="0"/>
+              <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+              <Group type="103" rootIndex="1" groupAlignment="0" attributes="0">
+                  <Group type="102" alignment="0" attributes="0">
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="sortDate" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="sortName" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="sortFavorite" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="sortSize" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="sortDictateSign" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace pref="474" max="32767" attributes="0"/>
+                  </Group>
+              </Group>
           </Group>
         </DimensionLayout>
         <DimensionLayout dim="1">
           <Group type="103" groupAlignment="0" attributes="0">
-              <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+              <EmptySpace min="0" pref="40" max="32767" attributes="0"/>
+              <Group type="103" rootIndex="1" groupAlignment="0" attributes="0">
+                  <Group type="102" alignment="0" attributes="0">
+                      <EmptySpace min="-2" pref="2" max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="3" attributes="0">
+                          <Component id="sortDate" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="sortName" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="sortFavorite" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="sortSize" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="sortDictateSign" alignment="3" min="-2" max="-2" attributes="0"/>
+                      </Group>
+                      <EmptySpace max="32767" attributes="0"/>
+                  </Group>
+              </Group>
           </Group>
         </DimensionLayout>
       </Layout>
+      <SubComponents>
+        <Component class="com.jdimension.jlawyer.ui.folders.SortButton" name="sortDate">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="Datum"/>
+          </Properties>
+          <Events>
+            <EventHandler event="mouseClicked" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="sortDateMouseClicked"/>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="sortDateActionPerformed"/>
+          </Events>
+        </Component>
+        <Component class="com.jdimension.jlawyer.ui.folders.SortButton" name="sortName">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="Name"/>
+          </Properties>
+          <Events>
+            <EventHandler event="mouseClicked" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="sortNameMouseClicked"/>
+          </Events>
+        </Component>
+        <Component class="com.jdimension.jlawyer.ui.folders.SortButton" name="sortFavorite">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="Favorit"/>
+          </Properties>
+          <Events>
+            <EventHandler event="mouseClicked" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="sortFavoriteMouseClicked"/>
+          </Events>
+        </Component>
+        <Component class="com.jdimension.jlawyer.ui.folders.SortButton" name="sortSize">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="Gr&#xf6;&#xdf;e"/>
+          </Properties>
+          <Events>
+            <EventHandler event="mouseClicked" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="sortSizeMouseClicked"/>
+          </Events>
+        </Component>
+        <Component class="com.jdimension.jlawyer.ui.folders.SortButton" name="sortDictateSign">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="Diktatzeichen"/>
+          </Properties>
+          <Events>
+            <EventHandler event="mouseClicked" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="sortDictateSignMouseClicked"/>
+          </Events>
+        </Component>
+      </SubComponents>
     </Container>
     <Container class="javax.swing.JPanel" name="jPanel3">
 
       <Layout class="org.netbeans.modules.form.compat2.layouts.DesignBoxLayout">
         <Property name="axis" type="int" value="1"/>
       </Layout>
+      <SubComponents>
+        <Component class="com.jdimension.jlawyer.ui.folders.DocumentEntryPanel" name="documentEntryPanel1">
+        </Component>
+        <Component class="com.jdimension.jlawyer.ui.folders.DocumentEntryPanel" name="documentEntryPanel2">
+        </Component>
+      </SubComponents>
     </Container>
-    <Component class="com.jdimension.jlawyer.ui.folders.SortButton" name="sortButton1">
-      <Properties>
-        <Property name="text" type="java.lang.String" value="Datum"/>
-      </Properties>
-    </Component>
-    <Component class="com.jdimension.jlawyer.ui.folders.SortButton" name="sortButton2">
-      <Properties>
-        <Property name="text" type="java.lang.String" value="Name"/>
-      </Properties>
-    </Component>
-    <Component class="com.jdimension.jlawyer.ui.folders.SortButton" name="sortButton3">
-      <Properties>
-        <Property name="text" type="java.lang.String" value="Favorit"/>
-      </Properties>
-    </Component>
-    <Component class="com.jdimension.jlawyer.ui.folders.SortButton" name="sortButton4">
-      <Properties>
-        <Property name="text" type="java.lang.String" value="Gr&#xf6;&#xdf;e"/>
-      </Properties>
-    </Component>
-    <Component class="com.jdimension.jlawyer.ui.folders.SortButton" name="Diktatzeichen">
-      <Properties>
-        <Property name="text" type="java.lang.String" value="Diktatzeichen"/>
-      </Properties>
-    </Component>
   </SubComponents>
 </Form>
