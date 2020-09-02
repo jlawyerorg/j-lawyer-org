@@ -684,9 +684,19 @@ public class ClientSettings {
     public static final String CONF_LASTSERVER="connection.lastserver";
     public static final String CONF_LASTSERVERLIST="connection.lastserverlist";
     public static final String CONF_LASTPORT="connection.lastport";
-    public static final String CONF_LASTHTTPPORT="connection.lasthttpport";
     public static final String CONF_LASTUSER="connection.lastuser";
+    
+    // deprecated! use LASTSECMODE instead
     public static final String CONF_LASTSERVERSSL="connection.lastserverssl";
+    
+    // can have values standard, ssl, ssh
+    public static final String CONF_LASTSECMODE="connection.lastsecmode";
+    public static final String CONF_LASTSSHHOST="connection.lastsshhost";
+    public static final String CONF_LASTSSHPORT="connection.lastsshport";
+    public static final String CONF_LASTSSHUSER="connection.lastsshuser";
+    public static final String CONF_LASTSSHPWD="connection.lastsshpwd";
+    public static final String CONF_LASTSOURCEPORT="connection.lastsshsourceport";
+    public static final String CONF_LASTTARGETPORT="connection.lastsshtargetport";
     
     public static final String CONF_THEME="client.theme";
     

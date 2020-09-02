@@ -725,8 +725,12 @@ public class Crypto {
     }
 
     public static String encrypt(String property) throws GeneralSecurityException, UnsupportedEncodingException {
+        return encrypt(property, PASSWORD);
+    }
+    
+    public static String encrypt(String property, char[] password) throws GeneralSecurityException, UnsupportedEncodingException {
         SecretKeyFactory keyFactory = SecretKeyFactory.getInstance("PBEWithMD5AndDES");
-        SecretKey key = keyFactory.generateSecret(new PBEKeySpec(PASSWORD));
+        SecretKey key = keyFactory.generateSecret(new PBEKeySpec(password));
         Cipher pbeCipher = Cipher.getInstance("PBEWithMD5AndDES");
         pbeCipher.init(Cipher.ENCRYPT_MODE, key, new PBEParameterSpec(SALT, 20));
         return base64Encode(pbeCipher.doFinal(property.getBytes("UTF-8")));
@@ -739,8 +743,12 @@ public class Crypto {
     }
 
     public static String decrypt(String property) throws GeneralSecurityException, IOException {
+        return decrypt(property, PASSWORD);
+    }
+    
+    public static String decrypt(String property, char[] password) throws GeneralSecurityException, IOException {
         SecretKeyFactory keyFactory = SecretKeyFactory.getInstance("PBEWithMD5AndDES");
-        SecretKey key = keyFactory.generateSecret(new PBEKeySpec(PASSWORD));
+        SecretKey key = keyFactory.generateSecret(new PBEKeySpec(password));
         Cipher pbeCipher = Cipher.getInstance("PBEWithMD5AndDES");
         pbeCipher.init(Cipher.DECRYPT_MODE, key, new PBEParameterSpec(SALT, 20));
         return new String(pbeCipher.doFinal(base64Decode(property)), "UTF-8");

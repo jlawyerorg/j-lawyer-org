@@ -1245,7 +1245,7 @@ public class BackupConfigurationDialog extends javax.swing.JDialog {
     private void cmdAdHocBackupActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdAdHocBackupActionPerformed
         ClientSettings settings = ClientSettings.getInstance();
         String server = settings.getConfiguration(settings.CONF_LASTSERVER, "localhost");
-        String port = settings.getConfiguration(settings.CONF_LASTHTTPPORT, "8080");
+        String port = settings.getConfiguration(settings.CONF_LASTPORT, "8080");
         String themeName = settings.getConfiguration(settings.CONF_THEME, "default");
         try {
             URL backupUrl = new java.net.URL("http://" + server + ":" + port + "/j-lawyer-server-war/autostart?action=backup.adhoc");
