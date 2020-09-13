@@ -778,7 +778,6 @@ public class LoginDialog extends javax.swing.JFrame {
             this.pwdSshPassword.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
             this.txtSourcePort.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
             this.txtTargetPort.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
-            
 
             this.cmbServer.setFont(font.deriveFont(Font.BOLD, 12));
             this.txtPort.setFont(font.deriveFont(Font.BOLD, 12));
@@ -793,14 +792,13 @@ public class LoginDialog extends javax.swing.JFrame {
             this.pwdSshPassword.setFont(font.deriveFont(Font.BOLD, 12));
             this.txtSourcePort.setFont(font.deriveFont(Font.BOLD, 12));
             this.txtTargetPort.setFont(font.deriveFont(Font.BOLD, 12));
-            
+
             this.jLabel5.setFont(font.deriveFont(Font.BOLD, 12));
             this.jLabel7.setFont(font.deriveFont(Font.BOLD, 12));
             this.jLabel8.setFont(font.deriveFont(Font.BOLD, 12));
             this.jLabel16.setFont(font.deriveFont(Font.BOLD, 12));
             this.jLabel17.setFont(font.deriveFont(Font.BOLD, 12));
             this.jLabel18.setFont(font.deriveFont(Font.BOLD, 12));
-            
 
         } catch (Throwable t) {
             t.printStackTrace();
@@ -822,22 +820,23 @@ public class LoginDialog extends javax.swing.JFrame {
 
         // default is no special security
         this.rdSecNone.setSelected(true);
-        
+
         String ssl = settings.getConfiguration(settings.CONF_LASTSERVERSSL, "0");
-        String secMode=settings.getConfiguration(settings.CONF_LASTSECMODE, "standard");
+        String secMode = settings.getConfiguration(settings.CONF_LASTSECMODE, "standard");
         if ("1".equalsIgnoreCase(ssl) || "ssl".equalsIgnoreCase(secMode)) {
             this.rdSecSsl.setSelected(true);
         }
-        if("ssh".equalsIgnoreCase(secMode)) {
+        if ("ssh".equalsIgnoreCase(secMode)) {
             this.rdSecTunnel.setSelected(true);
         }
         this.txtSshHost.setText(settings.getConfiguration(settings.CONF_LASTSSHHOST, ""));
         this.txtSshPort.setText(settings.getConfiguration(settings.CONF_LASTSSHPORT, "22"));
         this.txtSshUser.setText(settings.getConfiguration(settings.CONF_LASTSSHUSER, "root"));
-        String p=settings.getConfiguration(settings.CONF_LASTSSHPWD, "");
+        String p = settings.getConfiguration(settings.CONF_LASTSSHPWD, "");
         try {
-        if(p.length()>0)
-            p=Crypto.decrypt(p, System.getProperty("user.name").toCharArray());
+            if (p.length() > 0) {
+                p = Crypto.decrypt(p, System.getProperty("user.name").toCharArray());
+            }
         } catch (Throwable t) {
             log.error("Unable to decrypt tunnel SSH password", t);
         }
@@ -856,7 +855,7 @@ public class LoginDialog extends javax.swing.JFrame {
             if ("1".equalsIgnoreCase(cmdSsl)) {
                 this.rdSecSsl.setSelected(true);
             } else {
-                this.rdSecSsl.setSelected(true);
+                this.rdSecSsl.setSelected(false);
             }
             this.cmdLoginActionPerformed(null);
 
@@ -1508,23 +1507,25 @@ public class LoginDialog extends javax.swing.JFrame {
 
         ClientSettings settings = ClientSettings.getInstance();
 
-        try {
-            SshTunnel tunnel = SshTunnel.getInstance();
-            // for cases of subsequent tries
-            tunnel.disconnect();
-            
-            tunnel.setSourcePort(Integer.parseInt(this.txtSourcePort.getText()));
-            tunnel.setSshHost(this.txtSshHost.getText());
-            tunnel.setSshPassword(new String(this.pwdSshPassword.getPassword()));
-            tunnel.setSshPort(Integer.parseInt(this.txtSshPort.getText()));
-            tunnel.setSshUser(this.txtSshUser.getText());
-            tunnel.setTargetIp("127.0.0.1");
-            tunnel.setTargetPort(Integer.parseInt(this.txtTargetPort.getText()));
-            tunnel.connect();
-        } catch (Exception ex) {
-            log.error("SSH tunnel failed", ex);
-            JOptionPane.showMessageDialog(this, "Aufbau des SSH-Tunnels gescheitert:" + System.lineSeparator() + ex.getMessage(), "SSH-Fehler", JOptionPane.ERROR_MESSAGE);
-            return;
+        if (this.rdSecTunnel.isSelected()) {
+            try {
+                SshTunnel tunnel = SshTunnel.getInstance();
+                // for cases of subsequent tries
+                tunnel.disconnect();
+
+                tunnel.setSourcePort(Integer.parseInt(this.txtSourcePort.getText()));
+                tunnel.setSshHost(this.txtSshHost.getText());
+                tunnel.setSshPassword(new String(this.pwdSshPassword.getPassword()));
+                tunnel.setSshPort(Integer.parseInt(this.txtSshPort.getText()));
+                tunnel.setSshUser(this.txtSshUser.getText());
+                tunnel.setTargetIp("127.0.0.1");
+                tunnel.setTargetPort(Integer.parseInt(this.txtTargetPort.getText()));
+                tunnel.connect();
+            } catch (Exception ex) {
+                log.error("SSH tunnel failed", ex);
+                JOptionPane.showMessageDialog(this, "Aufbau des SSH-Tunnels gescheitert:" + System.lineSeparator() + ex.getMessage(), "SSH-Fehler", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
         }
 
         Properties properties = new Properties();
@@ -1640,12 +1641,12 @@ public class LoginDialog extends javax.swing.JFrame {
         }
 
         settings.setConfiguration(settings.CONF_LASTPORT, this.txtPort.getText());
-        
+
         // deprecated
         settings.setConfiguration(settings.CONF_LASTSERVERSSL, "deprecated");
         if (this.rdSecSsl.isSelected()) {
             settings.setConfiguration(settings.CONF_LASTSECMODE, "ssl");
-        } else if(this.rdSecTunnel.isSelected()) {
+        } else if (this.rdSecTunnel.isSelected()) {
             settings.setConfiguration(settings.CONF_LASTSECMODE, "ssh");
         } else {
             settings.setConfiguration(settings.CONF_LASTSECMODE, "standard");
@@ -1720,22 +1721,22 @@ public class LoginDialog extends javax.swing.JFrame {
     private void highlightSecuritySelection() {
 //        this.rdSecNone.setOpaque(true);
 //        this.rdSecSsl.setOpaque(true);
-        this.rdSecNone.setBackground(new Color(100,100,100,0));
-        this.rdSecSsl.setBackground(new Color(100,100,100,0));
-        this.jPanel4.setBackground(new Color(100,100,100,0));
-        
-        Color highlightColor=new Color(DefaultColorTheme.COLOR_LOGO_GREEN.getRed(), DefaultColorTheme.COLOR_LOGO_GREEN.getGreen(), DefaultColorTheme.COLOR_LOGO_GREEN.getBlue(), 170);
-        if(rdSecNone.isSelected()) {
+        this.rdSecNone.setBackground(new Color(100, 100, 100, 0));
+        this.rdSecSsl.setBackground(new Color(100, 100, 100, 0));
+        this.jPanel4.setBackground(new Color(100, 100, 100, 0));
+
+        Color highlightColor = new Color(DefaultColorTheme.COLOR_LOGO_GREEN.getRed(), DefaultColorTheme.COLOR_LOGO_GREEN.getGreen(), DefaultColorTheme.COLOR_LOGO_GREEN.getBlue(), 170);
+        if (rdSecNone.isSelected()) {
             //this.rdSecNone.setOpaque(false);
             this.rdSecNone.setBackground(highlightColor);
-        } else if(rdSecSsl.isSelected()) {
+        } else if (rdSecSsl.isSelected()) {
             //this.rdSecSsl.setOpaque(false);
             this.rdSecSsl.setBackground(highlightColor);
-        } else if(rdSecTunnel.isSelected()) {
+        } else if (rdSecTunnel.isSelected()) {
             //this.jPanel4.setOpaque(false);
             this.jPanel4.setBackground(highlightColor);
         }
-        
+
         //this.jPanel4.revalidate();
 //        this.rdSecNone.repaint();
 //        this.rdSecSsl.repaint();
@@ -1743,7 +1744,7 @@ public class LoginDialog extends javax.swing.JFrame {
 //        this.rdSecSsl.revalidate();
 //        this.jPanel2.repaint();
     }
-    
+
     /**
      * @param args the command line arguments
      */
