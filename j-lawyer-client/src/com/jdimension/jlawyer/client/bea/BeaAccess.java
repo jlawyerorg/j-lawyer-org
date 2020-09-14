@@ -939,7 +939,7 @@ public class BeaAccess {
     public Collection<Folder> getFolderStructure(String safeId) throws BeaWrapperException {
         this.checkValidBeaClient();
         this.checkValidBeaClient();
-        Collection<Folder> folders = this.wrapper.getFolderStructure(safeId);
+        Collection<Folder> folders = this.wrapper.getFolderStructure(safeId, true, true);
         long inboxId = -1;
         long jlawyerProcessedId = -1;
         for (Folder f : folders) {
