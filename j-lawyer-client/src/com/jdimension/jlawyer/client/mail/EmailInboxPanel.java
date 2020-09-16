@@ -875,6 +875,8 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                 Properties props = System.getProperties();
                 props.setProperty("mail.imap.partialfetch", "false");
                 props.setProperty("mail.imaps.partialfetch", "false");
+//                props.setProperty("mail.imaps.ssl.protocols", "TLSv1.2");
+//                props.setProperty("mail.imap.ssl.protocols", "TLSv1.2");
                 //props.setProperty("mail.store.protocol", "imaps");
                 props.setProperty("mail.store.protocol", cu.getEmailInType());
                 if (cu.isEmailInSsl()) {
