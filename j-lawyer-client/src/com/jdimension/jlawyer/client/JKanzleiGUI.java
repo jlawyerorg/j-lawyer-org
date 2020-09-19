@@ -2395,6 +2395,9 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             log.warn("download url for XJustiz Viewer is null");
             return;
         }
+        
+        JOptionPane.showMessageDialog(this, "Der XJustiz-Viewer ist ein Softwareprodukt von Uwe Möller / Henning Müller ervjustiz.de." + System.lineSeparator() + "Er ist ausschließlich für die Nutzung durch Rechtsanwältinnen und Rechtsanwälte sowie deren Mitarbeiterinnen und Mitarbeiter freigegeben." + System.lineSeparator() + "Jede darüberhinausgehende Nutzung ist nicht erlaubt.", "XJustiz-Viewer Nutzungsbedingungen", JOptionPane.INFORMATION_MESSAGE);
+        
         try {
             String home = System.getProperty("user.home");
             File dir = new File(home + "/Downloads/");
