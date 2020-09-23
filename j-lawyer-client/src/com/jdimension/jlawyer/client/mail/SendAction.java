@@ -867,8 +867,7 @@ public class SendAction extends ProgressableAction {
                     newName = FileUtils.sanitizeFileName(newName);
                     java.util.Date sentPrefix = new Date();
                     newName = FileUtils.getNewFileName(newName, true, sentPrefix, this.indicator, "Datei umbenennen");
-
-                    if (newName != null) {
+                    if(newName !=null) {
                         if (newName.trim().length() == 0) {
                             newName = "E-Mail";
                         }
@@ -876,6 +875,20 @@ public class SendAction extends ProgressableAction {
                         if (!newName.toLowerCase().endsWith(".eml")) {
                             newName = newName + ".eml";
                         }
+                        boolean documentExists = afs.doesDocumentExist(this.archiveFile.getId(), newName);
+                        while (documentExists) {
+
+                            newName = FileUtils.getNewFileName(newName, true, sentPrefix, this.indicator, "Datei umbenennen");
+                            if (newName == null || "".equals(newName)) {
+                                break;
+                            }
+                            documentExists = afs.doesDocumentExist(this.archiveFile.getId(), newName);
+
+                        }
+                    }
+
+                    if (newName != null) {
+                        
 
                         ArchiveFileDocumentsBean newDoc = afs.addDocument(this.archiveFile.getId(), newName, data, "");
 

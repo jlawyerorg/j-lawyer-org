@@ -711,8 +711,8 @@ public class SendEncryptedAction extends ProgressableAction {
     private String body = "";
     private String contentType = "text/plain";
     private ArchiveFileBean archiveFile = null;
-    private ArrayList<String> mails=null;
-    private String documentTag=null;
+    private ArrayList<String> mails = null;
+    private String documentTag = null;
 
     public SendEncryptedAction(ProgressIndicator i, JDialog cleanAfter, ArrayList<String> attachments, AppUserBean cu, boolean readReceipt, String to, String cc, String bcc, String subject, String body, String contentType, String documentTag) {
         super(i, false, cleanAfter);
@@ -725,11 +725,11 @@ public class SendEncryptedAction extends ProgressableAction {
         this.subject = subject;
         this.body = body;
         this.contentType = contentType;
-        this.documentTag=documentTag;
-        
+        this.documentTag = documentTag;
+
         this.mails = EmailUtils.getAllMailAddressesFromString(this.to);
-            mails.addAll(EmailUtils.getAllMailAddressesFromString(this.cc));
-            mails.addAll(EmailUtils.getAllMailAddressesFromString(this.bcc));
+        mails.addAll(EmailUtils.getAllMailAddressesFromString(this.cc));
+        mails.addAll(EmailUtils.getAllMailAddressesFromString(this.bcc));
     }
 
     public SendEncryptedAction(ProgressIndicator i, JDialog cleanAfter, ArrayList<String> attachments, AppUserBean cu, boolean readReceipt, String to, String cc, String bcc, String subject, String body, String contentType, ArchiveFileBean af, String documentTag) {
@@ -758,10 +758,10 @@ public class SendEncryptedAction extends ProgressableAction {
             protocol = "smtps";
             props.put("mail.smtp.ssl.enable", "true");
         }
-        
-        if(cu.getEmailOutPort()!=null && !("".equalsIgnoreCase(cu.getEmailOutPort()))) {
+
+        if (cu.getEmailOutPort() != null && !("".equalsIgnoreCase(cu.getEmailOutPort()))) {
             try {
-                int testInt=Integer.parseInt(cu.getEmailOutPort());
+                int testInt = Integer.parseInt(cu.getEmailOutPort());
                 props.put("mail.smtp.port", cu.getEmailOutPort());
                 props.put("mail.smtps.port", cu.getEmailOutPort());
             } catch (Throwable t) {
@@ -904,10 +904,23 @@ public class SendEncryptedAction extends ProgressableAction {
                             if (!newName.toLowerCase().endsWith(".eml")) {
                                 newName = newName + ".eml";
                             }
+                            boolean documentExists = afs.doesDocumentExist(this.archiveFile.getId(), newName);
+                            while (documentExists) {
+
+                                newName = FileUtils.getNewFileName(newName, true, sentPrefix, this.indicator, "Datei umbenennen");
+                                if (newName == null || "".equals(newName)) {
+                                    break;
+                                }
+                                documentExists = afs.doesDocumentExist(this.archiveFile.getId(), newName);
+
+                            }
+                        }
+
+                        if (newName != null) {
 
                             ArchiveFileDocumentsBean newDoc = afs.addDocument(this.archiveFile.getId(), newName, data, "");
-                            
-                            if(this.documentTag!=null && !("".equals(this.documentTag))) {
+
+                            if (this.documentTag != null && !("".equals(this.documentTag))) {
                                 afs.setDocumentTag(newDoc.getId(), new DocumentTagsBean(newDoc.getId(), this.documentTag), true);
                             }
 
