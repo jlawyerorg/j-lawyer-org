@@ -706,6 +706,7 @@ import java.awt.Point;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.dnd.*;
+import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -1892,6 +1893,15 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
             dlg.setSubject(subject);
 
             dlg.setBody(BeaUtils.getQuotedBody(this.beaMessageContentUI.getBody(), m.getSenderName()));
+            
+            for (Attachment att : m.getAttachments()) {
+                byte[] data = att.getContent();
+                if (data != null) {
+                    String attachmentUrl = FileUtils.createTempFile(att.getFileName(), data);
+                    new File(attachmentUrl).deleteOnExit();
+                    dlg.addAttachment(attachmentUrl, "");
+                }
+            }
 
             FrameUtils.centerDialog(dlg, null);
             dlg.setVisible(true);
