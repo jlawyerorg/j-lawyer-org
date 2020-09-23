@@ -715,6 +715,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Properties;
@@ -2680,6 +2681,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
 
                 MessageContainer msgC = (MessageContainer) this.tblMails.getValueAt(this.tblMails.getSelectedRow(), 0);
                 Message m = msgC.getMessage();
+                Date sentDate=m.getSentDate();
                 Folder f = m.getFolder();
                 boolean closed = !f.isOpen();
                 if (closed) {
@@ -2768,6 +2770,9 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                             }
 
                             ArchiveFileDocumentsBean newlyAddedDocument=afs.addDocument(caseId, newName, attachmentData, "");
+                            if(sentDate!=null) {
+                                afs.setDocumentDate(newlyAddedDocument.getId(), sentDate);
+                            }
 
                             temp = ClientSettings.getInstance().getConfiguration(ClientSettings.CONF_MAILS_DOCUMENTTAGGINGENABLED, "false");
                             if ("true".equalsIgnoreCase(temp)) {
@@ -2807,6 +2812,9 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                     }
 
                     ArchiveFileDocumentsBean newlyAddedDocument = afs.addDocument(caseId, newName, data, "");
+                    if (sentDate != null) {
+                        afs.setDocumentDate(newlyAddedDocument.getId(), sentDate);
+                    }
 
                     String temp = ClientSettings.getInstance().getConfiguration(ClientSettings.CONF_MAILS_TAGGINGENABLED, "false");
                     if ("true".equalsIgnoreCase(temp)) {
@@ -2852,7 +2860,10 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                             newName = "Anhang";
                         }
 
-                        afs.addDocument(caseId, newName, attachmentData, "");
+                        ArchiveFileDocumentsBean newlyAddedDocument=afs.addDocument(caseId, newName, attachmentData, "");
+                        if(sentDate != null) {
+                            afs.setDocumentDate(newlyAddedDocument.getId(), sentDate);
+                        }
                     }
 
                 }
