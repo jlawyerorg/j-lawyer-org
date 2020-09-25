@@ -704,6 +704,8 @@ import themes.colors.DefaultColorTheme;
 public class LoginDialog extends javax.swing.JFrame {
 
     private static final Logger log = Logger.getLogger(LoginDialog.class.getName());
+    private static boolean launching=false;
+    
     private StartupSplashFrame splash = null;
     private String initialStatus = null;
 
@@ -1505,6 +1507,13 @@ public class LoginDialog extends javax.swing.JFrame {
 
     private void cmdLoginActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdLoginActionPerformed
 
+        if(launching)
+            return;
+        
+        launching=true;
+        this.cmdLogin.setEnabled(false);
+        
+        
         ClientSettings settings = ClientSettings.getInstance();
 
         if (this.rdSecTunnel.isSelected()) {
@@ -1524,6 +1533,8 @@ public class LoginDialog extends javax.swing.JFrame {
             } catch (Exception ex) {
                 log.error("SSH tunnel failed", ex);
                 JOptionPane.showMessageDialog(this, "Aufbau des SSH-Tunnels gescheitert:" + System.lineSeparator() + ex.getMessage(), "SSH-Fehler", JOptionPane.ERROR_MESSAGE);
+                this.cmdLogin.setEnabled(true);
+                launching=false;
                 return;
             }
         }
@@ -1632,11 +1643,15 @@ public class LoginDialog extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/LoginDialog").getString("msg.loginfailed") + System.lineSeparator() + ex.getMessage(), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/LoginDialog").getString("msg.error"), JOptionPane.ERROR_MESSAGE);
             this.txtUser.setForeground(Color.RED);
             this.pwPassword.setForeground(Color.RED);
+            this.cmdLogin.setEnabled(true);
+            launching=false;
             System.exit(1);
         } catch (Exception ex) {
 
             log.error("Error connecting to server", ex);
             JOptionPane.showMessageDialog(this, java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/LoginDialog").getString("msg.error.loginorconnectionfailed"), new Object[]{ex.getMessage()}), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/LoginDialog").getString("msg.error"), JOptionPane.ERROR_MESSAGE);
+            this.cmdLogin.setEnabled(true);
+            launching=false;
             return;
         }
 
@@ -1677,6 +1692,8 @@ public class LoginDialog extends javax.swing.JFrame {
         if (!VersionUtils.isCompatible(serverVersion, clientVersion)) {
             int response = JOptionPane.showConfirmDialog(this, java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/LoginDialog").getString("msg.compatibilitycheck.failed"), new Object[]{clientVersion, serverVersion, System.getProperty("line.separator")}), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/LoginDialog").getString("msg.compatibilitycheck"), JOptionPane.YES_NO_OPTION);
             if (response == JOptionPane.NO_OPTION) {
+                this.cmdLogin.setEnabled(true);
+                launching=false;
                 System.exit(0);
             }
         }
@@ -1694,6 +1711,8 @@ public class LoginDialog extends javax.swing.JFrame {
         splash.addStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/LoginDialog").getString("label.loadingstatus"));
         splash.addStatus(System.getProperty("line.separator"));
         splash.repaint();
+//        this.cmdLogin.setEnabled(true);
+//        launching=false;
 
         new Thread(new SplashThread(splash, settings, this)).start();
     }//GEN-LAST:event_cmdLoginActionPerformed
