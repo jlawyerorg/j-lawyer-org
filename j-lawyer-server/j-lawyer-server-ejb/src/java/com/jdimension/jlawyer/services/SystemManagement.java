@@ -1407,26 +1407,25 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         };
 
         Session session = Session.getInstance(props, auth);
-        
-            Transport bus = session.getTransport("smtp");
 
-            bus.connect(smtpHost, smtpUser, smtpPwd);
+        Transport bus = session.getTransport("smtp");
 
-            MimeMessage msg = new MimeMessage(session);
+        bus.connect(smtpHost, smtpUser, smtpPwd);
 
-            String senderName = "j-lawyer Server Testmail";
-            msg.setFrom(new InternetAddress(smtpUser, senderName));
+        MimeMessage msg = new MimeMessage(session);
 
-            msg.setRecipients(Message.RecipientType.TO, mailAddress);
-            msg.setSubject("Testnachricht, j-lawyer.org Serverdienst");
-            msg.setSentDate(new java.util.Date());
-            msg.setText("Wenn Sie diese Nachricht erhalten, funktioniert der Versand von E-Mails.");
-            //Transport.send(msg);
-            msg.saveChanges();
-            bus.send(msg);
-            bus.close();
+        String senderName = "j-lawyer Server Testmail";
+        msg.setFrom(new InternetAddress(smtpUser, senderName));
 
-        
+        msg.setRecipients(Message.RecipientType.TO, mailAddress);
+        msg.setSubject("Testnachricht, j-lawyer.org Serverdienst");
+        msg.setSentDate(new java.util.Date());
+        msg.setText("Wenn Sie diese Nachricht erhalten, funktioniert der Versand von E-Mails.");
+        //Transport.send(msg);
+        msg.saveChanges();
+        bus.send(msg);
+        bus.close();
+
     }
 
     @Override
@@ -1449,10 +1448,10 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         folder.open(Folder.READ_ONLY);
 
         Message[] messages = folder.getMessages();
-        
+
         folder.close(false);
         store.close();
-       
+
     }
 
     @Override
@@ -2103,6 +2102,60 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
 
         this.partyTypesFacade.edit(partyType);
         return this.partyTypesFacade.find(partyType.getId());
+    }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public void addObservedFile(String fileName, byte[] content) throws Exception {
+        ServerSettingsBean mode = settingsFacade.find("jlawyer.server.observe.directory");
+        if (mode == null || "".equals(mode.getSettingValue())) {
+            log.error("No server directory configured for scans");
+            throw new Exception("No server directory configured for scans");
+        }
+
+        String scanDir = mode.getSettingValue();
+        if (scanDir == null || "".equals(scanDir)) {
+            log.error("No server directory configured for scans");
+            throw new Exception("No server directory configured for scans");
+        }
+
+        File scanDirectory = new File(scanDir);
+        if (!scanDirectory.exists()) {
+            log.error("Server directory for scans does not exist: " + scanDir);
+            throw new Exception("Server directory for scans does not exist: " + scanDir);
+        }
+
+        if (!scanDirectory.isDirectory()) {
+            log.error("Server directory for scans is not a directory: " + scanDir);
+            throw new Exception("Server directory for scans is not a directory: " + scanDir);
+        }
+        
+        File[] children=scanDirectory.listFiles();
+        if(children.length>5000) {
+            log.error("Scan directory has exceeded maximum of 5000 files!");
+            throw new Exception("Scan directory has exceeded maximum of 5000 files!");
+        }
+        
+        String fullDir=scanDir;
+        if(!scanDir.endsWith(File.separator))
+            fullDir=fullDir+File.separator;
+        String fullPath=fullDir+fileName;
+        
+        File uploadFile=new File(fullPath);
+        if(uploadFile.exists()) {
+            int copy=1;
+            
+            while(uploadFile.exists())  {
+                copy=copy+1;
+                fullPath=fullDir+"(" +copy + ") " + fileName;
+                uploadFile=new File(fullPath);
+            }
+        }
+        
+        FileOutputStream fout=new FileOutputStream(uploadFile);
+        fout.write(content);
+        fout.close();
+        
     }
 
 }

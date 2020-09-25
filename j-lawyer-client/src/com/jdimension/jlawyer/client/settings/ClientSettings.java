@@ -752,6 +752,7 @@ public class ClientSettings {
     public static final String CONF_SCANS_LASTTAG="client.scans.lasttag";
     public static final String CONF_SCANS_LASTDOCUMENTTAG="client.scans.lastdocumenttag";
     public static final String CONF_SCANS_DELETEENABLED="client.scans.deleteenabled";
+    public static final String CONF_SCANS_OBSERVELOCALDIR="client.scans.observelocaldir";
     
     public static final String CONF_MAILS_TAGGINGENABLED="client.mails.taggingenabled";
     public static final String CONF_MAILS_DOCUMENTTAGGINGENABLED="client.mails.documenttaggingenabled";
