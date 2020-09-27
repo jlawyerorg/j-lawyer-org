@@ -705,7 +705,7 @@ public interface ArchiveFileServiceRemote {
 
     Collection<ArchiveFileReviewsBean> getAllOpenReviews();
 
-    Collection getDocuments(String archiveFileKey);
+    Collection<ArchiveFileDocumentsBean> getDocuments(String archiveFileKey);
 
     boolean archiveFileExists(String id);
 

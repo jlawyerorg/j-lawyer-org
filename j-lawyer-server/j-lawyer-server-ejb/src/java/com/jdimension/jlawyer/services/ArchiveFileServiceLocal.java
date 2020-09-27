@@ -698,7 +698,7 @@ public interface ArchiveFileServiceLocal {
     
     
     public int getDocumentCount();
-    public Collection getDocuments(String archiveFileKey);
+    public Collection<ArchiveFileDocumentsBean> getDocuments(String archiveFileKey);
     public byte[] getDocumentContent(String id) throws Exception;
     
     public Collection getReviews(String archiveFileKey) throws Exception;

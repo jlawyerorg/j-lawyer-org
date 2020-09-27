@@ -977,6 +977,14 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     @Override
     @RolesAllowed({"readArchiveFileRole"})
     public ArchiveFileBean[] searchSimple(String query) {
+        
+        if(query==null)
+            query="";
+        
+        query=query.trim();
+        if("".equalsIgnoreCase(query))
+            return new ArchiveFileBean[0];
+        
         List<Group> userGroups = new ArrayList<Group>();
         try {
             userGroups = this.securityFacade.getGroupsForUser(context.getCallerPrincipal().getName());
@@ -1541,11 +1549,11 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
     @Override
     @RolesAllowed({"readArchiveFileRole"})
-    public Collection getDocuments(String archiveFileKey) {
+    public Collection<ArchiveFileDocumentsBean> getDocuments(String archiveFileKey) {
         return getDocumentsImpl(archiveFileKey, context.getCallerPrincipal().getName());
     }
 
-    private Collection getDocumentsImpl(String archiveFileKey, String principalId) {
+    private Collection<ArchiveFileDocumentsBean> getDocumentsImpl(String archiveFileKey, String principalId) {
         ArchiveFileBean aFile = this.archiveFileFacade.find(archiveFileKey);
         boolean allowed = false;
         if (principalId != null) {
@@ -2425,6 +2433,12 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     @Override
     @RolesAllowed({"readArchiveFileRole"})
     public ArchiveFileBean[] searchEnhanced(String query, boolean withArchive, String[] tagName, String[] documentTagNames) {
+        
+        if(query==null)
+            query="";
+        
+        query=query.trim();
+        
         List<Group> userGroups = new ArrayList<Group>();
         try {
             userGroups = this.securityFacade.getGroupsForUser(context.getCallerPrincipal().getName());
@@ -3159,7 +3173,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     }
 
     @Override
-    public Collection getDocumentsUnrestricted(String archiveFileKey) {
+    public Collection<ArchiveFileDocumentsBean> getDocumentsUnrestricted(String archiveFileKey) {
         return getDocumentsImpl(archiveFileKey, null);
     }
 
@@ -3349,6 +3363,12 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     @Override
     @RolesAllowed({"readArchiveFileRole"})
     public Hashtable<String, ArrayList<String>> searchTagsEnhanced(String query, boolean withArchive, String[] tagNames, String[] documentTagNames) {
+        
+        if(query==null)
+            query="";
+        
+        query=query.trim();
+        
         JDBCUtils utils = new JDBCUtils();
         Connection con = null;
         ResultSet rs = null;

@@ -769,6 +769,14 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
     @Override
     @RolesAllowed({"readAddressRole"})
     public AddressBean[] searchSimple(String query) {
+        
+        if(query==null)
+            query="";
+        
+        query=query.trim();
+        if("".equalsIgnoreCase(query))
+            return new AddressBean[0];
+        
         JDBCUtils utils = new JDBCUtils();
         Connection con = null;
         ResultSet rs = null;
@@ -938,6 +946,12 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
     @Override
     @RolesAllowed({"readAddressRole"})
     public AddressBean[] searchEnhanced(String query, String[] tagName) {
+        
+        if(query==null)
+            query="";
+        
+        query=query.trim();
+        
         JDBCUtils utils = new JDBCUtils();
         Connection con = null;
         ResultSet rs = null;
@@ -1045,6 +1059,12 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
     @Override
     @RolesAllowed({"readAddressRole"})
     public Hashtable<String, ArrayList<String>> searchTagsEnhanced(String query, String[] tagName) {
+        
+        if(query==null)
+            query="";
+        
+        query=query.trim();
+        
         JDBCUtils utils = new JDBCUtils();
         Connection con = null;
         ResultSet rs = null;
