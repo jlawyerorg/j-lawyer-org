@@ -735,7 +735,8 @@ public class LastChangedTimerTask extends java.util.TimerTask {
 
             myNewList = fileService.getLastChanged(50);
 
-            String temp = settings.getConfiguration(ClientSettings.CONF_DESKTOP_ONLYMYCASES, "false");
+            UserSettings.getInstance().migrateFrom(settings, UserSettings.CONF_DESKTOP_ONLYMYCASES);
+            String temp = UserSettings.getInstance().getSetting(UserSettings.CONF_DESKTOP_ONLYMYCASES, "false");
             if ("true".equalsIgnoreCase(temp)) {
                 String principalId = UserSettings.getInstance().getCurrentUser().getPrincipalId();
                 for (ArchiveFileBean x : myNewList) {

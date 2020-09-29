@@ -668,6 +668,7 @@ import com.formdev.flatlaf.FlatIntelliJLaf;
 import com.jdimension.jlawyer.client.events.Event;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.ServerSettings;
+import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.FontUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.VersionUtils;
@@ -920,66 +921,6 @@ public class Main {
         this.updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Main").getString("status.modules.available"), true);
         // todo: load this from the server
         ModuleMetadata root = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.mydesktop"));
-
-        String randomBackgrounds = settings.getConfiguration(ClientSettings.CONF_DESKTOP_RANDOM_BACKGROUND, "0");
-        
-        // webswing did not like the large images and displayed an empty frame instead of the application
-        String demoSystem=settings.getConfiguration("runtime.isdemosystem", "0");
-        boolean isDemoSystem=false;
-        if(demoSystem!=null && "1".equalsIgnoreCase(demoSystem)) {
-            isDemoSystem=true;
-        }
-        if ("0".equalsIgnoreCase(randomBackgrounds) || isDemoSystem) {
-
-            //root.setIcon("mydesktop.png");
-            //root.setBackgroundImage("mydesktop.jpg");
-            root.setBackgroundImage("archivefiles.jpg");
-            root.setRandomBackgroundImage(null);
-            //root.setBackgroundImage("Neuseeland_0617.jpg");
-        } else {
-            root.setBackgroundImage(null);
-            try {
-
-                URI uri = Main.class.getResource("/themes/default/backgroundsrandom").toURI();
-                Path path;
-                if (uri.getScheme().equals("jar")) {
-                    FileSystem fileSystem = FileSystems.newFileSystem(uri, Collections.<String, Object>emptyMap());
-                    path = fileSystem.getPath("/themes/default/backgroundsrandom");
-                } else {
-                    path = Paths.get(uri);
-                }
-//                Stream<Path> walk = Files.walk(myPath, 1);
-//                for (Iterator<Path> it = walk.iterator(); it.hasNext();) {
-//                    System.out.println(it.next());
-//                }
-
-                Predicate<String> con1 = s -> s.endsWith(".jpg");
-                Predicate<String> con2 = s -> s.endsWith(".png");
-
-                List<String> backgroundFileNames = Files.walk(path)
-                        .map(Path::getFileName)
-                        .map(Path::toString)
-                        .filter(con1.or(con2))
-                        .collect(Collectors.toList());
-
-//                Predicate<String> con1 = s -> s.endsWith(".jpg");
-//                Predicate<String> con2 = s -> s.endsWith(".png");
-//                //Path path = new File(Main.class.getResource("/themes/default/backgroundsrandom").toURI()).toPath();
-//                Path path = new File(Main.class.getResource("/themes/default/backgroundsrandom").toExternalForm()).toPath();
-//                List<String> backgroundFileNames = Files.walk(path)
-//                        .map(Path::getFileName)
-//                        .map(Path::toString)
-//                        .filter(con1.or(con2))
-//                        .collect(Collectors.toList());
-                int randomNum = ThreadLocalRandom.current().nextInt(0, backgroundFileNames.size());
-                root.setRandomBackgroundImage(backgroundFileNames.get(randomNum));
-            } catch (Throwable t) {
-                log.error("unable to get random background image", t);
-                root.setBackgroundImage("archivefiles.jpg");
-                root.setRandomBackgroundImage(null);
-            }
-
-        }
 
         //root.setEditorClass("com.jdimension.jlawyer.client.editors.MainPanel");
         root.setEditorClass("com.jdimension.jlawyer.client.desktop.DesktopPanel");

@@ -706,6 +706,16 @@ public class UserSettings {
     public static final String CLOUD_SHARE_PERMISSIONS_UPLOADEDIT = "uploadedit";
 
     public static final String CONF_SEARCH_WITHARCHIVE = "user.conf.search.witharchive";
+    
+    public static final String CONF_DESKTOP_RANDOM_BACKGROUND="client.desktop.background.random";
+    
+    public static final String CONF_DESKTOP_ONLYMYCASES="client.desktop.onlymycases";
+    public static final String CONF_DESKTOP_ONLYMYREVIEWS="client.desktop.onlymyreviews";
+    public static final String CONF_DESKTOP_ONLYMYTAGGED="client.desktop.onlymytagged";
+    public static final String CONF_DESKTOP_LASTFILTERTAG="client.desktop.lastfiltertag";
+    public static final String CONF_DESKTOP_LASTFILTERDOCUMENTTAG="client.desktop.lastfilterdocumenttag";
+    
+    private static String ARRAY_DELIMITER="#####";
 
     private static final Logger log = Logger.getLogger(UserSettings.class.getName());
     private static UserSettings instance = null;
@@ -756,6 +766,24 @@ public class UserSettings {
         }
         return value;
     }
+    
+    public String[] getSettingArray(String key, String[] defaultValue) {
+        String value=this.getSetting(key, null);
+        if(value==null)
+            return defaultValue;
+        
+        String[] ary=value.split(ARRAY_DELIMITER);
+        
+        return ary;
+    }
+    
+    public void migrateFrom(ClientSettings cs, String key) {
+        this.loadCache();
+        if(!(this.settingCache.containsKey(key))) {
+            this.setSetting(key, cs.getConfiguration(key, null));
+        }
+        
+    }
 
     public void removeSetting(String key) {
         // reload from server before removing a key
@@ -799,7 +827,16 @@ public class UserSettings {
                 this.mgmt.setUserSettings(currentUser, settingCache);
             }
         }
-
+    }
+    
+    public void setSettingArray(String key, String[] value) {
+        StringBuffer sb=new StringBuffer();
+        if(value==null)
+            value=new String[]{""};
+        for(String v: value) {
+            sb.append(v).append(ARRAY_DELIMITER);
+        }
+        this.setSetting(key, sb.toString());
     }
 
     public static synchronized UserSettings getInstance() {

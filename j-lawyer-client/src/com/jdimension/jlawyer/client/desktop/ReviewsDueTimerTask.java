@@ -736,7 +736,8 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
             ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
             Collection<ArchiveFileReviewsBean> myNewList = fileService.searchReviews(ArchiveFileConstants.REVIEWSTATUS_OPEN, ArchiveFileConstants.REVIEWTYPE_ANY, null, new Date(), 2500);
 
-            String temp = settings.getConfiguration(ClientSettings.CONF_DESKTOP_ONLYMYREVIEWS, "false");
+            UserSettings.getInstance().migrateFrom(settings, UserSettings.CONF_DESKTOP_ONLYMYREVIEWS);
+            String temp = UserSettings.getInstance().getSetting(UserSettings.CONF_DESKTOP_ONLYMYREVIEWS, "false");
             boolean onlyMyReviews = false;
             String principalId = UserSettings.getInstance().getCurrentUser().getPrincipalId();
             if ("true".equalsIgnoreCase(temp)) {

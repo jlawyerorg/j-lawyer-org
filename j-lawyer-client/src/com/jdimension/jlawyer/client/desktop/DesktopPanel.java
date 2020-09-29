@@ -775,24 +775,21 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         ClientSettings settings = ClientSettings.getInstance();
         //String h=settings.getConfiguration(ClientSettings.CONF_DESKTOP_MYAPPOINTMENTS_HEIGHT, "100");
 
-        String temp = settings.getConfiguration(ClientSettings.CONF_DESKTOP_ONLYMYCASES, "false");
-        boolean onlyMyCases = false;
+        UserSettings.getInstance().migrateFrom(settings, UserSettings.CONF_DESKTOP_ONLYMYCASES);
+        String temp = UserSettings.getInstance().getSetting(UserSettings.CONF_DESKTOP_ONLYMYCASES, "false");
         if ("true".equalsIgnoreCase(temp)) {
-            onlyMyCases = true;
             this.chkOnlyMyCases.setSelected(true);
         }
 
-        temp = settings.getConfiguration(ClientSettings.CONF_DESKTOP_ONLYMYREVIEWS, "false");
-        boolean onlyMyReviews = false;
+        UserSettings.getInstance().migrateFrom(settings, UserSettings.CONF_DESKTOP_ONLYMYREVIEWS);
+        temp = UserSettings.getInstance().getSetting(UserSettings.CONF_DESKTOP_ONLYMYREVIEWS, "false");
         if ("true".equalsIgnoreCase(temp)) {
-            onlyMyReviews = true;
             this.chkOnlyMyReviews.setSelected(true);
         }
 
-        temp = settings.getConfiguration(ClientSettings.CONF_DESKTOP_ONLYMYTAGGED, "false");
-        boolean onlyMyTagged = false;
+        UserSettings.getInstance().migrateFrom(settings, UserSettings.CONF_DESKTOP_ONLYMYTAGGED);
+        temp = UserSettings.getInstance().getSetting(UserSettings.CONF_DESKTOP_ONLYMYTAGGED, "false");
         if ("true".equalsIgnoreCase(temp)) {
-            onlyMyTagged = true;
             this.chkOnlyMyTagged.setSelected(true);
         }
 
@@ -1496,10 +1493,10 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
             return;
         }
 
-        ClientSettings settings = ClientSettings.getInstance();
+        UserSettings settings = UserSettings.getInstance();
 
         boolean onlyMyCases = this.chkOnlyMyCases.isSelected();
-        settings.setConfiguration(ClientSettings.CONF_DESKTOP_ONLYMYCASES, "" + onlyMyCases);
+        settings.setSetting(UserSettings.CONF_DESKTOP_ONLYMYCASES, "" + onlyMyCases);
 
         TimerTask lastChangedTask = new LastChangedTimerTask(this, this.pnlLastChanged, this.jSplitPane1, true);
         new Timer().schedule(lastChangedTask, 500);
@@ -1512,10 +1509,10 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
             return;
         }
 
-        ClientSettings settings = ClientSettings.getInstance();
+        UserSettings settings = UserSettings.getInstance();
 
         boolean onlyMyReviews = this.chkOnlyMyReviews.isSelected();
-        settings.setConfiguration(ClientSettings.CONF_DESKTOP_ONLYMYREVIEWS, "" + onlyMyReviews);
+        settings.setSetting(UserSettings.CONF_DESKTOP_ONLYMYREVIEWS, "" + onlyMyReviews);
 
         TimerTask revDueTask = new ReviewsDueTimerTask(this, this.pnlRevDue, this.jSplitPane1, true);
         new Timer().schedule(revDueTask, 500);
@@ -1542,10 +1539,10 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
             return;
         }
 
-        ClientSettings settings = ClientSettings.getInstance();
+        UserSettings settings = UserSettings.getInstance();
 
         boolean onlyMyTagged = this.chkOnlyMyTagged.isSelected();
-        settings.setConfiguration(ClientSettings.CONF_DESKTOP_ONLYMYTAGGED, "" + onlyMyTagged);
+        settings.setSetting(UserSettings.CONF_DESKTOP_ONLYMYTAGGED, "" + onlyMyTagged);
 
         TimerTask taggedTask = new TaggedTimerTask(this, this.pnlTagged, this.jSplitPane2, this.cmdTagFilter, this.cmdDocumentTagFilter, this.popTagFilter, this.popDocumentTagFilter, true);
         new Timer().schedule(taggedTask, 500);

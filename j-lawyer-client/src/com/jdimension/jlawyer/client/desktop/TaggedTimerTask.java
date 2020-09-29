@@ -735,7 +735,7 @@ public class TaggedTimerTask extends java.util.TimerTask {
         this(owner, resultPanel, split, tagMenu, tagDocumentMenu, popTags, popDocumentTags, false);
     }
 
-    private void buildPopup(JButton button, JPopupMenu popup, List<String> tagsInUse, String[] lastFilterTags, String clientSettingsKey) {
+    private void buildPopup(JButton button, JPopupMenu popup, List<String> tagsInUse, String[] lastFilterTags, String userSettingsKey) {
         // update combobox with tags that are currently in use, but only if there was an actual change
         List<String> currentComboItems = new ArrayList<String>();
         MenuElement[] elements = popup.getSubElements();
@@ -792,7 +792,7 @@ public class TaggedTimerTask extends java.util.TimerTask {
                         }
 
                         System.out.println("60: " + al);
-                        ClientSettings.getInstance().setConfigurationArray(clientSettingsKey, al.toArray(new String[al.size()]));
+                        UserSettings.getInstance().setSettingArray(userSettingsKey, al.toArray(new String[al.size()]));
                         TimerTask taggedTask = new TaggedTimerTask(EditorsRegistry.getInstance().getMainWindow(), resultUI, split, tagMenu, tagDocumentMenu, popTags, popDocumentTags, true, false);
                         new java.util.Timer().schedule(taggedTask, 1000);
 
@@ -825,7 +825,8 @@ public class TaggedTimerTask extends java.util.TimerTask {
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
-            String[] lastFilterTags = settings.getConfigurationArray(ClientSettings.CONF_DESKTOP_LASTFILTERTAG, new String[]{""});
+            UserSettings.getInstance().migrateFrom(settings, UserSettings.CONF_DESKTOP_LASTFILTERTAG);
+            String[] lastFilterTags = UserSettings.getInstance().getSettingArray(UserSettings.CONF_DESKTOP_LASTFILTERTAG, new String[]{""});
             List<String> caseTagsInUse = settings.getArchiveFileTagsInUse();
             AppOptionGroupBean[] allCaseTags = settings.getArchiveFileTagDtos();
             List<String> allCaseTagsAsString = new ArrayList<String>();
@@ -839,10 +840,12 @@ public class TaggedTimerTask extends java.util.TimerTask {
             }
             if (this.rebuildPopup && !(this.popTags.isVisible())) {
                 //this.buildPopup(this.tagMenu, this.popTags, tagsInUse, lastFilterTags, settings.CONF_DESKTOP_LASTFILTERTAG);
-                this.buildPopup(this.tagMenu, this.popTags, allCaseTagsAsString, lastFilterTags, settings.CONF_DESKTOP_LASTFILTERTAG);
+                UserSettings.getInstance().migrateFrom(settings, UserSettings.CONF_DESKTOP_LASTFILTERTAG);
+                this.buildPopup(this.tagMenu, this.popTags, allCaseTagsAsString, lastFilterTags, UserSettings.CONF_DESKTOP_LASTFILTERTAG);
             }
 
-            String[] lastFilterDocumentTags = settings.getConfigurationArray(ClientSettings.CONF_DESKTOP_LASTFILTERDOCUMENTTAG, new String[]{""});
+            UserSettings.getInstance().migrateFrom(settings, UserSettings.CONF_DESKTOP_LASTFILTERDOCUMENTTAG);
+            String[] lastFilterDocumentTags = UserSettings.getInstance().getSettingArray(UserSettings.CONF_DESKTOP_LASTFILTERDOCUMENTTAG, new String[]{""});
             List<String> docTagsInUse = settings.getDocumentTagsInUse();
             AppOptionGroupBean[] allDocTags = settings.getDocumentTagDtos();
             List<String> allDocTagsAsString = new ArrayList<String>();
@@ -856,7 +859,8 @@ public class TaggedTimerTask extends java.util.TimerTask {
             }
             if (this.rebuildPopup && !(this.popDocumentTags.isVisible())) {
                 //this.buildPopup(this.tagDocumentMenu, this.popDocumentTags, tagsInUse, lastFilterDocumentTags, settings.CONF_DESKTOP_LASTFILTERDOCUMENTTAG);
-                this.buildPopup(this.tagDocumentMenu, this.popDocumentTags, allDocTagsAsString, lastFilterDocumentTags, settings.CONF_DESKTOP_LASTFILTERDOCUMENTTAG);
+                UserSettings.getInstance().migrateFrom(settings, UserSettings.CONF_DESKTOP_LASTFILTERDOCUMENTTAG);
+                this.buildPopup(this.tagDocumentMenu, this.popDocumentTags, allDocTagsAsString, lastFilterDocumentTags, UserSettings.CONF_DESKTOP_LASTFILTERDOCUMENTTAG);
             }
 
             if (lastFilterTags.length == 0 && lastFilterDocumentTags.length == 0) {
@@ -876,7 +880,8 @@ public class TaggedTimerTask extends java.util.TimerTask {
             ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
 
             myNewList = fileService.getTagged(lastFilterTags, null, 50);
-            String temp = settings.getConfiguration(ClientSettings.CONF_DESKTOP_ONLYMYTAGGED, "false");
+            UserSettings.getInstance().migrateFrom(settings, UserSettings.CONF_DESKTOP_ONLYMYTAGGED);
+            String temp = UserSettings.getInstance().getSetting(UserSettings.CONF_DESKTOP_ONLYMYTAGGED, "false");
             if ("true".equalsIgnoreCase(temp)) {
                 String principalId = UserSettings.getInstance().getCurrentUser().getPrincipalId();
                 for (ArchiveFileBean x : myNewList) {

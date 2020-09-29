@@ -733,19 +733,7 @@ public class ClientSettings {
     public static final String CONF_DESKTOP_REVDUE_Y="client.desktop.revdue.y";
     public static final String CONF_DESKTOP_REVDUE_EXSTATE="client.desktop.revdue.exstate";
     
-    public static final String CONF_DESKTOP_TIPOFDAY_HEIGHT="client.desktop.tipofday.height";
-    public static final String CONF_DESKTOP_TIPOFDAY_WIDTH="client.desktop.tipofday.width";
-    public static final String CONF_DESKTOP_TIPOFDAY_X="client.desktop.tipofday.x";
-    public static final String CONF_DESKTOP_TIPOFDAY_Y="client.desktop.tipofday.y";
-    public static final String CONF_DESKTOP_TIPOFDAY_EXSTATE="client.desktop.tipofday.exstate";
     
-    public static final String CONF_DESKTOP_RANDOM_BACKGROUND="client.desktop.background.random";
-    
-    public static final String CONF_DESKTOP_ONLYMYCASES="client.desktop.onlymycases";
-    public static final String CONF_DESKTOP_ONLYMYREVIEWS="client.desktop.onlymyreviews";
-    public static final String CONF_DESKTOP_ONLYMYTAGGED="client.desktop.onlymytagged";
-    public static final String CONF_DESKTOP_LASTFILTERTAG="client.desktop.lastfiltertag";
-    public static final String CONF_DESKTOP_LASTFILTERDOCUMENTTAG="client.desktop.lastfilterdocumenttag";
     
     public static final String CONF_SCANS_TAGGINGENABLED="client.scans.taggingenabled";
     public static final String CONF_SCANS_DOCUMENTTAGGINGENABLED="client.scans.documenttaggingenabled";

@@ -762,7 +762,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
 //        this.scrollTree.getHorizontalScrollBar().setUnitIncrement(16);
 
         ClientSettings settings = ClientSettings.getInstance();
-        String randomBackgrounds = settings.getConfiguration(ClientSettings.CONF_DESKTOP_RANDOM_BACKGROUND, "1");
+        String randomBackgrounds = UserSettings.getInstance().getSetting(UserSettings.CONF_DESKTOP_RANDOM_BACKGROUND, "0");
         if("0".equalsIgnoreCase(randomBackgrounds)) {
             this.mnuChkRandomBackground.setSelected(false);
         } else {
@@ -2471,11 +2471,11 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     }//GEN-LAST:event_mnuWordProcessorActionPerformed
 
     private void mnuChkRandomBackgroundActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuChkRandomBackgroundActionPerformed
-        ClientSettings settings = ClientSettings.getInstance();
+        UserSettings settings = UserSettings.getInstance();
         if(this.mnuChkRandomBackground.isSelected()) {
-            settings.setConfiguration(ClientSettings.CONF_DESKTOP_RANDOM_BACKGROUND, "1");
+            settings.setSetting(UserSettings.CONF_DESKTOP_RANDOM_BACKGROUND, "1");
         } else {
-            settings.setConfiguration(ClientSettings.CONF_DESKTOP_RANDOM_BACKGROUND, "0");
+            settings.setSetting(UserSettings.CONF_DESKTOP_RANDOM_BACKGROUND, "0");
         }
         JOptionPane.showMessageDialog(this, "Die Einstellung erfordert einen Neustart des j-lawyer.org Clients.", "Neustart erforderlich", JOptionPane.INFORMATION_MESSAGE);
         
