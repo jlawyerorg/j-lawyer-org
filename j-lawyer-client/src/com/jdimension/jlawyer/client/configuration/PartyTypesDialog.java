@@ -783,6 +783,7 @@ public class PartyTypesDialog extends javax.swing.JDialog {
         taPlaceHolders = new javax.swing.JTextArea();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        setTitle("Beteiligtentypen");
 
         jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder("Beteiligtentypen"));
 

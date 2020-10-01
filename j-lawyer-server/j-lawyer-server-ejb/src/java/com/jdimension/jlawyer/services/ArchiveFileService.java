@@ -3997,7 +3997,39 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     @Override
     @RolesAllowed({"loginRole"})
     public List<PartyTypeBean> getAllPartyTypes() {
-        return this.partyTypeFacade.findAll();
+        List<PartyTypeBean> all=this.partyTypeFacade.findAll();
+        Collections.sort(all, new Comparator() {
+            @Override
+            public int compare(Object t, Object t1) {
+                Object u1=t;
+                Object u2=t1;
+                if(u1==null)
+                    return -1;
+                if(u2==null)
+                    return 1;
+                
+                if(!(u1 instanceof PartyTypeBean))
+                    return -1;
+                if(!(u2 instanceof PartyTypeBean))
+                    return 1;
+                
+                PartyTypeBean f1=(PartyTypeBean)u1;
+                PartyTypeBean f2=(PartyTypeBean)u2;
+                
+                String f1name = "";
+                if (f1.getName() != null) {
+                    f1name = f1.getName().toLowerCase();
+                }
+                String f2name = "";
+                if (f2.getName() != null) {
+                    f2name = f2.getName().toLowerCase();
+                }
+                
+                return f1name.compareTo(f2name);
+            }
+            
+        });
+        return all;
     }
 
     @Override

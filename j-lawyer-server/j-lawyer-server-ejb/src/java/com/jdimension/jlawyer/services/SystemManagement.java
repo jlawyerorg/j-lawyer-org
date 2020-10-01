@@ -683,6 +683,7 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.List;
@@ -2015,7 +2016,39 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     @Override
     @RolesAllowed({"loginRole"})
     public Collection<PartyTypeBean> getPartyTypes() {
-        return this.partyTypesFacade.findAll();
+        List<PartyTypeBean> all= this.partyTypesFacade.findAll();
+        Collections.sort(all, new Comparator() {
+            @Override
+            public int compare(Object t, Object t1) {
+                Object u1=t;
+                Object u2=t1;
+                if(u1==null)
+                    return -1;
+                if(u2==null)
+                    return 1;
+                
+                if(!(u1 instanceof PartyTypeBean))
+                    return -1;
+                if(!(u2 instanceof PartyTypeBean))
+                    return 1;
+                
+                PartyTypeBean f1=(PartyTypeBean)u1;
+                PartyTypeBean f2=(PartyTypeBean)u2;
+                
+                String f1name = "";
+                if (f1.getName() != null) {
+                    f1name = f1.getName().toLowerCase();
+                }
+                String f2name = "";
+                if (f2.getName() != null) {
+                    f2name = f2.getName().toLowerCase();
+                }
+                
+                return f1name.compareTo(f2name);
+            }
+            
+        });
+        return all;
     }
 
     @Override
