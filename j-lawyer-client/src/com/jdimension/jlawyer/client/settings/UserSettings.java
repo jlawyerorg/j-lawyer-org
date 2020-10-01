@@ -781,6 +781,7 @@ public class UserSettings {
         this.loadCache();
         if(!(this.settingCache.containsKey(key))) {
             this.setSetting(key, cs.getConfiguration(key, null));
+            cs.removeConfiguration(key);
         }
         
     }
