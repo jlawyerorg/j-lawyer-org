@@ -756,13 +756,14 @@ public class TaggedTimerTask extends java.util.TimerTask {
             boolean hasSelection = false;
             for (String t : tagsInUse) {
                 JCheckBoxMenuItem mi = new JCheckBoxMenuItem(t);
-                if (Arrays.binarySearch(lastFilterTags, t) > -1) {
+                if (Arrays.asList(lastFilterTags).contains(t)) {
                     mi.setSelected(true);
                     hasSelection = true;
                 } else {
                     mi.setSelected(false);
                 }
                 popup.add(mi);
+                
             }
             if (hasSelection) {
                 button.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_label_green_36dp.png")));

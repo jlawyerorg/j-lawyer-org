@@ -668,6 +668,7 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.LayoutManager;
+import java.util.Arrays;
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableModel;
@@ -1063,7 +1064,7 @@ public class ThreadUtils {
             }
         });
     }
-
+    
     public static void repaintComponent(final JComponent c) {
         SwingUtilities.invokeLater(
                 new Runnable() {

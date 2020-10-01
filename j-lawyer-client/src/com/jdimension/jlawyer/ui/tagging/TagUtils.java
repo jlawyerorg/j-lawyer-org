@@ -769,7 +769,8 @@ public class TagUtils {
                 popTagFilter.removeAll();
                 for(String t: tags) {
                     JCheckBoxMenuItem mi=new JCheckBoxMenuItem(t);
-                    if(Arrays.binarySearch(lastFilterTags.toArray(), t)>-1) {
+                    if(lastFilterTags.contains(t)) {
+                    //if(Arrays.binarySearch(lastFilterTags.toArray(), t)>-1) {
                         mi.setSelected(true);
                     } else {
                         mi.setSelected(false);
