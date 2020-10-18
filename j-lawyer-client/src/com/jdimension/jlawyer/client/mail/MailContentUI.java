@@ -758,8 +758,12 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
     }
 
     public String getBody() {
-
-        return this.editBody.getText();
+        try {
+            return this.editBody.getText();
+        } catch (Throwable t) {
+            log.error("Could not return mail body", t);
+            return "Nachrichtentext konnte nicht ermittelt werden";
+        }
 
 //        if("text/plain".equalsIgnoreCase(this.editBody.getContentType()))
 //            return this.editBody.getText();
