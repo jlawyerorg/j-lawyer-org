@@ -695,7 +695,13 @@ public class EmailTableCellRenderer extends DefaultTableCellRenderer {
         }
         
         
-        MessageContainer msgC = (MessageContainer) table.getValueAt(row, 0);
+        MessageContainer msgC = null;
+        try {
+            msgC=(MessageContainer) table.getValueAt(row, 0);
+        } catch (Throwable t) {
+            log.error(t);
+            return new JLabel("Fehler");
+        }
         Message msg = msgC.getMessage();
 
         Object returnRenderer = null;
