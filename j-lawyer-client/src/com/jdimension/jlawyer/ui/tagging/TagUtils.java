@@ -805,7 +805,8 @@ public class TagUtils {
             for(String dTag: sortedTags) {
                 sb.append(dTag);
                 //sb.append(" (" + activeTags.get(dTag) + ")&nbsp;&nbsp;&nbsp;");
-                sb.append(" (" + activeTags.get(dTag) + ")   ");
+                sb.append(" (" + activeTags.get(dTag) + ")");
+                sb.append(System.lineSeparator());
             }
         }
         //sb.append("</font>");

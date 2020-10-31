@@ -682,6 +682,7 @@ import com.jdimension.jlawyer.documents.PlaceHolders;
 import com.jdimension.jlawyer.persistence.*;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import com.jdimension.jlawyer.ui.folders.CaseFolderPanel;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import javax.swing.DefaultListModel;
@@ -703,7 +704,7 @@ import org.jlawyer.plugins.calculation.GenericCalculationTable;
 public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implements PartiesSelectionListener {
 
     private static final Logger log = Logger.getLogger(AddDocumentFromTemplateDialog.class.getName());
-    private JTable targetTable = null;
+    private CaseFolderPanel targetTable = null;
     private ArchiveFileBean aFile = null;
     private boolean initializing = true;
     private JTable tblReviewReasons = null;
@@ -713,14 +714,14 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
     private Collection<String> formPlaceHolders=new ArrayList<>();
     private Hashtable<String,String> formPlaceHolderValues=new Hashtable<>();
 
-    public AddDocumentFromTemplateDialog(java.awt.Frame parent, boolean modal, JTable targetTable, ArchiveFileBean aFile, List<ArchiveFileAddressesBean> involved, JTable tblReviewReasons) {
+    public AddDocumentFromTemplateDialog(java.awt.Frame parent, boolean modal, CaseFolderPanel targetTable, ArchiveFileBean aFile, List<ArchiveFileAddressesBean> involved, JTable tblReviewReasons) {
         this(parent, modal, targetTable, aFile, involved, tblReviewReasons, null);
     }
     
     /**
      * Creates new form AddDocumentDialog
      */
-    public AddDocumentFromTemplateDialog(java.awt.Frame parent, boolean modal, JTable targetTable, ArchiveFileBean aFile, List<ArchiveFileAddressesBean> involved, JTable tblReviewReasons, GenericCalculationTable calculationTable) {
+    public AddDocumentFromTemplateDialog(java.awt.Frame parent, boolean modal, CaseFolderPanel targetTable, ArchiveFileBean aFile, List<ArchiveFileAddressesBean> involved, JTable tblReviewReasons, GenericCalculationTable calculationTable) {
         super(parent, modal);
         this.initializing = true;
         
@@ -1356,11 +1357,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
             GenericNode gn = (GenericNode) tn.getUserObject();
 
             ArchiveFileDocumentsBean db = locator.lookupArchiveFileServiceRemote().addDocumentFromTemplate(this.aFile.getId(), this.txtFileName.getText(), gn, this.lstTemplates.getSelectedValue().toString(), phValues, this.cmbDictateSigns.getSelectedItem().toString());
-            ArchiveFileDocumentsTableModel m = (ArchiveFileDocumentsTableModel) this.targetTable.getModel();
-            //SimpleDateFormat df=new SimpleDateFormat("dd.MM.yyyy, HH:mm", Locale.GERMAN);
-            //m.addRow(new Object[] {df.format(db.getCreationDate()), db.getName()});
-            m.addRow(new Object[]{db, false, db.getName(), db.getDictateSign()});
-            ComponentUtils.autoSizeColumns(targetTable);
+            targetTable.addDocument(db);
 
         } catch (Exception ex) {
             log.error("Error adding document from template " + this.lstTemplates.getSelectedValue().toString(), ex);

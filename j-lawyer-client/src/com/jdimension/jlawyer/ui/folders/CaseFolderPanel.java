@@ -663,8 +663,16 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.ui.folders;
 
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeModel;
+import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import com.jdimension.jlawyer.client.editors.files.ArchiveFilePanel;
+import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
+import java.awt.Component;
+import java.awt.Rectangle;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Hashtable;
+import javax.swing.JPopupMenu;
+import themes.colors.DefaultColorTheme;
 
 /**
  *
@@ -672,12 +680,38 @@ import javax.swing.tree.DefaultTreeModel;
  */
 public class CaseFolderPanel extends javax.swing.JPanel {
 
+    private boolean readonly = false;
+    private ArrayList<ArchiveFileDocumentsBean> documents = new ArrayList<ArchiveFileDocumentsBean>();
+    private ArchiveFilePanel caseContainer = null;
+    private JPopupMenu documentsPopup = null;
+
     /**
      * Creates new form CaseFolderPanel
      */
+    public CaseFolderPanel(boolean readonly) {
+        initComponents();
+        this.readonly = readonly;
+        this.jScrollPane1.getVerticalScrollBar().setUnitIncrement(16);
+        this.jScrollPane2.getVerticalScrollBar().setUnitIncrement(16);
+    }
+
     public CaseFolderPanel() {
         initComponents();
-        
+        this.readonly = false;
+        this.jScrollPane1.getVerticalScrollBar().setUnitIncrement(16);
+        this.jScrollPane2.getVerticalScrollBar().setUnitIncrement(16);
+    }
+
+    public void setCaseContainer(ArchiveFilePanel p) {
+        this.caseContainer = p;
+    }
+
+    public void setDocumentsPopup(JPopupMenu menu) {
+        this.documentsPopup = menu;
+    }
+
+    public void setReadOnly(boolean readOnly) {
+        this.readonly = readOnly;
     }
 
     /**
@@ -691,16 +725,20 @@ public class CaseFolderPanel extends javax.swing.JPanel {
 
         jPanel1 = new javax.swing.JPanel();
         jButton1 = new javax.swing.JButton();
-        foldersPanel1 = new com.jdimension.jlawyer.ui.folders.FoldersPanel();
         jPanel2 = new javax.swing.JPanel();
         sortDate = new com.jdimension.jlawyer.ui.folders.SortButton();
         sortName = new com.jdimension.jlawyer.ui.folders.SortButton();
         sortFavorite = new com.jdimension.jlawyer.ui.folders.SortButton();
         sortSize = new com.jdimension.jlawyer.ui.folders.SortButton();
         sortDictateSign = new com.jdimension.jlawyer.ui.folders.SortButton();
-        jPanel3 = new javax.swing.JPanel();
+        cmdActions = new javax.swing.JButton();
+        sortFolder = new com.jdimension.jlawyer.ui.folders.SortButton();
+        jScrollPane2 = new javax.swing.JScrollPane();
+        pnlDocumentEntries = new javax.swing.JPanel();
         documentEntryPanel1 = new com.jdimension.jlawyer.ui.folders.DocumentEntryPanel();
         documentEntryPanel2 = new com.jdimension.jlawyer.ui.folders.DocumentEntryPanel();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        foldersPanel1 = new com.jdimension.jlawyer.ui.folders.FoldersPanel();
 
         jButton1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/package_system.png"))); // NOI18N
 
@@ -710,7 +748,7 @@ public class CaseFolderPanel extends javax.swing.JPanel {
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addComponent(jButton1)
-                .addGap(0, 0, Short.MAX_VALUE))
+                .addGap(0, 146, Short.MAX_VALUE))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -759,67 +797,97 @@ public class CaseFolderPanel extends javax.swing.JPanel {
             }
         });
 
+        cmdActions.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/14_layer_lowerlayer.png"))); // NOI18N
+        cmdActions.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                cmdActionsMousePressed(evt);
+            }
+            public void mouseReleased(java.awt.event.MouseEvent evt) {
+                cmdActionsMouseReleased(evt);
+            }
+        });
+        cmdActions.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdActionsActionPerformed(evt);
+            }
+        });
+
+        sortFolder.setText("Ordner");
+        sortFolder.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                sortFolderMouseClicked(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 0, Short.MAX_VALUE)
-            .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addGroup(jPanel2Layout.createSequentialGroup()
-                    .addContainerGap()
-                    .addComponent(sortDate, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                    .addComponent(sortName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                    .addComponent(sortFavorite, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                    .addComponent(sortSize, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                    .addComponent(sortDictateSign, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addContainerGap(474, Short.MAX_VALUE)))
+            .addGroup(jPanel2Layout.createSequentialGroup()
+                .addComponent(cmdActions)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(sortDate, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(sortName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(sortFavorite, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(sortSize, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(sortDictateSign, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(sortFolder, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap())
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 40, Short.MAX_VALUE)
-            .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addGroup(jPanel2Layout.createSequentialGroup()
-                    .addGap(2, 2, 2)
-                    .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(sortDate, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(sortName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(sortFavorite, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(sortSize, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(sortDictateSign, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+            .addComponent(cmdActions)
+            .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addComponent(sortFolder, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(sortDate, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(sortName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(sortFavorite, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(sortSize, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(sortDictateSign, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
 
-        jPanel3.setLayout(new javax.swing.BoxLayout(jPanel3, javax.swing.BoxLayout.Y_AXIS));
-        jPanel3.add(documentEntryPanel1);
-        jPanel3.add(documentEntryPanel2);
+        jScrollPane2.setBorder(null);
+
+        pnlDocumentEntries.setLayout(new javax.swing.BoxLayout(pnlDocumentEntries, javax.swing.BoxLayout.Y_AXIS));
+        pnlDocumentEntries.add(documentEntryPanel1);
+        pnlDocumentEntries.add(documentEntryPanel2);
+
+        jScrollPane2.setViewportView(pnlDocumentEntries);
+
+        jScrollPane1.setBorder(null);
+        jScrollPane1.setViewportView(foldersPanel1);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(foldersPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jScrollPane1))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, 927, Short.MAX_VALUE)
-                    .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                    .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jScrollPane2)))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(foldersPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, 425, Short.MAX_VALUE)
-                    .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(10, 10, 10)
+                        .addComponent(jScrollPane2))
+                    .addGroup(layout.createSequentialGroup()
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jScrollPane1))))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -827,74 +895,264 @@ public class CaseFolderPanel extends javax.swing.JPanel {
         // TODO add your handling code here:
     }//GEN-LAST:event_sortDateActionPerformed
 
+    public void selectAllDocuments(boolean selected) {
+        for (Component c : this.pnlDocumentEntries.getComponents()) {
+            if (c instanceof DocumentEntryPanel) {
+                ((DocumentEntryPanel) c).setSelected(selected);
+            }
+        }
+    }
+
     private void sortDateMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_sortDateMouseClicked
-        if(this.sortDate.getSortState()!=SortButton.SORT_NONE) {
+        if (this.sortDate.getSortState() != SortButton.SORT_NONE) {
             this.sortDictateSign.setSortState(SortButton.SORT_NONE);
             this.sortFavorite.setSortState(SortButton.SORT_NONE);
             this.sortName.setSortState(SortButton.SORT_NONE);
             this.sortSize.setSortState(SortButton.SORT_NONE);
+            this.sortFolder.setSortState(SortButton.SORT_NONE);
         }
-        if(this.sortDate.getSortState()==SortButton.SORT_NONE && this.sortDictateSign.getSortState()==SortButton.SORT_NONE && this.sortFavorite.getSortState()==SortButton.SORT_NONE && this.sortName.getSortState()==SortButton.SORT_NONE && this.sortSize.getSortState()==SortButton.SORT_NONE)
+        if (this.sortFolder.getSortState() == SortButton.SORT_NONE && this.sortDate.getSortState() == SortButton.SORT_NONE && this.sortDictateSign.getSortState() == SortButton.SORT_NONE && this.sortFavorite.getSortState() == SortButton.SORT_NONE && this.sortName.getSortState() == SortButton.SORT_NONE && this.sortSize.getSortState() == SortButton.SORT_NONE)
             this.sortDate.setSortState(SortButton.SORT_ASC);
     }//GEN-LAST:event_sortDateMouseClicked
 
     private void sortNameMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_sortNameMouseClicked
-        if(this.sortName.getSortState()!=SortButton.SORT_NONE) {
+        if (this.sortName.getSortState() != SortButton.SORT_NONE) {
             this.sortDictateSign.setSortState(SortButton.SORT_NONE);
             this.sortFavorite.setSortState(SortButton.SORT_NONE);
             this.sortDate.setSortState(SortButton.SORT_NONE);
             this.sortSize.setSortState(SortButton.SORT_NONE);
+            this.sortFolder.setSortState(SortButton.SORT_NONE);
         }
-        if(this.sortDate.getSortState()==SortButton.SORT_NONE && this.sortDictateSign.getSortState()==SortButton.SORT_NONE && this.sortFavorite.getSortState()==SortButton.SORT_NONE && this.sortName.getSortState()==SortButton.SORT_NONE && this.sortSize.getSortState()==SortButton.SORT_NONE)
+        if (this.sortFolder.getSortState() == SortButton.SORT_NONE && this.sortDate.getSortState() == SortButton.SORT_NONE && this.sortDictateSign.getSortState() == SortButton.SORT_NONE && this.sortFavorite.getSortState() == SortButton.SORT_NONE && this.sortName.getSortState() == SortButton.SORT_NONE && this.sortSize.getSortState() == SortButton.SORT_NONE)
             this.sortDate.setSortState(SortButton.SORT_ASC);
     }//GEN-LAST:event_sortNameMouseClicked
 
     private void sortFavoriteMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_sortFavoriteMouseClicked
-        if(this.sortFavorite.getSortState()!=SortButton.SORT_NONE) {
+        if (this.sortFavorite.getSortState() != SortButton.SORT_NONE) {
             this.sortDictateSign.setSortState(SortButton.SORT_NONE);
             this.sortDate.setSortState(SortButton.SORT_NONE);
             this.sortName.setSortState(SortButton.SORT_NONE);
             this.sortSize.setSortState(SortButton.SORT_NONE);
+            this.sortFolder.setSortState(SortButton.SORT_NONE);
         }
-        if(this.sortDate.getSortState()==SortButton.SORT_NONE && this.sortDictateSign.getSortState()==SortButton.SORT_NONE && this.sortFavorite.getSortState()==SortButton.SORT_NONE && this.sortName.getSortState()==SortButton.SORT_NONE && this.sortSize.getSortState()==SortButton.SORT_NONE)
+        if (this.sortFolder.getSortState() == SortButton.SORT_NONE && this.sortDate.getSortState() == SortButton.SORT_NONE && this.sortDictateSign.getSortState() == SortButton.SORT_NONE && this.sortFavorite.getSortState() == SortButton.SORT_NONE && this.sortName.getSortState() == SortButton.SORT_NONE && this.sortSize.getSortState() == SortButton.SORT_NONE)
             this.sortDate.setSortState(SortButton.SORT_ASC);
     }//GEN-LAST:event_sortFavoriteMouseClicked
 
     private void sortSizeMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_sortSizeMouseClicked
-        if(this.sortSize.getSortState()!=SortButton.SORT_NONE) {
+        if (this.sortSize.getSortState() != SortButton.SORT_NONE) {
             this.sortDictateSign.setSortState(SortButton.SORT_NONE);
             this.sortDate.setSortState(SortButton.SORT_NONE);
             this.sortName.setSortState(SortButton.SORT_NONE);
             this.sortFavorite.setSortState(SortButton.SORT_NONE);
+            this.sortFolder.setSortState(SortButton.SORT_NONE);
         }
-        if(this.sortDate.getSortState()==SortButton.SORT_NONE && this.sortDictateSign.getSortState()==SortButton.SORT_NONE && this.sortFavorite.getSortState()==SortButton.SORT_NONE && this.sortName.getSortState()==SortButton.SORT_NONE && this.sortSize.getSortState()==SortButton.SORT_NONE)
+        if (this.sortFolder.getSortState() == SortButton.SORT_NONE && this.sortDate.getSortState() == SortButton.SORT_NONE && this.sortDictateSign.getSortState() == SortButton.SORT_NONE && this.sortFavorite.getSortState() == SortButton.SORT_NONE && this.sortName.getSortState() == SortButton.SORT_NONE && this.sortSize.getSortState() == SortButton.SORT_NONE)
             this.sortDate.setSortState(SortButton.SORT_ASC);
     }//GEN-LAST:event_sortSizeMouseClicked
 
     private void sortDictateSignMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_sortDictateSignMouseClicked
-        if(this.sortDictateSign.getSortState()!=SortButton.SORT_NONE) {
+        if (this.sortDictateSign.getSortState() != SortButton.SORT_NONE) {
             this.sortSize.setSortState(SortButton.SORT_NONE);
             this.sortDate.setSortState(SortButton.SORT_NONE);
             this.sortName.setSortState(SortButton.SORT_NONE);
             this.sortFavorite.setSortState(SortButton.SORT_NONE);
+            this.sortFolder.setSortState(SortButton.SORT_NONE);
         }
-        if(this.sortDate.getSortState()==SortButton.SORT_NONE && this.sortDictateSign.getSortState()==SortButton.SORT_NONE && this.sortFavorite.getSortState()==SortButton.SORT_NONE && this.sortName.getSortState()==SortButton.SORT_NONE && this.sortSize.getSortState()==SortButton.SORT_NONE)
+        if (this.sortFolder.getSortState() == SortButton.SORT_NONE && this.sortDate.getSortState() == SortButton.SORT_NONE && this.sortDictateSign.getSortState() == SortButton.SORT_NONE && this.sortFavorite.getSortState() == SortButton.SORT_NONE && this.sortName.getSortState() == SortButton.SORT_NONE && this.sortSize.getSortState() == SortButton.SORT_NONE)
             this.sortDate.setSortState(SortButton.SORT_ASC);
     }//GEN-LAST:event_sortDictateSignMouseClicked
 
+    private void cmdActionsMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdActionsMousePressed
+
+    }//GEN-LAST:event_cmdActionsMousePressed
+
+    private void cmdActionsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdActionsActionPerformed
+
+    }//GEN-LAST:event_cmdActionsActionPerformed
+
+    private void sortFolderMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_sortFolderMouseClicked
+        if (this.sortFolder.getSortState() != SortButton.SORT_NONE) {
+            this.sortSize.setSortState(SortButton.SORT_NONE);
+            this.sortDate.setSortState(SortButton.SORT_NONE);
+            this.sortName.setSortState(SortButton.SORT_NONE);
+            this.sortFavorite.setSortState(SortButton.SORT_NONE);
+            this.sortDictateSign.setSortState(SortButton.SORT_NONE);
+        }
+        if (this.sortFolder.getSortState() == SortButton.SORT_NONE && this.sortDate.getSortState() == SortButton.SORT_NONE && this.sortDictateSign.getSortState() == SortButton.SORT_NONE && this.sortFavorite.getSortState() == SortButton.SORT_NONE && this.sortName.getSortState() == SortButton.SORT_NONE && this.sortSize.getSortState() == SortButton.SORT_NONE)
+            this.sortDate.setSortState(SortButton.SORT_ASC);
+    }//GEN-LAST:event_sortFolderMouseClicked
+
+    private void cmdActionsMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdActionsMouseReleased
+        //this.documentsPopup.show(this.cmdActions, evt.getX(), evt.getY());
+        this.caseContainer.showDocumentsPopup(evt);
+    }//GEN-LAST:event_cmdActionsMouseReleased
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton cmdActions;
     private com.jdimension.jlawyer.ui.folders.DocumentEntryPanel documentEntryPanel1;
     private com.jdimension.jlawyer.ui.folders.DocumentEntryPanel documentEntryPanel2;
     private com.jdimension.jlawyer.ui.folders.FoldersPanel foldersPanel1;
     private javax.swing.JButton jButton1;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
-    private javax.swing.JPanel jPanel3;
+    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JScrollPane jScrollPane2;
+    private javax.swing.JPanel pnlDocumentEntries;
     private com.jdimension.jlawyer.ui.folders.SortButton sortDate;
     private com.jdimension.jlawyer.ui.folders.SortButton sortDictateSign;
     private com.jdimension.jlawyer.ui.folders.SortButton sortFavorite;
+    private com.jdimension.jlawyer.ui.folders.SortButton sortFolder;
     private com.jdimension.jlawyer.ui.folders.SortButton sortName;
     private com.jdimension.jlawyer.ui.folders.SortButton sortSize;
     // End of variables declaration//GEN-END:variables
+
+    /**
+     * @return the documents
+     */
+    public ArrayList<ArchiveFileDocumentsBean> getDocuments() {
+        return documents;
+    }
+
+    public ArrayList<ArchiveFileDocumentsBean> getSelectedDocuments() {
+        ArrayList<ArchiveFileDocumentsBean> selectedDocs = new ArrayList<>();
+        for (Component c : this.pnlDocumentEntries.getComponents()) {
+            if (c instanceof DocumentEntryPanel) {
+                if (((DocumentEntryPanel) c).isSelected()) {
+                    selectedDocs.add(((DocumentEntryPanel) c).getDocument());
+                }
+            }
+        }
+        return selectedDocs;
+    }
+
+    public void selectDocumentByName(String fileName) {
+        int count = 0;
+        for (Component c : this.pnlDocumentEntries.getComponents()) {
+            if (c instanceof DocumentEntryPanel) {
+
+                if (((DocumentEntryPanel) c).getDocument().getName().equals(fileName)) {
+                    ((DocumentEntryPanel) c).setSelected(true);
+                    //this.jScrollPane2.scrollRectToVisible(((DocumentEntryPanel)c).getBounds());
+                    //System.out.println("location: " + (int)((DocumentEntryPanel)c).getY() + location);
+                    //this.jScrollPane2.getVerticalScrollBar().setValue((int)((DocumentEntryPanel)c).getY());
+                    Rectangle bounds = pnlDocumentEntries.getBounds(((DocumentEntryPanel) c).getVisibleRect());
+                    double height = bounds.getHeight();
+                    double perComponent = height / this.pnlDocumentEntries.getComponentCount();
+                    this.jScrollPane2.getVerticalScrollBar().setValue(count * (int) (perComponent));
+                    //System.out.println("calc: " + count*(perComponent));
+
+                }
+                count = count + 1;
+            }
+        }
+    }
+
+    /**
+     * @param documents the documents to set
+     */
+    public void setDocuments(Collection<ArchiveFileDocumentsBean> documents) {
+        this.documents = new ArrayList(documents);
+
+        this.pnlDocumentEntries.removeAll();
+        for (int i = 0; i < this.documents.size(); i++) {
+            ArchiveFileDocumentsBean d = this.documents.get(i);
+            DocumentEntryPanel p = new DocumentEntryPanel(this.caseContainer, this, d, this.readonly);
+            if (i % 2 == 0) {
+                p.setBackground(javax.swing.UIManager.getDefaults().getColor("Panel.background"));
+            } else {
+                p.setBackground(DefaultColorTheme.COLOR_LIGHT_GREY);
+            }
+            this.pnlDocumentEntries.add(p);
+        }
+        this.jScrollPane2.getVerticalScrollBar().setValue(0);
+    }
+
+    public void addDocument(ArchiveFileDocumentsBean newDoc) {
+        this.documents.add(newDoc);
+        DocumentEntryPanel p = new DocumentEntryPanel(this.caseContainer, this, newDoc, this.readonly);
+        if (this.documents.size() % 2 == 0) {
+            p.setBackground(javax.swing.UIManager.getDefaults().getColor("Panel.background"));
+        } else {
+            p.setBackground(DefaultColorTheme.COLOR_LIGHT_GREY);
+        }
+        this.pnlDocumentEntries.add(p);
+        this.pnlDocumentEntries.repaint();
+        this.pnlDocumentEntries.revalidate();
+    }
+
+    public void clearDocuments() {
+        this.documents.clear();
+        this.pnlDocumentEntries.removeAll();
+    }
+
+    public void removeDocument(ArchiveFileDocumentsBean doc) {
+        this.documents.remove(doc);
+        for (Component c : this.pnlDocumentEntries.getComponents()) {
+            if (c instanceof DocumentEntryPanel) {
+
+                if (((DocumentEntryPanel) c).getDocument().getId().equals(doc.getId())) {
+                    this.pnlDocumentEntries.remove(c);
+                    break;
+                }
+            }
+        }
+    }
+
+    public void updateDocument(ArchiveFileDocumentsBean doc) {
+        for (Component c : this.pnlDocumentEntries.getComponents()) {
+            if (c instanceof DocumentEntryPanel) {
+
+                if (((DocumentEntryPanel) c).getDocument().getId().equals(doc.getId())) {
+                    ((DocumentEntryPanel) c).setDocument(doc);
+                    break;
+                }
+            }
+        }
+    }
+
+    public int highlightDocuments(String text, String[] selectedTags, Hashtable<String, ArrayList<String>> allTags) {
+        int matchCount=0;
+        for (Component c : this.pnlDocumentEntries.getComponents()) {
+            if (c instanceof DocumentEntryPanel) {
+                ArchiveFileDocumentsBean doc = ((DocumentEntryPanel) c).getDocument();
+                boolean match = false;
+                if (text != null && !("".equals(text))) {
+                    if (doc.getName().toLowerCase().contains(text.toLowerCase())) {
+                        //((DocumentEntryPanel) c).highlight(true);
+                        match = true;
+                    } else {
+                        //((DocumentEntryPanel) c).highlight(false);
+                    }
+                } else {
+                    //((DocumentEntryPanel) c).highlight(false);
+                }
+
+                if(!match) {
+                if (selectedTags.length > 0) {
+                    
+                        String id = doc.getId();
+                        if (allTags.containsKey(id)) {
+                            for (String tag : selectedTags) {
+                                if (allTags.get(id).contains(tag)) {
+                                    match = true;
+                                    break;
+                                }
+                            }
+                        }
+                    
+                }
+                }
+                
+                if(match)
+                    matchCount=matchCount+1;
+                
+                ((DocumentEntryPanel) c).highlight(match);
+                
+
+            }
+        }
+        return matchCount;
+    }
 }

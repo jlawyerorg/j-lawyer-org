@@ -663,19 +663,83 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.ui.folders;
 
+import com.jdimension.jlawyer.client.editors.files.ArchiveFilePanel;
+import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.utils.FileUtils;
+import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
+import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
+import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.event.MouseEvent;
+import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
+import javax.swing.Icon;
+import javax.swing.JOptionPane;
+import org.apache.log4j.Logger;
+import themes.colors.DefaultColorTheme;
+
 /**
  *
  * @author jens
  */
 public class DocumentEntryPanel extends javax.swing.JPanel {
+    
+    private static final Logger log=Logger.getLogger(DocumentEntryPanel.class.getName());
+
+    private DecimalFormat megaBytes = new DecimalFormat("0");
+    private SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyy, HH:mm");
+    private CaseFolderPanel documentsContainer=null;
+    private ArchiveFilePanel caseContainer=null;
+    private Color defaultBackground=null;
+    private boolean readOnly=false;
+    protected ArchiveFileDocumentsBean document=null;
+    private Color defaultFilenameColor=null;
+    private Color defaultBackColor=null;
+    private boolean highlighted=false;
 
     /**
      * Creates new form DocumentEntryPanel
      */
     public DocumentEntryPanel() {
         initComponents();
+        this.defaultFilenameColor=this.lblFileName.getForeground();
+        
     }
+    
 
+    public DocumentEntryPanel(ArchiveFilePanel caseContainer, CaseFolderPanel documentsContainer, ArchiveFileDocumentsBean doc, boolean readonly) {
+        initComponents();
+        this.defaultFilenameColor=this.lblFileName.getForeground();
+        
+        this.documentsContainer=documentsContainer;
+        this.caseContainer=caseContainer;
+        this.readOnly=readonly;
+        this.setDocument(doc);
+    }
+    
+    public void highlight(boolean highlight) {
+        
+        if(this.defaultBackColor==null) {
+            this.defaultBackColor=this.getBackground();
+        }
+        
+        this.highlighted=highlight;
+        if(highlight) {
+            //this.lblFileName.setForeground(Color.WHITE);
+            this.lblFileName.setFont(this.lblFileName.getFont().deriveFont(Font.BOLD));
+            this.setBackground(DefaultColorTheme.COLOR_LOGO_RED);
+        } else {
+            //this.lblFileName.setForeground(this.defaultFilenameColor);
+            this.lblFileName.setFont(this.lblFileName.getFont().deriveFont(Font.PLAIN));
+            this.setBackground(this.defaultBackColor);
+            
+            // set background to selected
+            if(this.chkSelected.isSelected())
+                this.setSelected(true);
+        }
+    }
+    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -685,68 +749,256 @@ public class DocumentEntryPanel extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jButton1 = new javax.swing.JButton();
-        jLabel1 = new javax.swing.JLabel();
-        jLabel2 = new javax.swing.JLabel();
-        jLabel3 = new javax.swing.JLabel();
-        jLabel4 = new javax.swing.JLabel();
-        jLabel5 = new javax.swing.JLabel();
+        lblFileIcon = new javax.swing.JLabel();
+        lblFileName = new javax.swing.JLabel();
+        lblCreationDate = new javax.swing.JLabel();
+        lblDictateSign = new javax.swing.JLabel();
+        lblFileSize = new javax.swing.JLabel();
+        chkSelected = new javax.swing.JCheckBox();
+        lblFavorite = new javax.swing.JLabel();
 
-        jButton1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/package_favorite_grey.png"))); // NOI18N
-        jButton1.setBorder(null);
+        lblFileIcon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/fileicons/file_type_odt.png"))); // NOI18N
+        lblFileIcon.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        lblFileIcon.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                lblFileIconMouseClicked(evt);
+            }
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                lblFileIconMouseExited(evt);
+            }
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                lblFileIconMouseEntered(evt);
+            }
+        });
 
-        jLabel1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/fileicons/file_type_odt.png"))); // NOI18N
+        lblFileName.setText("document.odt");
+        lblFileName.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        lblFileName.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                lblFileNameMouseClicked(evt);
+            }
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                lblFileNameMouseExited(evt);
+            }
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                lblFileNameMouseEntered(evt);
+            }
+        });
 
-        jLabel2.setText("document.odt");
+        lblCreationDate.setFont(new java.awt.Font("Dialog", 1, 10)); // NOI18N
+        lblCreationDate.setText("10.10.2020");
 
-        jLabel3.setText("10.10.2020");
+        lblDictateSign.setFont(new java.awt.Font("Dialog", 1, 10)); // NOI18N
+        lblDictateSign.setText("DZ");
 
-        jLabel4.setText("DZ");
+        lblFileSize.setFont(new java.awt.Font("Dialog", 1, 10)); // NOI18N
+        lblFileSize.setText("3,4 MB");
 
-        jLabel5.setText("3,4 MB");
+        chkSelected.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseReleased(java.awt.event.MouseEvent evt) {
+                chkSelectedMouseReleased(evt);
+            }
+        });
+        chkSelected.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                chkSelectedActionPerformed(evt);
+            }
+        });
+
+        lblFavorite.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/package_favorite_grey.png"))); // NOI18N
+        lblFavorite.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                lblFavoriteMouseClicked(evt);
+            }
+        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addComponent(jButton1)
+                .addGap(2, 2, 2)
+                .addComponent(chkSelected)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(lblFavorite)
+                .addGap(18, 18, 18)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(jLabel3)
-                        .addGap(18, 18, 18)
-                        .addComponent(jLabel4)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jLabel5)
-                        .addContainerGap())
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(jLabel1)
+                        .addComponent(lblFileIcon)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jLabel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                        .addComponent(lblFileName))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(lblCreationDate)
+                        .addGap(18, 18, 18)
+                        .addComponent(lblFileSize)
+                        .addGap(18, 18, 18)
+                        .addComponent(lblDictateSign)))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(jLabel2)
-                    .addComponent(jLabel1)
-                    .addComponent(jButton1))
+                .addGap(4, 4, 4)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(lblFileIcon)
+                    .addComponent(lblFileName))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel3)
-                    .addComponent(jLabel4)
-                    .addComponent(jLabel5)))
+                    .addComponent(lblCreationDate)
+                    .addComponent(lblDictateSign)
+                    .addComponent(lblFileSize))
+                .addGap(0, 7, Short.MAX_VALUE))
+            .addComponent(chkSelected, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(lblFavorite, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
 
+    private void lblFileNameMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblFileNameMouseEntered
+        this.lblFileName.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
+    }//GEN-LAST:event_lblFileNameMouseEntered
+
+    private void lblFileNameMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblFileNameMouseExited
+        this.lblFileName.setForeground(Color.BLACK);
+    }//GEN-LAST:event_lblFileNameMouseExited
+
+    private void lblFileIconMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblFileIconMouseEntered
+        this.lblFileName.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
+    }//GEN-LAST:event_lblFileIconMouseEntered
+
+    private void lblFileIconMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblFileIconMouseExited
+        this.lblFileName.setForeground(Color.BLACK);
+    }//GEN-LAST:event_lblFileIconMouseExited
+
+    private void lblFileNameMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblFileNameMouseClicked
+        this.documentClicked(evt, true);
+    }//GEN-LAST:event_lblFileNameMouseClicked
+
+    private void lblFileIconMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblFileIconMouseClicked
+        this.documentClicked(evt, true);
+    }//GEN-LAST:event_lblFileIconMouseClicked
+
+    private void chkSelectedActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkSelectedActionPerformed
+        if(this.chkSelected.isSelected()) {
+            this.setBackground(DefaultColorTheme.COLOR_LOGO_GREEN);
+        } else {
+            this.setBackground(this.defaultBackground);
+        }
+        
+    }//GEN-LAST:event_chkSelectedActionPerformed
+
+    private void lblFavoriteMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblFavoriteMouseClicked
+        if(evt.getClickCount()==1 && !this.readOnly) {
+            try {
+                        ClientSettings settings = ClientSettings.getInstance();
+                        JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                        ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
+                        boolean favorite = this.getDocument().isFavorite();
+                        boolean newValue = !favorite;
+                        remote.setDocumentFavorite(this.getDocument().getId(), newValue);
+                        this.getDocument().setFavorite(newValue);
+                        this.setFavorite(newValue);
+                        this.caseContainer.updateFavoriteDocuments();
+
+                    } catch (Exception ioe) {
+                        log.error("Error setting document as favorite", ioe);
+                        JOptionPane.showMessageDialog(this, "Fehler beim Speichern: " + ioe.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+                    }
+        }
+    }//GEN-LAST:event_lblFavoriteMouseClicked
+
+    private void chkSelectedMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_chkSelectedMouseReleased
+        if(this.chkSelected.isSelected())
+            this.documentClicked(evt, false);
+        else
+            this.documentUnClicked(evt);
+    }//GEN-LAST:event_chkSelectedMouseReleased
+
+    private void documentUnClicked(MouseEvent evt) {
+        this.caseContainer.documentSelectionChanged(null);
+    }
+                    
+    private void documentClicked(MouseEvent evt, boolean deselectOthers) {
+        if(evt.getClickCount()==2 && !evt.isConsumed()) {
+            evt.consume();
+            this.caseContainer.openSelectedDocument(this.document);
+        } else if(evt.getClickCount()==1 && !evt.isConsumed()) {
+            if(this.documentsContainer!=null && deselectOthers)
+                this.documentsContainer.selectAllDocuments(false);
+            this.setSelected(true);
+            this.caseContainer.documentSelectionChanged(this.document);
+            evt.consume();
+        }
+    }
+    
+    public boolean isSelected() {
+        return this.chkSelected.isSelected();
+    }
+    
+    public void setSelected(boolean selected) {
+        if(this.defaultBackground==null && !this.chkSelected.isSelected())
+            this.defaultBackground=this.getBackground();
+        
+        if(selected) {
+            this.chkSelected.setSelected(selected);
+            this.setBackground(DefaultColorTheme.COLOR_LOGO_GREEN);
+        } else {
+            this.chkSelected.setSelected(selected);
+            this.setBackground(this.defaultBackground);
+        }
+        
+        if(this.highlighted)
+            this.highlight(true);
+    }
+    
+    public void setFavorite(boolean favorite) {
+        this.getDocument().setFavorite(favorite);
+        if (favorite) {
+            this.lblFavorite.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/package_favorite.png")));
+        } else {
+            this.lblFavorite.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/package_favorite_grey.png")));
+        }
+    }
+    
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton jButton1;
-    private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel2;
-    private javax.swing.JLabel jLabel3;
-    private javax.swing.JLabel jLabel4;
-    private javax.swing.JLabel jLabel5;
+    private javax.swing.JCheckBox chkSelected;
+    private javax.swing.JLabel lblCreationDate;
+    private javax.swing.JLabel lblDictateSign;
+    private javax.swing.JLabel lblFavorite;
+    private javax.swing.JLabel lblFileIcon;
+    private javax.swing.JLabel lblFileName;
+    private javax.swing.JLabel lblFileSize;
     // End of variables declaration//GEN-END:variables
+
+    /**
+     * @return the document
+     */
+    public ArchiveFileDocumentsBean getDocument() {
+        return document;
+    }
+
+    void setDocument(ArchiveFileDocumentsBean doc) {
+        this.document=doc;
+        this.lblFileName.setText(doc.getName());
+        this.lblCreationDate.setText(df.format(doc.getCreationDate()));
+        this.lblDictateSign.setText(doc.getDictateSign());
+
+        this.setFavorite(this.document.isFavorite());
+
+        FileUtils fu = FileUtils.getInstance();
+        Icon icon = fu.getFileTypeIcon(doc.getName());
+        //this.lblFileIcon.setText(sValue);
+        this.lblFileIcon.setIcon(icon);
+
+        long lValue = doc.getSize();
+        if (lValue < 1024) {
+            lValue = 1024l;
+        }
+
+        if (lValue > (1024 * 1024)) {
+            this.lblFileSize.setText(megaBytes.format(lValue / 1024l / 1024l) + " MB");
+        } else {
+            this.lblFileSize.setText(megaBytes.format(lValue / 1024l) + " KB");
+        }
+    }
 }

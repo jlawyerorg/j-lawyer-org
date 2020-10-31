@@ -23,10 +23,10 @@
               <EmptySpace max="-2" attributes="0"/>
               <Component id="lblExpanded" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
-              <Component id="lblFolderName" pref="232" max="32767" attributes="0"/>
+              <Component id="lblFolderName" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="cmdMore" min="-2" max="-2" attributes="0"/>
-              <EmptySpace max="-2" attributes="0"/>
+              <EmptySpace max="32767" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
@@ -36,7 +36,7 @@
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
                   <Component id="lblFolderName" alignment="3" min="-2" max="-2" attributes="0"/>
-                  <Component id="cmdMore" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="cmdMore" alignment="1" min="-2" max="-2" attributes="0"/>
                   <Component id="lblExpanded" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace max="32767" attributes="0"/>

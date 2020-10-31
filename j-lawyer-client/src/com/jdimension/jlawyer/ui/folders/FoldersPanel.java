@@ -701,6 +701,8 @@ public class FoldersPanel extends javax.swing.JPanel {
 
         setOpaque(false);
 
+        jScrollPane1.setBorder(null);
+
         treeFolders.setOpaque(false);
         jScrollPane1.setViewportView(treeFolders);
 

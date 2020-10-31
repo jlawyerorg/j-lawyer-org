@@ -680,6 +680,7 @@ import com.jdimension.jlawyer.documents.PlaceHolders;
 import com.jdimension.jlawyer.persistence.*;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import com.jdimension.jlawyer.ui.folders.CaseFolderPanel;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import javax.swing.JOptionPane;
@@ -694,7 +695,7 @@ import org.apache.log4j.Logger;
 public class AddNoteDialog extends javax.swing.JDialog {
 
     private static final Logger log = Logger.getLogger(AddNoteDialog.class.getName());
-    private JTable targetTable = null;
+    private CaseFolderPanel targetTable = null;
     private ArchiveFileBean aFile = null;
     private boolean initializing = true;
     private JTable tblReviewReasons = null;
@@ -702,7 +703,7 @@ public class AddNoteDialog extends javax.swing.JDialog {
     /**
      * Creates new form AddNoteDialog
      */
-    public AddNoteDialog(java.awt.Frame parent, boolean modal, JTable targetTable, ArchiveFileBean aFile, JTable tblReviewReasons) {
+    public AddNoteDialog(java.awt.Frame parent, boolean modal, CaseFolderPanel targetTable, ArchiveFileBean aFile, JTable tblReviewReasons) {
         super(parent, modal);
         this.initializing = true;
         this.targetTable = targetTable;
@@ -1089,12 +1090,8 @@ public class AddNoteDialog extends javax.swing.JDialog {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             
             ArchiveFileDocumentsBean db = locator.lookupArchiveFileServiceRemote().addDocument(this.aFile.getId(), FileUtils.sanitizeFileName(fileName), this.htmlEditorPanel1.getText().getBytes(), "");
-            ArchiveFileDocumentsTableModel m = (ArchiveFileDocumentsTableModel) this.targetTable.getModel();
-            //SimpleDateFormat df=new SimpleDateFormat("dd.MM.yyyy, HH:mm", Locale.GERMAN);
-            //m.addRow(new Object[] {df.format(db.getCreationDate()), db.getName()});
-            m.addRow(new Object[]{db, false, db.getName(), db.getDictateSign()});
-            ComponentUtils.autoSizeColumns(targetTable);
-
+            this.targetTable.addDocument(db);
+            
         } catch (Exception ex) {
             log.error("Error adding note", ex);
             JOptionPane.showMessageDialog(this, "Fehler beim Hinzufügen der Notiz: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
