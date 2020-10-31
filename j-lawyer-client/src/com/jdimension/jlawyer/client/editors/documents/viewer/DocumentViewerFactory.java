@@ -668,11 +668,14 @@ import com.jdimension.jlawyer.client.mail.MessageContainer;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import java.awt.Dimension;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 import javax.mail.Flags.Flag;
 import javax.mail.internet.MimeMessage;
 import javax.swing.JComponent;
@@ -689,23 +692,23 @@ public class DocumentViewerFactory {
     public static JComponent getDocumentViewer(String id, String fileName, boolean readOnly, String previewContent, byte[] content, int width, int height) {
 
         if (fileName.toLowerCase().endsWith(".pdf")) {
-           PdfImagePanel pdfP=new PdfImagePanel(fileName, content);
-           pdfP.setSize(new Dimension(width, height));
-           pdfP.showContent(content);
-           return pdfP;
-           
+            PdfImagePanel pdfP = new PdfImagePanel(fileName, content);
+            pdfP.setSize(new Dimension(width, height));
+            pdfP.showContent(content);
+            return pdfP;
+
         } else if (fileName.toLowerCase().endsWith(".jpg") || fileName.toLowerCase().endsWith(".jpeg") || fileName.toLowerCase().endsWith(".gif") || fileName.toLowerCase().endsWith(".png")) {
-            GifJpegPngImagePanel ip=new GifJpegPngImagePanel(content);
+            GifJpegPngImagePanel ip = new GifJpegPngImagePanel(content);
             ip.setSize(width, height);
             ip.showContent(content);
             return ip;
-            
+
         } else if (fileName.toLowerCase().endsWith(".bmp") || fileName.toLowerCase().endsWith(".tif") || fileName.toLowerCase().endsWith(".tiff")) {
-            BmpTiffImagePanel ip=new BmpTiffImagePanel(content);
+            BmpTiffImagePanel ip = new BmpTiffImagePanel(content);
             ip.setSize(width, height);
             ip.showContent(content);
             return ip;
-        } else if(fileName.toLowerCase().endsWith(".txt")) {
+        } else if (fileName.toLowerCase().endsWith(".txt")) {
             PlaintextPanel ptp = new PlaintextPanel();
             ptp.showContent(previewContent.getBytes());
             return ptp;
@@ -713,7 +716,7 @@ public class DocumentViewerFactory {
             HtmlPanel hp = new HtmlPanel(id, readOnly);
             hp.showContent(content);
             return hp;
-        } else if(fileName.toLowerCase().endsWith(".xml") && (fileName.toLowerCase().contains("xjustiz"))) {
+        } else if (fileName.toLowerCase().endsWith(".xml") && (fileName.toLowerCase().contains("xjustiz"))) {
             XjustizPanel xjp = new XjustizPanel(id, fileName);
             xjp.showContent(content);
             return xjp;
@@ -753,6 +756,49 @@ public class DocumentViewerFactory {
 //            } catch (Throwable t) {
 //                log.error("could not convert file to PDF: " + fileName, t);
 //            }
+        } else if (fileName.toLowerCase().endsWith(".odt") || fileName.toLowerCase().endsWith(".ods")) {
+            try {
+                byte[] thumbBytes = null;
+                ZipInputStream zis
+                        = new ZipInputStream(new ByteArrayInputStream(content));
+                //get the zipped file list entry
+                ZipEntry ze = zis.getNextEntry();
+
+                while (ze != null) {
+
+                    String thumbName = ze.getName();
+                    if (thumbName.toLowerCase().endsWith("thumbnail.png")) {
+                        byte[] buffer = new byte[1024];
+                        //create all non exists folders
+                        //else you will hit FileNotFoundException for compressed folder
+
+                        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+
+                        int len;
+                        while ((len = zis.read(buffer)) > 0) {
+                            bos.write(buffer, 0, len);
+                        }
+
+                        bos.close();
+                        thumbBytes = bos.toByteArray();
+                        break;
+                    }
+
+                    ze = zis.getNextEntry();
+                }
+
+                zis.closeEntry();
+                zis.close();
+
+                if (thumbBytes != null) {
+                    GifJpegPngImagePanel ip = new GifJpegPngImagePanel(thumbBytes);
+                    ip.setSize(width, height);
+                    ip.showContent(thumbBytes);
+                    return ip;
+                }
+            } catch (Throwable t) {
+                log.error("Error extracting thumbnail from " + fileName, t);
+            }
         } else if (fileName.toLowerCase().endsWith(".bea")) {
             try {
                 BeaPanel bp = new BeaPanel(id);
@@ -765,10 +811,9 @@ public class DocumentViewerFactory {
                 return bp;
             }
         } else if (LauncherFactory.supportedByLibreOffice(fileName)) {
-            
+
             // double clicking the documents table will fire the mouse event twice - one with clickount=1, then with clickcount=2
             // this cases LO to launch twice, which seems to fail...
-            
 //            try {
 //                FileConverter conv=FileConverter.getInstance();
 //                String tempPath=FileUtils.createTempFile(fileName, content);
@@ -791,23 +836,17 @@ public class DocumentViewerFactory {
 //                log.error(t);
 //                // fall back to text preview 
 //            }
-            
         }
-            // plain text preview is default
-            PlaintextPanel ptp = new PlaintextPanel();
-            
-                //ptp.showStatus("Vorschau wird geladen...");
-                // we just reuse the showStatus method because it is doing the same thing
-                //ptp.showStatus(previewContent);
-            
-            ptp.showContent(previewContent.getBytes());
-            
-            return ptp;
-        
-        
+        // plain text preview is default
+        PlaintextPanel ptp = new PlaintextPanel();
+
+        //ptp.showStatus("Vorschau wird geladen...");
+        // we just reuse the showStatus method because it is doing the same thing
+        //ptp.showStatus(previewContent);
+        ptp.showContent(previewContent.getBytes());
+
+        return ptp;
 
     }
-    
-    
 
 }
