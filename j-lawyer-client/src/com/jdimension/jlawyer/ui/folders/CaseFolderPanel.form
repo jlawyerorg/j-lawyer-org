@@ -125,7 +125,6 @@
           </Properties>
           <Events>
             <EventHandler event="mouseClicked" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="sortDateMouseClicked"/>
-            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="sortDateActionPerformed"/>
           </Events>
         </Component>
         <Component class="com.jdimension.jlawyer.ui.folders.SortButton" name="sortName">
@@ -214,7 +213,7 @@
 
       <Layout class="org.netbeans.modules.form.compat2.layouts.support.JScrollPaneSupportLayout"/>
       <SubComponents>
-        <Component class="com.jdimension.jlawyer.ui.folders.FoldersPanel" name="foldersPanel1">
+        <Component class="com.jdimension.jlawyer.ui.folders.FoldersPanel" name="foldersPanel">
         </Component>
       </SubComponents>
     </Container>

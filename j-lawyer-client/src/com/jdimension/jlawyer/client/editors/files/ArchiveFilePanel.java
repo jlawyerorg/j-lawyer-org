@@ -980,24 +980,28 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     }
 
-    public void documentSelectionChanged(ArchiveFileDocumentsBean selectedDoc) {
+    public void documentSelectionChanged() {
 //        if (!evt.getValueIsAdjusting()) {
-            this.updateDocumentPreview();
+        this.updateDocumentPreview();
 //        }
 
         try {
-            if (selectedDoc!=null) {
+            
+            ArrayList<ArchiveFileDocumentsBean> selectedDocs = this.caseFolderPanel1.getSelectedDocuments();
+
+            if (selectedDocs.size() == 1) {
+
                 this.documentTagPanel.removeAll();
                 this.documentTagPanel.revalidate();
 
+                ArchiveFileDocumentsBean selectedDoc=selectedDocs.get(0);
+                
                 ClientSettings settings = ClientSettings.getInstance();
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                 ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
                 Collection<DocumentTagsBean> tags = remote.getDocumentTags(selectedDoc.getId());
 
                 ArrayList<String> activeTags = new ArrayList<String>();
-                this.documentTagPanel.removeAll();
-                this.documentTagPanel.revalidate();
                 ArrayList<String> sortedTags = new ArrayList<String>();
                 for (Object t : tags) {
                     DocumentTagsBean tag = (DocumentTagsBean) t;
@@ -1032,6 +1036,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             } else {
                 this.documentTagPanel.removeAll();
                 this.documentTagPanel.revalidate();
+                this.documentTagPanel.repaint();
             }
         } catch (Throwable t) {
             log.error(t);
@@ -1057,7 +1062,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     public void updateFavoriteDocuments() {
         Collection<ArchiveFileDocumentsBean> currentDocList = this.caseFolderPanel1.getDocuments();
-        
+
         ArchiveFilePanel.updateFavoriteDocuments(dto, !this.cmdSave.isEnabled(), currentDocList, popDocumentFavorites);
     }
 
@@ -1258,7 +1263,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
 
         ThreadUtils.setWaitCursor(this);
-        
+
         this.caseFolderPanel1.clearDocuments();
 
         this.pnlInvolvedParties.removeAll();
@@ -1311,13 +1316,13 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     private ArrayList<String> getDocumentsOpenForWrite(ArrayList<ArchiveFileDocumentsBean> selectedDocs) {
         ArrayList<String> openDocs = new ArrayList<String>();
-        
-        for(ArchiveFileDocumentsBean doc: selectedDocs) {
+
+        for (ArchiveFileDocumentsBean doc : selectedDocs) {
             if (isOpenForWrite(doc.getId())) {
                 openDocs.add(doc.getName());
             }
         }
-        
+
         return openDocs;
 
     }
@@ -2543,8 +2548,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                         .add(cmdAddNote))
                     .add(cmdDocumentTagFilter))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                .add(splitDocuments, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 399, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .add(splitDocuments, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 399, Short.MAX_VALUE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel4, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 161, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
@@ -3369,36 +3374,35 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     public void showDocumentsPopup(MouseEvent evt) {
         //if (evt.isPopupTrigger() && evt.getComponent().isEnabled()) {
-            this.mnuOpenInExternalMailer.setEnabled(false);
-            ArrayList<ArchiveFileDocumentsBean> selectedDocs=this.caseFolderPanel1.getSelectedDocuments();
-            if (selectedDocs.size() == 1) {
-                // copying to other cases only supported for one document at a time for now
-                this.mnuCopyDocumentToOtherCase.setEnabled(true);
+        this.mnuOpenInExternalMailer.setEnabled(false);
+        ArrayList<ArchiveFileDocumentsBean> selectedDocs = this.caseFolderPanel1.getSelectedDocuments();
+        if (selectedDocs.size() == 1) {
+            // copying to other cases only supported for one document at a time for now
+            this.mnuCopyDocumentToOtherCase.setEnabled(true);
 
-                
-                ArchiveFileDocumentsBean value = selectedDocs.get(0);
-                if (value.getName().toLowerCase().endsWith(".eml")) {
-                    this.mnuOpenInExternalMailer.setEnabled(true);
-                }
-
-                if (value.getName().toLowerCase().endsWith(".odt") || value.getName().toLowerCase().endsWith(".ods") || value.getName().toLowerCase().endsWith(".docx")) {
-                    this.mnuUseDocumentAsTemplate.setEnabled(true);
-                } else {
-                    this.mnuUseDocumentAsTemplate.setEnabled(false);
-                }
-
-                if (LauncherFactory.isMicrosoftOfficeSupported() && (value.getName().toLowerCase().endsWith(".doc") || value.getName().toLowerCase().endsWith(".docx"))) {
-                    this.mnuOpenDocumentMicrosoftOffice.setEnabled(true);
-                } else {
-                    this.mnuOpenDocumentMicrosoftOffice.setEnabled(false);
-                }
-
-            } else {
-                this.mnuCopyDocumentToOtherCase.setEnabled(false);
-                this.mnuOpenDocumentMicrosoftOffice.setEnabled(false);
-                this.mnuUseDocumentAsTemplate.setEnabled(true);
+            ArchiveFileDocumentsBean value = selectedDocs.get(0);
+            if (value.getName().toLowerCase().endsWith(".eml")) {
+                this.mnuOpenInExternalMailer.setEnabled(true);
             }
-            this.documentsPopup.show(evt.getComponent(), evt.getX(), evt.getY());
+
+            if (value.getName().toLowerCase().endsWith(".odt") || value.getName().toLowerCase().endsWith(".ods") || value.getName().toLowerCase().endsWith(".docx")) {
+                this.mnuUseDocumentAsTemplate.setEnabled(true);
+            } else {
+                this.mnuUseDocumentAsTemplate.setEnabled(false);
+            }
+
+            if (LauncherFactory.isMicrosoftOfficeSupported() && (value.getName().toLowerCase().endsWith(".doc") || value.getName().toLowerCase().endsWith(".docx"))) {
+                this.mnuOpenDocumentMicrosoftOffice.setEnabled(true);
+            } else {
+                this.mnuOpenDocumentMicrosoftOffice.setEnabled(false);
+            }
+
+        } else {
+            this.mnuCopyDocumentToOtherCase.setEnabled(false);
+            this.mnuOpenDocumentMicrosoftOffice.setEnabled(false);
+            this.mnuUseDocumentAsTemplate.setEnabled(true);
+        }
+        this.documentsPopup.show(evt.getComponent(), evt.getX(), evt.getY());
         //}
     }
 
@@ -3546,7 +3550,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                     tagBean.setTagName(tagToActivate);
                     fileService.setTag(this.dto.getId(), tagBean, true);
                 }
-                
+
                 ArrayList<Group> allowedGroups = new ArrayList<>();
                 for (int r = 0; r < this.tblGroups.getRowCount(); r++) {
                     if (this.tblGroups.getValueAt(r, 0).equals(Boolean.TRUE)) {
@@ -3790,34 +3794,34 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     public void openSelectedDocument(ArchiveFileDocumentsBean value) {
         try {
-            
-                if (value != null) {
-                    boolean readOnly = !this.cmdSave.isEnabled();
-                    ClientSettings settings = ClientSettings.getInstance();
-                    String tmpUrl = null;
-                    byte[] content = null;
-                    try {
-                        JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                        content = locator.lookupArchiveFileServiceRemote().getDocumentContent(value.getId());
-                        //tmpUrl = appLauncher.createTempFile(value.getName(), content);
-                    } catch (Exception ex) {
-                        JOptionPane.showMessageDialog(this, "Fehler beim Laden des Dokuments: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+
+            if (value != null) {
+                boolean readOnly = !this.cmdSave.isEnabled();
+                ClientSettings settings = ClientSettings.getInstance();
+                String tmpUrl = null;
+                byte[] content = null;
+                try {
+                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                    content = locator.lookupArchiveFileServiceRemote().getDocumentContent(value.getId());
+                    //tmpUrl = appLauncher.createTempFile(value.getName(), content);
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(this, "Fehler beim Laden des Dokuments: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+                CaseDocumentStore store = new CaseDocumentStore(value.getId(), value.getName(), readOnly, value, dto);
+                Launcher launcher = LauncherFactory.getLauncher(value.getName(), content, store);
+                int response = JOptionPane.NO_OPTION;
+                if (launcher.isDocumentOpen(value.getId())) {
+                    response = JOptionPane.showConfirmDialog(EditorsRegistry.getInstance().getMainWindow(), "Dokument " + value.getName() + " ist bereits geöffnet. Trotzdem fortfahren?", "Dokument öffnen", JOptionPane.YES_NO_OPTION);
+                    if (response == JOptionPane.NO_OPTION) {
                         return;
                     }
-
-                    CaseDocumentStore store = new CaseDocumentStore(value.getId(), value.getName(), readOnly, value, dto);
-                    Launcher launcher = LauncherFactory.getLauncher(value.getName(), content, store);
-                    int response = JOptionPane.NO_OPTION;
-                    if (launcher.isDocumentOpen(value.getId())) {
-                        response = JOptionPane.showConfirmDialog(EditorsRegistry.getInstance().getMainWindow(), "Dokument " + value.getName() + " ist bereits geöffnet. Trotzdem fortfahren?", "Dokument öffnen", JOptionPane.YES_NO_OPTION);
-                        if (response == JOptionPane.NO_OPTION) {
-                            return;
-                        }
-                    }
-                    launcher.launch(response == JOptionPane.YES_OPTION);
-
                 }
-            
+                launcher.launch(response == JOptionPane.YES_OPTION);
+
+            }
+
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Fehler beim Öffnen des Dokuments: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
         }
@@ -3868,7 +3872,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     }
 
     public void updateDocumentPreview() {
-        ArrayList<ArchiveFileDocumentsBean> selectedDocs=this.caseFolderPanel1.getSelectedDocuments();
+        ArrayList<ArchiveFileDocumentsBean> selectedDocs = this.caseFolderPanel1.getSelectedDocuments();
         if (selectedDocs.size() != 1) {
             this.clearDocumentPreview("Vorschau nicht verfügbar");
         } else {
@@ -3963,8 +3967,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
-            
-            ArrayList<ArchiveFileDocumentsBean> selectedDocs=this.caseFolderPanel1.getSelectedDocuments();
+
+            ArrayList<ArchiveFileDocumentsBean> selectedDocs = this.caseFolderPanel1.getSelectedDocuments();
             if (selectedDocs.size() > 0) {
                 int response = JOptionPane.showConfirmDialog(this, "Ausgewählte Dokumente löschen?", "Dokumente löschen", JOptionPane.YES_NO_OPTION);
                 if (response != JOptionPane.YES_OPTION) {
@@ -3974,10 +3978,10 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 return;
             }
 
-            for (ArchiveFileDocumentsBean doc: selectedDocs) {
+            for (ArchiveFileDocumentsBean doc : selectedDocs) {
                 remote.removeDocument(doc.getId());
                 this.caseFolderPanel1.removeDocument(doc);
-                
+
             }
             this.updateFavoriteDocuments();
 
@@ -4002,9 +4006,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
-            ArrayList<ArchiveFileDocumentsBean> selectedDocs=this.caseFolderPanel1.getSelectedDocuments();
-            for (ArchiveFileDocumentsBean doc: selectedDocs) {
-                
+            ArrayList<ArchiveFileDocumentsBean> selectedDocs = this.caseFolderPanel1.getSelectedDocuments();
+            for (ArchiveFileDocumentsBean doc : selectedDocs) {
+
                 ProgressableActionCallback callback = new ProgressableActionCallback() {
                     @Override
                     public void actionFinished() {
@@ -4025,7 +4029,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                             }
                             ArchiveFileDocumentsBean newDoc = remote.addDocument(dto.getId(), newName, content, doc.getDictateSign());
                             caseFolderPanel1.addDocument(newDoc);
-                            
+
                         } catch (Exception ioe) {
                             log.error("Error duplicating document", ioe);
                             JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Duplizieren des Dokuments: " + ioe.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
@@ -4122,7 +4126,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
-            ArrayList<ArchiveFileDocumentsBean> selectedDocs=this.caseFolderPanel1.getSelectedDocuments();
+            ArrayList<ArchiveFileDocumentsBean> selectedDocs = this.caseFolderPanel1.getSelectedDocuments();
             if (selectedDocs.size() != 1) {
                 return;
             }
@@ -4138,7 +4142,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 this.caseFolderPanel1.updateDocument(doc);
 
                 this.updateFavoriteDocuments();
-                
+
             }
 
         } catch (Exception ioe) {
@@ -4149,7 +4153,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     private void mnuSendDocumentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSendDocumentActionPerformed
 
-        ArrayList<ArchiveFileDocumentsBean> selectedDocs=this.caseFolderPanel1.getSelectedDocuments();
+        ArrayList<ArchiveFileDocumentsBean> selectedDocs = this.caseFolderPanel1.getSelectedDocuments();
         ArrayList<String> open = this.getDocumentsOpenForWrite(selectedDocs);
         if (open.size() > 0) {
             String question = "<html>Soll die Aktion auf geöffnete Dokumente ausgeführt werden? Es besteht das Risiko fehlender / inkonsistenter Inhalte.<br/><ul>";
@@ -4176,7 +4180,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
-            for (ArchiveFileDocumentsBean doc: selectedDocs) {
+            for (ArchiveFileDocumentsBean doc : selectedDocs) {
                 byte[] content = locator.lookupArchiveFileServiceRemote().getDocumentContent(doc.getId());
                 String tmpUrl = FileUtils.createTempFile(doc.getName(), content);
                 dlg.addAttachment(tmpUrl, doc.getDictateSign());
@@ -4194,7 +4198,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     private void mnuSendDocumentPDFActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSendDocumentPDFActionPerformed
 
-        ArrayList<ArchiveFileDocumentsBean> selectedDocs=this.caseFolderPanel1.getSelectedDocuments();
+        ArrayList<ArchiveFileDocumentsBean> selectedDocs = this.caseFolderPanel1.getSelectedDocuments();
         ArrayList<String> open = this.getDocumentsOpenForWrite(selectedDocs);
         if (open.size() > 0) {
             String question = "<html>Soll die Aktion auf geöffnete Dokumente ausgeführt werden? Es besteht das Risiko fehlender / inkonsistenter Inhalte.<br/><ul>";
@@ -4227,10 +4231,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     private void mnuOpenInExternalMailerActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuOpenInExternalMailerActionPerformed
         try {
-            ArrayList<ArchiveFileDocumentsBean> selectedRows=this.caseFolderPanel1.getSelectedDocuments();
-            if(selectedRows.size()!=1)
+            ArrayList<ArchiveFileDocumentsBean> selectedRows = this.caseFolderPanel1.getSelectedDocuments();
+            if (selectedRows.size() != 1) {
                 return;
-            
+            }
+
             ArchiveFileDocumentsBean value = selectedRows.get(0);
 
             if (value != null) {
@@ -4283,9 +4288,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 ClientSettings settings = ClientSettings.getInstance();
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                 ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
-                ArrayList<ArchiveFileDocumentsBean> selectedDocs=this.caseFolderPanel1.getSelectedDocuments();
+                ArrayList<ArchiveFileDocumentsBean> selectedDocs = this.caseFolderPanel1.getSelectedDocuments();
 
-                if (selectedDocs.size()!=1) {
+                if (selectedDocs.size() != 1) {
                     JOptionPane.showMessageDialog(this, "Es können nur einzelne Dokumente gefaxt werden.", "Fehler", JOptionPane.WARNING_MESSAGE);
                     return;
                 }
@@ -4335,8 +4340,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
 
         ArrayList<ArchiveFileDocumentsBean> docs = this.caseFolderPanel1.getDocuments();
-        ArrayList<ArchiveFileDocumentsBean> selectedDocs=this.caseFolderPanel1.getSelectedDocuments();
-        
+        ArrayList<ArchiveFileDocumentsBean> selectedDocs = this.caseFolderPanel1.getSelectedDocuments();
+
         DrebisCoverageWizardDialog dlg = new DrebisCoverageWizardDialog(EditorsRegistry.getInstance().getMainWindow(), true);
 
         WizardSteps steps = new WizardSteps(dlg);
@@ -4572,10 +4577,10 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
-            ArrayList<ArchiveFileDocumentsBean> selectedDocs=this.caseFolderPanel1.getSelectedDocuments();
+            ArrayList<ArchiveFileDocumentsBean> selectedDocs = this.caseFolderPanel1.getSelectedDocuments();
             ArrayList<String> notSupported = new ArrayList<String>();
             ArrayList<String> supported = new ArrayList<String>();
-            for (ArchiveFileDocumentsBean doc: selectedDocs) {
+            for (ArchiveFileDocumentsBean doc : selectedDocs) {
                 if (LauncherFactory.printSupportedByLibreOffice(doc.getName())) {
                     byte[] content = locator.lookupArchiveFileServiceRemote().getDocumentContent(doc.getId());
                     String tmpUrl = FileUtils.createTempFile(doc.getName(), content);
@@ -4619,9 +4624,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
-            
-            ArrayList<ArchiveFileDocumentsBean> selected=this.caseFolderPanel1.getSelectedDocuments();
-            
+
+            ArrayList<ArchiveFileDocumentsBean> selected = this.caseFolderPanel1.getSelectedDocuments();
+
             if (selected.size() == 0) {
                 return;
             }
@@ -4636,7 +4641,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 return;
             }
 
-            for (ArchiveFileDocumentsBean doc: selected) {
+            for (ArchiveFileDocumentsBean doc : selected) {
 
                 ProgressableActionCallback callback = new ProgressableActionCallback() {
                     @Override
@@ -4676,7 +4681,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     }//GEN-LAST:event_mnuCopyDocumentToOtherCaseActionPerformed
 
     private void jScrollPane7ComponentResized(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_jScrollPane7ComponentResized
-        
+
     }//GEN-LAST:event_jScrollPane7ComponentResized
 
     private void mnuDuplicateDocumentAsPdfActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuDuplicateDocumentAsPdfActionPerformed
@@ -4689,9 +4694,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
-            ArrayList<ArchiveFileDocumentsBean> selected=this.caseFolderPanel1.getSelectedDocuments();
-            
-            for (ArchiveFileDocumentsBean doc: selected) {
+            ArrayList<ArchiveFileDocumentsBean> selected = this.caseFolderPanel1.getSelectedDocuments();
+
+            for (ArchiveFileDocumentsBean doc : selected) {
                 String currentExt = "";
                 for (String ext : LauncherFactory.LO_OFFICEFILETYPES) {
                     ext = ext.toLowerCase();
@@ -4734,7 +4739,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                             ArchiveFileDocumentsBean newDoc = remote.addDocument(dto.getId(), newName, pdfContent, doc.getDictateSign());
                             newDoc.setSize(pdfContent.length);
                             caseFolderPanel1.addDocument(newDoc);
-                            
+
                         } catch (Throwable t) {
                             log.error("Could not convert document to PDF", t);
                             JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Konvertierungsfehler: " + t.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
@@ -4756,9 +4761,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     }//GEN-LAST:event_mnuDuplicateDocumentAsPdfActionPerformed
 
     private void mnuOpenDocumentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuOpenDocumentActionPerformed
-        ArrayList<ArchiveFileDocumentsBean> selecteDocs=this.caseFolderPanel1.getSelectedDocuments();
-            if(selecteDocs.size()>0)
-                this.openSelectedDocument(selecteDocs.get(0));
+        ArrayList<ArchiveFileDocumentsBean> selecteDocs = this.caseFolderPanel1.getSelectedDocuments();
+        if (selecteDocs.size() > 0)
+            this.openSelectedDocument(selecteDocs.get(0));
     }//GEN-LAST:event_mnuOpenDocumentActionPerformed
 
     private void tblHistoryMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblHistoryMousePressed
@@ -4834,7 +4839,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     }
 
     private void mnuSendBeaDocumentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSendBeaDocumentActionPerformed
-        ArrayList<ArchiveFileDocumentsBean> selectedDocs=this.caseFolderPanel1.getSelectedDocuments();
+        ArrayList<ArchiveFileDocumentsBean> selectedDocs = this.caseFolderPanel1.getSelectedDocuments();
         ArrayList<String> open = this.getDocumentsOpenForWrite(selectedDocs);
         if (open.size() > 0) {
             String question = "<html>Soll die Aktion auf geöffnete Dokumente ausgeführt werden? Es besteht das Risiko fehlender / inkonsistenter Inhalte.<br/><ul>";
@@ -4877,7 +4882,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
-            for (ArchiveFileDocumentsBean doc: selectedDocs) {
+            for (ArchiveFileDocumentsBean doc : selectedDocs) {
                 byte[] content = locator.lookupArchiveFileServiceRemote().getDocumentContent(doc.getId());
                 String tmpUrl = FileUtils.createTempFile(doc.getName(), content);
                 dlg.addAttachment(tmpUrl, doc.getDictateSign());
@@ -4895,7 +4900,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     private void mnuSendBeaDocumentPDFActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSendBeaDocumentPDFActionPerformed
 
-        ArrayList<ArchiveFileDocumentsBean> selectedDocs=this.caseFolderPanel1.getSelectedDocuments();
+        ArrayList<ArchiveFileDocumentsBean> selectedDocs = this.caseFolderPanel1.getSelectedDocuments();
         ArrayList<String> open = this.getDocumentsOpenForWrite(selectedDocs);
         if (open.size() > 0) {
             String question = "<html>Soll die Aktion auf geöffnete Dokumente ausgeführt werden? Es besteht das Risiko fehlender / inkonsistenter Inhalte.<br/><ul>";
@@ -4943,7 +4948,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     private void mnuOpenDocumentMicrosoftOfficeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuOpenDocumentMicrosoftOfficeActionPerformed
         try {
-            ArrayList<ArchiveFileDocumentsBean> selectedDocs=this.caseFolderPanel1.getSelectedDocuments();
+            ArrayList<ArchiveFileDocumentsBean> selectedDocs = this.caseFolderPanel1.getSelectedDocuments();
             if (selectedDocs.isEmpty()) {
                 return;
             }
@@ -5018,8 +5023,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
-            ArrayList<ArchiveFileDocumentsBean> selectedDocs=this.caseFolderPanel1.getSelectedDocuments();
-            for (ArchiveFileDocumentsBean doc: selectedDocs) {
+            ArrayList<ArchiveFileDocumentsBean> selectedDocs = this.caseFolderPanel1.getSelectedDocuments();
+            for (ArchiveFileDocumentsBean doc : selectedDocs) {
                 DateTimePickerDialog dlg = new DateTimePickerDialog(EditorsRegistry.getInstance().getMainWindow(), false, doc, this.caseFolderPanel1);
 
                 FrameUtils.centerDialog(dlg, null);
@@ -5055,8 +5060,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
-            ArrayList<ArchiveFileDocumentsBean> selectedDocs=this.caseFolderPanel1.getSelectedDocuments();
-            for (ArchiveFileDocumentsBean doc: selectedDocs) {
+            ArrayList<ArchiveFileDocumentsBean> selectedDocs = this.caseFolderPanel1.getSelectedDocuments();
+            for (ArchiveFileDocumentsBean doc : selectedDocs) {
                 if (doc.getName().toLowerCase().endsWith(".ods") || doc.getName().toLowerCase().endsWith(".odt") || doc.getName().toLowerCase().endsWith(".docx")) {
                     byte[] content = remote.getDocumentContent(doc.getId());
                     String newName = FileUtils.getNewFileName(doc.getName(), false, new Date(), this, "Dokument als Vorlage speichern");
@@ -5090,8 +5095,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
-            ArrayList<ArchiveFileDocumentsBean> selectedDocs=this.caseFolderPanel1.getSelectedDocuments();
-            for (ArchiveFileDocumentsBean doc: selectedDocs) {
+            ArrayList<ArchiveFileDocumentsBean> selectedDocs = this.caseFolderPanel1.getSelectedDocuments();
+            for (ArchiveFileDocumentsBean doc : selectedDocs) {
                 byte[] content = locator.lookupArchiveFileServiceRemote().getDocumentContent(doc.getId());
                 String tmpUrl = FileUtils.createTempFile(doc.getName(), content);
 
@@ -5127,7 +5132,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
             Hashtable<String, ArrayList<String>> allTags = remote.getDocumentTagsForCase(this.dto.getId());
             //this.documentCellRenderer.setRenderTags(allTags);
-            int matches=this.caseFolderPanel1.highlightDocuments(this.txtSearchDocumentNames.getText(), selectedTags, allTags);
+            int matches = this.caseFolderPanel1.highlightDocuments(this.txtSearchDocumentNames.getText(), selectedTags, allTags);
             lblDocumentHits.setText(matches + " Treffer");
         } catch (Exception ioe) {
             log.error("Error loading document tags", ioe);
@@ -5146,8 +5151,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
-            ArrayList<ArchiveFileDocumentsBean> selectedDocs=this.caseFolderPanel1.getSelectedDocuments();
-            for (ArchiveFileDocumentsBean doc: selectedDocs) {
+            ArrayList<ArchiveFileDocumentsBean> selectedDocs = this.caseFolderPanel1.getSelectedDocuments();
+            for (ArchiveFileDocumentsBean doc : selectedDocs) {
                 Boolean favorite = doc.isFavorite();
                 boolean newValue = !favorite.booleanValue();
                 remote.setDocumentFavorite(doc.getId(), newValue);
@@ -5172,7 +5177,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     private void mnuSaveDocumentsLocallyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSaveDocumentsLocallyActionPerformed
         try {
-            ArrayList<ArchiveFileDocumentsBean> selectedDocs=this.caseFolderPanel1.getSelectedDocuments();
+            ArrayList<ArchiveFileDocumentsBean> selectedDocs = this.caseFolderPanel1.getSelectedDocuments();
             if (selectedDocs.isEmpty()) {
                 return;
             }
@@ -5213,8 +5218,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
-            ArrayList<ArchiveFileDocumentsBean> selectedDocs=this.caseFolderPanel1.getSelectedDocuments();
-            
+            ArrayList<ArchiveFileDocumentsBean> selectedDocs = this.caseFolderPanel1.getSelectedDocuments();
+
             String[] list = FileConverter.OUTPUTTYPES.toArray(new String[0]);
             JComboBox jcb = new JComboBox(list);
             jcb.setEditable(false);
@@ -5229,7 +5234,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
             String targetFormat = response.toString();
 
-            for (ArchiveFileDocumentsBean doc: selectedDocs) {
+            for (ArchiveFileDocumentsBean doc : selectedDocs) {
                 String currentExt = "";
                 for (String ext : LauncherFactory.LO_OFFICEFILETYPES) {
                     ext = ext.toLowerCase();
@@ -5261,7 +5266,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
                             ArchiveFileDocumentsBean newDoc = remote.addDocument(dto.getId(), newName, targetContent, doc.getDictateSign());
                             caseFolderPanel1.addDocument(newDoc);
-                            
+
                             // we only support duplication of one document at a time
                         } catch (Exception ioe) {
                             log.error("Error duplicating document", ioe);
@@ -5423,7 +5428,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     private void mnuOpenDocumentLibreOfficeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuOpenDocumentLibreOfficeActionPerformed
         try {
-            ArrayList<ArchiveFileDocumentsBean> selectedDocs=this.caseFolderPanel1.getSelectedDocuments();
+            ArrayList<ArchiveFileDocumentsBean> selectedDocs = this.caseFolderPanel1.getSelectedDocuments();
             if (selectedDocs.isEmpty()) {
                 return;
             }
@@ -5481,7 +5486,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
-            ArrayList<ArchiveFileDocumentsBean> selectedDocs=this.caseFolderPanel1.getSelectedDocuments();
+            ArrayList<ArchiveFileDocumentsBean> selectedDocs = this.caseFolderPanel1.getSelectedDocuments();
 
             if (selectedDocs.isEmpty()) {
                 return;
@@ -5491,7 +5496,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             for (ArchiveFileAddressesBean aab : this.pnlInvolvedParties.getInvolvedParties()) {
                 parties.add(aab);
             }
-            
+
             SendCloudShare dlg = new SendCloudShare(EditorsRegistry.getInstance().getMainWindow(), true, dto, parties, selectedDocs);
             dlg.setTitle("Freigabe senden");
             FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
@@ -5784,7 +5789,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                     log.error("drop not supported: " + dtde.getTransferable().getTransferDataFlavors());
                     if (dtde.getTransferable().getTransferDataFlavors() != null) {
                         for (int i = 0; i < dtde.getTransferable().getTransferDataFlavors().length; i++) {
-                            DataFlavor df=dtde.getTransferable().getTransferDataFlavors()[i];
+                            DataFlavor df = dtde.getTransferable().getTransferDataFlavors()[i];
                             log.error("  " + df.getHumanPresentableName() + " - " + df.getDefaultRepresentationClassAsString() + " - " + df.getMimeType());
                         }
                     }

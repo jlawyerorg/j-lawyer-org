@@ -664,6 +664,7 @@
 package com.jdimension.jlawyer.client.utils;
 
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.ui.folders.FoldersTree;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
@@ -916,5 +917,11 @@ public class ComponentUtils {
         });
         split.setBorder(null);
 
+    }
+
+    public static void selectAllTreeNodes(FoldersTree tree) {
+        for (int i = 0; i < tree.getRowCount(); i++) {
+            tree.setSelectionRow(i);
+        }
     }
 }

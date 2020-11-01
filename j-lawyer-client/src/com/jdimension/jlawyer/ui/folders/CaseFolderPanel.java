@@ -670,6 +670,9 @@ import java.awt.Component;
 import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
 import java.util.Hashtable;
 import javax.swing.JPopupMenu;
 import themes.colors.DefaultColorTheme;
@@ -693,15 +696,80 @@ public class CaseFolderPanel extends javax.swing.JPanel {
         this.readonly = readonly;
         this.jScrollPane1.getVerticalScrollBar().setUnitIncrement(16);
         this.jScrollPane2.getVerticalScrollBar().setUnitIncrement(16);
+        this.sortByDateDesc();
     }
-
+    
     public CaseFolderPanel() {
         initComponents();
         this.readonly = false;
         this.jScrollPane1.getVerticalScrollBar().setUnitIncrement(16);
         this.jScrollPane2.getVerticalScrollBar().setUnitIncrement(16);
+        this.sortByDateDesc();
+    }
+    
+    public void sort() {
+        
+        Collections.sort(documents, (Object t1, Object t2) -> {
+            if(!(t1 instanceof ArchiveFileDocumentsBean))
+                return -1;
+            if(!(t2 instanceof ArchiveFileDocumentsBean))
+                return 1;
+            
+            ArchiveFileDocumentsBean d1=(ArchiveFileDocumentsBean)t1;
+            ArchiveFileDocumentsBean d2=(ArchiveFileDocumentsBean)t2;
+            
+            if(sortDate.getSortState()==SortButton.SORT_ASC) {
+                Date date1=d1.getCreationDate();
+                Date date2=d2.getCreationDate();
+                return date1.compareTo(date2);
+            } else if(sortDate.getSortState()==SortButton.SORT_DESC) {
+                Date date1=d1.getCreationDate();
+                Date date2=d2.getCreationDate();
+                return date2.compareTo(date1);
+            } else if(sortSize.getSortState()==SortButton.SORT_ASC) {
+                long l1=d1.getSize();
+                long l2=d2.getSize();
+                return new Long(l1).compareTo(l2);
+            } else if(sortSize.getSortState()==SortButton.SORT_DESC) {
+                long l1=d1.getSize();
+                long l2=d2.getSize();
+                return new Long(l2).compareTo(l1);
+            } else if(sortName.getSortState()==SortButton.SORT_ASC) {
+                String s1=d1.getName();
+                String s2=d2.getName();
+                return s1.compareTo(s2);
+            } else if(sortName.getSortState()==SortButton.SORT_DESC) {
+                String s1=d1.getName();
+                String s2=d2.getName();
+                return s2.compareTo(s1);
+            } else if(sortFavorite.getSortState()==SortButton.SORT_ASC) {
+                Boolean b1=d1.isFavorite();
+                Boolean b2=d2.isFavorite();
+                return b2.compareTo(b1);
+            } else if(sortFavorite.getSortState()==SortButton.SORT_DESC) {
+                Boolean b1=d1.isFavorite();
+                Boolean b2=d2.isFavorite();
+                return b1.compareTo(b2);
+            } else if(sortDictateSign.getSortState()==SortButton.SORT_ASC) {
+                String s1=d1.getDictateSign();
+                String s2=d2.getDictateSign();
+                return s1.compareTo(s2);
+            } else if(sortDictateSign.getSortState()==SortButton.SORT_DESC) {
+                String s1=d1.getDictateSign();
+                String s2=d2.getDictateSign();
+                return s2.compareTo(s1);
+            }
+            
+            return -1;
+        });
+        this.setDocuments(documents);
     }
 
+    public void sortByDateDesc() {
+        this.sortDate.setSortState(SortButton.SORT_DESC);
+            
+    }
+    
     public void setCaseContainer(ArchiveFilePanel p) {
         this.caseContainer = p;
     }
@@ -738,7 +806,7 @@ public class CaseFolderPanel extends javax.swing.JPanel {
         documentEntryPanel1 = new com.jdimension.jlawyer.ui.folders.DocumentEntryPanel();
         documentEntryPanel2 = new com.jdimension.jlawyer.ui.folders.DocumentEntryPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
-        foldersPanel1 = new com.jdimension.jlawyer.ui.folders.FoldersPanel();
+        foldersPanel = new com.jdimension.jlawyer.ui.folders.FoldersPanel();
 
         jButton1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/package_system.png"))); // NOI18N
 
@@ -761,11 +829,6 @@ public class CaseFolderPanel extends javax.swing.JPanel {
         sortDate.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 sortDateMouseClicked(evt);
-            }
-        });
-        sortDate.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                sortDateActionPerformed(evt);
             }
         });
 
@@ -860,7 +923,7 @@ public class CaseFolderPanel extends javax.swing.JPanel {
         jScrollPane2.setViewportView(pnlDocumentEntries);
 
         jScrollPane1.setBorder(null);
-        jScrollPane1.setViewportView(foldersPanel1);
+        jScrollPane1.setViewportView(foldersPanel);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -891,10 +954,6 @@ public class CaseFolderPanel extends javax.swing.JPanel {
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    private void sortDateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_sortDateActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_sortDateActionPerformed
-
     public void selectAllDocuments(boolean selected) {
         for (Component c : this.pnlDocumentEntries.getComponents()) {
             if (c instanceof DocumentEntryPanel) {
@@ -912,7 +971,9 @@ public class CaseFolderPanel extends javax.swing.JPanel {
             this.sortFolder.setSortState(SortButton.SORT_NONE);
         }
         if (this.sortFolder.getSortState() == SortButton.SORT_NONE && this.sortDate.getSortState() == SortButton.SORT_NONE && this.sortDictateSign.getSortState() == SortButton.SORT_NONE && this.sortFavorite.getSortState() == SortButton.SORT_NONE && this.sortName.getSortState() == SortButton.SORT_NONE && this.sortSize.getSortState() == SortButton.SORT_NONE)
-            this.sortDate.setSortState(SortButton.SORT_ASC);
+            this.sortDate.setSortState(SortButton.SORT_DESC);
+        
+        this.sort();
     }//GEN-LAST:event_sortDateMouseClicked
 
     private void sortNameMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_sortNameMouseClicked
@@ -924,7 +985,9 @@ public class CaseFolderPanel extends javax.swing.JPanel {
             this.sortFolder.setSortState(SortButton.SORT_NONE);
         }
         if (this.sortFolder.getSortState() == SortButton.SORT_NONE && this.sortDate.getSortState() == SortButton.SORT_NONE && this.sortDictateSign.getSortState() == SortButton.SORT_NONE && this.sortFavorite.getSortState() == SortButton.SORT_NONE && this.sortName.getSortState() == SortButton.SORT_NONE && this.sortSize.getSortState() == SortButton.SORT_NONE)
-            this.sortDate.setSortState(SortButton.SORT_ASC);
+            this.sortDate.setSortState(SortButton.SORT_DESC);
+        
+        this.sort();
     }//GEN-LAST:event_sortNameMouseClicked
 
     private void sortFavoriteMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_sortFavoriteMouseClicked
@@ -936,7 +999,9 @@ public class CaseFolderPanel extends javax.swing.JPanel {
             this.sortFolder.setSortState(SortButton.SORT_NONE);
         }
         if (this.sortFolder.getSortState() == SortButton.SORT_NONE && this.sortDate.getSortState() == SortButton.SORT_NONE && this.sortDictateSign.getSortState() == SortButton.SORT_NONE && this.sortFavorite.getSortState() == SortButton.SORT_NONE && this.sortName.getSortState() == SortButton.SORT_NONE && this.sortSize.getSortState() == SortButton.SORT_NONE)
-            this.sortDate.setSortState(SortButton.SORT_ASC);
+            this.sortDate.setSortState(SortButton.SORT_DESC);
+        
+        this.sort();
     }//GEN-LAST:event_sortFavoriteMouseClicked
 
     private void sortSizeMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_sortSizeMouseClicked
@@ -948,7 +1013,9 @@ public class CaseFolderPanel extends javax.swing.JPanel {
             this.sortFolder.setSortState(SortButton.SORT_NONE);
         }
         if (this.sortFolder.getSortState() == SortButton.SORT_NONE && this.sortDate.getSortState() == SortButton.SORT_NONE && this.sortDictateSign.getSortState() == SortButton.SORT_NONE && this.sortFavorite.getSortState() == SortButton.SORT_NONE && this.sortName.getSortState() == SortButton.SORT_NONE && this.sortSize.getSortState() == SortButton.SORT_NONE)
-            this.sortDate.setSortState(SortButton.SORT_ASC);
+            this.sortDate.setSortState(SortButton.SORT_DESC);
+        
+        this.sort();
     }//GEN-LAST:event_sortSizeMouseClicked
 
     private void sortDictateSignMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_sortDictateSignMouseClicked
@@ -960,7 +1027,9 @@ public class CaseFolderPanel extends javax.swing.JPanel {
             this.sortFolder.setSortState(SortButton.SORT_NONE);
         }
         if (this.sortFolder.getSortState() == SortButton.SORT_NONE && this.sortDate.getSortState() == SortButton.SORT_NONE && this.sortDictateSign.getSortState() == SortButton.SORT_NONE && this.sortFavorite.getSortState() == SortButton.SORT_NONE && this.sortName.getSortState() == SortButton.SORT_NONE && this.sortSize.getSortState() == SortButton.SORT_NONE)
-            this.sortDate.setSortState(SortButton.SORT_ASC);
+            this.sortDate.setSortState(SortButton.SORT_DESC);
+        
+        this.sort();
     }//GEN-LAST:event_sortDictateSignMouseClicked
 
     private void cmdActionsMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdActionsMousePressed
@@ -980,7 +1049,9 @@ public class CaseFolderPanel extends javax.swing.JPanel {
             this.sortDictateSign.setSortState(SortButton.SORT_NONE);
         }
         if (this.sortFolder.getSortState() == SortButton.SORT_NONE && this.sortDate.getSortState() == SortButton.SORT_NONE && this.sortDictateSign.getSortState() == SortButton.SORT_NONE && this.sortFavorite.getSortState() == SortButton.SORT_NONE && this.sortName.getSortState() == SortButton.SORT_NONE && this.sortSize.getSortState() == SortButton.SORT_NONE)
-            this.sortDate.setSortState(SortButton.SORT_ASC);
+            this.sortDate.setSortState(SortButton.SORT_DESC);
+        
+        this.sort();
     }//GEN-LAST:event_sortFolderMouseClicked
 
     private void cmdActionsMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdActionsMouseReleased
@@ -993,7 +1064,7 @@ public class CaseFolderPanel extends javax.swing.JPanel {
     private javax.swing.JButton cmdActions;
     private com.jdimension.jlawyer.ui.folders.DocumentEntryPanel documentEntryPanel1;
     private com.jdimension.jlawyer.ui.folders.DocumentEntryPanel documentEntryPanel2;
-    private com.jdimension.jlawyer.ui.folders.FoldersPanel foldersPanel1;
+    private com.jdimension.jlawyer.ui.folders.FoldersPanel foldersPanel;
     private javax.swing.JButton jButton1;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
@@ -1052,10 +1123,11 @@ public class CaseFolderPanel extends javax.swing.JPanel {
     /**
      * @param documents the documents to set
      */
-    public void setDocuments(Collection<ArchiveFileDocumentsBean> documents) {
-        this.documents = new ArrayList(documents);
+    public void setDocuments(ArrayList<ArchiveFileDocumentsBean> documents) {
+        this.documents = documents;
 
         this.pnlDocumentEntries.removeAll();
+//        this.pnlDocumentEntries.repaint();
         for (int i = 0; i < this.documents.size(); i++) {
             ArchiveFileDocumentsBean d = this.documents.get(i);
             DocumentEntryPanel p = new DocumentEntryPanel(this.caseContainer, this, d, this.readonly);
@@ -1067,6 +1139,10 @@ public class CaseFolderPanel extends javax.swing.JPanel {
             this.pnlDocumentEntries.add(p);
         }
         this.jScrollPane2.getVerticalScrollBar().setValue(0);
+//        this.pnlDocumentEntries.revalidate();
+//        this.pnlDocumentEntries.repaint();
+        this.jScrollPane2.repaint();
+        this.jScrollPane2.revalidate();
     }
 
     public void addDocument(ArchiveFileDocumentsBean newDoc) {

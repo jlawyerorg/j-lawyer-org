@@ -914,7 +914,7 @@ public class DocumentEntryPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_chkSelectedMouseReleased
 
     private void documentUnClicked(MouseEvent evt) {
-        this.caseContainer.documentSelectionChanged(null);
+        this.caseContainer.documentSelectionChanged();
     }
                     
     private void documentClicked(MouseEvent evt, boolean deselectOthers) {
@@ -925,7 +925,7 @@ public class DocumentEntryPanel extends javax.swing.JPanel {
             if(this.documentsContainer!=null && deselectOthers)
                 this.documentsContainer.selectAllDocuments(false);
             this.setSelected(true);
-            this.caseContainer.documentSelectionChanged(this.document);
+            this.caseContainer.documentSelectionChanged();
             evt.consume();
         }
     }
