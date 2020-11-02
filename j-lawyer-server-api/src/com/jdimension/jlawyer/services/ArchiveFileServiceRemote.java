@@ -825,4 +825,6 @@ public interface ArchiveFileServiceRemote {
 
     void cloneFolderTemplate(String sourceTemplateName, String targetTemplateName) throws Exception;
 
+    CaseFolder createCaseFolder(String parentId, String name) throws Exception;
+
 }

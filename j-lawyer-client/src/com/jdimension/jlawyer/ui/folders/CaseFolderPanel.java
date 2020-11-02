@@ -666,6 +666,7 @@ package com.jdimension.jlawyer.ui.folders;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.files.ArchiveFilePanel;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
+import com.jdimension.jlawyer.persistence.CaseFolder;
 import java.awt.Component;
 import java.awt.Rectangle;
 import java.util.ArrayList;
@@ -705,6 +706,11 @@ public class CaseFolderPanel extends javax.swing.JPanel {
         this.jScrollPane1.getVerticalScrollBar().setUnitIncrement(16);
         this.jScrollPane2.getVerticalScrollBar().setUnitIncrement(16);
         this.sortByDateDesc();
+    }
+    
+    public void setRootFolder(CaseFolder rootFolder) {
+        this.foldersListPanel.setRootFolder(rootFolder);
+        
     }
     
     public void sort() {
@@ -792,7 +798,9 @@ public class CaseFolderPanel extends javax.swing.JPanel {
     private void initComponents() {
 
         jPanel1 = new javax.swing.JPanel();
-        jButton1 = new javax.swing.JButton();
+        cmdOptions = new javax.swing.JButton();
+        cmdSelectAll = new javax.swing.JButton();
+        cmdSelectNone = new javax.swing.JButton();
         jPanel2 = new javax.swing.JPanel();
         sortDate = new com.jdimension.jlawyer.ui.folders.SortButton();
         sortName = new com.jdimension.jlawyer.ui.folders.SortButton();
@@ -806,23 +814,45 @@ public class CaseFolderPanel extends javax.swing.JPanel {
         documentEntryPanel1 = new com.jdimension.jlawyer.ui.folders.DocumentEntryPanel();
         documentEntryPanel2 = new com.jdimension.jlawyer.ui.folders.DocumentEntryPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
-        foldersPanel = new com.jdimension.jlawyer.ui.folders.FoldersPanel();
+        foldersListPanel = new com.jdimension.jlawyer.ui.folders.FoldersListPanel();
 
-        jButton1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/package_system.png"))); // NOI18N
+        cmdOptions.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/package_system.png"))); // NOI18N
+
+        cmdSelectAll.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/baseline_select_all_black_48dp.png"))); // NOI18N
+        cmdSelectAll.setToolTipText("alle Ordner selektieren");
+        cmdSelectAll.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdSelectAllActionPerformed(evt);
+            }
+        });
+
+        cmdSelectNone.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/baseline_select_none_black_48dp.png"))); // NOI18N
+        cmdSelectNone.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdSelectNoneActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
-                .addComponent(jButton1)
-                .addGap(0, 146, Short.MAX_VALUE))
+                .addComponent(cmdOptions)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(cmdSelectAll)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(cmdSelectNone)
+                .addGap(0, 0, Short.MAX_VALUE))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
                 .addGap(0, 0, Short.MAX_VALUE)
-                .addComponent(jButton1))
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(cmdSelectNone)
+                    .addComponent(cmdSelectAll)
+                    .addComponent(cmdOptions)))
         );
 
         sortDate.setText("Datum");
@@ -923,7 +953,7 @@ public class CaseFolderPanel extends javax.swing.JPanel {
         jScrollPane2.setViewportView(pnlDocumentEntries);
 
         jScrollPane1.setBorder(null);
-        jScrollPane1.setViewportView(foldersPanel);
+        jScrollPane1.setViewportView(foldersListPanel);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -1059,13 +1089,24 @@ public class CaseFolderPanel extends javax.swing.JPanel {
         this.caseContainer.showDocumentsPopup(evt);
     }//GEN-LAST:event_cmdActionsMouseReleased
 
+    private void cmdSelectAllActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSelectAllActionPerformed
+        this.foldersListPanel.selectAll(true);
+    }//GEN-LAST:event_cmdSelectAllActionPerformed
+
+    private void cmdSelectNoneActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSelectNoneActionPerformed
+        this.foldersListPanel.selectAll(false);
+        
+    }//GEN-LAST:event_cmdSelectNoneActionPerformed
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton cmdActions;
+    private javax.swing.JButton cmdOptions;
+    private javax.swing.JButton cmdSelectAll;
+    private javax.swing.JButton cmdSelectNone;
     private com.jdimension.jlawyer.ui.folders.DocumentEntryPanel documentEntryPanel1;
     private com.jdimension.jlawyer.ui.folders.DocumentEntryPanel documentEntryPanel2;
-    private com.jdimension.jlawyer.ui.folders.FoldersPanel foldersPanel;
-    private javax.swing.JButton jButton1;
+    private com.jdimension.jlawyer.ui.folders.FoldersListPanel foldersListPanel;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JScrollPane jScrollPane1;

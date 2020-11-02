@@ -4271,4 +4271,16 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         }
     }
 
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public CaseFolder createCaseFolder(String parentId, String name) throws Exception {
+        CaseFolder cf=new CaseFolder();
+        cf.setParentId(parentId);
+        cf.setName(name);
+        String id=new StringGenerator().getID().toString();
+        cf.setId(id);
+        this.caseFolderFacade.create(cf);
+        return this.caseFolderFacade.find(id);
+    }
+
 }

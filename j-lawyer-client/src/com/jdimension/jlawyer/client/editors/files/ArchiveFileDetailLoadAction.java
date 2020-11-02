@@ -924,6 +924,7 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
             reviews = fileService.getReviews(this.archiveFileKey);
             this.progress("Lade Akte: Dokumente...");
             documents = fileService.getDocuments(this.archiveFileKey);
+            caseFolders.setRootFolder(this.caseDto.getRootFolder());
             caseFolders.setDocuments(new ArrayList(documents));
             caseFolders.sortByDateDesc();
             caseFolders.sort();

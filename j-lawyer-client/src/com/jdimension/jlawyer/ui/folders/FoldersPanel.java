@@ -664,6 +664,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.ui.folders;
 
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
+import com.jdimension.jlawyer.persistence.CaseFolder;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 
@@ -678,9 +679,9 @@ public class FoldersPanel extends javax.swing.JPanel {
      */
     public FoldersPanel() {
         initComponents();
-        
-        DefaultMutableTreeNode root=new DefaultMutableTreeNode("Dokumente");
-        DefaultMutableTreeNode sub1=new DefaultMutableTreeNode("Unterordner 1");
+
+        DefaultMutableTreeNode root = new DefaultMutableTreeNode("Dokumente");
+        DefaultMutableTreeNode sub1 = new DefaultMutableTreeNode("Unterordner 1");
         root.add(sub1);
         sub1.add(new DefaultMutableTreeNode("UUordner 1"));
         root.add(new DefaultMutableTreeNode("Unterordner 2"));
@@ -688,6 +689,18 @@ public class FoldersPanel extends javax.swing.JPanel {
         this.treeFolders.setModel(new DefaultTreeModel(root));
         ComponentUtils.expandTree(treeFolders);
         ComponentUtils.selectAllTreeNodes(treeFolders);
+    }
+
+    public void setRootFolder(CaseFolder rootFolder) {
+        DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode(rootFolder.getName());
+        rootNode.setUserObject(rootFolder);
+
+        this.buildRecursive(rootFolder, rootNode);
+
+        this.treeFolders.setModel(new DefaultTreeModel(rootNode));
+        ComponentUtils.expandTree(treeFolders);
+        ComponentUtils.selectAllTreeNodes(treeFolders);
+
     }
 
     /**
@@ -726,4 +739,16 @@ public class FoldersPanel extends javax.swing.JPanel {
     private javax.swing.JScrollPane jScrollPane1;
     private com.jdimension.jlawyer.ui.folders.FoldersTree treeFolders;
     // End of variables declaration//GEN-END:variables
+
+    private void buildRecursive(CaseFolder folder, DefaultMutableTreeNode node) {
+
+        if (folder.getChildren() != null) {
+            for (CaseFolder child : folder.getChildren()) {
+                DefaultMutableTreeNode childNode = new DefaultMutableTreeNode(child.getName());
+                childNode.setUserObject(child);
+                node.add(childNode);
+                buildRecursive(child, childNode);
+            }
+        }
+    }
 }
