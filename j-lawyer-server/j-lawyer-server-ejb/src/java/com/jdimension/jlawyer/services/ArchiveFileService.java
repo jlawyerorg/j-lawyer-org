@@ -979,14 +979,16 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     @Override
     @RolesAllowed({"readArchiveFileRole"})
     public ArchiveFileBean[] searchSimple(String query) {
-        
-        if(query==null)
-            query="";
-        
-        query=query.trim();
-        if("".equalsIgnoreCase(query))
+
+        if (query == null) {
+            query = "";
+        }
+
+        query = query.trim();
+        if ("".equalsIgnoreCase(query)) {
             return new ArchiveFileBean[0];
-        
+        }
+
         List<Group> userGroups = new ArrayList<Group>();
         try {
             userGroups = this.securityFacade.getGroupsForUser(context.getCallerPrincipal().getName());
@@ -1295,6 +1297,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         StringGenerator idGen = new StringGenerator();
         ArchiveFileBean aFile = this.archiveFileFacade.find(dto.getId());
         dto.setFileNumberMain(aFile.getFileNumberMain());
+        dto.setRootFolder(aFile.getRootFolder());
         this.checkGroupsForCase(context.getCallerPrincipal().getName(), aFile);
 
         Group g = dto.getGroup();
@@ -1471,15 +1474,6 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     public ArchiveFileBean getArchiveFile(String id) throws Exception {
 
         ArchiveFileBean aFile = this.archiveFileFacade.find(id);
-        if(aFile.getRootFolder()==null) {
-            CaseFolder root=new CaseFolder();
-            root.setId(new StringGenerator().getID().toString());
-            root.setName("Dokumente");
-            root.setParentId(null);
-            this.caseFolderFacade.create(root);
-            aFile.setRootFolder(root);
-        }
-        
         this.checkGroupsForCase(context.getCallerPrincipal().getName(), aFile);
         return aFile;
     }
@@ -2244,16 +2238,8 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
         this.checkGroupsForCase(context.getCallerPrincipal().getName(), result.get(0));
 
-        ArchiveFileBean aFile=result.get(0);
-        if(aFile.getRootFolder()==null) {
-            CaseFolder root=new CaseFolder();
-            root.setId(new StringGenerator().getID().toString());
-            root.setName("Dokumente");
-            root.setParentId(null);
-            this.caseFolderFacade.create(root);
-            aFile.setRootFolder(root);
-        }
-        
+        ArchiveFileBean aFile = result.get(0);
+
         return aFile;
     }
 
@@ -2454,12 +2440,13 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     @Override
     @RolesAllowed({"readArchiveFileRole"})
     public ArchiveFileBean[] searchEnhanced(String query, boolean withArchive, String[] tagName, String[] documentTagNames) {
-        
-        if(query==null)
-            query="";
-        
-        query=query.trim();
-        
+
+        if (query == null) {
+            query = "";
+        }
+
+        query = query.trim();
+
         List<Group> userGroups = new ArrayList<Group>();
         try {
             userGroups = this.securityFacade.getGroupsForUser(context.getCallerPrincipal().getName());
@@ -3384,12 +3371,13 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     @Override
     @RolesAllowed({"readArchiveFileRole"})
     public Hashtable<String, ArrayList<String>> searchTagsEnhanced(String query, boolean withArchive, String[] tagNames, String[] documentTagNames) {
-        
-        if(query==null)
-            query="";
-        
-        query=query.trim();
-        
+
+        if (query == null) {
+            query = "";
+        }
+
+        query = query.trim();
+
         JDBCUtils utils = new JDBCUtils();
         Connection con = null;
         ResultSet rs = null;
@@ -4018,25 +4006,29 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     @Override
     @RolesAllowed({"loginRole"})
     public List<PartyTypeBean> getAllPartyTypes() {
-        List<PartyTypeBean> all=this.partyTypeFacade.findAll();
+        List<PartyTypeBean> all = this.partyTypeFacade.findAll();
         Collections.sort(all, new Comparator() {
             @Override
             public int compare(Object t, Object t1) {
-                Object u1=t;
-                Object u2=t1;
-                if(u1==null)
+                Object u1 = t;
+                Object u2 = t1;
+                if (u1 == null) {
                     return -1;
-                if(u2==null)
+                }
+                if (u2 == null) {
                     return 1;
-                
-                if(!(u1 instanceof PartyTypeBean))
+                }
+
+                if (!(u1 instanceof PartyTypeBean)) {
                     return -1;
-                if(!(u2 instanceof PartyTypeBean))
+                }
+                if (!(u2 instanceof PartyTypeBean)) {
                     return 1;
-                
-                PartyTypeBean f1=(PartyTypeBean)u1;
-                PartyTypeBean f2=(PartyTypeBean)u2;
-                
+                }
+
+                PartyTypeBean f1 = (PartyTypeBean) u1;
+                PartyTypeBean f2 = (PartyTypeBean) u2;
+
                 String f1name = "";
                 if (f1.getName() != null) {
                     f1name = f1.getName().toLowerCase();
@@ -4045,10 +4037,10 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 if (f2.getName() != null) {
                     f2name = f2.getName().toLowerCase();
                 }
-                
+
                 return f1name.compareTo(f2name);
             }
-            
+
         });
         return all;
     }
@@ -4210,60 +4202,67 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
     @Override
     public DocumentFolder addFolderToTemplate(String templateName, DocumentFolder folder) throws Exception {
-        
-        DocumentFolderTemplate t=this.folderTemplateFacade.findByName(templateName);
-        if(t==null)
+
+        DocumentFolderTemplate t = this.folderTemplateFacade.findByName(templateName);
+        if (t == null) {
             throw new Exception("Ordnerstruktur " + templateName + " existiert nicht!");
-        
-        if(folder==null)
+        }
+
+        if (folder == null) {
             throw new Exception("Ordner kann nicht erstellt werden (leer)!");
+        }
 
-        if(folder.getName()==null || "".equals(folder.getName().trim()))
+        if (folder.getName() == null || "".equals(folder.getName().trim())) {
             throw new Exception("Ordnername darf nicht leer sein!");
-        
-        if(folder.getParentId()==null || "".equals(folder.getParentId()))
-            throw new Exception("Übergeordneter Ordner darf nicht leer sein!");
+        }
 
-        DocumentFolder parent=this.folderFacade.find(folder.getParentId());
-        if(parent==null)
+        if (folder.getParentId() == null || "".equals(folder.getParentId())) {
+            throw new Exception("Übergeordneter Ordner darf nicht leer sein!");
+        }
+
+        DocumentFolder parent = this.folderFacade.find(folder.getParentId());
+        if (parent == null) {
             throw new Exception("Übergeordneter Ordner kann nicht gefunden werden!");
-        
+        }
+
         StringGenerator idGen = new StringGenerator();
         folder.setId(idGen.getID().toString());
         this.folderFacade.create(folder);
         return folder;
-        
+
     }
 
     @Override
     public void removeFolderFromTemplate(String folderId) throws Exception {
-        
-        if(folderId==null || "".equals(folderId))
+
+        if (folderId == null || "".equals(folderId)) {
             throw new Exception("Ordner-ID darf nicht leer sein!");
-        
-        DocumentFolder df=this.folderFacade.find(folderId);
-        if(df==null)
+        }
+
+        DocumentFolder df = this.folderFacade.find(folderId);
+        if (df == null) {
             throw new Exception("Ordner kann nicht gefunden werden!");
-        
+        }
+
         this.folderFacade.remove(df);
-        
+
     }
 
     @Override
     public void cloneFolderTemplate(String sourceTemplateName, String targetTemplateName) throws Exception {
-        DocumentFolderTemplate source= this.getFolderTemplate(sourceTemplateName);
-        DocumentFolderTemplate target=new DocumentFolderTemplate();
+        DocumentFolderTemplate source = this.getFolderTemplate(sourceTemplateName);
+        DocumentFolderTemplate target = new DocumentFolderTemplate();
         target.setName(targetTemplateName);
         this.addFolderTemplate(target);
-        target=this.getFolderTemplate(targetTemplateName);
-        DocumentFolder sourceRoot=source.getRootFolder();
-        DocumentFolder targetRoot=target.getRootFolder();
+        target = this.getFolderTemplate(targetTemplateName);
+        DocumentFolder sourceRoot = source.getRootFolder();
+        DocumentFolder targetRoot = target.getRootFolder();
         this.cloneFolderTemplateRecursive(targetTemplateName, sourceRoot, targetRoot);
     }
-    
+
     private void cloneFolderTemplateRecursive(String targetTemplateName, DocumentFolder from, DocumentFolder to) throws Exception {
-        for(DocumentFolder child: from.getChildren()) {
-            DocumentFolder newChild=new DocumentFolder();
+        for (DocumentFolder child : from.getChildren()) {
+            DocumentFolder newChild = new DocumentFolder();
             newChild.setName(child.getName());
             newChild.setParentId(to.getId());
             this.addFolderToTemplate(targetTemplateName, newChild);
@@ -4274,13 +4273,112 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     @Override
     @RolesAllowed({"writeArchiveFileRole"})
     public CaseFolder createCaseFolder(String parentId, String name) throws Exception {
-        CaseFolder cf=new CaseFolder();
+
+        List<CaseFolder> neighbours = this.caseFolderFacade.findByParentId(parentId);
+        boolean nameCollision = false;
+        for (CaseFolder n : neighbours) {
+            if (name.equalsIgnoreCase(n.getName())) {
+                throw new Exception("Es existiert bereits ein Ordner mit diesem Namen!");
+            }
+        }
+        if (name == null || "".equals(name)) {
+            throw new Exception("Ordnername darf nicht leer sein!");
+        }
+
+        CaseFolder cf = new CaseFolder();
         cf.setParentId(parentId);
         cf.setName(name);
-        String id=new StringGenerator().getID().toString();
+        String id = new StringGenerator().getID().toString();
         cf.setId(id);
         this.caseFolderFacade.create(cf);
         return this.caseFolderFacade.find(id);
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public CaseFolder updateCaseFolder(CaseFolder folder) throws Exception {
+        CaseFolder cf = this.caseFolderFacade.find(folder.getId());
+        if (cf != null) {
+            List<CaseFolder> neighbours = this.caseFolderFacade.findByParentId(folder.getParentId());
+            boolean nameCollision = false;
+            for (CaseFolder n : neighbours) {
+                if (folder.getName().equalsIgnoreCase(n.getName()) && !(folder.getId().equals(n.getId()))) {
+                    throw new Exception("Es existiert bereits ein Ordner mit diesem Namen!");
+                }
+            }
+            if (folder.getName() == null || "".equals(folder.getName())) {
+                throw new Exception("Ordnername darf nicht leer sein!");
+            }
+
+            cf.setName(folder.getName());
+            this.caseFolderFacade.edit(cf);
+            return this.caseFolderFacade.find(folder.getId());
+        } else {
+            throw new Exception("Ordner kann nicht gefunden werden!");
+        }
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public void deleteCaseFolder(String folderId) throws Exception {
+        CaseFolder cf = this.caseFolderFacade.find(folderId);
+        if (cf != null) {
+            this.caseFolderFacade.remove(cf);
+        } else {
+            throw new Exception("Ordner kann nicht gefunden werden!");
+        }
+
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public void moveDocumentsToFolder(Collection<String> documentIds, String folderId) throws Exception {
+        CaseFolder target = this.caseFolderFacade.find(folderId);
+        if (target == null) {
+            log.error("There is no folder with ID " + folderId);
+            throw new Exception("Ordner existiert nicht!");
+        }
+
+        // check if folder and documents are in same case
+        String caseId = null;
+        ArrayList<ArchiveFileDocumentsBean> documents = new ArrayList<>();
+        for (String docId : documentIds) {
+            ArchiveFileDocumentsBean doc = this.archiveFileDocumentsFacade.find(docId);
+            if (doc == null) {
+                log.error("There is no document with ID " + folderId);
+                throw new Exception("Dokument existiert nicht!");
+            }
+            documents.add(doc);
+            if (caseId == null) {
+                caseId = doc.getArchiveFileKey().getId();
+            } else {
+                if (!(doc.getArchiveFileKey().getId().equals(caseId))) {
+                    throw new Exception("Alle zu verschiebenden Dokumente müssen zur selben Akte gehören!");
+                }
+            }
+        }
+
+        ArchiveFileBean afb = this.archiveFileFacade.find(caseId);
+        if (afb == null) {
+            log.error("There is no case with ID " + caseId);
+            throw new Exception("Akte existiert nicht!");
+        }
+
+        StringGenerator idGen=new StringGenerator();
+        for (ArchiveFileDocumentsBean doc : documents) {
+            doc.setFolder(target);
+            this.archiveFileDocumentsFacade.edit(doc);
+
+            ArchiveFileHistoryBean newHistEntry = new ArchiveFileHistoryBean();
+            newHistEntry.setId(idGen.getID().toString());
+            newHistEntry.setArchiveFileKey(afb);
+            newHistEntry.setChangeDate(new Date());
+            newHistEntry.setChangeDescription("Dokument " + doc.getName() + " in den Ordner " + target.getName() + " verschoben");
+            newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
+            this.archiveFileHistoryFacade.create(newHistEntry);
+
+        }
+
     }
 
 }

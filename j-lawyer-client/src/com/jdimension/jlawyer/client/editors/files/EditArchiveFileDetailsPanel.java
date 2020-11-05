@@ -674,7 +674,7 @@ public class EditArchiveFileDetailsPanel extends ArchiveFilePanel {
      */
     public EditArchiveFileDetailsPanel() {
         super();
-        this.setReadOnly(false);
+        this.setReadOnly(false, false);
         this.cmdBackToSearch.setEnabled(true);
         this.setOpenedFromEditorClass(EditArchiveFilePanel.class.getName());
         

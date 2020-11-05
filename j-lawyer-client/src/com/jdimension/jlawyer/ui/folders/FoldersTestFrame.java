@@ -665,11 +665,9 @@ package com.jdimension.jlawyer.ui.folders;
 
 import com.formdev.flatlaf.FlatIntelliJLaf;
 import java.awt.Color;
-import java.awt.Dimension;
 import javax.swing.UIManager;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreeSelectionModel;
 import themes.colors.DefaultColorTheme;
 
 /**
@@ -690,7 +688,6 @@ public class FoldersTestFrame extends javax.swing.JFrame {
         sub1.add(new DefaultMutableTreeNode("UUordner 1"));
         root.add(new DefaultMutableTreeNode("Unterordner 2"));
         root.add(new DefaultMutableTreeNode("Unterordner 3"));
-        this.foldersTree1.setModel(new DefaultTreeModel(root));
         
 //        //setPreferredSize(new Dimension(200, 300));
 //        //setRootVisible(false);
@@ -720,22 +717,10 @@ public class FoldersTestFrame extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jScrollPane2 = new javax.swing.JScrollPane();
-        foldersTree1 = new com.jdimension.jlawyer.ui.folders.FoldersTree();
         sortButton1 = new com.jdimension.jlawyer.ui.folders.SortButton();
         jButton1 = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
-
-        jScrollPane2.setOpaque(false);
-
-        foldersTree1.setOpaque(false);
-        foldersTree1.addTreeSelectionListener(new javax.swing.event.TreeSelectionListener() {
-            public void valueChanged(javax.swing.event.TreeSelectionEvent evt) {
-                foldersTree1ValueChanged(evt);
-            }
-        });
-        jScrollPane2.setViewportView(foldersTree1);
 
         sortButton1.setText("Dateiname");
         sortButton1.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -758,12 +743,9 @@ public class FoldersTestFrame extends javax.swing.JFrame {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 376, Short.MAX_VALUE)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(sortButton1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jButton1)))
+                .addComponent(sortButton1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 151, Short.MAX_VALUE)
+                .addComponent(jButton1)
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -773,17 +755,11 @@ public class FoldersTestFrame extends javax.swing.JFrame {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(sortButton1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jButton1))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 65, Short.MAX_VALUE)
-                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 217, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap())
+                .addContainerGap(294, Short.MAX_VALUE))
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
-
-    private void foldersTree1ValueChanged(javax.swing.event.TreeSelectionEvent evt) {//GEN-FIRST:event_foldersTree1ValueChanged
-        System.out.println(""+evt.getPaths().toString());
-    }//GEN-LAST:event_foldersTree1ValueChanged
 
     private void jButton1MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jButton1MouseClicked
         // TODO add your handling code here:
@@ -834,9 +810,7 @@ public class FoldersTestFrame extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private com.jdimension.jlawyer.ui.folders.FoldersTree foldersTree1;
     private javax.swing.JButton jButton1;
-    private javax.swing.JScrollPane jScrollPane2;
     private com.jdimension.jlawyer.ui.folders.SortButton sortButton1;
     // End of variables declaration//GEN-END:variables
 }

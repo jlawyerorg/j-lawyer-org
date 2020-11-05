@@ -663,46 +663,31 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.ui.folders;
 
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Dimension;
-import javax.swing.JPanel;
-import javax.swing.JTree;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeCellRenderer;
-import javax.swing.tree.TreePath;
-import themes.colors.DefaultColorTheme;
+import com.jdimension.jlawyer.persistence.CaseFolder;
+import javax.swing.JMenuItem;
 
 /**
  *
  * @author jens
  */
-public class FolderCellRenderer extends DefaultTreeCellRenderer {
+public class JMenuItemWithFolder extends JMenuItem {
+    
+    protected CaseFolder folder=null;
 
-    public FolderCellRenderer() {
-
+    /**
+     * @return the folder
+     */
+    public CaseFolder getFolder() {
+        return folder;
     }
 
-    @Override
-    public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel, boolean expanded, boolean leaf, int row, boolean hasFocus) {
-        //return super.getTreeCellRendererComponent(jtree, o, bln, bln1, bln2, i, bln3); //To change body of generated methods, choose Tools | Templates.
-        FolderCell cell = new FolderCell(value.toString(), false);
-
-        if (selected) {
-            cell.setBackground(DefaultColorTheme.COLOR_LOGO_GREEN);
-        } else {
-            cell.setBackground(DefaultColorTheme.COLOR_LIGHT_GREY);
-        }
-        
-        TreePath tp=tree.getPathForRow(row);
-        if(tp!=null) {
-        DefaultMutableTreeNode tn=(DefaultMutableTreeNode)tp.getLastPathComponent();
-        cell.setExpanded(expanded, tn.getChildCount()>0);
-        }
-
-        //cell.setPreferredSize(new Dimension(tree.getWidth(), tree.getRowHeight()));
-
-        return cell;
+    /**
+     * @param folder the folder to set
+     */
+    public void setFolder(CaseFolder folder) {
+        this.folder = folder;
     }
-
+    
+    
+    
 }

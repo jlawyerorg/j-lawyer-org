@@ -1,5 +1,4 @@
-/*
-                    GNU AFFERO GENERAL PUBLIC LICENSE
+/*                    GNU AFFERO GENERAL PUBLIC LICENSE
                        Version 3, 19 November 2007
 
  Copyright (C) 2007 Free Software Foundation, Inc. <https://fsf.org/>
@@ -661,103 +660,63 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.ui.folders;
+package db.migration;
 
-import java.awt.Component;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import javax.swing.AbstractCellEditor;
-import javax.swing.JTree;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.TreeCellEditor;
-import javax.swing.tree.TreePath;
-import themes.colors.DefaultColorTheme;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.util.ArrayList;
+import org.flywaydb.core.api.migration.BaseJavaMigration;
+import org.flywaydb.core.api.migration.Context;
+import org.jboss.logging.Logger;
 
 /**
  *
  * @author jens
  */
-public class FolderCellEditor extends AbstractCellEditor implements TreeCellEditor, ActionListener, MouseListener {
+public class V1_13_0_17__AddRootFolders extends BaseJavaMigration {
 
-    Object value = null;
-    FolderCell cell = null;
-    JTree tree=null;
-    int row=0;
+    private static final Logger log = Logger.getLogger(V1_13_0_17__AddRootFolders.class.getName());
 
-    public FolderCellEditor() {
-        cell = new FolderCell("", true);
-        cell.addMoreButtonActionListener(this);
-        cell.addExpandedListener(this);
-    }
+    public void migrate(Context context) throws Exception {
 
-    @Override
-    public Object getCellEditorValue() {
-        return value.toString();
-    }
+        log.info("Running migration " + V1_13_0_17__AddRootFolders.class.getName());
 
-    @Override
-    public void actionPerformed(ActionEvent e) {
-        String val = value.toString();
-        System.out.println("Pressed: " + val);
-        //stopCellEditing();
-    }
+        PreparedStatement statement
+                = context.getConnection().prepareStatement("SELECT id FROM cases where root_folder is null");
 
-    @Override
-    public Component getTreeCellEditorComponent(JTree tree, Object value, boolean isSelected, boolean expanded, boolean leaf, int row) {
-        this.value = value;
-        this.tree=tree;
-        this.row=row;
-        cell.setValue(value);
+        ArrayList<String> caseIds = new ArrayList<>();
+        try {
+            ResultSet rs = statement.executeQuery();
 
-        if (isSelected) {
-            cell.setBackground(DefaultColorTheme.COLOR_LOGO_GREEN);
-        } else {
-            cell.setBackground(DefaultColorTheme.COLOR_LIGHT_GREY);
-        }
+            while (rs.next()) {
+                String id = rs.getString(1);
+                caseIds.add(id);
+            }
 
-        TreePath tp = tree.getPathForRow(row);
-        if (tp != null) {
-            DefaultMutableTreeNode tn = (DefaultMutableTreeNode) tp.getLastPathComponent();
-            cell.setExpanded(expanded, tn.getChildCount() > 0);
-        }
+            rs.close();
+        } finally {
 
-        return cell;
-    }
-
-    @Override
-    public void mouseClicked(MouseEvent e) {
-        
-        if(e.getClickCount()==2) {
-            
-            System.out.println("expand row " + row);
-            boolean expanded=this.tree.isExpanded(row);
-            if(!expanded)
-                this.tree.expandRow(row);
-            else
-                this.tree.collapseRow(row);
+            statement.close();
         }
         
+        PreparedStatement st1
+                = context.getConnection().prepareStatement("insert into case_folders (id, name, parent_id) values (?, 'Dokumente', null)");
+        
+        PreparedStatement st2
+                = context.getConnection().prepareStatement("update cases set root_folder= ? where id = ?");
+        
+        for(String id: caseIds) {
+            st1.setString(1, id);
+            st1.executeUpdate();
+            st1.clearParameters();
+            st2.setString(1, id);
+            st2.setString(2, id);
+            st2.executeUpdate();
+            st2.clearParameters();
+        }
+        
+        st1.close();
+        st2.close();
+        
     }
-
-    @Override
-    public void mousePressed(MouseEvent e) {
-//            String val = value.toString();
-//            System.out.println("Clicked: " + val);
-//            stopCellEditing();
-    }
-
-    @Override
-    public void mouseReleased(MouseEvent e) {
-    }
-
-    @Override
-    public void mouseEntered(MouseEvent e) {
-    }
-
-    @Override
-    public void mouseExited(MouseEvent e) {
-    }
-
 }

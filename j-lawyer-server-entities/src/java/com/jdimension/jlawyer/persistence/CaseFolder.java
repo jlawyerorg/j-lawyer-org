@@ -677,6 +677,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlRootElement
 @NamedQueries({
     @NamedQuery(name = "CaseFolder.findAll", query = "SELECT a FROM CaseFolder a"),
+    @NamedQuery(name = "CaseFolder.findByParentId", query = "SELECT a FROM CaseFolder a WHERE a.parentId = :parentId"),
     @NamedQuery(name = "CaseFolder.findById", query = "SELECT a FROM CaseFolder a WHERE a.id = :id")})
 public class CaseFolder implements Serializable {
     
@@ -727,6 +728,10 @@ public class CaseFolder implements Serializable {
      */
     public String getParentId() {
         return parentId;
+    }
+    
+    public boolean isRoot() {
+        return this.parentId==null;
     }
 
     /**

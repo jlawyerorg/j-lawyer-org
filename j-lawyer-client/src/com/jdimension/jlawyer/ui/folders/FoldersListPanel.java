@@ -667,6 +667,10 @@ import com.jdimension.jlawyer.persistence.CaseFolder;
 import java.awt.Component;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 import javax.swing.Box;
 import javax.swing.JScrollPane;
 
@@ -678,6 +682,9 @@ public class FoldersListPanel extends javax.swing.JPanel {
 
     GridBagConstraints gbc = new GridBagConstraints();
     GridBagLayout gbl = new GridBagLayout();
+    protected boolean readOnly = false;
+    private CaseFolder rootFolder = null;
+    protected CaseFolderPanel caseFolderPanel=null;
 
     /**
      * Creates new form FoldersPanel
@@ -698,35 +705,42 @@ public class FoldersListPanel extends javax.swing.JPanel {
         gbc.gridwidth = GridBagConstraints.REMAINDER;
 
         this.pnlFolders.removeAll();
-        FolderListCell cell = new FolderListCell(0, "Dokumente", true);
+        FolderListCell cell = new FolderListCell(this, 0, "Dokumente", this.readOnly);
         cell.setSelected(true);
 
         this.pnlFolders.add(cell, gbc);
 
     }
-    
+
     public void selectAll(boolean selected) {
-        for(Component c: this.pnlFolders.getComponents()) {
-            if(c instanceof FolderListCell) {
-                ((FolderListCell)c).setSelected(selected);
+        for (Component c : this.pnlFolders.getComponents()) {
+            if (c instanceof FolderListCell) {
+                ((FolderListCell) c).setSelected(selected);
             }
         }
-        
-        if(this.pnlFolders.getComponentCount()>0) 
-            if(this.pnlFolders.getComponent(0) instanceof FolderListCell)
-                ((FolderListCell)this.pnlFolders.getComponent(0)).setSelected(true);
+
+        if (this.pnlFolders.getComponentCount() > 0) {
+            if (this.pnlFolders.getComponent(0) instanceof FolderListCell) {
+                ((FolderListCell) this.pnlFolders.getComponent(0)).setSelected(true);
+            }
+        }
     }
 
-    public void setRootFolder(CaseFolder rootFolder) {
+    public void setRootFolder(CaseFolder rootFolder, ArrayList<String> unselectedIds) {
+        this.rootFolder = rootFolder;
 
         this.pnlFolders.removeAll();
 
-        FolderListCell cell = new FolderListCell(0, rootFolder.getName(), true);
-        cell.setUserObject(rootFolder);
+        FolderListCell cell = new FolderListCell(this, 0, rootFolder.getName(), this.readOnly);
+        cell.setFolder(rootFolder);
+        cell.setParentFolder(null);
         cell.setSelected(true);
+        if (unselectedIds.contains(rootFolder.getId())) {
+            cell.setSelected(false);
+        }
         this.pnlFolders.add(cell, gbc);
 
-        this.buildRecursive(1, rootFolder);
+        this.buildRecursive(1, rootFolder, unselectedIds);
 
         //this.pnlFolders.add(Box.createVerticalGlue());
         // https://stackoverflow.com/questions/27925606/difficulties-in-aligning-scrollpane-in-top-left-corner
@@ -788,16 +802,121 @@ public class FoldersListPanel extends javax.swing.JPanel {
     private javax.swing.JPanel pnlFolders;
     // End of variables declaration//GEN-END:variables
 
-    private void buildRecursive(int level, CaseFolder folder) {
+    private void buildRecursive(int level, CaseFolder folder, ArrayList<String> unselectedIds) {
 
         if (folder.getChildren() != null) {
-            for (CaseFolder child : folder.getChildren()) {
-                FolderListCell childNode = new FolderListCell(level, child.getName(), true);
-                childNode.setUserObject(child);
+            List<CaseFolder> allChildren=folder.getChildren();
+            Collections.sort(allChildren, new Comparator() {
+                @Override
+                public int compare(Object t, Object t1) {
+                    CaseFolder f1=(CaseFolder)t;
+                    CaseFolder f2=(CaseFolder)t1;
+                    return f1.getName().compareTo(f2.getName());
+                }
+                
+            });
+            for (CaseFolder child : allChildren) {
+                FolderListCell childNode = new FolderListCell(this, level, child.getName(), this.readOnly);
+                childNode.setFolder(child);
+                childNode.setParentFolder(folder);
                 childNode.setSelected(true);
+                if (unselectedIds.contains(child.getId())) {
+                    childNode.setSelected(false);
+                }
                 this.pnlFolders.add(childNode, gbc);
-                buildRecursive(level + 1, child);
+                buildRecursive(level + 1, child, unselectedIds);
             }
         }
+    }
+
+    /**
+     * @return the readOnly
+     */
+    public boolean isReadOnly() {
+        return readOnly;
+    }
+
+    /**
+     * @param readOnly the readOnly to set
+     */
+    public void setReadOnly(boolean readOnly) {
+        this.readOnly = readOnly;
+        
+        for (Component c : this.pnlFolders.getComponents()) {
+            if (c instanceof FolderListCell) {
+                ((FolderListCell) c).setReadOnly(readOnly);
+                
+            }
+        }
+    }
+
+    public void folderRemoved(CaseFolder parent, CaseFolder removedFolder) {
+//        for(Component c: this.pnlFolders.getComponents()) {
+//            if(c instanceof FolderListCell) {
+//                CaseFolder cf=((FolderListCell)c).getFolder();
+//                if(cf.getId().equals(folder.getId())) {
+//                    this.remove(c);
+//                    this.repaint();
+//                    this.revalidate();
+//                    this.doLayout();
+//                    break;
+//                }
+//            }
+//        }
+        parent.getChildren().remove(removedFolder);
+        this.setRootFolder(this.rootFolder, this.getUnselectedFolderIds());
+        this.revalidate();
+        this.repaint();
+    }
+
+    public void folderAdded(CaseFolder parent, CaseFolder newFolder) {
+        parent.getChildren().add(newFolder);
+        this.setRootFolder(this.rootFolder, this.getUnselectedFolderIds());
+        this.revalidate();
+        this.repaint();
+    }
+
+    private ArrayList<String> getUnselectedFolderIds() {
+        ArrayList<String> ids = new ArrayList<>();
+        for (Component c : this.pnlFolders.getComponents()) {
+            if (c instanceof FolderListCell) {
+                if (!((FolderListCell) c).isSelected()) {
+                    String id = ((FolderListCell) c).getFolder().getId();
+                    ids.add(id);
+                }
+            }
+        }
+        return ids;
+    }
+
+    void selectionChanged() {
+        if(this.caseFolderPanel!=null)
+            this.caseFolderPanel.folderSelectionChanged();
+    }
+
+    /**
+     * @return the caseFolderPanel
+     */
+    public CaseFolderPanel getCaseFolderPanel() {
+        return caseFolderPanel;
+    }
+
+    /**
+     * @param parent the caseFolderPanel to set
+     */
+    public void setCaseFolderPanel(CaseFolderPanel parent) {
+        this.caseFolderPanel = parent;
+    }
+
+    ArrayList<CaseFolder> getSelectedFolders() {
+        ArrayList<CaseFolder> ids = new ArrayList<>();
+        for (Component c : this.pnlFolders.getComponents()) {
+            if (c instanceof FolderListCell) {
+                if (((FolderListCell) c).isSelected()) {
+                    ids.add(((FolderListCell) c).getFolder());
+                }
+            }
+        }
+        return ids;
     }
 }

@@ -906,8 +906,8 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
                     }
                 }
             }
-            this.tblGroups.setEnabled(userIsInOwnerGroup);
-            this.cmbGroups.setEnabled(userIsInOwnerGroup);
+            this.tblGroups.setEnabled(userIsInOwnerGroup && !this.readOnly && !this.caseDto.getArchivedBoolean());
+            this.cmbGroups.setEnabled(userIsInOwnerGroup && !this.readOnly && !this.caseDto.getArchivedBoolean());
             ComponentUtils.autoSizeColumns(tblGroups);
 
             this.progress("Lade Akte: Beteiligte...");
@@ -924,6 +924,7 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
             reviews = fileService.getReviews(this.archiveFileKey);
             this.progress("Lade Akte: Dokumente...");
             documents = fileService.getDocuments(this.archiveFileKey);
+            caseFolders.setReadOnly(readOnly || this.caseDto.getArchivedBoolean());
             caseFolders.setRootFolder(this.caseDto.getRootFolder());
             caseFolders.setDocuments(new ArrayList(documents));
             caseFolders.sortByDateDesc();
@@ -1086,7 +1087,7 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
             } else {
                 tb.setSelected(false);
             }
-            tb.setEnabled(!readOnly);
+            tb.setEnabled(!readOnly && !this.caseDto.getArchivedBoolean());
             tb.addActionListener(new ArchiveFileTagActionListener(this.archiveFileKey, fileService, this.owner));
             ThreadUtils.addComponent(tagPanel, tb);
         }

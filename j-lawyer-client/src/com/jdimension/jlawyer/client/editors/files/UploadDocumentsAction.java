@@ -768,6 +768,7 @@ public class UploadDocumentsAction extends ProgressableAction {
                     }
                 }
             }
+            //this.docTarget.sort();
 
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);

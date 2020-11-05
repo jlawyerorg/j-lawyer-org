@@ -687,4 +687,6 @@ public interface CaseFolderFacadeLocal {
 
     int count();
     
+    public List<CaseFolder> findByParentId(String parentId);
+    
 }

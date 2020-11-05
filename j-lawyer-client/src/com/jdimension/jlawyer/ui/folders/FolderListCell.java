@@ -663,10 +663,17 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.ui.folders;
 
+import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import com.jdimension.jlawyer.client.launcher.CaseDocumentStore;
+import com.jdimension.jlawyer.client.launcher.Launcher;
+import com.jdimension.jlawyer.client.launcher.LauncherFactory;
+import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.persistence.CaseFolder;
+import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Color;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseListener;
+import javax.swing.JOptionPane;
 import themes.colors.DefaultColorTheme;
 
 /**
@@ -675,30 +682,37 @@ import themes.colors.DefaultColorTheme;
  */
 public class FolderListCell extends javax.swing.JPanel {
 
-    private CaseFolder folder=null;
-    protected boolean selected=true;
-    private Color defaultBackground=null;
-    private int level=0;
-    
+    private CaseFolder folder = null;
+    protected CaseFolder parentFolder = null;
+    protected boolean selected = true;
+    private Color defaultBackground = null;
+    private int level = 0;
+    protected boolean readOnly = false;
+    private FoldersListPanel parent=null;
+
     /**
      * Creates new form FolderCell
      */
-    public FolderListCell(int level, String name, boolean displayMoreButton) {
+    public FolderListCell(FoldersListPanel parent, int level, String name, boolean readOnly) {
         initComponents();
-        this.level=level;
-        String tab="   ";
-        for(int i=0;i<level;i++)
-            tab=tab+tab;
+        this.level = level;
+        this.readOnly = readOnly;
+        this.parent=parent;
+        String tab = "   ";
+        for (int i = 0; i < level; i++) {
+            tab = tab + tab;
+        }
         this.lblExpanded.setText(tab);
-        
+
         this.lblFolderName.setText(name);
-        if(!displayMoreButton)
-            this.cmdMore.setVisible(false);
+//        if (!displayMoreButton) {
+//            this.cmdMore.setVisible(false);
+//        }
         this.doLayout();
-        this.defaultBackground=this.getBackground();
-        
+        this.defaultBackground = this.getBackground();
+
     }
-    
+
     public void setValue(Object value) {
         this.lblFolderName.setText(value.toString());
     }
@@ -706,13 +720,14 @@ public class FolderListCell extends javax.swing.JPanel {
     @Override
     public void setBackground(Color color) {
         super.setBackground(color); //To change body of generated methods, choose Tools | Templates.
-        if(this.lblFolderName!=null)
+        if (this.lblFolderName != null) {
             this.lblFolderName.setBackground(color);
+        }
     }
-    
+
     public void setExpanded(boolean expanded, boolean hasChildren) {
-        if(hasChildren) {
-            if(expanded) {
+        if (hasChildren) {
+            if (expanded) {
                 this.lblExpanded.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/jdimension/jlawyer/ui/folders/node-expanded.png")));
             } else {
                 this.lblExpanded.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/jdimension/jlawyer/ui/folders/node-collapsed.png")));
@@ -720,14 +735,14 @@ public class FolderListCell extends javax.swing.JPanel {
         } else {
             this.lblExpanded.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/jdimension/jlawyer/ui/folders/node-leaf.png")));
         }
-        
+
     }
-    
+
     public void addMoreButtonActionListener(ActionListener al) {
-        
+
         this.cmdMore.addActionListener(al);
     }
-    
+
     public void addExpandedListener(MouseListener ml) {
         this.lblExpanded.addMouseListener(ml);
         this.lblFolderName.addMouseListener(ml);
@@ -742,9 +757,37 @@ public class FolderListCell extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        popFolder = new javax.swing.JPopupMenu();
+        mnuEdit = new javax.swing.JMenuItem();
+        mnuDelete = new javax.swing.JMenuItem();
+        mnuCreate = new javax.swing.JMenuItem();
         lblFolderName = new javax.swing.JLabel();
         cmdMore = new javax.swing.JButton();
         lblExpanded = new javax.swing.JLabel();
+
+        mnuEdit.setText("umbenennen");
+        mnuEdit.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuEditActionPerformed(evt);
+            }
+        });
+        popFolder.add(mnuEdit);
+
+        mnuDelete.setText("löschen");
+        mnuDelete.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuDeleteActionPerformed(evt);
+            }
+        });
+        popFolder.add(mnuDelete);
+
+        mnuCreate.setText("Unterordner erstellen");
+        mnuCreate.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuCreateActionPerformed(evt);
+            }
+        });
+        popFolder.add(mnuCreate);
 
         addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
@@ -767,6 +810,11 @@ public class FolderListCell extends javax.swing.JPanel {
         cmdMore.setContentAreaFilled(false);
         cmdMore.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         cmdMore.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/com/jdimension/jlawyer/ui/folders/more-black.png"))); // NOI18N
+        cmdMore.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseReleased(java.awt.event.MouseEvent evt) {
+                cmdMoreMouseReleased(evt);
+            }
+        });
         cmdMore.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmdMoreActionPerformed(evt);
@@ -807,30 +855,127 @@ public class FolderListCell extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void cmdMoreActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdMoreActionPerformed
-        System.out.println("more");
+
     }//GEN-LAST:event_cmdMoreActionPerformed
 
     private void lblFolderNameMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblFolderNameMouseClicked
         setSelected(!isSelected());
+        this.parent.selectionChanged();
     }//GEN-LAST:event_lblFolderNameMouseClicked
 
     private void lblExpandedMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblExpandedMouseClicked
         setSelected(!isSelected());
+        this.parent.selectionChanged();
     }//GEN-LAST:event_lblExpandedMouseClicked
 
     private void formMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_formMouseClicked
         setSelected(!isSelected());
+        this.parent.selectionChanged();
     }//GEN-LAST:event_formMouseClicked
+
+    private void cmdMoreMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdMoreMouseReleased
+        if (this.folder.isRoot()) {
+            this.mnuDelete.setEnabled(false);
+        } else {
+            this.mnuDelete.setEnabled(true);
+        }
+        if (this.isReadOnly()) {
+            this.mnuCreate.setEnabled(false);
+            this.mnuDelete.setEnabled(false);
+            this.mnuEdit.setEnabled(false);
+        }
+        this.popFolder.show(this.cmdMore, evt.getX(), evt.getY());
+    }//GEN-LAST:event_cmdMoreMouseReleased
+
+    private void mnuEditActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuEditActionPerformed
+        try {
+
+            Object newNameObject = JOptionPane.showInputDialog(this, "neuer Ordnername: ", "Ordner umbenennen", JOptionPane.QUESTION_MESSAGE, null, null, this.folder.getName());
+            if (newNameObject == null || "".equals(newNameObject)) {
+                return;
+            }
+            String name = newNameObject.toString();
+
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            this.folder.setName(name);
+            locator.lookupArchiveFileServiceRemote().updateCaseFolder(folder);
+            this.lblFolderName.setText(name);
+//            this.revalidate();
+//            this.repaint();
+//            this.getParent().getParent().getParent().revalidate();
+//            this.getParent().getParent().getParent().repaint();
+//            this.getParent().getParent().getParent().doLayout();
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Ändern des Ordners: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+    }//GEN-LAST:event_mnuEditActionPerformed
+
+    private void mnuDeleteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuDeleteActionPerformed
+        try {
+
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            locator.lookupArchiveFileServiceRemote().deleteCaseFolder(this.folder.getId());
+            
+            
+            this.parent.folderRemoved(this.parentFolder, this.folder);
+            
+//            this.getParent().revalidate();
+//            this.getParent().repaint();
+//            this.getParent().doLayout();
+            
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Löschen des Ordners: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+    }//GEN-LAST:event_mnuDeleteActionPerformed
+
+    private void mnuCreateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuCreateActionPerformed
+        try {
+
+            Object newNameObject = JOptionPane.showInputDialog(this, "Ordnername: ", "Unterordner erstellen", JOptionPane.QUESTION_MESSAGE, null, null, "Ordner");
+            if (newNameObject == null || "".equals(newNameObject)) {
+                return;
+            }
+            String name = newNameObject.toString();
+
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            CaseFolder newFolder=locator.lookupArchiveFileServiceRemote().createCaseFolder(this.folder.getId(), name);
+//            FolderListCell newCell=new FolderListCell(this.parent,this.level+1,name, this.readOnly);
+//            this.parent.add(newCell);
+//            this.parent.revalidate();
+//            this.parent.repaint();
+//            
+//            this.parent.doLayout();
+            
+            this.parent.folderAdded(this.folder, newFolder);
+            
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Erstellen des Ordners: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+    }//GEN-LAST:event_mnuCreateActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton cmdMore;
     private javax.swing.JLabel lblExpanded;
     private javax.swing.JLabel lblFolderName;
+    private javax.swing.JMenuItem mnuCreate;
+    private javax.swing.JMenuItem mnuDelete;
+    private javax.swing.JMenuItem mnuEdit;
+    private javax.swing.JPopupMenu popFolder;
     // End of variables declaration//GEN-END:variables
 
-    void setUserObject(CaseFolder f) {
-        this.folder=f;
+    void setFolder(CaseFolder f) {
+        this.folder = f;
+    }
+    
+    public CaseFolder getFolder() {
+        return this.folder;
     }
 
     /**
@@ -845,10 +990,39 @@ public class FolderListCell extends javax.swing.JPanel {
      */
     public void setSelected(boolean selected) {
         this.selected = selected;
-        if(this.selected)
+        if (this.selected) {
             this.setBackground(DefaultColorTheme.COLOR_LOGO_GREEN);
-        else
+        } else {
             this.setBackground(this.defaultBackground);
+        }
         //this.repaint();
+    }
+
+    /**
+     * @return the parentFolder
+     */
+    public CaseFolder getParentFolder() {
+        return parentFolder;
+    }
+
+    /**
+     * @param parentFolder the parentFolder to set
+     */
+    public void setParentFolder(CaseFolder parentFolder) {
+        this.parentFolder = parentFolder;
+    }
+
+    /**
+     * @return the readOnly
+     */
+    public boolean isReadOnly() {
+        return readOnly;
+    }
+
+    /**
+     * @param readOnly the readOnly to set
+     */
+    public void setReadOnly(boolean readOnly) {
+        this.readOnly = readOnly;
     }
 }

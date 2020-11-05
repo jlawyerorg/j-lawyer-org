@@ -665,16 +665,22 @@ package com.jdimension.jlawyer.ui.folders;
 
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.files.ArchiveFilePanel;
+import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.CaseFolder;
+import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Component;
 import java.awt.Rectangle;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.Hashtable;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import themes.colors.DefaultColorTheme;
 
@@ -694,78 +700,170 @@ public class CaseFolderPanel extends javax.swing.JPanel {
      */
     public CaseFolderPanel(boolean readonly) {
         initComponents();
+        this.foldersListPanel.setCaseFolderPanel(this);
         this.readonly = readonly;
         this.jScrollPane1.getVerticalScrollBar().setUnitIncrement(16);
         this.jScrollPane2.getVerticalScrollBar().setUnitIncrement(16);
         this.sortByDateDesc();
     }
-    
+
     public CaseFolderPanel() {
         initComponents();
+        this.foldersListPanel.setCaseFolderPanel(this);
         this.readonly = false;
         this.jScrollPane1.getVerticalScrollBar().setUnitIncrement(16);
         this.jScrollPane2.getVerticalScrollBar().setUnitIncrement(16);
         this.sortByDateDesc();
     }
-    
+
     public void setRootFolder(CaseFolder rootFolder) {
-        this.foldersListPanel.setRootFolder(rootFolder);
-        
+        this.foldersListPanel.setRootFolder(rootFolder, new ArrayList<String>());
+        this.popMoveToFolder.removeAll();
+
+        ArrayList<JMenuItem> items = new ArrayList<JMenuItem>();
+        this.buildMoveToFolderMenu(items, rootFolder, "");
+        Collections.sort(items, new Comparator() {
+            @Override
+            public int compare(Object t, Object t1) {
+                JMenuItem m1 = (JMenuItem) t;
+                JMenuItem m2 = (JMenuItem) t1;
+                return m1.getText().compareTo(m2.getText());
+            }
+        });
+
+        for (JMenuItem m : items) {
+            this.popMoveToFolder.add(m);
+        }
+
     }
-    
+
+    private void buildMoveToFolderMenu(ArrayList<JMenuItem> items, CaseFolder folder, String path) {
+        JMenuItemWithFolder menu = new JMenuItemWithFolder();
+        menu.setFolder(folder);
+        menu.addActionListener((ActionEvent ae) -> {
+            
+            try {
+                ArrayList<ArchiveFileDocumentsBean> selectedDocs=this.getSelectedDocuments();
+                ArrayList<String> docIds=new ArrayList<>();
+                for(ArchiveFileDocumentsBean doc: selectedDocs) {
+                    docIds.add(doc.getId());
+                }
+                ClientSettings settings = ClientSettings.getInstance();
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                
+                locator.lookupArchiveFileServiceRemote().moveDocumentsToFolder(docIds, folder.getId());
+                
+                for(ArchiveFileDocumentsBean doc: selectedDocs) {
+                    doc.setFolder(folder);
+                    updateDocument(doc);
+                }
+                
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Ändern des Ordners: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+        });
+
+        String itemName = path;
+        if (path.length() > 0) {
+            itemName = itemName + " > ";
+        }
+        itemName = itemName + folder.getName();
+
+        menu.setText(itemName);
+        menu.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/jdimension/jlawyer/ui/folders/folder-empty.png")));
+        items.add(menu);
+
+        for (CaseFolder child : folder.getChildren()) {
+            buildMoveToFolderMenu(items, child, itemName);
+        }
+    }
+
     public void sort() {
-        
+
         Collections.sort(documents, (Object t1, Object t2) -> {
-            if(!(t1 instanceof ArchiveFileDocumentsBean))
+            if (!(t1 instanceof ArchiveFileDocumentsBean)) {
                 return -1;
-            if(!(t2 instanceof ArchiveFileDocumentsBean))
+            }
+            if (!(t2 instanceof ArchiveFileDocumentsBean)) {
                 return 1;
-            
-            ArchiveFileDocumentsBean d1=(ArchiveFileDocumentsBean)t1;
-            ArchiveFileDocumentsBean d2=(ArchiveFileDocumentsBean)t2;
-            
-            if(sortDate.getSortState()==SortButton.SORT_ASC) {
-                Date date1=d1.getCreationDate();
-                Date date2=d2.getCreationDate();
+            }
+
+            ArchiveFileDocumentsBean d1 = (ArchiveFileDocumentsBean) t1;
+            ArchiveFileDocumentsBean d2 = (ArchiveFileDocumentsBean) t2;
+
+            if (sortDate.getSortState() == SortButton.SORT_ASC) {
+                Date date1 = d1.getCreationDate();
+                Date date2 = d2.getCreationDate();
                 return date1.compareTo(date2);
-            } else if(sortDate.getSortState()==SortButton.SORT_DESC) {
-                Date date1=d1.getCreationDate();
-                Date date2=d2.getCreationDate();
+            } else if (sortDate.getSortState() == SortButton.SORT_DESC) {
+                Date date1 = d1.getCreationDate();
+                Date date2 = d2.getCreationDate();
                 return date2.compareTo(date1);
-            } else if(sortSize.getSortState()==SortButton.SORT_ASC) {
-                long l1=d1.getSize();
-                long l2=d2.getSize();
+            } else if (sortSize.getSortState() == SortButton.SORT_ASC) {
+                long l1 = d1.getSize();
+                long l2 = d2.getSize();
                 return new Long(l1).compareTo(l2);
-            } else if(sortSize.getSortState()==SortButton.SORT_DESC) {
-                long l1=d1.getSize();
-                long l2=d2.getSize();
+            } else if (sortSize.getSortState() == SortButton.SORT_DESC) {
+                long l1 = d1.getSize();
+                long l2 = d2.getSize();
                 return new Long(l2).compareTo(l1);
-            } else if(sortName.getSortState()==SortButton.SORT_ASC) {
-                String s1=d1.getName();
-                String s2=d2.getName();
+            } else if (sortName.getSortState() == SortButton.SORT_ASC) {
+                String s1 = d1.getName();
+                String s2 = d2.getName();
                 return s1.compareTo(s2);
-            } else if(sortName.getSortState()==SortButton.SORT_DESC) {
-                String s1=d1.getName();
-                String s2=d2.getName();
+            } else if (sortName.getSortState() == SortButton.SORT_DESC) {
+                String s1 = d1.getName();
+                String s2 = d2.getName();
                 return s2.compareTo(s1);
-            } else if(sortFavorite.getSortState()==SortButton.SORT_ASC) {
-                Boolean b1=d1.isFavorite();
-                Boolean b2=d2.isFavorite();
+            } else if (sortFavorite.getSortState() == SortButton.SORT_ASC) {
+                Boolean b1 = d1.isFavorite();
+                Boolean b2 = d2.isFavorite();
                 return b2.compareTo(b1);
-            } else if(sortFavorite.getSortState()==SortButton.SORT_DESC) {
-                Boolean b1=d1.isFavorite();
-                Boolean b2=d2.isFavorite();
+            } else if (sortFavorite.getSortState() == SortButton.SORT_DESC) {
+                Boolean b1 = d1.isFavorite();
+                Boolean b2 = d2.isFavorite();
                 return b1.compareTo(b2);
-            } else if(sortDictateSign.getSortState()==SortButton.SORT_ASC) {
-                String s1=d1.getDictateSign();
-                String s2=d2.getDictateSign();
+            } else if (sortDictateSign.getSortState() == SortButton.SORT_ASC) {
+                String s1 = d1.getDictateSign();
+                String s2 = d2.getDictateSign();
+                if(s1==null)
+                    s1="";
+                if(s2==null)
+                    s2="";
                 return s1.compareTo(s2);
-            } else if(sortDictateSign.getSortState()==SortButton.SORT_DESC) {
-                String s1=d1.getDictateSign();
-                String s2=d2.getDictateSign();
+            } else if (sortDictateSign.getSortState() == SortButton.SORT_DESC) {
+                String s1 = d1.getDictateSign();
+                String s2 = d2.getDictateSign();
+                if(s1==null)
+                    s1="";
+                if(s2==null)
+                    s2="";
+                return s2.compareTo(s1);
+            } else if (sortFolder.getSortState() == SortButton.SORT_ASC) {
+                CaseFolder f1=d1.getFolder();
+                CaseFolder f2=d2.getFolder();
+                
+                String s1 = "";
+                if(f1!=null)
+                    s1=f1.getName();
+                String s2 = "";
+                if(f2!=null)
+                    s2=f2.getName();
+                return s1.compareTo(s2);
+            } else if (sortFolder.getSortState() == SortButton.SORT_DESC) {
+                CaseFolder f1=d1.getFolder();
+                CaseFolder f2=d2.getFolder();
+                
+                String s1 = "";
+                if(f1!=null)
+                    s1=f1.getName();
+                String s2 = "";
+                if(f2!=null)
+                    s2=f2.getName();
                 return s2.compareTo(s1);
             }
-            
+
             return -1;
         });
         this.setDocuments(documents);
@@ -773,9 +871,9 @@ public class CaseFolderPanel extends javax.swing.JPanel {
 
     public void sortByDateDesc() {
         this.sortDate.setSortState(SortButton.SORT_DESC);
-            
+
     }
-    
+
     public void setCaseContainer(ArchiveFilePanel p) {
         this.caseContainer = p;
     }
@@ -786,6 +884,7 @@ public class CaseFolderPanel extends javax.swing.JPanel {
 
     public void setReadOnly(boolean readOnly) {
         this.readonly = readOnly;
+        this.foldersListPanel.setReadOnly(readOnly);
     }
 
     /**
@@ -797,6 +896,7 @@ public class CaseFolderPanel extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        popMoveToFolder = new javax.swing.JPopupMenu();
         jPanel1 = new javax.swing.JPanel();
         cmdOptions = new javax.swing.JButton();
         cmdSelectAll = new javax.swing.JButton();
@@ -809,6 +909,9 @@ public class CaseFolderPanel extends javax.swing.JPanel {
         sortDictateSign = new com.jdimension.jlawyer.ui.folders.SortButton();
         cmdActions = new javax.swing.JButton();
         sortFolder = new com.jdimension.jlawyer.ui.folders.SortButton();
+        cmdMoveToFolder = new javax.swing.JButton();
+        cmdSelectAll1 = new javax.swing.JButton();
+        cmdSelectNone1 = new javax.swing.JButton();
         jScrollPane2 = new javax.swing.JScrollPane();
         pnlDocumentEntries = new javax.swing.JPanel();
         documentEntryPanel1 = new com.jdimension.jlawyer.ui.folders.DocumentEntryPanel();
@@ -817,6 +920,7 @@ public class CaseFolderPanel extends javax.swing.JPanel {
         foldersListPanel = new com.jdimension.jlawyer.ui.folders.FoldersListPanel();
 
         cmdOptions.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/package_system.png"))); // NOI18N
+        cmdOptions.setToolTipText("Ordnereinstellungen");
 
         cmdSelectAll.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/baseline_select_all_black_48dp.png"))); // NOI18N
         cmdSelectAll.setToolTipText("alle Ordner selektieren");
@@ -827,6 +931,7 @@ public class CaseFolderPanel extends javax.swing.JPanel {
         });
 
         cmdSelectNone.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/baseline_select_none_black_48dp.png"))); // NOI18N
+        cmdSelectNone.setToolTipText("nur Wurzelordner selektieren");
         cmdSelectNone.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmdSelectNoneActionPerformed(evt);
@@ -912,6 +1017,30 @@ public class CaseFolderPanel extends javax.swing.JPanel {
             }
         });
 
+        cmdMoveToFolder.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_account_tree_black_48dp.png"))); // NOI18N
+        cmdMoveToFolder.setToolTipText("in Ordner verschieben");
+        cmdMoveToFolder.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseReleased(java.awt.event.MouseEvent evt) {
+                cmdMoveToFolderMouseReleased(evt);
+            }
+        });
+
+        cmdSelectAll1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/baseline_select_all_black_48dp.png"))); // NOI18N
+        cmdSelectAll1.setToolTipText("alle Ordner selektieren");
+        cmdSelectAll1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdSelectAll1ActionPerformed(evt);
+            }
+        });
+
+        cmdSelectNone1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/baseline_select_none_black_48dp.png"))); // NOI18N
+        cmdSelectNone1.setToolTipText("nur Wurzelordner selektieren");
+        cmdSelectNone1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdSelectNone1ActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
@@ -919,6 +1048,12 @@ public class CaseFolderPanel extends javax.swing.JPanel {
             .addGroup(jPanel2Layout.createSequentialGroup()
                 .addComponent(cmdActions)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(cmdMoveToFolder)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(cmdSelectAll1)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(cmdSelectNone1)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(sortDate, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(sortName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -930,7 +1065,7 @@ public class CaseFolderPanel extends javax.swing.JPanel {
                 .addComponent(sortDictateSign, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(sortFolder, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap())
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -941,7 +1076,10 @@ public class CaseFolderPanel extends javax.swing.JPanel {
                 .addComponent(sortName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addComponent(sortFavorite, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addComponent(sortSize, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addComponent(sortDictateSign, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addComponent(sortDictateSign, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(cmdMoveToFolder))
+            .addComponent(cmdSelectNone1)
+            .addComponent(cmdSelectAll1)
         );
 
         jScrollPane2.setBorder(null);
@@ -1000,9 +1138,10 @@ public class CaseFolderPanel extends javax.swing.JPanel {
             this.sortSize.setSortState(SortButton.SORT_NONE);
             this.sortFolder.setSortState(SortButton.SORT_NONE);
         }
-        if (this.sortFolder.getSortState() == SortButton.SORT_NONE && this.sortDate.getSortState() == SortButton.SORT_NONE && this.sortDictateSign.getSortState() == SortButton.SORT_NONE && this.sortFavorite.getSortState() == SortButton.SORT_NONE && this.sortName.getSortState() == SortButton.SORT_NONE && this.sortSize.getSortState() == SortButton.SORT_NONE)
+        if (this.sortFolder.getSortState() == SortButton.SORT_NONE && this.sortDate.getSortState() == SortButton.SORT_NONE && this.sortDictateSign.getSortState() == SortButton.SORT_NONE && this.sortFavorite.getSortState() == SortButton.SORT_NONE && this.sortName.getSortState() == SortButton.SORT_NONE && this.sortSize.getSortState() == SortButton.SORT_NONE) {
             this.sortDate.setSortState(SortButton.SORT_DESC);
-        
+        }
+
         this.sort();
     }//GEN-LAST:event_sortDateMouseClicked
 
@@ -1014,9 +1153,10 @@ public class CaseFolderPanel extends javax.swing.JPanel {
             this.sortSize.setSortState(SortButton.SORT_NONE);
             this.sortFolder.setSortState(SortButton.SORT_NONE);
         }
-        if (this.sortFolder.getSortState() == SortButton.SORT_NONE && this.sortDate.getSortState() == SortButton.SORT_NONE && this.sortDictateSign.getSortState() == SortButton.SORT_NONE && this.sortFavorite.getSortState() == SortButton.SORT_NONE && this.sortName.getSortState() == SortButton.SORT_NONE && this.sortSize.getSortState() == SortButton.SORT_NONE)
+        if (this.sortFolder.getSortState() == SortButton.SORT_NONE && this.sortDate.getSortState() == SortButton.SORT_NONE && this.sortDictateSign.getSortState() == SortButton.SORT_NONE && this.sortFavorite.getSortState() == SortButton.SORT_NONE && this.sortName.getSortState() == SortButton.SORT_NONE && this.sortSize.getSortState() == SortButton.SORT_NONE) {
             this.sortDate.setSortState(SortButton.SORT_DESC);
-        
+        }
+
         this.sort();
     }//GEN-LAST:event_sortNameMouseClicked
 
@@ -1028,9 +1168,10 @@ public class CaseFolderPanel extends javax.swing.JPanel {
             this.sortSize.setSortState(SortButton.SORT_NONE);
             this.sortFolder.setSortState(SortButton.SORT_NONE);
         }
-        if (this.sortFolder.getSortState() == SortButton.SORT_NONE && this.sortDate.getSortState() == SortButton.SORT_NONE && this.sortDictateSign.getSortState() == SortButton.SORT_NONE && this.sortFavorite.getSortState() == SortButton.SORT_NONE && this.sortName.getSortState() == SortButton.SORT_NONE && this.sortSize.getSortState() == SortButton.SORT_NONE)
+        if (this.sortFolder.getSortState() == SortButton.SORT_NONE && this.sortDate.getSortState() == SortButton.SORT_NONE && this.sortDictateSign.getSortState() == SortButton.SORT_NONE && this.sortFavorite.getSortState() == SortButton.SORT_NONE && this.sortName.getSortState() == SortButton.SORT_NONE && this.sortSize.getSortState() == SortButton.SORT_NONE) {
             this.sortDate.setSortState(SortButton.SORT_DESC);
-        
+        }
+
         this.sort();
     }//GEN-LAST:event_sortFavoriteMouseClicked
 
@@ -1042,9 +1183,10 @@ public class CaseFolderPanel extends javax.swing.JPanel {
             this.sortFavorite.setSortState(SortButton.SORT_NONE);
             this.sortFolder.setSortState(SortButton.SORT_NONE);
         }
-        if (this.sortFolder.getSortState() == SortButton.SORT_NONE && this.sortDate.getSortState() == SortButton.SORT_NONE && this.sortDictateSign.getSortState() == SortButton.SORT_NONE && this.sortFavorite.getSortState() == SortButton.SORT_NONE && this.sortName.getSortState() == SortButton.SORT_NONE && this.sortSize.getSortState() == SortButton.SORT_NONE)
+        if (this.sortFolder.getSortState() == SortButton.SORT_NONE && this.sortDate.getSortState() == SortButton.SORT_NONE && this.sortDictateSign.getSortState() == SortButton.SORT_NONE && this.sortFavorite.getSortState() == SortButton.SORT_NONE && this.sortName.getSortState() == SortButton.SORT_NONE && this.sortSize.getSortState() == SortButton.SORT_NONE) {
             this.sortDate.setSortState(SortButton.SORT_DESC);
-        
+        }
+
         this.sort();
     }//GEN-LAST:event_sortSizeMouseClicked
 
@@ -1056,9 +1198,10 @@ public class CaseFolderPanel extends javax.swing.JPanel {
             this.sortFavorite.setSortState(SortButton.SORT_NONE);
             this.sortFolder.setSortState(SortButton.SORT_NONE);
         }
-        if (this.sortFolder.getSortState() == SortButton.SORT_NONE && this.sortDate.getSortState() == SortButton.SORT_NONE && this.sortDictateSign.getSortState() == SortButton.SORT_NONE && this.sortFavorite.getSortState() == SortButton.SORT_NONE && this.sortName.getSortState() == SortButton.SORT_NONE && this.sortSize.getSortState() == SortButton.SORT_NONE)
+        if (this.sortFolder.getSortState() == SortButton.SORT_NONE && this.sortDate.getSortState() == SortButton.SORT_NONE && this.sortDictateSign.getSortState() == SortButton.SORT_NONE && this.sortFavorite.getSortState() == SortButton.SORT_NONE && this.sortName.getSortState() == SortButton.SORT_NONE && this.sortSize.getSortState() == SortButton.SORT_NONE) {
             this.sortDate.setSortState(SortButton.SORT_DESC);
-        
+        }
+
         this.sort();
     }//GEN-LAST:event_sortDictateSignMouseClicked
 
@@ -1078,9 +1221,10 @@ public class CaseFolderPanel extends javax.swing.JPanel {
             this.sortFavorite.setSortState(SortButton.SORT_NONE);
             this.sortDictateSign.setSortState(SortButton.SORT_NONE);
         }
-        if (this.sortFolder.getSortState() == SortButton.SORT_NONE && this.sortDate.getSortState() == SortButton.SORT_NONE && this.sortDictateSign.getSortState() == SortButton.SORT_NONE && this.sortFavorite.getSortState() == SortButton.SORT_NONE && this.sortName.getSortState() == SortButton.SORT_NONE && this.sortSize.getSortState() == SortButton.SORT_NONE)
+        if (this.sortFolder.getSortState() == SortButton.SORT_NONE && this.sortDate.getSortState() == SortButton.SORT_NONE && this.sortDictateSign.getSortState() == SortButton.SORT_NONE && this.sortFavorite.getSortState() == SortButton.SORT_NONE && this.sortName.getSortState() == SortButton.SORT_NONE && this.sortSize.getSortState() == SortButton.SORT_NONE) {
             this.sortDate.setSortState(SortButton.SORT_DESC);
-        
+        }
+
         this.sort();
     }//GEN-LAST:event_sortFolderMouseClicked
 
@@ -1091,19 +1235,39 @@ public class CaseFolderPanel extends javax.swing.JPanel {
 
     private void cmdSelectAllActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSelectAllActionPerformed
         this.foldersListPanel.selectAll(true);
+        this.foldersListPanel.selectionChanged();
     }//GEN-LAST:event_cmdSelectAllActionPerformed
 
     private void cmdSelectNoneActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSelectNoneActionPerformed
         this.foldersListPanel.selectAll(false);
-        
+        this.foldersListPanel.selectionChanged();
     }//GEN-LAST:event_cmdSelectNoneActionPerformed
+
+    private void cmdMoveToFolderMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdMoveToFolderMouseReleased
+        boolean selection = this.getSelectedDocuments().size() > 0;
+        for (Component m : this.popMoveToFolder.getComponents()) {
+            m.setEnabled(selection);
+        }
+        this.popMoveToFolder.show(this.cmdMoveToFolder, evt.getX(), evt.getY());
+    }//GEN-LAST:event_cmdMoveToFolderMouseReleased
+
+    private void cmdSelectAll1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSelectAll1ActionPerformed
+        this.selectAllDocuments(true);
+    }//GEN-LAST:event_cmdSelectAll1ActionPerformed
+
+    private void cmdSelectNone1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSelectNone1ActionPerformed
+        this.selectAllDocuments(false);
+    }//GEN-LAST:event_cmdSelectNone1ActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton cmdActions;
+    private javax.swing.JButton cmdMoveToFolder;
     private javax.swing.JButton cmdOptions;
     private javax.swing.JButton cmdSelectAll;
+    private javax.swing.JButton cmdSelectAll1;
     private javax.swing.JButton cmdSelectNone;
+    private javax.swing.JButton cmdSelectNone1;
     private com.jdimension.jlawyer.ui.folders.DocumentEntryPanel documentEntryPanel1;
     private com.jdimension.jlawyer.ui.folders.DocumentEntryPanel documentEntryPanel2;
     private com.jdimension.jlawyer.ui.folders.FoldersListPanel foldersListPanel;
@@ -1112,6 +1276,7 @@ public class CaseFolderPanel extends javax.swing.JPanel {
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JPanel pnlDocumentEntries;
+    private javax.swing.JPopupMenu popMoveToFolder;
     private com.jdimension.jlawyer.ui.folders.SortButton sortDate;
     private com.jdimension.jlawyer.ui.folders.SortButton sortDictateSign;
     private com.jdimension.jlawyer.ui.folders.SortButton sortFavorite;
@@ -1137,6 +1302,11 @@ public class CaseFolderPanel extends javax.swing.JPanel {
             }
         }
         return selectedDocs;
+    }
+    
+    public ArrayList<CaseFolder> getSelectedFolders() {
+        ArrayList<CaseFolder> selectedFolders = this.foldersListPanel.getSelectedFolders();
+        return selectedFolders;
     }
 
     public void selectDocumentByName(String fileName) {
@@ -1166,17 +1336,43 @@ public class CaseFolderPanel extends javax.swing.JPanel {
      */
     public void setDocuments(ArrayList<ArchiveFileDocumentsBean> documents) {
         this.documents = documents;
+        
+        ArrayList<ArchiveFileDocumentsBean> selectedDocs=this.getSelectedDocuments();
+        
+        ArrayList<CaseFolder> selectedFolders=this.foldersListPanel.getSelectedFolders();
+        ArrayList<String> selectedFolderIds=new ArrayList<>();
+        boolean rootSelected=false;
+        for(CaseFolder cf: selectedFolders) {
+            selectedFolderIds.add(cf.getId());
+            if(cf.getParentId()==null) {
+                rootSelected=true;
+            }
+        }
+        
+        
+        ArrayList<ArchiveFileDocumentsBean> docsInSelectedFolders=new ArrayList<>();
+        for (int i = 0; i < this.documents.size(); i++) {
+            ArchiveFileDocumentsBean d = this.documents.get(i);
+            if(d.getFolder()!=null && selectedFolderIds.contains(d.getFolder().getId())) {
+                docsInSelectedFolders.add(d);
+            } else if(rootSelected && d.getFolder()==null) {
+                docsInSelectedFolders.add(d);
+            }
+        }
+        
 
         this.pnlDocumentEntries.removeAll();
 //        this.pnlDocumentEntries.repaint();
-        for (int i = 0; i < this.documents.size(); i++) {
-            ArchiveFileDocumentsBean d = this.documents.get(i);
+        for (int i = 0; i < docsInSelectedFolders.size(); i++) {
+            ArchiveFileDocumentsBean d = docsInSelectedFolders.get(i);
             DocumentEntryPanel p = new DocumentEntryPanel(this.caseContainer, this, d, this.readonly);
             if (i % 2 == 0) {
                 p.setBackground(javax.swing.UIManager.getDefaults().getColor("Panel.background"));
             } else {
                 p.setBackground(DefaultColorTheme.COLOR_LIGHT_GREY);
             }
+            if(selectedDocs.contains(d))
+                p.setSelected(true);
             this.pnlDocumentEntries.add(p);
         }
         this.jScrollPane2.getVerticalScrollBar().setValue(0);
@@ -1197,6 +1393,7 @@ public class CaseFolderPanel extends javax.swing.JPanel {
         this.pnlDocumentEntries.add(p);
         this.pnlDocumentEntries.repaint();
         this.pnlDocumentEntries.revalidate();
+        this.sort();
     }
 
     public void clearDocuments() {
@@ -1215,6 +1412,9 @@ public class CaseFolderPanel extends javax.swing.JPanel {
                 }
             }
         }
+        
+        this.pnlDocumentEntries.repaint();
+        this.pnlDocumentEntries.revalidate();
     }
 
     public void updateDocument(ArchiveFileDocumentsBean doc) {
@@ -1230,7 +1430,7 @@ public class CaseFolderPanel extends javax.swing.JPanel {
     }
 
     public int highlightDocuments(String text, String[] selectedTags, Hashtable<String, ArrayList<String>> allTags) {
-        int matchCount=0;
+        int matchCount = 0;
         for (Component c : this.pnlDocumentEntries.getComponents()) {
             if (c instanceof DocumentEntryPanel) {
                 ArchiveFileDocumentsBean doc = ((DocumentEntryPanel) c).getDocument();
@@ -1246,9 +1446,9 @@ public class CaseFolderPanel extends javax.swing.JPanel {
                     //((DocumentEntryPanel) c).highlight(false);
                 }
 
-                if(!match) {
-                if (selectedTags.length > 0) {
-                    
+                if (!match) {
+                    if (selectedTags.length > 0) {
+
                         String id = doc.getId();
                         if (allTags.containsKey(id)) {
                             for (String tag : selectedTags) {
@@ -1258,18 +1458,23 @@ public class CaseFolderPanel extends javax.swing.JPanel {
                                 }
                             }
                         }
-                    
+
+                    }
                 }
+
+                if (match) {
+                    matchCount = matchCount + 1;
                 }
-                
-                if(match)
-                    matchCount=matchCount+1;
-                
+
                 ((DocumentEntryPanel) c).highlight(match);
-                
 
             }
         }
         return matchCount;
     }
+
+    void folderSelectionChanged() {
+        this.setDocuments(this.documents);
+    }
+
 }

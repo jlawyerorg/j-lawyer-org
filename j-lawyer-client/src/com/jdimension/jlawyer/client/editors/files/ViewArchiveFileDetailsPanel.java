@@ -672,7 +672,7 @@ public class ViewArchiveFileDetailsPanel extends ArchiveFilePanel {
     /** Creates a new instance of EditAddressPanel */
     public ViewArchiveFileDetailsPanel() {
         super();
-        this.setReadOnly(true);
+        this.setReadOnly(true, false);
         this.cmdBackToSearch.setEnabled(true);
         //this.setOpenedFromEditorClass(ViewArchiveFilePanel.class.getName());
         this.setOpenedFromEditorClass(EditArchiveFilePanel.class.getName());

@@ -827,4 +827,10 @@ public interface ArchiveFileServiceRemote {
 
     CaseFolder createCaseFolder(String parentId, String name) throws Exception;
 
+    CaseFolder updateCaseFolder(CaseFolder folder) throws Exception;
+
+    void deleteCaseFolder(String folderId) throws Exception;
+
+    void moveDocumentsToFolder(Collection<String> documentIds, String folderId) throws Exception;
+
 }

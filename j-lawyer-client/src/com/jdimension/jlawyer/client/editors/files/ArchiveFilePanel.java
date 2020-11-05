@@ -818,6 +818,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     private boolean initializing = false;
     private boolean groupPrivilegesChanged = false;
+    
+    private boolean readOnly=false;
 
     /**
      * Creates new form ArchiveFilePanel
@@ -1026,7 +1028,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                     } else {
                         tb.setSelected(false);
                     }
-                    tb.setEnabled(this.cmdSave.isEnabled());
+                    tb.setEnabled(!this.readOnly);
                     tb.addActionListener(new DocumentTagActionListener(selectedDoc.getId(), remote, this));
                     //ThreadUtils.addComponent(documentTagPanel, tb);
                     this.documentTagPanel.add(tb);
@@ -1063,7 +1065,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     public void updateFavoriteDocuments() {
         Collection<ArchiveFileDocumentsBean> currentDocList = this.caseFolderPanel1.getDocuments();
 
-        ArchiveFilePanel.updateFavoriteDocuments(dto, !this.cmdSave.isEnabled(), currentDocList, popDocumentFavorites);
+        ArchiveFilePanel.updateFavoriteDocuments(dto, this.readOnly, currentDocList, popDocumentFavorites);
     }
 
     public static void updateFavoriteDocuments(ArchiveFileBean caseDto, boolean readOnly, Collection<ArchiveFileDocumentsBean> documents, JPopupMenu popDocumentFavorites) {
@@ -1111,69 +1113,72 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.openedFromEditorClass = editorClassName;
     }
 
-    public void setReadOnly(boolean readOnly) {
+    public void setReadOnly(boolean readOnly, boolean archived) {
 
+        // this flag is not changed, it is determined by whether or not a user has privileges to edit or not
+        //this.readOnly=readOnly;
+        
         this.cmdSave.setEnabled(!readOnly);
-        this.caseFolderPanel1.setReadOnly(readOnly);
+        this.caseFolderPanel1.setReadOnly(readOnly || archived);
 
-        this.cmdAddForm.setEnabled(!readOnly);
+        this.cmdAddForm.setEnabled(!readOnly && !archived);
 
-        this.chkArchived.setEnabled(!readOnly);
-        this.lblArchivedSince.setEnabled(!readOnly);
-        this.cmdAddForm.setEnabled(!readOnly);
+        this.chkArchived.setEnabled(!readOnly && !archived);
+        this.lblArchivedSince.setEnabled(!readOnly && !archived);
+        this.cmdAddForm.setEnabled(!readOnly && !archived);
 
         //this.cmbDictateSign.setEnabled(!readOnly);
-        this.cmbLawyer.setEnabled(!readOnly);
-        this.cmbAssistant.setEnabled(!readOnly);
-        this.cmbGroup.setEnabled(!readOnly);
-        this.tblGroups.setEnabled(!readOnly);
-        this.cmbReviewAssignee.setEnabled(!readOnly);
-        this.radioReviewTypeFollowUp.setEnabled(!readOnly);
-        this.radioReviewTypeRespite.setEnabled(!readOnly);
-        this.cmbSubjectField.setEnabled(!readOnly);
-        this.txtReason.setEnabled(!readOnly);
-        this.txtReviewReason.setEnabled(!readOnly);
-        this.lstReviewReasons.setEnabled(!readOnly);
-        this.cmdNewDocument.setEnabled(!readOnly);
-        this.cmdAddNote.setEnabled(!readOnly);
-        this.cmdHeaderAddNote.setEnabled(!readOnly);
-        this.cmdUploadDocument.setEnabled(!readOnly);
-        this.cmdNewReview.setEnabled(!readOnly);
-        this.cmdSearchClient.setEnabled(!readOnly);
+        this.cmbLawyer.setEnabled(!readOnly && !archived);
+        this.cmbAssistant.setEnabled(!readOnly && !archived);
+        this.cmbGroup.setEnabled(!readOnly && !archived);
+        this.tblGroups.setEnabled(!readOnly && !archived);
+        this.cmbReviewAssignee.setEnabled(!readOnly && !archived);
+        this.radioReviewTypeFollowUp.setEnabled(!readOnly && !archived);
+        this.radioReviewTypeRespite.setEnabled(!readOnly && !archived);
+        this.cmbSubjectField.setEnabled(!readOnly && !archived);
+        this.txtReason.setEnabled(!readOnly && !archived);
+        this.txtReviewReason.setEnabled(!readOnly && !archived);
+        this.lstReviewReasons.setEnabled(!readOnly && !archived);
+        this.cmdNewDocument.setEnabled(!readOnly && !archived);
+        this.cmdAddNote.setEnabled(!readOnly && !archived);
+        this.cmdHeaderAddNote.setEnabled(!readOnly && !archived);
+        this.cmdUploadDocument.setEnabled(!readOnly && !archived);
+        this.cmdNewReview.setEnabled(!readOnly && !archived);
+        this.cmdSearchClient.setEnabled(!readOnly && !archived);
 
-        this.cmdNewRvg.setEnabled(!readOnly);
+        this.cmdNewRvg.setEnabled(!readOnly && !archived);
 
         // todo?
 //        this.lstClients.setEnabled(!readOnly);
 //        this.lstOpponentAttorneys.setEnabled(!readOnly);
 //        this.lstOpponents.setEnabled(!readOnly);
-        this.mnuRemoveDocument.setEnabled(!readOnly);
-        this.mnuDuplicateDocument.setEnabled(!readOnly);
-        this.mnuDuplicateDocumentAsPdf.setEnabled(!readOnly);
-        this.mnuDuplicateDocumentAs.setEnabled(!readOnly);
+        this.mnuRemoveDocument.setEnabled(!readOnly && !archived);
+        this.mnuDuplicateDocument.setEnabled(!readOnly && !archived);
+        this.mnuDuplicateDocumentAsPdf.setEnabled(!readOnly && !archived);
+        this.mnuDuplicateDocumentAs.setEnabled(!readOnly && !archived);
 
         // this can be enabled even if current case is opened readonly
         //this.mnuCopyDocumentToOtherCase.setEnabled(!readOnly);
-        this.mnuRenameDocument.setEnabled(!readOnly);
-        this.mnuSetDocumentDate.setEnabled(!readOnly);
-        this.mnuToggleFavorite.setEnabled(!readOnly);
+        this.mnuRenameDocument.setEnabled(!readOnly && !archived);
+        this.mnuSetDocumentDate.setEnabled(!readOnly && !archived);
+        this.mnuToggleFavorite.setEnabled(!readOnly && !archived);
         //        this.mnuSendDocument.setEnabled(!readOnly);
-        this.tblHistory.setEnabled(!readOnly);
-        this.tblReviewReasons.setEnabled(!readOnly);
-        this.txtClaimNumber.setEnabled(!readOnly);
-        this.txtClaimValue.setEnabled(!readOnly);
+        this.tblHistory.setEnabled(!readOnly && !archived);
+        this.tblReviewReasons.setEnabled(!readOnly && !archived);
+        this.txtClaimNumber.setEnabled(!readOnly && !archived);
+        this.txtClaimValue.setEnabled(!readOnly && !archived);
         //this.txtFileNumber.setEnabled(!readOnly);
         // the server calculates this
         this.txtFileNumber.setEnabled(false);
-        this.txtName.setEnabled(!readOnly);
-        this.txtNotice.setEnabled(!readOnly);
+        this.txtName.setEnabled(!readOnly && !archived);
+        this.txtNotice.setEnabled(!readOnly && !archived);
         //this.txtReviewDate.setEnabled(!readOnly);
-        this.cmdShowReviewSelector.setEnabled(!readOnly);
+        this.cmdShowReviewSelector.setEnabled(!readOnly && !archived);
 
-        this.cmdShowHistorySelector.setEnabled(!readOnly);
-        this.txtHistoryDesc.setEnabled(!readOnly);
-        this.cmbHistoryTime.setEnabled(!readOnly);
-        this.cmdAddHistory.setEnabled(!readOnly);
+        this.cmdShowHistorySelector.setEnabled(!readOnly && !archived);
+        this.txtHistoryDesc.setEnabled(!readOnly && !archived);
+        this.cmbHistoryTime.setEnabled(!readOnly && !archived);
+        this.cmdAddHistory.setEnabled(!readOnly && !archived);
 
         if (DrebisUtils.isDrebisEnabled() && !readOnly) {
             this.mnuCoverage.setEnabled(true);
@@ -1194,16 +1199,16 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
 
         for (Component c : this.tagPanel.getComponents()) {
-            c.setEnabled(!readOnly);
+            c.setEnabled(!readOnly && !archived);
         }
 
         for (Component c : this.documentTagPanel.getComponents()) {
-            c.setEnabled(!readOnly);
+            c.setEnabled(!readOnly && !archived);
         }
 
-        this.txtCustom1.setEnabled(!readOnly);
-        this.txtCustom2.setEnabled(!readOnly);
-        this.taCustom3.setEnabled(!readOnly);
+        this.txtCustom1.setEnabled(!readOnly && !archived);
+        this.txtCustom2.setEnabled(!readOnly && !archived);
+        this.taCustom3.setEnabled(!readOnly && !archived);
 
     }
 
@@ -1251,14 +1256,14 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.taCustom3.setText(dto.getCustom3());
 
         // lock when archive flag is set, only allow  dearchiving - only applies to editor in edit mode
-        if (this.cmdSave.isEnabled()) {
+        if (!this.readOnly) {
             if (dto.getArchivedBoolean()) {
                 // set everything readonly except for save button and archive checkbox
-                this.setReadOnly(true);
+                this.setReadOnly(this.readOnly, true);
                 this.chkArchived.setEnabled(true);
                 this.cmdSave.setEnabled(true);
             } else {
-                this.setReadOnly(false);
+                this.setReadOnly(this.readOnly, false);
             }
         }
 
@@ -1279,7 +1284,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         ProgressIndicator pi = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
         pi.setShowCancelButton(false);
-        ArchiveFileDetailLoadAction a = new ArchiveFileDetailLoadAction(pi, this, dto.getId(), this.dto, this.caseFolderPanel1, this.tblHistory, this.pnlInvolvedParties, this.tblReviewReasons, this.tagPanel, this.documentTagPanel, !this.cmdSave.isEnabled(), BeaAccess.isBeaEnabled(), selectDocumentWithFileName, this.lblArchivedSince, dto.getArchivedBoolean(), this.popDocumentFavorites, this.cmbFormType, this.pnlAddForms, this.tabPaneForms, this.cmbGroup, this.tblGroups);
+        ArchiveFileDetailLoadAction a = new ArchiveFileDetailLoadAction(pi, this, dto.getId(), this.dto, this.caseFolderPanel1, this.tblHistory, this.pnlInvolvedParties, this.tblReviewReasons, this.tagPanel, this.documentTagPanel, this.readOnly, BeaAccess.isBeaEnabled(), selectDocumentWithFileName, this.lblArchivedSince, dto.getArchivedBoolean(), this.popDocumentFavorites, this.cmbFormType, this.pnlAddForms, this.tabPaneForms, this.cmbGroup, this.tblGroups);
 
         a.start();
 
@@ -1390,7 +1395,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         for (String tagString : sortedTags) {
             TagToggleButton tb = new TagToggleButton(tagString);
             tb.setSelected(false);
-            tb.setEnabled(this.cmdSave.isEnabled());
+            tb.setEnabled(!this.readOnly);
             tb.addActionListener(new ArchiveFileTagActionListener(null, null, this));
             ThreadUtils.addComponent(tagPanel, tb);
         }
@@ -1410,7 +1415,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         for (String tagString : sortedDocumentTags) {
             TagToggleButton tb = new TagToggleButton(tagString);
             tb.setSelected(false);
-            tb.setEnabled(this.cmdSave.isEnabled());
+            tb.setEnabled(!this.readOnly);
             tb.addActionListener(new ArchiveFileTagActionListener(null, null, this));
             ThreadUtils.addComponent(documentTagPanel, tb);
         }
@@ -1442,8 +1447,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
             this.cmbGroup.setSelectedIndex(0);
 
-            this.tblGroups.setEnabled(true);
-            this.cmbGroup.setEnabled(true);
+//            this.tblGroups.setEnabled(true);
+//            this.cmbGroup.setEnabled(true);
             ComponentUtils.autoSizeColumns(tblGroups);
         } catch (Throwable t) {
             log.error("Unable to load privilege groups", t);
@@ -3796,7 +3801,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         try {
 
             if (value != null) {
-                boolean readOnly = !this.cmdSave.isEnabled();
+                //boolean readOnly = !this.cmdSave.isEnabled();
                 ClientSettings settings = ClientSettings.getInstance();
                 String tmpUrl = null;
                 byte[] content = null;
@@ -3809,7 +3814,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                     return;
                 }
 
-                CaseDocumentStore store = new CaseDocumentStore(value.getId(), value.getName(), readOnly, value, dto);
+                CaseDocumentStore store = new CaseDocumentStore(value.getId(), value.getName(), this.readOnly, value, dto);
                 Launcher launcher = LauncherFactory.getLauncher(value.getName(), content, store);
                 int response = JOptionPane.NO_OPTION;
                 if (launcher.isDocumentOpen(value.getId())) {
@@ -3878,7 +3883,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         } else {
             ArchiveFileDocumentsBean value = selectedDocs.get(0);
 
-            new Thread(new LoadDocumentPreviewThread(value.getId(), value.getName(), !this.cmdSave.isEnabled(), this.pnlPreview)).start();
+            new Thread(new LoadDocumentPreviewThread(value.getId(), value.getName(), this.readOnly, this.pnlPreview)).start();
         }
     }
 
@@ -4956,7 +4961,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             ArchiveFileDocumentsBean value = selectedDocs.get(0);
 
             if (value != null) {
-                boolean readOnly = !this.cmdSave.isEnabled();
+                //boolean readOnly = !this.cmdSave.isEnabled();
                 ClientSettings settings = ClientSettings.getInstance();
                 String tmpUrl = null;
                 byte[] content = null;
@@ -4969,7 +4974,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                     return;
                 }
 
-                CaseDocumentStore store = new CaseDocumentStore(value.getId(), value.getName(), readOnly, value, dto);
+                CaseDocumentStore store = new CaseDocumentStore(value.getId(), value.getName(), this.readOnly, value, dto);
                 Launcher launcher = LauncherFactory.getMicrosoftOfficeLauncher(value.getName(), content, store);
                 launcher.launch(false);
 
@@ -5382,7 +5387,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     }//GEN-LAST:event_cmdFormsManagerActionPerformed
 
     private void tblGroupsMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblGroupsMouseClicked
-        if (this.cmdSave.isEnabled()) {
+        if (!this.readOnly) {
             if (evt.getClickCount() == 1 && !evt.isPopupTrigger() && evt.getComponent().isEnabled()) {
 
                 Point p = evt.getPoint();
@@ -5436,7 +5441,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             ArchiveFileDocumentsBean value = selectedDocs.get(0);
 
             if (value != null) {
-                boolean readOnly = !this.cmdSave.isEnabled();
+                //boolean readOnly = !this.cmdSave.isEnabled();
                 ClientSettings settings = ClientSettings.getInstance();
                 String tmpUrl = null;
                 byte[] content = null;
@@ -5449,7 +5454,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                     return;
                 }
 
-                CaseDocumentStore store = new CaseDocumentStore(value.getId(), value.getName(), readOnly, value, dto);
+                CaseDocumentStore store = new CaseDocumentStore(value.getId(), value.getName(), this.readOnly, value, dto);
                 Launcher launcher = LauncherFactory.getLibreOfficeLauncher(value.getName(), content, store);
                 launcher.launch(false);
 
@@ -5473,7 +5478,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 }
             }
         } else {
-            if (this.cmdSave.isEnabled()) {
+            if (!this.readOnly) {
                 this.save(false);
                 this.setArchiveFileDTO(this.dto);
             }
@@ -5523,7 +5528,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     public void switchToAddressView(AddressBean selection) {
         try {
             Object editor = null;
-            if (this.cmdSave.isEnabled()) {
+            if (!this.readOnly) {
                 editor = EditorsRegistry.getInstance().getEditor(EditAddressDetailsPanel.class.getName());
             } else {
                 editor = EditorsRegistry.getInstance().getEditor(ViewAddressDetailsPanel.class.getName());
@@ -5974,7 +5979,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     @Override
     public boolean isDirty() {
 
-        if (!this.cmdSave.isEnabled()) {
+        if (this.readOnly) {
             return false;
         }
 
@@ -6135,10 +6140,12 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             String id = null;
             String fileNumberMain = null;
             String fileNumberExt = null;
+            CaseFolder rootFolder=null;
             if (this.dto != null) {
                 id = this.dto.getId();
                 fileNumberMain = this.dto.getFileNumberMain();
                 fileNumberExt = this.dto.getFileNumberExtension();
+                rootFolder=this.dto.getRootFolder();
             }
 
             this.dto = new ArchiveFileBean();
@@ -6146,6 +6153,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 this.dto.setId(id);
                 this.dto.setFileNumberMain(fileNumberMain);
                 this.dto.setFileNumberExtension(fileNumberExt);
+                this.dto.setRootFolder(rootFolder);
             }
 
             this.fillDTO(this.dto, true);

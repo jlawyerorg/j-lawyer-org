@@ -704,13 +704,14 @@ public class DocumentEntryPanel extends javax.swing.JPanel {
     public DocumentEntryPanel() {
         initComponents();
         this.defaultFilenameColor=this.lblFileName.getForeground();
-        
+        this.lblFolder.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
     }
     
 
     public DocumentEntryPanel(ArchiveFilePanel caseContainer, CaseFolderPanel documentsContainer, ArchiveFileDocumentsBean doc, boolean readonly) {
         initComponents();
         this.defaultFilenameColor=this.lblFileName.getForeground();
+        this.lblFolder.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
         
         this.documentsContainer=documentsContainer;
         this.caseContainer=caseContainer;
@@ -756,6 +757,7 @@ public class DocumentEntryPanel extends javax.swing.JPanel {
         lblFileSize = new javax.swing.JLabel();
         chkSelected = new javax.swing.JCheckBox();
         lblFavorite = new javax.swing.JLabel();
+        lblFolder = new javax.swing.JLabel();
 
         lblFileIcon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/fileicons/file_type_odt.png"))); // NOI18N
         lblFileIcon.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
@@ -812,6 +814,9 @@ public class DocumentEntryPanel extends javax.swing.JPanel {
             }
         });
 
+        lblFolder.setFont(new java.awt.Font("Dialog", 1, 10)); // NOI18N
+        lblFolder.setText(">");
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -832,7 +837,9 @@ public class DocumentEntryPanel extends javax.swing.JPanel {
                         .addGap(18, 18, 18)
                         .addComponent(lblFileSize)
                         .addGap(18, 18, 18)
-                        .addComponent(lblDictateSign)))
+                        .addComponent(lblDictateSign)
+                        .addGap(18, 18, 18)
+                        .addComponent(lblFolder)))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
@@ -840,16 +847,19 @@ public class DocumentEntryPanel extends javax.swing.JPanel {
             .addGroup(layout.createSequentialGroup()
                 .addGap(4, 4, 4)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(lblFileIcon)
-                    .addComponent(lblFileName))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(lblCreationDate)
-                    .addComponent(lblDictateSign)
-                    .addComponent(lblFileSize))
-                .addGap(0, 7, Short.MAX_VALUE))
-            .addComponent(chkSelected, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addComponent(lblFavorite, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(chkSelected)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(lblFileIcon)
+                            .addComponent(lblFileName)
+                            .addComponent(lblFavorite))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(lblCreationDate)
+                            .addComponent(lblDictateSign)
+                            .addComponent(lblFileSize)
+                            .addComponent(lblFolder))))
+                .addGap(0, 3, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -968,6 +978,7 @@ public class DocumentEntryPanel extends javax.swing.JPanel {
     private javax.swing.JLabel lblFileIcon;
     private javax.swing.JLabel lblFileName;
     private javax.swing.JLabel lblFileSize;
+    private javax.swing.JLabel lblFolder;
     // End of variables declaration//GEN-END:variables
 
     /**
@@ -982,6 +993,13 @@ public class DocumentEntryPanel extends javax.swing.JPanel {
         this.lblFileName.setText(doc.getName());
         this.lblCreationDate.setText(df.format(doc.getCreationDate()));
         this.lblDictateSign.setText(doc.getDictateSign());
+        if(this.document.getFolder()==null) {
+            this.lblFolder.setIcon(null);
+            this.lblFolder.setText("");
+        } else {
+            this.lblFolder.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/jdimension/jlawyer/ui/folders/folder-empty.png")));
+            this.lblFolder.setText(this.document.getFolder().getName());
+        }
 
         this.setFavorite(this.document.isFavorite());
 
