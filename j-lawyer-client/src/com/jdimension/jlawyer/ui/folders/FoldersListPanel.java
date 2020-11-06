@@ -863,10 +863,24 @@ public class FoldersListPanel extends javax.swing.JPanel {
 //                }
 //            }
 //        }
+
+        ArrayList<String> folderIds=new ArrayList<>();
+        this.collectSubtreeIds(removedFolder, folderIds);
+        
+        this.caseFolderPanel.removeDocumentsInFolders(folderIds);
+
         parent.getChildren().remove(removedFolder);
         this.setRootFolder(this.rootFolder, this.getUnselectedFolderIds());
         this.revalidate();
         this.repaint();
+    }
+    
+    private void collectSubtreeIds(CaseFolder f, ArrayList<String> ids) {
+        ids.add(f.getId());
+        for(CaseFolder c: f.getChildren()) {
+            this.collectSubtreeIds(c, ids);
+        }
+        
     }
 
     public void folderAdded(CaseFolder parent, CaseFolder newFolder) {
@@ -918,5 +932,10 @@ public class FoldersListPanel extends javax.swing.JPanel {
             }
         }
         return ids;
+    }
+
+    void folderUpdated(CaseFolder folder) {
+        this.caseFolderPanel.updateDocumentsInFolder(folder);
+
     }
 }

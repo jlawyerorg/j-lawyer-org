@@ -919,7 +919,15 @@ public class HTMLExport {
                 if (db.getDictateSign() != null) {
                     sb.append(db.getDictateSign());
                 }
-                sb.append("</p></td></tr>");
+                sb.append("</p></td>");
+                sb.append("<td><p class=\"post_info\">");
+                if(db.getFolder()!=null) {
+                    sb.append("Ordner: ").append(removeSonderzeichen(db.getFolder().getName()));
+                } else {
+                    sb.append("");
+                }
+                sb.append("</p></td>");
+                sb.append("</tr>");
             }
         }
         sContent = sContent.replaceAll("\\{\\{documents\\}\\}", sb.toString());

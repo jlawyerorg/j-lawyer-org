@@ -930,6 +930,12 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
             caseFolders.sortByDateDesc();
             caseFolders.sort();
             
+            List<DocumentFolderTemplate> allTemplates = fileService.getAllFolderTemplates();
+            ArrayList<String> allTemplateNames=new ArrayList<>();
+            for(DocumentFolderTemplate t: allTemplates) {
+                allTemplateNames.add(t.getName());
+            }
+            this.caseFolders.setFolderTemplateNames(allTemplateNames);
             
             this.progress("Lade Akte: Etiketten...");
             tags = fileService.getTags(archiveFileKey);

@@ -4020,6 +4020,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                         try {
 
                             byte[] content = remote.getDocumentContent(doc.getId());
+                            ArchiveFileDocumentsBean orgDoc=remote.getDocument(doc.getId());
                             String newName = FileUtils.getNewFileName(doc.getName(), false, new Date(), EditorsRegistry.getInstance().getMainWindow(), "Dokument duplizieren");
 
                             //Object newNameObject = JOptionPane.showInputDialog(this, "Dateiname mit Erweiterung: ", "Dokument duplizieren", JOptionPane.QUESTION_MESSAGE, null, null, doc.getName());
@@ -4033,7 +4034,14 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                                 return;
                             }
                             ArchiveFileDocumentsBean newDoc = remote.addDocument(dto.getId(), newName, content, doc.getDictateSign());
-                            caseFolderPanel1.addDocument(newDoc);
+                            
+                            if(orgDoc.getFolder()!=null) {
+                                ArrayList<String> docId=new ArrayList<>();
+                                docId.add(newDoc.getId());
+                                remote.moveDocumentsToFolder(docId, orgDoc.getFolder().getId());
+                            
+                            }
+                            caseFolderPanel1.addDocument(remote.getDocument(newDoc.getId()));
 
                         } catch (Exception ioe) {
                             log.error("Error duplicating document", ioe);
@@ -5713,6 +5721,20 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
         }
         return true;
+    }
+
+    public void applyFolderTemplate(String s) {
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
+            CaseFolder newRoot=remote.applyFolderTemplate(this.dto.getId(), s);
+            this.caseFolderPanel1.setRootFolder(newRoot);
+
+        } catch (Exception ioe) {
+            log.error("Error applying document template", ioe);
+            JOptionPane.showMessageDialog(this, "Fehler beim Anwender der Ordnervorlage: " + ioe.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     protected class DropTargetHandler implements DropTargetListener {

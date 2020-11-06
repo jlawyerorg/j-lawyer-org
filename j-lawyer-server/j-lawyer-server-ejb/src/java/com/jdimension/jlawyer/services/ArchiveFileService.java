@@ -1704,6 +1704,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         db.setArchiveFileKey(aFile);
         db.setCreationDate(new Date());
         db.setName(fileName);
+        db.setFolder(aFile.getRootFolder());
         if (data != null) {
             db.setSize(data.length);
         } else {
@@ -3610,6 +3611,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         db.setArchiveFileKey(aFile);
         db.setCreationDate(new Date());
         db.setName(fileName);
+        db.setFolder(aFile.getRootFolder());
         if (new File(dst).exists()) {
             db.setSize(new File(dst).length());
         } else {
@@ -4164,7 +4166,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         // create root folder
         DocumentFolder folder = new DocumentFolder();
         folder.setId(idGen.getID().toString());
-        folder.setName("/");
+        folder.setName("Dokumente");
         folder.setParentId(null);
         this.folderFacade.create(folder);
 
@@ -4379,6 +4381,61 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
         }
 
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public CaseFolder applyFolderTemplate(String caseId, String templateName) throws Exception {
+        DocumentFolderTemplate tpl=this.folderTemplateFacade.findByName(templateName);
+        if(tpl==null) {
+            throw new Exception("Ordnervorlage " + templateName + " existiert nicht!");
+        }
+        
+        ArchiveFileBean aFile=this.getArchiveFile(caseId);
+        if(aFile==null) {
+            throw new Exception("Akte " + caseId + " existiert nicht!");
+        }
+        
+        CaseFolder rootFolder=aFile.getRootFolder();
+        StringGenerator idGen=new StringGenerator();
+        if(rootFolder==null) {
+            rootFolder=new CaseFolder();
+            rootFolder.setId(idGen.getID().toString());
+            rootFolder.setName(tpl.getRootFolder().getName());
+            rootFolder.setParentId(null);
+            this.caseFolderFacade.create(rootFolder);
+            aFile.setRootFolder(rootFolder);
+            this.archiveFileFacade.edit(aFile);
+        }
+       
+        DocumentFolder tplRoot=tpl.getRootFolder();
+        rootFolder.setName(tplRoot.getName());
+        this.caseFolderFacade.edit(rootFolder);
+        
+        this.applyFolderTemplate(rootFolder, tplRoot, idGen);
+        
+        return this.caseFolderFacade.find(rootFolder.getId());
+    }
+    
+    private void applyFolderTemplate(CaseFolder cf, DocumentFolder tf, StringGenerator idGen) {
+        for(DocumentFolder from: tf.getChildren()) {
+            if(!cf.hasChild(from.getName())) {
+                CaseFolder newChild=new CaseFolder();
+                newChild.setId(idGen.getID().toString());
+                newChild.setName(from.getName());
+                newChild.setParentId(cf.getId());
+                this.caseFolderFacade.create(newChild);
+                if(cf.getChildren()==null)
+                    cf.setChildren(new ArrayList<CaseFolder>());
+                cf.getChildren().add(newChild);
+            }
+            for(CaseFolder child: cf.getChildren()) {
+                if(child.getName().equalsIgnoreCase(from.getName())) {
+                    applyFolderTemplate(child, from, idGen);
+                    break;
+                }
+            }
+        }
     }
 
 }

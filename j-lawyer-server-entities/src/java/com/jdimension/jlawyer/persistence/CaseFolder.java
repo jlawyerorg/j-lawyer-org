@@ -761,6 +761,16 @@ public class CaseFolder implements Serializable {
     public List<CaseFolder> getChildren() {
         return children;
     }
+    
+    public boolean hasChild(String name) {
+        if(this.children!=null) {
+            for(CaseFolder c: this.children) {
+                if(c.getName().equalsIgnoreCase(name))
+                    return true;
+            }
+        }
+        return false;
+    }
 
     /**
      * @param children the children to set

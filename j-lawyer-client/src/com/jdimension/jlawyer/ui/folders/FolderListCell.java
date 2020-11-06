@@ -901,6 +901,7 @@ public class FolderListCell extends javax.swing.JPanel {
             this.folder.setName(name);
             locator.lookupArchiveFileServiceRemote().updateCaseFolder(folder);
             this.lblFolderName.setText(name);
+            this.parent.folderUpdated(folder);
 //            this.revalidate();
 //            this.repaint();
 //            this.getParent().getParent().getParent().revalidate();
