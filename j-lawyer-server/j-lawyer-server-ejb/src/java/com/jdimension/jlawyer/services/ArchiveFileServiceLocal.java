@@ -670,6 +670,7 @@ import com.jdimension.jlawyer.persistence.ArchiveFileGroupsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileHistoryBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileTagsBean;
+import com.jdimension.jlawyer.persistence.CaseFolder;
 import com.jdimension.jlawyer.persistence.DocumentFolder;
 import com.jdimension.jlawyer.persistence.DocumentFolderTemplate;
 import com.jdimension.jlawyer.persistence.PartyTypeBean;
@@ -772,5 +773,9 @@ public interface ArchiveFileServiceLocal {
     void removeFolderFromTemplate(String folderId) throws Exception;
 
     void cloneFolderTemplate(String sourceTemplateName, String targetTemplateName) throws Exception;
+    
+    void moveDocumentsToFolder(Collection<String> documentIds, String folderId) throws Exception;
+    
+    CaseFolder applyFolderTemplate(String caseId, String templateName) throws Exception;
     
 }

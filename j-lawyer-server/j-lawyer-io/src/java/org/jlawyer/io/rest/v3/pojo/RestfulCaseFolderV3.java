@@ -661,25 +661,21 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package org.jlawyer.io.rest.v1.pojo;
+package org.jlawyer.io.rest.v3.pojo;
 
-import java.util.Date;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  *
  * @author jens
  */
-public class RestfulDocumentV1 {
+public class RestfulCaseFolderV3 {
     
-    private String id=null;
-    private String name=null;
-    private Date creationDate=null;
-    private long size=0l;
-    private boolean favorite=false;
-    protected String folderId=null;
-
-    public RestfulDocumentV1() {
-    }
+    protected String id;
+    protected String parentId=null;
+    protected String name;
+    protected List<RestfulCaseFolderV3> children=new ArrayList<>();
 
     /**
      * @return the id
@@ -693,6 +689,20 @@ public class RestfulDocumentV1 {
      */
     public void setId(String id) {
         this.id = id;
+    }
+
+    /**
+     * @return the parentId
+     */
+    public String getParentId() {
+        return parentId;
+    }
+
+    /**
+     * @param parentId the parentId to set
+     */
+    public void setParentId(String parentId) {
+        this.parentId = parentId;
     }
 
     /**
@@ -710,61 +720,17 @@ public class RestfulDocumentV1 {
     }
 
     /**
-     * @return the creationDate
+     * @return the children
      */
-    public Date getCreationDate() {
-        return creationDate;
+    public List<RestfulCaseFolderV3> getChildren() {
+        return children;
     }
 
     /**
-     * @param creationDate the creationDate to set
+     * @param children the children to set
      */
-    public void setCreationDate(Date creationDate) {
-        this.creationDate = creationDate;
+    public void setChildren(List<RestfulCaseFolderV3> children) {
+        this.children = children;
     }
-
-    /**
-     * @return the size
-     */
-    public long getSize() {
-        return size;
-    }
-
-    /**
-     * @param size the size to set
-     */
-    public void setSize(long size) {
-        this.size = size;
-    }
-
-    /**
-     * @return the favorite
-     */
-    public boolean isFavorite() {
-        return favorite;
-    }
-
-    /**
-     * @param favorite the favorite to set
-     */
-    public void setFavorite(boolean favorite) {
-        this.favorite = favorite;
-    }
-
-    /**
-     * @return the folderId
-     */
-    public String getFolderId() {
-        return folderId;
-    }
-
-    /**
-     * @param folderId the folderId to set
-     */
-    public void setFolderId(String folderId) {
-        this.folderId = folderId;
-    }
-    
-    
     
 }

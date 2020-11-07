@@ -661,25 +661,17 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package org.jlawyer.io.rest.v1.pojo;
-
-import java.util.Date;
+package org.jlawyer.io.rest.v3.pojo;
 
 /**
  *
  * @author jens
  */
-public class RestfulDocumentV1 {
+public class RestfulFolderTemplateV3 {
     
-    private String id=null;
-    private String name=null;
-    private Date creationDate=null;
-    private long size=0l;
-    private boolean favorite=false;
-    protected String folderId=null;
-
-    public RestfulDocumentV1() {
-    }
+    protected String id;
+    
+    protected String name;
 
     /**
      * @return the id
@@ -708,63 +700,5 @@ public class RestfulDocumentV1 {
     public void setName(String name) {
         this.name = name;
     }
-
-    /**
-     * @return the creationDate
-     */
-    public Date getCreationDate() {
-        return creationDate;
-    }
-
-    /**
-     * @param creationDate the creationDate to set
-     */
-    public void setCreationDate(Date creationDate) {
-        this.creationDate = creationDate;
-    }
-
-    /**
-     * @return the size
-     */
-    public long getSize() {
-        return size;
-    }
-
-    /**
-     * @param size the size to set
-     */
-    public void setSize(long size) {
-        this.size = size;
-    }
-
-    /**
-     * @return the favorite
-     */
-    public boolean isFavorite() {
-        return favorite;
-    }
-
-    /**
-     * @param favorite the favorite to set
-     */
-    public void setFavorite(boolean favorite) {
-        this.favorite = favorite;
-    }
-
-    /**
-     * @return the folderId
-     */
-    public String getFolderId() {
-        return folderId;
-    }
-
-    /**
-     * @param folderId the folderId to set
-     */
-    public void setFolderId(String folderId) {
-        this.folderId = folderId;
-    }
-    
-    
     
 }

@@ -661,110 +661,205 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package org.jlawyer.io.rest.v1.pojo;
+package org.jlawyer.io.rest.v3;
 
-import java.util.Date;
+import org.jlawyer.io.rest.v2.*;
+import com.jdimension.jlawyer.persistence.AddressBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBeanFacadeLocal;
+import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileFormsBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileTagsBean;
+import com.jdimension.jlawyer.persistence.CaseFolder;
+import com.jdimension.jlawyer.persistence.DocumentFolderTemplate;
+import com.jdimension.jlawyer.persistence.Group;
+import com.jdimension.jlawyer.persistence.PartyTypeBean;
+import com.jdimension.jlawyer.security.Base64;
+import com.jdimension.jlawyer.services.AddressServiceLocal;
+import com.jdimension.jlawyer.services.ArchiveFileServiceLocal;
+import com.jdimension.jlawyer.services.FormsServiceLocal;
+import com.jdimension.jlawyer.services.SecurityServiceLocal;
+import com.jdimension.jlawyer.services.SystemManagementLocal;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import javax.annotation.security.RolesAllowed;
+import javax.ejb.EJB;
+import javax.ejb.Stateless;
+import javax.naming.InitialContext;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import org.jboss.logging.Logger;
+import org.jlawyer.io.rest.v1.pojo.RestfulCaseOverviewV1;
+import org.jlawyer.io.rest.v1.pojo.RestfulCaseV2;
+import org.jlawyer.io.rest.v1.pojo.RestfulDocumentV1;
+import org.jlawyer.io.rest.v1.pojo.RestfulDocumentContentV1;
+import org.jlawyer.io.rest.v1.pojo.RestfulDueDateV1;
+import org.jlawyer.io.rest.v1.pojo.RestfulFormV1;
+import org.jlawyer.io.rest.v1.pojo.RestfulPartyTypeV1;
+import org.jlawyer.io.rest.v1.pojo.RestfulPartyV1;
+import org.jlawyer.io.rest.v1.pojo.RestfulTagV1;
+import org.jlawyer.io.rest.v3.pojo.RestfulCaseFolderV3;
+import org.jlawyer.io.rest.v3.pojo.RestfulFolderTemplateV3;
 
 /**
  *
- * @author jens
+ * http://localhost:8080/j-lawyer-io/rest/cases/list
  */
-public class RestfulDocumentV1 {
+@Stateless
+@Path("/v3/cases")
+@Consumes({"application/json"})
+@Produces({"application/json"})
+public class CasesEndpointV3 implements CasesEndpointLocalV3 {
+
+    private static final Logger log = Logger.getLogger(CasesEndpointV3.class.getName());
+
+    // when seeing something like
+    //  com.fasterxml.jackson.databind.JsonMappingException: failed to lazily initialize a collection of role: com.jdimension.jlawyer.persistence.ArchiveFileBean.archiveFileFormsBeanList, could not initialize proxy - no Session
+    // it is not necessarily an issue with fetch type eager or lazy, just put @XmlTransient to the getter of the list in the entity
+    /**
+     * Returns all folder templates configured in the system.
+     *
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/foldertemplates")
+    @RolesAllowed({"loginRole"})
+    public Response listFolderTemplates() {
+        try {
+
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal");
+            List<DocumentFolderTemplate> templates = cases.getAllFolderTemplates();
+
+            ArrayList<RestfulFolderTemplateV3> returnList = new ArrayList<RestfulFolderTemplateV3>();
+            for (DocumentFolderTemplate tpl : templates) {
+                RestfulFolderTemplateV3 ft = new RestfulFolderTemplateV3();
+                ft.setId(tpl.getId());
+                ft.setName(tpl.getName());
+                returnList.add(ft);
+            }
+
+            Response res = Response.ok(returnList).build();
+            return res;
+        } catch (Exception ex) {
+            log.error("can not get document folder templates", ex);
+            Response res = Response.serverError().build();
+            return res;
+        }
+    }
+
+    /**
+    * Returns the folder structure of a given case.
+    * @param id the case id
+    * @response 401 User not authorized
+    * @response 403 User not authenticated
+    */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/{id}/folders")
+    @RolesAllowed({"readArchiveFileRole"})
+    public Response getCaseFolders(@PathParam("id") String id) {
+        try {
+
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal");
+            ArchiveFileBean afb = cases.getArchiveFile(id);
+            if (afb == null) {
+                log.error("There is no case with id " + id);
+                Response res = Response.serverError().build();
+                return res;
+            }
+
+            CaseFolder rootFolder = afb.getRootFolder();
+            Response res = null;
+            if (rootFolder == null) {
+                res = Response.noContent().build();
+
+            } else {
+                RestfulCaseFolderV3 rootResult = new RestfulCaseFolderV3();
+                this.buildCaseFolders(rootFolder, rootResult);
+                res = Response.ok(rootResult).build();
+            }
+
+            return res;
+        } catch (Exception ex) {
+            log.error("can not get folders for case " + id, ex);
+            Response res = Response.serverError().build();
+            return res;
+        }
+
+    }
+
+    private void buildCaseFolders(CaseFolder rootFolder, RestfulCaseFolderV3 rootResult) {
+        rootResult.setId(rootFolder.getId());
+        rootResult.setName(rootFolder.getName());
+        rootResult.setParentId(rootFolder.getParentId());
+        if (rootFolder.getChildren() != null) {
+            for (CaseFolder c : rootFolder.getChildren()) {
+                RestfulCaseFolderV3 child = new RestfulCaseFolderV3();
+                rootResult.getChildren().add(child);
+                this.buildCaseFolders(c, child);
+            }
+        }
+    }
     
-    private String id=null;
-    private String name=null;
-    private Date creationDate=null;
-    private long size=0l;
-    private boolean favorite=false;
-    protected String folderId=null;
-
-    public RestfulDocumentV1() {
-    }
-
     /**
-     * @return the id
-     */
-    public String getId() {
-        return id;
+    * Applies a folder template to a case.
+    * @param id the case id
+    * @param templateName the name of the folder template to be applied
+    * @response 401 User not authorized
+    * @response 403 User not authenticated
+    */
+    @Override
+    @PUT
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/{id}/foldertemplates/{templateName}/apply")
+    @RolesAllowed({"writeArchiveFileRole"})
+    public Response applyFolderTemplate(@PathParam("id") String id, @PathParam("templateName") String templateName) {
+        try {
+
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal");
+            ArchiveFileBean afb = cases.getArchiveFile(id);
+            if (afb == null) {
+                log.error("There is no case with id " + id);
+                Response res = Response.serverError().build();
+                return res;
+            }
+
+            DocumentFolderTemplate tpl=cases.getFolderTemplate(templateName);
+            if(tpl==null) {
+                log.error("There is no folder template with name " + templateName);
+                Response res = Response.serverError().build();
+                return res;
+
+            } else {
+                CaseFolder cf=cases.applyFolderTemplate(id, templateName);
+                RestfulCaseFolderV3 rootResult = new RestfulCaseFolderV3();
+                this.buildCaseFolders(cf, rootResult);
+                return Response.ok(rootResult).build();
+            }
+            
+           
+        } catch (Exception ex) {
+            log.error("can not apply folder template to case " + id, ex);
+            Response res = Response.serverError().build();
+            return res;
+        }
     }
 
-    /**
-     * @param id the id to set
-     */
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    /**
-     * @return the name
-     */
-    public String getName() {
-        return name;
-    }
-
-    /**
-     * @param name the name to set
-     */
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    /**
-     * @return the creationDate
-     */
-    public Date getCreationDate() {
-        return creationDate;
-    }
-
-    /**
-     * @param creationDate the creationDate to set
-     */
-    public void setCreationDate(Date creationDate) {
-        this.creationDate = creationDate;
-    }
-
-    /**
-     * @return the size
-     */
-    public long getSize() {
-        return size;
-    }
-
-    /**
-     * @param size the size to set
-     */
-    public void setSize(long size) {
-        this.size = size;
-    }
-
-    /**
-     * @return the favorite
-     */
-    public boolean isFavorite() {
-        return favorite;
-    }
-
-    /**
-     * @param favorite the favorite to set
-     */
-    public void setFavorite(boolean favorite) {
-        this.favorite = favorite;
-    }
-
-    /**
-     * @return the folderId
-     */
-    public String getFolderId() {
-        return folderId;
-    }
-
-    /**
-     * @param folderId the folderId to set
-     */
-    public void setFolderId(String folderId) {
-        this.folderId = folderId;
-    }
-    
-    
-    
 }

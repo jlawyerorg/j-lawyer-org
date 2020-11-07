@@ -661,110 +661,28 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package org.jlawyer.io.rest.v1.pojo;
+package org.jlawyer.io.rest.v3;
 
-import java.util.Date;
+import org.jlawyer.io.rest.v2.*;
+import javax.ejb.Local;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.core.Response;
+import org.jlawyer.io.rest.v1.pojo.RestfulCaseV2;
+import org.jlawyer.io.rest.v1.pojo.RestfulDocumentContentV1;
+import org.jlawyer.io.rest.v1.pojo.RestfulPartyV1;
 
 /**
  *
  * @author jens
  */
-public class RestfulDocumentV1 {
+@Local
+public interface CasesEndpointLocalV3 {
+
+    Response listFolderTemplates();
     
-    private String id=null;
-    private String name=null;
-    private Date creationDate=null;
-    private long size=0l;
-    private boolean favorite=false;
-    protected String folderId=null;
-
-    public RestfulDocumentV1() {
-    }
-
-    /**
-     * @return the id
-     */
-    public String getId() {
-        return id;
-    }
-
-    /**
-     * @param id the id to set
-     */
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    /**
-     * @return the name
-     */
-    public String getName() {
-        return name;
-    }
-
-    /**
-     * @param name the name to set
-     */
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    /**
-     * @return the creationDate
-     */
-    public Date getCreationDate() {
-        return creationDate;
-    }
-
-    /**
-     * @param creationDate the creationDate to set
-     */
-    public void setCreationDate(Date creationDate) {
-        this.creationDate = creationDate;
-    }
-
-    /**
-     * @return the size
-     */
-    public long getSize() {
-        return size;
-    }
-
-    /**
-     * @param size the size to set
-     */
-    public void setSize(long size) {
-        this.size = size;
-    }
-
-    /**
-     * @return the favorite
-     */
-    public boolean isFavorite() {
-        return favorite;
-    }
-
-    /**
-     * @param favorite the favorite to set
-     */
-    public void setFavorite(boolean favorite) {
-        this.favorite = favorite;
-    }
-
-    /**
-     * @return the folderId
-     */
-    public String getFolderId() {
-        return folderId;
-    }
-
-    /**
-     * @param folderId the folderId to set
-     */
-    public void setFolderId(String folderId) {
-        this.folderId = folderId;
-    }
+    Response getCaseFolders(String caseId);
     
+    Response applyFolderTemplate(String id, String templateName);
     
     
 }

@@ -994,6 +994,8 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
                 d.setCreationDate(doc.getCreationDate());
                 d.setFavorite(doc.isFavorite());
                 d.setSize(doc.getSize());
+                if(doc.getFolder()!=null)
+                    d.setFolderId(doc.getFolder().getId());
                 docList.add(d);
             }
 
@@ -1045,6 +1047,8 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
             rdc.setFileName(doc.getName());
             rdc.setCaseId(doc.getArchiveFileKey().getId());
             rdc.setBase64content(base64);
+            if(doc.getFolder()!=null)
+                rdc.setFolderId(doc.getFolder().getId());
             Response res = Response.ok(rdc).build();
             return res;
         } catch (Exception ex) {
@@ -1184,6 +1188,8 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
             doc.setCaseId(document.getCaseId());
             doc.setFileName(newDoc.getName());
             doc.setId(newDoc.getId());
+            if(newDoc.getFolder()!=null)
+                doc.setFolderId(newDoc.getFolder().getId());
 
             Response res = Response.ok(doc).build();
             return res;
@@ -1228,18 +1234,26 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
             if (!currentDoc.getName().equals(document.getFileName())) {
                 cases.renameDocument(document.getId(), document.getFileName());
             }
-
+            
             if (document.getBase64content() != null && !"".equals(document.getBase64content())) {
                 byte[] newContent = new Base64().decode(document.getBase64content());
                 cases.setDocumentContent(document.getId(), newContent);
             }
 
+            if(document.getFolderId()!=null) {
+                ArrayList<String> docIds=new ArrayList<>();
+                docIds.add(document.getId());
+                cases.moveDocumentsToFolder(docIds, document.getFolderId());
+            }
+            
             ArchiveFileDocumentsBean updated = cases.getDocument(document.getId());
-
+            
             RestfulDocumentContentV1 doc = new RestfulDocumentContentV1();
             doc.setCaseId(document.getCaseId());
             doc.setFileName(updated.getName());
             doc.setId(updated.getId());
+            if(updated.getFolder()!=null)
+                doc.setFolderId(updated.getFolder().getId());
 
             Response res = Response.ok(doc).build();
 
