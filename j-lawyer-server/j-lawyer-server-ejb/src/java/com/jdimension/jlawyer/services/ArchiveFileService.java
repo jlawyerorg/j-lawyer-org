@@ -1286,7 +1286,19 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
         this.archiveFileFacade.create(dto);
 
-        return this.archiveFileFacade.find(dto.getId());
+        ArchiveFileBean aFile= this.archiveFileFacade.find(dto.getId());
+        
+        CaseFolder rootFolder=aFile.getRootFolder();
+        if(rootFolder==null) {
+            rootFolder=new CaseFolder();
+            rootFolder.setId(idGen.getID().toString());
+            rootFolder.setName("Dokumente");
+            rootFolder.setParentId(null);
+            this.caseFolderFacade.create(rootFolder);
+            aFile.setRootFolder(rootFolder);
+            this.archiveFileFacade.edit(aFile);
+        }
+        return aFile;
 
     }
 
@@ -1475,6 +1487,19 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
         ArchiveFileBean aFile = this.archiveFileFacade.find(id);
         this.checkGroupsForCase(context.getCallerPrincipal().getName(), aFile);
+        
+        CaseFolder rootFolder=aFile.getRootFolder();
+        StringGenerator idGen=new StringGenerator();
+        if(rootFolder==null) {
+            rootFolder=new CaseFolder();
+            rootFolder.setId(idGen.getID().toString());
+            rootFolder.setName("Dokumente");
+            rootFolder.setParentId(null);
+            this.caseFolderFacade.create(rootFolder);
+            aFile.setRootFolder(rootFolder);
+            this.archiveFileFacade.edit(aFile);
+        }
+        
         return aFile;
     }
 
@@ -1668,7 +1693,19 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
         this.archiveFileFacade.create(dto);
 
-        return this.archiveFileFacade.find(dto.getId());
+        ArchiveFileBean aFile= this.archiveFileFacade.find(dto.getId());
+        
+        CaseFolder rootFolder=aFile.getRootFolder();
+        if(rootFolder==null) {
+            rootFolder=new CaseFolder();
+            rootFolder.setId(idGen.getID().toString());
+            rootFolder.setName("Dokumente");
+            rootFolder.setParentId(null);
+            this.caseFolderFacade.create(rootFolder);
+            aFile.setRootFolder(rootFolder);
+            this.archiveFileFacade.edit(aFile);
+        }
+        return aFile;
     }
 
     @Override
@@ -1710,6 +1747,8 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         } else {
             db.setSize(-1);
         }
+        if(aFile.getRootFolder()!=null)
+            db.setFolder(aFile.getRootFolder());
         db.setFavorite(false);
         this.archiveFileDocumentsFacade.create(db);
 
@@ -2240,6 +2279,18 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         this.checkGroupsForCase(context.getCallerPrincipal().getName(), result.get(0));
 
         ArchiveFileBean aFile = result.get(0);
+        
+        CaseFolder rootFolder=aFile.getRootFolder();
+        StringGenerator idGen=new StringGenerator();
+        if(rootFolder==null) {
+            rootFolder=new CaseFolder();
+            rootFolder.setId(idGen.getID().toString());
+            rootFolder.setName("Dokumente");
+            rootFolder.setParentId(null);
+            this.caseFolderFacade.create(rootFolder);
+            aFile.setRootFolder(rootFolder);
+            this.archiveFileFacade.edit(aFile);
+        }
 
         return aFile;
     }
@@ -3168,7 +3219,21 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
     @Override
     public ArchiveFileBean getArchiveFileUnrestricted(String archiveFileKey) {
-        return this.archiveFileFacade.find(archiveFileKey);
+        ArchiveFileBean aFile=this.archiveFileFacade.find(archiveFileKey);
+        
+        CaseFolder rootFolder=aFile.getRootFolder();
+        StringGenerator idGen=new StringGenerator();
+        if(rootFolder==null) {
+            rootFolder=new CaseFolder();
+            rootFolder.setId(idGen.getID().toString());
+            rootFolder.setName("Dokumente");
+            rootFolder.setParentId(null);
+            this.caseFolderFacade.create(rootFolder);
+            aFile.setRootFolder(rootFolder);
+            this.archiveFileFacade.edit(aFile);
+        }
+        return aFile;
+        
     }
 
     @Override
