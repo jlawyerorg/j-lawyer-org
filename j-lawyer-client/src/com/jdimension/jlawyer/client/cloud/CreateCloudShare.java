@@ -1190,6 +1190,8 @@ public class CreateCloudShare extends javax.swing.JDialog {
             address = (AddressBean) selectedParty;
             if (address.getEncryptionPwd() != null) {
                 this.txtPassword.setText(address.getEncryptionPwd());
+            } else {
+                this.txtPassword.setText("");
             }
         }
     }//GEN-LAST:event_cmbPartyActionPerformed

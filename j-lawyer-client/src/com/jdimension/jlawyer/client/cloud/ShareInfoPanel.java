@@ -769,7 +769,7 @@ public class ShareInfoPanel extends javax.swing.JPanel {
     }
     
     public String getSubfolder() {
-        return this.cmbFolder.getSelectedItem().toString();
+        return this.cmbFolder.getEditor().getItem().toString();
     }
 
     public void setSelected(boolean selected) {

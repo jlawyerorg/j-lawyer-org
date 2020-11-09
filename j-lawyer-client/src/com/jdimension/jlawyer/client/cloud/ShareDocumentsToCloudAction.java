@@ -809,6 +809,7 @@ public class ShareDocumentsToCloudAction extends ProgressableAction {
                         SendEmailDialog dlg = new SendEmailDialog(EditorsRegistry.getInstance().getMainWindow(), false);
                         // make share link available for use via placeholder {{CLOUD_LINK}}
                         dlg.setCloudLink(share.getUrl());
+                        dlg.setBody("Freigabelink: " + share.getUrl(), "text/plain");
                         if (parties != null) {
                             dlg.setInvolvedInCase(parties);
                         }
