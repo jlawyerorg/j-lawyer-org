@@ -809,6 +809,16 @@ public class UserSettings {
     }
 
     public void setSetting(String key, String value) {
+        
+        if(key==null) {
+            log.error("Key is null when setting user properties");
+            return;
+        }
+        if(value==null) {
+            log.error("Value is null when setting user properties with key " + key);
+            return;
+        }
+            
 
         // reload from server before changing a key
         this.settingCache = null;
