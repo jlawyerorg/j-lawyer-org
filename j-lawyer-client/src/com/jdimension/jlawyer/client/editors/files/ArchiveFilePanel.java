@@ -670,6 +670,7 @@ import com.jdimension.jlawyer.client.bea.BeaLoginCallback;
 import com.jdimension.jlawyer.client.bea.BeaLoginDialog;
 import com.jdimension.jlawyer.client.bea.IdentityPanel;
 import com.jdimension.jlawyer.client.bea.SendBeaMessageDialog;
+import com.jdimension.jlawyer.client.cloud.CloudInstance;
 import com.jdimension.jlawyer.client.cloud.SendCloudShare;
 import com.jdimension.jlawyer.client.drebis.coverage.DrebisCoverageWizardDialog;
 import com.jdimension.jlawyer.client.components.MultiCalDialog;
@@ -5495,6 +5496,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     private void mnuShareNextcloudActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuShareNextcloudActionPerformed
 
+        if(!CloudInstance.isConfigured(UserSettings.getInstance().getCurrentUser())) {
+            JOptionPane.showMessageDialog(this, "Freigaben über Nextcloud sind für diesen Nutzer noch nicht konfiguriert.", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+        
         try {
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
