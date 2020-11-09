@@ -885,7 +885,8 @@ public class FoldersListPanel extends javax.swing.JPanel {
 
     public void folderAdded(CaseFolder parent, CaseFolder newFolder) {
         parent.getChildren().add(newFolder);
-        this.setRootFolder(this.rootFolder, this.getUnselectedFolderIds());
+        //this.setRootFolder(this.rootFolder, this.getUnselectedFolderIds());
+        this.caseFolderPanel.setRootFolder(this.rootFolder, this.getUnselectedFolderIds());
         this.revalidate();
         this.repaint();
     }

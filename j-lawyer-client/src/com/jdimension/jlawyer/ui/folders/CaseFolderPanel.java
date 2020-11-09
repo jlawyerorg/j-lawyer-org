@@ -717,8 +717,8 @@ public class CaseFolderPanel extends javax.swing.JPanel {
         this.sortByDateDesc();
     }
 
-    public void setRootFolder(CaseFolder rootFolder) {
-        this.foldersListPanel.setRootFolder(rootFolder, new ArrayList<String>());
+    public void setRootFolder(CaseFolder rootFolder, ArrayList<String> unselectedFolderIds) {
+        this.foldersListPanel.setRootFolder(rootFolder, unselectedFolderIds);
         this.foldersListPanel.revalidate();
         this.foldersListPanel.repaint();
         this.popMoveToFolder.removeAll();
@@ -737,6 +737,11 @@ public class CaseFolderPanel extends javax.swing.JPanel {
         for (JMenuItem m : items) {
             this.popMoveToFolder.add(m);
         }
+
+    }
+    
+    public void setRootFolder(CaseFolder rootFolder) {
+        this.setRootFolder(rootFolder, new ArrayList<String>());
 
     }
 
