@@ -692,8 +692,8 @@ public class FoldersListPanel extends javax.swing.JPanel {
     public FoldersListPanel() {
         initComponents();
 
-        this.jScrollPane2.setAlignmentX(JScrollPane.LEFT_ALIGNMENT);
-        this.jScrollPane2.setAlignmentY(JScrollPane.TOP_ALIGNMENT);
+//        this.jScrollPane2.setAlignmentX(JScrollPane.LEFT_ALIGNMENT);
+//        this.jScrollPane2.setAlignmentY(JScrollPane.TOP_ALIGNMENT);
 
         this.pnlFolders.setLayout(gbl);
         //gbc = new GridBagConstraints();
@@ -764,12 +764,9 @@ public class FoldersListPanel extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jScrollPane2 = new javax.swing.JScrollPane();
         pnlFolders = new javax.swing.JPanel();
 
         setOpaque(false);
-
-        jScrollPane2.setBorder(null);
 
         javax.swing.GroupLayout pnlFoldersLayout = new javax.swing.GroupLayout(pnlFolders);
         pnlFolders.setLayout(pnlFoldersLayout);
@@ -782,23 +779,20 @@ public class FoldersListPanel extends javax.swing.JPanel {
             .addGap(0, 328, Short.MAX_VALUE)
         );
 
-        jScrollPane2.setViewportView(pnlFolders);
-
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 200, Short.MAX_VALUE)
+            .addComponent(pnlFolders, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 328, Short.MAX_VALUE)
+            .addComponent(pnlFolders, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JPanel pnlFolders;
     // End of variables declaration//GEN-END:variables
 
