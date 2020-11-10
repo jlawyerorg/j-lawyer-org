@@ -5524,7 +5524,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         } catch (Exception ioe) {
             log.error("Error removing document", ioe);
-            JOptionPane.showMessageDialog(this, "Fehler beim Löschen des Dokuments: " + ioe.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Fehler beim Freigeben des Dokuments: " + ioe.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
         }
 
     }//GEN-LAST:event_mnuShareNextcloudActionPerformed
@@ -5802,6 +5802,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                         for (Object fo : transferData) {
                             if (fo instanceof File) {
                                 files.add((File) fo);
+                            } else {
+                                log.error("transfer data: " + fo.getClass().getName());
                             }
                         }
 
@@ -5812,13 +5814,16 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                         a.start();
 
                         dtde.dropComplete(true);
+                    } else {
+                        log.error("transfer data is empty");
                     }
 
                 } catch (Exception ex) {
                     ex.printStackTrace();
+                    log.error("file drop error", ex);
                 }
             } else {
-                dtde.rejectDrop();
+                
                 try {
                     log.error("drop not supported: " + dtde.getTransferable().getTransferDataFlavors());
                     if (dtde.getTransferable().getTransferDataFlavors() != null) {
@@ -5828,7 +5833,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                         }
                     }
                 } catch (Throwable th) {
+                    log.error("Error determining transferable flavor", th);
                 }
+                dtde.rejectDrop();
             }
         }
     }
