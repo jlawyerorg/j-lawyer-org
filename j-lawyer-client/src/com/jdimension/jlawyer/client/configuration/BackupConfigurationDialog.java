@@ -1222,7 +1222,7 @@ public class BackupConfigurationDialog extends javax.swing.JDialog {
         if (this.optBackupOn.isSelected()) {
             set.setSetting(set.SERVERCONF_BACKUP_MODE, "on");
         } else {
-            set.setSetting(set.SERVERCONF_BACKUP_MODE, "on");
+            set.setSetting(set.SERVERCONF_BACKUP_MODE, "off");
         }
 
         set.setSetting(set.SERVERCONF_BACKUP_MONDAY, "" + this.chkMon.isSelected());
