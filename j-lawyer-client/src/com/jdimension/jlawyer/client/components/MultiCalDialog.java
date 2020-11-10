@@ -680,86 +680,88 @@ import org.apache.log4j.Logger;
 public class MultiCalDialog extends javax.swing.JDialog {
 
     private static final Logger log = Logger.getLogger(MultiCalDialog.class.getName());
-    
-    
+
     private JTextField target;
-    private Calendar c1Cal=null;
-    private Calendar c2Cal=null;
-    private Calendar c3Cal=null;
-    private boolean initializing=true;
-    
-    /**
-     * Creates new form MultiCalDialog
-     */
+    private Calendar c1Cal = null;
+    private Calendar c2Cal = null;
+    private Calendar c3Cal = null;
+    private boolean initializing = true;
+    private boolean holidayWarning = true;
+
     public MultiCalDialog(JTextField target, java.awt.Frame parent, boolean modal) {
-        // last param is required so that the dialog inherits some graphics settings from its parent
-        // otherwise, it might e.g. be opened on a different screen in a multi monitor setup
-        super(parent, "", modal, parent.getGraphicsConfiguration());
-        this.initializing=true;
-        this.target=target;
-        initComponents();     
-        
-        //c1.se
-        
-        c1Cal=Calendar.getInstance();
-        c1.setCalendar(c1Cal);
-        c1.setAlwaysFireDayProperty(true);
-        
-        c2Cal=Calendar.getInstance();
-        c2Cal.add(Calendar.MONTH, 1);
-        c2.setCalendar(c2Cal);
-        c2.setAlwaysFireDayProperty(true);
-        
-        c3Cal=Calendar.getInstance();
-        c3Cal.add(Calendar.MONTH, 2);
-        c3.setCalendar(c3Cal);
-        c3.setAlwaysFireDayProperty(true);
-        
-        
-        this.updateMonthLabels();
-        this.initializing=false;
-        
-        
-        
+        this(target, parent, modal, true);
     }
-    
+
     /**
      * Creates new form MultiCalDialog
      */
-    public MultiCalDialog(JTextField target, java.awt.Dialog parent, boolean modal) {
+    public MultiCalDialog(JTextField target, java.awt.Frame parent, boolean modal, boolean holidayWarning) {
         // last param is required so that the dialog inherits some graphics settings from its parent
         // otherwise, it might e.g. be opened on a different screen in a multi monitor setup
         super(parent, "", modal, parent.getGraphicsConfiguration());
-        this.initializing=true;
-        this.target=target;
-        initComponents();     
-        
+        this.initializing = true;
+        this.target = target;
+        this.holidayWarning = holidayWarning;
+        initComponents();
+
         //c1.se
-        
-        c1Cal=Calendar.getInstance();
+        c1Cal = Calendar.getInstance();
         c1.setCalendar(c1Cal);
         c1.setAlwaysFireDayProperty(true);
-        
-        c2Cal=Calendar.getInstance();
+
+        c2Cal = Calendar.getInstance();
         c2Cal.add(Calendar.MONTH, 1);
         c2.setCalendar(c2Cal);
         c2.setAlwaysFireDayProperty(true);
-        
-        c3Cal=Calendar.getInstance();
+
+        c3Cal = Calendar.getInstance();
         c3Cal.add(Calendar.MONTH, 2);
         c3.setCalendar(c3Cal);
         c3.setAlwaysFireDayProperty(true);
-        
-        
+
         this.updateMonthLabels();
-        this.initializing=false;
-        
-        
-        
+        this.initializing = false;
+
     }
-    
+
+    public MultiCalDialog(JTextField target, java.awt.Dialog parent, boolean modal) {
+        this(target, parent, modal, true);
+    }
+
+    /**
+     * Creates new form MultiCalDialog
+     */
+    public MultiCalDialog(JTextField target, java.awt.Dialog parent, boolean modal, boolean holidayWarning) {
+        // last param is required so that the dialog inherits some graphics settings from its parent
+        // otherwise, it might e.g. be opened on a different screen in a multi monitor setup
+        super(parent, "", modal, parent.getGraphicsConfiguration());
+        this.initializing = true;
+        this.target = target;
+        this.holidayWarning = holidayWarning;
+        initComponents();
+
+        //c1.se
+        c1Cal = Calendar.getInstance();
+        c1.setCalendar(c1Cal);
+        c1.setAlwaysFireDayProperty(true);
+
+        c2Cal = Calendar.getInstance();
+        c2Cal.add(Calendar.MONTH, 1);
+        c2.setCalendar(c2Cal);
+        c2.setAlwaysFireDayProperty(true);
+
+        c3Cal = Calendar.getInstance();
+        c3Cal.add(Calendar.MONTH, 2);
+        c3.setCalendar(c3Cal);
+        c3.setAlwaysFireDayProperty(true);
+
+        this.updateMonthLabels();
+        this.initializing = false;
+
+    }
+
     private void updateMonthLabels() {
-        SimpleDateFormat df=new SimpleDateFormat("MMM yyyy");
+        SimpleDateFormat df = new SimpleDateFormat("MMM yyyy");
         this.lblC1.setText(df.format(c1Cal.getTime()));
         this.lblC2.setText(df.format(c2Cal.getTime()));
         this.lblC3.setText(df.format(c3Cal.getTime()));
@@ -974,19 +976,19 @@ public class MultiCalDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_cmdMonthForwardActionPerformed
 
     private void c1PropertyChange(java.beans.PropertyChangeEvent evt) {//GEN-FIRST:event_c1PropertyChange
-        if("day".equalsIgnoreCase(evt.getPropertyName()) && !initializing) {
+        if ("day".equalsIgnoreCase(evt.getPropertyName()) && !initializing) {
             selectDate(c1, c1Cal);
         }
     }//GEN-LAST:event_c1PropertyChange
 
     private void c2PropertyChange(java.beans.PropertyChangeEvent evt) {//GEN-FIRST:event_c2PropertyChange
-        if("day".equalsIgnoreCase(evt.getPropertyName()) && !initializing) {
+        if ("day".equalsIgnoreCase(evt.getPropertyName()) && !initializing) {
             selectDate(c2, c2Cal);
         }
     }//GEN-LAST:event_c2PropertyChange
 
     private void c3PropertyChange(java.beans.PropertyChangeEvent evt) {//GEN-FIRST:event_c3PropertyChange
-        if("day".equalsIgnoreCase(evt.getPropertyName()) && !initializing) {
+        if ("day".equalsIgnoreCase(evt.getPropertyName()) && !initializing) {
             selectDate(c3, c3Cal);
         }
     }//GEN-LAST:event_c3PropertyChange
@@ -1004,43 +1006,47 @@ public class MultiCalDialog extends javax.swing.JDialog {
         this.c2.setMaxSelectableDate(d);
         this.c3.setMaxSelectableDate(d);
     }
-    
+
     public void setMinDate(Date d) {
         this.c1.setMinSelectableDate(d);
         this.c2.setMinSelectableDate(d);
         this.c3.setMinSelectableDate(d);
     }
-    
-     private void selectDate(JDayChooser cal, Calendar c) {
-         c.set(Calendar.DAY_OF_MONTH, cal.getDay());
-         Date d=c.getTime();
-         
-         CalendarUtils cu=CalendarUtils.getInstance();
+
+    private void selectDate(JDayChooser cal, Calendar c) {
+        c.set(Calendar.DAY_OF_MONTH, cal.getDay());
+        Date d = c.getTime();
+
+        if (this.holidayWarning) {
+            CalendarUtils cu = CalendarUtils.getInstance();
             try {
                 //System.out.println(cu.getCountryCodes());
                 //System.out.println(cu.getRegionCodes("DE"));
-                
-                boolean holiday=cu.isHolidayForCurrentUser(d);
-                if(c.get(c.DAY_OF_WEEK)==c.SATURDAY || c.get(c.DAY_OF_WEEK)==c.SUNDAY)
-                    holiday=true;
-                
-                if(holiday) {
-                    int response = JOptionPane.showConfirmDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/components/MultiCalDialog").getString("dlg.confirm.nonweekday"), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/components/MultiCalDialog").getString("dlg.confirm.datecheck"), JOptionPane.YES_NO_OPTION);
-                    if(response==JOptionPane.NO_OPTION)
-                        return;
+
+                boolean holiday = cu.isHolidayForCurrentUser(d);
+                if (c.get(c.DAY_OF_WEEK) == c.SATURDAY || c.get(c.DAY_OF_WEEK) == c.SUNDAY) {
+                    holiday = true;
                 }
-                
+
+                if (holiday) {
+                    int response = JOptionPane.showConfirmDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/components/MultiCalDialog").getString("dlg.confirm.nonweekday"), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/components/MultiCalDialog").getString("dlg.confirm.datecheck"), JOptionPane.YES_NO_OPTION);
+                    if (response == JOptionPane.NO_OPTION) {
+                        return;
+                    }
+                }
+
                 //cu.getAllHolidays(2012, "DE", "sn");
                 //System.out.println(""+businessDay);
             } catch (Exception ex) {
                 log.error(ex);
             }
-         
-        SimpleDateFormat df=new SimpleDateFormat("dd.MM.yyyy");
+        }
+
+        SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
         this.target.setText(df.format(d));
         this.cmdCancelActionPerformed(null);
-     }
-    
+    }
+
     /**
      * @param args the command line arguments
      */
