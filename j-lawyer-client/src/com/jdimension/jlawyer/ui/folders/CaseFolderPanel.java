@@ -1139,7 +1139,7 @@ public class CaseFolderPanel extends javax.swing.JPanel {
                     .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 611, Short.MAX_VALUE)
+                    .addComponent(jScrollPane2)
                     .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
         );
         layout.setVerticalGroup(
@@ -1553,6 +1553,44 @@ public class CaseFolderPanel extends javax.swing.JPanel {
 
         this.pnlDocumentEntries.repaint();
         this.pnlDocumentEntries.revalidate();
+    }
+
+    void selectNextDocument() {
+        
+        boolean selectNext=false;
+        for (Component c : this.pnlDocumentEntries.getComponents()) {
+            if (c instanceof DocumentEntryPanel) {
+                if(selectNext) {
+                    this.selectAllDocuments(false);
+                    ((DocumentEntryPanel) c).setSelected(true);
+                    return;
+                }
+                if (((DocumentEntryPanel) c).isSelected()) {
+                    selectNext=true;
+                }
+            }
+        }
+    }
+
+    void selectPreviousDocument() {
+        int previousIndex=0;
+        for (int i=0;i<this.pnlDocumentEntries.getComponentCount();i++) {
+            Component c=this.pnlDocumentEntries.getComponent(i);
+            if (c instanceof DocumentEntryPanel) {
+                
+                if (((DocumentEntryPanel) c).isSelected()) {
+                    previousIndex=i-1;
+                    previousIndex=Math.max(previousIndex, 0);
+                }
+            }
+        }
+        
+        Component prev=this.pnlDocumentEntries.getComponent(previousIndex);
+        if(prev instanceof DocumentEntryPanel) {
+            this.selectAllDocuments(false);
+            ((DocumentEntryPanel) prev).setSelected(true);
+        }
+        
     }
 
 }

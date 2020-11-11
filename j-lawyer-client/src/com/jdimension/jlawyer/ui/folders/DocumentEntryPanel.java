@@ -671,6 +671,7 @@ import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Color;
 import java.awt.Font;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
@@ -806,6 +807,11 @@ public class DocumentEntryPanel extends javax.swing.JPanel {
                 chkSelectedActionPerformed(evt);
             }
         });
+        chkSelected.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyReleased(java.awt.event.KeyEvent evt) {
+                chkSelectedKeyReleased(evt);
+            }
+        });
 
         lblFavorite.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/package_favorite_grey.png"))); // NOI18N
         lblFavorite.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -923,6 +929,17 @@ public class DocumentEntryPanel extends javax.swing.JPanel {
             this.documentUnClicked(evt);
     }//GEN-LAST:event_chkSelectedMouseReleased
 
+    private void chkSelectedKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_chkSelectedKeyReleased
+        System.out.println("case folders key pressed 2 " + this.document.getName());
+        if(evt.getKeyCode()==KeyEvent.VK_DOWN) {
+            this.documentsContainer.selectNextDocument();
+            this.caseContainer.documentSelectionChanged();
+        } else if(evt.getKeyCode()==KeyEvent.VK_UP) {
+            this.documentsContainer.selectPreviousDocument();
+            this.caseContainer.documentSelectionChanged();
+        }
+    }//GEN-LAST:event_chkSelectedKeyReleased
+
     private void documentUnClicked(MouseEvent evt) {
         this.caseContainer.documentSelectionChanged();
     }
@@ -951,6 +968,7 @@ public class DocumentEntryPanel extends javax.swing.JPanel {
         if(selected) {
             this.chkSelected.setSelected(selected);
             this.setBackground(DefaultColorTheme.COLOR_LOGO_GREEN);
+            this.chkSelected.requestFocus();
         } else {
             this.chkSelected.setSelected(selected);
             this.setBackground(this.defaultBackground);
