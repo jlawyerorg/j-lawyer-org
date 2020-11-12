@@ -770,6 +770,8 @@ public class LastChangedTimerTask extends java.util.TimerTask {
                     //split.setDividerLocation(0.5d);
 
                     resultUI.removeAll();
+                    resultUI.repaint();
+                    resultUI.revalidate();
                     //GridLayout layout = new GridLayout(l1.size(), 1);
                     BoxLayout layout=new BoxLayout(resultUI, BoxLayout.Y_AXIS);
                     resultUI.setLayout(layout);
@@ -834,8 +836,16 @@ public class LastChangedTimerTask extends java.util.TimerTask {
 //                        }
                     //layout.setRows(i);
                     //split.setDividerLocation(0.5d);
+                    
+//                    resultUI.revalidate();
+//                    resultUI.repaint();
+//                    resultUI.updateUI();
                     split.setDividerLocation(split.getDividerLocation()+1);
+//                    split.revalidate();
+//                    split.repaint();
                     split.setDividerLocation(split.getDividerLocation()-1);
+//                    split.revalidate();
+//                    split.repaint();
 
 //                        SwingUtilities.invokeLater(
 //                                new Runnable() {
