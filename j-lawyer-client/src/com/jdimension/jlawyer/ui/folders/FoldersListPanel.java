@@ -719,11 +719,6 @@ public class FoldersListPanel extends javax.swing.JPanel {
             }
         }
 
-        if (this.pnlFolders.getComponentCount() > 0) {
-            if (this.pnlFolders.getComponent(0) instanceof FolderListCell) {
-                ((FolderListCell) this.pnlFolders.getComponent(0)).setSelected(true);
-            }
-        }
     }
 
     public void setRootFolder(CaseFolder rootFolder, ArrayList<String> unselectedIds) {
