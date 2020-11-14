@@ -627,7 +627,7 @@
                                           </Group>
                                       </Group>
                                       <Group type="103" groupAlignment="0" attributes="0">
-                                          <Component id="txtOutServer" pref="218" max="32767" attributes="0"/>
+                                          <Component id="txtOutServer" pref="254" max="32767" attributes="0"/>
                                           <Component id="txtOutUsername" max="32767" attributes="0"/>
                                       </Group>
                                   </Group>
@@ -1017,7 +1017,7 @@
           <Layout>
             <DimensionLayout dim="0">
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Group type="102" attributes="0">
+                  <Group type="102" alignment="0" attributes="0">
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Component id="jLabel21" alignment="0" min="-2" max="-2" attributes="0"/>
@@ -1028,15 +1028,22 @@
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Component id="txtCloudHost" alignment="0" max="32767" attributes="0"/>
+                          <Component id="txtCloudUser" alignment="0" max="32767" attributes="0"/>
+                          <Component id="pwCloudPassword" alignment="0" max="32767" attributes="0"/>
                           <Group type="102" attributes="0">
                               <Group type="103" groupAlignment="0" attributes="0">
+                                  <Group type="102" attributes="0">
+                                      <Component id="txtNextcloudOrder" min="-2" max="-2" attributes="0"/>
+                                      <EmptySpace max="-2" attributes="0"/>
+                                      <Component id="cmdShowWebsite" min="-2" max="-2" attributes="0"/>
+                                  </Group>
+                                  <Component id="lblNextcloudOrder1" min="-2" max="-2" attributes="0"/>
+                                  <Component id="lblNextcloudOrder" min="-2" max="-2" attributes="0"/>
                                   <Component id="chkCloudSsl" min="-2" max="-2" attributes="0"/>
                                   <Component id="txtCloudPort" alignment="0" min="-2" pref="165" max="-2" attributes="0"/>
                               </Group>
-                              <EmptySpace min="0" pref="493" max="32767" attributes="0"/>
+                              <EmptySpace min="0" pref="270" max="32767" attributes="0"/>
                           </Group>
-                          <Component id="txtCloudUser" alignment="0" max="32767" attributes="0"/>
-                          <Component id="pwCloudPassword" alignment="0" max="32767" attributes="0"/>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
                   </Group>
@@ -1067,7 +1074,16 @@
                           <Component id="jLabel24" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="pwCloudPassword" alignment="3" min="-2" max="-2" attributes="0"/>
                       </Group>
-                      <EmptySpace pref="320" max="32767" attributes="0"/>
+                      <EmptySpace type="separate" max="-2" attributes="0"/>
+                      <Component id="lblNextcloudOrder" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="lblNextcloudOrder1" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="1" attributes="0">
+                          <Component id="cmdShowWebsite" min="-2" max="-2" attributes="0"/>
+                          <Component id="txtNextcloudOrder" min="-2" max="-2" attributes="0"/>
+                      </Group>
+                      <EmptySpace pref="222" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -1113,6 +1129,39 @@
               </Properties>
             </Component>
             <Component class="javax.swing.JPasswordField" name="pwCloudPassword">
+            </Component>
+            <Component class="javax.swing.JLabel" name="lblNextcloudOrder">
+              <Properties>
+                <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                  <Font name="Dialog" size="14" style="1"/>
+                </Property>
+                <Property name="text" type="java.lang.String" value="Keine Lust auf Betrieb, Datensicherung und Updates?"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JTextField" name="txtNextcloudOrder">
+              <Properties>
+                <Property name="editable" type="boolean" value="false"/>
+                <Property name="text" type="java.lang.String" value="https://www.j-lawyer.org/?page_id=1119"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JButton" name="cmdShowWebsite">
+              <Properties>
+                <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                  <Image iconType="3" name="/icons16/web.png"/>
+                </Property>
+                <Property name="toolTipText" type="java.lang.String" value="im Browser &#xf6;ffnen"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdShowWebsiteActionPerformed"/>
+              </Events>
+            </Component>
+            <Component class="javax.swing.JLabel" name="lblNextcloudOrder1">
+              <Properties>
+                <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                  <Font name="Dialog" size="14" style="1"/>
+                </Property>
+                <Property name="text" type="java.lang.String" value="Hier Nextcloud-Nutzer anfordern:"/>
+              </Properties>
             </Component>
           </SubComponents>
         </Container>

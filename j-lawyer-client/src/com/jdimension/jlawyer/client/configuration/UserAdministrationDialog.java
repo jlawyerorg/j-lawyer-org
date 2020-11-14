@@ -684,6 +684,7 @@ import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.processing.ProgressIndicator;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
+import com.jdimension.jlawyer.client.utils.DesktopUtils;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.TableUtils;
 import com.jdimension.jlawyer.persistence.Group;
@@ -698,6 +699,7 @@ import javax.swing.DefaultComboBoxModel;
 import javax.swing.DefaultListModel;
 import javax.swing.JFileChooser;
 import javax.swing.table.DefaultTableModel;
+import themes.colors.DefaultColorTheme;
 
 /**
  *
@@ -723,6 +725,9 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         this.lstUsers.setCellRenderer(new UserListCellRenderer());
         UserListModel m = new UserListModel();
         this.lstUsers.setModel(m);
+        this.txtNextcloudOrder.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
+        this.lblNextcloudOrder.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
+        this.lblNextcloudOrder1.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
 
         ClientSettings settings = ClientSettings.getInstance();
         try {
@@ -861,6 +866,10 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         jLabel23 = new javax.swing.JLabel();
         jLabel24 = new javax.swing.JLabel();
         pwCloudPassword = new javax.swing.JPasswordField();
+        lblNextcloudOrder = new javax.swing.JLabel();
+        txtNextcloudOrder = new javax.swing.JTextField();
+        cmdShowWebsite = new javax.swing.JButton();
+        lblNextcloudOrder1 = new javax.swing.JLabel();
         jPanel9 = new javax.swing.JPanel();
         jLabel18 = new javax.swing.JLabel();
         cmbPrimaryGroup = new javax.swing.JComboBox<>();
@@ -1230,7 +1239,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                                         .add(jLabel7)
                                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)))
                                 .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                                    .add(txtOutServer, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 218, Short.MAX_VALUE)
+                                    .add(txtOutServer, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 254, Short.MAX_VALUE)
                                     .add(txtOutUsername)))
                             .add(jPanel7Layout.createSequentialGroup()
                                 .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -1423,6 +1432,23 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
 
         jLabel24.setText("Passwort:");
 
+        lblNextcloudOrder.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        lblNextcloudOrder.setText("Keine Lust auf Betrieb, Datensicherung und Updates?");
+
+        txtNextcloudOrder.setEditable(false);
+        txtNextcloudOrder.setText("https://www.j-lawyer.org/?page_id=1119");
+
+        cmdShowWebsite.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/web.png"))); // NOI18N
+        cmdShowWebsite.setToolTipText("im Browser öffnen");
+        cmdShowWebsite.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdShowWebsiteActionPerformed(evt);
+            }
+        });
+
+        lblNextcloudOrder1.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
+        lblNextcloudOrder1.setText("Hier Nextcloud-Nutzer anfordern:");
+
         org.jdesktop.layout.GroupLayout jPanel10Layout = new org.jdesktop.layout.GroupLayout(jPanel10);
         jPanel10.setLayout(jPanel10Layout);
         jPanel10Layout.setHorizontalGroup(
@@ -1437,13 +1463,19 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel10Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(txtCloudHost)
+                    .add(txtCloudUser)
+                    .add(pwCloudPassword)
                     .add(jPanel10Layout.createSequentialGroup()
                         .add(jPanel10Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            .add(jPanel10Layout.createSequentialGroup()
+                                .add(txtNextcloudOrder, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(cmdShowWebsite))
+                            .add(lblNextcloudOrder1)
+                            .add(lblNextcloudOrder)
                             .add(chkCloudSsl)
                             .add(txtCloudPort, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 165, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                        .add(0, 493, Short.MAX_VALUE))
-                    .add(txtCloudUser)
-                    .add(pwCloudPassword))
+                        .add(0, 270, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         jPanel10Layout.setVerticalGroup(
@@ -1467,7 +1499,15 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 .add(jPanel10Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(jLabel24)
                     .add(pwCloudPassword, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(320, Short.MAX_VALUE))
+                .add(18, 18, 18)
+                .add(lblNextcloudOrder)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(lblNextcloudOrder1)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                .add(jPanel10Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
+                    .add(cmdShowWebsite)
+                    .add(txtNextcloudOrder, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(222, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("Nextcloud", jPanel10);
@@ -2134,6 +2174,12 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         
     }//GEN-LAST:event_cmdTestMailActionPerformed
 
+    private void cmdShowWebsiteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdShowWebsiteActionPerformed
+        if (this.txtNextcloudOrder.getText() != null && !"".equalsIgnoreCase(this.txtNextcloudOrder.getText())) {
+            DesktopUtils.openBrowser(this.txtNextcloudOrder.getText());
+        }
+    }//GEN-LAST:event_cmdShowWebsiteActionPerformed
+
     private List<AppRoleBean> getRolesFromUI(String principalId) {
         List<AppRoleBean> result = new ArrayList<AppRoleBean>();
 
@@ -2393,6 +2439,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
     private javax.swing.JButton cmdRemoveCertificate;
     private javax.swing.JButton cmdSave;
     private javax.swing.JButton cmdSelectCertificate;
+    private javax.swing.JButton cmdShowWebsite;
     private javax.swing.JButton cmdTestMail;
     private com.jdimension.jlawyer.client.mail.HtmlEditorPanel htmlEmailSig;
     private javax.swing.JLabel jLabel1;
@@ -2433,6 +2480,8 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane4;
     private javax.swing.JTabbedPane jTabbedPane1;
+    private javax.swing.JLabel lblNextcloudOrder;
+    private javax.swing.JLabel lblNextcloudOrder1;
     private javax.swing.JLabel lblTestProgress;
     private javax.swing.JList lstUsers;
     private javax.swing.JMenuItem mnuDelete;
@@ -2453,6 +2502,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
     private javax.swing.JTextField txtEmailSender;
     private javax.swing.JTextField txtInServer;
     private javax.swing.JTextField txtInUser;
+    private javax.swing.JTextField txtNextcloudOrder;
     private javax.swing.JTextField txtOutPort;
     private javax.swing.JTextField txtOutServer;
     private javax.swing.JTextField txtOutUsername;
