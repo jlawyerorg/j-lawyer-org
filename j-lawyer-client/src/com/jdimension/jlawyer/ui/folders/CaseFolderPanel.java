@@ -1165,6 +1165,45 @@ public class CaseFolderPanel extends javax.swing.JPanel {
             }
         }
     }
+    
+    public void selectDocumentsRangeTo(String docId) {
+        // find currently selected, which may be BEFORE or AFTER the clicked document
+        int rangeStart=-1;
+        int rangeEnd=-1;
+        int index=-1;
+        for (Component c : this.pnlDocumentEntries.getComponents()) {
+            index=index+1;
+            if (c instanceof DocumentEntryPanel) {
+                // find the former select that is NOT equal to the clicked
+                if(((DocumentEntryPanel) c).isSelected() && !(docId.equals(((DocumentEntryPanel) c).getDocument().getId()))) {
+                    rangeStart=index;
+                    
+                }
+                if(docId.equals(((DocumentEntryPanel) c).getDocument().getId())) {
+                    rangeEnd=index;
+                    
+                }
+            }
+        }
+        
+        if(rangeStart==-1) {
+            rangeStart=rangeEnd;
+        }
+        
+        int selectionStart=Math.min(rangeStart, rangeEnd);
+        int selectionEnd=Math.max(rangeStart, rangeEnd);
+        
+        index=-1;
+        for (Component c : this.pnlDocumentEntries.getComponents()) {
+            index=index+1;
+            if (c instanceof DocumentEntryPanel) {
+                if(index>=selectionStart && index <=selectionEnd) {
+                    ((DocumentEntryPanel) c).setSelected(true);
+                }
+            }
+        }
+        
+    }
 
     private void sortDateMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_sortDateMouseClicked
         if (this.sortDate.getSortState() != SortButton.SORT_NONE) {

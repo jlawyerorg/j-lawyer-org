@@ -671,6 +671,7 @@ import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Color;
 import java.awt.Font;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.text.DecimalFormat;
@@ -886,11 +887,26 @@ public class DocumentEntryPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_lblFileIconMouseExited
 
     private void lblFileNameMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblFileNameMouseClicked
-        this.documentClicked(evt, true);
+        if ((evt.getModifiers() & InputEvent.SHIFT_MASK) == InputEvent.SHIFT_MASK) {
+            this.documentRangeClicked(evt);
+            
+        } else if ((evt.getModifiers() & InputEvent.CTRL_MASK) == InputEvent.CTRL_MASK) {
+            this.documentClicked(evt, false);
+        } else {
+            this.documentClicked(evt, true);
+        }
     }//GEN-LAST:event_lblFileNameMouseClicked
 
     private void lblFileIconMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblFileIconMouseClicked
-        this.documentClicked(evt, true);
+        if ((evt.getModifiers() & InputEvent.SHIFT_MASK) == InputEvent.SHIFT_MASK) {
+            
+            this.documentRangeClicked(evt);
+            
+        } else if ((evt.getModifiers() & InputEvent.CTRL_MASK) == InputEvent.CTRL_MASK) {
+            this.documentClicked(evt, false);
+        } else {
+            this.documentClicked(evt, true);
+        }
     }//GEN-LAST:event_lblFileIconMouseClicked
 
     private void chkSelectedActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkSelectedActionPerformed
@@ -923,10 +939,24 @@ public class DocumentEntryPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_lblFavoriteMouseClicked
 
     private void chkSelectedMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_chkSelectedMouseReleased
-        if(this.chkSelected.isSelected())
-            this.documentClicked(evt, false);
-        else
-            this.documentUnClicked(evt);
+        if ((evt.getModifiers() & InputEvent.SHIFT_MASK) == InputEvent.SHIFT_MASK) {
+            if (this.chkSelected.isSelected()) {
+                this.documentRangeClicked(evt);
+            }
+        } else if ((evt.getModifiers() & InputEvent.CTRL_MASK) == InputEvent.CTRL_MASK) {
+            // this actually equals the default behaviour below...
+            if (this.chkSelected.isSelected()) {
+                this.documentClicked(evt, false);
+            } else {
+                this.documentUnClicked(evt);
+            }
+        } else {
+            if (this.chkSelected.isSelected()) {
+                this.documentClicked(evt, false);
+            } else {
+                this.documentUnClicked(evt);
+            }
+        }
     }//GEN-LAST:event_chkSelectedMouseReleased
 
     private void chkSelectedKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_chkSelectedKeyReleased
@@ -1035,6 +1065,16 @@ public class DocumentEntryPanel extends javax.swing.JPanel {
             this.lblFileSize.setText(megaBytes.format(lValue / 1024l / 1024l) + " MB");
         } else {
             this.lblFileSize.setText(megaBytes.format(lValue / 1024l) + " KB");
+        }
+    }
+
+    private void documentRangeClicked(MouseEvent evt) {
+        if(evt.getClickCount()==1 && !evt.isConsumed()) {
+            if(this.documentsContainer!=null)
+                this.documentsContainer.selectDocumentsRangeTo(this.document.getId());
+            this.setSelected(true);
+            this.caseContainer.documentSelectionChanged();
+            evt.consume();
         }
     }
 }
