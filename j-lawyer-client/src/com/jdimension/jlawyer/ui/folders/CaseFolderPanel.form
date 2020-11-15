@@ -111,7 +111,7 @@
             <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
               <Image iconType="3" name="/icons16/baseline_select_all_black_48dp.png"/>
             </Property>
-            <Property name="toolTipText" type="java.lang.String" value="alle Ordner selektieren"/>
+            <Property name="toolTipText" type="java.lang.String" value="alle ausw&#xe4;hlen"/>
             <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
               <Border info="null"/>
             </Property>
@@ -128,7 +128,7 @@
             <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
               <Image iconType="3" name="/icons16/baseline_select_none_black_48dp.png"/>
             </Property>
-            <Property name="toolTipText" type="java.lang.String" value="nur Wurzelordner selektieren"/>
+            <Property name="toolTipText" type="java.lang.String" value="Auswahl aufheben"/>
             <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
               <Border info="null"/>
             </Property>
@@ -260,7 +260,7 @@
             <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
               <Image iconType="3" name="/icons16/baseline_select_all_black_48dp.png"/>
             </Property>
-            <Property name="toolTipText" type="java.lang.String" value="alle Ordner selektieren"/>
+            <Property name="toolTipText" type="java.lang.String" value="alle ausw&#xe4;hlen"/>
             <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
               <Border info="null"/>
             </Property>
@@ -277,7 +277,7 @@
             <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
               <Image iconType="3" name="/icons16/baseline_select_none_black_48dp.png"/>
             </Property>
-            <Property name="toolTipText" type="java.lang.String" value="nur Wurzelordner selektieren"/>
+            <Property name="toolTipText" type="java.lang.String" value="Auswahl aufheben"/>
             <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
               <Border info="null"/>
             </Property>

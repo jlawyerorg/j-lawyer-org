@@ -684,7 +684,7 @@ public class FoldersListPanel extends javax.swing.JPanel {
     GridBagLayout gbl = new GridBagLayout();
     protected boolean readOnly = false;
     private CaseFolder rootFolder = null;
-    protected CaseFolderPanel caseFolderPanel=null;
+    protected CaseFolderPanel caseFolderPanel = null;
 
     /**
      * Creates new form FoldersPanel
@@ -694,7 +694,6 @@ public class FoldersListPanel extends javax.swing.JPanel {
 
 //        this.jScrollPane2.setAlignmentX(JScrollPane.LEFT_ALIGNMENT);
 //        this.jScrollPane2.setAlignmentY(JScrollPane.TOP_ALIGNMENT);
-
         this.pnlFolders.setLayout(gbl);
         //gbc = new GridBagConstraints();
         gbc.anchor = GridBagConstraints.NORTHWEST;
@@ -794,15 +793,15 @@ public class FoldersListPanel extends javax.swing.JPanel {
     private void buildRecursive(int level, CaseFolder folder, ArrayList<String> unselectedIds) {
 
         if (folder.getChildren() != null) {
-            List<CaseFolder> allChildren=folder.getChildren();
+            List<CaseFolder> allChildren = folder.getChildren();
             Collections.sort(allChildren, new Comparator() {
                 @Override
                 public int compare(Object t, Object t1) {
-                    CaseFolder f1=(CaseFolder)t;
-                    CaseFolder f2=(CaseFolder)t1;
+                    CaseFolder f1 = (CaseFolder) t;
+                    CaseFolder f2 = (CaseFolder) t1;
                     return f1.getName().compareTo(f2.getName());
                 }
-                
+
             });
             for (CaseFolder child : allChildren) {
                 FolderListCell childNode = new FolderListCell(this, level, child.getName(), this.readOnly);
@@ -830,11 +829,11 @@ public class FoldersListPanel extends javax.swing.JPanel {
      */
     public void setReadOnly(boolean readOnly) {
         this.readOnly = readOnly;
-        
+
         for (Component c : this.pnlFolders.getComponents()) {
             if (c instanceof FolderListCell) {
                 ((FolderListCell) c).setReadOnly(readOnly);
-                
+
             }
         }
     }
@@ -853,9 +852,9 @@ public class FoldersListPanel extends javax.swing.JPanel {
 //            }
 //        }
 
-        ArrayList<String> folderIds=new ArrayList<>();
+        ArrayList<String> folderIds = new ArrayList<>();
         this.collectSubtreeIds(removedFolder, folderIds);
-        
+
         this.caseFolderPanel.removeDocumentsInFolders(folderIds);
 
         parent.getChildren().remove(removedFolder);
@@ -863,16 +862,18 @@ public class FoldersListPanel extends javax.swing.JPanel {
         this.revalidate();
         this.repaint();
     }
-    
+
     private void collectSubtreeIds(CaseFolder f, ArrayList<String> ids) {
         ids.add(f.getId());
-        for(CaseFolder c: f.getChildren()) {
-            this.collectSubtreeIds(c, ids);
+        if (f.getChildren() != null) {
+            for (CaseFolder c : f.getChildren()) {
+                this.collectSubtreeIds(c, ids);
+            }
         }
-        
     }
 
     public void folderAdded(CaseFolder parent, CaseFolder newFolder) {
+        
         parent.getChildren().add(newFolder);
         //this.setRootFolder(this.rootFolder, this.getUnselectedFolderIds());
         this.caseFolderPanel.setRootFolder(this.rootFolder, this.getUnselectedFolderIds());
@@ -894,8 +895,9 @@ public class FoldersListPanel extends javax.swing.JPanel {
     }
 
     void selectionChanged() {
-        if(this.caseFolderPanel!=null)
+        if (this.caseFolderPanel != null) {
             this.caseFolderPanel.folderSelectionChanged();
+        }
     }
 
     /**

@@ -957,7 +957,7 @@ public class CaseFolderPanel extends javax.swing.JPanel {
         });
 
         cmdSelectAll.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/baseline_select_all_black_48dp.png"))); // NOI18N
-        cmdSelectAll.setToolTipText("alle Ordner selektieren");
+        cmdSelectAll.setToolTipText("alle auswählen");
         cmdSelectAll.setBorder(null);
         cmdSelectAll.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         cmdSelectAll.addActionListener(new java.awt.event.ActionListener() {
@@ -967,7 +967,7 @@ public class CaseFolderPanel extends javax.swing.JPanel {
         });
 
         cmdSelectNone.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/baseline_select_none_black_48dp.png"))); // NOI18N
-        cmdSelectNone.setToolTipText("nur Wurzelordner selektieren");
+        cmdSelectNone.setToolTipText("Auswahl aufheben");
         cmdSelectNone.setBorder(null);
         cmdSelectNone.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         cmdSelectNone.addActionListener(new java.awt.event.ActionListener() {
@@ -1058,7 +1058,7 @@ public class CaseFolderPanel extends javax.swing.JPanel {
         });
 
         cmdSelectAll1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/baseline_select_all_black_48dp.png"))); // NOI18N
-        cmdSelectAll1.setToolTipText("alle Ordner selektieren");
+        cmdSelectAll1.setToolTipText("alle auswählen");
         cmdSelectAll1.setBorder(null);
         cmdSelectAll1.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         cmdSelectAll1.addActionListener(new java.awt.event.ActionListener() {
@@ -1068,7 +1068,7 @@ public class CaseFolderPanel extends javax.swing.JPanel {
         });
 
         cmdSelectNone1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/baseline_select_none_black_48dp.png"))); // NOI18N
-        cmdSelectNone1.setToolTipText("nur Wurzelordner selektieren");
+        cmdSelectNone1.setToolTipText("Auswahl aufheben");
         cmdSelectNone1.setBorder(null);
         cmdSelectNone1.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         cmdSelectNone1.addActionListener(new java.awt.event.ActionListener() {

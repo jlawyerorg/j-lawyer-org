@@ -674,6 +674,7 @@ import java.awt.Color;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseListener;
 import javax.swing.JOptionPane;
+import org.apache.log4j.Logger;
 import themes.colors.DefaultColorTheme;
 
 /**
@@ -682,6 +683,8 @@ import themes.colors.DefaultColorTheme;
  */
 public class FolderListCell extends javax.swing.JPanel {
 
+    private static Logger log=Logger.getLogger(FolderListCell.class.getName());
+    
     private CaseFolder folder = null;
     protected CaseFolder parentFolder = null;
     protected boolean selected = true;
@@ -928,6 +931,7 @@ public class FolderListCell extends javax.swing.JPanel {
 //            this.getParent().doLayout();
             
         } catch (Exception ex) {
+            log.error("could not delete document folder", ex);
             JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Löschen des Ordners: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
             return;
         }

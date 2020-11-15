@@ -664,6 +664,7 @@
 package com.jdimension.jlawyer.persistence;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 import javax.persistence.*;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -759,6 +760,9 @@ public class CaseFolder implements Serializable {
      * @return the children
      */
     public List<CaseFolder> getChildren() {
+        if(this.children==null) {
+            this.children=new ArrayList<CaseFolder>();
+        }
         return children;
     }
     
