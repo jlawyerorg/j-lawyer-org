@@ -776,6 +776,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
+import javafx.scene.input.KeyCode;
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
@@ -5140,24 +5141,27 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     }//GEN-LAST:event_mnuSaveDocumentEncryptedActionPerformed
 
     private void txtSearchDocumentNamesKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtSearchDocumentNamesKeyReleased
-        String[] selectedTags = ComponentUtils.getSelectedMenuItems(this.popDocumentTagFilter);
-        try {
-            ClientSettings settings = ClientSettings.getInstance();
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
-            Hashtable<String, ArrayList<String>> allTags = remote.getDocumentTagsForCase(this.dto.getId());
-            //this.documentCellRenderer.setRenderTags(allTags);
-            int matches = this.caseFolderPanel1.highlightDocuments(this.txtSearchDocumentNames.getText(), selectedTags, allTags);
-            lblDocumentHits.setText(matches + " Treffer");
-        } catch (Exception ioe) {
-            log.error("Error loading document tags", ioe);
-            JOptionPane.showMessageDialog(this, "Fehler beim Laden der Dokumentetiketten: " + ioe.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
-        }
+        if(evt==null || evt.getKeyCode() == evt.VK_ENTER) {
 
-        if (this.txtSearchDocumentNames.getText().length() > 0 || selectedTags.length > 0) {
-            this.cmdClearSearch.setEnabled(true);
-        } else {
-            this.cmdClearSearch.setEnabled(false);
+            String[] selectedTags = ComponentUtils.getSelectedMenuItems(this.popDocumentTagFilter);
+            try {
+                ClientSettings settings = ClientSettings.getInstance();
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
+                Hashtable<String, ArrayList<String>> allTags = remote.getDocumentTagsForCase(this.dto.getId());
+                //this.documentCellRenderer.setRenderTags(allTags);
+                int matches = this.caseFolderPanel1.highlightDocuments(this.txtSearchDocumentNames.getText(), selectedTags, allTags);
+                lblDocumentHits.setText(matches + " Treffer");
+            } catch (Exception ioe) {
+                log.error("Error loading document tags", ioe);
+                JOptionPane.showMessageDialog(this, "Fehler beim Laden der Dokumentetiketten: " + ioe.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            }
+
+            if (this.txtSearchDocumentNames.getText().length() > 0 || selectedTags.length > 0) {
+                this.cmdClearSearch.setEnabled(true);
+            } else {
+                this.cmdClearSearch.setEnabled(false);
+            }
         }
     }//GEN-LAST:event_txtSearchDocumentNamesKeyReleased
 
