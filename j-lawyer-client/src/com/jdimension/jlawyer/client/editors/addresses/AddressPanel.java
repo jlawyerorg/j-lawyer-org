@@ -2806,7 +2806,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
     }//GEN-LAST:event_cmdSaveActionPerformed
 
     private void jTabbedPane1StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_jTabbedPane1StateChanged
-        if (this.jTabbedPane1.getSelectedIndex() == 5) {
+        if (this.jTabbedPane1.getSelectedIndex() == 6) {
             if (this.dto == null) {
                 //this.lblArchiveFilesForAddress.setText("");
                 this.pnlCasesForContact.removeAll();
