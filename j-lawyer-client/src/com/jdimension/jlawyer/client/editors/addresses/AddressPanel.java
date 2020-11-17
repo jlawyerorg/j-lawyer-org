@@ -3494,7 +3494,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         if (!StringUtils.equals(dto.getTitleInAddress(), (String) this.cmbTitleInAddress.getSelectedItem())) {
             return true;
         }
-        if (!StringUtils.equals(dto.getCountry(), this.cmbCountry.getSelectedItem().toString())) {
+        if (!StringUtils.equals(dto.getCountry(), (String) this.cmbCountry.getSelectedItem())) {
             return true;
         }
         if (!StringUtils.equals(dto.getEmail(), this.txtEmail.getText())) {
@@ -3664,7 +3664,11 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         } else {
             adr.setTitleInAddress("");
         }
-        adr.setCountry(this.cmbCountry.getSelectedItem().toString());
+        if (this.cmbCountry.getSelectedItem() != null) {
+            adr.setCountry(this.cmbCountry.getSelectedItem().toString());
+        } else {
+            adr.setCountry("");
+        }
         adr.setEmail(this.txtEmail.getText());
         adr.setFax(this.txtFax.getText());
         adr.setFirstName(this.txtFirstName.getText());
