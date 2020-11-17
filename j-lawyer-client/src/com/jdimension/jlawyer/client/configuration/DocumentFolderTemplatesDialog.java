@@ -892,7 +892,7 @@ public class DocumentFolderTemplatesDialog extends javax.swing.JDialog {
         if (this.cmbTemplates.getSelectedItem() == null) {
             return;
         }
-
+        
         ClientSettings settings = ClientSettings.getInstance();
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
@@ -909,6 +909,9 @@ public class DocumentFolderTemplatesDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_cmdRemoveActionPerformed
 
     private void cmdEditActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdEditActionPerformed
+        if(this.cmbTemplates.getSelectedItem()==null)
+            return;
+        
         ClientSettings settings = ClientSettings.getInstance();
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
@@ -1013,6 +1016,9 @@ public class DocumentFolderTemplatesDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_treeFoldersMouseReleased
 
     private void cmdCloneTemplateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCloneTemplateActionPerformed
+        if(this.cmbTemplates.getSelectedItem()==null)
+            return;
+        
         String name = JOptionPane.showInputDialog(this, "Name der Ordnerstruktur: ", "");
         if (name == null || "".equals(name)) {
             return;
