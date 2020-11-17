@@ -887,7 +887,11 @@ public class DocumentEntryPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_lblFileIconMouseExited
 
     private void lblFileNameMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblFileNameMouseClicked
-        if ((evt.getModifiers() & InputEvent.SHIFT_MASK) == InputEvent.SHIFT_MASK) {
+        if (evt.getModifiers() == evt.BUTTON2_MASK || evt.getModifiers() == evt.BUTTON2_DOWN_MASK || evt.getModifiers() == evt.BUTTON3_MASK || evt.getModifiers() == evt.BUTTON3_DOWN_MASK) {
+            if(this.documentsContainer.getSelectedDocuments().isEmpty())
+                this.documentClicked(evt, true);
+            this.caseContainer.showDocumentsPopup(evt);
+        } else if ((evt.getModifiers() & InputEvent.SHIFT_MASK) == InputEvent.SHIFT_MASK) {
             this.documentRangeClicked(evt);
             
         } else if ((evt.getModifiers() & InputEvent.CTRL_MASK) == InputEvent.CTRL_MASK) {
@@ -898,7 +902,11 @@ public class DocumentEntryPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_lblFileNameMouseClicked
 
     private void lblFileIconMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblFileIconMouseClicked
-        if ((evt.getModifiers() & InputEvent.SHIFT_MASK) == InputEvent.SHIFT_MASK) {
+        if (evt.getModifiers() == evt.BUTTON2_MASK || evt.getModifiers() == evt.BUTTON2_DOWN_MASK || evt.getModifiers() == evt.BUTTON3_MASK || evt.getModifiers() == evt.BUTTON3_DOWN_MASK) {
+            if(this.documentsContainer.getSelectedDocuments().size()==0)
+                this.documentClicked(evt, true);
+            this.caseContainer.showDocumentsPopup(evt);
+        } else if ((evt.getModifiers() & InputEvent.SHIFT_MASK) == InputEvent.SHIFT_MASK) {
             
             this.documentRangeClicked(evt);
             
@@ -939,7 +947,11 @@ public class DocumentEntryPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_lblFavoriteMouseClicked
 
     private void chkSelectedMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_chkSelectedMouseReleased
-        if ((evt.getModifiers() & InputEvent.SHIFT_MASK) == InputEvent.SHIFT_MASK) {
+        if (evt.getModifiers() == evt.BUTTON2_MASK || evt.getModifiers() == evt.BUTTON2_DOWN_MASK || evt.getModifiers() == evt.BUTTON3_MASK || evt.getModifiers() == evt.BUTTON3_DOWN_MASK) {
+            if(this.documentsContainer.getSelectedDocuments().size()==0)
+                this.documentClicked(evt, true);
+            this.caseContainer.showDocumentsPopup(evt);
+        } else if ((evt.getModifiers() & InputEvent.SHIFT_MASK) == InputEvent.SHIFT_MASK) {
             if (this.chkSelected.isSelected()) {
                 this.documentRangeClicked(evt);
             }
