@@ -4390,11 +4390,29 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     public void deleteCaseFolder(String folderId) throws Exception {
         CaseFolder cf = this.caseFolderFacade.find(folderId);
         if (cf != null) {
+            this.recursiveDocumentDeletion(cf);
             this.caseFolderFacade.remove(cf);
         } else {
             throw new Exception("Ordner kann nicht gefunden werden!");
         }
 
+    }
+    
+    private void recursiveDocumentDeletion(CaseFolder f) throws Exception {
+        if(f==null)
+            return;
+        
+        List<ArchiveFileDocumentsBean> folderDocs=this.archiveFileDocumentsFacade.findByFolder(f);
+        if(folderDocs!=null) {
+            for(ArchiveFileDocumentsBean d: folderDocs) {
+                this.removeDocument(d.getId());
+            }
+        }
+        
+        if(f.getChildren()!=null) {
+            for(CaseFolder child: f.getChildren())
+                this.recursiveDocumentDeletion(child);
+        }
     }
 
     @Override

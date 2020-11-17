@@ -686,6 +686,8 @@ public interface ArchiveFileDocumentsBeanFacadeLocal {
     List<ArchiveFileDocumentsBean> findRange(int[] range);
     
     public List<ArchiveFileDocumentsBean> findByArchiveFileKey(ArchiveFileBean archiveFileKey);
+    
+    public List<ArchiveFileDocumentsBean> findByFolder(CaseFolder folder);
 
     int count();
     
