@@ -710,6 +710,7 @@ public class DesktopUtils {
             if (desktop.isSupported(Desktop.Action.BROWSE)) {
                 URI uri = null;
                 try {
+                    url=url.replace("\\", "/");
                     uri = new URI(url);
                     desktop.browse(uri);
                 } catch (Throwable t) {
