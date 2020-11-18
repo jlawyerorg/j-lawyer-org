@@ -1035,7 +1035,7 @@ public class SplashThread implements Runnable {
         splash = null;
 
         long end = System.currentTimeMillis();
-        log.info("client startup in " + (end - start) + "ms");
+        log.info("client startup in " + (end - start) + "ms, version " + VersionUtils.getFullClientVersion());
 
         SwingUtilities.invokeLater(
                 new Runnable() {
