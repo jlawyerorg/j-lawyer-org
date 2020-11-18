@@ -772,7 +772,7 @@ public class PdfImagePanel extends javax.swing.JPanel implements PreviewPanel {
                 .addComponent(cmdLastPage)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(lblCurrentPage)
-                .addContainerGap(102, Short.MAX_VALUE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -785,7 +785,7 @@ public class PdfImagePanel extends javax.swing.JPanel implements PreviewPanel {
                         .addComponent(lblCurrentPage, javax.swing.GroupLayout.Alignment.TRAILING))
                     .addComponent(cmdLastPage))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 460, Short.MAX_VALUE))
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 22, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 

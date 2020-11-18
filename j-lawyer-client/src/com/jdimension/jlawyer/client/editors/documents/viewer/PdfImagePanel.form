@@ -30,7 +30,7 @@
               <Component id="cmdLastPage" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="lblCurrentPage" min="-2" max="-2" attributes="0"/>
-              <EmptySpace pref="102" max="32767" attributes="0"/>
+              <EmptySpace max="32767" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
@@ -47,7 +47,7 @@
                   <Component id="cmdLastPage" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
-              <Component id="jScrollPane1" pref="460" max="32767" attributes="0"/>
+              <Component id="jScrollPane1" pref="22" max="32767" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
