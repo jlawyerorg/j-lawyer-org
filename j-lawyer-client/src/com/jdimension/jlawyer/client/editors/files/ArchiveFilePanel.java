@@ -931,17 +931,10 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
 
         }
-
-        try {
-            String dividerLocation = ClientSettings.getInstance().getConfiguration(ClientSettings.CONF_DIVIDERLOCATION_DOCPREVIEW, "");
-            if (!"".equalsIgnoreCase(dividerLocation)) {
-                this.splitDocuments.setDividerLocation(Integer.parseInt(dividerLocation));
-            } else {
-                this.splitDocuments.setDividerLocation(0.7d);
-            }
-        } catch (Throwable t) {
-            log.error("Could not set divider location for doc preview", t);
-        }
+        
+        this.splitDocuments.setDividerLocation(0.7d);
+        ComponentUtils.restoreSplitPane(splitDocuments, this.getClass(), "splitDocuments");
+        ComponentUtils.persistSplitPane(splitDocuments, this.getClass(), "splitDocuments");
 
         ArrayList<CalculationPlugin> plugins = CalculationPluginUtil.loadLocalPlugins();
         Collections.sort(plugins);
@@ -2423,12 +2416,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         });
 
         splitDocuments.setDividerLocation(400);
-        splitDocuments.setResizeWeight(0.7);
-        splitDocuments.addPropertyChangeListener(new java.beans.PropertyChangeListener() {
-            public void propertyChange(java.beans.PropertyChangeEvent evt) {
-                splitDocumentsPropertyChange(evt);
-            }
-        });
 
         jScrollPane7.addComponentListener(new java.awt.event.ComponentAdapter() {
             public void componentResized(java.awt.event.ComponentEvent evt) {
@@ -5001,17 +4988,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.cmdDocumentTagFilter.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/favorites.png")));
         this.txtSearchDocumentNamesKeyReleased(null);
     }//GEN-LAST:event_cmdClearSearchActionPerformed
-
-    private void splitDocumentsPropertyChange(java.beans.PropertyChangeEvent evt) {//GEN-FIRST:event_splitDocumentsPropertyChange
-        if (!this.initializing) {
-            if (evt.getPropertyName().equals(JSplitPane.DIVIDER_LOCATION_PROPERTY)) {
-                if (this.splitDocuments.getDividerLocation() > 0) {
-                    ClientSettings s = ClientSettings.getInstance();
-                    s.setConfiguration(ClientSettings.CONF_DIVIDERLOCATION_DOCPREVIEW, "" + this.splitDocuments.getDividerLocation());
-                }
-            }
-        }
-    }//GEN-LAST:event_splitDocumentsPropertyChange
 
     private void cmdAddNoteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdAddNoteActionPerformed
         AddNoteDialog dlg = new AddNoteDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.caseFolderPanel1, this.dto, this.tblReviewReasons);

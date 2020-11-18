@@ -859,18 +859,14 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         } catch (Throwable t) {
             log.error("Could not set up timer task for automatic tag updates", t);
         }
+
         this.jSplitPane1.setDividerLocation(0.5d);
-
-        SwingUtilities.invokeLater(
-                new Runnable() {
-            public void run() {
-
-                jSplitPane1.setDividerLocation(0.5d);
-            }
-
-        }
-        );
-        this.jSplitPane1.setDividerLocation(0.5d);
+        
+        ComponentUtils.restoreSplitPane(this.jSplitPane1, this.getClass(), "jSplitPane1");
+        ComponentUtils.restoreSplitPane(this.jSplitPane2, this.getClass(), "jSplitPane2");
+        
+        ComponentUtils.persistSplitPane(this.jSplitPane1, this.getClass(), "jSplitPane1");
+        ComponentUtils.persistSplitPane(this.jSplitPane2, this.getClass(), "jSplitPane2");
 
         UserSettings us = UserSettings.getInstance();
         this.lblUserName.setText(us.getCurrentUser().getPrincipalId());
@@ -1463,7 +1459,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
 
     private void formComponentResized(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentResized
         // TODO add your handling code here:
-        this.jSplitPane1.setDividerLocation(0.5d);
+        //this.jSplitPane1.setDividerLocation(0.5d);
     }//GEN-LAST:event_formComponentResized
 
     public void updateUserIcon() {

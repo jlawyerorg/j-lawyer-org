@@ -917,6 +917,12 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
         Timer timer2 = new Timer();
         TimerTask scannerUploadsTask = new ScannerLocalDocumentsUploadTimerTask();
         timer2.schedule(scannerUploadsTask, 9500, 15000);
+        
+        ComponentUtils.restoreSplitPane(this.splitTop, this.getClass(), "splitTop");
+        ComponentUtils.restoreSplitPane(this.splitMain, this.getClass(), "splitMain");
+        
+        ComponentUtils.persistSplitPane(this.splitTop, this.getClass(), "splitTop");
+        ComponentUtils.persistSplitPane(this.splitMain, this.getClass(), "splitMain");
 
 //        final int numberOfScans=this.tblDirContent.getModel().getRowCount();
 //        new Thread(new Runnable() {
@@ -1105,34 +1111,34 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
             jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(jScrollPane1)
+            .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 584, Short.MAX_VALUE)
             .add(jPanel2Layout.createSequentialGroup()
                 .addContainerGap()
                 .add(chkDeleteAfterAction)
                 .add(18, 18, 18)
-                .add(chkCaseTagging)
+                .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(chkDocumentTagging)
+                    .add(chkCaseTagging))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(cmbCaseTag, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                .add(chkDocumentTagging)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(cmbDocumentTag, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(cmbCaseTag, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(cmbDocumentTag, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel2Layout.createSequentialGroup()
                 .addContainerGap()
-                .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                        .add(chkDocumentTagging)
-                        .add(cmbDocumentTag, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                    .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                        .add(chkCaseTagging)
-                        .add(cmbCaseTag, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .add(chkDeleteAfterAction)))
+                .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(chkCaseTagging)
+                    .add(cmbCaseTag, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(chkDeleteAfterAction))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 395, Short.MAX_VALUE))
+                .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(chkDocumentTagging)
+                    .add(cmbDocumentTag, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 365, Short.MAX_VALUE))
         );
 
         splitMain.setRightComponent(jPanel2);
@@ -1340,40 +1346,6 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
                     }
                 }
             }).start();
-//                try {
-//                    this.pnlPreview.setVisible(false);
-//                    this.pnlPreview.removeAll();
-//                    ThreadUtils.setLayout(pnlPreview, new FlowLayout());
-//                    JProgressBar loading = new JProgressBar();
-//                    loading.setIndeterminate(true);
-//                    this.pnlPreview.add(loading);
-//                    this.pnlPreview.setVisible(true);
-//                    ClientSettings settings = ClientSettings.getInstance();
-//                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-//                    IntegrationServiceRemote is = locator.lookupIntegrationServiceRemote();
-//                    byte[] data = is.getObservedFile(fileName);
-//                    String previewText = is.getObservedFilePreview(fileName);
-//
-//                    JComponent preview = DocumentViewerFactory.getDocumentViewer(fileName, previewText, data, this.pnlPreview.getWidth(), this.pnlPreview.getHeight());
-//                    this.pnlPreview.setVisible(false);
-//                    this.pnlPreview.remove(loading);
-//                    ThreadUtils.setLayout(pnlPreview, new BorderLayout());
-//                    this.pnlPreview.add(preview, BorderLayout.CENTER);
-//                    this.pnlPreview.setVisible(true);
-//                    //this.pnlPreview.setBounds(this.pnlPreview.getBounds());
-//
-//                    //preview.setBounds(0,0,this.pnlPreview.getWidth(),this.pnlPreview.getHeight());
-//                    //this.pnlPreview.revalidate();
-//                    //this.pnlPreview.repaint();
-//                    //System.out.println(pnlPreview.getBounds());
-//                    //System.out.println(preview.getBounds());
-//                } catch (Exception ex) {
-//                    log.error(ex);
-//                    this.pnlPreview.removeAll();
-//                    this.pnlPreview.add(new JLabel("Vorschau nicht verfügbar..."));
-//                    ThreadUtils.showErrorDialog(this, "Fehler beim Generieren der Vorschau: " + ex.getMessage(), "Fehler");
-//
-//                }
 
         }
     }

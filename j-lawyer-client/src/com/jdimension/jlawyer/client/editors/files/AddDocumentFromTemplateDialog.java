@@ -804,6 +804,14 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
         
         this.jSplitPane1.setDividerLocation(0.5d);
         
+        ComponentUtils.restoreSplitPane(splitMain, this.getClass(), "splitMain");
+        ComponentUtils.restoreSplitPane(this.splitPlaceholders, this.getClass(), "splitPlaceholders");
+        ComponentUtils.restoreSplitPane(this.jSplitPane1, this.getClass(), "jSplitPane1");
+        
+        ComponentUtils.persistSplitPane(splitMain, this.getClass(), "splitMain");
+        ComponentUtils.persistSplitPane(this.splitPlaceholders, this.getClass(), "splitPlaceholders");
+        ComponentUtils.persistSplitPane(this.jSplitPane1, this.getClass(), "jSplitPane1");
+        
         try {
             //InitialContext context = new InitialContext(settings.getLookupProperties());
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
@@ -817,7 +825,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
             EditorsRegistry.getInstance().clearStatus();
         }
         
-
+        
         this.initializing = false;
 
     }
