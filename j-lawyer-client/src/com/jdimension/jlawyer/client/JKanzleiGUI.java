@@ -756,10 +756,8 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         b.subscribeConsumer(this, Event.TYPE_BEASTATUS);
         b.subscribeConsumer(this, Event.TYPE_DREBISSTATUS);
 
-        this.scrollMain.getVerticalScrollBar().setUnitIncrement(16);
-        this.scrollMain.getHorizontalScrollBar().setUnitIncrement(16);
-//        this.scrollTree.getVerticalScrollBar().setUnitIncrement(16);
-//        this.scrollTree.getHorizontalScrollBar().setUnitIncrement(16);
+//        this.scrollMain.getVerticalScrollBar().setUnitIncrement(16);
+//        this.scrollMain.getHorizontalScrollBar().setUnitIncrement(16);
 
         ClientSettings settings = ClientSettings.getInstance();
         String randomBackgrounds = UserSettings.getInstance().getSetting(UserSettings.CONF_DESKTOP_RANDOM_BACKGROUND, "0");
@@ -781,7 +779,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         ModuleMetadata rootModule = settings.getRootModule();
 
         EditorsRegistry registry = EditorsRegistry.getInstance();
-        registry.setMainEditorsPane(this.scrollMain);
+        registry.setMainEditorsPane(this.jPanel1);
 
         DefaultTreeModel model = new DefaultTreeModel(rootModule);
 //        this.treeModules.setModel(model);
@@ -1050,7 +1048,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         lblDrebisStatus = new javax.swing.JLabel();
         lblBeaStatus = new javax.swing.JLabel();
         moduleBar = new com.jdimension.jlawyer.client.modulebar.ModuleBar();
-        scrollMain = new javax.swing.JScrollPane();
+        jPanel1 = new javax.swing.JPanel();
         jMenuBar1 = new javax.swing.JMenuBar();
         mnuFile = new javax.swing.JMenu();
         mnuBankImport = new javax.swing.JMenuItem();
@@ -1213,6 +1211,8 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
                 .add(lblBeaStatus))
             .add(org.jdesktop.layout.GroupLayout.TRAILING, lblSystemStatus)
         );
+
+        jPanel1.setLayout(new javax.swing.BoxLayout(jPanel1, javax.swing.BoxLayout.LINE_AXIS));
 
         mnuFile.setText(bundle.getString("menu.file")); // NOI18N
 
@@ -1711,7 +1711,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             .add(layout.createSequentialGroup()
                 .add(moduleBar, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 160, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(scrollMain))
+                .add(jPanel1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
             .add(statusPanel, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
@@ -1719,7 +1719,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             .add(layout.createSequentialGroup()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(moduleBar, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 553, Short.MAX_VALUE)
-                    .add(scrollMain))
+                    .add(jPanel1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(statusPanel, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
         );
@@ -2573,6 +2573,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JMenuBar jMenuBar1;
+    private javax.swing.JPanel jPanel1;
     private javax.swing.JSeparator jSeparator1;
     private javax.swing.JSeparator jSeparator2;
     private javax.swing.JSeparator jSeparator3;
@@ -2644,7 +2645,6 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     private javax.swing.JMenuItem mnuXjustizViewer;
     private javax.swing.JMenuItem mnuZipCodeImport;
     private com.jdimension.jlawyer.client.modulebar.ModuleBar moduleBar;
-    private javax.swing.JScrollPane scrollMain;
     private javax.swing.JLabel statusLabel;
     private javax.swing.JPanel statusPanel;
     // End of variables declaration//GEN-END:variables

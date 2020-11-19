@@ -729,7 +729,7 @@
           <Group type="102" attributes="0">
               <Component id="moduleBar" min="-2" pref="160" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
-              <Component id="scrollMain" max="32767" attributes="0"/>
+              <Component id="jPanel1" max="32767" attributes="0"/>
           </Group>
           <Component id="statusPanel" max="32767" attributes="0"/>
       </Group>
@@ -739,7 +739,7 @@
           <Group type="102" attributes="0">
               <Group type="103" groupAlignment="0" attributes="0">
                   <Component id="moduleBar" pref="553" max="32767" attributes="0"/>
-                  <Component id="scrollMain" max="32767" attributes="0"/>
+                  <Component id="jPanel1" max="32767" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="statusPanel" min="-2" max="-2" attributes="0"/>
@@ -895,9 +895,9 @@
     </Container>
     <Component class="com.jdimension.jlawyer.client.modulebar.ModuleBar" name="moduleBar">
     </Component>
-    <Container class="javax.swing.JScrollPane" name="scrollMain">
+    <Container class="javax.swing.JPanel" name="jPanel1">
 
-      <Layout class="org.netbeans.modules.form.compat2.layouts.support.JScrollPaneSupportLayout"/>
+      <Layout class="org.netbeans.modules.form.compat2.layouts.DesignBoxLayout"/>
     </Container>
   </SubComponents>
 </Form>

@@ -694,30 +694,45 @@ public class DocumentViewerFactory {
         if (fileName.toLowerCase().endsWith(".pdf")) {
             PdfImagePanel pdfP = new PdfImagePanel(fileName, content);
             pdfP.setSize(new Dimension(width, height));
+            pdfP.setMaximumSize(new Dimension(width, height));
+            pdfP.setPreferredSize(new Dimension(width, height));
             pdfP.showContent(content);
             return pdfP;
 
         } else if (fileName.toLowerCase().endsWith(".jpg") || fileName.toLowerCase().endsWith(".jpeg") || fileName.toLowerCase().endsWith(".gif") || fileName.toLowerCase().endsWith(".png")) {
             GifJpegPngImagePanel ip = new GifJpegPngImagePanel(content);
             ip.setSize(width, height);
+            ip.setMaximumSize(new Dimension(width, height));
+            ip.setPreferredSize(new Dimension(width, height));
             ip.showContent(content);
             return ip;
 
         } else if (fileName.toLowerCase().endsWith(".bmp") || fileName.toLowerCase().endsWith(".tif") || fileName.toLowerCase().endsWith(".tiff")) {
             BmpTiffImagePanel ip = new BmpTiffImagePanel(content);
             ip.setSize(width, height);
+            ip.setMaximumSize(new Dimension(width, height));
+            ip.setPreferredSize(new Dimension(width, height));
             ip.showContent(content);
             return ip;
         } else if (fileName.toLowerCase().endsWith(".txt")) {
             PlaintextPanel ptp = new PlaintextPanel();
+            ptp.setSize(new Dimension(width, height));
+            ptp.setMaximumSize(new Dimension(width, height));
+            ptp.setPreferredSize(new Dimension(width, height));
             ptp.showContent(previewContent.getBytes());
             return ptp;
         } else if (fileName.toLowerCase().endsWith(".html") || fileName.toLowerCase().endsWith(".htm")) {
             HtmlPanel hp = new HtmlPanel(id, readOnly);
+            hp.setSize(new Dimension(width, height));
+            hp.setMaximumSize(new Dimension(width, height));
+            hp.setPreferredSize(new Dimension(width, height));
             hp.showContent(content);
             return hp;
         } else if (fileName.toLowerCase().endsWith(".xml") && (fileName.toLowerCase().contains("xjustiz"))) {
             XjustizPanel xjp = new XjustizPanel(id, fileName);
+            xjp.setSize(new Dimension(width, height));
+            xjp.setMaximumSize(new Dimension(width, height));
+            xjp.setPreferredSize(new Dimension(width, height));
             xjp.showContent(content);
             return xjp;
         } else if (fileName.toLowerCase().endsWith(".eml")) {
@@ -727,10 +742,16 @@ public class DocumentViewerFactory {
                 // need to set this to avoid sending read receipts
                 message.setFlag(Flag.SEEN, true);
                 EmailPanel ep = new EmailPanel();
+                ep.setSize(new Dimension(width, height));
+                ep.setMaximumSize(new Dimension(width, height));
+                ep.setPreferredSize(new Dimension(width, height));
                 ep.setMessage(new MessageContainer(message, message.getSubject(), true));
                 return ep;
             } catch (Throwable t) {
                 EmailPanel ep = new EmailPanel();
+                ep.setSize(new Dimension(width, height));
+                ep.setMaximumSize(new Dimension(width, height));
+                ep.setPreferredSize(new Dimension(width, height));
                 ep.showStatus("Vorschau kann nicht geladen werden.");
                 return ep;
             }
@@ -793,6 +814,8 @@ public class DocumentViewerFactory {
                 if (thumbBytes != null) {
                     GifJpegPngImageWithTextPanel ip = new GifJpegPngImageWithTextPanel(thumbBytes, previewContent.getBytes());
                     ip.setSize(width, height);
+                    ip.setMaximumSize(new Dimension(width, height));
+                    ip.setPreferredSize(new Dimension(width, height));
                     ip.showContent(thumbBytes);
                     return ip;
 //                    GifJpegPngImagePanel ip = new GifJpegPngImagePanel(thumbBytes);
@@ -806,11 +829,17 @@ public class DocumentViewerFactory {
         } else if (fileName.toLowerCase().endsWith(".bea")) {
             try {
                 BeaPanel bp = new BeaPanel(id);
+                bp.setSize(new Dimension(width, height));
+                bp.setMaximumSize(new Dimension(width, height));
+                bp.setPreferredSize(new Dimension(width, height));
                 bp.showContent(content);
                 return bp;
             } catch (Throwable t) {
                 log.error(t);
                 BeaPanel bp = new BeaPanel(null);
+                bp.setSize(new Dimension(width, height));
+                bp.setMaximumSize(new Dimension(width, height));
+                bp.setPreferredSize(new Dimension(width, height));
                 bp.showStatus("Vorschau kann nicht geladen werden.");
                 return bp;
             }
@@ -843,6 +872,9 @@ public class DocumentViewerFactory {
         }
         // plain text preview is default
         PlaintextPanel ptp = new PlaintextPanel();
+        ptp.setSize(new Dimension(width, height));
+        ptp.setMaximumSize(new Dimension(width, height));
+        ptp.setPreferredSize(new Dimension(width, height));
 
         //ptp.showStatus("Vorschau wird geladen...");
         // we just reuse the showStatus method because it is doing the same thing

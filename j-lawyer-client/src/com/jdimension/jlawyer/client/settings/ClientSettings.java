@@ -702,9 +702,6 @@ public class ClientSettings {
     
     public static final String CONF_HEIGHT="client.height";
     public static final String CONF_WIDTH="client.width";
-    //public static final String CONF_DIVIDERLOCATION="client.dividerlocation";
-    
-    //public static final String CONF_DIVIDERLOCATION_DOCPREVIEW="client.dividerlocation.case.docpreview";
     
     public static final String CONF_UI_FONTSIZEOFFSET="client.ui.fontsizeoffset";
     

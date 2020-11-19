@@ -1626,6 +1626,8 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
             this.lblUpdateStatus.addMouseListener(((AutoUpdateEvent) e).getMouseListener());
             this.lblUpdateStatus.setText("1 Update");
             this.lblUpdateStatus.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+            this.revalidate();
+            this.repaint();
             
         } else if (e instanceof NewsEvent) {
             this.lblNewsStatus.setIcon(((NewsEvent) e).getIcon());
@@ -1633,6 +1635,8 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
             this.lblNewsStatus.addMouseListener(((NewsEvent) e).getMouseListener());
             this.lblNewsStatus.setText("News");
             this.lblNewsStatus.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+            this.revalidate();
+            this.repaint();
         } else if (e instanceof ScannerStatusEvent) {
             //this.lblScans.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/scanner_big.png")));
             this.lblScans.setText("" + ((ScannerStatusEvent) e).getFileNames().size());
@@ -1641,6 +1645,8 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
                 this.lblScans.setEnabled(true);
             else
                 this.lblScans.setEnabled(false);
+            this.revalidate();
+            this.repaint();
         } else if (e instanceof FaxFailedEvent) {
             FaxQueueBean fb = ((FaxFailedEvent) e).getFax();
             JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fax an " + fb.getRemoteName() + " konnte nicht gesendet werden!", "Fehler", JOptionPane.ERROR_MESSAGE);
@@ -1665,11 +1671,17 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
             else
                 this.lblFaxStatus.setEnabled(false);
 
+            this.revalidate();
+            this.repaint();
+            
         } else if (e instanceof EmailStatusEvent) {
             //this.lblUnreadMail.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/Icons2-30.png")));
             this.lblUnreadMail.setText("" + ((EmailStatusEvent) e).getUnread());
             this.lblUnreadMail.setToolTipText(((EmailStatusEvent) e).getUnread() + " " + java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/editors/EditorsRegistry").getString("status.unreadmails"));
             this.lblUnreadMail.setEnabled(true);
+            
+            this.revalidate();
+            this.repaint();
         } else if(e instanceof BeaStatusEvent) {
             this.lblUnreadBea.setEnabled(true);
             if(((BeaStatusEvent) e).getUnread()>0) {
@@ -1679,6 +1691,9 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
                 this.lblUnreadBea.setText("");
                 this.lblUnreadBea.setToolTipText("keine ungelesenen beA-Nachrichten");
             }
+            
+            this.revalidate();
+            this.repaint();
         } else if(e instanceof DrebisStatusEvent) {
             
             if(((DrebisStatusEvent) e).getMessages()>0) {
@@ -1689,6 +1704,9 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
                 this.lblUnreadDrebis.setText("");
                 this.lblUnreadDrebis.setToolTipText("keine ungelesenen Drebis-Nachrichten");
             }
+            
+            this.revalidate();
+            this.repaint();
         }
     }
 
