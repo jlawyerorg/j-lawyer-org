@@ -887,6 +887,20 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 item.setSelected(!item.isSelected());
                 // Repaint cell
                 list.repaint(list.getCellBounds(index, index));
+                
+                int selectionCount=0;
+                String selectedItemText="";
+                for(int i=0;i<list.getModel().getSize();i++) {
+                    CheckboxListItem cli = (CheckboxListItem) list.getModel().getElementAt(i);
+                    if(cli.isSelected()) {
+                        selectionCount++;
+                        selectedItemText=cli.toString();
+                    }
+                }
+                if(selectionCount==1)
+                    txtReviewReason.setText(selectedItemText);
+                else
+                    txtReviewReason.setText("");
             }
         });
 
@@ -3421,17 +3435,28 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             EditorsRegistry.getInstance().updateStatus("Wiedervorlage/Frist wird gespeichert...");
 
             try {
-                if (!StringUtils.isEmpty(this.txtReviewReason.getText())) {
-                    this.addReview(this.txtReviewReason.getText(), d);
-                }
+                int selectionCount=0;
                 for (int i = 0; i < ((DefaultListModel) this.lstReviewReasons.getModel()).size(); i++) {
                     CheckboxListItem item = (CheckboxListItem) ((DefaultListModel) this.lstReviewReasons.getModel()).getElementAt(i);
                     if (item.isSelected()) {
-                        this.addReview(item.toString(), d);
+                        selectionCount++;
                     }
-                    item.setSelected(false);
+                }
+                
+                if (selectionCount<=1 && !StringUtils.isEmpty(this.txtReviewReason.getText())) {
+                    this.addReview(this.txtReviewReason.getText(), d);
+                } else {
+                    if(!StringUtils.isEmpty(this.txtReviewReason.getText()))
+                        this.addReview(this.txtReviewReason.getText(), d);
+                    for (int i = 0; i < ((DefaultListModel) this.lstReviewReasons.getModel()).size(); i++) {
+                        CheckboxListItem item = (CheckboxListItem) ((DefaultListModel) this.lstReviewReasons.getModel()).getElementAt(i);
+                        if (item.isSelected()) {
+                            this.addReview(item.toString(), d);
+                        }
+                        item.setSelected(false);
 
-                    this.lstReviewReasons.repaint(this.lstReviewReasons.getCellBounds(i, i));
+                        this.lstReviewReasons.repaint(this.lstReviewReasons.getCellBounds(i, i));
+                    }
                 }
 
             } catch (Exception ex) {
