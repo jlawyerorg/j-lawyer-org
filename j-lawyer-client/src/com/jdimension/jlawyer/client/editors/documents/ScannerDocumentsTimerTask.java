@@ -681,40 +681,43 @@ import org.apache.log4j.Logger;
 public class ScannerDocumentsTimerTask extends java.util.TimerTask {
 
     private static final Logger log = Logger.getLogger(ScannerDocumentsTimerTask.class.getName());
-    private ArrayList<String> lastFiles = new ArrayList<String>();
-
+    private static ArrayList<String> lastFiles = new ArrayList<String>();
+    private boolean bypassCache=false;
+    
     /**
      * Creates a new instance of SystemStateTimerTask
      */
-    public ScannerDocumentsTimerTask() {
+    public ScannerDocumentsTimerTask(boolean bypassCache) {
         super();
+        this.bypassCache=bypassCache;
 
     }
 
     public void run() {
-        try {
-            ClientSettings settings = ClientSettings.getInstance();
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            Hashtable<File, Date> files = locator.lookupSingletonServiceRemote().getObservedFiles();
+        synchronized (this) {
+            try {
+                ClientSettings settings = ClientSettings.getInstance();
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                Hashtable<File, Date> files = locator.lookupSingletonServiceRemote().getObservedFiles(this.bypassCache);
 
-            ArrayList<String> currentFiles = new ArrayList<String>();
-            for (File f : files.keySet()) {
-                currentFiles.add(f.getName());
+                ArrayList<String> currentFiles = new ArrayList<String>();
+                for (File f : files.keySet()) {
+                    currentFiles.add(f.getName());
+                }
+                Collections.sort(currentFiles);
+
+                if (!currentFiles.equals(lastFiles)) {
+
+                    EventBroker eb = EventBroker.getInstance();
+                    eb.publishEvent(new ScannerStatusEvent(files));
+                }
+                this.lastFiles = currentFiles;
+
+            } catch (Throwable ex) {
+                log.error("Error connecting to server", ex);
+
             }
-            Collections.sort(currentFiles);
-
-            if (!currentFiles.equals(lastFiles)) {
-
-                EventBroker eb = EventBroker.getInstance();
-                eb.publishEvent(new ScannerStatusEvent(files));
-            }
-            this.lastFiles = currentFiles;
-
-        } catch (Throwable ex) {
-            log.error("Error connecting to server", ex);
-
         }
-
     }
 
 }

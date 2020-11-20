@@ -668,6 +668,8 @@ import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.services.IntegrationServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import java.util.Timer;
+import java.util.TimerTask;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
 import org.apache.log4j.Logger;
@@ -705,15 +707,17 @@ public class DeleteScanAction extends ScanAction {
                     DefaultTableModel model = new DefaultTableModel(colNames, 0);
                     ThreadUtils.setTableModel(this.actionsTable, model);
 
-                    DefaultTableModel filesModel = (DefaultTableModel) filesTable.getModel();
-                    int selectedRow=filesTable.getSelectedRow();
-                    if(selectedRow<0) {
-                        // nothing selected - table probably already refreshed by a message from the server
-                    } else {
-                        filesModel.removeRow(filesTable.convertRowIndexToModel(selectedRow));
-                    }
+//                    DefaultTableModel filesModel = (DefaultTableModel) filesTable.getModel();
+//                    int selectedRow=filesTable.getSelectedRow();
+//                    if(selectedRow<0) {
+//                        // nothing selected - table probably already refreshed by a message from the server
+//                    } else {
+//                        filesModel.removeRow(filesTable.convertRowIndexToModel(selectedRow));
+//                    }
+                    Timer timer = new Timer();
+                    TimerTask scannerTask = new ScannerDocumentsTimerTask(true);
+                    timer.schedule(scannerTask, 1);
 
-                    //EditorsRegistry.getInstance().updateScanStatus(filesModel.getRowCount());
                 }
 
             } catch (Throwable ex) {

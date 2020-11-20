@@ -700,6 +700,10 @@ public interface SingletonServiceRemote {
     void setSystemStatus(int status);
 
     Hashtable<File,Date> getObservedFiles();
+    
+    Hashtable<File,Date> getObservedFiles(boolean bypassCache);
+    
+    void updateObservedFiles();
 
     void setObservedFiles(Hashtable<File,Date> fileNames);
 

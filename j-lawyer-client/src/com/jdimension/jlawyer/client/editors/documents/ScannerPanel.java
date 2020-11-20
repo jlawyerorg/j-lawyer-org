@@ -911,7 +911,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
         //ThreadUtils.setSplitDividerLocation(this.splitTop, (int) tblDirContent.getPreferredSize().getWidth());
         
         Timer timer = new Timer();
-        TimerTask scannerTask = new ScannerDocumentsTimerTask();
+        TimerTask scannerTask = new ScannerDocumentsTimerTask(false);
         timer.schedule(scannerTask, 6500, 15000);
         
         Timer timer2 = new Timer();
