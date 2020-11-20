@@ -3147,32 +3147,73 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
     }//GEN-LAST:event_txtDeathDateFocusLost
 
     private void updateAge() {
+        Date birth = null;
+        Date death = null;
         SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
         boolean dead = false;
         if (this.txtDeathDate.getText() != null && !("".equalsIgnoreCase(this.txtDeathDate.getText().trim()))) {
             try {
-                Date deathDate = df.parse(this.txtDeathDate.getText());
-                if (deathDate.before(new Date())) {
+                death = df.parse(this.txtDeathDate.getText());
+                if (death.before(new Date())) {
                     dead = true;
                 }
             } catch (Throwable t) {
 
             }
         }
-        int age = AddressBean.calculateAge(this.txtBirthDate.getText());
-        this.lblAge.setIcon(null);
-        if(dead) {
-            if(age>-1) {
+
+        if (this.txtBirthDate.getText() != null && !("".equalsIgnoreCase(this.txtBirthDate.getText().trim()))) {
+            try {
+                birth = df.parse(this.txtBirthDate.getText());
+            } catch (Throwable t) {
+
+            }
+        }
+
+        int age = -1;
+        if (birth != null && death != null) {
+            Calendar c = Calendar.getInstance();
+            c.setTime(birth);
+            int year = c.get(Calendar.YEAR);
+            int month = c.get(Calendar.MONTH) + 1;
+            int date = c.get(Calendar.DATE);
+            LocalDate l1 = LocalDate.of(year, month, date);
+
+            Calendar c2 = Calendar.getInstance();
+            c2.setTime(death);
+            int year2 = c2.get(Calendar.YEAR);
+            int month2 = c2.get(Calendar.MONTH) + 1;
+            int date2 = c2.get(Calendar.DATE);
+            LocalDate l2 = LocalDate.of(year2, month2, date2);
+
+            Period diff1 = Period.between(l1, l2);
+            age = diff1.getYears();
+        } else if (birth != null) {
+            Calendar c = Calendar.getInstance();
+            c.setTime(birth);
+            int year = c.get(Calendar.YEAR);
+            int month = c.get(Calendar.MONTH) + 1;
+            int date = c.get(Calendar.DATE);
+            LocalDate l1 = LocalDate.of(year, month, date);
+            LocalDate now1 = LocalDate.now();
+            Period diff1 = Period.between(l1, now1);
+            age = diff1.getYears();
+        }
+
+        if (dead) {
+            if (age > -1 && age >=18) {
                 this.lblAge.setText("<html><b>verstorben (" + age + " J.)</b></html>");
+            } else if(age > -1 && age <18) {
+                this.lblAge.setText("<html><b>minderjährig verstorben (" + age + " J.)</b></html>");
             } else {
                 this.lblAge.setText("<html><b>verstorben</b></html>");
             }
             this.lblAge.setFont(this.lblAge.getFont().deriveFont(Font.BOLD));
-        } else if(age>-1) {
-            StringBuffer sb=new StringBuffer();
+        } else if (age > -1) {
+            StringBuffer sb = new StringBuffer();
             sb.append("<html>");
-            sb.append("<b>").append("Alter: "+age).append(" Jahre</b><br/>");
-            if(age<18) {
+            sb.append("<b>").append("Alter: " + age).append(" Jahre</b><br/>");
+            if (age < 18) {
                 sb.append("<font color=\"red\">minderj&auml;hrig</font>");
                 this.lblAge.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_child_care_black_20.png")));
             }
@@ -3181,6 +3222,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         } else {
             this.lblAge.setText("");
         }
+
     }
 
     private void enableEmailButton() {
@@ -3622,8 +3664,9 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
             g = AddressBean.GENDER_LEGALENTITY;
         }
         if (!StringUtils.equals(dto.getGender(), g)) {
-            if(!(dto.getGender() == null && AddressBean.GENDER_UNDEFINED.equals(g)))
+            if (!(dto.getGender() == null && AddressBean.GENDER_UNDEFINED.equals(g))) {
                 return true;
+            }
         }
         if (!StringUtils.equals(dto.getStreetNumber(), this.txtStreetNr.getText())) {
             return true;
