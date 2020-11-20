@@ -801,7 +801,8 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
 //            this.splitMain.setDividerLocation(this.splitMain.getWidth()/2);
 //            this.splitPlaceholders.setDividerLocation(this.splitPlaceholders.getHeight()/2);
         
-        
+        ComponentUtils.restoreDialogSize(this);
+
         this.jSplitPane1.setDividerLocation(0.5d);
         
         ComponentUtils.restoreSplitPane(splitMain, this.getClass(), "splitMain");
