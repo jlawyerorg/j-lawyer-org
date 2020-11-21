@@ -679,6 +679,8 @@ public class TransientTimer {
     private Timer timerBackup=null;
     private Timer timerSync=null;
     private Timer timerObserver=null;
+    private Timer timerMonitor=null;
+    private Timer timerFax=null;
     
     private TransientTimer() {
         
@@ -716,11 +718,21 @@ public class TransientTimer {
             // start after 20s and run every 12s
             timerObserver.schedule(new DirectoryObserverTask(), 20000, 12000);
             
+        }
+        
+        if(timerMonitor==null) {
+            timerMonitor=new Timer();
+            
             // start after 25s and run every 10mins
-            timerObserver.schedule(new SystemMonitorTask(), 25000, 60000*10);
+            timerMonitor.schedule(new SystemMonitorTask(), 25000, 60000*10);
+            
+        }
+        
+        if(timerFax==null) {
+            timerFax=new Timer();
             
             // start after 30s and run every 12s
-            timerObserver.schedule(new FaxQueueStatusTask(), 30000, 12000);
+            timerFax.schedule(new FaxQueueStatusTask(), 30000, 12000);
             
         }
     }
@@ -740,6 +752,12 @@ public class TransientTimer {
         
         if(timerObserver!=null)
             timerObserver.cancel();
+        
+        if(timerMonitor!=null)
+            timerMonitor.cancel();
+        
+        if(timerFax!=null)
+            timerFax.cancel();
     }
     
 }
