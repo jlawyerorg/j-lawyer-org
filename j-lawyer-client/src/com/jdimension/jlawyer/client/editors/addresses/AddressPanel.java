@@ -3216,6 +3216,8 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
             if (age < 18) {
                 sb.append("<font color=\"red\">minderj&auml;hrig</font>");
                 this.lblAge.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_child_care_black_20.png")));
+            } else {
+                this.lblAge.setIcon(null);
             }
             sb.append("</html>");
             this.lblAge.setText(sb.toString());
