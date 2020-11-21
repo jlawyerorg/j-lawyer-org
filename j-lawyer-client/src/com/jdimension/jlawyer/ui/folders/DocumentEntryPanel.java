@@ -761,6 +761,12 @@ public class DocumentEntryPanel extends javax.swing.JPanel {
         lblFavorite = new javax.swing.JLabel();
         lblFolder = new javax.swing.JLabel();
 
+        addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                formMouseClicked(evt);
+            }
+        });
+
         lblFileIcon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/fileicons/file_type_odt.png"))); // NOI18N
         lblFileIcon.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         lblFileIcon.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -775,6 +781,7 @@ public class DocumentEntryPanel extends javax.swing.JPanel {
             }
         });
 
+        lblFileName.setFont(new java.awt.Font("Dialog", 1, 13)); // NOI18N
         lblFileName.setText("document.odt");
         lblFileName.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         lblFileName.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -860,7 +867,7 @@ public class DocumentEntryPanel extends javax.swing.JPanel {
                             .addComponent(lblFileIcon)
                             .addComponent(lblFileName)
                             .addComponent(lblFavorite))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGap(1, 1, 1)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(lblCreationDate)
                             .addComponent(lblDictateSign)
@@ -902,19 +909,7 @@ public class DocumentEntryPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_lblFileNameMouseClicked
 
     private void lblFileIconMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblFileIconMouseClicked
-        if (evt.getModifiers() == evt.BUTTON2_MASK || evt.getModifiers() == evt.BUTTON2_DOWN_MASK || evt.getModifiers() == evt.BUTTON3_MASK || evt.getModifiers() == evt.BUTTON3_DOWN_MASK) {
-            if(this.documentsContainer.getSelectedDocuments().size()==0)
-                this.documentClicked(evt, true);
-            this.caseContainer.showDocumentsPopup(evt);
-        } else if ((evt.getModifiers() & InputEvent.SHIFT_MASK) == InputEvent.SHIFT_MASK) {
-            
-            this.documentRangeClicked(evt);
-            
-        } else if ((evt.getModifiers() & InputEvent.CTRL_MASK) == InputEvent.CTRL_MASK) {
-            this.documentClicked(evt, false);
-        } else {
-            this.documentClicked(evt, true);
-        }
+        this.lblFileNameMouseClicked(evt);
     }//GEN-LAST:event_lblFileIconMouseClicked
 
     private void chkSelectedActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkSelectedActionPerformed
@@ -981,6 +976,10 @@ public class DocumentEntryPanel extends javax.swing.JPanel {
             this.caseContainer.documentSelectionChanged();
         }
     }//GEN-LAST:event_chkSelectedKeyReleased
+
+    private void formMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_formMouseClicked
+        this.lblFileNameMouseClicked(evt);
+    }//GEN-LAST:event_formMouseClicked
 
     private void documentUnClicked(MouseEvent evt) {
         this.caseContainer.documentSelectionChanged();
