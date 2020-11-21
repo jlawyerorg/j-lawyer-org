@@ -946,6 +946,9 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
         }
         // required to be able to drop on an empty table
         this.tblAttachments.setFillsViewportHeight(true);
+        
+        ComponentUtils.restoreSplitPane(jSplitPane1, this.getClass(), "jSplitPane1");
+        ComponentUtils.persistSplitPane(jSplitPane1, this.getClass(), "jSplitPane1");
 
     }
 

@@ -972,6 +972,9 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
             doctaggingEnabled = true;
             this.chkDocumentTagging.setSelected(true);
         }
+        
+        ComponentUtils.restoreSplitPane(jSplitPane1, this.getClass(), "jSplitPane1");
+        ComponentUtils.persistSplitPane(jSplitPane1, this.getClass(), "jSplitPane1");
 
     }
     
@@ -1226,7 +1229,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
             }
         });
 
-        jSplitPane1.setResizeWeight(0.75);
+        jSplitPane1.setResizeWeight(0.5);
 
         jLabel2.setText("An:");
 
