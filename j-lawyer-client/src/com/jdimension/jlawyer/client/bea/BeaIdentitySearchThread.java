@@ -668,6 +668,7 @@ import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import java.awt.Component;
+import java.util.ArrayList;
 import java.util.Collection;
 import javax.swing.JLabel;
 import javax.swing.JTable;
@@ -707,8 +708,9 @@ public class BeaIdentitySearchThread implements Runnable {
 
     public void run() {
         Collection<Identity> dtos=null;
+        BeaAccess bea=null;
         try {
-            BeaAccess bea=BeaAccess.getInstance();
+            bea=BeaAccess.getInstance();
             dtos=bea.searchIdentity(qFirstName, qName, qUserName, qCity, qZipCode, qOfficeName);
             //addressService.remove();
         } catch (Exception ex) {
@@ -721,14 +723,31 @@ public class BeaIdentitySearchThread implements Runnable {
             return;
         }
         
+        long start=System.currentTimeMillis();
+        // search service does not return emails - let's load the details of all matching identities, but only if it takes less than 5s
+        ArrayList<Identity> fullDtos=new ArrayList<>(dtos);
+        for(int i=0;i<fullDtos.size();i++) {
+            Identity ident=fullDtos.get(i);
+            try {
+                Identity full=bea.getIdentity(ident.getSafeId());
+                fullDtos.set(i, full);
+            } catch (Throwable t) {
+                log.error("Error retrieving full identity information for identity " + ident.getSafeId(), t);
+            }
+            if((System.currentTimeMillis()-start)>3500) {
+                log.info("skipping full identity loading after 3.5s");
+                break;
+            }
+        }
+        
         String[] colNames=new String[] {"Name", "Vorname", "Nutzername", "PLZ", "Ort", "Strasse", "Typ", "Kanzleiname", "E-Mail"};
         QuickAddressSearchTableModel model=new QuickAddressSearchTableModel(colNames, 0);
-        for(Identity i: dtos) {
+        for(Identity i: fullDtos) {
             Object[] row=new Object[]{new BeaIdentitySearchRowIdentifier(i), i.getFirstName(), i.getUserName(), i.getZipCode(), i.getCity(), StringUtils.nonEmpty(i.getStreet()) + " " + StringUtils.nonEmpty(i.getStreetNumber()), i.getType(), StringUtils.nonEmpty(i.getOfficeName()), StringUtils.nonEmpty(i.getEmail())};
             model.addRow(row);
         }
-        if(dtos.size()>0) {
-            ThreadUtils.setLabel(errors, dtos.size() + " Ergebnisse");
+        if(fullDtos.size()>0) {
+            ThreadUtils.setLabel(errors, fullDtos.size() + " Ergebnisse");
             ThreadUtils.setTableModel(this.target, model, 0, 0);
             ThreadUtils.requestFocus(target);
             
