@@ -817,6 +817,7 @@ public class MassMailPanel extends javax.swing.JPanel implements ThemeableEditor
             }
         });
 
+        jLabel1.setForeground(new java.awt.Color(255, 255, 255));
         jLabel1.setText("Serie:");
 
         cmdAddCampaign.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit_add.png"))); // NOI18N
@@ -834,6 +835,7 @@ public class MassMailPanel extends javax.swing.JPanel implements ThemeableEditor
             }
         });
 
+        lblFolder.setForeground(new java.awt.Color(255, 255, 255));
         lblFolder.setText(" ");
 
         cmdAddContacts.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/vcard.png"))); // NOI18N

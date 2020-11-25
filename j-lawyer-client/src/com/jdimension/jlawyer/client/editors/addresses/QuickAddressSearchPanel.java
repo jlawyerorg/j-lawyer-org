@@ -833,6 +833,7 @@ public class QuickAddressSearchPanel extends javax.swing.JPanel implements Theme
         });
         popupAddressActions.add(mnuDeleteSelectedAddresses);
 
+        jLabel1.setForeground(new java.awt.Color(255, 255, 255));
         jLabel1.setText("Suchanfrage:");
 
         txtSearchString.addKeyListener(new java.awt.event.KeyAdapter() {

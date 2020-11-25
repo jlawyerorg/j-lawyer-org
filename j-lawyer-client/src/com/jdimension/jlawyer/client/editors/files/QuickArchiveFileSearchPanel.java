@@ -848,6 +848,7 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
             }
         });
 
+        jLabel1.setForeground(new java.awt.Color(255, 255, 255));
         jLabel1.setText("Suchanfrage:");
 
         txtSearchString.addKeyListener(new java.awt.event.KeyAdapter() {
