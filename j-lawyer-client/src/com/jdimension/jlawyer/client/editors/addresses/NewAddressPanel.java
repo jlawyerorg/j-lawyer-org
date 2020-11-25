@@ -708,7 +708,7 @@ public class NewAddressPanel extends AddressPanel implements ResetOnDisplayEdito
     }
     
     public void setCountry(String country) {
-        this.txtCountry.setText(country);
+        this.cmbCountry.setSelectedItem(country);
     }
     
     public void setCity(String city) {
@@ -759,7 +759,7 @@ public class NewAddressPanel extends AddressPanel implements ResetOnDisplayEdito
         if (!StringUtils.isEmpty((String) this.cmbTitle.getSelectedItem())) {
             return true;
         }
-        if (!StringUtils.isEmpty(this.txtCountry.getText())) {
+        if (!StringUtils.isEmpty(this.cmbCountry.getSelectedItem().toString())) {
             return true;
         }
         if (!StringUtils.isEmpty(this.txtEmail.getText())) {

@@ -668,6 +668,7 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.LayoutManager;
+import java.util.Arrays;
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableModel;
@@ -810,6 +811,16 @@ public class ThreadUtils {
 
             public void run() {
                 list.setModel(model);
+            }
+        });
+    }
+    
+    public static void selectRadioButton(final JRadioButton radio, boolean selected) {
+        SwingUtilities.invokeLater(
+                new Runnable() {
+
+            public void run() {
+                radio.setSelected(selected);
             }
         });
     }
@@ -1043,7 +1054,17 @@ public class ThreadUtils {
             }
         });
     }
+    
+    public static void addComboBoxItem(final JComboBox cmb, Object item) {
+        SwingUtilities.invokeLater(
+                new Runnable() {
 
+            public void run() {
+                cmb.addItem(item);
+            }
+        });
+    }
+    
     public static void repaintComponent(final JComponent c) {
         SwingUtilities.invokeLater(
                 new Runnable() {

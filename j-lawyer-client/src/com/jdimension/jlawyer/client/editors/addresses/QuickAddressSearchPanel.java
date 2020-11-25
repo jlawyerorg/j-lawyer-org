@@ -664,7 +664,6 @@
 package com.jdimension.jlawyer.client.editors.addresses;
 
 import com.jdimension.jlawyer.client.configuration.PopulateOptionsEditor;
-import com.jdimension.jlawyer.client.desktop.TaggedTimerTask;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.ThemeableEditor;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
@@ -725,7 +724,7 @@ public class QuickAddressSearchPanel extends javax.swing.JPanel implements Theme
         } else {
             this.detailsEditorClass = ViewAddressDetailsPanel.class.getName();
         }
-        String[] colNames = new String[]{"Name", "Vorname", "Firma", "Abteilung", "PLZ", "Ort", "Strasse", "Land", "Etiketten"};
+        String[] colNames = new String[]{"Name", "Vorname", "Unternehmen", "Abteilung", "PLZ", "Ort", "Strasse", "Land", "Etiketten"};
         QuickAddressSearchTableModel model = new QuickAddressSearchTableModel(colNames, 0);
         this.tblResults.setModel(model);
 
@@ -754,7 +753,7 @@ public class QuickAddressSearchPanel extends javax.swing.JPanel implements Theme
 
     public void clearInputs() {
         this.txtSearchString.setText("");
-        String[] colNames = new String[]{"Name", "Vorname", "Firma", "Abteilung", "PLZ", "Ort", "Strasse", "Land", "Etiketten"};
+        String[] colNames = new String[]{"Name", "Vorname", "Unternehmen", "Abteilung", "PLZ", "Ort", "Strasse", "Land", "Etiketten"};
         QuickAddressSearchTableModel model = new QuickAddressSearchTableModel(colNames, 0);
         this.tblResults.setModel(model);
     }
@@ -834,6 +833,7 @@ public class QuickAddressSearchPanel extends javax.swing.JPanel implements Theme
         });
         popupAddressActions.add(mnuDeleteSelectedAddresses);
 
+        jLabel1.setForeground(new java.awt.Color(255, 255, 255));
         jLabel1.setText("Suchanfrage:");
 
         txtSearchString.addKeyListener(new java.awt.event.KeyAdapter() {

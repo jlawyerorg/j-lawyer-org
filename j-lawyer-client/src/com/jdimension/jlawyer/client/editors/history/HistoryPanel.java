@@ -666,6 +666,7 @@ package com.jdimension.jlawyer.client.editors.history;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.ThemeableEditor;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
@@ -678,104 +679,105 @@ import org.apache.log4j.Logger;
 
 /**
  *
- * @author  jens
+ * @author jens
  */
 public class HistoryPanel extends javax.swing.JPanel implements ThemeableEditor {
-    
-    private static final Logger log=Logger.getLogger(HistoryPanel.class.getName());
-    
+
+    private static final Logger log = Logger.getLogger(HistoryPanel.class.getName());
+
     private String detailsEditorClass;
-    private Image backgroundImage=null;
-    
-    private String principalId=null;
-    
-    private Date intervalMin=null;
-    private Date intervalMax=null;
-    
-    private Date lowerDate=null;
-    private Date upperDate=null;
-    
-    private int lowerValue=-1;
-    private int upperValue=-1;
-    
-    private SimpleDateFormat df=new SimpleDateFormat("dd.MM.yyyy HH:mm");
-    
-    
+    private Image backgroundImage = null;
+
+    private String principalId = null;
+
+    private Date intervalMin = null;
+    private Date intervalMax = null;
+
+    private Date lowerDate = null;
+    private Date upperDate = null;
+
+    private int lowerValue = -1;
+    private int upperValue = -1;
+
+    private SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy HH:mm");
+
     /**
      * Creates new form QuickArchiveFileSearchPanel
      */
-    public HistoryPanel(String principalId, String dialogTitle) {
-        this.principalId=principalId;
+    public HistoryPanel() {
+
         initComponents();
-        
-        if(this.getClass().getName().equals(MyHistoryPanel.class.getName())) {
-            jLabel18.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/history_big_my.png")));
+        this.jScrollPane1.getVerticalScrollBar().setUnitIncrement(16);
+
+        if (this.chkOnlyMine.isSelected()) {
+            this.principalId = UserSettings.getInstance().getCurrentUser().getPrincipalId();
         } else {
-            jLabel18.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/history_big.png")));
+            this.principalId = null;
         }
-        
-        this.lblPanelTitle.setText(dialogTitle);
-        
+
+//        if (this.getClass().getName().equals(MyHistoryPanel.class.getName())) {
+//            jLabel18.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/history_big_my.png")));
+//        } else {
+            jLabel18.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/history_big.png")));
+//        }
+
+//        this.lblPanelTitle.setText(dialogTitle);
+
         try {
-            ClientSettings settings=ClientSettings.getInstance();
-            JLawyerServiceLocator locator=JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+
             //ArchiveFileServiceRemoteHome home = (ArchiveFileServiceRemoteHome)locator.getRemoteHome("ejb/ArchiveFileServiceBean", ArchiveFileServiceRemoteHome.class);
             ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
-            Date[] date=fileService.getHistoryInterval(this.principalId);
-            
-            
-            if(date[0]!=null) {
+            Date[] date = fileService.getHistoryInterval(this.principalId);
+
+            if (date[0] != null) {
                 this.lblMinDate.setText(df.format(date[0]));
-                this.intervalMin=date[0];
+                this.intervalMin = date[0];
             }
-            if(date[1]!=null) {
+            if (date[1] != null) {
 //                this.lblMaxDate.setText(df.format(date[1]));
 //                this.intervalMax=date[1];
-                
-                Date now=new Date();
+
+                Date now = new Date();
                 this.lblMaxDate.setText(df.format(now));
-                this.intervalMax=now;
+                this.intervalMax = now;
             }
-            
+
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);
             //JOptionPane.showMessageDialog(this.owner, "Verbindungsfehler: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
             ThreadUtils.showErrorDialog(this, ex.getMessage(), "Fehler");
             return;
         }
-        
-        
-        
-        long intervalDiff=this.intervalMax.getTime() - this.intervalMin.getTime();
-        float percentage=(4f*7f*24f*60f*60f*1000f) / (float)intervalDiff;
-        
-        
-        
+
+        long intervalDiff = this.intervalMax.getTime() - this.intervalMin.getTime();
+        float percentage = (4f * 7f * 24f * 60f * 60f * 1000f) / (float) intervalDiff;
+
         this.historyIntervalSlider.setUpperValue(this.historyIntervalSlider.getMaximum());
-        this.historyIntervalSlider.setValue(this.historyIntervalSlider.getMaximum()-Math.max((int)(percentage*100),1));
+        this.historyIntervalSlider.setValue(this.historyIntervalSlider.getMaximum() - Math.max((int) (percentage * 100), 1));
         //this.cmdRefreshActionPerformed(null);
-        
+
         /*RowSorter<TableModel> sorter = new TableRowSorter<TableModel>(model);
         this.tblResults.setRowSorter(sorter);*/
     }
-    
+
     public void setBackgroundImage(Image image) {
-        this.backgroundImage=image;
-        
-        
+        this.backgroundImage = image;
+
     }
-    
+
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
-        if(this.backgroundImage != null)
-            g.drawImage(this.backgroundImage, 0,0,this.getWidth(),this.getHeight(),this);
+        if (this.backgroundImage != null) {
+            g.drawImage(this.backgroundImage, 0, 0, this.getWidth(), this.getHeight(), this);
+        }
     }
-    
-    /** This method is called from within the constructor to
-     * initialize the form.
-     * WARNING: Do NOT modify this code. The content of this method is
-     * always regenerated by the Form Editor.
+
+    /**
+     * This method is called from within the constructor to initialize the form.
+     * WARNING: Do NOT modify this code. The content of this method is always
+     * regenerated by the Form Editor.
      */
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
@@ -790,6 +792,7 @@ public class HistoryPanel extends javax.swing.JPanel implements ThemeableEditor 
         pnlEntries = new javax.swing.JPanel();
         cmbMaxEntries = new javax.swing.JComboBox();
         cmdRefresh = new javax.swing.JButton();
+        chkOnlyMine = new javax.swing.JCheckBox();
 
         addComponentListener(new java.awt.event.ComponentAdapter() {
             public void componentResized(java.awt.event.ComponentEvent evt) {
@@ -801,7 +804,7 @@ public class HistoryPanel extends javax.swing.JPanel implements ThemeableEditor 
 
         lblPanelTitle.setFont(new java.awt.Font("Dialog", 1, 24)); // NOI18N
         lblPanelTitle.setForeground(new java.awt.Color(255, 255, 255));
-        lblPanelTitle.setText("Meine Timeline");
+        lblPanelTitle.setText("Historienrecherche");
 
         historyIntervalSlider.setPaintLabels(true);
         historyIntervalSlider.setValue(90);
@@ -841,6 +844,15 @@ public class HistoryPanel extends javax.swing.JPanel implements ThemeableEditor 
             }
         });
 
+        chkOnlyMine.setForeground(new java.awt.Color(255, 255, 255));
+        chkOnlyMine.setSelected(true);
+        chkOnlyMine.setText("nur meine Änderungen");
+        chkOnlyMine.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                chkOnlyMineActionPerformed(evt);
+            }
+        });
+
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -856,6 +868,8 @@ public class HistoryPanel extends javax.swing.JPanel implements ThemeableEditor 
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(lblPanelTitle)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .add(chkOnlyMine)
+                        .add(18, 18, 18)
                         .add(cmbMaxEntries, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 107, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                     .add(historyIntervalSlider, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .add(layout.createSequentialGroup()
@@ -871,11 +885,13 @@ public class HistoryPanel extends javax.swing.JPanel implements ThemeableEditor 
             .add(layout.createSequentialGroup()
                 .addContainerGap()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
-                        .add(org.jdesktop.layout.GroupLayout.LEADING, jLabel18, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .add(org.jdesktop.layout.GroupLayout.LEADING, lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .add(org.jdesktop.layout.GroupLayout.LEADING, cmbMaxEntries))
-                    .add(cmdRefresh))
+                    .add(cmdRefresh)
+                    .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
+                        .add(chkOnlyMine)
+                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
+                            .add(org.jdesktop.layout.GroupLayout.LEADING, jLabel18, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .add(org.jdesktop.layout.GroupLayout.LEADING, lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .add(org.jdesktop.layout.GroupLayout.LEADING, cmbMaxEntries))))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(historyIntervalSlider, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
@@ -890,8 +906,7 @@ public class HistoryPanel extends javax.swing.JPanel implements ThemeableEditor 
     }// </editor-fold>//GEN-END:initComponents
 
     private void cmdRefreshActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRefreshActionPerformed
-       
-        
+
         // in case of manual refreshs use current date as max
         // perform search here
         ThreadUtils.setWaitCursor(this);
@@ -904,51 +919,58 @@ public class HistoryPanel extends javax.swing.JPanel implements ThemeableEditor 
         this.historyIntervalSlider.setValue(this.historyIntervalSlider.getMaximum() - Math.max((int) (percentage * 100), 1));
         //EditorsRegistry.getInstance().updateStatus("Suche Wiedervorlagen...");
         new Thread(new HistorySearchThread(this, this.pnlEntries, this.principalId, this.lowerDate, this.upperDate, Integer.parseInt(this.cmbMaxEntries.getSelectedItem().toString()))).start();
-        
+
     }//GEN-LAST:event_cmdRefreshActionPerformed
 
     private void historyIntervalSliderStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_historyIntervalSliderStateChanged
-        if(this.lowerValue!=this.historyIntervalSlider.getValue() || this.upperValue!=this.historyIntervalSlider.getUpperValue()) {
-            this.lowerValue=this.historyIntervalSlider.getValue();
-            this.upperValue=this.historyIntervalSlider.getUpperValue();
-            
-            float lowerPercentage=((float)this.lowerValue / (float)this.historyIntervalSlider.getMaximum());
-            float upperPercentage=((float)this.upperValue / (float)this.historyIntervalSlider.getMaximum());
-            
-            long intervalDiff=this.intervalMax.getTime() - this.intervalMin.getTime();
-            
-            if(this.lowerValue==this.historyIntervalSlider.getMinimum()) {
-                this.lowerDate=this.intervalMin;
+        if (this.lowerValue != this.historyIntervalSlider.getValue() || this.upperValue != this.historyIntervalSlider.getUpperValue()) {
+            this.lowerValue = this.historyIntervalSlider.getValue();
+            this.upperValue = this.historyIntervalSlider.getUpperValue();
+
+            float lowerPercentage = ((float) this.lowerValue / (float) this.historyIntervalSlider.getMaximum());
+            float upperPercentage = ((float) this.upperValue / (float) this.historyIntervalSlider.getMaximum());
+
+            long intervalDiff = this.intervalMax.getTime() - this.intervalMin.getTime();
+
+            if (this.lowerValue == this.historyIntervalSlider.getMinimum()) {
+                this.lowerDate = this.intervalMin;
             } else {
-                this.lowerDate=new Date((long)(this.intervalMin.getTime()+ (lowerPercentage * intervalDiff)));
+                this.lowerDate = new Date((long) (this.intervalMin.getTime() + (lowerPercentage * intervalDiff)));
             }
-            
-            if(this.upperValue==this.historyIntervalSlider.getMaximum()) {
-                this.upperDate=this.intervalMax;
+
+            if (this.upperValue == this.historyIntervalSlider.getMaximum()) {
+                this.upperDate = this.intervalMax;
             } else {
-                this.upperDate=new Date((long)(this.intervalMin.getTime()+ (upperPercentage * intervalDiff)));
+                this.upperDate = new Date((long) (this.intervalMin.getTime() + (upperPercentage * intervalDiff)));
             }
-            
+
             this.txtSelected.setText(df.format(this.lowerDate) + " bis " + df.format(this.upperDate));
-            
-            
+
             // perform search here
             ThreadUtils.setWaitCursor(this);
             //EditorsRegistry.getInstance().updateStatus("Suche Wiedervorlagen...");
             new Thread(new HistorySearchThread(this, this.pnlEntries, this.principalId, this.lowerDate, this.upperDate, Integer.parseInt(this.cmbMaxEntries.getSelectedItem().toString()))).start();
 
         }
-        
-        
-        
+
+
     }//GEN-LAST:event_historyIntervalSliderStateChanged
 
     private void formComponentResized(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentResized
         this.pnlEntries.setMaximumSize(new Dimension(this.getWidth(), Integer.MAX_VALUE));
     }//GEN-LAST:event_formComponentResized
-    
-    
+
+    private void chkOnlyMineActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkOnlyMineActionPerformed
+        if (this.chkOnlyMine.isSelected()) {
+            this.principalId = UserSettings.getInstance().getCurrentUser().getPrincipalId();
+        } else {
+            this.principalId = null;
+        }
+    }//GEN-LAST:event_chkOnlyMineActionPerformed
+
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JCheckBox chkOnlyMine;
     private javax.swing.JComboBox cmbMaxEntries;
     private javax.swing.JButton cmdRefresh;
     private com.jdimension.jlawyer.client.components.RangeSlider historyIntervalSlider;
@@ -966,6 +988,4 @@ public class HistoryPanel extends javax.swing.JPanel implements ThemeableEditor 
         return this.backgroundImage;
     }
 
-    
-    
 }

@@ -713,6 +713,10 @@ public class AutoUpdateEvent extends Event {
     }
     
     public ImageIcon getIcon() {
+        return new javax.swing.ImageIcon(getClass().getResource("/icons/baseline_system_update_alt_white_48dp.png"));
+    }
+    
+    public ImageIcon getSmallIcon() {
         return new javax.swing.ImageIcon(getClass().getResource("/icons/agt_update_misc.png"));
     }
     

@@ -782,7 +782,8 @@ public class FolderSync {
                             break;
                         }
                     }
-                    if (fromLength != toLength) {
+                    if (fromLength != toLength || f.getName().toLowerCase().contains(".sql")) {
+                        // database is always copied
                         log.info("Copying " + f.getName() + " to sync location");
                         to.copyLocalFile(f);
                     }

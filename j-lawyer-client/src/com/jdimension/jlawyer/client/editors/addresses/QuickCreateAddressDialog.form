@@ -111,7 +111,7 @@
                   </Group>
                   <EmptySpace max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="0" attributes="0">
-                      <Component id="txtName" alignment="0" pref="558" max="32767" attributes="0"/>
+                      <Component id="txtName" alignment="0" pref="532" max="32767" attributes="0"/>
                       <Component id="txtFirstName" alignment="0" max="32767" attributes="0"/>
                       <Component id="txtCompany" alignment="0" max="32767" attributes="0"/>
                       <Group type="102" alignment="0" attributes="0">
@@ -168,7 +168,7 @@
         </Component>
         <Component class="javax.swing.JLabel" name="jLabel3">
           <Properties>
-            <Property name="text" type="java.lang.String" value="Firma:"/>
+            <Property name="text" type="java.lang.String" value="Unternehmen:"/>
           </Properties>
         </Component>
         <Component class="javax.swing.JTextField" name="txtFirstName">

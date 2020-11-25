@@ -670,6 +670,9 @@ import com.jdimension.jlawyer.persistence.ArchiveFileGroupsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileHistoryBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileTagsBean;
+import com.jdimension.jlawyer.persistence.CaseFolder;
+import com.jdimension.jlawyer.persistence.DocumentFolder;
+import com.jdimension.jlawyer.persistence.DocumentFolderTemplate;
 import com.jdimension.jlawyer.persistence.PartyTypeBean;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -696,7 +699,7 @@ public interface ArchiveFileServiceLocal {
     
     
     public int getDocumentCount();
-    public Collection getDocuments(String archiveFileKey);
+    public Collection<ArchiveFileDocumentsBean> getDocuments(String archiveFileKey);
     public byte[] getDocumentContent(String id) throws Exception;
     
     public Collection getReviews(String archiveFileKey) throws Exception;
@@ -754,5 +757,25 @@ public interface ArchiveFileServiceLocal {
     void removeParty(String id) throws Exception;
 
     List<ArchiveFileGroupsBean> getAllowedGroups(String caseId) throws Exception;
+
+    List<DocumentFolderTemplate> getAllFolderTemplates();
+
+    void addFolderTemplate(DocumentFolderTemplate template);
+
+    void removeFolderTemplate(String name);
+
+    void updateFolderTemplate(DocumentFolderTemplate template);
+
+    DocumentFolderTemplate getFolderTemplate(String name);
+
+    DocumentFolder addFolderToTemplate(String templateName, DocumentFolder folder) throws Exception;
+
+    void removeFolderFromTemplate(String folderId) throws Exception;
+
+    void cloneFolderTemplate(String sourceTemplateName, String targetTemplateName) throws Exception;
+    
+    void moveDocumentsToFolder(Collection<String> documentIds, String folderId) throws Exception;
+    
+    CaseFolder applyFolderTemplate(String caseId, String templateName) throws Exception;
     
 }

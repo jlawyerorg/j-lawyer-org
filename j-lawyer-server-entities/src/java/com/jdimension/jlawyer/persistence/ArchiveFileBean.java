@@ -738,6 +738,10 @@ public class ArchiveFileBean implements Serializable {
     @JoinColumn(name = "owner_group", referencedColumnName = "id")
     @OneToOne(fetch = FetchType.EAGER)
     private Group group;
+    
+    @JoinColumn(name = "root_folder", referencedColumnName = "id")
+    @OneToOne(cascade = CascadeType.REMOVE)
+    private CaseFolder rootFolder;
 
     public ArchiveFileBean() {
     }
@@ -1093,6 +1097,20 @@ public class ArchiveFileBean implements Serializable {
      */
     public void setFileNumberExtension(String fileNumberExtension) {
         this.fileNumberExtension = fileNumberExtension;
+    }
+
+    /**
+     * @return the rootFolder
+     */
+    public CaseFolder getRootFolder() {
+        return rootFolder;
+    }
+
+    /**
+     * @param rootFolder the rootFolder to set
+     */
+    public void setRootFolder(CaseFolder rootFolder) {
+        this.rootFolder = rootFolder;
     }
     
 }

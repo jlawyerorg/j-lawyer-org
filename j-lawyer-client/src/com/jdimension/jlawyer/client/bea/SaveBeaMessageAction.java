@@ -750,7 +750,7 @@ public class SaveBeaMessageAction extends ProgressableAction {
 
         this.progress("Verbinde...");
         BeaAccess bea = BeaAccess.getInstance();
-        long sentId = -1;
+        String sentId = null;
         Message msg = new Message();
         StringBuffer recipientsText = new StringBuffer();
 
@@ -816,7 +816,7 @@ public class SaveBeaMessageAction extends ProgressableAction {
 
                 this.progress("Speichern in Akte " + this.archiveFile.getFileNumber());
 
-                Message msgEx = bea.getMessage("" + sentId, fromSafeId);
+                Message msgEx = bea.getMessage(sentId, fromSafeId);
                 MessageExport mex = bea.exportMessage(msgEx);
 
                 java.util.Date receivedPrefix = msg.getReceptionTime();

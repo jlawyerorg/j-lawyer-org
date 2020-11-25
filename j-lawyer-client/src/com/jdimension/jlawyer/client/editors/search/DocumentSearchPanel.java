@@ -694,6 +694,7 @@ public class DocumentSearchPanel extends javax.swing.JPanel implements Themeable
      */
     public DocumentSearchPanel() {
         initComponents();
+        this.scrollResults.getVerticalScrollBar().setUnitIncrement(16);
         String[] colNames = new String[]{"Suchergebnisse"};
         DefaultTableModel model = new DefaultTableModel(colNames, 0);
         ((JLabel)this.cmbMaxDocs.getRenderer()).setHorizontalAlignment(SwingConstants.RIGHT);
@@ -755,6 +756,7 @@ public class DocumentSearchPanel extends javax.swing.JPanel implements Themeable
         cmbMaxDocs = new javax.swing.JComboBox();
         lblResultCount = new javax.swing.JLabel();
 
+        jLabel1.setForeground(new java.awt.Color(255, 255, 255));
         jLabel1.setText("Suchanfrage:");
 
         txtSearchString.addKeyListener(new java.awt.event.KeyAdapter() {
@@ -794,6 +796,7 @@ public class DocumentSearchPanel extends javax.swing.JPanel implements Themeable
         cmbMaxDocs.setSelectedIndex(1);
         cmbMaxDocs.setToolTipText("maximale Anzahl Dokumente im Ergebnis");
 
+        lblResultCount.setForeground(new java.awt.Color(255, 255, 255));
         lblResultCount.setText("0 Ergebnisse");
 
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(this);

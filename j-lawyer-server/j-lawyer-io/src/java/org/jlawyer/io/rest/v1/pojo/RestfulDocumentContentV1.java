@@ -673,6 +673,7 @@ public class RestfulDocumentContentV1 {
     private String caseId=null;
     private String fileName=null;
     private String base64content=null;
+    protected String folderId=null;
 
     public RestfulDocumentContentV1() {
     }
@@ -731,6 +732,20 @@ public class RestfulDocumentContentV1 {
      */
     public void setCaseId(String caseId) {
         this.caseId = caseId;
+    }
+
+    /**
+     * @return the folderId
+     */
+    public String getFolderId() {
+        return folderId;
+    }
+
+    /**
+     * @param folderId the folderId to set
+     */
+    public void setFolderId(String folderId) {
+        this.folderId = folderId;
     }
     
     

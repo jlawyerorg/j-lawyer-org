@@ -703,7 +703,7 @@ public class MicrosoftOfficeAccess {
 
             XWPFDocument outputDocx;
             ArrayList<String> resultList = new ArrayList<String>();
-            FileInputStream fileIn=new FileInputStream(file);
+            FileInputStream fileIn = new FileInputStream(file);
             outputDocx = new XWPFDocument(fileIn);
 
             Enumeration en = values.keys();
@@ -729,7 +729,7 @@ public class MicrosoftOfficeAccess {
                         }
                         // REPLACE BODY
                         replaceInBodyElements(trailKey, value, outputDocx.getBodyElements());
-                        
+
                         for (XWPFFooter footer : outputDocx.getFooterList()) {
                             replaceInBodyElements(trailKey, value, footer.getBodyElements());
                         }
@@ -746,16 +746,166 @@ public class MicrosoftOfficeAccess {
                     for (XWPFFooter footer : outputDocx.getFooterList()) {
                         replaceInBodyElements(key, value, footer.getBodyElements());
                     }
-                    
+
                 } else if (values.get(key) instanceof CalculationTable) {
+                    List<XWPFTable> allTables = outputDocx.getTables();
+                    CalculationTable tab = (CalculationTable) values.get(key);
+                    for (XWPFTable t : allTables) {
+                        if (t.getRow(0).getTableCells().size() == 1 && t.getNumberOfRows() == 1) {
+                            if (key.equals(t.getRow(0).getCell(0).getText())) {
+//                                Border border = new Border(Color.WHITE, 1.0, SupportedLinearMeasure.PT);
+                                for (int i = 0; i < tab.getData()[0].length - 1; i++) {
+                                    t.addNewCol();
 
+                                }
+                                for (int i = 0; i < tab.getData().length - 1; i++) {
+                                    t.createRow();
+                                }
+                                int firstDataRow = 0;
+                                if (tab.getColumnLabels().size() > 0) {
+                                    firstDataRow = 1;
+                                    t.createRow();
+                                    for (int i = 0; i < tab.getColumnLabels().size(); i++) {
+                                        t.getRow(0).getCell(i).setText(tab.getColumnLabels().get(i));
+//                                        border.setColor(Color.WHITE);
+//                                        t.getCellByPosition(i, 0).setBorders(CellBordersType.NONE, border);
+//                                        t.getCellByPosition(i, 0).setHorizontalAlignment(StyleTypeDefinitions.HorizontalAlignmentType.CENTER);
+//                                        Font f = t.getCellByPosition(i, 0).getFont();
+//                                        f.setFontStyle(StyleTypeDefinitions.FontStyle.BOLD);
+//                                        t.getCellByPosition(i, 0).setFont(f);
+                                    }
+                                }
+                                for (int i = 0; i < tab.getData()[0].length; i++) {
+                                    for (int k = 0; k < tab.getData().length; k++) {
+                                        t.getRow(k + firstDataRow).getCell(i).setText(tab.getData()[k][i]);
+//                                        border.setColor(Color.WHITE);
+//                                        t.getCellByPosition(i, k + firstDataRow).setBorders(CellBordersType.NONE, border);
+//                                        // set font to regular
+//                                        Font f = t.getCellByPosition(i, k + firstDataRow).getFont();
+//                                        f.setFontStyle(StyleTypeDefinitions.FontStyle.REGULAR);
+//                                        t.getCellByPosition(i, k + firstDataRow).setFont(f);
+                                        // set alignment
+//                                        int alignment = tab.getAlignment(i);
+//                                        if (alignment == CalculationTable.ALIGNMENT_CENTER) {
+//                                            t.getCellByPosition(i, k + firstDataRow).setHorizontalAlignment(StyleTypeDefinitions.HorizontalAlignmentType.CENTER);
+//                                        } else if (alignment == CalculationTable.ALIGNMENT_RIGHT) {
+//                                            t.getCellByPosition(i, k + firstDataRow).setHorizontalAlignment(StyleTypeDefinitions.HorizontalAlignmentType.RIGHT);
+//                                        } else {
+//                                            t.getCellByPosition(i, k + firstDataRow).setHorizontalAlignment(StyleTypeDefinitions.HorizontalAlignmentType.LEFT);
+//                                        }
+                                    }
+                                }
+
+                            }
+                        }
+                    }
                 } else if (values.get(key) instanceof StyledCalculationTable) {
+                    List<XWPFTable> allTables = outputDocx.getTables();
+                    StyledCalculationTable tab = (StyledCalculationTable) values.get(key);
+                    for (XWPFTable t : allTables) {
+                        if (t.getRow(0).getTableCells().size() == 1 && t.getNumberOfRows() == 1) {
+                            if (key.equals(t.getRow(0).getCell(0).getText())) {
+//                                Border border = new Border(Color.BLACK, 0.05, SupportedLinearMeasure.PT);
+//                                border.setColor(new org.odftoolkit.odfdom.type.Color(tab.getBorderColor()));
 
+                                for (int i2 = 0; i2 < tab.getColumnCount() - 1; i2++) {
+                                    t.getRow(0).addNewTableCell();
+                                }
+                                for (int i = 0; i < tab.getRowCount() - 1; i++) {
+                                    XWPFTableRow newrow = t.createRow();
+                                    t.addRow(newrow);
+
+                                }
+//                                for (int i = 0; i < tab.getColumnCount() - 1; i++) {
+//                                    
+//                                    t.addNewCol();
+//                                   
+//                                    
+//                                }
+
+//                                for (int i = 0; i < tab.getColumnCount(); i++) {
+//                                    if (tab.getColumnWidth(i) > -1) {
+//                                        t.getColumnByIndex(i).setWidth(tab.getColumnWidth(i));
+//                                    } else {
+//                                        t.getColumnByIndex(i).setUseOptimalWidth(true);
+//                                    }
+//                                }
+                                for (int i = 0; i < tab.getColumnCount(); i++) {
+                                    for (int k = 0; k < tab.getRowCount(); k++) {
+                                        //t.getRow(k).getCell(i).setText(tab.getValueAt(k, i));
+
+                                        List<XWPFParagraph> paragraphs = t.getRow(k).getCell(i).getParagraphs();
+                                        if (paragraphs.size() > 0) {
+//                                            final XWPFParagraph paragrafo = t.getRow(k).getCell(i).getParagraphArray(0);
+//                                            paragrafo.createRun().setText(tab.getValueAt(k, i));
+                                            t.getRow(k).getCell(i).setText(tab.getValueAt(k, i));
+                                        } else {
+
+//                                            final XWPFParagraph paragrafo = t.getRow(k).getCell(i).addParagraph();
+//                                            paragrafo.createRun().setText(tab.getValueAt(k, i));
+                                            t.getRow(k).getCell(i).setText(tab.getValueAt(k, i));
+
+                                        }
+//                                        if (tab.isLineBorder()) {
+//                                            Border b = new Border(Color.BLACK, 0.05, SupportedLinearMeasure.PT);
+//                                            b.setColor(new org.odftoolkit.odfdom.type.Color(tab.getBorderColor()));
+//                                            t.getCellByPosition(i, k).setBorders(CellBordersType.ALL_FOUR, b);
+//                                        } else {
+//                                            t.getCellByPosition(i, k).setBorders(CellBordersType.NONE, border);
+//                                        }
+                                        // set font to regular
+//                                        Font f = t.getCellByPosition(i, k).getFont();
+//                                        Cell c = tab.getCellAt(k, i);
+//                                        if (!("".equals(tab.getFontFamily()))) {
+//                                            f.setFamilyName(tab.getFontFamily());
+//                                        }
+//                                        if (c.isBold()) {
+//                                            if (c.isItalic()) {
+//                                                f.setFontStyle(StyleTypeDefinitions.FontStyle.BOLDITALIC);
+//                                            } else {
+//                                                f.setFontStyle(StyleTypeDefinitions.FontStyle.BOLD);
+//                                            }
+//                                        } else {
+//                                            if (c.isItalic()) {
+//                                                f.setFontStyle(StyleTypeDefinitions.FontStyle.ITALIC);
+//                                            } else {
+//                                                f.setFontStyle(StyleTypeDefinitions.FontStyle.REGULAR);
+//                                            }
+//                                        }
+//                                        if (c.isUnderline()) {
+//                                            f.setTextLinePosition(StyleTypeDefinitions.TextLinePosition.UNDER);
+//                                        } else {
+//                                            f.setTextLinePosition(StyleTypeDefinitions.TextLinePosition.REGULAR);
+//                                        }
+//                                        if (c.getFontSize() > 0) {
+//                                            f.setSize(c.getFontSize());
+//                                        }
+//                                        f.setColor(new org.odftoolkit.odfdom.type.Color(c.getForeGround()));
+//                                        t.getCellByPosition(i, k).setFont(f);
+//                                        t.getCellByPosition(i, k).setCellBackgroundColor(new org.odftoolkit.odfdom.type.Color(c.getBackGround()));
+//                                        // set alignment
+//                                        Cell cell = tab.getCellAt(k, i);
+//                                        int alignment = cell.getAlignment();
+//                                        if (alignment == Cell.ALIGNMENT_CENTER) {
+//                                            t.getCellByPosition(i, k).setHorizontalAlignment(StyleTypeDefinitions.HorizontalAlignmentType.CENTER);
+//                                        } else if (alignment == Cell.ALIGNMENT_RIGHT) {
+//                                            t.getCellByPosition(i, k).setHorizontalAlignment(StyleTypeDefinitions.HorizontalAlignmentType.RIGHT);
+//                                        } else {
+//                                            t.getCellByPosition(i, k).setHorizontalAlignment(StyleTypeDefinitions.HorizontalAlignmentType.LEFT);
+//                                        }
+                                    }
+                                }
+
+//                                for (int i = 0; i < t.getColumnCount(); i++) {
+//                                    t.getColumnByIndex(i).setUseOptimalWidth(true);
+//                                }
+                            }
+                        }
+                    }
                 }
 
             }
 
-            
             fileIn.close();
             FileOutputStream out = new FileOutputStream(file);
             outputDocx.write(out);
@@ -763,40 +913,50 @@ public class MicrosoftOfficeAccess {
         }
     }
 
-    public static java.util.List<String> getPlaceHolders(String file, List<String> allPartyTypesPlaceHolders, Collection<String> formsPlaceHolders) throws Exception {
+    public static java.util.List<String> getPlaceHolders(String file, List<String> allPartyTypesPlaceHolders, Collection<String> formsPlaceHolders, Hashtable<Integer, CTR> tfCache) throws Exception {
 
         if (file.toLowerCase().endsWith(".docx")) {
 
             XWPFDocument outputDocx;
             ArrayList<String> resultList = new ArrayList<String>();
-            FileInputStream fileIn=new FileInputStream(file);
+            FileInputStream fileIn = new FileInputStream(file);
             outputDocx = new XWPFDocument(fileIn);
 
             for (String r : PlaceHolders.getAllPlaceHolders(allPartyTypesPlaceHolders, formsPlaceHolders)) {
                 String key = r;
-                
+
                 // header
                 for (XWPFHeader header : outputDocx.getHeaderList()) {
-                    findInBodyElements(key, header.getBodyElements(), resultList);
+                    findInBodyElements(key, header.getBodyElements(), resultList, tfCache);
                     if (resultList.contains(key)) {
                         continue;
                     }
                 }
                 // REPLACE BODY
-                findInBodyElements(key, outputDocx.getBodyElements(), resultList);
-                
+                findInBodyElements(key, outputDocx.getBodyElements(), resultList, tfCache);
+
                 // footer
                 for (XWPFFooter footer : outputDocx.getFooterList()) {
-                    findInBodyElements(key, footer.getBodyElements(), resultList);
+                    findInBodyElements(key, footer.getBodyElements(), resultList, tfCache);
                     if (resultList.contains(key)) {
                         continue;
                     }
                 }
             }
 
-            //List<Table> allTables = outputOdt.getTableList();
+            List<XWPFTable> allTables = outputDocx.getTables();
             for (String r : PlaceHolders.ALLTABLEPLACEHOLDERS) {
-
+                for (XWPFTable t : allTables) {
+                    try {
+                        if (t.getRow(0).getTableCells().size() == 1 && t.getNumberOfRows() == 1) {
+                            if (r.equals(t.getRow(0).getCell(0).getText())) {
+                                resultList.add(r);
+                            }
+                        }
+                    } catch (Throwable th) {
+                        log.error("Could not check content of cell [0,0] in DOCX table", th);
+                    }
+                }
             }
             fileIn.close();
 
@@ -808,7 +968,7 @@ public class MicrosoftOfficeAccess {
 
     }
 
-    private static void findInBodyElements(String key, List<IBodyElement> bodyElements, ArrayList<String> resultList) {
+    private static void findInBodyElements(String key, List<IBodyElement> bodyElements, ArrayList<String> resultList, Hashtable<Integer, CTR> tfCache) {
         if (resultList.contains(key)) {
             return;
         }
@@ -819,15 +979,15 @@ public class MicrosoftOfficeAccess {
                 if (resultList.contains(key)) {
                     return;
                 }
-                findInTextfield(key, (XWPFParagraph) bodyElement, resultList);
+                findInTextfield(key, (XWPFParagraph) bodyElement, resultList, tfCache);
                 if (resultList.contains(key)) {
                     return;
                 }
-                
+
             }
             if (bodyElement.getElementType().compareTo(BodyElementType.TABLE) == 0) {
                 findInTable(key, (XWPFTable) bodyElement, resultList);
-                
+
             }
         }
     }
@@ -955,7 +1115,7 @@ public class MicrosoftOfficeAccess {
         }
     }
 
-    private static void findInTextfield(String key, XWPFParagraph xwpfParagraph, ArrayList<String> resultList) {
+    private static void findInTextfield(String key, XWPFParagraph xwpfParagraph, ArrayList<String> resultList, Hashtable<Integer, CTR> tfCache) {
 
         if (resultList.contains(key)) {
             return;
@@ -973,7 +1133,17 @@ public class MicrosoftOfficeAccess {
         }
         for (XmlObject obj : ctrsintxtbx) {
             try {
-                CTR ctr = CTR.Factory.parse(obj.xmlText());
+                String xmlText = obj.xmlText();
+                if (!(tfCache.containsKey(xmlText.hashCode()))) {
+                    CTR ctr = CTR.Factory.parse(xmlText);
+                    tfCache.put(xmlText.hashCode(), ctr);
+
+                } else {
+                    System.out.println("cache hit");
+                }
+                CTR ctr = tfCache.get(xmlText.hashCode());
+                //faster, but does not work: CTR ctr = CTR.Factory.parse(obj.getDomNode());
+
                 //CTR ctr = CTR.Factory.parse(obj.newInputStream());
                 XWPFRun bufferrun = new XWPFRun(ctr, (IRunBody) xwpfParagraph);
                 String text = bufferrun.getText(0);

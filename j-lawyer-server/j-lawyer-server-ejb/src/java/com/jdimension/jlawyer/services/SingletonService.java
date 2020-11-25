@@ -675,21 +675,23 @@ specific requirements.
 if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
-*/
-
+ */
 package com.jdimension.jlawyer.services;
 
-
-
 import com.jdimension.jlawyer.persistence.FaxQueueBean;
+import com.jdimension.jlawyer.persistence.ServerSettingsBean;
+import com.jdimension.jlawyer.persistence.ServerSettingsBeanFacadeLocal;
 import com.jdimension.jlawyer.server.constants.MonitoringConstants;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.Hashtable;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.Singleton;
+import javax.naming.InitialContext;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -697,17 +699,18 @@ import javax.ejb.Singleton;
  */
 @Singleton
 public class SingletonService implements SingletonServiceRemote, SingletonServiceLocal {
+    
+    private static Logger log = Logger.getLogger(SingletonService.class.getName());
 
     // Add business logic below. (Right-click in editor and choose
     // "Insert Code > Add Business Method")
-    
-    private int systemStatus=MonitoringConstants.LEVEL_NORMAL;
-    private Hashtable<File,Date> observedFileNames=new Hashtable<File,Date>();
-    private FaxQueueBean failedFax=null;
-    private ArrayList<FaxQueueBean> faxQueue=new ArrayList<FaxQueueBean>();
+    private int systemStatus = MonitoringConstants.LEVEL_NORMAL;
+    private Hashtable<File, Date> observedFileNames = new Hashtable<File, Date>();
+    private FaxQueueBean failedFax = null;
+    private ArrayList<FaxQueueBean> faxQueue = new ArrayList<FaxQueueBean>();
 
     @Override
-    @RolesAllowed(value={"loginRole"})
+    @RolesAllowed(value = {"loginRole"})
     public int getSystemStatus() {
         return this.systemStatus;
     }
@@ -715,43 +718,124 @@ public class SingletonService implements SingletonServiceRemote, SingletonServic
     @Override
     @PermitAll
     public void setSystemStatus(int status) {
-        this.systemStatus=status;
+        this.systemStatus = status;
     }
 
     @Override
-    @RolesAllowed(value={"loginRole"})
-    public Hashtable<File,Date> getObservedFiles() {
+    @RolesAllowed(value = {"loginRole"})
+    public Hashtable<File, Date> getObservedFiles() {
+        return this.getObservedFiles(false);
+    }
+    
+    @Override
+    @PermitAll
+    public void updateObservedFiles() {
+        ServerSettingsBean mode = null;
+            SingletonServiceLocal singleton = null;
+            try {
+                InitialContext ic = new InitialContext();
+                //ServerSettingsBeanFacadeLocal settings = (ServerSettingsBeanFacadeLocal) ic.lookup("j-lawyer-server/ServerSettingsBeanFacade/local");
+                // ServerSettingsBeanFacade!com.jdimension.jlawyer.persistence.ServerSettingsBeanFacadeLocal	
+                ServerSettingsBeanFacadeLocal settings = (ServerSettingsBeanFacadeLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ServerSettingsBeanFacade!com.jdimension.jlawyer.persistence.ServerSettingsBeanFacadeLocal");
+                singleton = (SingletonServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/SingletonService!com.jdimension.jlawyer.services.SingletonServiceLocal");
+                mode = settings.find("jlawyer.server.observe.directory");
+                if (mode == null || "".equals(mode.getSettingValue())) {
+                    log.info("directory observation is switched off");
+                    return;
+                }
+            } catch (Throwable ex) {
+                log.error("Error getting server setting for directory observation", ex);
+                return;
+            }
+
+            //String scanDir = System.getProperty("jlawyer.server.observe.directory");
+            String scanDir = mode.getSettingValue();
+            if (scanDir == null || "".equals(scanDir)) {
+                log.info("directory observation is switched off");
+                return;
+            }
+
+            File scanDirectory = new File(scanDir);
+            if (!scanDirectory.exists()) {
+                log.error("observed directory does not exist");
+                return;
+            }
+
+            if (!scanDirectory.isDirectory()) {
+                log.error("observed directory is not a directory");
+                return;
+            }
+
+            Hashtable<File, Date> fileObjects = new Hashtable<File, Date>();
+            File files[] = scanDirectory.listFiles();
+            if (files != null) {
+                for (File f : files) {
+                    if (!f.isDirectory()) {
+                        // file might still be copying - skip if last modified is less than 3s in the past
+                        if ((System.currentTimeMillis() - f.lastModified()) > 5000l) {
+                            fileObjects.put(f, new Date(f.lastModified()));
+                        } else {
+
+                            long size = f.length();
+                            try {
+                                Thread.sleep(300);
+                            } catch (Throwable t) {
+
+                            }
+                            if (size != f.length()) {
+                                // skip file - still copying...
+                            } else {
+                                fileObjects.put(f, new Date(f.lastModified()));
+                            }
+
+                        }
+                    }
+                }
+                
+            } else {
+                log.error("observed directory returns null for #listFiles");
+            }
+
+            
+            this.setObservedFiles(fileObjects);
+            
+    }
+
+    @Override
+    @RolesAllowed(value = {"loginRole"})
+    public Hashtable<File, Date> getObservedFiles(boolean bypassCache) {
+        if (bypassCache) {
+            this.updateObservedFiles();
+        }
         return this.observedFileNames;
     }
 
     @Override
     @PermitAll
-    public void setObservedFiles(Hashtable<File,Date> fileNames) {
-        this.observedFileNames=fileNames;
+    public void setObservedFiles(Hashtable<File, Date> fileNames) {
+        this.observedFileNames = fileNames;
     }
 
     @Override
-    @RolesAllowed(value={"loginRole"})
+    @RolesAllowed(value = {"loginRole"})
     public FaxQueueBean getFailedFax() {
         return this.failedFax;
     }
 
     @Override
-    @RolesAllowed(value={"loginRole"})
+    @RolesAllowed(value = {"loginRole"})
     public ArrayList<FaxQueueBean> getFaxQueue() {
         return this.faxQueue;
     }
 
     @Override
     public void setFailedFax(FaxQueueBean failedFax) {
-        this.failedFax=failedFax;
+        this.failedFax = failedFax;
     }
 
     @Override
     public void setFaxQueue(ArrayList<FaxQueueBean> faxQueue) {
-        this.faxQueue=faxQueue;
+        this.faxQueue = faxQueue;
     }
-    
-    
-    
+
 }

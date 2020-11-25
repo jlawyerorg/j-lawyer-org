@@ -703,6 +703,7 @@ import com.jdimension.jlawyer.services.AddressServiceRemote;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Color;
+import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.io.File;
@@ -736,12 +737,28 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
     
     private Collection<PartyTypeBean> allPartyTypes = new ArrayList<PartyTypeBean>();
     private List<String> allPartyTypesPlaceholders = new ArrayList<String>();
+    
+    // can be set by code that constructs the SendEmailDialog to "inject" a recently created link to a Nextcloud share
+    // will be made available as a placeholder
+    private String cloudLink=null;
 
     /**
      * Creates new form SendEmailDialog
      */
-    public SendEmailDialog(java.awt.Frame parent, boolean modal) {
+    public SendEmailDialog(JDialog parent, boolean modal) {
         super(parent, modal);
+        this.initialize();
+    }
+    
+    /**
+     * Creates new form SendEmailDialog
+     */
+    public SendEmailDialog(JFrame parent, boolean modal) {
+        super(parent, modal);
+        this.initialize();
+    }
+    
+    private void initialize() {
         initComponents();
         
         ComponentUtils.decorateSplitPane(jSplitPane1);
@@ -955,7 +972,14 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
             doctaggingEnabled = true;
             this.chkDocumentTagging.setSelected(true);
         }
+        
+        ComponentUtils.restoreSplitPane(jSplitPane1, this.getClass(), "jSplitPane1");
+        ComponentUtils.persistSplitPane(jSplitPane1, this.getClass(), "jSplitPane1");
 
+    }
+    
+    public void setCloudLink(String link) {
+        this.cloudLink=link;
     }
 
     @Override
@@ -1205,7 +1229,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
             }
         });
 
-        jSplitPane1.setResizeWeight(0.75);
+        jSplitPane1.setResizeWeight(0.5);
 
         jLabel2.setText("An:");
 
@@ -1703,13 +1727,13 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         mails.addAll(EmailUtils.getAllMailAddressesFromString(this.txtBcc.getText()));
 
         if (mails.size() == 0) {
-            ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Liste der Empfänger kann nicht leer sein.", "Fehler");
+            ThreadUtils.showErrorDialog(this, "Liste der Empfänger kann nicht leer sein.", "Fehler");
             return;
         }
 
         if (this.chkSaveAsDocument.isSelected() || !(this.radioReviewTypeNone.isSelected())) {
             if (this.contextArchiveFile == null) {
-                SearchAndAssignDialog saDlg = new SearchAndAssignDialog(this, true);
+                SearchAndAssignDialog saDlg = new SearchAndAssignDialog(this, true, ""+this.txtSubject.getText()+ed.getText());
                 saDlg.setVisible(true);
                 this.contextArchiveFile = saDlg.getSelection();
 
@@ -1736,7 +1760,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                 try {
                     crypto = this.cryptoRecipients(mails);
                 } catch (Throwable t) {
-                    ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler: " + t.getMessage(), "Fehler");
+                    ThreadUtils.showErrorDialog(this, "Fehler: " + t.getMessage(), "Fehler");
                     return;
                 }
                 if (crypto < mails.size()) {
@@ -1755,7 +1779,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
             try {
                 crypto = this.cryptoRecipients(mails);
             } catch (Throwable t) {
-                ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler: " + t.getMessage(), "Fehler");
+                ThreadUtils.showErrorDialog(this, "Fehler: " + t.getMessage(), "Fehler");
                 return;
             }
             if (crypto < mails.size()) {
@@ -1949,6 +1973,9 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                 htValues = PlaceHolderUtils.getPlaceHolderValues(ht, this.contextArchiveFile, selectedParties, this.contextDictateSign, null, new Hashtable<String,String>());
                 //this.taBody.setText(EmailTemplateAccess.replacePlaceHolders(tpl.getBody(), htValues) + System.getProperty("line.separator") + System.getProperty("line.separator") + this.cu.getEmailSignature());
 
+                if(this.cloudLink!=null)
+                    htValues.put("{{CLOUD_LINK}}", this.cloudLink);
+                
                 if (tpl.isText()) {
                     this.tp.setText(EmailTemplateAccess.replacePlaceHolders(tpl.getBody(), htValues) + System.getProperty("line.separator") + System.getProperty("line.separator") + EmailUtils.Html2Text(this.cu.getEmailSignature()));
                     this.hp.setText("");

@@ -838,7 +838,7 @@ public class PartiesPanel extends javax.swing.JPanel {
                         return;
                     }
                     
-                    System.out.println("table model changed: " + evt.getType());
+                    //System.out.println("table model changed: " + evt.getType());
 
                     ignoreTableChanges = true;
                     if (evt.getColumn() > 0) {

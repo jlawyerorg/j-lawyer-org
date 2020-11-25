@@ -676,6 +676,7 @@ public class RestfulDocumentV1 {
     private Date creationDate=null;
     private long size=0l;
     private boolean favorite=false;
+    protected String folderId=null;
 
     public RestfulDocumentV1() {
     }
@@ -748,6 +749,20 @@ public class RestfulDocumentV1 {
      */
     public void setFavorite(boolean favorite) {
         this.favorite = favorite;
+    }
+
+    /**
+     * @return the folderId
+     */
+    public String getFolderId() {
+        return folderId;
+    }
+
+    /**
+     * @param folderId the folderId to set
+     */
+    public void setFolderId(String folderId) {
+        this.folderId = folderId;
     }
     
     

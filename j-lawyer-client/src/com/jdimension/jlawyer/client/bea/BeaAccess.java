@@ -939,7 +939,7 @@ public class BeaAccess {
     public Collection<Folder> getFolderStructure(String safeId) throws BeaWrapperException {
         this.checkValidBeaClient();
         this.checkValidBeaClient();
-        Collection<Folder> folders = this.wrapper.getFolderStructure(safeId);
+        Collection<Folder> folders = this.wrapper.getFolderStructure(safeId, true, true);
         long inboxId = -1;
         long jlawyerProcessedId = -1;
         for (Folder f : folders) {
@@ -1114,7 +1114,7 @@ public class BeaAccess {
         return sentMessage;
     }
 
-    public long saveMessageToDrafts(Message msg, String senderSafeId, ArrayList<String> recipientSafeIds, BeaListItem authority) throws BeaWrapperException {
+    public String saveMessageToDrafts(Message msg, String senderSafeId, ArrayList<String> recipientSafeIds, BeaListItem authority) throws BeaWrapperException {
         this.checkValidBeaClient();
         // todo: need to only remove folder overview for sent folder
         this.folderOverviewCache.clear();

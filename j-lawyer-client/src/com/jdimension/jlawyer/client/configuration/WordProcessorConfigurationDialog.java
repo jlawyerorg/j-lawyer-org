@@ -737,7 +737,7 @@ public class WordProcessorConfigurationDialog extends javax.swing.JDialog {
             }
         });
 
-        lblCaption.setText("Primäre Textverarbeitung auf diesem Gerät:");
+        lblCaption.setText("Primäre Office-Suite auf diesem Gerät:");
 
         cmdSave.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png"))); // NOI18N
         cmdSave.setText(bundle.getString("button.save")); // NOI18N
@@ -800,8 +800,6 @@ public class WordProcessorConfigurationDialog extends javax.swing.JDialog {
                     .add(cmdSave))
                 .addContainerGap())
         );
-
-        lblCaption.getAccessibleContext().setAccessibleName("Primäre Textverarbeitung auf diesem Gerät:");
 
         pack();
     }// </editor-fold>//GEN-END:initComponents

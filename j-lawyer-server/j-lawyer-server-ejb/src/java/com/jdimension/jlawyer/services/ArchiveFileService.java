@@ -708,7 +708,7 @@ import org.jlawyer.search.SearchIndexRequest;
 @Stateless
 @SecurityDomain("j-lawyer-security")
 public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFileServiceLocal {
-    
+
     private static Logger log = Logger.getLogger(ArchiveFileService.class.getName());
     @Resource
     private SessionContext context;
@@ -738,11 +738,17 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     private SecurityServiceLocal securityFacade;
     @EJB
     private SystemManagementLocal sysFacade;
-    
+    @EJB
+    private DocumentFolderTemplateFacadeLocal folderTemplateFacade;
+    @EJB
+    private DocumentFolderFacadeLocal folderFacade;
+    @EJB
+    private CaseFolderFacadeLocal caseFolderFacade;
+
     private static final String PS_SEARCHENHANCED_2 = "select id from cases where ucase(name) like ? or ucase(fileNumber) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(subjectField) like ?";
     //private static final String PS_SEARCHENHANCED_3 = "select ArchiveFileBean.id from cases, ArchiveFileTagsBean where (ucase(name) like ? or ucase(fileNumber) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ?) and archived=0 and (ArchiveFileTagsBean.tagName=? and ArchiveFileTagsBean.archiveFileKey=ArchiveFileBean.id)";
     private static final String PS_SEARCHENHANCED_4 = "select id from cases where (ucase(name) like ? or ucase(fileNumber) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(subjectField) like ?) and archived=0";
-    
+
     @Override
     @RolesAllowed({"loginRole"})
     public int getArchiveFileCount() {
@@ -753,9 +759,9 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             throw new EJBException("Error getting number of archive files", ex);
         }
     }
-    
+
     private String getExtension(String userAbbr, String groupAbbr) throws Exception {
-        
+
         ServerSettingsBean s = this.settingsFacade.find("jlawyer.server.numbering.ext.enabled");
         if (s == null) {
             return "";
@@ -766,19 +772,19 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         } catch (Throwable t) {
             log.error("non-boolean value for jlawyer.server.numbering.ext.enabled: " + s.getSettingValue());
         }
-        
+
         s = this.settingsFacade.find("jlawyer.server.numbering.ext.divider.main");
         String dividerMain = "";
         if (s != null) {
             dividerMain = s.getSettingValue();
         }
-        
+
         s = this.settingsFacade.find("jlawyer.server.numbering.ext.divider.ext");
         String dividerExt = "";
         if (s != null) {
             dividerExt = s.getSettingValue();
         }
-        
+
         s = this.settingsFacade.find("jlawyer.server.numbering.ext.prefix.enabled");
         boolean bPrefix = false;
         try {
@@ -786,7 +792,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         } catch (Throwable t) {
             log.error("non-boolean value for jlawyer.server.numbering.ext.prefix.enabled: " + s.getSettingValue());
         }
-        
+
         s = this.settingsFacade.find("jlawyer.server.numbering.ext.suffix.enabled");
         boolean bSuffix = false;
         try {
@@ -794,7 +800,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         } catch (Throwable t) {
             log.error("non-boolean value for jlawyer.server.numbering.ext.suffix.enabled: " + s.getSettingValue());
         }
-        
+
         s = this.settingsFacade.find("jlawyer.server.numbering.ext.lawyer.enabled");
         boolean bUserAbbr = false;
         try {
@@ -802,7 +808,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         } catch (Throwable t) {
             log.error("non-boolean value for jlawyer.server.numbering.ext.lawyer.enabled: " + s.getSettingValue());
         }
-        
+
         s = this.settingsFacade.find("jlawyer.server.numbering.ext.group.enabled");
         boolean bGroupAbbr = false;
         try {
@@ -810,34 +816,34 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         } catch (Throwable t) {
             log.error("non-boolean value for jlawyer.server.numbering.ext.group.enabled: " + s.getSettingValue());
         }
-        
+
         s = this.settingsFacade.find("jlawyer.server.numbering.ext.prefix");
         String prefix = "";
         if (s != null) {
             prefix = s.getSettingValue();
         }
-        
+
         s = this.settingsFacade.find("jlawyer.server.numbering.ext.suffix");
         String suffix = "";
         if (s != null) {
             suffix = s.getSettingValue();
         }
-        
+
         if (userAbbr == null) {
             userAbbr = "";
         }
-        
+
         if (groupAbbr == null) {
             groupAbbr = "";
         }
-        
+
         return CaseNumberGenerator.getExtension(extension, dividerMain, dividerExt, bPrefix, prefix, bSuffix, suffix, bUserAbbr, userAbbr, bGroupAbbr, groupAbbr);
-        
+
     }
 
     // @todo: more efficient implementation
     private synchronized String getNextCaseNumber() throws InvalidCaseNumberPatternException {
-        
+
         ServerSettingsBean obs = this.settingsFacade.find("jlawyer.server.numbering.pattern");
         boolean legacy = true;
         String numberingPattern = "";
@@ -849,7 +855,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 }
             }
         }
-        
+
         ServerSettingsBean startFromSetting = this.settingsFacade.find("jlawyer.server.numbering.startfrom");
         int startFromIndex = -1;
         if (startFromSetting != null) {
@@ -861,30 +867,30 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 }
             }
         }
-        
+
         if (!legacy) {
-            
+
             JDBCUtils utils = new JDBCUtils();
             Connection con = null;
             ResultSet rs = null;
             PreparedStatement st = null;
             ArrayList<String> allExisting = new ArrayList<String>();
-            
+
             try {
                 con = utils.getConnection();
                 st = con.prepareStatement("select distinct (fileNumber) from cases order by fileNumber asc");
-                
+
                 rs = st.executeQuery();
                 while (rs.next()) {
                     allExisting.add(rs.getString("fileNumber"));
                 }
-                
+
                 try {
                     rs.close();
                 } catch (Exception ex) {
                     log.error(ex);
                 }
-                
+
             } catch (SQLException sqle) {
                 log.error("Error calculating new file number", sqle);
                 throw new EJBException("Es konnte kein neues Aktenzeichen ermittelt werden.", sqle);
@@ -900,13 +906,13 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                     log.error(t);
                 }
             }
-            
+
             return CaseNumberGenerator.getNextCaseNumber(allExisting, numberingPattern, startFromIndex);
-            
+
         } else {
             String forYear = System.getProperty("jlawyer.server.numbering.foryear");
             String startFrom = System.getProperty("jlawyer.server.numbering.startfrom");
-            
+
             JDBCUtils utils = new JDBCUtils();
             SimpleDateFormat df = new SimpleDateFormat("yyyy");
             Connection con = null;
@@ -915,9 +921,9 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             String newKey = "";
             int index = 1;
             NumberFormat nf = new DecimalFormat("00000");
-            
+
             String suffix = df.format(new Date());
-            
+
             if (suffix.equals(forYear)) {
                 try {
                     index = Integer.parseInt(startFrom);
@@ -925,7 +931,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                     log.error("invalid configuration for custom archive file numbering", t);
                 }
             }
-            
+
             suffix = "/" + suffix.substring(2);
             try {
                 con = utils.getConnection();
@@ -938,7 +944,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                     if (!rs.next()) {
                         found = false;
                     }
-                    
+
                     try {
                         rs.close();
                     } catch (Exception ex) {
@@ -946,7 +952,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                     }
                     index++;
                 }
-                
+
             } catch (SQLException sqle) {
                 log.error("Error calculating new file number", sqle);
                 throw new EJBException("Es konnte kein neues Aktenzeichen ermittelt werden.", sqle);
@@ -962,10 +968,10 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                     log.error(t);
                 }
             }
-            
+
             return newKey;
         }
-        
+
     }
 
     // Add business logic below. (Right-click in editor and choose
@@ -973,13 +979,23 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     @Override
     @RolesAllowed({"readArchiveFileRole"})
     public ArchiveFileBean[] searchSimple(String query) {
+
+        if (query == null) {
+            query = "";
+        }
+
+        query = query.trim();
+        if ("".equalsIgnoreCase(query)) {
+            return new ArchiveFileBean[0];
+        }
+
         List<Group> userGroups = new ArrayList<Group>();
         try {
             userGroups = this.securityFacade.getGroupsForUser(context.getCallerPrincipal().getName());
         } catch (Throwable t) {
             log.error("Unable to determine groups for user " + context.getCallerPrincipal().getName(), t);
         }
-        
+
         JDBCUtils utils = new JDBCUtils();
         Connection con = null;
         ResultSet rs = null;
@@ -1006,7 +1022,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 if (this.checkGroupsForCase(context.getCallerPrincipal().getName(), userGroups, dto)) {
                     list.add(dto);
                 }
-                
+
             }
         } catch (SQLException sqle) {
             log.error("Error finding archive files", sqle);
@@ -1031,32 +1047,32 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 log.error(t);
             }
         }
-        
+
         return (ArchiveFileBean[]) list.toArray(new ArchiveFileBean[list.size()]);
-        
+
     }
-    
+
     private void checkGroupsForCase(String principalId, ArchiveFileBean aFile) throws Exception {
         if (aFile == null) {
             return;
         }
-        
+
         Group owner = aFile.getGroup();
         if (owner == null) {
             return;
         }
-        
+
         if (principalId == null) {
             return;
         }
-        
+
         List<Group> userGroups = new ArrayList<Group>();
         try {
             userGroups = this.securityFacade.getGroupsForUser(principalId);
         } catch (Throwable t) {
             log.error("Unable to determine groups for user " + context.getCallerPrincipal().getName(), t);
         }
-        
+
         boolean isAllowed = false;
         if (owner != null) {
             for (Group g : userGroups) {
@@ -1065,7 +1081,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 }
             }
         }
-        
+
         List<ArchiveFileGroupsBean> caseGroups = new ArrayList<>();
         try {
             caseGroups = this.getAllowedGroups(aFile);
@@ -1079,17 +1095,17 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 }
             }
         }
-        
+
         throw new Exception("Nutzer " + principalId + " ist für diese Akte nicht zugriffsberechtigt!");
-        
+
     }
-    
+
     private boolean checkGroupsForCase(String principalId, List<Group> userGroups, ArchiveFileBean aFile) {
         Group owner = aFile.getGroup();
         if (owner == null) {
             return true;
         }
-        
+
         if (owner != null) {
             for (Group g : userGroups) {
                 if (g.equals(owner)) {
@@ -1097,7 +1113,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 }
             }
         }
-        
+
         List<ArchiveFileGroupsBean> caseGroups = this.getAllowedGroups(aFile);
         for (Group g : userGroups) {
             for (ArchiveFileGroupsBean cg : caseGroups) {
@@ -1106,28 +1122,28 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 }
             }
         }
-        
+
         return false;
-        
+
     }
-    
+
     @Override
     @RolesAllowed({"removeArchiveFileRole"})
     public void removeArchiveFile(String id) throws Exception {
         ArchiveFileBean b = this.archiveFileFacade.find(id);
         this.checkGroupsForCase(context.getCallerPrincipal().getName(), b);
-        
+
         Collection docs = this.getDocuments(id);
         ArrayList docList = new ArrayList(docs);
         for (int i = 0; i < docList.size(); i++) {
-            
+
             try {
                 ArchiveFileDocumentsBean db = (ArchiveFileDocumentsBean) docList.get(i);
                 SearchIndexRequest req = new SearchIndexRequest(SearchIndexRequest.ACTION_DELETE);
                 req.setId(db.getId());
-                
+
                 this.publishSearchIndexRequest(req);
-                
+
             } catch (Throwable t) {
                 log.error("Error publishing search index request ADD", t);
             }
@@ -1135,7 +1151,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
         //String fileNumber=b.getFileNumber();
         this.archiveFileFacade.remove(b);
-        
+
         try {
             String localBaseDir = System.getProperty("jlawyer.server.basedirectory");
             localBaseDir = localBaseDir.trim();
@@ -1145,7 +1161,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             String dst = localBaseDir + "archivefiles" + System.getProperty("file.separator") + b.getId() + System.getProperty("file.separator");
             File delFile = new File(dst);
             ServerFileUtils.getInstance().delete(delFile);
-            
+
             dst = localBaseDir + "archivefiles-preview" + System.getProperty("file.separator") + b.getId() + System.getProperty("file.separator");
             delFile = new File(dst);
             if (delFile.exists()) {
@@ -1155,19 +1171,19 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             log.error("could not remove documents for archive file " + id, t);
         }
     }
-    
+
     @Override
     @RolesAllowed({"readArchiveFileRole"})
     public ArchiveFileHistoryBean[] getHistoryForArchiveFile(String archiveFileKey) throws Exception {
-        
+
         return getHistoryForArchiveFileImpl(archiveFileKey, context.getCallerPrincipal().getName());
-        
+
     }
-    
+
     private ArchiveFileHistoryBean[] getHistoryForArchiveFileImpl(String archiveFileKey, String principalId) throws Exception {
         ArchiveFileBean aFile = this.archiveFileFacade.find(archiveFileKey);
         this.checkGroupsForCase(principalId, aFile);
-        
+
         List resultList = this.archiveFileHistoryFacade.findByArchiveFileKey(aFile);
         ArchiveFileHistoryBean[] resultArray = new ArchiveFileHistoryBean[0];
         if (resultList != null) {
@@ -1175,29 +1191,29 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         }
         return resultArray;
     }
-    
+
     @Override
     @RolesAllowed({"readArchiveFileRole"})
     public Collection getReviews(String archiveFileKey) throws Exception {
-        
+
         return getReviewsImpl(archiveFileKey, context.getCallerPrincipal().getName());
-        
+
     }
-    
+
     private Collection getReviewsImpl(String archiveFileKey, String principalId) throws Exception {
         ArchiveFileBean aFile = this.archiveFileFacade.find(archiveFileKey);
         if (principalId != null) {
             this.checkGroupsForCase(principalId, aFile);
         }
-        
+
         List resultList = this.archiveFileReviewsFacade.findByArchiveFileKey(aFile);
         return resultList;
     }
-    
+
     @Override
     @RolesAllowed({"createArchiveFileRole"})
     public ArchiveFileBean createArchiveFile(ArchiveFileBean dto) throws Exception {
-        
+
         StringGenerator idGen = new StringGenerator();
 
 //        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd-", Locale.GERMAN);
@@ -1206,13 +1222,13 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         String newArchiveFileKeyExtension = null;
         try {
             newArchiveFileKey = this.getNextCaseNumber();
-            
+
             Group g = dto.getGroup();
             String gs = "";
             if (g != null) {
                 gs = g.getAbbreviation();
             }
-            
+
             String lawyer = dto.getLawyer();
             String lawyerAbbr = "";
             if (lawyer != null && !("".equalsIgnoreCase(lawyer))) {
@@ -1221,17 +1237,17 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                     lawyerAbbr = u.getAbbreviation();
                 }
             }
-            
+
             newArchiveFileKeyExtension = this.getExtension(lawyerAbbr, gs);
         } catch (InvalidCaseNumberPatternException icpe) {
             throw new Exception(icpe.getMessage());
         }
         dto.setFileNumberMain(newArchiveFileKey);
         dto.setFileNumberExtension(newArchiveFileKeyExtension);
-        
+
         String id = idGen.getID().toString();
         dto.setId(id);
-        
+
         List<ArchiveFileAddressesBean> addresses = dto.getArchiveFileAddressesBeanList();
         if (addresses != null) {
             for (ArchiveFileAddressesBean ad : addresses) {
@@ -1240,7 +1256,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 this.archiveFileAddressesFacade.create(ad);
             }
         }
-        
+
         List<ArchiveFileReviewsBean> reviews = dto.getArchiveFileReviewsBeanList();
         if (reviews != null) {
             for (ArchiveFileReviewsBean ar : reviews) {
@@ -1267,20 +1283,33 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         initialEntry.setChangeDescription("Akte erstellt");
         initialEntry.setPrincipal(context.getCallerPrincipal().getName());
         this.archiveFileHistoryFacade.create(initialEntry);
-        
+
         this.archiveFileFacade.create(dto);
+
+        ArchiveFileBean aFile= this.archiveFileFacade.find(dto.getId());
         
-        return this.archiveFileFacade.find(dto.getId());
-        
+        CaseFolder rootFolder=aFile.getRootFolder();
+        if(rootFolder==null) {
+            rootFolder=new CaseFolder();
+            rootFolder.setId(idGen.getID().toString());
+            rootFolder.setName("Dokumente");
+            rootFolder.setParentId(null);
+            this.caseFolderFacade.create(rootFolder);
+            aFile.setRootFolder(rootFolder);
+            this.archiveFileFacade.edit(aFile);
+        }
+        return aFile;
+
     }
-    
+
     @Override
     @RolesAllowed({"writeArchiveFileRole"})
     public void updateArchiveFile(ArchiveFileBean dto) throws Exception {
-        
+
         StringGenerator idGen = new StringGenerator();
         ArchiveFileBean aFile = this.archiveFileFacade.find(dto.getId());
         dto.setFileNumberMain(aFile.getFileNumberMain());
+        dto.setRootFolder(aFile.getRootFolder());
         this.checkGroupsForCase(context.getCallerPrincipal().getName(), aFile);
 
         Group g = dto.getGroup();
@@ -1303,7 +1332,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
         boolean archivedOld = aFile.getArchivedBoolean();
         boolean archivedNew = dto.getArchivedBoolean();
-        
+
         ArchiveFileHistoryBean newHistEntry = new ArchiveFileHistoryBean();
         newHistEntry.setId(idGen.getID().toString());
         newHistEntry.setArchiveFileKey(dto);
@@ -1311,7 +1340,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         newHistEntry.setChangeDescription("Akte geändert");
         newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
         this.archiveFileHistoryFacade.create(newHistEntry);
-        
+
         if (archivedOld != archivedNew) {
             // archive flag was changed
             String historyDescription = "";
@@ -1330,12 +1359,11 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             archiveHistEntry.setPrincipal(context.getCallerPrincipal().getName());
             this.archiveFileHistoryFacade.create(archiveHistEntry);
         }
-        
+
         this.archiveFileFacade.edit(dto);
-        
+
         // added because of lazy load issue when getting reviews from dto
         //dto=this.archiveFileFacade.find(dto.getId());
-
         // update the reviews
         List<ArchiveFileReviewsBean> reviewList = this.archiveFileReviewsFacade.findByArchiveFileKey(aFile);
         //List<ArchiveFileReviewsBean> reviewList = this.archiveFileReviewsFacade.findByArchiveFileKey(dto);
@@ -1374,9 +1402,9 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 this.archiveFileAddressesFacade.create(add);
             }
         }
-        
+
     }
-    
+
     @Override
     @RolesAllowed({"readArchiveFileRole"})
     public List<ArchiveFileBean> getLastChanged(String lastChangeUser, boolean userOnly, int limit) {
@@ -1391,14 +1419,14 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         } catch (Throwable t) {
             log.error("Unable to determine groups for user " + context.getCallerPrincipal().getName(), t);
         }
-        
+
         int dbLimit = 5 * limit;
         JDBCUtils utils = new JDBCUtils();
         Connection con = null;
         ResultSet rs = null;
         PreparedStatement st = null;
         List<ArchiveFileBean> returnList = new ArrayList<ArchiveFileBean>();
-        
+
         try {
             con = utils.getConnection();
             if (userOnly) {
@@ -1412,7 +1440,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 //st = con.prepareStatement("select distinct(t1.archiveFileKey) from (select archiveFileKey, changeDate from ArchiveFileHistoryBean where principal != ? order by changeDate DESC limit 0,200) t1, ArchiveFileBean t2 where t1.archiveFileKey = t2.id and t2.archived=0 limit 0,?");
                 st = con.prepareStatement("select t1.archiveFileKey from (select archiveFileKey, max(changeDate) as changeDate from case_history where principal != ? group by archiveFileKey order by changeDate desc) t1, cases t2 where t1.archiveFileKey = t2.id and t2.archived=0 order by changeDate DESC limit 0,?");
             }
-            
+
             st.setString(1, lastChangeUser);
             st.setInt(2, dbLimit);
             rs = st.executeQuery();
@@ -1422,18 +1450,18 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 if (this.checkGroupsForCase(context.getCallerPrincipal().getName(), userGroups, aFile)) {
                     returnList.add(aFile);
                 }
-                
+
                 if (returnList.size() == limit) {
                     break;
                 }
             }
-            
+
             try {
                 rs.close();
             } catch (Exception ex) {
                 log.error(ex);
             }
-            
+
         } catch (SQLException sqle) {
             log.error("Error getting last changed archive files", sqle);
             throw new EJBException("Die zuletzt geänderten Akten konnten nicht ermittelt werden.", sqle);
@@ -1449,21 +1477,34 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 log.error(t);
             }
         }
-        
+
         return returnList;
     }
-    
+
     @Override
     @RolesAllowed({"readArchiveFileRole"})
     public ArchiveFileBean getArchiveFile(String id) throws Exception {
-        
+
         ArchiveFileBean aFile = this.archiveFileFacade.find(id);
         this.checkGroupsForCase(context.getCallerPrincipal().getName(), aFile);
+        
+        CaseFolder rootFolder=aFile.getRootFolder();
+        StringGenerator idGen=new StringGenerator();
+        if(rootFolder==null) {
+            rootFolder=new CaseFolder();
+            rootFolder.setId(idGen.getID().toString());
+            rootFolder.setName("Dokumente");
+            rootFolder.setParentId(null);
+            this.caseFolderFacade.create(rootFolder);
+            aFile.setRootFolder(rootFolder);
+            this.archiveFileFacade.edit(aFile);
+        }
+        
         return aFile;
     }
-    
+
     private Collection<ArchiveFileReviewsBean> getAllOpenReviewsImpl(String principalId) {
-        
+
         List<Group> userGroups = new ArrayList<Group>();
         if (principalId != null) {
             try {
@@ -1472,7 +1513,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 log.error("Unable to determine groups for user " + principalId, t);
             }
         }
-        
+
         JDBCUtils utils = new JDBCUtils();
         Connection con = null;
         ResultSet rs = null;
@@ -1482,11 +1523,11 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             con = utils.getConnection();
             st = con.prepareStatement("select id, archiveFileKey from case_followups where done=0 order by reviewDate asc");
             rs = st.executeQuery();
-            
+
             while (rs.next()) {
                 String archiveFileKey = rs.getString(2);
                 ArchiveFileBean dto = this.archiveFileFacade.find(archiveFileKey);
-                
+
                 boolean allowed = false;
                 if (principalId != null) {
                     if (this.checkGroupsForCase(context.getCallerPrincipal().getName(), userGroups, dto)) {
@@ -1495,7 +1536,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 } else {
                     allowed = true;
                 }
-                
+
                 if (allowed) {
                     String id = rs.getString(1);
                     ArchiveFileReviewsBean rev = this.archiveFileReviewsFacade.find(id);
@@ -1526,23 +1567,23 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 log.error(t);
             }
         }
-        
+
         return list;
     }
-    
+
     @Override
     @RolesAllowed({"readArchiveFileRole"})
     public Collection<ArchiveFileReviewsBean> getAllOpenReviews() {
         return this.getAllOpenReviewsImpl(context.getCallerPrincipal().getName());
     }
-    
+
     @Override
     @RolesAllowed({"readArchiveFileRole"})
-    public Collection getDocuments(String archiveFileKey) {
+    public Collection<ArchiveFileDocumentsBean> getDocuments(String archiveFileKey) {
         return getDocumentsImpl(archiveFileKey, context.getCallerPrincipal().getName());
     }
-    
-    private Collection getDocumentsImpl(String archiveFileKey, String principalId) {
+
+    private Collection<ArchiveFileDocumentsBean> getDocumentsImpl(String archiveFileKey, String principalId) {
         ArchiveFileBean aFile = this.archiveFileFacade.find(archiveFileKey);
         boolean allowed = false;
         if (principalId != null) {
@@ -1558,7 +1599,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         } else {
             allowed = true;
         }
-        
+
         if (allowed) {
             List resultList = this.archiveFileDocumentsFacade.findByArchiveFileKey(aFile);
             for (Object d : resultList) {
@@ -1574,7 +1615,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             return new ArrayList();
         }
     }
-    
+
     @Override
     @RolesAllowed({"readArchiveFileRole"})
     public boolean archiveFileExists(String id) {
@@ -1584,7 +1625,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         }
         return true;
     }
-    
+
     @Override
     @RolesAllowed({"createArchiveFileRole"})
     public ArchiveFileBean createArchiveFile(ArchiveFileBean dto, String id) throws Exception {
@@ -1598,13 +1639,13 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             String newArchiveFileKeyExtension = null;
             try {
                 newArchiveFileKey = this.getNextCaseNumber();
-                
+
                 Group g = dto.getGroup();
                 String gs = "";
                 if (g != null) {
                     gs = g.getAbbreviation();
                 }
-                
+
                 String lawyer = dto.getLawyer();
                 String lawyerAbbr = "";
                 if (lawyer != null && !("".equalsIgnoreCase(lawyer))) {
@@ -1613,7 +1654,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                         lawyerAbbr = u.getAbbreviation();
                     }
                 }
-                
+
                 newArchiveFileKeyExtension = this.getExtension(lawyerAbbr, gs);
             } catch (InvalidCaseNumberPatternException ipe) {
                 throw new Exception(ipe.getMessage());
@@ -1621,9 +1662,9 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             dto.setFileNumberMain(newArchiveFileKey);
             dto.setFileNumberExtension(newArchiveFileKeyExtension);
         }
-        
+
         dto.setId(id);
-        
+
         List<ArchiveFileAddressesBean> addresses = dto.getArchiveFileAddressesBeanList();
         if (addresses != null) {
             for (ArchiveFileAddressesBean ad : addresses) {
@@ -1632,7 +1673,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 this.archiveFileAddressesFacade.create(ad);
             }
         }
-        
+
         List<ArchiveFileReviewsBean> reviews = dto.getArchiveFileReviewsBeanList();
         if (reviews != null) {
             for (ArchiveFileReviewsBean ar : reviews) {
@@ -1641,7 +1682,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 this.archiveFileReviewsFacade.create(ar);
             }
         }
-        
+
         ArchiveFileHistoryBean initialEntry = new ArchiveFileHistoryBean();
         initialEntry.setId(idGen.getID().toString());
         initialEntry.setArchiveFileKey(dto);
@@ -1649,38 +1690,50 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         initialEntry.setChangeDescription("Akte erstellt");
         initialEntry.setPrincipal(context.getCallerPrincipal().getName());
         this.archiveFileHistoryFacade.create(initialEntry);
-        
+
         this.archiveFileFacade.create(dto);
+
+        ArchiveFileBean aFile= this.archiveFileFacade.find(dto.getId());
         
-        return this.archiveFileFacade.find(dto.getId());
+        CaseFolder rootFolder=aFile.getRootFolder();
+        if(rootFolder==null) {
+            rootFolder=new CaseFolder();
+            rootFolder.setId(idGen.getID().toString());
+            rootFolder.setName("Dokumente");
+            rootFolder.setParentId(null);
+            this.caseFolderFacade.create(rootFolder);
+            aFile.setRootFolder(rootFolder);
+            this.archiveFileFacade.edit(aFile);
+        }
+        return aFile;
     }
-    
+
     @Override
     @RolesAllowed({"writeArchiveFileRole"})
     public ArchiveFileDocumentsBean addDocument(String archiveFileId, String fileName, byte[] data, String dictateSign) throws Exception {
         StringGenerator idGen = new StringGenerator();
         ArchiveFileBean aFile = this.archiveFileFacade.find(archiveFileId);
         this.checkGroupsForCase(context.getCallerPrincipal().getName(), aFile);
-        
+
         String localBaseDir = System.getProperty("jlawyer.server.basedirectory");
         localBaseDir = localBaseDir.trim();
         if (!localBaseDir.endsWith(System.getProperty("file.separator"))) {
             localBaseDir = localBaseDir + System.getProperty("file.separator");
         }
-        
+
         String dst = localBaseDir + "archivefiles" + System.getProperty("file.separator") + aFile.getId() + System.getProperty("file.separator");
-        
+
         File dstDir = new File(dst);
         dstDir.mkdirs();
-        
+
         dst = dst + fileName;
-        
+
         if (new File(dst).exists()) {
             throw new Exception("Dokument " + fileName + " existiert bereits - bitte einen anderen Namen wählen!");
         }
-        
+
         SystemManagement.createFile(dst, data);
-        
+
         ArchiveFileDocumentsBean db = new ArchiveFileDocumentsBean();
         String docId = idGen.getID().toString();
         db.setId(docId);
@@ -1688,14 +1741,17 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         db.setArchiveFileKey(aFile);
         db.setCreationDate(new Date());
         db.setName(fileName);
+        db.setFolder(aFile.getRootFolder());
         if (data != null) {
             db.setSize(data.length);
         } else {
             db.setSize(-1);
         }
+        if(aFile.getRootFolder()!=null)
+            db.setFolder(aFile.getRootFolder());
         db.setFavorite(false);
         this.archiveFileDocumentsFacade.create(db);
-        
+
         ArchiveFileHistoryBean newHistEntry = new ArchiveFileHistoryBean();
         newHistEntry.setId(idGen.getID().toString());
         newHistEntry.setArchiveFileKey(aFile);
@@ -1703,7 +1759,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         newHistEntry.setChangeDescription("Dokument hinzugefügt: " + fileName);
         newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
         this.archiveFileHistoryFacade.create(newHistEntry);
-        
+
         String preview = "";
         try {
             PreviewGenerator pg = new PreviewGenerator(this.archiveFileDocumentsFacade);
@@ -1711,7 +1767,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         } catch (Throwable t) {
             log.error("Error creating document preview", t);
         }
-        
+
         try {
             SearchIndexRequest req = new SearchIndexRequest(SearchIndexRequest.ACTION_ADD);
             req.setArchiveFileId(archiveFileId);
@@ -1720,15 +1776,15 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             req.setFileName(fileName);
             req.setId(docId);
             req.setText(preview);
-            
+
             this.publishSearchIndexRequest(req);
         } catch (Throwable t) {
             log.error("Error publishing search index request ADD", t);
         }
-        
+
         return this.archiveFileDocumentsFacade.find(docId);
     }
-    
+
     private void publishSearchIndexRequest(SearchIndexRequest req) {
         try {
             InitialContext ic = new InitialContext();
@@ -1741,7 +1797,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             //TextMessage message = session.createTextMessage("This is an order");
             ObjectMessage msg = session.createObjectMessage(req);
             producer.send(msg);
-            
+
             connection.stop();
             producer.close();
             session.close();
@@ -1750,13 +1806,13 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             log.error("could not publish search index request", ex);
         }
     }
-    
+
     @Override
     @RolesAllowed({"readArchiveFileRole"})
     public Collection<ArchiveFileReviewsBean> searchReviews(int status, int type, Date fromDate, Date toDate) {
         return searchReviews(status, type, fromDate, toDate, 5000000);
     }
-    
+
     @Override
     @RolesAllowed({"loginRole"})
     public int getArchiveFileArchivedCount() {
@@ -1768,12 +1824,12 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         try {
             con = utils.getConnection();
             st = con.prepareStatement("select count(*) from cases where archived=1");
-            
+
             rs = st.executeQuery();
             if (rs.next()) {
                 count = rs.getInt(1);
             }
-            
+
         } catch (SQLException sqle) {
             log.error("Error getting archive files count", sqle);
             count = 0;
@@ -1799,7 +1855,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         }
         return count;
     }
-    
+
     @Override
     @RolesAllowed({"loginRole"})
     public int getDocumentCount() {
@@ -1810,7 +1866,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             throw new EJBException("Error getting number of archive files", ex);
         }
     }
-    
+
     @Override
     @RolesAllowed({"writeArchiveFileRole"})
     public void removeDocument(String id) throws Exception {
@@ -1818,16 +1874,16 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         ArchiveFileDocumentsBean db = this.archiveFileDocumentsFacade.find(id);
         ArchiveFileBean aFile = db.getArchiveFileKey();
         this.checkGroupsForCase(context.getCallerPrincipal().getName(), aFile);
-        
+
         String localBaseDir = System.getProperty("jlawyer.server.basedirectory");
         localBaseDir = localBaseDir.trim();
         if (!localBaseDir.endsWith(System.getProperty("file.separator"))) {
             localBaseDir = localBaseDir + System.getProperty("file.separator");
         }
-        
+
         String dst = localBaseDir + "archivefiles" + System.getProperty("file.separator") + aFile.getId() + System.getProperty("file.separator");
         dst = dst + db.getName();
-        
+
         File dbFile = new File(dst);
         if (!(dbFile.exists())) {
             log.warn("Dokument " + dst + " existiert nicht und kann nicht gelöscht werden!");
@@ -1838,14 +1894,14 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 log.error("Dokument " + dst + " konnte nicht gelöscht werden!");
             }
         }
-        
+
         try {
             PreviewGenerator pg = new PreviewGenerator(this.archiveFileDocumentsFacade);
             pg.deletePreview(aFile.getId(), db.getName());
         } catch (Throwable t) {
             log.warn("Error deleting document preview", t);
         }
-        
+
         ArchiveFileHistoryBean newHistEntry = new ArchiveFileHistoryBean();
         newHistEntry.setId(idGen.getID().toString());
         newHistEntry.setArchiveFileKey(aFile);
@@ -1853,54 +1909,54 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         newHistEntry.setChangeDescription("Dokument gelöscht: " + db.getName());
         newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
         this.archiveFileHistoryFacade.create(newHistEntry);
-        
+
         try {
             SearchIndexRequest req = new SearchIndexRequest(SearchIndexRequest.ACTION_DELETE);
             req.setId(id);
-            
+
             this.publishSearchIndexRequest(req);
         } catch (Throwable t) {
             log.error("Error publishing search index request DELETE", t);
         }
-        
+
         this.archiveFileDocumentsFacade.remove(db);
-        
+
     }
-    
+
     @Override
     @RolesAllowed({"writeArchiveFileRole"})
     public boolean setDocumentContent(String id, byte[] content) throws Exception {
-        
+
         ArchiveFileDocumentsBean db = this.archiveFileDocumentsFacade.find(id);
         this.checkGroupsForCase(context.getCallerPrincipal().getName(), db.getArchiveFileKey());
         String aId = db.getArchiveFileKey().getId();
-        
+
         if (content != null) {
             db.setSize(content.length);
             this.archiveFileDocumentsFacade.edit(db);
         }
-        
+
         String localBaseDir = System.getProperty("jlawyer.server.basedirectory");
         localBaseDir = localBaseDir.trim();
         if (!localBaseDir.endsWith(System.getProperty("file.separator"))) {
             localBaseDir = localBaseDir + System.getProperty("file.separator");
         }
-        
+
         String dst = localBaseDir + "archivefiles" + System.getProperty("file.separator") + aId + System.getProperty("file.separator");
-        
+
         File dstDir = new File(dst);
         dstDir.mkdirs();
-        
+
         dst = dst + db.getName();
-        
+
         File dstFile = new File(dst);
-        
+
         if (!(dstFile.exists())) {
             throw new Exception("Dokument " + dst + " existiert nicht!");
         }
-        
+
         SystemManagement.writeFile(dstFile, content);
-        
+
         String preview = "";
         try {
             PreviewGenerator pg = new PreviewGenerator(this.archiveFileDocumentsFacade);
@@ -1908,7 +1964,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         } catch (Throwable t) {
             log.error("Error updating document preview", t);
         }
-        
+
         try {
             SearchIndexRequest req = new SearchIndexRequest(SearchIndexRequest.ACTION_UPDATE);
             req.setArchiveFileId(aId);
@@ -1917,12 +1973,12 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             req.setFileName(db.getName());
             req.setId(db.getId());
             req.setText(preview);
-            
+
             this.publishSearchIndexRequest(req);
         } catch (Throwable t) {
             log.error("Error publishing search index request UPDATE", t);
         }
-        
+
         StringGenerator idGen = new StringGenerator();
         ArchiveFileHistoryBean newHistEntry = new ArchiveFileHistoryBean();
         newHistEntry.setId(idGen.getID().toString());
@@ -1931,18 +1987,18 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         newHistEntry.setChangeDescription("Dokument geändert: " + db.getName());
         newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
         this.archiveFileHistoryFacade.create(newHistEntry);
-        
+
         return true;
     }
-    
+
     @Override
     @RolesAllowed({"readArchiveFileRole"})
     public byte[] getDocumentContent(String id) throws Exception {
-        
+
         return getDocumentContentImpl(id, context.getCallerPrincipal().getName());
-        
+
     }
-    
+
     private byte[] getDocumentContentImpl(String id, String principalId) throws Exception {
         ArchiveFileDocumentsBean db = this.archiveFileDocumentsFacade.find(id);
         if (db == null) {
@@ -1951,79 +2007,79 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         }
         this.checkGroupsForCase(principalId, db.getArchiveFileKey());
         String aId = db.getArchiveFileKey().getId();
-        
+
         String localBaseDir = System.getProperty("jlawyer.server.basedirectory");
         localBaseDir = localBaseDir.trim();
         if (!localBaseDir.endsWith(System.getProperty("file.separator"))) {
             localBaseDir = localBaseDir + System.getProperty("file.separator");
         }
-        
+
         String dst = localBaseDir + "archivefiles" + System.getProperty("file.separator") + aId + System.getProperty("file.separator");
-        
+
         File dstDir = new File(dst);
         dstDir.mkdirs();
-        
+
         dst = dst + db.getName();
-        
+
         File dstFile = new File(dst);
-        
+
         if (!(dstFile.exists())) {
             throw new Exception("Dokument " + dst + " existiert nicht!");
         }
-        
+
         return SystemManagement.readFile(dstFile);
     }
-    
+
     private long getDocumentSize(ArchiveFileDocumentsBean db) {
         String aId = db.getArchiveFileKey().getId();
-        
+
         String localBaseDir = System.getProperty("jlawyer.server.basedirectory");
         localBaseDir = localBaseDir.trim();
         if (!localBaseDir.endsWith(System.getProperty("file.separator"))) {
             localBaseDir = localBaseDir + System.getProperty("file.separator");
         }
-        
+
         String dst = localBaseDir + "archivefiles" + System.getProperty("file.separator") + aId + System.getProperty("file.separator");
-        
+
         File dstDir = new File(dst);
         dstDir.mkdirs();
-        
+
         dst = dst + db.getName();
-        
+
         File dstFile = new File(dst);
-        
+
         if (!(dstFile.exists())) {
             log.error("Dokument " + dst + " existiert nicht!");
             return 0;
         }
         return dstFile.length();
-        
+
     }
-    
+
     @Override
     public Collection<ArchiveFileAddressesBean> getArchiveFileAddressesForAddress(String adressId) {
-        
+
         List<Group> userGroups = new ArrayList<Group>();
         try {
             userGroups = this.securityFacade.getGroupsForUser(context.getCallerPrincipal().getName());
         } catch (Throwable t) {
             log.error("Unable to determine groups for user " + context.getCallerPrincipal().getName(), t);
         }
-        
+
         AddressBean ab = this.addressFacade.find(adressId);
         List<ArchiveFileAddressesBean> l = this.archiveFileAddressesFacade.findByAddressKey(ab);
         ArrayList<ArchiveFileAddressesBean> l2 = new ArrayList<>();
         for (ArchiveFileAddressesBean aab : l) {
-            
+
             if (this.checkGroupsForCase(context.getCallerPrincipal().getName(), userGroups, aab.getArchiveFileKey())) {
                 l2.add(aab);
             }
-            
+
         }
-        
+
         return l2;
     }
-    
+
     @Override
     @RolesAllowed({"writeArchiveFileRole"})
     public boolean renameDocument(String id, String newName) throws Exception {
@@ -2031,46 +2087,50 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         ArchiveFileDocumentsBean db = this.archiveFileDocumentsFacade.find(id);
         ArchiveFileBean aFile = db.getArchiveFileKey();
         this.checkGroupsForCase(context.getCallerPrincipal().getName(), aFile);
-        
+
         String localBaseDir = System.getProperty("jlawyer.server.basedirectory");
         localBaseDir = localBaseDir.trim();
         if (!localBaseDir.endsWith(System.getProperty("file.separator"))) {
             localBaseDir = localBaseDir + System.getProperty("file.separator");
         }
-        
+
         String dst = localBaseDir + "archivefiles" + System.getProperty("file.separator") + aFile.getId() + System.getProperty("file.separator");
         String dstNew = dst + newName;
         dst = dst + db.getName();
-        
+
         File dbFile = new File(dst);
         if (!(dbFile.exists())) {
             throw new Exception("Dokument " + dst + " existiert nicht und kann nicht umbenannt werden!");
         }
         File dbFileNew = new File(dstNew);
-        
+
+        if (dbFileNew.exists()) {
+            throw new Exception("Ein Dokument mit dem Namen " + newName + " existiert bereits in der Akte!");
+        }
+
         boolean renamed = dbFile.renameTo(dbFileNew);
         if (!renamed) {
             throw new Exception("Dokument " + dst + " konnte nicht umbenannt werden!");
         }
-        
+
         String preview = "";
         PreviewGenerator pg = new PreviewGenerator(this.archiveFileDocumentsFacade);
         if (pg.previewExists(aFile.getId(), db.getName())) {
             String prv = localBaseDir + "archivefiles-preview" + System.getProperty("file.separator") + aFile.getId() + System.getProperty("file.separator");
             String prvNew = prv + newName;
             prv = prv + db.getName();
-            
+
             File prvFile = new File(prv);
             File prvFileNew = new File(prvNew);
-            
+
             renamed = prvFile.renameTo(prvFileNew);
             if (!renamed) {
                 throw new Exception("Dokumentvorschau " + prv + " konnte nicht umbenannt werden!");
             }
-            
+
             preview = ServerFileUtils.readFileAsString(prvFileNew);
         }
-        
+
         ArchiveFileHistoryBean newHistEntry = new ArchiveFileHistoryBean();
         newHistEntry.setId(idGen.getID().toString());
         newHistEntry.setArchiveFileKey(aFile);
@@ -2078,10 +2138,10 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         newHistEntry.setChangeDescription("Dokument umbenannt: " + db.getName() + " (neuer Name: " + newName + ")");
         newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
         this.archiveFileHistoryFacade.create(newHistEntry);
-        
+
         db.setName(newName);
         this.archiveFileDocumentsFacade.edit(db);
-        
+
         try {
             SearchIndexRequest req = new SearchIndexRequest(SearchIndexRequest.ACTION_UPDATE);
             req.setArchiveFileId(aFile.getId());
@@ -2090,27 +2150,27 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             req.setFileName(newName);
             req.setId(db.getId());
             req.setText(preview);
-            
+
             this.publishSearchIndexRequest(req);
         } catch (Throwable t) {
             log.error("Error publishing search index request ADD", t);
         }
-        
+
         return true;
     }
-    
+
     @Override
     @RolesAllowed({"writeArchiveFileRole"})
     public ArchiveFileReviewsBean addReview(String archiveFileId, ArchiveFileReviewsBean review) throws Exception {
         StringGenerator idGen = new StringGenerator();
         ArchiveFileBean aFile = this.archiveFileFacade.find(archiveFileId);
         this.checkGroupsForCase(context.getCallerPrincipal().getName(), aFile);
-        
+
         String revId = idGen.getID().toString();
         review.setId(revId);
         review.setArchiveFileKey(aFile);
         this.archiveFileReviewsFacade.create(review);
-        
+
         ArchiveFileHistoryBean newHistEntry = new ArchiveFileHistoryBean();
         newHistEntry.setId(idGen.getID().toString());
         newHistEntry.setArchiveFileKey(aFile);
@@ -2118,17 +2178,17 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         newHistEntry.setChangeDescription(review.getReviewTypeName() + " hinzugefügt: " + review.getReviewReason() + " (" + review.toString() + ")");
         newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
         this.archiveFileHistoryFacade.create(newHistEntry);
-        
+
         return this.archiveFileReviewsFacade.find(revId);
     }
-    
+
     @Override
     @RolesAllowed({"writeArchiveFileRole"})
     public ArchiveFileReviewsBean updateReview(String archiveFileId, ArchiveFileReviewsBean review) throws Exception {
         StringGenerator idGen = new StringGenerator();
         ArchiveFileBean aFile = this.archiveFileFacade.find(archiveFileId);
         this.checkGroupsForCase(context.getCallerPrincipal().getName(), aFile);
-        
+
         ArchiveFileHistoryBean newHistEntry = new ArchiveFileHistoryBean();
         newHistEntry.setId(idGen.getID().toString());
         newHistEntry.setArchiveFileKey(aFile);
@@ -2140,12 +2200,12 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         newHistEntry.setChangeDescription(review.getReviewTypeName() + " geändert: " + review.getReviewReason() + " (" + review.toString() + ", " + status + ")");
         newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
         this.archiveFileHistoryFacade.create(newHistEntry);
-        
+
         review.setArchiveFileKey(aFile);
         this.archiveFileReviewsFacade.edit(review);
         return this.archiveFileReviewsFacade.find(review.getId());
     }
-    
+
     @Override
     @RolesAllowed({"writeArchiveFileRole"})
     public void removeReview(String reviewId) throws Exception {
@@ -2153,7 +2213,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         ArchiveFileReviewsBean rb = this.archiveFileReviewsFacade.find(reviewId);
         ArchiveFileBean aFile = rb.getArchiveFileKey();
         this.checkGroupsForCase(context.getCallerPrincipal().getName(), aFile);
-        
+
         ArchiveFileHistoryBean newHistEntry = new ArchiveFileHistoryBean();
         newHistEntry.setId(idGen.getID().toString());
         newHistEntry.setArchiveFileKey(aFile);
@@ -2161,38 +2221,87 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         newHistEntry.setChangeDescription(rb.getReviewTypeName() + " gelöscht: " + rb.getReviewReason() + " (" + rb.toString() + ")");
         newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
         this.archiveFileHistoryFacade.create(newHistEntry);
-        
+
         this.archiveFileReviewsFacade.remove(rb);
     }
-    
+
     @Override
     @RolesAllowed({"readArchiveFileRole"})
     public ArchiveFileBean getArchiveFileByFileNumber(String fileNumber) throws Exception {
+
+        boolean extension = false;
+        String dividerMain = null;
+        ServerSettingsBean s = this.settingsFacade.find("jlawyer.server.numbering.ext.enabled");
+        if (s != null) {
+            try {
+                extension = Boolean.parseBoolean(s.getSettingValue());
+            } catch (Throwable t) {
+                log.error("non-boolean value for jlawyer.server.numbering.ext.enabled: " + s.getSettingValue());
+            }
+
+            // extension is enabled
+            if (extension) {
+                s = this.settingsFacade.find("jlawyer.server.numbering.ext.divider.main");
+                if (s != null) {
+                    dividerMain = s.getSettingValue();
+                    if ("".equals(dividerMain)) {
+                        dividerMain = null;
+                    }
+                }
+            }
+
+        }
+
+        try {
+            if (dividerMain != null) {
+                int i = fileNumber.lastIndexOf(dividerMain);
+                if (i > -1) {
+                    fileNumber = fileNumber.substring(0, i);
+                }
+            }
+        } catch (Throwable t) {
+            log.error("Error getting file number from " + fileNumber + " and divider " + dividerMain);
+        }
+
         List<ArchiveFileBean> result = this.archiveFileFacade.findByFileNumber(fileNumber);
         if (result == null) {
             return null;
         }
-        
+
         if (result.size() == 0) {
             return null;
         }
-        
+
         if (result.size() > 1) {
             throw new Exception("Es wurde mehr als eine Akte mit AZ '" + fileNumber + "' gefunden!");
         }
-        
+
         this.checkGroupsForCase(context.getCallerPrincipal().getName(), result.get(0));
+
+        ArchiveFileBean aFile = result.get(0);
         
-        return result.get(0);
+        CaseFolder rootFolder=aFile.getRootFolder();
+        StringGenerator idGen=new StringGenerator();
+        if(rootFolder==null) {
+            rootFolder=new CaseFolder();
+            rootFolder.setId(idGen.getID().toString());
+            rootFolder.setName("Dokumente");
+            rootFolder.setParentId(null);
+            this.caseFolderFacade.create(rootFolder);
+            aFile.setRootFolder(rootFolder);
+            this.archiveFileFacade.edit(aFile);
+        }
+
+        return aFile;
     }
-    
+
     @Override
     @RolesAllowed({"writeArchiveFileRole"})
     public ArchiveFileHistoryBean addHistory(String archiveFileId, ArchiveFileHistoryBean history) throws Exception {
         StringGenerator idGen = new StringGenerator();
         ArchiveFileBean aFile = this.archiveFileFacade.find(archiveFileId);
         this.checkGroupsForCase(context.getCallerPrincipal().getName(), aFile);
-        
+
         ArchiveFileHistoryBean newHistEntry = history;
         String histId = idGen.getID().toString();
         newHistEntry.setId(histId);
@@ -2203,20 +2312,20 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         this.archiveFileHistoryFacade.create(newHistEntry);
         return this.archiveFileHistoryFacade.find(histId);
     }
-    
+
     @Override
     @RolesAllowed({"writeArchiveFileRole"})
     public void setTag(String archiveFileId, ArchiveFileTagsBean tag, boolean active) throws Exception {
-        
+
         ArchiveFileBean aFile = this.archiveFileFacade.find(archiveFileId);
         this.checkGroupsForCase(context.getCallerPrincipal().getName(), aFile);
         List check = this.archiveFileTagsFacade.findByArchiveFileKeyAndTagName(aFile, tag.getTagName());
         StringGenerator idGen = new StringGenerator();
         String historyText = "";
-        
+
         if (active) {
             if (check.size() == 0) {
-                
+
                 String tagId = idGen.getID().toString();
                 tag.setId(tagId);
                 tag.setArchiveFileKey(aFile);
@@ -2228,7 +2337,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             this.archiveFileTagsFacade.remove(remove);
             historyText = "Akten-Etikett entfernt: " + tag.getTagName();
         }
-        
+
         ArchiveFileHistoryBean newHistEntry = new ArchiveFileHistoryBean();
         newHistEntry.setId(idGen.getID().toString());
         newHistEntry.setArchiveFileKey(aFile);
@@ -2236,23 +2345,23 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         newHistEntry.setChangeDescription(historyText);
         newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
         this.archiveFileHistoryFacade.create(newHistEntry);
-        
+
         return;
     }
-    
+
     @Override
     @RolesAllowed({"writeArchiveFileRole"})
     public void setDocumentTag(String documentId, DocumentTagsBean tag, boolean active) throws Exception {
-        
+
         ArchiveFileDocumentsBean aFile = this.archiveFileDocumentsFacade.find(documentId);
         this.checkGroupsForCase(context.getCallerPrincipal().getName(), aFile.getArchiveFileKey());
         List check = this.documentTagsFacade.findByDocumentKeyAndTagName(aFile, tag.getTagName());
         StringGenerator idGen = new StringGenerator();
         String historyText = "";
-        
+
         if (active) {
             if (check.size() == 0) {
-                
+
                 String tagId = idGen.getID().toString();
                 tag.setId(tagId);
                 tag.setArchiveFileKey(aFile);
@@ -2264,7 +2373,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             this.documentTagsFacade.remove(remove);
             historyText = "Dokument-Etikett entfernt von " + aFile.getName() + ": " + tag.getTagName();
         }
-        
+
         ArchiveFileHistoryBean newHistEntry = new ArchiveFileHistoryBean();
         newHistEntry.setId(idGen.getID().toString());
         newHistEntry.setArchiveFileKey(aFile.getArchiveFileKey());
@@ -2272,34 +2381,34 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         newHistEntry.setChangeDescription(historyText);
         newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
         this.archiveFileHistoryFacade.create(newHistEntry);
-        
+
         return;
     }
-    
+
     @Override
     @RolesAllowed({"readArchiveFileRole"})
     public Collection<ArchiveFileTagsBean> getTags(String archiveFileId) throws Exception {
         ArchiveFileBean aFile = this.archiveFileFacade.find(archiveFileId);
         this.checkGroupsForCase(context.getCallerPrincipal().getName(), aFile);
-        
+
         List resultList = this.archiveFileTagsFacade.findByArchiveFileKey(aFile);
         return resultList;
     }
-    
+
     @Override
     @RolesAllowed({"readArchiveFileRole"})
     public Collection<DocumentTagsBean> getDocumentTags(String documentId) throws Exception {
         ArchiveFileDocumentsBean aFile = this.archiveFileDocumentsFacade.find(documentId);
         this.checkGroupsForCase(context.getCallerPrincipal().getName(), aFile.getArchiveFileKey());
-        
+
         List resultList = this.documentTagsFacade.findByDocumentKey(aFile);
         return resultList;
     }
-    
+
     @Override
     @RolesAllowed({"loginRole"})
     public List<String> searchTagsInUse() {
-        
+
         JDBCUtils utils = new JDBCUtils();
         Connection con = null;
         ResultSet rs = null;
@@ -2309,7 +2418,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             con = utils.getConnection();
             st = con.prepareStatement("select distinct(tagName) from case_tags order by tagName asc");
             rs = st.executeQuery();
-            
+
             while (rs.next()) {
                 String t = rs.getString(1);
                 list.add(t);
@@ -2334,14 +2443,14 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 log.error(t);
             }
         }
-        
+
         return list;
     }
-    
+
     @Override
     @RolesAllowed({"loginRole"})
     public List<String> searchDocumentTagsInUse() {
-        
+
         JDBCUtils utils = new JDBCUtils();
         Connection con = null;
         ResultSet rs = null;
@@ -2351,7 +2460,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             con = utils.getConnection();
             st = con.prepareStatement("select distinct(tagName) from document_tags order by tagName asc");
             rs = st.executeQuery();
-            
+
             while (rs.next()) {
                 String t = rs.getString(1);
                 list.add(t);
@@ -2376,25 +2485,32 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 log.error(t);
             }
         }
-        
+
         return list;
     }
-    
+
     @Override
     @RolesAllowed({"readArchiveFileRole"})
     public ArchiveFileBean[] searchEnhanced(String query, boolean withArchive, String[] tagName, String[] documentTagNames) {
+
+        if (query == null) {
+            query = "";
+        }
+
+        query = query.trim();
+
         List<Group> userGroups = new ArrayList<Group>();
         try {
             userGroups = this.securityFacade.getGroupsForUser(context.getCallerPrincipal().getName());
         } catch (Throwable t) {
             log.error("Unable to determine groups for user " + context.getCallerPrincipal().getName(), t);
         }
-        
+
         JDBCUtils utils = new JDBCUtils();
         Connection con = null;
         ResultSet rs = null;
         PreparedStatement st = null;
-        
+
         boolean withTag = false;
         if (tagName != null && tagName.length > 0) {
             if (tagName.length == 1 && "".equals(tagName[0])) {
@@ -2402,9 +2518,9 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             } else {
                 withTag = true;
             }
-            
+
         }
-        
+
         boolean withDocumentTag = false;
         if (documentTagNames != null && documentTagNames.length > 0) {
             if (documentTagNames.length == 1 && "".equals(documentTagNames[0])) {
@@ -2412,28 +2528,28 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             } else {
                 withDocumentTag = true;
             }
-            
+
         }
-        
+
         if (withTag || withDocumentTag) {
             if (tagName == null || tagName.length == 0) {
                 tagName = new String[]{"some-non-existing-string"};
             }
-            
+
             if (documentTagNames == null || documentTagNames.length == 0) {
                 documentTagNames = new String[]{"some-non-existing-string"};
             }
         }
-        
+
         ArrayList<ArchiveFileBean> list = new ArrayList<ArchiveFileBean>();
         try {
             con = utils.getConnection();
             String wildCard = "%" + StringUtils.germanToUpperCase(query) + "%";
-            
+
             if (withArchive) {
                 // with archive
                 if (withTag || withDocumentTag) {
-                    
+
                     String inClauseCase = "?";
                     if (withTag) {
                         inClauseCase = "";
@@ -2462,7 +2578,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                             + "    (case_tags.tagName in (" + inClauseCase + ")) or \n"
                             + "    (document_tags.tagName in (" + inClauseDoc + "))\n"
                             + "    )");
-                    
+
                     st.setString(1, wildCard);
                     st.setString(2, wildCard);
                     st.setString(3, wildCard);
@@ -2492,7 +2608,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 }
             } else // without archive
             if (withTag || withDocumentTag) {
-                
+
                 String inClauseCase = "?";
                 if (withTag) {
                     inClauseCase = "";
@@ -2548,7 +2664,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 st.setString(6, wildCard);
                 st.setString(7, wildCard);
             }
-            
+
             rs = st.executeQuery();
 
             //ArchiveFileLocalHome home = this.lookupArchiveFileBean();
@@ -2559,7 +2675,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 if (this.checkGroupsForCase(context.getCallerPrincipal().getName(), userGroups, dto)) {
                     list.add(dto);
                 }
-                
+
             }
         } catch (SQLException sqle) {
             log.error("Error finding archive files", sqle);
@@ -2584,45 +2700,45 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 log.error(t);
             }
         }
-        
+
         return (ArchiveFileBean[]) list.toArray(new ArchiveFileBean[list.size()]);
     }
-    
+
     @Override
     @RolesAllowed({"readArchiveFileRole"})
     public String getDocumentPreview(String id) throws Exception {
-        
+
         PreviewGenerator pg = new PreviewGenerator(this.archiveFileDocumentsFacade);
         return pg.getDocumentPreview(id);
-        
+
     }
-    
+
     @Override
     @RolesAllowed({"readArchiveFileRole"})
     public Collection<ArchiveFileReviewsBean> searchReviews(int status, int type, Date fromDate, Date toDate, int limit) {
-        
+
         if (fromDate == null) {
             fromDate = new Date();
             fromDate.setDate(1);
             fromDate.setMonth(1);
             fromDate.setYear(0);
         }
-        
+
         if (toDate == null) {
             toDate = new Date();
             toDate.setDate(31);
             toDate.setMonth(11);
             toDate.setYear(200);
         }
-        
+
         fromDate.setHours(0);
         fromDate.setMinutes(0);
         fromDate.setSeconds(0);
-        
+
         toDate.setHours(23);
         toDate.setMinutes(59);
         toDate.setSeconds(59);
-        
+
         JDBCUtils utils = new JDBCUtils();
         Connection con = null;
         ResultSet rs = null;
@@ -2659,25 +2775,25 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 st.setInt(5, dbLimit);
             }
             rs = st.executeQuery();
-            
+
             List<Group> userGroups = new ArrayList<Group>();
             try {
                 userGroups = this.securityFacade.getGroupsForUser(context.getCallerPrincipal().getName());
             } catch (Throwable t) {
                 log.error("Unable to determine groups for user " + context.getCallerPrincipal().getName(), t);
             }
-            
+
             while (rs.next()) {
                 String id = rs.getString(1);
                 ArchiveFileReviewsBean rev = this.archiveFileReviewsFacade.find(id);
                 String archiveFileKey = rs.getString(2);
                 ArchiveFileBean dto = this.archiveFileFacade.find(archiveFileKey);
-                
+
                 boolean allowed = false;
                 if (this.checkGroupsForCase(context.getCallerPrincipal().getName(), userGroups, dto)) {
                     allowed = true;
                 }
-                
+
                 if (allowed) {
                     rev.setArchiveFileKey(dto);
                     list.add(rev);
@@ -2709,10 +2825,10 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 log.error(t);
             }
         }
-        
+
         return list;
     }
-    
+
     @Override
     @RolesAllowed({"loginRole"})
     public Date[] getHistoryInterval(String principalId) {
@@ -2732,7 +2848,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 st.setString(1, principalId);
             }
             rs = st.executeQuery();
-            
+
             if (rs.next()) {
                 Date minDateTest = rs.getTimestamp("minDate");
                 if (minDateTest == null) {
@@ -2742,10 +2858,10 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 if (maxDateTest == null) {
                     maxDateTest = new Date();
                 }
-                
+
                 Date minDate = new Date(minDateTest.getTime());
                 Date maxDate = new Date(maxDateTest.getTime());
-                
+
                 result[0] = minDate;
                 result[1] = maxDate;
             }
@@ -2772,20 +2888,20 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 log.error(t);
             }
         }
-        
+
         return result;
     }
-    
+
     @Override
     public List<ArchiveFileHistoryBean> getHistoryByDateInterval(Date fromDate, Date toDate, int limit) {
         return filterHistory(this.archiveFileHistoryFacade.findByDateInterval(fromDate, toDate, limit), context.getCallerPrincipal().getName());
     }
-    
+
     @Override
     public List<ArchiveFileHistoryBean> getHistoryByPrincipalAndDateInterval(String principal, Date fromDate, Date toDate, int limit) {
         return filterHistory(this.archiveFileHistoryFacade.findByPrincipalAndDateInterval(principal, fromDate, toDate, limit), context.getCallerPrincipal().getName());
     }
-    
+
     private List<ArchiveFileHistoryBean> filterHistory(List<ArchiveFileHistoryBean> inputList, String principalId) {
         List<Group> userGroups = new ArrayList<Group>();
         try {
@@ -2793,22 +2909,22 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         } catch (Throwable t) {
             log.error("Unable to determine groups for user " + principalId, t);
         }
-        
+
         if (inputList == null) {
             return inputList;
         }
-        
+
         ArrayList<ArchiveFileHistoryBean> outputList = new ArrayList<>();
         for (ArchiveFileHistoryBean h : inputList) {
-            
+
             if (this.checkGroupsForCase(context.getCallerPrincipal().getName(), userGroups, h.getArchiveFileKey())) {
                 outputList.add(h);
             }
-            
+
         }
         return outputList;
     }
-    
+
     @Override
     @RolesAllowed({"readArchiveFileRole"})
     public List<ArchiveFileBean> getLastChanged(int limit) {
@@ -2817,41 +2933,41 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         ResultSet rs = null;
         PreparedStatement st = null;
         List<ArchiveFileBean> returnList = new ArrayList<ArchiveFileBean>();
-        
+
         List<Group> userGroups = new ArrayList<Group>();
         try {
             userGroups = this.securityFacade.getGroupsForUser(context.getCallerPrincipal().getName());
         } catch (Throwable t) {
             log.error("Unable to determine groups for user " + context.getCallerPrincipal().getName(), t);
         }
-        
+
         try {
             con = utils.getConnection();
-            
+
             st = con.prepareStatement("select archiveFileKey from (SELECT archiveFileKey, MAX(changeDate) as maxChangeDate FROM case_history GROUP BY archiveFileKey order by maxChangeDate DESC) a1, cases a2 where a1.archiveFileKey = a2.id and a2.archived=0 order by maxChangeDate DESC limit 0,?");
-            
+
             st.setInt(1, 5 * limit);
             rs = st.executeQuery();
             while (rs.next()) {
                 String id = rs.getString(1);
                 ArchiveFileBean aFile = this.archiveFileFacade.find(id);
-                
+
                 if (this.checkGroupsForCase(context.getCallerPrincipal().getName(), userGroups, aFile)) {
                     returnList.add(aFile);
                 }
-                
+
                 if (returnList.size() == limit) {
                     break;
                 }
-                
+
             }
-            
+
             try {
                 rs.close();
             } catch (Exception ex) {
                 log.error(ex);
             }
-            
+
         } catch (SQLException sqle) {
             log.error("Error getting last changed archive files", sqle);
             throw new EJBException("Die zuletzt geänderten Akten konnten nicht ermittelt werden.", sqle);
@@ -2867,68 +2983,68 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 log.error(t);
             }
         }
-        
+
         return returnList;
     }
-    
+
     @Override
     @RolesAllowed({"loginRole"})
     public String[] previewCaseNumbering(String pattern, int startFrom, boolean extension, String dividerMain, String dividerExt, boolean bPrefix, String prefix, boolean bSuffix, String suffix, boolean userAbbr, boolean groupAbbr) throws Exception {
         ArrayList<String> existing = new ArrayList<String>();
         ArrayList<String> previews = new ArrayList<String>();
-        
+
         AppUserBean user = this.sysFacade.getUser(context.getCallerPrincipal().getName());
         String usr = user.getAbbreviation();
         if (usr == null || "".equalsIgnoreCase(usr)) {
             usr = "JOHN";
         }
-        
+
         String grp = "GRUPPE";
         if (user.getPrimaryGroup() != null) {
             if (user.getPrimaryGroup().getAbbreviation() != null && (user.getPrimaryGroup().getAbbreviation().length() > 0)) {
                 grp = user.getPrimaryGroup().getAbbreviation();
             }
         }
-        
+
         String ext = CaseNumberGenerator.getExtension(extension, dividerMain, dividerExt, bPrefix, prefix, bSuffix, suffix, userAbbr, usr, groupAbbr, "GRUPPE");
-        
+
         Date now = new Date();
         try {
-            
+
             for (int i = 0; i < 3; i++) {
                 String next = CaseNumberGenerator.getNextCaseNumber(existing, pattern, now, startFrom);
                 existing.add(next);
                 previews.add(next + ext);
             }
-            
+
             Date now2 = new Date(System.currentTimeMillis() + 24l * 60l * 60l * 1000l);
             for (int i = 0; i < 3; i++) {
                 String next = CaseNumberGenerator.getNextCaseNumber(existing, pattern, now2, startFrom);
                 existing.add(next);
                 previews.add(next + ext);
             }
-            
+
             Date now3 = new Date(System.currentTimeMillis() + 24l * 60l * 60l * 1000l + 31l * 24l * 60l * 60l * 1000l);
             for (int i = 0; i < 3; i++) {
                 String next = CaseNumberGenerator.getNextCaseNumber(existing, pattern, now3, startFrom);
                 existing.add(next);
                 previews.add(next + ext);
             }
-            
+
             Date now4 = new Date(now3.getTime() + 366l * 24l * 60l * 60l * 1000l);
             for (int i = 0; i < 3; i++) {
                 String next = CaseNumberGenerator.getNextCaseNumber(existing, pattern, now4, startFrom);
                 existing.add(next);
                 previews.add(next + ext);
             }
-            
+
             return previews.toArray(new String[0]);
-            
+
         } catch (InvalidCaseNumberPatternException icpe) {
             throw new Exception(icpe.getMessage());
         }
     }
-    
+
     @Override
     @RolesAllowed({"readArchiveFileRole"})
     public Collection<ArchiveFileBean> getAllWithMissingReviews() {
@@ -2937,27 +3053,27 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         ResultSet rs = null;
         PreparedStatement st = null;
         ArrayList<ArchiveFileBean> list = new ArrayList<ArchiveFileBean>();
-        
+
         List<Group> userGroups = new ArrayList<Group>();
         try {
             userGroups = this.securityFacade.getGroupsForUser(context.getCallerPrincipal().getName());
         } catch (Throwable t) {
             log.error("Unable to determine groups for user " + context.getCallerPrincipal().getName(), t);
         }
-        
+
         try {
             con = utils.getConnection();
             st = con.prepareStatement("select id from cases where archived=0 and id not in (select archiveFileKey from case_followups where done=0) order by fileNumber asc");
             rs = st.executeQuery();
-            
+
             while (rs.next()) {
                 String id = rs.getString(1);
                 ArchiveFileBean dto = this.archiveFileFacade.find(id);
-                
+
                 if (this.checkGroupsForCase(context.getCallerPrincipal().getName(), userGroups, dto)) {
                     list.add(dto);
                 }
-                
+
             }
         } catch (SQLException sqle) {
             log.error("Error finding archive files", sqle);
@@ -2982,10 +3098,10 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 log.error(t);
             }
         }
-        
+
         return list;
     }
-    
+
     @Override
     @RolesAllowed({"readArchiveFileRole"})
     public byte[] exportCaseToHtml(String caseId) throws Exception {
@@ -2998,7 +3114,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         this.checkGroupsForCase(context.getCallerPrincipal().getName(), dto);
         HTMLExport export = new HTMLExport(new File(tmpDir), this);
         String path = export.export(dto, null);
-        
+
         String zipFile = tmpDir + System.getProperty("file.separator") + new StringGenerator().getID().toString() + ".zip";
         export.zipDirectory(path, zipFile);
         File zip = new File(zipFile);
@@ -3007,9 +3123,9 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         File exportPath = new File(path);
         ServerFileUtils.getInstance().deleteRecursively(exportPath);
         return zipBytes;
-        
+
     }
-    
+
     @Override
     //@RolesAllowed({"readArchiveFileRole"})
     public ArrayList<String> getAllArchiveFileIds() {
@@ -3051,11 +3167,11 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 log.error(t);
             }
         }
-        
+
         return list;
-        
+
     }
-    
+
     @Override
     //@RolesAllowed({"readArchiveFileRole"})
     public Date getLastChangedForArchiveFile(String archiveFileKey) {
@@ -3070,7 +3186,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             st = con.prepareStatement("SELECT max(changeDate) FROM case_history where archiveFileKey=?;");
             st.setString(1, archiveFileKey);
             rs = st.executeQuery();
-            
+
             if (rs.next()) {
                 result = rs.getDate(1);
             }
@@ -3097,40 +3213,54 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 log.error(t);
             }
         }
-        
+
         return result;
     }
-    
+
     @Override
     public ArchiveFileBean getArchiveFileUnrestricted(String archiveFileKey) {
-        return this.archiveFileFacade.find(archiveFileKey);
+        ArchiveFileBean aFile=this.archiveFileFacade.find(archiveFileKey);
+        
+        CaseFolder rootFolder=aFile.getRootFolder();
+        StringGenerator idGen=new StringGenerator();
+        if(rootFolder==null) {
+            rootFolder=new CaseFolder();
+            rootFolder.setId(idGen.getID().toString());
+            rootFolder.setName("Dokumente");
+            rootFolder.setParentId(null);
+            this.caseFolderFacade.create(rootFolder);
+            aFile.setRootFolder(rootFolder);
+            this.archiveFileFacade.edit(aFile);
+        }
+        return aFile;
+        
     }
-    
+
     @Override
     public ArchiveFileHistoryBean[] getHistoryForArchiveFileUnrestricted(String archiveFileKey) throws Exception {
         return getHistoryForArchiveFileImpl(archiveFileKey, null);
     }
-    
+
     @Override
     public Collection getReviewsUnrestricted(String archiveFileKey) throws Exception {
         return getReviewsImpl(archiveFileKey, null);
     }
-    
+
     @Override
-    public Collection getDocumentsUnrestricted(String archiveFileKey) {
+    public Collection<ArchiveFileDocumentsBean> getDocumentsUnrestricted(String archiveFileKey) {
         return getDocumentsImpl(archiveFileKey, null);
     }
-    
+
     @Override
     public byte[] getDocumentContentUnrestricted(String id) throws Exception {
         return getDocumentContentImpl(id, null);
     }
-    
+
     @Override
     public Collection<ArchiveFileReviewsBean> getAllOpenReviewsUnrestricted() {
         return this.getAllOpenReviewsImpl(null);
     }
-    
+
     @Override
     @RolesAllowed({"readArchiveFileRole"})
     public List<ArchiveFileBean> getTagged(String[] tagName, String[] docTagName, int limit) {
@@ -3139,25 +3269,25 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         ResultSet rs = null;
         PreparedStatement st = null;
         List<ArchiveFileBean> returnList = new ArrayList<ArchiveFileBean>();
-        
+
         List<Group> userGroups = new ArrayList<Group>();
         try {
             userGroups = this.securityFacade.getGroupsForUser(context.getCallerPrincipal().getName());
         } catch (Throwable t) {
             log.error("Unable to determine groups for user " + context.getCallerPrincipal().getName(), t);
         }
-        
+
         if (tagName == null || tagName.length == 0) {
             tagName = new String[]{"some-non-existing-string"};
         }
-        
+
         if (docTagName == null || docTagName.length == 0) {
             docTagName = new String[]{"some-non-existing-string"};
         }
-        
+
         try {
             con = utils.getConnection();
-            
+
             String inClauseCase = "";
             boolean empty = true;
             if (tagName != null && tagName.length > 0) {
@@ -3166,7 +3296,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                     inClauseCase = inClauseCase + ",?";
                 }
             }
-            
+
             String inClauseDoc = "";
             if (docTagName != null && docTagName.length > 0) {
                 empty = false;
@@ -3177,7 +3307,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             if (empty) {
                 return new ArrayList<ArchiveFileBean>();
             }
-            
+
             inClauseCase = inClauseCase.replaceFirst(",", "");
             inClauseDoc = inClauseDoc.replaceFirst(",", "");
 
@@ -3203,7 +3333,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                     + "            (a4.tagName in (" + inClauseDoc + "))\n"
                     + "            \n"
                     + "        )) order by maxChangeDate DESC) allkeys limit 0,?");
-            
+
             int index = 1;
             if (tagName != null && tagName.length > 0) {
                 for (String t : tagName) {
@@ -3217,7 +3347,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                     index = index + 1;
                 }
             }
-            
+
             st.setInt(index, 5 * limit);
             rs = st.executeQuery();
             ArrayList<String> keyCache = new ArrayList<String>();
@@ -3226,26 +3356,26 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 // there might be duplicate cases in the result set
                 if (!keyCache.contains(id)) {
                     keyCache.add(id);
-                    
+
                     ArchiveFileBean dto = this.archiveFileFacade.find(id);
-                    
+
                     if (this.checkGroupsForCase(context.getCallerPrincipal().getName(), userGroups, dto)) {
                         returnList.add(dto);
                     }
-                    
+
                     if (returnList.size() == limit) {
                         break;
                     }
-                    
+
                 }
             }
-            
+
             try {
                 rs.close();
             } catch (Exception ex) {
                 log.error(ex);
             }
-            
+
         } catch (SQLException sqle) {
             log.error("Error getting archive files by specific tag", sqle);
             throw new EJBException("Markierte Akten konnten nicht ermittelt werden.", sqle);
@@ -3261,24 +3391,24 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 log.error(t);
             }
         }
-        
+
         return returnList;
     }
-    
+
     @Override
     @RolesAllowed({"writeArchiveFileRole"})
     public boolean setDocumentDate(String id, Date date) throws Exception {
         ArchiveFileDocumentsBean db = this.archiveFileDocumentsFacade.find(id);
         String aId = db.getArchiveFileKey().getId();
         this.checkGroupsForCase(context.getCallerPrincipal().getName(), db.getArchiveFileKey());
-        
+
         if (date == null) {
             throw new Exception("Dokumentdatum darf nicht leer sein!");
         }
-        
+
         db.setCreationDate(date);
         this.archiveFileDocumentsFacade.edit(db);
-        
+
         StringGenerator idGen = new StringGenerator();
         ArchiveFileHistoryBean newHistEntry = new ArchiveFileHistoryBean();
         newHistEntry.setId(idGen.getID().toString());
@@ -3287,31 +3417,38 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         newHistEntry.setChangeDescription("Dokumentdatum geändert: " + db.getName());
         newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
         this.archiveFileHistoryFacade.create(newHistEntry);
-        
+
         return true;
     }
-    
+
     @Override
     @RolesAllowed({"writeArchiveFileRole"})
     public boolean setDocumentFavorite(String id, boolean favorite) throws Exception {
         ArchiveFileDocumentsBean db = this.archiveFileDocumentsFacade.find(id);
         String aId = db.getArchiveFileKey().getId();
         this.checkGroupsForCase(context.getCallerPrincipal().getName(), db.getArchiveFileKey());
-        
+
         db.setFavorite(favorite);
         this.archiveFileDocumentsFacade.edit(db);
-        
+
         return true;
     }
-    
+
     @Override
     @RolesAllowed({"readArchiveFileRole"})
     public Hashtable<String, ArrayList<String>> searchTagsEnhanced(String query, boolean withArchive, String[] tagNames, String[] documentTagNames) {
+
+        if (query == null) {
+            query = "";
+        }
+
+        query = query.trim();
+
         JDBCUtils utils = new JDBCUtils();
         Connection con = null;
         ResultSet rs = null;
         PreparedStatement st = null;
-        
+
         boolean withTag = false;
         if (tagNames != null && tagNames.length > 0) {
             if (tagNames.length == 1 && "".equals(tagNames[0])) {
@@ -3319,9 +3456,9 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             } else {
                 withTag = true;
             }
-            
+
         }
-        
+
         boolean withDocumentTag = false;
         if (documentTagNames != null && documentTagNames.length > 0) {
             if (documentTagNames.length == 1 && "".equals(documentTagNames[0])) {
@@ -3329,28 +3466,28 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             } else {
                 withDocumentTag = true;
             }
-            
+
         }
-        
+
         if (withTag || withDocumentTag) {
             if (tagNames == null || tagNames.length == 0) {
                 tagNames = new String[]{"some-non-existing-string"};
             }
-            
+
             if (documentTagNames == null || documentTagNames.length == 0) {
                 documentTagNames = new String[]{"some-non-existing-string"};
             }
         }
-        
+
         Hashtable<String, ArrayList<String>> list = new Hashtable<String, ArrayList<String>>();
         try {
             con = utils.getConnection();
             String wildCard = "%" + StringUtils.germanToUpperCase(query) + "%";
-            
+
             if (withArchive) {
                 // with archive
                 if (withTag || withDocumentTag) {
-                    
+
                     String inClauseCase = "?";
                     if (withTag) {
                         inClauseCase = "";
@@ -3379,7 +3516,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                     st.setString(6, wildCard);
                     st.setString(7, wildCard);
                     int index = 8;
-                    
+
                     for (String t : tagNames) {
                         st.setString(index, t);
                         index = index + 1;
@@ -3428,7 +3565,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 st.setString(6, wildCard);
                 st.setString(7, wildCard);
                 int index = 8;
-                
+
                 for (String t : tagNames) {
                     st.setString(index, t);
                     index = index + 1;
@@ -3448,9 +3585,9 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 st.setString(6, wildCard);
                 st.setString(7, wildCard);
             }
-            
+
             rs = st.executeQuery();
-            
+
             while (rs.next()) {
                 String id = rs.getString(1);
                 String tagName = rs.getString(2);
@@ -3461,12 +3598,12 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 if (!tagList.contains(tagName)) {
                     tagList.add(tagName);
                 }
-                
+
                 String docTagName = rs.getString(3);
                 if (!tagList.contains(docTagName)) {
                     tagList.add(docTagName);
                 }
-                
+
             }
         } catch (SQLException sqle) {
             log.error("Error finding archive files", sqle);
@@ -3491,26 +3628,26 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 log.error(t);
             }
         }
-        
+
         return list;
     }
-    
+
     @Override
     @RolesAllowed({"writeArchiveFileRole"})
     public ArchiveFileDocumentsBean addDocumentFromTemplate(String archiveFileId, String fileName, GenericNode templateFolder, String templateName, Hashtable placeHolderValues, String dictateSign) throws Exception {
         StringGenerator idGen = new StringGenerator();
         ArchiveFileBean aFile = this.archiveFileFacade.find(archiveFileId);
         this.checkGroupsForCase(context.getCallerPrincipal().getName(), aFile);
-        
+
         String localBaseDir = System.getProperty("jlawyer.server.basedirectory");
         localBaseDir = localBaseDir.trim();
         if (!localBaseDir.endsWith(System.getProperty("file.separator"))) {
             localBaseDir = localBaseDir + System.getProperty("file.separator");
         }
-        
+
         String src = localBaseDir + "templates" + TreeNodeUtils.buildNodePath(templateFolder) + System.getProperty("file.separator") + templateName;
         String dst = localBaseDir + "archivefiles" + System.getProperty("file.separator") + aFile.getId() + System.getProperty("file.separator");
-        
+
         String ext = "";
         try {
             ext = templateName.substring(templateName.lastIndexOf('.'));
@@ -3518,20 +3655,20 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             log.warn("Template without file extension: " + templateName);
         }
         fileName = fileName + ext;
-        
+
         File dstDir = new File(dst);
         dstDir.mkdirs();
-        
+
         dst = dst + fileName;
-        
+
         if (new File(dst).exists()) {
             throw new Exception("Dokument " + fileName + " existiert bereits - bitte einen anderen Namen wählen!");
         }
-        
+
         SystemManagement.copyFile(src, dst);
-        
+
         LibreOfficeAccess.setPlaceHolders(dst, placeHolderValues);
-        
+
         ArchiveFileDocumentsBean db = new ArchiveFileDocumentsBean();
         String docId = idGen.getID().toString();
         db.setId(docId);
@@ -3539,6 +3676,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         db.setArchiveFileKey(aFile);
         db.setCreationDate(new Date());
         db.setName(fileName);
+        db.setFolder(aFile.getRootFolder());
         if (new File(dst).exists()) {
             db.setSize(new File(dst).length());
         } else {
@@ -3546,7 +3684,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         }
         db.setFavorite(false);
         this.archiveFileDocumentsFacade.create(db);
-        
+
         ArchiveFileHistoryBean newHistEntry = new ArchiveFileHistoryBean();
         newHistEntry.setId(idGen.getID().toString());
         newHistEntry.setArchiveFileKey(aFile);
@@ -3554,7 +3692,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         newHistEntry.setChangeDescription("Dokument hinzugefügt: " + fileName);
         newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
         this.archiveFileHistoryFacade.create(newHistEntry);
-        
+
         String preview = "";
         try {
             PreviewGenerator pg = new PreviewGenerator(this.archiveFileDocumentsFacade);
@@ -3562,7 +3700,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         } catch (Throwable t) {
             log.error("Error creating document preview", t);
         }
-        
+
         try {
             SearchIndexRequest req = new SearchIndexRequest(SearchIndexRequest.ACTION_ADD);
             req.setArchiveFileId(archiveFileId);
@@ -3571,31 +3709,31 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             req.setFileName(fileName);
             req.setId(docId);
             req.setText(preview);
-            
+
             this.publishSearchIndexRequest(req);
         } catch (Throwable t) {
             log.error("Error publishing search index request ADD", t);
         }
-        
+
         return this.archiveFileDocumentsFacade.find(docId);
     }
-    
+
     @Override
     @RolesAllowed({"readArchiveFileRole"})
     public List<AddressBean> getAddressesForCase(String archiveFileKey) throws Exception {
         ArchiveFileBean aFile = this.archiveFileFacade.find(archiveFileKey);
         this.checkGroupsForCase(context.getCallerPrincipal().getName(), aFile);
-        
+
         List resultList = this.archiveFileAddressesFacade.findByArchiveFileKey(aFile);
-        
+
         ArrayList addressList = new ArrayList();
         for (Object client : resultList) {
             addressList.add(((ArchiveFileAddressesBean) client).getAddressKey());
-            
+
         }
         return addressList;
     }
-    
+
     private String getSortString(ArchiveFileAddressesBean afab) {
         // 1 for clients, 2 for opponents, 3 for others
         String sortString = "";
@@ -3607,7 +3745,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         }
         return sortString;
     }
-    
+
     private List<ArchiveFileAddressesBean> getInvolvementDetailsForCaseImpl(String archiveFileKey) {
         ArchiveFileBean aFile = this.archiveFileFacade.find(archiveFileKey);
         List resultList = this.archiveFileAddressesFacade.findByArchiveFileKey(aFile);
@@ -3627,7 +3765,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                             }
                             return -1;
                         }
-                        
+
                     });
                 } catch (Throwable t) {
                     // log, but do not fail
@@ -3638,18 +3776,18 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         }
         return resultList;
     }
-    
+
     @Override
     @RolesAllowed({"readArchiveFileRole"})
     public List<ArchiveFileAddressesBean> getInvolvementDetailsForCase(String archiveFileKey) {
         return this.getInvolvementDetailsForCaseImpl(archiveFileKey);
     }
-    
+
     @Override
     public List<ArchiveFileAddressesBean> getInvolvementDetailsForCaseUnrestricted(String archiveFileKey) {
         return this.getInvolvementDetailsForCaseImpl(archiveFileKey);
     }
-    
+
     @Override
     @RolesAllowed({"adminRole"})
     public boolean udpateFileNumber(String from, String to) throws Exception {
@@ -3660,7 +3798,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         }
         afb.setFileNumberMain(to);
         this.archiveFileFacade.edit(afb);
-        
+
         StringGenerator idGen = new StringGenerator();
         ArchiveFileHistoryBean newHistEntry = new ArchiveFileHistoryBean();
         newHistEntry.setId(idGen.getID().toString());
@@ -3669,15 +3807,15 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         newHistEntry.setChangeDescription("Aktenzeichen geändert: " + from + " --> " + to);
         newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
         this.archiveFileHistoryFacade.create(newHistEntry);
-        
+
         return true;
     }
-    
+
     @Override
     @RolesAllowed({"loginRole"})
     public boolean doesDocumentExist(String caseId, String documentName) {
         ArchiveFileBean aFile = this.archiveFileFacade.find(caseId);
-        
+
         List resultList = this.archiveFileDocumentsFacade.findByArchiveFileKey(aFile);
         for (Object d : resultList) {
             if (d instanceof ArchiveFileDocumentsBean) {
@@ -3689,7 +3827,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         }
         return false;
     }
-    
+
     @Override
     @RolesAllowed({"loginRole"})
     public boolean doesDocumentExist(String id) {
@@ -3698,28 +3836,28 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             return false;
         }
         String aId = db.getArchiveFileKey().getId();
-        
+
         String localBaseDir = System.getProperty("jlawyer.server.basedirectory");
         localBaseDir = localBaseDir.trim();
         if (!localBaseDir.endsWith(System.getProperty("file.separator"))) {
             localBaseDir = localBaseDir + System.getProperty("file.separator");
         }
-        
+
         String dst = localBaseDir + "archivefiles" + System.getProperty("file.separator") + aId + System.getProperty("file.separator");
-        
+
         File dstDir = new File(dst);
         dstDir.mkdirs();
-        
+
         dst = dst + db.getName();
-        
+
         File dstFile = new File(dst);
-        
+
         if (!(dstFile.exists())) {
             return false;
         }
         return true;
     }
-    
+
     @Override
     @RolesAllowed({"readArchiveFileRole"})
     public List<ArchiveFileDocumentsBean> getTaggedDocuments(java.lang.String[] docTagName, int limit) {
@@ -3728,37 +3866,37 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         ResultSet rs = null;
         PreparedStatement st = null;
         List<ArchiveFileDocumentsBean> returnList = new ArrayList<ArchiveFileDocumentsBean>();
-        
+
         List<Group> userGroups = new ArrayList<Group>();
         try {
             userGroups = this.securityFacade.getGroupsForUser(context.getCallerPrincipal().getName());
         } catch (Throwable t) {
             log.error("Unable to determine groups for user " + context.getCallerPrincipal().getName(), t);
         }
-        
+
         try {
             con = utils.getConnection();
-            
+
             String inClause = "";
             for (String t : docTagName) {
                 inClause = inClause + ",?";
             }
             inClause = inClause.replaceFirst(",", "");
-            
+
             st = con.prepareStatement("select distinct(docid) from (select a5.id as docid from "
                     + "    (SELECT archiveFileKey, MAX(changeDate) as maxChangeDate "
                     + "    FROM case_history "
                     + "    GROUP BY archiveFileKey "
                     + "    order by maxChangeDate DESC) a1, cases a2, document_tags a4, case_documents a5 "
                     + "    where a1.archiveFileKey = a2.id and a2.archived=0 and (((a4.tagName in (" + inClause + ") and a4.documentKey=a5.id and a5.archiveFileKey=a2.id))) order by maxChangeDate DESC) allkeys limit 0,?");
-            
+
             int index = 1;
-            
+
             for (String t : docTagName) {
                 st.setString(index, t);
                 index = index + 1;
             }
-            
+
             st.setInt(index, limit);
             rs = st.executeQuery();
             ArrayList<String> keyCache = new ArrayList<String>();
@@ -3768,20 +3906,20 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 if (!keyCache.contains(id)) {
                     keyCache.add(id);
                     ArchiveFileDocumentsBean docb = this.archiveFileDocumentsFacade.find(id);
-                    
+
                     if (this.checkGroupsForCase(context.getCallerPrincipal().getName(), userGroups, docb.getArchiveFileKey())) {
                         returnList.add(docb);
                     }
-                    
+
                 }
             }
-            
+
             try {
                 rs.close();
             } catch (Exception ex) {
                 log.error(ex);
             }
-            
+
         } catch (SQLException sqle) {
             log.error("Error getting documents by specific tag", sqle);
             throw new EJBException("Markierte Dokumente konnten nicht ermittelt werden.", sqle);
@@ -3797,10 +3935,10 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 log.error(t);
             }
         }
-        
+
         return returnList;
     }
-    
+
     @Override
     @RolesAllowed({"readArchiveFileRole"})
     public Hashtable<String, ArrayList<String>> getDocumentTagsForCase(String caseId) {
@@ -3809,11 +3947,11 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         ResultSet rs = null;
         PreparedStatement st = null;
         Hashtable<String, ArrayList<String>> returnList = new Hashtable<String, ArrayList<String>>();
-        
+
         try {
             con = utils.getConnection();
             st = con.prepareStatement("select docs.id, tags.tagName from case_documents docs, document_tags tags where docs.archiveFileKey=? and docs.id=tags.documentKey and docs.id in (select documentKey from document_tags)");
-            
+
             st.setString(1, caseId);
             rs = st.executeQuery();
             while (rs.next()) {
@@ -3825,16 +3963,16 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                     tags = new ArrayList<String>();
                     returnList.put(id, tags);
                 }
-                
+
                 tags.add(rs.getString(2));
             }
-            
+
             try {
                 rs.close();
             } catch (Exception ex) {
                 log.error(ex);
             }
-            
+
         } catch (SQLException sqle) {
             log.error("Error getting documents tags", sqle);
             throw new EJBException("Markierte Dokumente konnten nicht ermittelt werden.", sqle);
@@ -3850,21 +3988,21 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 log.error(t);
             }
         }
-        
+
         return returnList;
     }
-    
+
     @Override
     @RolesAllowed({"writeArchiveFileRole"})
     public void renameTag(String fromName, String toName) throws Exception {
-        
+
         StringGenerator idGen = new StringGenerator();
-        
+
         List<ArchiveFileTagsBean> tags = this.archiveFileTagsFacade.findByTagName(fromName);
         for (ArchiveFileTagsBean t : tags) {
             t.setTagName(toName);
             this.archiveFileTagsFacade.edit(t);
-            
+
             ArchiveFileHistoryBean newHistEntry = new ArchiveFileHistoryBean();
             newHistEntry.setId(idGen.getID().toString());
             newHistEntry.setArchiveFileKey(t.getArchiveFileKey());
@@ -3873,19 +4011,19 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
             this.archiveFileHistoryFacade.create(newHistEntry);
         }
-        
+
     }
-    
+
     @Override
     @RolesAllowed({"writeArchiveFileRole"})
     public void renameDocumentTag(String fromName, String toName) throws Exception {
         StringGenerator idGen = new StringGenerator();
-        
+
         List<DocumentTagsBean> tags = this.documentTagsFacade.findByTagName(fromName);
         for (DocumentTagsBean t : tags) {
             t.setTagName(toName);
             this.documentTagsFacade.edit(t);
-            
+
             ArchiveFileHistoryBean newHistEntry = new ArchiveFileHistoryBean();
             newHistEntry.setId(idGen.getID().toString());
             newHistEntry.setArchiveFileKey(t.getDocumentKey().getArchiveFileKey());
@@ -3895,7 +4033,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             this.archiveFileHistoryFacade.create(newHistEntry);
         }
     }
-    
+
     @Override
     @RolesAllowed({"readArchiveFileRole"})
     public ArchiveFileDocumentsBean getDocument(String id) throws Exception {
@@ -3907,59 +4045,95 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         this.checkGroupsForCase(context.getCallerPrincipal().getName(), db.getArchiveFileKey());
         return db;
     }
-    
+
     @Override
     @RolesAllowed({"writeArchiveFileRole"})
     public ArchiveFileAddressesBean addAddressToCase(ArchiveFileAddressesBean address) throws Exception {
         if (address.getArchiveFileKey() == null) {
             throw new Exception("Akteninformationen erforderlich, um Beteiligten hinzuzufügen");
         }
-        
+
         if (address.getAddressKey() == null) {
             throw new Exception("Adressinformationen erforderlich, um Beteiligten hinzuzufügen");
         }
-        
+
         StringGenerator idGen = new StringGenerator();
         String id = idGen.getID().toString();
         address.setId(id);
-        
+
         this.checkGroupsForCase(context.getCallerPrincipal().getName(), address.getArchiveFileKey());
-        
+
         this.archiveFileAddressesFacade.create(address);
-        
+
         address = this.archiveFileAddressesFacade.find(id);
         return address;
-        
+
     }
-    
+
     @Override
     @RolesAllowed({"loginRole"})
     public List<PartyTypeBean> getAllPartyTypes() {
-        return this.partyTypeFacade.findAll();
+        List<PartyTypeBean> all = this.partyTypeFacade.findAll();
+        Collections.sort(all, new Comparator() {
+            @Override
+            public int compare(Object t, Object t1) {
+                Object u1 = t;
+                Object u2 = t1;
+                if (u1 == null) {
+                    return -1;
+                }
+                if (u2 == null) {
+                    return 1;
+                }
+
+                if (!(u1 instanceof PartyTypeBean)) {
+                    return -1;
+                }
+                if (!(u2 instanceof PartyTypeBean)) {
+                    return 1;
+                }
+
+                PartyTypeBean f1 = (PartyTypeBean) u1;
+                PartyTypeBean f2 = (PartyTypeBean) u2;
+
+                String f1name = "";
+                if (f1.getName() != null) {
+                    f1name = f1.getName().toLowerCase();
+                }
+                String f2name = "";
+                if (f2.getName() != null) {
+                    f2name = f2.getName().toLowerCase();
+                }
+
+                return f1name.compareTo(f2name);
+            }
+
+        });
+        return all;
     }
-    
+
     @Override
     @RolesAllowed({"writeArchiveFileRole"})
     public ArchiveFileAddressesBean updateParty(String caseId, ArchiveFileAddressesBean party) throws Exception {
         StringGenerator idGen = new StringGenerator();
         ArchiveFileBean aFile = this.archiveFileFacade.find(caseId);
         this.checkGroupsForCase(context.getCallerPrincipal().getName(), aFile);
-        
+
         ArchiveFileAddressesBean oldParty = this.archiveFileAddressesFacade.find(party.getId());
         String name = "?";
         if (oldParty.getAddressKey() != null) {
             name = oldParty.getAddressKey().toDisplayName();
         }
-        
+
         oldParty.setContact(party.getContact());
         oldParty.setCustom1(party.getCustom1());
         oldParty.setCustom2(party.getCustom2());
         oldParty.setCustom3(party.getCustom3());
         oldParty.setReference(party.getReference());
         oldParty.setReferenceType(party.getReferenceType());
-        
+
         this.archiveFileAddressesFacade.edit(oldParty);
-        
+
         ArchiveFileHistoryBean newHistEntry = new ArchiveFileHistoryBean();
         newHistEntry.setId(idGen.getID().toString());
         newHistEntry.setArchiveFileKey(aFile);
@@ -3967,19 +4141,19 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         newHistEntry.setChangeDescription("Beteiligtendaten für " + name + " geändert");
         newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
         this.archiveFileHistoryFacade.create(newHistEntry);
-        
+
         return this.archiveFileAddressesFacade.find(oldParty.getId());
     }
-    
+
     @Override
     @RolesAllowed({"writeArchiveFileRole"})
     public void removeParty(String id) throws Exception {
-        
+
         StringGenerator idGen = new StringGenerator();
         ArchiveFileAddressesBean db = this.archiveFileAddressesFacade.find(id);
         ArchiveFileBean aFile = db.getArchiveFileKey();
         this.checkGroupsForCase(context.getCallerPrincipal().getName(), aFile);
-        
+
         ArchiveFileHistoryBean newHistEntry = new ArchiveFileHistoryBean();
         newHistEntry.setId(idGen.getID().toString());
         newHistEntry.setArchiveFileKey(aFile);
@@ -3987,31 +4161,31 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         newHistEntry.setChangeDescription("Beteiligter gelöscht: " + db.getAddressKey().toDisplayName());
         newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
         this.archiveFileHistoryFacade.create(newHistEntry);
-        
+
         this.archiveFileAddressesFacade.remove(db);
-        
+
     }
-    
+
     @Override
     @RolesAllowed({"readArchiveFileRole"})
     public List<ArchiveFileGroupsBean> getAllowedGroups(String caseId) {
         ArchiveFileBean archiveFile = this.archiveFileFacade.find(caseId);
         return this.getAllowedGroups(archiveFile);
-        
+
     }
-    
+
     private List<ArchiveFileGroupsBean> getAllowedGroups(ArchiveFileBean archiveFile) {
         if (archiveFile == null) {
             return new ArrayList<ArchiveFileGroupsBean>();
         }
         return this.caseGroupsFacade.findByCase(archiveFile);
-        
+
     }
-    
+
     @Override
     @RolesAllowed({"writeArchiveFileRole"})
     public void updateAllowedGroups(String caseId, Collection<Group> allowedGroups) throws Exception {
-        
+
         ArchiveFileBean aFile = this.archiveFileFacade.find(caseId);
         if (aFile == null) {
             log.error("Case " + caseId + " not found - updating allowed groups failed.");
@@ -4022,7 +4196,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         for (ArchiveFileGroupsBean g : currentGroups) {
             this.caseGroupsFacade.remove(g);
         }
-        
+
         for (Group g : allowedGroups) {
             ArchiveFileGroupsBean newGroup = new ArchiveFileGroupsBean();
             newGroup.setArchiveFileKey(aFile);
@@ -4030,7 +4204,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             newGroup.setId(new StringGenerator().getID().toString());
             this.caseGroupsFacade.create(newGroup);
         }
-        
+
     }
 
     @Override
@@ -4042,5 +4216,309 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         }
         return aFile.getFileNumber();
     }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public List<DocumentFolderTemplate> getAllFolderTemplates() {
+        return this.folderTemplateFacade.findAll();
+    }
+
+    @Override
+    @RolesAllowed({"adminRole"})
+    public void addFolderTemplate(DocumentFolderTemplate template) {
+        StringGenerator idGen = new StringGenerator();
+
+        // create root folder
+        DocumentFolder folder = new DocumentFolder();
+        folder.setId(idGen.getID().toString());
+        folder.setName("Dokumente");
+        folder.setParentId(null);
+        this.folderFacade.create(folder);
+
+        template.setId(idGen.getID().toString());
+        template.setRootFolder(folder);
+        this.folderTemplateFacade.create(template);
+
+    }
+
+    @Override
+    @RolesAllowed({"adminRole"})
+    public void removeFolderTemplate(String name) {
+        DocumentFolderTemplate t = this.folderTemplateFacade.findByName(name);
+        if (t != null) {
+            this.folderTemplateFacade.remove(t);
+        }
+
+    }
+
+    @Override
+    @RolesAllowed({"adminRole"})
+    public void updateFolderTemplate(DocumentFolderTemplate template) {
+        DocumentFolderTemplate t = this.folderTemplateFacade.find(template.getId());
+        if (t != null) {
+            t.setName(template.getName());
+            this.folderTemplateFacade.edit(t);
+        }
+    }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public DocumentFolderTemplate getFolderTemplate(String name) {
+        return this.folderTemplateFacade.findByName(name);
+    }
+
+    @Override
+    public DocumentFolder addFolderToTemplate(String templateName, DocumentFolder folder) throws Exception {
+
+        DocumentFolderTemplate t = this.folderTemplateFacade.findByName(templateName);
+        if (t == null) {
+            throw new Exception("Ordnerstruktur " + templateName + " existiert nicht!");
+        }
+
+        if (folder == null) {
+            throw new Exception("Ordner kann nicht erstellt werden (leer)!");
+        }
+
+        if (folder.getName() == null || "".equals(folder.getName().trim())) {
+            throw new Exception("Ordnername darf nicht leer sein!");
+        }
+
+        if (folder.getParentId() == null || "".equals(folder.getParentId())) {
+            throw new Exception("Übergeordneter Ordner darf nicht leer sein!");
+        }
+
+        DocumentFolder parent = this.folderFacade.find(folder.getParentId());
+        if (parent == null) {
+            throw new Exception("Übergeordneter Ordner kann nicht gefunden werden!");
+        }
+
+        StringGenerator idGen = new StringGenerator();
+        folder.setId(idGen.getID().toString());
+        this.folderFacade.create(folder);
+        return folder;
+
+    }
+
+    @Override
+    public void removeFolderFromTemplate(String folderId) throws Exception {
+
+        if (folderId == null || "".equals(folderId)) {
+            throw new Exception("Ordner-ID darf nicht leer sein!");
+        }
+
+        DocumentFolder df = this.folderFacade.find(folderId);
+        if (df == null) {
+            throw new Exception("Ordner kann nicht gefunden werden!");
+        }
+
+        this.folderFacade.remove(df);
+
+    }
+
+    @Override
+    public void cloneFolderTemplate(String sourceTemplateName, String targetTemplateName) throws Exception {
+        DocumentFolderTemplate source = this.getFolderTemplate(sourceTemplateName);
+        DocumentFolderTemplate target = new DocumentFolderTemplate();
+        target.setName(targetTemplateName);
+        this.addFolderTemplate(target);
+        target = this.getFolderTemplate(targetTemplateName);
+        DocumentFolder sourceRoot = source.getRootFolder();
+        DocumentFolder targetRoot = target.getRootFolder();
+        this.cloneFolderTemplateRecursive(targetTemplateName, sourceRoot, targetRoot);
+    }
+
+    private void cloneFolderTemplateRecursive(String targetTemplateName, DocumentFolder from, DocumentFolder to) throws Exception {
+        for (DocumentFolder child : from.getChildren()) {
+            DocumentFolder newChild = new DocumentFolder();
+            newChild.setName(child.getName());
+            newChild.setParentId(to.getId());
+            this.addFolderToTemplate(targetTemplateName, newChild);
+            this.cloneFolderTemplateRecursive(targetTemplateName, child, newChild);
+        }
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public CaseFolder createCaseFolder(String parentId, String name) throws Exception {
+
+        List<CaseFolder> neighbours = this.caseFolderFacade.findByParentId(parentId);
+        boolean nameCollision = false;
+        for (CaseFolder n : neighbours) {
+            if (name.equalsIgnoreCase(n.getName())) {
+                throw new Exception("Es existiert bereits ein Ordner mit diesem Namen!");
+            }
+        }
+        if (name == null || "".equals(name)) {
+            throw new Exception("Ordnername darf nicht leer sein!");
+        }
+
+        CaseFolder cf = new CaseFolder();
+        cf.setParentId(parentId);
+        cf.setName(name);
+        String id = new StringGenerator().getID().toString();
+        cf.setId(id);
+        this.caseFolderFacade.create(cf);
+        return this.caseFolderFacade.find(id);
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public CaseFolder updateCaseFolder(CaseFolder folder) throws Exception {
+        CaseFolder cf = this.caseFolderFacade.find(folder.getId());
+        if (cf != null) {
+            List<CaseFolder> neighbours = this.caseFolderFacade.findByParentId(folder.getParentId());
+            boolean nameCollision = false;
+            for (CaseFolder n : neighbours) {
+                if (folder.getName().equalsIgnoreCase(n.getName()) && !(folder.getId().equals(n.getId()))) {
+                    throw new Exception("Es existiert bereits ein Ordner mit diesem Namen!");
+                }
+            }
+            if (folder.getName() == null || "".equals(folder.getName())) {
+                throw new Exception("Ordnername darf nicht leer sein!");
+            }
+
+            cf.setName(folder.getName());
+            this.caseFolderFacade.edit(cf);
+            return this.caseFolderFacade.find(folder.getId());
+        } else {
+            throw new Exception("Ordner kann nicht gefunden werden!");
+        }
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public void deleteCaseFolder(String folderId) throws Exception {
+        CaseFolder cf = this.caseFolderFacade.find(folderId);
+        if (cf != null) {
+            this.recursiveDocumentDeletion(cf);
+            this.caseFolderFacade.remove(cf);
+        } else {
+            throw new Exception("Ordner kann nicht gefunden werden!");
+        }
+
+    }
     
+    private void recursiveDocumentDeletion(CaseFolder f) throws Exception {
+        if(f==null)
+            return;
+        
+        List<ArchiveFileDocumentsBean> folderDocs=this.archiveFileDocumentsFacade.findByFolder(f);
+        if(folderDocs!=null) {
+            for(ArchiveFileDocumentsBean d: folderDocs) {
+                this.removeDocument(d.getId());
+            }
+        }
+        
+        if(f.getChildren()!=null) {
+            for(CaseFolder child: f.getChildren())
+                this.recursiveDocumentDeletion(child);
+        }
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public void moveDocumentsToFolder(Collection<String> documentIds, String folderId) throws Exception {
+        CaseFolder target = this.caseFolderFacade.find(folderId);
+        if (target == null) {
+            log.error("There is no folder with ID " + folderId);
+            throw new Exception("Ordner existiert nicht!");
+        }
+
+        // check if folder and documents are in same case
+        String caseId = null;
+        ArrayList<ArchiveFileDocumentsBean> documents = new ArrayList<>();
+        for (String docId : documentIds) {
+            ArchiveFileDocumentsBean doc = this.archiveFileDocumentsFacade.find(docId);
+            if (doc == null) {
+                log.error("There is no document with ID " + folderId);
+                throw new Exception("Dokument existiert nicht!");
+            }
+            documents.add(doc);
+            if (caseId == null) {
+                caseId = doc.getArchiveFileKey().getId();
+            } else {
+                if (!(doc.getArchiveFileKey().getId().equals(caseId))) {
+                    throw new Exception("Alle zu verschiebenden Dokumente müssen zur selben Akte gehören!");
+                }
+            }
+        }
+
+        ArchiveFileBean afb = this.archiveFileFacade.find(caseId);
+        if (afb == null) {
+            log.error("There is no case with ID " + caseId);
+            throw new Exception("Akte existiert nicht!");
+        }
+
+        StringGenerator idGen=new StringGenerator();
+        for (ArchiveFileDocumentsBean doc : documents) {
+            doc.setFolder(target);
+            this.archiveFileDocumentsFacade.edit(doc);
+
+            ArchiveFileHistoryBean newHistEntry = new ArchiveFileHistoryBean();
+            newHistEntry.setId(idGen.getID().toString());
+            newHistEntry.setArchiveFileKey(afb);
+            newHistEntry.setChangeDate(new Date());
+            newHistEntry.setChangeDescription("Dokument " + doc.getName() + " in den Ordner " + target.getName() + " verschoben");
+            newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
+            this.archiveFileHistoryFacade.create(newHistEntry);
+
+        }
+
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public CaseFolder applyFolderTemplate(String caseId, String templateName) throws Exception {
+        DocumentFolderTemplate tpl=this.folderTemplateFacade.findByName(templateName);
+        if(tpl==null) {
+            throw new Exception("Ordnervorlage " + templateName + " existiert nicht!");
+        }
+        
+        ArchiveFileBean aFile=this.getArchiveFile(caseId);
+        if(aFile==null) {
+            throw new Exception("Akte " + caseId + " existiert nicht!");
+        }
+        
+        CaseFolder rootFolder=aFile.getRootFolder();
+        StringGenerator idGen=new StringGenerator();
+        if(rootFolder==null) {
+            rootFolder=new CaseFolder();
+            rootFolder.setId(idGen.getID().toString());
+            rootFolder.setName(tpl.getRootFolder().getName());
+            rootFolder.setParentId(null);
+            this.caseFolderFacade.create(rootFolder);
+            aFile.setRootFolder(rootFolder);
+            this.archiveFileFacade.edit(aFile);
+        }
+       
+        DocumentFolder tplRoot=tpl.getRootFolder();
+        rootFolder.setName(tplRoot.getName());
+        this.caseFolderFacade.edit(rootFolder);
+        
+        this.applyFolderTemplate(rootFolder, tplRoot, idGen);
+        
+        return this.caseFolderFacade.find(rootFolder.getId());
+    }
+    
+    private void applyFolderTemplate(CaseFolder cf, DocumentFolder tf, StringGenerator idGen) {
+        for(DocumentFolder from: tf.getChildren()) {
+            if(!cf.hasChild(from.getName())) {
+                CaseFolder newChild=new CaseFolder();
+                newChild.setId(idGen.getID().toString());
+                newChild.setName(from.getName());
+                newChild.setParentId(cf.getId());
+                this.caseFolderFacade.create(newChild);
+                if(cf.getChildren()==null)
+                    cf.setChildren(new ArrayList<CaseFolder>());
+                cf.getChildren().add(newChild);
+            }
+            for(CaseFolder child: cf.getChildren()) {
+                if(child.getName().equalsIgnoreCase(from.getName())) {
+                    applyFolderTemplate(child, from, idGen);
+                    break;
+                }
+            }
+        }
+    }
+
 }

@@ -787,7 +787,7 @@ public class QuickCreateAddressDialog extends javax.swing.JDialog {
 
         jLabel2.setText("Vorname:");
 
-        jLabel3.setText("Firma:");
+        jLabel3.setText("Unternehmen:");
 
         jLabel25.setText("Titel:");
 
@@ -808,7 +808,7 @@ public class QuickCreateAddressDialog extends javax.swing.JDialog {
                     .add(jLabel25))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(txtName, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 558, Short.MAX_VALUE)
+                    .add(txtName, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 532, Short.MAX_VALUE)
                     .add(txtFirstName)
                     .add(txtCompany)
                     .add(jPanel1Layout.createSequentialGroup()

@@ -685,6 +685,7 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTR;
 
 /**
  *
@@ -740,6 +741,26 @@ public class MicrosoftOfficeDocxTest {
             allPartyTypesPlaceholders.add("DRITTE");
             ArrayList l = new ArrayList(LibreOfficeAccess.getPlaceHolders("test/data/textfield.docx", allPartyTypesPlaceholders, new ArrayList<String>()));
             Assert.assertEquals(13, l.size());
+        } catch (Throwable t) {
+            Assert.fail(t.getMessage());
+            t.printStackTrace();
+        }
+    }
+    
+    @Test
+    public void getPlaceHoldersInTextfieldPerformance() {
+        try {
+            //ArrayList l = new ArrayList(LibreOfficeAccess.getPlaceHolders("/home/jens/jenkins-home/workspace/j-lawyer-server/j-lawyer-server-ejb/test/data/template.odt"));
+            ArrayList<String> allPartyTypesPlaceholders=new ArrayList<>();
+            allPartyTypesPlaceholders.add("MANDANT");
+            allPartyTypesPlaceholders.add("GEGNER");
+            allPartyTypesPlaceholders.add("DRITTE");
+            long start=System.currentTimeMillis();
+            
+            ArrayList l = new ArrayList(LibreOfficeAccess.getPlaceHolders("test/data/many-textfields.docx", allPartyTypesPlaceholders, new ArrayList<String>()));
+            long end=System.currentTimeMillis();
+            System.out.println("textfield search took " + (end-start));
+            //Assert.assertEquals(13, l.size());
         } catch (Throwable t) {
             Assert.fail(t.getMessage());
             t.printStackTrace();

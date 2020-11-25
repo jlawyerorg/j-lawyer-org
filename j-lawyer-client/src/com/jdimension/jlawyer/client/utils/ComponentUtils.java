@@ -668,6 +668,8 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Graphics;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.BorderFactory;
@@ -881,6 +883,32 @@ public class ComponentUtils {
         decorateSplitPane(split, null);
     }
 
+    public static void restoreSplitPane(JSplitPane split, Class container, String componentName) {
+        try {
+            String dividerLocation = ClientSettings.getInstance().getConfiguration("split." + container.getName() + "." + componentName, "");
+            if (!"".equalsIgnoreCase(dividerLocation)) {
+                split.setDividerLocation(Integer.parseInt(dividerLocation));
+            }
+        } catch (Throwable t) {
+            log.error("Could not set divider location for " + componentName + " in " + container.getName(), t);
+        }
+    }
+    
+    public static void persistSplitPane(JSplitPane split, Class container, String componentName) {
+        split.addPropertyChangeListener(new PropertyChangeListener() {
+            @Override
+            public void propertyChange(PropertyChangeEvent evt) {
+                if (evt.getPropertyName().equals(JSplitPane.DIVIDER_LOCATION_PROPERTY)) {
+                    if (split.getDividerLocation() > 0) {
+                        ClientSettings s = ClientSettings.getInstance();
+                        s.setConfiguration("split." + container.getName() + "." + componentName, "" + split.getDividerLocation());
+                    }
+                }
+            }
+
+        });
+    }
+
     public static void decorateSplitPane(JSplitPane split, Color dividerColor) {
         BasicSplitPaneDivider divider = ((BasicSplitPaneUI) split.getUI()).getDivider();
         split.setOneTouchExpandable(false);
@@ -903,7 +931,7 @@ public class ComponentUtils {
 
                     @Override
                     public void paint(Graphics g) {
-                        if(dividerColor!=null) {
+                        if (dividerColor != null) {
                             g.setColor(dividerColor);
                         } else {
                             g.setColor(DefaultColorTheme.COLOR_DARK_GREY);

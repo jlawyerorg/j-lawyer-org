@@ -686,6 +686,7 @@ import org.odftoolkit.simple.style.StyleTypeDefinitions;
 import org.odftoolkit.simple.style.StyleTypeDefinitions.CellBordersType;
 import org.odftoolkit.simple.style.StyleTypeDefinitions.SupportedLinearMeasure;
 import org.odftoolkit.simple.table.Table;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTR;
 import org.w3c.dom.Node;
 
 /**
@@ -1097,8 +1098,8 @@ public class LibreOfficeAccess {
             return resultList;
         } else if (file.toLowerCase().endsWith(".docx")) {
 
-            
-            return new ArrayList(MicrosoftOfficeAccess.getPlaceHolders(file, allPartyTypesPlaceHolders, formsPlaceHolders));
+            Hashtable<Integer,CTR> tfCache=new Hashtable<>();
+            return new ArrayList(MicrosoftOfficeAccess.getPlaceHolders(file, allPartyTypesPlaceHolders, formsPlaceHolders, tfCache));
 
         }
 

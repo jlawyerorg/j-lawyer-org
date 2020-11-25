@@ -12,6 +12,10 @@ export ftppassword=""
 export ftphome=""
 export ftphost=""
 
+
+# there is an OpenJDK bug on Ubuntu, causing Surefire tests to fail - skip tests for now
+mvn -f j-lawyer-cloud/pom.xml install -DskipTests
+
 if [ "$sipuser" = "" ] || [ "$sippassword" = "" ]
 then
    echo "Sipgate credentials not set, skipping j-lawyer-fax tests"

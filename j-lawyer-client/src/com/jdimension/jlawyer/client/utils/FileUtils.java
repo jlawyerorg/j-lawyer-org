@@ -665,6 +665,7 @@ package com.jdimension.jlawyer.client.utils;
 
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.launcher.LauncherFactory;
+import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.server.utils.ServerFileUtils;
 import java.awt.Component;
 import java.io.File;
@@ -727,12 +728,13 @@ public class FileUtils extends ServerFileUtils {
 
             if (osName.indexOf("linux") > -1 || osName.startsWith("mac")) {
 
-                if(fileExt.startsWith("."))
-                    fileExt=fileExt.substring(1,fileExt.length());
-                fileExt=fileExt.toLowerCase();
+                if (fileExt.startsWith(".")) {
+                    fileExt = fileExt.substring(1, fileExt.length());
+                }
+                fileExt = fileExt.toLowerCase();
                 ImageIcon image = null;
                 try {
-                    image=new ImageIcon(getClass().getResource("/icons16/fileicons/file_type_" + fileExt + ".png"));
+                    image = new ImageIcon(getClass().getResource("/icons16/fileicons/file_type_" + fileExt + ".png"));
                 } catch (Throwable t) {
                     log.warn("no file type icon for " + fileExt);
                 }
@@ -754,7 +756,6 @@ public class FileUtils extends ServerFileUtils {
 //            } else if (osName.startsWith("mac")) {
 
 // this was not working - maybe macOS needs a "real" file, not just an empty one?
-
 //
 //                //Create a temporary file with the specified extension
 //                File file = File.createTempFile("icon", fileExt);
@@ -769,7 +770,6 @@ public class FileUtils extends ServerFileUtils {
 //                //Delete the temporary file
 //                file.delete();
 //                return icon;
-
             } else {
                 // Windows behaviour is default
                 //Create a temporary file with the specified extension
@@ -832,6 +832,13 @@ public class FileUtils extends ServerFileUtils {
         return name.trim();
     }
 
+    public static String sanitizeFolderName(String folderName) {
+        String sanitized = sanitizeFileName(folderName);
+        sanitized = sanitized.replaceAll("  ", " ");
+        sanitized = sanitized.replaceAll("  ", " ");
+        return sanitized;
+    }
+
     public static String preserveExtension(String currentFileName, String newFileName) {
 
         String currentExt = "";
@@ -858,7 +865,7 @@ public class FileUtils extends ServerFileUtils {
     public static String createTempFile(String fileName, byte[] content) throws Exception {
         return createTempFile(fileName, content, false);
     }
-    
+
     public static String createTempDirectory() throws Exception {
         String tmpDir = System.getProperty("java.io.tmpdir");
         if (!tmpDir.endsWith(System.getProperty("file.separator"))) {
@@ -870,30 +877,94 @@ public class FileUtils extends ServerFileUtils {
         return tmpDir;
     }
 
-    public static String createTempFile(String fileName, byte[] content, boolean readOnly) throws Exception {
-        
-        String osName = System.getProperty("os.name").toLowerCase();
-        String tmpDir = System.getProperty("java.io.tmpdir");
-        if (osName.startsWith("mac")) {
-            // otherwise mac os 10.15+ will give a warning and user needs to grant access manually
-            tmpDir="/Users/" + System.getProperty("user.name") + "/Library/Group Containers/UBF8T346G9.Office";
-            if(!(new File(tmpDir).exists()) || !(new File(tmpDir).isDirectory())) {
-                throw new Exception("Ungültiges temporäres Verzeichnis: " + tmpDir);
+    public static void cleanupTempFilesWithRetentionTime() {
+        // cleaning up temp dir must not ever cause the client to fail
+        try {
+
+            String tmpDir = System.getProperty("user.home") + System.getProperty("file.separator") + ".j-lawyer-client" + System.getProperty("file.separator") + "tmp-documents";
+            File fTmpDir = new File(tmpDir);
+            if (!(fTmpDir.exists())) {
+                fTmpDir.mkdirs();
             }
-            //tmpDir=System.getProperty("user.home");
+
+            for (File f : fTmpDir.listFiles()) {
+                if (f.isDirectory()) {
+                    if (f.getName().indexOf("_") > -1) {
+                        String datePart = f.getName().substring(0, f.getName().indexOf("_"));
+                        try {
+                            long lDeletionTime = Long.parseLong(datePart);
+                            if (lDeletionTime < System.currentTimeMillis()) {
+                                for (File tmpFile : f.listFiles()) {
+                                    tmpFile.delete();
+                                }
+                                f.delete();
+                            }
+                        } catch (Throwable t) {
+                            log.error("Could not check / delete temporary directory " + f.getName());
+                        }
+                    }
+                }
+            }
+        } catch (Throwable t) {
+            log.error("Errors cleaning up temporary documents", t);
+        }
+
+        //        File f = new File(path);
+//        f.deleteOnExit();
+//
+//        String dir = path.substring(0, path.lastIndexOf(System.getProperty("file.separator")));
+//        File remDir = new File(dir);
+//        remDir.deleteOnExit();
+    }
+
+    public static String createTempFile(String fileName, byte[] content, boolean readOnly) throws Exception {
+        return createTempFile(fileName, content, readOnly, true, -1);
+    }
+
+    public static String createTempFile(String fileName, byte[] content, boolean readOnly, boolean deleteOnExit, long deleteAfterDays) throws Exception {
+
+        if (deleteAfterDays > -1) {
+            deleteOnExit = false;
+        }
+
+        String osName = System.getProperty("os.name").toLowerCase();
+
+        String tmpDir = System.getProperty("java.io.tmpdir");
+        if (deleteAfterDays > -1) {
+            tmpDir = System.getProperty("user.home") + System.getProperty("file.separator") + ".j-lawyer-client" + System.getProperty("file.separator") + "tmp-documents";
         }
         
-        
+        boolean wordOnMac=false;
+
+        if (osName.startsWith("mac")) {
+
+            ClientSettings set = ClientSettings.getInstance();
+            String wordProcessor = set.getConfiguration(ClientSettings.CONF_APPS_WORDPROCESSOR_KEY, ClientSettings.CONF_APPS_WORDPROCESSOR_VALUE_LO);
+            boolean wordProcessorMicrosoft = ClientSettings.CONF_APPS_WORDPROCESSOR_VALUE_MSO.equalsIgnoreCase(wordProcessor);
+
+            if (wordProcessorMicrosoft) {
+                wordOnMac=true;
+                // otherwise mac os 10.15+ will give a warning and user needs to grant access manually
+                tmpDir = "/Users/" + System.getProperty("user.name") + "/Library/Group Containers/UBF8T346G9.Office";
+                if (!(new File(tmpDir).exists()) || !(new File(tmpDir).isDirectory())) {
+                    throw new Exception("Ungültiges temporäres Verzeichnis: " + tmpDir);
+                }
+            }
+        }
+
         if (!tmpDir.endsWith(System.getProperty("file.separator"))) {
             tmpDir = tmpDir + System.getProperty("file.separator");
         }
-        
+
 //        if (osName.startsWith("mac")) {
 //            tmpDir=tmpDir + ".j-lawyer-client" + System.getProperty("file.separator") + "macos-tmp" + System.getProperty("file.separator");
 //        }
-        
         StringGenerator idGen = new StringGenerator();
-        tmpDir = tmpDir + idGen.getID().toString() + System.getProperty("file.separator");
+        if (deleteAfterDays > -1) {
+            tmpDir = tmpDir + "" + (System.currentTimeMillis() + (deleteAfterDays * 24l * 60l * 60l * 1000l)) + "_" + idGen.getID().toString() + System.getProperty("file.separator");
+        } else {
+            tmpDir = tmpDir + idGen.getID().toString() + System.getProperty("file.separator");
+        }
         new File(tmpDir).mkdirs();
         String tmpFile = tmpDir + fileName;
         FileOutputStream fos = new FileOutputStream(new File(tmpFile), false);
@@ -908,7 +979,9 @@ public class FileUtils extends ServerFileUtils {
             }
         }
 
-        cleanupTempFile(tmpFile);
+        if (deleteOnExit || wordOnMac) {
+            cleanupTempFile(tmpFile);
+        }
         
         return tmpFile;
     }
@@ -945,7 +1018,7 @@ public class FileUtils extends ServerFileUtils {
         JOptionPane pane = new JOptionPane(p, JOptionPane.QUESTION_MESSAGE);
         JDialog dialog = pane.createDialog(parent, title);
         dialog.doLayout();
-        dialog.setSize(dialog.getWidth(), dialog.getHeight()+50);
+        dialog.setSize(dialog.getWidth(), dialog.getHeight() + 50);
         //dialog.getRootPane().setWindowDecorationStyle(JRootPane.PLAIN_DIALOG);
         // prevent user from using the 'X' button to close the dialog
         dialog.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);

@@ -950,7 +950,10 @@ public class ViewBeaDialog extends javax.swing.JDialog {
         Message msgC = this.msg;
         try {
 
-            dlg.setAzRecipient(msgC.getReferenceNumber());
+            String azSender = msgC.getReferenceNumber();
+            String azRecipient = msgC.getReferenceJustice();
+            dlg.setAzRecipient(azRecipient);
+            dlg.setAzSender(azSender);
 
             String subject = msgC.getSubject();
             if (subject == null) {

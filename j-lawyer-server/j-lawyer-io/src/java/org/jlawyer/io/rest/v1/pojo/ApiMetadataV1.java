@@ -669,7 +669,7 @@ package org.jlawyer.io.rest.v1.pojo;
  */
 public class ApiMetadataV1 {
     
-    private int apiLevel=1;
+    private int apiLevel=2;
     
     public ApiMetadataV1() {
     }

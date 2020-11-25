@@ -693,4 +693,11 @@ public class ArchiveFileDocumentsBeanFacade extends AbstractFacade<ArchiveFileDo
         return list;
     }
     
+    @Override
+    public List<ArchiveFileDocumentsBean> findByFolder(CaseFolder folder) {
+        
+        List<ArchiveFileDocumentsBean> list = getEntityManager().createQuery("from ArchiveFileDocumentsBean where folder = ?1").setParameter(1, folder).getResultList();
+        return list;
+    }
+    
 }

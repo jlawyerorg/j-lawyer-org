@@ -38,13 +38,13 @@
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" alignment="0" attributes="0">
-                      <Component id="lblDay" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace max="-2" attributes="0"/>
                       <Component id="messagesWidget" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace max="32767" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="lblDay" max="32767" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
                       <Component id="desktopWidgetPanel2" min="-2" max="-2" attributes="0"/>
                   </Group>
-                  <Component id="jSplitPane1" pref="972" max="32767" attributes="0"/>
+                  <Component id="jSplitPane1" pref="984" max="32767" attributes="0"/>
                   <Component id="systemInformationWidget" alignment="0" max="32767" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
@@ -56,9 +56,11 @@
           <Group type="102" alignment="0" attributes="0">
               <EmptySpace min="-2" max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Component id="messagesWidget" alignment="0" min="-2" max="-2" attributes="0"/>
-                  <Component id="lblDay" min="-2" max="-2" attributes="0"/>
                   <Component id="desktopWidgetPanel2" min="-2" max="-2" attributes="0"/>
+                  <Group type="103" alignment="0" groupAlignment="1" max="-2" attributes="0">
+                      <Component id="lblDay" alignment="0" max="32767" attributes="0"/>
+                      <Component id="messagesWidget" alignment="0" max="32767" attributes="0"/>
+                  </Group>
               </Group>
               <EmptySpace min="-2" pref="8" max="-2" attributes="0"/>
               <Component id="jSplitPane1" max="32767" attributes="0"/>
@@ -97,7 +99,7 @@
                   <Group type="102" attributes="0">
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="jScrollPane1" alignment="0" pref="338" max="32767" attributes="0"/>
+                          <Component id="jScrollPane1" alignment="0" pref="350" max="32767" attributes="0"/>
                           <Group type="102" alignment="0" attributes="0">
                               <Component id="cmdRefreshRevDue" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
@@ -142,6 +144,9 @@
             </Component>
             <Container class="javax.swing.JScrollPane" name="jScrollPane1">
               <Properties>
+                <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
+                  <Border info="null"/>
+                </Property>
                 <Property name="opaque" type="boolean" value="false"/>
               </Properties>
 
@@ -280,6 +285,9 @@
                 </Component>
                 <Container class="javax.swing.JScrollPane" name="jScrollPane3">
                   <Properties>
+                    <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
+                      <Border info="null"/>
+                    </Property>
                     <Property name="opaque" type="boolean" value="false"/>
                   </Properties>
 
@@ -425,6 +433,9 @@
                 </Component>
                 <Container class="javax.swing.JScrollPane" name="jScrollPane4">
                   <Properties>
+                    <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
+                      <Border info="null"/>
+                    </Property>
                     <Property name="opaque" type="boolean" value="false"/>
                   </Properties>
 
@@ -558,9 +569,9 @@
           <Group type="103" groupAlignment="0" attributes="0">
               <Group type="102" attributes="0">
                   <Component id="lblUnreadMail" min="-2" max="-2" attributes="0"/>
-                  <EmptySpace max="-2" attributes="0"/>
+                  <EmptySpace type="separate" max="-2" attributes="0"/>
                   <Component id="lblScans" min="-2" max="-2" attributes="0"/>
-                  <EmptySpace max="-2" attributes="0"/>
+                  <EmptySpace type="separate" max="-2" attributes="0"/>
                   <Component id="lblFaxStatus" min="-2" max="-2" attributes="0"/>
                   <EmptySpace type="separate" max="-2" attributes="0"/>
                   <Component id="lblUnreadDrebis" min="-2" pref="64" max="-2" attributes="0"/>
@@ -582,8 +593,8 @@
                   <Component id="lblFaxStatus" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="lblUnreadDrebis" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="lblUnreadBea" alignment="3" min="-2" max="-2" attributes="0"/>
-                  <Component id="lblUpdateStatus" alignment="3" min="-2" max="-2" attributes="0"/>
-                  <Component id="lblNewsStatus" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="lblUpdateStatus" alignment="3" min="-2" pref="40" max="-2" attributes="0"/>
+                  <Component id="lblNewsStatus" alignment="3" min="-2" pref="40" max="-2" attributes="0"/>
               </Group>
           </Group>
         </DimensionLayout>
@@ -599,7 +610,7 @@
             </Property>
             <Property name="horizontalAlignment" type="int" value="0"/>
             <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-              <Image iconType="3" name="/icons16/material/baseline_email_white_36dp.png"/>
+              <Image iconType="3" name="/icons/Icons2-30.png"/>
             </Property>
             <Property name="text" type="java.lang.String" value="0"/>
             <Property name="enabled" type="boolean" value="false"/>
@@ -615,7 +626,7 @@
             </Property>
             <Property name="horizontalAlignment" type="int" value="0"/>
             <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-              <Image iconType="3" name="/icons16/beadesktop16.png"/>
+              <Image iconType="3" name="/icons/Icons2-16.png"/>
             </Property>
             <Property name="text" type="java.lang.String" value="?"/>
             <Property name="toolTipText" type="java.lang.String" value="noch nicht eingeloggt"/>
@@ -632,7 +643,7 @@
             </Property>
             <Property name="horizontalAlignment" type="int" value="0"/>
             <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-              <Image iconType="3" name="/icons16/material/baseline_scanner_white_36dp.png"/>
+              <Image iconType="3" name="/icons/scanner_big.png"/>
             </Property>
             <Property name="text" type="java.lang.String" value="0"/>
             <Property name="enabled" type="boolean" value="false"/>
@@ -648,7 +659,7 @@
             </Property>
             <Property name="horizontalAlignment" type="int" value="0"/>
             <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-              <Image iconType="3" name="/icons16/drebisdesktop16.png"/>
+              <Image iconType="3" name="/icons/Icons2-17.png"/>
             </Property>
             <Property name="text" type="java.lang.String" value="?"/>
             <Property name="enabled" type="boolean" value="false"/>
@@ -663,7 +674,7 @@
               <Color blue="ff" green="ff" id="white" palette="1" red="ff" type="palette"/>
             </Property>
             <Property name="horizontalAlignment" type="int" value="2"/>
-            <Property name="text" type="java.lang.String" value=" "/>
+            <Property name="text" type="java.lang.String" value="???"/>
           </Properties>
         </Component>
         <Component class="javax.swing.JLabel" name="lblNewsStatus">
@@ -675,7 +686,7 @@
               <Color blue="ff" green="ff" id="white" palette="1" red="ff" type="palette"/>
             </Property>
             <Property name="horizontalAlignment" type="int" value="2"/>
-            <Property name="text" type="java.lang.String" value=" "/>
+            <Property name="text" type="java.lang.String" value="???"/>
           </Properties>
         </Component>
         <Component class="javax.swing.JLabel" name="lblFaxStatus">
@@ -687,7 +698,7 @@
               <Color blue="0" green="0" red="ff" type="rgb"/>
             </Property>
             <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-              <Image iconType="3" name="/icons16/material/baseline_print_white_36dp.png"/>
+              <Image iconType="3" name="/icons/fax_big.png"/>
             </Property>
             <Property name="text" type="java.lang.String" value="?"/>
             <Property name="enabled" type="boolean" value="false"/>
@@ -805,7 +816,7 @@
       <Layout>
         <DimensionLayout dim="0">
           <Group type="103" groupAlignment="0" attributes="0">
-              <Group type="102" attributes="0">
+              <Group type="102" alignment="0" attributes="0">
                   <EmptySpace max="32767" attributes="0"/>
                   <Component id="lblUserName" min="-2" max="-2" attributes="0"/>
                   <EmptySpace max="-2" attributes="0"/>

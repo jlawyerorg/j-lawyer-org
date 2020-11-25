@@ -706,6 +706,7 @@ import java.awt.Point;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.dnd.*;
+import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -1424,7 +1425,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
 
     private void cmdRefreshActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRefreshActionPerformed
         try {
-            this.reset();
+            this.reset(true);
         } catch (Exception ex) {
             log.error(ex);
             ex.printStackTrace();
@@ -1892,6 +1893,15 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
             dlg.setSubject(subject);
 
             dlg.setBody(BeaUtils.getQuotedBody(this.beaMessageContentUI.getBody(), m.getSenderName()));
+            
+            for (Attachment att : m.getAttachments()) {
+                byte[] data = att.getContent();
+                if (data != null) {
+                    String attachmentUrl = FileUtils.createTempFile(att.getFileName(), data);
+                    new File(attachmentUrl).deleteOnExit();
+                    dlg.addAttachment(attachmentUrl, "");
+                }
+            }
 
             FrameUtils.centerDialog(dlg, null);
             dlg.setVisible(true);
@@ -2356,6 +2366,10 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
 
     @Override
     public void reset() {
+        this.reset(false);
+    }
+    
+    public void reset(boolean force) {
 
         boolean needsReset = !BeaAccess.hasInstance();
         if (!needsReset) {
@@ -2374,6 +2388,15 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                 return;
             }
         }
+        
+        if(force) {
+            try {
+                this.refreshFolders(true);
+            } catch (Throwable t) {
+                log.error("Error during forced refresh: " + t.getMessage(), t);
+            }
+        }
+        
         //this.loginSuccess();
 //        BeaLoginDialog loginPanel=new BeaLoginDialog(EditorsRegistry.getInstance().getMainWindow(), true, this);
 //        loginPanel.setVisible(true);
@@ -2503,7 +2526,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                 }
 
                 if (caseId == null) {
-                    SearchAndAssignDialog dlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true);
+                    SearchAndAssignDialog dlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true, ""+m.getReferenceJustice()+m.getReferenceNumber()+m.getSubject()+m.getBody());
                     dlg.setVisible(true);
                     ArchiveFileBean sel = dlg.getSelection();
 
@@ -2738,7 +2761,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
 
                 Message m = BeaAccess.getInstance().getMessage(mh.getId(), BeaAccess.getInstance().getLoggedInSafeId());
                 log.info("eEB ID of the incoming message from " + m.getSenderSafeId() + " / " + m.getSenderName() + " is : " + m.getEebId());
-                if(m.getEebId() == null || "".equals(m.getEebId())) {
+                if (m.getEebId() == null || "".equals(m.getEebId())) {
                     JOptionPane.showMessageDialog(this, "Eingehende eEB-ID ist leer - eEB bitte über beA im Browser abgeben!", "eEB abgeben", JOptionPane.WARNING_MESSAGE);
                     return false;
                 }
@@ -2875,8 +2898,10 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                 if (!BeaAccess.isBeaEnabled()) {
                     return;
                 }
-                BeaAccess bea = BeaAccess.getInstance();
-                bea.logout();
+                if (BeaAccess.hasInstance()) {
+                    BeaAccess bea = BeaAccess.getInstance();
+                    bea.logout();
+                }
 
             } catch (Exception ex) {
                 log.error(ex);

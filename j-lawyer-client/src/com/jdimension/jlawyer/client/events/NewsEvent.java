@@ -694,8 +694,6 @@ public class NewsEvent extends Event {
     public String getLongDescriptionHtml() {
         StringBuffer newsBuff=new StringBuffer();
                             newsBuff.append("<html><p align=\"center\">");
-                            newsBuff.append(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/editors/EditorsRegistry").getString("status.news.tooltip"));
-                            newsBuff.append(":<br/> ");
                             newsBuff.append(summary);
                             newsBuff.append(" (");
                             newsBuff.append(published);
@@ -706,6 +704,10 @@ public class NewsEvent extends Event {
     }
     
     public ImageIcon getIcon() {
+        return new javax.swing.ImageIcon(getClass().getResource("/icons/baseline_feedback_white_48dp.png"));
+    }
+    
+    public ImageIcon getSmallIcon() {
         return new javax.swing.ImageIcon(getClass().getResource("/icons16/konqsidebar_news.png"));
     }
     

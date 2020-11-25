@@ -682,54 +682,54 @@ import org.jboss.logging.Logger;
  * @author jens
  */
 public class FormInstancePanel extends javax.swing.JPanel {
-    
-    private static final Logger log=Logger.getLogger(FormInstancePanel.class.getName());
-    
-    private ArchiveFileFormsBean form=null;
-    private JTabbedPane container=null;
-    private FormPlugin plugin=null;
+
+    private static final Logger log = Logger.getLogger(FormInstancePanel.class.getName());
+
+    private ArchiveFileFormsBean form = null;
+    private JTabbedPane container = null;
+    private FormPlugin plugin = null;
 
     /**
      * Creates new form FormInstancePanel
      */
     public FormInstancePanel(JTabbedPane container, FormPlugin plugin) {
         initComponents();
-        this.container=container;
-        this.plugin=plugin;
+        this.container = container;
+        this.plugin = plugin;
     }
-    
+
     public void initialize() throws Exception {
         JPanel ui = new JPanel();
         try {
-            ui=plugin.getUi();
+            ui = plugin.getUi();
             this.scrollPlugin.setViewportView(ui);
         } catch (Exception ex) {
             log.error("Can not initialize plugin " + plugin.getId(), ex);
             this.scrollPlugin.setViewportView(ui);
             throw ex;
         }
-        
+
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
-            List<ArchiveFileFormEntriesBean> entries=locator.lookupFormsServiceRemote().getFormEntries(this.form.getId());
-            Hashtable placeHolderValues=new Hashtable();
-            for(ArchiveFileFormEntriesBean entry: entries) {
-                if(entry.getPlaceHolder()==null || "".equals(entry.getPlaceHolder())) {
+            List<ArchiveFileFormEntriesBean> entries = locator.lookupFormsServiceRemote().getFormEntries(this.form.getId());
+            Hashtable placeHolderValues = new Hashtable();
+            for (ArchiveFileFormEntriesBean entry : entries) {
+                if (entry.getPlaceHolder() == null || "".equals(entry.getPlaceHolder())) {
                     log.warn("Form with id " + this.form.getId() + " has an entry with a null placeholder, which is invalid!");
                 } else {
                     placeHolderValues.put(entry.getPlaceHolder(), entry.getStringValue());
                 }
-                
+
             }
             this.plugin.setPlaceHolderValues(placeHolderValues);
-            
+
         } catch (Throwable t) {
             log.error("Error removing form", t);
             JOptionPane.showMessageDialog(this, "Fehler beim Laden des Falldatenblattes: " + t.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
         }
-        
+
     }
-    
+
     public void setDescription(String description) {
         this.taDescription.setText(description);
     }
@@ -808,36 +808,47 @@ public class FormInstancePanel extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void cmdRemoveFormActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRemoveFormActionPerformed
-        try {
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
-            locator.lookupFormsServiceRemote().removeForm(this.form.getId());
-            this.container.remove(this);
-        } catch (Throwable t) {
-            log.error("Error removing form", t);
-            JOptionPane.showMessageDialog(this, "Fehler beim Löschen des Falldatenblattes: " + t.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+
+        int response = JOptionPane.showConfirmDialog(this, "Falldaten '" + this.form.getFormType().getName() + "' löschen?", "Falldaten löschen", JOptionPane.YES_NO_OPTION);
+        if (response == JOptionPane.YES_OPTION) {
+
+            try {
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
+                locator.lookupFormsServiceRemote().removeForm(this.form.getId());
+                this.container.remove(this);
+            } catch (Throwable t) {
+                log.error("Error removing form", t);
+                JOptionPane.showMessageDialog(this, "Fehler beim Löschen des Falldatenblattes: " + t.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            }
         }
-        
-        
+
+
     }//GEN-LAST:event_cmdRemoveFormActionPerformed
 
     private void cmdShowPlaceHoldersActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdShowPlaceHoldersActionPerformed
-        Hashtable placeHolders=this.plugin.getPlaceHolderValues();
-        FormPluginPlaceholderDialog dlg=new FormPluginPlaceholderDialog(EditorsRegistry.getInstance().getMainWindow(), true);
+        Hashtable placeHolders = this.plugin.getPlaceHolderValues();
+        FormPluginPlaceholderDialog dlg = new FormPluginPlaceholderDialog(EditorsRegistry.getInstance().getMainWindow(), true);
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setPlaceHolders(placeHolders);
         dlg.setVisible(true);
-        
+
     }//GEN-LAST:event_cmdShowPlaceHoldersActionPerformed
 
     public void save() {
-        Hashtable placeHolders=this.plugin.getPlaceHolderValues();
-        ArrayList<ArchiveFileFormEntriesBean> formEntries=new ArrayList<ArchiveFileFormEntriesBean>();
+        Hashtable placeHolders = this.plugin.getPlaceHolderValues();
+        if (placeHolders == null) {
+            // this happens e.g. when the form had compile issues and did not load.
+            // in that case, do NOT overwrite existing values with an empty set - it would mean data loss for this form!
+            return;
+        }
+
+        ArrayList<ArchiveFileFormEntriesBean> formEntries = new ArrayList<ArchiveFileFormEntriesBean>();
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
-            for(Object key: placeHolders.keySet()) {
-                String keyString=key.toString();
-                String value=placeHolders.get(key).toString();
-                ArchiveFileFormEntriesBean formEntry=new ArchiveFileFormEntriesBean();
+            for (Object key : placeHolders.keySet()) {
+                String keyString = key.toString();
+                String value = placeHolders.get(key).toString();
+                ArchiveFileFormEntriesBean formEntry = new ArchiveFileFormEntriesBean();
                 formEntry.setForm(form);
                 formEntry.setPlaceHolder(keyString);
                 formEntry.setStringValue(value);
@@ -848,9 +859,9 @@ public class FormInstancePanel extends javax.swing.JPanel {
             log.error("Error saving form entries", t);
             JOptionPane.showMessageDialog(this, "Fehler beim Speichern des Falldatenblattes: " + t.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
         }
-        
+
     }
-    
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton cmdRemoveForm;
     private javax.swing.JButton cmdShowPlaceHolders;

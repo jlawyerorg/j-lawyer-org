@@ -683,6 +683,7 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.List;
@@ -693,9 +694,11 @@ import javax.ejb.Asynchronous;
 import javax.ejb.EJB;
 import javax.ejb.EJBException;
 import javax.ejb.Stateless;
+import javax.mail.Folder;
 import javax.mail.Message;
 import javax.mail.PasswordAuthentication;
 import javax.mail.Session;
+import javax.mail.Store;
 import javax.mail.Transport;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
@@ -753,8 +756,6 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
 
     }
 
-    
-    
     @Override
     @RolesAllowed({"loginRole"})
     public BankDataBean[] searchBankData(String query) {
@@ -1288,11 +1289,6 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         }
 
         Properties props = new Properties();
-//        props.put("mail.smtp.host", smtpHost);
-//        props.put("mail.smtp.user", smtpUser);
-//        props.put("mail.smtp.auth", true);
-//        props.put("mail.from", smtpUser);
-//        props.put("mail.password", smtpPwd);
 
         if ("true".equalsIgnoreCase(smtpSsl)) {
             props.put("mail.smtp.ssl.enable", "true");
@@ -1303,7 +1299,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         }
 
         if (smtpHostP != null) {
-            String p=smtpHostP.getSettingValue();
+            String p = smtpHostP.getSettingValue();
             if (p != null && !("".equalsIgnoreCase(p))) {
                 try {
                     int testInt = Integer.parseInt(p);
@@ -1365,6 +1361,98 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
             log.error(mex);
 
         }
+    }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public void testSendMail(String smtpHost, int smtpPort, String smtpUser, String smtpPwd, boolean smtpSsl, boolean smtpStartTls, String mailAddress) throws Exception {
+
+        if (smtpHost == null || smtpUser == null || smtpPwd == null || mailAddress == null) {
+            throw new Exception("incomplete configuration for sending test mails");
+        }
+
+        Properties props = new Properties();
+
+        if (smtpSsl) {
+            props.put("mail.smtp.ssl.enable", "true");
+        }
+
+        if (smtpStartTls) {
+            props.put("mail.smtp.starttls.enable", "true");
+        }
+
+        if (smtpPort > -1) {
+            try {
+                props.put("mail.smtp.port", "" + smtpPort);
+                props.put("mail.smtps.port", "" + smtpPort);
+            } catch (Throwable t) {
+                log.error("Invalid SMTP port: " + smtpHost);
+            }
+        }
+
+        props.put("mail.smtp.host", smtpHost);
+        props.put("mail.smtp.user", smtpUser);
+        props.put("mail.smtp.auth", true);
+        props.put("mail.smtps.host", smtpHost);
+        props.put("mail.smtps.user", smtpUser);
+        props.put("mail.smtps.auth", true);
+        props.put("mail.from", smtpUser);
+        props.put("mail.password", smtpPwd);
+
+        javax.mail.Authenticator auth = new javax.mail.Authenticator() {
+
+            @Override
+            public PasswordAuthentication getPasswordAuthentication() {
+                return new PasswordAuthentication(smtpUser, smtpPwd);
+            }
+        };
+
+        Session session = Session.getInstance(props, auth);
+
+        Transport bus = session.getTransport("smtp");
+
+        bus.connect(smtpHost, smtpUser, smtpPwd);
+
+        MimeMessage msg = new MimeMessage(session);
+
+        String senderName = "j-lawyer Server Testmail";
+        msg.setFrom(new InternetAddress(smtpUser, senderName));
+
+        msg.setRecipients(Message.RecipientType.TO, mailAddress);
+        msg.setSubject("Testnachricht, j-lawyer.org Serverdienst");
+        msg.setSentDate(new java.util.Date());
+        msg.setText("Wenn Sie diese Nachricht erhalten, funktioniert der Versand von E-Mails.");
+        //Transport.send(msg);
+        msg.saveChanges();
+        bus.send(msg);
+        bus.close();
+
+    }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public void testReceiveMail(String mailAddress, String host, String protocol, boolean ssl, String user, String pwd) throws Exception {
+        Properties props = System.getProperties();
+        props.setProperty("mail.imap.partialfetch", "false");
+        props.setProperty("mail.imaps.partialfetch", "false");
+        props.setProperty("mail.store.protocol", protocol);
+        if (ssl) {
+            props.setProperty("mail." + protocol + ".ssl.enable", "true");
+        }
+
+        Session session = Session.getDefaultInstance(props, null);
+
+        Store store = session.getStore(protocol);
+        store.connect(host, user, pwd);
+
+        Folder folder = (Folder) store.getFolder("INBOX"); //This works for both email account
+        folder.open(Folder.READ_ONLY);
+
+        Message[] messages = folder.getMessages();
+
+        folder.close(false);
+        store.close();
+
     }
 
     @Override
@@ -1838,12 +1926,12 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
 
         localBaseDir = localBaseDir + "templates" + TreeNodeUtils.buildNodePath(folder) + System.getProperty("file.separator") + templateName;
 
-        Collection<PartyTypeBean> partyTypes=this.getPartyTypes();
-        ArrayList<String> allPartyTypesPlaceholders=new ArrayList<String>();
-        for(PartyTypeBean ptb: partyTypes) {
+        Collection<PartyTypeBean> partyTypes = this.getPartyTypes();
+        ArrayList<String> allPartyTypesPlaceholders = new ArrayList<String>();
+        for (PartyTypeBean ptb : partyTypes) {
             allPartyTypesPlaceholders.add(ptb.getPlaceHolder());
         }
-        
+
         return LibreOfficeAccess.getPlaceHolders(localBaseDir, allPartyTypesPlaceholders, formsPlaceHolders);
     }
 
@@ -1924,13 +2012,43 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
 
         fromFile.renameTo(new File(to));
     }
-    
-    
 
     @Override
     @RolesAllowed({"loginRole"})
     public Collection<PartyTypeBean> getPartyTypes() {
-        return this.partyTypesFacade.findAll();
+        List<PartyTypeBean> all= this.partyTypesFacade.findAll();
+        Collections.sort(all, new Comparator() {
+            @Override
+            public int compare(Object t, Object t1) {
+                Object u1=t;
+                Object u2=t1;
+                if(u1==null)
+                    return -1;
+                if(u2==null)
+                    return 1;
+                
+                if(!(u1 instanceof PartyTypeBean))
+                    return -1;
+                if(!(u2 instanceof PartyTypeBean))
+                    return 1;
+                
+                PartyTypeBean f1=(PartyTypeBean)u1;
+                PartyTypeBean f2=(PartyTypeBean)u2;
+                
+                String f1name = "";
+                if (f1.getName() != null) {
+                    f1name = f1.getName().toLowerCase();
+                }
+                String f2name = "";
+                if (f2.getName() != null) {
+                    f2name = f2.getName().toLowerCase();
+                }
+                
+                return f1name.compareTo(f2name);
+            }
+            
+        });
+        return all;
     }
 
     @Override
@@ -1941,10 +2059,10 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
 
     @Override
     @RolesAllowed({"loginRole"})
-    public Hashtable<String,PartyTypeBean> getPartyTypesTable() {
-        List<PartyTypeBean> allParties=this.partyTypesFacade.findAll();
-        Hashtable<String,PartyTypeBean> result=new Hashtable<String,PartyTypeBean>();
-        for(PartyTypeBean p: allParties) {
+    public Hashtable<String, PartyTypeBean> getPartyTypesTable() {
+        List<PartyTypeBean> allParties = this.partyTypesFacade.findAll();
+        Hashtable<String, PartyTypeBean> result = new Hashtable<String, PartyTypeBean>();
+        for (PartyTypeBean p : allParties) {
             result.put(p.getName(), p);
         }
         return result;
@@ -1952,71 +2070,125 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
 
     @Override
     public PartyTypeBean addPartyType(PartyTypeBean partyType) throws Exception {
-        List<PartyTypeBean> allTypes=this.partyTypesFacade.findAll();
-        for(PartyTypeBean ptb: allTypes) {
-            if(partyType.getName()==null || "".equals(partyType.getName().trim())) {
+        List<PartyTypeBean> allTypes = this.partyTypesFacade.findAll();
+        for (PartyTypeBean ptb : allTypes) {
+            if (partyType.getName() == null || "".equals(partyType.getName().trim())) {
                 throw new Exception("Typ mit leerem Namen ist unzulässig!");
             }
-            if(partyType.getPlaceHolder()==null || "".equals(partyType.getPlaceHolder().trim())) {
+            if (partyType.getPlaceHolder() == null || "".equals(partyType.getPlaceHolder().trim())) {
                 throw new Exception("Typ mit leerem Platzhalter ist unzulässig!");
             }
-            
-            if(ptb.getName().equalsIgnoreCase(partyType.getName())) {
+
+            if (ptb.getName().equalsIgnoreCase(partyType.getName())) {
                 throw new Exception("Typ mit Namen " + partyType.getName() + " existiert bereits!");
             }
-            if(ptb.getPlaceHolder().equalsIgnoreCase(partyType.getPlaceHolder())) {
+            if (ptb.getPlaceHolder().equalsIgnoreCase(partyType.getPlaceHolder())) {
                 throw new Exception("Typ mit Platzhalter " + partyType.getName() + " existiert bereits!");
             }
-            
+
         }
-        
+
         partyType.setName(partyType.getName().trim());
         partyType.setPlaceHolder(partyType.getPlaceHolder().trim());
         StringGenerator idGen = new StringGenerator();
-        String id=idGen.getID().toString();
+        String id = idGen.getID().toString();
         partyType.setId(id);
-        
+
         this.partyTypesFacade.create(partyType);
         return this.partyTypesFacade.find(id);
-        
+
     }
 
     @Override
     public void removePartyType(PartyTypeBean partyType) throws Exception {
-        
-        List<ArchiveFileAddressesBean> list=this.archiveFileAddressesFacade.findByReferenceType(partyType);
-        if(list.size()>0) {
+
+        List<ArchiveFileAddressesBean> list = this.archiveFileAddressesFacade.findByReferenceType(partyType);
+        if (list.size() > 0) {
             throw new Exception("Beteiligtentyp " + partyType.getName() + " wird noch benutzt und kann nicht gelöscht werden!");
         }
-        
+
         this.partyTypesFacade.remove(partyType);
-        
+
     }
-    
+
     public PartyTypeBean updatePartyType(PartyTypeBean partyType) throws Exception {
-        List<PartyTypeBean> allTypes=this.partyTypesFacade.findAll();
-        for(PartyTypeBean ptb: allTypes) {
-            if(partyType.getName()==null || "".equals(partyType.getName().trim())) {
+        List<PartyTypeBean> allTypes = this.partyTypesFacade.findAll();
+        for (PartyTypeBean ptb : allTypes) {
+            if (partyType.getName() == null || "".equals(partyType.getName().trim())) {
                 throw new Exception("Typ mit leerem Namen ist unzulässig!");
             }
-            if(partyType.getPlaceHolder()==null || "".equals(partyType.getPlaceHolder().trim())) {
+            if (partyType.getPlaceHolder() == null || "".equals(partyType.getPlaceHolder().trim())) {
                 throw new Exception("Typ mit leerem Platzhalter ist unzulässig!");
             }
-            
-            if(ptb.getName().equalsIgnoreCase(partyType.getName()) && !partyType.getId().equals(ptb.getId())) {
+
+            if (ptb.getName().equalsIgnoreCase(partyType.getName()) && !partyType.getId().equals(ptb.getId())) {
                 throw new Exception("Typ mit Namen " + partyType.getName() + " existiert bereits!");
             }
-            if(ptb.getPlaceHolder().equalsIgnoreCase(partyType.getPlaceHolder()) && !partyType.getId().equals(ptb.getId())) {
+            if (ptb.getPlaceHolder().equalsIgnoreCase(partyType.getPlaceHolder()) && !partyType.getId().equals(ptb.getId())) {
                 throw new Exception("Typ mit Platzhalter " + partyType.getName() + " existiert bereits!");
             }
-            
+
         }
-        
+
         partyType.setName(partyType.getName().trim());
         partyType.setPlaceHolder(partyType.getPlaceHolder().trim());
-        
+
         this.partyTypesFacade.edit(partyType);
         return this.partyTypesFacade.find(partyType.getId());
+    }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public void addObservedFile(String fileName, byte[] content) throws Exception {
+        ServerSettingsBean mode = settingsFacade.find("jlawyer.server.observe.directory");
+        if (mode == null || "".equals(mode.getSettingValue())) {
+            log.error("No server directory configured for scans");
+            throw new Exception("No server directory configured for scans");
+        }
+
+        String scanDir = mode.getSettingValue();
+        if (scanDir == null || "".equals(scanDir)) {
+            log.error("No server directory configured for scans");
+            throw new Exception("No server directory configured for scans");
+        }
+
+        File scanDirectory = new File(scanDir);
+        if (!scanDirectory.exists()) {
+            log.error("Server directory for scans does not exist: " + scanDir);
+            throw new Exception("Server directory for scans does not exist: " + scanDir);
+        }
+
+        if (!scanDirectory.isDirectory()) {
+            log.error("Server directory for scans is not a directory: " + scanDir);
+            throw new Exception("Server directory for scans is not a directory: " + scanDir);
+        }
+        
+        File[] children=scanDirectory.listFiles();
+        if(children.length>5000) {
+            log.error("Scan directory has exceeded maximum of 5000 files!");
+            throw new Exception("Scan directory has exceeded maximum of 5000 files!");
+        }
+        
+        String fullDir=scanDir;
+        if(!scanDir.endsWith(File.separator))
+            fullDir=fullDir+File.separator;
+        String fullPath=fullDir+fileName;
+        
+        File uploadFile=new File(fullPath);
+        if(uploadFile.exists()) {
+            int copy=1;
+            
+            while(uploadFile.exists())  {
+                copy=copy+1;
+                fullPath=fullDir+"(" +copy + ") " + fileName;
+                uploadFile=new File(fullPath);
+            }
+        }
+        
+        FileOutputStream fout=new FileOutputStream(uploadFile);
+        fout.write(content);
+        fout.close();
+        
     }
 
 }

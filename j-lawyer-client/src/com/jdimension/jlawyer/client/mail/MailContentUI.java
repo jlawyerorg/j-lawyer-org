@@ -758,8 +758,12 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
     }
 
     public String getBody() {
-
-        return this.editBody.getText();
+        try {
+            return this.editBody.getText();
+        } catch (Throwable t) {
+            log.error("Could not return mail body", t);
+            return "Nachrichtentext konnte nicht ermittelt werden";
+        }
 
 //        if("text/plain".equalsIgnoreCase(this.editBody.getContentType()))
 //            return this.editBody.getText();
@@ -831,8 +835,14 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
 
         } catch (Exception ex) {
             log.error("Error getting contents of IMAP message", ex);
-            JOptionPane.showMessageDialog(this, "Fehler Öffnen der Nachricht: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
-            //EditorsRegistry.getInstance().clearStatus();
+            //JOptionPane.showMessageDialog(this, "Fehler Öffnen der Nachricht: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            this.setErrorMessage("Fehler beim Laden der Nachricht: " + ex.getMessage());
+            this.lblBCC.setText("");
+            this.lblCC.setText("");
+            this.lblFrom.setText("");
+            this.lblSentDate.setText("");
+            this.lblSubject.setText("");
+            this.lblTo.setText("");
         }
     }
 
@@ -1519,16 +1529,20 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
         }
 
         try {
-
+            String userHome = System.getProperty("user.home");
+            if (!userHome.endsWith(File.separator)) {
+                userHome = userHome + File.separator;
+            }
+            String selectedFolder = null;
             for (Object selected : this.lstAttachments.getSelectedValuesList()) {
 
                 byte[] data = EmailUtils.getAttachmentBytes(selected.toString(), this.msgContainer);
-                String userHome = System.getProperty("user.home");
-                if (!userHome.endsWith(File.separator)) {
-                    userHome = userHome + File.separator;
-                }
 
-                JFileChooser chooser = new JFileChooser(userHome);
+                String useFolder=userHome;
+                if (selectedFolder != null) {
+                    useFolder=selectedFolder;
+                }
+                JFileChooser chooser = new JFileChooser(useFolder);
                 chooser.setSelectedFile(new File(selected.toString()));
                 chooser.showSaveDialog(this);
                 File f = chooser.getSelectedFile();
@@ -1539,9 +1553,12 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
                 if (!f.exists()) {
                     f.createNewFile();
                 }
+                selectedFolder = f.getParentFile().getAbsolutePath();
+
                 FileOutputStream fOut = new FileOutputStream(f);
                 fOut.write(data);
                 fOut.close();
+
             }
 
         } catch (Exception ex) {
@@ -1557,7 +1574,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
             return;
         }
 
-        SearchAndAssignDialog dlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true);
+        SearchAndAssignDialog dlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true, ""+this.lblSubject.getText()+this.editBody.getText());
         dlg.setVisible(true);
         ArchiveFileBean sel = dlg.getSelection();
 
@@ -1579,8 +1596,8 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
                         return;
                     }
 
-                    ArchiveFileDocumentsBean newDoc=afs.addDocument(sel.getId(), newName, data, "");
-                    
+                    ArchiveFileDocumentsBean newDoc = afs.addDocument(sel.getId(), newName, data, "");
+
                     EventBroker eb = EventBroker.getInstance();
                     eb.publishEvent(new DocumentAddedEvent(newDoc));
 

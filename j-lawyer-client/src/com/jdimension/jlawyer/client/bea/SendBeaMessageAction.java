@@ -716,8 +716,10 @@ public class SendBeaMessageAction extends ProgressableAction {
 
     private String azSender = null;
     private String azRecipient = null;
+    
+    private String msgType=Message.MESSAGETYPE_ALLGEMEINE_NACHRICHT;
 
-    public SendBeaMessageAction(ProgressIndicator i, JDialog cleanAfter, String fromSafeId, ArrayList<BeaAttachmentMetadata> attachmentMetadata, AppUserBean cu, boolean readReceipt, BeaListItem authority, Enumeration to, String subject, String body, String documentTag, String azSender, String azRecipient) {
+    public SendBeaMessageAction(ProgressIndicator i, JDialog cleanAfter, String messageType, String fromSafeId, ArrayList<BeaAttachmentMetadata> attachmentMetadata, AppUserBean cu, boolean readReceipt, BeaListItem authority, Enumeration to, String subject, String body, String documentTag, String azSender, String azRecipient) {
         super(i, false, cleanAfter);
         this.attachments = attachmentMetadata;
         this.cu = cu;
@@ -731,10 +733,11 @@ public class SendBeaMessageAction extends ProgressableAction {
         this.authority = authority;
         this.azSender = azSender;
         this.azRecipient = azRecipient;
+        this.msgType=messageType;
     }
 
-    public SendBeaMessageAction(ProgressIndicator i, JDialog cleanAfter, String fromSafeId, ArrayList<BeaAttachmentMetadata> attachmentMetadata, AppUserBean cu, boolean readReceipt, BeaListItem authority, Enumeration to, String subject, String body, ArchiveFileBean af, String documentTag, String azSender, String azRecipient) {
-        this(i, cleanAfter, fromSafeId, attachmentMetadata, cu, readReceipt, authority, to, subject, body, documentTag, azSender, azRecipient);
+    public SendBeaMessageAction(ProgressIndicator i, JDialog cleanAfter, String messageType, String fromSafeId, ArrayList<BeaAttachmentMetadata> attachmentMetadata, AppUserBean cu, boolean readReceipt, BeaListItem authority, Enumeration to, String subject, String body, ArchiveFileBean af, String documentTag, String azSender, String azRecipient) {
+        this(i, cleanAfter, messageType, fromSafeId, attachmentMetadata, cu, readReceipt, authority, to, subject, body, documentTag, azSender, azRecipient);
         this.archiveFile = af;
     }
 
@@ -756,6 +759,7 @@ public class SendBeaMessageAction extends ProgressableAction {
         //long sentId = -1;
         Message sentMessage = null;
         Message msg = new Message();
+        msg.setMessageType(msgType);
         ArrayList<String> recipients = new ArrayList<String>();
         StringBuffer recipientsText = new StringBuffer();
 

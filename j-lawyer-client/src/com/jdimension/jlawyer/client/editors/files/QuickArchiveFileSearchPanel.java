@@ -702,6 +702,7 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
     private String detailsEditorClass;
     private Image backgroundImage = null;
     private boolean initializing = false;
+    private boolean userCanEdit=true;
 
     /**
      * Creates new form QuickArchiveFileSearchPanel
@@ -712,8 +713,10 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
         UserSettings userSet = UserSettings.getInstance();
         //this.detailsEditorClass=detailsEditorClass;
         if (userSet.isCurrentUserInRole(UserSettings.ROLE_WRITECASE)) {
+            this.userCanEdit=true;
             this.detailsEditorClass = EditArchiveFileDetailsPanel.class.getName();
         } else {
+            this.userCanEdit=false;
             this.detailsEditorClass = ViewArchiveFileDetailsPanel.class.getName();
         }
         
@@ -845,6 +848,7 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
             }
         });
 
+        jLabel1.setForeground(new java.awt.Color(255, 255, 255));
         jLabel1.setText("Suchanfrage:");
 
         txtSearchString.addKeyListener(new java.awt.event.KeyAdapter() {
@@ -1065,6 +1069,7 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
             }
             ((ArchiveFilePanel) editor).setArchiveFileDTO(id.getArchiveFileDTO());
             ((ArchiveFilePanel) editor).setOpenedFromEditorClass(this.getClass().getName());
+//            ((ArchiveFilePanel) editor).setReadOnly(!this.userCanEdit);
             EditorsRegistry.getInstance().setMainEditorsPaneView((Component) editor);
 
         } catch (Exception ex) {

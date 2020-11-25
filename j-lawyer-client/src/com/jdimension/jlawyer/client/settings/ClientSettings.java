@@ -684,17 +684,24 @@ public class ClientSettings {
     public static final String CONF_LASTSERVER="connection.lastserver";
     public static final String CONF_LASTSERVERLIST="connection.lastserverlist";
     public static final String CONF_LASTPORT="connection.lastport";
-    public static final String CONF_LASTHTTPPORT="connection.lasthttpport";
     public static final String CONF_LASTUSER="connection.lastuser";
+    
+    // deprecated! use LASTSECMODE instead
     public static final String CONF_LASTSERVERSSL="connection.lastserverssl";
+    
+    // can have values standard, ssl, ssh
+    public static final String CONF_LASTSECMODE="connection.lastsecmode";
+    public static final String CONF_LASTSSHHOST="connection.lastsshhost";
+    public static final String CONF_LASTSSHPORT="connection.lastsshport";
+    public static final String CONF_LASTSSHUSER="connection.lastsshuser";
+    public static final String CONF_LASTSSHPWD="connection.lastsshpwd";
+    public static final String CONF_LASTSOURCEPORT="connection.lastsshsourceport";
+    public static final String CONF_LASTTARGETPORT="connection.lastsshtargetport";
     
     public static final String CONF_THEME="client.theme";
     
     public static final String CONF_HEIGHT="client.height";
     public static final String CONF_WIDTH="client.width";
-    public static final String CONF_DIVIDERLOCATION="client.dividerlocation";
-    
-    public static final String CONF_DIVIDERLOCATION_DOCPREVIEW="client.dividerlocation.case.docpreview";
     
     public static final String CONF_UI_FONTSIZEOFFSET="client.ui.fontsizeoffset";
     
@@ -723,23 +730,14 @@ public class ClientSettings {
     public static final String CONF_DESKTOP_REVDUE_Y="client.desktop.revdue.y";
     public static final String CONF_DESKTOP_REVDUE_EXSTATE="client.desktop.revdue.exstate";
     
-    public static final String CONF_DESKTOP_TIPOFDAY_HEIGHT="client.desktop.tipofday.height";
-    public static final String CONF_DESKTOP_TIPOFDAY_WIDTH="client.desktop.tipofday.width";
-    public static final String CONF_DESKTOP_TIPOFDAY_X="client.desktop.tipofday.x";
-    public static final String CONF_DESKTOP_TIPOFDAY_Y="client.desktop.tipofday.y";
-    public static final String CONF_DESKTOP_TIPOFDAY_EXSTATE="client.desktop.tipofday.exstate";
     
-    public static final String CONF_DESKTOP_ONLYMYCASES="client.desktop.onlymycases";
-    public static final String CONF_DESKTOP_ONLYMYREVIEWS="client.desktop.onlymyreviews";
-    public static final String CONF_DESKTOP_ONLYMYTAGGED="client.desktop.onlymytagged";
-    public static final String CONF_DESKTOP_LASTFILTERTAG="client.desktop.lastfiltertag";
-    public static final String CONF_DESKTOP_LASTFILTERDOCUMENTTAG="client.desktop.lastfilterdocumenttag";
     
     public static final String CONF_SCANS_TAGGINGENABLED="client.scans.taggingenabled";
     public static final String CONF_SCANS_DOCUMENTTAGGINGENABLED="client.scans.documenttaggingenabled";
     public static final String CONF_SCANS_LASTTAG="client.scans.lasttag";
     public static final String CONF_SCANS_LASTDOCUMENTTAG="client.scans.lastdocumenttag";
     public static final String CONF_SCANS_DELETEENABLED="client.scans.deleteenabled";
+    public static final String CONF_SCANS_OBSERVELOCALDIR="client.scans.observelocaldir";
     
     public static final String CONF_MAILS_TAGGINGENABLED="client.mails.taggingenabled";
     public static final String CONF_MAILS_DOCUMENTTAGGINGENABLED="client.mails.documenttaggingenabled";
@@ -800,6 +798,14 @@ public class ClientSettings {
     private AppOptionGroupBean[] adrTagDtos=null;
     private AppOptionGroupBean[] docTagDtos=null;
     private AppOptionGroupBean[] titles=null;
+    private AppOptionGroupBean[] titlesInAddress=null;
+    private AppOptionGroupBean[] countries=null;
+    private AppOptionGroupBean[] nationalities=null;
+    private AppOptionGroupBean[] legalForms=null;
+    private AppOptionGroupBean[] degreePrefixes=null;
+    private AppOptionGroupBean[] degreeSuffixes=null;
+    private AppOptionGroupBean[] professions=null;
+    private AppOptionGroupBean[] roles=null; // "Funktion" an einer Adresse
     
     private List<String>afTagsInUse=new ArrayList<String>();
     private List<String>adrTagsInUse=new ArrayList<String>();
@@ -1091,6 +1097,118 @@ public class ClientSettings {
     
     public void setUrlXjustiz(String url) {
         this.urlXjustiz=url;
+    }
+
+    /**
+     * @return the countries
+     */
+    public AppOptionGroupBean[] getCountries() {
+        return countries;
+    }
+
+    /**
+     * @param countries the countries to set
+     */
+    public void setCountries(AppOptionGroupBean[] countries) {
+        this.countries = countries;
+    }
+
+    /**
+     * @return the nationalities
+     */
+    public AppOptionGroupBean[] getNationalities() {
+        return nationalities;
+    }
+
+    /**
+     * @param nationalities the nationalities to set
+     */
+    public void setNationalities(AppOptionGroupBean[] nationalities) {
+        this.nationalities = nationalities;
+    }
+
+    /**
+     * @return the legalForms
+     */
+    public AppOptionGroupBean[] getLegalForms() {
+        return legalForms;
+    }
+
+    /**
+     * @param legalForms the legalForms to set
+     */
+    public void setLegalForms(AppOptionGroupBean[] legalForms) {
+        this.legalForms = legalForms;
+    }
+
+    /**
+     * @return the degreePrefixes
+     */
+    public AppOptionGroupBean[] getDegreePrefixes() {
+        return degreePrefixes;
+    }
+
+    /**
+     * @param degreePrefixes the degreePrefixes to set
+     */
+    public void setDegreePrefixes(AppOptionGroupBean[] degreePrefixes) {
+        this.degreePrefixes = degreePrefixes;
+    }
+
+    /**
+     * @return the degreeSuffixes
+     */
+    public AppOptionGroupBean[] getDegreeSuffixes() {
+        return degreeSuffixes;
+    }
+
+    /**
+     * @param degreeSuffixes the degreeSuffixes to set
+     */
+    public void setDegreeSuffixes(AppOptionGroupBean[] degreeSuffixes) {
+        this.degreeSuffixes = degreeSuffixes;
+    }
+
+    /**
+     * @return the professions
+     */
+    public AppOptionGroupBean[] getProfessions() {
+        return professions;
+    }
+
+    /**
+     * @param professions the professions to set
+     */
+    public void setProfessions(AppOptionGroupBean[] professions) {
+        this.professions = professions;
+    }
+
+    /**
+     * @return the roles
+     */
+    public AppOptionGroupBean[] getRoles() {
+        return roles;
+    }
+
+    /**
+     * @param roles the roles to set
+     */
+    public void setRoles(AppOptionGroupBean[] roles) {
+        this.roles = roles;
+    }
+
+    /**
+     * @return the titlesInAddress
+     */
+    public AppOptionGroupBean[] getTitlesInAddress() {
+        return titlesInAddress;
+    }
+
+    /**
+     * @param titlesInAddress the titlesInAddress to set
+     */
+    public void setTitlesInAddress(AppOptionGroupBean[] titlesInAddress) {
+        this.titlesInAddress = titlesInAddress;
     }
  
     

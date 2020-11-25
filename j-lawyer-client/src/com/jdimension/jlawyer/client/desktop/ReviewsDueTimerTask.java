@@ -684,6 +684,7 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import javax.swing.border.TitledBorder;
 import org.apache.log4j.Logger;
+import themes.colors.DefaultColorTheme;
 
 /**
  *
@@ -735,7 +736,8 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
             ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
             Collection<ArchiveFileReviewsBean> myNewList = fileService.searchReviews(ArchiveFileConstants.REVIEWSTATUS_OPEN, ArchiveFileConstants.REVIEWTYPE_ANY, null, new Date(), 2500);
 
-            String temp = settings.getConfiguration(ClientSettings.CONF_DESKTOP_ONLYMYREVIEWS, "false");
+            UserSettings.getInstance().migrateFrom(settings, UserSettings.CONF_DESKTOP_ONLYMYREVIEWS);
+            String temp = UserSettings.getInstance().getSetting(UserSettings.CONF_DESKTOP_ONLYMYREVIEWS, "false");
             boolean onlyMyReviews = false;
             String principalId = UserSettings.getInstance().getCurrentUser().getPrincipalId();
             if ("true".equalsIgnoreCase(temp)) {
@@ -827,11 +829,12 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
 
         final ArrayList<ReviewDueEntry> list = entries;
         try {
-            
+
             SwingUtilities.invokeLater(
                     new Runnable() {
                 public void run() {
-                    split.setDividerLocation(0.5d);
+                    split.setDividerLocation(split.getDividerLocation() + 1);
+                    split.setDividerLocation(split.getDividerLocation() - 1);
                 }
 
             }
@@ -846,8 +849,8 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
                 public void run() {
                     resultUI.removeAll();
 
-                    split.setDividerLocation(0.5d);
-
+//                    split.setDividerLocation(split.getDividerLocation()+1);
+//                    split.setDividerLocation(split.getDividerLocation()-1);
                     int i = 0;
                     int maxCount = Math.min(list.size(), 200);
                     //resultUI.setLayout(new GridLayout(maxCount-1, 1));
@@ -855,10 +858,12 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
                     //for(int k=list.size()-1;k>=(list.size()-maxCount);k--) {
                     for (int k = 0; k < maxCount; k++) {
                         try {
-                            ReviewDueEntryPanel ep = new ReviewDueEntryPanel();
+                            Color background = DefaultColorTheme.DESKTOP_ENTRY_BACKGROUND;
                             if (i % 2 == 0) {
-                                ep.setBackground(ep.getBackground().brighter());
+                                background = background.brighter();
                             }
+                            ReviewDueEntryPanel ep = new ReviewDueEntryPanel(background);
+
                             //ep.setEntry(e);
                             //ep.setSize(resultUI.getWidth(), ep.getHeight());
                             ep.setEntry(list.get(k));
@@ -869,7 +874,8 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
                         }
 
                     }
-                    split.setDividerLocation(0.5d);
+                    split.setDividerLocation(split.getDividerLocation() + 1);
+                    split.setDividerLocation(split.getDividerLocation() - 1);
                 }
 
             }

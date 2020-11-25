@@ -705,7 +705,7 @@ public interface ArchiveFileServiceRemote {
 
     Collection<ArchiveFileReviewsBean> getAllOpenReviews();
 
-    Collection getDocuments(String archiveFileKey);
+    Collection<ArchiveFileDocumentsBean> getDocuments(String archiveFileKey);
 
     boolean archiveFileExists(String id);
 
@@ -808,5 +808,31 @@ public interface ArchiveFileServiceRemote {
     void updateAllowedGroups(String caseId, Collection<Group> allowedGroups) throws Exception;
 
     String getFileNumber(String id);
+
+    List<DocumentFolderTemplate> getAllFolderTemplates();
+
+    void addFolderTemplate(DocumentFolderTemplate template);
+
+    void removeFolderTemplate(String name);
+
+    void updateFolderTemplate(DocumentFolderTemplate template);
+
+    DocumentFolderTemplate getFolderTemplate(String name);
+
+    DocumentFolder addFolderToTemplate(String templateName, DocumentFolder folder) throws Exception;
+
+    void removeFolderFromTemplate(String folderId) throws Exception;
+
+    void cloneFolderTemplate(String sourceTemplateName, String targetTemplateName) throws Exception;
+
+    CaseFolder createCaseFolder(String parentId, String name) throws Exception;
+
+    CaseFolder updateCaseFolder(CaseFolder folder) throws Exception;
+
+    void deleteCaseFolder(String folderId) throws Exception;
+
+    void moveDocumentsToFolder(Collection<String> documentIds, String folderId) throws Exception;
+
+    CaseFolder applyFolderTemplate(String caseId, String templateName) throws Exception;
 
 }

@@ -700,10 +700,13 @@ public class PlaceHolders {
 
     public static final String _NAME = "{{###_NAME}}";
     public static final String _VORNAME = "{{###_VORNAME}}";
-    public static final String _FIRMA = "{{###_FIRMA}}";
+    public static final String _FIRMA_ALIAS = "{{###_FIRMA}}"; // Alias for UNTERNEHMEN
+    public static final String _UNTERNEHMEN = "{{###_UNTERNEHMEN}}";
     public static final String _ABTLG = "{{###_ABTLG}}";
-    public static final String _TITEL = "{{###_TITEL}}";
-    public static final String _ANREDE = "{{###_ANREDE}}";
+    public static final String _TITEL_ALIAS = "{{###_TITEL}}";// Alias for ANREDE1
+    public static final String _ANREDE1 = "{{###_ANREDE1}}"; 
+    public static final String _ANREDE_ALIAS = "{{###_ANREDE}}"; // Alias for BEGRUESSUNG
+    public static final String _BEGRUESSUNG = "{{###_BEGRUESSUNG}}";
     public static final String _NACHTEXT = "{{###_NACHTEXT}}";
     public static final String _STRASSE = "{{###_STRASSE}}";
     public static final String _ORT = "{{###_ORT}}";
@@ -729,6 +732,27 @@ public class PlaceHolders {
     public static final String _AKTE_EIGENE1 = "{{###_AKTE_EIGENE1}}";
     public static final String _AKTE_EIGENE2 = "{{###_AKTE_EIGENE2}}";
     public static final String _AKTE_EIGENE3 = "{{###_AKTE_EIGENE3}}";
+    public static final String _ORTSTEIL = "{{###_ORTSTEIL}}";
+    public static final String _NOTIZ = "{{###_NOTIZ}}";
+    public static final String _STA = "{{###_STA}}";
+    public static final String _GEBNAME = "{{###_GEBNAME}}";
+    public static final String _GEBORT = "{{###_GEBORT}}";
+    public static final String _GEST = "{{###_GEST}}";
+    public static final String _USTIDNR = "{{###_USTIDNR}}";
+    public static final String _STEUERNR = "{{###_STEUERNR}}";
+    public static final String _RFORM = "{{###_RFORM}}";
+    public static final String _REGNR = "{{###_REGNR}}";
+    public static final String _REGGERICHT = "{{###_REGGERICHT}}";
+    public static final String _GESCHLECHT = "{{###_GESCHLECHT}}";
+    public static final String _HAUSNR = "{{###_HAUSNR}}";
+    public static final String _INITIAL = "{{###_INITIAL}}";
+    public static final String _AGRAD1 = "{{###_AGRAD1}}";
+    public static final String _AGRAD2 = "{{###_AGRAD2}}";
+    public static final String _BERUF = "{{###_BERUF}}";
+    public static final String _FKT = "{{###_FKT}}";
+    public static final String _ZUSATZ = "{{###_ZUSATZ}}";
+    public static final String _ANREDE2 = "{{###_ANREDE2}}";
+    public static final String _ALTER = "{{###_ALTER}}";
 
     public static final String AKTE_NR = "{{AKTE_NR}}";
     public static final String AKTE_ZEICHEN = "{{AKTE_ZEICHEN}}";
@@ -789,10 +813,13 @@ public class PlaceHolders {
 
             ALLPLACEHOLDERS.add(_NAME.replaceAll("###", typePlaceHolder));
             ALLPLACEHOLDERS.add(_VORNAME.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_FIRMA.replaceAll("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_FIRMA_ALIAS.replaceAll("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_UNTERNEHMEN.replaceAll("###", typePlaceHolder));
             ALLPLACEHOLDERS.add(_ABTLG.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_TITEL.replaceAll("###", typePlaceHolder));
-            ALLPLACEHOLDERS.add(_ANREDE.replaceAll("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_TITEL_ALIAS.replaceAll("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_ANREDE1.replaceAll("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_ANREDE_ALIAS.replaceAll("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_BEGRUESSUNG.replaceAll("###", typePlaceHolder));
             ALLPLACEHOLDERS.add(_NACHTEXT.replaceAll("###", typePlaceHolder));
             ALLPLACEHOLDERS.add(_STRASSE.replaceAll("###", typePlaceHolder));
             ALLPLACEHOLDERS.add(_ORT.replaceAll("###", typePlaceHolder));
@@ -818,6 +845,27 @@ public class PlaceHolders {
             ALLPLACEHOLDERS.add(_AKTE_EIGENE3.replaceAll("###", typePlaceHolder));
             ALLPLACEHOLDERS.add(_AKTE_ZEICHEN.replaceAll("###", typePlaceHolder));
             ALLPLACEHOLDERS.add(_AKTE_KONTAKT.replaceAll("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_ORTSTEIL.replaceAll("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_NOTIZ.replaceAll("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_STA.replaceAll("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_GEBNAME.replaceAll("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_GEBORT.replaceAll("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_GEST.replaceAll("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_USTIDNR.replaceAll("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_STEUERNR.replaceAll("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_RFORM.replaceAll("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_REGNR.replaceAll("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_REGGERICHT.replaceAll("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_GESCHLECHT.replaceAll("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_HAUSNR.replaceAll("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_INITIAL.replaceAll("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_AGRAD1.replaceAll("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_AGRAD2.replaceAll("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_BERUF.replaceAll("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_FKT.replaceAll("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_ZUSATZ.replaceAll("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_ANREDE2.replaceAll("###", typePlaceHolder));
+            ALLPLACEHOLDERS.add(_ALTER.replaceAll("###", typePlaceHolder));
 
         }
 

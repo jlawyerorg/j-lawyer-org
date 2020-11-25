@@ -797,7 +797,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
 
         this.msgContainer = msg;
         this.documentId = documentId;
-        if(this.msgContainer.getProcessCard()!=null && this.msgContainer.getProcessCard().getOsciMessage()!=null) {
+        if (this.msgContainer.getProcessCard() != null && this.msgContainer.getProcessCard().getOsciMessage() != null) {
             this.cmdShowProcessCard.setEnabled(true);
         } else {
             this.cmdShowProcessCard.setEnabled(false);
@@ -1131,6 +1131,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
         jLabel6 = new javax.swing.JLabel();
         lblReferenceJustice = new javax.swing.JLabel();
         lblEeb = new javax.swing.JLabel();
+        cmdToPdf = new javax.swing.JButton();
         jPanel4 = new javax.swing.JPanel();
         jScrollPane3 = new javax.swing.JScrollPane();
         tblJournal = new javax.swing.JTable();
@@ -1290,6 +1291,14 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
         lblEeb.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/lassists.png"))); // NOI18N
         lblEeb.setEnabled(false);
 
+        cmdToPdf.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/fileicons/file_type_pdf.png"))); // NOI18N
+        cmdToPdf.setToolTipText("Nachricht als PDF anzeigen / drucken");
+        cmdToPdf.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdToPdfActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);
         jPanel3Layout.setHorizontalGroup(
@@ -1308,23 +1317,28 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(lblReferenceJustice)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(lblEeb)))
+                        .addComponent(lblEeb)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdToPdf)))
                 .addContainerGap())
         );
         jPanel3Layout.setVerticalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel3Layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel4)
-                    .addComponent(lblCaseNumber)
-                    .addComponent(jLabel6)
-                    .addComponent(lblReferenceJustice)
+                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(jLabel4)
+                            .addComponent(lblCaseNumber)
+                            .addComponent(jLabel6)
+                            .addComponent(lblReferenceJustice))
+                        .addComponent(cmdToPdf, javax.swing.GroupLayout.Alignment.TRAILING))
                     .addComponent(lblEeb))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jSplitPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 348, Short.MAX_VALUE)
+                .addComponent(jSplitPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 342, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -1489,16 +1503,20 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
         }
 
         try {
-
+            String userHome = System.getProperty("user.home");
+            if (!userHome.endsWith(File.separator)) {
+                userHome = userHome + File.separator;
+            }
+            String selectedFolder = null;
             for (Object selected : this.lstAttachments.getSelectedValuesList()) {
 
                 byte[] data = ((Attachment) selected).getContent();
-                String userHome = System.getProperty("user.home");
-                if (!userHome.endsWith(File.separator)) {
-                    userHome = userHome + File.separator;
-                }
 
-                JFileChooser chooser = new JFileChooser(userHome);
+                String useFolder = userHome;
+                if (selectedFolder != null) {
+                    useFolder = selectedFolder;
+                }
+                JFileChooser chooser = new JFileChooser(useFolder);
                 chooser.setSelectedFile(new File(selected.toString()));
                 int result = chooser.showSaveDialog(this);
                 if (result == JFileChooser.CANCEL_OPTION) {
@@ -1513,6 +1531,8 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
                 if (!f.exists()) {
                     f.createNewFile();
                 }
+                selectedFolder = f.getParentFile().getAbsolutePath();
+
                 FileOutputStream fOut = new FileOutputStream(f);
                 fOut.write(data);
                 fOut.close();
@@ -1531,7 +1551,11 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
             return;
         }
 
-        SearchAndAssignDialog dlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true);
+        String searchContext = null;
+        if (this.msgContainer != null) {
+            searchContext = "" + msgContainer.getReferenceJustice() + msgContainer.getReferenceNumber() + msgContainer.getSubject() + msgContainer.getBody();
+        }
+        SearchAndAssignDialog dlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true, searchContext);
         dlg.setVisible(true);
         ArchiveFileBean sel = dlg.getSelection();
 
@@ -1661,16 +1685,33 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
     }//GEN-LAST:event_cmdRefreshProcessCardActionPerformed
 
     private void cmdShowProcessCardActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdShowProcessCardActionPerformed
-        String osciMsg=this.msgContainer.getProcessCard().getOsciMessage();
-        OsciMessageViewer v=new OsciMessageViewer(EditorsRegistry.getInstance().getMainWindow(), true, "" +this.msgContainer.getProcessCard().getMessageId(), osciMsg);
+        String osciMsg = this.msgContainer.getProcessCard().getOsciMessage();
+        OsciMessageViewer v = new OsciMessageViewer(EditorsRegistry.getInstance().getMainWindow(), true, "" + this.msgContainer.getProcessCard().getMessageId(), osciMsg);
         FrameUtils.centerDialog(v, EditorsRegistry.getInstance().getMainWindow());
         v.setVisible(true);
     }//GEN-LAST:event_cmdShowProcessCardActionPerformed
+
+    private void cmdToPdfActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdToPdfActionPerformed
+        if (this.msgContainer != null) {
+            try {
+                byte[] pdf = this.msgContainer.toPdf("j-lawyer.org " + VersionUtils.getFullClientVersion());
+                String fileName="beA-Nachricht-"+this.msgContainer.getId() + ".pdf";
+                ReadOnlyDocumentStore store = new ReadOnlyDocumentStore("beacontentui-" + fileName, fileName);
+                Launcher launcher = LauncherFactory.getLauncher(fileName, pdf, store);
+                launcher.launch(false);
+
+            } catch (Exception ex) {
+                log.error("Could not generate PDF for beA message", ex);
+                JOptionPane.showMessageDialog(this, "Fehler beim Erstellen des PDF: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }//GEN-LAST:event_cmdToPdfActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton cmdRefreshJournal;
     private javax.swing.JButton cmdRefreshProcessCard;
     private javax.swing.JButton cmdShowProcessCard;
+    private javax.swing.JButton cmdToPdf;
     private javax.swing.JEditorPane editBody;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;

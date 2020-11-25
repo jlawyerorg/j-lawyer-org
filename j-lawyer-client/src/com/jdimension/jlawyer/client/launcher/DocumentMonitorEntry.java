@@ -686,6 +686,7 @@ public class DocumentMonitorEntry extends javax.swing.JPanel {
         this.lblStore.setText(doc.getStore().getType());
         this.lblName.setText(doc.getName());
         this.lblName.setIcon(FileUtils.getInstance().getFileTypeIcon(doc.getName()));
+        this.lblName.setToolTipText(doc.getPath());
         this.lblOpened.setText(df.format(new Date(doc.getOpened())));
         if(doc.isReadOnly()) {
             this.chkReadOnly.setSelected(true);
@@ -695,6 +696,8 @@ public class DocumentMonitorEntry extends javax.swing.JPanel {
             this.chkReadOnly.setForeground(Color.RED.darker().darker());
         }
         this.lblStatus.setText(doc.getStatusString());
+        if(doc.isMonitoringMode())
+            this.lblName.setForeground(this.jLabel1.getForeground());
     }
 
     /**

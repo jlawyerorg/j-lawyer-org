@@ -48,7 +48,7 @@
       <Group type="103" groupAlignment="0" attributes="0">
           <Group type="102" alignment="0" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
-              <Component id="jTabbedPane1" pref="442" max="32767" attributes="0"/>
+              <Component id="jTabbedPane1" max="32767" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
                   <Component id="cmdCancel" alignment="3" min="-2" max="-2" attributes="0"/>
@@ -158,7 +158,7 @@
                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
                       <Component id="jLabel5" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
-                      <Component id="jScrollPane1" pref="260" max="32767" attributes="0"/>
+                      <Component id="jScrollPane1" pref="283" max="32767" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                   </Group>
               </Group>
@@ -167,6 +167,9 @@
           <SubComponents>
             <Component class="javax.swing.JProgressBar" name="prgVMMemory">
               <Properties>
+                <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                  <Font name="Dialog" size="14" style="1"/>
+                </Property>
                 <Property name="value" type="int" value="50"/>
                 <Property name="string" type="java.lang.String" value="blubb"/>
                 <Property name="stringPainted" type="boolean" value="true"/>
@@ -194,16 +197,25 @@
             </Component>
             <Component class="javax.swing.JProgressBar" name="prgDisk">
               <Properties>
+                <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                  <Font name="Dialog" size="14" style="1"/>
+                </Property>
                 <Property name="stringPainted" type="boolean" value="true"/>
               </Properties>
             </Component>
             <Component class="javax.swing.JProgressBar" name="prgMemory">
               <Properties>
+                <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                  <Font name="Dialog" size="14" style="1"/>
+                </Property>
                 <Property name="stringPainted" type="boolean" value="true"/>
               </Properties>
             </Component>
             <Component class="javax.swing.JProgressBar" name="prgCpu">
               <Properties>
+                <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                  <Font name="Dialog" size="14" style="1"/>
+                </Property>
                 <Property name="stringPainted" type="boolean" value="true"/>
               </Properties>
             </Component>
@@ -644,15 +656,20 @@
                                       <Component id="txtUser" max="32767" attributes="0"/>
                                       <Component id="txtPassword" alignment="0" max="32767" attributes="0"/>
                                       <Component id="txtSenderName" alignment="0" max="32767" attributes="0"/>
+                                      <Component id="txtSmtpPort" alignment="0" max="32767" attributes="0"/>
                                       <Group type="102" attributes="0">
-                                          <Component id="txtSmtp" min="-2" pref="289" max="-2" attributes="0"/>
-                                          <EmptySpace max="-2" attributes="0"/>
-                                          <Component id="chkEmailStartTls" min="-2" max="-2" attributes="0"/>
-                                          <EmptySpace min="-2" pref="2" max="-2" attributes="0"/>
-                                          <Component id="chkSsl" min="-2" max="-2" attributes="0"/>
+                                          <Group type="103" groupAlignment="0" attributes="0">
+                                              <Component id="cmdTestMail" min="-2" max="-2" attributes="0"/>
+                                              <Group type="102" attributes="0">
+                                                  <Component id="txtSmtp" min="-2" pref="289" max="-2" attributes="0"/>
+                                                  <EmptySpace max="-2" attributes="0"/>
+                                                  <Component id="chkEmailStartTls" min="-2" max="-2" attributes="0"/>
+                                                  <EmptySpace min="-2" pref="2" max="-2" attributes="0"/>
+                                                  <Component id="chkSsl" min="-2" max="-2" attributes="0"/>
+                                              </Group>
+                                          </Group>
                                           <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                                       </Group>
-                                      <Component id="txtSmtpPort" alignment="0" max="32767" attributes="0"/>
                                   </Group>
                               </Group>
                           </Group>
@@ -696,6 +713,8 @@
                               <Component id="jLabel19" alignment="3" min="-2" max="-2" attributes="0"/>
                               <Component id="txtRecipient" alignment="3" min="-2" max="-2" attributes="0"/>
                           </Group>
+                          <EmptySpace max="-2" attributes="0"/>
+                          <Component id="cmdTestMail" min="-2" max="-2" attributes="0"/>
                           <EmptySpace max="32767" attributes="0"/>
                       </Group>
                   </Group>
@@ -758,6 +777,14 @@
                   </Properties>
                 </Component>
                 <Component class="javax.swing.JTextField" name="txtSmtpPort">
+                </Component>
+                <Component class="javax.swing.JButton" name="cmdTestMail">
+                  <Properties>
+                    <Property name="text" type="java.lang.String" value="Einstellungen testen"/>
+                  </Properties>
+                  <Events>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdTestMailActionPerformed"/>
+                  </Events>
                 </Component>
               </SubComponents>
             </Container>

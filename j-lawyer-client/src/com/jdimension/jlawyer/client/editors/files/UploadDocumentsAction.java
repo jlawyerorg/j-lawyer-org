@@ -674,6 +674,7 @@ import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.persistence.*;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import com.jdimension.jlawyer.ui.folders.CaseFolderPanel;
 import com.jdimension.jlawyer.ui.tagging.ArchiveFileTagActionListener;
 import com.jdimension.jlawyer.ui.tagging.TagToggleButton;
 import java.awt.Component;
@@ -682,6 +683,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import javax.swing.*;
@@ -700,11 +702,11 @@ public class UploadDocumentsAction extends ProgressableAction {
 
     private String archiveFileKey;
     private Component owner;
-    private JTable docTarget;
+    private CaseFolderPanel docTarget;
 
     private List<File> files;
 
-    public UploadDocumentsAction(ProgressIndicator i, Component owner, String archiveFileKey, JTable docTarget, List<File> files) {
+    public UploadDocumentsAction(ProgressIndicator i, Component owner, String archiveFileKey, CaseFolderPanel docTarget, List<File> files) {
         super(i, false);
 
         this.archiveFileKey = archiveFileKey;
@@ -732,6 +734,7 @@ public class UploadDocumentsAction extends ProgressableAction {
             //if(this.isCancelled())
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
 
             for (File f : this.files) {
                 if (!this.isCancelled()) {
@@ -739,18 +742,33 @@ public class UploadDocumentsAction extends ProgressableAction {
                     if (!f.isDirectory()) {
 
                         byte[] data = FileUtils.readFile(f);
-                        final long dataSize=(long)data.length;
-                        final ArchiveFileDocumentsBean doc = locator.lookupArchiveFileServiceRemote().addDocument(this.archiveFileKey, f.getName(), data, null);
+                        final long dataSize = (long) data.length;
+
+                        String newName = f.getName();
+                        boolean documentExists = afs.doesDocumentExist(this.archiveFileKey, newName);
+                        while (documentExists) {
+
+                            newName = FileUtils.getNewFileName(newName, false, new Date(), this.indicator, "neuer Dateiname");
+                            if (newName == null || "".equals(newName)) {
+                                EditorsRegistry.getInstance().clearStatus(true);
+                                ThreadUtils.setDefaultCursor(this.owner);
+                                return false;
+                            }
+                            documentExists = afs.doesDocumentExist(this.archiveFileKey, newName);
+
+                        }
+
+                        final ArchiveFileDocumentsBean doc = afs.addDocument(this.archiveFileKey, newName, data, null);
                         SwingUtilities.invokeLater(new Runnable() {
                             public void run() {
-                                ArchiveFileDocumentsTableModel m = (ArchiveFileDocumentsTableModel) docTarget.getModel();
-                                m.addRow(new Object[]{doc, false, doc.getName(), "",dataSize});
+                                docTarget.addDocument(doc);
                             }
                         });
 
                     }
                 }
             }
+            //this.docTarget.sort();
 
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);
@@ -761,14 +779,6 @@ public class UploadDocumentsAction extends ProgressableAction {
             //ThreadUtils.showErrorDialog(this.owner, ex.getMessage(), "Fehler");
             return true;
         }
-
-        SwingUtilities.invokeLater(
-                new Thread(new Runnable() {
-                    public void run() {
-                        ComponentUtils.autoSizeColumns(docTarget);
-
-                    }
-                }));
 
         EditorsRegistry.getInstance().clearStatus(true);
         ThreadUtils.setDefaultCursor(this.owner);

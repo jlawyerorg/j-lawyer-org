@@ -758,7 +758,7 @@ public class VoipConfigurationDialog extends javax.swing.JDialog {
             }
         });
 
-        jLabel5.setText("Sipgate-Nutzer:");
+        jLabel5.setText("Sipgate-Kundennr.:");
 
         jLabel6.setText("Sipgate-Passwort:");
 

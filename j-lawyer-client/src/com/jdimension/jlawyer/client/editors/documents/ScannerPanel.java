@@ -706,7 +706,9 @@ import java.util.TimerTask;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.Icon;
 import javax.swing.JComponent;
+import javax.swing.JFileChooser;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JProgressBar;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -842,6 +844,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
         
         ComponentUtils.decorateSplitPane(this.splitMain);
         ComponentUtils.decorateSplitPane(this.splitTop);
+        ComponentUtils.decorateSplitPane(this.splitTop);
         
         ClientSettings settings=ClientSettings.getInstance();
         String temp = settings.getConfiguration(ClientSettings.CONF_SCANS_TAGGINGENABLED, "false");
@@ -864,6 +867,8 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
             deleteEnabled = false;
             this.chkDeleteAfterAction.setSelected(false);
         }
+        
+        this.displayLocalScanDir();
         
         //this.splitMain.setDividerLocation(300);
         
@@ -899,13 +904,25 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
         DefaultTableModel model = new DefaultTableModel(colNames, 0);
         ThreadUtils.setTableModel(this.tblActions, model);
         
-        //this.splitMain.setDividerLocation(0.5d);
-        this.splitMain.setDividerLocation(300);
-        ThreadUtils.setSplitDividerLocation(splitTop, (int) tblDirContent.getPreferredSize().getWidth());
+        this.splitTop.setDividerLocation(0.5d);
+        this.splitMain.setDividerLocation(0.5d);
+        //this.splitMain.setDividerLocation(300);
+        //ThreadUtils.setSplitDividerLocation(splitTop, (int) tblDirContent.getPreferredSize().getWidth());
+        //ThreadUtils.setSplitDividerLocation(this.splitTop, (int) tblDirContent.getPreferredSize().getWidth());
         
         Timer timer = new Timer();
-        TimerTask scannerTask = new ScannerDocumentsTimerTask();
+        TimerTask scannerTask = new ScannerDocumentsTimerTask(false);
         timer.schedule(scannerTask, 6500, 15000);
+        
+        Timer timer2 = new Timer();
+        TimerTask scannerUploadsTask = new ScannerLocalDocumentsUploadTimerTask();
+        timer2.schedule(scannerUploadsTask, 9500, 15000);
+        
+        ComponentUtils.restoreSplitPane(this.splitTop, this.getClass(), "splitTop");
+        ComponentUtils.restoreSplitPane(this.splitMain, this.getClass(), "splitMain");
+        
+        ComponentUtils.persistSplitPane(this.splitTop, this.getClass(), "splitTop");
+        ComponentUtils.persistSplitPane(this.splitMain, this.getClass(), "splitMain");
 
 //        final int numberOfScans=this.tblDirContent.getModel().getRowCount();
 //        new Thread(new Runnable() {
@@ -920,6 +937,16 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
 //                EditorsRegistry.getInstance().updateScanStatus(numberOfScans);
 //            }
 //        }).start();
+    }
+    
+    private void displayLocalScanDir() {
+        ClientSettings settings=ClientSettings.getInstance();
+        String temp = settings.getConfiguration(ClientSettings.CONF_SCANS_OBSERVELOCALDIR, "");
+        if("".equalsIgnoreCase(temp)) {
+            this.lblLocalDir.setText("kein Eingangsordner auf diesem Gerät");
+        } else {
+            this.lblLocalDir.setText("Eingangsordner auf diesem Gerät: " + temp);
+        }
     }
     
     public void refreshList() {
@@ -965,11 +992,11 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
 
         jLabel18 = new javax.swing.JLabel();
         lblPanelTitle = new javax.swing.JLabel();
-        splitMain = new javax.swing.JSplitPane();
+        cmdRefresh = new javax.swing.JButton();
         splitTop = new javax.swing.JSplitPane();
+        splitMain = new javax.swing.JSplitPane();
         jScrollPane2 = new javax.swing.JScrollPane();
         tblDirContent = new javax.swing.JTable();
-        pnlPreview = new javax.swing.JPanel();
         jPanel2 = new javax.swing.JPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
         tblActions = new javax.swing.JTable();
@@ -978,13 +1005,23 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
         chkDeleteAfterAction = new javax.swing.JCheckBox();
         chkDocumentTagging = new javax.swing.JCheckBox();
         cmbDocumentTag = new javax.swing.JComboBox<>();
-        cmdRefresh = new javax.swing.JButton();
+        pnlPreview = new javax.swing.JPanel();
+        cmdLocalUploadDir = new javax.swing.JButton();
+        lblLocalDir = new javax.swing.JLabel();
 
         jLabel18.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/scanner_big.png"))); // NOI18N
 
         lblPanelTitle.setFont(new java.awt.Font("Dialog", 1, 24)); // NOI18N
         lblPanelTitle.setForeground(new java.awt.Color(255, 255, 255));
         lblPanelTitle.setText("Scans");
+
+        cmdRefresh.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_refresh_blue_36dp.png"))); // NOI18N
+        cmdRefresh.setToolTipText("Aktualisieren");
+        cmdRefresh.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdRefreshActionPerformed(evt);
+            }
+        });
 
         splitMain.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
 
@@ -1012,12 +1049,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
         });
         jScrollPane2.setViewportView(tblDirContent);
 
-        splitTop.setLeftComponent(jScrollPane2);
-
-        pnlPreview.setLayout(new java.awt.BorderLayout());
-        splitTop.setRightComponent(pnlPreview);
-
-        splitMain.setTopComponent(splitTop);
+        splitMain.setLeftComponent(jScrollPane2);
 
         tblActions.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
@@ -1079,45 +1111,53 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
             jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 1068, Short.MAX_VALUE)
+            .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 584, Short.MAX_VALUE)
             .add(jPanel2Layout.createSequentialGroup()
                 .addContainerGap()
                 .add(chkDeleteAfterAction)
                 .add(18, 18, 18)
-                .add(chkCaseTagging)
+                .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(chkDocumentTagging)
+                    .add(chkCaseTagging))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(cmbCaseTag, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                .add(chkDocumentTagging)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(cmbDocumentTag, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(cmbCaseTag, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(cmbDocumentTag, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel2Layout.createSequentialGroup()
                 .addContainerGap()
-                .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                        .add(chkDocumentTagging)
-                        .add(cmbDocumentTag, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                    .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                        .add(chkCaseTagging)
-                        .add(cmbCaseTag, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .add(chkDeleteAfterAction)))
+                .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(chkCaseTagging)
+                    .add(cmbCaseTag, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(chkDeleteAfterAction))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 647, Short.MAX_VALUE))
+                .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(chkDocumentTagging)
+                    .add(cmbDocumentTag, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 365, Short.MAX_VALUE))
         );
 
         splitMain.setRightComponent(jPanel2);
 
-        cmdRefresh.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_refresh_blue_36dp.png"))); // NOI18N
-        cmdRefresh.setToolTipText("Aktualisieren");
-        cmdRefresh.addActionListener(new java.awt.event.ActionListener() {
+        splitTop.setLeftComponent(splitMain);
+
+        pnlPreview.setLayout(new java.awt.BorderLayout());
+        splitTop.setRightComponent(pnlPreview);
+
+        cmdLocalUploadDir.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/package_system.png"))); // NOI18N
+        cmdLocalUploadDir.setToolTipText("Ordner auf diesem Gerät überwachen");
+        cmdLocalUploadDir.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdRefreshActionPerformed(evt);
+                cmdLocalUploadDirActionPerformed(evt);
             }
         });
+
+        lblLocalDir.setForeground(new java.awt.Color(255, 255, 255));
+        lblLocalDir.setText("jLabel1");
 
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(this);
         this.setLayout(layout);
@@ -1126,14 +1166,17 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
             .add(layout.createSequentialGroup()
                 .addContainerGap()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(splitMain)
+                    .add(splitTop)
                     .add(layout.createSequentialGroup()
                         .add(cmdRefresh)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                         .add(jLabel18)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(lblPanelTitle)
-                        .add(0, 0, Short.MAX_VALUE)))
+                        .add(lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 828, Short.MAX_VALUE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(lblLocalDir)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(cmdLocalUploadDir)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -1141,11 +1184,14 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
             .add(layout.createSequentialGroup()
                 .addContainerGap()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(lblPanelTitle, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 40, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(jLabel18)
-                    .add(cmdRefresh))
+                    .add(cmdRefresh)
+                    .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
+                        .add(cmdLocalUploadDir)
+                        .add(lblPanelTitle, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 40, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .add(lblLocalDir)))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(splitMain, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 729, Short.MAX_VALUE)
+                .add(splitTop, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 477, Short.MAX_VALUE)
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -1300,40 +1346,6 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
                     }
                 }
             }).start();
-//                try {
-//                    this.pnlPreview.setVisible(false);
-//                    this.pnlPreview.removeAll();
-//                    ThreadUtils.setLayout(pnlPreview, new FlowLayout());
-//                    JProgressBar loading = new JProgressBar();
-//                    loading.setIndeterminate(true);
-//                    this.pnlPreview.add(loading);
-//                    this.pnlPreview.setVisible(true);
-//                    ClientSettings settings = ClientSettings.getInstance();
-//                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-//                    IntegrationServiceRemote is = locator.lookupIntegrationServiceRemote();
-//                    byte[] data = is.getObservedFile(fileName);
-//                    String previewText = is.getObservedFilePreview(fileName);
-//
-//                    JComponent preview = DocumentViewerFactory.getDocumentViewer(fileName, previewText, data, this.pnlPreview.getWidth(), this.pnlPreview.getHeight());
-//                    this.pnlPreview.setVisible(false);
-//                    this.pnlPreview.remove(loading);
-//                    ThreadUtils.setLayout(pnlPreview, new BorderLayout());
-//                    this.pnlPreview.add(preview, BorderLayout.CENTER);
-//                    this.pnlPreview.setVisible(true);
-//                    //this.pnlPreview.setBounds(this.pnlPreview.getBounds());
-//
-//                    //preview.setBounds(0,0,this.pnlPreview.getWidth(),this.pnlPreview.getHeight());
-//                    //this.pnlPreview.revalidate();
-//                    //this.pnlPreview.repaint();
-//                    //System.out.println(pnlPreview.getBounds());
-//                    //System.out.println(preview.getBounds());
-//                } catch (Exception ex) {
-//                    log.error(ex);
-//                    this.pnlPreview.removeAll();
-//                    this.pnlPreview.add(new JLabel("Vorschau nicht verfügbar..."));
-//                    ThreadUtils.showErrorDialog(this, "Fehler beim Generieren der Vorschau: " + ex.getMessage(), "Fehler");
-//
-//                }
 
         }
     }
@@ -1435,17 +1447,51 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
         settings.setConfiguration(ClientSettings.CONF_SCANS_LASTDOCUMENTTAG, lastTag);
     }//GEN-LAST:event_cmbDocumentTagActionPerformed
 
+    private void cmdLocalUploadDirActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdLocalUploadDirActionPerformed
+        
+        JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "<html><b>HINWEIS:</b> Die Dokumente in dem hier gew&auml;hlten Ordner werden in den Scaneingang kopiert<br/>und anschlie&szlig;end von Ihrem Arbeitsplatz <b>gelöscht!</b></html>", "zu überwachender Ordner auf diesem Gerät", JOptionPane.WARNING_MESSAGE);
+        
+        ClientSettings cs=ClientSettings.getInstance();
+        String observedDir=cs.getConfiguration(ClientSettings.CONF_SCANS_OBSERVELOCALDIR, "");
+        
+        String current=cs.getConfiguration(ClientSettings.CONF_SCANS_OBSERVELOCALDIR, System.getProperty("user.home"));
+        JFileChooser chooser = new JFileChooser(current);
+        chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        chooser.setAcceptAllFileFilterUsed(false);
+        
+        if(!("".equals(observedDir))) {
+            File observedDirFile=new File(observedDir);
+            if(observedDirFile.exists() && observedDirFile.isDirectory()) {
+                chooser.setSelectedFile(observedDirFile);
+            }
+        } 
+        
+        chooser.setDialogTitle("zu überwachender Ordner auf diesem Gerät");
+        chooser.setApproveButtonText("Auswählen");
+        if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+            
+            cs.setConfiguration(ClientSettings.CONF_SCANS_OBSERVELOCALDIR, chooser.getSelectedFile().getAbsolutePath());
+            this.displayLocalScanDir();
+           
+        } else  {
+            cs.setConfiguration(ClientSettings.CONF_SCANS_OBSERVELOCALDIR, "");
+            this.displayLocalScanDir();
+        }
+    }//GEN-LAST:event_cmdLocalUploadDirActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JCheckBox chkCaseTagging;
     private javax.swing.JCheckBox chkDeleteAfterAction;
     private javax.swing.JCheckBox chkDocumentTagging;
     private javax.swing.JComboBox<String> cmbCaseTag;
     private javax.swing.JComboBox<String> cmbDocumentTag;
+    private javax.swing.JButton cmdLocalUploadDir;
     private javax.swing.JButton cmdRefresh;
     private javax.swing.JLabel jLabel18;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
+    private javax.swing.JLabel lblLocalDir;
     protected javax.swing.JLabel lblPanelTitle;
     private javax.swing.JPanel pnlPreview;
     private javax.swing.JSplitPane splitMain;

@@ -711,7 +711,11 @@ public class DocumentMonitorDialog extends javax.swing.JDialog implements Docume
         
         ArrayList<ObservedDocument> docs=observer.getDocuments();
         for(ObservedDocument d: docs) {
-            ((DefaultListModel)this.lstOpenDocs.getModel()).addElement(d);
+            if(this.shuttingDown && d.isMonitoringMode()) {
+                // hide the documents that are only in monitoring mode
+            } else {
+                ((DefaultListModel)this.lstOpenDocs.getModel()).addElement(d);
+            }
         }
         
         observer.addListener(this);

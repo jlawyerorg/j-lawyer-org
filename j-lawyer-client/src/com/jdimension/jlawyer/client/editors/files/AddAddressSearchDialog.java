@@ -718,7 +718,7 @@ public class AddAddressSearchDialog extends javax.swing.JDialog {
 
         
         
-        String[] colNames = new String[]{"Name", "Vorname", "Firma", "Abteilung", "PLZ", "Ort", "Strasse", "Land", "Etiketten"};
+        String[] colNames = new String[]{"Name", "Vorname", "Unternehmen", "Abteilung", "PLZ", "Ort", "Strasse", "Land", "Etiketten"};
         QuickAddressSearchTableModel model = new QuickAddressSearchTableModel(colNames, 0);
         this.tblResults.setModel(model);
         ComponentUtils.autoSizeColumns(tblResults);

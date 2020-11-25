@@ -668,6 +668,7 @@ import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import com.jdimension.jlawyer.ui.folders.CaseFolderPanel;
 import java.util.Date;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
@@ -684,20 +685,18 @@ public class DateTimePickerDialog extends javax.swing.JDialog {
 
     private Date date = null;
     private ArchiveFileDocumentsBean doc = null;
-    private JTable table = null;
-    private int row = 0;
+    private CaseFolderPanel table = null;
 
     /**
      * Creates new form ShowURLDialog
      */
-    public DateTimePickerDialog(java.awt.Frame parent, boolean modal, ArchiveFileDocumentsBean d, JTable table, int row) {
+    public DateTimePickerDialog(java.awt.Frame parent, boolean modal, ArchiveFileDocumentsBean d, CaseFolderPanel table) {
         super(parent, modal);
         initComponents();
         this.doc = d;
         this.setDate(d.getCreationDate());
         this.spinDateTime.setValue(this.date);
         this.table = table;
-        this.row = row;
         try {
             FrameUtils.centerDialog(this, (JFrame) parent);
         } catch (Throwable t) {
@@ -809,8 +808,7 @@ public class DateTimePickerDialog extends javax.swing.JDialog {
             ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
             remote.setDocumentDate(doc.getId(), d);
             doc.setCreationDate(d);
-            table.setValueAt(doc, row, 0);
-            table.repaint();
+            this.table.updateDocument(doc);
 
             this.setVisible(false);
             this.dispose();
@@ -851,7 +849,7 @@ public class DateTimePickerDialog extends javax.swing.JDialog {
         /* Create and display the dialog */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                DateTimePickerDialog dialog = new DateTimePickerDialog(new javax.swing.JFrame(), true, null, null, 0);
+                DateTimePickerDialog dialog = new DateTimePickerDialog(new javax.swing.JFrame(), true, null, null);
                 dialog.addWindowListener(new java.awt.event.WindowAdapter() {
                     @Override
                     public void windowClosing(java.awt.event.WindowEvent e) {

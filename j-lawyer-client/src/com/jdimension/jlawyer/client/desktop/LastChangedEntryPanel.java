@@ -676,9 +676,12 @@ import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.ui.tagging.TagUtils;
+import java.awt.AlphaComposite;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.Image;
 import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
@@ -693,12 +696,24 @@ public class LastChangedEntryPanel extends javax.swing.JPanel {
     private static final Logger log = Logger.getLogger(LastChangedEntryPanel.class.getName());
     //DecimalFormat df = new DecimalFormat("0.00%");
     private LastChangedEntry e = null;
+    
+    private Color normalBackground=null;
+    private float alpha=DefaultColorTheme.DESKTOP_ALPHA_DEFAULT;
+    
 
     /**
      * Creates new form HitPanel
      */
-    public LastChangedEntryPanel() {
+    public LastChangedEntryPanel(Color background) {
         initComponents();
+        //this.lblTags.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
+        this.normalBackground=background;
+        this.setBackground(background);
+        this.setOpaque(false);
+        //this.setBackground(new Color(238,238,238,160));
+        this.lblChangedBy.setOpaque(false);
+        this.lblDescription.setOpaque(false);
+        this.lblTags.setOpaque(false);
         
         ClientSettings settings=ClientSettings.getInstance();
         String fontSizeOffset = settings.getConfiguration(settings.CONF_UI_FONTSIZEOFFSET, "0");
@@ -710,6 +725,27 @@ public class LastChangedEntryPanel extends javax.swing.JPanel {
             log.error("Could not set font size", t);
         }
     }
+    
+    @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g); 
+
+        Graphics2D g2d = (Graphics2D) g.create();
+        g2d.setComposite(AlphaComposite.SrcOver.derive(this.alpha));
+        //g2d.setComposite(AlphaComposite.Src.derive(this.alpha));
+        g2d.setColor(getBackground());
+        g2d.fillRect(0, 0, getWidth(), getHeight());
+        g2d.dispose();
+
+    }
+
+//    @Override
+//    public void setBackground(Color color) {
+//        super.setBackground(color); //To change body of generated methods, choose Tools | Templates.
+//        this.normalBackground=color;
+//    }
+//    
+    
 
     public void setEntry(LastChangedEntry entry) {
         this.e = entry;
@@ -792,6 +828,15 @@ public class LastChangedEntryPanel extends javax.swing.JPanel {
         lblTags = new javax.swing.JLabel();
         jLabel1 = new javax.swing.JLabel();
 
+        addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                formMouseExited(evt);
+            }
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                formMouseEntered(evt);
+            }
+        });
+
         java.util.ResourceBundle bundle = java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/LastChangedEntryPanel"); // NOI18N
         lblDescription.setText(bundle.getString("label.case.name")); // NOI18N
         lblDescription.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
@@ -814,6 +859,14 @@ public class LastChangedEntryPanel extends javax.swing.JPanel {
         lblTags.setFont(new java.awt.Font("Dialog", 0, 10)); // NOI18N
         lblTags.setForeground(new java.awt.Color(14, 114, 181));
         lblTags.setText(" ");
+        lblTags.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                lblTagsMouseExited(evt);
+            }
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                lblTagsMouseEntered(evt);
+            }
+        });
 
         jLabel1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder.png"))); // NOI18N
 
@@ -829,7 +882,7 @@ public class LastChangedEntryPanel extends javax.swing.JPanel {
                     .addComponent(lblTags, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(lblDescription)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 127, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(lblChangedBy)))
                 .addContainerGap())
         );
@@ -848,11 +901,19 @@ public class LastChangedEntryPanel extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void lblDescriptionMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblDescriptionMouseEntered
-        this.lblDescription.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
+        //this.lblDescription.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
+        //this.setBackground(new Color(250,250,250,180));
+        
+        this.alpha=DefaultColorTheme.DESKTOP_ALPHA_HIGHLIGHT;
+        this.setBackground(new Color(250,250,250));
     }//GEN-LAST:event_lblDescriptionMouseEntered
 
     private void lblDescriptionMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblDescriptionMouseExited
-        this.lblDescription.setForeground(Color.BLACK);
+        //this.lblDescription.setForeground(Color.BLACK);
+        //this.setBackground(new Color(238,238,238,160));
+        
+        this.alpha=DefaultColorTheme.DESKTOP_ALPHA_DEFAULT;
+        this.setBackground(this.normalBackground);
     }//GEN-LAST:event_lblDescriptionMouseExited
 
     private void lblDescriptionMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblDescriptionMouseClicked
@@ -898,6 +959,30 @@ public class LastChangedEntryPanel extends javax.swing.JPanel {
             JOptionPane.showMessageDialog(this, java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/LastChangedEntryPanel").getString("error.loadingeditor"), new Object[]{ex.getMessage()}), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/LastChangedEntryPanel").getString("dialog.error"), JOptionPane.ERROR_MESSAGE);
         }
     }//GEN-LAST:event_lblDescriptionMouseClicked
+
+    private void formMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_formMouseEntered
+        //this.lblDescription.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
+        //this.setBackground(new Color(250,250,250,180));
+        this.alpha=DefaultColorTheme.DESKTOP_ALPHA_HIGHLIGHT;
+        this.setBackground(new Color(250,250,250));
+    }//GEN-LAST:event_formMouseEntered
+
+    private void formMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_formMouseExited
+        //this.lblDescription.setForeground(Color.BLACK);
+        //this.setBackground(new Color(238,238,238,160));
+        this.alpha=DefaultColorTheme.DESKTOP_ALPHA_DEFAULT;
+        this.setBackground(this.normalBackground);
+    }//GEN-LAST:event_formMouseExited
+
+    private void lblTagsMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblTagsMouseEntered
+        this.alpha=DefaultColorTheme.DESKTOP_ALPHA_HIGHLIGHT;
+        this.setBackground(new Color(250,250,250));
+    }//GEN-LAST:event_lblTagsMouseEntered
+
+    private void lblTagsMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblTagsMouseExited
+        this.alpha=DefaultColorTheme.DESKTOP_ALPHA_DEFAULT;
+        this.setBackground(this.normalBackground);
+    }//GEN-LAST:event_lblTagsMouseExited
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel jLabel1;

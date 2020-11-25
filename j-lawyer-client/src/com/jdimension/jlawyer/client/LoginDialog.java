@@ -663,6 +663,7 @@
  */
 package com.jdimension.jlawyer.client;
 
+import com.jdimension.jlawyer.client.security.ssh.SshTunnel;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.DesktopUtils;
@@ -670,6 +671,7 @@ import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.SystemUtils;
 import com.jdimension.jlawyer.client.utils.VersionUtils;
 import com.jdimension.jlawyer.jlawyerbox.BoxAccess;
+import com.jdimension.jlawyer.security.Crypto;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 //import com.jdimension.jkanzlei.server.services.SecurityServiceRemoteHome;
 import com.jdimension.jlawyer.services.SecurityServiceRemote;
@@ -677,6 +679,7 @@ import com.jdimension.jlawyer.services.SystemManagementRemote;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics;
+import java.awt.Rectangle;
 import java.io.InputStream;
 import java.util.Properties;
 import javax.ejb.EJBAccessException;
@@ -701,6 +704,8 @@ import themes.colors.DefaultColorTheme;
 public class LoginDialog extends javax.swing.JFrame {
 
     private static final Logger log = Logger.getLogger(LoginDialog.class.getName());
+    private static boolean launching=false;
+    
     private StartupSplashFrame splash = null;
     private String initialStatus = null;
 
@@ -751,6 +756,7 @@ public class LoginDialog extends javax.swing.JFrame {
 
             this.jLabel1.setFont(font.deriveFont(Font.BOLD, 16));
             this.jLabel2.setFont(font.deriveFont(Font.BOLD, 16));
+            this.jLabel4.setFont(font.deriveFont(Font.BOLD, 16));
             this.jLabel5.setFont(font.deriveFont(Font.BOLD, 16));
             this.jLabel6.setFont(font.deriveFont(Font.BOLD, 16));
             this.jLabel15.setFont(font.deriveFont(Font.BOLD, 16));
@@ -766,17 +772,35 @@ public class LoginDialog extends javax.swing.JFrame {
 
             this.cmbServer.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
             this.txtPort.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
-            this.txtHttpPort.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
             this.txtBoxPassword.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
             this.txtCurrentHost.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
-            this.chkSsl.setForeground(Color.WHITE);
+            this.txtSshHost.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
+            this.txtSshPort.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
+            this.txtSshUser.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
+            this.pwdSshPassword.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
+            this.txtSourcePort.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
+            this.txtTargetPort.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
 
             this.cmbServer.setFont(font.deriveFont(Font.BOLD, 12));
             this.txtPort.setFont(font.deriveFont(Font.BOLD, 12));
-            this.txtHttpPort.setFont(font.deriveFont(Font.BOLD, 12));
             this.txtBoxPassword.setFont(font.deriveFont(Font.BOLD, 12));
             this.txtCurrentHost.setFont(font.deriveFont(Font.BOLD, 12));
-            this.chkSsl.setFont(font.deriveFont(Font.BOLD, 12));
+            this.rdSecNone.setFont(font.deriveFont(Font.BOLD, 12));
+            this.rdSecTunnel.setFont(font.deriveFont(Font.BOLD, 12));
+            this.rdSecSsl.setFont(font.deriveFont(Font.BOLD, 12));
+            this.txtSshHost.setFont(font.deriveFont(Font.BOLD, 12));
+            this.txtSshPort.setFont(font.deriveFont(Font.BOLD, 12));
+            this.txtSshUser.setFont(font.deriveFont(Font.BOLD, 12));
+            this.pwdSshPassword.setFont(font.deriveFont(Font.BOLD, 12));
+            this.txtSourcePort.setFont(font.deriveFont(Font.BOLD, 12));
+            this.txtTargetPort.setFont(font.deriveFont(Font.BOLD, 12));
+
+            this.jLabel5.setFont(font.deriveFont(Font.BOLD, 12));
+            this.jLabel7.setFont(font.deriveFont(Font.BOLD, 12));
+            this.jLabel8.setFont(font.deriveFont(Font.BOLD, 12));
+            this.jLabel16.setFont(font.deriveFont(Font.BOLD, 12));
+            this.jLabel17.setFont(font.deriveFont(Font.BOLD, 12));
+            this.jLabel18.setFont(font.deriveFont(Font.BOLD, 12));
 
         } catch (Throwable t) {
             t.printStackTrace();
@@ -794,33 +818,53 @@ public class LoginDialog extends javax.swing.JFrame {
         this.cmbServer.setModel(allServersModel);
         this.cmbServer.setSelectedItem(settings.getConfiguration(settings.CONF_LASTSERVER, "localhost"));
         this.txtPort.setText(settings.getConfiguration(settings.CONF_LASTPORT, "8080"));
-        this.txtHttpPort.setText(settings.getConfiguration(settings.CONF_LASTHTTPPORT, "8080"));
         this.txtUser.setText(settings.getConfiguration(settings.CONF_LASTUSER, ""));
 
+        // default is no special security
+        this.rdSecNone.setSelected(true);
+
         String ssl = settings.getConfiguration(settings.CONF_LASTSERVERSSL, "0");
-        if ("1".equalsIgnoreCase(ssl)) {
-            this.chkSsl.setSelected(true);
-        } else {
-            this.chkSsl.setSelected(false);
+        String secMode = settings.getConfiguration(settings.CONF_LASTSECMODE, "standard");
+        if ("1".equalsIgnoreCase(ssl) || "ssl".equalsIgnoreCase(secMode)) {
+            this.rdSecSsl.setSelected(true);
         }
+        if ("ssh".equalsIgnoreCase(secMode)) {
+            this.rdSecTunnel.setSelected(true);
+        }
+        this.txtSshHost.setText(settings.getConfiguration(settings.CONF_LASTSSHHOST, ""));
+        this.txtSshPort.setText(settings.getConfiguration(settings.CONF_LASTSSHPORT, "22"));
+        this.txtSshUser.setText(settings.getConfiguration(settings.CONF_LASTSSHUSER, "root"));
+        String p = settings.getConfiguration(settings.CONF_LASTSSHPWD, "");
+        try {
+            if (p.length() > 0) {
+                p = Crypto.decrypt(p, System.getProperty("user.name").toCharArray());
+            }
+        } catch (Throwable t) {
+            log.error("Unable to decrypt tunnel SSH password", t);
+        }
+        this.pwdSshPassword.setText(p);
+        this.txtSourcePort.setText(settings.getConfiguration(settings.CONF_LASTSOURCEPORT, "8080"));
+        this.txtTargetPort.setText(settings.getConfiguration(settings.CONF_LASTTARGETPORT, "8080"));
 
         BoxAccess box = new BoxAccess(this.txtBoxPassword.getText());
         box.checkReachable(jTabbedPane1, 2, this.cmbServer.getSelectedItem().toString());
 
-        if (cmdHost != null && cmdPort != null && cmdHttpPort != null && cmdUser != null && cmdPassword != null) {
+        if (cmdHost != null && cmdPort != null && cmdUser != null && cmdPassword != null) {
             this.cmbServer.setSelectedItem(cmdHost);
             this.txtPort.setText(cmdPort);
-            this.txtHttpPort.setText(cmdHttpPort);
             this.txtUser.setText(cmdUser);
             this.pwPassword.setText(cmdPassword);
             if ("1".equalsIgnoreCase(cmdSsl)) {
-                this.chkSsl.setSelected(true);
+                this.rdSecSsl.setSelected(true);
             } else {
-                this.chkSsl.setSelected(false);
+                this.rdSecSsl.setSelected(false);
             }
             this.cmdLoginActionPerformed(null);
 
+        } else {
+            this.setFocusToPasswordField();
         }
+        this.highlightSecuritySelection();
 
     }
 
@@ -837,6 +881,7 @@ public class LoginDialog extends javax.swing.JFrame {
     private void initComponents() {
 
         jButton1 = new javax.swing.JButton();
+        btnGrpSecurity = new javax.swing.ButtonGroup();
         bgPanel = new com.jdimension.jlawyer.client.StyledPanel();
         jTabbedPane1 = new javax.swing.JTabbedPane();
         jPanel1 = new javax.swing.JPanel();
@@ -851,10 +896,33 @@ public class LoginDialog extends javax.swing.JFrame {
         jLabel1 = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
         txtPort = new javax.swing.JTextField();
-        jLabel5 = new javax.swing.JLabel();
-        txtHttpPort = new javax.swing.JTextField();
         cmbServer = new javax.swing.JComboBox<>();
-        chkSsl = new javax.swing.JCheckBox();
+        rdSecNone = new javax.swing.JRadioButton();
+        rdSecSsl = new javax.swing.JRadioButton();
+        jLabel4 = new javax.swing.JLabel();
+        jPanel4 = new javax.swing.JPanel() {
+
+            public void paintComponent(Graphics g) {
+                g.setColor(getBackground());
+                Rectangle r = g.getClipBounds();
+                g.fillRect(r.x, r.y, r.width, r.height);
+                super.paintComponent(g);
+            }
+
+        };
+        rdSecTunnel = new javax.swing.JRadioButton();
+        jLabel18 = new javax.swing.JLabel();
+        txtSshUser = new javax.swing.JTextField();
+        jLabel8 = new javax.swing.JLabel();
+        txtSourcePort = new javax.swing.JTextField();
+        jLabel7 = new javax.swing.JLabel();
+        txtTargetPort = new javax.swing.JTextField();
+        pwdSshPassword = new javax.swing.JPasswordField();
+        jLabel5 = new javax.swing.JLabel();
+        txtSshPort = new javax.swing.JTextField();
+        jLabel17 = new javax.swing.JLabel();
+        txtSshHost = new javax.swing.JTextField();
+        jLabel16 = new javax.swing.JLabel();
         jPanel3 = new javax.swing.JPanel();
         jLabel6 = new javax.swing.JLabel();
         txtBoxPassword = new javax.swing.JPasswordField();
@@ -977,7 +1045,7 @@ public class LoginDialog extends javax.swing.JFrame {
                 .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(cmdLogin)
                     .add(cmdCancel))
-                .addContainerGap(167, Short.MAX_VALUE))
+                .addContainerGap(170, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("Login", jPanel1);
@@ -992,11 +1060,6 @@ public class LoginDialog extends javax.swing.JFrame {
 
         txtPort.setText("8080");
 
-        jLabel5.setForeground(new java.awt.Color(255, 255, 255));
-        jLabel5.setText(bundle.getString("label.port.http")); // NOI18N
-
-        txtHttpPort.setText("8080");
-
         cmbServer.setEditable(true);
         cmbServer.addFocusListener(new java.awt.event.FocusAdapter() {
             public void focusLost(java.awt.event.FocusEvent evt) {
@@ -1004,8 +1067,121 @@ public class LoginDialog extends javax.swing.JFrame {
             }
         });
 
-        chkSsl.setForeground(new java.awt.Color(255, 255, 255));
-        chkSsl.setText("Server unterstützt SSL-Verschlüsselung");
+        btnGrpSecurity.add(rdSecNone);
+        rdSecNone.setForeground(new java.awt.Color(255, 255, 255));
+        rdSecNone.setSelected(true);
+        rdSecNone.setText("Standard");
+        rdSecNone.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                rdSecNoneActionPerformed(evt);
+            }
+        });
+
+        btnGrpSecurity.add(rdSecSsl);
+        rdSecSsl.setForeground(new java.awt.Color(255, 255, 255));
+        rdSecSsl.setText("SSL");
+        rdSecSsl.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                rdSecSslActionPerformed(evt);
+            }
+        });
+
+        jLabel4.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel4.setText("Sicherheit:");
+
+        jPanel4.setOpaque(false);
+
+        btnGrpSecurity.add(rdSecTunnel);
+        rdSecTunnel.setForeground(new java.awt.Color(255, 255, 255));
+        rdSecTunnel.setText("SSH-Tunnel");
+        rdSecTunnel.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                rdSecTunnelActionPerformed(evt);
+            }
+        });
+
+        jLabel18.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel18.setText(">>");
+
+        jLabel8.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel8.setText("Nutzer:");
+
+        txtSourcePort.setText("8080");
+
+        jLabel7.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel7.setText(":");
+
+        txtTargetPort.setText("8080");
+
+        pwdSshPassword.setText("jPasswordField1");
+
+        jLabel5.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel5.setText("Host : Port");
+
+        txtSshPort.setText("22");
+
+        jLabel17.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel17.setText("Weiterleitung:");
+
+        jLabel16.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel16.setText("Passwort:");
+
+        org.jdesktop.layout.GroupLayout jPanel4Layout = new org.jdesktop.layout.GroupLayout(jPanel4);
+        jPanel4.setLayout(jPanel4Layout);
+        jPanel4Layout.setHorizontalGroup(
+            jPanel4Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jPanel4Layout.createSequentialGroup()
+                .add(0, 0, 0)
+                .add(rdSecTunnel)
+                .add(18, 18, 18)
+                .add(jPanel4Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(jLabel5)
+                    .add(jLabel8)
+                    .add(jLabel16)
+                    .add(jLabel17))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel4Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
+                    .add(txtSshUser)
+                    .add(txtSshHost)
+                    .add(pwdSshPassword)
+                    .add(jPanel4Layout.createSequentialGroup()
+                        .add(txtSourcePort, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(jLabel18)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .add(txtTargetPort, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 55, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jLabel7)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(txtSshPort, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 55, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap())
+        );
+        jPanel4Layout.setVerticalGroup(
+            jPanel4Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jPanel4Layout.createSequentialGroup()
+                .add(3, 3, 3)
+                .add(jPanel4Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(rdSecTunnel)
+                    .add(jLabel5)
+                    .add(txtSshHost, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(jLabel7)
+                    .add(txtSshPort, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel4Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(txtSshUser, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(jLabel8))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel4Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(jLabel16)
+                    .add(pwdSshPassword, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel4Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(txtSourcePort, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(jLabel17)
+                    .add(jLabel18)
+                    .add(txtTargetPort, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap())
+        );
 
         org.jdesktop.layout.GroupLayout jPanel2Layout = new org.jdesktop.layout.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
@@ -1016,15 +1192,14 @@ public class LoginDialog extends javax.swing.JFrame {
                 .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(jLabel1)
                     .add(jLabel2)
-                    .add(jLabel5))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                    .add(jLabel4))
+                .add(19, 19, 19)
                 .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(txtPort, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 477, Short.MAX_VALUE)
-                    .add(txtHttpPort, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 477, Short.MAX_VALUE)
+                    .add(txtPort)
                     .add(cmbServer, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .add(jPanel2Layout.createSequentialGroup()
-                        .add(chkSsl)
-                        .add(0, 0, Short.MAX_VALUE)))
+                    .add(rdSecNone, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(rdSecSsl, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(jPanel4, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
         jPanel2Layout.setVerticalGroup(
@@ -1038,13 +1213,15 @@ public class LoginDialog extends javax.swing.JFrame {
                 .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(jLabel2)
                     .add(txtPort, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(jLabel5)
-                    .add(txtHttpPort, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                .add(chkSsl)
-                .addContainerGap(181, Short.MAX_VALUE))
+                .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(rdSecNone)
+                    .add(jLabel4))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(rdSecSsl)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel4, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(73, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab(bundle.getString("tab.title.connection"), jPanel2); // NOI18N
@@ -1216,7 +1393,7 @@ public class LoginDialog extends javax.swing.JFrame {
                 .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(cmdMgmtConsole)
                     .add(jLabel11, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 10, Short.MAX_VALUE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 13, Short.MAX_VALUE)
                 .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(cmdRestore)
                     .add(jLabel9, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 30, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
@@ -1330,10 +1507,40 @@ public class LoginDialog extends javax.swing.JFrame {
 
     private void cmdLoginActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdLoginActionPerformed
 
+        if(launching)
+            return;
+        
+        launching=true;
+        this.cmdLogin.setEnabled(false);
+        
+        
         ClientSettings settings = ClientSettings.getInstance();
 
+        if (this.rdSecTunnel.isSelected()) {
+            try {
+                SshTunnel tunnel = SshTunnel.getInstance();
+                // for cases of subsequent tries
+                tunnel.disconnect();
+
+                tunnel.setSourcePort(Integer.parseInt(this.txtSourcePort.getText()));
+                tunnel.setSshHost(this.txtSshHost.getText());
+                tunnel.setSshPassword(new String(this.pwdSshPassword.getPassword()));
+                tunnel.setSshPort(Integer.parseInt(this.txtSshPort.getText()));
+                tunnel.setSshUser(this.txtSshUser.getText());
+                tunnel.setTargetIp("127.0.0.1");
+                tunnel.setTargetPort(Integer.parseInt(this.txtTargetPort.getText()));
+                tunnel.connect();
+            } catch (Exception ex) {
+                log.error("SSH tunnel failed", ex);
+                JOptionPane.showMessageDialog(this, "Aufbau des SSH-Tunnels gescheitert:" + System.lineSeparator() + ex.getMessage(), "SSH-Fehler", JOptionPane.ERROR_MESSAGE);
+                this.cmdLogin.setEnabled(true);
+                launching=false;
+                return;
+            }
+        }
+
         Properties properties = new Properties();
-        if (this.chkSsl.isSelected()) {
+        if (this.rdSecSsl.isSelected()) {
             //properties.put(Context.URL_PKG_PREFIXES, "org.jboss.ejb.client.naming");
             properties.put("jboss.naming.client.ejb.context", true);
 
@@ -1360,7 +1567,7 @@ public class LoginDialog extends javax.swing.JFrame {
             properties.put(Context.SECURITY_CREDENTIALS, this.pwPassword.getText());
             properties.put("jboss.naming.client.connect.options.org.xnio.Options.SASL_POLICY_NOPLAINTEXT", "false");
             properties.put("jboss.naming.client.connect.options.org.xnio.Options.SASL_POLICY_NOANONYMOUS", "false");
-            
+
         }
 
         //properties.put("", "false");
@@ -1436,21 +1643,40 @@ public class LoginDialog extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/LoginDialog").getString("msg.loginfailed") + System.lineSeparator() + ex.getMessage(), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/LoginDialog").getString("msg.error"), JOptionPane.ERROR_MESSAGE);
             this.txtUser.setForeground(Color.RED);
             this.pwPassword.setForeground(Color.RED);
+            this.cmdLogin.setEnabled(true);
+            launching=false;
             System.exit(1);
         } catch (Exception ex) {
 
             log.error("Error connecting to server", ex);
             JOptionPane.showMessageDialog(this, java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/LoginDialog").getString("msg.error.loginorconnectionfailed"), new Object[]{ex.getMessage()}), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/LoginDialog").getString("msg.error"), JOptionPane.ERROR_MESSAGE);
+            this.cmdLogin.setEnabled(true);
+            launching=false;
             return;
         }
 
         settings.setConfiguration(settings.CONF_LASTPORT, this.txtPort.getText());
-        settings.setConfiguration(settings.CONF_LASTHTTPPORT, this.txtHttpPort.getText());
-        if(this.chkSsl.isSelected()) {
-            settings.setConfiguration(settings.CONF_LASTSERVERSSL, "1");
+
+        // deprecated
+        settings.setConfiguration(settings.CONF_LASTSERVERSSL, "deprecated");
+        if (this.rdSecSsl.isSelected()) {
+            settings.setConfiguration(settings.CONF_LASTSECMODE, "ssl");
+        } else if (this.rdSecTunnel.isSelected()) {
+            settings.setConfiguration(settings.CONF_LASTSECMODE, "ssh");
         } else {
-            settings.setConfiguration(settings.CONF_LASTSERVERSSL, "0");
+            settings.setConfiguration(settings.CONF_LASTSECMODE, "standard");
         }
+        settings.setConfiguration(settings.CONF_LASTSSHHOST, this.txtSshHost.getText());
+        settings.setConfiguration(settings.CONF_LASTSSHPORT, this.txtSshPort.getText());
+        settings.setConfiguration(settings.CONF_LASTSSHUSER, this.txtSshUser.getText());
+        try {
+            settings.setConfiguration(settings.CONF_LASTSSHPWD, Crypto.encrypt(new String(this.pwdSshPassword.getPassword()), System.getProperty("user.name").toCharArray()));
+        } catch (Throwable t) {
+            log.error("Unable to encrypt tunnel SSH password", t);
+            settings.setConfiguration(settings.CONF_LASTSSHPWD, "");
+        }
+        settings.setConfiguration(settings.CONF_LASTSOURCEPORT, this.txtSourcePort.getText());
+        settings.setConfiguration(settings.CONF_LASTTARGETPORT, this.txtTargetPort.getText());
 
         String allServers = settings.getConfiguration(settings.CONF_LASTSERVERLIST, "localhost");
         if (allServers.indexOf(this.cmbServer.getSelectedItem().toString()) < 0) {
@@ -1466,6 +1692,8 @@ public class LoginDialog extends javax.swing.JFrame {
         if (!VersionUtils.isCompatible(serverVersion, clientVersion)) {
             int response = JOptionPane.showConfirmDialog(this, java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/LoginDialog").getString("msg.compatibilitycheck.failed"), new Object[]{clientVersion, serverVersion, System.getProperty("line.separator")}), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/LoginDialog").getString("msg.compatibilitycheck"), JOptionPane.YES_NO_OPTION);
             if (response == JOptionPane.NO_OPTION) {
+                this.cmdLogin.setEnabled(true);
+                launching=false;
                 System.exit(0);
             }
         }
@@ -1483,6 +1711,8 @@ public class LoginDialog extends javax.swing.JFrame {
         splash.addStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/LoginDialog").getString("label.loadingstatus"));
         splash.addStatus(System.getProperty("line.separator"));
         splash.repaint();
+//        this.cmdLogin.setEnabled(true);
+//        launching=false;
 
         new Thread(new SplashThread(splash, settings, this)).start();
     }//GEN-LAST:event_cmdLoginActionPerformed
@@ -1494,6 +1724,45 @@ public class LoginDialog extends javax.swing.JFrame {
     private void cmbServerFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_cmbServerFocusLost
         cmbServer.setSelectedItem(cmbServer.getSelectedItem().toString().trim());
     }//GEN-LAST:event_cmbServerFocusLost
+
+    private void rdSecNoneActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rdSecNoneActionPerformed
+        this.highlightSecuritySelection();
+    }//GEN-LAST:event_rdSecNoneActionPerformed
+
+    private void rdSecSslActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rdSecSslActionPerformed
+        this.highlightSecuritySelection();
+    }//GEN-LAST:event_rdSecSslActionPerformed
+
+    private void rdSecTunnelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rdSecTunnelActionPerformed
+        this.highlightSecuritySelection();
+    }//GEN-LAST:event_rdSecTunnelActionPerformed
+
+    private void highlightSecuritySelection() {
+//        this.rdSecNone.setOpaque(true);
+//        this.rdSecSsl.setOpaque(true);
+        this.rdSecNone.setBackground(new Color(100, 100, 100, 0));
+        this.rdSecSsl.setBackground(new Color(100, 100, 100, 0));
+        this.jPanel4.setBackground(new Color(100, 100, 100, 0));
+
+        Color highlightColor = new Color(DefaultColorTheme.COLOR_LOGO_GREEN.getRed(), DefaultColorTheme.COLOR_LOGO_GREEN.getGreen(), DefaultColorTheme.COLOR_LOGO_GREEN.getBlue(), 170);
+        if (rdSecNone.isSelected()) {
+            //this.rdSecNone.setOpaque(false);
+            this.rdSecNone.setBackground(highlightColor);
+        } else if (rdSecSsl.isSelected()) {
+            //this.rdSecSsl.setOpaque(false);
+            this.rdSecSsl.setBackground(highlightColor);
+        } else if (rdSecTunnel.isSelected()) {
+            //this.jPanel4.setOpaque(false);
+            this.jPanel4.setBackground(highlightColor);
+        }
+
+        //this.jPanel4.revalidate();
+//        this.rdSecNone.repaint();
+//        this.rdSecSsl.repaint();
+//        this.rdSecNone.revalidate();
+//        this.rdSecSsl.revalidate();
+//        this.jPanel2.repaint();
+    }
 
     /**
      * @param args the command line arguments
@@ -1509,7 +1778,7 @@ public class LoginDialog extends javax.swing.JFrame {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private com.jdimension.jlawyer.client.StyledPanel bgPanel;
     private javax.swing.JProgressBar boxProgress;
-    private javax.swing.JCheckBox chkSsl;
+    private javax.swing.ButtonGroup btnGrpSecurity;
     private javax.swing.JComboBox<String> cmbServer;
     private javax.swing.JButton cmdBoxCheck;
     private javax.swing.JButton cmdBoxReboot;
@@ -1528,24 +1797,39 @@ public class LoginDialog extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel13;
     private javax.swing.JLabel jLabel14;
     private javax.swing.JLabel jLabel15;
+    private javax.swing.JLabel jLabel16;
+    private javax.swing.JLabel jLabel17;
+    private javax.swing.JLabel jLabel18;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
+    private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
+    private javax.swing.JLabel jLabel7;
+    private javax.swing.JLabel jLabel8;
     private javax.swing.JLabel jLabel9;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
+    private javax.swing.JPanel jPanel4;
     private javax.swing.JTabbedPane jTabbedPane1;
     private javax.swing.JLabel lblBoxOutput;
     private javax.swing.JLabel lblHint;
     private javax.swing.JLabel lblPassword;
     private javax.swing.JLabel lblUser;
     private javax.swing.JPasswordField pwPassword;
+    private javax.swing.JPasswordField pwdSshPassword;
+    private javax.swing.JRadioButton rdSecNone;
+    private javax.swing.JRadioButton rdSecSsl;
+    private javax.swing.JRadioButton rdSecTunnel;
     private javax.swing.JPasswordField txtBoxPassword;
     private javax.swing.JTextField txtCurrentHost;
-    private javax.swing.JTextField txtHttpPort;
     private javax.swing.JTextField txtPort;
+    private javax.swing.JTextField txtSourcePort;
+    private javax.swing.JTextField txtSshHost;
+    private javax.swing.JTextField txtSshPort;
+    private javax.swing.JTextField txtSshUser;
+    private javax.swing.JTextField txtTargetPort;
     private javax.swing.JTextField txtUser;
     // End of variables declaration//GEN-END:variables
 

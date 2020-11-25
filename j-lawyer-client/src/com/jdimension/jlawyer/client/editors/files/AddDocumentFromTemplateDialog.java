@@ -682,6 +682,7 @@ import com.jdimension.jlawyer.documents.PlaceHolders;
 import com.jdimension.jlawyer.persistence.*;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import com.jdimension.jlawyer.ui.folders.CaseFolderPanel;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import javax.swing.DefaultListModel;
@@ -703,7 +704,7 @@ import org.jlawyer.plugins.calculation.GenericCalculationTable;
 public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implements PartiesSelectionListener {
 
     private static final Logger log = Logger.getLogger(AddDocumentFromTemplateDialog.class.getName());
-    private JTable targetTable = null;
+    private CaseFolderPanel targetTable = null;
     private ArchiveFileBean aFile = null;
     private boolean initializing = true;
     private JTable tblReviewReasons = null;
@@ -713,14 +714,14 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
     private Collection<String> formPlaceHolders=new ArrayList<>();
     private Hashtable<String,String> formPlaceHolderValues=new Hashtable<>();
 
-    public AddDocumentFromTemplateDialog(java.awt.Frame parent, boolean modal, JTable targetTable, ArchiveFileBean aFile, List<ArchiveFileAddressesBean> involved, JTable tblReviewReasons) {
+    public AddDocumentFromTemplateDialog(java.awt.Frame parent, boolean modal, CaseFolderPanel targetTable, ArchiveFileBean aFile, List<ArchiveFileAddressesBean> involved, JTable tblReviewReasons) {
         this(parent, modal, targetTable, aFile, involved, tblReviewReasons, null);
     }
     
     /**
      * Creates new form AddDocumentDialog
      */
-    public AddDocumentFromTemplateDialog(java.awt.Frame parent, boolean modal, JTable targetTable, ArchiveFileBean aFile, List<ArchiveFileAddressesBean> involved, JTable tblReviewReasons, GenericCalculationTable calculationTable) {
+    public AddDocumentFromTemplateDialog(java.awt.Frame parent, boolean modal, CaseFolderPanel targetTable, ArchiveFileBean aFile, List<ArchiveFileAddressesBean> involved, JTable tblReviewReasons, GenericCalculationTable calculationTable) {
         super(parent, modal);
         this.initializing = true;
         
@@ -800,8 +801,17 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
 //            this.splitMain.setDividerLocation(this.splitMain.getWidth()/2);
 //            this.splitPlaceholders.setDividerLocation(this.splitPlaceholders.getHeight()/2);
         
-        
+        ComponentUtils.restoreDialogSize(this);
+
         this.jSplitPane1.setDividerLocation(0.5d);
+        
+        ComponentUtils.restoreSplitPane(splitMain, this.getClass(), "splitMain");
+        ComponentUtils.restoreSplitPane(this.splitPlaceholders, this.getClass(), "splitPlaceholders");
+        ComponentUtils.restoreSplitPane(this.jSplitPane1, this.getClass(), "jSplitPane1");
+        
+        ComponentUtils.persistSplitPane(splitMain, this.getClass(), "splitMain");
+        ComponentUtils.persistSplitPane(this.splitPlaceholders, this.getClass(), "splitPlaceholders");
+        ComponentUtils.persistSplitPane(this.jSplitPane1, this.getClass(), "jSplitPane1");
         
         try {
             //InitialContext context = new InitialContext(settings.getLookupProperties());
@@ -816,7 +826,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
             EditorsRegistry.getInstance().clearStatus();
         }
         
-
+        
         this.initializing = false;
 
     }
@@ -838,7 +848,33 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
         //name=templateFileName + "_" + df.format(new Date());
         name = df.format(new Date()) + "_" + templateFileName;
 
-        for(PartyTypeBean ptb: this.allPartyTypes) {
+        // avoid ANWALT being replaced before ANWALT2 --> start with longest placeholders first
+        ArrayList<PartyTypeBean> apt=new ArrayList(this.allPartyTypes);
+        Comparator<PartyTypeBean> prefixLengthComparator=new Comparator<PartyTypeBean>() {
+            @Override
+            public int compare(PartyTypeBean t1, PartyTypeBean t2) {
+                String prefix1=null;
+                String prefix2=null;
+                if(t1!=null)
+                    prefix1=t1.getPlaceHolder();
+                if(t2!=null)
+                    prefix2=t2.getPlaceHolder();
+                
+                int l1=0;
+                if(prefix1!=null)
+                    l1=prefix1.length();
+                int l2=0;
+                if(prefix2!=null)
+                    l2=prefix2.length();
+                
+                return new Integer(l1).compareTo(new Integer(l2));
+                    
+            }
+        };
+        Collections.sort(apt, prefixLengthComparator);
+        Collections.reverse(apt);
+        
+        for(PartyTypeBean ptb: apt) {
             PartiesPanelEntry party=this.pnlPartiesPanel.getSelectedParty(ptb);
             if(party!=null) {
                 String contactName = party.getAddress().toDisplayName();
@@ -1330,11 +1366,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
             GenericNode gn = (GenericNode) tn.getUserObject();
 
             ArchiveFileDocumentsBean db = locator.lookupArchiveFileServiceRemote().addDocumentFromTemplate(this.aFile.getId(), this.txtFileName.getText(), gn, this.lstTemplates.getSelectedValue().toString(), phValues, this.cmbDictateSigns.getSelectedItem().toString());
-            ArchiveFileDocumentsTableModel m = (ArchiveFileDocumentsTableModel) this.targetTable.getModel();
-            //SimpleDateFormat df=new SimpleDateFormat("dd.MM.yyyy, HH:mm", Locale.GERMAN);
-            //m.addRow(new Object[] {df.format(db.getCreationDate()), db.getName()});
-            m.addRow(new Object[]{db, false, db.getName(), db.getDictateSign()});
-            ComponentUtils.autoSizeColumns(targetTable);
+            targetTable.addDocument(db);
 
         } catch (Exception ex) {
             log.error("Error adding document from template " + this.lstTemplates.getSelectedValue().toString(), ex);

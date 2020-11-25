@@ -668,6 +668,7 @@ import com.jdimension.jlawyer.client.configuration.ProfileDialog;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.StatusBarProvider;
 import com.jdimension.jlawyer.client.editors.ThemeableEditor;
+import com.jdimension.jlawyer.client.launcher.LauncherFactory;
 import com.jdimension.jlawyer.client.plugins.calculation.CalculationPlugin;
 import com.jdimension.jlawyer.client.plugins.calculation.CalculationPluginUtil;
 import com.jdimension.jlawyer.client.plugins.form.FormPluginUtil;
@@ -697,14 +698,24 @@ import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.services.SystemManagementRemote;
 import java.awt.Image;
 import java.io.*;
+import java.net.URI;
 import java.net.URL;
 import java.net.URLConnection;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
@@ -778,6 +789,15 @@ public class SplashThread implements Runnable {
         AppOptionGroupBean[] adrTagDtos = null;
         AppOptionGroupBean[] docTagDtos = null;
         AppOptionGroupBean[] titles = null;
+        AppOptionGroupBean[] titlesInAddress = null;
+        AppOptionGroupBean[] countries = null;
+        AppOptionGroupBean[] nationalities = null;
+        AppOptionGroupBean[] legalForms = null;
+        AppOptionGroupBean[] degreePrefixes = null;
+        AppOptionGroupBean[] degreeSuffixes = null;
+        AppOptionGroupBean[] professions = null;
+        AppOptionGroupBean[] roles = null;
+
         AppUserBean[] lawyerUsers = null;
         AppUserBean[] assistUsers = null;
         AppUserBean[] allUsers = null;
@@ -831,6 +851,14 @@ public class SplashThread implements Runnable {
             this.updateProgress(false, 9, 9, "");
             updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.option.9"), true);
             titles = mgmt.getOptionGroup(OptionConstants.OPTIONGROUP_TITLES);
+            titlesInAddress = mgmt.getOptionGroup(OptionConstants.OPTIONGROUP_TITLESINADDRESS);
+            countries = mgmt.getOptionGroup(OptionConstants.OPTIONGROUP_COUNTRY);
+            nationalities = mgmt.getOptionGroup(OptionConstants.OPTIONGROUP_NATIONALITY);
+            legalForms = mgmt.getOptionGroup(OptionConstants.OPTIONGROUP_LEGALFORM);
+            degreePrefixes = mgmt.getOptionGroup(OptionConstants.OPTIONGROUP_DEGREEPREFIX);
+            degreeSuffixes = mgmt.getOptionGroup(OptionConstants.OPTIONGROUP_DEGREESUFFIX);
+            professions = mgmt.getOptionGroup(OptionConstants.OPTIONGROUP_PROFESSION);
+            roles = mgmt.getOptionGroup(OptionConstants.OPTIONGROUP_ROLE);
 
             //mgmt.remove();
         } catch (Exception ex) {
@@ -850,6 +878,14 @@ public class SplashThread implements Runnable {
         UserSettings.getInstance().setAssistantUsers(assistUsers);
         UserSettings.getInstance().setAllUsers(allUsers);
         settings.setTitles(titles);
+        settings.setTitlesInAddress(titlesInAddress);
+        settings.setCountries(countries);
+        settings.setNationalities(nationalities);
+        settings.setLegalForms(legalForms);
+        settings.setDegreePrefixes(degreePrefixes);
+        settings.setDegreeSuffixes(degreeSuffixes);
+        settings.setProfessions(professions);
+        settings.setRoles(roles);
 
         updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.loadingdesign"), true);
         this.countModules(settings.getRootModule());
@@ -857,6 +893,54 @@ public class SplashThread implements Runnable {
         this.updateProgress(false, this.numberOfMods, 0, "");
         ThemeSettings theme = ThemeSettings.getInstance();
         ModuleMetadata rootModule = settings.getRootModule();
+        
+        
+        String randomBackgrounds = UserSettings.getInstance().getSetting(UserSettings.CONF_DESKTOP_RANDOM_BACKGROUND, "0");
+        // webswing did not like the large images and displayed an empty frame instead of the application
+        String demoSystem=settings.getConfiguration("runtime.isdemosystem", "0");
+        boolean isDemoSystem=false;
+        if(demoSystem!=null && "1".equalsIgnoreCase(demoSystem)) {
+            isDemoSystem=true;
+        }
+        if ("0".equalsIgnoreCase(randomBackgrounds) || isDemoSystem) {
+
+            //root.setIcon("mydesktop.png");
+            //root.setBackgroundImage("mydesktop.jpg");
+            rootModule.setBackgroundImage("archivefiles.jpg");
+            rootModule.setRandomBackgroundImage(null);
+            //root.setBackgroundImage("Neuseeland_0617.jpg");
+        } else {
+            rootModule.setBackgroundImage(null);
+            try {
+
+                URI uri = Main.class.getResource("/themes/default/backgroundsrandom").toURI();
+                Path path;
+                if (uri.getScheme().equals("jar")) {
+                    FileSystem fileSystem = FileSystems.newFileSystem(uri, Collections.<String, Object>emptyMap());
+                    path = fileSystem.getPath("/themes/default/backgroundsrandom");
+                } else {
+                    path = Paths.get(uri);
+                }
+
+                Predicate<String> con1 = s -> s.endsWith(".jpg");
+                Predicate<String> con2 = s -> s.endsWith(".png");
+
+                List<String> backgroundFileNames = Files.walk(path)
+                        .map(Path::getFileName)
+                        .map(Path::toString)
+                        .filter(con1.or(con2))
+                        .collect(Collectors.toList());
+
+                int randomNum = ThreadLocalRandom.current().nextInt(0, backgroundFileNames.size());
+                rootModule.setRandomBackgroundImage(backgroundFileNames.get(randomNum));
+            } catch (Throwable t) {
+                log.error("unable to get random background image", t);
+                rootModule.setBackgroundImage("archivefiles.jpg");
+                rootModule.setRandomBackgroundImage(null);
+            }
+
+        }
+        
         this.loadTheme(theme, rootModule);
 
         ExecutorService pool = Executors.newFixedThreadPool(3);
@@ -944,13 +1028,14 @@ public class SplashThread implements Runnable {
 //        }
 
         updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.done"), true);
-
+        LauncherFactory.cleanupTempDocuments();
+        
         splash.setVisible(false);
         splash.dispose();
         splash = null;
 
         long end = System.currentTimeMillis();
-        log.info("client startup in " + (end - start) + "ms");
+        log.info("client startup in " + (end - start) + "ms, version " + VersionUtils.getFullClientVersion());
 
         SwingUtilities.invokeLater(
                 new Runnable() {
@@ -996,7 +1081,8 @@ public class SplashThread implements Runnable {
                     dialogContent.append("<li>W&auml;hlen Sie 'Ja' wenn diese Installation aktiv genutzt werden soll</li>");
                     dialogContent.append("</ul>");
                     dialogContent.append("</html>");
-                    int response = JOptionPane.showConfirmDialog(EditorsRegistry.getInstance().getMainWindow(), dialogContent.toString(), "j-lawyer.BOX Replikation", JOptionPane.YES_NO_OPTION);
+                    // int response = JOptionPane.showConfirmDialog(EditorsRegistry.getInstance().getMainWindow(), dialogContent.toString(), "j-lawyer.BOX Replikation", JOptionPane.YES_NO_OPTION);
+                    int response=JOptionPane.showOptionDialog(EditorsRegistry.getInstance().getMainWindow(), dialogContent.toString(), "j-lawyer.BOX Replikation", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, null, new String[]{"Ja", "Nein"}, "Nein");
                     if (response == JOptionPane.YES_OPTION) {
                         serverSettings.setSetting(ServerSettings.SERVERCONF_REPLICATION_ISTARGET, "0");
                     }
@@ -1159,6 +1245,18 @@ public class SplashThread implements Runnable {
                 log.error(ex);
             }
         }
+        if (module.getRandomBackgroundImage() != null) {
+            //updateStatus("   Hintergrund " + module.getBackgroundImage() + "...", true);
+
+            try {
+
+                //Image image=javax.imageio.ImageIO.read(new java.net.URL("http://" + server + ":" + port + "/j-lawyer-server-war/themes/" + themeName + "/backgrounds/" + module.getBackgroundImage()));
+                ImageIcon image = new ImageIcon(getClass().getResource("/themes/" + themeName + "/backgroundsrandom/" + module.getRandomBackgroundImage()));
+                theme.addBackground(module, image.getImage());
+            } catch (Exception ex) {
+                log.error(ex);
+            }
+        }
         if (module.getIcon() != null) {
             //updateStatus("   Icon " + module.getIcon() + "...", true);
             //updateStatus(".", false);
@@ -1198,7 +1296,7 @@ public class SplashThread implements Runnable {
                         public void run() {
                             try {
                                 Object editor = EditorsRegistry.getInstance().getEditor(editorClass);
-                                if (module.getBackgroundImage() != null) {
+                                if (module.getBackgroundImage() != null || module.getRandomBackgroundImage() != null) {
                                     if (editor instanceof ThemeableEditor) {
                                         Image image = theme.getBackground(module);
                                         if (image != null) {
@@ -1218,7 +1316,7 @@ public class SplashThread implements Runnable {
 
                 } else {
                     Object editor = EditorsRegistry.getInstance().getEditor(editorClass);
-                    if (module.getBackgroundImage() != null) {
+                    if (module.getBackgroundImage() != null || module.getRandomBackgroundImage() != null) {
                         if (editor instanceof ThemeableEditor) {
                             Image image = theme.getBackground(module);
                             if (image != null) {

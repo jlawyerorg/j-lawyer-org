@@ -716,8 +716,8 @@ public class CaseNumberingConfigurationDialog extends javax.swing.JDialog {
         this.txtExtPrefix.setText(set.getSetting(ServerSettings.SERVERCONF_CASENUMBERING_EXT_PREFIX, ""));
         this.chkExtSuffix.setSelected(set.getSettingAsBoolean(ServerSettings.SERVERCONF_CASENUMBERING_EXT_SUFFIX_ENABLED, false));
         this.txtExtSuffix.setText(set.getSetting(ServerSettings.SERVERCONF_CASENUMBERING_EXT_SUFFIX, ""));
-        this.chkExtUserAbbrev.setSelected(set.getSettingAsBoolean(ServerSettings.SERVERCONF_CASENUMBERING_EXT_GROUP_ENABLED, false));
-        this.chkExtGroupAbbrev.setSelected(set.getSettingAsBoolean(ServerSettings.SERVERCONF_CASENUMBERING_EXT_LAWYER_ENABLED, false));
+        this.chkExtUserAbbrev.setSelected(set.getSettingAsBoolean(ServerSettings.SERVERCONF_CASENUMBERING_EXT_LAWYER_ENABLED, false));
+        this.chkExtGroupAbbrev.setSelected(set.getSettingAsBoolean(ServerSettings.SERVERCONF_CASENUMBERING_EXT_GROUP_ENABLED, false));
         
         this.updatePreview();
         
@@ -1180,8 +1180,8 @@ public class CaseNumberingConfigurationDialog extends javax.swing.JDialog {
         set.setSetting(ServerSettings.SERVERCONF_CASENUMBERING_EXT_PREFIX, this.txtExtPrefix.getText());
         set.setSettingAsBoolean(ServerSettings.SERVERCONF_CASENUMBERING_EXT_SUFFIX_ENABLED, this.chkExtSuffix.isSelected());
         set.setSetting(ServerSettings.SERVERCONF_CASENUMBERING_EXT_SUFFIX, this.txtExtSuffix.getText());
-        set.setSettingAsBoolean(ServerSettings.SERVERCONF_CASENUMBERING_EXT_GROUP_ENABLED, this.chkExtUserAbbrev.isSelected());
-        set.setSettingAsBoolean(ServerSettings.SERVERCONF_CASENUMBERING_EXT_LAWYER_ENABLED, this.chkExtGroupAbbrev.isSelected());
+        set.setSettingAsBoolean(ServerSettings.SERVERCONF_CASENUMBERING_EXT_GROUP_ENABLED, this.chkExtGroupAbbrev.isSelected());
+        set.setSettingAsBoolean(ServerSettings.SERVERCONF_CASENUMBERING_EXT_LAWYER_ENABLED, this.chkExtUserAbbrev.isSelected());
         
         
         this.setVisible(false);

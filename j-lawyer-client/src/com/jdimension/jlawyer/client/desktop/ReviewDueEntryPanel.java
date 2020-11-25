@@ -680,9 +680,12 @@ import com.jdimension.jlawyer.server.constants.ArchiveFileConstants;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.ui.tagging.TagUtils;
+import java.awt.AlphaComposite;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.Image;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -710,12 +713,21 @@ public class ReviewDueEntryPanel extends javax.swing.JPanel {
     
     private String doneDescription="";
     private String unDoneDescription="";
+    
+    private Color normalBackground=null;
+    private float alpha=DefaultColorTheme.DESKTOP_ALPHA_DEFAULT;
 
     /**
      * Creates new form HitPanel
      */
-    public ReviewDueEntryPanel() {
+    public ReviewDueEntryPanel(Color background) {
         initComponents();
+        
+        this.normalBackground=background;
+        this.setBackground(background);
+        this.setOpaque(false);
+        this.lblDescription.setOpaque(false);
+        this.lblTags.setOpaque(false);
         
         ClientSettings settings=ClientSettings.getInstance();
         String fontSizeOffset = settings.getConfiguration(settings.CONF_UI_FONTSIZEOFFSET, "0");
@@ -726,6 +738,18 @@ public class ReviewDueEntryPanel extends javax.swing.JPanel {
         } catch (Throwable t) {
             log.error("Could not set font size", t);
         }
+    }
+    
+    @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g); 
+
+        Graphics2D g2d = (Graphics2D) g.create();
+        g2d.setComposite(AlphaComposite.SrcOver.derive(this.alpha));
+        g2d.setColor(getBackground());
+        g2d.fillRect(0, 0, getWidth(), getHeight());
+        g2d.dispose();
+
     }
 
     public void setEntry(ReviewDueEntry entry) {
@@ -872,6 +896,15 @@ public class ReviewDueEntryPanel extends javax.swing.JPanel {
         cmdPostpone = new javax.swing.JButton();
         lblTags = new javax.swing.JLabel();
 
+        addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                formMouseExited(evt);
+            }
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                formMouseEntered(evt);
+            }
+        });
+
         lblResponsible.setFont(new java.awt.Font("Dialog", 2, 12)); // NOI18N
         lblResponsible.setForeground(new java.awt.Color(14, 114, 181));
         lblResponsible.setText("user");
@@ -917,6 +950,14 @@ public class ReviewDueEntryPanel extends javax.swing.JPanel {
         lblTags.setFont(new java.awt.Font("Dialog", 0, 10)); // NOI18N
         lblTags.setForeground(new java.awt.Color(14, 114, 181));
         lblTags.setText(" ");
+        lblTags.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                lblTagsMouseExited(evt);
+            }
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                lblTagsMouseEntered(evt);
+            }
+        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -930,7 +971,7 @@ public class ReviewDueEntryPanel extends javax.swing.JPanel {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(lblTags, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(lblDescription, javax.swing.GroupLayout.DEFAULT_SIZE, 499, Short.MAX_VALUE))
+                    .addComponent(lblDescription, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
                         .addGap(41, 41, 41)
@@ -1006,11 +1047,15 @@ public class ReviewDueEntryPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_lblDescriptionMouseClicked
 
     private void lblDescriptionMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblDescriptionMouseEntered
-        this.lblDescription.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
+        //this.lblDescription.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
+        this.alpha=DefaultColorTheme.DESKTOP_ALPHA_HIGHLIGHT;
+        this.setBackground(new Color(250,250,250));
     }//GEN-LAST:event_lblDescriptionMouseEntered
 
     private void lblDescriptionMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblDescriptionMouseExited
-        this.lblDescription.setForeground(this.defaultColor);
+        //this.lblDescription.setForeground(this.defaultColor);
+        this.alpha=DefaultColorTheme.DESKTOP_ALPHA_DEFAULT;
+        this.setBackground(this.normalBackground);
     }//GEN-LAST:event_lblDescriptionMouseExited
 
     private void chkDescriptionStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_chkDescriptionStateChanged
@@ -1095,6 +1140,26 @@ public class ReviewDueEntryPanel extends javax.swing.JPanel {
             // update UI
             this.setEntry(e);
     }//GEN-LAST:event_cmdPostponeActionPerformed
+
+    private void formMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_formMouseEntered
+        this.alpha=DefaultColorTheme.DESKTOP_ALPHA_HIGHLIGHT;
+        this.setBackground(new Color(250,250,250));
+    }//GEN-LAST:event_formMouseEntered
+
+    private void formMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_formMouseExited
+        this.alpha=DefaultColorTheme.DESKTOP_ALPHA_DEFAULT;
+        this.setBackground(this.normalBackground);
+    }//GEN-LAST:event_formMouseExited
+
+    private void lblTagsMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblTagsMouseEntered
+        this.alpha=DefaultColorTheme.DESKTOP_ALPHA_HIGHLIGHT;
+        this.setBackground(new Color(250,250,250));
+    }//GEN-LAST:event_lblTagsMouseEntered
+
+    private void lblTagsMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblTagsMouseExited
+        this.alpha=DefaultColorTheme.DESKTOP_ALPHA_DEFAULT;
+        this.setBackground(this.normalBackground);
+    }//GEN-LAST:event_lblTagsMouseExited
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JCheckBox chkDescription;

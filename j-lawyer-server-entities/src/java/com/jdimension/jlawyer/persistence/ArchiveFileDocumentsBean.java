@@ -705,6 +705,10 @@ public class ArchiveFileDocumentsBean implements Serializable {
     private ArchiveFileBean archiveFileKey;
     @Column(name = "favorite", columnDefinition = "TINYINT DEFAULT 0")
     private boolean favorite;
+    
+    @JoinColumn(name = "folder", referencedColumnName = "id")
+    @ManyToOne
+    private CaseFolder folder;
 
     public ArchiveFileDocumentsBean() {
     }
@@ -826,6 +830,20 @@ public class ArchiveFileDocumentsBean implements Serializable {
      */
     public void setFavorite(boolean favorite) {
         this.favorite = favorite;
+    }
+
+    /**
+     * @return the folder
+     */
+    public CaseFolder getFolder() {
+        return folder;
+    }
+
+    /**
+     * @param folder the folder to set
+     */
+    public void setFolder(CaseFolder folder) {
+        this.folder = folder;
     }
     
 }

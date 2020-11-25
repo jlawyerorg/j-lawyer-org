@@ -673,13 +673,17 @@ import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
+import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.ui.tagging.TagUtils;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
+import java.util.ArrayList;
 import java.util.List;
 import javax.swing.AbstractAction;
 import javax.swing.JComponent;
 import javax.swing.KeyStroke;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -687,51 +691,43 @@ import javax.swing.KeyStroke;
  */
 public class SearchAndAssignDialog extends javax.swing.JDialog {
 
+    private static final Logger log = Logger.getLogger(SearchAndAssignDialog.class.getName());
+
     private ArchiveFileBean selection = null;
 
+    // this can be an arbitrary string or longer text
+    // it will be searched for file number and name of cases to quickly find matching cases
+    // e.g. when assigning an email, you can pass in subject and body
+    // when null, the dialog will load last changed
+    private String searchContext = null;
+
     /**
      * Creates new form SearchAndAssignDialog
      */
-    public SearchAndAssignDialog(java.awt.Dialog parent, boolean modal) {
+    public SearchAndAssignDialog(java.awt.Dialog parent, boolean modal, String searchContext) {
         super(parent, modal);
         initComponents();
+        this.searchContext = searchContext;
         FrameUtils.centerDialog(this, EditorsRegistry.getInstance().getMainWindow());
+        this.initialize();
+    }
 
-        String[] colNames = new String[]{"Aktenzeichen", "Kurzrubrum", "wegen", "archiviert", "Anwalt"};
-        QuickArchiveFileSearchTableModel model = new QuickArchiveFileSearchTableModel(colNames, 0);
-        this.tblResults.setModel(model);
-
-        this.tblResults.setDefaultRenderer(Object.class, new QuickArchiveFileSearchCellRenderer());
-
-        ClientSettings s = ClientSettings.getInstance();
-        List<String> tags = s.getArchiveFileTagsInUse();
-        List<String> documentTags = s.getDocumentTagsInUse();
-        TagUtils.populateTags(tags, cmdTagFilter, popTagFilter, null);
-        TagUtils.populateTags(documentTags, cmdDocumentTagFilter, popDocumentTagFilter, null);
-
-        ComponentUtils.restoreDialogSize(this);
-
-        this.tblResults.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "Enter");
-        this.tblResults.getActionMap().put("Enter", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent ae) {
-                useSelection();
-            }
-        });
+    /**
+     * Creates new form SearchAndAssignDialog
+     */
+    public SearchAndAssignDialog(java.awt.Frame parent, boolean modal, String searchContext) {
+        super(parent, modal);
+        initComponents();
+        this.searchContext = searchContext;
+        FrameUtils.centerDialog(this, EditorsRegistry.getInstance().getMainWindow());
+        this.initialize();
 
     }
-    
-    /**
-     * Creates new form SearchAndAssignDialog
-     */
-    public SearchAndAssignDialog(java.awt.Frame parent, boolean modal) {
-        super(parent, modal);
-        initComponents();
-        FrameUtils.centerDialog(this, EditorsRegistry.getInstance().getMainWindow());
 
-        String[] colNames = new String[]{"Aktenzeichen", "Kurzrubrum", "wegen", "archiviert", "Anwalt"};
-        QuickArchiveFileSearchTableModel model = new QuickArchiveFileSearchTableModel(colNames, 0);
-        this.tblResults.setModel(model);
+    private void initialize() {
+//        String[] colNames = new String[]{"Aktenzeichen", "Kurzrubrum", "wegen", "archiviert", "Anwalt"};
+//        QuickArchiveFileSearchTableModel model = new QuickArchiveFileSearchTableModel(colNames, 0);
+//        this.tblResults.setModel(model);
 
         this.tblResults.setDefaultRenderer(Object.class, new QuickArchiveFileSearchCellRenderer());
 
@@ -751,18 +747,73 @@ public class SearchAndAssignDialog extends javax.swing.JDialog {
             }
         });
 
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(s.getLookupProperties());
+
+            ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
+            List<ArchiveFileBean> lastChanged = fileService.getLastChanged(150);
+            String[] colNames = new String[]{"Aktenzeichen", "Kurzrubrum", "wegen", "archiviert", "Anwalt"};
+            QuickArchiveFileSearchTableModel model = new QuickArchiveFileSearchTableModel(colNames, 0);
+            this.tblResults.setModel(model);
+
+            ArrayList<ArchiveFileBean> contextMatches = new ArrayList<>();
+            ArrayList<ArchiveFileBean> lastChangedClone = new ArrayList<>();
+            lastChangedClone.addAll(lastChanged);
+            if (this.searchContext != null) {
+                this.searchContext = this.searchContext.toLowerCase();
+                for (ArchiveFileBean a : lastChangedClone) {
+                    if (this.searchContext.contains(a.getFileNumber())) {
+                        contextMatches.add(a);
+                        lastChanged.remove(a);
+                    } else if (a.getName() != null && !("".equals(a.getName())) && this.searchContext.contains(a.getName().toLowerCase())) {
+                        contextMatches.add(a);
+                        lastChanged.remove(a);
+                    }
+                }
+            }
+
+            // matching entries at the top
+            for (ArchiveFileBean a : contextMatches) {
+                Object[] row = new Object[]{new QuickArchiveFileSearchRowIdentifier(a), a.getName(), a.getReason(), new Boolean(a.getArchivedBoolean()), a.getLawyer()};
+                model.addRow(row);
+            }
+            
+            // last changed follow
+            for (ArchiveFileBean a : lastChanged) {
+                Object[] row = new Object[]{new QuickArchiveFileSearchRowIdentifier(a), a.getName(), a.getReason(), new Boolean(a.getArchivedBoolean()), a.getLawyer()};
+                model.addRow(row);
+            }
+            
+            if(model.getRowCount()>0) {
+                this.tblResults.setRowSelectionInterval(0, 0);
+            }
+
+        } catch (Exception t) {
+            log.error("unable to get last changed cases", t);
+        }
     }
 
     private void useSelection() {
-        int row = this.tblResults.getSelectedRow();
-        QuickArchiveFileSearchRowIdentifier id = (QuickArchiveFileSearchRowIdentifier) this.tblResults.getValueAt(row, 0);
-        this.selection = id.getArchiveFileDTO();
+        int row
+                = this.tblResults
+                        .getSelectedRow();
+        QuickArchiveFileSearchRowIdentifier id
+                = (QuickArchiveFileSearchRowIdentifier) this.tblResults
+                        .getValueAt(row,
+                                0);
+
+        this.selection
+                = id
+                        .getArchiveFileDTO();
+
         this.setVisible(false);
 
     }
 
-    public ArchiveFileBean getSelection() {
+    public ArchiveFileBean
+            getSelection() {
         return this.selection;
+
     }
 
     /**
@@ -913,22 +964,34 @@ public class SearchAndAssignDialog extends javax.swing.JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void txtSearchStringKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtSearchStringKeyPressed
-        if (evt.getKeyCode() == evt.VK_ENTER) {
+        if (evt
+                .getKeyCode() == evt.VK_ENTER) {
             this.cmdQuickSearchActionPerformed(null);
+
         }
     }//GEN-LAST:event_txtSearchStringKeyPressed
 
     private void cmdQuickSearchActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdQuickSearchActionPerformed
         // perform search here
-        ThreadUtils.setWaitCursor(this);
-        EditorsRegistry.getInstance().updateStatus("Suche Akten...");
-        
-        new Thread(new QuickArchiveFileSearchThread(this, this.txtSearchString.getText(), true, TagUtils.getSelectedTags(popTagFilter), TagUtils.getSelectedTags(popDocumentTagFilter), this.tblResults)).start();
+        ThreadUtils
+                .setWaitCursor(this);
+        EditorsRegistry
+                .getInstance().updateStatus("Suche Akten...");
+
+        new Thread(new QuickArchiveFileSearchThread(this, this.txtSearchString
+                .getText(), true, TagUtils
+                        .getSelectedTags(popTagFilter
+                        ), TagUtils
+                        .getSelectedTags(popDocumentTagFilter
+                        ), this.tblResults
+        )).start();
 
     }//GEN-LAST:event_cmdQuickSearchActionPerformed
 
     private void tblResultsMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblResultsMouseClicked
-        if (evt.getClickCount() == 2 && evt.getButton() == evt.BUTTON1) {
+        if (evt
+                .getClickCount() == 2 && evt
+                        .getButton() == evt.BUTTON1) {
             this.useSelection();
 
         }
@@ -940,27 +1003,43 @@ public class SearchAndAssignDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_tblResultsKeyReleased
 
     private void cmdCancelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCancelActionPerformed
-        this.selection = null;
+        this.selection
+                = null;
+
         this.setVisible(false);
     }//GEN-LAST:event_cmdCancelActionPerformed
 
     private void formComponentResized(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentResized
-        ComponentUtils.storeDialogSize(this);
+        ComponentUtils
+                .storeDialogSize(this);
     }//GEN-LAST:event_formComponentResized
 
     private void cmdUseSelectionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdUseSelectionActionPerformed
-        int row = this.tblResults.getSelectedRow();
-        if(row>=0) {
+        int row
+                = this.tblResults
+                        .getSelectedRow();
+
+        if (row
+                >= 0) {
             this.useSelection();
+
         }
     }//GEN-LAST:event_cmdUseSelectionActionPerformed
 
     private void cmdTagFilterMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdTagFilterMousePressed
-        this.popTagFilter.show(this.cmdTagFilter, evt.getX(), evt.getY());
+        this.popTagFilter
+                .show(this.cmdTagFilter,
+                        evt
+                                .getX(), evt
+                                .getY());
     }//GEN-LAST:event_cmdTagFilterMousePressed
 
     private void cmdDocumentTagFilterMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdDocumentTagFilterMousePressed
-        this.popDocumentTagFilter.show(this.cmdDocumentTagFilter, evt.getX(), evt.getY());
+        this.popDocumentTagFilter
+                .show(this.cmdDocumentTagFilter,
+                        evt
+                                .getX(), evt
+                                .getY());
     }//GEN-LAST:event_cmdDocumentTagFilterMousePressed
 
     /**
@@ -977,40 +1056,64 @@ public class SearchAndAssignDialog extends javax.swing.JDialog {
          * http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html
          */
         try {
-            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-                if ("Nimbus".equals(info.getName())) {
-                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
+            for (javax.swing.UIManager.LookAndFeelInfo info
+                    : javax.swing.UIManager
+                            .getInstalledLookAndFeels()) {
+                if ("Nimbus".equals(info
+                        .getName())) {
+                    javax.swing.UIManager
+                            .setLookAndFeel(info
+                                    .getClassName());
+
                     break;
+
                 }
             }
         } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(SearchAndAssignDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger
+                    .getLogger(SearchAndAssignDialog.class
+                            .getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(SearchAndAssignDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger
+                    .getLogger(SearchAndAssignDialog.class
+                            .getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(SearchAndAssignDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger
+                    .getLogger(SearchAndAssignDialog.class
+                            .getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(SearchAndAssignDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger
+                    .getLogger(SearchAndAssignDialog.class
+                            .getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
         //</editor-fold>
 
         /*
          * Create and display the dialog
          */
-        java.awt.EventQueue.invokeLater(new Runnable() {
+        java.awt.EventQueue
+                .invokeLater(new Runnable() {
 
-            public void run() {
-                SearchAndAssignDialog dialog = new SearchAndAssignDialog(new javax.swing.JFrame(), true);
-                dialog.addWindowListener(new java.awt.event.WindowAdapter() {
+                    public void run() {
+                        SearchAndAssignDialog dialog
+                                = new SearchAndAssignDialog(new javax.swing.JFrame(), true, null);
+                        dialog
+                                .addWindowListener(new java.awt.event.WindowAdapter() {
 
-                    @Override
-                    public void windowClosing(java.awt.event.WindowEvent e) {
-                        System.exit(0);
+                                    @Override
+                                    public void windowClosing(java.awt.event.WindowEvent e
+                                    ) {
+                                        System
+                                                .exit(0);
+
+                                    }
+                                });
+                        dialog
+                                .setVisible(true);
+
                     }
                 });
-                dialog.setVisible(true);
-            }
-        });
+
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton cmdCancel;

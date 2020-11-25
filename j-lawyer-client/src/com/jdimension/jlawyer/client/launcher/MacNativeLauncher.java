@@ -703,6 +703,7 @@ public class MacNativeLauncher extends NativeLauncher {
                 odoc = new ObservedDocument(url, store, thisLauncher);
                 DocumentObserver observer = DocumentObserver.getInstance();
                 odoc.setStatus(ObservedDocument.STATUS_LAUNCHING);
+                odoc.setMonitoringMode(true);
                 observer.addDocument(odoc);
 
                 try {
@@ -714,7 +715,7 @@ public class MacNativeLauncher extends NativeLauncher {
                         odoc.setClosed(true);
                         throw new Exception("Datei kann nicht geöffnet werden: Desktop API wird nicht unterstützt!");
                     }
-                    odoc.setStatus(ObservedDocument.STATUS_OPEN);
+                    odoc.setStatus(ObservedDocument.STATUS_MONITORING);
                     if (store.isReadOnly()) {
                         d.open(new File(url));
                     } else {
@@ -728,8 +729,9 @@ public class MacNativeLauncher extends NativeLauncher {
 
                         try {
                             int exit = 0;
+                            long launched=System.currentTimeMillis();
                             Process p = Runtime.getRuntime().exec(new String[]{"open", url});
-                            odoc.setStatus(ObservedDocument.STATUS_OPEN);
+                            odoc.setStatus(ObservedDocument.STATUS_MONITORING);
                             log.debug("waitFor");
                             exit = p.waitFor();
                             log.debug("exit code: " + exit);
@@ -737,7 +739,10 @@ public class MacNativeLauncher extends NativeLauncher {
                             if (exit != 0) {
                                 throw new Exception("Fehler beim Öffnen des Dokuments!");
                             } else {
-                                odoc.setClosed(true);
+                                // if the application was running >30s, we assume that xdg-open was blocking until the app was closed by the user
+                                if((System.currentTimeMillis()-launched)>30000)
+                                    odoc.setClosed(true);
+                                // otherwise, keep monitoring the file for changes
                             }
                         } catch (final Throwable t) {
 
@@ -761,7 +766,7 @@ public class MacNativeLauncher extends NativeLauncher {
                     }
                 }
 
-                odoc.setClosed(true);
+                //odoc.setClosed(true);
 
             }
         }).start();

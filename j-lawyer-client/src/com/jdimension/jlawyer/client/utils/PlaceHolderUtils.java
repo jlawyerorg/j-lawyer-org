@@ -793,17 +793,26 @@ public class PlaceHolderUtils extends PlaceHolders {
             if (placeHolders.containsKey(getPlaceHolderForType(_VORNAME, ptb.getPlaceHolder()))) {
                 placeHolders.put(getPlaceHolderForType(_VORNAME, ptb.getPlaceHolder()), val(selected.getFirstName()));
             }
-            if (placeHolders.containsKey(getPlaceHolderForType(_FIRMA, ptb.getPlaceHolder()))) {
-                placeHolders.put(getPlaceHolderForType(_FIRMA, ptb.getPlaceHolder()), val(selected.getCompany()));
+            if (placeHolders.containsKey(getPlaceHolderForType(_FIRMA_ALIAS, ptb.getPlaceHolder()))) {
+                placeHolders.put(getPlaceHolderForType(_FIRMA_ALIAS, ptb.getPlaceHolder()), val(selected.getCompany()));
+            }
+            if (placeHolders.containsKey(getPlaceHolderForType(_UNTERNEHMEN, ptb.getPlaceHolder()))) {
+                placeHolders.put(getPlaceHolderForType(_UNTERNEHMEN, ptb.getPlaceHolder()), val(selected.getCompany()));
             }
             if (placeHolders.containsKey(getPlaceHolderForType(_ABTLG, ptb.getPlaceHolder()))) {
                 placeHolders.put(getPlaceHolderForType(_ABTLG, ptb.getPlaceHolder()), val(selected.getDepartment()));
             }
-            if (placeHolders.containsKey(getPlaceHolderForType(_TITEL, ptb.getPlaceHolder()))) {
-                placeHolders.put(getPlaceHolderForType(_TITEL, ptb.getPlaceHolder()), val(selected.getTitle()));
+            if (placeHolders.containsKey(getPlaceHolderForType(_TITEL_ALIAS, ptb.getPlaceHolder()))) {
+                placeHolders.put(getPlaceHolderForType(_TITEL_ALIAS, ptb.getPlaceHolder()), val(selected.getTitle()));
             }
-            if (placeHolders.containsKey(getPlaceHolderForType(_ANREDE, ptb.getPlaceHolder()))) {
-                placeHolders.put(getPlaceHolderForType(_ANREDE, ptb.getPlaceHolder()), val(selected.getSalutation()));
+            if (placeHolders.containsKey(getPlaceHolderForType(_ANREDE1, ptb.getPlaceHolder()))) {
+                placeHolders.put(getPlaceHolderForType(_ANREDE1, ptb.getPlaceHolder()), val(selected.getTitle()));
+            }
+            if (placeHolders.containsKey(getPlaceHolderForType(_ANREDE_ALIAS, ptb.getPlaceHolder()))) {
+                placeHolders.put(getPlaceHolderForType(_ANREDE_ALIAS, ptb.getPlaceHolder()), val(selected.getSalutation()));
+            }
+            if (placeHolders.containsKey(getPlaceHolderForType(_BEGRUESSUNG, ptb.getPlaceHolder()))) {
+                placeHolders.put(getPlaceHolderForType(_BEGRUESSUNG, ptb.getPlaceHolder()), val(selected.getSalutation()));
             }
             if (placeHolders.containsKey(getPlaceHolderForType(_NACHTEXT, ptb.getPlaceHolder()))) {
                 placeHolders.put(getPlaceHolderForType(_NACHTEXT, ptb.getPlaceHolder()), val(selected.getComplimentaryClose()));
@@ -865,6 +874,75 @@ public class PlaceHolderUtils extends PlaceHolders {
             if (placeHolders.containsKey(getPlaceHolderForType(_GEB, ptb.getPlaceHolder()))) {
                 placeHolders.put(getPlaceHolderForType(_GEB, ptb.getPlaceHolder()), val(selected.getBirthDate()));
             }
+            
+            if (placeHolders.containsKey(getPlaceHolderForType(_ORTSTEIL, ptb.getPlaceHolder()))) {
+                placeHolders.put(getPlaceHolderForType(_ORTSTEIL, ptb.getPlaceHolder()), val(selected.getDistrict()));
+            }
+            if (placeHolders.containsKey(getPlaceHolderForType(_NOTIZ, ptb.getPlaceHolder()))) {
+                placeHolders.put(getPlaceHolderForType(_NOTIZ, ptb.getPlaceHolder()), val(selected.getNotice()));
+            }
+            if (placeHolders.containsKey(getPlaceHolderForType(_STA, ptb.getPlaceHolder()))) {
+                placeHolders.put(getPlaceHolderForType(_STA, ptb.getPlaceHolder()), val(selected.getNationality()));
+            }
+            if (placeHolders.containsKey(getPlaceHolderForType(_GEBNAME, ptb.getPlaceHolder()))) {
+                placeHolders.put(getPlaceHolderForType(_GEBNAME, ptb.getPlaceHolder()), val(selected.getBirthName()));
+            }
+            if (placeHolders.containsKey(getPlaceHolderForType(_GEBORT, ptb.getPlaceHolder()))) {
+                placeHolders.put(getPlaceHolderForType(_GEBORT, ptb.getPlaceHolder()), val(selected.getPlaceOfBirth()));
+            }
+            if (placeHolders.containsKey(getPlaceHolderForType(_GEST, ptb.getPlaceHolder()))) {
+                placeHolders.put(getPlaceHolderForType(_GEST, ptb.getPlaceHolder()), val(selected.getDateOfDeath()));
+            }
+            if (placeHolders.containsKey(getPlaceHolderForType(_USTIDNR, ptb.getPlaceHolder()))) {
+                placeHolders.put(getPlaceHolderForType(_USTIDNR, ptb.getPlaceHolder()), val(selected.getVatId()));
+            }
+            if (placeHolders.containsKey(getPlaceHolderForType(_STEUERNR, ptb.getPlaceHolder()))) {
+                placeHolders.put(getPlaceHolderForType(_STEUERNR, ptb.getPlaceHolder()), val(selected.getTin()));
+            }
+            if (placeHolders.containsKey(getPlaceHolderForType(_RFORM, ptb.getPlaceHolder()))) {
+                placeHolders.put(getPlaceHolderForType(_RFORM, ptb.getPlaceHolder()), val(selected.getLegalForm()));
+            }
+            if (placeHolders.containsKey(getPlaceHolderForType(_REGNR, ptb.getPlaceHolder()))) {
+                placeHolders.put(getPlaceHolderForType(_REGNR, ptb.getPlaceHolder()), val(selected.getCompanyRegistrationNumber()));
+            }
+            if (placeHolders.containsKey(getPlaceHolderForType(_REGGERICHT, ptb.getPlaceHolder()))) {
+                placeHolders.put(getPlaceHolderForType(_REGGERICHT, ptb.getPlaceHolder()), val(selected.getCompanyRegistrationCourt()));
+            }
+            if (placeHolders.containsKey(getPlaceHolderForType(_GESCHLECHT, ptb.getPlaceHolder()))) {
+                placeHolders.put(getPlaceHolderForType(_GESCHLECHT, ptb.getPlaceHolder()), val(selected.getGenderDisplayValue()));
+            }
+            if (placeHolders.containsKey(getPlaceHolderForType(_HAUSNR, ptb.getPlaceHolder()))) {
+                placeHolders.put(getPlaceHolderForType(_HAUSNR, ptb.getPlaceHolder()), val(selected.getStreetNumber()));
+            }
+            if (placeHolders.containsKey(getPlaceHolderForType(_INITIAL, ptb.getPlaceHolder()))) {
+                placeHolders.put(getPlaceHolderForType(_INITIAL, ptb.getPlaceHolder()), val(selected.getInitials()));
+            }
+            if (placeHolders.containsKey(getPlaceHolderForType(_AGRAD1, ptb.getPlaceHolder()))) {
+                placeHolders.put(getPlaceHolderForType(_AGRAD1, ptb.getPlaceHolder()), val(selected.getDegreePrefix()));
+            }
+            if (placeHolders.containsKey(getPlaceHolderForType(_AGRAD2, ptb.getPlaceHolder()))) {
+                placeHolders.put(getPlaceHolderForType(_AGRAD2, ptb.getPlaceHolder()), val(selected.getDegreeSuffix()));
+            }
+            if (placeHolders.containsKey(getPlaceHolderForType(_BERUF, ptb.getPlaceHolder()))) {
+                placeHolders.put(getPlaceHolderForType(_BERUF, ptb.getPlaceHolder()), val(selected.getProfession()));
+            }
+            if (placeHolders.containsKey(getPlaceHolderForType(_FKT, ptb.getPlaceHolder()))) {
+                placeHolders.put(getPlaceHolderForType(_FKT, ptb.getPlaceHolder()), val(selected.getRole()));
+            }
+            if (placeHolders.containsKey(getPlaceHolderForType(_ZUSATZ, ptb.getPlaceHolder()))) {
+                placeHolders.put(getPlaceHolderForType(_ZUSATZ, ptb.getPlaceHolder()), val(selected.getAdjunct()));
+            }
+            if (placeHolders.containsKey(getPlaceHolderForType(_ANREDE2, ptb.getPlaceHolder()))) {
+                placeHolders.put(getPlaceHolderForType(_ANREDE2, ptb.getPlaceHolder()), val(selected.getTitleInAddress()));
+            }
+            if (placeHolders.containsKey(getPlaceHolderForType(_ALTER, ptb.getPlaceHolder()))) {
+                int age=AddressBean.calculateAge(selected.getBirthDate());
+                if(age>-1)
+                    placeHolders.put(getPlaceHolderForType(_ALTER, ptb.getPlaceHolder()), val("" + age));
+                else
+                    placeHolders.put(getPlaceHolderForType(_ALTER, ptb.getPlaceHolder()), val("?"));
+            }
+            
             
             
             
