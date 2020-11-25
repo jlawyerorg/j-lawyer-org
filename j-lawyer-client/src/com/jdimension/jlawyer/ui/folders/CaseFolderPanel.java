@@ -1213,7 +1213,9 @@ public class CaseFolderPanel extends javax.swing.JPanel {
             this.sortFolder.setSortState(SortButton.SORT_NONE);
         }
         if (this.sortFolder.getSortState() == SortButton.SORT_NONE && this.sortDate.getSortState() == SortButton.SORT_NONE && this.sortFavorite.getSortState() == SortButton.SORT_NONE && this.sortName.getSortState() == SortButton.SORT_NONE && this.sortSize.getSortState() == SortButton.SORT_NONE) {
-            this.sortDate.setSortState(SortButton.SORT_DESC);
+            //this.sortDate.setSortState(SortButton.SORT_DESC);
+            if(this.sortDate.getSortState() == SortButton.SORT_NONE)
+                this.sortDate.setSortState(SortButton.SORT_ASC);
         }
 
         this.sort();
