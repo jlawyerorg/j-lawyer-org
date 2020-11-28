@@ -680,6 +680,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.Hashtable;
+import javax.swing.ImageIcon;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
@@ -711,6 +712,17 @@ public class CaseFolderPanel extends javax.swing.JPanel {
         this.cmdSelectNone.setBackground(this.jPanel2.getBackground());
         this.cmdSelectAll1.setBackground(this.jPanel2.getBackground());
         this.cmdSelectNone1.setBackground(this.jPanel2.getBackground());
+        
+        ImageIcon sortDateNoneIcon=new ImageIcon(CaseFolderPanel.class.getResource("/com/jdimension/jlawyer/ui/folders/baseline_query_builder_white_18dp.png"));
+        sortDate.setNoneIcon(sortDateNoneIcon);
+        ImageIcon sortNameNoneIcon=new ImageIcon(CaseFolderPanel.class.getResource("/com/jdimension/jlawyer/ui/folders/baseline_insert_drive_file_white_18dp.png"));
+        sortName.setNoneIcon(sortNameNoneIcon);
+        ImageIcon sortFavoriteNoneIcon=new ImageIcon(CaseFolderPanel.class.getResource("/com/jdimension/jlawyer/ui/folders/baseline_star_white_18dp.png"));
+        sortFavorite.setNoneIcon(sortFavoriteNoneIcon);
+        ImageIcon sortSizeNoneIcon=new ImageIcon(CaseFolderPanel.class.getResource("/com/jdimension/jlawyer/ui/folders/baseline_pie_chart_white_18dp.png"));
+        sortSize.setNoneIcon(sortSizeNoneIcon);
+        ImageIcon sortFolderNoneIcon=new ImageIcon(CaseFolderPanel.class.getResource("/com/jdimension/jlawyer/ui/folders/baseline_folder_open_white_18dp.png"));
+        sortFolder.setNoneIcon(sortFolderNoneIcon);
     }
 
     public CaseFolderPanel() {
@@ -725,6 +737,17 @@ public class CaseFolderPanel extends javax.swing.JPanel {
         this.cmdSelectNone.setBackground(this.jPanel2.getBackground());
         this.cmdSelectAll1.setBackground(this.jPanel2.getBackground());
         this.cmdSelectNone1.setBackground(this.jPanel2.getBackground());
+        
+        ImageIcon sortDateNoneIcon=new ImageIcon(CaseFolderPanel.class.getResource("/com/jdimension/jlawyer/ui/folders/baseline_query_builder_white_18dp.png"));
+        sortDate.setNoneIcon(sortDateNoneIcon);
+        ImageIcon sortNameNoneIcon=new ImageIcon(CaseFolderPanel.class.getResource("/com/jdimension/jlawyer/ui/folders/baseline_insert_drive_file_white_18dp.png"));
+        sortName.setNoneIcon(sortNameNoneIcon);
+        ImageIcon sortFavoriteNoneIcon=new ImageIcon(CaseFolderPanel.class.getResource("/com/jdimension/jlawyer/ui/folders/baseline_star_white_18dp.png"));
+        sortFavorite.setNoneIcon(sortFavoriteNoneIcon);
+        ImageIcon sortSizeNoneIcon=new ImageIcon(CaseFolderPanel.class.getResource("/com/jdimension/jlawyer/ui/folders/baseline_pie_chart_white_18dp.png"));
+        sortSize.setNoneIcon(sortSizeNoneIcon);
+        ImageIcon sortFolderNoneIcon=new ImageIcon(CaseFolderPanel.class.getResource("/com/jdimension/jlawyer/ui/folders/baseline_folder_open_white_18dp.png"));
+        sortFolder.setNoneIcon(sortFolderNoneIcon);
     }
 
     public void setRootFolder(CaseFolder rootFolder, ArrayList<String> unselectedFolderIds) {
@@ -999,6 +1022,8 @@ public class CaseFolderPanel extends javax.swing.JPanel {
         );
 
         sortDate.setText("Datum");
+        sortDate.setToolTipText("nach Erstellungsdatum sortieren");
+        sortDate.setIconTextGap(2);
         sortDate.setInheritsPopupMenu(true);
         sortDate.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
@@ -1007,6 +1032,8 @@ public class CaseFolderPanel extends javax.swing.JPanel {
         });
 
         sortName.setText("Name");
+        sortName.setToolTipText("nach Dateiname sortieren");
+        sortName.setIconTextGap(2);
         sortName.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 sortNameMouseClicked(evt);
@@ -1014,6 +1041,8 @@ public class CaseFolderPanel extends javax.swing.JPanel {
         });
 
         sortFavorite.setText("Favorit");
+        sortFavorite.setToolTipText("nach Favoritenstatus sortieren");
+        sortFavorite.setIconTextGap(2);
         sortFavorite.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 sortFavoriteMouseClicked(evt);
@@ -1021,6 +1050,8 @@ public class CaseFolderPanel extends javax.swing.JPanel {
         });
 
         sortSize.setText("Größe");
+        sortSize.setToolTipText("nach Dateigröße sortieren");
+        sortSize.setIconTextGap(2);
         sortSize.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 sortSizeMouseClicked(evt);
@@ -1043,6 +1074,8 @@ public class CaseFolderPanel extends javax.swing.JPanel {
         });
 
         sortFolder.setText("Ordner");
+        sortFolder.setToolTipText("nach Ordnernamen sortieren");
+        sortFolder.setIconTextGap(2);
         sortFolder.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 sortFolderMouseClicked(evt);
@@ -1091,13 +1124,13 @@ public class CaseFolderPanel extends javax.swing.JPanel {
                 .addComponent(cmdSelectNone1)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(sortDate, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGap(2, 2, 2)
                 .addComponent(sortName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGap(2, 2, 2)
                 .addComponent(sortFavorite, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGap(2, 2, 2)
                 .addComponent(sortSize, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGap(2, 2, 2)
                 .addComponent(sortFolder, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
