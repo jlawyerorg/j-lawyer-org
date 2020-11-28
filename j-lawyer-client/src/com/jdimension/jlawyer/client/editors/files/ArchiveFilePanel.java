@@ -840,6 +840,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
 
         ComponentUtils.decorateSplitPane(this.splitDocuments);
+        ComponentUtils.decorateSplitPane(this.splitNotes);
 
         //this.tagPanel.setPreferredSize(new Dimension(this.getWidth()-100, this.tagPanel.getHeight()));
         this.tagPanel.setLayout(new WrapLayout());
@@ -949,6 +950,10 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.splitDocuments.setDividerLocation(0.7d);
         ComponentUtils.restoreSplitPane(splitDocuments, this.getClass(), "splitDocuments");
         ComponentUtils.persistSplitPane(splitDocuments, this.getClass(), "splitDocuments");
+        
+        this.splitNotes.setDividerLocation(170);
+        ComponentUtils.restoreSplitPane(splitNotes, this.getClass(), "splitNotes");
+        ComponentUtils.persistSplitPane(splitNotes, this.getClass(), "splitNotes");
 
         ArrayList<CalculationPlugin> plugins = CalculationPluginUtil.loadLocalPlugins();
         Collections.sort(plugins);
@@ -1651,12 +1656,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         mnuSendMotorCoverage = new javax.swing.JMenuItem();
         tabPaneArchiveFile = new javax.swing.JTabbedPane();
         tabGeneralData = new javax.swing.JPanel();
-        jPanel2 = new javax.swing.JPanel();
-        jScrollPane1 = new javax.swing.JScrollPane();
-        tagPanel = new javax.swing.JPanel();
-        jPanel3 = new javax.swing.JPanel();
-        txtNoticePane = new javax.swing.JScrollPane();
-        txtNotice = new javax.swing.JTextArea();
         jPanel1 = new javax.swing.JPanel();
         jLabel1 = new javax.swing.JLabel();
         txtFileNumber = new javax.swing.JTextField();
@@ -1680,6 +1679,13 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         jPanel6 = new javax.swing.JPanel();
         jScrollPane3 = new javax.swing.JScrollPane();
         tblGroups = new javax.swing.JTable();
+        splitNotes = new javax.swing.JSplitPane();
+        jPanel2 = new javax.swing.JPanel();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        tagPanel = new javax.swing.JPanel();
+        jPanel3 = new javax.swing.JPanel();
+        txtNoticePane = new javax.swing.JScrollPane();
+        txtNotice = new javax.swing.JTextArea();
         tabParties = new javax.swing.JPanel();
         cmdSearchClient = new javax.swing.JButton();
         jScrollPane8 = new javax.swing.JScrollPane();
@@ -2100,52 +2106,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
         });
 
-        jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder("Akten-Etiketten"));
-        jPanel2.setLayout(new java.awt.BorderLayout());
-
-        jScrollPane1.setBorder(null);
-
-        org.jdesktop.layout.GroupLayout tagPanelLayout = new org.jdesktop.layout.GroupLayout(tagPanel);
-        tagPanel.setLayout(tagPanelLayout);
-        tagPanelLayout.setHorizontalGroup(
-            tagPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(0, 935, Short.MAX_VALUE)
-        );
-        tagPanelLayout.setVerticalGroup(
-            tagPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(0, 165, Short.MAX_VALUE)
-        );
-
-        jScrollPane1.setViewportView(tagPanel);
-
-        jPanel2.add(jScrollPane1, java.awt.BorderLayout.CENTER);
-
-        jPanel3.setBorder(javax.swing.BorderFactory.createTitledBorder("Notizen"));
-
-        txtNoticePane.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-
-        txtNotice.setColumns(20);
-        txtNotice.setLineWrap(true);
-        txtNotice.setRows(5);
-        txtNotice.setWrapStyleWord(true);
-        txtNoticePane.setViewportView(txtNotice);
-
-        org.jdesktop.layout.GroupLayout jPanel3Layout = new org.jdesktop.layout.GroupLayout(jPanel3);
-        jPanel3.setLayout(jPanel3Layout);
-        jPanel3Layout.setHorizontalGroup(
-            jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(jPanel3Layout.createSequentialGroup()
-                .addContainerGap()
-                .add(txtNoticePane)
-                .addContainerGap())
-        );
-        jPanel3Layout.setVerticalGroup(
-            jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(jPanel3Layout.createSequentialGroup()
-                .add(txtNoticePane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 165, Short.MAX_VALUE)
-                .addContainerGap())
-        );
-
         jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder("Aktenkopf"));
 
         jLabel1.setText("Aktenzeichen:");
@@ -2345,6 +2305,59 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 .addContainerGap())
         );
 
+        splitNotes.setDividerLocation(170);
+        splitNotes.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
+
+        jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder("Akten-Etiketten"));
+        jPanel2.setLayout(new java.awt.BorderLayout());
+
+        jScrollPane1.setBorder(null);
+
+        org.jdesktop.layout.GroupLayout tagPanelLayout = new org.jdesktop.layout.GroupLayout(tagPanel);
+        tagPanel.setLayout(tagPanelLayout);
+        tagPanelLayout.setHorizontalGroup(
+            tagPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(0, 935, Short.MAX_VALUE)
+        );
+        tagPanelLayout.setVerticalGroup(
+            tagPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(0, 283, Short.MAX_VALUE)
+        );
+
+        jScrollPane1.setViewportView(tagPanel);
+
+        jPanel2.add(jScrollPane1, java.awt.BorderLayout.CENTER);
+
+        splitNotes.setLeftComponent(jPanel2);
+
+        jPanel3.setBorder(javax.swing.BorderFactory.createTitledBorder("Notizen"));
+
+        txtNoticePane.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+
+        txtNotice.setColumns(20);
+        txtNotice.setLineWrap(true);
+        txtNotice.setRows(5);
+        txtNotice.setWrapStyleWord(true);
+        txtNoticePane.setViewportView(txtNotice);
+
+        org.jdesktop.layout.GroupLayout jPanel3Layout = new org.jdesktop.layout.GroupLayout(jPanel3);
+        jPanel3.setLayout(jPanel3Layout);
+        jPanel3Layout.setHorizontalGroup(
+            jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jPanel3Layout.createSequentialGroup()
+                .addContainerGap()
+                .add(txtNoticePane)
+                .addContainerGap())
+        );
+        jPanel3Layout.setVerticalGroup(
+            jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jPanel3Layout.createSequentialGroup()
+                .add(txtNoticePane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 109, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+
+        splitNotes.setRightComponent(jPanel3);
+
         org.jdesktop.layout.GroupLayout tabGeneralDataLayout = new org.jdesktop.layout.GroupLayout(tabGeneralData);
         tabGeneralData.setLayout(tabGeneralDataLayout);
         tabGeneralDataLayout.setHorizontalGroup(
@@ -2352,9 +2365,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             .add(tabGeneralDataLayout.createSequentialGroup()
                 .addContainerGap()
                 .add(tabGeneralDataLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jPanel3, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .add(jPanel2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 953, Short.MAX_VALUE)
-                    .add(jPanel1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .add(jPanel1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(splitNotes, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 953, Short.MAX_VALUE))
                 .addContainerGap())
         );
         tabGeneralDataLayout.setVerticalGroup(
@@ -2363,9 +2375,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 .addContainerGap()
                 .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jPanel2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 119, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jPanel3, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .add(splitNotes, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 324, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -6009,6 +6019,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JRadioButton radioReviewTypeRespite;
     private javax.swing.JPopupMenu reviewsPopup;
     private javax.swing.JSplitPane splitDocuments;
+    private javax.swing.JSplitPane splitNotes;
     protected javax.swing.JTextArea taCustom3;
     private javax.swing.JPanel tabClaims;
     private javax.swing.JPanel tabDocuments;
