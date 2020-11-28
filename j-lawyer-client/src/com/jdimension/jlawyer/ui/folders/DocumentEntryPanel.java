@@ -730,11 +730,11 @@ public class DocumentEntryPanel extends javax.swing.JPanel {
         this.highlighted=highlight;
         if(highlight) {
             //this.lblFileName.setForeground(Color.WHITE);
-            this.lblFileName.setFont(this.lblFileName.getFont().deriveFont(Font.BOLD));
+            //this.lblFileName.setFont(this.lblFileName.getFont().deriveFont(Font.BOLD));
             this.setBackground(DefaultColorTheme.COLOR_LOGO_RED);
         } else {
             //this.lblFileName.setForeground(this.defaultFilenameColor);
-            this.lblFileName.setFont(this.lblFileName.getFont().deriveFont(Font.PLAIN));
+            //this.lblFileName.setFont(this.lblFileName.getFont().deriveFont(Font.PLAIN));
             this.setBackground(this.defaultBackColor);
             
             // set background to selected
