@@ -3445,6 +3445,13 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 
                 if (selectionCount<=1 && !StringUtils.isEmpty(this.txtReviewReason.getText())) {
                     this.addReview(this.txtReviewReason.getText(), d);
+                    
+                    // clear selection
+                    for (int i = 0; i < ((DefaultListModel) this.lstReviewReasons.getModel()).size(); i++) {
+                        CheckboxListItem item = (CheckboxListItem) ((DefaultListModel) this.lstReviewReasons.getModel()).getElementAt(i);
+                        item.setSelected(false);
+                        this.lstReviewReasons.repaint(this.lstReviewReasons.getCellBounds(i, i));
+                    }
                 } else {
                     if(!StringUtils.isEmpty(this.txtReviewReason.getText()))
                         this.addReview(this.txtReviewReason.getText(), d);
