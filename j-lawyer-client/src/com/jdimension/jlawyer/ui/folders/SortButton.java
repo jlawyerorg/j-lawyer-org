@@ -765,13 +765,13 @@ public class SortButton extends JButton {
             this.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
             super.setText(activeText);
             setIcon(ICON_ASC);
-            setMargin(new Insets(3, 2, 3, 7));
+            setMargin(new Insets(3, 2, 3, 9));
         } else if (this.getSortState() == SORT_DESC) {
             this.setBackground(DefaultColorTheme.COLOR_LOGO_BLUE);
             this.setForeground(DefaultColorTheme.COLOR_LIGHT_GREY);
             super.setText(activeText);
             setIcon(ICON_DESC);
-            setMargin(new Insets(3, 2, 3, 7));
+            setMargin(new Insets(3, 2, 3, 9));
         } else if (this.getSortState() == SORT_NONE) {
             this.setBackground(DefaultColorTheme.COLOR_LIGHT_GREY);
             this.setForeground(DefaultColorTheme.COLOR_DARK_GREY);

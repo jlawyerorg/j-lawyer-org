@@ -684,8 +684,8 @@ public class DeleteScanAction extends ScanAction {
 
     private boolean delete = true;
 
-    public DeleteScanAction(JTable actionsTable, JTable filesTable, boolean delete) {
-        super(actionsTable, filesTable);
+    public DeleteScanAction(JTable actionsTable, boolean delete) {
+        super(actionsTable);
         this.setDescription("aus Scaneingang löschen");
         this.setArchiveFile("");
         this.delete = delete;
