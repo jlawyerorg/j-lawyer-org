@@ -693,6 +693,7 @@ import java.util.stream.Collectors;
 import javax.swing.KeyStroke;
 
 import javax.swing.SwingUtilities;
+import javax.swing.ToolTipManager;
 import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
 import javax.swing.UnsupportedLookAndFeelException;
@@ -782,6 +783,8 @@ public class Main {
         // for newer JDK versions
         System.setProperty("apple.awt.application.name", "j-lawyer.org");
 
+        ToolTipManager.sharedInstance().setDismissDelay(30000);
+        
         FlatIntelliJLaf.install();
 
         //FlatDarculaLaf.install();
