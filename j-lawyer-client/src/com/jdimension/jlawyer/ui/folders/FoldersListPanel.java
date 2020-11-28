@@ -673,6 +673,7 @@ import java.util.Comparator;
 import java.util.List;
 import javax.swing.Box;
 import javax.swing.JScrollPane;
+import javax.swing.JSplitPane;
 
 /**
  *
@@ -861,6 +862,7 @@ public class FoldersListPanel extends javax.swing.JPanel {
         this.setRootFolder(this.rootFolder, this.getUnselectedFolderIds());
         this.revalidate();
         this.repaint();
+        this.forceRelayout();
     }
 
     private void collectSubtreeIds(CaseFolder f, ArrayList<String> ids) {
@@ -879,6 +881,16 @@ public class FoldersListPanel extends javax.swing.JPanel {
         this.caseFolderPanel.setRootFolder(this.rootFolder, this.getUnselectedFolderIds());
         this.revalidate();
         this.repaint();
+        this.forceRelayout();
+    }
+    
+    private void forceRelayout() {
+        Object split=this.caseFolderPanel.getParent();
+        if(split!=null && split instanceof JSplitPane) {
+            int loc=((JSplitPane)split).getDividerLocation();
+            ((JSplitPane)split).setDividerLocation(loc+1);
+            ((JSplitPane)split).setDividerLocation(loc);
+        }
     }
 
     private ArrayList<String> getUnselectedFolderIds() {
@@ -928,6 +940,6 @@ public class FoldersListPanel extends javax.swing.JPanel {
 
     void folderUpdated(CaseFolder folder) {
         this.caseFolderPanel.updateDocumentsInFolder(folder);
-
+        this.forceRelayout();
     }
 }

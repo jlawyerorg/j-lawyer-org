@@ -701,9 +701,10 @@ public class FolderListCell extends javax.swing.JPanel {
         this.level = level;
         this.readOnly = readOnly;
         this.parent=parent;
-        String tab = "   ";
+        String indent = "  ";
+        String tab = "";
         for (int i = 0; i < level; i++) {
-            tab = tab + tab;
+            tab = tab + indent;
         }
         this.lblExpanded.setText(tab);
 
