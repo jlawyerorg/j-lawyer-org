@@ -923,6 +923,9 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
         
         ComponentUtils.persistSplitPane(this.splitTop, this.getClass(), "splitTop");
         ComponentUtils.persistSplitPane(this.splitMain, this.getClass(), "splitMain");
+        
+        if(this.splitMain.getDividerLocation()<100)
+            this.splitMain.setDividerLocation(100);
 
 //        final int numberOfScans=this.tblDirContent.getModel().getRowCount();
 //        new Thread(new Runnable() {
