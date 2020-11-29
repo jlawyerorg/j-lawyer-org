@@ -665,6 +665,7 @@ package com.jdimension.jlawyer.client.editors.files;
 
 import com.jdimension.jlawyer.client.configuration.PopulateOptionsEditor;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import com.jdimension.jlawyer.client.editors.ResetOnDisplayEditor;
 import com.jdimension.jlawyer.client.editors.ThemeableEditor;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
@@ -695,7 +696,7 @@ import org.apache.log4j.Logger;
  *
  * @author jens
  */
-public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements ThemeableEditor {
+public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements ThemeableEditor, ResetOnDisplayEditor {
 
     private static final Logger log = Logger.getLogger(QuickArchiveFileSearchPanel.class.getName());
 
@@ -1287,6 +1288,16 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
     @Override
     public Image getBackgroundImage() {
         return this.backgroundImage;
+    }
+
+    @Override
+    public void reset() {
+        this.txtSearchString.requestFocus();
+    }
+
+    @Override
+    public boolean needsReset() {
+        return true;
     }
 
 }
