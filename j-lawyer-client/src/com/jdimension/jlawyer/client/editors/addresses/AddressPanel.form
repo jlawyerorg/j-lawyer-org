@@ -146,10 +146,10 @@
                                               <Component id="jLabel25" alignment="0" min="-2" max="-2" attributes="0"/>
                                               <Component id="jLabel47" alignment="0" min="-2" max="-2" attributes="0"/>
                                           </Group>
-                                          <EmptySpace min="40" pref="40" max="-2" attributes="0"/>
+                                          <EmptySpace min="-2" pref="40" max="-2" attributes="0"/>
                                           <Group type="103" groupAlignment="0" attributes="0">
-                                              <Component id="cmbTitle" pref="566" max="32767" attributes="0"/>
-                                              <Component id="cmbTitleInAddress" max="32767" attributes="0"/>
+                                              <Component id="cmbTitleInAddress" pref="566" max="32767" attributes="0"/>
+                                              <Component id="cmbTitle" max="32767" attributes="0"/>
                                           </Group>
                                       </Group>
                                       <Group type="102" alignment="0" attributes="0">
@@ -686,26 +686,19 @@
                   <Group type="103" groupAlignment="0" attributes="0">
                       <Group type="102" attributes="0">
                           <Group type="103" groupAlignment="0" attributes="0">
-                              <Group type="102" alignment="0" attributes="0">
-                                  <Group type="103" groupAlignment="0" attributes="0">
-                                      <Component id="jLabel3" min="-2" max="-2" attributes="0"/>
-                                      <Component id="jLabel27" min="-2" max="-2" attributes="0"/>
-                                      <Component id="jLabel36" min="-2" max="-2" attributes="0"/>
-                                      <Component id="jLabel38" min="-2" max="-2" attributes="0"/>
-                                  </Group>
-                                  <EmptySpace min="19" pref="19" max="-2" attributes="0"/>
-                                  <Group type="103" groupAlignment="0" attributes="0">
-                                      <Component id="txtRegCourt" max="32767" attributes="0"/>
-                                      <Component id="txtCompany" alignment="1" max="32767" attributes="0"/>
-                                      <Component id="txtDepartment" alignment="1" max="32767" attributes="0"/>
-                                      <Component id="cmbLegalForm" alignment="0" pref="389" max="32767" attributes="0"/>
-                                  </Group>
-                              </Group>
-                              <Group type="102" alignment="0" attributes="0">
-                                  <Component id="jLabel37" min="-2" max="-2" attributes="0"/>
-                                  <EmptySpace max="-2" attributes="0"/>
-                                  <Component id="txtRegNr" max="32767" attributes="0"/>
-                              </Group>
+                              <Component id="jLabel3" min="-2" max="-2" attributes="0"/>
+                              <Component id="jLabel27" min="-2" max="-2" attributes="0"/>
+                              <Component id="jLabel36" min="-2" max="-2" attributes="0"/>
+                              <Component id="jLabel38" min="-2" max="-2" attributes="0"/>
+                              <Component id="jLabel37" alignment="0" min="-2" max="-2" attributes="0"/>
+                          </Group>
+                          <EmptySpace max="-2" attributes="0"/>
+                          <Group type="103" groupAlignment="0" attributes="0">
+                              <Component id="txtRegNr" max="32767" attributes="0"/>
+                              <Component id="txtRegCourt" max="32767" attributes="0"/>
+                              <Component id="txtCompany" alignment="1" max="32767" attributes="0"/>
+                              <Component id="txtDepartment" alignment="1" max="32767" attributes="0"/>
+                              <Component id="cmbLegalForm" alignment="0" pref="389" max="32767" attributes="0"/>
                           </Group>
                           <EmptySpace max="-2" attributes="0"/>
                       </Group>
