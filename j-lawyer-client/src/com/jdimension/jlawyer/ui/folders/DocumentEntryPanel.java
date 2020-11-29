@@ -768,7 +768,6 @@ public class DocumentEntryPanel extends javax.swing.JPanel {
         });
 
         lblFileIcon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/fileicons/file_type_odt.png"))); // NOI18N
-        lblFileIcon.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         lblFileIcon.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 lblFileIconMouseClicked(evt);
@@ -783,7 +782,6 @@ public class DocumentEntryPanel extends javax.swing.JPanel {
 
         lblFileName.setFont(new java.awt.Font("Dialog", 1, 13)); // NOI18N
         lblFileName.setText("document.odt");
-        lblFileName.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         lblFileName.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 lblFileNameMouseClicked(evt);
