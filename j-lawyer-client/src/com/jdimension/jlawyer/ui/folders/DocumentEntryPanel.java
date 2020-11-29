@@ -839,11 +839,10 @@ public class DocumentEntryPanel extends javax.swing.JPanel {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(lblFavorite)
                 .addGap(18, 18, 18)
+                .addComponent(lblFileIcon)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(lblFileIcon)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(lblFileName))
+                    .addComponent(lblFileName)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(lblCreationDate)
                         .addGap(18, 18, 18)
@@ -859,19 +858,18 @@ public class DocumentEntryPanel extends javax.swing.JPanel {
             .addGroup(layout.createSequentialGroup()
                 .addGap(4, 4, 4)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(chkSelected)
+                    .addComponent(lblFileIcon, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(lblFileIcon)
-                            .addComponent(lblFileName)
-                            .addComponent(lblFavorite))
-                        .addGap(1, 1, 1)
+                        .addComponent(lblFileName)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(lblCreationDate)
                             .addComponent(lblDictateSign)
                             .addComponent(lblFileSize)
-                            .addComponent(lblFolder))))
-                .addGap(0, 3, Short.MAX_VALUE))
+                            .addComponent(lblFolder)))
+                    .addComponent(lblFavorite, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(chkSelected, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -1061,7 +1059,7 @@ public class DocumentEntryPanel extends javax.swing.JPanel {
         this.setFavorite(this.document.isFavorite());
 
         FileUtils fu = FileUtils.getInstance();
-        Icon icon = fu.getFileTypeIcon(doc.getName());
+        Icon icon = fu.getFileTypeIcon32(doc.getName());
         //this.lblFileIcon.setText(sValue);
         this.lblFileIcon.setIcon(icon);
 

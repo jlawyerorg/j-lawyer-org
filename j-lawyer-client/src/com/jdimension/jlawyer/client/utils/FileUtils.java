@@ -691,6 +691,7 @@ public class FileUtils extends ServerFileUtils {
     private static final Logger log = Logger.getLogger(FileUtils.class.getName());
     private static final SimpleDateFormat datePrefix = new SimpleDateFormat("yyyy-MM-dd_HH-mm_");
     private Hashtable<String, Icon> iconCache = null;
+    private Hashtable<String, Icon> iconCache32 = null;
 
     public static synchronized FileUtils getInstance() {
         if (instance == null) {
@@ -703,6 +704,7 @@ public class FileUtils extends ServerFileUtils {
     private FileUtils() {
         super();
         iconCache = new Hashtable<String, Icon>();
+        iconCache32 = new Hashtable<String, Icon>();
 
     }
 
@@ -778,6 +780,74 @@ public class FileUtils extends ServerFileUtils {
                 FileSystemView view = FileSystemView.getFileSystemView();
                 Icon icon = view.getSystemIcon(file);
                 this.iconCache.put(fileExt, icon);
+
+                //Delete the temporary file
+                file.delete();
+                return icon;
+            }
+
+        } catch (Throwable t) {
+            log.error("Could not determine default file type icon for " + fileName, t);
+            return null;
+        }
+    }
+    
+    public Icon getFileTypeIcon32(String fileName) {
+
+        if (fileName == null) {
+            return null;
+        }
+
+        int lastDot = fileName.lastIndexOf('.');
+        String fileExt = ".odt";
+        if (lastDot > -1) {
+            fileExt = fileName.substring(lastDot);
+        }
+
+        if (this.iconCache32.containsKey(fileExt)) {
+            return this.iconCache32.get(fileExt);
+        }
+
+        try {
+
+            String osName = System.getProperty("os.name").toLowerCase();
+
+            if (osName.indexOf("linux") > -1 || osName.startsWith("mac")) {
+
+                if (fileExt.startsWith(".")) {
+                    fileExt = fileExt.substring(1, fileExt.length());
+                }
+                fileExt = fileExt.toLowerCase();
+                ImageIcon image = null;
+                try {
+                    image = new ImageIcon(getClass().getResource("/icons32/fileicons/file_type_" + fileExt + "@2x.png"));
+                } catch (Throwable t) {
+                    log.warn("no file type icon for " + fileExt);
+                }
+                if (image != null) {
+                    this.iconCache32.put(fileExt, image);
+                    return image;
+                } else {
+                    //Create a temporary file with the specified extension
+                    File file = File.createTempFile("icon", fileExt);
+
+                    FileSystemView view = FileSystemView.getFileSystemView();
+                    Icon icon = view.getSystemIcon(file);
+                    this.iconCache32.put(fileExt, icon);
+
+                    //Delete the temporary file
+                    file.delete();
+                    return icon;
+                }
+
+            } else {
+                // Windows behaviour is default
+                //Create a temporary file with the specified extension
+                File file = File.createTempFile("icon", fileExt);
+
+                FileSystemView view = FileSystemView.getFileSystemView();
+                Icon icon = view.getSystemIcon(file);
+                this.iconCache32.put(fileExt, icon);
 
                 //Delete the temporary file
                 file.delete();
