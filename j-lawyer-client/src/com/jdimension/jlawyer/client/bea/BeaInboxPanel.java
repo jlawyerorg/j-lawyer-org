@@ -2064,9 +2064,15 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
 
     private void displayMessage() {
 
+        this.beaMessageContentUI.clear();
+        this.beaMessageContentUI.repaint();
+        this.beaMessageContentUI.revalidate();
+        
+        this.pnlActionsChild.removeAll();
+        this.pnlActionsChild.repaint();
+        this.pnlActionsChild.revalidate();
+        
         if (this.tblMails.getSelectedRow() < 0 || this.tblMails.getSelectedRows().length > 1) {
-            this.beaMessageContentUI.clear();
-            this.pnlActionsChild.removeAll();
             return;
         }
 
