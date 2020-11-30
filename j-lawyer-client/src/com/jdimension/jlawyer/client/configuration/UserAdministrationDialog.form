@@ -1024,6 +1024,7 @@
                           <Component id="jLabel22" alignment="0" min="-2" max="-2" attributes="0"/>
                           <Component id="jLabel23" alignment="0" min="-2" max="-2" attributes="0"/>
                           <Component id="jLabel24" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Component id="lblCloudPath" alignment="0" min="-2" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
@@ -1040,10 +1041,11 @@
                                   <Component id="lblNextcloudOrder1" min="-2" max="-2" attributes="0"/>
                                   <Component id="lblNextcloudOrder" min="-2" max="-2" attributes="0"/>
                                   <Component id="chkCloudSsl" min="-2" max="-2" attributes="0"/>
-                                  <Component id="txtCloudPort" alignment="0" min="-2" pref="165" max="-2" attributes="0"/>
+                                  <Component id="txtCloudPort" alignment="0" min="-2" pref="64" max="-2" attributes="0"/>
                               </Group>
                               <EmptySpace min="0" pref="270" max="32767" attributes="0"/>
                           </Group>
+                          <Component id="txtCloudPath" alignment="0" max="32767" attributes="0"/>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
                   </Group>
@@ -1064,7 +1066,12 @@
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="chkCloudSsl" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="3" attributes="0">
+                          <Component id="txtCloudPath" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="lblCloudPath" alignment="3" min="-2" max="-2" attributes="0"/>
+                      </Group>
+                      <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="3" attributes="0">
                           <Component id="txtCloudUser" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="jLabel23" alignment="3" min="-2" max="-2" attributes="0"/>
@@ -1083,7 +1090,7 @@
                           <Component id="cmdShowWebsite" min="-2" max="-2" attributes="0"/>
                           <Component id="txtNextcloudOrder" min="-2" max="-2" attributes="0"/>
                       </Group>
-                      <EmptySpace pref="222" max="32767" attributes="0"/>
+                      <EmptySpace pref="203" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -1161,6 +1168,16 @@
                   <Font name="Dialog" size="14" style="1"/>
                 </Property>
                 <Property name="text" type="java.lang.String" value="Hier Nextcloud-Nutzer anfordern:"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JTextField" name="txtCloudPath">
+              <Properties>
+                <Property name="toolTipText" type="java.lang.String" value="Unterverzeichnis des Webservers, ohne f&#xfc;hrende oder abschlie&#xdf;ende /"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JLabel" name="lblCloudPath">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="Pfad:"/>
               </Properties>
             </Component>
           </SubComponents>

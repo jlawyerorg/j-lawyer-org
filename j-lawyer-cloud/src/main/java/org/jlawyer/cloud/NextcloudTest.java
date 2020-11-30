@@ -691,6 +691,9 @@ public class NextcloudTest {
     public static void main(String[] args) {
         try {
             NextcloudConnector nc = new NextcloudConnector("bla.com", true, 443, "jens", "opensesame");
+            //nc.setSubpathPrefix("nextcloud");
+            
+            
 //            List<String> contents=nc.getUsers();
 //            for(String s: contents) {
 //                System.out.println(s);
@@ -712,18 +715,23 @@ public class NextcloudTest {
             List<String> tempFiles = nc.listFolderContent("temp");
             System.out.println(tempFiles);
 
-            System.out.println("upload 1");
-
-            //byte[] bytes = readFile(new File("/home/jens/beawrapper.txt"));
-            nc.uploadFile(new File("/home/jens/beawrapper.txt"), "/temp/beawrapper.txt");
-
-            System.out.println("upload 2");
-            //bytes = readFile(new File("/home/jens/briefkopf.odt"));
-            //nc.uploadFile(new FileInputStream("/home/jens/briefkopf.odt"), "/temp/briefkopf.odt", true);
-            nc.uploadFile(new File("/home/jens/briefkopf.odt"), "/temp/briefkopf.odt");
-
-            System.out.println("upload 3");
-            nc.uploadFile(new File("/home/jens/temp/ubuntu/ubuntu-18.04.3-live-server-amd64.iso"), "/temp/ubuntu-18.04.3-live-server-amd64.iso");
+//            System.out.println("upload 1");
+//
+//            //byte[] bytes = readFile(new File("/home/jens/beawrapper.txt"));
+//            nc.uploadFile(new File("/home/jens/beawrapper.txt"), "/temp/beawrapper.txt");
+//
+//            System.out.println("upload 2");
+//            //bytes = readFile(new File("/home/jens/briefkopf.odt"));
+//            //nc.uploadFile(new FileInputStream("/hem.out.println("upload 1");
+//
+//            //byte[] bytes = readFile(new File("/home/jens/beawrapper.txt"));
+//            nc.uploadFile(new File("/home/jens/beawrapper.txt"), "/temp/beawrapper.txt");
+//
+//            System.out.println("upload 2");
+//            //bytes = readFile(new File("/home/jens/briefkopf.odt"));
+//            //nc.uploadFile(new FileInputStream("/home/jens/briefkopf.odt"), "/temp/briefkopf.odt", true);
+//            nc.uploaome/jens/briefkopf.odt"), "/temp/briefkopf.odt", true);
+//            nc.uploadFile(new File("/home/jens/briefkopf.odt"), "/temp/briefkopf.odt");
 
 //            System.out.println("upload 4");
 //            nc.uploadFile(new ByteArrayInputStream(bytes), "/temp/briefkopf3.odt");

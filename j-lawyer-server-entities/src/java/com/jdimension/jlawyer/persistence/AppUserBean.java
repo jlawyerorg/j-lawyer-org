@@ -755,6 +755,9 @@ public class AppUserBean implements Serializable {
     @Column(name = "cloudPassword")
     private String cloudPassword;
     
+    @Column(name = "cloudPath")
+    protected String cloudPath;
+    
     
     public AppUserBean() {
     }
@@ -1194,6 +1197,20 @@ public class AppUserBean implements Serializable {
      */
     public void setCloudPassword(String cloudPassword) {
         this.cloudPassword = cloudPassword;
+    }
+
+    /**
+     * @return the cloudPath
+     */
+    public String getCloudPath() {
+        return cloudPath;
+    }
+
+    /**
+     * @param cloudPath the cloudPath to set
+     */
+    public void setCloudPath(String cloudPath) {
+        this.cloudPath = cloudPath;
     }
     
     

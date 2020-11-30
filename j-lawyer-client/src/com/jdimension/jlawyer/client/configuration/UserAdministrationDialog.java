@@ -870,6 +870,8 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         txtNextcloudOrder = new javax.swing.JTextField();
         cmdShowWebsite = new javax.swing.JButton();
         lblNextcloudOrder1 = new javax.swing.JLabel();
+        txtCloudPath = new javax.swing.JTextField();
+        lblCloudPath = new javax.swing.JLabel();
         jPanel9 = new javax.swing.JPanel();
         jLabel18 = new javax.swing.JLabel();
         cmbPrimaryGroup = new javax.swing.JComboBox<>();
@@ -1449,6 +1451,10 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         lblNextcloudOrder1.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
         lblNextcloudOrder1.setText("Hier Nextcloud-Nutzer anfordern:");
 
+        txtCloudPath.setToolTipText("Unterverzeichnis des Webservers, ohne führende oder abschließende /");
+
+        lblCloudPath.setText("Pfad:");
+
         org.jdesktop.layout.GroupLayout jPanel10Layout = new org.jdesktop.layout.GroupLayout(jPanel10);
         jPanel10.setLayout(jPanel10Layout);
         jPanel10Layout.setHorizontalGroup(
@@ -1459,7 +1465,8 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                     .add(jLabel21)
                     .add(jLabel22)
                     .add(jLabel23)
-                    .add(jLabel24))
+                    .add(jLabel24)
+                    .add(lblCloudPath))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel10Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(txtCloudHost)
@@ -1474,8 +1481,9 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                             .add(lblNextcloudOrder1)
                             .add(lblNextcloudOrder)
                             .add(chkCloudSsl)
-                            .add(txtCloudPort, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 165, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                        .add(0, 270, Short.MAX_VALUE)))
+                            .add(txtCloudPort, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 64, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                        .add(0, 270, Short.MAX_VALUE))
+                    .add(txtCloudPath))
                 .addContainerGap())
         );
         jPanel10Layout.setVerticalGroup(
@@ -1491,7 +1499,11 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                     .add(txtCloudPort, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(chkCloudSsl)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel10Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(txtCloudPath, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(lblCloudPath))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel10Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(txtCloudUser, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(jLabel23))
@@ -1507,7 +1519,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 .add(jPanel10Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
                     .add(cmdShowWebsite)
                     .add(txtNextcloudOrder, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(222, Short.MAX_VALUE))
+                .addContainerGap(203, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("Nextcloud", jPanel10);
@@ -1735,6 +1747,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         this.txtAbbreviation.setText("");
         this.cmbPrimaryGroup.setSelectedIndex(0);
         this.txtCloudHost.setText("");
+        this.txtCloudPath.setText("");
         this.txtCloudPort.setText(""+443);
         this.txtCloudUser.setText("");
         this.pwCloudPassword.setText("");
@@ -1815,6 +1828,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 this.cmbPrimaryGroup.setSelectedItem(u.getPrimaryGroup());
                 
                 this.txtCloudHost.setText(u.getCloudHost());
+                this.txtCloudPath.setText(u.getCloudPath());
                 this.txtCloudPort.setText(""+u.getCloudPort());
                 this.txtCloudUser.setText(u.getCloudUser());
                 this.pwCloudPassword.setText(u.getCloudPassword());
@@ -1955,6 +1969,19 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 u.setBeaCertificateAutoLogin(this.rdAutoLogin.isSelected());
                 
                 u.setCloudHost(this.txtCloudHost.getText());
+                String cloudPath=null;
+                if(txtCloudPath.getText().trim().length()>0) {
+                    cloudPath=txtCloudPath.getText();
+                    if(cloudPath.startsWith("/")) {
+                        cloudPath=cloudPath.substring(1,cloudPath.length()-1);
+                    }
+                    if(cloudPath.endsWith("/")) {
+                        cloudPath=cloudPath.substring(0,cloudPath.length()-2);
+                    }
+                    if(cloudPath.length()==0)
+                        cloudPath=null;
+                }
+                u.setCloudPath(cloudPath);
                 u.setCloudPassword(new String(this.pwCloudPassword.getPassword()));
                 u.setCloudPort(Integer.parseInt(this.txtCloudPort.getText()));
                 u.setCloudSsl(this.chkCloudSsl.isSelected());
@@ -2005,6 +2032,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         this.cmbPrimaryGroup.setSelectedIndex(0);
         
         this.txtCloudHost.setText("");
+        this.txtCloudPath.setText("");
         this.txtCloudPort.setText("443");
         this.txtCloudUser.setText("");
         this.pwCloudPassword.setText("");
@@ -2480,6 +2508,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane4;
     private javax.swing.JTabbedPane jTabbedPane1;
+    private javax.swing.JLabel lblCloudPath;
     private javax.swing.JLabel lblNextcloudOrder;
     private javax.swing.JLabel lblNextcloudOrder1;
     private javax.swing.JLabel lblTestProgress;
@@ -2497,6 +2526,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
     private javax.swing.JTextField txtAbbreviation;
     private javax.swing.JTextField txtAddress;
     private javax.swing.JTextField txtCloudHost;
+    private javax.swing.JTextField txtCloudPath;
     private javax.swing.JTextField txtCloudPort;
     private javax.swing.JTextField txtCloudUser;
     private javax.swing.JTextField txtEmailSender;

@@ -693,8 +693,11 @@ public class CloudInstance {
     private static CloudInstance instance = null;
     private NextcloudConnector con = null;
 
-    private CloudInstance(String serverName, boolean useHTTPS, int port, String userName, String password) {
+    private CloudInstance(String serverName, boolean useHTTPS, int port, String path, String userName, String password) {
         this.con = new NextcloudConnector(serverName, useHTTPS, port, userName, password);
+        if(path!=null && !"".equals(path)) {
+            con.setSubpathPrefix(path);
+        }
     }
     
     public static boolean isConfigured(AppUserBean user) {
@@ -728,7 +731,7 @@ public class CloudInstance {
                 return null;
             }
 
-            instance = new CloudInstance(user.getCloudHost(), user.isCloudSsl(), user.getCloudPort(), user.getCloudUser(), user.getCloudPassword());
+            instance = new CloudInstance(user.getCloudHost(), user.isCloudSsl(), user.getCloudPort(), user.getCloudPath(), user.getCloudUser(), user.getCloudPassword());
         }
         return instance;
     }
