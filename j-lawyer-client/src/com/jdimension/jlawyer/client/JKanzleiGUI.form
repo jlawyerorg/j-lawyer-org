@@ -142,7 +142,7 @@
                     <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
                       <Image iconType="3" name="/icons/file_doc.png"/>
                     </Property>
-                    <Property name="text" type="java.lang.String" value="Titel"/>
+                    <Property name="text" type="java.lang.String" value="Anrede"/>
                   </Properties>
                   <Events>
                     <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuAddressOptionsTitleActionPerformed"/>
@@ -153,7 +153,7 @@
                     <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
                       <Image iconType="3" name="/icons/file_doc.png"/>
                     </Property>
-                    <Property name="text" type="java.lang.String" value="Titel (Briefkopf)"/>
+                    <Property name="text" type="java.lang.String" value="Anrede (Briefkopf)"/>
                   </Properties>
                   <Events>
                     <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuAddressOptionsTitleInAddressActionPerformed"/>

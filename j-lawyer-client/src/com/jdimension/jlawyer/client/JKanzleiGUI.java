@@ -1301,7 +1301,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuAddressOptions.add(mnuAddressOptionsComplimentaryClose);
 
         mnuAddressOptionsTitle.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/file_doc.png"))); // NOI18N
-        mnuAddressOptionsTitle.setText("Titel");
+        mnuAddressOptionsTitle.setText("Anrede");
         mnuAddressOptionsTitle.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 mnuAddressOptionsTitleActionPerformed(evt);
@@ -1310,7 +1310,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuAddressOptions.add(mnuAddressOptionsTitle);
 
         mnuAddressOptionsTitleInAddress.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/file_doc.png"))); // NOI18N
-        mnuAddressOptionsTitleInAddress.setText("Titel (Briefkopf)");
+        mnuAddressOptionsTitleInAddress.setText("Anrede (Briefkopf)");
         mnuAddressOptionsTitleInAddress.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 mnuAddressOptionsTitleInAddressActionPerformed(evt);
