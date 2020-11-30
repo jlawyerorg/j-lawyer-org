@@ -4186,7 +4186,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             if (newName == null) {
                 return;
             }
-            if(newName.equalsIgnoreCase(doc.getName()))
+            if(newName.equals(doc.getName()))
                 return;
             boolean renamed = remote.renameDocument(doc.getId(), newName);
 
