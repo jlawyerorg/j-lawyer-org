@@ -663,6 +663,7 @@
  */
 package com.jdimension.jlawyer.client;
 
+import com.jdimension.jlawyer.client.bea.BeaAccess;
 import com.jdimension.jlawyer.client.cloud.CloudInstance;
 import com.jdimension.jlawyer.client.plugins.form.FormsManagementDialog;
 import com.jdimension.jlawyer.client.configuration.*;
@@ -713,6 +714,7 @@ import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -724,6 +726,7 @@ import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import javax.swing.tree.DefaultTreeModel;
 import org.apache.log4j.Logger;
+import org.jlawyer.bea.model.PostBox;
 import themes.colors.DefaultColorTheme;
 
 /**
@@ -758,10 +761,9 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
 
 //        this.scrollMain.getVerticalScrollBar().setUnitIncrement(16);
 //        this.scrollMain.getHorizontalScrollBar().setUnitIncrement(16);
-
         ClientSettings settings = ClientSettings.getInstance();
         String randomBackgrounds = UserSettings.getInstance().getSetting(UserSettings.CONF_DESKTOP_RANDOM_BACKGROUND, "0");
-        if("0".equalsIgnoreCase(randomBackgrounds)) {
+        if ("0".equalsIgnoreCase(randomBackgrounds)) {
             this.mnuChkRandomBackground.setSelected(false);
         } else {
             this.mnuChkRandomBackground.setSelected(true);
@@ -867,7 +869,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
 
             }));
         }
-       
+
         Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
             @Override
             public void run() {
@@ -881,7 +883,6 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             }
 
         }));
-        
 
 //        try {
 //            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
@@ -1799,6 +1800,25 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
 
     private void formWindowClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosing
 
+        try {
+            if (BeaAccess.hasInstance()) {
+                BeaAccess bea = BeaAccess.getInstance();
+                Collection<PostBox> postboxes = bea.getPostBoxes();
+                boolean pendingMessages = false;
+                for (PostBox pb : postboxes) {
+                    if (!bea.isOutboxEmpty(pb.getSafeId())) {
+                        pendingMessages = true;
+                        break;
+                    }
+                }
+                if (pendingMessages) {
+                    ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Es sind noch Nachrichten im beA-Postausgang - bitte manuell prüfen!", "Warnung");
+                }
+            }
+        } catch (Exception ex) {
+            log.error(ex);
+        }
+
         DocumentObserver observer = DocumentObserver.getInstance();
         boolean cancelled = false;
         if (observer.hasUnsavedDocuments()) {
@@ -2392,9 +2412,9 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             log.warn("download url for XJustiz Viewer is null");
             return;
         }
-        
+
         JOptionPane.showMessageDialog(this, "Der XJustiz-Viewer ist ein Softwareprodukt von Uwe Möller / Henning Müller ervjustiz.de." + System.lineSeparator() + "Er ist ausschließlich für die Nutzung durch Rechtsanwältinnen und Rechtsanwälte sowie deren Mitarbeiterinnen und Mitarbeiter freigegeben." + System.lineSeparator() + "Jede darüberhinausgehende Nutzung ist nicht erlaubt.", "XJustiz-Viewer Nutzungsbedingungen", JOptionPane.INFORMATION_MESSAGE);
-        
+
         try {
             String home = System.getProperty("user.home");
             File dir = new File(home + "/Downloads/");
@@ -2469,13 +2489,13 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
 
     private void mnuChkRandomBackgroundActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuChkRandomBackgroundActionPerformed
         UserSettings settings = UserSettings.getInstance();
-        if(this.mnuChkRandomBackground.isSelected()) {
+        if (this.mnuChkRandomBackground.isSelected()) {
             settings.setSetting(UserSettings.CONF_DESKTOP_RANDOM_BACKGROUND, "1");
         } else {
             settings.setSetting(UserSettings.CONF_DESKTOP_RANDOM_BACKGROUND, "0");
         }
         JOptionPane.showMessageDialog(this, "Die Einstellung erfordert einen Neustart des j-lawyer.org Clients.", "Neustart erforderlich", JOptionPane.INFORMATION_MESSAGE);
-        
+
     }//GEN-LAST:event_mnuChkRandomBackgroundActionPerformed
 
     private void mnuAddressOptionsNationalityActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuAddressOptionsNationalityActionPerformed

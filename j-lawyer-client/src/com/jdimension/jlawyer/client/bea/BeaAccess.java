@@ -975,6 +975,11 @@ public class BeaAccess {
         }
         return this.inboxes;
     }
+    
+    public boolean isOutboxEmpty(String safeId) throws BeaWrapperException {
+        this.checkValidBeaClient();
+        return this.wrapper.isOutboxEmpty(safeId);
+    }
 
     public Identity getIdentity(String safeId) throws BeaWrapperException {
         this.checkValidBeaClient();
