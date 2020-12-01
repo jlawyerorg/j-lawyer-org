@@ -671,6 +671,7 @@ import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.CaseFolder;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -680,9 +681,11 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.Hashtable;
+import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import themes.colors.DefaultColorTheme;
 
@@ -1472,7 +1475,10 @@ public class CaseFolderPanel extends javax.swing.JPanel {
         }
 
         this.pnlDocumentEntries.removeAll();
+        BoxLayout boxLayout=new BoxLayout(this.pnlDocumentEntries, BoxLayout.Y_AXIS);
+        this.pnlDocumentEntries.setLayout(boxLayout);
 //        this.pnlDocumentEntries.repaint();
+        double prefHeight=0;
         for (int i = 0; i < docsInSelectedFolders.size(); i++) {
             ArchiveFileDocumentsBean d = docsInSelectedFolders.get(i);
             DocumentEntryPanel p = new DocumentEntryPanel(this.caseContainer, this, d, this.readonly);
@@ -1485,6 +1491,12 @@ public class CaseFolderPanel extends javax.swing.JPanel {
                 p.setSelected(true);
             }
             this.pnlDocumentEntries.add(p);
+            prefHeight=prefHeight+p.getPreferredSize().getHeight();
+        }
+        if(prefHeight<this.pnlDocumentEntries.getHeight()) {
+            JPanel glue=new JPanel();
+            glue.setPreferredSize(new Dimension(3,(this.pnlDocumentEntries.getHeight()-(int)prefHeight)));
+            this.pnlDocumentEntries.add(glue);
         }
         this.jScrollPane2.getVerticalScrollBar().setValue(0);
 //        this.pnlDocumentEntries.revalidate();
