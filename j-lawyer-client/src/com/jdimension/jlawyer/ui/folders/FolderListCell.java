@@ -918,6 +918,11 @@ public class FolderListCell extends javax.swing.JPanel {
     }//GEN-LAST:event_mnuEditActionPerformed
 
     private void mnuDeleteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuDeleteActionPerformed
+        int response = JOptionPane.showConfirmDialog(this, "Der Ordner wird mit seinen Unterordnern und Dokumenten gelöscht. Fortfahren?", "Ordner löschen", JOptionPane.YES_NO_OPTION);
+        if (response == JOptionPane.NO_OPTION) {
+            return;
+        }
+        
         try {
 
             ClientSettings settings = ClientSettings.getInstance();
