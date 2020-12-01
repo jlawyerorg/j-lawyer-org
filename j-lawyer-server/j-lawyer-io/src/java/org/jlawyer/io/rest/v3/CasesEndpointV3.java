@@ -820,16 +820,16 @@ public class CasesEndpointV3 implements CasesEndpointLocalV3 {
     /**
     * Applies a folder template to a case.
     * @param id the case id
-    * @param templateName the name of the folder template to be applied
+    * @param templateId the ID of the folder template to be applied
     * @response 401 User not authorized
     * @response 403 User not authenticated
     */
     @Override
     @PUT
     @Produces(MediaType.APPLICATION_JSON)
-    @Path("/{id}/foldertemplates/{templateName}/apply")
+    @Path("/{id}/foldertemplates/{templateId}/apply")
     @RolesAllowed({"writeArchiveFileRole"})
-    public Response applyFolderTemplate(@PathParam("id") String id, @PathParam("templateName") String templateName) {
+    public Response applyFolderTemplate(@PathParam("id") String id, @PathParam("templateId") String templateId) {
         try {
 
             InitialContext ic = new InitialContext();
@@ -841,14 +841,14 @@ public class CasesEndpointV3 implements CasesEndpointLocalV3 {
                 return res;
             }
 
-            DocumentFolderTemplate tpl=cases.getFolderTemplate(templateName);
+            DocumentFolderTemplate tpl=cases.getFolderTemplateById(templateId);
             if(tpl==null) {
-                log.error("There is no folder template with name " + templateName);
+                log.error("There is no folder template with ID " + templateId);
                 Response res = Response.serverError().build();
                 return res;
 
             } else {
-                CaseFolder cf=cases.applyFolderTemplate(id, templateName);
+                CaseFolder cf=cases.applyFolderTemplate(id, tpl.getName());
                 RestfulCaseFolderV3 rootResult = new RestfulCaseFolderV3();
                 this.buildCaseFolders(cf, rootResult);
                 return Response.ok(rootResult).build();

@@ -4521,4 +4521,44 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         }
     }
 
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public CaseFolder applyFolderTemplateById(String caseId, String templateId) throws Exception {
+        DocumentFolderTemplate tpl=this.folderTemplateFacade.find(templateId);
+        if(tpl==null) {
+            throw new Exception("Ordnervorlage mit ID " + templateId + " existiert nicht!");
+        }
+        
+        ArchiveFileBean aFile=this.getArchiveFile(caseId);
+        if(aFile==null) {
+            throw new Exception("Akte " + caseId + " existiert nicht!");
+        }
+        
+        CaseFolder rootFolder=aFile.getRootFolder();
+        StringGenerator idGen=new StringGenerator();
+        if(rootFolder==null) {
+            rootFolder=new CaseFolder();
+            rootFolder.setId(idGen.getID().toString());
+            rootFolder.setName(tpl.getRootFolder().getName());
+            rootFolder.setParentId(null);
+            this.caseFolderFacade.create(rootFolder);
+            aFile.setRootFolder(rootFolder);
+            this.archiveFileFacade.edit(aFile);
+        }
+       
+        DocumentFolder tplRoot=tpl.getRootFolder();
+        rootFolder.setName(tplRoot.getName());
+        this.caseFolderFacade.edit(rootFolder);
+        
+        this.applyFolderTemplate(rootFolder, tplRoot, idGen);
+        
+        return this.caseFolderFacade.find(rootFolder.getId());
+    }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public DocumentFolderTemplate getFolderTemplateById(String id) {
+        return this.folderTemplateFacade.find(id);
+    }
+
 }

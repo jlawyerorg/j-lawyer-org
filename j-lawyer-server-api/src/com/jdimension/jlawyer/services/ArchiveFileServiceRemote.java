@@ -835,4 +835,8 @@ public interface ArchiveFileServiceRemote {
 
     CaseFolder applyFolderTemplate(String caseId, String templateName) throws Exception;
 
+    CaseFolder applyFolderTemplateById(String id, String templateId) throws Exception;
+
+    DocumentFolderTemplate getFolderTemplateById(String id);
+
 }

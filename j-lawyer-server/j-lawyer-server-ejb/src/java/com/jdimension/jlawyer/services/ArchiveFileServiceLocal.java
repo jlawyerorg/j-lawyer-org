@@ -777,5 +777,9 @@ public interface ArchiveFileServiceLocal {
     void moveDocumentsToFolder(Collection<String> documentIds, String folderId) throws Exception;
     
     CaseFolder applyFolderTemplate(String caseId, String templateName) throws Exception;
+
+    CaseFolder applyFolderTemplateById(String id, String templateId) throws Exception;
+
+    DocumentFolderTemplate getFolderTemplateById(String id);
     
 }
