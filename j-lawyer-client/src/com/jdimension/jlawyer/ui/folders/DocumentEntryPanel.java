@@ -1049,6 +1049,8 @@ public class DocumentEntryPanel extends javax.swing.JPanel {
     void setDocument(ArchiveFileDocumentsBean doc) {
         this.document=doc;
         this.lblFileName.setText(doc.getName());
+        this.lblFileName.setToolTipText(doc.getName());
+        this.lblFileIcon.setToolTipText(doc.getName());
         this.lblCreationDate.setText(df.format(doc.getCreationDate()));
         this.lblDictateSign.setText(doc.getDictateSign());
         if(this.document.getFolder()==null) {
