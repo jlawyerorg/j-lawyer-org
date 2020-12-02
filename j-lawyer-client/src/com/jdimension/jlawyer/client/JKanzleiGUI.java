@@ -1059,6 +1059,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         jSeparator3 = new javax.swing.JSeparator();
         mnuExit = new javax.swing.JMenuItem();
         mnuView = new javax.swing.JMenu();
+        mnuFontSize = new javax.swing.JMenuItem();
         mnuChkRandomBackground = new javax.swing.JCheckBoxMenuItem();
         mnuOptions = new javax.swing.JMenu();
         mnuAddressOptions = new javax.swing.JMenu();
@@ -1092,8 +1093,6 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuWordProcessor = new javax.swing.JMenuItem();
         mnuSearchIndex = new javax.swing.JMenuItem();
         mnuCustomLauncherOptions = new javax.swing.JMenuItem();
-        jSeparator1 = new javax.swing.JSeparator();
-        mnuFontSize = new javax.swing.JMenuItem();
         jSeparator2 = new javax.swing.JSeparator();
         mnuUserProfile = new javax.swing.JMenuItem();
         mnuProfileInfo = new javax.swing.JMenuItem();
@@ -1266,6 +1265,15 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         jMenuBar1.add(mnuFile);
 
         mnuView.setText("Ansicht");
+
+        mnuFontSize.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/fonts.png"))); // NOI18N
+        mnuFontSize.setText(bundle.getString("menu.settings.fontsize")); // NOI18N
+        mnuFontSize.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuFontSizeActionPerformed(evt);
+            }
+        });
+        mnuView.add(mnuFontSize);
 
         mnuChkRandomBackground.setText("zufälliger Desktophintergrund");
         mnuChkRandomBackground.setToolTipText("");
@@ -1546,16 +1554,6 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuDocumentOptions.add(mnuCustomLauncherOptions);
 
         mnuOptions.add(mnuDocumentOptions);
-        mnuOptions.add(jSeparator1);
-
-        mnuFontSize.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/fonts.png"))); // NOI18N
-        mnuFontSize.setText(bundle.getString("menu.settings.fontsize")); // NOI18N
-        mnuFontSize.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                mnuFontSizeActionPerformed(evt);
-            }
-        });
-        mnuOptions.add(mnuFontSize);
         mnuOptions.add(jSeparator2);
 
         mnuUserProfile.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/identity.png"))); // NOI18N
@@ -2594,7 +2592,6 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JMenuBar jMenuBar1;
     private javax.swing.JPanel jPanel1;
-    private javax.swing.JSeparator jSeparator1;
     private javax.swing.JSeparator jSeparator2;
     private javax.swing.JSeparator jSeparator3;
     private javax.swing.JPopupMenu.Separator jSeparator4;
