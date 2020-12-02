@@ -2415,10 +2415,10 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             .add(tabPartiesLayout.createSequentialGroup()
                 .addContainerGap()
                 .add(tabPartiesLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jScrollPane8, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 945, Short.MAX_VALUE)
-                    .add(org.jdesktop.layout.GroupLayout.TRAILING, tabPartiesLayout.createSequentialGroup()
-                        .add(0, 0, Short.MAX_VALUE)
-                        .add(cmdSearchClient)))
+                    .add(jScrollPane8, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 953, Short.MAX_VALUE)
+                    .add(tabPartiesLayout.createSequentialGroup()
+                        .add(cmdSearchClient)
+                        .add(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         tabPartiesLayout.setVerticalGroup(
