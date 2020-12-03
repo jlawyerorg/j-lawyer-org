@@ -780,6 +780,10 @@ public class CaseFolderPanel extends javax.swing.JPanel {
         this.setRootFolder(rootFolder, new ArrayList<String>());
 
     }
+    
+    public String getFolderPath(String folderId) {
+        return this.foldersListPanel.getFolderPath(folderId);
+    }
 
     private void buildMoveToFolderMenu(ArrayList<JMenuItem> items, CaseFolder folder, String path) {
         JMenuItemWithFolder menu = new JMenuItemWithFolder();
@@ -884,11 +888,11 @@ public class CaseFolderPanel extends javax.swing.JPanel {
 
                 String s1 = "";
                 if (f1 != null) {
-                    s1 = f1.getName();
+                    s1 = this.getFolderPath(f1.getId());
                 }
                 String s2 = "";
                 if (f2 != null) {
-                    s2 = f2.getName();
+                    s2 = this.getFolderPath(f2.getId());
                 }
                 if(s1==null)
                     s1="";
@@ -901,11 +905,11 @@ public class CaseFolderPanel extends javax.swing.JPanel {
 
                 String s1 = "";
                 if (f1 != null) {
-                    s1 = f1.getName();
+                    s1 = this.getFolderPath(f1.getId());
                 }
                 String s2 = "";
                 if (f2 != null) {
-                    s2 = f2.getName();
+                    s2 = this.getFolderPath(f2.getId());
                 }
                 if(s1==null)
                     s1="";

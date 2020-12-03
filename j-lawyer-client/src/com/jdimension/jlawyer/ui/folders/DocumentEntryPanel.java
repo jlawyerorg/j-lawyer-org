@@ -1058,7 +1058,8 @@ public class DocumentEntryPanel extends javax.swing.JPanel {
             this.lblFolder.setText("");
         } else {
             this.lblFolder.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/jdimension/jlawyer/ui/folders/folder-empty.png")));
-            this.lblFolder.setText(this.document.getFolder().getName());
+            this.lblFolder.setToolTipText(this.document.getFolder().getName());
+            this.lblFolder.setText(this.documentsContainer.getFolderPath(this.document.getFolder().getId()));
         }
 
         this.setFavorite(this.document.isFavorite());

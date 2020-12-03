@@ -670,6 +670,7 @@ import java.awt.GridBagLayout;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Hashtable;
 import java.util.List;
 import javax.swing.Box;
 import javax.swing.JScrollPane;
@@ -870,6 +871,32 @@ public class FoldersListPanel extends javax.swing.JPanel {
         if (f.getChildren() != null) {
             for (CaseFolder c : f.getChildren()) {
                 this.collectSubtreeIds(c, ids);
+            }
+        }
+    }
+    
+    public String getFolderPath(String folderId) {
+        Hashtable<String,String> folderPaths=new Hashtable<String,String>();
+        this.collectFolderPaths(folderPaths, this.rootFolder, "");
+        if(folderPaths.containsKey(folderId)) {
+            return folderPaths.get(folderId);
+        } else {
+            return "(unbekannter Ordner)";
+        }
+    }
+    
+    private void collectFolderPaths(Hashtable<String,String> items, CaseFolder folder, String path) {
+        String itemName = path;
+        if (path.length() > 0) {
+            itemName = itemName + " > ";
+        }
+        itemName = itemName + folder.getName();
+
+        items.put(folder.getId(), itemName);
+        
+        if (folder.getChildren() != null) {
+            for (CaseFolder child : folder.getChildren()) {
+                collectFolderPaths(items, child, itemName);
             }
         }
     }
