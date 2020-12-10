@@ -858,9 +858,13 @@ public class FoldersListPanel extends javax.swing.JPanel {
         this.collectSubtreeIds(removedFolder, folderIds);
 
         this.caseFolderPanel.removeDocumentsInFolders(folderIds);
-
+        
         parent.getChildren().remove(removedFolder);
-        this.setRootFolder(this.rootFolder, this.getUnselectedFolderIds());
+        //this.setRootFolder(this.rootFolder, this.getUnselectedFolderIds());
+        
+        // need to rebuild the popup menu with all the folders
+        this.caseFolderPanel.setRootFolder(this.rootFolder, this.getUnselectedFolderIds());
+        
         this.revalidate();
         this.repaint();
         this.forceRelayout();
