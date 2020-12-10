@@ -974,7 +974,7 @@ public class CaseFolderPanel extends javax.swing.JPanel {
         foldersListPanel = new com.jdimension.jlawyer.ui.folders.FoldersListPanel();
 
         cmdOptions.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/package_system.png"))); // NOI18N
-        cmdOptions.setToolTipText("Ordnereinstellungen");
+        cmdOptions.setToolTipText("Ordnervorlagen");
         cmdOptions.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseReleased(java.awt.event.MouseEvent evt) {
                 cmdOptionsMouseReleased(evt);
