@@ -1290,7 +1290,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         ThreadUtils.setWaitCursor(this);
 
         this.caseFolderPanel1.clearDocuments();
-
+        this.cmdClearSearchActionPerformed(null);
+        
         this.pnlInvolvedParties.removeAll();
 
         for (int t = this.tabPaneForms.getTabCount() - 1; t > 0; t--) {
@@ -1322,6 +1323,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         };
 
         TagUtils.populateTags(ClientSettings.getInstance().getDocumentTagsInUse(), this.cmdDocumentTagFilter, this.popDocumentTagFilter, tagAction);
+        
 
     }
 
