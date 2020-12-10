@@ -1602,6 +1602,7 @@ public class CaseFolderPanel extends javax.swing.JPanel {
 
     void folderSelectionChanged() {
         this.setDocuments(this.documents);
+        this.caseContainer.documentSelectionChanged();
     }
 
     void removeDocumentsInFolders(ArrayList<String> folderIds) {
