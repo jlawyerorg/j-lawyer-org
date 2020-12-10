@@ -666,6 +666,8 @@ package com.jdimension.jlawyer.client.bea;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
+import com.jdimension.jlawyer.client.utils.StringUtils;
+import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
 import javax.swing.DefaultListModel;
@@ -691,10 +693,19 @@ public class SelectLegalAuthorityDialog extends javax.swing.JDialog {
         
         DefaultListModel lm=new DefaultListModel();
         List<BeaListItem> auths=LegalAuthorities.getAuthorities();
+        ArrayList<String> authNames=new ArrayList<String>();
+        
+        
         for(BeaListItem la: auths) {
-            lm.addElement(la.getName());
+            //lm.addElement(la.getName());
+            authNames.add(la.getName());
             authorities.put(la.getName(), la);
         }
+        StringUtils.sortIgnoreCase(authNames);
+        for(String s: authNames) {
+            lm.addElement(s);
+        }
+        
         this.lstAuthorities.setModel(lm);
         this.cmdOK.setEnabled(true);
         
@@ -810,10 +821,17 @@ public class SelectLegalAuthorityDialog extends javax.swing.JDialog {
         this.cmdOK.setEnabled(false);
         DefaultListModel lm=new DefaultListModel();
         List<BeaListItem> auths=LegalAuthorities.getAuthorities();
+        ArrayList<String> authNames=new ArrayList<>();
         for(BeaListItem la: auths) {
             if(la.getName().toLowerCase().indexOf(txtSearch.getText().toLowerCase())>-1)
-                lm.addElement(la.getName());
+                //lm.addElement(la.getName());
+                authNames.add(la.getName());
         }
+        StringUtils.sortIgnoreCase(authNames);
+        for(String s: authNames) {
+            lm.addElement(s);
+        }
+        
         this.lstAuthorities.setModel(lm);
         if(lm.getSize()==1) {
             this.lstAuthorities.setSelectedIndex(0);
