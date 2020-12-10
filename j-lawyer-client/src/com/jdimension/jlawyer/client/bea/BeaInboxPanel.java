@@ -812,6 +812,15 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                         this);
 
         AppUserBean cu = UserSettings.getInstance().getCurrentUser();
+        
+        ComponentUtils.restoreSplitPane(this.mainSplitter, this.getClass(), "mainSplitter");
+        ComponentUtils.persistSplitPane(this.mainSplitter, this.getClass(), "mainSplitter");
+        
+        ComponentUtils.restoreSplitPane(this.splitterFolderDetails, this.getClass(), "splitterFolderDetails");
+        ComponentUtils.persistSplitPane(this.splitterFolderDetails, this.getClass(), "splitterFolderDetails");
+        
+        ComponentUtils.restoreSplitPane(this.jSplitPane1, this.getClass(), "jSplitPane1");
+        ComponentUtils.persistSplitPane(this.jSplitPane1, this.getClass(), "jSplitPane1");
 
         // cancel constructur if there is no email configuration
         if (!BeaUtils.hasCertificateConfig(cu) || (BeaUtils.hasCertificateConfig(cu) && !cu.isBeaCertificateAutoLogin()) || !BeaAccess.isBeaEnabled()) {
@@ -840,7 +849,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
         } catch (Exception ex) {
             log.error(ex);
         }
-
+        
         this.initializing = false;
     }
 
