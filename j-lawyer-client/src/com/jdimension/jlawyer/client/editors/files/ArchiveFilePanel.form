@@ -229,7 +229,7 @@
         <MenuItem class="javax.swing.JMenuItem" name="mnuSendDocument">
           <Properties>
             <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-              <Image iconType="3" name="/icons/mail_send.png"/>
+              <Image iconType="3" name="/icons/mail_send_2.png"/>
             </Property>
             <Property name="text" type="java.lang.String" value="senden"/>
           </Properties>
@@ -240,7 +240,7 @@
         <MenuItem class="javax.swing.JMenuItem" name="mnuSendDocumentPDF">
           <Properties>
             <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-              <Image iconType="3" name="/icons/mail_send.png"/>
+              <Image iconType="3" name="/icons/mail_send_2.png"/>
             </Property>
             <Property name="text" type="java.lang.String" value="als PDF senden"/>
           </Properties>
@@ -251,7 +251,7 @@
         <MenuItem class="javax.swing.JMenuItem" name="mnuOpenInExternalMailer">
           <Properties>
             <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-              <Image iconType="3" name="/icons/mail_send.png"/>
+              <Image iconType="3" name="/icons/mail_send_2.png"/>
             </Property>
             <Property name="text" type="java.lang.String" value="im externen Mailprogramm &#xf6;ffnen"/>
           </Properties>

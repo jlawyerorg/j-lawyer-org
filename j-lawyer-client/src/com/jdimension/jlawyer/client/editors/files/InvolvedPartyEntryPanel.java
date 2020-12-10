@@ -860,7 +860,7 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
         txtCustom3 = new javax.swing.JTextField();
         lblUnderage = new javax.swing.JLabel();
 
-        mnuSendEmail.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/mail_send.png"))); // NOI18N
+        mnuSendEmail.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/mail_send_2.png"))); // NOI18N
         mnuSendEmail.setText("E-Mail verfassen");
         mnuSendEmail.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
