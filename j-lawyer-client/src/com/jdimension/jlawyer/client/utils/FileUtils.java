@@ -866,13 +866,13 @@ public class FileUtils extends ServerFileUtils {
 
     public static String getNewFileName(String currentFileName, boolean datetimePrefix, java.util.Date d) {
 
-        return getNewFileName(currentFileName, datetimePrefix, d, EditorsRegistry.getInstance().getMainWindow(), "Datei umbenennen");
+        return getNewFileName(currentFileName, datetimePrefix, d, EditorsRegistry.getInstance().getMainWindow(), "Datei benennen");
 
     }
 
     public static String getNewFileName(String currentFileName, boolean datetimePrefix, java.util.Date d, Component parent) {
 
-        return getNewFileName(currentFileName, datetimePrefix, d, parent, "Datei umbenennen");
+        return getNewFileName(currentFileName, datetimePrefix, d, parent, "Datei benennen");
 
     }
 
