@@ -703,6 +703,7 @@ public class FormInstancePanel extends javax.swing.JPanel {
         try {
             ui = plugin.getUi();
             this.scrollPlugin.setViewportView(ui);
+            this.scrollPlugin.getVerticalScrollBar().setUnitIncrement(16);
         } catch (Exception ex) {
             log.error("Can not initialize plugin " + plugin.getId(), ex);
             this.scrollPlugin.setViewportView(ui);
