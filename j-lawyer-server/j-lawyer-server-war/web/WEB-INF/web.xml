@@ -17,6 +17,26 @@
     <welcome-file-list>
         <welcome-file>index.jsp</welcome-file>
     </welcome-file-list>
+    <security-constraint>
+        <display-name>Constraint1</display-name>
+        <web-resource-collection>
+            <web-resource-name>default</web-resource-name>
+            <description/>
+            <url-pattern>/autostart</url-pattern>
+        </web-resource-collection>
+        <auth-constraint>
+            <description>need at least login role</description>
+            <role-name>loginRole</role-name>
+        </auth-constraint>
+    </security-constraint>
+    <login-config>
+        <auth-method>BASIC</auth-method>
+        <realm-name>jlawyerRealm</realm-name>
+    </login-config>
+    <security-role>
+        <description/>
+        <role-name>loginRole</role-name>
+    </security-role>
     <ejb-local-ref>
         <ejb-ref-name>ServerSettingsBeanFacade</ejb-ref-name>
         <ejb-ref-type>Session</ejb-ref-type>

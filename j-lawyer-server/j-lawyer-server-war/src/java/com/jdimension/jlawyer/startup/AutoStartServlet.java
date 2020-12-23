@@ -663,12 +663,12 @@
  */
 package com.jdimension.jlawyer.startup;
 
-import com.jdimension.jlawyer.persistence.ServerSettingsBeanFacadeLocal;
 import com.jdimension.jlawyer.timer.TransientTimer;
 import java.io.*;
-import javax.ejb.EJB;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
+import javax.servlet.annotation.HttpConstraint;
+import javax.servlet.annotation.ServletSecurity;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -680,6 +680,7 @@ import org.apache.log4j.Logger;
  * @author jens
  */
 @WebServlet(name = "AutoStartServlet", urlPatterns = {"/autostart"})
+@ServletSecurity(@HttpConstraint(rolesAllowed = "loginRole"))
 public class AutoStartServlet extends HttpServlet {
     
 //    @EJB
