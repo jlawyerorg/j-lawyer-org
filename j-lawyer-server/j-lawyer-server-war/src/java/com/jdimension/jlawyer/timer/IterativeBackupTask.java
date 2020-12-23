@@ -899,7 +899,7 @@ public class IterativeBackupTask extends java.util.TimerTask implements Cancella
             log.info("Backup finished");
 
             if (syncLocation.length() > 0) {
-                log.info("Starting sync to " + syncLocation);
+                log.info("Starting sync to " + BackupSyncTask.removePasswordFromUrl(syncLocation));
                 syncStart = new Date();
 
                 try {

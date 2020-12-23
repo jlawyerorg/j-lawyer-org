@@ -700,6 +700,31 @@ public class BackupSyncTask extends java.util.TimerTask {
 
     }
 
+    public static String removePasswordFromUrl(String url) {
+        try {
+            int atIndex = url.indexOf("@");
+            if (atIndex > -1) {
+                String tempUrl = url.substring(0, atIndex);
+                int protocolIndex = url.indexOf("//");
+                int colonIndex =url.lastIndexOf(":");
+                if(colonIndex>protocolIndex) {
+                    // it has a password
+                    String pwd=tempUrl.substring(colonIndex+1);
+                    return url.replaceAll(pwd, "***");
+                } else {
+                    // no password
+                    return url;
+                }
+                
+                
+            }
+        } catch (Throwable t) {
+            log.warn("unable to strip credentials from url", t);
+            
+        }
+        return url;
+    }
+
     @Override
     public void run() {
 
@@ -731,7 +756,7 @@ public class BackupSyncTask extends java.util.TimerTask {
             backupDir.mkdirs();
 
             if (syncLocation.length() > 0) {
-                log.info("Starting sync to " + syncLocation);
+                log.info("Starting sync to " + removePasswordFromUrl(syncLocation));
 
                 try {
                     VirtualFile vf = VirtualFile.getFile(syncLocation);
