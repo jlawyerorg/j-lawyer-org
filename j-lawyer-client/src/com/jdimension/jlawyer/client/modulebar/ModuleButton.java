@@ -712,6 +712,13 @@ public class ModuleButton extends javax.swing.JPanel implements EventConsumer {
         initComponents();
         this.defaultBackColor=this.getBackground();
         this.module = m;
+        
+        
+        if (m.getStatusEventType() > 0) {
+            EventBroker b = EventBroker.getInstance();
+            b.subscribeConsumer(this, m.getStatusEventType());
+            log.info(m.getFullName() + " is subscribed to events");
+        }
 
         this.editorClass = m.getEditorClass();
 
@@ -754,10 +761,6 @@ public class ModuleButton extends javax.swing.JPanel implements EventConsumer {
 //            this.lblIndicator.setForeground(new Color(222, 49, 59));
 //        }
 
-        if (m.getStatusEventType() > 0) {
-            EventBroker b = EventBroker.getInstance();
-            b.subscribeConsumer(this, m.getStatusEventType());
-        }
 
     }
 

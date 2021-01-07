@@ -1347,7 +1347,6 @@ public class SplashThread implements Runnable {
             //updateStatus(".", false);
             try {
                 editor = EditorsRegistry.getInstance().getEditor(editorClass);
-
                 if (editor instanceof StatusBarProvider) {
 
                     ((StatusBarProvider) editor).notifyStatusBarReady();

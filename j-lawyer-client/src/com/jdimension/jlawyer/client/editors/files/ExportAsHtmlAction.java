@@ -673,7 +673,7 @@ import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
-import com.sun.glass.ui.Cursor;
+//import com.sun.glass.ui.Cursor;
 import java.awt.Component;
 import java.io.ByteArrayInputStream;
 import java.io.File;
