@@ -919,7 +919,10 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
         // the copiedMsg object to access the content of the message.
         // todo: remove?
         // copiedMsg=msg;
-        lblSentDate.setText(df.format(copiedMsg.getSentDate()));
+        String sentString="";
+        if(copiedMsg.getSentDate()!=null)
+            sentString=df.format(copiedMsg.getSentDate());
+        lblSentDate.setText(sentString);
         lblSubject.setText(copiedMsg.getSubject());
         lblSubject.setToolTipText(lblSubject.getText());
         lblFrom.setText(MimeUtility.decodeText(copiedMsg.getFrom()[0].toString()));

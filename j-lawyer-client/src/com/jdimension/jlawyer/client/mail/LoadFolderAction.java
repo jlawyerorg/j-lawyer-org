@@ -673,6 +673,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import javax.mail.Address;
+import javax.mail.FetchProfile;
 import javax.mail.Flags;
 import javax.mail.Folder;
 import javax.mail.Message;
@@ -765,6 +766,12 @@ public class LoadFolderAction extends ProgressableAction {
             }
 
             Message[] messages = f.getMessages(fromIndex, toIndex);
+
+            FetchProfile fp = new FetchProfile();
+            fp.add(FetchProfile.Item.ENVELOPE);
+            fp.add(FetchProfile.Item.FLAGS);
+            f.fetch(messages, fp);
+
             HashMap<String, String> decodedMap = new HashMap<String, String>();
             final int indexMax = messages.length - 1;
             ArrayList<Object[]> tableRows = new ArrayList<>();
@@ -848,10 +855,14 @@ public class LoadFolderAction extends ProgressableAction {
 
 //                final String subject=MimeUtility.decodeText(msg.getFrom()[0].toString());
                 //final String toString2 = toString;
-                Object[] newRow = new Object[]{new MessageContainer(msg, msg.getSubject(), msg.isSet(Flags.Flag.SEEN)), from, toString, df.format(msg.getSentDate())};
+                String sentString="";
+                if(msg.getSentDate()!=null) {
+                    sentString=df.format(msg.getSentDate());
+                }
+                Object[] newRow = new Object[]{new MessageContainer(msg, msg.getSubject(), msg.isSet(Flags.Flag.SEEN)), from, toString, sentString};
                 tableRows.add(newRow);
 
-                if (((i % 25) == 0 && i>0) || i == (messages.length - 1)) {
+                if (((i % 25) == 0 && i > 0) || i == (messages.length - 1)) {
 
                     final int currentIndex = i;
                     final ArrayList<Object[]> tableRowsClone = (ArrayList<Object[]>) tableRows.clone();
