@@ -742,7 +742,7 @@ public class SortButton extends JButton {
             this.setSortState(SORT_DESC);
             
         } else if (this.getSortState() == SORT_DESC) {
-            this.setSortState(SORT_NONE);
+            this.setSortState(SORT_ASC);
             
         }
     }
