@@ -715,6 +715,11 @@ public class UserSettings {
     public static final String CONF_DESKTOP_LASTFILTERTAG="client.desktop.lastfiltertag";
     public static final String CONF_DESKTOP_LASTFILTERDOCUMENTTAG="client.desktop.lastfilterdocumenttag";
     
+    public static final String CONF_DREBIS_TAGGINGENABLED="user.drebis.taggingenabled";
+    public static final String CONF_DREBIS_DOCUMENTTAGGINGENABLED="user.drebis.documenttaggingenabled";
+    public static final String CONF_DREBIS_LASTTAG="user.drebis.lasttag";
+    public static final String CONF_DREBIS_LASTDOCUMENTTAG="user.drebis.lastdocumenttag";
+    
     private static String ARRAY_DELIMITER="#####";
 
     private static final Logger log = Logger.getLogger(UserSettings.class.getName());

@@ -741,7 +741,6 @@ public class ClientSettings {
     
     public static final String CONF_MAILS_TAGGINGENABLED="client.mails.taggingenabled";
     public static final String CONF_MAILS_DOCUMENTTAGGINGENABLED="client.mails.documenttaggingenabled";
-    public static final String CONF_MAILS_LASTTAG="client.mails.lasttag";
     public static final String CONF_MAILS_DELETEENABLED="client.mails.deleteenabled";
     
     public static final String CONF_MAILSEND_DOCUMENTTAGGINGENABLED="client.mailsend.documenttaggingenabled";
