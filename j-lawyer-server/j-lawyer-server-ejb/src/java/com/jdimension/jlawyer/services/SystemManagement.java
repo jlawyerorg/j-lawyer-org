@@ -688,11 +688,13 @@ import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Properties;
+import javax.annotation.Resource;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.Asynchronous;
 import javax.ejb.EJB;
 import javax.ejb.EJBException;
+import javax.ejb.SessionContext;
 import javax.ejb.Stateless;
 import javax.mail.Folder;
 import javax.mail.Message;
@@ -731,6 +733,8 @@ import org.w3c.dom.NodeList;
 public class SystemManagement implements SystemManagementRemote, SystemManagementLocal {
 
     private static Logger log = Logger.getLogger(SystemManagement.class.getName());
+    @Resource
+    private SessionContext context;
     @EJB
     private AppOptionGroupBeanFacadeLocal appOptionGroupBeanFacade;
     @EJB
@@ -2189,6 +2193,21 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         fout.write(content);
         fout.close();
         
+    }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public boolean updatePassword(String newPassword) throws Exception {
+        String principalId=context.getCallerPrincipal().getName();
+        AppUserBean u=this.userBeanFacade.findByPrincipalId(principalId);
+        if(u==null) {
+            throw new Exception("Error resetting password for " + principalId);
+        }
+        
+        u.setPassword(newPassword);
+        this.userBeanFacade.edit(u);
+        
+        return true;
     }
 
 }
