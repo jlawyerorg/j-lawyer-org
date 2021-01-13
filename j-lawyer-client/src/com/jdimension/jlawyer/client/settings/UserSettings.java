@@ -720,6 +720,8 @@ public class UserSettings {
     public static final String CONF_DREBIS_LASTTAG="user.drebis.lasttag";
     public static final String CONF_DREBIS_LASTDOCUMENTTAG="user.drebis.lastdocumenttag";
     
+    public static final String CONF_CASE_LASTPARTYTYPE="user.case.lastpartytype";
+    
     private static String ARRAY_DELIMITER="#####";
 
     private static final Logger log = Logger.getLogger(UserSettings.class.getName());

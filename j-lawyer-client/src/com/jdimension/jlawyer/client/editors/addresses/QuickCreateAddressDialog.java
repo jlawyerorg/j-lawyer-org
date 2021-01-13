@@ -688,7 +688,7 @@ public class QuickCreateAddressDialog extends javax.swing.JDialog {
     private AddressBean result=null;
     
     /**
-     * Creates new form AddAddressSearchDialog
+     * Creates new form QuickCreateAddressDialog
      */
     public QuickCreateAddressDialog(java.awt.Dialog parent, boolean modal) {
         super(parent, modal);

@@ -700,7 +700,7 @@ public class AddBeaRecipientSearchDialog extends javax.swing.JDialog {
     private JComponent nextFocus = null;
 
     /**
-     * Creates new form AddAddressSearchDialog
+     * Creates new form AddBeaRecipientSearchDialog
      */
     public AddBeaRecipientSearchDialog(JDialog parent, boolean modal, JList to, JComponent nextFocus) {
         super(parent, modal);
