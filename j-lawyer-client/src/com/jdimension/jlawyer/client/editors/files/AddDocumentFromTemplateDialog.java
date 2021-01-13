@@ -1471,8 +1471,8 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
             //System.out.println(list.size());
             ((TemplatesTreeCellRenderer) this.treeFolders.getCellRenderer()).setHighlightNodes(list);
             ((DefaultTreeModel) this.treeFolders.getModel()).reload();
-            ComponentUtils.expandTree(treeFolders);
-            
+            //ComponentUtils.expandTree(treeFolders);
+            this.expandTreeNodes((DefaultMutableTreeNode)this.treeFolders.getModel().getRoot(), list);
             this.refreshList();
             
             if(selectedRows!=null) {
@@ -1483,6 +1483,21 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
         } catch (Exception ex) {
             log.error("Error adding review", ex);
 
+        }
+    }
+    
+    private void expandTreeNodes(DefaultMutableTreeNode node, List<GenericNode> list) {
+        Object uo=node.getUserObject();
+        for(GenericNode n: list) {
+            if(n.equals(uo)) {
+                if(n.getParent()!=null) {
+                    TreePath tp=new TreePath(((DefaultMutableTreeNode)node.getParent()).getPath());
+                    this.treeFolders.expandPath(tp);
+                }
+            }
+        }
+        for(int i=0;i<node.getChildCount();i++) {
+            expandTreeNodes((DefaultMutableTreeNode)node.getChildAt(i), list);
         }
     }
 
