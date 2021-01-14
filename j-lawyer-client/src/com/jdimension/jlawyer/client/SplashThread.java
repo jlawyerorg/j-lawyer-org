@@ -1046,7 +1046,7 @@ public class SplashThread implements Runnable {
                 EditorsRegistry.getInstance().setMainWindow(gui);
 
                 ClientSettings cs = ClientSettings.getInstance();
-                gui.setTitle(gui.getTitle() + " " + VersionUtils.getFullClientVersion() + " [" + UserSettings.getInstance().getCurrentUser().getPrincipalId() + "@" + cs.getConfiguration(ClientSettings.CONF_LASTSERVER, "localhost") + "]");
+                gui.setTitle(gui.getTitle() + " " + VersionUtils.getFullClientVersion() + " [" + UserSettings.getInstance().getCurrentUser().getPrincipalId() + "@" + cs.getConfiguration(ClientSettings.CONF_LASTSERVER, "localhost") + ":" + cs.getConfiguration(ClientSettings.CONF_LASTPORTDYN, "8080") + "-" + cs.getConfiguration(ClientSettings.CONF_LASTSECMODE, "standard") + "]");
                 gui.buildModuleBar();
 
                 gui.pack();
