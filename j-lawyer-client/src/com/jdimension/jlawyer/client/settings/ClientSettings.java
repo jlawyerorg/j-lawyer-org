@@ -684,6 +684,8 @@ public class ClientSettings {
     public static final String CONF_LASTSERVER="connection.lastserver";
     public static final String CONF_LASTSERVERLIST="connection.lastserverlist";
     public static final String CONF_LASTPORT="connection.lastport";
+    // in case of SSH tunneling, the client determines an available port automatically, which must not be saved for future connections --> dedicated property
+    public static final String CONF_LASTPORTDYN="connection.lastportdyn";
     public static final String CONF_LASTUSER="connection.lastuser";
     
     // deprecated! use LASTSECMODE instead
@@ -695,7 +697,6 @@ public class ClientSettings {
     public static final String CONF_LASTSSHPORT="connection.lastsshport";
     public static final String CONF_LASTSSHUSER="connection.lastsshuser";
     public static final String CONF_LASTSSHPWD="connection.lastsshpwd";
-    public static final String CONF_LASTSOURCEPORT="connection.lastsshsourceport";
     public static final String CONF_LASTTARGETPORT="connection.lastsshtargetport";
     
     public static final String CONF_THEME="client.theme";
