@@ -731,8 +731,13 @@ public class Main {
         String cmdPassword = null;
         String cmdHost = null;
         String cmdPort = null;
-        String cmdHttpPort = null;
-        String cmdSsl = "0";
+        String cmdSecMode = "standard";
+
+        String cmdSshHost = null;
+        String cmdSshPort = null;
+        String cmdSshUser = null;
+        String cmdSshPwd = null;
+        String cmdSshTargetPort = null;
 
         try {
             BeaWrapper.preInit();
@@ -743,19 +748,33 @@ public class Main {
 
         cmdLineSwitch = cmdLineSwitch.replaceAll("j-lawyer.org", "");
 
-        if (args.length == 5) {
+        if (args.length == 4) {
+            // standard security
             cmdHost = args[0];
             cmdPort = args[1];
-            cmdHttpPort = args[2];
-            cmdUser = args[3];
-            cmdPassword = args[4];
-        } else if (args.length == 6) {
+            cmdUser = args[2];
+            cmdPassword = args[3];
+            cmdSecMode = "standard";
+        } else if (args.length == 5) {
+            // ssl
             cmdHost = args[0];
             cmdPort = args[1];
-            cmdHttpPort = args[2];
-            cmdUser = args[3];
-            cmdPassword = args[4];
-            cmdSsl = args[5];
+            cmdUser = args[2];
+            cmdPassword = args[3];
+            // should be "ssl"
+            cmdSecMode = args[4];
+        } else if (args.length == 10) {
+            cmdHost = args[0];
+            cmdPort = args[1];
+            cmdUser = args[2];
+            cmdPassword = args[3];
+            // should be "ssh"
+            cmdSecMode = args[4];
+            cmdSshHost = args[5];
+            cmdSshPort = args[6];
+            cmdSshUser = args[7];
+            cmdSshPwd = args[8];
+            cmdSshTargetPort = args[9];
         } else if (args.length == 0) {
             // this is the default
         } else {
@@ -763,19 +782,21 @@ public class Main {
             System.out.println("Invalid arguments! Launch with");
             System.out.println("  (1) zero arguments to bring up a login dialog");
             System.out.println("  (2) five arguments to bring launch directly into the desktop view:");
-            System.out.println("      <host> <port> <http-port> <user> <password> <sslenabled 1|0>");
-            System.out.println("      e.g. \"localhost 8080 8080 admin a 0");
+            System.out.println("      <host> <port> <http-port> <user> <password> <standard|ssl>");
+            System.out.println("      e.g. \"localhost 8080 admin a standard\" for standard security");
+            System.out.println("      e.g. \"localhost 8080 admin a ssl\" if the server supports SSL encryption");
+            System.out.println("      e.g. \"localhost 8080 admin a ssh 84.2.3.4 22 root rootpasswort 8080\" when using an SSH tunnel");
             System.exit(1);
         }
 
         System.setProperty("http.agent", "j-lawyer Client v" + VersionUtils.getFullClientVersion());
         System.setProperty("javax.net.ssl.keyStorePassword", cmdLineSwitch);
         Main main = new Main();
-        main.showSplash(cmdHost, cmdPort, cmdHttpPort, cmdUser, cmdPassword, cmdSsl);
+        main.showSplash(cmdHost, cmdPort, cmdUser, cmdPassword, cmdSecMode, cmdSshHost, cmdSshPort, cmdSshUser, cmdSshPwd, cmdSshTargetPort);
 
     }
 
-    private void showSplash(String cmdHost, String cmdPort, String cmdHttpPort, String cmdUser, String cmdPassword, String cmdSsl) {
+    private void showSplash(String cmdHost, String cmdPort, String cmdUser, String cmdPassword, String cmdSecMode, String cmdSshHost, String cmdSshPort, String cmdSshUser, String cmdSshPwd, String cmdSshTargetPort) {
 
         System.setProperty("apple.laf.useScreenMenuBar", "true");
 
@@ -785,7 +806,7 @@ public class Main {
         System.setProperty("apple.awt.application.name", "j-lawyer.org");
 
         ToolTipManager.sharedInstance().setDismissDelay(30000);
-        
+
         FlatIntelliJLaf.install();
 
         //FlatDarculaLaf.install();
@@ -1219,10 +1240,10 @@ public class Main {
         this.splash.dispose();
         this.splash = null;
 
-        LoginDialog login = new LoginDialog(lastStatus, cmdHost, cmdPort, cmdHttpPort, cmdUser, cmdPassword, cmdSsl);
+        LoginDialog login = new LoginDialog(lastStatus, cmdHost, cmdPort, cmdUser, cmdPassword, cmdSecMode, cmdSshHost, cmdSshPort, cmdSshUser, cmdSshPwd, cmdSshTargetPort);
         FrameUtils.centerFrame(login, null);
 
-        if (cmdHost == null && cmdPort == null && cmdHttpPort == null && cmdUser == null && cmdPassword == null) {
+        if (cmdHost == null && cmdPort == null && cmdUser == null && cmdPassword == null) {
             login.setVisible(true);
             login.setFocusToPasswordField();
         }

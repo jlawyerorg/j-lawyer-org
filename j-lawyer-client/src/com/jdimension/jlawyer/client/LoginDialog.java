@@ -714,7 +714,7 @@ public class LoginDialog extends javax.swing.JFrame {
     /**
      * Creates new form LoginDialog
      */
-    public LoginDialog(String initialStatus, String cmdHost, String cmdPort, String cmdHttpPort, String cmdUser, String cmdPassword, String cmdSsl) {
+    public LoginDialog(String initialStatus, String cmdHost, String cmdPort, String cmdUser, String cmdPassword, String cmdSecMode, String cmdSshHost, String cmdSshPort, String cmdSshUser, String cmdSshPwd, String cmdSshTargetPort) {
         initComponents();
         this.setTitle(this.getTitle() + " | Version " + VersionUtils.getFullClientVersion());
 
@@ -852,10 +852,17 @@ public class LoginDialog extends javax.swing.JFrame {
             this.txtPort.setText(cmdPort);
             this.txtUser.setText(cmdUser);
             this.pwPassword.setText(cmdPassword);
-            if ("1".equalsIgnoreCase(cmdSsl)) {
+            if ("1".equalsIgnoreCase(cmdSecMode) || "ssl".equalsIgnoreCase(cmdSecMode)) {
                 this.rdSecSsl.setSelected(true);
-            } else {
-                this.rdSecSsl.setSelected(false);
+            } else if("0".equalsIgnoreCase(cmdSecMode) || "standard".equalsIgnoreCase(cmdSecMode)) {
+                this.rdSecNone.setSelected(true);
+            } else if("ssh".equalsIgnoreCase(cmdSecMode)) {
+                this.rdSecTunnel.setSelected(true);
+                this.txtSshHost.setText(cmdSshHost);
+                this.txtSshPort.setText(cmdSshPort);
+                this.txtSshUser.setText(cmdSshUser);
+                this.pwdSshPassword.setText(cmdSshPwd);
+                this.txtTargetPort.setText(cmdSshTargetPort);
             }
             this.cmdLoginActionPerformed(null);
 
@@ -1780,7 +1787,7 @@ public class LoginDialog extends javax.swing.JFrame {
     public static void main(String args[]) {
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                new LoginDialog("", null, null, null, null, null, "0").setVisible(true);
+                new LoginDialog("", null, null, null, null, "standard", null, null, null, null, null).setVisible(true);
             }
         });
     }
