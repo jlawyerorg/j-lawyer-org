@@ -802,5 +802,7 @@ public interface SystemManagementRemote {
     void addObservedFile(String fileName, byte[] content) throws Exception;
 
     boolean updatePassword(String newPassword) throws Exception;
+
+    boolean updatePasswordForUser(String principalId, String newPassword) throws Exception;
     
 }

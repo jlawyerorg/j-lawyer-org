@@ -1001,6 +1001,11 @@ public class UserProfileDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_cmdCloseActionPerformed
 
     private void cmdChangePasswordActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdChangePasswordActionPerformed
+        int response = JOptionPane.showConfirmDialog(this, "Nach Passwortänderung muss die Anwendung neu gestartet werden. Stellen Sie sicher dass alle Dokumente / Akten geschlossen sind. Fortfahren?", "Passwort ändern", JOptionPane.YES_NO_OPTION);
+        if (response == JOptionPane.NO_OPTION) {
+            return;
+        }
+        
         boolean changed = false;
 
         Object newPwd = JOptionPane.showInputDialog(this, "neues Passwort: ", "Passwort ändern", JOptionPane.QUESTION_MESSAGE, null, null, "");

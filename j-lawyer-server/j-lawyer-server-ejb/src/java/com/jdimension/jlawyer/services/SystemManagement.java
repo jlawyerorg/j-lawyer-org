@@ -668,6 +668,7 @@ import com.jdimension.jlawyer.documents.LibreOfficeAccess;
 import com.jdimension.jlawyer.persistence.*;
 import com.jdimension.jlawyer.persistence.utils.JDBCUtils;
 import com.jdimension.jlawyer.persistence.utils.StringGenerator;
+import com.jdimension.jlawyer.security.PasswordsUtil;
 import com.jdimension.jlawyer.server.services.MonitoringSnapshot;
 import com.jdimension.jlawyer.server.services.ServerInformation;
 import com.jdimension.jlawyer.server.utils.ServerFileUtils;
@@ -704,6 +705,9 @@ import javax.mail.Store;
 import javax.mail.Transport;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
+import javax.management.MBeanServer;
+import javax.management.MBeanServerFactory;
+import javax.management.ObjectName;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.Transformer;
@@ -1103,6 +1107,8 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
 //            throw new Exception ("Nutzer existiert bereits: " + user.getPrincipalId());
 
         StringGenerator idGen = new StringGenerator();
+        // create password hash
+        user.setPassword(PasswordsUtil.createPasswordHash(user.getPassword()));
         this.userBeanFacade.create(user);
 
         for (AppRoleBean r : roles) {
@@ -1116,6 +1122,15 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     @Override
     @RolesAllowed({"adminRole"})
     public AppUserBean updateUser(AppUserBean user, List<AppRoleBean> roles) throws Exception {
+        
+        AppUserBean outdated=this.userBeanFacade.findByPrincipalId(user.getPrincipalId());
+        if(outdated==null) {
+            throw new Exception("No user with name " + user.getPrincipalId());
+        }
+        
+        // no password change via updateUser, only by using updatePassword service
+        // preserve current password hash
+        user.setPassword(outdated.getPassword());
         this.userBeanFacade.edit(user);
 
         List<AppRoleBean> delRoles = this.roleBeanFacade.findByPrincipalId(user.getPrincipalId());
@@ -1128,8 +1143,23 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
             r.setId(idGen.getID().toString());
             this.roleBeanFacade.create(r);
         }
+        
+        this.flushUserCache(user.getPrincipalId());
 
         return user;
+    }
+    
+    private void flushUserCache(String principalId) {
+        try {
+
+            ObjectName jaasMgr = new ObjectName("jboss.as:subsystem=security,security-domain=j-lawyer-security");
+            Object[] params = {principalId};
+            String[] signature = {"java.lang.String"};
+            MBeanServer server = (MBeanServer) MBeanServerFactory.findMBeanServer(null).get(0);
+            server.invoke(jaasMgr, "flushCache", params, signature);
+        } catch (Throwable ex) {
+            log.warn("Could not flush authorization cache", ex);
+        }
     }
 
     @Override
@@ -2204,8 +2234,32 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
             throw new Exception("Error resetting password for " + principalId);
         }
         
+        // persist the hash of the password
+        newPassword=PasswordsUtil.createPasswordHash(newPassword);
+        
         u.setPassword(newPassword);
         this.userBeanFacade.edit(u);
+        
+        this.flushUserCache(principalId);
+        
+        return true;
+    }
+
+    @Override
+    @RolesAllowed({"adminRole"})
+    public boolean updatePasswordForUser(String principalId, String newPassword) throws Exception {
+        AppUserBean u=this.userBeanFacade.findByPrincipalId(principalId);
+        if(u==null) {
+            throw new Exception("Error resetting password for " + principalId);
+        }
+        
+        // persist the hash of the password
+        newPassword=PasswordsUtil.createPasswordHash(newPassword);
+        
+        u.setPassword(newPassword);
+        this.userBeanFacade.edit(u);
+        
+        this.flushUserCache(principalId);
         
         return true;
     }
