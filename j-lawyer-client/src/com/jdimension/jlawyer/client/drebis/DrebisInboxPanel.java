@@ -669,6 +669,7 @@ import com.jdimension.jlawyer.client.editors.addresses.AddressPanel;
 import com.jdimension.jlawyer.client.editors.addresses.EditAddressDetailsPanel;
 import com.jdimension.jlawyer.client.editors.addresses.NewAddressPanel;
 import com.jdimension.jlawyer.client.editors.addresses.ViewAddressDetailsPanel;
+import com.jdimension.jlawyer.client.editors.documents.SearchAndAssignDialog;
 import com.jdimension.jlawyer.client.events.AllCaseTagsEvent;
 import com.jdimension.jlawyer.client.events.AllDocumentTagsEvent;
 import com.jdimension.jlawyer.client.events.Event;
@@ -1296,8 +1297,16 @@ public class DrebisInboxPanel extends javax.swing.JPanel implements ThemeableEdi
             // archiveFileNumber=ArchiveFileUtils.addLeadingZeroes(archiveFileNumber);
             ArchiveFileBean sel = afs.getArchiveFileByFileNumber(archiveFileNumber);
             if (sel == null) {
-                JOptionPane.showMessageDialog(this, "Akte " + archiveFileNumber + " konnte nicht gefunden werden!", "Fehler", JOptionPane.ERROR_MESSAGE);
-                return;
+                
+                SearchAndAssignDialog saDlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true, ""+archiveFileNumber);
+                saDlg.setVisible(true);
+                sel = saDlg.getSelection();
+
+                saDlg.dispose();
+                
+                if(sel==null)
+                    return;
+                
             }
 
             String temp = UserSettings.getInstance().getSetting(UserSettings.CONF_DREBIS_TAGGINGENABLED, "false");
