@@ -3000,7 +3000,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
                 }
 
                 if (!StringUtils.isEmpty(i.getStreetNumber())) {
-                    this.txtStreet.setText(StringUtils.nonEmpty(i.getStreetNumber()));
+                    this.txtStreetNr.setText(StringUtils.nonEmpty(i.getStreetNumber()));
                 }
 
                 if (!StringUtils.isEmpty(i.getOfficeName())) {
