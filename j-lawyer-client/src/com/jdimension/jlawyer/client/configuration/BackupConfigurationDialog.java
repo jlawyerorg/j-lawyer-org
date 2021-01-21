@@ -1255,7 +1255,14 @@ public class BackupConfigurationDialog extends javax.swing.JDialog {
         }
 
         String principalId = UserSettings.getInstance().getCurrentUser().getPrincipalId();
-        String password = UserSettings.getInstance().getCurrentUser().getPassword();
+        
+        // this is just the hash, not usable for http basic auth
+        //String password = UserSettings.getInstance().getCurrentUser().getPassword();
+        
+        String password = JOptionPane.showInputDialog(this, "Start der Datensicherung durch Passworteingabe für Nutzer " + principalId + " bestätigen: ", "");
+                if (password == null || "".equals(password)) {
+                    return;
+                }
 
         try {
             URL backupUrl = new java.net.URL(protocol + "://" + principalId + ":" + password + "@" + server + ":" + port + "/j-lawyer-server-war/autostart?action=backup.adhoc");

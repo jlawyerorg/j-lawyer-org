@@ -802,6 +802,7 @@ public class MailSettingsTestAction extends ProgressableAction {
             });
             Thread.sleep(3000);
         } catch (Exception ex) {
+            log.error(ex);
             String exMsg = ex.getMessage();
             if (ex.getCause() != null) {
                 exMsg = exMsg + "; " + ex.getCause().getMessage();

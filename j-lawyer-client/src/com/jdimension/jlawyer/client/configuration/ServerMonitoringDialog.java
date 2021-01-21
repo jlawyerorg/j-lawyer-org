@@ -1413,6 +1413,7 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
             sysMan.testSendMail(this.txtSmtp.getText(), port, this.txtUser.getText(), new String(this.txtPassword.getPassword()), this.chkSsl.isSelected(), this.chkEmailStartTls.isSelected(), this.txtRecipient.getText());
             JOptionPane.showMessageDialog(this, "Testnachricht erfolgreich  verschickt - bitte Posteingang prüfen", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
         } catch (Exception ex) {
+            log.error(ex);
             String exMsg = ex.getMessage();
             if (ex.getCause() != null) {
                 exMsg = exMsg + "; " + ex.getCause().getMessage();
