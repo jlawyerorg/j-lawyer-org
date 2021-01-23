@@ -745,7 +745,9 @@ public class AutoUpdateTimerTask extends java.util.TimerTask {
             String company = set.getSetting(set.PROFILE_COMPANYNAME, "x");
             String zip = set.getSetting(set.PROFILE_COMPANYZIP, "x");
 
-            String voipmode = set.getSetting(set.SERVERCONF_VOIPMODE, "off");
+            String voipmode = "off";
+            if(UserSettings.getInstance().getCurrentUser().isVoipEnabled())
+                voipmode="on";
             String drebismode = set.getSetting(set.SERVERCONF_DREBISMODE, "off");
             String backupmode = set.getSetting(set.SERVERCONF_BACKUP_MODE, "off");
 

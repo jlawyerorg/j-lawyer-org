@@ -683,6 +683,7 @@ import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.mail.SendEmailDialog;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.ServerSettings;
+import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.DesktopUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.JTextFieldLimit;
@@ -2861,9 +2862,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
     }//GEN-LAST:event_txtEmailKeyPressed
 
     private void cmdNewSmsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdNewSmsActionPerformed
-        ServerSettings set = ServerSettings.getInstance();
-        String mode = set.getSetting(set.SERVERCONF_VOIPMODE, "on");
-        if ("on".equalsIgnoreCase(mode)) {
+        if (UserSettings.getInstance().getCurrentUser().isVoipEnabled()) {
             SendSmsDialog dlg = new SendSmsDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.dto);
             FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
             dlg.setVisible(true);
@@ -2880,9 +2879,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
     }//GEN-LAST:event_cmdShowWebsiteActionPerformed
 
     private void cmdNewCall2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdNewCall2ActionPerformed
-        ServerSettings set = ServerSettings.getInstance();
-        String mode = set.getSetting(set.SERVERCONF_VOIPMODE, "on");
-        if ("on".equalsIgnoreCase(mode)) {
+        if (UserSettings.getInstance().getCurrentUser().isVoipEnabled()) {
             PlaceCallDialog dlg = new PlaceCallDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.dto, this.txtMobile.getText());
             FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
             dlg.setVisible(true);
@@ -2893,9 +2890,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
     }//GEN-LAST:event_cmdNewCall2ActionPerformed
 
     private void cmdNewCall1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdNewCall1ActionPerformed
-        ServerSettings set = ServerSettings.getInstance();
-        String mode = set.getSetting(set.SERVERCONF_VOIPMODE, "on");
-        if ("on".equalsIgnoreCase(mode)) {
+        if (UserSettings.getInstance().getCurrentUser().isVoipEnabled()) {
             PlaceCallDialog dlg = new PlaceCallDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.dto, this.txtPhone.getText());
             FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
             dlg.setVisible(true);
@@ -2906,9 +2901,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
     }//GEN-LAST:event_cmdNewCall1ActionPerformed
 
     private void cmdNewFaxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdNewFaxActionPerformed
-        ServerSettings set = ServerSettings.getInstance();
-        String mode = set.getSetting(set.SERVERCONF_VOIPMODE, "on");
-        if ("on".equalsIgnoreCase(mode)) {
+        if (UserSettings.getInstance().getCurrentUser().isVoipEnabled()) {
             ArrayList<AddressBean> list = new ArrayList<AddressBean>();
             list.add(this.dto);
             SendFaxDialog dlg = new SendFaxDialog(EditorsRegistry.getInstance().getMainWindow(), true, list, this.dto, null);
@@ -3096,9 +3089,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
     }//GEN-LAST:event_chkEncryptionStateChanged
 
     private void cmdNewSmsWithEncryptionPasswordActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdNewSmsWithEncryptionPasswordActionPerformed
-        ServerSettings set = ServerSettings.getInstance();
-        String mode = set.getSetting(set.SERVERCONF_VOIPMODE, "on");
-        if ("on".equalsIgnoreCase(mode)) {
+        if (UserSettings.getInstance().getCurrentUser().isVoipEnabled()) {
 
             String smsText = "Passwort zum Entsperren empfangener Dokumente: " + this.encryptionPwd;
             SendSmsDialog dlg = new SendSmsDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.dto, smsText);

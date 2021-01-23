@@ -679,6 +679,7 @@ import com.jdimension.jlawyer.client.events.EventConsumer;
 import com.jdimension.jlawyer.client.mail.SendEmailDialog;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.ServerSettings;
+import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.client.voip.PlaceCallDialog;
@@ -1239,9 +1240,7 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
 
         } else {
 
-            ServerSettings set = ServerSettings.getInstance();
-            String mode = set.getSetting(set.SERVERCONF_VOIPMODE, "on");
-            if ("on".equalsIgnoreCase(mode)) {
+            if (UserSettings.getInstance().getCurrentUser().isVoipEnabled()) {
                 SendSmsDialog dlg = new SendSmsDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.a);
                 FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
                 dlg.setVisible(true);
@@ -1260,9 +1259,7 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
 
         } else {
 
-            ServerSettings set = ServerSettings.getInstance();
-            String mode = set.getSetting(set.SERVERCONF_VOIPMODE, "on");
-            if ("on".equalsIgnoreCase(mode)) {
+            if (UserSettings.getInstance().getCurrentUser().isVoipEnabled()) {
                 PlaceCallDialog dlg = new PlaceCallDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.a, this.a.getMobile());
                 FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
                 dlg.setVisible(true);
@@ -1281,9 +1278,7 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
 
         } else {
 
-            ServerSettings set = ServerSettings.getInstance();
-            String mode = set.getSetting(set.SERVERCONF_VOIPMODE, "on");
-            if ("on".equalsIgnoreCase(mode)) {
+            if (UserSettings.getInstance().getCurrentUser().isVoipEnabled()) {
                 PlaceCallDialog dlg = new PlaceCallDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.a, this.a.getPhone());
                 FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
                 dlg.setVisible(true);
@@ -1297,9 +1292,7 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
     }//GEN-LAST:event_mnuCallPhoneActionPerformed
 
     private void mnuSendFaxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSendFaxActionPerformed
-        ServerSettings set = ServerSettings.getInstance();
-        String mode = set.getSetting(set.SERVERCONF_VOIPMODE, "on");
-        if ("on".equalsIgnoreCase(mode)) {
+        if (UserSettings.getInstance().getCurrentUser().isVoipEnabled()) {
             ArrayList<AddressBean> faxList = new ArrayList<AddressBean>();
 
             faxList.addAll(this.container.getInvolvedPartiesAddress());

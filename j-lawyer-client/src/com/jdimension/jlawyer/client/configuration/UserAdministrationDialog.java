@@ -812,6 +812,8 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         chkCreateOption = new javax.swing.JCheckBox();
         chkRemoveOption = new javax.swing.JCheckBox();
         chkLawyer = new javax.swing.JCheckBox();
+        jLabel27 = new javax.swing.JLabel();
+        txtDisplayName = new javax.swing.JTextField();
         jPanel6 = new javax.swing.JPanel();
         jLabel3 = new javax.swing.JLabel();
         jLabel4 = new javax.swing.JLabel();
@@ -871,6 +873,12 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         lblNextcloudOrder1 = new javax.swing.JLabel();
         txtCloudPath = new javax.swing.JTextField();
         lblCloudPath = new javax.swing.JLabel();
+        jPanel11 = new javax.swing.JPanel();
+        jLabel2 = new javax.swing.JLabel();
+        jLabel25 = new javax.swing.JLabel();
+        txtVoipUser = new javax.swing.JTextField();
+        txtVoipPassword = new javax.swing.JTextField();
+        jLabel26 = new javax.swing.JLabel();
         jPanel9 = new javax.swing.JPanel();
         jLabel18 = new javax.swing.JLabel();
         cmbPrimaryGroup = new javax.swing.JComboBox<>();
@@ -1076,7 +1084,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                     .add(chkWriteOption)
                     .add(chkCreateOption)
                     .add(chkRemoveOption))
-                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(218, Short.MAX_VALUE))
         );
         jPanel4Layout.setVerticalGroup(
             jPanel4Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -1090,6 +1098,8 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         );
 
         chkLawyer.setText("Nutzer ist Anwalt");
+
+        jLabel27.setText("Anzeigename:");
 
         org.jdesktop.layout.GroupLayout jPanel5Layout = new org.jdesktop.layout.GroupLayout(jPanel5);
         jPanel5.setLayout(jPanel5Layout);
@@ -1105,17 +1115,24 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(jPanel3, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(jPanel4, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .add(jPanel5Layout.createSequentialGroup()
+                        .add(jPanel4, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addContainerGap())
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel5Layout.createSequentialGroup()
+                        .add(jLabel27)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(txtDisplayName)
+                        .add(18, 18, 18)
                         .add(chkLawyer)
-                        .add(0, 0, Short.MAX_VALUE)))
-                .addContainerGap())
+                        .add(189, 189, 189))))
         );
         jPanel5Layout.setVerticalGroup(
             jPanel5Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel5Layout.createSequentialGroup()
                 .addContainerGap()
-                .add(chkLawyer)
+                .add(jPanel5Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(chkLawyer)
+                    .add(jLabel27)
+                    .add(txtDisplayName, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                 .add(jPanel5Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(jPanel4, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
@@ -1525,10 +1542,53 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 .add(jPanel10Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
                     .add(cmdShowWebsite)
                     .add(txtNextcloudOrder, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(203, Short.MAX_VALUE))
+                .addContainerGap(214, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("Nextcloud", jPanel10);
+
+        jLabel2.setText("Sipgate-Kundennummer:");
+
+        jLabel25.setText("Sipgate-Passwort:");
+
+        jLabel26.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/info.png"))); // NOI18N
+        jLabel26.setText("Änderung erfordert Neustart des j-lawyer.org Clients");
+
+        org.jdesktop.layout.GroupLayout jPanel11Layout = new org.jdesktop.layout.GroupLayout(jPanel11);
+        jPanel11.setLayout(jPanel11Layout);
+        jPanel11Layout.setHorizontalGroup(
+            jPanel11Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jPanel11Layout.createSequentialGroup()
+                .addContainerGap()
+                .add(jPanel11Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(jLabel2)
+                    .add(jLabel25))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel11Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(jPanel11Layout.createSequentialGroup()
+                        .add(jLabel26)
+                        .add(0, 258, Short.MAX_VALUE))
+                    .add(txtVoipUser)
+                    .add(txtVoipPassword))
+                .addContainerGap())
+        );
+        jPanel11Layout.setVerticalGroup(
+            jPanel11Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jPanel11Layout.createSequentialGroup()
+                .addContainerGap()
+                .add(jPanel11Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(jLabel2)
+                    .add(txtVoipUser, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel11Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(jLabel25)
+                    .add(txtVoipPassword, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                .add(jLabel26)
+                .addContainerGap(392, Short.MAX_VALUE))
+        );
+
+        jTabbedPane1.addTab("Sipgate", jPanel11);
 
         jLabel18.setText("Primäre Gruppe:");
 
@@ -1618,7 +1678,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
             .add(layout.createSequentialGroup()
                 .addContainerGap()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jTabbedPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 791, Short.MAX_VALUE)
+                    .add(jTabbedPane1)
                     .add(layout.createSequentialGroup()
                         .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
                             .add(cmdAdd)
@@ -1754,6 +1814,9 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         this.txtCloudUser.setText("");
         this.pwCloudPassword.setText("");
         this.chkCloudSsl.setSelected(true);
+        this.txtVoipPassword.setText("");
+        this.txtVoipUser.setText("");
+        this.txtDisplayName.setText("");
         this.txtUser.requestFocus();
     }//GEN-LAST:event_cmdAddActionPerformed
 
@@ -1860,6 +1923,11 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 this.txtCloudUser.setText(u.getCloudUser());
                 this.pwCloudPassword.setText(u.getCloudPassword());
                 this.chkCloudSsl.setSelected(u.isCloudSsl());
+                
+                this.txtVoipPassword.setText(u.getVoipPassword());
+                this.txtVoipUser.setText(u.getVoipUser());
+                
+                this.txtDisplayName.setText(u.getDisplayName());
 
                 if (u.isBeaCertificateAutoLogin()) {
                     this.rdAutoLogin.setSelected(true);
@@ -2006,6 +2074,11 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 u.setCloudPort(Integer.parseInt(this.txtCloudPort.getText()));
                 u.setCloudSsl(this.chkCloudSsl.isSelected());
                 u.setCloudUser(this.txtCloudUser.getText());
+                
+                u.setVoipPassword(this.txtVoipPassword.getText());
+                u.setVoipUser(this.txtVoipUser.getText());
+                
+                u.setDisplayName(this.txtDisplayName.getText());
 
                 AppUserBean newUser = mgmt.updateUser(u, this.getRolesFromUI(u.getPrincipalId()));
                 //mgmt.remove();
@@ -2056,6 +2129,11 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         this.txtCloudUser.setText("");
         this.pwCloudPassword.setText("");
         this.chkCloudSsl.setSelected(true);
+        
+        this.txtVoipPassword.setText("");
+        this.txtVoipUser.setText("");
+        
+        this.txtDisplayName.setText("");
 
         this.txtUser.requestFocus();
     }//GEN-LAST:event_cmdSaveActionPerformed
@@ -2559,11 +2637,15 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
     private javax.swing.JLabel jLabel17;
     private javax.swing.JLabel jLabel18;
     private javax.swing.JLabel jLabel19;
+    private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel20;
     private javax.swing.JLabel jLabel21;
     private javax.swing.JLabel jLabel22;
     private javax.swing.JLabel jLabel23;
     private javax.swing.JLabel jLabel24;
+    private javax.swing.JLabel jLabel25;
+    private javax.swing.JLabel jLabel26;
+    private javax.swing.JLabel jLabel27;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
@@ -2573,6 +2655,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
     private javax.swing.JLabel jLabel9;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel10;
+    private javax.swing.JPanel jPanel11;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
     private javax.swing.JPanel jPanel4;
@@ -2607,6 +2690,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
     private javax.swing.JTextField txtCloudPath;
     private javax.swing.JTextField txtCloudPort;
     private javax.swing.JTextField txtCloudUser;
+    private javax.swing.JTextField txtDisplayName;
     private javax.swing.JTextField txtEmailSender;
     private javax.swing.JTextField txtInServer;
     private javax.swing.JTextField txtInUser;
@@ -2615,6 +2699,8 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
     private javax.swing.JTextField txtOutServer;
     private javax.swing.JTextField txtOutUsername;
     private javax.swing.JTextField txtUser;
+    private javax.swing.JTextField txtVoipPassword;
+    private javax.swing.JTextField txtVoipUser;
     // End of variables declaration//GEN-END:variables
 
 }

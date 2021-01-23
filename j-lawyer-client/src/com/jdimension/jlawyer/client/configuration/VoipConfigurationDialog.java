@@ -679,20 +679,9 @@ public class VoipConfigurationDialog extends javax.swing.JDialog {
         initComponents();
         
         ServerSettings set=ServerSettings.getInstance();
-        String mode=set.getSetting(set.SERVERCONF_VOIPMODE, "on");
-        if("on".equalsIgnoreCase(mode))
-            this.optVoipOn.setSelected(true);
-        if("off".equalsIgnoreCase(mode))
-            this.optVoipOff.setSelected(true);
         
         String endpoint=set.getSetting(set.SERVERCONF_VOIPENDPOINT, "https://samurai.sipgate.net/RPC2");
         this.txtEndpoint.setText(endpoint);
-        
-        String user=set.getSetting(set.SERVERCONF_VOIPUSER, "<sipgate-nutzerkennung>");
-        this.txtUser.setText(user);
-        
-        String pwd=set.getSetting(set.SERVERCONF_VOIPPWD, "");
-        this.txtPwd.setText(pwd);
         
         String prefix=set.getSetting(set.SERVERCONF_VOIPSIPPREFIX, "sip:");
         this.txtSipPrefix.setText(prefix);
@@ -715,15 +704,8 @@ public class VoipConfigurationDialog extends javax.swing.JDialog {
     private void initComponents() {
 
         voipMode = new javax.swing.ButtonGroup();
-        jLabel1 = new javax.swing.JLabel();
-        optVoipOn = new javax.swing.JRadioButton();
-        optVoipOff = new javax.swing.JRadioButton();
         cmdCancel = new javax.swing.JButton();
         cmdSave = new javax.swing.JButton();
-        txtUser = new javax.swing.JTextField();
-        jLabel5 = new javax.swing.JLabel();
-        jLabel6 = new javax.swing.JLabel();
-        txtPwd = new javax.swing.JPasswordField();
         jLabel2 = new javax.swing.JLabel();
         txtEndpoint = new javax.swing.JTextField();
         jLabel3 = new javax.swing.JLabel();
@@ -733,14 +715,6 @@ public class VoipConfigurationDialog extends javax.swing.JDialog {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Voice-over-IP - Einstellungen");
-
-        jLabel1.setText("Sipgate-Integration:");
-
-        voipMode.add(optVoipOn);
-        optVoipOn.setText("an");
-
-        voipMode.add(optVoipOff);
-        optVoipOff.setText("aus");
 
         cmdCancel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png"))); // NOI18N
         cmdCancel.setText("Schliessen");
@@ -758,10 +732,6 @@ public class VoipConfigurationDialog extends javax.swing.JDialog {
             }
         });
 
-        jLabel5.setText("Sipgate-Kundennr.:");
-
-        jLabel6.setText("Sipgate-Passwort:");
-
         jLabel2.setText("API-Endpunkt:");
 
         jLabel3.setText("SIP-Präfix:");
@@ -776,29 +746,19 @@ public class VoipConfigurationDialog extends javax.swing.JDialog {
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addGap(0, 259, Short.MAX_VALUE)
+                        .addGap(0, 283, Short.MAX_VALUE)
                         .addComponent(cmdSave)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cmdCancel))
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel5)
-                            .addComponent(jLabel6)
-                            .addComponent(jLabel1)
                             .addComponent(jLabel2)
                             .addComponent(jLabel3)
                             .addComponent(jLabel4))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(txtUser)
-                            .addComponent(txtPwd)
                             .addComponent(txtEndpoint)
                             .addComponent(txtSipPrefix)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(optVoipOn)
-                                .addGap(18, 18, 18)
-                                .addComponent(optVoipOff)
-                                .addGap(0, 0, Short.MAX_VALUE))
                             .addComponent(txtSipSuffix))))
                 .addContainerGap())
         );
@@ -806,19 +766,6 @@ public class VoipConfigurationDialog extends javax.swing.JDialog {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel1)
-                    .addComponent(optVoipOn)
-                    .addComponent(optVoipOff))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(txtUser, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel5))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel6)
-                    .addComponent(txtPwd, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel2)
                     .addComponent(txtEndpoint, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
@@ -830,7 +777,7 @@ public class VoipConfigurationDialog extends javax.swing.JDialog {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel4)
                     .addComponent(txtSipSuffix, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 27, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(cmdCancel)
                     .addComponent(cmdSave))
@@ -842,16 +789,9 @@ public class VoipConfigurationDialog extends javax.swing.JDialog {
 
     private void cmdSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveActionPerformed
         ServerSettings set=ServerSettings.getInstance();
-        set.setSetting(set.SERVERCONF_VOIPUSER, this.txtUser.getText());
-        set.setSetting(set.SERVERCONF_VOIPPWD, this.txtPwd.getText());
         set.setSetting(set.SERVERCONF_VOIPENDPOINT, this.txtEndpoint.getText());
         set.setSetting(set.SERVERCONF_VOIPSIPPREFIX, this.txtSipPrefix.getText());
         set.setSetting(set.SERVERCONF_VOIPSIPSUFFIX, this.txtSipSuffix.getText());
-        
-        if(this.optVoipOn.isSelected())
-            set.setSetting(set.SERVERCONF_VOIPMODE, "on");
-        else 
-            set.setSetting(set.SERVERCONF_VOIPMODE, "off");
         
         this.setVisible(false);
         this.dispose();
@@ -914,19 +854,12 @@ public class VoipConfigurationDialog extends javax.swing.JDialog {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton cmdCancel;
     private javax.swing.JButton cmdSave;
-    private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
-    private javax.swing.JLabel jLabel5;
-    private javax.swing.JLabel jLabel6;
-    private javax.swing.JRadioButton optVoipOff;
-    private javax.swing.JRadioButton optVoipOn;
     private javax.swing.JTextField txtEndpoint;
-    private javax.swing.JPasswordField txtPwd;
     private javax.swing.JTextField txtSipPrefix;
     private javax.swing.JTextField txtSipSuffix;
-    private javax.swing.JTextField txtUser;
     private javax.swing.ButtonGroup voipMode;
     // End of variables declaration//GEN-END:variables
 }

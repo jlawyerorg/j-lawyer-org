@@ -714,25 +714,18 @@ public class VoipService implements VoipServiceRemote, VoipServiceLocal {
     @RolesAllowed({"loginRole"})
     public BalanceInformation getBalance() throws SipgateException {
 
-        if (!this.isVoipEnabled()) {
+        AppUserBean currentUser=this.sysMan.getUser(context.getCallerPrincipal().getName());
+        
+        if (!currentUser.isVoipEnabled()) {
             BalanceInformation bi = new BalanceInformation();
             bi.setCurrency("EUR");
             bi.setTotal(0d);
             bi.setValid(new Date());
             return bi;
         }
-
-        SipgateInstance sip = SipgateInstance.getInstance(this.settingsFacade.find("jlawyer.server.voip.voipendpoint").getSettingValue(), this.settingsFacade.find("jlawyer.server.voip.voipuser").getSettingValue(), this.settingsFacade.find("jlawyer.server.voip.voippwd").getSettingValue(), "j-lawyer Server", sysMan.getServerVersion());
+        
+        SipgateInstance sip = SipgateInstance.getInstance(this.settingsFacade.find("jlawyer.server.voip.voipendpoint").getSettingValue(), currentUser.getVoipUser(), currentUser.getVoipPassword(), "j-lawyer Server", sysMan.getServerVersion());
         return sip.getBalance();
-    }
-
-    private boolean isVoipEnabled() {
-        ServerSettingsBean en = this.settingsFacade.find("jlawyer.server.voip.voipmode");
-        if (en == null) {
-            return false;
-        } else {
-            return "on".equalsIgnoreCase(en.getSettingValue());
-        }
     }
 
     // Add business logic below. (Right-click in editor and choose
@@ -740,36 +733,39 @@ public class VoipService implements VoipServiceRemote, VoipServiceLocal {
     @Override
     @RolesAllowed({"loginRole"})
     public ArrayList<SipUri> getOwnUris() throws SipgateException {
-        if (!this.isVoipEnabled()) {
+        AppUserBean currentUser=this.sysMan.getUser(context.getCallerPrincipal().getName());
+        if (!currentUser.isVoipEnabled()) {
 
             return new ArrayList<SipUri>();
         }
 
-        SipgateInstance sip = SipgateInstance.getInstance(this.settingsFacade.find("jlawyer.server.voip.voipendpoint").getSettingValue(), this.settingsFacade.find("jlawyer.server.voip.voipuser").getSettingValue(), this.settingsFacade.find("jlawyer.server.voip.voippwd").getSettingValue(), "j-lawyer Server", sysMan.getServerVersion());
+        SipgateInstance sip = SipgateInstance.getInstance(this.settingsFacade.find("jlawyer.server.voip.voipendpoint").getSettingValue(), currentUser.getVoipUser(), currentUser.getVoipPassword(), "j-lawyer Server", sysMan.getServerVersion());
         return sip.getOwnUris();
     }
 
     @Override
     @RolesAllowed({"loginRole"})
     public String initiateSms(String localUri, String remoteUri, String content) throws SipgateException {
-        if (!this.isVoipEnabled()) {
+        AppUserBean currentUser=this.sysMan.getUser(context.getCallerPrincipal().getName());
+        if (!currentUser.isVoipEnabled()) {
 
             throw new SipgateException("Voice-over-IP - Integration ist nicht aktiviert!");
         }
 
-        SipgateInstance sip = SipgateInstance.getInstance(this.settingsFacade.find("jlawyer.server.voip.voipendpoint").getSettingValue(), this.settingsFacade.find("jlawyer.server.voip.voipuser").getSettingValue(), this.settingsFacade.find("jlawyer.server.voip.voippwd").getSettingValue(), "j-lawyer Server", sysMan.getServerVersion());
+        SipgateInstance sip = SipgateInstance.getInstance(this.settingsFacade.find("jlawyer.server.voip.voipendpoint").getSettingValue(), currentUser.getVoipUser(), currentUser.getVoipPassword(), "j-lawyer Server", sysMan.getServerVersion());
         return sip.initiateSms(localUri, remoteUri, content);
     }
 
     @Override
     @RolesAllowed({"loginRole"})
     public String initiateCall(String localUri, String remoteUri) throws SipgateException {
-        if (!this.isVoipEnabled()) {
+        AppUserBean currentUser=this.sysMan.getUser(context.getCallerPrincipal().getName());
+        if (!currentUser.isVoipEnabled()) {
 
             throw new SipgateException("Voice-over-IP - Integration ist nicht aktiviert!");
         }
 
-        SipgateInstance sip = SipgateInstance.getInstance(this.settingsFacade.find("jlawyer.server.voip.voipendpoint").getSettingValue(), this.settingsFacade.find("jlawyer.server.voip.voipuser").getSettingValue(), this.settingsFacade.find("jlawyer.server.voip.voippwd").getSettingValue(), "j-lawyer Server", sysMan.getServerVersion());
+        SipgateInstance sip = SipgateInstance.getInstance(this.settingsFacade.find("jlawyer.server.voip.voipendpoint").getSettingValue(), currentUser.getVoipUser(), currentUser.getVoipPassword(), "j-lawyer Server", sysMan.getServerVersion());
         return sip.initiateCall(localUri, remoteUri);
     }
 
@@ -777,12 +773,13 @@ public class VoipService implements VoipServiceRemote, VoipServiceLocal {
     @RolesAllowed({"loginRole"})
     public String initiateFax(String localUri, String remoteUri, String remoteName, String pdfName, byte[] pdfData, String archiveFileId) throws SipgateException {
 
-        if (!this.isVoipEnabled()) {
+        AppUserBean currentUser=this.sysMan.getUser(context.getCallerPrincipal().getName());
+        if (!currentUser.isVoipEnabled()) {
 
             throw new SipgateException("Voice-over-IP - Integration ist nicht aktiviert!");
         }
 
-        SipgateInstance sip = SipgateInstance.getInstance(this.settingsFacade.find("jlawyer.server.voip.voipendpoint").getSettingValue(), this.settingsFacade.find("jlawyer.server.voip.voipuser").getSettingValue(), this.settingsFacade.find("jlawyer.server.voip.voippwd").getSettingValue(), "j-lawyer Server", sysMan.getServerVersion());
+        SipgateInstance sip = SipgateInstance.getInstance(this.settingsFacade.find("jlawyer.server.voip.voipendpoint").getSettingValue(), currentUser.getVoipUser(), currentUser.getVoipPassword(), "j-lawyer Server", sysMan.getServerVersion());
         Date sentDate = new Date();
         String sessionId = sip.initiateFax(localUri, remoteUri, pdfData);
 
@@ -872,12 +869,13 @@ public class VoipService implements VoipServiceRemote, VoipServiceLocal {
     @Override
     @PermitAll
     public String getSessionStatus(String sessionId) throws SipgateException {
-        if (!this.isVoipEnabled()) {
+        AppUserBean currentUser=this.sysMan.getUser(context.getCallerPrincipal().getName());
+        if (!currentUser.isVoipEnabled()) {
 
             throw new SipgateException("Voice-over-IP - Integration ist nicht aktiviert!");
         }
 
-        SipgateInstance sip = SipgateInstance.getInstance(this.settingsFacade.find("jlawyer.server.voip.voipendpoint").getSettingValue(), this.settingsFacade.find("jlawyer.server.voip.voipuser").getSettingValue(), this.settingsFacade.find("jlawyer.server.voip.voippwd").getSettingValue(), "j-lawyer Server", sysMan.getServerVersion());
+        SipgateInstance sip = SipgateInstance.getInstance(this.settingsFacade.find("jlawyer.server.voip.voipendpoint").getSettingValue(), currentUser.getVoipUser(), currentUser.getVoipPassword(), "j-lawyer Server", sysMan.getServerVersion());
         return sip.getSessionStatus(sessionId);
     }
 

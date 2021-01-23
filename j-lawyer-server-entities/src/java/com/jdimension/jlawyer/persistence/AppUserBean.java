@@ -755,6 +755,15 @@ public class AppUserBean implements Serializable {
     @Column(name = "cloudPassword")
     private String cloudPassword;
     
+    @Column(name = "displayName")
+    protected String displayName;
+    
+    @Column(name = "voipUser")
+    protected String voipUser;
+    
+    @Column(name = "voipPassword")
+    protected String voipPassword;
+    
     @Column(name = "cloudPath")
     protected String cloudPath;
     
@@ -764,6 +773,10 @@ public class AppUserBean implements Serializable {
 
     public AppUserBean(String principalId) {
         this.principalId = principalId;
+    }
+    
+    public boolean isVoipEnabled() {
+        return this.voipPassword!=null && !("".equalsIgnoreCase(this.voipPassword)) && this.voipUser!=null && !("".equalsIgnoreCase(this.voipUser));
     }
 
     public String getPrincipalId() {
@@ -1211,6 +1224,48 @@ public class AppUserBean implements Serializable {
      */
     public void setCloudPath(String cloudPath) {
         this.cloudPath = cloudPath;
+    }
+
+    /**
+     * @return the displayName
+     */
+    public String getDisplayName() {
+        return displayName;
+    }
+
+    /**
+     * @param displayName the displayName to set
+     */
+    public void setDisplayName(String displayName) {
+        this.displayName = displayName;
+    }
+
+    /**
+     * @return the voipUser
+     */
+    public String getVoipUser() {
+        return voipUser;
+    }
+
+    /**
+     * @param voipUser the voipUser to set
+     */
+    public void setVoipUser(String voipUser) {
+        this.voipUser = voipUser;
+    }
+
+    /**
+     * @return the voipPassword
+     */
+    public String getVoipPassword() {
+        return voipPassword;
+    }
+
+    /**
+     * @param voipPassword the voipPassword to set
+     */
+    public void setVoipPassword(String voipPassword) {
+        this.voipPassword = voipPassword;
     }
     
     

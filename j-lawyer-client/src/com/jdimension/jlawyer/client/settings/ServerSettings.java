@@ -701,9 +701,6 @@ public class ServerSettings {
     public static final String PROFILE_COMPANYBANKCODE_AK="profile.company.ak.bankcode";
     public static final String PROFILE_COMPANYACCOUNTNO_AK="profile.company.ak.accountno";
     
-    public static final String SERVERCONF_VOIPMODE="jlawyer.server.voip.voipmode";
-    public static final String SERVERCONF_VOIPUSER="jlawyer.server.voip.voipuser";
-    public static final String SERVERCONF_VOIPPWD="jlawyer.server.voip.voippwd";
     public static final String SERVERCONF_VOIPENDPOINT="jlawyer.server.voip.voipendpoint";
     public static final String SERVERCONF_VOIPSIPPREFIX="jlawyer.server.voip.sipprefix";
     public static final String SERVERCONF_VOIPSIPSUFFIX="jlawyer.server.voip.sipsuffix";

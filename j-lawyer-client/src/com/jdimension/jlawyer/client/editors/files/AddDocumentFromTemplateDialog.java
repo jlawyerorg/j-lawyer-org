@@ -1579,7 +1579,16 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
                     ht.put(ph, "");
                 }
                 List<PartiesPanelEntry> selectedParties=this.pnlPartiesPanel.getSelectedParties(this.allPartyTypes);
-                ht = PlaceHolderUtils.getPlaceHolderValues(ht, aFile, selectedParties, this.cmbDictateSigns.getSelectedItem().toString(), this.calculationTable, this.formPlaceHolderValues);
+                
+                AppUserBean caseLawyer=null;
+                AppUserBean caseAssistant=null;
+                AppUserBean author=UserSettings.getInstance().getCurrentUser();
+                if(aFile!=null) {
+                    caseLawyer=locator.lookupSystemManagementRemote().getUser(aFile.getLawyer());
+                    caseAssistant=locator.lookupSystemManagementRemote().getUser(aFile.getAssistant());
+                }
+                
+                ht = PlaceHolderUtils.getPlaceHolderValues(ht, aFile, selectedParties, this.cmbDictateSigns.getSelectedItem().toString(), this.calculationTable, this.formPlaceHolderValues, caseLawyer, caseAssistant, author);
 
                 Enumeration htEn = ht.keys();
                 while (htEn.hasMoreElements()) {
