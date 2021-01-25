@@ -775,8 +775,6 @@ public class TaggedTimerTask extends java.util.TimerTask {
                     @Override
                     public void actionPerformed(ActionEvent e) {
                         boolean selected = false;
-                        System.out.println("source: " + ((JCheckBoxMenuItem) e.getSource()).getText() + ((JCheckBoxMenuItem) e.getSource()).isSelected());
-                        System.out.println("10");
                         ArrayList<String> al = new ArrayList<String>();
                         for (MenuElement me : popup.getSubElements()) {
                             JCheckBoxMenuItem mi = ((JCheckBoxMenuItem) me.getComponent());
@@ -792,7 +790,6 @@ public class TaggedTimerTask extends java.util.TimerTask {
                             button.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_label_white_36dp.png")));
                         }
 
-                        System.out.println("60: " + al);
                         UserSettings.getInstance().setSettingArray(userSettingsKey, al.toArray(new String[al.size()]));
                         TimerTask taggedTask = new TaggedTimerTask(EditorsRegistry.getInstance().getMainWindow(), resultUI, split, tagMenu, tagDocumentMenu, popTags, popDocumentTags, true, false);
                         new java.util.Timer().schedule(taggedTask, 1000);

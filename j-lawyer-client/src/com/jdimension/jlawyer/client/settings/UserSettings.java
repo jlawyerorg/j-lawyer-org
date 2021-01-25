@@ -787,8 +787,13 @@ public class UserSettings {
     public void migrateFrom(ClientSettings cs, String key) {
         this.loadCache();
         if(!(this.settingCache.containsKey(key))) {
-            this.setSetting(key, cs.getConfiguration(key, null));
+            String csValue=cs.getConfiguration(key, null);
             cs.removeConfiguration(key);
+            if(csValue==null) {
+                return;
+            }
+            this.setSetting(key, csValue);
+            
         }
         
     }
@@ -822,7 +827,7 @@ public class UserSettings {
             return;
         }
         if(value==null) {
-            log.error("Value is null when setting user properties with key " + key);
+            log.error("Value is null when setting user properties with key " + key, new Exception());
             return;
         }
             

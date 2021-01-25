@@ -706,6 +706,12 @@ public class EmailFolderTreeCellRenderer extends DefaultTreeCellRenderer {
         if(((DefaultMutableTreeNode)object).getUserObject()==null)
             return this;
         
+        if(((DefaultMutableTreeNode)object).isRoot()) {
+                this.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/mail_send_2.png")));
+                this.setFont(this.getFont().deriveFont(Font.BOLD));
+                return this;
+        }
+        
         //new javax.swing.ImageIcon(getClass().getResource("/icons/scanner_big.png"))
         
         try {
@@ -720,11 +726,28 @@ public class EmailFolderTreeCellRenderer extends DefaultTreeCellRenderer {
             if("trash".equalsIgnoreCase(f.getName()))
                 this.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/trashcan_full.png")));
             
+            for(String a: EmailUtils.getFolderAliases(FolderContainer.TRASH)) {
+                if(a.equalsIgnoreCase(f.getName()))
+                    this.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/trashcan_full.png")));
+            }
+            
             if("sent".equalsIgnoreCase(f.getName()))
                 this.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder_sent_mail.png")));
             
+            for(String a: EmailUtils.getFolderAliases(FolderContainer.SENT)) {
+                if(a.equalsIgnoreCase(f.getName()))
+                    this.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder_sent_mail.png")));
+            }
+            
             if("inbox".equalsIgnoreCase(f.getName()))
                 this.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder_inbox.png")));
+            
+            for(String a: EmailUtils.getFolderAliases(FolderContainer.INBOX)) {
+                if(a.equalsIgnoreCase(f.getName()))
+                    this.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder_inbox.png")));
+            }
+            
+            
             
             int unread=f.getUnreadMessageCount();
             if(unread>0) {

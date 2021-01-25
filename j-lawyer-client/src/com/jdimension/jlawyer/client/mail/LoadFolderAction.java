@@ -951,7 +951,6 @@ public class LoadFolderAction extends ProgressableAction {
             ex.printStackTrace();
             return false;
         }
-        System.out.println("email folder loaded in " + (System.currentTimeMillis() - start));
         return true;
     }
 }

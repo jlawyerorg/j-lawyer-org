@@ -948,12 +948,12 @@ public class SendEncryptedAction extends ProgressableAction {
                 Store store = session.getStore(cu.getEmailInType());
                 store.connect(cu.getEmailInServer(), cu.getEmailInUser(), cu.getEmailInPwd());
 
-                Folder folder = store.getFolder(FolderContainer.INBOX);
+                Folder folder = EmailUtils.getInboxFolder(store);
                 if (!folder.isOpen()) {
                     folder.open(Folder.READ_WRITE);
                 }
 
-                Folder sent = EmailUtils.getSentFolder(folder);
+                Folder sent = EmailUtils.getSentFolder(store);
                 if (sent != null) {
                     this.progress("Kopiere Nachricht in 'Gesendet'...");
                     sent.open(Folder.READ_WRITE);
