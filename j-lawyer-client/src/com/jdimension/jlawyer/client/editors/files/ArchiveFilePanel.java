@@ -4032,7 +4032,16 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
             ArrayList<ArchiveFileDocumentsBean> selectedDocs = this.caseFolderPanel1.getSelectedDocuments();
             if (selectedDocs.size() > 0) {
-                int response = JOptionPane.showConfirmDialog(this, "Ausgewählte Dokumente löschen?", "Dokumente löschen", JOptionPane.YES_NO_OPTION);
+                StringBuffer sb=new StringBuffer();
+                sb.append("<html>");
+                sb.append("<p>Ausgew&auml;hlte Dokumente l&ouml;schen?</p>");
+                sb.append("<ul>");
+                for(ArchiveFileDocumentsBean deldoc: selectedDocs) {
+                    sb.append("<li>").append(deldoc.getName()).append("</li>");
+                }
+                sb.append("</ul>");
+                sb.append("</html>");
+                int response = JOptionPane.showConfirmDialog(this, sb.toString(), "Dokumente löschen", JOptionPane.YES_NO_OPTION);
                 if (response != JOptionPane.YES_OPTION) {
                     return;
                 }
