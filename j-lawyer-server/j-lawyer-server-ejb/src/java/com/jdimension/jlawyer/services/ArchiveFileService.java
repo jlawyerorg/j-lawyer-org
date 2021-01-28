@@ -680,6 +680,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
@@ -3186,7 +3187,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         Connection con = null;
         ResultSet rs = null;
         PreparedStatement st = null;
-        Date result = null;
+        Timestamp result = null;
         ArrayList<String> list = new ArrayList<String>();
         try {
             con = utils.getConnection();
@@ -3195,7 +3196,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             rs = st.executeQuery();
 
             if (rs.next()) {
-                result = rs.getDate(1);
+                result = rs.getTimestamp(1);
             }
         } catch (SQLException sqle) {
             log.error("Error getting last changed", sqle);

@@ -886,6 +886,7 @@ public class IterativeBackupTask extends java.util.TimerTask implements Cancella
             subject = "Fehlgeschlagen: ";
             body.append(t.getMessage()).append("\r\n\r\n");
         }
+        log.info("Backup finished");
 
         File exportDir = null;
         if (exportLocation.length() > 0) {
@@ -893,30 +894,8 @@ public class IterativeBackupTask extends java.util.TimerTask implements Cancella
             exportDir = new File(exportLocation);
             exportDir.mkdirs();
         }
-
+        
         try {
-
-            log.info("Backup finished");
-
-            if (syncLocation.length() > 0) {
-                log.info("Starting sync to " + BackupSyncTask.removePasswordFromUrl(syncLocation));
-                syncStart = new Date();
-
-                try {
-                    VirtualFile vf = VirtualFile.getFile(syncLocation);
-                    FolderSync sync = new FolderSync(new File(backupDir), vf, null);
-                    // we can be sure the file is written, so sync without lastmodified check
-                    sync.synchronize(0);
-                    vf.close();
-                } catch (Throwable t) {
-                    log.error("failed to sync: " + t.getMessage(), t);
-                    syncSuccess = false;
-                    subject = "Fehlgeschlagen: ";
-                }
-
-                syncEnd = new Date();
-                log.info("Sync finished");
-            }
 
             exportEnabled = exportLocation.length() > 0;
             exportStart = new Date();
@@ -962,6 +941,33 @@ public class IterativeBackupTask extends java.util.TimerTask implements Cancella
             body.append(ex.getMessage()).append("\r\n\r\n");
         }
         exportEnd = new Date();
+
+        try {
+            if (syncLocation.length() > 0) {
+                log.info("Starting sync to " + BackupSyncTask.removePasswordFromUrl(syncLocation));
+                syncStart = new Date();
+
+                try {
+                    VirtualFile vf = VirtualFile.getFile(syncLocation);
+                    FolderSync sync = new FolderSync(new File(backupDir), vf, null);
+                    // we can be sure the file is written, so sync without lastmodified check
+                    sync.synchronize(0);
+                    vf.close();
+                } catch (Throwable t) {
+                    log.error("failed to sync: " + t.getMessage(), t);
+                    syncSuccess = false;
+                    subject = "Fehlgeschlagen: ";
+                }
+
+                syncEnd = new Date();
+                log.info("Sync finished");
+            }
+        } catch (Throwable ex) {
+            log.error("Errors syncing backup", ex);
+            subject = "Fehlgeschlagen: ";
+            body.append(ex.getMessage()).append("\r\n\r\n");
+        }
+        
 
         Date backupEnd = new Date();
         try {
