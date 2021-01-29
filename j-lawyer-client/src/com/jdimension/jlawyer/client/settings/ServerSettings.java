@@ -745,6 +745,8 @@ public class ServerSettings {
     public static final String SERVERCONF_MONITOR_VMWARN="jlawyer.server.monitor.vmwarn";
     public static final String SERVERCONF_MONITOR_VMERROR="jlawyer.server.monitor.vmerror";
     public static final String SERVERCONF_MONITOR_NOTIFY="jlawyer.server.monitor.notify";
+    public static final String SERVERCONF_MONITOR_NOTIFY_BACKUPSUCCESS="jlawyer.server.monitor.notify.backupsuccess";
+    public static final String SERVERCONF_MONITOR_NOTIFY_BACKUPFAILURE="jlawyer.server.monitor.notify.backupfailure";
     public static final String SERVERCONF_MONITOR_SMTPSERVER="jlawyer.server.monitor.smtpserver";
     public static final String SERVERCONF_MONITOR_SMTPPORT="jlawyer.server.monitor.smtpport";
     public static final String SERVERCONF_MONITOR_SMTPUSER="jlawyer.server.monitor.smtpuser";

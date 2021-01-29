@@ -728,12 +728,15 @@ public class IterativeBackupTask extends java.util.TimerTask implements Cancella
         String dbPassword = "";
         String dbPort = "3306";
         String syncLocation = "";
+        boolean backupSuccess=true;
         boolean syncSuccess = true;
         boolean exportSuccess = true;
         boolean exportEnabled = true;
         String exportLocation = "";
         String encryptionPassword = "";
         boolean encrypt = false;
+        boolean notifySuccess=true;
+        boolean notifyFailure=true;
 
         try {
             InitialContext ic = new InitialContext();
@@ -806,6 +809,21 @@ public class IterativeBackupTask extends java.util.TimerTask implements Cancella
                     exportLocation = exportLocation.trim();
                 } else {
                     exportLocation = "";
+                }
+            }
+            
+            ServerSettingsBean notifySuccessSetting = settings.find("jlawyer.server.monitor.notify.backupsuccess");
+            if (notifySuccessSetting != null) {
+                String temp = notifySuccessSetting.getSettingValue();
+                if (temp != null) {
+                    notifySuccess="on".equalsIgnoreCase(temp);
+                }
+            }
+            ServerSettingsBean notifyFailureSetting = settings.find("jlawyer.server.monitor.notify.backupfailure");
+            if (notifyFailureSetting != null) {
+                String temp = notifyFailureSetting.getSettingValue();
+                if (temp != null) {
+                    notifyFailure="on".equalsIgnoreCase(temp);
                 }
             }
 
@@ -882,6 +900,7 @@ public class IterativeBackupTask extends java.util.TimerTask implements Cancella
             log.info("starting backup");
             backupResult=ibe.execute();
         } catch (Throwable t) {
+            backupSuccess=false;
             log.error("backup executor failed", t);
             subject = "Fehlgeschlagen: ";
             body.append(t.getMessage()).append("\r\n\r\n");
@@ -936,7 +955,8 @@ public class IterativeBackupTask extends java.util.TimerTask implements Cancella
             }
 
         } catch (Throwable ex) {
-            log.error("Errors creating backup", ex);
+            exportSuccess=false;
+            log.error("Errors creating export", ex);
             subject = "Fehlgeschlagen: ";
             body.append(ex.getMessage()).append("\r\n\r\n");
         }
@@ -1014,7 +1034,11 @@ public class IterativeBackupTask extends java.util.TimerTask implements Cancella
             body.append("\r\n");
             body.append("Hinweis: Speichern Sie die Sicherungsdatei regelmäßig auf einem anderen Medium, idealerweise in anderen Räumlichkeiten (für den Fall eines Diebstahls oder Brandes).");
 
-            sysMan.statusMail(subject, body.toString());
+            if(exportSuccess && syncSuccess && backupSuccess && notifySuccess) {
+                sysMan.statusMail(subject, body.toString());
+            } else if((!exportSuccess || !syncSuccess || !backupSuccess) && notifyFailure) {
+                sysMan.statusMail(subject, body.toString());
+            }
         } catch (Throwable t) {
             log.error("Could not send status mail", t);
         }

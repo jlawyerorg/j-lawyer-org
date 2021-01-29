@@ -1147,22 +1147,4 @@ public class SystemMonitorTask extends java.util.TimerTask {
         }
     }
 
-//    private void publishStatus(int level) throws Exception {
-//        InitialContext ic = new InitialContext();
-//        ConnectionFactory cf = (ConnectionFactory) ic.lookup("/ConnectionFactory");
-//        Topic observerTopic = (Topic) ic.lookup("/topic/systemMonitoringTopic");
-//        Connection connection = cf.createConnection();
-//        Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-//        MessageProducer producer = session.createProducer(observerTopic);
-//        connection.start();
-//        //TextMessage message = session.createTextMessage("This is an order");
-//        ObjectMessage msg = session.createObjectMessage(new Integer(level));
-//        producer.send(msg);
-//
-//        connection.stop();
-//        producer.close();
-//        session.close();
-//        connection.close();
-//
-//    }
 }

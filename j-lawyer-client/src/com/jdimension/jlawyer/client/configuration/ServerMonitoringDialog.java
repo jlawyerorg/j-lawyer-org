@@ -709,6 +709,8 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
                 this.cmbVMMemError.setEnabled(false);
                 this.cmbVMMemWarn.setEnabled(false);
                 this.chkWarnings.setEnabled(false);
+                this.chkWarningsBackupSuccess.setEnabled(false);
+                this.chkWarningsBackupFailure.setEnabled(false);
                 this.chkMonitorCpu.setEnabled(false);
                 this.chkMonitorDisk.setEnabled(false);
                 this.chkMonitorJava.setEnabled(false);
@@ -751,6 +753,19 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
                 this.chkWarnings.setSelected(false);
             } else {
                 this.chkWarnings.setSelected(true);
+            }
+            
+            notify = set.getSetting(set.SERVERCONF_MONITOR_NOTIFY_BACKUPSUCCESS, "on");
+            if ("off".equalsIgnoreCase(notify)) {
+                this.chkWarningsBackupSuccess.setSelected(false);
+            } else {
+                this.chkWarningsBackupSuccess.setSelected(true);
+            }
+            notify = set.getSetting(set.SERVERCONF_MONITOR_NOTIFY_BACKUPFAILURE, "on");
+            if ("off".equalsIgnoreCase(notify)) {
+                this.chkWarningsBackupFailure.setSelected(false);
+            } else {
+                this.chkWarningsBackupFailure.setSelected(true);
             }
 
             String cpuEnabled = set.getSetting(set.SERVERCONF_MONITOR_ENABLED_CPU, "on");
@@ -938,6 +953,8 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
         jLabel21 = new javax.swing.JLabel();
         txtSmtpPort = new javax.swing.JTextField();
         cmdTestMail = new javax.swing.JButton();
+        chkWarningsBackupFailure = new javax.swing.JCheckBox();
+        chkWarningsBackupSuccess = new javax.swing.JCheckBox();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Servermonitoring");
@@ -1037,7 +1054,7 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jLabel5)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 283, Short.MAX_VALUE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 343, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -1205,6 +1222,10 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
             }
         });
 
+        chkWarningsBackupFailure.setText("bei fehlgeschlagener Datensicherung");
+
+        chkWarningsBackupSuccess.setText("bei erfolgreicher Datensicherung (Zusammenfassung)");
+
         javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
         jPanel4.setLayout(jPanel4Layout);
         jPanel4Layout.setHorizontalGroup(
@@ -1238,7 +1259,9 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
                                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                         .addComponent(chkEmailStartTls)
                                         .addGap(2, 2, 2)
-                                        .addComponent(chkSsl)))
+                                        .addComponent(chkSsl))
+                                    .addComponent(chkWarningsBackupFailure)
+                                    .addComponent(chkWarningsBackupSuccess))
                                 .addGap(0, 0, Short.MAX_VALUE)))))
                 .addContainerGap())
         );
@@ -1246,6 +1269,10 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
             jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel4Layout.createSequentialGroup()
                 .addComponent(chkWarnings)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(chkWarningsBackupSuccess)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(chkWarningsBackupFailure)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel6)
@@ -1323,8 +1350,7 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(cmdCancel)
-                    .addComponent(cmdSave))
-                .addContainerGap())
+                    .addComponent(cmdSave)))
         );
 
         jTabbedPane1.getAccessibleContext().setAccessibleDescription("");
@@ -1348,6 +1374,17 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
             set.setSetting(set.SERVERCONF_MONITOR_NOTIFY, "on");
         } else {
             set.setSetting(set.SERVERCONF_MONITOR_NOTIFY, "off");
+        }
+        
+        if (this.chkWarningsBackupSuccess.isSelected()) {
+            set.setSetting(set.SERVERCONF_MONITOR_NOTIFY_BACKUPSUCCESS, "on");
+        } else {
+            set.setSetting(set.SERVERCONF_MONITOR_NOTIFY_BACKUPSUCCESS, "off");
+        }
+        if (this.chkWarningsBackupFailure.isSelected()) {
+            set.setSetting(set.SERVERCONF_MONITOR_NOTIFY_BACKUPFAILURE, "on");
+        } else {
+            set.setSetting(set.SERVERCONF_MONITOR_NOTIFY_BACKUPFAILURE, "off");
         }
 
         if (this.chkMonitorCpu.isSelected()) {
@@ -1480,6 +1517,8 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
     private javax.swing.JCheckBox chkMonitorRam;
     private javax.swing.JCheckBox chkSsl;
     private javax.swing.JCheckBox chkWarnings;
+    private javax.swing.JCheckBox chkWarningsBackupFailure;
+    private javax.swing.JCheckBox chkWarningsBackupSuccess;
     private javax.swing.JComboBox cmbCpuError;
     private javax.swing.JComboBox cmbCpuWarn;
     private javax.swing.JComboBox cmbDiskError;
