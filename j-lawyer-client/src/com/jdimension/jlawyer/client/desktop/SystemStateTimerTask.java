@@ -749,11 +749,12 @@ public class SystemStateTimerTask extends java.util.TimerTask {
             
         } catch (Throwable ex) {
             log.error("Error connecting to server", ex);
-            String errorMsg=java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/SystemStateTimerTask").getString("msg.connectionerror"), new Object[] {ex.getMessage()});
+            //String errorMsg=java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/SystemStateTimerTask").getString("msg.connectionerror"), new Object[] {ex.getMessage()});
             if(ex instanceof SipgateException) {
-                errorMsg="Keine Sipgate-Verbindung: " + ex.getMessage();
+                String errorMsg="Keine Sipgate-Verbindung: " + ex.getMessage();
+                ThreadUtils.showErrorDialog(this.owner, errorMsg, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/SystemStateTimerTask").getString("msg.error"));
             }
-            ThreadUtils.showErrorDialog(this.owner, errorMsg, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/SystemStateTimerTask").getString("msg.error"));
+            
             return;
         }
         

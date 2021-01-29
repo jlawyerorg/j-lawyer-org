@@ -681,6 +681,7 @@ import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemListener;
+import java.nio.channels.ClosedChannelException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -689,6 +690,7 @@ import java.util.Hashtable;
 import java.util.List;
 import java.util.TimerTask;
 import java.util.logging.Level;
+import javax.ejb.EJBException;
 import javax.swing.*;
 import org.apache.log4j.Logger;
 import themes.colors.DefaultColorTheme;
@@ -912,6 +914,18 @@ public class TaggedTimerTask extends java.util.TimerTask {
             }
             //running=false;
 
+        } catch (EJBException | ClosedChannelException ex) {
+            log.error("Error connecting to server", ex);
+            if(ex instanceof ClosedChannelException) {
+                // ignore connection loss
+            } else if (ex instanceof EJBException && ex.getCause()!=null && ex.getCause() instanceof ClosedChannelException) {
+                // ignore connection loss
+            } else {
+                // could be a SQL error or whatever - display to user
+                ThreadUtils.showErrorDialog(this.owner, java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/TaggedTimerTask").getString("msg.connectionerror"), new Object[]{ex.getMessage()}), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/TaggedTimerTask").getString("msg.error"));
+            }
+            running = false;
+            return;
         } catch (Throwable ex) {
             log.error("Error connecting to server", ex);
             //JOptionPane.showMessageDialog(this.owner, "Verbindungsfehler: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
