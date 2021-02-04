@@ -55,3 +55,7 @@ jobs:
           sipuser: ${{ secrets.SIPUSER }}
           sippassword: ${{ secrets.SIPPASSWORD }}
           runsontravisci: ${{ secrets.RUNSONTRAVISCI }}
+          mysqlpwd: root
+          backupdirectory: /home/runner/j-lawyer-backup
+          datadirectory: /home/runner/j-lawyer-data
+          encryptionpwd:  
