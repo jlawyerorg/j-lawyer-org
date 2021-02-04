@@ -32,12 +32,12 @@ jobs:
 
       - name: Prepare environment
         run:  |
-          mkdir /home/travis/j-lawyer-backup
-          mkdir /home/travis/j-lawyer-data
-          mkdir /home/travis/j-lawyer-data/archivefiles
-          mkdir /home/travis/j-lawyer-data/emailtemplates
-          mkdir /home/travis/j-lawyer-data/templates
-          mkdir /home/travis/j-lawyer-data/mastertemplates
+          mkdir /home/runner/j-lawyer-backup
+          mkdir /home/runner/j-lawyer-data
+          mkdir /home/runner/j-lawyer-data/archivefiles
+          mkdir /home/runner/j-lawyer-data/emailtemplates
+          mkdir /home/runner/j-lawyer-data/templates
+          mkdir /home/runner/j-lawyer-data/mastertemplates
           mysql -uroot -h127.0.0.1 -proot -e 'CREATE DATABASE IF NOT EXISTS db1;'
 
       - name: Build
