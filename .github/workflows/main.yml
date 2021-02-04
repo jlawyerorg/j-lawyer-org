@@ -39,7 +39,11 @@ jobs:
           mkdir /home/runner/j-lawyer-data/emailtemplates
           mkdir /home/runner/j-lawyer-data/templates
           mkdir /home/runner/j-lawyer-data/mastertemplates
-          mysql -uroot -h127.0.0.1 -proot -e 'CREATE DATABASE IF NOT EXISTS db1;'
+          mysql -uroot -h127.0.0.1 -proot -e 'CREATE DATABASE IF NOT EXISTS jlawyerdb;'
+          sudo apt-get install wget tar ant ant-optional junit4
+          wget -O /home/runner/j-lawyer-backup/backups.tar.gz https://www.j-lawyer.org/downloads/travisci/backups/backups.tar.gz
+          tar -m -xvzf /home/runner/j-lawyer-backup/backups.tar.gz
+          
 
       - name: Build
         run: echo test
