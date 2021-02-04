@@ -63,7 +63,7 @@ jobs:
       - name: Docker Images
         run:  |
           docker login --username="$dockeruser" --password="$dockerpassword"
-          cd /home/runner/build/jlawyerorg/j-lawyer-org/docker && bash build.sh && bash push.sh
+          cd /home/runner/work/j-lawyer-org/j-lawyer-org/docker && bash build.sh && bash push.sh
         env:
           dockeruser: ${{ secrets.DOCKERUSER }}
           dockerpassword: ${{ secrets.DOCKERPASSWORD }}
