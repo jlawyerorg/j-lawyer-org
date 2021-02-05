@@ -685,9 +685,11 @@ public interface ArchiveFileDocumentsBeanFacadeLocal {
 
     List<ArchiveFileDocumentsBean> findRange(int[] range);
     
-    public List<ArchiveFileDocumentsBean> findByArchiveFileKey(ArchiveFileBean archiveFileKey);
+    public List<ArchiveFileDocumentsBean> findByArchiveFileKey(ArchiveFileBean archiveFileKey, boolean deleted);
     
     public List<ArchiveFileDocumentsBean> findByFolder(CaseFolder folder);
+    
+    public List<ArchiveFileDocumentsBean> findDeleted();
 
     int count();
     

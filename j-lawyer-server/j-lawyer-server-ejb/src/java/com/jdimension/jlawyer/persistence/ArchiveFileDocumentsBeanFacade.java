@@ -687,16 +687,23 @@ public class ArchiveFileDocumentsBeanFacade extends AbstractFacade<ArchiveFileDo
     }
     
     @Override
-    public List<ArchiveFileDocumentsBean> findByArchiveFileKey(ArchiveFileBean archiveFileKey) {
+    public List<ArchiveFileDocumentsBean> findByArchiveFileKey(ArchiveFileBean archiveFileKey, boolean deleted) {
         
-        List<ArchiveFileDocumentsBean> list = getEntityManager().createQuery("from ArchiveFileDocumentsBean where archiveFileKey = ?1").setParameter(1, archiveFileKey).getResultList();
+        List<ArchiveFileDocumentsBean> list = getEntityManager().createQuery("from ArchiveFileDocumentsBean where archiveFileKey = ?1 and deleted = ?2").setParameter(1, archiveFileKey).setParameter(2, deleted).getResultList();
         return list;
     }
     
     @Override
     public List<ArchiveFileDocumentsBean> findByFolder(CaseFolder folder) {
         
-        List<ArchiveFileDocumentsBean> list = getEntityManager().createQuery("from ArchiveFileDocumentsBean where folder = ?1").setParameter(1, folder).getResultList();
+        List<ArchiveFileDocumentsBean> list = getEntityManager().createQuery("from ArchiveFileDocumentsBean where folder = ?1 and deleted = false").setParameter(1, folder).getResultList();
+        return list;
+    }
+    
+    @Override
+    public List<ArchiveFileDocumentsBean> findDeleted() {
+        
+        List<ArchiveFileDocumentsBean> list = getEntityManager().createQuery("from ArchiveFileDocumentsBean where deleted = true").getResultList();
         return list;
     }
     

@@ -857,9 +857,10 @@ public class SendEncryptedAction extends ProgressableAction {
 
                     MimeBodyPart att = new MimeBodyPart();
                     FileDataSource attFile = new FileDataSource(url);
-                    att.setDataHandler(new DataHandler(attFile));
-                    att.setFileName(MimeUtility.encodeText(attFile.getName()));
-                    att.addHeader("Content-Transfer-Encoding", "base64");
+//                    att.setDataHandler(new DataHandler(attFile));
+//                    att.setFileName(MimeUtility.encodeText(attFile.getName()));
+//                    att.addHeader("Content-Transfer-Encoding", "base64");
+                    att.attachFile(url);
                     attachmentNames = attachmentNames + attFile.getName() + " ";
                     multiPart.addBodyPart(att);
                 }

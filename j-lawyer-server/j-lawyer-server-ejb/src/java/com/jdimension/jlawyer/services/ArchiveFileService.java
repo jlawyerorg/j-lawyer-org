@@ -1583,10 +1583,10 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     @Override
     @RolesAllowed({"readArchiveFileRole"})
     public Collection<ArchiveFileDocumentsBean> getDocuments(String archiveFileKey) {
-        return getDocumentsImpl(archiveFileKey, context.getCallerPrincipal().getName());
+        return getDocumentsImpl(archiveFileKey, false, context.getCallerPrincipal().getName());
     }
 
-    private Collection<ArchiveFileDocumentsBean> getDocumentsImpl(String archiveFileKey, String principalId) {
+    private Collection<ArchiveFileDocumentsBean> getDocumentsImpl(String archiveFileKey, boolean deleted, String principalId) {
         ArchiveFileBean aFile = this.archiveFileFacade.find(archiveFileKey);
         boolean allowed = false;
         if (principalId != null) {
@@ -1604,7 +1604,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         }
 
         if (allowed) {
-            List resultList = this.archiveFileDocumentsFacade.findByArchiveFileKey(aFile);
+            List resultList = this.archiveFileDocumentsFacade.findByArchiveFileKey(aFile, deleted);
             for (Object d : resultList) {
                 if (d instanceof ArchiveFileDocumentsBean) {
                     ArchiveFileDocumentsBean doc = (ArchiveFileDocumentsBean) d;
@@ -1733,7 +1733,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         dst = dst + fileName;
 
         if (new File(dst).exists()) {
-            throw new Exception("Dokument " + fileName + " existiert bereits - bitte einen anderen Namen wählen!");
+            throw new Exception("Dokument " + fileName + " existiert bereits in der Akte oder deren Papierkorb - bitte einen anderen Namen wählen!");
         }
 
         SystemManagement.createFile(dst, data);
@@ -1754,6 +1754,9 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         if(aFile.getRootFolder()!=null)
             db.setFolder(aFile.getRootFolder());
         db.setFavorite(false);
+        db.setDeleted(false);
+        db.setDeletedBy(null);
+        db.setDeletionDate(null);
         this.archiveFileDocumentsFacade.create(db);
 
         ArchiveFileHistoryBean newHistEntry = new ArchiveFileHistoryBean();
@@ -1885,20 +1888,20 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             localBaseDir = localBaseDir + System.getProperty("file.separator");
         }
 
-        String dst = localBaseDir + "archivefiles" + System.getProperty("file.separator") + aFile.getId() + System.getProperty("file.separator");
-        dst = dst + db.getName();
-
-        File dbFile = new File(dst);
-        if (!(dbFile.exists())) {
-            log.warn("Dokument " + dst + " existiert nicht und kann nicht gelöscht werden!");
-        } else {
-            boolean deleted = dbFile.delete();
-            if (!deleted) {
-                // could not delete document, but still let's continue with removal
-                log.error("Dokument " + dst + " konnte nicht gelöscht werden!");
-            }
-        }
-
+//        String dst = localBaseDir + "archivefiles" + System.getProperty("file.separator") + aFile.getId() + System.getProperty("file.separator");
+//        dst = dst + db.getName();
+//
+//        File dbFile = new File(dst);
+//        if (!(dbFile.exists())) {
+//            log.warn("Dokument " + dst + " existiert nicht und kann nicht gelöscht werden!");
+//        } else {
+//            boolean deleted = dbFile.delete();
+//            if (!deleted) {
+//                // could not delete document, but still let's continue with removal
+//                log.error("Dokument " + dst + " konnte nicht gelöscht werden!");
+//            }
+//        }
+//
         try {
             PreviewGenerator pg = new PreviewGenerator(this.archiveFileDocumentsFacade);
             pg.deletePreview(aFile.getId(), db.getName());
@@ -1910,7 +1913,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         newHistEntry.setId(idGen.getID().toString());
         newHistEntry.setArchiveFileKey(aFile);
         newHistEntry.setChangeDate(new Date());
-        newHistEntry.setChangeDescription("Dokument gelöscht: " + db.getName());
+        newHistEntry.setChangeDescription("Dokument in den Papierkorb verschoben: " + db.getName());
         newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
         this.archiveFileHistoryFacade.create(newHistEntry);
 
@@ -1923,7 +1926,11 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             log.error("Error publishing search index request DELETE", t);
         }
 
-        this.archiveFileDocumentsFacade.remove(db);
+        db.setDeleted(true);
+        db.setDeletionDate(new Date());
+        db.setDeletedBy(context.getCallerPrincipal().getName());
+        db.setFolder(null);
+        this.archiveFileDocumentsFacade.edit(db);
 
     }
 
@@ -2109,7 +2116,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         File dbFileNew = new File(dstNew);
 
         if (dbFileNew.exists()) {
-            throw new Exception("Ein Dokument mit dem Namen " + newName + " existiert bereits in der Akte!");
+            throw new Exception("Ein Dokument mit dem Namen " + newName + " existiert bereits in der Akte oder deren Papierkorb!");
         }
 
         boolean renamed = dbFile.renameTo(dbFileNew);
@@ -3256,7 +3263,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
     @Override
     public Collection<ArchiveFileDocumentsBean> getDocumentsUnrestricted(String archiveFileKey) {
-        return getDocumentsImpl(archiveFileKey, null);
+        return getDocumentsImpl(archiveFileKey, false, null);
     }
 
     @Override
@@ -3674,7 +3681,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         dst = dst + fileName;
 
         if (new File(dst).exists()) {
-            throw new Exception("Dokument " + fileName + " existiert bereits - bitte einen anderen Namen wählen!");
+            throw new Exception("Dokument " + fileName + " existiert bereits in der Akte oder deren Papierkorb - bitte einen anderen Namen wählen!");
         }
 
         SystemManagement.copyFile(src, dst);
@@ -3695,6 +3702,9 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             db.setSize(-1);
         }
         db.setFavorite(false);
+        db.setDeleted(false);
+        db.setDeletedBy(null);
+        db.setDeletionDate(null);
         this.archiveFileDocumentsFacade.create(db);
 
         ArchiveFileHistoryBean newHistEntry = new ArchiveFileHistoryBean();
@@ -3828,7 +3838,18 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     public boolean doesDocumentExist(String caseId, String documentName) {
         ArchiveFileBean aFile = this.archiveFileFacade.find(caseId);
 
-        List resultList = this.archiveFileDocumentsFacade.findByArchiveFileKey(aFile);
+        List resultList = this.archiveFileDocumentsFacade.findByArchiveFileKey(aFile, false);
+        for (Object d : resultList) {
+            if (d instanceof ArchiveFileDocumentsBean) {
+                ArchiveFileDocumentsBean doc = (ArchiveFileDocumentsBean) d;
+                if (doc.getName().equalsIgnoreCase(documentName)) {
+                    return true;
+                }
+            }
+        }
+        
+        // need to check bin also
+        resultList = this.archiveFileDocumentsFacade.findByArchiveFileKey(aFile, true);
         for (Object d : resultList) {
             if (d instanceof ArchiveFileDocumentsBean) {
                 ArchiveFileDocumentsBean doc = (ArchiveFileDocumentsBean) d;
@@ -3919,7 +3940,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                     keyCache.add(id);
                     ArchiveFileDocumentsBean docb = this.archiveFileDocumentsFacade.find(id);
 
-                    if (this.checkGroupsForCase(context.getCallerPrincipal().getName(), userGroups, docb.getArchiveFileKey())) {
+                    if (!docb.isDeleted() && this.checkGroupsForCase(context.getCallerPrincipal().getName(), userGroups, docb.getArchiveFileKey())) {
                         returnList.add(docb);
                     }
 
@@ -4571,6 +4592,113 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     @RolesAllowed({"loginRole"})
     public DocumentFolderTemplate getFolderTemplateById(String id) {
         return this.folderTemplateFacade.find(id);
+    }
+
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public Collection<ArchiveFileDocumentsBean> getDocumentsBin() {
+        Collection<ArchiveFileDocumentsBean> deleted=this.archiveFileDocumentsFacade.findDeleted();
+        ArrayList<ArchiveFileDocumentsBean> deletedAllowed=new ArrayList<>();
+        
+        String principalId=context.getCallerPrincipal().getName();
+        List<Group> userGroups = new ArrayList<Group>();
+        try {
+            userGroups = this.securityFacade.getGroupsForUser(principalId);
+        } catch (Throwable t) {
+            log.error("Unable to determine groups for user " + principalId, t);
+        }
+        
+        for(ArchiveFileDocumentsBean doc: deleted) {
+            if(this.checkGroupsForCase(principalId, userGroups, doc.getArchiveFileKey())) {
+                deletedAllowed.add(doc);
+            }
+        }
+        
+        return deletedAllowed;
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public void removeDocumentFromBin(String docId) throws Exception {
+        StringGenerator idGen = new StringGenerator();
+        ArchiveFileDocumentsBean db = this.archiveFileDocumentsFacade.find(docId);
+        ArchiveFileBean aFile = db.getArchiveFileKey();
+        this.checkGroupsForCase(context.getCallerPrincipal().getName(), aFile);
+
+        String localBaseDir = System.getProperty("jlawyer.server.basedirectory");
+        localBaseDir = localBaseDir.trim();
+        if (!localBaseDir.endsWith(System.getProperty("file.separator"))) {
+            localBaseDir = localBaseDir + System.getProperty("file.separator");
+        }
+
+        String dst = localBaseDir + "archivefiles" + System.getProperty("file.separator") + aFile.getId() + System.getProperty("file.separator");
+        dst = dst + db.getName();
+
+        File dbFile = new File(dst);
+        if (!(dbFile.exists())) {
+            log.warn("Dokument " + dst + " existiert nicht und kann nicht gelöscht werden!");
+        } else {
+            boolean deleted = dbFile.delete();
+            if (!deleted) {
+                // could not delete document, but still let's continue with removal
+                log.error("Dokument " + dst + " konnte nicht gelöscht werden!");
+            }
+        }
+
+        ArchiveFileHistoryBean newHistEntry = new ArchiveFileHistoryBean();
+        newHistEntry.setId(idGen.getID().toString());
+        newHistEntry.setArchiveFileKey(aFile);
+        newHistEntry.setChangeDate(new Date());
+        newHistEntry.setChangeDescription("Dokument aus dem Papierkorb gelöscht: " + db.getName());
+        newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
+        this.archiveFileHistoryFacade.create(newHistEntry);
+
+        this.archiveFileDocumentsFacade.remove(db);
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public boolean restoreDocumentFromBin(String docId) throws Exception {
+        StringGenerator idGen = new StringGenerator();
+        ArchiveFileDocumentsBean db = this.archiveFileDocumentsFacade.find(docId);
+        ArchiveFileBean aFile = db.getArchiveFileKey();
+        this.checkGroupsForCase(context.getCallerPrincipal().getName(), aFile);
+
+        db.setDeleted(false);
+        db.setDeletedBy(null);
+        db.setDeletionDate(null);
+        this.archiveFileDocumentsFacade.edit(db);
+
+        ArchiveFileHistoryBean newHistEntry = new ArchiveFileHistoryBean();
+        newHistEntry.setId(idGen.getID().toString());
+        newHistEntry.setArchiveFileKey(aFile);
+        newHistEntry.setChangeDate(new Date());
+        newHistEntry.setChangeDescription("Dokument aus dem Papierkorb wiederhergestellt: " + db.getName());
+        newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
+        this.archiveFileHistoryFacade.create(newHistEntry);
+
+        String preview = "";
+        try {
+            PreviewGenerator pg = new PreviewGenerator(this.archiveFileDocumentsFacade);
+            preview = pg.createPreview(aFile.getId(), db.getName());
+        } catch (Throwable t) {
+            log.error("Error creating document preview", t);
+        }
+
+        try {
+            SearchIndexRequest req = new SearchIndexRequest(SearchIndexRequest.ACTION_ADD);
+            req.setArchiveFileId(aFile.getId());
+            req.setArchiveFileName(aFile.getName());
+            req.setArchiveFileNumber(aFile.getFileNumber());
+            req.setFileName(db.getName());
+            req.setId(docId);
+            req.setText(preview);
+
+            this.publishSearchIndexRequest(req);
+        } catch (Throwable t) {
+            log.error("Error publishing search index request ADD", t);
+        }
+        return true;
     }
 
 }

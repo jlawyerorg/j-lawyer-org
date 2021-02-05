@@ -1052,6 +1052,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         jPanel1 = new javax.swing.JPanel();
         jMenuBar1 = new javax.swing.JMenuBar();
         mnuFile = new javax.swing.JMenu();
+        mnuDocumentsBin = new javax.swing.JMenuItem();
         mnuBankImport = new javax.swing.JMenuItem();
         mnuZipCodeImport = new javax.swing.JMenuItem();
         mnuAddressImport = new javax.swing.JMenuItem();
@@ -1215,6 +1216,15 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         jPanel1.setLayout(new javax.swing.BoxLayout(jPanel1, javax.swing.BoxLayout.LINE_AXIS));
 
         mnuFile.setText(bundle.getString("menu.file")); // NOI18N
+
+        mnuDocumentsBin.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/baseline_restore_from_trash_black_48dp.png"))); // NOI18N
+        mnuDocumentsBin.setText("Papierkorb");
+        mnuDocumentsBin.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuDocumentsBinActionPerformed(evt);
+            }
+        });
+        mnuFile.add(mnuDocumentsBin);
 
         mnuBankImport.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/fileimport.png"))); // NOI18N
         mnuBankImport.setText(bundle.getString("menu.file.import.banks")); // NOI18N
@@ -2578,6 +2588,12 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         }
     }//GEN-LAST:event_mnuDocumentFolderTemplatesActionPerformed
 
+    private void mnuDocumentsBinActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuDocumentsBinActionPerformed
+        DocumentsBinDialog dlg=new DocumentsBinDialog(this, true);
+        FrameUtils.centerDialog(dlg, this);
+                dlg.setVisible(true);
+    }//GEN-LAST:event_mnuDocumentsBinActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -2639,6 +2655,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     private javax.swing.JMenuItem mnuDocumentMonitor;
     private javax.swing.JMenu mnuDocumentOptions;
     private javax.swing.JMenuItem mnuDocumentTags;
+    private javax.swing.JMenuItem mnuDocumentsBin;
     private javax.swing.JMenuItem mnuDrebisSettings;
     private javax.swing.JMenuItem mnuExit;
     private javax.swing.JMenu mnuFile;

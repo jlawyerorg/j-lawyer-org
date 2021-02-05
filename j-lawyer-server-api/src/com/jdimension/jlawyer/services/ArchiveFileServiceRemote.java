@@ -839,4 +839,10 @@ public interface ArchiveFileServiceRemote {
 
     DocumentFolderTemplate getFolderTemplateById(String id);
 
+    Collection<ArchiveFileDocumentsBean> getDocumentsBin();
+
+    void removeDocumentFromBin(String docId) throws Exception;
+
+    boolean restoreDocumentFromBin(String docId) throws Exception;
+
 }

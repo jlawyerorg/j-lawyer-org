@@ -709,6 +709,14 @@ public class ArchiveFileDocumentsBean implements Serializable {
     @JoinColumn(name = "folder", referencedColumnName = "id")
     @ManyToOne
     private CaseFolder folder;
+    
+    @Column(name = "deleted_by")
+    protected String deletedBy;
+    @Column(name = "deletion_date")
+    @Temporal(TemporalType.TIMESTAMP)
+    protected Date deletionDate;
+    @Column(name = "deleted", columnDefinition = "TINYINT DEFAULT 0")
+    protected boolean deleted;
 
     public ArchiveFileDocumentsBean() {
     }
@@ -844,6 +852,48 @@ public class ArchiveFileDocumentsBean implements Serializable {
      */
     public void setFolder(CaseFolder folder) {
         this.folder = folder;
+    }
+
+    /**
+     * @return the deletedBy
+     */
+    public String getDeletedBy() {
+        return deletedBy;
+    }
+
+    /**
+     * @param deletedBy the deletedBy to set
+     */
+    public void setDeletedBy(String deletedBy) {
+        this.deletedBy = deletedBy;
+    }
+
+    /**
+     * @return the deletionDate
+     */
+    public Date getDeletionDate() {
+        return deletionDate;
+    }
+
+    /**
+     * @param deletionDate the deletionDate to set
+     */
+    public void setDeletionDate(Date deletionDate) {
+        this.deletionDate = deletionDate;
+    }
+
+    /**
+     * @return the deleted
+     */
+    public boolean isDeleted() {
+        return deleted;
+    }
+
+    /**
+     * @param deleted the deleted to set
+     */
+    public void setDeleted(boolean deleted) {
+        this.deleted = deleted;
     }
     
 }
