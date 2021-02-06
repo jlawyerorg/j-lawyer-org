@@ -681,6 +681,7 @@ public class TransientTimer {
     private Timer timerObserver=null;
     private Timer timerMonitor=null;
     private Timer timerFax=null;
+    private Timer timerPurgeBin=null;
     
     private TransientTimer() {
         
@@ -734,6 +735,13 @@ public class TransientTimer {
             // start after 30s and run every 12s
             timerFax.schedule(new FaxQueueStatusTask(), 30000, 12000);
             
+        }
+        
+        if(timerPurgeBin==null) {
+            timerPurgeBin=new Timer();
+            
+            // start after 35s and run every 4hrs
+            timerPurgeBin.schedule(new PurgeBinTask(), 35000, 4l * 60l * 60l * 1000l);
         }
     }
     

@@ -782,6 +782,8 @@ public class ServerSettings {
     
     public static final String SERVERCONF_DOCUMENTS_WAITFOR_MAC="jlawyer.server.documents.waitforprocess.mac";
     
+    public static final String SERVERCONF_DOCUMENTS_BIN_RETENTIONDAYS="jlawyer.server.documents.bin.retentiondays";
+    
     private SystemManagementRemote mgmt=null;
     
     /**

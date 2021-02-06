@@ -669,6 +669,7 @@ import com.jdimension.jlawyer.client.editors.files.DescendingDateTimeStringCompa
 import com.jdimension.jlawyer.client.events.DocumentAddedEvent;
 import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
@@ -713,6 +714,9 @@ public class DocumentsBinDialog extends javax.swing.JDialog {
             log.error("Could not determine retention days for documents bin", t);
             
         }
+        
+        String retentionDays=ServerSettings.getInstance().getSetting(ServerSettings.SERVERCONF_DOCUMENTS_BIN_RETENTIONDAYS, "7");
+        this.cmbRetentionDays.setSelectedItem(retentionDays);
 
         this.loadBin();
 
@@ -841,6 +845,11 @@ public class DocumentsBinDialog extends javax.swing.JDialog {
         jLabel1.setText("MB im Papierkorb");
 
         cmbRetentionDays.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "3", "7", "10", "14", "30" }));
+        cmbRetentionDays.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmbRetentionDaysActionPerformed(evt);
+            }
+        });
 
         jLabel2.setText("automatisch löschen nach ... Tagen:");
 
@@ -959,6 +968,10 @@ public class DocumentsBinDialog extends javax.swing.JDialog {
             JOptionPane.showMessageDialog(this, "Fehler beim Löschen aus dem Papierkorbs: " + t.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
         }
     }//GEN-LAST:event_cmdEmptyBinActionPerformed
+
+    private void cmbRetentionDaysActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbRetentionDaysActionPerformed
+        ServerSettings.getInstance().setSetting(ServerSettings.SERVERCONF_DOCUMENTS_BIN_RETENTIONDAYS, this.cmbRetentionDays.getSelectedItem().toString());
+    }//GEN-LAST:event_cmbRetentionDaysActionPerformed
 
     /**
      * @param args the command line arguments
