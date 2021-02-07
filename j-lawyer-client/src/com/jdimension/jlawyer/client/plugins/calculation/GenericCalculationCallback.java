@@ -722,11 +722,11 @@ public class GenericCalculationCallback implements CalculationPluginCallback {
     public void processResultToDocument(GenericCalculationTable table, Container c) {
         if (table != null) {
 
-            Container pluginDlg = FrameUtils.getDialogOfComponent(c);
-            if (pluginDlg != null) {
-                pluginDlg.setVisible(false);
-                ((JDialog) pluginDlg).dispose();
-            }
+//            Container pluginDlg = FrameUtils.getDialogOfComponent(c);
+//            if (pluginDlg != null) {
+//                pluginDlg.setVisible(false);
+//                ((JDialog) pluginDlg).dispose();
+//            }
 
             if (this.selectedCase == null) {
                 SearchAndAssignDialog dlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true, null);
