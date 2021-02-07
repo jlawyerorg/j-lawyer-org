@@ -729,6 +729,7 @@ public class AutoStartServlet extends HttpServlet {
     @Override
     public void destroy() {
         super.destroy();
+        log.info("j-lawyer AutoStartServlet destroyed");
         TransientTimer timer=TransientTimer.getInstance();
         timer.stop();
     }

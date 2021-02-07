@@ -766,6 +766,9 @@ public class TransientTimer {
         
         if(timerFax!=null)
             timerFax.cancel();
+        
+        if(timerPurgeBin!=null)
+            timerPurgeBin.cancel();
     }
     
 }
