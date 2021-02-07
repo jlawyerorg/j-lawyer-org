@@ -4816,7 +4816,17 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                             FileUtils.cleanupTempFile(tempPdfPath);
 
                             ArchiveFileDocumentsBean newDoc = remote.addDocument(dto.getId(), newName, pdfContent, doc.getDictateSign());
+                            
                             newDoc.setSize(pdfContent.length);
+                            
+                            if(doc.getFolder()!=null) {
+                                newDoc.setFolder(doc.getFolder());
+                                ArrayList<String> documentIds=new ArrayList<>();
+                                documentIds.add(newDoc.getId());
+                                remote.moveDocumentsToFolder(documentIds, doc.getFolder().getId());
+                            } else {
+                                log.warn("document folder of source document is null when duplicating as PDF/A");
+                            }
                             caseFolderPanel1.addDocument(newDoc);
 
                         } catch (Throwable t) {
@@ -5336,6 +5346,16 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                             FileUtils.cleanupTempFile(tempTargetPath);
 
                             ArchiveFileDocumentsBean newDoc = remote.addDocument(dto.getId(), newName, targetContent, doc.getDictateSign());
+                            
+                            if(doc.getFolder()!=null) {
+                                newDoc.setFolder(doc.getFolder());
+                                ArrayList<String> documentIds=new ArrayList<>();
+                                documentIds.add(newDoc.getId());
+                                remote.moveDocumentsToFolder(documentIds, doc.getFolder().getId());
+                            } else {
+                                log.warn("document folder of source document is null when duplicating as " + targetFormat);
+                            }
+                            
                             caseFolderPanel1.addDocument(newDoc);
 
                             // we only support duplication of one document at a time
