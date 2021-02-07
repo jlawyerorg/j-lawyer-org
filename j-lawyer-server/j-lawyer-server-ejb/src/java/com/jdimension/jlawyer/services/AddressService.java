@@ -968,6 +968,7 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
         }
 
         ArrayList<AddressBean> list = new ArrayList<AddressBean>();
+        ArrayList<String> idList=new ArrayList<>();
         try {
             con = utils.getConnection();
 
@@ -1025,9 +1026,12 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
             //AddressLocalHome home=this.lookupAddressBean();
             while (rs.next()) {
                 String id = rs.getString(1);
-                //AddressLocal address=home.findByPrimaryKey(id);
-                AddressBean address = this.addressFacade.find(id);
-                list.add(address);
+                if (!idList.contains(id)) {
+                    //AddressLocal address=home.findByPrimaryKey(id);
+                    AddressBean address = this.addressFacade.find(id);
+                    list.add(address);
+                    idList.add(id);
+                }
             }
         } catch (SQLException sqle) {
             log.error("Error finding addresses", sqle);
