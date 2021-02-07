@@ -704,6 +704,8 @@ public class VoipService implements VoipServiceRemote, VoipServiceLocal {
     @EJB
     private ArchiveFileBeanFacadeLocal fileFacade;
     @EJB
+    private AppUserBeanFacadeLocal userBeanFacade;
+    @EJB
     private ArchiveFileServiceLocal fileSvc;
     @EJB
     private SystemManagementLocal sysMan;
@@ -868,8 +870,8 @@ public class VoipService implements VoipServiceRemote, VoipServiceLocal {
 
     @Override
     @PermitAll
-    public String getSessionStatus(String sessionId) throws SipgateException {
-        AppUserBean currentUser=this.sysMan.getUser(context.getCallerPrincipal().getName());
+    public String getSessionStatus(String sessionId, String senderPrincipalId) throws SipgateException {
+        AppUserBean currentUser=this.userBeanFacade.findByPrincipalIdUnrestricted(senderPrincipalId);
         if (!currentUser.isVoipEnabled()) {
 
             throw new SipgateException("Voice-over-IP - Integration ist nicht aktiviert!");

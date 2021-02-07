@@ -688,116 +688,66 @@ public class FaxQueueStatusTask extends java.util.TimerTask {
     private static Logger log = Logger.getLogger(FaxQueueStatusTask.class.getName());
 //    private static DecimalFormat df=new DecimalFormat("##0");
 //    private static SimpleDateFormat dateF=new SimpleDateFormat("dd.MM.yyy HH:mm:ss");
-    
+
     public FaxQueueStatusTask() {
-        
 
     }
 
     @Override
     public void run() {
-        
-                    
-        
+
         try {
             InitialContext ic = new InitialContext();
             //ServerSettingsBeanFacadeLocal settings = (ServerSettingsBeanFacadeLocal) ic.lookup("j-lawyer-server/ServerSettingsBeanFacade/local");
             ServerSettingsBeanFacadeLocal settings = (ServerSettingsBeanFacadeLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ServerSettingsBeanFacade!com.jdimension.jlawyer.persistence.ServerSettingsBeanFacadeLocal");
             SingletonServiceLocal singleton = (SingletonServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/SingletonService!com.jdimension.jlawyer.services.SingletonServiceLocal");
             //SystemManagementRemote sysMan= (SystemManagementRemote) ic.lookup("java:/j-lawyer-server/SystemManagement/remote");
-            
-            if(!isVoipEnabled(settings))
-                return;
-            
+
             //VoipServiceLocal voip = (VoipServiceLocal) ic.lookup("j-lawyer-server/VoipService/local");
             VoipServiceLocal voip = (VoipServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/VoipService!com.jdimension.jlawyer.services.VoipServiceLocal");
-            
+
             FaxQueueBeanFacadeLocal faxQ = (FaxQueueBeanFacadeLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/FaxQueueBeanFacade!com.jdimension.jlawyer.persistence.FaxQueueBeanFacadeLocal");
-            List<FaxQueueBean> entries=faxQ.findAll();
-            boolean changes=false;
-            int failed=0;
-            for(FaxQueueBean fb: entries) {
-                
-                String currentStatus=fb.getLastStatus();
-                if(!SipUtils.isFinalStatus(currentStatus)) {
-                    String newStatus=voip.getSessionStatus(fb.getSessionId());
-                    if(!(newStatus).equalsIgnoreCase(currentStatus)) {
-                        // update entry
-                        changes=true;
-                        fb.setLastStatus(newStatus);
-                        fb.setLastStatusDate(new Date());
-                        faxQ.edit(fb);
-                        
-                        if(SipUtils.isFailStatus(newStatus)) {
-                            //this.publishFailStatus(fb);
-                            failed=failed+1;
-                            singleton.setFailedFax(fb);
+            List<FaxQueueBean> entries = faxQ.findAll();
+            boolean changes = false;
+            int failed = 0;
+            for (FaxQueueBean fb : entries) {
+                try {
+                    String currentStatus = fb.getLastStatus();
+                    if (!SipUtils.isFinalStatus(currentStatus)) {
+                        String newStatus = voip.getSessionStatus(fb.getSessionId(), fb.getSentBy());
+                        if (!(newStatus).equalsIgnoreCase(currentStatus)) {
+                            // update entry
+                            changes = true;
+                            fb.setLastStatus(newStatus);
+                            fb.setLastStatusDate(new Date());
+                            faxQ.edit(fb);
+
+                            if (SipUtils.isFailStatus(newStatus)) {
+                                //this.publishFailStatus(fb);
+                                failed = failed + 1;
+                                singleton.setFailedFax(fb);
+                            }
                         }
+
                     }
-                    
+                } catch (Throwable t) {
+                    log.error("Could not update status for fax session " + fb.getSessionId() + " - skipping...", t);
                 }
             }
-            if(failed==0) {
+            if (failed == 0) {
                 singleton.setFailedFax(null);
             }
-            
+
             //if(changes) {
-                ArrayList<FaxQueueBean> list=new ArrayList<FaxQueueBean>();
-                list.addAll(faxQ.findAll());
-                //this.publishQueueList(list);
-                singleton.setFaxQueue(list);
+            ArrayList<FaxQueueBean> list = new ArrayList<FaxQueueBean>();
+            list.addAll(faxQ.findAll());
+            //this.publishQueueList(list);
+            singleton.setFaxQueue(list);
             //}
-            
-            
+
         } catch (Throwable ex) {
             log.error("Error checking fax statuses", ex);
         }
     }
 
-    private boolean isVoipEnabled (ServerSettingsBeanFacadeLocal settingsFacade) {
-        ServerSettingsBean en=settingsFacade.find("jlawyer.server.voip.voipmode");
-        if(en==null) {
-            return false;
-        } else {
-            return "on".equalsIgnoreCase(en.getSettingValue());
-        }
-    }
-
-//    private void publishFailStatus(FaxQueueBean failed) throws Exception {
-//        InitialContext ic = new InitialContext();
-//        ConnectionFactory cf = (ConnectionFactory) ic.lookup("/ConnectionFactory");
-//        Topic observerTopic = (Topic) ic.lookup("/topic/faxQueueTopic");
-//        Connection connection = cf.createConnection();
-//        Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-//        MessageProducer producer = session.createProducer(observerTopic);
-//        connection.start();
-//        //TextMessage message = session.createTextMessage("This is an order");
-//        ObjectMessage msg = session.createObjectMessage(failed);
-//        producer.send(msg);
-//
-//        connection.stop();
-//        producer.close();
-//        session.close();
-//        connection.close();
-//
-//    }
-//    
-//    private void publishQueueList(ArrayList<FaxQueueBean> list) throws Exception {
-//        InitialContext ic = new InitialContext();
-//        ConnectionFactory cf = (ConnectionFactory) ic.lookup("/ConnectionFactory");
-//        Topic observerTopic = (Topic) ic.lookup("/topic/faxQueueTopic");
-//        Connection connection = cf.createConnection();
-//        Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-//        MessageProducer producer = session.createProducer(observerTopic);
-//        connection.start();
-//        //TextMessage message = session.createTextMessage("This is an order");
-//        ObjectMessage msg = session.createObjectMessage(list);
-//        producer.send(msg);
-//
-//        connection.stop();
-//        producer.close();
-//        session.close();
-//        connection.close();
-//
-//    }
 }

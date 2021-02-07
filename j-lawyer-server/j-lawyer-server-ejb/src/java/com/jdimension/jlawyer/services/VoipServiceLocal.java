@@ -673,6 +673,6 @@ import javax.ejb.Local;
 @Local
 public interface VoipServiceLocal {
 
-    String getSessionStatus(String sessionId) throws SipgateException;
+    String getSessionStatus(String sessionId, String senderPrincipalId) throws SipgateException;
     
 }
