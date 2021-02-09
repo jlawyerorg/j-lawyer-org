@@ -684,8 +684,13 @@ public class ModuleGroupLabel extends javax.swing.JPanel {
         this.lblModuleName.setText(groupCaption);
         this.lblModuleName.setFont(this.lblModuleName.getFont().deriveFont(Font.BOLD));
         //this.setBackground(DefaultColorTheme.COLOR_DARK_GREY);
-        this.setBackground(Color.WHITE);
-        this.lblModuleName.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE.darker());
+        
+        
+//        this.setBackground(Color.WHITE);
+//        this.lblModuleName.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE.darker());
+
+        this.lblModuleName.setForeground(Color.WHITE);
+        this.setBackground(DefaultColorTheme.COLOR_LOGO_BLUE);
 
     }
 
