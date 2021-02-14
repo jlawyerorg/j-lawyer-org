@@ -791,6 +791,10 @@ public class Main {
 
         System.setProperty("http.agent", "j-lawyer Client v" + VersionUtils.getFullClientVersion());
         System.setProperty("javax.net.ssl.keyStorePassword", cmdLineSwitch);
+        
+        com.jdimension.jlawyer.client.editors.documents.viewer.html.data.Handler.install();
+        com.jdimension.jlawyer.client.editors.documents.viewer.html.cid.Handler.install();
+        
         Main main = new Main();
         main.showSplash(cmdHost, cmdPort, cmdUser, cmdPassword, cmdSecMode, cmdSshHost, cmdSshPort, cmdSshUser, cmdSshPwd, cmdSshTargetPort);
 

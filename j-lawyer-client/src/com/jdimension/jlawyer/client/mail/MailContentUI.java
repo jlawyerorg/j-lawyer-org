@@ -665,6 +665,7 @@ package com.jdimension.jlawyer.client.mail;
 
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.documents.SearchAndAssignDialog;
+import com.jdimension.jlawyer.client.editors.documents.viewer.html.cid.CidCache;
 import com.jdimension.jlawyer.client.events.DocumentAddedEvent;
 import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.launcher.Launcher;
@@ -913,15 +914,21 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
         //MimeMessage copiedMsg = new MimeMessag(msg.getFolder(), msg.get)
         bis.close();
 
+        
+        CidCache cids=CidCache.getInstance();
+        cids.clear();
+        recursiveLoadInlineImages(copiedMsg.getContent(), cids);
+
         // The copiedMsg object is disconnected from the server so
         // setFlags will have no effect (for example).  Use
         // the original msg object for such operations.  Use
         // the copiedMsg object to access the content of the message.
         // todo: remove?
         // copiedMsg=msg;
-        String sentString="";
-        if(copiedMsg.getSentDate()!=null)
-            sentString=df.format(copiedMsg.getSentDate());
+        String sentString = "";
+        if (copiedMsg.getSentDate() != null) {
+            sentString = df.format(copiedMsg.getSentDate());
+        }
         lblSentDate.setText(sentString);
         lblSubject.setText(copiedMsg.getSubject());
         lblSubject.setToolTipText(lblSubject.getText());
@@ -1224,6 +1231,61 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
                     //return mimePart.getContent().toString();
                     resultList.add(mimePart.getContent().toString());
                 }
+            }
+        }
+
+        //return null;
+    }
+
+    private static void recursiveLoadInlineImages(Object partObject, CidCache cids) throws Exception {
+        if (partObject instanceof Multipart) {
+            Multipart mp = (Multipart) partObject;
+            for (int i = 0; i < mp.getCount(); i++) {
+                Part childPart = mp.getBodyPart(i);
+                recursiveLoadInlineImages(childPart, cids);
+            }
+        } else {
+            
+            if(!(partObject instanceof Part))
+                return;
+
+            Part part = (Part) partObject;
+            String disposition = part.getDisposition();
+
+            if (disposition == null) {
+                MimeBodyPart mimePart = (MimeBodyPart) part;
+
+                if (mimePart.getContent() instanceof Multipart) {
+                    //String returnValue = recursiveFindPart(mimePart.getContent(), mimeType);
+                    recursiveLoadInlineImages(mimePart.getContent(), cids);
+//                    if (returnValue != null) {
+//                        return returnValue;
+//                    }
+                }
+
+            } else if (disposition.equalsIgnoreCase(Part.INLINE)) {
+                Object content = part.getContent();
+                String fileName = part.getFileName();
+                String contentId="" + System.currentTimeMillis();
+                if(part instanceof MimeBodyPart) {
+                    contentId=((MimeBodyPart)part).getContentID();
+                }
+
+                if (content instanceof InputStream) {
+
+                    InputStream inStream = (InputStream) content;
+                    ByteArrayOutputStream outStream = new ByteArrayOutputStream();
+                    byte[] tempBuffer = new byte[4096];// 4 KB
+                    int numRead;
+                    while ((numRead = inStream.read(tempBuffer)) != -1) {
+                        outStream.write(tempBuffer);
+                    }
+                    inStream.close();
+                    outStream.close();
+                    cids.put(contentId, outStream.toByteArray());
+
+                }
+
             }
         }
 
@@ -1541,9 +1603,9 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
 
                 byte[] data = EmailUtils.getAttachmentBytes(selected.toString(), this.msgContainer);
 
-                String useFolder=userHome;
+                String useFolder = userHome;
                 if (selectedFolder != null) {
-                    useFolder=selectedFolder;
+                    useFolder = selectedFolder;
                 }
                 JFileChooser chooser = new JFileChooser(useFolder);
                 chooser.setSelectedFile(new File(selected.toString()));
@@ -1577,7 +1639,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
             return;
         }
 
-        SearchAndAssignDialog dlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true, ""+this.lblSubject.getText()+this.editBody.getText());
+        SearchAndAssignDialog dlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true, "" + this.lblSubject.getText() + this.editBody.getText());
         dlg.setVisible(true);
         ArchiveFileBean sel = dlg.getSelection();
 

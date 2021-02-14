@@ -3654,10 +3654,10 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     private void tabPaneArchiveFileStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_tabPaneArchiveFileStateChanged
 
-        if (this.tabPaneArchiveFile.getSelectedIndex() == 2 || this.tabPaneArchiveFile.getSelectedIndex() == 4 || this.tabPaneArchiveFile.getSelectedIndex() == 7) {
+        if (this.tabPaneArchiveFile.getSelectedIndex() == 1 || this.tabPaneArchiveFile.getSelectedIndex() == 2 || this.tabPaneArchiveFile.getSelectedIndex() == 4 || this.tabPaneArchiveFile.getSelectedIndex() == 7) {
 
             if (this.dto == null || this.dto.getId() == null) {
-                this.confirmSave("Bevor Dokumente/Wiedervorlagen/Falldaten hinzugefügt werden können,\nmuß die Akte gespeichert werden.\n\nJetzt speichern?", null);
+                this.confirmSave("Bevor Beteiligte/Dokumente/Wiedervorlagen/Falldaten hinzugefügt werden können,\nmuß die Akte gespeichert werden.\n\nJetzt speichern?", null);
             }
 
         } else if (this.tabPaneArchiveFile.getSelectedIndex() == 6) {
@@ -5658,7 +5658,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
 
             ((AddressPanel) editor).setAddressDTO(selection);
+            // there is a bug #883 when the user opened the panel to create a new case, then changed tab and confirmed to save, then added a party and navigated to it, then used the back button
             ((AddressPanel) editor).setOpenedFromEditorClass(this.getClass().getName());
+            
             EditorsRegistry.getInstance().setMainEditorsPaneView((Component) editor);
         } catch (Exception ex) {
             log.error("Error creating editor from class " + this.getClass().getName(), ex);

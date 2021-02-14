@@ -707,6 +707,7 @@ public class ViewEmailDialog extends javax.swing.JDialog {
         initComponents();
         this.contextArchiveFile = contextArchiveFile;
         this.odoc = odoc;
+
         ComponentUtils.restoreDialogSize(this);
 
     }

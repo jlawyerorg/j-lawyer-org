@@ -708,36 +708,36 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
     private ArchiveFileBean aFile = null;
     private boolean initializing = true;
     private JTable tblReviewReasons = null;
-    private List<ArchiveFileAddressesBean> involved=null;
-    private GenericCalculationTable calculationTable=null;
-    private List<PartyTypeBean> allPartyTypes=null;
-    private Collection<String> formPlaceHolders=new ArrayList<>();
-    private Hashtable<String,String> formPlaceHolderValues=new Hashtable<>();
+    private List<ArchiveFileAddressesBean> involved = null;
+    private GenericCalculationTable calculationTable = null;
+    private List<PartyTypeBean> allPartyTypes = null;
+    private Collection<String> formPlaceHolders = new ArrayList<>();
+    private Hashtable<String, String> formPlaceHolderValues = new Hashtable<>();
 
     public AddDocumentFromTemplateDialog(java.awt.Frame parent, boolean modal, CaseFolderPanel targetTable, ArchiveFileBean aFile, List<ArchiveFileAddressesBean> involved, JTable tblReviewReasons) {
         this(parent, modal, targetTable, aFile, involved, tblReviewReasons, null);
     }
-    
+
     /**
      * Creates new form AddDocumentDialog
      */
     public AddDocumentFromTemplateDialog(java.awt.Frame parent, boolean modal, CaseFolderPanel targetTable, ArchiveFileBean aFile, List<ArchiveFileAddressesBean> involved, JTable tblReviewReasons, GenericCalculationTable calculationTable) {
         super(parent, modal);
         this.initializing = true;
-        
-        this.calculationTable=calculationTable;
-        
+
+        this.calculationTable = calculationTable;
+
         this.targetTable = targetTable;
         this.tblReviewReasons = tblReviewReasons;
         this.aFile = aFile;
-        this.involved=involved;
+        this.involved = involved;
         initComponents();
-        
+
         this.quickDateSelectionPanel.setTarget(this.txtReviewDateField);
-        
+
         this.pnlPartiesPanel.initialize(involved);
         this.pnlPartiesPanel.setListener(this);
-        
+
         ComponentUtils.decorateSplitPane(jSplitPane1);
         ComponentUtils.decorateSplitPane(this.splitPlaceholders);
         ComponentUtils.decorateSplitPane(splitMain);
@@ -796,52 +796,50 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
         this.refreshTree();
 
         //ComponentUtils.restoreDialogSize(this);
-
         FrameUtils.fitDialogToScreen(this, 85f);
-        
-        
+
 //            this.splitMain.setDividerLocation(this.splitMain.getWidth()/2);
 //            this.splitPlaceholders.setDividerLocation(this.splitPlaceholders.getHeight()/2);
-        
         ComponentUtils.restoreDialogSize(this);
 
         this.jSplitPane1.setDividerLocation(0.5d);
-        
+
         ComponentUtils.restoreSplitPane(splitMain, this.getClass(), "splitMain");
         ComponentUtils.restoreSplitPane(this.splitPlaceholders, this.getClass(), "splitPlaceholders");
         ComponentUtils.restoreSplitPane(this.jSplitPane1, this.getClass(), "jSplitPane1");
-        
+
         ComponentUtils.persistSplitPane(splitMain, this.getClass(), "splitMain");
         ComponentUtils.persistSplitPane(this.splitPlaceholders, this.getClass(), "splitPlaceholders");
         ComponentUtils.persistSplitPane(this.jSplitPane1, this.getClass(), "jSplitPane1");
-        
+
         try {
             //InitialContext context = new InitialContext(settings.getLookupProperties());
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            this.allPartyTypes=locator.lookupArchiveFileServiceRemote().getAllPartyTypes();
-            this.formPlaceHolders=locator.lookupFormsServiceRemote().getPlaceHoldersForCase(aFile.getId());
-            this.formPlaceHolderValues=locator.lookupFormsServiceRemote().getPlaceHolderValuesForCase(aFile.getId());
+            this.allPartyTypes = locator.lookupArchiveFileServiceRemote().getAllPartyTypes();
+            this.formPlaceHolders = locator.lookupFormsServiceRemote().getPlaceHoldersForCase(aFile.getId());
+            this.formPlaceHolderValues = locator.lookupFormsServiceRemote().getPlaceHolderValuesForCase(aFile.getId());
 
         } catch (Exception ex) {
             log.error("Error getting all party types", ex);
             JOptionPane.showMessageDialog(this, "Fehler beim Laden der Beteiligtentypen: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
             EditorsRegistry.getInstance().clearStatus();
         }
-        
-        if(this.aFile.getAssistant()!=null)
+
+        if (this.aFile.getAssistant() != null) {
             this.cmbReviewAssignee.setSelectedItem(this.aFile.getAssistant());
-        
+        }
+
         this.initializing = false;
 
     }
 
     private void updateFileName() {
-        
-        String templateName=null;
+
+        String templateName = null;
         if (this.lstTemplates.getSelectedValue() != null) {
-            templateName=this.lstTemplates.getSelectedValue().toString();
+            templateName = this.lstTemplates.getSelectedValue().toString();
         }
-        
+
         String name = "";
         SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
 
@@ -853,40 +851,44 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
         name = df.format(new Date()) + "_" + templateFileName;
 
         // avoid ANWALT being replaced before ANWALT2 --> start with longest placeholders first
-        ArrayList<PartyTypeBean> apt=new ArrayList(this.allPartyTypes);
-        Comparator<PartyTypeBean> prefixLengthComparator=new Comparator<PartyTypeBean>() {
+        ArrayList<PartyTypeBean> apt = new ArrayList(this.allPartyTypes);
+        Comparator<PartyTypeBean> prefixLengthComparator = new Comparator<PartyTypeBean>() {
             @Override
             public int compare(PartyTypeBean t1, PartyTypeBean t2) {
-                String prefix1=null;
-                String prefix2=null;
-                if(t1!=null)
-                    prefix1=t1.getPlaceHolder();
-                if(t2!=null)
-                    prefix2=t2.getPlaceHolder();
-                
-                int l1=0;
-                if(prefix1!=null)
-                    l1=prefix1.length();
-                int l2=0;
-                if(prefix2!=null)
-                    l2=prefix2.length();
-                
+                String prefix1 = null;
+                String prefix2 = null;
+                if (t1 != null) {
+                    prefix1 = t1.getPlaceHolder();
+                }
+                if (t2 != null) {
+                    prefix2 = t2.getPlaceHolder();
+                }
+
+                int l1 = 0;
+                if (prefix1 != null) {
+                    l1 = prefix1.length();
+                }
+                int l2 = 0;
+                if (prefix2 != null) {
+                    l2 = prefix2.length();
+                }
+
                 return new Integer(l1).compareTo(new Integer(l2));
-                    
+
             }
         };
         Collections.sort(apt, prefixLengthComparator);
         Collections.reverse(apt);
-        
-        for(PartyTypeBean ptb: apt) {
-            PartiesPanelEntry party=this.pnlPartiesPanel.getSelectedParty(ptb);
-            if(party!=null) {
+
+        for (PartyTypeBean ptb : apt) {
+            PartiesPanelEntry party = this.pnlPartiesPanel.getSelectedParty(ptb);
+            if (party != null) {
                 String contactName = party.getAddress().toDisplayName();
                 contactName = StringUtils.removeSonderzeichen(contactName);
                 name = name.replaceAll(ptb.getPlaceHolder(), contactName);
             }
         }
-        
+
         name = name.replaceAll(",", "");
         name = name.replaceAll("\"", "");
         name = name.replaceAll("§", "");
@@ -1460,7 +1462,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
 
     private void highlightTree(String templateQuery) {
         try {
-            int[] selectedRows=this.treeFolders.getSelectionRows();
+            int[] selectedRows = this.treeFolders.getSelectionRows();
             List<GenericNode> list = new ArrayList<GenericNode>();
             if (!("".equalsIgnoreCase(templateQuery.trim()))) {
                 ClientSettings settings = ClientSettings.getInstance();
@@ -1472,12 +1474,13 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
             ((TemplatesTreeCellRenderer) this.treeFolders.getCellRenderer()).setHighlightNodes(list);
             ((DefaultTreeModel) this.treeFolders.getModel()).reload();
             //ComponentUtils.expandTree(treeFolders);
-            this.expandTreeNodes((DefaultMutableTreeNode)this.treeFolders.getModel().getRoot(), list);
+            this.expandTreeNodes((DefaultMutableTreeNode) this.treeFolders.getModel().getRoot(), list);
             this.refreshList();
-            
-            if(selectedRows!=null) {
-                if(selectedRows.length>0)
+
+            if (selectedRows != null) {
+                if (selectedRows.length > 0) {
                     this.treeFolders.setSelectionRows(selectedRows);
+                }
             }
 
         } catch (Exception ex) {
@@ -1485,19 +1488,19 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
 
         }
     }
-    
+
     private void expandTreeNodes(DefaultMutableTreeNode node, List<GenericNode> list) {
-        Object uo=node.getUserObject();
-        for(GenericNode n: list) {
-            if(n.equals(uo)) {
-                if(n.getParent()!=null) {
-                    TreePath tp=new TreePath(((DefaultMutableTreeNode)node.getParent()).getPath());
+        Object uo = node.getUserObject();
+        for (GenericNode n : list) {
+            if (n.equals(uo)) {
+                if (n.getParent() != null) {
+                    TreePath tp = new TreePath(((DefaultMutableTreeNode) node.getParent()).getPath());
                     this.treeFolders.expandPath(tp);
                 }
             }
         }
-        for(int i=0;i<node.getChildCount();i++) {
-            expandTreeNodes((DefaultMutableTreeNode)node.getChildAt(i), list);
+        for (int i = 0; i < node.getChildCount(); i++) {
+            expandTreeNodes((DefaultMutableTreeNode) node.getChildAt(i), list);
         }
     }
 
@@ -1546,7 +1549,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
 
     private void formComponentResized(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentResized
         ComponentUtils.storeDialogSize(this);
-        
+
     }//GEN-LAST:event_formComponentResized
 
     private void lstTemplatesMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lstTemplatesMouseClicked
@@ -1578,16 +1581,25 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
                 for (String ph : placeHolders) {
                     ht.put(ph, "");
                 }
-                List<PartiesPanelEntry> selectedParties=this.pnlPartiesPanel.getSelectedParties(this.allPartyTypes);
-                
-                AppUserBean caseLawyer=null;
-                AppUserBean caseAssistant=null;
-                AppUserBean author=UserSettings.getInstance().getCurrentUser();
-                if(aFile!=null) {
-                    caseLawyer=locator.lookupSystemManagementRemote().getUser(aFile.getLawyer());
-                    caseAssistant=locator.lookupSystemManagementRemote().getUser(aFile.getAssistant());
+                List<PartiesPanelEntry> selectedParties = this.pnlPartiesPanel.getSelectedParties(this.allPartyTypes);
+
+                AppUserBean caseLawyer = null;
+                AppUserBean caseAssistant = null;
+                AppUserBean author = UserSettings.getInstance().getCurrentUser();
+                if (aFile != null) {
+                    try {
+                        caseLawyer = locator.lookupSystemManagementRemote().getUser(aFile.getLawyer());
+                    } catch (Exception ex) {
+                        log.warn("Unable to load lawyer with id " + aFile.getLawyer());
+                    }
+                    try {
+                        caseAssistant = locator.lookupSystemManagementRemote().getUser(aFile.getAssistant());
+                    } catch (Exception ex) {
+                        log.warn("Unable to load assistant with id " + aFile.getAssistant());
+                    }
+
                 }
-                
+
                 ht = PlaceHolderUtils.getPlaceHolderValues(ht, aFile, selectedParties, this.cmbDictateSigns.getSelectedItem().toString(), this.calculationTable, this.formPlaceHolderValues, caseLawyer, caseAssistant, author);
 
                 Enumeration htEn = ht.keys();
@@ -1597,18 +1609,18 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
                     model.addRow(row);
                 }
                 ThreadUtils.setTableModel(this.tblPlaceHolders, model);
-                
-                ArrayList<PartyTypeBean> partiesInTemplate=new ArrayList<PartyTypeBean>();
-                for(PartyTypeBean p : this.allPartyTypes) {
+
+                ArrayList<PartyTypeBean> partiesInTemplate = new ArrayList<PartyTypeBean>();
+                for (PartyTypeBean p : this.allPartyTypes) {
                     for (Object key : ht.keySet()) {
-                        String keyName=key.toString();
-                        if(keyName.indexOf("{{" + p.getPlaceHolder() + "_")>-1) {
+                        String keyName = key.toString();
+                        if (keyName.indexOf("{{" + p.getPlaceHolder() + "_") > -1) {
                             partiesInTemplate.add(p);
                             break;
                         }
                     }
                 }
-                
+
                 this.pnlPartiesPanel.expandParties(partiesInTemplate);
 
             } catch (Exception ex) {
@@ -1722,10 +1734,11 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
             Collection fileNames = locator.lookupSystemManagementRemote().getTemplatesInFolder(folder);
 
             for (Object o : fileNames) {
-                if("".equals(this.txtTemplateFilter.getText().trim())) {
+                if ("".equals(this.txtTemplateFilter.getText().trim())) {
                     model.addElement(o);
-                } else if(o.toString().toLowerCase().indexOf(this.txtTemplateFilter.getText().trim().toLowerCase())>-1)
+                } else if (o.toString().toLowerCase().indexOf(this.txtTemplateFilter.getText().trim().toLowerCase()) > -1) {
                     model.addElement(o);
+                }
             }
 
         } catch (Exception ex) {
