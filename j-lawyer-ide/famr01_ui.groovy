@@ -720,6 +720,58 @@ public class famr01_ui implements com.jdimension.jlawyer.client.plugins.form.For
             
                     tr {
                         td (colfill:true, align: 'left') {
+                            panel(border: titledBorder(title: 'Persönliche Angaben')) {
+                                tableLayout (cellpadding: 5) {
+                                    
+                                    tr {
+                                        td (colfill:true) {
+                                            label(text: 'Geburtsname:')
+                                        }
+                                        td {
+                                            textField(name: "_PA_GEBNAME", text: '', columns:30)
+                                        }
+                                    }
+                                    tr {
+                                        td (colfill:true) {
+                                            label(text: 'jetzige ausländische Staatsangehörigkeit:')
+                                        }
+                                        td {
+                                            textField(name: "_PA_STAANG", text: '', columns:30)
+                                        }
+                                    }
+                                    tr {
+                                        td (colfill:true) {
+                                            label(text: 'sichere Postadresse:')
+                                        }
+                                        td {
+                                            textField(name: "_PA_ADRESSE", text: '', columns:50)
+                                        }
+                                    }
+                                    tr {
+                                        td (colfill:true) {
+                                            label(text: 'sichere E-Mail-Adresse:')
+                                        }
+                                        td {
+                                            textField(name: "_PA_EMAIL", text: '', columns:30)
+                                        }
+                                    }
+                                    tr {
+                                        td (colfill:true) {
+                                            label(text: 'sichere Telefonnummer:')
+                                        }
+                                        td {
+                                            textField(name: "_PA_TEL", text: '', columns:30)
+                                        }
+                                    }
+                                    
+                                }
+                            }
+                        }
+                    }
+
+                    
+                    tr {
+                        td (colfill:true, align: 'left') {
                             panel(border: titledBorder(title: 'Hochzeit')) {
                                 tableLayout (cellpadding: 5) {
                                     tr {
@@ -777,12 +829,20 @@ public class famr01_ui implements com.jdimension.jlawyer.client.plugins.form.For
                                             textField(name: "_EHE_INTRECHT", text: '', columns:30)
                                         }
                                     }
+                                    
+                                    tr {
+                                        td (colfill:true) {
+                                            label(text: 'Staatsangehörigkeit z.Zt. der Eheschließung:')
+                                        }
+                                        td {
+                                            textField(name: "_EHE_STAANG", text: '', columns:30)
+                                        }
+                                    }
 
                                 }
                             }
                         }
                     }
-
                     
                     
                     
@@ -800,6 +860,15 @@ public class famr01_ui implements com.jdimension.jlawyer.client.plugins.form.For
                                             formattedTextField(name: "_TR_EINK_MDT", text: '', columns:10, format: betragFormat)
                                         }
                                     }
+                                    
+                                    tr {
+                                        td (colfill:true) {
+                                            label(text: 'Beruf Mandant:')
+                                        }
+                                        td {
+                                            textField(name: "_TR_BERUF_MDT", text: '', columns:30)
+                                        }
+                                    }
 
                                     tr {
                                         td (colfill:true) {
@@ -809,7 +878,14 @@ public class famr01_ui implements com.jdimension.jlawyer.client.plugins.form.For
                                             formattedTextField(name: "_TR_EINK_GATTE", text: '', columns:10, format: betragFormat)
                                         }
                                     }
-
+                                    tr {
+                                        td (colfill:true) {
+                                            label(text: 'Beruf Ehegatte:')
+                                        }
+                                        td {
+                                            textField(name: "_TR_BERUF_GATTE", text: '', columns:30)
+                                        }
+                                    }
 
 
                                     
@@ -819,6 +895,15 @@ public class famr01_ui implements com.jdimension.jlawyer.client.plugins.form.For
                                         }
                                         td {
                                             checkBox(text: 'Gütliche Trennung', name: "_TR_GUETLICH", selected: false)
+                                        }
+                                    }
+                                    
+                                    tr {
+                                        td (colfill:true) {
+                                            label(text: '     ')
+                                        }
+                                        td {
+                                            checkBox(text: 'Versorgungsausgleich geklärt (Verzicht)', name: "_TR_VAUSGLEICH", selected: false)
                                         }
                                     }
 
@@ -875,7 +960,14 @@ public class famr01_ui implements com.jdimension.jlawyer.client.plugins.form.For
                                             checkBox(text: 'Umgangsrecht geklärt', name: "_TR_UMGARE", selected: false)
                                         }
                                     }
-
+                                    tr {
+                                        td (colfill:true) {
+                                            label(text: '     ')
+                                        }
+                                        td {
+                                            checkBox(text: 'es liegt ein notarieller Vertrag vor', name: "_TR_NOTARVERTRAG", selected: false)
+                                        }
+                                    }
 
                                     tr {
                                         td (colfill:true) {
@@ -926,6 +1018,14 @@ public class famr01_ui implements com.jdimension.jlawyer.client.plugins.form.For
                                     }
                                     tr {
                                         td (colfill:true) {
+                                            label(text: 'Kind 1 Geburtsort:')
+                                        }
+                                        td {
+                                            textField(name: "_K1_GEBORT", text: '', columns:30)
+                                        }
+                                    }
+                                    tr {
+                                        td (colfill:true) {
                                             label(text: 'Kind 1 eigenes Einkommen:')
                                         }
                                         td {
@@ -953,10 +1053,88 @@ public class famr01_ui implements com.jdimension.jlawyer.client.plugins.form.For
                                     }
                                     tr {
                                         td (colfill:true) {
+                                            label(text: 'Kind 2 Geburtsort:')
+                                        }
+                                        td {
+                                            textField(name: "_K2_GEBORT", text: '', columns:30)
+                                        }
+                                    }
+                                    tr {
+                                        td (colfill:true) {
                                             label(text: 'Kind 2 eigenes Einkommen:')
                                         }
                                         td {
                                             formattedTextField(name: "_K2_EINK", text: '', columns:10, format: betragFormat)
+                                        }
+
+                                    }
+                                    
+                                    tr {
+                                        td (colfill:true) {
+                                            label(text: 'Kind 3 Name:')
+                                        }
+                                        td {
+                                            textField(name: "_K3_NAME", text: '', columns:30)
+                                        }
+                                    }
+                                    tr {
+                                        td (colfill:true) {
+                                            label(text: 'Kind 3 Geburtsort:')
+                                        }
+                                        td {
+                                            textField(name: "_K3_GEBORT", text: '', columns:30)
+                                        }
+                                    }
+
+                                    tr {
+                                        td (colfill:true) {
+                                            label(text: 'Kind 3 Geburtsdatum:')
+                                        }
+                                        td {
+                                            textField(name: "_K3_GEB", text: '', columns:10)
+                                        }
+                                    }
+                                    tr {
+                                        td (colfill:true) {
+                                            label(text: 'Kind 3 eigenes Einkommen:')
+                                        }
+                                        td {
+                                            formattedTextField(name: "_K3_EINK", text: '', columns:10, format: betragFormat)
+                                        }
+
+                                    }
+                                    
+                                    tr {
+                                        td (colfill:true) {
+                                            label(text: 'Kind 4 Name:')
+                                        }
+                                        td {
+                                            textField(name: "_K4_NAME", text: '', columns:30)
+                                        }
+                                    }
+                                    tr {
+                                        td (colfill:true) {
+                                            label(text: 'Kind 4 Geburtsort:')
+                                        }
+                                        td {
+                                            textField(name: "_K4_GEBORT", text: '', columns:30)
+                                        }
+                                    }
+
+                                    tr {
+                                        td (colfill:true) {
+                                            label(text: 'Kind 4 Geburtsdatum:')
+                                        }
+                                        td {
+                                            textField(name: "_K4_GEB", text: '', columns:10)
+                                        }
+                                    }
+                                    tr {
+                                        td (colfill:true) {
+                                            label(text: 'Kind 4 eigenes Einkommen:')
+                                        }
+                                        td {
+                                            formattedTextField(name: "_K4_EINK", text: '', columns:10, format: betragFormat)
                                         }
 
                                     }
@@ -970,6 +1148,21 @@ public class famr01_ui implements com.jdimension.jlawyer.client.plugins.form.For
                                             'Mandant',
                                             'Ehegatte'
                                                 ], name: "_TR_KINDGELD", editable: true, actionPerformed: {
+                                                    
+                                                }
+                                            )
+                                        }
+                                    }
+                                    tr {
+                                        td (colfill:true) {
+                                            label(text: 'bei minderjährigen Kindern Wohnort bei welchem Elternteil:')
+                                        }
+                                        td {
+                                            comboBox(items: [
+                                            'Mandant',
+                                            'Ehegatte',
+                                            'weder noch'
+                                                ], name: "_TR_KINDER_WO", editable: true, actionPerformed: {
                                                     
                                                 }
                                             )
@@ -1007,7 +1200,7 @@ public class famr01_ui implements com.jdimension.jlawyer.client.plugins.form.For
                                                 label(text: '     ')
                                             }
                                             td {
-                                                checkBox(text: 'PKH', name: "_SCH_PKH", selected: false)
+                                                checkBox(text: 'VKH', name: "_SCH_VKH", selected: false)
                                             }
                                         }
                                         
