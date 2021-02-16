@@ -697,8 +697,17 @@ public class GifJpegPngImageWithTextPanel extends javax.swing.JPanel implements 
         taContent = new javax.swing.JTextArea();
         lblContent = new javax.swing.JLabel();
 
+        jScrollPane2.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+
         taContent.setColumns(20);
+        taContent.setLineWrap(true);
         taContent.setRows(5);
+        taContent.setWrapStyleWord(true);
+        taContent.addComponentListener(new java.awt.event.ComponentAdapter() {
+            public void componentResized(java.awt.event.ComponentEvent evt) {
+                taContentComponentResized(evt);
+            }
+        });
         jScrollPane2.setViewportView(taContent);
 
         lblContent.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
@@ -720,6 +729,10 @@ public class GifJpegPngImageWithTextPanel extends javax.swing.JPanel implements 
                 .addComponent(jScrollPane2))
         );
     }// </editor-fold>//GEN-END:initComponents
+
+    private void taContentComponentResized(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_taContentComponentResized
+        System.out.println(" " + this.getWidth() + " - " + this.getParent().getWidth());
+    }//GEN-LAST:event_taContentComponentResized
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

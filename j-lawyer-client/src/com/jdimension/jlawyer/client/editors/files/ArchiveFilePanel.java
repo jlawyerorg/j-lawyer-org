@@ -2520,7 +2520,13 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         splitDocuments.setDividerLocation(400);
         splitDocuments.setOneTouchExpandable(true);
+        splitDocuments.addPropertyChangeListener(new java.beans.PropertyChangeListener() {
+            public void propertyChange(java.beans.PropertyChangeEvent evt) {
+                splitDocumentsPropertyChange(evt);
+            }
+        });
 
+        jScrollPane7.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         jScrollPane7.addComponentListener(new java.awt.event.ComponentAdapter() {
             public void componentResized(java.awt.event.ComponentEvent evt) {
                 jScrollPane7ComponentResized(evt);
@@ -5615,6 +5621,13 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     
 
     }//GEN-LAST:event_tabPaneArchiveFileComponentResized
+
+    private void splitDocumentsPropertyChange(java.beans.PropertyChangeEvent evt) {//GEN-FIRST:event_splitDocumentsPropertyChange
+        int w=this.jScrollPane7.getHorizontalScrollBar().getWidth();
+        int h=this.jScrollPane7.getVerticalScrollBar().getWidth();
+        this.jScrollPane7.getViewport().getComponent(0).setPreferredSize(new Dimension(w,h));
+        this.jScrollPane7.doLayout();
+    }//GEN-LAST:event_splitDocumentsPropertyChange
 
     private AddressBean[] convertArray(Object[] in) {
         if (in != null) {
