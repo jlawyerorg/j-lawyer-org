@@ -35,7 +35,9 @@
                   <Group type="102" attributes="0">
                       <Component id="jLabel2" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
-                      <Component id="lblPanelTitle" max="32767" attributes="0"/>
+                      <Component id="lblPanelTitle" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="32767" attributes="0"/>
+                      <Component id="jLabel3" min="-2" max="-2" attributes="0"/>
                   </Group>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
@@ -49,6 +51,7 @@
               <Group type="103" groupAlignment="0" attributes="0">
                   <Component id="jLabel2" min="-2" max="-2" attributes="0"/>
                   <Component id="lblPanelTitle" min="-2" pref="34" max="-2" attributes="0"/>
+                  <Component id="jLabel3" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
@@ -155,6 +158,14 @@
           <Color blue="ff" green="ff" red="ff" type="rgb"/>
         </Property>
         <Property name="text" type="java.lang.String" value="0 Ergebnisse"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JLabel" name="jLabel3">
+      <Properties>
+        <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+          <Image iconType="3" name="/icons16/baseline_help_white_36dp.png"/>
+        </Property>
+        <Property name="toolTipText" type="java.lang.String" value="&lt;html&gt;&lt;b&gt;Felder: text: dateiname: autor: akte: az:&lt;/b&gt;&lt;br/&gt;Bsp: text:Kauf&#xa;&lt;p&gt;&amp;nbsp;&lt;/p&gt;&#xa;&lt;b&gt;Suchoptien: AND OR&lt;/b&gt;&#xa;&lt;p&gt;&amp;nbsp;&lt;/p&gt;&#xa;&lt;b&gt;&amp;quot;Wortgruppe mittels Anf&amp;uuml;hrungszeichen&amp;quot;&lt;/b&gt;&#xa;&lt;p&gt;&amp;nbsp;&lt;/p&gt;&#xa;&lt;b&gt;Wildcards: ? f&amp;uuml;r ein Zeichen, * f&amp;uuml;r mehrere Zeichen.&lt;/b&gt;&lt;br/&gt;&#xa;Bsp: M?ier (f&amp;uuml;r eine Suche nach Meier und Maier)&lt;br/&gt;&#xa;&lt;/html&gt;"/>
       </Properties>
     </Component>
   </SubComponents>
