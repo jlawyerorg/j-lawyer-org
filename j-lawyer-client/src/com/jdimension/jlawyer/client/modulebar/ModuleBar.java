@@ -842,7 +842,7 @@ public class ModuleBar extends javax.swing.JPanel {
         setOpaque(false);
 
         cmdSettings.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_settings_applications_black_36dp.png"))); // NOI18N
-        cmdSettings.setText("Einstellungen");
+        cmdSettings.setText("Vorlagen");
         cmdSettings.setBorder(null);
         cmdSettings.setBorderPainted(false);
         cmdSettings.setContentAreaFilled(false);
