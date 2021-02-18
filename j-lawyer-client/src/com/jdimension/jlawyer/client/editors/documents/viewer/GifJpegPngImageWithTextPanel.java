@@ -663,9 +663,14 @@
  */
 package com.jdimension.jlawyer.client.editors.documents.viewer;
 
+import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
+import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
+import java.awt.Dimension;
 import java.awt.Image;
+import java.awt.Rectangle;
 import javax.swing.ImageIcon;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -673,15 +678,54 @@ import javax.swing.ImageIcon;
  */
 public class GifJpegPngImageWithTextPanel extends javax.swing.JPanel implements PreviewPanel {
 
+    private static final Logger log = Logger.getLogger(GifJpegPngImageWithTextPanel.class.getName());
+
     /**
      * Creates new form PlaintextPanel
      */
     public GifJpegPngImageWithTextPanel(byte[] graphics, byte[] text) {
         initComponents();
         ThreadUtils.updateLabel(this.lblContent, "");
-        ThreadUtils.updateTextArea(this.taContent, new String(text));
-        
-        
+
+        String txt = new String(text);
+        ThreadUtils.updateTextArea(this.taContent, txt);
+
+    }
+
+    public void intelligentScrolling() {
+        String txt = this.taContent.getText();
+        //this.taContent.setC
+        ClientSettings settings = ClientSettings.getInstance();
+        AppOptionGroupBean[] salutations = settings.getSalutationDtos();
+        int pos = 0;
+        String txtLower = txt.toLowerCase();
+        for (AppOptionGroupBean o : salutations) {
+            int oPos = txtLower.indexOf(o.getValue().toLowerCase());
+            if (pos == 0 && oPos > 0) {
+                pos = oPos;
+            } else if (oPos > 0 && oPos < pos) {
+                pos = oPos;
+            }
+        }
+        try {
+            this.taContent.setCaretPosition(pos);
+        } catch (Throwable t) {
+            log.warn("invalid caret position: " + pos, t);
+        }
+
+        if (pos > 0) {
+            try {
+                Rectangle viewRect = taContent.modelToView(pos);
+                if (viewRect != null) {
+                    // Scroll to make the rectangle visible
+                    
+                    viewRect.setSize((int)(viewRect.getSize().getWidth()), (int)this.taContent.getHeight());
+                    taContent.scrollRectToVisible(viewRect);
+                }
+            } catch (Throwable t) {
+                log.warn(t);
+            }
+        }
     }
 
     /**
@@ -703,11 +747,6 @@ public class GifJpegPngImageWithTextPanel extends javax.swing.JPanel implements 
         taContent.setLineWrap(true);
         taContent.setRows(5);
         taContent.setWrapStyleWord(true);
-        taContent.addComponentListener(new java.awt.event.ComponentAdapter() {
-            public void componentResized(java.awt.event.ComponentEvent evt) {
-                taContentComponentResized(evt);
-            }
-        });
         jScrollPane2.setViewportView(taContent);
 
         lblContent.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
@@ -730,10 +769,6 @@ public class GifJpegPngImageWithTextPanel extends javax.swing.JPanel implements 
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    private void taContentComponentResized(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_taContentComponentResized
-        System.out.println(" " + this.getWidth() + " - " + this.getParent().getWidth());
-    }//GEN-LAST:event_taContentComponentResized
-
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JScrollPane jScrollPane2;
@@ -748,27 +783,21 @@ public class GifJpegPngImageWithTextPanel extends javax.swing.JPanel implements 
 
     @Override
     public void showContent(byte[] content) {
-        
+
         ImageIcon imageIcon = new ImageIcon(content); // load the image to a imageIcon
         Image image = imageIcon.getImage(); // transform it
-        
-        
-        int height=Math.max(this.lblContent.getHeight(), 256);
-        float scaleFactor=(float)height/(float)imageIcon.getIconHeight();
-        int width=(int)((float)imageIcon.getIconWidth()*scaleFactor);
-        Image newimg=image.getScaledInstance(width,height,Image.SCALE_FAST);
-        
-        
-        
-	        
-                //float scaleFactor=(float)((float)this.getWidth()/(float)imageIcon.getIconWidth());
-	        //Image newimg = image.getScaledInstance(this.getWidth(), (int)((float)imageIcon.getIconHeight()*scaleFactor),  java.awt.Image.SCALE_FAST); // scale it the smooth way 
-	        
+
+        int height = Math.max(this.lblContent.getHeight(), 256);
+        float scaleFactor = (float) height / (float) imageIcon.getIconHeight();
+        int width = (int) ((float) imageIcon.getIconWidth() * scaleFactor);
+        Image newimg = image.getScaledInstance(width, height, Image.SCALE_FAST);
+
+        //float scaleFactor=(float)((float)this.getWidth()/(float)imageIcon.getIconWidth());
+        //Image newimg = image.getScaledInstance(this.getWidth(), (int)((float)imageIcon.getIconHeight()*scaleFactor),  java.awt.Image.SCALE_FAST); // scale it the smooth way 
         imageIcon = new ImageIcon(newimg);  // transform it back
-        
+
         //this.lblContent.setSize(this.getWidth(),this.lblContent.getHeight());
         ThreadUtils.updateLabelIcon(this.lblContent, imageIcon);
     }
-    
-    
+
 }
