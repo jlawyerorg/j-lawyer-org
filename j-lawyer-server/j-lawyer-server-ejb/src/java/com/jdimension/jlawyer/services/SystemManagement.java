@@ -2214,6 +2214,10 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
             
             while(uploadFile.exists())  {
                 copy=copy+1;
+                if(copy==6) {
+                    log.warn("observed file " + fileName + " can not be stored, already has more than 5 copies");
+                    return;
+                }
                 fullPath=fullDir+"(" +copy + ") " + fileName;
                 uploadFile=new File(fullPath);
             }
