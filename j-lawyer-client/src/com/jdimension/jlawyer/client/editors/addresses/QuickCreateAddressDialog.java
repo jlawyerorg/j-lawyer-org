@@ -745,6 +745,8 @@ public class QuickCreateAddressDialog extends javax.swing.JDialog {
         jLabel7 = new javax.swing.JLabel();
         txtCountry = new javax.swing.JTextField();
         cmdChooseCity = new javax.swing.JButton();
+        txtStreetNr = new javax.swing.JTextField();
+        jLabel12 = new javax.swing.JLabel();
         jPanel3 = new javax.swing.JPanel();
         jLabel8 = new javax.swing.JLabel();
         jLabel9 = new javax.swing.JLabel();
@@ -859,6 +861,8 @@ public class QuickCreateAddressDialog extends javax.swing.JDialog {
             }
         });
 
+        jLabel12.setText("Nr.");
+
         org.jdesktop.layout.GroupLayout jPanel2Layout = new org.jdesktop.layout.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
@@ -871,10 +875,15 @@ public class QuickCreateAddressDialog extends javax.swing.JDialog {
                     .add(jLabel7))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
-                    .add(org.jdesktop.layout.GroupLayout.LEADING, txtStreet)
-                    .add(org.jdesktop.layout.GroupLayout.LEADING, txtZipCode, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 510, Short.MAX_VALUE)
+                    .add(org.jdesktop.layout.GroupLayout.LEADING, txtZipCode, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 513, Short.MAX_VALUE)
                     .add(org.jdesktop.layout.GroupLayout.LEADING, txtCity)
-                    .add(txtCountry))
+                    .add(txtCountry)
+                    .add(org.jdesktop.layout.GroupLayout.LEADING, jPanel2Layout.createSequentialGroup()
+                        .add(txtStreet)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                        .add(jLabel12)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(txtStreetNr, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 53, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(cmdChooseCity)
                 .addContainerGap())
@@ -884,7 +893,9 @@ public class QuickCreateAddressDialog extends javax.swing.JDialog {
             .add(jPanel2Layout.createSequentialGroup()
                 .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(jLabel4)
-                    .add(txtStreet, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                    .add(txtStreet, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(txtStreetNr, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(jLabel12))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(jLabel5)
@@ -1027,6 +1038,7 @@ public class QuickCreateAddressDialog extends javax.swing.JDialog {
             adr.setPhone(this.txtPhone.getText());
             adr.setMobile(this.txtMobile.getText());
             adr.setStreet(this.txtStreet.getText());
+            adr.setStreetNumber(this.txtStreetNr.getText());
             adr.setWebsite(this.txtWebsite.getText());
             adr.setZipCode(this.txtZipCode.getText());
 
@@ -1099,6 +1111,7 @@ public class QuickCreateAddressDialog extends javax.swing.JDialog {
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel11;
+    private javax.swing.JLabel jLabel12;
     private javax.swing.JLabel jLabel19;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel25;
@@ -1124,6 +1137,7 @@ public class QuickCreateAddressDialog extends javax.swing.JDialog {
     protected javax.swing.JTextField txtName;
     protected javax.swing.JTextField txtPhone;
     protected javax.swing.JTextField txtStreet;
+    private javax.swing.JTextField txtStreetNr;
     protected javax.swing.JTextField txtWebsite;
     protected javax.swing.JTextField txtZipCode;
     // End of variables declaration//GEN-END:variables

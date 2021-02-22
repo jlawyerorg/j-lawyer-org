@@ -244,10 +244,16 @@
                   </Group>
                   <EmptySpace max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="1" attributes="0">
-                      <Component id="txtStreet" alignment="0" max="32767" attributes="0"/>
-                      <Component id="txtZipCode" alignment="0" pref="510" max="32767" attributes="0"/>
+                      <Component id="txtZipCode" alignment="0" pref="513" max="32767" attributes="0"/>
                       <Component id="txtCity" alignment="0" max="32767" attributes="0"/>
                       <Component id="txtCountry" alignment="1" max="32767" attributes="0"/>
+                      <Group type="102" alignment="0" attributes="0">
+                          <Component id="txtStreet" max="32767" attributes="0"/>
+                          <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                          <Component id="jLabel12" min="-2" max="-2" attributes="0"/>
+                          <EmptySpace max="-2" attributes="0"/>
+                          <Component id="txtStreetNr" min="-2" pref="53" max="-2" attributes="0"/>
+                      </Group>
                   </Group>
                   <EmptySpace max="-2" attributes="0"/>
                   <Component id="cmdChooseCity" min="-2" max="-2" attributes="0"/>
@@ -261,6 +267,8 @@
                   <Group type="103" groupAlignment="3" attributes="0">
                       <Component id="jLabel4" alignment="3" min="-2" max="-2" attributes="0"/>
                       <Component id="txtStreet" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="txtStreetNr" alignment="3" min="-2" max="-2" attributes="0"/>
+                      <Component id="jLabel12" alignment="3" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <EmptySpace max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="3" attributes="0">
@@ -333,6 +341,13 @@
           <Events>
             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdChooseCityActionPerformed"/>
           </Events>
+        </Component>
+        <Component class="javax.swing.JTextField" name="txtStreetNr">
+        </Component>
+        <Component class="javax.swing.JLabel" name="jLabel12">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="Nr."/>
+          </Properties>
         </Component>
       </SubComponents>
     </Container>
