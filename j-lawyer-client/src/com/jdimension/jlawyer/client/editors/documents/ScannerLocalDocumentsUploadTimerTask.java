@@ -707,21 +707,31 @@ public class ScannerLocalDocumentsUploadTimerTask extends java.util.TimerTask {
 
                 File[] children = localDir.listFiles();
                 for (File f : children) {
+                    
+                    // avoid two concurrently running clients to upload the same file
+                    if(f.getName().endsWith(".uploading"))
+                        continue;
+                    
                     // file needs to be writeable to be uploaded
                     // files that cannot be deleted would cause the servers disk to be filled completely
                     if (f.isFile() && f.canWrite()) {
+                        File uploadInProgress=null;
+                        String realName=f.getName();
                         try {
-                            byte[] content = FileUtils.readFile(f);
-                            locator.lookupSystemManagementRemote().addObservedFile(f.getName(), content);
+                            uploadInProgress=new File(f.getParentFile().getAbsolutePath() + File.separator + f.getName() + ".uploading");
+                            f.renameTo(uploadInProgress);
+                            byte[] content = FileUtils.readFile(uploadInProgress);
+                            locator.lookupSystemManagementRemote().addObservedFile(realName, content);
                         } catch (Exception ex) {
                             log.error("Unable to upload scan " + f.getName() + " from " + localDir.getPath(), ex);
                             // leave scan in local inbox
                             continue;
                         }
                         try {
-                            f.delete();
+                            if(uploadInProgress!=null)
+                                uploadInProgress.delete();
                         } catch (Exception ex) {
-                            log.error("Unable to delete local scan " + f.getName() + " from " + localDir.getPath(), ex);
+                            log.error("Unable to delete local scan " + uploadInProgress.getName() + " from " + localDir.getPath(), ex);
                         }
                     }
                 }
