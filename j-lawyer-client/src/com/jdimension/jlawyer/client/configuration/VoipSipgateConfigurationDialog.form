@@ -45,6 +45,10 @@
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
+                          <Group type="102" attributes="0">
+                              <Component id="jLabel1" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                          </Group>
                           <Component id="txtEndpoint" max="32767" attributes="0"/>
                           <Component id="txtSipPrefix" max="32767" attributes="0"/>
                           <Component id="txtSipSuffix" alignment="0" max="32767" attributes="0"/>
@@ -73,6 +77,8 @@
                   <Component id="jLabel4" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="txtSipSuffix" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
+              <EmptySpace type="unrelated" max="-2" attributes="0"/>
+              <Component id="jLabel1" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="32767" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
                   <Component id="cmdCancel" alignment="3" min="-2" max="-2" attributes="0"/>
@@ -126,6 +132,14 @@
     <Component class="javax.swing.JTextField" name="txtSipPrefix">
     </Component>
     <Component class="javax.swing.JTextField" name="txtSipSuffix">
+    </Component>
+    <Component class="javax.swing.JLabel" name="jLabel1">
+      <Properties>
+        <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+          <Image iconType="3" name="/icons/info.png"/>
+        </Property>
+        <Property name="text" type="java.lang.String" value="Sipgate-Zugangsdaten werden in der Nutzerverwaltung hinterlegt"/>
+      </Properties>
     </Component>
   </SubComponents>
 </Form>

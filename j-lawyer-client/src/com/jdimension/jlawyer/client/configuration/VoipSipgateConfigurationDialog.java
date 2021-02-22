@@ -669,12 +669,12 @@ import com.jdimension.jlawyer.client.settings.ServerSettings;
  *
  * @author jens
  */
-public class VoipConfigurationDialog extends javax.swing.JDialog {
+public class VoipSipgateConfigurationDialog extends javax.swing.JDialog {
 
     /**
      * Creates new form BackupConfigurationDialog
      */
-    public VoipConfigurationDialog(java.awt.Frame parent, boolean modal) {
+    public VoipSipgateConfigurationDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
         
@@ -712,6 +712,7 @@ public class VoipConfigurationDialog extends javax.swing.JDialog {
         jLabel4 = new javax.swing.JLabel();
         txtSipPrefix = new javax.swing.JTextField();
         txtSipSuffix = new javax.swing.JTextField();
+        jLabel1 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Voice-over-IP - Einstellungen");
@@ -738,6 +739,9 @@ public class VoipConfigurationDialog extends javax.swing.JDialog {
 
         jLabel4.setText("SIP-Suffix:");
 
+        jLabel1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/info.png"))); // NOI18N
+        jLabel1.setText("Sipgate-Zugangsdaten werden in der Nutzerverwaltung hinterlegt");
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -757,6 +761,9 @@ public class VoipConfigurationDialog extends javax.swing.JDialog {
                             .addComponent(jLabel4))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(jLabel1)
+                                .addGap(0, 0, Short.MAX_VALUE))
                             .addComponent(txtEndpoint)
                             .addComponent(txtSipPrefix)
                             .addComponent(txtSipSuffix))))
@@ -777,6 +784,8 @@ public class VoipConfigurationDialog extends javax.swing.JDialog {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel4)
                     .addComponent(txtSipSuffix, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jLabel1)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(cmdCancel)
@@ -823,14 +832,15 @@ public class VoipConfigurationDialog extends javax.swing.JDialog {
                 }
             }
         } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(VoipConfigurationDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(VoipSipgateConfigurationDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(VoipConfigurationDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(VoipSipgateConfigurationDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(VoipConfigurationDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(VoipSipgateConfigurationDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(VoipConfigurationDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(VoipSipgateConfigurationDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
+        //</editor-fold>
         //</editor-fold>
 
         /*
@@ -839,7 +849,7 @@ public class VoipConfigurationDialog extends javax.swing.JDialog {
         java.awt.EventQueue.invokeLater(new Runnable() {
 
             public void run() {
-                VoipConfigurationDialog dialog = new VoipConfigurationDialog(new javax.swing.JFrame(), true);
+                VoipSipgateConfigurationDialog dialog = new VoipSipgateConfigurationDialog(new javax.swing.JFrame(), true);
                 dialog.addWindowListener(new java.awt.event.WindowAdapter() {
 
                     @Override
@@ -854,6 +864,7 @@ public class VoipConfigurationDialog extends javax.swing.JDialog {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton cmdCancel;
     private javax.swing.JButton cmdSave;
+    private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;

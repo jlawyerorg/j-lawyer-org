@@ -685,6 +685,7 @@ import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.client.voip.PlaceCallDialog;
 import com.jdimension.jlawyer.client.voip.SendFaxDialog;
 import com.jdimension.jlawyer.client.voip.SendSmsDialog;
+import com.jdimension.jlawyer.client.voip.VoipUtils;
 import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
@@ -1259,15 +1260,8 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
 
         } else {
 
-            if (UserSettings.getInstance().getCurrentUser().isVoipEnabled()) {
-                PlaceCallDialog dlg = new PlaceCallDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.a, this.a.getMobile());
-                FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
-                dlg.setVisible(true);
-            } else {
-                JOptionPane.showMessageDialog(this, "Voice-over-IP - Integration ist nicht aktiviert!", "Anruf tätigen", JOptionPane.INFORMATION_MESSAGE);
-
-            }
-
+            VoipUtils.placeCall(this.a, this.a.getMobile());
+            
         }
 
     }//GEN-LAST:event_mnuCallMobileActionPerformed
@@ -1278,15 +1272,8 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
 
         } else {
 
-            if (UserSettings.getInstance().getCurrentUser().isVoipEnabled()) {
-                PlaceCallDialog dlg = new PlaceCallDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.a, this.a.getPhone());
-                FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
-                dlg.setVisible(true);
-            } else {
-                JOptionPane.showMessageDialog(this, "Voice-over-IP - Integration ist nicht aktiviert!", "Anruf tätigen", JOptionPane.INFORMATION_MESSAGE);
-
-            }
-
+            VoipUtils.placeCall(this.a, this.a.getPhone());
+            
         }
 
     }//GEN-LAST:event_mnuCallPhoneActionPerformed

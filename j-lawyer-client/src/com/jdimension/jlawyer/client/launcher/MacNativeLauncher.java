@@ -725,7 +725,7 @@ public class MacNativeLauncher extends NativeLauncher {
 
                 } catch (final Exception ex) {
                     if (ex instanceof IOException) {
-                        log.error("IOException opening file using Desktop API - falling back to xdg-open", ex);
+                        log.error("IOException opening file using Desktop API - falling back to /usr/bin/open", ex);
 
                         try {
                             int exit = 0;
@@ -739,7 +739,7 @@ public class MacNativeLauncher extends NativeLauncher {
                             if (exit != 0) {
                                 throw new Exception("Fehler beim Öffnen des Dokuments!");
                             } else {
-                                // if the application was running >30s, we assume that xdg-open was blocking until the app was closed by the user
+                                // if the application was running >30s, we assume that /usr/bin/open was blocking until the app was closed by the user
                                 if((System.currentTimeMillis()-launched)>30000)
                                     odoc.setClosed(true);
                                 // otherwise, keep monitoring the file for changes

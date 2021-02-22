@@ -1100,9 +1100,11 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuUsers = new javax.swing.JMenuItem();
         mnuGroups = new javax.swing.JMenuItem();
         jSeparator4 = new javax.swing.JPopupMenu.Separator();
-        mnuVoipSettings = new javax.swing.JMenuItem();
+        mnuVoipSipgateSettings = new javax.swing.JMenuItem();
+        mnuVoipSoftphoneSettings = new javax.swing.JMenuItem();
         mnuBeaSettings = new javax.swing.JMenuItem();
         mnuDrebisSettings = new javax.swing.JMenuItem();
+        jSeparator5 = new javax.swing.JPopupMenu.Separator();
         mnuBackupConfiguration = new javax.swing.JMenuItem();
         mnuAdminConsole = new javax.swing.JMenuItem();
         mnuServerMonitor = new javax.swing.JMenuItem();
@@ -1603,14 +1605,23 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuOptions.add(mnuGroups);
         mnuOptions.add(jSeparator4);
 
-        mnuVoipSettings.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/sipphone.png"))); // NOI18N
-        mnuVoipSettings.setText(bundle.getString("menu.settings.voip")); // NOI18N
-        mnuVoipSettings.addActionListener(new java.awt.event.ActionListener() {
+        mnuVoipSipgateSettings.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/sipphone.png"))); // NOI18N
+        mnuVoipSipgateSettings.setText("Telefonie/Fax: Sipgate");
+        mnuVoipSipgateSettings.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                mnuVoipSettingsActionPerformed(evt);
+                mnuVoipSipgateSettingsActionPerformed(evt);
             }
         });
-        mnuOptions.add(mnuVoipSettings);
+        mnuOptions.add(mnuVoipSipgateSettings);
+
+        mnuVoipSoftphoneSettings.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/sipphone.png"))); // NOI18N
+        mnuVoipSoftphoneSettings.setText("Telefonie: Softphone");
+        mnuVoipSoftphoneSettings.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuVoipSoftphoneSettingsActionPerformed(evt);
+            }
+        });
+        mnuOptions.add(mnuVoipSoftphoneSettings);
 
         mnuBeaSettings.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/bea16.png"))); // NOI18N
         mnuBeaSettings.setText("beA (Anwaltspostfach)"); // NOI18N
@@ -1629,6 +1640,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             }
         });
         mnuOptions.add(mnuDrebisSettings);
+        mnuOptions.add(jSeparator5);
 
         mnuBackupConfiguration.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/database.png"))); // NOI18N
         mnuBackupConfiguration.setText(bundle.getString("menu.settings.backup")); // NOI18N
@@ -2039,13 +2051,13 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         }
     }//GEN-LAST:event_mnuScanOptionsActionPerformed
 
-    private void mnuVoipSettingsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuVoipSettingsActionPerformed
+    private void mnuVoipSipgateSettingsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuVoipSipgateSettingsActionPerformed
         ClientSettings settings = ClientSettings.getInstance();
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             boolean currentlyAdmin = locator.lookupSecurityServiceRemote().isAdmin();
             if (currentlyAdmin) {
-                VoipConfigurationDialog dlg = new VoipConfigurationDialog(this, true);
+                VoipSipgateConfigurationDialog dlg = new VoipSipgateConfigurationDialog(this, true);
                 //dlg.setTitle("Anreden");
                 //dlg.setOptionGroup(OptionConstants.OPTIONGROUP_SALUTATIONS);
                 FrameUtils.centerDialog(dlg, this);
@@ -2057,7 +2069,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             log.error(ex);
             JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("error.launchsettings") + ex.getMessage(), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.error"), JOptionPane.INFORMATION_MESSAGE);
         }
-    }//GEN-LAST:event_mnuVoipSettingsActionPerformed
+    }//GEN-LAST:event_mnuVoipSipgateSettingsActionPerformed
 
     private void mnuDrebisSettingsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuDrebisSettingsActionPerformed
         ClientSettings settings = ClientSettings.getInstance();
@@ -2594,6 +2606,15 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
                 dlg.setVisible(true);
     }//GEN-LAST:event_mnuDocumentsBinActionPerformed
 
+    private void mnuVoipSoftphoneSettingsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuVoipSoftphoneSettingsActionPerformed
+            VoipSoftphoneConfigurationDialog dlg = new VoipSoftphoneConfigurationDialog(this, true);
+                //dlg.setTitle("Anreden");
+                //dlg.setOptionGroup(OptionConstants.OPTIONGROUP_SALUTATIONS);
+                FrameUtils.centerDialog(dlg, this);
+                dlg.setVisible(true);
+            
+    }//GEN-LAST:event_mnuVoipSoftphoneSettingsActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -2611,6 +2632,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     private javax.swing.JSeparator jSeparator2;
     private javax.swing.JSeparator jSeparator3;
     private javax.swing.JPopupMenu.Separator jSeparator4;
+    private javax.swing.JPopupMenu.Separator jSeparator5;
     private javax.swing.JLabel lblBeaStatus;
     private javax.swing.JLabel lblDrebisStatus;
     private javax.swing.JLabel lblFaxStatus;
@@ -2674,7 +2696,8 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     private javax.swing.JMenuItem mnuUserProfile;
     private javax.swing.JMenuItem mnuUsers;
     private javax.swing.JMenu mnuView;
-    private javax.swing.JMenuItem mnuVoipSettings;
+    private javax.swing.JMenuItem mnuVoipSipgateSettings;
+    private javax.swing.JMenuItem mnuVoipSoftphoneSettings;
     private javax.swing.JMenuItem mnuWordProcessor;
     private javax.swing.JMenuItem mnuXjustizViewer;
     private javax.swing.JMenuItem mnuZipCodeImport;

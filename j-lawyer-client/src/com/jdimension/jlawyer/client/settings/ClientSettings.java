@@ -772,6 +772,12 @@ public class ClientSettings {
     public static final String CONF_VOIP_LASTSIPSMS="client.voip.lastsipsms";
     public static final String CONF_VOIP_LASTSIPVOICE="client.voip.lastsipvoice";
     
+    // may be "protocolhandler" or "exectuable
+    public static final String CONF_VOIP_SOFTPHONE_MODE="client.voip.softphone.mode";
+    public static final String CONF_VOIP_SOFTPHONE_PROTOCOL_NAME="client.voip.softphone.protocol.name";
+    public static final String CONF_VOIP_SOFTPHONE_EXECUTABLE_PATH="client.voip.softphone.executable.name";
+    public static final String CONF_VOIP_SOFTPHONE_EXECUTABLE_PARAMS="client.voip.softphone.executable.parameters";
+    
     public static final String CONF_APPS_XJUSTIZVIEWER_PATH="client.apps.xjustiz.path";
     
     public static final String CONF_APPS_WORDPROCESSOR_KEY="client.apps.wordprocessor";

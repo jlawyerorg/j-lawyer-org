@@ -735,6 +735,8 @@ public class FaxStatusPanel extends javax.swing.JPanel implements ThemeableEdito
     public FaxStatusPanel() {
 
         initComponents();
+        
+        VoipUtils.initializeSettings();
 
         EventBroker eb = EventBroker.getInstance();
         eb.subscribeConsumer(this, Event.TYPE_FAXSTATUS);

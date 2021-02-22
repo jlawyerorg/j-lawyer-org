@@ -661,103 +661,47 @@
  * For more information on this, and how to apply and follow the GNU AGPL, see
  * <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.client.voip;
+package com.jdimension.jlawyer.client.configuration;
 
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.ServerSettings;
-import com.jdimension.jlawyer.client.utils.ComponentUtils;
-import com.jdimension.jlawyer.client.utils.StringUtils;
-import com.jdimension.jlawyer.client.utils.ThreadUtils;
-import com.jdimension.jlawyer.fax.BalanceInformation;
-import com.jdimension.jlawyer.fax.SipUri;
-import com.jdimension.jlawyer.persistence.AddressBean;
-import com.jdimension.jlawyer.services.JLawyerServiceLocator;
-import com.jdimension.jlawyer.sip.SipUtils;
-import java.awt.Window;
-import java.text.NumberFormat;
-import java.util.ArrayList;
-import javax.swing.DefaultComboBoxModel;
-import javax.swing.JFrame;
-import javax.swing.SwingUtilities;
+import com.jdimension.jlawyer.client.voip.VoipUtils;
+import java.io.IOException;
+import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
 
 /**
  *
  * @author jens
  */
-public class PlaceCallDialog extends javax.swing.JDialog {
-
-    private static final Logger log=Logger.getLogger(PlaceCallDialog.class.getName());
+public class VoipSoftphoneConfigurationDialog extends javax.swing.JDialog {
     
+    private static final Logger log=Logger.getLogger(VoipSoftphoneConfigurationDialog.class.getName());
+
     /**
-     * Creates new form SendSmsDialog
+     * Creates new form BackupConfigurationDialog
      */
-    public PlaceCallDialog(JFrame parent, boolean modal, AddressBean ab, String phone) {
+    public VoipSoftphoneConfigurationDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
-       
-        if(phone==null)
-            phone="";
-        if("".equals(phone))
-            phone="0";
         
-        this.lblTo.setText(ab.toDisplayName() + " (" + phone + ")");
-        this.txtE164.setText(SipUtils.E164Number(phone));
+        ClientSettings set=ClientSettings.getInstance();
+        String mode=set.getConfiguration(ClientSettings.CONF_VOIP_SOFTPHONE_MODE, VoipUtils.SOFTPHONE_MODE_PROTOCOLHANDLER);
+        if(VoipUtils.SOFTPHONE_MODE_PROTOCOLHANDLER.equalsIgnoreCase(mode))
+            this.rdSoftphoneProtocolHandler.setSelected(true);
+        else
+            this.rdSoftphoneExecutable.setSelected(true);
         
-        ServerSettings set=ServerSettings.getInstance();
-        String prefix=set.getSetting(set.SERVERCONF_VOIPSIPPREFIX, "sip:");
-        this.lblPrefix.setText(prefix);
-        String suffix=set.getSetting(set.SERVERCONF_VOIPSIPSUFFIX, "@sipgate.de");
-        this.lblSuffix.setText(suffix);
+        String protocolName=set.getConfiguration(ClientSettings.CONF_VOIP_SOFTPHONE_PROTOCOL_NAME, VoipUtils.SOFTPHONE_PROTOCOL_TEL);
+        this.txtProtocol.setText(protocolName);
         
-        ClientSettings settings = ClientSettings.getInstance();
-        String lastUsed=settings.getConfiguration(settings.CONF_VOIP_LASTSIPVOICE, "");
-        try {
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-              ArrayList<SipUri> list=locator.lookupVoipServiceRemote().getOwnUris();
-            DefaultComboBoxModel m=new DefaultComboBoxModel();
-            SipUri lastUsedUri=null;
-            for(SipUri uri: list) {
-                m.addElement(uri);
-                if(uri.getUri().equals(lastUsed))
-                    lastUsedUri=uri;
-            }
-            this.cmbOwnUris.setModel(m);
-            if(lastUsedUri!=null)
-                this.cmbOwnUris.setSelectedItem(lastUsedUri);
-
-        } catch (Exception ex) {
-            log.error(ex);
-            ThreadUtils.showErrorDialog(this, "Fehler beim Ermitteln der eigenen SIP-Rufnummern: " + ex.getMessage(), "Fehler");
-        }
+        String executable=set.getConfiguration(ClientSettings.CONF_VOIP_SOFTPHONE_EXECUTABLE_PATH, "");
+        this.txtExecutable.setText(executable);
         
-        this.cmbOwnUrisActionPerformed(null);
+        String params=set.getConfiguration(ClientSettings.CONF_VOIP_SOFTPHONE_EXECUTABLE_PARAMS, "TELNR");
+        this.txtParameters.setText(params);
         
-        ComponentUtils.restoreDialogSize(this);
-        
-        new Thread(new Runnable() {
-
-            public void run() {
-                ClientSettings settings = ClientSettings.getInstance();
-                try {
-                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                    
-                    final BalanceInformation bi = locator.lookupVoipServiceRemote().getBalance();
-                    
-                    SwingUtilities.invokeLater(new Runnable() {
-                        public void run() {
-                            NumberFormat nf=NumberFormat.getCurrencyInstance();
-                            lblBalance.setText("Guthaben: " + nf.format(bi.getTotal()));
-                        }
-                    });
-                    
-
-                } catch (Exception ex) {
-                    log.error(ex);
-                    //ThreadUtils.showErrorDialog(this, "Fehler beim Ermitteln der eigenen SIP-Rufnummern: " + ex.getMessage(), "Fehler");
-                }
-            }
-        }).start();
         
     }
 
@@ -770,254 +714,208 @@ public class PlaceCallDialog extends javax.swing.JDialog {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        btnGrpSoftphone = new javax.swing.ButtonGroup();
         cmdCancel = new javax.swing.JButton();
-        cmdCall = new javax.swing.JButton();
+        cmdSave = new javax.swing.JButton();
+        rdSoftphoneProtocolHandler = new javax.swing.JRadioButton();
+        rdSoftphoneExecutable = new javax.swing.JRadioButton();
+        jLabel2 = new javax.swing.JLabel();
+        txtExecutable = new javax.swing.JTextField();
+        cmdFindExecutable = new javax.swing.JButton();
+        jLabel3 = new javax.swing.JLabel();
+        txtParameters = new javax.swing.JTextField();
+        jLabel4 = new javax.swing.JLabel();
         jPanel1 = new javax.swing.JPanel();
-        cmbOwnUris = new javax.swing.JComboBox();
-        jLabel7 = new javax.swing.JLabel();
+        jLabel1 = new javax.swing.JLabel();
+        jLabel5 = new javax.swing.JLabel();
         jLabel6 = new javax.swing.JLabel();
-        jCheckBox1 = new javax.swing.JCheckBox();
-        lblVoice = new javax.swing.JLabel();
-        lblText = new javax.swing.JLabel();
-        lblFax = new javax.swing.JLabel();
-        lblBalance = new javax.swing.JLabel();
-        jPanel2 = new javax.swing.JPanel();
-        lblTo = new javax.swing.JLabel();
-        lblPrefix = new javax.swing.JLabel();
-        txtE164 = new javax.swing.JTextField();
-        lblSuffix = new javax.swing.JLabel();
+        txtProtocol = new javax.swing.JTextField();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
-        setTitle("neuen Anruf tätigen");
-        addComponentListener(new java.awt.event.ComponentAdapter() {
-            public void componentResized(java.awt.event.ComponentEvent evt) {
-                formComponentResized(evt);
-            }
-        });
+        setTitle("Voice-over-IP - Einstellungen");
 
         cmdCancel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png"))); // NOI18N
-        cmdCancel.setText("Abbrechen");
+        cmdCancel.setText("Schliessen");
         cmdCancel.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmdCancelActionPerformed(evt);
             }
         });
 
-        cmdCall.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/sipphone.png"))); // NOI18N
-        cmdCall.setText("Anrufen");
-        cmdCall.addActionListener(new java.awt.event.ActionListener() {
+        cmdSave.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/filesave.png"))); // NOI18N
+        cmdSave.setText("Speichern");
+        cmdSave.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdCallActionPerformed(evt);
+                cmdSaveActionPerformed(evt);
             }
         });
 
-        jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder("eigene Kennung"));
+        btnGrpSoftphone.add(rdSoftphoneProtocolHandler);
+        rdSoftphoneProtocolHandler.setSelected(true);
+        rdSoftphoneProtocolHandler.setText("Aufruf per Protokollhandler (empfohlen)");
 
-        cmbOwnUris.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
-        cmbOwnUris.addItemListener(new java.awt.event.ItemListener() {
-            public void itemStateChanged(java.awt.event.ItemEvent evt) {
-                cmbOwnUrisItemStateChanged(evt);
-            }
-        });
-        cmbOwnUris.addActionListener(new java.awt.event.ActionListener() {
+        btnGrpSoftphone.add(rdSoftphoneExecutable);
+        rdSoftphoneExecutable.setText("Aufruf per Kommandozeilenparameter");
+
+        jLabel2.setText("Ausführbare Datei:");
+
+        txtExecutable.setEditable(false);
+
+        cmdFindExecutable.setText("...");
+        cmdFindExecutable.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmbOwnUrisActionPerformed(evt);
+                cmdFindExecutableActionPerformed(evt);
             }
         });
 
-        jLabel7.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/kfax.png"))); // NOI18N
-        jLabel7.setText("Faxe");
+        jLabel3.setText("Parameter:");
 
-        jLabel6.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/sms_protocol.png"))); // NOI18N
-        jLabel6.setText("Textnachrichten / SMS");
+        txtParameters.setText("TELNR");
 
-        jCheckBox1.setText("Telefonie");
-        jCheckBox1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/sipphone.png"))); // NOI18N
+        jLabel4.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/info.png"))); // NOI18N
+        jLabel4.setToolTipText("Der Platzhalter TELNR wird durch die zu wählende Telefonnummer ersetzt.");
 
-        lblVoice.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png"))); // NOI18N
-        lblVoice.setText(" ");
+        jPanel1.setBackground(new java.awt.Color(204, 204, 204));
 
-        lblText.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png"))); // NOI18N
-        lblText.setText(" ");
+        jLabel1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/info.png"))); // NOI18N
+        jLabel1.setText("Softphone wird nur genutzt, wenn kein Sipgate konfiguriert ist");
 
-        lblFax.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png"))); // NOI18N
-        lblFax.setText(" ");
-
-        lblBalance.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-        lblBalance.setText("Guthaben: 0 EUR");
+        jLabel5.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/info.png"))); // NOI18N
+        jLabel5.setText("Einstellungen werden nur für diesen Arbeitsplatz gespeichert");
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+            .addGroup(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(lblBalance, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(cmbOwnUris, javax.swing.GroupLayout.Alignment.LEADING, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel1Layout.createSequentialGroup()
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addComponent(lblFax)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jLabel7))
-                            .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(lblText)
-                                    .addComponent(lblVoice))
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                                    .addComponent(jCheckBox1)
-                                    .addComponent(jLabel6))))
-                        .addGap(0, 148, Short.MAX_VALUE)))
-                .addContainerGap())
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jLabel5)
+                    .addComponent(jLabel1))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
-                .addComponent(cmbOwnUris, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(lblVoice)
-                    .addComponent(jCheckBox1))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(lblText)
-                    .addComponent(jLabel6))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(lblFax)
-                    .addComponent(jLabel7))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 7, Short.MAX_VALUE)
-                .addComponent(lblBalance)
-                .addContainerGap())
-        );
-
-        jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder("Empfänger"));
-
-        lblTo.setText("0123");
-
-        lblPrefix.setText("sip:");
-
-        lblSuffix.setText("@sipgate.de");
-
-        javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
-        jPanel2.setLayout(jPanel2Layout);
-        jPanel2Layout.setHorizontalGroup(
-            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel2Layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(lblTo, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addComponent(lblPrefix)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(txtE164, javax.swing.GroupLayout.DEFAULT_SIZE, 204, Short.MAX_VALUE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(lblSuffix)))
-                .addContainerGap())
-        );
-        jPanel2Layout.setVerticalGroup(
-            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel2Layout.createSequentialGroup()
-                .addComponent(lblTo)
+                .addComponent(jLabel1)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(lblPrefix)
-                    .addComponent(txtE164, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(lblSuffix))
-                .addGap(0, 0, Short.MAX_VALUE))
+                .addComponent(jLabel5)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
+
+        jLabel6.setText("Protokoll:");
+
+        txtProtocol.setText("tel://");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(cmdSave)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(cmdCancel)
+                .addGap(12, 12, 12))
+            .addGroup(layout.createSequentialGroup()
+                .addGap(12, 12, 12)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addGap(0, 0, Short.MAX_VALUE)
-                        .addComponent(cmdCall)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(cmdCancel)))
-                .addContainerGap())
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(layout.createSequentialGroup()
+                                .addGap(21, 21, 21)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(jLabel2)
+                                    .addComponent(jLabel3))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(txtParameters)
+                                    .addComponent(txtExecutable))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(cmdFindExecutable)
+                                    .addComponent(jLabel4)))
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(rdSoftphoneExecutable)
+                                .addGap(186, 186, 186)))
+                        .addContainerGap())
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addGroup(layout.createSequentialGroup()
+                                .addGap(21, 21, 21)
+                                .addComponent(jLabel6)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(txtProtocol))
+                            .addComponent(rdSoftphoneProtocolHandler))
+                        .addGap(324, 324, 324))))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(rdSoftphoneProtocolHandler)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel6)
+                    .addComponent(txtProtocol, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(rdSoftphoneExecutable)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel2)
+                    .addComponent(txtExecutable, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(cmdFindExecutable))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel3)
+                    .addComponent(txtParameters, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel4))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(cmdCancel)
-                    .addComponent(cmdCall))
-                .addContainerGap(13, Short.MAX_VALUE))
+                    .addComponent(cmdSave))
+                .addGap(43, 43, 43))
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void cmbOwnUrisItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cmbOwnUrisItemStateChanged
+    private void cmdSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveActionPerformed
+        ClientSettings set=ClientSettings.getInstance();
+        if(this.rdSoftphoneProtocolHandler.isSelected())
+            set.setConfiguration(ClientSettings.CONF_VOIP_SOFTPHONE_MODE, VoipUtils.SOFTPHONE_MODE_PROTOCOLHANDLER);
+        else
+            set.setConfiguration(ClientSettings.CONF_VOIP_SOFTPHONE_MODE, VoipUtils.SOFTPHONE_MODE_EXECUTABLE);
         
-    }//GEN-LAST:event_cmbOwnUrisItemStateChanged
+        set.setConfiguration(ClientSettings.CONF_VOIP_SOFTPHONE_EXECUTABLE_PARAMS, txtParameters.getText());
+        set.setConfiguration(ClientSettings.CONF_VOIP_SOFTPHONE_EXECUTABLE_PATH, txtExecutable.getText());
+        set.setConfiguration(ClientSettings.CONF_VOIP_SOFTPHONE_PROTOCOL_NAME, txtProtocol.getText());
+        
+        this.setVisible(false);
+        this.dispose();
+    }//GEN-LAST:event_cmdSaveActionPerformed
 
     private void cmdCancelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCancelActionPerformed
         this.setVisible(false);
         this.dispose();
     }//GEN-LAST:event_cmdCancelActionPerformed
 
-    private void cmdCallActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCallActionPerformed
-        ClientSettings settings = ClientSettings.getInstance();
-        try {
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            SipUri localUri=(SipUri)this.cmbOwnUris.getSelectedItem();
-            String remoteUri=this.lblPrefix.getText() + this.txtE164.getText() + this.lblSuffix.getText();
-            
-            locator.lookupVoipServiceRemote().initiateCall(localUri.getUri(), remoteUri);
-            settings.setConfiguration(settings.CONF_VOIP_LASTSIPVOICE, localUri.getUri());
-            
-            this.setVisible(false);
-            this.dispose();
-        } catch (Exception ex) {
-            log.error(ex);
-            ThreadUtils.showErrorDialog(this, "Fehler beim Gesprächsaufbau: " + ex.getMessage(), "Fehler");
-        }
-        
-        
-    }//GEN-LAST:event_cmdCallActionPerformed
+    private void cmdFindExecutableActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdFindExecutableActionPerformed
+        JFileChooser chooser = new JFileChooser();
+        int returnVal = chooser.showOpenDialog(this);
+        if (returnVal == JFileChooser.APPROVE_OPTION) {
 
-    private void cmbOwnUrisActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbOwnUrisActionPerformed
-        Object sel=this.cmbOwnUris.getSelectedItem();
-        if(sel!=null && sel instanceof SipUri) {
-            SipUri uri=(SipUri)sel;
-            this.lblFax.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png")));
-            this.lblVoice.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png")));
-            this.lblText.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png")));
-            
-            ArrayList<String> tosList=uri.getTypeOfService();
-            for(String tos: tosList) {
-                if(SipUtils.TOS_FAX.equals(tos))
-                    this.lblFax.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png")));
-                
-                if(SipUtils.TOS_TEXT.equals(tos))
-                    this.lblText.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png")));
-                
-                if(SipUtils.TOS_VOICE.equals(tos))
-                    this.lblVoice.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png")));
+            try {
+                this.txtExecutable.setText(chooser.getSelectedFile().getCanonicalPath());
+            } catch (IOException ioe) {
+                log.error("Error getting binary path", ioe);
+                JOptionPane.showMessageDialog(this, java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/configuration/CustomLauncherOptionsDialog").getString("msg.error.gettingpath"), new Object[] {ioe.getMessage()}), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/configuration/CustomLauncherOptionsDialog").getString("msg.error"), JOptionPane.ERROR_MESSAGE);
             }
         }
-    }//GEN-LAST:event_cmbOwnUrisActionPerformed
-
-    private void formComponentResized(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentResized
-        ComponentUtils.storeDialogSize(this);
-    }//GEN-LAST:event_formComponentResized
+    }//GEN-LAST:event_cmdFindExecutableActionPerformed
 
     /**
      * @param args the command line arguments
@@ -1040,14 +938,17 @@ public class PlaceCallDialog extends javax.swing.JDialog {
                 }
             }
         } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(PlaceCallDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(VoipSoftphoneConfigurationDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(PlaceCallDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(VoipSoftphoneConfigurationDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(PlaceCallDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(VoipSoftphoneConfigurationDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(PlaceCallDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(VoipSoftphoneConfigurationDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
+        //</editor-fold>
+        //</editor-fold>
+        //</editor-fold>
         //</editor-fold>
 
         /*
@@ -1056,7 +957,7 @@ public class PlaceCallDialog extends javax.swing.JDialog {
         java.awt.EventQueue.invokeLater(new Runnable() {
 
             public void run() {
-                PlaceCallDialog dialog = new PlaceCallDialog(new javax.swing.JFrame(), true, null, null);
+                VoipSoftphoneConfigurationDialog dialog = new VoipSoftphoneConfigurationDialog(new javax.swing.JFrame(), true);
                 dialog.addWindowListener(new java.awt.event.WindowAdapter() {
 
                     @Override
@@ -1069,21 +970,21 @@ public class PlaceCallDialog extends javax.swing.JDialog {
         });
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JComboBox cmbOwnUris;
-    private javax.swing.JButton cmdCall;
+    private javax.swing.ButtonGroup btnGrpSoftphone;
     private javax.swing.JButton cmdCancel;
-    private javax.swing.JCheckBox jCheckBox1;
+    private javax.swing.JButton cmdFindExecutable;
+    private javax.swing.JButton cmdSave;
+    private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel jLabel3;
+    private javax.swing.JLabel jLabel4;
+    private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
-    private javax.swing.JLabel jLabel7;
     private javax.swing.JPanel jPanel1;
-    private javax.swing.JPanel jPanel2;
-    private javax.swing.JLabel lblBalance;
-    private javax.swing.JLabel lblFax;
-    private javax.swing.JLabel lblPrefix;
-    private javax.swing.JLabel lblSuffix;
-    private javax.swing.JLabel lblText;
-    private javax.swing.JLabel lblTo;
-    private javax.swing.JLabel lblVoice;
-    private javax.swing.JTextField txtE164;
+    private javax.swing.JRadioButton rdSoftphoneExecutable;
+    private javax.swing.JRadioButton rdSoftphoneProtocolHandler;
+    private javax.swing.JTextField txtExecutable;
+    private javax.swing.JTextField txtParameters;
+    private javax.swing.JTextField txtProtocol;
     // End of variables declaration//GEN-END:variables
 }
