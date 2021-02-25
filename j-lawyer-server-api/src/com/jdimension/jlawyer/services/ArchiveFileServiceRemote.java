@@ -845,4 +845,8 @@ public interface ArchiveFileServiceRemote {
 
     boolean restoreDocumentFromBin(String docId) throws Exception;
 
+    Collection<Keyword> extractKeywordsFromDocument(String docId) throws Exception;
+
+    Collection<Keyword> extractKeywordsFromText(String text) throws Exception;
+
 }

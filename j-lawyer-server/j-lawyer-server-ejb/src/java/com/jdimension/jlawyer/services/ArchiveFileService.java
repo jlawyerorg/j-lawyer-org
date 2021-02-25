@@ -663,6 +663,8 @@
  */
 package com.jdimension.jlawyer.services;
 
+import com.google.i18n.phonenumbers.PhoneNumberMatch;
+import com.google.i18n.phonenumbers.PhoneNumberUtil;
 import com.jdimension.jlawyer.server.utils.ServerFileUtils;
 import com.jdimension.jlawyer.documents.LibreOfficeAccess;
 import com.jdimension.jlawyer.documents.PreviewGenerator;
@@ -4636,9 +4638,10 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         StringGenerator idGen = new StringGenerator();
         ArchiveFileDocumentsBean db = this.archiveFileDocumentsFacade.find(docId);
         ArchiveFileBean aFile = db.getArchiveFileKey();
-        
-        if(authCheck)
+
+        if (authCheck) {
             this.checkGroupsForCase(context.getCallerPrincipal().getName(), aFile);
+        }
 
         String localBaseDir = System.getProperty("jlawyer.server.basedirectory");
         localBaseDir = localBaseDir.trim();
@@ -4670,7 +4673,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
         this.archiveFileDocumentsFacade.remove(db);
     }
-    
+
     @Override
     @RolesAllowed({"writeArchiveFileRole"})
     public void removeDocumentFromBin(String docId) throws Exception {
@@ -4739,23 +4742,61 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 log.error("Value jlawyer.server.documents.bin.retentiondays is not a valid integer: " + retentionDaysString);
             }
         }
-        
+
         Collection<ArchiveFileDocumentsBean> deleted = this.archiveFileDocumentsFacade.findDeleted();
-        long retentionMillis=(long)retentionDays*24l*60l*60l*1000l;
-        long now=System.currentTimeMillis();
+        long retentionMillis = (long) retentionDays * 24l * 60l * 60l * 1000l;
+        long now = System.currentTimeMillis();
         for (ArchiveFileDocumentsBean doc : deleted) {
-            Date delDate=doc.getDeletionDate();
-            if(delDate!=null) {
-                long deletionDate=delDate.getTime();
-                if((now-deletionDate)>retentionMillis) {
+            Date delDate = doc.getDeletionDate();
+            if (delDate != null) {
+                long deletionDate = delDate.getTime();
+                if ((now - deletionDate) > retentionMillis) {
                     this.removeDocumentFromBinImpl(doc.getId(), false);
                 }
             } else {
                 log.error("document in bin has no deletion date: " + doc.getId());
             }
-            
+
         }
 
+    }
+
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public Collection<Keyword> extractKeywordsFromDocument(String docId) throws Exception {
+
+        ArchiveFileDocumentsBean db = this.archiveFileDocumentsFacade.find(docId);
+        if (db == null) {
+            log.error("Document with id " + docId + " does not exist");
+            throw new Exception("Dokument mit ID " + docId + " existiert nicht!");
+        }
+        this.checkGroupsForCase(context.getCallerPrincipal().getName(), db.getArchiveFileKey());
+
+        String preview = this.getDocumentPreview(docId);
+        if (preview == null || "".equals(preview)) {
+            return new ArrayList<Keyword>();
+        }
+
+        return this.extractKeywordsFromText(preview);
+    }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public Collection<Keyword> extractKeywordsFromText(String text) throws Exception {
+
+        ArrayList<Keyword> result=new ArrayList<>();
+        ArrayList<String> numbers=new ArrayList<String>();
+        Iterator<PhoneNumberMatch> existsPhone = PhoneNumberUtil.getInstance().findNumbers(text, "DE").iterator();
+        while (existsPhone.hasNext()) {
+            PhoneNumberMatch match = existsPhone.next();
+            String number="+" + match.number().getCountryCode() + match.number().getNationalNumber();
+            if(!numbers.contains(number)) {
+                numbers.add(number);
+                result.add(new Keyword(number, Keyword.TYPE_PHONENR));
+            }
+        }
+    
+        return result;
     }
 
 }

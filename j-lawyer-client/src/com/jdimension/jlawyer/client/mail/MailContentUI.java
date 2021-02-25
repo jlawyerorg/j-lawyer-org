@@ -914,8 +914,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
         //MimeMessage copiedMsg = new MimeMessag(msg.getFolder(), msg.get)
         bis.close();
 
-        
-        CidCache cids=CidCache.getInstance();
+        CidCache cids = CidCache.getInstance();
         cids.clear();
         recursiveLoadInlineImages(copiedMsg.getContent(), cids);
 
@@ -1245,9 +1244,10 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
                 recursiveLoadInlineImages(childPart, cids);
             }
         } else {
-            
-            if(!(partObject instanceof Part))
+
+            if (!(partObject instanceof Part)) {
                 return;
+            }
 
             Part part = (Part) partObject;
             String disposition = part.getDisposition();
@@ -1264,26 +1264,30 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
                 }
 
             } else if (disposition.equalsIgnoreCase(Part.INLINE)) {
-                Object content = part.getContent();
-                String fileName = part.getFileName();
-                String contentId="" + System.currentTimeMillis();
-                if(part instanceof MimeBodyPart) {
-                    contentId=((MimeBodyPart)part).getContentID();
-                }
-
-                if (content instanceof InputStream) {
-
-                    InputStream inStream = (InputStream) content;
-                    ByteArrayOutputStream outStream = new ByteArrayOutputStream();
-                    byte[] tempBuffer = new byte[4096];// 4 KB
-                    int numRead;
-                    while ((numRead = inStream.read(tempBuffer)) != -1) {
-                        outStream.write(tempBuffer);
+                try {
+                    Object content = part.getContent();
+                    String fileName = part.getFileName();
+                    String contentId = "" + System.currentTimeMillis();
+                    if (part instanceof MimeBodyPart) {
+                        contentId = ((MimeBodyPart) part).getContentID();
                     }
-                    inStream.close();
-                    outStream.close();
-                    cids.put(contentId, outStream.toByteArray());
 
+                    if (content instanceof InputStream) {
+
+                        InputStream inStream = (InputStream) content;
+                        ByteArrayOutputStream outStream = new ByteArrayOutputStream();
+                        byte[] tempBuffer = new byte[4096];// 4 KB
+                        int numRead;
+                        while ((numRead = inStream.read(tempBuffer)) != -1) {
+                            outStream.write(tempBuffer);
+                        }
+                        inStream.close();
+                        outStream.close();
+                        cids.put(contentId, outStream.toByteArray());
+
+                    }
+                } catch (Throwable t) {
+                    log.error("could not load inline image", t);
                 }
 
             }

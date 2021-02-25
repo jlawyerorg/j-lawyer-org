@@ -1066,7 +1066,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
             this.chkSaveAsDocument.setEnabled(true);
             this.chkSaveAsDocument.setText("als Dokument speichern");
         }
-        if(this.contextArchiveFile.getAssistant()!=null)
+        if(af!=null && this.contextArchiveFile.getAssistant()!=null)
             this.cmbReviewAssignee.setSelectedItem(this.contextArchiveFile.getAssistant());
     }
 

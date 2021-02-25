@@ -701,7 +701,10 @@ public class PlaceCallDialog extends javax.swing.JDialog {
         if("".equals(phone))
             phone="0";
         
-        this.lblTo.setText(ab.toDisplayName() + " (" + phone + ")");
+        String displayName="unbekannt";
+        if(ab!=null)
+            displayName=ab.toDisplayName();
+        this.lblTo.setText(displayName + " (" + phone + ")");
         this.txtE164.setText(SipUtils.E164Number(phone));
         
         ServerSettings set=ServerSettings.getInstance();

@@ -680,6 +680,7 @@ import com.jdimension.jlawyer.client.events.Event;
 import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.events.EventConsumer;
 import com.jdimension.jlawyer.client.mail.sidebar.CreateNewAddressPanel;
+import com.jdimension.jlawyer.client.mail.sidebar.ExtractedPhoneNumbersPanel;
 import com.jdimension.jlawyer.client.mail.sidebar.NavigateToAddressPanel;
 import com.jdimension.jlawyer.client.mail.sidebar.SaveToCasePanel;
 import com.jdimension.jlawyer.client.processing.ProgressIndicator;
@@ -697,6 +698,7 @@ import com.jdimension.jlawyer.persistence.DocumentTagsBean;
 import com.jdimension.jlawyer.services.AddressServiceRemote;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import com.jdimension.jlawyer.services.Keyword;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Graphics;
@@ -2132,6 +2134,18 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             AddressServiceRemote ads = locator.lookupAddressServiceRemote();
             ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
+            
+            ArrayList<String> phoneNumbers=new ArrayList<>();        
+            try {
+                Collection<Keyword> keywords = afs.extractKeywordsFromText(this.beaMessageContentUI.getBody());
+                for(Keyword w: keywords) {
+                    if(w.getType()==Keyword.TYPE_PHONENR)
+                        phoneNumbers.add(w.getValue());
+                }
+            } catch (Throwable t) {
+                log.error("Could not extract keywords from email", t);
+            }
+            
 // ((javax.mail.internet.InternetAddress?)msg.getFrom()[0]).getAddress()
             String sender = msg.getSenderSafeId();
             if (sender != null && sender.length() > 0) {
@@ -2159,6 +2173,12 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                 cce.setArchived(false);
                 sp.setEntry(cce, this);
                 actionPanelEntries.add(sp);
+                
+                if(phoneNumbers.size() > 0) {
+                    ExtractedPhoneNumbersPanel pnp = new ExtractedPhoneNumbersPanel();
+                    pnp.setPhoneNumbers(phoneNumbers);
+                    actionPanelEntries.add(pnp);
+                }
 
                 if (msg.isEebRequested()) {
                     // sen eEB

@@ -679,6 +679,7 @@ import com.jdimension.jlawyer.client.launcher.ReadOnlyDocumentStore;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.FileUtils;
+import com.jdimension.jlawyer.client.voip.VoipUtils;
 import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.services.AddressServiceRemote;
@@ -711,9 +712,23 @@ public class NavigateToAddressPanel extends javax.swing.JPanel {
     public void setAddress(AddressBean ab) {
         this.address = ab;
         //this.lblFileName.setText(sh.getFileName() + " in " + sh.getArchiveFileNumber() + " " + sh.getArchiveFileName());
-        this.lblAddress.setText(ab.toShortHtml());
-        //this.lblAddress.setToolTipText();
         
+        this.lblAddress.setText("<html><b>"+ ab.toDisplayName() + "</b></html>");
+        this.lblAddress.setToolTipText(ab.toShortHtml());
+        
+        this.cmdPhone.setToolTipText("");
+        if(ab.getPhone()!=null && ! "".equals(ab.getPhone())) {
+            this.cmdPhone.setEnabled(true);
+            this.cmdPhone.setToolTipText("anrufen: " + ab.getPhone());
+        } else
+            this.cmdPhone.setEnabled(false);
+        
+        this.cmdCell.setToolTipText("");
+        if(ab.getMobile()!=null && ! "".equals(ab.getMobile())) {
+            this.cmdCell.setEnabled(true);
+            this.cmdCell.setToolTipText("anrufen: " + ab.getMobile());
+        } else
+            this.cmdCell.setEnabled(false);
 
     }
 
@@ -727,8 +742,11 @@ public class NavigateToAddressPanel extends javax.swing.JPanel {
     private void initComponents() {
 
         lblAddress = new javax.swing.JLabel();
+        cmdPhone = new javax.swing.JButton();
+        jLabel1 = new javax.swing.JLabel();
+        cmdCell = new javax.swing.JButton();
+        jLabel2 = new javax.swing.JLabel();
 
-        lblAddress.setFont(new java.awt.Font("Dialog", 0, 12)); // NOI18N
         lblAddress.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/vcard.png"))); // NOI18N
         lblAddress.setText("<Adresse>");
         lblAddress.setVerticalAlignment(javax.swing.SwingConstants.TOP);
@@ -745,13 +763,41 @@ public class NavigateToAddressPanel extends javax.swing.JPanel {
             }
         });
 
+        cmdPhone.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/sipphone.png"))); // NOI18N
+        cmdPhone.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdPhoneActionPerformed(evt);
+            }
+        });
+
+        jLabel1.setText("Tel.");
+
+        cmdCell.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/sipphone.png"))); // NOI18N
+        cmdCell.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdCellActionPerformed(evt);
+            }
+        });
+
+        jLabel2.setText("Mobil");
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(lblAddress)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(12, 12, 12)
+                        .addComponent(cmdPhone)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jLabel1)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(cmdCell)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jLabel2))
+                    .addComponent(lblAddress))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
@@ -759,6 +805,13 @@ public class NavigateToAddressPanel extends javax.swing.JPanel {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(lblAddress)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(jLabel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                        .addComponent(cmdCell, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(cmdPhone, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -801,7 +854,19 @@ public class NavigateToAddressPanel extends javax.swing.JPanel {
         }
     }//GEN-LAST:event_lblAddressMouseClicked
 
+    private void cmdPhoneActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdPhoneActionPerformed
+        VoipUtils.placeCall(this.address, this.address.getPhone());
+    }//GEN-LAST:event_cmdPhoneActionPerformed
+
+    private void cmdCellActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCellActionPerformed
+        VoipUtils.placeCall(this.address, this.address.getMobile());
+    }//GEN-LAST:event_cmdCellActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton cmdCell;
+    private javax.swing.JButton cmdPhone;
+    private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel lblAddress;
     // End of variables declaration//GEN-END:variables
 }

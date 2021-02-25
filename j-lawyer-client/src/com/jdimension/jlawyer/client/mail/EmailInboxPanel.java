@@ -680,6 +680,7 @@ import com.jdimension.jlawyer.client.launcher.Launcher;
 import com.jdimension.jlawyer.client.launcher.LauncherFactory;
 import com.jdimension.jlawyer.client.launcher.ReadOnlyDocumentStore;
 import com.jdimension.jlawyer.client.mail.sidebar.CreateNewAddressPanel;
+import com.jdimension.jlawyer.client.mail.sidebar.ExtractedPhoneNumbersPanel;
 import com.jdimension.jlawyer.client.mail.sidebar.NavigateToAddressPanel;
 import com.jdimension.jlawyer.client.mail.sidebar.SaveToCasePanel;
 import com.jdimension.jlawyer.client.processing.ProgressIndicator;
@@ -697,6 +698,7 @@ import com.jdimension.jlawyer.persistence.DocumentTagsBean;
 import com.jdimension.jlawyer.services.AddressServiceRemote;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import com.jdimension.jlawyer.services.Keyword;
 import com.sun.mail.pop3.POP3Folder;
 import java.awt.Color;
 import java.awt.Component;
@@ -762,8 +764,8 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
     private FolderContainer inboxFolder = null;
     private FolderContainer trashFolder = null;
     private FolderContainer sentFolder = null;
-    
-    private DefaultMutableTreeNode inboxFolderNode=null;
+
+    private DefaultMutableTreeNode inboxFolderNode = null;
 
     private DragSource dragSource = null;
 
@@ -969,9 +971,9 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         //folder.open(Folder.READ_WRITE);
 
         Folder inboxFolderF = EmailUtils.getInboxFolder(accountFolders);
-        Folder trashFolderF=EmailUtils.getTrashFolder(accountFolders);
-        Folder sentFolderF=EmailUtils.getSentFolder(accountFolders);
-        
+        Folder trashFolderF = EmailUtils.getTrashFolder(accountFolders);
+        Folder sentFolderF = EmailUtils.getSentFolder(accountFolders);
+
         if (EmailUtils.isIMAP(accountFolders[0])) {
             if (sentFolderF == null) {
                 sentFolderF = inboxFolderF.getFolder(FolderContainer.SENT);
@@ -987,7 +989,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                 }
             }
         }
-        
+
         this.inboxFolder = new FolderContainer(inboxFolderF);
         this.trashFolder = new FolderContainer(trashFolderF);
         this.sentFolder = new FolderContainer(sentFolderF);
@@ -1051,7 +1053,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
 //                this.trashFolder = childContainer;
 //            }
 
-            String key=childContainer.toString().toLowerCase();
+            String key = childContainer.toString().toLowerCase();
             childHt.put(key, childContainer);
             htKeys.add(key);
         }
@@ -1061,8 +1063,8 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         for (String key : htKeysSorted) {
             FolderContainer childContainer = childHt.get(key);
             DefaultMutableTreeNode childNode = new DefaultMutableTreeNode(childContainer);
-            if(childContainer.getFolder().equals(this.inboxFolder.getFolder())) {
-                this.inboxFolderNode=childNode;
+            if (childContainer.getFolder().equals(this.inboxFolder.getFolder())) {
+                this.inboxFolderNode = childNode;
             }
             currentNode.add(childNode);
             traverseFolders(childContainer.getFolder().list(), childNode);
@@ -1535,8 +1537,8 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
             return;
         }
         DefaultMutableTreeNode selNode = (DefaultMutableTreeNode) tp.getLastPathComponent();
-        
-        if(!(selNode.getUserObject() instanceof FolderContainer)) {
+
+        if (!(selNode.getUserObject() instanceof FolderContainer)) {
             // probably clicked the root node, which does not have a folder object but is the email account name
             DefaultTableModel tm = new DefaultTableModel(new String[]{"Betreff", "Absender", "Empfänger", "Gesendet"}, 0) {
 
@@ -1553,7 +1555,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
             this.tblMails.setDefaultRenderer(Object.class, new EmailTableCellRenderer());
             return;
         }
-        
+
         FolderContainer folderC = (FolderContainer) selNode.getUserObject();
         Folder folder = folderC.getFolder();
         //EditorsRegistry.getInstance().updateStatus("Öffne Ordner " + folder.getName(), true);
@@ -2380,6 +2382,17 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             AddressServiceRemote ads = locator.lookupAddressServiceRemote();
             ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
+
+            ArrayList<String> phoneNumbers=new ArrayList<>();        
+            try {
+                Collection<Keyword> keywords = afs.extractKeywordsFromText(this.mailContentUI.getBody());
+                for(Keyword w: keywords) {
+                    if(w.getType()==Keyword.TYPE_PHONENR)
+                        phoneNumbers.add(w.getValue());
+                }
+            } catch (Throwable t) {
+                log.error("Could not extract keywords from email", t);
+            }
 // ((javax.mail.internet.InternetAddress?)msg.getFrom()[0]).getAddress()
             Address[] senders = msgC.getMessage().getFrom();
             if (senders != null) {
@@ -2409,6 +2422,12 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                         cce.setArchived(false);
                         sp.setEntry(cce, this);
                         actionPanelEntries.add(sp);
+                        
+                        if(phoneNumbers.size()>0) {
+                            ExtractedPhoneNumbersPanel pnp=new ExtractedPhoneNumbersPanel();
+                            pnp.setPhoneNumbers(phoneNumbers);
+                            actionPanelEntries.add(pnp);
+                        }
 
                         for (AddressBean h : hits) {
                             NavigateToAddressPanel ap = new NavigateToAddressPanel(this.getClass().getName());
@@ -2517,7 +2536,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                     try {
                         Thread.sleep(5000);
                         if (root instanceof DefaultMutableTreeNode) {
-                            Object userObject=inboxFolder;
+                            Object userObject = inboxFolder;
                             if (userObject instanceof FolderContainer) {
                                 Folder f = ((FolderContainer) userObject).getFolder();
                                 if (!f.isOpen()) {
@@ -2563,7 +2582,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
     }
 
     public int getInboxUnread() {
-        Object uo =this.inboxFolder;
+        Object uo = this.inboxFolder;
         if (uo instanceof FolderContainer) {
             FolderContainer fc = (FolderContainer) uo;
             Folder f = fc.getFolder();
@@ -2650,7 +2669,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
             Point p = dtde.getLocation();
             DefaultMutableTreeNode current = (DefaultMutableTreeNode) this.treeFolders.getClosestPathForLocation(p.x, p.y).getLastPathComponent();
             //DefaultMutableTreeNode current=(DefaultMutableTreeNode)this.jTree1.getSelectionPath().getLastPathComponent();
-            if(!(current.getUserObject() instanceof FolderContainer)) {
+            if (!(current.getUserObject() instanceof FolderContainer)) {
                 log.warn("dropping a mail on a node with user object of invalid type");
                 dtde.dropComplete(true);
                 return;
