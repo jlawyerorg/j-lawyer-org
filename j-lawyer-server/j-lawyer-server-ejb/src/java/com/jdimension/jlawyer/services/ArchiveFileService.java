@@ -1366,14 +1366,35 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             archiveHistEntry.setPrincipal(context.getCallerPrincipal().getName());
             this.archiveFileHistoryFacade.create(archiveHistEntry);
         }
-
+        
+        // added because of lazy load issue when getting reviews from dto
+        List<ArchiveFileReviewsBean> reviewList = this.archiveFileReviewsFacade.findByArchiveFileKey(aFile);
+        
+        // avoid race condition:
+        /*
+        Client 1 macht Akte A auf
+        Client 2 macht Akte A auf
+        Client 1 löscht WV in Akte A
+        Client 2 macht andere Änderung in Akte A
+        Client 2 speichert Akte
+         */
+        ArrayList<ArchiveFileReviewsBean> toBeRemoved=new ArrayList<>();
+        if (reviewList != null && dto.getArchiveFileReviewsBeanList()!=null) {
+            for (ArchiveFileReviewsBean arb : dto.getArchiveFileReviewsBeanList()) {
+                if (!reviewList.contains(arb)) {
+                    toBeRemoved.add(arb);
+                    // avoid concurrentmodificationexception
+                    //dto.getArchiveFileReviewsBeanList().remove(arb);
+                }
+            }
+        }
+        for(ArchiveFileReviewsBean remArb: toBeRemoved) {
+            dto.getArchiveFileReviewsBeanList().remove(remArb);
+        }
+        
         this.archiveFileFacade.edit(dto);
 
-        // added because of lazy load issue when getting reviews from dto
-        //dto=this.archiveFileFacade.find(dto.getId());
         // update the reviews
-        List<ArchiveFileReviewsBean> reviewList = this.archiveFileReviewsFacade.findByArchiveFileKey(aFile);
-        //List<ArchiveFileReviewsBean> reviewList = this.archiveFileReviewsFacade.findByArchiveFileKey(dto);
         if (reviewList != null) {
             for (ArchiveFileReviewsBean rev : reviewList) {
                 this.archiveFileReviewsFacade.remove(rev);
