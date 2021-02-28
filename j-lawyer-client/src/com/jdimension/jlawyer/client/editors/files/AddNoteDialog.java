@@ -729,7 +729,7 @@ public class AddNoteDialog extends javax.swing.JDialog {
                 + "</table>\n"
                 + "<hr/>\n"
                 + "<p>\n"
-                + "  NOTIZTEXT\n"
+                + "  \n"
                 + "</p>";
         this.htmlEditorPanel1.setText(html);
 
@@ -759,8 +759,6 @@ public class AddNoteDialog extends javax.swing.JDialog {
         this.cmbReviewAssignee.setRenderer(new UserListCellRenderer());
 
         ComponentUtils.restoreDialogSize(this);
-
-        this.htmlEditorPanel1.requestFocus();
 
         if (this.aFile.getAssistant() != null) {
             this.cmbReviewAssignee.setSelectedItem(this.aFile.getAssistant());

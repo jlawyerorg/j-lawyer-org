@@ -741,7 +741,7 @@ public class HtmlEditorPanel extends javax.swing.JPanel implements EditorImpleme
                 setEnabledRecursive((Container)child, enabled);
         }
     }
-
+    
     @Override
     public void setCaretPosition(int pos) {
         this.htmlPane.setCaretPosition(pos);
