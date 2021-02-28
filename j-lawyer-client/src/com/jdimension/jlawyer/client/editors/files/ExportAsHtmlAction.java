@@ -778,6 +778,7 @@ public class ExportAsHtmlAction extends ProgressableAction {
 
         } catch (Throwable t) {
             log.error("Could not unzip exported case", t);
+            ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Exportieren der Akte: " + t.getMessage(), "Fehler");
             EditorsRegistry.getInstance().clearStatus(true);
             ThreadUtils.setDefaultCursor(this.owner);
         }
