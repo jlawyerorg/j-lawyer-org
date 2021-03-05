@@ -746,6 +746,19 @@ public class FormPlugin implements Comparable {
             return null;
         }
     }
+    
+    public Hashtable getPlaceHolderDescriptions() {
+        try {
+
+            Hashtable result = ((FormPluginMethods) scriptInstance).getPlaceHolderDescriptions(this.placeHolder);
+
+            return result;
+
+        } catch (Throwable t) {
+            t.printStackTrace();
+            return null;
+        }
+    }
 
     public void setPlaceHolderValues(Hashtable placeHolders) {
         try {

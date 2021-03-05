@@ -680,13 +680,17 @@ public class FormPluginPlaceholderDialog extends javax.swing.JDialog {
         initComponents();
     }
     
-    public void setPlaceHolders(Hashtable placeHolders) {
+    public void setPlaceHolders(Hashtable placeHolders, Hashtable descriptions) {
         
         DefaultTableModel tm=(DefaultTableModel)this.tblPlaceHolders.getModel();
         for(Object key: placeHolders.keySet()) {
             String keyValue=key.toString();
             String value=placeHolders.get(key).toString();
-            Object[] row=new String[]{keyValue, value};
+            String description="";
+            if(descriptions.containsKey(keyValue)) {
+                description=descriptions.get(keyValue).toString();
+            }
+            Object[] row=new String[]{keyValue, value, description};
             tm.addRow(row);
         }
         
@@ -713,14 +717,14 @@ public class FormPluginPlaceholderDialog extends javax.swing.JDialog {
 
             },
             new String [] {
-                "Platzhalter", "Wert"
+                "Platzhalter", "Wert", "Beschreibung"
             }
         ) {
             Class[] types = new Class [] {
-                java.lang.String.class, java.lang.String.class
+                java.lang.String.class, java.lang.String.class, java.lang.String.class
             };
             boolean[] canEdit = new boolean [] {
-                false, false
+                false, false, true
             };
 
             public Class getColumnClass(int columnIndex) {
@@ -739,7 +743,7 @@ public class FormPluginPlaceholderDialog extends javax.swing.JDialog {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 449, Short.MAX_VALUE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 676, Short.MAX_VALUE)
                 .addContainerGap())
         );
         layout.setVerticalGroup(

@@ -677,6 +677,8 @@ public interface FormPluginMethods {
     
     public Hashtable getPlaceHolderValues(String prefix);
     
+    public Hashtable getPlaceHolderDescriptions(String prefix);
+    
     public void setPlaceHolderValues(String prefix, Hashtable placeHolderValues);
     
     public void setCallback(FormPluginCallback callback);

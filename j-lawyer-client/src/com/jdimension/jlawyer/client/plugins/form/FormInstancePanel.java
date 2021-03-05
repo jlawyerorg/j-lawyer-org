@@ -828,9 +828,10 @@ public class FormInstancePanel extends javax.swing.JPanel {
 
     private void cmdShowPlaceHoldersActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdShowPlaceHoldersActionPerformed
         Hashtable placeHolders = this.plugin.getPlaceHolderValues();
+        Hashtable descriptions = this.plugin.getPlaceHolderDescriptions();
         FormPluginPlaceholderDialog dlg = new FormPluginPlaceholderDialog(EditorsRegistry.getInstance().getMainWindow(), true);
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
-        dlg.setPlaceHolders(placeHolders);
+        dlg.setPlaceHolders(placeHolders, descriptions);
         dlg.setVisible(true);
 
     }//GEN-LAST:event_cmdShowPlaceHoldersActionPerformed
