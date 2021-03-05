@@ -24,12 +24,13 @@ jobs:
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
       - uses: actions/setup-java@v1
         with:
           java-version: '8' # The JDK version to make available on the path.
           java-package: jdk+fx # (jre, jdk, or jdk+fx) - defaults to jdk
           architecture: x64 # (x64 or x86) - defaults to x64
-          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
 
       - name: Prepare environment
         run:  |
@@ -72,6 +73,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          JAVA_HOME: 
           
       - name: Docker Images
         run:  |
