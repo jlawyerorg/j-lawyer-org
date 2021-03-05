@@ -15,23 +15,6 @@ on:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  sonarcloud:
-    name: SonarCloud
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
-      - name: SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@master
-        with:
-          args: >
-            -Dsonar.organization=jlawyerorg
-            -Dsonar.projectKey=jlawyerorg_j-lawyer-org
-            -Dsonar.projectName=j-lawyer-org
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
   # This workflow contains a single job called "build"
   build:
     # The type of runner that the job will run on
@@ -85,3 +68,20 @@ jobs:
         env:
           dockeruser: ${{ secrets.DOCKERUSER }}
           dockerpassword: ${{ secrets.DOCKERPASSWORD }}
+  sonarcloud:
+    name: SonarCloud
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        with:
+          args: >
+            -Dsonar.organization=jlawyerorg
+            -Dsonar.projectKey=jlawyerorg_j-lawyer-org
+            -Dsonar.projectName=j-lawyer-org
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
