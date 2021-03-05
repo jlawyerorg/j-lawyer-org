@@ -26,11 +26,6 @@ jobs:
             -Dsonar.organization=jlawyerorg
             -Dsonar.projectKey=jlawyerorg_j-lawyer-org
             -Dsonar.projectName=j-lawyer-org
-            # -Dsonar.python.coverage.reportPaths=coverage.xml
-            # -Dsonar.sources=lib/
-            # -Dsonar.test.exclusions=tests/**
-            # -Dsonar.tests=tests/
-            # -Dsonar.verbose=true
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master
         env:
