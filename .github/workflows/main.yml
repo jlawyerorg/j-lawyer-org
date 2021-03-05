@@ -70,10 +70,11 @@ jobs:
             -Dsonar.organization=jlawyerorg
             -Dsonar.projectKey=jlawyerorg_j-lawyer-org
             -Dsonar.projectName=j-lawyer-org
+            -Dsonar.java.binaries=j-lawyer-backupmgr/target/classes,j-lawyer-client/build/classes,j-lawyer-cloud/target/classes,j-lawyer-fax/build/classes,j-lawyer-io-common/build/classes,j-lawyer-server/j-lawyer-io/build/web/WEB-INF/classes,j-lawyer-server/j-lawyer-server-ejb/build/classes,j-lawyer-server/j-lawyer-server-io/build/web/WEB-INF/classes,j-lawyer-server/j-lawyer-server-war/build/web/WEB-INF/classes,j-lawyer-server-api/build/classes,j-lawyer-server-common/build/classes,j-lawyer-server-entities/build/classes
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          JAVA_HOME: 
+          JAVA_HOME: '' # Avoid 'java: not found' error
           
       - name: Docker Images
         run:  |
