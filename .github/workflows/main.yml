@@ -29,6 +29,7 @@ jobs:
           java-version: '8' # The JDK version to make available on the path.
           java-package: jdk+fx # (jre, jdk, or jdk+fx) - defaults to jdk
           architecture: x64 # (x64 or x86) - defaults to x64
+          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
 
       - name: Prepare environment
         run:  |
@@ -61,21 +62,6 @@ jobs:
           datadirectory: /home/runner/j-lawyer-data
           encryptionpwd:  
 
-      - name: Docker Images
-        run:  |
-          docker login --username="$dockeruser" --password="$dockerpassword"
-          cd /home/runner/work/j-lawyer-org/j-lawyer-org/docker && bash build.sh && bash push.sh
-        env:
-          dockeruser: ${{ secrets.DOCKERUSER }}
-          dockerpassword: ${{ secrets.DOCKERPASSWORD }}
-  sonarcloud:
-    name: SonarCloud
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master
         with:
@@ -86,3 +72,11 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          
+      - name: Docker Images
+        run:  |
+          docker login --username="$dockeruser" --password="$dockerpassword"
+          cd /home/runner/work/j-lawyer-org/j-lawyer-org/docker && bash build.sh && bash push.sh
+        env:
+          dockeruser: ${{ secrets.DOCKERUSER }}
+          dockerpassword: ${{ secrets.DOCKERPASSWORD }}
