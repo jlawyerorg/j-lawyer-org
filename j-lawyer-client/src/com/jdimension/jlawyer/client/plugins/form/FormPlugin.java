@@ -729,7 +729,7 @@ public class FormPlugin implements Comparable {
 //            System.out.println(result.toString());
 
         } catch (Throwable t) {
-            t.printStackTrace();
+            log.error(t);
         }
         return new ArrayList<String>();
     }
@@ -742,7 +742,7 @@ public class FormPlugin implements Comparable {
             return result;
 
         } catch (Throwable t) {
-            t.printStackTrace();
+            log.error(t);
             return null;
         }
     }
@@ -755,7 +755,7 @@ public class FormPlugin implements Comparable {
             return result;
 
         } catch (Throwable t) {
-            t.printStackTrace();
+            log.error(t);
             return null;
         }
     }
@@ -766,7 +766,7 @@ public class FormPlugin implements Comparable {
             ((FormPluginMethods) scriptInstance).setPlaceHolderValues(this.placeHolder, placeHolders);
 
         } catch (Throwable t) {
-            t.printStackTrace();
+            log.error(t);
         }
     }
 
@@ -798,7 +798,7 @@ public class FormPlugin implements Comparable {
                 ((FormPluginMethods) scriptInstance).setCallback(new FormPluginCallback(caseDto));
 
             } catch (Throwable t) {
-                t.printStackTrace();
+                log.error(t);
             }
 
             return ui;
@@ -807,37 +807,11 @@ public class FormPlugin implements Comparable {
 //            System.out.println(result.toString());
 
         } catch (Throwable t) {
-            t.printStackTrace();
+            log.error(t);
         }
         return null;
     }
 
-    /*
-    public JPanel getUi(ArchiveFileBean targetCase, float claimValue) throws Exception {
-//        GroovyScriptEngine e = new GroovyScriptEngine(FormPluginUtil.getLocalDirectory() + File.separator);
-//        Binding bind = new Binding();
-//        bind.setVariable("callback", new GenericCalculationCallback(targetCase));
-//        bind.setVariable("claimvalue", claimValue);
-//        e.run(getId() + "_ui.groovy", bind);
-//        return (JPanel) bind.getVariable("SCRIPTPANEL");
-
-        try {
-
-            Class scriptClass = new GroovyScriptEngine(FormPluginUtil.getLocalDirectory() + File.separator).loadScriptByName(getId() + "_ui.groovy");
-            Object scriptInstance = scriptClass.newInstance();
-            Object result = scriptClass.getDeclaredMethod("getUi", new Class[]{}).invoke(scriptInstance, new Object[]{});
-            return (JPanel) result;
-//            System.out.println(result.toString());
-//            result = scriptClass.getDeclaredMethod("setResult", new Class[]{List.class}).invoke(scriptInstance, new Object[]{(List) result});
-//            System.out.println(result.toString());
-
-        } catch (Throwable t) {
-            t.printStackTrace();
-        }
-        return null;
-
-    }
-     */
     private FormTypeBean toFormTypeBean() {
         FormTypeBean ftb = new FormTypeBean();
         ftb.setId(this.id);

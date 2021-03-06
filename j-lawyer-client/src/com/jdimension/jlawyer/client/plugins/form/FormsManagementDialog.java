@@ -811,7 +811,6 @@ public class FormsManagementDialog extends javax.swing.JDialog implements FormAc
 
         } catch (Throwable t) {
             log.error("Error downloading calculation plugins", t);
-            t.printStackTrace();
         }
 
         // check for local plugins
@@ -902,7 +901,6 @@ public class FormsManagementDialog extends javax.swing.JDialog implements FormAc
 
         } catch (Throwable t) {
             log.error("Error downloading calculation plugins", t);
-            t.printStackTrace();
         }
 
     }

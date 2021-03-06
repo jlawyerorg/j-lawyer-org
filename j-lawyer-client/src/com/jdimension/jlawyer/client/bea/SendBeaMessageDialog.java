@@ -2510,7 +2510,7 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
                     }
 
                 } catch (Exception ex) {
-                    ex.printStackTrace();
+                    log.error(ex);
                 }
             } else {
                 dtde.rejectDrop();

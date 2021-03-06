@@ -811,7 +811,7 @@ public class BeaAccess {
                             .disk(250, MemoryUnit.MB, true)
             ).withExpiry(ExpiryPolicyBuilder.timeToLiveExpiration(Duration.ofSeconds(60 * 60 * 2))));
         } catch (Throwable t) {
-            t.printStackTrace();
+            log.error(t);
         }
 
         //this.folderOverviewCache= cacheManager.getCache("bea-messageheaders-cache", Long.class, Collection.class);
@@ -824,7 +824,7 @@ public class BeaAccess {
             ).withExpiry(ExpiryPolicyBuilder.timeToLiveExpiration(Duration.ofSeconds(300))));
 
         } catch (Throwable t) {
-            t.printStackTrace();
+            log.error(t);
         }
 
 //        Cache<Long, String> myCache = cacheManager.createCache("myCache",

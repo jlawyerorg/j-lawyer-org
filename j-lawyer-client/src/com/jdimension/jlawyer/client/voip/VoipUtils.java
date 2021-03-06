@@ -790,7 +790,6 @@ public class VoipUtils {
 
                     } catch (Throwable t) {
                         log.error("error launching softphone executable ", t);
-                        t.printStackTrace();
                     }
 
                 } catch (final Throwable t) {

@@ -824,7 +824,7 @@ public class MoveAction extends ProgressableAction {
             //            dtde.rejectDrop();
 
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error(e);
             dtde.rejectDrop();
             return false;
         }

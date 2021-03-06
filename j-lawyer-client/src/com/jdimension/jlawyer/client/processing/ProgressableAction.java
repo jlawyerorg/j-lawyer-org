@@ -781,7 +781,6 @@ public abstract class ProgressableAction {
 
                 } catch (Throwable t) {
                     log.error(t);
-                    t.printStackTrace();
                     success = false;
                     error = t.getMessage();
 

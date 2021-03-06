@@ -670,6 +670,7 @@ import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import javax.swing.ImageIcon;
+import org.apache.log4j.Logger;
 import themes.colors.DefaultColorTheme;
 
 /**
@@ -678,6 +679,7 @@ import themes.colors.DefaultColorTheme;
  */
 public class StartupSplashFrame extends javax.swing.JFrame {
 
+    private static Logger log=Logger.getLogger(StartupSplashFrame.class.getName());
     private Main owner;
 
     /**
@@ -708,7 +710,7 @@ public class StartupSplashFrame extends javax.swing.JFrame {
             this.lblFullClientVersion.setFont(font.deriveFont(Font.BOLD, 12));
             this.lblUser.setFont(font.deriveFont(Font.BOLD, 18));
         } catch (Throwable t) {
-            t.printStackTrace();
+            log.error(t);
         }
     }
 

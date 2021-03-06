@@ -751,7 +751,6 @@ public class BeaMessageTableCellRenderer extends DefaultTableCellRenderer {
         
         } catch (Exception ex) {
             log.error(ex);
-            ex.printStackTrace();
         } 
         return (Component)returnRenderer;
     }

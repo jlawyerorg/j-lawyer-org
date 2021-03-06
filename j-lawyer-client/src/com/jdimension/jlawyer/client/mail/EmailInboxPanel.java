@@ -1028,7 +1028,6 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                     notifyStatusBarReady();
                 } catch (Throwable t) {
                     log.error("Could not load folder");
-                    t.printStackTrace();
                 }
             }
 
@@ -1075,7 +1074,6 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                 }
             } catch (Throwable t) {
                 log.error(t);
-                t.printStackTrace();
             }
         }
 
@@ -1836,7 +1834,6 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                 }
             } catch (MessagingException mex) {
                 log.error(mex);
-                mex.printStackTrace();
             }
         } else {
             return;
@@ -1852,7 +1849,6 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                 }
             } catch (MessagingException mex) {
                 log.error(mex);
-                mex.printStackTrace();
             }
         }
 
@@ -1876,7 +1872,6 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                         }
                     } catch (MessagingException mex) {
                         log.error(mex);
-                        mex.printStackTrace();
                     }
 
                     Message[] msgArray = new Message[0];
@@ -1896,7 +1891,6 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                                 }
                             } catch (MessagingException mex) {
                                 log.error(mex);
-                                mex.printStackTrace();
                             }
                         }
                     }
@@ -1914,46 +1908,10 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
             //((DefaultTableModel) this.tblMails.getModel()).removeRow(this.tblMails.convertRowIndexToModel(selected[i]));
         } catch (Throwable ex) {
             log.error(ex);
-            ex.printStackTrace();
         }
 
-//        for(MessageContainer msgC: msgContainers) {
-//            messages.add(msgC.getMessage());
-//        }
         scrollToRow = tblMails.getSelectedRow();
-//        for (int i = selected.length - 1; i > -1; i--) {
-//
-//            MessageContainer msgC = (MessageContainer) this.tblMails.getValueAt(selected[i], 0);
-//            try {
-//                if (EmailUtils.isIMAP(expungeFolder)) {
-//
-//                    if (!(expungeFolder.getName().equalsIgnoreCase(FolderContainer.TRASH))) {
-//                        // when deleting from trash, we don't move it to trash again :-)
-//
-//                        try {
-//                            if (!expungeFolder.isOpen()) {
-//                                expungeFolder.open(Folder.READ_WRITE);
-//                            }
-//                        } catch (MessagingException mex) {
-//                            log.error(mex);
-//                            mex.printStackTrace();
-//                        }
-//
-//                        expungeFolder.copyMessages(new Message[]{msgC.getMessage()}, this.trashFolder.getFolder());
-//                    }
-//                    msgC.getMessage().setFlag(Flag.DELETED, true);
-//
-//                } else {
-//                    msgC.getMessage().setFlag(Flags.Flag.DELETED, true);
-//
-//                }
-//
-//                ((DefaultTableModel) this.tblMails.getModel()).removeRow(this.tblMails.convertRowIndexToModel(selected[i]));
-//            } catch (Throwable ex) {
-//                log.error(ex);
-//                ex.printStackTrace();
-//            }
-//        }
+
 
         this.mailContentUI.clear();
         this.pnlActionsChild.removeAll();
@@ -1965,7 +1923,6 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
             }
         } catch (Throwable t) {
             log.error(t);
-            t.printStackTrace();
         }
 
         try {
@@ -1991,7 +1948,6 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
 
         } catch (MessagingException ex) {
             log.error(ex);
-            ex.printStackTrace();
         }
 
         int sortCol = -1;
@@ -2751,7 +2707,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
             this.treeFoldersValueChangedImpl(new TreeSelectionEvent(this.tblMails, this.treeFolders.getSelectionPath(), false, null, null), sortCol, scrollToRow);
 
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error(e);
             dtde.rejectDrop();
         }
     }

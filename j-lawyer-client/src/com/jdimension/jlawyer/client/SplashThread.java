@@ -1007,26 +1007,8 @@ public class SplashThread implements Runnable {
         updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.modules"), true);
         this.loadedMods = 0;
         this.updateProgress(false, this.numberOfMods, 0, "");
-//        try {
-//            SwingUtilities.invokeAndWait(new Runnable() {
-//                @Override
-//                public void run() {
+
         preloadEditors(theme, rootModule);
-//                }
-//
-//            });
-//        } catch (Exception ex) {
-//
-//        }
-        //this.preloadEditors(theme, rootModule);
-        //updateStatus(".", true);
-        //pool.shutdown();
-//        try {
-//            pool.awaitTermination(60, TimeUnit.SECONDS);
-//        } catch (Throwable t) {
-//            t.printStackTrace();
-//            log.error("Error preloading editors", t);
-//        }
 
         updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.done"), true);
         LauncherFactory.cleanupTempDocuments();
@@ -1526,7 +1508,6 @@ public class SplashThread implements Runnable {
             }
         } catch (Throwable t) {
             log.error("Error downloading calculation plugins", t);
-            t.printStackTrace();
         }
 //            }
 //
@@ -1619,7 +1600,6 @@ public class SplashThread implements Runnable {
             }
         } catch (Throwable t) {
             log.error("Error downloading calculation plugins", t);
-            t.printStackTrace();
         }
 //            }
 //

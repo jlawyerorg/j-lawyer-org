@@ -1536,7 +1536,7 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
             this.myTransferable=null;
 
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error(e);
             dtde.rejectDrop();
         }
     }
@@ -1632,7 +1632,7 @@ public class TemplatesTreePanel extends javax.swing.JPanel implements ThemeableE
                     }
 
                 } catch (Exception ex) {
-                    ex.printStackTrace();
+                    log.error(ex);
                 }
             } else {
                 dtde.rejectDrop();

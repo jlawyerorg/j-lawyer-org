@@ -1051,15 +1051,6 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
                 }
                 editBody.setCaretPosition(0);
 
-//                    File t=File.createTempFile("" + System.currentTimeMillis(), ".html");
-//                    FileWriter fw=new FileWriter(t);
-//                    fw.write(html);
-//                    fw.close();
-//                    try {
-//                    this.editBody.setPage(t.toURI().toURL());
-//                    } catch (Throwable th) {
-//                        th.printStackTrace();
-//                    }
             } else {
                 //editBody.setEditorKit(new StyledEditorKit());
                 recursiveFindPart(copiedMsg.getContent(), "text/plain", partsFound);

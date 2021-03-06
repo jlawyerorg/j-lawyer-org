@@ -758,7 +758,6 @@ public class CustomLauncher extends Launcher {
 
                     } catch (Throwable t) {
                         log.error("error in custom launcher for " + extension, t);
-                        t.printStackTrace();
                     }
 
                 } catch (final Throwable t) {

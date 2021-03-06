@@ -734,7 +734,6 @@ public class TemplatesTreeCellRenderer extends DefaultTreeCellRenderer {
         } catch (Exception ex) {
             log.error(ex);
             log.error(ex.getMessage());
-            ex.printStackTrace();
         }
 
         return this;

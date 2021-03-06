@@ -1443,7 +1443,6 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
             this.reset(true);
         } catch (Exception ex) {
             log.error(ex);
-            ex.printStackTrace();
         }
     }//GEN-LAST:event_cmdRefreshActionPerformed
 
@@ -1752,7 +1751,6 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
 
             } catch (Throwable ex) {
                 log.error(ex);
-                ex.printStackTrace();
             }
         }
 
@@ -2048,7 +2046,6 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
 
             } catch (Throwable ex) {
                 log.error(ex);
-                ex.printStackTrace();
             }
         }
 
@@ -2273,7 +2270,6 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
 
         } catch (Throwable t) {
             log.error(t);
-            t.printStackTrace();
         }
 
         this.tblMails.setValueAt(msgh, selectionIndex, 3);

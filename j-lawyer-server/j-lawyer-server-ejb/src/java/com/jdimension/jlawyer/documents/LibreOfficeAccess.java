@@ -1206,7 +1206,7 @@ public class LibreOfficeAccess {
             outputOds.close();
 
         } catch (Throwable t) {
-            t.printStackTrace();
+            log.error(t);
         }
 
     }

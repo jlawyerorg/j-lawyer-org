@@ -5897,7 +5897,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                     }
 
                 } catch (Exception ex) {
-                    ex.printStackTrace();
                     log.error("file drop error", ex);
                 }
             } else {

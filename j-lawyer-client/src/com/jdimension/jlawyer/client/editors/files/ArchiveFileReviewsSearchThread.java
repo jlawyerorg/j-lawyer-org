@@ -737,15 +737,15 @@ public class ArchiveFileReviewsSearchThread implements Runnable {
         this.target.getColumnModel().getColumn(6).setCellRenderer(new UserTableCellRenderer());
         for(ArchiveFileReviewsBean b:dtos) {
             try {
-            //Object[] row=new Object[]{new QuickArchiveFileSearchRowIdentifier(dtos[i]), dtos[i].getFileNumber(), dtos[i].getName()};
-            Date reviewDate=b.getReviewDate();
-            String reviewDateString="";
-            if(reviewDate!=null)
-                reviewDateString=df.format(reviewDate);
-            Object[] row=new Object[]{new ArchiveFileReviewsRowIdentifier(b.getArchiveFileKey(), reviewDateString), b.getReviewTypeName(), b.getArchiveFileKey().getFileNumber(), b.getArchiveFileKey().getName(), b.getReviewReason(), b.getArchiveFileKey().getLawyer(), b.getAssignee()};
-            model.addRow(row);
+                Date reviewDate = b.getReviewDate();
+                String reviewDateString = "";
+                if (reviewDate != null) {
+                    reviewDateString = df.format(reviewDate);
+                }
+                Object[] row = new Object[]{new ArchiveFileReviewsRowIdentifier(b.getArchiveFileKey(), reviewDateString), b.getReviewTypeName(), b.getArchiveFileKey().getFileNumber(), b.getArchiveFileKey().getName(), b.getReviewReason(), b.getArchiveFileKey().getLawyer(), b.getAssignee()};
+                model.addRow(row);
             } catch (Throwable t) {
-                t.printStackTrace();
+                log.error(t);
             }
         }
         TableRowSorter<TableModel> sorter = new TableRowSorter<TableModel>(model);

@@ -802,7 +802,7 @@ public class LoginDialog extends javax.swing.JFrame {
             this.jLabel17.setFont(font.deriveFont(Font.BOLD, 12));
 
         } catch (Throwable t) {
-            t.printStackTrace();
+            log.error(t);
         }
 
         this.boxProgress.setVisible(false);

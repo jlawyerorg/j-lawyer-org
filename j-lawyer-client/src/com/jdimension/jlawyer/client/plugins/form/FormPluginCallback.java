@@ -744,7 +744,7 @@ public class FormPluginCallback {
 
             } catch (ClassNotFoundException ex) {
 
-                ex.printStackTrace();
+                log.error(ex);
 
             }
 

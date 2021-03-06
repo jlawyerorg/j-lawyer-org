@@ -780,7 +780,7 @@ public class GenericCalculationCallback implements CalculationPluginCallback {
 
             } catch (ClassNotFoundException ex) {
 
-                ex.printStackTrace();
+                log.error(ex);
 
             }
 
