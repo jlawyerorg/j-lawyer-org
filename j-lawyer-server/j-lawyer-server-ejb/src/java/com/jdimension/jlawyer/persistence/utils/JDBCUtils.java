@@ -664,6 +664,7 @@
 package com.jdimension.jlawyer.persistence.utils;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -699,13 +700,14 @@ public class JDBCUtils {
     
     public int getRowCount(String tableName) throws SQLException {
         Connection con=null;
-        Statement st=null;
+        PreparedStatement st=null;
         ResultSet rs=null;
         int count=0;
         try {
             con=this.ds.getConnection();
-            st=con.createStatement();
-            rs=st.executeQuery("select count(*) from " + tableName);
+            st=con.prepareStatement("select count(*) from ?");
+            st.setString(1, tableName);
+            rs=st.executeQuery();
             
             if(rs.next())
                 count=rs.getInt(1);
