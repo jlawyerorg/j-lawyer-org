@@ -720,6 +720,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
+import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import net.sf.jasperreports.engine.JasperCompileManager;
@@ -1440,6 +1441,8 @@ public class SplashThread implements Runnable {
             String calculationsContent = sb.toString();
 
             DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+            dbf.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+            dbf.setAttribute(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
             DocumentBuilder remoteDb = dbf.newDocumentBuilder();
             InputSource inSrc1 = new InputSource(new StringReader(calculationsContent));
             inSrc1.setEncoding("UTF-8");
