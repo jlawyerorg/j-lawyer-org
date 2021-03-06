@@ -1149,9 +1149,7 @@ public class SplashThread implements Runnable {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                try {
-
-                    InputStream is4 = this.getClass().getClassLoader().getResourceAsStream("reports/reviews.jrxml");
+                try (InputStream is4 = this.getClass().getClassLoader().getResourceAsStream("reports/reviews.jrxml");
                     FileOutputStream os4 = new FileOutputStream(s.getLocalReportsDirectory() + "reviews.jasper");
 
                     InputStream is6 = this.getClass().getClassLoader().getResourceAsStream("reports/reviews_detail.jrxml");
@@ -1167,7 +1165,9 @@ public class SplashThread implements Runnable {
                     FileOutputStream os8 = new FileOutputStream(s.getLocalReportsDirectory() + "archivefile_review_detail.jasper");
 
                     InputStream is9 = this.getClass().getClassLoader().getResourceAsStream("reports/archivefile_cost_detail.jrxml");
-                    FileOutputStream os9 = new FileOutputStream(s.getLocalReportsDirectory() + "archivefile_cost_detail.jasper");
+                    FileOutputStream os9 = new FileOutputStream(s.getLocalReportsDirectory() + "archivefile_cost_detail.jasper");) {
+
+                    
 
                     //updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.print.1"), true);
                     //this.updateProgress(false, 6, 1, "");

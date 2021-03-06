@@ -708,13 +708,9 @@ public class WindowsOfficeLauncher extends OfficeLauncher {
                     Process p = null;
                     boolean libreOffice = false;
                     try {
-                        if (store.isReadOnly()) {
-                            // do not use -view switch - in this case there will be no lock file, which makes it more risky
-                            //p = Runtime.getRuntime().exec(new String[]{loBinary, "-view", url});
-                            p = Runtime.getRuntime().exec(new String[]{loBinary, url});
-                        } else {
-                            p = Runtime.getRuntime().exec(new String[]{loBinary, url});
-                        }
+                        // do not use -view switch - in this case there will be no lock file, which makes it more risky
+                        //p = Runtime.getRuntime().exec(new String[]{loBinary, "-view", url});
+                        p = Runtime.getRuntime().exec(new String[]{loBinary, url});
                         log.debug("using " + loBinary + " for " + odoc.getName());
                         libreOffice = true;
                     } catch (Throwable ex) {
@@ -751,13 +747,9 @@ public class WindowsOfficeLauncher extends OfficeLauncher {
                         log.debug(new java.util.Date().toString() + " no LO found - falling back to OOO");
                         try {
                             int exit = 0;
-                            if (store.isReadOnly()) {
-                                // do not use -view switch - in this case there will be no lock file, which makes it more risky
-                                //p = Runtime.getRuntime().exec(new String[]{oooBinary, "-view", url});
-                                p = Runtime.getRuntime().exec(new String[]{oooBinary, url});
-                            } else {
-                                p = Runtime.getRuntime().exec(new String[]{oooBinary, url});
-                            }
+                            // do not use -view switch - in this case there will be no lock file, which makes it more risky
+                            //p = Runtime.getRuntime().exec(new String[]{oooBinary, "-view", url});
+                            p = Runtime.getRuntime().exec(new String[]{oooBinary, url});
                             log.debug("using " + oooBinary + " for " + odoc.getName());
                             odoc.setStatus(ObservedDocument.STATUS_OPEN);
                             log.debug("waitFor");

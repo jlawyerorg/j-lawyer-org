@@ -881,17 +881,15 @@ public class Main {
         new File(userHomeConfLogParent).mkdirs();
         if (!userHomeConfLogFile.exists()) {
             // copy from JAR
-            try {
-                InputStream is = this.getClass().getClassLoader().getResourceAsStream("conf/j-lawyer-client-log4j.xml");
-                FileOutputStream fOut = new FileOutputStream(userHomeConfLog);
+            try (InputStream is = this.getClass().getClassLoader().getResourceAsStream("conf/j-lawyer-client-log4j.xml");
+                FileOutputStream fOut = new FileOutputStream(userHomeConfLog);) {
+                
                 byte[] buffer = new byte[256];
                 int len = 0;
                 while ((len = is.read(buffer)) > 0) {
                     fOut.write(buffer, 0, len);
                     updateStatus(".", false);
                 }
-                is.close();
-                fOut.close();
 
             } catch (Exception ex) {
                 ex.printStackTrace();

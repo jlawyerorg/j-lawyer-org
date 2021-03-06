@@ -717,12 +717,7 @@ public class WindowsNativeLauncher extends NativeLauncher {
                     }
                     odoc.setStatus(ObservedDocument.STATUS_MONITORING);
                     long launched=System.currentTimeMillis();
-                    if (store.isReadOnly()) {
-                        d.open(new File(url));
-                    } else {
-                        //d.edit(new File(url));
-                        d.open(new File(url));
-                    }
+                    d.open(new File(url));
                     long launchDuration=System.currentTimeMillis()-launched;
                     if(launchDuration>30000)
                         odoc.setClosed(true);

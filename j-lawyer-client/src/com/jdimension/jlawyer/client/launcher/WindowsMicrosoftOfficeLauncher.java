@@ -721,11 +721,7 @@ public class WindowsMicrosoftOfficeLauncher extends OfficeLauncher {
                         else if(LauncherFactory.supportedByMicrosoftOfficePowerPoint(url))
                             binary=powerpointBinary;
                         
-                        if (store.isReadOnly()) {
-                            p = Runtime.getRuntime().exec(new String[]{binary, url});
-                        } else {
-                            p = Runtime.getRuntime().exec(new String[]{binary, url});
-                        }
+                        p = Runtime.getRuntime().exec(new String[]{binary, url});
                         log.debug("using " + binary + " for " + odoc.getName());
 
                     } catch (Throwable ex) {

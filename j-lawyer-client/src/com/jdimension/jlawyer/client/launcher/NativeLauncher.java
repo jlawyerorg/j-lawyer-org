@@ -699,12 +699,8 @@ public class NativeLauncher extends Launcher {
             throw new Exception("Datei kann nicht geöffnet werden: Desktop API wird nicht unterstützt!");
         }
         odoc.setStatus(ObservedDocument.STATUS_OPEN);
-        if (store.isReadOnly()) {
-            d.open(new File(url));
-        } else {
-            //d.edit(new File(url));
-            d.open(new File(url));
-        }
+        d.open(new File(url));
+        
         odoc.setStatus(ObservedDocument.STATUS_CLOSING);
         odoc.setClosed(true);
     }

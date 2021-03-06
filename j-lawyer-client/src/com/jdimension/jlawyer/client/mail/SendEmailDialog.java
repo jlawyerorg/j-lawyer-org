@@ -1460,11 +1460,6 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                 chkEncryptionStateChanged(evt);
             }
         });
-        chkEncryption.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                chkEncryptionActionPerformed(evt);
-            }
-        });
 
         lblEncryption.setText("unverschlüsselt senden");
 
@@ -2176,15 +2171,6 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
 //
 //        }
     }//GEN-LAST:event_txtBccKeyReleased
-
-    private void chkEncryptionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkEncryptionActionPerformed
-        if (this.chkEncryption.isSelected()) {
-
-//                this.chkEncryption.setSelected(false);
-        } else {
-            //this.encryptionPwd=null;
-        }
-    }//GEN-LAST:event_chkEncryptionActionPerformed
 
     private void chkEncryptionStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_chkEncryptionStateChanged
         if (this.chkEncryption.isSelected()) {

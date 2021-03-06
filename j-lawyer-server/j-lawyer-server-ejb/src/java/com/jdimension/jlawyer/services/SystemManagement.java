@@ -1018,15 +1018,9 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     }
 
     public static void createFile(String file, byte[] data) throws Exception {
-        FileOutputStream fos = null;
-        try {
-            fos = new FileOutputStream(file);
+        try (FileOutputStream fos = new FileOutputStream(file)) {
             fos.write(data);
 
-        } finally {
-            if (fos != null) {
-                fos.close();
-            }
         }
 
     }
