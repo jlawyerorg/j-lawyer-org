@@ -73,7 +73,7 @@ jobs:
             -Dsonar.projectName=j-lawyer-org
             -Dsonar.java.binaries=.
             -Dsonar.java.source=8
-            # -Dsonar.java.binaries=/github/workspace/j-lawyer-client/build/classes,/github/workspace/j-lawyer-cloud/target/classes,/github/workspace/j-lawyer-fax/build/classes,/github/workspace/j-lawyer-io-common/build/classes,/github/workspace/j-lawyer-server/j-lawyer-io/build/web/WEB-INF/classes,/github/workspace/j-lawyer-server/j-lawyer-server-ejb/build/classes,/github/workspace/j-lawyer-server/j-lawyer-server-io/build/web/WEB-INF/classes,/github/workspace/j-lawyer-server/j-lawyer-server-war/build/web/WEB-INF/classes,/github/workspace/j-lawyer-server-api/build/classes,/github/workspace/j-lawyer-server-common/build/classes,/github/workspace/j-lawyer-server-entities/build/classes
+            
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
