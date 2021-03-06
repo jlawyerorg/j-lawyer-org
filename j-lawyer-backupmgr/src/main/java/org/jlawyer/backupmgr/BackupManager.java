@@ -718,7 +718,6 @@ public class BackupManager extends Application {
             GraphicsDevice[] screenDevices = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices();
             return screenDevices == null || screenDevices.length == 0;
         } catch (HeadlessException e) {
-            System.out.println("System likely running headless: " + e.getMessage());
             return true;
         }
     }

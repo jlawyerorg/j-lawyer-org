@@ -663,9 +663,6 @@
  */
 package org.jlawyer.test.server.ejb;
 
-import com.jdimension.jlawyer.services.ArchiveFileService;
-import javax.ejb.embeddable.EJBContainer;
-import junit.framework.Assert;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -703,7 +700,7 @@ public class ArchiveFileServiceTest {
     @Test
     public void hello() {
         
-        
+        // intentionally left blank
 
     }
 

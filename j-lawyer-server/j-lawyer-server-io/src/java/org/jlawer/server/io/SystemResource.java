@@ -676,6 +676,7 @@ import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.MediaType;
+import org.apache.log4j.Logger;
 import org.jlawer.io.common.system.Monitor;
 
 /**
@@ -685,6 +686,8 @@ import org.jlawer.io.common.system.Monitor;
  */
 @Path("/system")
 public class SystemResource {
+    
+    private static final Logger log=Logger.getLogger(SystemResource.class.getName());
 
     @Context
     private UriInfo context;
@@ -775,7 +778,7 @@ public class SystemResource {
         SystemManagementLocal sys = (SystemManagementLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/SystemManagement!com.jdimension.jlawyer.services.SystemManagementLocal");
            return sys.getServerInterfacesBoundTo();
         } catch (Exception ex) {
-            ex.printStackTrace();
+            log.error(ex);
             return "unknown";
         }
         

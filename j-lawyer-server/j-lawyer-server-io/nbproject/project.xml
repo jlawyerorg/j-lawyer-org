@@ -25,6 +25,10 @@
                 <library dirs="200">
                     <file>${reference.j-lawyer-server-common.jar}</file>
                 </library>
+                <library dirs="200">
+                    <file>${file.reference.log4j-1.2.17.jar}</file>
+                    <path-in-war>WEB-INF/lib</path-in-war>
+                </library>
             </web-module-libraries>
             <web-module-additional-libraries/>
             <source-roots>

@@ -810,7 +810,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.caseFolderPanel1.setCaseContainer(this);
         this.caseFolderPanel1.setDocumentsPopup(this.documentsPopup);
 
-        if (this.getClass().getName().equals(NewArchiveFilePanel.class.getName())) {
+        if (this instanceof NewArchiveFilePanel) {
             jLabel2.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/Icons2-12.png")));
         } else {
             jLabel2.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder_big.png")));
@@ -916,7 +916,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.lblCustom3.setText(sset.getSetting(sset.DATA_CUSTOMFIELD_ARCHIVEFILE_PREFIX + "3", "Eigenes Feld 3"));
 
         // support for drag and drop for documents - only when case is shown in edit mode
-        if (this.getClass().getName().equals(EditArchiveFileDetailsPanel.class.getName()) || this.getClass().getName().equals(NewArchiveFilePanel.class.getName())) {
+        if (this instanceof EditArchiveFileDetailsPanel || this instanceof NewArchiveFilePanel) {
 
             try {
                 getMyDropTarget().addDropTargetListener(getDropTargetHandler());
@@ -6228,7 +6228,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 }
 
             }
-            if (contains = false) {
+            if (contains == false) {
                 return false;
             }
         }

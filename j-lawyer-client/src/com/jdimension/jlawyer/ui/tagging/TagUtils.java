@@ -687,26 +687,26 @@ import org.apache.log4j.Logger;
  * @author jens
  */
 public class TagUtils {
-    
-    private static final Logger log=Logger.getLogger(TagUtils.class.getName());
-    
+
+    private static final Logger log = Logger.getLogger(TagUtils.class.getName());
+
     public static String getTagList(ArrayList<String> tags) {
-        
-            StringBuffer sb = new StringBuffer();
-            
-            Collections.sort(tags);
-            for (String t : tags) {
-                sb.append(t);
-                sb.append(", ");
-            }
-            String returnValue = sb.toString();
-            if (returnValue.endsWith(", ")) {
-                returnValue = returnValue.substring(0, returnValue.length() - 2);
-            }
-            return returnValue;
-        
+
+        StringBuffer sb = new StringBuffer();
+
+        Collections.sort(tags);
+        for (String t : tags) {
+            sb.append(t);
+            sb.append(", ");
+        }
+        String returnValue = sb.toString();
+        if (returnValue.endsWith(", ")) {
+            returnValue = returnValue.substring(0, returnValue.length() - 2);
+        }
+        return returnValue;
+
     }
-    
+
     public static String getTagList(String id, Hashtable<String, ArrayList<String>> tags) {
         if (tags.containsKey(id)) {
             StringBuffer sb = new StringBuffer();
@@ -725,84 +725,87 @@ public class TagUtils {
             return "";
         }
     }
-    
+
     public static void populateTags(List<String> tags, JButton cmdTagFilter, JPopupMenu popTagFilter, TagSelectedAction action) {
-        ActionListener al=new ActionListener() {
-                        @Override
-                        public void actionPerformed(ActionEvent e) {
-                            boolean selected=false;
-                            for(MenuElement me: popTagFilter.getSubElements()) {
-                                JCheckBoxMenuItem mi=((JCheckBoxMenuItem)me.getComponent());
-                                if(mi.isSelected()) {
-                                    selected=true;
-                                    break;
-                                }
-                            }
-                            if(selected) {
-                                cmdTagFilter.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/favorites-green.png")));
-                            } else {
-                                cmdTagFilter.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/favorites.png")));
-                            }
-                                
-                            if(action!=null) {
-                                action.execute();
-                            }
-                            
-                        }
-                        
-                    };
-    
+        ActionListener al = new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                boolean selected = false;
+                for (MenuElement me : popTagFilter.getSubElements()) {
+                    JCheckBoxMenuItem mi = ((JCheckBoxMenuItem) me.getComponent());
+                    if (mi.isSelected()) {
+                        selected = true;
+                        break;
+                    }
+                }
+                if (selected) {
+                    cmdTagFilter.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/favorites-green.png")));
+                } else {
+                    cmdTagFilter.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/favorites.png")));
+                }
+
+                if (action != null) {
+                    action.execute();
+                }
+
+            }
+
+        };
+
         List<String> currentComboItems = new ArrayList<String>();
         List<String> lastFilterTags = new ArrayList<String>();
-            MenuElement[] elements=popTagFilter.getSubElements();
-            for (MenuElement e: elements) {
-                currentComboItems.add(((JCheckBoxMenuItem)e.getComponent()).getText());
-                if(((JCheckBoxMenuItem)e.getComponent()).isSelected())
-                    lastFilterTags.add(((JCheckBoxMenuItem)e.getComponent()).getText());
+        MenuElement[] elements = popTagFilter.getSubElements();
+        for (MenuElement e : elements) {
+            currentComboItems.add(((JCheckBoxMenuItem) e.getComponent()).getText());
+            if (((JCheckBoxMenuItem) e.getComponent()).isSelected()) {
+                lastFilterTags.add(((JCheckBoxMenuItem) e.getComponent()).getText());
             }
-            Collections.sort(currentComboItems);
-            if (!tags.equals(currentComboItems)) {
-                if (tags == null) {
-                    tags = new ArrayList<String>();
-                }
-                
-                popTagFilter.removeAll();
-                for(String t: tags) {
-                    JCheckBoxMenuItem mi=new JCheckBoxMenuItem(t);
-                    if(lastFilterTags.contains(t)) {
+        }
+        Collections.sort(currentComboItems);
+        if (tags == null) {
+            tags = new ArrayList<String>();
+        }
+        if (!tags.equals(currentComboItems)) {
+
+            popTagFilter.removeAll();
+            for (String t : tags) {
+                JCheckBoxMenuItem mi = new JCheckBoxMenuItem(t);
+                if (lastFilterTags.contains(t)) {
                     //if(Arrays.binarySearch(lastFilterTags.toArray(), t)>-1) {
-                        mi.setSelected(true);
-                    } else {
-                        mi.setSelected(false);
-                    }
-                    popTagFilter.add(mi);
+                    mi.setSelected(true);
+                } else {
+                    mi.setSelected(false);
                 }
-                for(MenuElement me: popTagFilter.getSubElements()) {
-                    ((JCheckBoxMenuItem)me.getComponent()).addActionListener(al);
-                }
-                
+                popTagFilter.add(mi);
             }
+            for (MenuElement me : popTagFilter.getSubElements()) {
+                ((JCheckBoxMenuItem) me.getComponent()).addActionListener(al);
+            }
+
+        }
     }
-    
+
     public static String getDocumentTagsOverviewAsHtml(Hashtable<String, ArrayList<String>> docTags) {
-        StringBuffer sb=new StringBuffer();
+        StringBuffer sb = new StringBuffer();
         //sb.append("<html>");
         //sb.append("<font color=\"blue\">");
-        if(docTags!=null) {
-            Hashtable<String, Integer> activeTags=new Hashtable<String, Integer>();
-            ArrayList<String> sortedTags=new ArrayList<String>();
-            for(ArrayList<String> dTags: docTags.values()) {
-                for(String t: dTags) {
-                    if(!sortedTags.contains(t))
+        if (docTags != null) {
+            Hashtable<String, Integer> activeTags = new Hashtable<String, Integer>();
+            ArrayList<String> sortedTags = new ArrayList<String>();
+            for (ArrayList<String> dTags : docTags.values()) {
+                for (String t : dTags) {
+                    if (!sortedTags.contains(t)) {
                         sortedTags.add(t);
-                    if(activeTags.containsKey(t))
-                        activeTags.put(t, activeTags.get(t)+1);
-                    else
+                    }
+                    if (activeTags.containsKey(t)) {
+                        activeTags.put(t, activeTags.get(t) + 1);
+                    } else {
                         activeTags.put(t, 1);
+                    }
                 }
             }
             StringUtils.sortIgnoreCase(sortedTags);
-            for(String dTag: sortedTags) {
+            for (String dTag : sortedTags) {
                 sb.append(dTag);
                 //sb.append(" (" + activeTags.get(dTag) + ")&nbsp;&nbsp;&nbsp;");
                 sb.append(" (" + activeTags.get(dTag) + ")");
@@ -813,17 +816,18 @@ public class TagUtils {
         //sb.append("</html>");
         return sb.toString();
     }
-    
+
     public static String[] getSelectedTags(JPopupMenu popup) {
-        ArrayList<String> selected=new ArrayList<String>();
-        MenuElement[] elements=popup.getSubElements();
-            for (MenuElement e: elements) {
-                if(((JCheckBoxMenuItem)e.getComponent()).isSelected())
-                    selected.add(((JCheckBoxMenuItem)e.getComponent()).getText());
+        ArrayList<String> selected = new ArrayList<String>();
+        MenuElement[] elements = popup.getSubElements();
+        for (MenuElement e : elements) {
+            if (((JCheckBoxMenuItem) e.getComponent()).isSelected()) {
+                selected.add(((JCheckBoxMenuItem) e.getComponent()).getText());
             }
-            return selected.toArray(new String[0]);
+        }
+        return selected.toArray(new String[0]);
     }
-    
+
     public static void updateTagSelector(Component owner, JPopupMenu popTags, ActionListener menuItemActionListener, List<String> tagsInUse, String[] lastFilterTags) {
         Hashtable<String, List<ArchiveFileTagsBean>> tags = new Hashtable<String, List<ArchiveFileTagsBean>>();
         //List<ArchiveFileBean> othersNewList = new ArrayList<ArchiveFileBean>();
@@ -832,10 +836,7 @@ public class TagUtils {
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
-            
-
             // update combobox with tags that are currently in use, but only if there was an actual change
-            
         } catch (Throwable ex) {
             log.error("Error connecting to server", ex);
             //JOptionPane.showMessageDialog(this.owner, "Verbindungsfehler: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
@@ -843,5 +844,5 @@ public class TagUtils {
             return;
         }
     }
-    
+
 }

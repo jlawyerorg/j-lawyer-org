@@ -1972,7 +1972,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
 
     private void cmdSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveActionPerformed
         boolean valid = true;
-        if (this.currentCertificate != null && ("".equals(this.pwdBeaCertificatePassword.getText().trim()) || "".equals(this.pwdBeaCertificatePassword.getText().trim()))) {
+        if (this.currentCertificate != null && "".equals(this.pwdBeaCertificatePassword.getText().trim())) {
             valid = false;
         }
 

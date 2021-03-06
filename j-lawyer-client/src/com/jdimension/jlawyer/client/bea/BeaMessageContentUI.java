@@ -804,10 +804,6 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
         }
         try {
 
-            if (msg == null) {
-                return;
-            }
-
             System.out.println("TODO: set message read");
 //            if (!(msgC.isRead()))
 //                msgC.setRead(true);

@@ -751,7 +751,7 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
         initComponents();
         this.lblAge.setText("");
 
-        if (this.getClass().getName().equals(NewAddressPanel.class.getName())) {
+        if (this instanceof NewAddressPanel) {
             jLabel18.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/Icons2-19.png")));
         } else {
             jLabel18.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/vcard_big.png")));

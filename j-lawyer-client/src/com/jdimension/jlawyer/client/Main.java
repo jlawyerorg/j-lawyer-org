@@ -910,28 +910,6 @@ public class Main {
 
         log.info("Java: " + System.getProperty("java.version"));
 
-//        this.updateStatus("Oberflächenlayout wird gesetzt.", false);
-//        
-//        boolean nimbusFound = false;
-//        try {
-//            for (LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
-//                updateStatus(".", false);
-//                if ("Nimbus".equals(info.getName())) {
-//                    UIManager.setLookAndFeel(info.getClassName());
-//                    nimbusFound = true;
-//                    break;
-//                }
-//            }
-//            updateStatus(".", true);
-//        } catch (Exception ex) {
-//        }
-//        if (!nimbusFound) {
-//            try {
-//                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-//            } catch (Exception ex) {
-//                log.error("Could not set look and feel", ex);
-//            }
-//        }
         this.updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Main").getString("status.settingsinit"), true);
         ClientSettings settings = ClientSettings.getInstance();
         String themeName = settings.getConfiguration(settings.CONF_THEME, "default");
