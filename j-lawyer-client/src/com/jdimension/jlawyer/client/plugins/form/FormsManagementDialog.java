@@ -836,6 +836,8 @@ public class FormsManagementDialog extends javax.swing.JDialog implements FormAc
             String formsContent = sb.toString();
 
             DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+            dbf.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+            dbf.setAttribute(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
             DocumentBuilder remoteDb = dbf.newDocumentBuilder();
             InputSource inSrc1 = new InputSource(new StringReader(formsContent));
             inSrc1.setEncoding("UTF-8");

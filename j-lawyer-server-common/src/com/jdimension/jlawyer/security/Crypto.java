@@ -666,11 +666,14 @@ package com.jdimension.jlawyer.security;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.security.GeneralSecurityException;
+import java.security.SecureRandom;
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.PBEParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 
 /**
  *
@@ -681,8 +684,7 @@ public class Crypto {
     private static final char[] PASSWORD = "enfldsgbnlsngdlksdsgm".toCharArray();
     private static final byte[] SALT = {
         (byte) 0xde, (byte) 0x33, (byte) 0x10, (byte) 0x12,
-        (byte) 0xde, (byte) 0x33, (byte) 0x10, (byte) 0x12,
-    };
+        (byte) 0xde, (byte) 0x33, (byte) 0x10, (byte) 0x12,};
 
     public static void main(String[] args) throws Exception {
 
@@ -713,21 +715,20 @@ public class Crypto {
 //        } else if ("encrypt".equalsIgnoreCase(args[0])) {
 //            System.out.println("encrypted: " + encrypt(args[1]));
 //        }
-
         String originalPassword = "nix";
         System.out.println("Original password: " + originalPassword);
         String encryptedPassword = encrypt(originalPassword);
         System.out.println("Encrypted password: " + encryptedPassword);
         String decryptedPassword = decrypt(encryptedPassword);
         System.out.println("Decrypted password: " + decryptedPassword);
-        
+
         System.out.println(encrypt("<kanzlei-passwort>"));
     }
 
     public static String encrypt(String property) throws GeneralSecurityException, UnsupportedEncodingException {
         return encrypt(property, PASSWORD);
     }
-    
+
     public static String encrypt(String property, char[] password) throws GeneralSecurityException, UnsupportedEncodingException {
         SecretKeyFactory keyFactory = SecretKeyFactory.getInstance("PBEWithMD5AndDES");
         SecretKey key = keyFactory.generateSecret(new PBEKeySpec(password));
@@ -745,7 +746,7 @@ public class Crypto {
     public static String decrypt(String property) throws GeneralSecurityException, IOException {
         return decrypt(property, PASSWORD);
     }
-    
+
     public static String decrypt(String property, char[] password) throws GeneralSecurityException, IOException {
         SecretKeyFactory keyFactory = SecretKeyFactory.getInstance("PBEWithMD5AndDES");
         SecretKey key = keyFactory.generateSecret(new PBEKeySpec(password));
@@ -761,4 +762,3 @@ public class Crypto {
     }
 
 }
-
