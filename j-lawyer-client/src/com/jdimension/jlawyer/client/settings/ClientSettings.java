@@ -838,8 +838,8 @@ public class ClientSettings {
                 log.error("Could not create new client configuration file", ex);
             }
         }
-        try {
-            this.clientConfiguration.load(new FileInputStream(clientConfFile));
+        try (FileInputStream fis=new FileInputStream(clientConfFile)) {
+            this.clientConfiguration.load(fis);
         } catch (Exception ex) {
             log.error("Could not load client configuration file", ex);
         }
@@ -855,7 +855,9 @@ public class ClientSettings {
     public void saveConfiguration() throws Exception {
         String clientConfFileLocation=System.getProperty("user.home") + System.getProperty("file.separator") + ".j-lawyer-client" + System.getProperty("file.separator") + "clientConfiguration.properties";
         File clientConfFile=new File(clientConfFileLocation);
-        this.clientConfiguration.store(new FileOutputStream(clientConfFile), "j-lawyer Client configuration");
+        try (FileOutputStream fos=new FileOutputStream(clientConfFile)) {
+            this.clientConfiguration.store(fos, "j-lawyer Client configuration");
+        }
     }
     
     public String getConfiguration(String key, String defaultValue) {

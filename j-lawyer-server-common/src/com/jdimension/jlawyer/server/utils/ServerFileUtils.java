@@ -694,27 +694,26 @@ public class ServerFileUtils {
     }
 
     public static byte[] readFile(File file) throws Exception {
-        FileInputStream fileInputStream = new FileInputStream(file);
-        byte[] data = new byte[(int) file.length()];
-        fileInputStream.read(data);
-        fileInputStream.close();
-        return data;
+        try (FileInputStream fileInputStream = new FileInputStream(file);) {
+            byte[] data = new byte[(int) file.length()];
+            fileInputStream.read(data);
+            return data;
+        }
     }
     
     public static String readFileAsString(File file) throws Exception {
-        FileReader fileReader = new FileReader(file);
-        BufferedReader br=new BufferedReader(fileReader);
-        StringBuilder sb = new StringBuilder();
-        String line = br.readLine();
+        try (FileReader fileReader = new FileReader(file);
+                BufferedReader br = new BufferedReader(fileReader);) {
+            StringBuilder sb = new StringBuilder();
+            String line = br.readLine();
 
-        while (line != null) {
-            sb.append(line);
-            sb.append(System.lineSeparator());
-            line = br.readLine();
+            while (line != null) {
+                sb.append(line);
+                sb.append(System.lineSeparator());
+                line = br.readLine();
+            }
+            return sb.toString();
         }
-        br.close();
-        fileReader.close();
-        return sb.toString();
         
     }
     

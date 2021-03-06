@@ -803,11 +803,11 @@ public class ImportBanksThread implements Runnable {
             return;
         }
         
-        try {
-            //FileReader fr=new FileReader(tmpF);
-            FileInputStream fr=new FileInputStream(tmpF);
+        try (FileInputStream fr=new FileInputStream(tmpF);
             InputStreamReader isr=new InputStreamReader(fr, "UTF-8");
-            BufferedReader br=new BufferedReader(isr);
+            BufferedReader br=new BufferedReader(isr);) {
+            //FileReader fr=new FileReader(tmpF);
+            
             String line=null;
             int lineCounter=0;
             ArrayList<BankDataBean> newBankData=new ArrayList<BankDataBean>();
@@ -845,9 +845,6 @@ public class ImportBanksThread implements Runnable {
             if(newBankData.size()>0) {
                 mgmt.createBankData(newBankData.toArray(new BankDataBean[0]));
             }
-            br.close();
-            isr.close();
-            fr.close();
             
             //mgmt.remove();
             

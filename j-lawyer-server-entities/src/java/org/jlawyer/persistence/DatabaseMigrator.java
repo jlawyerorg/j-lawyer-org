@@ -664,6 +664,7 @@ package org.jlawyer.persistence;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
+import java.sql.Statement;
 import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.sql.DataSource;
@@ -687,8 +688,8 @@ public class DatabaseMigrator implements Integrator {
 
     private void executeUpdate(String sql, Connection dbCon) {
         log.info("running database migration: " + sql);
-        try {
-            dbCon.createStatement().executeUpdate(sql);
+        try (Statement st=dbCon.createStatement()) {
+            st.executeUpdate(sql);
         } catch (Throwable t) {
             log.error("failed: " + sql, t);
         }
@@ -697,8 +698,8 @@ public class DatabaseMigrator implements Integrator {
     private String getCurrentDatabaseVersion(Connection dbCon) {
         // select settingValue from ServerSettingsBean where settingKey = 'jlawyer.server.database.version'
         String dbVersion = "unknown";
-        try {
-            ResultSet rs = dbCon.createStatement().executeQuery("select settingValue from server_settings where settingKey = 'jlawyer.server.database.version'");
+        try (Statement st=dbCon.createStatement()) {
+            ResultSet rs = st.executeQuery("select settingValue from server_settings where settingKey = 'jlawyer.server.database.version'");
             if (rs.next()) {
 
                 dbVersion = rs.getString(1);

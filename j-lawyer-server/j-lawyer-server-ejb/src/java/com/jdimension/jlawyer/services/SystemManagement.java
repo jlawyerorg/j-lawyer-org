@@ -1050,11 +1050,11 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     }
 
     public static byte[] readFile(File file) throws Exception {
-        FileInputStream fileInputStream = new FileInputStream(file);
-        byte[] data = new byte[(int) file.length()];
-        fileInputStream.read(data);
-        fileInputStream.close();
-        return data;
+        try (FileInputStream fileInputStream = new FileInputStream(file);) {
+            byte[] data = new byte[(int) file.length()];
+            fileInputStream.read(data);
+            return data;
+        }
     }
 
     public static String readTextFile(File file) throws Exception {
@@ -1067,10 +1067,10 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     }
 
     public static void writeFile(File file, byte[] content) throws Exception {
-        FileOutputStream fileOutputStream = new FileOutputStream(file, false);
-        fileOutputStream.write(content);
-        fileOutputStream.flush();
-        fileOutputStream.close();
+        try (FileOutputStream fileOutputStream = new FileOutputStream(file, false);) {
+            fileOutputStream.write(content);
+            fileOutputStream.flush();
+        }
     }
 
     @Override

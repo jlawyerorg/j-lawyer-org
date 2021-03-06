@@ -751,15 +751,13 @@ public class ImportZipCodesThread implements Runnable {
         ThreadUtils.updateProgressBar(this.target, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/configuration/ImportZipCodesThread").getString("status.scanningfile"),0,1, true);
 //        File file=new File(this.importFile);
         int i=-1;
-        try {
-            FileReader fr=new FileReader(tmpF);
-            BufferedReader br=new BufferedReader(fr);
+        try (FileReader fr=new FileReader(tmpF);
+            BufferedReader br=new BufferedReader(fr);) {
             while(br.readLine()!=null) {
                 i++;
                 
             }
-            br.close();
-            fr.close();
+            
         } catch (Exception ex) {
             log.error("Error reading import file", ex);
             ThreadUtils.showErrorDialog(this.owner, ex.getMessage(), "Fehler");
@@ -800,10 +798,10 @@ public class ImportZipCodesThread implements Runnable {
             return;
         }
         
-        try {
-            FileInputStream fr=new FileInputStream(tmpF);
+        try (FileInputStream fr=new FileInputStream(tmpF);
             InputStreamReader isr=new InputStreamReader(fr, "UTF-8");
-            BufferedReader br=new BufferedReader(isr);
+            BufferedReader br=new BufferedReader(isr);) {
+            
             String line=null;
             int lineCounter=0;
             ArrayList<CityDataBean> newCityData=new ArrayList<CityDataBean>();
@@ -838,10 +836,6 @@ public class ImportZipCodesThread implements Runnable {
             if(newCityData.size()>0) {
                 mgmt.createCityData(newCityData.toArray(new CityDataBean[0]));
             }
-            br.close();
-            isr.close();
-            fr.close();
-            //mgmt.remove();
             tmpF.delete();
             
         } catch (Exception ex) {

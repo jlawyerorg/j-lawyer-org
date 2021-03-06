@@ -1033,15 +1033,14 @@ public class HTMLExport {
     }
 
     private void copyToLocal(String resource, String name, File dir, String subDir) throws Exception {
-        InputStream is = this.getClass().getClassLoader().getResourceAsStream(resource);
-        FileOutputStream fOut = new FileOutputStream(dir.getAbsolutePath() + System.getProperty("file.separator") + subDir + name);
-        byte[] buffer = new byte[256];
-        int len = 0;
-        while ((len = is.read(buffer)) > 0) {
-            fOut.write(buffer, 0, len);
+        try (InputStream is = this.getClass().getClassLoader().getResourceAsStream(resource);
+                FileOutputStream fOut = new FileOutputStream(dir.getAbsolutePath() + System.getProperty("file.separator") + subDir + name);) {
+            byte[] buffer = new byte[256];
+            int len = 0;
+            while ((len = is.read(buffer)) > 0) {
+                fOut.write(buffer, 0, len);
 
+            }
         }
-        is.close();
-        fOut.close();
     }
 }
