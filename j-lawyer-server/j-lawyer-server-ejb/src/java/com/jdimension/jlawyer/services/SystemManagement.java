@@ -708,6 +708,7 @@ import javax.mail.internet.MimeMessage;
 import javax.management.MBeanServer;
 import javax.management.MBeanServerFactory;
 import javax.management.ObjectName;
+import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.Transformer;
@@ -1625,6 +1626,8 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         Document dom;
         // Make an  instance of the DocumentBuilderFactory
         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+        dbf.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+        dbf.setAttribute(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
 
         // use the factory to take an instance of the document builder
         DocumentBuilder db = dbf.newDocumentBuilder();
@@ -1677,6 +1680,8 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         Document dom;
         // Make an  instance of the DocumentBuilderFactory
         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+        dbf.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+        dbf.setAttribute(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
 
         // use the factory to take an instance of the document builder
         DocumentBuilder db = dbf.newDocumentBuilder();
