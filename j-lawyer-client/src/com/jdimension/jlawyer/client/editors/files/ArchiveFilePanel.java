@@ -749,7 +749,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.image.BufferedImage;
 import java.io.File;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
@@ -789,10 +788,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     private DropTarget dropTarget;
     private DropTargetHandler dropTargetHandler;
-    private Point dragPoint;
-
-    private boolean dragOver = false;
-    private BufferedImage target;
 
     private boolean initializing = false;
     private boolean groupPrivilegesChanged = false;
@@ -2095,11 +2090,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         tabPaneArchiveFile.addChangeListener(new javax.swing.event.ChangeListener() {
             public void stateChanged(javax.swing.event.ChangeEvent evt) {
                 tabPaneArchiveFileStateChanged(evt);
-            }
-        });
-        tabPaneArchiveFile.addComponentListener(new java.awt.event.ComponentAdapter() {
-            public void componentResized(java.awt.event.ComponentEvent evt) {
-                tabPaneArchiveFileComponentResized(evt);
             }
         });
 
@@ -4408,7 +4398,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         WizardSteps steps = new WizardSteps(dlg);
         steps.addStep(new com.jdimension.jlawyer.client.drebis.coverage.ClientSelectionStep());
         steps.addStep(new com.jdimension.jlawyer.client.drebis.coverage.OthersSelectionStep());
-        steps.addStep(new com.jdimension.jlawyer.client.drebis.coverage.DocumentsStep());
+        steps.addStep(new com.jdimension.jlawyer.client.drebis.DocumentsStep(DocumentsStep.TYPE_GENERIC));
         steps.addStep(new com.jdimension.jlawyer.client.drebis.coverage.FinalReviewCoverageStep());
         steps.addStep(new com.jdimension.jlawyer.client.drebis.coverage.SubmitCoverageStep());
 
@@ -4448,7 +4438,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         steps.addStep(new com.jdimension.jlawyer.client.drebis.claim.ClientSelectionStep());
         steps.addStep(new com.jdimension.jlawyer.client.drebis.claim.OthersSelectionStep());
         steps.addStep(new com.jdimension.jlawyer.client.drebis.claim.ClaimDetailsStep());
-        steps.addStep(new com.jdimension.jlawyer.client.drebis.claim.DocumentsStep());
+        steps.addStep(new com.jdimension.jlawyer.client.drebis.DocumentsStep(DocumentsStep.TYPE_CLAIM));
         steps.addStep(new com.jdimension.jlawyer.client.drebis.claim.FinalReviewClaimStep());
         steps.addStep(new com.jdimension.jlawyer.client.drebis.claim.SubmitClaimStep());
 
@@ -4551,7 +4541,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         WizardSteps steps = new WizardSteps(dlg);
         steps.addStep(new com.jdimension.jlawyer.client.drebis.freetext.ClientSelectionStep());
-        steps.addStep(new com.jdimension.jlawyer.client.drebis.freetext.DocumentsStep());
+        steps.addStep(new com.jdimension.jlawyer.client.drebis.DocumentsStep(DocumentsStep.TYPE_GENERIC));
         steps.addStep(new com.jdimension.jlawyer.client.drebis.freetext.FreeTextStep());
         steps.addStep(new com.jdimension.jlawyer.client.drebis.freetext.FinalReviewFreeTextStep());
         steps.addStep(new com.jdimension.jlawyer.client.drebis.freetext.SubmitFreeTextStep());
@@ -5586,17 +5576,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
 
     }//GEN-LAST:event_mnuShareNextcloudActionPerformed
-
-    private void tabPaneArchiveFileComponentResized(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_tabPaneArchiveFileComponentResized
-//        if(!this.initializing) {
-//            if(this.getWidth()>this.getParent().getWidth()) {
-//                System.out.println("width is messed up");
-//                this.setSize(this.getParent().getWidth(), this.getHeight());
-//            }
-//        }
-    
-
-    }//GEN-LAST:event_tabPaneArchiveFileComponentResized
 
     private void splitDocumentsPropertyChange(java.beans.PropertyChangeEvent evt) {//GEN-FIRST:event_splitDocumentsPropertyChange
         int w=this.jScrollPane7.getHorizontalScrollBar().getWidth();

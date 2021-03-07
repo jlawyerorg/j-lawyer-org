@@ -661,7 +661,7 @@
  * For more information on this, and how to apply and follow the GNU AGPL, see
  * <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.client.drebis.freetext;
+package com.jdimension.jlawyer.client.drebis;
 
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.wizard.*;
@@ -679,13 +679,18 @@ import javax.swing.table.DefaultTableModel;
  */
 public class DocumentsStep extends javax.swing.JPanel implements WizardStepInterface {
 
+    public static final int TYPE_GENERIC=10;
+    public static final int TYPE_CLAIM=10;
+    
     private WizardDataContainer data = null;
+    private int type=TYPE_GENERIC;
 
     /**
      * Creates new form SampleStep1
      */
-    public DocumentsStep() {
+    public DocumentsStep(int dialogType) {
         initComponents();
+        this.type=dialogType;
     }
 
     @Override
@@ -815,8 +820,16 @@ public class DocumentsStep extends javax.swing.JPanel implements WizardStepInter
 
     @Override
     public void display() {
-        InsuranceInfo ins = (InsuranceInfo) this.data.get("clients.insurance");
-        if (ins != null) {
+        Object insTest=null;
+        if(this.type==TYPE_GENERIC) {
+            insTest=this.data.get("clients.insurance");
+        } else {
+            insTest=this.data.get("claimdetails.insurance");
+        }
+        //InsuranceInfo ins = (InsuranceInfo) this.data.get("claimdetails.insurance");
+        InsuranceInfo ins=null;
+        if (insTest != null && insTest instanceof InsuranceInfo) {
+            ins=(InsuranceInfo)insTest;
             String hint = "<html><p>W&auml;hlen Sie die zu &uuml;bermittelnden Dokumente aus (optionaler Schritt). Sie k&ouml;nnen den Dateinamen vor der &Uuml;bertragung direkt in der Tabelle anpassen. Die <b>{INSURANCE}</b> akzeptiert Dateien bis zu einer jeweiligen Gr&ouml;&szlig;e von <b>{MAXFILESIZE}</b>.";
             hint = hint.replaceAll("\\{INSURANCE\\}", ins.toString());
 
@@ -829,6 +842,9 @@ public class DocumentsStep extends javax.swing.JPanel implements WizardStepInter
             double fsMB = (double) ((double) fs / 1024d / 1024d);
 
             hint = hint.replaceAll("\\{MAXFILESIZE\\}", df.format(fsMB) + "MB");
+            this.jLabel1.setText(hint);
+        } else {
+            String hint = "<html><p>W&auml;hlen Sie die zu &uuml;bermittelnden Dokumente aus (optionaler Schritt). Sie k&ouml;nnen den Dateinamen vor der &Uuml;bertragung direkt in der Tabelle anpassen.";
             this.jLabel1.setText(hint);
         }
 
