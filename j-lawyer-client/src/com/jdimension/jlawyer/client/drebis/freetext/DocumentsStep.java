@@ -665,7 +665,6 @@ package com.jdimension.jlawyer.client.drebis.freetext;
 
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.wizard.*;
-import com.jdimension.jlawyer.drebis.DrebisPerson;
 import com.jdimension.jlawyer.drebis.InsuranceInfo;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import java.text.DecimalFormat;
@@ -822,8 +821,8 @@ public class DocumentsStep extends javax.swing.JPanel implements WizardStepInter
             hint = hint.replaceAll("\\{INSURANCE\\}", ins.toString());
 
             long fs = ins.getMaxFileSize();
-            if (fs < 0 || fs > (20 * 1024 * 1024)) {
-                fs = 20 * 1024 * 1024;
+            if (fs < 0l || fs > (20l * 1024l * 1024l)) {
+                fs = 20l * 1024l * 1024l;
             }
 
             DecimalFormat df = new DecimalFormat("##.00");

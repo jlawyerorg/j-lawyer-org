@@ -663,7 +663,6 @@
  */
 package com.jdimension.jlawyer.client.desktop;
 
-import com.jdimension.jlawyer.client.StartupSplashFrame;
 import com.jdimension.jlawyer.client.bea.BeaCheckTimerTask;
 import com.jdimension.jlawyer.client.configuration.UserProfileDialog;
 import com.jdimension.jlawyer.client.drebis.DrebisCheckTimerTask;
@@ -692,7 +691,6 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Image;
-import java.awt.event.ItemEvent;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -701,7 +699,6 @@ import java.util.Timer;
 import java.util.TimerTask;
 import javax.swing.BoxLayout;
 import javax.swing.JOptionPane;
-import javax.swing.SwingUtilities;
 import org.apache.log4j.Logger;
 
 /**
@@ -819,7 +816,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
 
         Timer timer3 = new Timer();
         TimerTask autoUpdateTask = new AutoUpdateTimerTask(this);
-        timer3.schedule(autoUpdateTask, 20000, 24 * 60 * 60 * 1000);
+        timer3.schedule(autoUpdateTask, 20000, 24l * 60l * 60l * 1000l);
 
         Timer timer4 = new Timer();
         TimerTask revDueTask = new ReviewsDueTimerTask(this, this.pnlRevDue, this.jSplitPane1);
@@ -842,7 +839,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         
         Timer timer8 = new Timer();
         TimerTask drebisCheckTask=new DrebisCheckTimerTask();
-        timer8.schedule(drebisCheckTask, 3500,1000*60*60);
+        timer8.schedule(drebisCheckTask, 3500,1000l*60l*60l);
         
         try {
             Timer timer9 = new Timer();

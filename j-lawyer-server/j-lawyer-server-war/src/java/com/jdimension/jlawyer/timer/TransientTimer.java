@@ -663,7 +663,6 @@
  */
 package com.jdimension.jlawyer.timer;
 
-import com.jdimension.jlawyer.persistence.ServerSettingsBeanFacadeLocal;
 import java.util.Timer;
 import org.apache.log4j.Logger;
 
@@ -672,103 +671,109 @@ import org.apache.log4j.Logger;
  * @author jens
  */
 public class TransientTimer {
-    
+
     private static Logger log = Logger.getLogger(TransientTimer.class.getName());
-    private static TransientTimer instance=null;
-    
-    private Timer timerBackup=null;
-    private Timer timerSync=null;
-    private Timer timerObserver=null;
-    private Timer timerMonitor=null;
-    private Timer timerFax=null;
-    private Timer timerPurgeBin=null;
-    
+    private static TransientTimer instance = null;
+
+    private Timer timerBackup = null;
+    private Timer timerSync = null;
+    private Timer timerObserver = null;
+    private Timer timerMonitor = null;
+    private Timer timerFax = null;
+    private Timer timerPurgeBin = null;
+
     private TransientTimer() {
-        
+
     }
-    
+
     public static synchronized TransientTimer getInstance() {
-        if(instance==null)
-            instance=new TransientTimer();
+        if (instance == null) {
+            instance = new TransientTimer();
+        }
         return instance;
     }
-    
+
     public void start() {
-        
-        IterativeBackupTask ibt=new IterativeBackupTask();
-        if(timerBackup==null) {
-            timerBackup=new Timer();
-            
+
+        IterativeBackupTask ibt = new IterativeBackupTask();
+        if (timerBackup == null) {
+            timerBackup = new Timer();
+
             // start after 5mins and run every 60mins
-            timerBackup.schedule(ibt, 60000*5, 60000*60);
-            
-            
+            timerBackup.schedule(ibt, 60000l * 5l, 60000l * 60l);
+
         }
-        
-        if(timerSync==null) {
-            timerSync=new Timer();
-            
+
+        if (timerSync == null) {
+            timerSync = new Timer();
+
             // start after 600s and run every 3hrs
-            timerSync.schedule(new BackupSyncTask(ibt), 600000, 1000*60*60*3);
-            
+            timerSync.schedule(new BackupSyncTask(ibt), 600000l, 1000l * 60l * 60l * 3l);
+
         }
-        
-        if(timerObserver==null) {
-            timerObserver=new Timer();
-            
+
+        if (timerObserver == null) {
+            timerObserver = new Timer();
+
             // start after 20s and run every 12s
-            timerObserver.schedule(new DirectoryObserverTask(), 20000, 12000);
-            
+            timerObserver.schedule(new DirectoryObserverTask(), 20000l, 12000l);
+
         }
-        
-        if(timerMonitor==null) {
-            timerMonitor=new Timer();
-            
+
+        if (timerMonitor == null) {
+            timerMonitor = new Timer();
+
             // start after 25s and run every 10mins
-            timerMonitor.schedule(new SystemMonitorTask(), 25000, 60000*10);
-            
+            timerMonitor.schedule(new SystemMonitorTask(), 25000l, 60000l * 10l);
+
         }
-        
-        if(timerFax==null) {
-            timerFax=new Timer();
-            
+
+        if (timerFax == null) {
+            timerFax = new Timer();
+
             // start after 30s and run every 12s
-            timerFax.schedule(new FaxQueueStatusTask(), 30000, 12000);
-            
+            timerFax.schedule(new FaxQueueStatusTask(), 30000l, 12000l);
+
         }
-        
-        if(timerPurgeBin==null) {
-            timerPurgeBin=new Timer();
-            
+
+        if (timerPurgeBin == null) {
+            timerPurgeBin = new Timer();
+
             // start after 35s and run every 4hrs
-            timerPurgeBin.schedule(new PurgeBinTask(), 35000, 4l * 60l * 60l * 1000l);
+            timerPurgeBin.schedule(new PurgeBinTask(), 35000l, 4l * 60l * 60l * 1000l);
         }
     }
-    
+
     public void scheduleAdHocBackup() {
-        if(timerBackup!=null) {
-            timerBackup.schedule(new IterativeBackupTask(true), 3000);
+        if (timerBackup != null) {
+            timerBackup.schedule(new IterativeBackupTask(true), 3000l);
         }
     }
-    
+
     public void stop() {
-        if(timerBackup!=null)
+        if (timerBackup != null) {
             timerBackup.cancel();
-        
-        if(timerSync!=null)
+        }
+
+        if (timerSync != null) {
             timerSync.cancel();
-        
-        if(timerObserver!=null)
+        }
+
+        if (timerObserver != null) {
             timerObserver.cancel();
-        
-        if(timerMonitor!=null)
+        }
+
+        if (timerMonitor != null) {
             timerMonitor.cancel();
-        
-        if(timerFax!=null)
+        }
+
+        if (timerFax != null) {
             timerFax.cancel();
-        
-        if(timerPurgeBin!=null)
+        }
+
+        if (timerPurgeBin != null) {
             timerPurgeBin.cancel();
+        }
     }
-    
+
 }

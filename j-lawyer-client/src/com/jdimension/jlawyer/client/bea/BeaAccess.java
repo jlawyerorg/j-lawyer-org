@@ -809,7 +809,7 @@ public class BeaAccess {
                             .heap(50, MemoryUnit.MB)
                             //.offheap(1, MemoryUnit.MB)
                             .disk(250, MemoryUnit.MB, true)
-            ).withExpiry(ExpiryPolicyBuilder.timeToLiveExpiration(Duration.ofSeconds(60 * 60 * 2))));
+            ).withExpiry(ExpiryPolicyBuilder.timeToLiveExpiration(Duration.ofSeconds(60l * 60l * 2l))));
         } catch (Throwable t) {
             log.error(t);
         }

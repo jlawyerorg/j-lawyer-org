@@ -985,7 +985,7 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
                 sb.append(df.format(currentSchriftsatzIndex)).append("_");
             } else {
                 currentAttachmentIndex++;
-                sb.append(df.format(schriftsatzCount + currentAttachmentIndex)).append("_");
+                sb.append(df.format((long)schriftsatzCount + (long)currentAttachmentIndex)).append("_");
             }
 
             if (schriftsatz) {
