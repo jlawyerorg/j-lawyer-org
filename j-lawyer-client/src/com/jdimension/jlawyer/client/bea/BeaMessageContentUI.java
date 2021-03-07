@@ -715,7 +715,7 @@ import org.jlawyer.bea.model.ProcessCardEntry;
 public class BeaMessageContentUI extends javax.swing.JPanel implements HyperlinkListener {
 
     private static final Logger log = Logger.getLogger(BeaMessageContentUI.class.getName());
-    private static SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy HH:mm");
+    private SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy HH:mm");
     private static String HTML_WARNING = "<html><font color=\"red\">HTML-Inhalte werden zum Schutz vor Spam erst auf Knopfdruck im Kopfbereich dieser E-Mail oder nach Doppelklick auf diese Warnung angezeigt.<br/>Der Absender dieser E-Mail wird dann permanent als vertrauensw&uuml;rdig eingestuft.</font></html>";
     private Message msgContainer = null;
     private String cachedHtml = null;
@@ -845,7 +845,8 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
             log.warn("beA mesage " + msg.getId() + " - " + msg.getSubject() + " does not have a reception time yet!");
             lblSentDate.setText("");
         } else {
-            lblSentDate.setText(df.format(msg.getReceptionTime()));
+            SimpleDateFormat df2 = new SimpleDateFormat("dd.MM.yyyy HH:mm");
+            lblSentDate.setText(df2.format(msg.getReceptionTime()));
         }
         lblSubject.setText(msg.getSubject());
         lblSubject.setToolTipText(lblSubject.getText());
@@ -883,9 +884,10 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
         TableRowSorter<TableModel> sorter = new TableRowSorter<TableModel>(tm);
         sorter.setComparator(4, new DescendingDateTimeStringComparator());
         journalTable.setRowSorter(sorter);
+        SimpleDateFormat df2 = new SimpleDateFormat("dd.MM.yyyy HH:mm");
         if (msg.getJournal() != null) {
             for (MessageJournalEntry e : msg.getJournal()) {
-                ((DefaultTableModel) journalTable.getModel()).addRow(new Object[]{e.getFromSurnameFirstname(), e.getFromUsername(), e.getAttachmentReference(), e.getEventType(), df.format(e.getTimestamp())});
+                ((DefaultTableModel) journalTable.getModel()).addRow(new Object[]{e.getFromSurnameFirstname(), e.getFromUsername(), e.getAttachmentReference(), e.getEventType(), df2.format(e.getTimestamp())});
 
             }
         }

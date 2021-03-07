@@ -698,8 +698,8 @@ public class HTMLExport {
 
     private static final Logger log = Logger.getLogger(HTMLExport.class.getName());
 
-    private static SimpleDateFormat dtf = new SimpleDateFormat("dd.MM.yyyy HH:mm");
-    private static SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
+    private SimpleDateFormat dtf = new SimpleDateFormat("dd.MM.yyyy HH:mm");
+    private SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
 
     private static String CELL_BREAK = "\t";
     private static String LINE_BREAK = System.getProperty("line.separator");

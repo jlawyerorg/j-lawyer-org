@@ -689,7 +689,6 @@ public class FileUtils extends ServerFileUtils {
 
     private static FileUtils instance = null;
     private static final Logger log = Logger.getLogger(FileUtils.class.getName());
-    private static final SimpleDateFormat datePrefix = new SimpleDateFormat("yyyy-MM-dd_HH-mm_");
     private Hashtable<String, Icon> iconCache = null;
     private Hashtable<String, Icon> iconCache32 = null;
 
@@ -1076,6 +1075,7 @@ public class FileUtils extends ServerFileUtils {
 
         String dtPrefix = "";
         if (datetimePrefix) {
+            SimpleDateFormat datePrefix = new SimpleDateFormat("yyyy-MM-dd_HH-mm_");
             dtPrefix = datePrefix.format(d);
         }
 

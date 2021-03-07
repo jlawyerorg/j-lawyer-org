@@ -684,8 +684,8 @@ import org.apache.tika.parser.txt.CharsetDetector;
 public class IterativeBackupExecutor {
 
     private static final Logger log = Logger.getLogger(IterativeBackupExecutor.class.getName());
-    private static final SimpleDateFormat dfMailDate = new SimpleDateFormat("dd.MM.yyyy");
-    private static final SimpleDateFormat dfMailTime = new SimpleDateFormat("HH:mm:ss");
+    private final SimpleDateFormat dfMailDate = new SimpleDateFormat("dd.MM.yyyy");
+    private final SimpleDateFormat dfMailTime = new SimpleDateFormat("HH:mm:ss");
     private static final DecimalFormat mbFormat = new DecimalFormat("0.0");
 
     // these directories will be zipped entirely with each backup run

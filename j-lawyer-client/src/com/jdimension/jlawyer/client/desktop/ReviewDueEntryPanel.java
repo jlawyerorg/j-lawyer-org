@@ -702,7 +702,7 @@ import themes.colors.DefaultColorTheme;
 public class ReviewDueEntryPanel extends javax.swing.JPanel {
 
     private static final Logger log = Logger.getLogger(ReviewDueEntryPanel.class.getName());
-    private static SimpleDateFormat df = new SimpleDateFormat("dd.MM.yy");
+    private SimpleDateFormat df = new SimpleDateFormat("dd.MM.yy");
 
     private static Color lightGreen = new Color(153, 255, 102);
     private static Color lightRed = new Color(255, 153, 153);

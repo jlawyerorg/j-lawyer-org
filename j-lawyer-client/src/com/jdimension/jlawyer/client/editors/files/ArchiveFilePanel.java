@@ -778,8 +778,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     private static final Logger log = Logger.getLogger(ArchiveFilePanel.class.getName());
 
-    private static SimpleDateFormat dfTime = new SimpleDateFormat("HH:mm");
-    private static SimpleDateFormat dfDay = new SimpleDateFormat("dd.MM.yyyy");
+    private SimpleDateFormat dfTime = new SimpleDateFormat("HH:mm");
+    private SimpleDateFormat dfDay = new SimpleDateFormat("dd.MM.yyyy");
 
     private ArchiveFileBean dto = null;
     private String openedFromEditorClass = null;

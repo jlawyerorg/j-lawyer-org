@@ -672,7 +672,7 @@ import java.util.*;
  */
 public class ArchiveFileStub extends GenericStub {
 
-    private static SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
+    private SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
     
     private String name;
     private String fileNumber;

@@ -691,7 +691,7 @@ public class EditorOrDuplicateReviewDialog extends javax.swing.JDialog {
     public static final int MODE_DUPLICATE = 10;
     public static final int MODE_EDIT = 20;
 
-    private static SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
+    private SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
     private static final Logger log = Logger.getLogger(EditorOrDuplicateReviewDialog.class.getName());
 
     private ArchiveFileReviewsBean targetReview = null;

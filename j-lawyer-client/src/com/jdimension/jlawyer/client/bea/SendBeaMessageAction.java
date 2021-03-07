@@ -702,7 +702,7 @@ import themes.colors.DefaultColorTheme;
 public class SendBeaMessageAction extends ProgressableAction {
 
     private static final Logger log = Logger.getLogger(SendBeaMessageAction.class.getName());
-    private static SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy, HH:mm");
+    private SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy, HH:mm");
     ArrayList<BeaAttachmentMetadata> attachments = null;
     private AppUserBean cu = null;
     private boolean readReceipt = false;

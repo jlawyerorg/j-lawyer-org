@@ -677,15 +677,6 @@ import java.util.regex.Pattern;
  */
 public class CaseNumberGenerator {
 
-    private static final SimpleDateFormat shortYear = new SimpleDateFormat("yy");
-    private static final SimpleDateFormat longYear = new SimpleDateFormat("yyyy");
-
-    private static final SimpleDateFormat shortMonth = new SimpleDateFormat("M");
-    private static final SimpleDateFormat longMonth = new SimpleDateFormat("MM");
-
-    private static final SimpleDateFormat shortDay = new SimpleDateFormat("d");
-    private static final SimpleDateFormat longDay = new SimpleDateFormat("dd");
-
     private static final String shortCodeChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
     private static final boolean DBG = false;
@@ -838,6 +829,15 @@ public class CaseNumberGenerator {
 
     private static synchronized String next(ArrayList<String> allExisting, String pattern, Date date, int startFromIndex) throws InvalidCaseNumberPatternException {
 
+        SimpleDateFormat shortYear = new SimpleDateFormat("yy");
+    SimpleDateFormat longYear = new SimpleDateFormat("yyyy");
+
+    SimpleDateFormat shortMonth = new SimpleDateFormat("M");
+    SimpleDateFormat longMonth = new SimpleDateFormat("MM");
+
+    SimpleDateFormat shortDay = new SimpleDateFormat("d");
+    SimpleDateFormat longDay = new SimpleDateFormat("dd");
+        
         Date current = date;
         if (current == null) {
             current = new Date();

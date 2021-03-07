@@ -690,8 +690,8 @@ import org.jlawyer.bea.model.MessageHeader;
 public class LoadBeaFolderAction extends ProgressableAction {
 
     private static final Logger log = Logger.getLogger(LoadBeaFolderAction.class.getName());
-    private static SimpleDateFormat dfDateTime = new SimpleDateFormat("dd.MM.yyyy, HH:mm");
-    private static SimpleDateFormat dfDate = new SimpleDateFormat("dd.MM.yyyy");
+    private SimpleDateFormat dfDateTime = new SimpleDateFormat("dd.MM.yyyy, HH:mm");
+    private SimpleDateFormat dfDate = new SimpleDateFormat("dd.MM.yyyy");
 
     private static ArrayList DOWNLOAD_RESTRICTIONS = new ArrayList() {
     };

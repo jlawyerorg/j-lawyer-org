@@ -699,9 +699,9 @@ public class IterativeBackupTask extends java.util.TimerTask implements Cancella
     private static boolean isRunning=false;
 
     private static Logger log = Logger.getLogger(IterativeBackupTask.class.getName());
-    private static SimpleDateFormat dfMailDate = new SimpleDateFormat("dd.MM.yyyy");
-    private static SimpleDateFormat dfMailTime = new SimpleDateFormat("HH:mm:ss");
-    private static DecimalFormat mbFormat = new DecimalFormat("0.0");
+    private SimpleDateFormat dfMailDate = new SimpleDateFormat("dd.MM.yyyy");
+    private SimpleDateFormat dfMailTime = new SimpleDateFormat("HH:mm:ss");
+    private DecimalFormat mbFormat = new DecimalFormat("0.0");
     private boolean adHoc = false;
 
     public IterativeBackupTask() {

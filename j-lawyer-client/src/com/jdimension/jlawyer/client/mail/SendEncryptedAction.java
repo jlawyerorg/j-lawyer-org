@@ -700,7 +700,7 @@ import org.apache.log4j.Logger;
 public class SendEncryptedAction extends ProgressableAction {
 
     private static final Logger log = Logger.getLogger(SendEncryptedAction.class.getName());
-    private static SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy, HH:mm");
+    private SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy, HH:mm");
     private ArrayList<String> attachments = null;
     private AppUserBean cu = null;
     private boolean readReceipt = false;

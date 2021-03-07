@@ -692,7 +692,7 @@ public class SystemMonitorTask extends java.util.TimerTask {
 
     private static Logger log = Logger.getLogger(SystemMonitorTask.class.getName());
     private static DecimalFormat df = new DecimalFormat("##0");
-    private static SimpleDateFormat dateF = new SimpleDateFormat("dd.MM.yyy HH:mm:ss");
+    private SimpleDateFormat dateF = new SimpleDateFormat("dd.MM.yyy HH:mm:ss");
 
     private ArrayList<String> formerList = null;
 

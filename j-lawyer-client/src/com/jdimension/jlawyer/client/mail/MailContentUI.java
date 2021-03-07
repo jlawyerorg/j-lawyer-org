@@ -712,7 +712,7 @@ import org.apache.log4j.Logger;
 public class MailContentUI extends javax.swing.JPanel implements HyperlinkListener {
 
     private static final Logger log = Logger.getLogger(MailContentUI.class.getName());
-    private static SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy HH:mm");
+    private SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy HH:mm");
     private static String HTML_WARNING = "<html><font color=\"red\">HTML-Inhalte werden zum Schutz vor Spam erst auf Knopfdruck im Kopfbereich dieser E-Mail oder nach Doppelklick auf diese Warnung angezeigt.<br/>Der Absender dieser E-Mail wird dann permanent als vertrauensw&uuml;rdig eingestuft.</font></html>";
     private MessageContainer msgContainer = null;
     private String cachedHtml = null;
@@ -926,7 +926,8 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
         // copiedMsg=msg;
         String sentString = "";
         if (copiedMsg.getSentDate() != null) {
-            sentString = df.format(copiedMsg.getSentDate());
+            SimpleDateFormat df2 = new SimpleDateFormat("dd.MM.yyyy HH:mm");
+            sentString = df2.format(copiedMsg.getSentDate());
         }
         lblSentDate.setText(sentString);
         lblSubject.setText(copiedMsg.getSubject());

@@ -697,7 +697,7 @@ import org.apache.log4j.Logger;
 public class SendAction extends ProgressableAction {
 
     private static final Logger log = Logger.getLogger(SendAction.class.getName());
-    private static SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy, HH:mm");
+    private SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy, HH:mm");
     private ArrayList<String> attachments = null;
     private AppUserBean cu = null;
     private boolean readReceipt = false;

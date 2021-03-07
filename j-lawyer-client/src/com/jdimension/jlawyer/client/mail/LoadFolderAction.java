@@ -690,7 +690,7 @@ import org.apache.log4j.Logger;
 public class LoadFolderAction extends ProgressableAction {
 
     private static final Logger log = Logger.getLogger(LoadFolderAction.class.getName());
-    private static SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy, HH:mm");
+    private SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy, HH:mm");
 
     private static ArrayList DOWNLOAD_RESTRICTIONS = new ArrayList() {
     };

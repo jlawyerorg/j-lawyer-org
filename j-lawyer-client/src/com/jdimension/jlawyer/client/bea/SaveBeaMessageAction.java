@@ -699,7 +699,7 @@ import org.jlawyer.bea.model.MessageExport;
 public class SaveBeaMessageAction extends ProgressableAction {
 
     private static final Logger log = Logger.getLogger(SaveBeaMessageAction.class.getName());
-    private static SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy, HH:mm");
+    private SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy, HH:mm");
     private ArrayList<String> attachments = null;
     private AppUserBean cu = null;
     private boolean readReceipt = false;

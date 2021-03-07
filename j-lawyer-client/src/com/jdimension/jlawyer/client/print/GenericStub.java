@@ -673,7 +673,7 @@ import java.util.List;
  */
 public class GenericStub {
 
-    protected static SimpleDateFormat df=new SimpleDateFormat("dd.MM.yyy HH:mm");
+    protected SimpleDateFormat df=new SimpleDateFormat("dd.MM.yyy HH:mm");
     
     public GenericStub() {
     }
