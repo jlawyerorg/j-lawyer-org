@@ -715,7 +715,7 @@ import org.jlawyer.bea.model.ProcessCardEntry;
 public class BeaMessageContentUI extends javax.swing.JPanel implements HyperlinkListener {
 
     private static final Logger log = Logger.getLogger(BeaMessageContentUI.class.getName());
-    private SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy HH:mm");
+    private static final String DATEFORMAT="dd.MM.yyyy HH:mm";
     private static String HTML_WARNING = "<html><font color=\"red\">HTML-Inhalte werden zum Schutz vor Spam erst auf Knopfdruck im Kopfbereich dieser E-Mail oder nach Doppelklick auf diese Warnung angezeigt.<br/>Der Absender dieser E-Mail wird dann permanent als vertrauensw&uuml;rdig eingestuft.</font></html>";
     private Message msgContainer = null;
     private String cachedHtml = null;
@@ -814,10 +814,6 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
                 ProgressIndicator dlg = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
                 dlg.setShowCancelButton(false);
                 dlg.setInfinite(true);
-                DecimalFormat df = new DecimalFormat("###0.00");
-//                dlg.progress("Lade Email... (" + df.format(msg.getSize() / 1024 / 1024) + "MB)");
-//                LoadEmailAction lea = new LoadEmailAction(dlg, this, msg, this.lblSubject, this.lblSentDate, this.lblTo, this.lblCC, this.lblFrom, this.editBody, this.lstAttachments, this.cmdShowHtml);
-//                lea.start();
                 return;
             } else {
                 BeaMessageContentUI.setMessageImpl(this, msg, this.lblSubject, this.lblSentDate, this.lblTo, this.lblFrom, this.lblCaseNumber, this.lblReferenceJustice, this.editBody, this.lstAttachments, false, this.tblJournal, this.tblProcessCard, this.lblEeb, this.jTabbedPane1);
@@ -845,7 +841,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
             log.warn("beA mesage " + msg.getId() + " - " + msg.getSubject() + " does not have a reception time yet!");
             lblSentDate.setText("");
         } else {
-            SimpleDateFormat df2 = new SimpleDateFormat("dd.MM.yyyy HH:mm");
+            SimpleDateFormat df2 = new SimpleDateFormat(DATEFORMAT);
             lblSentDate.setText(df2.format(msg.getReceptionTime()));
         }
         lblSubject.setText(msg.getSubject());
@@ -884,7 +880,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
         TableRowSorter<TableModel> sorter = new TableRowSorter<TableModel>(tm);
         sorter.setComparator(4, new DescendingDateTimeStringComparator());
         journalTable.setRowSorter(sorter);
-        SimpleDateFormat df2 = new SimpleDateFormat("dd.MM.yyyy HH:mm");
+        SimpleDateFormat df2 = new SimpleDateFormat(DATEFORMAT);
         if (msg.getJournal() != null) {
             for (MessageJournalEntry e : msg.getJournal()) {
                 ((DefaultTableModel) journalTable.getModel()).addRow(new Object[]{e.getFromSurnameFirstname(), e.getFromUsername(), e.getAttachmentReference(), e.getEventType(), df2.format(e.getTimestamp())});
