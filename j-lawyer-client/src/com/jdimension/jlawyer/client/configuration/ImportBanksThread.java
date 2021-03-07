@@ -754,15 +754,13 @@ public class ImportBanksThread implements Runnable {
         ThreadUtils.updateProgressBar(this.target, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/configuration/ImportBanksThread").getString("status.scanningfile"),0,1, true);
         //File file=new File(this.importFile);
         int i=-1;
-        try {
-            FileReader fr=new FileReader(tmpF);
-            BufferedReader br=new BufferedReader(fr);
+        try (FileReader fr=new FileReader(tmpF);
+            BufferedReader br=new BufferedReader(fr);) {
+            
             while(br.readLine()!=null) {
                 i++;
                 
             }
-            br.close();
-            fr.close();
         } catch (Exception ex) {
             log.error("Error reading import file", ex);
             ThreadUtils.showErrorDialog(this.owner, ex.getMessage(), "Fehler");
