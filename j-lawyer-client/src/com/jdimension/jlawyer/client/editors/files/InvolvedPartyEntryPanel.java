@@ -681,6 +681,7 @@ import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
+import com.jdimension.jlawyer.client.utils.JTextFieldLimit;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.client.voip.PlaceCallDialog;
 import com.jdimension.jlawyer.client.voip.SendFaxDialog;
@@ -741,6 +742,10 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
         this.lblCustom1.setText(sset.getSetting(sset.DATA_CUSTOMFIELD_ARCHIVEFILE_INVOLVED_PREFIX + "1", "Eigenes Feld 1"));
         this.lblCustom2.setText(sset.getSetting(sset.DATA_CUSTOMFIELD_ARCHIVEFILE_INVOLVED_PREFIX + "2", "Eigenes Feld 2"));
         this.lblCustom3.setText(sset.getSetting(sset.DATA_CUSTOMFIELD_ARCHIVEFILE_INVOLVED_PREFIX + "3", "Eigenes Feld 3"));
+        
+        this.txtCustom1.setDocument(new JTextFieldLimit(249));
+        this.txtCustom2.setDocument(new JTextFieldLimit(249));
+        this.txtCustom3.setDocument(new JTextFieldLimit(249));
 
         try {
             ClientSettings settings = ClientSettings.getInstance();
