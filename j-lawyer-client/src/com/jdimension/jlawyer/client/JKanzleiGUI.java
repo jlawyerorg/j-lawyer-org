@@ -2443,15 +2443,14 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    try {
+                    try (FileOutputStream fout = new FileOutputStream(file)) {
                         ThreadUtils.showInformationDialog(EditorsRegistry.getInstance().getMainWindow(), "XJustiz-Viewer wird im Hintergrund heruntergeladen...", "Download gestartet");
                         URL updateURL = new URL(downloadUrl);
                         URLConnection urlCon = updateURL.openConnection();
                         urlCon.setRequestProperty("User-Agent", "j-lawyer Client v" + VersionUtils.getFullClientVersion());
 
-                        FileOutputStream fout = new FileOutputStream(file);
+                        
                         InputStream is = urlCon.getInputStream();
-
                         byte[] buffer = new byte[1024];
                         int len = 0;
                         StringBuffer sb = new StringBuffer();
@@ -2459,7 +2458,6 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
                             fout.write(buffer, 0, len);
                         }
                         is.close();
-                        fout.close();
                         ThreadUtils.showInformationDialog(EditorsRegistry.getInstance().getMainWindow(), "XJustiz-Viewer zur Installation verfügbar: " + file.getAbsolutePath(), "Download abgeschlossen");
 
                     } catch (Exception ex) {
