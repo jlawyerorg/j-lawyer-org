@@ -840,6 +840,7 @@ public class LoginDialog extends javax.swing.JFrame {
             }
         } catch (Throwable t) {
             log.error("Unable to decrypt tunnel SSH password", t);
+            p="";
         }
         this.pwdSshPassword.setText(p);
         this.txtTargetPort.setText(settings.getConfiguration(settings.CONF_LASTTARGETPORT, "8080"));
@@ -1532,7 +1533,13 @@ public class LoginDialog extends javax.swing.JFrame {
                 tunnel.connect();
             } catch (Exception ex) {
                 log.error("SSH tunnel failed", ex);
-                JOptionPane.showMessageDialog(this, "Aufbau des SSH-Tunnels gescheitert:" + System.lineSeparator() + ex.getMessage(), "SSH-Fehler", JOptionPane.ERROR_MESSAGE);
+                if("".equals(new String(this.pwdSshPassword.getPassword()))) {
+                    // happens due to the change from DES to AES encryption of this password
+                    // user needs to re-enter password once
+                    JOptionPane.showMessageDialog(this, "Aufbau des SSH-Tunnels gescheitert - bitte SSH-Passwort erneut eingeben:" + System.lineSeparator() + ex.getMessage(), "SSH-Fehler", JOptionPane.ERROR_MESSAGE);
+                } else {
+                    JOptionPane.showMessageDialog(this, "Aufbau des SSH-Tunnels gescheitert:" + System.lineSeparator() + ex.getMessage(), "SSH-Fehler", JOptionPane.ERROR_MESSAGE);
+                }
                 this.cmdLogin.setEnabled(true);
                 launching=false;
                 return;
