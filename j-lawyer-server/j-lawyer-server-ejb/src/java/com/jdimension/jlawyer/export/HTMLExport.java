@@ -765,7 +765,7 @@ public class HTMLExport {
             excelStr.append(CELL_BREAK);
             if (rev.getReviewType() == ArchiveFileReviewsBean.REVIEWTYPE_FOLLOWUP) {
                 excelStr.append(escape("Wiedervorlage"));
-            } else if (rev.getReviewType() == ArchiveFileReviewsBean.REVIEWTYPE_FOLLOWUP) {
+            } else if (rev.getReviewType() == ArchiveFileReviewsBean.REVIEWTYPE_RESPITE) {
                 excelStr.append(escape("Frist"));
             } else {
                 excelStr.append(escape("-"));
