@@ -693,6 +693,8 @@ public class DocumentsSizeComparator implements java.util.Comparator {
     }
     
     public boolean equals(Object obj) {
-        return this.equals(obj);
+        if(obj!=null)
+            return obj.equals(this);
+        return false;
     }
 }

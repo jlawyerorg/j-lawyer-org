@@ -701,6 +701,8 @@ public class DocumentsComparator implements java.util.Comparator {
     }
     
     public boolean equals(Object obj) {
-        return obj.equals(this);
+        if(obj!=null)
+            return obj.equals(this);
+        return false;
     }
 }
