@@ -694,7 +694,6 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import org.apache.log4j.Logger;
 import org.jlawyer.data.tree.GenericNode;
-import org.jlawyer.plugins.calculation.CalculationTable;
 import org.jlawyer.plugins.calculation.GenericCalculationTable;
 
 /**
@@ -795,11 +794,8 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
 
         this.refreshTree();
 
-        //ComponentUtils.restoreDialogSize(this);
         FrameUtils.fitDialogToScreen(this, 85f);
 
-//            this.splitMain.setDividerLocation(this.splitMain.getWidth()/2);
-//            this.splitPlaceholders.setDividerLocation(this.splitPlaceholders.getHeight()/2);
         ComponentUtils.restoreDialogSize(this);
 
         this.jSplitPane1.setDividerLocation(0.5d);
@@ -813,7 +809,6 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
         ComponentUtils.persistSplitPane(this.jSplitPane1, this.getClass(), "jSplitPane1");
 
         try {
-            //InitialContext context = new InitialContext(settings.getLookupProperties());
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             this.allPartyTypes = locator.lookupArchiveFileServiceRemote().getAllPartyTypes();
             this.formPlaceHolders = locator.lookupFormsServiceRemote().getPlaceHoldersForCase(aFile.getId());
@@ -844,10 +839,12 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
         SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
 
         String templateFileName = templateName;
+        if(templateFileName==null)
+            templateFileName="";
+        
         if (templateFileName.lastIndexOf(".") >= 0) {
             templateFileName = templateFileName.substring(0, templateFileName.lastIndexOf("."));
         }
-        //name=templateFileName + "_" + df.format(new Date());
         name = df.format(new Date()) + "_" + templateFileName;
 
         // avoid ANWALT being replaced before ANWALT2 --> start with longest placeholders first
@@ -1066,7 +1063,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
                                         .add(txtReviewDateField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 135, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                                         .add(cmdShowReviewSelector)))
-                                .add(0, 56, Short.MAX_VALUE)))))
+                                .add(0, 0, Short.MAX_VALUE)))))
                 .addContainerGap())
         );
         jPanel4Layout.setVerticalGroup(
@@ -1157,17 +1154,12 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
 
         jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder("Vorlage"));
 
-        txtTemplateFilter.addFocusListener(new java.awt.event.FocusAdapter() {
-            public void focusLost(java.awt.event.FocusEvent evt) {
-                txtTemplateFilterFocusLost(evt);
-            }
-        });
         txtTemplateFilter.addKeyListener(new java.awt.event.KeyAdapter() {
-            public void keyPressed(java.awt.event.KeyEvent evt) {
-                txtTemplateFilterKeyPressed(evt);
-            }
             public void keyTyped(java.awt.event.KeyEvent evt) {
                 txtTemplateFilterKeyTyped(evt);
+            }
+            public void keyPressed(java.awt.event.KeyEvent evt) {
+                txtTemplateFilterKeyPressed(evt);
             }
         });
 
@@ -1366,7 +1358,6 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
 
         EditorsRegistry.getInstance().updateStatus("Erstelle Dokument...");
         try {
-            //InitialContext context = new InitialContext(settings.getLookupProperties());
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             Hashtable phValues = new Hashtable();
             TableModel model = this.tblPlaceHolders.getModel();
@@ -1470,10 +1461,8 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
                 list = locator.lookupSystemManagementRemote().searchTemplateFolders(this.txtTemplateFilter.getText());
             }
 
-            //System.out.println(list.size());
             ((TemplatesTreeCellRenderer) this.treeFolders.getCellRenderer()).setHighlightNodes(list);
             ((DefaultTreeModel) this.treeFolders.getModel()).reload();
-            //ComponentUtils.expandTree(treeFolders);
             this.expandTreeNodes((DefaultMutableTreeNode) this.treeFolders.getModel().getRoot(), list);
             this.refreshList();
 
@@ -1504,13 +1493,6 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
         }
     }
 
-    private void txtTemplateFilterFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtTemplateFilterFocusLost
-//        String search = this.txtTemplateFilter.getText();
-//        if(search.trim().length()>0)
-//            this.highlightTree(search);
-
-    }//GEN-LAST:event_txtTemplateFilterFocusLost
-
     private void cmbDictateSignsItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cmbDictateSignsItemStateChanged
         if (!(this.tblPlaceHolders.getModel() instanceof ArchiveFileTemplatePlaceHoldersTableModel)) {
             return;
@@ -1529,7 +1511,6 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
     private void cmdShowReviewSelectorActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdShowReviewSelectorActionPerformed
 
         MultiCalDialog dlg = new MultiCalDialog(this.txtReviewDateField, this, true);
-        //dlg.setLocation(this.getX() + this.cmdShowReviewSelector.getX(), this.getY() + this.cmdShowReviewSelector.getY());
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
     }//GEN-LAST:event_cmdShowReviewSelectorActionPerformed
@@ -1562,7 +1543,6 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
             ClientSettings settings = ClientSettings.getInstance();
             EditorsRegistry.getInstance().updateStatus("Analysiere Dokumentvorlage...");
 
-            //SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
             try {
 
                 this.updateFileName();
@@ -1570,7 +1550,6 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
                 DefaultMutableTreeNode tn = (DefaultMutableTreeNode) this.treeFolders.getSelectionPath().getLastPathComponent();
                 GenericNode gn = (GenericNode) tn.getUserObject();
 
-                //InitialContext context = new InitialContext(settings.getLookupProperties());
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                 List<String> placeHolders = locator.lookupSystemManagementRemote().getPlaceHoldersForTemplate(gn, this.lstTemplates.getSelectedValue().toString(), this.formPlaceHolders);
                 String[] colNames = new String[]{"Platzhalter", "Wert"};
@@ -1684,14 +1663,8 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
         this.lstTemplates.setModel(model);
 
         ClientSettings settings = ClientSettings.getInstance();
-        //EditorsRegistry.getInstance().updateStatus("Adresse wird gespeichert...");
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-//            Collection fileNames = locator.lookupSystemManagementRemote().getAllTemplateNames();
-//
-//            for (Object o : fileNames) {
-//                model.addElement(o);
-//            }
 
             GenericNode templateTree = locator.lookupSystemManagementRemote().getAllTemplatesTree();
 
@@ -1704,10 +1677,6 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
 
             this.treeFolders.setSelectionRow(0);
 
-//            } else {
-//                this.lstTemplates.setToolTipText("Zugriff nur für Administratoren möglich");
-//                this.lstTemplates.setEnabled(false);
-//            }
         } catch (Exception ex) {
             log.error(ex);
             ThreadUtils.showErrorDialog(this, "Fehler beim Laden der Vorlagen: " + ex.getMessage(), "Fehler");
