@@ -774,7 +774,6 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
         this.cmbFrom.removeAllItems();
         this.cmbFrom.setModel(new DefaultComboBoxModel());
 
-        //FrameUtils.fitDialogToScreen(this, 0.85f);
         try {
             BeaAccess bea = BeaAccess.getInstance();
             for (PostBox pb : bea.getPostBoxes()) {
@@ -782,18 +781,6 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
 
             }
 
-            // can only send with a real postbox as "from"
-//        String currentUserSafeId=bea.getLoggedInSafeId();
-//        DefaultComboBoxModel model=(DefaultComboBoxModel)this.cmbFrom.getModel();
-//        boolean fromContainsCurrentLogin=false;
-//        for(int i=0;i<model.getSize();i++) {
-//            Identity ident=(Identity)model.getElementAt(i);
-//            if(ident.getSafeId().equals(currentUserSafeId)) {
-//                fromContainsCurrentLogin=true;
-//            }
-//        }
-//        if(!fromContainsCurrentLogin)
-//            model.addElement(bea.getIdentity(currentUserSafeId));
         } catch (Throwable t) {
             // leave dropdown empty
             log.error(t);
@@ -937,7 +924,6 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
 
                     updateAlias();
                 }
-                //System.out.println("" + evt.getColumn() + " " + evt.getFirstRow() + " " + evt.getLastRow());
             }
         });
 
@@ -1067,23 +1053,6 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
 
         this.txtAzSender.setText(fileNumber);
     }
-
-//    public void addAllParties(List<AddressBean> list, PartyTypeBean ptb) {
-//        for (AddressBean o : list) {
-//            this.addParty(o, ptb);
-//        }
-//    }
-//
-//    public void addParty(AddressBean ab, PartyTypeBean ptb) {
-//        if (ab == null) {
-//            return;
-//        }
-//
-//        this.pnlParties.addParty(ab, ptb);
-//
-//        this.addRecipientCandidate(ab, ptb);
-//
-//    }
     
     public void addParty(AddressBean addr, PartyTypeBean ptb) {
         
@@ -1118,8 +1087,9 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
             this.chkSaveAsDocument.setEnabled(true);
             this.chkSaveAsDocument.setText("als Dokument speichern");
         }
-        if(this.contextArchiveFile.getAssistant()!=null)
-            this.cmbReviewAssignee.setSelectedItem(this.contextArchiveFile.getAssistant());
+        if(this.contextArchiveFile != null)
+            if (this.contextArchiveFile.getAssistant() != null)
+                this.cmbReviewAssignee.setSelectedItem(this.contextArchiveFile.getAssistant());
     }
 
     public void setTo(Identity i) {
