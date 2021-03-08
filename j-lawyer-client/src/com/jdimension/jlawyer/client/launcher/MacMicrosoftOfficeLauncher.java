@@ -664,10 +664,6 @@
 package com.jdimension.jlawyer.client.launcher;
 
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
-import com.jdimension.jlawyer.persistence.ArchiveFileBean;
-import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
-import java.awt.Desktop;
-import java.io.File;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import org.apache.log4j.Logger;
@@ -735,12 +731,15 @@ public class MacMicrosoftOfficeLauncher extends OfficeLauncher {
                     odoc.setStatus(ObservedDocument.STATUS_OPEN);
 
                     log.debug("waitFor");
-                    int exit = p.waitFor();
+                    int exit=-42;
+                    if(p!=null)
+                        exit = p.waitFor();
+                    else
+                        log.error("no process was launched");
+                    
                     log.debug("exit code: " + exit);
                     if (exit == 0) {
 
-                        //log.debug("observer status closed " + odoc.getName());
-                        //odoc.setClosed(true);
                         log.debug("process returned exit code 0. keeping file open, relying on lock file");
 
                     } else {
