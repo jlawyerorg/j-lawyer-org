@@ -728,8 +728,12 @@ public class ConflictOfInterestUtils {
                 } else if(parent instanceof JFrame) {
                     dlg=new ConflictOfInterestDialog((JFrame)parent, true, address, selectedType, casesWithDifferentPartyType);
                 }
-                FrameUtils.centerDialog(dlg, parent);
-                dlg.setVisible(true);
+                if(dlg != null) {
+                    FrameUtils.centerDialog(dlg, parent);
+                    dlg.setVisible(true);
+                } else {
+                    log.error("unknown parent type for ConflictOfInterestDialog");
+                }
                 
             }
 
