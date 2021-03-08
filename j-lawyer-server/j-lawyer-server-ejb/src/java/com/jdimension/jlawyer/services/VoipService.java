@@ -683,8 +683,6 @@ import javax.annotation.security.RolesAllowed;
 import javax.ejb.EJB;
 import javax.ejb.SessionContext;
 import javax.ejb.Stateless;
-import javax.jms.*;
-import javax.naming.InitialContext;
 import org.apache.log4j.Logger;
 
 /**
@@ -835,24 +833,10 @@ public class VoipService implements VoipServiceRemote, VoipServiceLocal {
 
     private void publishQueueList() {
         try {
-//            InitialContext ic = new InitialContext();
-//            ConnectionFactory cf = (ConnectionFactory) ic.lookup("/ConnectionFactory");
-//            Topic observerTopic = (Topic) ic.lookup("/topic/faxQueueTopic");
-//            Connection connection = cf.createConnection();
-//            Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-//            MessageProducer producer = session.createProducer(observerTopic);
-//            connection.start();
 
             ArrayList<FaxQueueBean> list = new ArrayList<FaxQueueBean>();
             list.addAll(this.faxFacade.findAll());
             singleton.setFaxQueue(list);
-//            ObjectMessage msg = session.createObjectMessage(list);
-//            producer.send(msg);
-//
-//            connection.stop();
-//            producer.close();
-//            session.close();
-//            connection.close();
         } catch (Exception ex) {
             log.error("could not publish fax queue list", ex);
         }
@@ -940,7 +924,10 @@ public class VoipService implements VoipServiceRemote, VoipServiceLocal {
                 throw new SipgateException("Fax " + id + " wird noch verarbeitet - Status kann nicht gelöscht werden!");
             }
 
-        }
+        } else {
+            log.error("fax with id " + id + " does not exist");
+            throw new SipgateException("Fax " + id + " ist nicht (mehr) vorhanden!");
+        }     
 
         ArchiveFileBean afb = fb.getArchiveFileKey();
         String aFileId = null;
