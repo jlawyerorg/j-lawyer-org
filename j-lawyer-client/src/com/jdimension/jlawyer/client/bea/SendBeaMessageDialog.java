@@ -1797,8 +1797,6 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
         }
 
         if (this.authority == null) {
-            //JOptionPane.showMessageDialog(this, "Für den Versand mit eEB muss eine Justizbehörde ausgewählt sein!", "Versand mit eEB", JOptionPane.WARNING_MESSAGE);
-            //return;
             this.rdXjustizActionPerformed(null);
             
             if(this.authority==null) {
@@ -1819,7 +1817,6 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
 
         ProgressIndicator dlg = new ProgressIndicator(this, true);
         dlg.setShowCancelButton(false);
-        //SendAction a=new SendAction(dlg, this, this.attachments, this.cu, this.chkReadReceipt.isSelected(), this.txtTo.getText(), this.txtCc.getText(), this.txtBcc.getText(), this.txtSubject.getText(), this.taBody.getText());
         EditorImplementation ed = (EditorImplementation) this.contentPanel.getComponent(0);
         String contentType = ed.getContentType();
         String fromSafeId = ((Identity) this.cmbFrom.getSelectedItem()).getSafeId();
@@ -1863,10 +1860,8 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
             messageType=Message.MESSAGETYPE_MAHN_ANTRAG;
         
         if (this.chkSaveAsDocument.isSelected()) {
-            //a = new SendBeaMessageAction(dlg, this, fromSafeId, attachmentMetadata, this.cu, this.rdXjustizEeb.isSelected(), this.authority, ((DefaultListModel) this.lstTo.getModel()).elements(), this.txtSubject.getText(), ed.getText(), this.contextArchiveFile, createDocumentTag, this.txtAzSender.getText(), this.cmbAzRecipient.getSelectedItem().toString());
             a = new SendBeaMessageAction(dlg, this, messageType, fromSafeId, attachmentMetadata, this.cu, this.rdXjustizEeb.isSelected(), this.authority, ((DefaultListModel) this.lstTo.getModel()).elements(), this.txtSubject.getText(), ed.getText(), this.contextArchiveFile, createDocumentTag, this.txtAzSender.getText(), this.cmbAzRecipient.getEditor().getItem().toString());
         } else {
-            //a = new SendBeaMessageAction(dlg, this, fromSafeId, attachmentMetadata, this.cu, this.rdXjustizEeb.isSelected(), this.authority, ((DefaultListModel) this.lstTo.getModel()).elements(), this.txtSubject.getText(), ed.getText(), createDocumentTag, this.txtAzSender.getText(), this.cmbAzRecipient.getSelectedItem().toString());
             a = new SendBeaMessageAction(dlg, this, messageType, fromSafeId, attachmentMetadata, this.cu, this.rdXjustizEeb.isSelected(), this.authority, ((DefaultListModel) this.lstTo.getModel()).elements(), this.txtSubject.getText(), ed.getText(), createDocumentTag, this.txtAzSender.getText(), this.cmbAzRecipient.getEditor().getItem().toString());
         }
         a.start();
@@ -1926,7 +1921,6 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
         this.jLabel10.setEnabled(enable);
         this.jLabel12.setEnabled(enable);
         if (!enable) {
-            //this.cmbReviewAssignee.setSelectedIndex(0);
             this.cmbReviewReason.setSelectedIndex(0);
             this.txtReviewDateField.setText(null);
         }
@@ -1943,7 +1937,6 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
         sad.setVisible(true);
 
         try {
-            //this.txtImportFile.setText(chooser.getSelectedFile().getCanonicalPath());
             File[] files = sad.getSelectedFiles();
             if (files == null) {
                 return;
@@ -2021,14 +2014,9 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
                     ht.put(ph, "");
                 }
                 htValues = PlaceHolderUtils.getPlaceHolderValues(ht, this.contextArchiveFile, selectedParties, this.contextDictateSign, null, new Hashtable<String, String>(), caseLawyer, caseAssistant, author);
-                //this.taBody.setText(EmailTemplateAccess.replacePlaceHolders(tpl.getBody(), htValues) + System.getProperty("line.separator") + System.getProperty("line.separator") + this.cu.getEmailSignature());
-
+                
                 this.tp.setText(EmailTemplateAccess.replacePlaceHolders(tpl.getBody(), htValues) + System.getProperty("line.separator") + System.getProperty("line.separator") + EmailUtils.Html2Text(this.cu.getEmailSignature()));
-                //this.rdNoSignature.setSelected(true);
-                //this.textActionPerformed(null);
-
-//                this.tp.setText(EmailTemplateAccess.replacePlaceHolders(tpl.getBody(), htValues) + System.getProperty("line.separator") + System.getProperty("line.separator") + this.cu.getEmailSignature());
-//                this.hp.setText(EmailTemplateAccess.replacePlaceHolders(tpl.getBody(), htValues) + System.getProperty("line.separator") + System.getProperty("line.separator") + this.cu.getEmailSignature());
+                
             } catch (Exception ex) {
                 log.error("Error applying template", ex);
                 JOptionPane.showMessageDialog(this, "Fehler beim Erstellen der Vorlage: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
@@ -2046,15 +2034,12 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
     }//GEN-LAST:event_rdXjustizActionPerformed
 
     private void contentPanelComponentResized(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_contentPanelComponentResized
-        //Component c=contentPanel.getComponent(0);
         tp.setBounds(0, 0, this.contentPanel.getWidth(), this.contentPanel.getHeight());
-        //tp.setSize(this.contentPanel.getWidth(), this.contentPanel.getHeight());
         SwingUtilities.updateComponentTreeUI(tp);
 
     }//GEN-LAST:event_contentPanelComponentResized
 
     private void mnuSearchRecipientActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSearchRecipientActionPerformed
-        //AddRecipientSearchDialog dlg = new AddRecipientSearchDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.txtTo);
         AddBeaRecipientSearchDialog dlg = new AddBeaRecipientSearchDialog(this, true, this.lstTo, this.txtSubject);
         dlg.setTitle("Empfänger hinzufügen");
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
@@ -2076,7 +2061,6 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
 
     private void mnuSearchRecipientInBeaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSearchRecipientInBeaActionPerformed
         BeaIdentitySearchDialog dlg = new BeaIdentitySearchDialog(this, true, null, null, null, null, null, null);
-        //dlg.setSize(ip.getPreferredSize());
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
         Identity i = dlg.getSelection();
@@ -2099,7 +2083,6 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
     private void cmdShowReviewSelectorActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdShowReviewSelectorActionPerformed
 
         MultiCalDialog dlg = new MultiCalDialog(this.txtReviewDateField, this, true);
-        //dlg.setLocation(this.getX() + this.cmdShowReviewSelector.getX(), this.getY() + this.cmdShowReviewSelector.getY());
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
     }//GEN-LAST:event_cmdShowReviewSelectorActionPerformed
@@ -2197,8 +2180,6 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
         }
 
         if (this.authority == null) {
-            //JOptionPane.showMessageDialog(this, "Für den Versand mit eEB muss eine Justizbehörde ausgewählt sein!", "Versand mit eEB", JOptionPane.WARNING_MESSAGE);
-            //return;
             this.rdXjustizActionPerformed(null);
         }
 
@@ -2213,7 +2194,6 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
         }
 
         ProgressIndicator dlg = new ProgressIndicator(this, true);
-        //SendAction a=new SendAction(dlg, this, this.attachments, this.cu, this.chkReadReceipt.isSelected(), this.txtTo.getText(), this.txtCc.getText(), this.txtBcc.getText(), this.txtSubject.getText(), this.taBody.getText());
         EditorImplementation ed = (EditorImplementation) this.contentPanel.getComponent(0);
         String contentType = ed.getContentType();
         String fromSafeId = ((Identity) this.cmbFrom.getSelectedItem()).getSafeId();
@@ -2299,7 +2279,6 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
                     return;
                 }
                 byte[] data = FileUtils.readFile(new File(requestedAttachmentUrl));
-                //String tmpFile = FileUtils.createTempFile(this.lstAttachments.getSelectedValue().toString(), data);
                 ReadOnlyDocumentStore store = new ReadOnlyDocumentStore("mailattachment-" + selectedFileName, selectedFileName);
                 Launcher launcher = LauncherFactory.getLauncher(selectedFileName, data, store);
                 launcher.launch(false);
@@ -2426,14 +2405,12 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
         @Override
         public void dragEnter(DropTargetDragEvent dtde) {
             processDrag(dtde);
-            //SwingUtilities.invokeLater(new DragUpdate(true, dtde.getLocation()));
             repaint();
         }
 
         @Override
         public void dragOver(DropTargetDragEvent dtde) {
             processDrag(dtde);
-            //SwingUtilities.invokeLater(new DragUpdate(true, dtde.getLocation()));
             repaint();
         }
 
@@ -2443,14 +2420,12 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
 
         @Override
         public void dragExit(DropTargetEvent dte) {
-            //SwingUtilities.invokeLater(new DragUpdate(false, null));
             repaint();
         }
 
         @Override
         public void drop(DropTargetDropEvent dtde) {
 
-            //SwingUtilities.invokeLater(new DragUpdate(false, null));
             Transferable transferable = dtde.getTransferable();
             if (dtde.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
                 dtde.acceptDrop(dtde.getDropAction());

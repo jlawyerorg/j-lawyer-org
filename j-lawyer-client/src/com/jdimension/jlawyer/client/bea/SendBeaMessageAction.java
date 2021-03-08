@@ -814,6 +814,7 @@ public class SendBeaMessageAction extends ProgressableAction {
         } catch (BeaWrapperException ex) {
             log.error(ex);
             JOptionPane.showMessageDialog(this.indicator, "Nachricht kann nicht gesendet werden: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            throw ex;
         }
 
         ProcessCard p = sentMessage.getProcessCard();
