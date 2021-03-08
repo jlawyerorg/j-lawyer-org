@@ -664,7 +664,6 @@
 package com.jdimension.jlawyer.comparator;
 
 import com.jdimension.jlawyer.persistence.ArchiveFileHistoryBean;
-import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 import java.util.Date;
 
 /**
@@ -702,6 +701,8 @@ public class HistoryComparator implements java.util.Comparator {
     }
     
     public boolean equals(Object obj) {
-        return obj.equals(this);
+        if(obj!=null)
+            return obj.equals(this);
+        return false;
     }
 }
