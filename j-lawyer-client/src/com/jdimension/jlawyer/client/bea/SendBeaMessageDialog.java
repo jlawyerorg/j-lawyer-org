@@ -1087,9 +1087,9 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
             this.chkSaveAsDocument.setEnabled(true);
             this.chkSaveAsDocument.setText("als Dokument speichern");
         }
-        if(this.contextArchiveFile != null)
-            if (this.contextArchiveFile.getAssistant() != null)
-                this.cmbReviewAssignee.setSelectedItem(this.contextArchiveFile.getAssistant());
+        
+        if (this.contextArchiveFile != null && this.contextArchiveFile.getAssistant() != null)
+            this.cmbReviewAssignee.setSelectedItem(this.contextArchiveFile.getAssistant());
     }
 
     public void setTo(Identity i) {
