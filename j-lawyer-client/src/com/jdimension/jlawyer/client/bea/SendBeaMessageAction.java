@@ -682,6 +682,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Enumeration;
+import java.util.List;
 import javax.swing.JDialog;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
@@ -703,11 +704,11 @@ public class SendBeaMessageAction extends ProgressableAction {
 
     private static final Logger log = Logger.getLogger(SendBeaMessageAction.class.getName());
     private SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy, HH:mm");
-    ArrayList<BeaAttachmentMetadata> attachments = null;
+    List<BeaAttachmentMetadata> attachments = null;
     private AppUserBean cu = null;
     private boolean readReceipt = false;
     private BeaListItem authority = null;
-    private Enumeration to = null;
+    private Enumeration<Identity> to = null;
     private String subject = "";
     private String body = "";
     private String fromSafeId = "";
@@ -720,7 +721,7 @@ public class SendBeaMessageAction extends ProgressableAction {
 
     private String msgType = Message.MESSAGETYPE_ALLGEMEINE_NACHRICHT;
 
-    public SendBeaMessageAction(ProgressIndicator i, JDialog cleanAfter, String messageType, String fromSafeId, ArrayList<BeaAttachmentMetadata> attachmentMetadata, AppUserBean cu, boolean readReceipt, BeaListItem authority, Enumeration to, String subject, String body, String documentTag, String azSender, String azRecipient) {
+    public SendBeaMessageAction(ProgressIndicator i, JDialog cleanAfter, String messageType, String fromSafeId, List<BeaAttachmentMetadata> attachmentMetadata, AppUserBean cu, boolean readReceipt, BeaListItem authority, Enumeration to, String subject, String body, String documentTag, String azSender, String azRecipient) {
         super(i, false, cleanAfter);
         this.attachments = attachmentMetadata;
         this.cu = cu;
@@ -737,7 +738,7 @@ public class SendBeaMessageAction extends ProgressableAction {
         this.msgType = messageType;
     }
 
-    public SendBeaMessageAction(ProgressIndicator i, JDialog cleanAfter, String messageType, String fromSafeId, ArrayList<BeaAttachmentMetadata> attachmentMetadata, AppUserBean cu, boolean readReceipt, BeaListItem authority, Enumeration to, String subject, String body, ArchiveFileBean af, String documentTag, String azSender, String azRecipient, CaseFolder folder) {
+    public SendBeaMessageAction(ProgressIndicator i, JDialog cleanAfter, String messageType, String fromSafeId, ArrayList<BeaAttachmentMetadata> attachmentMetadata, AppUserBean cu, boolean readReceipt, BeaListItem authority, Enumeration<Identity> to, String subject, String body, ArchiveFileBean af, String documentTag, String azSender, String azRecipient, CaseFolder folder) {
         this(i, cleanAfter, messageType, fromSafeId, attachmentMetadata, cu, readReceipt, authority, to, subject, body, documentTag, azSender, azRecipient);
         this.archiveFile = af;
         this.folder=folder;
@@ -779,13 +780,11 @@ public class SendBeaMessageAction extends ProgressableAction {
             }
 
             while (this.to.hasMoreElements()) {
-                Object o = this.to.nextElement();
-                if (o instanceof Identity) {
-                    String safeId = ((Identity) o).getSafeId();
-                    recipients.add(safeId);
-                    recipientsText.append(((Identity) o).toString());
-                    recipientsText.append("  ");
-                }
+                Identity o = this.to.nextElement();
+                String safeId = ((Identity) o).getSafeId();
+                recipients.add(safeId);
+                recipientsText.append(((Identity) o).toString());
+                recipientsText.append("  ");
             }
 
             String senderSafeId = this.fromSafeId;
@@ -905,7 +904,7 @@ public class SendBeaMessageAction extends ProgressableAction {
                         }
                         
                         if(this.folder != null) {
-                            ArrayList<String> docList = new ArrayList<String>();
+                            ArrayList<String> docList = new ArrayList<>();
                             docList.add(newDoc.getId());
                             afs.moveDocumentsToFolder(docList, folder.getId());
                         }

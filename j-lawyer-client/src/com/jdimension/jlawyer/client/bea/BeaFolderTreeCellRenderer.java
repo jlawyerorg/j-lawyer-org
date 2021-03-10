@@ -687,6 +687,7 @@ public class BeaFolderTreeCellRenderer extends DefaultTreeCellRenderer {
         super();
     }
 
+    @Override
     public Component getTreeCellRendererComponent(JTree jTree, Object object, boolean sel,
             boolean expanded,
             boolean leaf,

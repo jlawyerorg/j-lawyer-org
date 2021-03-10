@@ -679,6 +679,7 @@ import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.ui.tagging.TagUtils;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.AbstractAction;
@@ -1095,17 +1096,17 @@ public class SearchAndAssignDialog extends javax.swing.JDialog {
     }
 
     private void tblResultsMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblResultsMouseClicked
-        if (evt.getClickCount() == 2 && evt.getButton() == evt.BUTTON1) {
+        if (evt.getClickCount() == 2 && evt.getButton() == MouseEvent.BUTTON1) {
             this.useSelection();
 
-        } else if (evt.getClickCount() == 1 && evt.getButton() == evt.BUTTON1) {
+        } else if (evt.getClickCount() == 1 && evt.getButton() == MouseEvent.BUTTON1) {
             this.updateCaseFolderStructure();
         }
 
     }//GEN-LAST:event_tblResultsMouseClicked
 
     private void tblResultsKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_tblResultsKeyReleased
-        if (this.tblResults.getSelectedRowCount() == 1 && (evt.getKeyCode() == evt.VK_DOWN || evt.getKeyCode() == evt.VK_UP)) {
+        if (this.tblResults.getSelectedRowCount() == 1 && (evt.getKeyCode() == KeyEvent.VK_DOWN || evt.getKeyCode() == KeyEvent.VK_UP)) {
             this.updateCaseFolderStructure();
 
         }
@@ -1168,7 +1169,7 @@ public class SearchAndAssignDialog extends javax.swing.JDialog {
 
             String parentId=null;
             DefaultMutableTreeNode tn = (DefaultMutableTreeNode) this.treeFolders.getSelectionPath().getLastPathComponent();
-            if(tn.getUserObject()!=null && tn.getUserObject() instanceof CaseFolder) {
+            if(tn.getUserObject() instanceof CaseFolder) {
                 parentId=((CaseFolder)tn.getUserObject()).getId();
             } else {
                 return;
@@ -1198,7 +1199,6 @@ public class SearchAndAssignDialog extends javax.swing.JDialog {
             
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Erstellen des Ordners: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
-            return;
         }
     }//GEN-LAST:event_mnuNewFolderActionPerformed
 

@@ -743,7 +743,7 @@ public class SearchAndAssignScanAction extends DeleteScanAction {
                                 locator.lookupArchiveFileServiceRemote().setDocumentTag(doc.getId(), new DocumentTagsBean(null, this.getDocumentTag()), true);
                                 
                                 if (folder != null) {
-                                    ArrayList<String> dList = new ArrayList<String>();
+                                    ArrayList<String> dList = new ArrayList<>();
                                     dList.add(doc.getId());
                                     locator.lookupArchiveFileServiceRemote().moveDocumentsToFolder(dList, folder.getId());
                                 }

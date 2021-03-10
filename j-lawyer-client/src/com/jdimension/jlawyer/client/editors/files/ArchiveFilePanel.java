@@ -4712,7 +4712,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
                             ArchiveFileDocumentsBean newDoc = remote.addDocument(sel.getId(), newName, content, doc.getDictateSign());
                             if(folder != null) {
-                                ArrayList<String> docList = new ArrayList<String>();
+                                ArrayList<String> docList = new ArrayList<>();
                                 docList.add(newDoc.getId());
                                 remote.moveDocumentsToFolder(docList, folder.getId());
                             }

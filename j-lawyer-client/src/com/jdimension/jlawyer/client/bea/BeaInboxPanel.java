@@ -901,7 +901,6 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
         this.initializing = false;
 
         this.needsReset = false;
-        return;
     }
 
     public void refreshFolders(boolean showErrorDialogOnFailure) throws Exception {
@@ -910,7 +909,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
         EditorsRegistry.getInstance().updateStatus("beA-Postfächer werden geladen...");
         DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode("beA-Postfächer");
         Collection<PostBox> inboxes = bea.getPostBoxes();
-        Hashtable<String, Folder> inboxFolders = new Hashtable<String, Folder>();
+        Hashtable<String, Folder> inboxFolders = new Hashtable<>();
         for (PostBox pb : inboxes) {
             EditorsRegistry.getInstance().updateStatus("Lade beA-Postfach" + pb.getSafeId() + "...");
             try {
@@ -2546,7 +2545,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                             ArchiveFileDocumentsBean newlyAddedDocument = afs.addDocument(caseId, newName, attachmentData, "");
 
                             if(folderId!=null) {
-                                ArrayList<String> docList=new ArrayList<String>();
+                                ArrayList<String> docList=new ArrayList<>();
                                 docList.add(newlyAddedDocument.getId());
                                 afs.moveDocumentsToFolder(docList, folderId);
                             }
@@ -2585,7 +2584,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                     ArchiveFileDocumentsBean newlyAddedDocument = afs.addDocument(caseId, newName, export.getContent(), "");
 
                     if(folderId != null) {
-                        ArrayList<String> docList = new ArrayList<String>();
+                        ArrayList<String> docList = new ArrayList<>();
                         docList.add(newlyAddedDocument.getId());
                         afs.moveDocumentsToFolder(docList, folderId);
                     }
@@ -2636,7 +2635,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                         ArchiveFileDocumentsBean newlyAddedDocument = afs.addDocument(caseId, newName, attachmentData, "");
                         
                         if(folderId != null) {
-                            ArrayList<String> docList = new ArrayList<String>();
+                            ArrayList<String> docList = new ArrayList<>();
                             docList.add(newlyAddedDocument.getId());
                             afs.moveDocumentsToFolder(docList, folderId);
                         }

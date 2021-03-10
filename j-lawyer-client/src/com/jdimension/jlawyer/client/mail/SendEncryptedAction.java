@@ -686,6 +686,7 @@ import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Properties;
 import javax.activation.FileDataSource;
 import javax.mail.*;
@@ -701,7 +702,7 @@ public class SendEncryptedAction extends ProgressableAction {
 
     private static final Logger log = Logger.getLogger(SendEncryptedAction.class.getName());
     private SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy, HH:mm");
-    private ArrayList<String> attachments = null;
+    private List<String> attachments = null;
     private AppUserBean cu = null;
     private boolean readReceipt = false;
     private String to = "";
@@ -711,11 +712,11 @@ public class SendEncryptedAction extends ProgressableAction {
     private String body = "";
     private String contentType = "text/plain";
     private ArchiveFileBean archiveFile = null;
-    private CaseFolder folder=null;
+    private CaseFolder caseFolder=null;
     private ArrayList<String> mails = null;
     private String documentTag = null;
 
-    public SendEncryptedAction(ProgressIndicator i, JDialog cleanAfter, ArrayList<String> attachments, AppUserBean cu, boolean readReceipt, String to, String cc, String bcc, String subject, String body, String contentType, String documentTag) {
+    public SendEncryptedAction(ProgressIndicator i, JDialog cleanAfter, List<String> attachments, AppUserBean cu, boolean readReceipt, String to, String cc, String bcc, String subject, String body, String contentType, String documentTag) {
         super(i, false, cleanAfter);
         this.attachments = attachments;
         this.cu = cu;
@@ -733,10 +734,10 @@ public class SendEncryptedAction extends ProgressableAction {
         mails.addAll(EmailUtils.getAllMailAddressesFromString(this.bcc));
     }
 
-    public SendEncryptedAction(ProgressIndicator i, JDialog cleanAfter, ArrayList<String> attachments, AppUserBean cu, boolean readReceipt, String to, String cc, String bcc, String subject, String body, String contentType, ArchiveFileBean af, String documentTag, CaseFolder folder) {
+    public SendEncryptedAction(ProgressIndicator i, JDialog cleanAfter, List<String> attachments, AppUserBean cu, boolean readReceipt, String to, String cc, String bcc, String subject, String body, String contentType, ArchiveFileBean af, String documentTag, CaseFolder folder) {
         this(i, cleanAfter, attachments, cu, readReceipt, to, cc, bcc, subject, body, contentType, documentTag);
         this.archiveFile = af;
-        this.folder=folder;
+        this.caseFolder=folder;
     }
 
     @Override
@@ -922,10 +923,10 @@ public class SendEncryptedAction extends ProgressableAction {
                                 afs.setDocumentTag(newDoc.getId(), new DocumentTagsBean(newDoc.getId(), this.documentTag), true);
                             }
                             
-                            if(this.folder != null) {
-                                ArrayList<String> docList = new ArrayList<String>();
+                            if(this.caseFolder != null) {
+                                ArrayList<String> docList = new ArrayList<>();
                                 docList.add(newDoc.getId());
-                                afs.moveDocumentsToFolder(docList, folder.getId());
+                                afs.moveDocumentsToFolder(docList, caseFolder.getId());
                             }
 
                             ArchiveFileHistoryBean historyDto = new ArchiveFileHistoryBean();

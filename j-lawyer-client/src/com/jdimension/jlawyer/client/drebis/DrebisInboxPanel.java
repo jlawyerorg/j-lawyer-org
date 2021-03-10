@@ -1332,7 +1332,7 @@ public class DrebisInboxPanel extends javax.swing.JPanel implements ThemeableEdi
                 ArchiveFileDocumentsBean newlyAddedDocument = afs.addDocument(sel.getId(), newName, da.getContent(), "");
 
                 if (folder != null) {
-                    ArrayList<String> docList = new ArrayList<String>();
+                    ArrayList<String> docList = new ArrayList<>();
                     docList.add(newlyAddedDocument.getId());
                     afs.moveDocumentsToFolder(docList, folder.getId());
                 }

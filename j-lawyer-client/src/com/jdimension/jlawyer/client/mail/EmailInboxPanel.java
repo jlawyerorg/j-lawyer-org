@@ -2746,7 +2746,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                                 afs.setDocumentDate(newlyAddedDocument.getId(), sentDate);
                             }
                             if(folderId!=null) {
-                                ArrayList<String> docList=new ArrayList<String>();
+                                ArrayList<String> docList=new ArrayList<>();
                                 docList.add(newlyAddedDocument.getId());
                                 afs.moveDocumentsToFolder(docList, folderId);
                             }
@@ -2793,7 +2793,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                         afs.setDocumentDate(newlyAddedDocument.getId(), sentDate);
                     }
                     if(folderId != null) {
-                        ArrayList<String> docList = new ArrayList<String>();
+                        ArrayList<String> docList = new ArrayList<>();
                         docList.add(newlyAddedDocument.getId());
                         afs.moveDocumentsToFolder(docList, folderId);
                     }
@@ -2847,7 +2847,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                             afs.setDocumentDate(newlyAddedDocument.getId(), sentDate);
                         }
                         if(folderId != null) {
-                            ArrayList<String> docList = new ArrayList<String>();
+                            ArrayList<String> docList = new ArrayList<>();
                             docList.add(newlyAddedDocument.getId());
                             afs.moveDocumentsToFolder(docList, folderId);
                         }

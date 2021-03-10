@@ -1603,7 +1603,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
                     ArchiveFileDocumentsBean newDoc = afs.addDocument(sel.getId(), newName, data, "");
                     
                     if(folder != null) {
-                        ArrayList<String> docList = new ArrayList<String>();
+                        ArrayList<String> docList = new ArrayList<>();
                         docList.add(newDoc.getId());
                         afs.moveDocumentsToFolder(docList, folder.getId());
                     }
