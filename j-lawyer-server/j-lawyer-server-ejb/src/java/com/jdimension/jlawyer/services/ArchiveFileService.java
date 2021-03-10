@@ -4518,6 +4518,12 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             log.error("There is no case with ID " + caseId);
             throw new Exception("Akte existiert nicht!");
         }
+        
+        CaseFolder rootFolder=afb.getRootFolder();
+        if(!containsFolder(rootFolder, folderId)) {
+            log.error("Case " + afb.getId() + " " + afb.getFileNumber() + " does not contain a folder with id " +  folderId);
+            throw new Exception("Akte " + afb.getFileNumber() + " enthält keinen Ordner mit ID " +  folderId);
+        }
 
         StringGenerator idGen = new StringGenerator();
         for (ArchiveFileDocumentsBean doc : documents) {
@@ -4534,6 +4540,21 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
         }
 
+    }
+    
+    private boolean containsFolder(CaseFolder f, String folderId) {
+        if (f.getId().equals(folderId))
+            return true;
+        if (f.getChildren() != null) {
+            for (CaseFolder c : f.getChildren()) {
+                boolean childContainsFolder = containsFolder(c, folderId);
+                if (childContainsFolder) {
+                    return true;
+                }
+
+            }
+        }
+        return false;
     }
 
     @Override

@@ -667,14 +667,10 @@ import com.jdimension.jlawyer.client.components.MultiCalDialog;
 import com.jdimension.jlawyer.client.configuration.OptionGroupListCellRenderer;
 import com.jdimension.jlawyer.client.configuration.UserListCellRenderer;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
-import com.jdimension.jlawyer.client.editors.addresses.ContactTypeColors;
 import com.jdimension.jlawyer.client.editors.documents.SearchAndAssignDialog;
-import com.jdimension.jlawyer.client.editors.files.AddressBeanListCellRenderer;
 import com.jdimension.jlawyer.client.editors.files.OptionsComboBoxModel;
 import com.jdimension.jlawyer.client.editors.files.PartiesPanelEntry;
 import com.jdimension.jlawyer.client.editors.files.PartiesSelectionListener;
-import com.jdimension.jlawyer.client.events.AllDocumentTagsEvent;
-import com.jdimension.jlawyer.client.events.DocumentAddedEvent;
 import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.events.ReviewAddedEvent;
 import com.jdimension.jlawyer.client.launcher.Launcher;
@@ -698,12 +694,12 @@ import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
+import com.jdimension.jlawyer.persistence.CaseFolder;
 import com.jdimension.jlawyer.persistence.PartyTypeBean;
 import com.jdimension.jlawyer.services.AddressServiceRemote;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Color;
-import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.io.File;
@@ -846,9 +842,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
 
                 }
                 if (invalids > 0 || valids == 0) {
-                    //this.popRecipients.getSelectionModel().setSelectedIndex(0);
                     popRecipients.show(cmdRecipients, 0, 0);
-                    //this.popRecipients.setSelected(this.mnuSearchRecipient);
                     MenuSelectionManager.defaultManager().setSelectedPath(new MenuElement[]{popRecipients, mnuSearchRecipient});
 
                 } else {
@@ -864,7 +858,6 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         this.txtCc.getActionMap().put("Enter", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent ae) {
-                //if (evt.getKeyCode() == evt.VK_ENTER) {
                 String[] mails = txtCc.getText().split(",");
                 int valids = 0;
                 int invalids = 0;
@@ -880,9 +873,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
 
                 }
                 if (invalids > 0 || valids == 0) {
-                    //this.popRecipients.getSelectionModel().setSelectedIndex(0);
                     popRecipients.show(cmdRecipientsCc, 0, 0);
-                    //this.popRecipients.setSelected(this.mnuSearchRecipient);
                     MenuSelectionManager.defaultManager().setSelectedPath(new MenuElement[]{popRecipients, mnuSearchRecipientCc});
 
                 } else {
@@ -896,7 +887,6 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         this.txtBcc.getActionMap().put("Enter", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent ae) {
-                //if (evt.getKeyCode() == evt.VK_ENTER) {
                 String[] mails = txtBcc.getText().split(",");
                 int valids = 0;
                 int invalids = 0;
@@ -912,9 +902,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
 
                 }
                 if (invalids > 0 || valids == 0) {
-                    //this.popRecipients.getSelectionModel().setSelectedIndex(0);
                     popRecipients.show(cmdRecipientsBcc, 0, 0);
-                    //this.popRecipients.setSelected(this.mnuSearchRecipient);
                     MenuSelectionManager.defaultManager().setSelectedPath(new MenuElement[]{popRecipients, mnuSearchRecipientBcc});
 
                 } else {
@@ -931,7 +919,6 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         for (int i = 0; i < reviewReasons.length; i++) {
             AppOptionGroupBean aogb = (AppOptionGroupBean) reviewReasons[i];
             reviewReasonItems[i + 1] = aogb.getValue();
-            //reviewReasonItems[i+1]=reviewReasons[i];
         }
         StringUtils.sortIgnoreCase(reviewReasonItems);
         OptionsComboBoxModel reviewReasonModel = new OptionsComboBoxModel(reviewReasonItems);
@@ -1018,12 +1005,6 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         this.lblFrom.setText(f);
     }
 
-//    public void addAllParties(List<AddressBean> list, PartyTypeBean ptb) {
-//        for (AddressBean o : list) {
-//            this.addParty(o, ptb);
-//        }
-//    }
-
     public void addParty(AddressBean addr, PartyTypeBean ptb) {
         
         this.pnlParties.addParty(new PartiesPanelEntry(addr, ptb));
@@ -1041,17 +1022,6 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         this.addRecipientCandidate(p.getAddressKey(), p.getReferenceType());
         
     }
-    
-//    public void addParty(AddressBean ab, PartyTypeBean ptb) {
-//        if (ab == null) {
-//            return;
-//        }
-//
-//        this.pnlParties.addParty(ab, ptb);
-//
-//        this.addRecipientCandidate(ab, ptb);
-//
-//    }
 
     public void setDictateSign(String dictateSign) {
         this.contextDictateSign = dictateSign;
@@ -1085,8 +1055,6 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
     public void setBody(String b, String contentType) {
         AppUserBean cu = UserSettings.getInstance().getCurrentUser();
 
-//        this.taBody.setText(b + cu.getEmailSignature());
-//        this.taBody.setCaretPosition(0);
         if (contentType.toLowerCase().startsWith("text/plain")) {
 
             this.tp.setText(b + EmailUtils.Html2Text(cu.getEmailSignature()));
@@ -1247,12 +1215,6 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
 
         jLabel1.setText("Von:");
 
-        txtBcc.addKeyListener(new java.awt.event.KeyAdapter() {
-            public void keyReleased(java.awt.event.KeyEvent evt) {
-                txtBccKeyReleased(evt);
-            }
-        });
-
         contentPanel.addComponentListener(new java.awt.event.ComponentAdapter() {
             public void componentResized(java.awt.event.ComponentEvent evt) {
                 contentPanelComponentResized(evt);
@@ -1343,19 +1305,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         });
         jToolBar1.add(cmdAttach);
 
-        txtCc.addKeyListener(new java.awt.event.KeyAdapter() {
-            public void keyReleased(java.awt.event.KeyEvent evt) {
-                txtCcKeyReleased(evt);
-            }
-        });
-
         jLabel9.setText("BCC:");
-
-        txtTo.addKeyListener(new java.awt.event.KeyAdapter() {
-            public void keyReleased(java.awt.event.KeyEvent evt) {
-                txtToKeyReleased(evt);
-            }
-        });
 
         javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);
@@ -1741,11 +1691,13 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
             return;
         }
 
+        CaseFolder folder=null;
         if (this.chkSaveAsDocument.isSelected() || !(this.radioReviewTypeNone.isSelected())) {
             if (this.contextArchiveFile == null) {
                 SearchAndAssignDialog saDlg = new SearchAndAssignDialog(this, true, ""+this.txtSubject.getText()+ed.getText());
                 saDlg.setVisible(true);
-                this.contextArchiveFile = saDlg.getSelection();
+                this.contextArchiveFile = saDlg.getCaseSelection();
+                folder=saDlg.getFolderSelection();
 
                 saDlg.dispose();
 
@@ -1779,9 +1731,9 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                         return;
                     }
                 }
-                a = new SendEncryptedAction(dlg, this, new ArrayList(this.attachments.values()), this.cu, this.chkReadReceipt.isSelected(), this.txtTo.getText(), this.txtCc.getText(), this.txtBcc.getText(), this.txtSubject.getText(), ed.getText(), contentType, this.contextArchiveFile, createDocumentTag);
+                a = new SendEncryptedAction(dlg, this, new ArrayList(this.attachments.values()), this.cu, this.chkReadReceipt.isSelected(), this.txtTo.getText(), this.txtCc.getText(), this.txtBcc.getText(), this.txtSubject.getText(), ed.getText(), contentType, this.contextArchiveFile, createDocumentTag, folder);
             } else {
-                a = new SendAction(dlg, this, new ArrayList(this.attachments.values()), this.cu, this.chkReadReceipt.isSelected(), this.txtTo.getText(), this.txtCc.getText(), this.txtBcc.getText(), this.txtSubject.getText(), ed.getText(), contentType, this.contextArchiveFile, createDocumentTag);
+                a = new SendAction(dlg, this, new ArrayList(this.attachments.values()), this.cu, this.chkReadReceipt.isSelected(), this.txtTo.getText(), this.txtCc.getText(), this.txtBcc.getText(), this.txtSubject.getText(), ed.getText(), contentType, this.contextArchiveFile, createDocumentTag, folder);
             }
 
         } else if (this.chkEncryption.isSelected()) {
@@ -1872,24 +1824,6 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
     }
 
     private void cmdAttachActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdAttachActionPerformed
-//        JFileChooser chooser = new JFileChooser();
-//        chooser.setMultiSelectionEnabled(true);
-//        int returnVal = chooser.showOpenDialog(this);
-//        if (returnVal == JFileChooser.APPROVE_OPTION) {
-//            try {
-//                //this.txtImportFile.setText(chooser.getSelectedFile().getCanonicalPath());
-//                File[] files = chooser.getSelectedFiles();
-//                for (File f : files) {
-//                    byte[] data = FileUtils.readFile(f);
-//                    String tmpUrl = FileUtils.createTempFile(f.getName(), data);
-//                    this.addAttachment(tmpUrl, null);
-//                }
-//
-//            } catch (Exception ioe) {
-//                log.error("Error attaching document", ioe);
-//                JOptionPane.showMessageDialog(this, "Fehler beim Laden der Datei: " + ioe.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
-//            }
-//        }
 
         String caseId = null;
         if (this.contextArchiveFile != null) {
@@ -1900,7 +1834,6 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         sad.setVisible(true);
 
         try {
-            //this.txtImportFile.setText(chooser.getSelectedFile().getCanonicalPath());
             File[] files = sad.getSelectedFiles();
             if (files == null) {
                 return;
@@ -1989,8 +1922,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                     ht.put(ph, "");
                 }
                 htValues = PlaceHolderUtils.getPlaceHolderValues(ht, this.contextArchiveFile, selectedParties, this.contextDictateSign, null, new Hashtable<String,String>(), caseLawyer, caseAssistant, author);
-                //this.taBody.setText(EmailTemplateAccess.replacePlaceHolders(tpl.getBody(), htValues) + System.getProperty("line.separator") + System.getProperty("line.separator") + this.cu.getEmailSignature());
-
+                
                 if(this.cloudLink!=null)
                     htValues.put("{{CLOUD_LINK}}", this.cloudLink);
                 
@@ -2010,8 +1942,6 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                     this.htmlActionPerformed(null);
                 }
 
-//                this.tp.setText(EmailTemplateAccess.replacePlaceHolders(tpl.getBody(), htValues) + System.getProperty("line.separator") + System.getProperty("line.separator") + this.cu.getEmailSignature());
-//                this.hp.setText(EmailTemplateAccess.replacePlaceHolders(tpl.getBody(), htValues) + System.getProperty("line.separator") + System.getProperty("line.separator") + this.cu.getEmailSignature());
             } catch (Exception ex) {
                 log.error("Error initiating template", ex);
                 JOptionPane.showMessageDialog(this, "Fehler beim Erstellen der Vorlage: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
@@ -2034,11 +1964,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
             this.contentPanel.remove(0);
             this.contentPanel.add(tp);
             tp.setBounds(0, 0, this.contentPanel.getWidth(), this.contentPanel.getHeight());
-            //tp.setSize(this.contentPanel.getWidth(), this.contentPanel.getHeight());
             hp.setBounds(0, 0, this.contentPanel.getWidth(), this.contentPanel.getHeight());
-            //hp.setSize(this.contentPanel.getWidth(), this.contentPanel.getHeight());
-            //this.contentPanel.repaint();
-            //tp.repaint();
             SwingUtilities.updateComponentTreeUI(tp);
             SwingUtilities.updateComponentTreeUI(hp);
 
@@ -2050,30 +1976,20 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
             this.contentPanel.remove(0);
             this.contentPanel.add(hp);
             hp.setBounds(0, 0, this.contentPanel.getWidth(), this.contentPanel.getHeight());
-            //hp.setSize(this.contentPanel.getWidth(), this.contentPanel.getHeight());
             tp.setBounds(0, 0, this.contentPanel.getWidth(), this.contentPanel.getHeight());
-            //tp.setSize(this.contentPanel.getWidth(), this.contentPanel.getHeight());
-            //this.contentPanel.repaint();
-            //hp.repaint();
             SwingUtilities.updateComponentTreeUI(tp);
             SwingUtilities.updateComponentTreeUI(hp);
         }
     }//GEN-LAST:event_htmlActionPerformed
 
     private void contentPanelComponentResized(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_contentPanelComponentResized
-        //Component c=contentPanel.getComponent(0);
         tp.setBounds(0, 0, this.contentPanel.getWidth(), this.contentPanel.getHeight());
-        //tp.setSize(this.contentPanel.getWidth(), this.contentPanel.getHeight());
         hp.setBounds(0, 0, this.contentPanel.getWidth(), this.contentPanel.getHeight());
-        //hp.setSize(this.contentPanel.getWidth(), this.contentPanel.getHeight());
-        //hp.repaint();
-        //tp.repaint();
         SwingUtilities.updateComponentTreeUI(tp);
         SwingUtilities.updateComponentTreeUI(hp);
     }//GEN-LAST:event_contentPanelComponentResized
 
     private void mnuSearchRecipientActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSearchRecipientActionPerformed
-        //AddRecipientSearchDialog dlg = new AddRecipientSearchDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.txtTo);
         AddRecipientSearchDialog dlg = new AddRecipientSearchDialog(this, true, this.txtTo, this.txtCc);
         dlg.setTitle("Empfänger hinzufügen (An)");
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
@@ -2089,7 +2005,6 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
     }//GEN-LAST:event_cmdRecipientsBccActionPerformed
 
     private void mnuSearchRecipientCcActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSearchRecipientCcActionPerformed
-        //AddRecipientSearchDialog dlg = new AddRecipientSearchDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.txtCc);
         AddRecipientSearchDialog dlg = new AddRecipientSearchDialog(this, true, this.txtCc, this.txtBcc);
         dlg.setTitle("Empfänger hinzufügen (CC)");
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
@@ -2097,7 +2012,6 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
     }//GEN-LAST:event_mnuSearchRecipientCcActionPerformed
 
     private void mnuSearchRecipientBccActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSearchRecipientBccActionPerformed
-        //AddRecipientSearchDialog dlg = new AddRecipientSearchDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.txtBcc);
         AddRecipientSearchDialog dlg = new AddRecipientSearchDialog(this, true, this.txtBcc, this.txtSubject);
         dlg.setTitle("Empfänger hinzufügen (BCC)");
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
@@ -2107,70 +2021,6 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
     private void formComponentResized(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentResized
         ComponentUtils.storeDialogSize(this);
     }//GEN-LAST:event_formComponentResized
-
-    private void txtToKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtToKeyReleased
-
-    }//GEN-LAST:event_txtToKeyReleased
-
-    private void txtCcKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtCcKeyReleased
-//        if (evt.getKeyCode() == evt.VK_ENTER) {
-//            String[] mails = this.txtCc.getText().split(",");
-//            int valids = 0;
-//            int invalids = 0;
-//
-//            if (mails != null) {
-//                for (String m : mails) {
-//                    if (EmailUtils.isValidEmailAddress(m.trim())) {
-//                        valids++;
-//                    } else {
-//                        invalids++;
-//                    }
-//                }
-//
-//            }
-//            if (invalids > 0 || valids == 0) {
-//                //this.popRecipients.getSelectionModel().setSelectedIndex(0);
-//                this.popRecipients.show(this.cmdRecipientsCc, 0, 0);
-//                //this.popRecipients.setSelected(this.mnuSearchRecipient);
-//                MenuSelectionManager.defaultManager().setSelectedPath(new MenuElement[]{this.popRecipients, this.mnuSearchRecipientCc});
-//
-//            } else {
-//                // focus next field
-//                this.txtBcc.requestFocusInWindow();
-//            }
-//
-//        }
-    }//GEN-LAST:event_txtCcKeyReleased
-
-    private void txtBccKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtBccKeyReleased
-//        if (evt.getKeyCode() == evt.VK_ENTER) {
-//            String[] mails = this.txtBcc.getText().split(",");
-//            int valids = 0;
-//            int invalids = 0;
-//
-//            if (mails != null) {
-//                for (String m : mails) {
-//                    if (EmailUtils.isValidEmailAddress(m.trim())) {
-//                        valids++;
-//                    } else {
-//                        invalids++;
-//                    }
-//                }
-//
-//            }
-//            if (invalids > 0 || valids == 0) {
-//                //this.popRecipients.getSelectionModel().setSelectedIndex(0);
-//                this.popRecipients.show(this.cmdRecipientsBcc, 0, 0);
-//                //this.popRecipients.setSelected(this.mnuSearchRecipient);
-//                MenuSelectionManager.defaultManager().setSelectedPath(new MenuElement[]{this.popRecipients, this.mnuSearchRecipientBcc});
-//
-//            } else {
-//                // focus next field
-//                this.txtSubject.requestFocusInWindow();
-//            }
-//
-//        }
-    }//GEN-LAST:event_txtBccKeyReleased
 
     private void chkEncryptionStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_chkEncryptionStateChanged
         if (this.chkEncryption.isSelected()) {

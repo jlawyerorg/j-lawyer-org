@@ -673,6 +673,7 @@ import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.persistence.CaseFolder;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.ui.tagging.TagUtils;
@@ -682,7 +683,12 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.swing.AbstractAction;
 import javax.swing.JComponent;
+import javax.swing.JOptionPane;
 import javax.swing.KeyStroke;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.MutableTreeNode;
+import javax.swing.tree.TreePath;
 import org.apache.log4j.Logger;
 
 /**
@@ -693,7 +699,14 @@ public class SearchAndAssignDialog extends javax.swing.JDialog {
 
     private static final Logger log = Logger.getLogger(SearchAndAssignDialog.class.getName());
 
-    private ArchiveFileBean selection = null;
+    // holds the selected case, e.g. when user double clicks an entry or uses the button
+    private ArchiveFileBean caseSelection = null;
+    // nolds the last selected folder
+    private CaseFolder folderSelection=null;
+    
+    // holds the last selected case, required to determine whether or not caseSelection actually changed
+    // only when changed, the folder structure is to be reloaded, otherwise selected folder needs to be retained
+    private ArchiveFileBean lastSelection = null;
 
     // this can be an arbitrary string or longer text
     // it will be searched for file number and name of cases to quickly find matching cases
@@ -725,9 +738,7 @@ public class SearchAndAssignDialog extends javax.swing.JDialog {
     }
 
     private void initialize() {
-//        String[] colNames = new String[]{"Aktenzeichen", "Kurzrubrum", "wegen", "archiviert", "Anwalt"};
-//        QuickArchiveFileSearchTableModel model = new QuickArchiveFileSearchTableModel(colNames, 0);
-//        this.tblResults.setModel(model);
+        this.treeFolders.setCellRenderer(new CaseFolderCellRenderer());
 
         this.tblResults.setDefaultRenderer(Object.class, new QuickArchiveFileSearchCellRenderer());
 
@@ -777,16 +788,17 @@ public class SearchAndAssignDialog extends javax.swing.JDialog {
                 Object[] row = new Object[]{new QuickArchiveFileSearchRowIdentifier(a), a.getName(), a.getReason(), new Boolean(a.getArchivedBoolean()), a.getLawyer()};
                 model.addRow(row);
             }
-            
+
             // last changed follow
             for (ArchiveFileBean a : lastChanged) {
                 Object[] row = new Object[]{new QuickArchiveFileSearchRowIdentifier(a), a.getName(), a.getReason(), new Boolean(a.getArchivedBoolean()), a.getLawyer()};
                 model.addRow(row);
             }
-            
-            if(model.getRowCount()>0) {
+
+            if (model.getRowCount() > 0) {
                 this.tblResults.setRowSelectionInterval(0, 0);
             }
+            this.updateCaseFolderStructure();
 
         } catch (Exception t) {
             log.error("unable to get last changed cases", t);
@@ -794,25 +806,29 @@ public class SearchAndAssignDialog extends javax.swing.JDialog {
     }
 
     private void useSelection() {
-        int row
-                = this.tblResults
-                        .getSelectedRow();
-        QuickArchiveFileSearchRowIdentifier id
-                = (QuickArchiveFileSearchRowIdentifier) this.tblResults
-                        .getValueAt(row,
-                                0);
+        int row = this.tblResults.getSelectedRow();
+        QuickArchiveFileSearchRowIdentifier id = (QuickArchiveFileSearchRowIdentifier) this.tblResults.getValueAt(row, 0);
 
-        this.selection
-                = id
-                        .getArchiveFileDTO();
+        this.caseSelection = id.getArchiveFileDTO();
+        if(this.treeFolders.getSelectionCount()==1) {
+            DefaultMutableTreeNode tn = (DefaultMutableTreeNode) this.treeFolders.getSelectionPath().getLastPathComponent();
+            if(tn!=null && tn.getUserObject()!=null && tn.getUserObject() instanceof CaseFolder)
+                this.folderSelection = (CaseFolder) tn.getUserObject();
+            
+        }
+        
 
         this.setVisible(false);
 
     }
 
-    public ArchiveFileBean
-            getSelection() {
-        return this.selection;
+    public ArchiveFileBean getCaseSelection() {
+        return this.caseSelection;
+
+    }
+    
+    public CaseFolder getFolderSelection() {
+        return this.folderSelection;
 
     }
 
@@ -827,6 +843,8 @@ public class SearchAndAssignDialog extends javax.swing.JDialog {
 
         popTagFilter = new javax.swing.JPopupMenu();
         popDocumentTagFilter = new javax.swing.JPopupMenu();
+        popFolders = new javax.swing.JPopupMenu();
+        mnuNewFolder = new javax.swing.JMenuItem();
         jLabel1 = new javax.swing.JLabel();
         txtSearchString = new javax.swing.JTextField();
         cmdQuickSearch = new javax.swing.JButton();
@@ -836,6 +854,16 @@ public class SearchAndAssignDialog extends javax.swing.JDialog {
         cmdUseSelection = new javax.swing.JButton();
         cmdTagFilter = new javax.swing.JButton();
         cmdDocumentTagFilter = new javax.swing.JButton();
+        jScrollPane2 = new javax.swing.JScrollPane();
+        treeFolders = new javax.swing.JTree();
+
+        mnuNewFolder.setText("Unterordner erstellen");
+        mnuNewFolder.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuNewFolderActionPerformed(evt);
+            }
+        });
+        popFolders.add(mnuNewFolder);
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Akte suchen");
@@ -915,6 +943,16 @@ public class SearchAndAssignDialog extends javax.swing.JDialog {
             }
         });
 
+        treeFolders.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                treeFoldersMousePressed(evt);
+            }
+            public void mouseReleased(java.awt.event.MouseEvent evt) {
+                treeFoldersMouseReleased(evt);
+            }
+        });
+        jScrollPane2.setViewportView(treeFolders);
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -922,22 +960,25 @@ public class SearchAndAssignDialog extends javax.swing.JDialog {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addComponent(cmdUseSelection)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdCancel))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addComponent(jLabel1)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(txtSearchString)
+                        .addComponent(txtSearchString, javax.swing.GroupLayout.DEFAULT_SIZE, 499, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cmdQuickSearch)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(cmdTagFilter)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cmdDocumentTagFilter))
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 672, Short.MAX_VALUE)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addGap(0, 0, Short.MAX_VALUE)
-                        .addComponent(cmdUseSelection)
+                        .addComponent(jScrollPane1)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(cmdCancel)))
+                        .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 154, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -952,7 +993,9 @@ public class SearchAndAssignDialog extends javax.swing.JDialog {
                     .addComponent(cmdTagFilter)
                     .addComponent(cmdDocumentTagFilter))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 179, Short.MAX_VALUE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 371, Short.MAX_VALUE)
+                    .addComponent(jScrollPane2))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(cmdCancel)
@@ -988,22 +1031,88 @@ public class SearchAndAssignDialog extends javax.swing.JDialog {
 
     }//GEN-LAST:event_cmdQuickSearchActionPerformed
 
+    private void showPopupMenu(java.awt.event.MouseEvent evt) {
+        if (evt.isPopupTrigger()) {
+            int row = this.treeFolders.getRowForLocation(evt.getX(), evt.getY());
+            if (row < 0) {
+                return;
+            }
+
+            this.treeFolders.setSelectionRow(row);
+
+            if (this.treeFolders.getSelectionPath() == null) {
+                return;
+            }
+
+            if (this.treeFolders.getSelectionPath().getLastPathComponent() == null) {
+                return;
+            }
+
+            DefaultMutableTreeNode tn = (DefaultMutableTreeNode) this.treeFolders.getSelectionPath().getLastPathComponent();
+            if(tn!=null && tn.getUserObject()!=null && tn.getUserObject() instanceof CaseFolder)
+                this.popFolders.show(evt.getComponent(), evt.getX(), evt.getY());
+        }
+    }
+    
+    private void updateCaseFolderStructure() {
+        if (this.tblResults.getSelectedRowCount() == 1) {
+            int row = this.tblResults.getSelectedRow();
+            QuickArchiveFileSearchRowIdentifier id = (QuickArchiveFileSearchRowIdentifier) this.tblResults.getValueAt(row, 0);
+            ArchiveFileBean selectedCase = id.getArchiveFileDTO();
+            
+            if (this.lastSelection == null || !selectedCase.equals(this.lastSelection)) {
+                this.lastSelection=selectedCase;
+                CaseFolder rootFolder = selectedCase.getRootFolder();
+                
+                DefaultTreeModel tm = new DefaultTreeModel(buildTree(rootFolder));
+                this.treeFolders.setModel(tm);
+                ComponentUtils.expandTree(treeFolders);
+                this.treeFolders.setSelectionRow(0);
+            } else {
+                // user clicked but there is no change in caseSelection - leave case folder selected as is
+            }
+
+        } else {
+            DefaultTreeModel tm = new DefaultTreeModel(null);
+            this.treeFolders.setModel(tm);
+            this.lastSelection=null;
+            this.treeFolders.setSelectionRow(0);
+        }
+        
+    }
+
+    private MutableTreeNode buildTree(CaseFolder cf) {
+        if (cf != null) {
+            DefaultMutableTreeNode node = new DefaultMutableTreeNode(cf);
+            for (CaseFolder child : cf.getChildren()) {
+                node.add(buildTree(child));
+            }
+            return node;
+        } else {
+            return new DefaultMutableTreeNode("unbekannt");
+        }
+
+    }
+
     private void tblResultsMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblResultsMouseClicked
-        if (evt
-                .getClickCount() == 2 && evt
-                        .getButton() == evt.BUTTON1) {
+        if (evt.getClickCount() == 2 && evt.getButton() == evt.BUTTON1) {
             this.useSelection();
 
+        } else if (evt.getClickCount() == 1 && evt.getButton() == evt.BUTTON1) {
+            this.updateCaseFolderStructure();
         }
 
     }//GEN-LAST:event_tblResultsMouseClicked
 
     private void tblResultsKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_tblResultsKeyReleased
+        if (this.tblResults.getSelectedRowCount() == 1 && (evt.getKeyCode() == evt.VK_DOWN || evt.getKeyCode() == evt.VK_UP)) {
+            this.updateCaseFolderStructure();
 
+        }
     }//GEN-LAST:event_tblResultsKeyReleased
 
     private void cmdCancelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCancelActionPerformed
-        this.selection
+        this.caseSelection
                 = null;
 
         this.setVisible(false);
@@ -1041,6 +1150,57 @@ public class SearchAndAssignDialog extends javax.swing.JDialog {
                                 .getX(), evt
                                 .getY());
     }//GEN-LAST:event_cmdDocumentTagFilterMousePressed
+
+    private void treeFoldersMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_treeFoldersMousePressed
+        this.showPopupMenu(evt);
+    }//GEN-LAST:event_treeFoldersMousePressed
+
+    private void treeFoldersMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_treeFoldersMouseReleased
+        this.showPopupMenu(evt);
+    }//GEN-LAST:event_treeFoldersMouseReleased
+
+    private void mnuNewFolderActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuNewFolderActionPerformed
+        try {
+            
+            if (this.treeFolders.getSelectionPath() == null || this.treeFolders.getSelectionPath().getLastPathComponent()==null) {
+                return;
+            }
+
+            String parentId=null;
+            DefaultMutableTreeNode tn = (DefaultMutableTreeNode) this.treeFolders.getSelectionPath().getLastPathComponent();
+            if(tn.getUserObject()!=null && tn.getUserObject() instanceof CaseFolder) {
+                parentId=((CaseFolder)tn.getUserObject()).getId();
+            } else {
+                return;
+            }
+
+            Object newNameObject = JOptionPane.showInputDialog(this, "Ordnername: ", "Unterordner erstellen", JOptionPane.QUESTION_MESSAGE, null, null, "Ordner");
+            if (newNameObject == null || "".equals(newNameObject)) {
+                return;
+            }
+            String name = newNameObject.toString();
+
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            CaseFolder newFolder=locator.lookupArchiveFileServiceRemote().createCaseFolder(parentId, name);
+            ((CaseFolder)tn.getUserObject()).getChildren().add(newFolder);
+            
+            DefaultMutableTreeNode newTn = new DefaultMutableTreeNode(newFolder);
+
+            DefaultTreeModel dm = (DefaultTreeModel) this.treeFolders.getModel();
+            dm.insertNodeInto(newTn, tn, 0);
+            
+            TreePath tp= new TreePath(tn.getPath());
+            int parentRow=treeFolders.getRowForPath(tp);
+            treeFolders.expandRow(parentRow);
+            
+            this.treeFolders.setSelectionRow(parentRow+1);
+            
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Erstellen des Ordners: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+    }//GEN-LAST:event_mnuNewFolderActionPerformed
 
     /**
      * @param args the command line arguments
@@ -1123,9 +1283,13 @@ public class SearchAndAssignDialog extends javax.swing.JDialog {
     private javax.swing.JButton cmdUseSelection;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JScrollPane jScrollPane2;
+    private javax.swing.JMenuItem mnuNewFolder;
     private javax.swing.JPopupMenu popDocumentTagFilter;
+    private javax.swing.JPopupMenu popFolders;
     private javax.swing.JPopupMenu popTagFilter;
     private javax.swing.JTable tblResults;
+    private javax.swing.JTree treeFolders;
     private javax.swing.JTextField txtSearchString;
     // End of variables declaration//GEN-END:variables
 }

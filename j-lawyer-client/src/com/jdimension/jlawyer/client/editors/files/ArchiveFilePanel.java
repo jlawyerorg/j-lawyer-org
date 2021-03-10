@@ -753,7 +753,6 @@ import java.io.File;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
-//import javafx.scene.input.KeyCode;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableRowSorter;
@@ -4684,7 +4683,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
             SearchAndAssignDialog dlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true, null);
             dlg.setVisible(true);
-            ArchiveFileBean sel = dlg.getSelection();
+            ArchiveFileBean sel = dlg.getCaseSelection();
+            CaseFolder folder=dlg.getFolderSelection();
 
             dlg.dispose();
 
@@ -4711,6 +4711,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                             }
 
                             ArchiveFileDocumentsBean newDoc = remote.addDocument(sel.getId(), newName, content, doc.getDictateSign());
+                            if(folder != null) {
+                                ArrayList<String> docList = new ArrayList<String>();
+                                docList.add(newDoc.getId());
+                                remote.moveDocumentsToFolder(docList, folder.getId());
+                            }
                         } catch (Exception ioe) {
                             log.error("Error duplicating document", ioe);
                             JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Kopieren des Dokuments: " + ioe.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);

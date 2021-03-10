@@ -676,6 +676,7 @@ import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileHistoryBean;
+import com.jdimension.jlawyer.persistence.CaseFolder;
 import com.jdimension.jlawyer.persistence.DocumentTagsBean;
 import com.jdimension.jlawyer.services.AddressServiceRemote;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
@@ -686,7 +687,6 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Properties;
-import javax.activation.DataHandler;
 import javax.activation.FileDataSource;
 import javax.mail.*;
 import javax.mail.internet.*;
@@ -711,6 +711,7 @@ public class SendEncryptedAction extends ProgressableAction {
     private String body = "";
     private String contentType = "text/plain";
     private ArchiveFileBean archiveFile = null;
+    private CaseFolder folder=null;
     private ArrayList<String> mails = null;
     private String documentTag = null;
 
@@ -732,9 +733,10 @@ public class SendEncryptedAction extends ProgressableAction {
         mails.addAll(EmailUtils.getAllMailAddressesFromString(this.bcc));
     }
 
-    public SendEncryptedAction(ProgressIndicator i, JDialog cleanAfter, ArrayList<String> attachments, AppUserBean cu, boolean readReceipt, String to, String cc, String bcc, String subject, String body, String contentType, ArchiveFileBean af, String documentTag) {
+    public SendEncryptedAction(ProgressIndicator i, JDialog cleanAfter, ArrayList<String> attachments, AppUserBean cu, boolean readReceipt, String to, String cc, String bcc, String subject, String body, String contentType, ArchiveFileBean af, String documentTag, CaseFolder folder) {
         this(i, cleanAfter, attachments, cu, readReceipt, to, cc, bcc, subject, body, contentType, documentTag);
         this.archiveFile = af;
+        this.folder=folder;
     }
 
     @Override
@@ -838,17 +840,13 @@ public class SendEncryptedAction extends ProgressableAction {
                 }
 
                 msg.setRecipients(Message.RecipientType.TO, currentRecipientMail);
-//                msg.setRecipients(Message.RecipientType.CC, cc);
-//                msg.setRecipients(Message.RecipientType.BCC, bcc);
 
                 msg.setSubject(MimeUtility.encodeText(subject, "utf-8", "B"));
                 msg.setSentDate(new Date());
-                //msg.setText(this.taBody.getText());
 
                 Multipart multiPart = new MimeMultipart();
 
                 MimeBodyPart messageText = new MimeBodyPart();
-                //messageText.setContent(body, "text/plain; charset=UTF-8");
                 messageText.setContent(body, this.contentType + "; charset=UTF-8");
                 multiPart.addBodyPart(messageText);
 
@@ -868,7 +866,6 @@ public class SendEncryptedAction extends ProgressableAction {
                 msg.setContent(multiPart);
 
                 this.progress("Sende an " + currentRecipientMail + "...");
-                //Transport.send(msg);
                 msg.saveChanges();
                 bus.send(msg);
 
@@ -924,6 +921,12 @@ public class SendEncryptedAction extends ProgressableAction {
                             if (this.documentTag != null && !("".equals(this.documentTag))) {
                                 afs.setDocumentTag(newDoc.getId(), new DocumentTagsBean(newDoc.getId(), this.documentTag), true);
                             }
+                            
+                            if(this.folder != null) {
+                                ArrayList<String> docList = new ArrayList<String>();
+                                docList.add(newDoc.getId());
+                                afs.moveDocumentsToFolder(docList, folder.getId());
+                            }
 
                             ArchiveFileHistoryBean historyDto = new ArchiveFileHistoryBean();
                             historyDto.setChangeDate(new Date());
@@ -965,7 +968,6 @@ public class SendEncryptedAction extends ProgressableAction {
 
                 try {
                     EmailUtils.closeIfIMAP(folder);
-                    //folder.close(true);
                 } catch (Throwable t) {
                     log.error(t);
                 }
@@ -994,7 +996,6 @@ public class SendEncryptedAction extends ProgressableAction {
 
         } catch (Exception mex) {
             log.error(mex);
-//            JOptionPane.showMessageDialog(this, "Fehler beim Senden: " + mex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
             throw new Exception("Fehler beim Senden: " + mex.getMessage());
         }
         return true;

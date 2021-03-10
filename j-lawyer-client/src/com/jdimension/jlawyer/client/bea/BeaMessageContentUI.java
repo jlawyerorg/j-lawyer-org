@@ -679,6 +679,7 @@ import com.jdimension.jlawyer.client.utils.*;
 import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
+import com.jdimension.jlawyer.persistence.CaseFolder;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Dimension;
@@ -769,15 +770,6 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
 
         return this.editBody.getText();
 
-//        if("text/plain".equalsIgnoreCase(this.editBody.getContentType()))
-//            return this.editBody.getText();
-//        else
-//            return "";
-//        try {
-//            return this.editBody.getDocument().getText(0, editBody.getDocument().getLength());
-//        } catch (Throwable t) {
-//            return "";
-//        }
     }
 
     public String getContentType() {
@@ -800,8 +792,6 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
         try {
 
             System.out.println("TODO: set message read");
-//            if (!(msgC.isRead()))
-//                msgC.setRead(true);
 
             System.out.println("TODO: load with progressindicator");
             if (false) {
@@ -817,7 +807,6 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
         } catch (Exception ex) {
             log.error("Error getting contents of beA message", ex);
             JOptionPane.showMessageDialog(this, "Fehler beim Öffnen der Nachricht: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
-            //EditorsRegistry.getInstance().clearStatus();
         }
     }
 
@@ -825,12 +814,6 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
         // we copy the message to avoid the "Unable to load BODYSTRUCTURE" issue
 
         AppUserBean cu = UserSettings.getInstance().getCurrentUser();
-//        if (EmailUtils.isReceiptRequested(msg)) {
-//            int response = JOptionPane.showConfirmDialog(contentUI, "Der Absender hat eine Lesebestätigung angefordert - jetzt senden?", "Lesebestätigung", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
-//            if (response == JOptionPane.YES_OPTION) {
-//                EmailUtils.sendReceipt(cu, msg.getSubject(), MimeUtility.decodeText(msg.getFrom()[0].toString()));
-//            }
-//        }
 
         if (msg.getReceptionTime() == null) {
             log.warn("beA mesage " + msg.getId() + " - " + msg.getSubject() + " does not have a reception time yet!");
@@ -1308,7 +1291,6 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
             try {
                 byte[] data = ((Attachment) this.lstAttachments.getSelectedValue()).getContent();
                 String fileName = ((Attachment) this.lstAttachments.getSelectedValue()).getFileName();
-                //String tmpFile = FileUtils.createTempFile(this.lstAttachments.getSelectedValue().toString(), data);
                 ReadOnlyDocumentStore store = new ReadOnlyDocumentStore("beaattachment-" + fileName, fileName);
                 Launcher launcher = LauncherFactory.getLauncher(fileName, data, store);
                 launcher.launch(false);
@@ -1386,7 +1368,8 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
         }
         SearchAndAssignDialog dlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true, searchContext);
         dlg.setVisible(true);
-        ArchiveFileBean sel = dlg.getSelection();
+        ArchiveFileBean sel = dlg.getCaseSelection();
+        CaseFolder folder=dlg.getFolderSelection();
 
         dlg.dispose();
 
@@ -1407,6 +1390,12 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
                     }
 
                     ArchiveFileDocumentsBean newDoc = afs.addDocument(sel.getId(), newName, data, "");
+                    
+                    if (folder != null) {
+                        ArrayList<String> docList = new ArrayList<String>();
+                        docList.add(newDoc.getId());
+                        afs.moveDocumentsToFolder(docList, folder.getId());
+                    }
 
                     EventBroker eb = EventBroker.getInstance();
                     eb.publishEvent(new DocumentAddedEvent(newDoc));

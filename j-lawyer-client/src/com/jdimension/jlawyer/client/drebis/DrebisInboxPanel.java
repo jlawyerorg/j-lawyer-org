@@ -688,6 +688,7 @@ import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileTagsBean;
+import com.jdimension.jlawyer.persistence.CaseFolder;
 import com.jdimension.jlawyer.persistence.DocumentTagsBean;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.DrebisServiceRemote;
@@ -1296,11 +1297,13 @@ public class DrebisInboxPanel extends javax.swing.JPanel implements ThemeableEdi
             // removed due to custom file numbers
             // archiveFileNumber=ArchiveFileUtils.addLeadingZeroes(archiveFileNumber);
             ArchiveFileBean sel = afs.getArchiveFileByFileNumber(archiveFileNumber);
+            CaseFolder folder=null;
             if (sel == null) {
                 
                 SearchAndAssignDialog saDlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true, ""+archiveFileNumber);
                 saDlg.setVisible(true);
-                sel = saDlg.getSelection();
+                sel = saDlg.getCaseSelection();
+                folder=saDlg.getFolderSelection();
 
                 saDlg.dispose();
                 
@@ -1328,6 +1331,12 @@ public class DrebisInboxPanel extends javax.swing.JPanel implements ThemeableEdi
 
                 ArchiveFileDocumentsBean newlyAddedDocument = afs.addDocument(sel.getId(), newName, da.getContent(), "");
 
+                if (folder != null) {
+                    ArrayList<String> docList = new ArrayList<String>();
+                    docList.add(newlyAddedDocument.getId());
+                    afs.moveDocumentsToFolder(docList, folder.getId());
+                }
+                
                 temp = UserSettings.getInstance().getSetting(UserSettings.CONF_DREBIS_DOCUMENTTAGGINGENABLED, "false");
                 if ("true".equalsIgnoreCase(temp)) {
                     String docTag = UserSettings.getInstance().getSetting(UserSettings.CONF_DREBIS_LASTDOCUMENTTAG, "");
