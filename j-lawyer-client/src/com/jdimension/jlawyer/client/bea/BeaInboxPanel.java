@@ -717,7 +717,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -909,7 +909,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
         EditorsRegistry.getInstance().updateStatus("beA-Postfächer werden geladen...");
         DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode("beA-Postfächer");
         Collection<PostBox> inboxes = bea.getPostBoxes();
-        Hashtable<String, Folder> inboxFolders = new Hashtable<>();
+        HashMap<String, Folder> inboxFolders = new HashMap<>();
         for (PostBox pb : inboxes) {
             EditorsRegistry.getInstance().updateStatus("Lade beA-Postfach" + pb.getSafeId() + "...");
             try {
@@ -917,8 +917,8 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                 SortedBeaFolderNode pbNode = new SortedBeaFolderNode(identity);
                 rootNode.add(pbNode);
                 Collection<org.jlawyer.bea.model.Folder> folders = bea.getFolderStructure(pb.getSafeId());
-                Hashtable folderTable = new Hashtable();
-                Hashtable nodeTable = new Hashtable();
+                HashMap folderTable = new HashMap();
+                HashMap nodeTable = new HashMap();
                 for (org.jlawyer.bea.model.Folder f : folders) {
                     // collect all inbox folders for later
                     if (f.getType().equals(Folder.TYPE_INBOX)) {
