@@ -714,7 +714,6 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
             return new Hashtable();
         }
 
-        //String scanDir = System.getProperty("jlawyer.server.observe.directory");
         String scanDir = obs.getSettingValue();
         if (scanDir == null) {
             log.info("directory observation is switched off");
@@ -732,18 +731,17 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
             return new Hashtable();
         }
 
-        //ArrayList<String> fileNames = new ArrayList<String>();
         Hashtable<File, Date> fileObjects = new Hashtable<File, Date>();
         File files[] = scanDirectory.listFiles();
         if (files != null) {
             for (File f : files) {
                 if (!f.isDirectory()) {
-                    
+
                     if ((System.currentTimeMillis() - f.lastModified()) > 5000l) {
                         String name = f.getName();
                         fileObjects.put(f, new Date(f.lastModified()));
                     } else {
-                        
+
                         long size = f.length();
                         try {
                             Thread.sleep(300);
@@ -758,9 +756,7 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
                         }
 
                     }
-                    
-//                    String name = f.getName();
-//                    fileObjects.put(f, new Date(f.lastModified()));
+
                 }
             }
         } else {
@@ -780,7 +776,6 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
             return false;
         }
 
-        //String scanDir = System.getProperty("jlawyer.server.observe.directory");
         String scanDir = obs.getSettingValue();
         if (scanDir == null) {
             log.error("directory observation is switched off");
@@ -822,7 +817,6 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
             return null;
         }
 
-        //String scanDir = System.getProperty("jlawyer.server.observe.directory");
         String scanDir = obs.getSettingValue();
         if (scanDir == null) {
             log.error("directory observation is switched off");
@@ -858,7 +852,6 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
             return false;
         }
 
-        //String scanDir = System.getProperty("jlawyer.server.observe.directory");
         String scanDir = obs.getSettingValue();
         if (scanDir == null) {
             log.error("directory observation is switched off");
@@ -880,7 +873,6 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
             if (!f.isDirectory()) {
                 String name = f.getName();
                 if (name.equals(fileName)) {
-                    //f.delete();
                     byte[] data = SystemManagement.readFile(f);
                     this.archiveFileService.addDocument(archiveFileId, renameTo, data, "");
                     return true;
@@ -928,9 +920,9 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
             throw new Exception("Datei existiert bereits: " + template.getFileName());
         }
 
-        FileWriter fw = new FileWriter(f);
-        fw.write(template.toXML());
-        fw.close();
+        try (FileWriter fw = new FileWriter(f)) {
+            fw.write(template.toXML());
+        }
     }
 
     @Override
@@ -964,14 +956,15 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
 
         File f = new File(localBaseDir + fileName);
         if (f.exists()) {
-            FileReader fr = new FileReader(f);
-            char[] buffer = new char[1024];
-            int len = 0;
-            StringBuffer sb = new StringBuffer();
-            while ((len = fr.read(buffer)) > -1) {
-                sb.append(buffer, 0, len);
+            StringBuilder sb = new StringBuilder();
+            try (FileReader fr = new FileReader(f)) {
+                char[] buffer = new char[1024];
+                int len = 0;
+                
+                while ((len = fr.read(buffer)) > -1) {
+                    sb.append(buffer, 0, len);
+                }
             }
-            fr.close();
             EmailTemplate tpl = EmailTemplate.fromXML(sb.toString());
             tpl.setFileName(fileName);
             return tpl;
@@ -988,20 +981,21 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
         }
 
         Tika tika = new Tika();
+        String result = null;
         try {
-            Reader r = tika.parse(new ByteArrayInputStream(data));
-            BufferedReader br = new BufferedReader(r);
-            StringWriter sw = new StringWriter();
-            BufferedWriter bw = new BufferedWriter(sw);
-            char[] buffer = new char[1024];
-            int bytesRead = -1;
-            while ((bytesRead = br.read(buffer)) > -1) {
-                bw.write(buffer, 0, bytesRead);
+            try (Reader r = tika.parse(new ByteArrayInputStream(data));
+                    BufferedReader br = new BufferedReader(r);
+                    StringWriter sw = new StringWriter();
+                    BufferedWriter bw = new BufferedWriter(sw)) {
+                char[] buffer = new char[1024];
+                int bytesRead = -1;
+                while ((bytesRead = br.read(buffer)) > -1) {
+                    bw.write(buffer, 0, bytesRead);
+                }
+                result = sw.toString();
             }
-            bw.close();
-            br.close();
 
-            return sw.toString();
+            return result;
 
         } catch (Throwable t) {
             log.error("Error creating document preview", t);

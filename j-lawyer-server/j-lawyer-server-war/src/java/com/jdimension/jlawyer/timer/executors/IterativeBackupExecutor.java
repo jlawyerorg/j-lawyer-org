@@ -979,12 +979,9 @@ public class IterativeBackupExecutor {
         for (File file : files) {
             fileList.add(file);
             if (file.isDirectory()) {
-                //System.out.println("directory:" + file.getCanonicalPath());
                 if (!("searchindex".equals(file.getName())) && !("archivefiles-preview".equals(file.getName()))) {
                     getAllFiles(file, fileList);
                 }
-            } else {
-                //System.out.println("     file:" + file.getCanonicalPath());
             }
         }
 
@@ -1078,24 +1075,24 @@ public class IterativeBackupExecutor {
     public static void addToZip(File directoryToZip, File file, ZipOutputStream zos, BackupResult backupResult) throws FileNotFoundException,
             IOException {
 
-        FileInputStream fis = new FileInputStream(file);
+        try (FileInputStream fis = new FileInputStream(file)) {
 
-        // we want the zipEntry's path to be a relative path that is relative
-        // to the directory being zipped, so chop off the rest of the path
-        String zipFilePath = file.getCanonicalPath().substring(directoryToZip.getCanonicalPath().length() + 1,
-                file.getCanonicalPath().length());
-        log.debug("Writing '" + zipFilePath + "' to zip file");
-        ZipEntry zipEntry = new ZipEntry(zipFilePath);
-        zos.putNextEntry(zipEntry);
+            // we want the zipEntry's path to be a relative path that is relative
+            // to the directory being zipped, so chop off the rest of the path
+            String zipFilePath = file.getCanonicalPath().substring(directoryToZip.getCanonicalPath().length() + 1,
+                    file.getCanonicalPath().length());
+            log.debug("Writing '" + zipFilePath + "' to zip file");
+            ZipEntry zipEntry = new ZipEntry(zipFilePath);
+            zos.putNextEntry(zipEntry);
 
-        byte[] bytes = new byte[1024];
-        int length;
-        while ((length = fis.read(bytes)) >= 0) {
-            zos.write(bytes, 0, length);
+            byte[] bytes = new byte[1024];
+            int length;
+            while ((length = fis.read(bytes)) >= 0) {
+                zos.write(bytes, 0, length);
+            }
+
+            zos.closeEntry();
         }
-
-        zos.closeEntry();
-        fis.close();
 
         if (backupResult != null) {
             backupResult.increaseFileCounter();

@@ -736,7 +736,7 @@ public class CalculationPlugin implements Comparable {
 
                 char[] buffer = new char[1024];
                 int len = 0;
-                StringBuffer sb = new StringBuffer();
+                StringBuilder sb = new StringBuilder();
                 while ((len = reader.read(buffer)) > -1) {
                     sb.append(buffer, 0, len);
                 }
@@ -744,9 +744,9 @@ public class CalculationPlugin implements Comparable {
                 is.close();
                 String content = sb.toString();
 
-                FileWriter fw = new FileWriter(localFileLocation);
-                fw.write(content);
-                fw.close();
+                try (FileWriter fw = new FileWriter(localFileLocation)) {
+                    fw.write(content);
+                }
             }
         }
 

@@ -676,61 +676,59 @@ import org.apache.tika.Tika;
  * @author jens
  */
 public class PreviewGenerator {
-    
-    private static final Logger log=Logger.getLogger(PreviewGenerator.class.getName());
-    
+
+    private static final Logger log = Logger.getLogger(PreviewGenerator.class.getName());
+
     private ArchiveFileDocumentsBeanFacadeLocal archiveFileDocumentsFacade;
-    
+
     public PreviewGenerator(ArchiveFileDocumentsBeanFacadeLocal archiveFileDocumentsFacade) {
-        this.archiveFileDocumentsFacade=archiveFileDocumentsFacade;
+        this.archiveFileDocumentsFacade = archiveFileDocumentsFacade;
     }
-    
+
     public String getDocumentPreview(String id) throws Exception {
-        
-        ArchiveFileDocumentsBean db=this.archiveFileDocumentsFacade.find(id);
-        String aId=db.getArchiveFileKey().getId();
-        
-        if(!this.previewExists(aId, db.getName()))
+
+        ArchiveFileDocumentsBean db = this.archiveFileDocumentsFacade.find(id);
+        String aId = db.getArchiveFileKey().getId();
+
+        if (!this.previewExists(aId, db.getName())) {
             this.createPreview(aId, db.getName());
-        
+        }
+
         String localBaseDir = System.getProperty("jlawyer.server.basedirectory");
-        localBaseDir=localBaseDir.trim();
+        localBaseDir = localBaseDir.trim();
         if (!localBaseDir.endsWith(System.getProperty("file.separator"))) {
             localBaseDir = localBaseDir + System.getProperty("file.separator");
         }
-        
-        String dst=localBaseDir + "archivefiles-preview" + System.getProperty("file.separator") + aId + System.getProperty("file.separator");
-        
-        File dstDir=new File(dst);
+
+        String dst = localBaseDir + "archivefiles-preview" + System.getProperty("file.separator") + aId + System.getProperty("file.separator");
+
+        File dstDir = new File(dst);
         dstDir.mkdirs();
-                
-        dst=dst + db.getName();
-        
-        File dstFile=new File(dst);
-        
-        if(!(dstFile.exists())) {
-            throw new Exception ("Dokumentvorschau " + dst + " existiert nicht!");
+
+        dst = dst + db.getName();
+
+        File dstFile = new File(dst);
+
+        if (!(dstFile.exists())) {
+            throw new Exception("Dokumentvorschau " + dst + " existiert nicht!");
         }
-        
+
         return SystemManagement.readTextFile(dstFile);
     }
-    
+
     public boolean previewExists(String archiveFileId, String fileName) {
         String localBaseDir = System.getProperty("jlawyer.server.basedirectory");
-        localBaseDir=localBaseDir.trim();
+        localBaseDir = localBaseDir.trim();
         if (!localBaseDir.endsWith(System.getProperty("file.separator"))) {
             localBaseDir = localBaseDir + System.getProperty("file.separator");
         }
-        
-        
-        String dst=localBaseDir + "archivefiles-preview" + System.getProperty("file.separator") + archiveFileId + System.getProperty("file.separator");
-        //File dstDir=new File(dst);
-        //dstDir.mkdirs();
-        dst=dst + fileName;
-        
+
+        String dst = localBaseDir + "archivefiles-preview" + System.getProperty("file.separator") + archiveFileId + System.getProperty("file.separator");
+        dst = dst + fileName;
+
         return new File(dst).exists();
     }
-    
+
     public void deletePreview(String archiveFileId, String fileName) {
         if (this.previewExists(archiveFileId, fileName)) {
 
@@ -741,61 +739,60 @@ public class PreviewGenerator {
             }
 
             String dst = localBaseDir + "archivefiles-preview" + System.getProperty("file.separator") + archiveFileId + System.getProperty("file.separator");
-            //File dstDir=new File(dst);
-            //dstDir.mkdirs();
             dst = dst + fileName;
             new File(dst).delete();
         }
-            
+
     }
-    
+
     public String updatePreview(String archiveFileId, String fileName) {
-        if(this.previewExists(archiveFileId, fileName))
+        if (this.previewExists(archiveFileId, fileName)) {
             this.deletePreview(archiveFileId, fileName);
+        }
         return this.createPreview(archiveFileId, fileName);
     }
-    
+
     public String createPreview(String archiveFileId, String fileName) {
-        if(this.previewExists(archiveFileId, fileName))
+        if (this.previewExists(archiveFileId, fileName)) {
             this.deletePreview(archiveFileId, fileName);
-        
+        }
+
         String localBaseDir = System.getProperty("jlawyer.server.basedirectory");
-        localBaseDir=localBaseDir.trim();
+        localBaseDir = localBaseDir.trim();
         if (!localBaseDir.endsWith(System.getProperty("file.separator"))) {
             localBaseDir = localBaseDir + System.getProperty("file.separator");
         }
-        
-        String src=localBaseDir + "archivefiles" + System.getProperty("file.separator") + archiveFileId + System.getProperty("file.separator");
-        File srcDir=new File(src);
+
+        String src = localBaseDir + "archivefiles" + System.getProperty("file.separator") + archiveFileId + System.getProperty("file.separator");
+        File srcDir = new File(src);
         srcDir.mkdirs();
-        src=src + fileName;
-        
-        String dst=localBaseDir + "archivefiles-preview" + System.getProperty("file.separator") + archiveFileId + System.getProperty("file.separator");
-        File dstDir=new File(dst);
+        src = src + fileName;
+
+        String dst = localBaseDir + "archivefiles-preview" + System.getProperty("file.separator") + archiveFileId + System.getProperty("file.separator");
+        File dstDir = new File(dst);
         dstDir.mkdirs();
-        dst=dst + fileName;
-        
-        Tika tika=new Tika();
+        dst = dst + fileName;
+
+        Tika tika = new Tika();
         try {
-            Reader r=tika.parse(new File(src));
-            BufferedReader br=new BufferedReader(r);
-            FileWriter fw=new FileWriter(dst);
-            BufferedWriter bw=new BufferedWriter(fw);
-            char[] buffer=new char[1024];
-            int bytesRead=-1;
-            while((bytesRead=br.read(buffer))>-1) {
-                bw.write(buffer,0,bytesRead);
+            Reader r = tika.parse(new File(src));
+            try (BufferedReader br = new BufferedReader(r);
+                    FileWriter fw = new FileWriter(dst);
+                    BufferedWriter bw = new BufferedWriter(fw)) {
+                char[] buffer = new char[1024];
+                int bytesRead = -1;
+                while ((bytesRead = br.read(buffer)) > -1) {
+                    bw.write(buffer, 0, bytesRead);
+                }
             }
-            bw.close();
-            br.close();
-            
+
             return ServerFileUtils.readFileAsString(new File(dst));
-            
+
         } catch (Throwable t) {
             log.error("Error creating document preview", t);
         }
-        
+
         return "";
     }
-    
+
 }

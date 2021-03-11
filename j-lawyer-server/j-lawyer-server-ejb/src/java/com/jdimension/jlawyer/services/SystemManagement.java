@@ -663,7 +663,6 @@
  */
 package com.jdimension.jlawyer.services;
 
-import com.jdimension.jlawyer.server.utils.ServerFileUtils;
 import com.jdimension.jlawyer.documents.LibreOfficeAccess;
 import com.jdimension.jlawyer.persistence.*;
 import com.jdimension.jlawyer.persistence.utils.JDBCUtils;
@@ -1034,18 +1033,15 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
             throw new Exception("Zieldatei existiert bereits!");
         }
 
-        InputStream in = new FileInputStream(f1);
+        try (InputStream in = new FileInputStream(f1);
+                OutputStream out = new FileOutputStream(f2)) {
 
-        OutputStream out = new FileOutputStream(f2);
-
-        byte[] buf = new byte[1024];
-        int len;
-        while ((len = in.read(buf)) > 0) {
-            out.write(buf, 0, len);
+            byte[] buf = new byte[1024];
+            int len;
+            while ((len = in.read(buf)) > 0) {
+                out.write(buf, 0, len);
+            }
         }
-        in.close();
-        out.close();
-        //System.out.println("File copied.");
 
     }
 
@@ -1058,12 +1054,12 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     }
 
     public static String readTextFile(File file) throws Exception {
-        FileReader fr = new FileReader(file);
+        try (FileReader fr = new FileReader(file)) {
 
-        char[] data = new char[(int) file.length()];
-        fr.read(data);
-        fr.close();
-        return new String(data);
+            char[] data = new char[(int) file.length()];
+            fr.read(data);
+            return new String(data);
+        }
     }
 
     public static void writeFile(File file, byte[] content) throws Exception {
@@ -1089,23 +1085,6 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     @Override
     @RolesAllowed({"adminRole"})
     public AppUserBean createUser(AppUserBean user, List<AppRoleBean> roles) throws Exception {
-//        boolean userExists=false;
-//        try {
-//            AppUserBean u=this.userBeanFacade..findByPrincipalId(user.getPrincipalId());
-//            userExists=true;
-//        } catch (Exception nre) {
-//            boolean nfe=false;
-//            if(nre.getCause()!=null) {
-//                if(nre.getCause() instanceof NoResultException) {
-//                    nfe=true;
-//                }
-//            }
-//            if(!nfe) {
-//                throw nre;
-//            }
-//        }
-//        if(userExists)
-//            throw new Exception ("Nutzer existiert bereits: " + user.getPrincipalId());
 
         StringGenerator idGen = new StringGenerator();
         // create password hash
@@ -1503,11 +1482,6 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     @Override
     @PermitAll
     public String getServerVersion() {
-//        ServerSettingsBean srvVersion = this.settingsFacade.find("jlawyer.server.database.version");
-//        if(srvVersion!=null)
-//            return srvVersion.getSettingValue();
-//        else 
-//            return "unknown";
 
         String version = "unknown";
         JDBCUtils utils = new JDBCUtils();
@@ -1646,9 +1620,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
 
             String interfaceType = ((Element) n.getParentNode()).getAttribute("name");
 
-            //((Element)aNode).setAttribute("name", "value");
             String interfaceBound = (((Element) n).getAttribute("value"));
-            //((Element) n).setAttribute("value", "nixda");
             bindString = bindString + interfaceType + "=" + interfaceBound + ", ";
 
         }
@@ -1656,12 +1628,6 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
             bindString = bindString.substring(0, bindString.length() - 2);
         }
 
-//            TransformerFactory transformerFactory = TransformerFactory.newInstance();
-//            Transformer transformer = transformerFactory.newTransformer();
-//            DOMSource source = new DOMSource(doc);
-//            StreamResult result = new StreamResult(new File("src/testout.xml"));
-//
-//            transformer.transform(source, result);
         return bindString;
     }
 
@@ -1735,11 +1701,11 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
             throw new Exception("Zieldatei existiert bereits!");
         }
 
-        OutputStream out = new FileOutputStream(f2);
+        try (OutputStream out = new FileOutputStream(f2)) {
 
-        out.write(data);
+            out.write(data);
 
-        out.close();
+        }
 
         return true;
     }
@@ -2230,9 +2196,9 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
             }
         }
         
-        FileOutputStream fout=new FileOutputStream(uploadFile);
-        fout.write(content);
-        fout.close();
+        try (FileOutputStream fout=new FileOutputStream(uploadFile)) {
+            fout.write(content);
+        }
         
     }
 

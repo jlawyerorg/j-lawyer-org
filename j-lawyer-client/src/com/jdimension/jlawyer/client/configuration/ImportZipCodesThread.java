@@ -669,17 +669,12 @@ import com.jdimension.jlawyer.client.utils.VersionUtils;
 import com.jdimension.jlawyer.persistence.CityDataBean;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.services.SystemManagementRemote;
-//import com.jdimension.jkanzlei.server.persistence.CityDataDTO;
-//import com.jdimension.jkanzlei.server.services.JKanzleiServiceLocator;
-//import com.jdimension.jkanzlei.server.services.SystemManagementRemote;
-//import com.jdimension.jkanzlei.server.services.SystemManagementRemoteHome;
 import java.awt.Component;
 import java.io.*;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
 import javax.swing.JButton;
-import javax.swing.JLabel;
 import javax.swing.JProgressBar;
 import org.apache.log4j.Logger;
 
@@ -688,58 +683,50 @@ import org.apache.log4j.Logger;
  * @author jens
  */
 public class ImportZipCodesThread implements Runnable {
-    
-    private static final Logger log=Logger.getLogger(ImportZipCodesThread.class.getName());
-    
+
+    private static final Logger log = Logger.getLogger(ImportZipCodesThread.class.getName());
+
     private Component owner;
     private JProgressBar target;
-//    private String importFile;
     private JButton importButton;
     private JButton closeButton;
 
-    
     /**
      * Creates a new instance of LoadOptionGroupThread
      */
     public ImportZipCodesThread(Component owner, JProgressBar target, JButton closeButton, JButton importButton) {
-        this.owner=owner;
-        this.target=target;
-//        this.importFile=importFile;
-        this.closeButton=closeButton;
-        this.importButton=importButton;
+        this.owner = owner;
+        this.target = target;
+        this.closeButton = closeButton;
+        this.importButton = importButton;
     }
-    
+
     public void run() {
-        
+
         ThreadUtils.enableComponent(this.closeButton, false);
         ThreadUtils.enableComponent(this.importButton, false);
-        
-        ThreadUtils.updateProgressBar(this.target, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/configuration/ImportZipCodesThread").getString("status.downloading"),0,1, true);
-        
-        File tmpF=null;
-        try {
-        URL updateURL = new URL("https://www.j-lawyer.org/downloads/plz.txt");
-            URLConnection urlCon=updateURL.openConnection();
-            urlCon.setRequestProperty("User-Agent", "j-lawyer Client v" + VersionUtils.getFullClientVersion());
-            InputStream is = urlCon.getInputStream();
-            //InputStreamReader reader = new InputStreamReader(is);
 
-            tmpF=File.createTempFile("plz", ".csv");
-            FileOutputStream fOut=new FileOutputStream(tmpF);
-            
-            byte[] buffer = new byte[1024];
-            int len = 0;
-            //StringBuffer sb = new StringBuffer();
-            while ((len = is.read(buffer)) > -1) {
-                //sb.append(buffer, 0, len);
-                fOut.write(buffer, 0, len);
+        ThreadUtils.updateProgressBar(this.target, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/configuration/ImportZipCodesThread").getString("status.downloading"), 0, 1, true);
+
+        File tmpF = null;
+        try {
+            URL updateURL = new URL("https://www.j-lawyer.org/downloads/plz.txt");
+            URLConnection urlCon = updateURL.openConnection();
+            urlCon.setRequestProperty("User-Agent", "j-lawyer Client v" + VersionUtils.getFullClientVersion());
+
+            tmpF = File.createTempFile("plz", ".csv");
+
+            try (InputStream is = urlCon.getInputStream();
+                    FileOutputStream fOut = new FileOutputStream(tmpF)) {
+
+                byte[] buffer = new byte[1024];
+                int len = 0;
+                while ((len = is.read(buffer)) > -1) {
+                    fOut.write(buffer, 0, len);
+                }
             }
-            //reader.close();
-            is.close();
-            fOut.close();
-            //String updateContent = sb.toString();
-        
-            } catch (Exception ex) {
+
+        } catch (Exception ex) {
             log.error("Error downloading import file", ex);
             ThreadUtils.showErrorDialog(this.owner, ex.getMessage(), "Fehler");
             ThreadUtils.enableComponent(this.closeButton, true);
@@ -747,17 +734,17 @@ public class ImportZipCodesThread implements Runnable {
             ThreadUtils.setDefaultCursor(this.owner);
             return;
         }
-        
-        ThreadUtils.updateProgressBar(this.target, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/configuration/ImportZipCodesThread").getString("status.scanningfile"),0,1, true);
-//        File file=new File(this.importFile);
-        int i=-1;
-        try (FileReader fr=new FileReader(tmpF);
-            BufferedReader br=new BufferedReader(fr);) {
-            while(br.readLine()!=null) {
+
+        ThreadUtils.updateProgressBar(this.target, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/configuration/ImportZipCodesThread").getString("status.scanningfile"), 0, 1, true);
+
+        int i = -1;
+        try (FileReader fr = new FileReader(tmpF);
+                BufferedReader br = new BufferedReader(fr);) {
+            while (br.readLine() != null) {
                 i++;
-                
+
             }
-            
+
         } catch (Exception ex) {
             log.error("Error reading import file", ex);
             ThreadUtils.showErrorDialog(this.owner, ex.getMessage(), "Fehler");
@@ -766,78 +753,74 @@ public class ImportZipCodesThread implements Runnable {
             ThreadUtils.setDefaultCursor(this.owner);
             return;
         }
-        ThreadUtils.updateProgressBar(this.target, java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/configuration/ImportZipCodesThread").getString("status.imported"), new Object[] {i}),0,i,false);
-        int totalCount=i;
-        
-        ClientSettings settings=ClientSettings.getInstance();
-        JLawyerServiceLocator locator=null;
+        ThreadUtils.updateProgressBar(this.target, java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/configuration/ImportZipCodesThread").getString("status.imported"), new Object[]{i}), 0, i, false);
+        int totalCount = i;
+
+        ClientSettings settings = ClientSettings.getInstance();
+        JLawyerServiceLocator locator = null;
         try {
-            locator=JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);
-            //JOptionPane.showMessageDialog(this.owner, "Verbindungsfehler: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
-            ThreadUtils.showErrorDialog(this.owner, java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/configuration/ImportZipCodesThread").getString("dialog.connectionerror"), new Object[] {ex.getMessage()}), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/configuration/ImportZipCodesThread").getString("dialog.error"));
+            ThreadUtils.showErrorDialog(this.owner, java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/configuration/ImportZipCodesThread").getString("dialog.connectionerror"), new Object[]{ex.getMessage()}), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/configuration/ImportZipCodesThread").getString("dialog.error"));
             ThreadUtils.enableComponent(this.closeButton, true);
             ThreadUtils.enableComponent(this.importButton, true);
             ThreadUtils.setDefaultCursor(this.owner);
             return;
         }
-        
-        SystemManagementRemote mgmt=null;
+
+        SystemManagementRemote mgmt = null;
         try {
-            //SystemManagementRemoteHome home = (SystemManagementRemoteHome)locator.getRemoteHome("ejb/SystemManagementBean", SystemManagementRemoteHome.class);
             mgmt = locator.lookupSystemManagementRemote();
             mgmt.removeAllCityData();
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);
-            //JOptionPane.showMessageDialog(this.owner, "Verbindungsfehler: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
             ThreadUtils.showErrorDialog(this.owner, ex.getMessage(), "Fehler");
             ThreadUtils.enableComponent(this.closeButton, true);
             ThreadUtils.enableComponent(this.importButton, true);
             ThreadUtils.setDefaultCursor(this.owner);
             return;
         }
-        
-        try (FileInputStream fr=new FileInputStream(tmpF);
-            InputStreamReader isr=new InputStreamReader(fr, "UTF-8");
-            BufferedReader br=new BufferedReader(isr);) {
-            
-            String line=null;
-            int lineCounter=0;
-            ArrayList<CityDataBean> newCityData=new ArrayList<CityDataBean>();
-            while((line=br.readLine())!=null) {
-                if(lineCounter==0) {
+
+        try (FileInputStream fr = new FileInputStream(tmpF);
+                InputStreamReader isr = new InputStreamReader(fr, "UTF-8");
+                BufferedReader br = new BufferedReader(isr);) {
+
+            String line = null;
+            int lineCounter = 0;
+            ArrayList<CityDataBean> newCityData = new ArrayList<CityDataBean>();
+            while ((line = br.readLine()) != null) {
+                if (lineCounter == 0) {
                     lineCounter++;
                     continue;
                 }
-                
-                String zip=line.substring(0, line.indexOf("\t"));
-                line=line.substring(line.indexOf("\t")+1);
-                
-                String city=line.substring(0, line.indexOf("\t"));
-                line=line.substring(line.lastIndexOf("\t")+1);
-                
-                String state=line;
-                
-                CityDataBean dto=new CityDataBean();
+
+                String zip = line.substring(0, line.indexOf("\t"));
+                line = line.substring(line.indexOf("\t") + 1);
+
+                String city = line.substring(0, line.indexOf("\t"));
+                line = line.substring(line.lastIndexOf("\t") + 1);
+
+                String state = line;
+
+                CityDataBean dto = new CityDataBean();
                 dto.setZipCode(zip);
-                //dto.setCity(city + " (" + state + ")");
                 dto.setCity(city);
                 newCityData.add(dto);
-                if(newCityData.size()==100) {
+                if (newCityData.size() == 100) {
                     mgmt.createCityData(newCityData.toArray(new CityDataBean[0]));
-                    newCityData=new ArrayList<CityDataBean>();
+                    newCityData = new ArrayList<CityDataBean>();
                 }
-                
+
                 lineCounter++;
-                ThreadUtils.updateProgressBar(this.target, (lineCounter-1) + java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/configuration/ImportZipCodesThread").getString("status.imported2"), new Object[] {totalCount}), (lineCounter-1), totalCount, false);
-                
+                ThreadUtils.updateProgressBar(this.target, (lineCounter - 1) + java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/configuration/ImportZipCodesThread").getString("status.imported2"), new Object[]{totalCount}), (lineCounter - 1), totalCount, false);
+
             }
-            if(newCityData.size()>0) {
+            if (newCityData.size() > 0) {
                 mgmt.createCityData(newCityData.toArray(new CityDataBean[0]));
             }
             tmpF.delete();
-            
+
         } catch (Exception ex) {
             log.error("Error reading import file", ex);
             ThreadUtils.showErrorDialog(this.owner, ex.getMessage(), "Fehler");
@@ -846,11 +829,11 @@ public class ImportZipCodesThread implements Runnable {
             ThreadUtils.setDefaultCursor(this.owner);
             return;
         }
-        
+
         ThreadUtils.enableComponent(this.closeButton, true);
         ThreadUtils.setText(closeButton, "Fertig - Dialog schliessen");
         ThreadUtils.enableComponent(this.importButton, false);
         ThreadUtils.setDefaultCursor(this.owner);
-    
-}
+
+    }
 }

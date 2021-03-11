@@ -1558,9 +1558,9 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
                 }
                 selectedFolder = f.getParentFile().getAbsolutePath();
 
-                FileOutputStream fOut = new FileOutputStream(f);
-                fOut.write(data);
-                fOut.close();
+                try (FileOutputStream fOut = new FileOutputStream(f)) {
+                    fOut.write(data);
+                }
 
             }
 

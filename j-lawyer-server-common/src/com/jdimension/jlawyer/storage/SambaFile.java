@@ -677,22 +677,22 @@ import jcifs.smb.SmbFile;
  * @author jens
  */
 public class SambaFile extends VirtualFile {
-    
-    private SmbFile sf=null;
-    private String location=null;
-    
+
+    private SmbFile sf = null;
+    private String location = null;
+
     public SambaFile(String location) throws Exception {
-        this.sf=new SmbFile(location);
-        this.location=location;
+        this.sf = new SmbFile(location);
+        this.location = location;
     }
 
     @Override
     public Collection<VirtualFile> listFiles() throws Exception {
-        
-        ArrayList<VirtualFile> list=new ArrayList<VirtualFile>();
-        
-        SmbFile[] children=this.sf.listFiles();
-        for(SmbFile child: children) {
+
+        ArrayList<VirtualFile> list = new ArrayList<VirtualFile>();
+
+        SmbFile[] children = this.sf.listFiles();
+        for (SmbFile child : children) {
             list.add(new SambaFile(child.getCanonicalPath()));
         }
         return list;
@@ -720,29 +720,27 @@ public class SambaFile extends VirtualFile {
 
     @Override
     public void copyLocalFile(File f) throws Exception {
-        
-        if(!this.sf.isDirectory() || !this.sf.exists())
+
+        if (!this.sf.isDirectory() || !this.sf.exists()) {
             throw new Exception("Can only copy local file to a directory and directory must exist");
-        
-        String newFileLocation=this.sf.getCanonicalPath() + f.getName();
-        SmbFile target=new SmbFile(newFileLocation);
-        
-        OutputStream os=target.getOutputStream();
-        BufferedOutputStream bos=new BufferedOutputStream (os);
-        
-        FileInputStream fin=new FileInputStream (f);
-        BufferedInputStream bfin=new BufferedInputStream (fin);
-        
-        byte[] buffer=new byte[4096];
-        int bytesRead=-1;
-        while((bytesRead=bfin.read(buffer))>-1) {
-            bos.write(buffer,0,bytesRead);
         }
-        
-        bfin.close();
-        bos.flush();
-        bos.close();
-        
+
+        String newFileLocation = this.sf.getCanonicalPath() + f.getName();
+        SmbFile target = new SmbFile(newFileLocation);
+
+        try (OutputStream os = target.getOutputStream();
+                BufferedOutputStream bos = new BufferedOutputStream(os);
+                FileInputStream fin = new FileInputStream(f);
+                BufferedInputStream bfin = new BufferedInputStream(fin)) {
+
+            byte[] buffer = new byte[4096];
+            int bytesRead = -1;
+            while ((bytesRead = bfin.read(buffer)) > -1) {
+                bos.write(buffer, 0, bytesRead);
+            }
+            bos.flush();
+        }
+
     }
 
     @Override
@@ -772,12 +770,14 @@ public class SambaFile extends VirtualFile {
 
     @Override
     public void createDirectory(String name) throws Exception {
-        if(!this.sf.isDirectory() || !this.sf.exists())
+        if (!this.sf.isDirectory() || !this.sf.exists()) {
             throw new Exception("Can only create sub directory in a directory and directory must exist");
-        
-        SmbFile newDir=new SmbFile(location + "/" + name + "/");
-        if(!newDir.exists())
+        }
+
+        SmbFile newDir = new SmbFile(location + "/" + name + "/");
+        if (!newDir.exists()) {
             newDir.mkdirs();
+        }
     }
 
     @Override
@@ -787,17 +787,18 @@ public class SambaFile extends VirtualFile {
 
     @Override
     public long length() throws Exception {
-        if(this.sf.isDirectory())
+        if (this.sf.isDirectory()) {
             return 0;
-        else if(this.sf.isFile())
+        } else if (this.sf.isFile()) {
             return this.sf.length();
-        else
+        } else {
             return 0;
+        }
     }
 
     @Override
     public void deleteAll() throws Exception {
         this.sf.delete();
     }
-    
+
 }

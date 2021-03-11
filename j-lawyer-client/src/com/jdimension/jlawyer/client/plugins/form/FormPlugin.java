@@ -663,7 +663,6 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.plugins.form;
 
-import com.jdimension.jlawyer.client.plugins.calculation.*;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.VersionUtils;
@@ -672,8 +671,6 @@ import com.jdimension.jlawyer.persistence.FormTypeArtefactBean;
 import com.jdimension.jlawyer.persistence.FormTypeBean;
 import com.jdimension.jlawyer.services.FormsServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
-import groovy.lang.Binding;
-import groovy.swing.SwingBuilder;
 import groovy.util.GroovyScriptEngine;
 import java.io.File;
 import java.io.FileWriter;
@@ -683,7 +680,6 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Hashtable;
-import java.util.List;
 import javax.swing.JPanel;
 import org.apache.log4j.Logger;
 
@@ -722,11 +718,7 @@ public class FormPlugin implements Comparable {
 
             ArrayList<String> result = ((FormPluginMethods) scriptInstance).getPlaceHolders(this.placeHolder);
 
-            //Object result = scriptClass.getDeclaredMethod("getPlaceHolders", new Class[]{String.class}).invoke(scriptInstance, new Object[]{this.placeHolder});
             return result;
-//            System.out.println(result.toString());
-//            result = scriptClass.getDeclaredMethod("setResult", new Class[]{List.class}).invoke(scriptInstance, new Object[]{(List) result});
-//            System.out.println(result.toString());
 
         } catch (Throwable t) {
             log.error(t);
@@ -771,11 +763,6 @@ public class FormPlugin implements Comparable {
     }
 
     public JPanel getUi() throws Exception {
-//        GroovyScriptEngine e = new GroovyScriptEngine(FormPluginUtil.getLocalDirectory() + File.separator);
-//        Binding bind = new Binding();
-//        bind.setVariable("callback", new GenericCalculationCallback());
-//        e.run(getId() + "_ui.groovy", bind);
-//        return (JPanel) bind.getVariable("SCRIPTPANEL");
 
         if (ui != null) {
             return ui;
@@ -786,10 +773,6 @@ public class FormPlugin implements Comparable {
             this.scriptClass = new GroovyScriptEngine(FormPluginUtil.getLocalDirectory() + File.separator).loadScriptByName(getId() + "_ui.groovy");
             this.scriptInstance = scriptClass.newInstance();
             Object result = scriptClass.getDeclaredMethod("getUi", new Class[]{}).invoke(scriptInstance, new Object[]{});
-//            ArrayList list=new ArrayList();
-//            list.add("schnuff");
-//            list.add("bluff");
-//            scriptClass.getDeclaredMethod("setResult", new Class[]{List.class}).invoke(scriptInstance, new Object[]{list});
 
             this.ui = (JPanel) result;
 
@@ -802,9 +785,6 @@ public class FormPlugin implements Comparable {
             }
 
             return ui;
-//            System.out.println(result.toString());
-//            result = scriptClass.getDeclaredMethod("setResult", new Class[]{List.class}).invoke(scriptInstance, new Object[]{(List) result});
-//            System.out.println(result.toString());
 
         } catch (Throwable t) {
             log.error(t);
@@ -863,9 +843,9 @@ public class FormPlugin implements Comparable {
                 is.close();
                 String content = sb.toString();
 
-                FileWriter fw = new FileWriter(localFileLocation);
-                fw.write(content);
-                fw.close();
+                try (FileWriter fw = new FileWriter(localFileLocation)) {
+                    fw.write(content);
+                }
 
                 FormTypeArtefactBean newArtefact = new FormTypeArtefactBean();
                 newArtefact.setContent(FileUtils.readFile(localFile));
@@ -932,9 +912,9 @@ public class FormPlugin implements Comparable {
                 is.close();
                 String content = sb.toString();
 
-                FileWriter fw = new FileWriter(localFileLocation);
-                fw.write(content);
-                fw.close();
+                try (FileWriter fw = new FileWriter(localFileLocation)) {
+                    fw.write(content);
+                }
 
                 FormTypeArtefactBean newArtefact = new FormTypeArtefactBean();
                 newArtefact.setContent(FileUtils.readFile(localFile));

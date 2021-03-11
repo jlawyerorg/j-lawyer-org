@@ -668,7 +668,6 @@ import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.util.ArrayList;
@@ -833,9 +832,9 @@ public class SaveDocumentsLocallyDialog extends javax.swing.JDialog {
             }
             for (ArchiveFileDocumentsBean doc : this.docs2local) {
                 byte[] content = locator.lookupArchiveFileServiceRemote().getDocumentContent(doc.getId());
-                FileOutputStream fout = new FileOutputStream(new File(path + doc.getName()));
-                fout.write(content);
-                fout.close();
+                try (FileOutputStream fout = new FileOutputStream(new File(path + doc.getName()))) {
+                    fout.write(content);
+                }
             }
 
             cmdSave.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png")));

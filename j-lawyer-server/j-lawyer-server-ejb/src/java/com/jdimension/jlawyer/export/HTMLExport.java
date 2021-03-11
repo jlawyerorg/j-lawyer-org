@@ -780,10 +780,10 @@ public class HTMLExport {
 
         }
 
-        FileWriter fw = new FileWriter(revCsv);
-        fw.write(excelStr.toString());
-        fw.flush();
-        fw.close();
+        try (FileWriter fw = new FileWriter(revCsv)) {
+            fw.write(excelStr.toString());
+            fw.flush();
+        }
 
         return revCsv.getPath();
     }
@@ -896,9 +896,9 @@ public class HTMLExport {
 
                 try {
                     byte[] docContent = caseFacade.getDocumentContentUnrestricted(db.getId());
-                    FileOutputStream docOut = new FileOutputStream(newDir3.getAbsolutePath() + System.getProperty("file.separator") + dbNewName);
-                    docOut.write(docContent);
-                    docOut.close();
+                    try (FileOutputStream docOut = new FileOutputStream(newDir3.getAbsolutePath() + System.getProperty("file.separator") + dbNewName)) {
+                        docOut.write(docContent);
+                    }
                     File docOutFile = new File(newDir3.getAbsolutePath() + System.getProperty("file.separator") + dbNewName);
                     if (db.getCreationDate() != null) {
                         docOutFile.setLastModified(db.getCreationDate().getTime());
@@ -921,7 +921,7 @@ public class HTMLExport {
                 }
                 sb.append("</p></td>");
                 sb.append("<td><p class=\"post_info\">");
-                if(db.getFolder()!=null) {
+                if (db.getFolder() != null) {
                     sb.append("Ordner: ").append(removeSonderzeichen(db.getFolder().getName()));
                 } else {
                     sb.append("");
@@ -932,14 +932,14 @@ public class HTMLExport {
         }
         sContent = sContent.replaceAll("\\{\\{documents\\}\\}", sb.toString());
 
-        FileWriter fw = new FileWriter(indexFile);
-        fw.write(sContent);
-        fw.close();
+        try (FileWriter fw = new FileWriter(indexFile)) {
+            fw.write(sContent);
+        }
 
         if (lastModified != null) {
-            FileWriter fwmod = new FileWriter(newDir.getPath() + File.separator + ".lastchanged");
-            fwmod.write("" + lastModified.getTime());
-            fwmod.close();
+            try (FileWriter fwmod = new FileWriter(newDir.getPath() + File.separator + ".lastchanged")) {
+                fwmod.write("" + lastModified.getTime());
+            }
         }
 
         return newDir.getAbsolutePath();
@@ -955,13 +955,12 @@ public class HTMLExport {
     }
 
     public void zipDirectory(String dirToZip, String targetFile) throws Exception {
-        FileOutputStream fos = new FileOutputStream(targetFile);
-        ZipOutputStream zos = new ZipOutputStream(fos);
-        addDirToZipArchive(zos, new File(dirToZip), null);
-        zos.flush();
-        fos.flush();
-        zos.close();
-        fos.close();
+        try (FileOutputStream fos = new FileOutputStream(targetFile);
+                ZipOutputStream zos = new ZipOutputStream(fos)) {
+            addDirToZipArchive(zos, new File(dirToZip), null);
+            zos.flush();
+            fos.flush();
+        }
     }
 
     private void addDirToZipArchive(ZipOutputStream zos, File fileToZip, String parrentDirectoryName) throws Exception {
@@ -982,50 +981,49 @@ public class HTMLExport {
         } else {
             System.out.println("   " + zipEntryName);
             byte[] buffer = new byte[1024];
-            FileInputStream fis = new FileInputStream(fileToZip);
-            ZipEntry ze=new ZipEntry(zipEntryName);
-            try {
-                ze.setLastModifiedTime(FileTime.fromMillis(fileToZip.lastModified()));
-            } catch (Throwable t) {
-                log.error("Could not set last modified time of " + fileToZip.getName(), t);
+            try (FileInputStream fis = new FileInputStream(fileToZip)) {
+                ZipEntry ze = new ZipEntry(zipEntryName);
+                try {
+                    ze.setLastModifiedTime(FileTime.fromMillis(fileToZip.lastModified()));
+                } catch (Throwable t) {
+                    log.error("Could not set last modified time of " + fileToZip.getName(), t);
+                }
+                zos.putNextEntry(ze);
+                int length;
+                while ((length = fis.read(buffer)) > 0) {
+                    zos.write(buffer, 0, length);
+                }
+                zos.closeEntry();
             }
-            zos.putNextEntry(ze);
-            int length;
-            while ((length = fis.read(buffer)) > 0) {
-                zos.write(buffer, 0, length);
-            }
-            zos.closeEntry();
-            fis.close();
         }
     }
 
     private String getPartiesList(Collection parties) {
         ArrayList partiesList = new ArrayList(parties);
-        //Collections.sort(partiesList, new ReviewsComparator());
         StringBuffer sb = new StringBuffer();
         for (Object p : partiesList) {
             if (p instanceof ArchiveFileAddressesBean) {
                 AddressBean ab = ((ArchiveFileAddressesBean) p).getAddressKey();
-                PartyTypeBean pt=((ArchiveFileAddressesBean) p).getReferenceType();
+                PartyTypeBean pt = ((ArchiveFileAddressesBean) p).getReferenceType();
                 // <tr><td><p class="post_info">01.01.2013</p></td><td><p class="post_info">dings</p></td></tr>
                 //sb.append("<tr valign=\"top\"><td><p class=\"post_info\">");
                 sb.append("<p class=\"post_info\">");
                 sb.append(toHtml4(ab.toDisplayName() + " (" + pt.getName() + ")"));
-                if(ab.getStreet()!=null && ab.getZipCode()!=null && ab.getCity()!=null) {
-                    if(!("".equals(ab.getStreet())) && !("".equals(ab.getZipCode())) && !("".equals(ab.getCity()))) {
+                if (ab.getStreet() != null && ab.getZipCode() != null && ab.getCity() != null) {
+                    if (!("".equals(ab.getStreet())) && !("".equals(ab.getZipCode())) && !("".equals(ab.getCity()))) {
                         sb.append(toHtml4(", " + ab.getStreet()));
-                        if(ab.getStreetNumber()!=null && !"".equals(ab.getStreetNumber()))
-                            sb.append(toHtml4(" "+ab.getStreetNumber()));
+                        if (ab.getStreetNumber() != null && !"".equals(ab.getStreetNumber())) {
+                            sb.append(toHtml4(" " + ab.getStreetNumber()));
+                        }
                         sb.append(toHtml4(", " + ab.getZipCode() + " " + ab.getCity()));
                     }
                 }
-                if(ab.getPhone()!=null)
+                if (ab.getPhone() != null) {
                     sb.append(", Tel: " + ab.getPhone());
-                if(ab.getMobile()!=null)
+                }
+                if (ab.getMobile() != null) {
                     sb.append(", Mob: " + ab.getMobile());
-//                sb.append("</p></td><td><p class=\"post_info\">");
-//                sb.append(rb.getReviewReason());
-                //sb.append("</p></td></tr>");
+                }
                 sb.append("</p>");
             }
         }

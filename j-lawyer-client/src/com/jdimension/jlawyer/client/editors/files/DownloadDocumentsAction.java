@@ -672,11 +672,9 @@ import com.jdimension.jlawyer.persistence.*;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Component;
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -691,9 +689,7 @@ import org.apache.log4j.Logger;
 public class DownloadDocumentsAction extends ProgressableAction {
 
     private static final Logger log = Logger.getLogger(DownloadDocumentsAction.class.getName());
-    //private JTable table = null;
-    //private SendEmailDialog dlg = null;
-
+    
     private String archiveFileKey;
     private Component owner;
     private File targetDir = null;
@@ -728,7 +724,6 @@ public class DownloadDocumentsAction extends ProgressableAction {
 
         try {
 
-            //if(this.isCancelled())
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             ArchiveFileServiceRemote caseSvc = locator.lookupArchiveFileServiceRemote();
@@ -750,9 +745,9 @@ public class DownloadDocumentsAction extends ProgressableAction {
                             File newFile = new File(newFileName);
                             newFile.createNewFile();
                             newFile.deleteOnExit();
-                            FileOutputStream fout = new FileOutputStream(newFile);
-                            fout.write(docContent);
-                            fout.close();
+                            try (FileOutputStream fout = new FileOutputStream(newFile)) {
+                                fout.write(docContent);
+                            }
                             break;
                         }
                     }
@@ -829,7 +824,6 @@ public class DownloadDocumentsAction extends ProgressableAction {
             EditorsRegistry.getInstance().clearStatus(true);
             ThreadUtils.setDefaultCursor(this.owner);
 
-            //ThreadUtils.showErrorDialog(this.owner, ex.getMessage(), "Fehler");
             return true;
         }
 

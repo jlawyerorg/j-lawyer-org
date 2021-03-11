@@ -1344,9 +1344,9 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
                 }
                 selectedFolder = f.getParentFile().getAbsolutePath();
 
-                FileOutputStream fOut = new FileOutputStream(f);
-                fOut.write(data);
-                fOut.close();
+                try (FileOutputStream fOut = new FileOutputStream(f)) {
+                    fOut.write(data);
+                }
             }
 
         } catch (Exception ex) {

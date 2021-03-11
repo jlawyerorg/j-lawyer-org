@@ -669,10 +669,6 @@ import com.jdimension.jlawyer.client.utils.VersionUtils;
 import com.jdimension.jlawyer.persistence.BankDataBean;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.services.SystemManagementRemote;
-//import com.jdimension.jkanzlei.server.persistence.BankDataDTO;
-//import com.jdimension.jkanzlei.server.services.JKanzleiServiceLocator;
-//import com.jdimension.jkanzlei.server.services.SystemManagementRemote;
-//import com.jdimension.jkanzlei.server.services.SystemManagementRemoteHome;
 import java.awt.Component;
 import java.io.*;
 import java.net.URL;
@@ -687,61 +683,50 @@ import org.apache.log4j.Logger;
  * @author jens
  */
 public class ImportBanksThread implements Runnable {
-    
-    private static final Logger log=Logger.getLogger(ImportBanksThread.class.getName());
-    
+
+    private static final Logger log = Logger.getLogger(ImportBanksThread.class.getName());
+
     private Component owner;
     private JProgressBar target;
-//    private String importFile;
     private JButton importButton;
     private JButton closeButton;
 
-    
     /**
      * Creates a new instance of LoadOptionGroupThread
      */
     public ImportBanksThread(Component owner, JProgressBar target, JButton closeButton, JButton importButton) {
-        this.owner=owner;
-        this.target=target;
-//        this.importFile=importFile;
-        this.closeButton=closeButton;
-        this.importButton=importButton;
+        this.owner = owner;
+        this.target = target;
+        this.closeButton = closeButton;
+        this.importButton = importButton;
     }
-    
+
     public void run() {
-        
+
         ThreadUtils.enableComponent(this.closeButton, false);
         ThreadUtils.enableComponent(this.importButton, false);
-        
-        ThreadUtils.updateProgressBar(this.target, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/configuration/ImportBanksThread").getString("status.downloading"),0,1, true);
-        
-        File tmpF=null;
-        try {
-        URL updateURL = new URL("https://www.j-lawyer.org/downloads/bic.csv");
-            URLConnection urlCon=updateURL.openConnection();
-            urlCon.setRequestProperty("User-Agent", "j-lawyer Client v" + VersionUtils.getFullClientVersion());
-            InputStream is = urlCon.getInputStream();
-            //InputStreamReader reader = new InputStreamReader(is);
 
-            tmpF=File.createTempFile("blz", ".csv");
-            //FileWriter fOut=new FileWriter(tmpF);
-            FileOutputStream fOut=new FileOutputStream(tmpF);
+        ThreadUtils.updateProgressBar(this.target, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/configuration/ImportBanksThread").getString("status.downloading"), 0, 1, true);
+
+        File tmpF = null;
+        try {
+            URL updateURL = new URL("https://www.j-lawyer.org/downloads/bic.csv");
+            URLConnection urlCon = updateURL.openConnection();
+            urlCon.setRequestProperty("User-Agent", "j-lawyer Client v" + VersionUtils.getFullClientVersion());
             
-            //char[] buffer = new char[1024];
-            byte[] buffer = new byte[1024];
-            int len = 0;
-            //StringBuffer sb = new StringBuffer();
-            //while ((len = reader.read(buffer)) > -1) {
-            while ((len = is.read(buffer)) > -1) {
-                //sb.append(buffer, 0, len);
-                fOut.write(buffer, 0, len);
+            tmpF = File.createTempFile("blz", ".csv");
+            
+            try (InputStream is = urlCon.getInputStream();
+                    FileOutputStream fOut = new FileOutputStream(tmpF)) {
+
+                byte[] buffer = new byte[1024];
+                int len = 0;
+                while ((len = is.read(buffer)) > -1) {
+                    fOut.write(buffer, 0, len);
+                }
             }
-            //reader.close();
-            is.close();
-            fOut.close();
-            //String updateContent = sb.toString();
-        
-            } catch (Exception ex) {
+
+        } catch (Exception ex) {
             log.error("Error downloading import file", ex);
             ThreadUtils.showErrorDialog(this.owner, ex.getMessage(), "Fehler");
             ThreadUtils.enableComponent(this.closeButton, true);
@@ -749,17 +734,15 @@ public class ImportBanksThread implements Runnable {
             ThreadUtils.setDefaultCursor(this.owner);
             return;
         }
-        
-        
-        ThreadUtils.updateProgressBar(this.target, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/configuration/ImportBanksThread").getString("status.scanningfile"),0,1, true);
-        //File file=new File(this.importFile);
-        int i=-1;
-        try (FileReader fr=new FileReader(tmpF);
-            BufferedReader br=new BufferedReader(fr);) {
-            
-            while(br.readLine()!=null) {
+
+        ThreadUtils.updateProgressBar(this.target, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/configuration/ImportBanksThread").getString("status.scanningfile"), 0, 1, true);
+        int i = -1;
+        try (FileReader fr = new FileReader(tmpF);
+                BufferedReader br = new BufferedReader(fr);) {
+
+            while (br.readLine() != null) {
                 i++;
-                
+
             }
         } catch (Exception ex) {
             log.error("Error reading import file", ex);
@@ -769,85 +752,77 @@ public class ImportBanksThread implements Runnable {
             ThreadUtils.setDefaultCursor(this.owner);
             return;
         }
-        ThreadUtils.updateProgressBar(this.target, java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/configuration/ImportBanksThread").getString("status.importedprogress"), new Object[] {i}),0,i,false);
-        int totalCount=i;
-        
-        ClientSettings settings=ClientSettings.getInstance();
-        JLawyerServiceLocator locator=null;
+        ThreadUtils.updateProgressBar(this.target, java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/configuration/ImportBanksThread").getString("status.importedprogress"), new Object[]{i}), 0, i, false);
+        int totalCount = i;
+
+        ClientSettings settings = ClientSettings.getInstance();
+        JLawyerServiceLocator locator = null;
         try {
-            locator=JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);
             //JOptionPane.showMessageDialog(this.owner, "Verbindungsfehler: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
-            ThreadUtils.showErrorDialog(this.owner, java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/configuration/ImportBanksThread").getString("status.connectionerror"), new Object[] {ex.getMessage()}), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/configuration/ImportBanksThread").getString("status.dialog.error"));
+            ThreadUtils.showErrorDialog(this.owner, java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/configuration/ImportBanksThread").getString("status.connectionerror"), new Object[]{ex.getMessage()}), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/configuration/ImportBanksThread").getString("status.dialog.error"));
             ThreadUtils.enableComponent(this.closeButton, true);
             ThreadUtils.enableComponent(this.importButton, true);
             ThreadUtils.setDefaultCursor(this.owner);
             return;
         }
-        
-        SystemManagementRemote mgmt=null;
+
+        SystemManagementRemote mgmt = null;
         try {
-            //SystemManagementRemoteHome home = (SystemManagementRemoteHome)locator.getRemoteHome("ejb/SystemManagementBean", SystemManagementRemoteHome.class);
             mgmt = locator.lookupSystemManagementRemote();
             mgmt.removeAllBankData();
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);
-            //JOptionPane.showMessageDialog(this.owner, "Verbindungsfehler: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
             ThreadUtils.showErrorDialog(this.owner, ex.getMessage(), "Fehler");
             ThreadUtils.enableComponent(this.closeButton, true);
             ThreadUtils.enableComponent(this.importButton, true);
             ThreadUtils.setDefaultCursor(this.owner);
             return;
         }
-        
-        try (FileInputStream fr=new FileInputStream(tmpF);
-            InputStreamReader isr=new InputStreamReader(fr, "UTF-8");
-            BufferedReader br=new BufferedReader(isr);) {
-            //FileReader fr=new FileReader(tmpF);
+
+        try (FileInputStream fr = new FileInputStream(tmpF);
+                InputStreamReader isr = new InputStreamReader(fr, "UTF-8");
+                BufferedReader br = new BufferedReader(isr);) {
             
-            String line=null;
-            int lineCounter=0;
-            ArrayList<BankDataBean> newBankData=new ArrayList<BankDataBean>();
-            while((line=br.readLine())!=null) {
-                if(lineCounter==0) {
+            String line = null;
+            int lineCounter = 0;
+            ArrayList<BankDataBean> newBankData = new ArrayList<BankDataBean>();
+            while ((line = br.readLine()) != null) {
+                if (lineCounter == 0) {
                     lineCounter++;
                     continue;
                 }
-                
-                String bic=line.substring(0, line.indexOf(":"));
-                line=line.substring(line.indexOf(":")+1);
-//                for(i=0;i<4;i++) {
-//                    line=line.substring(line.indexOf(":")+1);
-//                }
-                if(!"".equals(bic)) {
-                
-                String city=line.substring(0, line.indexOf(":"));
-                line=line.substring(line.indexOf(":")+1);
-                String bankName=line.substring(0, line.indexOf(":"));
-                
-                BankDataBean dto=new BankDataBean();
-                dto.setBankCode(bic);
-                dto.setName(bankName + " (" + city + ")");
-                newBankData.add(dto);
-                if(newBankData.size()==100) {
-                    mgmt.createBankData(newBankData.toArray(new BankDataBean[0]));
-                    newBankData=new ArrayList<BankDataBean>();
+
+                String bic = line.substring(0, line.indexOf(":"));
+                line = line.substring(line.indexOf(":") + 1);
+                if (!"".equals(bic)) {
+
+                    String city = line.substring(0, line.indexOf(":"));
+                    line = line.substring(line.indexOf(":") + 1);
+                    String bankName = line.substring(0, line.indexOf(":"));
+
+                    BankDataBean dto = new BankDataBean();
+                    dto.setBankCode(bic);
+                    dto.setName(bankName + " (" + city + ")");
+                    newBankData.add(dto);
+                    if (newBankData.size() == 100) {
+                        mgmt.createBankData(newBankData.toArray(new BankDataBean[0]));
+                        newBankData = new ArrayList<BankDataBean>();
+                    }
                 }
-                }
-                
+
                 lineCounter++;
-                ThreadUtils.updateProgressBar(this.target, (lineCounter-1) + java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/configuration/ImportBanksThread").getString("status.importedfromtotals"), new Object[] {totalCount}), (lineCounter-1), totalCount, false);
-                
+                ThreadUtils.updateProgressBar(this.target, (lineCounter - 1) + java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/configuration/ImportBanksThread").getString("status.importedfromtotals"), new Object[]{totalCount}), (lineCounter - 1), totalCount, false);
+
             }
-            if(newBankData.size()>0) {
+            if (newBankData.size() > 0) {
                 mgmt.createBankData(newBankData.toArray(new BankDataBean[0]));
             }
-            
-            //mgmt.remove();
-            
+
             tmpF.delete();
-            
+
         } catch (Exception ex) {
             log.error("Error reading import file", ex);
             ThreadUtils.showErrorDialog(this.owner, ex.getMessage(), "Fehler");
@@ -856,11 +831,11 @@ public class ImportBanksThread implements Runnable {
             ThreadUtils.setDefaultCursor(this.owner);
             return;
         }
-        
+
         ThreadUtils.enableComponent(this.closeButton, true);
         ThreadUtils.setText(closeButton, "Fertig - Dialog schliessen");
         ThreadUtils.enableComponent(this.importButton, false);
         ThreadUtils.setDefaultCursor(this.owner);
-    
-}
+
+    }
 }

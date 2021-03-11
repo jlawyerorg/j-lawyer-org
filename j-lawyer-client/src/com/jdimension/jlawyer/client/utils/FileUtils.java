@@ -671,12 +671,11 @@ import java.awt.Component;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.text.SimpleDateFormat;
-import java.util.Hashtable;
+import java.util.HashMap;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JDialog;
 import javax.swing.JOptionPane;
-import javax.swing.JRootPane;
 import javax.swing.WindowConstants;
 import javax.swing.filechooser.FileSystemView;
 import org.apache.log4j.Logger;
@@ -689,8 +688,8 @@ public class FileUtils extends ServerFileUtils {
 
     private static FileUtils instance = null;
     private static final Logger log = Logger.getLogger(FileUtils.class.getName());
-    private Hashtable<String, Icon> iconCache = null;
-    private Hashtable<String, Icon> iconCache32 = null;
+    private HashMap<String, Icon> iconCache = null;
+    private HashMap<String, Icon> iconCache32 = null;
 
     public static synchronized FileUtils getInstance() {
         if (instance == null) {
@@ -702,8 +701,8 @@ public class FileUtils extends ServerFileUtils {
 
     private FileUtils() {
         super();
-        iconCache = new Hashtable<String, Icon>();
-        iconCache32 = new Hashtable<String, Icon>();
+        iconCache = new HashMap<String, Icon>();
+        iconCache32 = new HashMap<String, Icon>();
 
     }
 
@@ -978,12 +977,6 @@ public class FileUtils extends ServerFileUtils {
             log.error("Errors cleaning up temporary documents", t);
         }
 
-        //        File f = new File(path);
-//        f.deleteOnExit();
-//
-//        String dir = path.substring(0, path.lastIndexOf(System.getProperty("file.separator")));
-//        File remDir = new File(dir);
-//        remDir.deleteOnExit();
     }
 
     public static String createTempFile(String fileName, byte[] content, boolean readOnly) throws Exception {
@@ -1025,9 +1018,6 @@ public class FileUtils extends ServerFileUtils {
             tmpDir = tmpDir + System.getProperty("file.separator");
         }
 
-//        if (osName.startsWith("mac")) {
-//            tmpDir=tmpDir + ".j-lawyer-client" + System.getProperty("file.separator") + "macos-tmp" + System.getProperty("file.separator");
-//        }
         StringGenerator idGen = new StringGenerator();
         if (deleteAfterDays > -1) {
             tmpDir = tmpDir + "" + (System.currentTimeMillis() + (deleteAfterDays * 24l * 60l * 60l * 1000l)) + "_" + idGen.getID().toString() + System.getProperty("file.separator");
@@ -1036,9 +1026,9 @@ public class FileUtils extends ServerFileUtils {
         }
         new File(tmpDir).mkdirs();
         String tmpFile = tmpDir + fileName;
-        FileOutputStream fos = new FileOutputStream(new File(tmpFile), false);
-        fos.write(content);
-        fos.close();
+        try (FileOutputStream fos = new FileOutputStream(new File(tmpFile), false)) {
+            fos.write(content);
+        }
 
         if (readOnly) {
             try {
@@ -1057,11 +1047,6 @@ public class FileUtils extends ServerFileUtils {
 
     public static void cleanupTempFile(String url) {
         File f = new File(url);
-//        boolean deleted = f.delete();
-//        if (!deleted) {
-//            log.error("could not delete temporary file " + url);
-//            return;
-//        }
 
         f.deleteOnExit();
 

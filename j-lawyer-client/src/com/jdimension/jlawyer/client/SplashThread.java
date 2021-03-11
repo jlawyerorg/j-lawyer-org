@@ -684,16 +684,9 @@ import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.FormTypeArtefactBean;
 import com.jdimension.jlawyer.persistence.FormTypeBean;
 import com.jdimension.jlawyer.server.constants.OptionConstants;
-//import com.jdimension.jkanzlei.server.services.AddressServiceRemote;
-//import com.jdimension.jkanzlei.server.services.AddressServiceRemoteHome;
-//import com.jdimension.jkanzlei.server.services.JKanzleiServiceLocator;
 import com.jdimension.jlawyer.server.modules.ModuleMetadata;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.FormsServiceRemote;
-//import com.jdimension.jkanzlei.server.persistence.AppOptionGroupDTO;
-//import com.jdimension.jkanzlei.server.services.ArchiveFileServiceRemote;
-//import com.jdimension.jkanzlei.server.services.ArchiveFileServiceRemoteHome;
-//import com.jdimension.jkanzlei.server.services.SystemManagementRemoteHome;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.services.SystemManagementRemote;
 import java.awt.Image;
@@ -708,7 +701,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -716,6 +709,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
@@ -724,7 +718,6 @@ import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import net.sf.jasperreports.engine.JasperCompileManager;
-import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
@@ -742,8 +735,6 @@ public class SplashThread implements Runnable {
     private StartupSplashFrame splash = null;
     private ClientSettings settings = null;
     private JFrame owner = null;
-//    private static int addressCount=0;
-//    private static int archiveFileCount=0;
 
     private int loadedMods = 0;
     private int numberOfMods = 0;
@@ -766,7 +757,6 @@ public class SplashThread implements Runnable {
             locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);
-            //JOptionPane.showMessageDialog(this.owner, "Verbindungsfehler: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
             String errorCaption = java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("dialog.connectionerror");
             ThreadUtils.showErrorDialog(this.owner, errorCaption + ": " + ex.getMessage(), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("msg.error"));
             return;
@@ -803,7 +793,6 @@ public class SplashThread implements Runnable {
         AppUserBean[] assistUsers = null;
         AppUserBean[] allUsers = null;
         try {
-            //SystemManagementRemoteHome home = (SystemManagementRemoteHome)locator.getRemoteHome("ejb/SystemManagementBean", SystemManagementRemoteHome.class);
             SystemManagementRemote mgmt = locator.lookupSystemManagementRemote();
             ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
             this.updateProgress(false, 9, 1, "");
@@ -861,7 +850,6 @@ public class SplashThread implements Runnable {
             professions = mgmt.getOptionGroup(OptionConstants.OPTIONGROUP_PROFESSION);
             roles = mgmt.getOptionGroup(OptionConstants.OPTIONGROUP_ROLE);
 
-            //mgmt.remove();
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);
             ThreadUtils.showErrorDialog(this.owner, ex.getMessage(), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("msg.error"));
@@ -894,22 +882,18 @@ public class SplashThread implements Runnable {
         this.updateProgress(false, this.numberOfMods, 0, "");
         ThemeSettings theme = ThemeSettings.getInstance();
         ModuleMetadata rootModule = settings.getRootModule();
-        
-        
+
         String randomBackgrounds = UserSettings.getInstance().getSetting(UserSettings.CONF_DESKTOP_RANDOM_BACKGROUND, "0");
         // webswing did not like the large images and displayed an empty frame instead of the application
-        String demoSystem=settings.getConfiguration("runtime.isdemosystem", "0");
-        boolean isDemoSystem=false;
-        if(demoSystem!=null && "1".equalsIgnoreCase(demoSystem)) {
-            isDemoSystem=true;
+        String demoSystem = settings.getConfiguration("runtime.isdemosystem", "0");
+        boolean isDemoSystem = false;
+        if (demoSystem != null && "1".equalsIgnoreCase(demoSystem)) {
+            isDemoSystem = true;
         }
         if ("0".equalsIgnoreCase(randomBackgrounds) || isDemoSystem) {
 
-            //root.setIcon("mydesktop.png");
-            //root.setBackgroundImage("mydesktop.jpg");
             rootModule.setBackgroundImage("archivefiles.jpg");
             rootModule.setRandomBackgroundImage(null);
-            //root.setBackgroundImage("Neuseeland_0617.jpg");
         } else {
             rootModule.setBackgroundImage(null);
             try {
@@ -917,20 +901,25 @@ public class SplashThread implements Runnable {
                 URI uri = Main.class.getResource("/themes/default/backgroundsrandom").toURI();
                 Path path;
                 if (uri.getScheme().equals("jar")) {
-                    FileSystem fileSystem = FileSystems.newFileSystem(uri, Collections.<String, Object>emptyMap());
-                    path = fileSystem.getPath("/themes/default/backgroundsrandom");
+                    try (FileSystem fileSystem = FileSystems.newFileSystem(uri, Collections.<String, Object>emptyMap())) {
+                        path = fileSystem.getPath("/themes/default/backgroundsrandom");
+                    }
+                    
                 } else {
                     path = Paths.get(uri);
                 }
 
                 Predicate<String> con1 = s -> s.endsWith(".jpg");
                 Predicate<String> con2 = s -> s.endsWith(".png");
-
-                List<String> backgroundFileNames = Files.walk(path)
-                        .map(Path::getFileName)
+                
+                List<String> backgroundFileNames=new ArrayList<>();
+                try (Stream<Path> walk = Files.walk(path)) {
+                    backgroundFileNames=walk
+                            .map(Path::getFileName)
                         .map(Path::toString)
                         .filter(con1.or(con2))
                         .collect(Collectors.toList());
+                }
 
                 int randomNum = ThreadLocalRandom.current().nextInt(0, backgroundFileNames.size());
                 rootModule.setRandomBackgroundImage(backgroundFileNames.get(randomNum));
@@ -941,7 +930,7 @@ public class SplashThread implements Runnable {
             }
 
         }
-        
+
         this.loadTheme(theme, rootModule);
 
         ExecutorService pool = Executors.newFixedThreadPool(3);
@@ -956,7 +945,6 @@ public class SplashThread implements Runnable {
                     ThreadUtils.showErrorDialog(owner, ex.getMessage(), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("dialog.printstuberror"));
                     return;
                 }
-                //updateStatus(".", true);
             }
 
         };
@@ -1003,7 +991,6 @@ public class SplashThread implements Runnable {
             log.error("error loading help / plugins / reports / forms", t);
         }
 
-        //pool = Executors.newFixedThreadPool(3);
         updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.modules"), true);
         this.loadedMods = 0;
         this.updateProgress(false, this.numberOfMods, 0, "");
@@ -1012,7 +999,7 @@ public class SplashThread implements Runnable {
 
         updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.done"), true);
         LauncherFactory.cleanupTempDocuments();
-        
+
         splash.setVisible(false);
         splash.dispose();
         splash = null;
@@ -1036,7 +1023,6 @@ public class SplashThread implements Runnable {
                 gui.doLayout();
                 gui.setVisible(true);
 
-                //gui.setDividerLocation(135);
                 notifyEditorForStatus(ClientSettings.getInstance().getRootModule());
 
                 ServerSettings serverSettings = ServerSettings.getInstance();
@@ -1065,7 +1051,7 @@ public class SplashThread implements Runnable {
                     dialogContent.append("</ul>");
                     dialogContent.append("</html>");
                     // int response = JOptionPane.showConfirmDialog(EditorsRegistry.getInstance().getMainWindow(), dialogContent.toString(), "j-lawyer.BOX Replikation", JOptionPane.YES_NO_OPTION);
-                    int response=JOptionPane.showOptionDialog(EditorsRegistry.getInstance().getMainWindow(), dialogContent.toString(), "j-lawyer.BOX Replikation", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, null, new String[]{"Ja", "Nein"}, "Nein");
+                    int response = JOptionPane.showOptionDialog(EditorsRegistry.getInstance().getMainWindow(), dialogContent.toString(), "j-lawyer.BOX Replikation", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, null, new String[]{"Ja", "Nein"}, "Nein");
                     if (response == JOptionPane.YES_OPTION) {
                         serverSettings.setSetting(ServerSettings.SERVERCONF_REPLICATION_ISTARGET, "0");
                     }
@@ -1094,9 +1080,9 @@ public class SplashThread implements Runnable {
         is.close();
         String content = sb.toString();
 
-        FileWriter fw = new FileWriter(localFile);
-        fw.write(content);
-        fw.close();
+        try (FileWriter fw = new FileWriter(localFile)) {
+            fw.write(content);
+        }
     }
 
     private void openProfileInformationDialog() {
@@ -1106,8 +1092,6 @@ public class SplashThread implements Runnable {
             boolean currentlyAdmin = locator.lookupSecurityServiceRemote().isAdmin();
             if (currentlyAdmin) {
                 ProfileDialog dlg = new ProfileDialog(EditorsRegistry.getInstance().getMainWindow(), true);
-                //dlg.setTitle("Anreden");
-                //dlg.setOptionGroup(OptionConstants.OPTIONGROUP_SALUTATIONS);
                 FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
                 dlg.setVisible(true);
             } else {
@@ -1126,8 +1110,6 @@ public class SplashThread implements Runnable {
             boolean currentlyAdmin = locator.lookupSecurityServiceRemote().isAdmin();
             if (currentlyAdmin) {
                 BackupConfigurationDialog dlg = new BackupConfigurationDialog(EditorsRegistry.getInstance().getMainWindow(), true);
-                //dlg.setTitle("Anreden");
-                //dlg.setOptionGroup(OptionConstants.OPTIONGROUP_SALUTATIONS);
                 FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
                 dlg.setVisible(true);
             } else {
@@ -1150,42 +1132,23 @@ public class SplashThread implements Runnable {
             @Override
             public void run() {
                 try (InputStream is4 = this.getClass().getClassLoader().getResourceAsStream("reports/reviews.jrxml");
-                    FileOutputStream os4 = new FileOutputStream(s.getLocalReportsDirectory() + "reviews.jasper");
+                        FileOutputStream os4 = new FileOutputStream(s.getLocalReportsDirectory() + "reviews.jasper");
+                        InputStream is6 = this.getClass().getClassLoader().getResourceAsStream("reports/reviews_detail.jrxml");
+                        FileOutputStream os6 = new FileOutputStream(s.getLocalReportsDirectory() + "reviews_detail.jasper");
+                        InputStream is5 = this.getClass().getClassLoader().getResourceAsStream("reports/archivefile.jrxml");
+                        FileOutputStream os5 = new FileOutputStream(s.getLocalReportsDirectory() + "archivefile.jasper");
+                        InputStream is7 = this.getClass().getClassLoader().getResourceAsStream("reports/archivefile_address_detail.jrxml");
+                        FileOutputStream os7 = new FileOutputStream(s.getLocalReportsDirectory() + "archivefile_address_detail.jasper");
+                        InputStream is8 = this.getClass().getClassLoader().getResourceAsStream("reports/archivefile_review_detail.jrxml");
+                        FileOutputStream os8 = new FileOutputStream(s.getLocalReportsDirectory() + "archivefile_review_detail.jasper");
+                        InputStream is9 = this.getClass().getClassLoader().getResourceAsStream("reports/archivefile_cost_detail.jrxml");
+                        FileOutputStream os9 = new FileOutputStream(s.getLocalReportsDirectory() + "archivefile_cost_detail.jasper");) {
 
-                    InputStream is6 = this.getClass().getClassLoader().getResourceAsStream("reports/reviews_detail.jrxml");
-                    FileOutputStream os6 = new FileOutputStream(s.getLocalReportsDirectory() + "reviews_detail.jasper");
-
-                    InputStream is5 = this.getClass().getClassLoader().getResourceAsStream("reports/archivefile.jrxml");
-                    FileOutputStream os5 = new FileOutputStream(s.getLocalReportsDirectory() + "archivefile.jasper");
-
-                    InputStream is7 = this.getClass().getClassLoader().getResourceAsStream("reports/archivefile_address_detail.jrxml");
-                    FileOutputStream os7 = new FileOutputStream(s.getLocalReportsDirectory() + "archivefile_address_detail.jasper");
-
-                    InputStream is8 = this.getClass().getClassLoader().getResourceAsStream("reports/archivefile_review_detail.jrxml");
-                    FileOutputStream os8 = new FileOutputStream(s.getLocalReportsDirectory() + "archivefile_review_detail.jasper");
-
-                    InputStream is9 = this.getClass().getClassLoader().getResourceAsStream("reports/archivefile_cost_detail.jrxml");
-                    FileOutputStream os9 = new FileOutputStream(s.getLocalReportsDirectory() + "archivefile_cost_detail.jasper");) {
-
-                    
-
-                    //updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.print.1"), true);
-                    //this.updateProgress(false, 6, 1, "");
                     JasperCompileManager.compileReportToStream(is4, os4);
-                    //updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.print.2"), true);
-                    //this.updateProgress(false, 6, 2, "");
                     JasperCompileManager.compileReportToStream(is5, os5);
-                    //updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.print.3"), true);
-                    //this.updateProgress(false, 6, 3, "");
                     JasperCompileManager.compileReportToStream(is6, os6);
-                    //updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.print.4"), true);
-                    //this.updateProgress(false, 6, 4, "");
                     JasperCompileManager.compileReportToStream(is7, os7);
-                    //updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.print.5"), true);
-                    //this.updateProgress(false, 6, 5, "");
                     JasperCompileManager.compileReportToStream(is8, os8);
-                    //updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.print.6"), true);
-                    //this.updateProgress(false, 6, 6, "");
                     JasperCompileManager.compileReportToStream(is9, os9);
                 } catch (Throwable t) {
                     ThreadUtils.showErrorDialog(owner, "Fehler beim Generieren der Druckvorlagen", "Fehler");
@@ -1213,15 +1176,11 @@ public class SplashThread implements Runnable {
         this.updateProgress(false, this.numberOfMods, this.loadedMods, "");
 
         ClientSettings settings = ClientSettings.getInstance();
-//        String server = settings.getConfiguration(settings.CONF_LASTSERVER, "localhost");
-//        String port = settings.getConfiguration(settings.CONF_LASTHTTPPORT, "8080");
         String themeName = settings.getConfiguration(settings.CONF_THEME, "default");
         if (module.getBackgroundImage() != null) {
-            //updateStatus("   Hintergrund " + module.getBackgroundImage() + "...", true);
 
             try {
 
-                //Image image=javax.imageio.ImageIO.read(new java.net.URL("http://" + server + ":" + port + "/j-lawyer-server-war/themes/" + themeName + "/backgrounds/" + module.getBackgroundImage()));
                 ImageIcon image = new ImageIcon(getClass().getResource("/themes/" + themeName + "/backgrounds/" + module.getBackgroundImage()));
                 theme.addBackground(module, image.getImage());
             } catch (Exception ex) {
@@ -1229,11 +1188,9 @@ public class SplashThread implements Runnable {
             }
         }
         if (module.getRandomBackgroundImage() != null) {
-            //updateStatus("   Hintergrund " + module.getBackgroundImage() + "...", true);
 
             try {
 
-                //Image image=javax.imageio.ImageIO.read(new java.net.URL("http://" + server + ":" + port + "/j-lawyer-server-war/themes/" + themeName + "/backgrounds/" + module.getBackgroundImage()));
                 ImageIcon image = new ImageIcon(getClass().getResource("/themes/" + themeName + "/backgroundsrandom/" + module.getRandomBackgroundImage()));
                 theme.addBackground(module, image.getImage());
             } catch (Exception ex) {
@@ -1241,11 +1198,8 @@ public class SplashThread implements Runnable {
             }
         }
         if (module.getIcon() != null) {
-            //updateStatus("   Icon " + module.getIcon() + "...", true);
-            //updateStatus(".", false);
             try {
                 // loading themes from server
-                //Image image=javax.imageio.ImageIO.read(new java.net.URL("http://" + server + ":" + port + "/j-lawyer-server-war/themes/" + themeName + "/icons/" + module.getIcon()));
 
                 ImageIcon image = new ImageIcon(getClass().getResource("/themes/" + themeName + "/modules16/" + module.getIcon()));
                 module.setIconAsImage(image.getImage());
@@ -1257,21 +1211,17 @@ public class SplashThread implements Runnable {
             this.updateProgress(false, module.getChildCount(), i, "");
             this.loadTheme(theme, (ModuleMetadata) module.getChildAt(i));
         }
-        //updateStatus(".", false);
     }
 
     private void preloadEditors(ThemeSettings theme, ModuleMetadata module) {
 
         this.loadedMods++;
 
-        //this.updateStatus(java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.loadingmodules"), new Object[] {this.loadedMods, this.numberOfMods, module.getFullName()}), true);
         this.updateStatus(java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.loadingmodules"), new Object[]{module.getFullName()}), true);
         this.updateProgress(false, this.numberOfMods, this.loadedMods, "");
 
         String editorClass = ((ModuleMetadata) module).getEditorClass();
         if (editorClass != null) {
-            //Object editor = null;
-            //updateStatus(".", false);
             try {
                 if (!SwingUtilities.isEventDispatchThread()) {
                     SwingUtilities.invokeAndWait(new Runnable() {
@@ -1327,7 +1277,6 @@ public class SplashThread implements Runnable {
         String editorClass = ((ModuleMetadata) module).getEditorClass();
         if (editorClass != null) {
             Object editor = null;
-            //updateStatus(".", false);
             try {
                 editor = EditorsRegistry.getInstance().getEditor(editorClass);
                 if (editor instanceof StatusBarProvider) {
@@ -1356,8 +1305,6 @@ public class SplashThread implements Runnable {
                         }
 
                         splash.addStatus(s);
-                        //splash.revalidate();
-                        //splash.repaint();
                     }
                 }
             });
@@ -1369,8 +1316,6 @@ public class SplashThread implements Runnable {
                 }
 
                 splash.addStatus(s);
-                //splash.revalidate();
-                //splash.repaint();
             }
         }
     }
@@ -1382,16 +1327,12 @@ public class SplashThread implements Runnable {
                 public void run() {
                     if (splash != null) {
                         splash.setProgress(indeterminate, max, value, s);
-                        //splash.revalidate();
-                        //splash.repaint();
                     }
                 }
             });
         } else {
             if (splash != null) {
                 splash.setProgress(indeterminate, max, value, s);
-                //splash.revalidate();
-                //splash.repaint();
             }
         }
     }
@@ -1399,9 +1340,6 @@ public class SplashThread implements Runnable {
     private void loadCalculations() throws Exception {
         this.updateProgress(false, 1, 0, "");
 
-//        new Thread(new Runnable() {
-//            @Override
-//            public void run() {
         try {
             URL updateURL = new URL("https://www.j-lawyer.org/downloads/j-lawyer-calculations.xml");
             URLConnection urlCon = updateURL.openConnection();
@@ -1431,10 +1369,6 @@ public class SplashThread implements Runnable {
             Document remoteDoc = remoteDb.parse(inSrc1);
 
             NodeList remoteList = remoteDoc.getElementsByTagName("calculations");
-//        String remoteVersion = remoteList.item(0).getAttributes().getNamedItem("version").getNodeValue();
-//        String baseUrl = remoteList.item(0).getAttributes().getNamedItem("baseurl").getNodeValue();
-//        if(!baseUrl.endsWith("/"))
-//            baseUrl=baseUrl+"/";
 
             remoteList = remoteDoc.getElementsByTagName("calculation");
 
@@ -1467,7 +1401,7 @@ public class SplashThread implements Runnable {
             }
 
             ExecutorService pluginPool = Executors.newFixedThreadPool(5);
-            Hashtable<String, String> localCalcs = new Hashtable<String, String>();
+            HashMap<String, String> localCalcs = new HashMap<String, String>();
             for (File c : calcDirFile.listFiles()) {
 
                 Runnable r = new Runnable() {
@@ -1494,7 +1428,6 @@ public class SplashThread implements Runnable {
             pluginPool.shutdown();
             pluginPool.awaitTermination(60, TimeUnit.SECONDS);
 
-            //this.updateProgress(false, calcPlugins.size() + 1, 1, "");
             int i = 1;
             for (CalculationPlugin p : calcPlugins) {
                 boolean forceDownload = false;
@@ -1504,14 +1437,10 @@ public class SplashThread implements Runnable {
                 updateStatus("Plugin: neue Version für " + p.getName(), true);
                 p.download(forceDownload);
                 i++;
-                //this.updateProgress(false, calcPlugins.size() + 1, i, "");
             }
         } catch (Throwable t) {
             log.error("Error downloading calculation plugins", t);
         }
-//            }
-//
-//        }).start();
 
     }
 
@@ -1538,7 +1467,7 @@ public class SplashThread implements Runnable {
             }
 
             ExecutorService pluginPool = Executors.newFixedThreadPool(5);
-            Hashtable<String, String> localForms = new Hashtable<String, String>();
+            HashMap<String, String> localForms = new HashMap<String, String>();
             for (File c : formDirFile.listFiles()) {
 
                 Runnable r = new Runnable() {
@@ -1565,7 +1494,6 @@ public class SplashThread implements Runnable {
             pluginPool.shutdown();
             pluginPool.awaitTermination(60, TimeUnit.SECONDS);
 
-            //this.updateProgress(false, calcPlugins.size() + 1, 1, "");
             int i = 1;
             for (FormTypeBean p : allFormTypes) {
                 boolean force = false;
@@ -1573,24 +1501,27 @@ public class SplashThread implements Runnable {
                     force = true;
                 }
                 updateStatus("Plugin: neue Version für " + p.getName(), true);
-                
+
                 String localDir = FormPluginUtil.getLocalDirectory() + File.separator;
                 new File(localDir).mkdirs();
 
                 for (FormTypeArtefactBean artefact : formsSvc.getFormTypeArtefacts(p.getId())) {
 
-                    String f=artefact.getFileName();
-                    
+                    String f = artefact.getFileName();
+
                     String localFileLocation = localDir + f;
                     File localFile = new File(localFileLocation);
 
                     if (!localFile.exists() || force) {
 
-                        byte[] content=artefact.getContent();
+                        byte[] content = artefact.getContent();
 
-                        FileOutputStream fw = new FileOutputStream(localFileLocation);
-                        fw.write(content);
-                        fw.close();
+                        try (FileOutputStream fw = new FileOutputStream(localFileLocation)) {
+                            fw.write(content);
+                            fw.close();
+                        } catch (Exception ex) {
+                            log.error("could not write plugin file: " + localFileLocation, ex);
+                        }
 
                     }
 
@@ -1601,9 +1532,6 @@ public class SplashThread implements Runnable {
         } catch (Throwable t) {
             log.error("Error downloading calculation plugins", t);
         }
-//            }
-//
-//        }).start();
 
     }
 
