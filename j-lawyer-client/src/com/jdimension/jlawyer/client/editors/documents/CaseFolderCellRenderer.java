@@ -668,7 +668,6 @@ import java.awt.Component;
 import javax.swing.JTree;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeCellRenderer;
-import org.apache.log4j.Logger;
 
 /**
  *

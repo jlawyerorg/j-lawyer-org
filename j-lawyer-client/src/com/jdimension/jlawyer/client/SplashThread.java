@@ -1401,7 +1401,7 @@ public class SplashThread implements Runnable {
             }
 
             ExecutorService pluginPool = Executors.newFixedThreadPool(5);
-            HashMap<String, String> localCalcs = new HashMap<String, String>();
+            HashMap<String, String> localCalcs = new HashMap<>();
             for (File c : calcDirFile.listFiles()) {
 
                 Runnable r = new Runnable() {

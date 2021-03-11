@@ -677,6 +677,7 @@ import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.net.URL;
 import java.net.URLConnection;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -727,7 +728,7 @@ public class FormsManagementDialog extends javax.swing.JDialog implements FormAc
             urlCon.setReadTimeout(5000);
 
             InputStream is = urlCon.getInputStream();
-            InputStreamReader reader = new InputStreamReader(is, "UTF-8");
+            InputStreamReader reader = new InputStreamReader(is, StandardCharsets.UTF_8);
 
             char[] buffer = new char[1024];
             int len = 0;
@@ -823,7 +824,7 @@ public class FormsManagementDialog extends javax.swing.JDialog implements FormAc
 
             StringBuilder sb = new StringBuilder();
             try (InputStream is = new FileInputStream(internalXml);
-                    InputStreamReader reader = new InputStreamReader(is, "UTF-8")) {
+                    InputStreamReader reader = new InputStreamReader(is, StandardCharsets.UTF_8)) {
 
                 char[] buffer = new char[1024];
                 int len = 0;
