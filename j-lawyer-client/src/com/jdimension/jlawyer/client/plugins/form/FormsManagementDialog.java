@@ -805,8 +805,8 @@ public class FormsManagementDialog extends javax.swing.JDialog implements FormAc
             }
             Iterator i = formPlugins.entrySet().iterator();
             while (i.hasNext()) {
-                Map.Entry me=(Map.Entry)i.next();
-                this.formPluginsPanel.add((Component)me.getValue());
+                Map.Entry me = (Map.Entry) i.next();
+                this.formPluginsPanel.add((Component) me.getValue());
             }
 
         } catch (Throwable t) {
@@ -821,17 +821,16 @@ public class FormsManagementDialog extends javax.swing.JDialog implements FormAc
                 return;
             }
 
-            InputStream is = new FileInputStream(internalXml);
-            InputStreamReader reader = new InputStreamReader(is, "UTF-8");
+            StringBuilder sb = new StringBuilder();
+            try (InputStream is = new FileInputStream(internalXml);
+                    InputStreamReader reader = new InputStreamReader(is, "UTF-8")) {
 
-            char[] buffer = new char[1024];
-            int len = 0;
-            StringBuffer sb = new StringBuffer();
-            while ((len = reader.read(buffer)) > -1) {
-                sb.append(buffer, 0, len);
+                char[] buffer = new char[1024];
+                int len = 0;
+                while ((len = reader.read(buffer)) > -1) {
+                    sb.append(buffer, 0, len);
+                }
             }
-            reader.close();
-            is.close();
             String formsContent = sb.toString();
 
             DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();

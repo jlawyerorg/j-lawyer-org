@@ -666,16 +666,11 @@ package com.jdimension.jlawyer.jlawyerbox;
 import com.jcabi.ssh.SSHByPassword;
 import com.jcabi.ssh.Shell;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
-import com.jdimension.jlawyer.client.utils.VersionUtils;
-import java.awt.Color;
-import java.io.IOException;
 import java.io.StringBufferInputStream;
-import java.net.HttpURLConnection;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
-import java.net.URL;
 import java.util.Enumeration;
 import javax.swing.Icon;
 import javax.swing.JLabel;
@@ -712,19 +707,6 @@ public class BoxAccess {
                     ThreadUtils.setTabbedPaneIcon(pane, index, icon);
                 }
 
-//                if (!reachable) {
-//                    String alternativeHost = getAlternativeHostName();
-//                    if (!host.equals(alternativeHost)) {
-//                        reachable = isReachableOnHost(alternativeHost);
-//                        if (!reachable) {
-//                            Icon icon = new javax.swing.ImageIcon(getClass().getResource("/icons/redled.png"));
-//                            ThreadUtils.setTabbedPaneIcon(pane, index, icon);
-//                        } else {
-//                            Icon icon = new javax.swing.ImageIcon(getClass().getResource("/icons/greenled.png"));
-//                            ThreadUtils.setTabbedPaneIcon(pane, index, icon);
-//                        }
-//                    }
-//                }
             }
         }).start();
     }
@@ -849,9 +831,11 @@ public class BoxAccess {
                     }
                     
                     //shell = new SSHByPassword(host, 22, "root", password);
-                    StringBufferInputStream params=new StringBufferInputStream("/usr/local/j-lawyer-server/samba/restore\n/usr/local/j-lawyer-server/j-lawyer-data\n" + encryptionPassword +"\n" + dbPassword + "\n-force\n\n");
-                    int returnCode=new Shell.Safe(shell).exec("/usr/local/j-lawyer-server/j-lawyer-backupmgr/backupmgr.sh", params, System.out, System.err);
-                    System.out.println("exit code: " + returnCode);
+                    int returnCode=-1;
+                    try (StringBufferInputStream params = new StringBufferInputStream("/usr/local/j-lawyer-server/samba/restore\n/usr/local/j-lawyer-server/j-lawyer-data\n" + encryptionPassword + "\n" + dbPassword + "\n-force\n\n")) {
+                        returnCode = new Shell.Safe(shell).exec("/usr/local/j-lawyer-server/j-lawyer-backupmgr/backupmgr.sh", params, System.out, System.err);
+                        System.out.println("exit code: " + returnCode);
+                    }
                     if(returnCode!=0) {
                         throw new Exception("Fehler - bitte restore.log in der Freigabe der Box prüfen");
                     }
@@ -874,19 +858,7 @@ public class BoxAccess {
     }
     
     public void serviceCheck(final JLabel output, final JProgressBar progress, String lastSuccessFulHost) {
-//        String testHost = this.getDefaultHostName();
-//        ThreadUtils.setLabel(output, "Verbinde zu " + testHost);
-//        boolean reachable=this.isReachableOnHost(testHost);
-//        if(!reachable) {
-//            testHost=this.getAlternativeHostName();
-//            ThreadUtils.setLabel(output, "Verbinde zu " + testHost);
-//            reachable=this.isReachableOnHost(testHost);
-//            if(!reachable) {
-//                testHost=lastSuccessFulHost;
-//                ThreadUtils.setLabel(output, "Verbinde zu " + testHost);
-//            }
-//        }
-//        final String host=testHost;
+
         final String host = lastSuccessFulHost;
         new Thread(new Runnable() {
             public void run() {
@@ -917,19 +889,7 @@ public class BoxAccess {
     }
 
     public void serviceRestart(final JLabel output, final JProgressBar progress, String lastSuccessFulHost) {
-//        String testHost = this.getDefaultHostName();
-//        ThreadUtils.setLabel(output, "Verbinde zu " + testHost);
-//        boolean reachable=this.isReachableOnHost(testHost);
-//        if(!reachable) {
-//            testHost=this.getAlternativeHostName();
-//            ThreadUtils.setLabel(output, "Verbinde zu " + testHost);
-//            reachable=this.isReachableOnHost(testHost);
-//            if(!reachable) {
-//                testHost=lastSuccessFulHost;
-//                ThreadUtils.setLabel(output, "Verbinde zu " + testHost);
-//            }
-//        }
-//        final String host=testHost;
+
         final String host = lastSuccessFulHost;
         new Thread(new Runnable() {
             public void run() {
@@ -1040,7 +1000,6 @@ public class BoxAccess {
     }
 
     public static String getManagementConsoleUrl(String lastSuccessfulHost) {
-        //return "http://" + getDefaultHostName() + ":8080/j-lawyer.box/";
         return "http://" + lastSuccessfulHost + ":8080/j-lawyer.box/";
     }
 

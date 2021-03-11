@@ -668,7 +668,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.sql.Connection;
@@ -749,17 +748,17 @@ public class RestoreExecutor {
             progress.onProgress("Prüfe Datenbankverbindung...");
         }
         Class.forName("com.mysql.jdbc.Driver");
-        Connection mysql = DriverManager.getConnection("jdbc:mysql://localhost/jlawyerdb?user=root&useSSL=false&password=" + mysqlPassword);
-        ResultSet rs = mysql.getMetaData().getCatalogs();
         boolean jlawyerdbFound = false;
-        while (rs.next()) {
-            //System.out.println("TABLE_CAT = " + rs.getString("TABLE_CAT"));
-            if ("jlawyerdb".equals(rs.getString("TABLE_CAT").toLowerCase())) {
-                jlawyerdbFound = true;
+        try (Connection mysql = DriverManager.getConnection("jdbc:mysql://localhost/jlawyerdb?user=root&useSSL=false&password=" + mysqlPassword)) {
+            ResultSet rs = mysql.getMetaData().getCatalogs();
+
+            while (rs.next()) {
+                if ("jlawyerdb".equals(rs.getString("TABLE_CAT").toLowerCase())) {
+                    jlawyerdbFound = true;
+                }
             }
+            rs.close();
         }
-        rs.close();
-        mysql.close();
         if (!jlawyerdbFound) {
             throw new Exception("Datenbank 'jlawyerdb' nicht gefunden!");
         }
@@ -868,21 +867,9 @@ public class RestoreExecutor {
 
         for (Iterator iterator = list.iterator(); iterator.hasNext();) {
             FileHeader fh = (FileHeader) iterator.next();
-            //byte[] b = fh.getFileName().getBytes("ISO8859-1");
             byte[] b = fh.getFileName().getBytes(this.filenameEncoding);
             String fName = new String(b, this.filenameEncoding);
-//            String fName = null;
-//            try {
-//                CharsetDetector charDetect = new CharsetDetector();
-//                charDetect.setText(b);
-//                String charSet = charDetect.detect().getName();
-//                if(charSet.toLowerCase().indexOf("utf")<0)
-//                    charSet="UTF-8";
-//                //fName = new String(b, charSet);
-//                fName = new String(b, "UTF-8");
-//            } catch (Throwable e) {
-//                fName = fh.getFileName();
-//            }
+
             try {
                 zipFile.extractFile(fh, targetDir, param, fName);
             } catch (Throwable t) {
@@ -904,47 +891,43 @@ public class RestoreExecutor {
 
         byte[] buffer = new byte[4096];
         //get the zip file content
-        ZipInputStream zis
-                = new ZipInputStream(new FileInputStream(source));
-        //get the zipped file list entry
-        ZipEntry ze = zis.getNextEntry();
+        try (ZipInputStream zis
+                = new ZipInputStream(new FileInputStream(source))) {
+            //get the zipped file list entry
+            ZipEntry ze = zis.getNextEntry();
 
-        while (ze != null) {
+            while (ze != null) {
 
-            String fileName = ze.getName();
-            File newFile = new File(targetDir + File.separator + fileName);
+                String fileName = ze.getName();
+                File newFile = new File(targetDir + File.separator + fileName);
 
-            System.out.println("file unzip : " + newFile.getAbsoluteFile());
+                System.out.println("file unzip : " + newFile.getAbsoluteFile());
 
-            if (ze.isDirectory()) {
-                newFile.mkdirs();
-            } else {
-                //create all non exists folders
-                //else you will hit FileNotFoundException for compressed folder
-                try {
+                if (ze.isDirectory()) {
+                    newFile.mkdirs();
+                } else {
+                    //create all non exists folders
+                    //else you will hit FileNotFoundException for compressed folder
                     new File(newFile.getParent()).mkdirs();
+                    try (FileOutputStream fos = new FileOutputStream(newFile)) {
+                        int len;
+                        while ((len = zis.read(buffer)) > 0) {
+                            fos.write(buffer, 0, len);
+                        }
 
-                    FileOutputStream fos = new FileOutputStream(newFile);
-
-                    int len;
-                    while ((len = zis.read(buffer)) > 0) {
-                        fos.write(buffer, 0, len);
-                    }
-
-                    fos.close();
-                } catch (Throwable t) {
-                    t.printStackTrace();
-                    fileFailures = fileFailures + 1;
-                    if (fileFailures > 5) {
-                        throw new Exception("Mehr als 5 Dateien konnten nicht wiederhergestellt werden - Abbruch!");
+                    } catch (Throwable t) {
+                        t.printStackTrace();
+                        fileFailures = fileFailures + 1;
+                        if (fileFailures > 5) {
+                            throw new Exception("Mehr als 5 Dateien konnten nicht wiederhergestellt werden - Abbruch!");
+                        }
                     }
                 }
+                ze = zis.getNextEntry();
             }
-            ze = zis.getNextEntry();
-        }
 
-        zis.closeEntry();
-        zis.close();
+            zis.closeEntry();
+        }
     }
 
     private void validateBackupDirectory(BackupProgressCallback progress) throws Exception {
@@ -1176,7 +1159,7 @@ public class RestoreExecutor {
         String osName = System.getProperty("os.name").toLowerCase();
         String path = "";
         if (osName.indexOf("win") > -1) {
-            backup=backup.replace("\\", "/");
+            backup = backup.replace("\\", "/");
         } else if (osName.indexOf("linux") > -1) {
 
         } else if (osName.startsWith("mac")) {

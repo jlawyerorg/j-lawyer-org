@@ -701,8 +701,8 @@ public class FileUtils extends ServerFileUtils {
 
     private FileUtils() {
         super();
-        iconCache = new HashMap<String, Icon>();
-        iconCache32 = new HashMap<String, Icon>();
+        iconCache = new HashMap<>();
+        iconCache32 = new HashMap<>();
 
     }
 

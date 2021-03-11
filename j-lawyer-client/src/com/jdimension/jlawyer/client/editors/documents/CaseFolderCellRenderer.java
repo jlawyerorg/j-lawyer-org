@@ -669,15 +669,12 @@ import javax.swing.JTree;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeCellRenderer;
 import org.apache.log4j.Logger;
-import themes.colors.DefaultColorTheme;
 
 /**
  *
  * @author jens
  */
 public class CaseFolderCellRenderer extends DefaultTreeCellRenderer {
-
-    private static final Logger log = Logger.getLogger(CaseFolderCellRenderer.class.getName());
 
     private Color defaultBackground=null;
     

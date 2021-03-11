@@ -724,7 +724,7 @@ public class SendAction extends ProgressableAction {
         this.documentTag = documentTag;
     }
 
-    public SendAction(ProgressIndicator i, JDialog cleanAfter, ArrayList<String> attachments, AppUserBean cu, boolean readReceipt, String to, String cc, String bcc, String subject, String body, String contentType, ArchiveFileBean af, String documentTag, CaseFolder folder) {
+    public SendAction(ProgressIndicator i, JDialog cleanAfter, List<String> attachments, AppUserBean cu, boolean readReceipt, String to, String cc, String bcc, String subject, String body, String contentType, ArchiveFileBean af, String documentTag, CaseFolder folder) {
         this(i, cleanAfter, attachments, cu, readReceipt, to, cc, bcc, subject, body, contentType, documentTag);
         this.archiveFile = af;
         this.caseFolder=folder;

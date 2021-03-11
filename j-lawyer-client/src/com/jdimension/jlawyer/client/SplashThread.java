@@ -1467,7 +1467,7 @@ public class SplashThread implements Runnable {
             }
 
             ExecutorService pluginPool = Executors.newFixedThreadPool(5);
-            HashMap<String, String> localForms = new HashMap<String, String>();
+            HashMap<String, String> localForms = new HashMap<>();
             for (File c : formDirFile.listFiles()) {
 
                 Runnable r = new Runnable() {
@@ -1518,7 +1518,6 @@ public class SplashThread implements Runnable {
 
                         try (FileOutputStream fw = new FileOutputStream(localFileLocation)) {
                             fw.write(content);
-                            fw.close();
                         } catch (Exception ex) {
                             log.error("could not write plugin file: " + localFileLocation, ex);
                         }

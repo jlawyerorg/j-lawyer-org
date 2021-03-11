@@ -1731,9 +1731,9 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                         return;
                     }
                 }
-                a = new SendEncryptedAction(dlg, this, new ArrayList(this.attachments.values()), this.cu, this.chkReadReceipt.isSelected(), this.txtTo.getText(), this.txtCc.getText(), this.txtBcc.getText(), this.txtSubject.getText(), ed.getText(), contentType, this.contextArchiveFile, createDocumentTag, folder);
+                a = new SendEncryptedAction(dlg, this, new ArrayList<String>(this.attachments.values()), this.cu, this.chkReadReceipt.isSelected(), this.txtTo.getText(), this.txtCc.getText(), this.txtBcc.getText(), this.txtSubject.getText(), ed.getText(), contentType, this.contextArchiveFile, createDocumentTag, folder);
             } else {
-                a = new SendAction(dlg, this, new ArrayList(this.attachments.values()), this.cu, this.chkReadReceipt.isSelected(), this.txtTo.getText(), this.txtCc.getText(), this.txtBcc.getText(), this.txtSubject.getText(), ed.getText(), contentType, this.contextArchiveFile, createDocumentTag, folder);
+                a = new SendAction(dlg, this, new ArrayList<String>(this.attachments.values()), this.cu, this.chkReadReceipt.isSelected(), this.txtTo.getText(), this.txtCc.getText(), this.txtBcc.getText(), this.txtSubject.getText(), ed.getText(), contentType, this.contextArchiveFile, createDocumentTag, folder);
             }
 
         } else if (this.chkEncryption.isSelected()) {
