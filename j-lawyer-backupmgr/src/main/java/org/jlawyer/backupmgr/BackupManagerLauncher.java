@@ -757,8 +757,6 @@ public class BackupManagerLauncher {
                 }
             }.start();
         }
-
-        //launch(args);
     }
 
     private static boolean isReallyHeadless() {

@@ -674,8 +674,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Reader;
 import java.io.StringWriter;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import junit.framework.Assert;
@@ -685,7 +683,6 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTR;
 
 /**
  *
@@ -706,9 +703,8 @@ public class MicrosoftOfficeDocxTest {
 
     @Before
     public void setUp() {
-        
-         //org.slf4j.helpers.Util.
 
+        //org.slf4j.helpers.Util.
     }
 
     @After
@@ -719,7 +715,7 @@ public class MicrosoftOfficeDocxTest {
     public void getPlaceHolders() {
         try {
             //ArrayList l = new ArrayList(LibreOfficeAccess.getPlaceHolders("/home/jens/jenkins-home/workspace/j-lawyer-server/j-lawyer-server-ejb/test/data/template.odt"));
-            ArrayList<String> allPartyTypesPlaceholders=new ArrayList<>();
+            ArrayList<String> allPartyTypesPlaceholders = new ArrayList<>();
             allPartyTypesPlaceholders.add("MANDANT");
             allPartyTypesPlaceholders.add("GEGNER");
             allPartyTypesPlaceholders.add("DRITTE");
@@ -730,12 +726,12 @@ public class MicrosoftOfficeDocxTest {
             t.printStackTrace();
         }
     }
-    
+
     @Test
     public void getPlaceHoldersInTextfield() {
         try {
             //ArrayList l = new ArrayList(LibreOfficeAccess.getPlaceHolders("/home/jens/jenkins-home/workspace/j-lawyer-server/j-lawyer-server-ejb/test/data/template.odt"));
-            ArrayList<String> allPartyTypesPlaceholders=new ArrayList<>();
+            ArrayList<String> allPartyTypesPlaceholders = new ArrayList<>();
             allPartyTypesPlaceholders.add("MANDANT");
             allPartyTypesPlaceholders.add("GEGNER");
             allPartyTypesPlaceholders.add("DRITTE");
@@ -746,20 +742,20 @@ public class MicrosoftOfficeDocxTest {
             t.printStackTrace();
         }
     }
-    
+
     @Test
     public void getPlaceHoldersInTextfieldPerformance() {
         try {
             //ArrayList l = new ArrayList(LibreOfficeAccess.getPlaceHolders("/home/jens/jenkins-home/workspace/j-lawyer-server/j-lawyer-server-ejb/test/data/template.odt"));
-            ArrayList<String> allPartyTypesPlaceholders=new ArrayList<>();
+            ArrayList<String> allPartyTypesPlaceholders = new ArrayList<>();
             allPartyTypesPlaceholders.add("MANDANT");
             allPartyTypesPlaceholders.add("GEGNER");
             allPartyTypesPlaceholders.add("DRITTE");
-            long start=System.currentTimeMillis();
-            
+            long start = System.currentTimeMillis();
+
             ArrayList l = new ArrayList(LibreOfficeAccess.getPlaceHolders("test/data/many-textfields.docx", allPartyTypesPlaceholders, new ArrayList<String>()));
-            long end=System.currentTimeMillis();
-            System.out.println("textfield search took " + (end-start));
+            long end = System.currentTimeMillis();
+            System.out.println("textfield search took " + (end - start));
             //Assert.assertEquals(13, l.size());
         } catch (Throwable t) {
             Assert.fail(t.getMessage());
@@ -772,14 +768,14 @@ public class MicrosoftOfficeDocxTest {
         try {
             //Files.copy(new File("/home/jens/dev/projects/j-lawyer-server/j-lawyer-server-ejb/test/data/template.odt").toPath(), new File("/home/jens/dev/projects/j-lawyer-server/j-lawyer-server-ejb/test/data/template-run.odt").toPath(), StandardCopyOption.REPLACE_EXISTING);
             //File f=new File("/home/jens/jenkins-home/workspace/j-lawyer-server/j-lawyer-server-ejb/test/data/template-run.odt");
-            File f=new File("test/data/template-run.docx");
+            File f = new File("test/data/template-run.docx");
             f.delete();
             //copyFileUsingStream(new File("/home/jens/jenkins-home/workspace/j-lawyer-server/j-lawyer-server-ejb/test/data/template.odt"), new File("/home/jens/jenkins-home/workspace/j-lawyer-server/j-lawyer-server-ejb/test/data/template-run.odt"));
             copyFileUsingStream(new File("test/data/template.docx"), new File("test/data/template-run.docx"));
         } catch (Throwable t) {
             t.printStackTrace();
             Assert.fail();
-            
+
         }
 
         Hashtable ph = new Hashtable();
@@ -795,7 +791,7 @@ public class MicrosoftOfficeDocxTest {
             Assert.fail();
         }
 
-        String content="";
+        String content = "";
         Tika tika = new Tika();
         try {
             //Reader r = tika.parse(new File("/home/jens/jenkins-home/workspace/j-lawyer-server/j-lawyer-server-ejb/test/data/template-run.odt"));
@@ -818,7 +814,7 @@ public class MicrosoftOfficeDocxTest {
             t.printStackTrace();
             Assert.fail();
         }
-        
+
         Assert.assertEquals(0, content.indexOf("otto. test"));
         Assert.assertEquals(11, content.indexOf("otto, test"));
         Assert.assertEquals(22, content.indexOf("otto; test"));
@@ -830,23 +826,23 @@ public class MicrosoftOfficeDocxTest {
         Assert.assertEquals(88, content.indexOf("otto test"));
         Assert.assertEquals(98, content.indexOf("hans otto"));
         Assert.assertEquals(109, content.indexOf("hans otto 2"));
-        Assert.assertTrue(content.indexOf("MANDANT_ANREDE")<0);
-        
+        Assert.assertTrue(content.indexOf("MANDANT_ANREDE") < 0);
+
     }
-    
+
     @Test
     public void setPlaceHoldersDocxTextfield() {
         try {
             //Files.copy(new File("/home/jens/dev/projects/j-lawyer-server/j-lawyer-server-ejb/test/data/template.odt").toPath(), new File("/home/jens/dev/projects/j-lawyer-server/j-lawyer-server-ejb/test/data/template-run.odt").toPath(), StandardCopyOption.REPLACE_EXISTING);
             //File f=new File("/home/jens/jenkins-home/workspace/j-lawyer-server/j-lawyer-server-ejb/test/data/template-run.odt");
-            File f=new File("test/data/textfield-run.docx");
+            File f = new File("test/data/textfield-run.docx");
             f.delete();
             //copyFileUsingStream(new File("/home/jens/jenkins-home/workspace/j-lawyer-server/j-lawyer-server-ejb/test/data/template.odt"), new File("/home/jens/jenkins-home/workspace/j-lawyer-server/j-lawyer-server-ejb/test/data/template-run.odt"));
             copyFileUsingStream(new File("test/data/textfield.docx"), new File("test/data/textfield-run.docx"));
         } catch (Throwable t) {
             t.printStackTrace();
             Assert.fail();
-            
+
         }
 
         Hashtable ph = new Hashtable();
@@ -872,7 +868,7 @@ public class MicrosoftOfficeDocxTest {
             Assert.fail();
         }
 
-        String content="";
+        String content = "";
         Tika tika = new Tika();
         try {
             //Reader r = tika.parse(new File("/home/jens/jenkins-home/workspace/j-lawyer-server/j-lawyer-server-ejb/test/data/template-run.odt"));
@@ -895,13 +891,13 @@ public class MicrosoftOfficeDocxTest {
             t.printStackTrace();
             Assert.fail();
         }
-        
-        Assert.assertTrue(content.indexOf("www.kanzlei.com")>-1);
-        Assert.assertTrue(content.indexOf("Brüssel")>-1);
-        Assert.assertTrue(content.indexOf("anwalt@")>-1);
-        
+
+        Assert.assertTrue(content.indexOf("www.kanzlei.com") > -1);
+        Assert.assertTrue(content.indexOf("Brüssel") > -1);
+        Assert.assertTrue(content.indexOf("anwalt@") > -1);
+
     }
-    
+
 //    @Test
 //    public void setReplaceEmptyLine() {
 //        try {
@@ -965,7 +961,6 @@ public class MicrosoftOfficeDocxTest {
 //        
 //        
 //    }
-    
 //    @Test
 //    public void setReplaceEmptyLine2() {
 //        try {
@@ -1027,21 +1022,15 @@ public class MicrosoftOfficeDocxTest {
 //        
 //        
 //    }
-   
     private static void copyFileUsingStream(File source, File dest) throws IOException {
-        InputStream is = null;
-        OutputStream os = null;
-        try {
-            is = new FileInputStream(source);
-            os = new FileOutputStream(dest);
+        try (InputStream is = new FileInputStream(source);
+                OutputStream os = new FileOutputStream(dest)) {
+
             byte[] buffer = new byte[1024];
             int length;
             while ((length = is.read(buffer)) > 0) {
                 os.write(buffer, 0, length);
             }
-        } finally {
-            is.close();
-            os.close();
         }
     }
 

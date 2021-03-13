@@ -768,13 +768,10 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     @RolesAllowed({"loginRole"})
     public BankDataBean[] searchBankData(String query) {
         JDBCUtils utils = new JDBCUtils();
-        Connection con = null;
         ResultSet rs = null;
-        PreparedStatement st = null;
         ArrayList<BankDataBean> list = new ArrayList<BankDataBean>();
-        try {
-            con = utils.getConnection();
-            st = con.prepareStatement("select id, name, bankCode from directory_banks where ucase(name) like ? or bankCode like ? order by bankCode, name");
+        try (Connection con = utils.getConnection();
+                PreparedStatement st = con.prepareStatement("select id, name, bankCode from directory_banks where ucase(name) like ? or bankCode like ? order by bankCode, name")) {
             String wildCard1 = StringUtils.germanToUpperCase(query) + "%";
             String wildCard2 = "%" + wildCard1;
             st.setString(1, wildCard2);
@@ -796,17 +793,8 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
             throw new EJBException("Bankensuche konnte nicht ausgeführt werden.", sqle);
         } finally {
             try {
-                rs.close();
-            } catch (Throwable t) {
-                log.error(t);
-            }
-            try {
-                st.close();
-            } catch (Throwable t) {
-                log.error(t);
-            }
-            try {
-                con.close();
+                if(rs!=null)
+                    rs.close();
             } catch (Throwable t) {
                 log.error(t);
             }
@@ -819,13 +807,11 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     @RolesAllowed({"loginRole"})
     public CityDataBean[] searchCityData(String query) {
         JDBCUtils utils = new JDBCUtils();
-        Connection con = null;
         ResultSet rs = null;
-        PreparedStatement st = null;
-        ArrayList<CityDataBean> list = new ArrayList<CityDataBean>();
-        try {
-            con = utils.getConnection();
-            st = con.prepareStatement("select id, city, zipCode from directory_cities where ucase(city) like ? or zipCode like ? order by zipCode");
+        ArrayList<CityDataBean> list = new ArrayList<>();
+        try (Connection con = utils.getConnection();
+                PreparedStatement st = con.prepareStatement("select id, city, zipCode from directory_cities where ucase(city) like ? or zipCode like ? order by zipCode")) {
+
             String wildCard1 = StringUtils.germanToUpperCase(query) + "%";
             String wildCard2 = "%" + wildCard1;
             st.setString(1, wildCard2);
@@ -847,17 +833,8 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
             throw new EJBException("Postleitzahlensuche konnte nicht ausgeführt werden.", sqle);
         } finally {
             try {
-                rs.close();
-            } catch (Throwable t) {
-                log.error(t);
-            }
-            try {
-                st.close();
-            } catch (Throwable t) {
-                log.error(t);
-            }
-            try {
-                con.close();
+                if(rs!=null)
+                    rs.close();
             } catch (Throwable t) {
                 log.error(t);
             }
@@ -894,29 +871,14 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     @RolesAllowed({"adminRole"})
     public void removeAllBankData() {
         JDBCUtils utils = new JDBCUtils();
-        Connection con = null;
-        Statement st = null;
-        try {
-            con = utils.getConnection();
-            st = con.createStatement();
+        try (Connection con = utils.getConnection();
+                Statement st = con.createStatement()) {
+
             st.execute("delete from directory_banks");
         } catch (SQLException sqle) {
             log.error("Error deleting bank data", sqle);
             throw new EJBException("Bankdaten konnten nicht gelöscht werden.", sqle);
-        } finally {
-            try {
-                st.close();
-            } catch (Throwable t) {
-                log.error(t);
-            }
-            try {
-                con.close();
-            } catch (Throwable t) {
-                log.error(t);
-            }
         }
-
-        return;
     }
 
     @Override
@@ -940,29 +902,13 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     @RolesAllowed({"adminRole"})
     public void removeAllCityData() {
         JDBCUtils utils = new JDBCUtils();
-        Connection con = null;
-        Statement st = null;
-        try {
-            con = utils.getConnection();
-            st = con.createStatement();
+        try (Connection con = utils.getConnection();
+                Statement st = con.createStatement()) {
             st.execute("delete from directory_cities");
         } catch (SQLException sqle) {
             log.error("Error deleting city data", sqle);
             throw new EJBException("Postleitzahldaten konnten nicht gelöscht werden.", sqle);
-        } finally {
-            try {
-                st.close();
-            } catch (Throwable t) {
-                log.error(t);
-            }
-            try {
-                con.close();
-            } catch (Throwable t) {
-                log.error(t);
-            }
         }
-
-        return;
     }
 
     @Override
@@ -1102,12 +1048,12 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     @Override
     @RolesAllowed({"adminRole"})
     public AppUserBean updateUser(AppUserBean user, List<AppRoleBean> roles) throws Exception {
-        
-        AppUserBean outdated=this.userBeanFacade.findByPrincipalId(user.getPrincipalId());
-        if(outdated==null) {
+
+        AppUserBean outdated = this.userBeanFacade.findByPrincipalId(user.getPrincipalId());
+        if (outdated == null) {
             throw new Exception("No user with name " + user.getPrincipalId());
         }
-        
+
         // no password change via updateUser, only by using updatePassword service
         // preserve current password hash
         user.setPassword(outdated.getPassword());
@@ -1123,12 +1069,12 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
             r.setId(idGen.getID().toString());
             this.roleBeanFacade.create(r);
         }
-        
+
         this.flushUserCache(user.getPrincipalId());
 
         return user;
     }
-    
+
     private void flushUserCache(String principalId) {
         try {
 
@@ -1485,13 +1431,9 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
 
         String version = "unknown";
         JDBCUtils utils = new JDBCUtils();
-        Connection con = null;
-        ResultSet rs = null;
-        PreparedStatement st = null;
-        try {
-            con = utils.getConnection();
-            st = con.prepareStatement("SELECT version FROM flyway_schema_history where success =1 order by installed_rank desc limit 1");
-            rs = st.executeQuery();
+        try (Connection con = utils.getConnection();
+                PreparedStatement st = con.prepareStatement("SELECT version FROM flyway_schema_history where success =1 order by installed_rank desc limit 1");
+                ResultSet rs = st.executeQuery()) {
 
             if (rs.next()) {
                 version = rs.getString(1);
@@ -1499,22 +1441,6 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
             }
         } catch (SQLException sqle) {
             log.error("Error getting database / server version", sqle);
-        } finally {
-            try {
-                rs.close();
-            } catch (Throwable t) {
-                log.error(t);
-            }
-            try {
-                st.close();
-            } catch (Throwable t) {
-                log.error(t);
-            }
-            try {
-                con.close();
-            } catch (Throwable t) {
-                log.error(t);
-            }
         }
 
         return version;
@@ -2023,25 +1949,29 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     @Override
     @RolesAllowed({"loginRole"})
     public Collection<PartyTypeBean> getPartyTypes() {
-        List<PartyTypeBean> all= this.partyTypesFacade.findAll();
+        List<PartyTypeBean> all = this.partyTypesFacade.findAll();
         Collections.sort(all, new Comparator() {
             @Override
             public int compare(Object t, Object t1) {
-                Object u1=t;
-                Object u2=t1;
-                if(u1==null)
+                Object u1 = t;
+                Object u2 = t1;
+                if (u1 == null) {
                     return -1;
-                if(u2==null)
+                }
+                if (u2 == null) {
                     return 1;
-                
-                if(!(u1 instanceof PartyTypeBean))
+                }
+
+                if (!(u1 instanceof PartyTypeBean)) {
                     return -1;
-                if(!(u2 instanceof PartyTypeBean))
+                }
+                if (!(u2 instanceof PartyTypeBean)) {
                     return 1;
-                
-                PartyTypeBean f1=(PartyTypeBean)u1;
-                PartyTypeBean f2=(PartyTypeBean)u2;
-                
+                }
+
+                PartyTypeBean f1 = (PartyTypeBean) u1;
+                PartyTypeBean f2 = (PartyTypeBean) u2;
+
                 String f1name = "";
                 if (f1.getName() != null) {
                     f1name = f1.getName().toLowerCase();
@@ -2050,10 +1980,10 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
                 if (f2.getName() != null) {
                     f2name = f2.getName().toLowerCase();
                 }
-                
+
                 return f1name.compareTo(f2name);
             }
-            
+
         });
         return all;
     }
@@ -2169,75 +2099,76 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
             log.error("Server directory for scans is not a directory: " + scanDir);
             throw new Exception("Server directory for scans is not a directory: " + scanDir);
         }
-        
-        File[] children=scanDirectory.listFiles();
-        if(children.length>5000) {
+
+        File[] children = scanDirectory.listFiles();
+        if (children.length > 5000) {
             log.error("Scan directory has exceeded maximum of 5000 files!");
             throw new Exception("Scan directory has exceeded maximum of 5000 files!");
         }
-        
-        String fullDir=scanDir;
-        if(!scanDir.endsWith(File.separator))
-            fullDir=fullDir+File.separator;
-        String fullPath=fullDir+fileName;
-        
-        File uploadFile=new File(fullPath);
-        if(uploadFile.exists()) {
-            int copy=1;
-            
-            while(uploadFile.exists())  {
-                copy=copy+1;
-                if(copy==6) {
+
+        String fullDir = scanDir;
+        if (!scanDir.endsWith(File.separator)) {
+            fullDir = fullDir + File.separator;
+        }
+        String fullPath = fullDir + fileName;
+
+        File uploadFile = new File(fullPath);
+        if (uploadFile.exists()) {
+            int copy = 1;
+
+            while (uploadFile.exists()) {
+                copy = copy + 1;
+                if (copy == 6) {
                     log.warn("observed file " + fileName + " can not be stored, already has more than 5 copies");
                     return;
                 }
-                fullPath=fullDir+"(" +copy + ") " + fileName;
-                uploadFile=new File(fullPath);
+                fullPath = fullDir + "(" + copy + ") " + fileName;
+                uploadFile = new File(fullPath);
             }
         }
-        
-        try (FileOutputStream fout=new FileOutputStream(uploadFile)) {
+
+        try (FileOutputStream fout = new FileOutputStream(uploadFile)) {
             fout.write(content);
         }
-        
+
     }
 
     @Override
     @RolesAllowed({"loginRole"})
     public boolean updatePassword(String newPassword) throws Exception {
-        String principalId=context.getCallerPrincipal().getName();
-        AppUserBean u=this.userBeanFacade.findByPrincipalId(principalId);
-        if(u==null) {
+        String principalId = context.getCallerPrincipal().getName();
+        AppUserBean u = this.userBeanFacade.findByPrincipalId(principalId);
+        if (u == null) {
             throw new Exception("Error resetting password for " + principalId);
         }
-        
+
         // persist the hash of the password
-        newPassword=PasswordsUtil.createPasswordHash(newPassword);
-        
+        newPassword = PasswordsUtil.createPasswordHash(newPassword);
+
         u.setPassword(newPassword);
         this.userBeanFacade.edit(u);
-        
+
         this.flushUserCache(principalId);
-        
+
         return true;
     }
 
     @Override
     @RolesAllowed({"adminRole"})
     public boolean updatePasswordForUser(String principalId, String newPassword) throws Exception {
-        AppUserBean u=this.userBeanFacade.findByPrincipalId(principalId);
-        if(u==null) {
+        AppUserBean u = this.userBeanFacade.findByPrincipalId(principalId);
+        if (u == null) {
             throw new Exception("Error resetting password for " + principalId);
         }
-        
+
         // persist the hash of the password
-        newPassword=PasswordsUtil.createPasswordHash(newPassword);
-        
+        newPassword = PasswordsUtil.createPasswordHash(newPassword);
+
         u.setPassword(newPassword);
         this.userBeanFacade.edit(u);
-        
+
         this.flushUserCache(principalId);
-        
+
         return true;
     }
 

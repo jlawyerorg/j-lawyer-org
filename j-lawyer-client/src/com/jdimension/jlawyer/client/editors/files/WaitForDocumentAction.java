@@ -663,42 +663,13 @@
  */
 package com.jdimension.jlawyer.client.editors.files;
 
-import com.jdimension.jlawyer.client.bea.*;
-import com.jdimension.jlawyer.client.events.DocumentAddedEvent;
-import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.launcher.DocumentObserver;
-import com.jdimension.jlawyer.client.launcher.LauncherFactory;
 import com.jdimension.jlawyer.client.launcher.ObservedDocument;
 import com.jdimension.jlawyer.client.processing.ProgressIndicator;
 import com.jdimension.jlawyer.client.processing.ProgressableAction;
-import com.jdimension.jlawyer.client.processing.ProgressableActionCallback;
-import com.jdimension.jlawyer.client.settings.ClientSettings;
-import com.jdimension.jlawyer.persistence.AppUserBean;
-import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
-import com.jdimension.jlawyer.persistence.ArchiveFileHistoryBean;
-import com.jdimension.jlawyer.persistence.DocumentTagsBean;
-import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
-import com.jdimension.jlawyer.services.JLawyerServiceLocator;
-import java.io.File;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.Enumeration;
-import java.util.logging.Level;
-import javax.swing.JDialog;
 import javax.swing.JOptionPane;
-import javax.swing.SwingUtilities;
-import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
-import org.jlawyer.bea.BeaWrapperException;
-import org.jlawyer.bea.model.Attachment;
-import org.jlawyer.bea.model.Identity;
-import org.jlawyer.bea.model.BeaListItem;
-import org.jlawyer.bea.model.Message;
-import org.jlawyer.bea.model.MessageExport;
-import org.jlawyer.bea.model.ProcessCard;
-import themes.colors.DefaultColorTheme;
 
 /**
  *
@@ -756,12 +727,7 @@ public class WaitForDocumentAction extends ProgressableAction {
             if (open) {
                 ObservedDocument odoc = DocumentObserver.getInstance().getDocumentById(doc.getId());
                 if (odoc.getStatus() != ObservedDocument.STATUS_CLOSING) {
-                    try {
-                        Thread.sleep(500);
-
-                    } catch (InterruptedException ex) {
-                        log.error(ex);
-                    }
+                    Thread.sleep(500);
 
                     secondsWaited = secondsWaited + 1;
                     this.progress();
