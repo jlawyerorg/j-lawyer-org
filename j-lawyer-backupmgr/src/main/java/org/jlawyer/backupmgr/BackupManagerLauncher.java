@@ -705,9 +705,9 @@ public class BackupManagerLauncher {
             backupDir = scanner.next();
             System.out.print("Datenverzeichnis der j-lawyer.org Serverinstallation: ");
             dataDir = scanner.next();
-            System.out.print("Verschlüsselungspasswort: ");
+            System.out.print("Verschlüsselungspasswort (Leerzeichen, wenn keine Verschlüsselung genutzt wurde): ");
             encryptionPwd = scanner.next();
-            if("***empty***".equals(encryptionPwd))
+            if("***empty***".equals(encryptionPwd) || " ".equals(encryptionPwd))
                 encryptionPwd="";
             System.out.print("MySQL root-Passwort: ");
             dbPwd = scanner.next();
