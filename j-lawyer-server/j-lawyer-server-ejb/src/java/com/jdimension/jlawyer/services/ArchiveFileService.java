@@ -884,12 +884,6 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                     allExisting.add(rs.getString("fileNumber"));
                 }
 
-                try {
-                    rs.close();
-                } catch (Exception ex) {
-                    log.error(ex);
-                }
-
             } catch (SQLException sqle) {
                 log.error("Error calculating new file number", sqle);
                 throw new EJBException("Es konnte kein neues Aktenzeichen ermittelt werden.", sqle);
@@ -903,9 +897,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
             JDBCUtils utils = new JDBCUtils();
             SimpleDateFormat df = new SimpleDateFormat("yyyy");
-            Connection con = null;
             ResultSet rs = null;
-            PreparedStatement st = null;
             String newKey = "";
             int index = 1;
             NumberFormat nf = new DecimalFormat("00000");
@@ -921,9 +913,9 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             }
 
             suffix = "/" + suffix.substring(2);
-            try {
-                con = utils.getConnection();
-                st = con.prepareStatement("select id from cases where fileNumber = ?");
+            try (Connection con = utils.getConnection();
+                PreparedStatement st = con.prepareStatement("select id from cases where fileNumber = ?")) {
+                
                 boolean found = true;
                 while (found) {
                     newKey = nf.format(index) + suffix;
@@ -944,17 +936,6 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             } catch (SQLException sqle) {
                 log.error("Error calculating new file number", sqle);
                 throw new EJBException("Es konnte kein neues Aktenzeichen ermittelt werden.", sqle);
-            } finally {
-                try {
-                    st.close();
-                } catch (Throwable t) {
-                    log.error(t);
-                }
-                try {
-                    con.close();
-                } catch (Throwable t) {
-                    log.error(t);
-                }
             }
 
             return newKey;
@@ -2415,15 +2396,11 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     public List<String> searchTagsInUse() {
 
         JDBCUtils utils = new JDBCUtils();
-        Connection con = null;
-        ResultSet rs = null;
-        PreparedStatement st = null;
-        ArrayList<String> list = new ArrayList<String>();
-        try {
-            con = utils.getConnection();
-            st = con.prepareStatement("select distinct(tagName) from case_tags order by tagName asc");
-            rs = st.executeQuery();
-
+        ArrayList<String> list = new ArrayList<>();
+        try (Connection con = utils.getConnection();
+                PreparedStatement st = con.prepareStatement("select distinct(tagName) from case_tags order by tagName asc");
+                ResultSet rs = st.executeQuery()) {
+            
             while (rs.next()) {
                 String t = rs.getString(1);
                 list.add(t);
@@ -2431,22 +2408,6 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         } catch (SQLException sqle) {
             log.error("Error finding tags in use", sqle);
             throw new EJBException("Aktuelle genutzte Etiketten konnten nicht gefunden werden.", sqle);
-        } finally {
-            try {
-                rs.close();
-            } catch (Throwable t) {
-                log.error(t);
-            }
-            try {
-                st.close();
-            } catch (Throwable t) {
-                log.error(t);
-            }
-            try {
-                con.close();
-            } catch (Throwable t) {
-                log.error(t);
-            }
         }
 
         return list;
@@ -2825,14 +2786,13 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     @RolesAllowed({"loginRole"})
     public Date[] getHistoryInterval(String principalId) {
         JDBCUtils utils = new JDBCUtils();
-        Connection con = null;
         ResultSet rs = null;
         PreparedStatement st = null;
         Date[] result = new Date[2];
         result[0] = new Date();
         result[1] = new Date();
-        try {
-            con = utils.getConnection();
+        try (Connection con = utils.getConnection()) {
+            
             if (principalId == null || "".equalsIgnoreCase(principalId)) {
                 st = con.prepareStatement("select min(changeDate) as minDate, max(changeDate) as maxDate from case_history");
             } else {
@@ -2860,22 +2820,16 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         } catch (SQLException sqle) {
             log.error("Error getting maxDate/minDate from history", sqle);
             throw new EJBException("Historie konnte nicht geladen werden", sqle);
-//        } catch (FinderException fe) {
-//            log.error("Error finding archive file", fe);
-//            throw new EJBException("Aktensuche konnte nicht ausgeführt werden.", fe);
         } finally {
             try {
-                rs.close();
+                if(rs!=null)
+                    rs.close();
             } catch (Throwable t) {
                 log.error(t);
             }
             try {
-                st.close();
-            } catch (Throwable t) {
-                log.error(t);
-            }
-            try {
-                con.close();
+                if(st!=null)
+                    st.close();
             } catch (Throwable t) {
                 log.error(t);
             }
@@ -2951,8 +2905,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             }
 
             try {
-                if(rs!=null)
-                    rs.close();
+                rs.close();
             } catch (Exception ex) {
                 log.error(ex);
             }
@@ -3027,9 +2980,6 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     @RolesAllowed({"readArchiveFileRole"})
     public Collection<ArchiveFileBean> getAllWithMissingReviews() {
         JDBCUtils utils = new JDBCUtils();
-        Connection con = null;
-        ResultSet rs = null;
-        PreparedStatement st = null;
         ArrayList<ArchiveFileBean> list = new ArrayList<ArchiveFileBean>();
 
         List<Group> userGroups = new ArrayList<Group>();
@@ -3039,11 +2989,10 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             log.error("Unable to determine groups for user " + context.getCallerPrincipal().getName(), t);
         }
 
-        try {
-            con = utils.getConnection();
-            st = con.prepareStatement("select id from cases where archived=0 and id not in (select archiveFileKey from case_followups where done=0) order by fileNumber asc");
-            rs = st.executeQuery();
-
+        try (Connection con = utils.getConnection();
+                PreparedStatement st = con.prepareStatement("select id from cases where archived=0 and id not in (select archiveFileKey from case_followups where done=0) order by fileNumber asc");
+                ResultSet rs = st.executeQuery()) {
+            
             while (rs.next()) {
                 String id = rs.getString(1);
                 ArchiveFileBean dto = this.archiveFileFacade.find(id);
@@ -3056,25 +3005,6 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         } catch (SQLException sqle) {
             log.error("Error finding archive files", sqle);
             throw new EJBException("Wiedervorlagensuche konnte nicht ausgeführt werden.", sqle);
-//        } catch (FinderException fe) {
-//            log.error("Error finding archive file", fe);
-//            throw new EJBException("Aktensuche konnte nicht ausgeführt werden.", fe);
-        } finally {
-            try {
-                rs.close();
-            } catch (Throwable t) {
-                log.error(t);
-            }
-            try {
-                st.close();
-            } catch (Throwable t) {
-                log.error(t);
-            }
-            try {
-                con.close();
-            } catch (Throwable t) {
-                log.error(t);
-            }
         }
 
         return list;
@@ -3127,12 +3057,10 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     }
 
     @Override
-    //@RolesAllowed({"readArchiveFileRole"})
     public Date getLastChangedForArchiveFile(String archiveFileKey) {
         JDBCUtils utils = new JDBCUtils();
         ResultSet rs = null;
         Timestamp result = null;
-        ArrayList<String> list = new ArrayList<>();
         try (Connection con = utils.getConnection();
             PreparedStatement st = con.prepareStatement("SELECT max(changeDate) FROM case_history where archiveFileKey=?;")) {
             st.setString(1, archiveFileKey);
@@ -3146,7 +3074,8 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             throw new EJBException("Letzte Änderung kann nicht ermittelt werden.", sqle);
         } finally {
             try {
-                rs.close();
+                if(rs!=null)
+                    rs.close();
             } catch (Throwable t) {
                 log.error(t);
             }
@@ -3910,8 +3839,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             }
 
             try {
-                if(rs!=null)
-                    rs.close();
+                rs.close();
             } catch (Exception ex) {
                 log.error(ex);
             }
