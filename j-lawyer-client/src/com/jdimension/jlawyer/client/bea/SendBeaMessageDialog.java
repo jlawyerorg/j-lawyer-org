@@ -831,7 +831,8 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
                 this.cmbTemplates.setSelectedIndex(0);
             }
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Fehler beim Erstellen der Vorlage: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            log.error(ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim Laden der Nachrichtenvorlage: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
         }
 
         try {
@@ -2022,7 +2023,7 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
                 
             } catch (Exception ex) {
                 log.error("Error applying template", ex);
-                JOptionPane.showMessageDialog(this, "Fehler beim Erstellen der Vorlage: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Fehler beim Laden der Nachrichtenvorlage: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
             }
         }
     }//GEN-LAST:event_cmbTemplatesActionPerformed

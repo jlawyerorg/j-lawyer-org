@@ -1526,8 +1526,13 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         Document dom;
         // Make an  instance of the DocumentBuilderFactory
         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-        dbf.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
-        dbf.setAttribute(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
+        try {
+            dbf.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+            dbf.setAttribute(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
+        } catch (IllegalArgumentException iae) {
+            // only available from JAXP 1.5+, but Wildfly still ships 1.4
+            log.warn("Unable to set external entity restrictions in XML parser", iae);
+        }
 
         // use the factory to take an instance of the document builder
         DocumentBuilder db = dbf.newDocumentBuilder();
@@ -1572,8 +1577,13 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         Document dom;
         // Make an  instance of the DocumentBuilderFactory
         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-        dbf.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
-        dbf.setAttribute(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
+        try {
+            dbf.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+            dbf.setAttribute(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
+        } catch (IllegalArgumentException iae) {
+            // only available from JAXP 1.5+, but Wildfly still ships 1.4
+            log.warn("Unable to set external entity restrictions in XML parser", iae);
+        }
 
         // use the factory to take an instance of the document builder
         DocumentBuilder db = dbf.newDocumentBuilder();
@@ -1597,8 +1607,14 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         }
 
         TransformerFactory transformerFactory = TransformerFactory.newInstance();
-        transformerFactory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, ""); // Compliant
-        transformerFactory.setAttribute(XMLConstants.ACCESS_EXTERNAL_STYLESHEET, ""); // Compliant
+        try {
+            transformerFactory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, ""); // Compliant
+            transformerFactory.setAttribute(XMLConstants.ACCESS_EXTERNAL_STYLESHEET, ""); // Compliant
+        } catch (IllegalArgumentException iae) {
+            // only available from JAXP 1.5+, but Wildfly still ships 1.4
+            log.warn("Unable to set external entity restrictions in XML parser", iae);
+        }
+        
         Transformer transformer = transformerFactory.newTransformer();
         DOMSource source = new DOMSource(doc);
         StreamResult result = new StreamResult(wildFlyConf);

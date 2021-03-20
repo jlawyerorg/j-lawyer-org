@@ -1361,8 +1361,13 @@ public class SplashThread implements Runnable {
             String calculationsContent = sb.toString();
 
             DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-            dbf.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
-            dbf.setAttribute(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
+            try {
+                dbf.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+                dbf.setAttribute(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
+            } catch (IllegalArgumentException iae) {
+                // only available from JAXP 1.5+, but Wildfly still ships 1.4
+                log.warn("Unable to set external entity restrictions in XML parser", iae);
+            }
             DocumentBuilder remoteDb = dbf.newDocumentBuilder();
             InputSource inSrc1 = new InputSource(new StringReader(calculationsContent));
             inSrc1.setEncoding("UTF-8");

@@ -668,6 +668,7 @@ import java.io.StringReader;
 import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import org.apache.log4j.Logger;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
@@ -677,6 +678,8 @@ import org.xml.sax.InputSource;
  * @author jens
  */
 public class EmailTemplate implements Serializable {
+    
+    private static final Logger log=Logger.getLogger(EmailTemplate.class.getName());
 
     public static String[] SUPPORTED_FORMATS = new String[]{"text/plain", "text/html"};
     private String fileName = null;
@@ -712,8 +715,13 @@ public class EmailTemplate implements Serializable {
         EmailTemplate tpl = new EmailTemplate();
 
         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-        dbf.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
-        dbf.setAttribute(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
+        try {
+            dbf.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+            dbf.setAttribute(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
+        } catch (IllegalArgumentException iae) {
+            // only available from JAXP 1.5+, but Wildfly still ships 1.4
+            log.warn("Unable to set external entity restrictions in XML parser", iae);
+        }
         DocumentBuilder db = dbf.newDocumentBuilder();
         Document doc = db.parse(new InputSource(new StringReader(xml)));
 
