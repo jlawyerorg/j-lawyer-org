@@ -1694,7 +1694,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         CaseFolder folder=null;
         if (this.chkSaveAsDocument.isSelected() || !(this.radioReviewTypeNone.isSelected())) {
             if (this.contextArchiveFile == null) {
-                SearchAndAssignDialog saDlg = new SearchAndAssignDialog(this, true, ""+this.txtSubject.getText()+ed.getText());
+                SearchAndAssignDialog saDlg = new SearchAndAssignDialog(this, true, ""+this.txtSubject.getText()+ed.getText(), null);
                 saDlg.setVisible(true);
                 this.contextArchiveFile = saDlg.getCaseSelection();
                 folder=saDlg.getFolderSelection();

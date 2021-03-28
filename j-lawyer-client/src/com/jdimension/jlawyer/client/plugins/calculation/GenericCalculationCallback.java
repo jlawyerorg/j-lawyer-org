@@ -719,7 +719,7 @@ public class GenericCalculationCallback implements CalculationPluginCallback {
         if (table != null) {
 
             if (this.selectedCase == null) {
-                SearchAndAssignDialog dlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true, null);
+                SearchAndAssignDialog dlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true, null, null);
                 dlg.setVisible(true);
                 this.selectedCase = dlg.getCaseSelection();
                 dlg.dispose();

@@ -700,7 +700,7 @@ public class SearchAndAssignScanAction extends DeleteScanAction {
 
             IntegrationServiceRemote is = locator.lookupIntegrationServiceRemote();
 
-            SearchAndAssignDialog dlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true, null);
+            SearchAndAssignDialog dlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true, null, null);
             dlg.setVisible(true);
             ArchiveFileBean sel = dlg.getCaseSelection();
             CaseFolder folder=dlg.getFolderSelection();

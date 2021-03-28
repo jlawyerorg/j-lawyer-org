@@ -2691,7 +2691,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
 
                 String folderId=null;
                 if (caseId == null) {
-                    SearchAndAssignDialog dlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true, "" + m.getSubject() + mailContentUI.getBody());
+                    SearchAndAssignDialog dlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true, "" + m.getSubject() + mailContentUI.getBody(), null);
                     dlg.setVisible(true);
                     ArchiveFileBean sel = dlg.getCaseSelection();
 
@@ -2699,6 +2699,14 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                     if (sel != null) {
                         caseId = sel.getId();
                     }
+                    CaseFolder caseFolder=dlg.getFolderSelection();
+                    if(caseFolder!=null) {
+                        folderId=caseFolder.getId();
+                    }
+                } else {
+                    SearchAndAssignDialog dlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true, "" + m.getSubject() + mailContentUI.getBody(), caseId);
+                    dlg.setVisible(true);
+                    dlg.dispose();
                     CaseFolder caseFolder=dlg.getFolderSelection();
                     if(caseFolder!=null) {
                         folderId=caseFolder.getId();

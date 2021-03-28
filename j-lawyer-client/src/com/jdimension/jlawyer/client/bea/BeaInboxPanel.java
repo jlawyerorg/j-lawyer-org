@@ -2492,7 +2492,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
 
                 String folderId=null;
                 if (caseId == null) {
-                    SearchAndAssignDialog dlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true, ""+m.getReferenceJustice()+m.getReferenceNumber()+m.getSubject()+m.getBody());
+                    SearchAndAssignDialog dlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true, ""+m.getReferenceJustice()+m.getReferenceNumber()+m.getSubject()+m.getBody(), null);
                     dlg.setVisible(true);
                     ArchiveFileBean sel = dlg.getCaseSelection();
 
@@ -2500,6 +2500,14 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                     if (sel != null) {
                         caseId = sel.getId();
                     }
+                    CaseFolder caseFolder=dlg.getFolderSelection();
+                    if(caseFolder!=null) {
+                        folderId=caseFolder.getId();
+                    }
+                } else {
+                    SearchAndAssignDialog dlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true, ""+m.getReferenceJustice()+m.getReferenceNumber()+m.getSubject()+m.getBody(), caseId);
+                    dlg.setVisible(true);
+                    dlg.dispose();
                     CaseFolder caseFolder=dlg.getFolderSelection();
                     if(caseFolder!=null) {
                         folderId=caseFolder.getId();

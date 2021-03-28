@@ -1366,7 +1366,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
         if (this.msgContainer != null) {
             searchContext = "" + msgContainer.getReferenceJustice() + msgContainer.getReferenceNumber() + msgContainer.getSubject() + msgContainer.getBody();
         }
-        SearchAndAssignDialog dlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true, searchContext);
+        SearchAndAssignDialog dlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true, searchContext, null);
         dlg.setVisible(true);
         ArchiveFileBean sel = dlg.getCaseSelection();
         CaseFolder folder=dlg.getFolderSelection();

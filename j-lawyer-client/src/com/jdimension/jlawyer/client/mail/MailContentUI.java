@@ -1577,7 +1577,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
             return;
         }
 
-        SearchAndAssignDialog dlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true, "" + this.lblSubject.getText() + this.editBody.getText());
+        SearchAndAssignDialog dlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true, "" + this.lblSubject.getText() + this.editBody.getText(), null);
         dlg.setVisible(true);
         ArchiveFileBean sel = dlg.getCaseSelection();
         CaseFolder folder=dlg.getFolderSelection();

@@ -703,8 +703,8 @@ public class SearchAndAssignDialog extends javax.swing.JDialog {
     // holds the selected case, e.g. when user double clicks an entry or uses the button
     private ArchiveFileBean caseSelection = null;
     // nolds the last selected folder
-    private CaseFolder folderSelection=null;
-    
+    private CaseFolder folderSelection = null;
+
     // holds the last selected case, required to determine whether or not caseSelection actually changed
     // only when changed, the folder structure is to be reloaded, otherwise selected folder needs to be retained
     private ArchiveFileBean lastSelection = null;
@@ -715,13 +715,18 @@ public class SearchAndAssignDialog extends javax.swing.JDialog {
     // when null, the dialog will load last changed
     private String searchContext = null;
 
+    // if this is set, the selection is forced to this case id
+    // the dialog will then only be used to have the user select a folder
+    private String forceCaseId = null;
+
     /**
      * Creates new form SearchAndAssignDialog
      */
-    public SearchAndAssignDialog(java.awt.Dialog parent, boolean modal, String searchContext) {
+    public SearchAndAssignDialog(java.awt.Dialog parent, boolean modal, String searchContext, String forceCaseId) {
         super(parent, modal);
         initComponents();
         this.searchContext = searchContext;
+        this.forceCaseId = forceCaseId;
         FrameUtils.centerDialog(this, EditorsRegistry.getInstance().getMainWindow());
         this.initialize();
     }
@@ -729,10 +734,11 @@ public class SearchAndAssignDialog extends javax.swing.JDialog {
     /**
      * Creates new form SearchAndAssignDialog
      */
-    public SearchAndAssignDialog(java.awt.Frame parent, boolean modal, String searchContext) {
+    public SearchAndAssignDialog(java.awt.Frame parent, boolean modal, String searchContext, String forceCaseId) {
         super(parent, modal);
         initComponents();
         this.searchContext = searchContext;
+        this.forceCaseId = forceCaseId;
         FrameUtils.centerDialog(this, EditorsRegistry.getInstance().getMainWindow());
         this.initialize();
 
@@ -768,32 +774,49 @@ public class SearchAndAssignDialog extends javax.swing.JDialog {
             QuickArchiveFileSearchTableModel model = new QuickArchiveFileSearchTableModel(colNames, 0);
             this.tblResults.setModel(model);
 
-            ArrayList<ArchiveFileBean> contextMatches = new ArrayList<>();
-            ArrayList<ArchiveFileBean> lastChangedClone = new ArrayList<>();
-            lastChangedClone.addAll(lastChanged);
-            if (this.searchContext != null) {
-                this.searchContext = this.searchContext.toLowerCase();
-                for (ArchiveFileBean a : lastChangedClone) {
-                    if (this.searchContext.contains(a.getFileNumber())) {
-                        contextMatches.add(a);
-                        lastChanged.remove(a);
-                    } else if (a.getName() != null && !("".equals(a.getName())) && this.searchContext.contains(a.getName().toLowerCase())) {
-                        contextMatches.add(a);
-                        lastChanged.remove(a);
+            if (this.forceCaseId == null) {
+                // allow selection of a case
+
+                ArrayList<ArchiveFileBean> contextMatches = new ArrayList<>();
+                ArrayList<ArchiveFileBean> lastChangedClone = new ArrayList<>();
+                lastChangedClone.addAll(lastChanged);
+                if (this.searchContext != null) {
+                    this.searchContext = this.searchContext.toLowerCase();
+                    for (ArchiveFileBean a : lastChangedClone) {
+                        if (this.searchContext.contains(a.getFileNumber())) {
+                            contextMatches.add(a);
+                            lastChanged.remove(a);
+                        } else if (a.getName() != null && !("".equals(a.getName())) && this.searchContext.contains(a.getName().toLowerCase())) {
+                            contextMatches.add(a);
+                            lastChanged.remove(a);
+                        }
                     }
                 }
-            }
 
-            // matching entries at the top
-            for (ArchiveFileBean a : contextMatches) {
-                Object[] row = new Object[]{new QuickArchiveFileSearchRowIdentifier(a), a.getName(), a.getReason(), new Boolean(a.getArchivedBoolean()), a.getLawyer()};
-                model.addRow(row);
-            }
+                // matching entries at the top
+                for (ArchiveFileBean a : contextMatches) {
+                    Object[] row = new Object[]{new QuickArchiveFileSearchRowIdentifier(a), a.getName(), a.getReason(), new Boolean(a.getArchivedBoolean()), a.getLawyer()};
+                    model.addRow(row);
+                }
 
-            // last changed follow
-            for (ArchiveFileBean a : lastChanged) {
-                Object[] row = new Object[]{new QuickArchiveFileSearchRowIdentifier(a), a.getName(), a.getReason(), new Boolean(a.getArchivedBoolean()), a.getLawyer()};
-                model.addRow(row);
+                // last changed follow
+                for (ArchiveFileBean a : lastChanged) {
+                    Object[] row = new Object[]{new QuickArchiveFileSearchRowIdentifier(a), a.getName(), a.getReason(), new Boolean(a.getArchivedBoolean()), a.getLawyer()};
+                    model.addRow(row);
+                }
+            } else {
+                
+                // dialog is forced to provide only one specific case
+                this.txtSearchString.setEnabled(false);
+                this.cmdDocumentTagFilter.setEnabled(false);
+                this.cmdTagFilter.setEnabled(false);
+                this.cmdQuickSearch.setEnabled(false);
+                
+                ArchiveFileBean forcedCase=fileService.getArchiveFile(forceCaseId);
+                if(forcedCase!=null) {
+                    Object[] row = new Object[]{new QuickArchiveFileSearchRowIdentifier(forcedCase), forcedCase.getName(), forcedCase.getReason(), new Boolean(forcedCase.getArchivedBoolean()), forcedCase.getLawyer()};
+                    model.addRow(row);
+                }
             }
 
             if (model.getRowCount() > 0) {
@@ -811,13 +834,13 @@ public class SearchAndAssignDialog extends javax.swing.JDialog {
         QuickArchiveFileSearchRowIdentifier id = (QuickArchiveFileSearchRowIdentifier) this.tblResults.getValueAt(row, 0);
 
         this.caseSelection = id.getArchiveFileDTO();
-        if(this.treeFolders.getSelectionCount()==1) {
+        if (this.treeFolders.getSelectionCount() == 1) {
             DefaultMutableTreeNode tn = (DefaultMutableTreeNode) this.treeFolders.getSelectionPath().getLastPathComponent();
-            if(tn!=null && tn.getUserObject()!=null && tn.getUserObject() instanceof CaseFolder)
+            if (tn != null && tn.getUserObject() != null && tn.getUserObject() instanceof CaseFolder) {
                 this.folderSelection = (CaseFolder) tn.getUserObject();
-            
+            }
+
         }
-        
 
         this.setVisible(false);
 
@@ -827,7 +850,7 @@ public class SearchAndAssignDialog extends javax.swing.JDialog {
         return this.caseSelection;
 
     }
-    
+
     public CaseFolder getFolderSelection() {
         return this.folderSelection;
 
@@ -1050,21 +1073,22 @@ public class SearchAndAssignDialog extends javax.swing.JDialog {
             }
 
             DefaultMutableTreeNode tn = (DefaultMutableTreeNode) this.treeFolders.getSelectionPath().getLastPathComponent();
-            if(tn!=null && tn.getUserObject()!=null && tn.getUserObject() instanceof CaseFolder)
+            if (tn != null && tn.getUserObject() != null && tn.getUserObject() instanceof CaseFolder) {
                 this.popFolders.show(evt.getComponent(), evt.getX(), evt.getY());
+            }
         }
     }
-    
+
     private void updateCaseFolderStructure() {
         if (this.tblResults.getSelectedRowCount() == 1) {
             int row = this.tblResults.getSelectedRow();
             QuickArchiveFileSearchRowIdentifier id = (QuickArchiveFileSearchRowIdentifier) this.tblResults.getValueAt(row, 0);
             ArchiveFileBean selectedCase = id.getArchiveFileDTO();
-            
+
             if (this.lastSelection == null || !selectedCase.equals(this.lastSelection)) {
-                this.lastSelection=selectedCase;
+                this.lastSelection = selectedCase;
                 CaseFolder rootFolder = selectedCase.getRootFolder();
-                
+
                 DefaultTreeModel tm = new DefaultTreeModel(buildTree(rootFolder));
                 this.treeFolders.setModel(tm);
                 ComponentUtils.expandTree(treeFolders);
@@ -1076,10 +1100,10 @@ public class SearchAndAssignDialog extends javax.swing.JDialog {
         } else {
             DefaultTreeModel tm = new DefaultTreeModel(null);
             this.treeFolders.setModel(tm);
-            this.lastSelection=null;
+            this.lastSelection = null;
             this.treeFolders.setSelectionRow(0);
         }
-        
+
     }
 
     private MutableTreeNode buildTree(CaseFolder cf) {
@@ -1162,15 +1186,15 @@ public class SearchAndAssignDialog extends javax.swing.JDialog {
 
     private void mnuNewFolderActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuNewFolderActionPerformed
         try {
-            
-            if (this.treeFolders.getSelectionPath() == null || this.treeFolders.getSelectionPath().getLastPathComponent()==null) {
+
+            if (this.treeFolders.getSelectionPath() == null || this.treeFolders.getSelectionPath().getLastPathComponent() == null) {
                 return;
             }
 
-            String parentId=null;
+            String parentId = null;
             DefaultMutableTreeNode tn = (DefaultMutableTreeNode) this.treeFolders.getSelectionPath().getLastPathComponent();
-            if(tn.getUserObject() instanceof CaseFolder) {
-                parentId=((CaseFolder)tn.getUserObject()).getId();
+            if (tn.getUserObject() instanceof CaseFolder) {
+                parentId = ((CaseFolder) tn.getUserObject()).getId();
             } else {
                 return;
             }
@@ -1183,20 +1207,20 @@ public class SearchAndAssignDialog extends javax.swing.JDialog {
 
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            CaseFolder newFolder=locator.lookupArchiveFileServiceRemote().createCaseFolder(parentId, name);
-            ((CaseFolder)tn.getUserObject()).getChildren().add(newFolder);
-            
+            CaseFolder newFolder = locator.lookupArchiveFileServiceRemote().createCaseFolder(parentId, name);
+            ((CaseFolder) tn.getUserObject()).getChildren().add(newFolder);
+
             DefaultMutableTreeNode newTn = new DefaultMutableTreeNode(newFolder);
 
             DefaultTreeModel dm = (DefaultTreeModel) this.treeFolders.getModel();
             dm.insertNodeInto(newTn, tn, 0);
-            
-            TreePath tp= new TreePath(tn.getPath());
-            int parentRow=treeFolders.getRowForPath(tp);
+
+            TreePath tp = new TreePath(tn.getPath());
+            int parentRow = treeFolders.getRowForPath(tp);
             treeFolders.expandRow(parentRow);
-            
-            this.treeFolders.setSelectionRow(parentRow+1);
-            
+
+            this.treeFolders.setSelectionRow(parentRow + 1);
+
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Erstellen des Ordners: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
         }
@@ -1255,10 +1279,8 @@ public class SearchAndAssignDialog extends javax.swing.JDialog {
                 .invokeLater(new Runnable() {
 
                     public void run() {
-                        SearchAndAssignDialog dialog
-                                = new SearchAndAssignDialog(new javax.swing.JFrame(), true, null);
-                        dialog
-                                .addWindowListener(new java.awt.event.WindowAdapter() {
+                        SearchAndAssignDialog dialog = new SearchAndAssignDialog(new javax.swing.JFrame(), true, null, null);
+                        dialog.addWindowListener(new java.awt.event.WindowAdapter() {
 
                                     @Override
                                     public void windowClosing(java.awt.event.WindowEvent e
@@ -1268,8 +1290,7 @@ public class SearchAndAssignDialog extends javax.swing.JDialog {
 
                                     }
                                 });
-                        dialog
-                                .setVisible(true);
+                        dialog.setVisible(true);
 
                     }
                 });

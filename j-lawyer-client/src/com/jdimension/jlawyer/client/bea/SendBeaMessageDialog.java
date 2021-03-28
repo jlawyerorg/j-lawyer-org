@@ -1827,7 +1827,7 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
         CaseFolder folder=null;
         if (this.chkSaveAsDocument.isSelected() || !(this.radioReviewTypeNone.isSelected())) {
             if (this.contextArchiveFile == null) {
-                SearchAndAssignDialog saDlg = new SearchAndAssignDialog(this, true, ""+this.cmbAzRecipient.getEditor().getItem().toString()+this.txtAzSender.getText()+this.txtSubject.getText());
+                SearchAndAssignDialog saDlg = new SearchAndAssignDialog(this, true, ""+this.cmbAzRecipient.getEditor().getItem().toString()+this.txtAzSender.getText()+this.txtSubject.getText(), null);
                 saDlg.setVisible(true);
                 this.contextArchiveFile = saDlg.getCaseSelection();
                 folder=saDlg.getFolderSelection();
@@ -2203,19 +2203,20 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
         String fromSafeId = ((Identity) this.cmbFrom.getSelectedItem()).getSafeId();
         SaveBeaMessageAction a = null;
 
+        CaseFolder folder=null;
         if (this.chkSaveAsDocument.isSelected() || !(this.radioReviewTypeNone.isSelected())) {
             if (this.contextArchiveFile == null) {
-                SearchAndAssignDialog saDlg = new SearchAndAssignDialog(this, true, ""+this.cmbAzRecipient.getEditor().getItem().toString()+this.txtAzSender.getText()+this.txtSubject.getText());
+                SearchAndAssignDialog saDlg = new SearchAndAssignDialog(this, true, ""+this.cmbAzRecipient.getEditor().getItem().toString()+this.txtAzSender.getText()+this.txtSubject.getText(), null);
                 saDlg.setVisible(true);
                 this.contextArchiveFile = saDlg.getCaseSelection();
-
+                folder=saDlg.getFolderSelection();
                 saDlg.dispose();
 
             }
         }
 
         if (this.chkSaveAsDocument.isSelected()) {
-            a = new SaveBeaMessageAction(dlg, this, fromSafeId, new ArrayList(this.attachments.values()), this.cu, this.rdXjustizEeb.isSelected(), this.authority, ((DefaultListModel) this.lstTo.getModel()).elements(), this.txtSubject.getText(), ed.getText(), this.contextArchiveFile, createDocumentTag, this.txtAzSender.getText(), this.cmbAzRecipient.getSelectedItem().toString());
+            a = new SaveBeaMessageAction(dlg, this, fromSafeId, new ArrayList(this.attachments.values()), this.cu, this.rdXjustizEeb.isSelected(), this.authority, ((DefaultListModel) this.lstTo.getModel()).elements(), this.txtSubject.getText(), ed.getText(), this.contextArchiveFile, createDocumentTag, this.txtAzSender.getText(), this.cmbAzRecipient.getSelectedItem().toString(), folder);
         } else {
             a = new SaveBeaMessageAction(dlg, this, fromSafeId, new ArrayList(this.attachments.values()), this.cu, this.rdXjustizEeb.isSelected(), this.authority, ((DefaultListModel) this.lstTo.getModel()).elements(), this.txtSubject.getText(), ed.getText(), createDocumentTag, this.txtAzSender.getText(), this.cmbAzRecipient.getSelectedItem().toString());
         }

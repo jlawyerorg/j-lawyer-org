@@ -1300,7 +1300,7 @@ public class DrebisInboxPanel extends javax.swing.JPanel implements ThemeableEdi
             CaseFolder folder=null;
             if (sel == null) {
                 
-                SearchAndAssignDialog saDlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true, ""+archiveFileNumber);
+                SearchAndAssignDialog saDlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true, ""+archiveFileNumber, null);
                 saDlg.setVisible(true);
                 sel = saDlg.getCaseSelection();
                 folder=saDlg.getFolderSelection();

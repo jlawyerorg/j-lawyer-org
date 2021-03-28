@@ -4677,11 +4677,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
             ArrayList<ArchiveFileDocumentsBean> selected = this.caseFolderPanel1.getSelectedDocuments();
 
-            if (selected.size() == 0) {
+            if (selected.isEmpty()) {
                 return;
             }
 
-            SearchAndAssignDialog dlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true, null);
+            SearchAndAssignDialog dlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true, null, null);
             dlg.setVisible(true);
             ArchiveFileBean sel = dlg.getCaseSelection();
             CaseFolder folder=dlg.getFolderSelection();
@@ -5872,7 +5872,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                         ProgressIndicator pi = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
                         pi.setShowCancelButton(true);
                         UploadDocumentsAction a = new UploadDocumentsAction(pi, p, dto.getId(), caseFolderPanel1, files);
-
+                        
                         a.start();
 
                         dtde.dropComplete(true);
