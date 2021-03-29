@@ -663,16 +663,11 @@
  */
 package com.jdimension.jlawyer.client.editors.documents;
 
-import com.jdimension.jlawyer.client.events.EventBroker;
-import com.jdimension.jlawyer.client.events.ScannerStatusEvent;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.Hashtable;
 import org.apache.log4j.Logger;
 
 /**
@@ -682,7 +677,7 @@ import org.apache.log4j.Logger;
 public class ScannerLocalDocumentsUploadTimerTask extends java.util.TimerTask {
 
     private static final Logger log = Logger.getLogger(ScannerLocalDocumentsUploadTimerTask.class.getName());
-    private ArrayList<String> lastFiles = new ArrayList<String>();
+    private ArrayList<String> lastFiles = new ArrayList<>();
 
     /**
      * Creates a new instance of ScannerLocalDocumentsUploadTimerTask
