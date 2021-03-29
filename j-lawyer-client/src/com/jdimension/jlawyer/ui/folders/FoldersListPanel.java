@@ -693,6 +693,8 @@ public class FoldersListPanel extends javax.swing.JPanel {
      */
     public FoldersListPanel() {
         initComponents();
+        
+        
 
 //        this.jScrollPane2.setAlignmentX(JScrollPane.LEFT_ALIGNMENT);
 //        this.jScrollPane2.setAlignmentY(JScrollPane.TOP_ALIGNMENT);

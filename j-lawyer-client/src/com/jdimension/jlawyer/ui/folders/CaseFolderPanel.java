@@ -665,6 +665,7 @@ package com.jdimension.jlawyer.ui.folders;
 
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.files.ArchiveFilePanel;
+import com.jdimension.jlawyer.client.mail.MessagesTransferable;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
@@ -673,10 +674,13 @@ import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Rectangle;
+import java.awt.dnd.DnDConstants;
+import java.awt.dnd.DragGestureEvent;
+import java.awt.dnd.DragGestureListener;
+import java.awt.dnd.DragGestureRecognizer;
+import java.awt.dnd.DragSource;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
@@ -699,6 +703,7 @@ public class CaseFolderPanel extends javax.swing.JPanel {
     private ArrayList<ArchiveFileDocumentsBean> documents = new ArrayList<ArchiveFileDocumentsBean>();
     private ArchiveFilePanel caseContainer = null;
     private JPopupMenu documentsPopup = null;
+    private String caseId=null;
 
     /**
      * Creates new form CaseFolderPanel
@@ -726,6 +731,15 @@ public class CaseFolderPanel extends javax.swing.JPanel {
         sortSize.setNoneIcon(sortSizeNoneIcon);
         ImageIcon sortFolderNoneIcon=new ImageIcon(CaseFolderPanel.class.getResource("/com/jdimension/jlawyer/ui/folders/baseline_folder_open_white_18dp.png"));
         sortFolder.setNoneIcon(sortFolderNoneIcon);
+        
+    }
+    
+    public String getCaseId() {
+        return this.caseId;
+    }
+    
+    public void setCaseId(String caseId) {
+        this.caseId=caseId;
     }
 
     public CaseFolderPanel() {
@@ -784,14 +798,10 @@ public class CaseFolderPanel extends javax.swing.JPanel {
     public String getFolderPath(String folderId) {
         return this.foldersListPanel.getFolderPath(folderId);
     }
-
-    private void buildMoveToFolderMenu(ArrayList<JMenuItem> items, CaseFolder folder, String path) {
-        JMenuItemWithFolder menu = new JMenuItemWithFolder();
-        menu.setFolder(folder);
-        menu.addActionListener((ActionEvent ae) -> {
-
-            try {
-                ArrayList<ArchiveFileDocumentsBean> selectedDocs = this.getSelectedDocuments();
+    
+    public void moveDocumentsToFolder(ArrayList<ArchiveFileDocumentsBean> selectedDocs, CaseFolder folder) {
+        try {
+                
                 ArrayList<String> docIds = new ArrayList<>();
                 for (ArchiveFileDocumentsBean doc : selectedDocs) {
                     docIds.add(doc.getId());
@@ -810,6 +820,16 @@ public class CaseFolderPanel extends javax.swing.JPanel {
                 JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Ändern des Ordners: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
                 return;
             }
+    }
+
+    private void buildMoveToFolderMenu(ArrayList<JMenuItem> items, CaseFolder folder, String path) {
+        JMenuItemWithFolder menu = new JMenuItemWithFolder();
+        menu.setFolder(folder);
+        menu.addActionListener((ActionEvent ae) -> {
+
+            ArrayList<ArchiveFileDocumentsBean> selectedDocs = this.getSelectedDocuments();
+            moveDocumentsToFolder(selectedDocs, folder);
+            
         });
 
         String itemName = path;
@@ -939,6 +959,10 @@ public class CaseFolderPanel extends javax.swing.JPanel {
     public void setReadOnly(boolean readOnly) {
         this.readonly = readOnly;
         this.foldersListPanel.setReadOnly(readOnly);
+    }
+    
+    public boolean getReadOnly() {
+        return this.readonly;
     }
 
     /**

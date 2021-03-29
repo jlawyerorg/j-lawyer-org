@@ -664,15 +664,30 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.ui.folders;
 
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
-import com.jdimension.jlawyer.client.launcher.CaseDocumentStore;
-import com.jdimension.jlawyer.client.launcher.Launcher;
-import com.jdimension.jlawyer.client.launcher.LauncherFactory;
+import com.jdimension.jlawyer.client.editors.files.DocumentsTransferHandler;
+import com.jdimension.jlawyer.client.editors.files.DocumentsTransferable;
+import com.jdimension.jlawyer.client.editors.files.UploadDocumentsAction;
+import com.jdimension.jlawyer.client.processing.ProgressIndicator;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.utils.ThreadUtils;
+import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.CaseFolder;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Color;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
+import java.awt.dnd.DnDConstants;
+import java.awt.dnd.DropTarget;
+import java.awt.dnd.DropTargetDragEvent;
+import java.awt.dnd.DropTargetDropEvent;
+import java.awt.dnd.DropTargetEvent;
+import java.awt.dnd.DropTargetListener;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseListener;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+import javax.swing.DropMode;
 import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
 import themes.colors.DefaultColorTheme;
@@ -681,17 +696,17 @@ import themes.colors.DefaultColorTheme;
  *
  * @author jens
  */
-public class FolderListCell extends javax.swing.JPanel {
+public class FolderListCell extends javax.swing.JPanel implements DropTargetListener {
 
-    private static Logger log=Logger.getLogger(FolderListCell.class.getName());
-    
+    private static Logger log = Logger.getLogger(FolderListCell.class.getName());
+
     private CaseFolder folder = null;
     protected CaseFolder parentFolder = null;
     protected boolean selected = true;
     private Color defaultBackground = null;
     private int level = 0;
     protected boolean readOnly = false;
-    private FoldersListPanel parent=null;
+    private FoldersListPanel parent = null;
 
     /**
      * Creates new form FolderCell
@@ -700,7 +715,7 @@ public class FolderListCell extends javax.swing.JPanel {
         initComponents();
         this.level = level;
         this.readOnly = readOnly;
-        this.parent=parent;
+        this.parent = parent;
         String indent = "  ";
         String tab = "";
         for (int i = 0; i < level; i++) {
@@ -708,24 +723,27 @@ public class FolderListCell extends javax.swing.JPanel {
         }
         this.lblExpanded.setText(tab);
 
-        this.lblFolderName.setText(name);
-//        if (!displayMoreButton) {
-//            this.cmdMore.setVisible(false);
-//        }
+        this.txtFolderName.setText(name);
+
         this.doLayout();
         this.defaultBackground = this.getBackground();
 
+        this.txtFolderName.setDropMode(DropMode.INSERT);
+        DropTarget dt = new DropTarget(this.txtFolderName, this);
+
+        this.txtFolderName.setTransferHandler(new DocumentsTransferHandler());
+        this.setTransferHandler(new DocumentsTransferHandler());
     }
 
     public void setValue(Object value) {
-        this.lblFolderName.setText(value.toString());
+        this.txtFolderName.setText(value.toString());
     }
 
     @Override
     public void setBackground(Color color) {
         super.setBackground(color); //To change body of generated methods, choose Tools | Templates.
-        if (this.lblFolderName != null) {
-            this.lblFolderName.setBackground(color);
+        if (this.txtFolderName != null) {
+            this.txtFolderName.setBackground(color);
         }
     }
 
@@ -749,6 +767,7 @@ public class FolderListCell extends javax.swing.JPanel {
 
     public void addExpandedListener(MouseListener ml) {
         this.lblExpanded.addMouseListener(ml);
+        this.txtFolderName.addMouseListener(ml);
         this.lblFolderName.addMouseListener(ml);
     }
 
@@ -768,6 +787,7 @@ public class FolderListCell extends javax.swing.JPanel {
         lblFolderName = new javax.swing.JLabel();
         cmdMore = new javax.swing.JButton();
         lblExpanded = new javax.swing.JLabel();
+        txtFolderName = new javax.swing.JTextField();
 
         mnuEdit.setText("umbenennen");
         mnuEdit.addActionListener(new java.awt.event.ActionListener() {
@@ -800,7 +820,6 @@ public class FolderListCell extends javax.swing.JPanel {
         });
 
         lblFolderName.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/jdimension/jlawyer/ui/folders/folder-empty.png"))); // NOI18N
-        lblFolderName.setText("jLabel1");
         lblFolderName.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 lblFolderNameMouseClicked(evt);
@@ -832,6 +851,17 @@ public class FolderListCell extends javax.swing.JPanel {
             }
         });
 
+        txtFolderName.setEditable(false);
+        txtFolderName.setFont(new java.awt.Font("Dialog", 1, 12)); // NOI18N
+        txtFolderName.setText("jTextField1");
+        txtFolderName.setBorder(null);
+        txtFolderName.setOpaque(false);
+        txtFolderName.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                txtFolderNameMouseClicked(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -841,6 +871,8 @@ public class FolderListCell extends javax.swing.JPanel {
                 .addComponent(lblExpanded)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(lblFolderName)
+                .addGap(3, 3, 3)
+                .addComponent(txtFolderName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(cmdMore)
                 .addContainerGap())
@@ -850,11 +882,15 @@ public class FolderListCell extends javax.swing.JPanel {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(cmdMore, javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(lblFolderName)
-                        .addComponent(lblExpanded)))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(cmdMore, javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                .addComponent(lblFolderName)
+                                .addComponent(lblExpanded)))
+                        .addGap(0, 1, Short.MAX_VALUE))
+                    .addComponent(txtFolderName))
+                .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -904,13 +940,9 @@ public class FolderListCell extends javax.swing.JPanel {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             this.folder.setName(name);
             locator.lookupArchiveFileServiceRemote().updateCaseFolder(folder);
-            this.lblFolderName.setText(name);
+            this.txtFolderName.setText(name);
             this.parent.folderUpdated(folder);
-//            this.revalidate();
-//            this.repaint();
-//            this.getParent().getParent().getParent().revalidate();
-//            this.getParent().getParent().getParent().repaint();
-//            this.getParent().getParent().getParent().doLayout();
+
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Ändern des Ordners: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
             return;
@@ -922,20 +954,15 @@ public class FolderListCell extends javax.swing.JPanel {
         if (response == JOptionPane.NO_OPTION) {
             return;
         }
-        
+
         try {
 
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             locator.lookupArchiveFileServiceRemote().deleteCaseFolder(this.folder.getId());
-            
-            
+
             this.parent.folderRemoved(this.parentFolder, this.folder);
-            
-//            this.getParent().revalidate();
-//            this.getParent().repaint();
-//            this.getParent().doLayout();
-            
+
         } catch (Exception ex) {
             log.error("could not delete document folder", ex);
             JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Löschen des Ordners: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
@@ -954,21 +981,20 @@ public class FolderListCell extends javax.swing.JPanel {
 
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            CaseFolder newFolder=locator.lookupArchiveFileServiceRemote().createCaseFolder(this.folder.getId(), name);
-//            FolderListCell newCell=new FolderListCell(this.parent,this.level+1,name, this.readOnly);
-//            this.parent.add(newCell);
-//            this.parent.revalidate();
-//            this.parent.repaint();
-//            
-//            this.parent.doLayout();
-            
+            CaseFolder newFolder = locator.lookupArchiveFileServiceRemote().createCaseFolder(this.folder.getId(), name);
+
             this.parent.folderAdded(this.folder, newFolder);
-            
+
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Erstellen des Ordners: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
             return;
         }
     }//GEN-LAST:event_mnuCreateActionPerformed
+
+    private void txtFolderNameMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_txtFolderNameMouseClicked
+        setSelected(!isSelected());
+        this.parent.selectionChanged();
+    }//GEN-LAST:event_txtFolderNameMouseClicked
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -979,12 +1005,13 @@ public class FolderListCell extends javax.swing.JPanel {
     private javax.swing.JMenuItem mnuDelete;
     private javax.swing.JMenuItem mnuEdit;
     private javax.swing.JPopupMenu popFolder;
+    private javax.swing.JTextField txtFolderName;
     // End of variables declaration//GEN-END:variables
 
     void setFolder(CaseFolder f) {
         this.folder = f;
     }
-    
+
     public CaseFolder getFolder() {
         return this.folder;
     }
@@ -1035,5 +1062,91 @@ public class FolderListCell extends javax.swing.JPanel {
      */
     public void setReadOnly(boolean readOnly) {
         this.readOnly = readOnly;
+    }
+
+    @Override
+    public void dragEnter(DropTargetDragEvent dtde) {
+
+    }
+
+    @Override
+    public void dragOver(DropTargetDragEvent dtde) {
+
+    }
+
+    @Override
+    public void dropActionChanged(DropTargetDragEvent dtde) {
+
+    }
+
+    @Override
+    public void dragExit(DropTargetEvent dte) {
+
+    }
+
+    @Override
+    public void drop(DropTargetDropEvent dtde) {
+        
+        if(this.readOnly)
+            dtde.rejectDrop();
+        
+        if(this.parent.getCaseFolderPanel().getCaseId()==null)
+            dtde.rejectDrop();
+        
+        
+        try {
+
+            if (dtde.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
+                dtde.acceptDrop(dtde.getDropAction());
+                try {
+                    Transferable transferable = dtde.getTransferable();
+                    List transferData = (List) transferable.getTransferData(DataFlavor.javaFileListFlavor);
+                    if (transferData != null && transferData.size() > 0) {
+
+                        ThreadUtils.setWaitCursor(EditorsRegistry.getInstance().getMainEditorsPane());
+
+                        ArrayList<File> files = new ArrayList<File>();
+                        for (Object fo : transferData) {
+                            if (fo instanceof File) {
+                                files.add((File) fo);
+                            } else {
+                                log.error("transfer data: " + fo.getClass().getName());
+                            }
+                        }
+
+                        ProgressIndicator pi = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
+                        pi.setShowCancelButton(true);
+                        
+                        UploadDocumentsAction a = new UploadDocumentsAction(pi, EditorsRegistry.getInstance().getMainEditorsPane(), this.parent.getCaseFolderPanel().getCaseId(), this.parent.getCaseFolderPanel(), files, this.folder);
+
+                        a.start();
+
+                        dtde.dropComplete(true);
+                    } else {
+                        log.error("transfer data is empty");
+                    }
+
+                } catch (Exception ex) {
+                    log.error("file drop error", ex);
+                }
+            } else {
+
+                // Ok, get the dropped object and try to figure out what it is
+                Transferable tr = dtde.getTransferable();
+                if (!(tr instanceof DocumentsTransferable)) {
+                    dtde.rejectDrop();
+                }
+                Object transferred = tr.getTransferData(DataFlavor.stringFlavor);
+                dtde.acceptDrop(DnDConstants.ACTION_LINK);
+                ArrayList<ArchiveFileDocumentsBean> droppedDocs = (ArrayList<ArchiveFileDocumentsBean>) transferred;
+
+                this.parent.caseFolderPanel.moveDocumentsToFolder(droppedDocs, folder);
+
+                dtde.dropComplete(true);
+            }
+        } catch (Exception e) {
+            log.error(e);
+            dtde.rejectDrop();
+        }
     }
 }

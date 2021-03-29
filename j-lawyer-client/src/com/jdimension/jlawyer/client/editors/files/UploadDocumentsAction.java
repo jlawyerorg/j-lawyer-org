@@ -675,6 +675,7 @@ import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.ui.folders.CaseFolderPanel;
 import java.awt.Component;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import javax.swing.*;
@@ -691,16 +692,18 @@ public class UploadDocumentsAction extends ProgressableAction {
     private String archiveFileKey;
     private Component owner;
     private CaseFolderPanel docTarget;
+    private CaseFolder targetFolder=null;
 
     private List<File> files;
 
-    public UploadDocumentsAction(ProgressIndicator i, Component owner, String archiveFileKey, CaseFolderPanel docTarget, List<File> files) {
+    public UploadDocumentsAction(ProgressIndicator i, Component owner, String archiveFileKey, CaseFolderPanel docTarget, List<File> files, CaseFolder targetFolder) {
         super(i, false);
 
         this.archiveFileKey = archiveFileKey;
         this.owner = owner;
         this.docTarget = docTarget;
         this.files = files;
+        this.targetFolder=targetFolder;
 
     }
     
@@ -719,7 +722,6 @@ public class UploadDocumentsAction extends ProgressableAction {
 
         try {
 
-            //if(this.isCancelled())
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
@@ -747,24 +749,31 @@ public class UploadDocumentsAction extends ProgressableAction {
                         }
 
                         final ArchiveFileDocumentsBean doc = afs.addDocument(this.archiveFileKey, newName, data, null);
+                        if(this.targetFolder!=null) {
+                            ArrayList<String> docId=new ArrayList<>();
+                            docId.add(doc.getId());
+                            afs.moveDocumentsToFolder(docId, this.targetFolder.getId());
+                        }
                         SwingUtilities.invokeLater(new Runnable() {
                             public void run() {
                                 docTarget.addDocument(doc);
+                                if(targetFolder!=null) {
+                                    ArrayList<ArchiveFileDocumentsBean> docs=new ArrayList<>();
+                                    docs.add(doc);
+                                    docTarget.moveDocumentsToFolder(docs, targetFolder);
+                                }
                             }
                         });
 
                     }
                 }
             }
-            //this.docTarget.sort();
-
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);
             JOptionPane.showMessageDialog(this.indicator, ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
             EditorsRegistry.getInstance().clearStatus(true);
             ThreadUtils.setDefaultCursor(this.owner);
 
-            //ThreadUtils.showErrorDialog(this.owner, ex.getMessage(), "Fehler");
             return true;
         }
 
