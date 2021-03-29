@@ -712,6 +712,10 @@ public class ScannerLocalDocumentsUploadTimerTask extends java.util.TimerTask {
                     if(f.getName().endsWith(".uploading"))
                         continue;
                     
+                    // avoid processing files that might still be written by the scanner
+                    if((System.currentTimeMillis() - f.lastModified())>10000l)
+                        continue;
+                    
                     // file needs to be writeable to be uploaded
                     // files that cannot be deleted would cause the servers disk to be filled completely
                     if (f.isFile() && f.canWrite()) {
