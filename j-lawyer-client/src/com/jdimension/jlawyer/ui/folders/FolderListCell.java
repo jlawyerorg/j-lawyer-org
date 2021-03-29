@@ -1066,69 +1066,67 @@ public class FolderListCell extends javax.swing.JPanel implements DropTargetList
 
     @Override
     public void dragEnter(DropTargetDragEvent dtde) {
-
+        // blank
     }
 
     @Override
     public void dragOver(DropTargetDragEvent dtde) {
-
+        // blank
     }
 
     @Override
     public void dropActionChanged(DropTargetDragEvent dtde) {
-
+        // blank
     }
 
     @Override
     public void dragExit(DropTargetEvent dte) {
-
+        // blank
     }
 
     @Override
     public void drop(DropTargetDropEvent dtde) {
-        
-        if(this.readOnly)
+
+        if (this.readOnly) {
             dtde.rejectDrop();
-        
-        if(this.parent.getCaseFolderPanel().getCaseId()==null)
+        }
+
+        if (this.parent.getCaseFolderPanel().getCaseId() == null) {
             dtde.rejectDrop();
-        
-        
+        }
+
         try {
 
             if (dtde.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
                 dtde.acceptDrop(dtde.getDropAction());
-                try {
-                    Transferable transferable = dtde.getTransferable();
-                    List transferData = (List) transferable.getTransferData(DataFlavor.javaFileListFlavor);
-                    if (transferData != null && transferData.size() > 0) {
 
-                        ThreadUtils.setWaitCursor(EditorsRegistry.getInstance().getMainEditorsPane());
+                Transferable transferable = dtde.getTransferable();
+                List transferData = (List) transferable.getTransferData(DataFlavor.javaFileListFlavor);
+                if (transferData != null && !(transferData.isEmpty())) {
 
-                        ArrayList<File> files = new ArrayList<File>();
-                        for (Object fo : transferData) {
-                            if (fo instanceof File) {
-                                files.add((File) fo);
-                            } else {
-                                log.error("transfer data: " + fo.getClass().getName());
-                            }
+                    ThreadUtils.setWaitCursor(EditorsRegistry.getInstance().getMainEditorsPane());
+
+                    List<File> files = new ArrayList<>();
+                    for (Object fo : transferData) {
+                        if (fo instanceof File) {
+                            files.add((File) fo);
+                        } else {
+                            log.error("transfer data: " + fo.getClass().getName());
                         }
-
-                        ProgressIndicator pi = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
-                        pi.setShowCancelButton(true);
-                        
-                        UploadDocumentsAction a = new UploadDocumentsAction(pi, EditorsRegistry.getInstance().getMainEditorsPane(), this.parent.getCaseFolderPanel().getCaseId(), this.parent.getCaseFolderPanel(), files, this.folder);
-
-                        a.start();
-
-                        dtde.dropComplete(true);
-                    } else {
-                        log.error("transfer data is empty");
                     }
 
-                } catch (Exception ex) {
-                    log.error("file drop error", ex);
+                    ProgressIndicator pi = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
+                    pi.setShowCancelButton(true);
+
+                    UploadDocumentsAction a = new UploadDocumentsAction(pi, EditorsRegistry.getInstance().getMainEditorsPane(), this.parent.getCaseFolderPanel().getCaseId(), this.parent.getCaseFolderPanel(), files, this.folder);
+
+                    a.start();
+
+                    dtde.dropComplete(true);
+                } else {
+                    log.error("transfer data is empty");
                 }
+
             } else {
 
                 // Ok, get the dropped object and try to figure out what it is

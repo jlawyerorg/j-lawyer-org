@@ -665,14 +665,12 @@ package com.jdimension.jlawyer.ui.folders;
 
 import com.jdimension.jlawyer.client.editors.files.ArchiveFilePanel;
 import com.jdimension.jlawyer.client.editors.files.DocumentsTransferable;
-import com.jdimension.jlawyer.client.mail.MessagesTransferable;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Color;
-import java.awt.Font;
 import java.awt.dnd.DnDConstants;
 import java.awt.dnd.DragGestureEvent;
 import java.awt.dnd.DragGestureListener;
@@ -1130,7 +1128,7 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
     public void dragGestureRecognized(DragGestureEvent dge) {
         ArrayList<ArchiveFileDocumentsBean> selDocs=this.documentsContainer.getSelectedDocuments();
         if(selDocs==null || selDocs.isEmpty()) {
-            selDocs=new ArrayList<ArchiveFileDocumentsBean>();
+            selDocs=new ArrayList<>();
             selDocs.add(this.document);
         }
         this.dragSource.startDrag(dge, null, new DocumentsTransferable(selDocs), null);

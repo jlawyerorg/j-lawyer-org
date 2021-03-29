@@ -665,7 +665,6 @@ package com.jdimension.jlawyer.ui.folders;
 
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.files.ArchiveFilePanel;
-import com.jdimension.jlawyer.client.mail.MessagesTransferable;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
@@ -674,17 +673,13 @@ import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Rectangle;
-import java.awt.dnd.DnDConstants;
-import java.awt.dnd.DragGestureEvent;
-import java.awt.dnd.DragGestureListener;
-import java.awt.dnd.DragGestureRecognizer;
-import java.awt.dnd.DragSource;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.Hashtable;
+import java.util.List;
 import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JMenuItem;
@@ -700,7 +695,7 @@ import themes.colors.DefaultColorTheme;
 public class CaseFolderPanel extends javax.swing.JPanel {
 
     private boolean readonly = false;
-    private ArrayList<ArchiveFileDocumentsBean> documents = new ArrayList<ArchiveFileDocumentsBean>();
+    private ArrayList<ArchiveFileDocumentsBean> documents = new ArrayList<>();
     private ArchiveFilePanel caseContainer = null;
     private JPopupMenu documentsPopup = null;
     private String caseId=null;
@@ -802,7 +797,7 @@ public class CaseFolderPanel extends javax.swing.JPanel {
     public void moveDocumentsToFolder(ArrayList<ArchiveFileDocumentsBean> selectedDocs, CaseFolder folder) {
         try {
                 
-                ArrayList<String> docIds = new ArrayList<>();
+                List<String> docIds = new ArrayList<>();
                 for (ArchiveFileDocumentsBean doc : selectedDocs) {
                     docIds.add(doc.getId());
                 }
@@ -818,7 +813,6 @@ public class CaseFolderPanel extends javax.swing.JPanel {
 
             } catch (Exception ex) {
                 JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Ändern des Ordners: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
-                return;
             }
     }
 
