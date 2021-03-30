@@ -663,6 +663,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.ui.folders;
 
+import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.CaseFolder;
 import java.awt.Component;
 import java.awt.GridBagConstraints;
@@ -719,6 +720,26 @@ public class FoldersListPanel extends javax.swing.JPanel {
         for (Component c : this.pnlFolders.getComponents()) {
             if (c instanceof FolderListCell) {
                 ((FolderListCell) c).setSelected(selected);
+            }
+        }
+
+    }
+    
+    public void renderEmptyFullState() {
+        for (Component c : this.pnlFolders.getComponents()) {
+            if (c instanceof FolderListCell) {
+                boolean folderHasDocuments=false;
+                for(ArchiveFileDocumentsBean db: this.caseFolderPanel.getDocuments()) {
+                    if(db.getFolder()!=null) {
+                        if(db.getFolder().getId().equals(((FolderListCell) c).getFolder().getId())) {
+                            folderHasDocuments=true;
+                            break;
+                        }
+                    }
+                }
+                
+                
+                ((FolderListCell) c).setEmpty(!folderHasDocuments);
             }
         }
 

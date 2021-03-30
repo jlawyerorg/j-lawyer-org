@@ -738,6 +738,13 @@ public class FolderListCell extends javax.swing.JPanel implements DropTargetList
     public void setValue(Object value) {
         this.txtFolderName.setText(value.toString());
     }
+    
+    public void setEmpty(boolean empty) {
+        if(empty)
+            lblFolderName.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/jdimension/jlawyer/ui/folders/folder-empty.png")));
+        else
+            lblFolderName.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/jdimension/jlawyer/ui/folders/folder-filled.png")));
+    }
 
     @Override
     public void setBackground(Color color) {

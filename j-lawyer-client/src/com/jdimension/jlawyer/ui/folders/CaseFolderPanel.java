@@ -1539,6 +1539,8 @@ public class CaseFolderPanel extends javax.swing.JPanel {
 //        this.pnlDocumentEntries.repaint();
         this.jScrollPane2.repaint();
         this.jScrollPane2.revalidate();
+        
+        this.foldersListPanel.renderEmptyFullState();
     }
 
     public void addDocument(ArchiveFileDocumentsBean newDoc) {
@@ -1553,11 +1555,13 @@ public class CaseFolderPanel extends javax.swing.JPanel {
         this.pnlDocumentEntries.repaint();
         this.pnlDocumentEntries.revalidate();
         this.sort();
+        this.foldersListPanel.renderEmptyFullState();
     }
 
     public void clearDocuments() {
         this.documents.clear();
         this.pnlDocumentEntries.removeAll();
+        this.foldersListPanel.renderEmptyFullState();
     }
 
     public void removeDocument(ArchiveFileDocumentsBean doc) {
@@ -1597,6 +1601,8 @@ public class CaseFolderPanel extends javax.swing.JPanel {
                 db.setFolder(doc.getFolder());
             }
         }
+        
+        this.foldersListPanel.renderEmptyFullState();
     }
 
     public int highlightDocuments(String text, String[] selectedTags, Hashtable<String, ArrayList<String>> allTags) {
@@ -1667,6 +1673,8 @@ public class CaseFolderPanel extends javax.swing.JPanel {
 
         this.pnlDocumentEntries.repaint();
         this.pnlDocumentEntries.revalidate();
+        
+        this.foldersListPanel.renderEmptyFullState();
     }
 
     void updateDocumentsInFolder(CaseFolder folder) {
