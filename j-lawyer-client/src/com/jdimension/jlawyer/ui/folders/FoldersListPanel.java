@@ -673,8 +673,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Hashtable;
 import java.util.List;
-import javax.swing.Box;
-import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 
 /**
@@ -695,12 +693,8 @@ public class FoldersListPanel extends javax.swing.JPanel {
     public FoldersListPanel() {
         initComponents();
         
-        
 
-//        this.jScrollPane2.setAlignmentX(JScrollPane.LEFT_ALIGNMENT);
-//        this.jScrollPane2.setAlignmentY(JScrollPane.TOP_ALIGNMENT);
         this.pnlFolders.setLayout(gbl);
-        //gbc = new GridBagConstraints();
         gbc.anchor = GridBagConstraints.NORTHWEST;
         gbc.fill = GridBagConstraints.NONE;
         gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -710,7 +704,7 @@ public class FoldersListPanel extends javax.swing.JPanel {
 
         this.pnlFolders.removeAll();
         FolderListCell cell = new FolderListCell(this, 0, "Dokumente", this.readOnly);
-        cell.setSelected(true);
+        cell.setSelected(true, false);
 
         this.pnlFolders.add(cell, gbc);
 
@@ -753,7 +747,7 @@ public class FoldersListPanel extends javax.swing.JPanel {
         FolderListCell cell = new FolderListCell(this, 0, rootFolder.getName(), this.readOnly);
         cell.setFolder(rootFolder);
         cell.setParentFolder(null);
-        cell.setSelected(true);
+        cell.setSelected(true, false);
         if (unselectedIds.contains(rootFolder.getId())) {
             cell.setSelected(false);
         }
@@ -832,7 +826,7 @@ public class FoldersListPanel extends javax.swing.JPanel {
                 FolderListCell childNode = new FolderListCell(this, level, child.getName(), this.readOnly);
                 childNode.setFolder(child);
                 childNode.setParentFolder(folder);
-                childNode.setSelected(true);
+                childNode.setSelected(true, false);
                 if (unselectedIds.contains(child.getId())) {
                     childNode.setSelected(false);
                 }
@@ -864,18 +858,6 @@ public class FoldersListPanel extends javax.swing.JPanel {
     }
 
     public void folderRemoved(CaseFolder parent, CaseFolder removedFolder) {
-//        for(Component c: this.pnlFolders.getComponents()) {
-//            if(c instanceof FolderListCell) {
-//                CaseFolder cf=((FolderListCell)c).getFolder();
-//                if(cf.getId().equals(folder.getId())) {
-//                    this.remove(c);
-//                    this.repaint();
-//                    this.revalidate();
-//                    this.doLayout();
-//                    break;
-//                }
-//            }
-//        }
 
         ArrayList<String> folderIds = new ArrayList<>();
         this.collectSubtreeIds(removedFolder, folderIds);
@@ -883,7 +865,6 @@ public class FoldersListPanel extends javax.swing.JPanel {
         this.caseFolderPanel.removeDocumentsInFolders(folderIds);
         
         parent.getChildren().remove(removedFolder);
-        //this.setRootFolder(this.rootFolder, this.getUnselectedFolderIds());
         
         // need to rebuild the popup menu with all the folders
         this.caseFolderPanel.setRootFolder(this.rootFolder, this.getUnselectedFolderIds());
@@ -931,7 +912,6 @@ public class FoldersListPanel extends javax.swing.JPanel {
     public void folderAdded(CaseFolder parent, CaseFolder newFolder) {
         
         parent.getChildren().add(newFolder);
-        //this.setRootFolder(this.rootFolder, this.getUnselectedFolderIds());
         this.caseFolderPanel.setRootFolder(this.rootFolder, this.getUnselectedFolderIds());
         this.revalidate();
         this.repaint();

@@ -815,11 +815,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         ComponentUtils.decorateSplitPane(this.splitDocumentsMain);
         ComponentUtils.decorateSplitPane(this.splitNotes);
 
-        //this.tagPanel.setPreferredSize(new Dimension(this.getWidth()-100, this.tagPanel.getHeight()));
         this.tagPanel.setLayout(new WrapLayout());
         this.documentTagPanel.setLayout(new WrapLayout());
 
-        //GridLayout layout = new GridLayout(1, 1);
         BoxLayout layout = new javax.swing.BoxLayout(this.pnlInvolvedParties, javax.swing.BoxLayout.Y_AXIS);
         this.pnlInvolvedParties.setLayout(layout);
 
@@ -839,7 +837,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         this.currencyFormat.setMinimumFractionDigits(2);
         this.currencyFormat.setMaximumFractionDigits(2);
-        //this.currencyFormat.setParseIntegerOnly(false);
 
         String[] colNames2 = new String[]{"Änderung", "Nutzer", "Beschreibung"};
         ArchiveFileHistoryTableModel model2 = new ArchiveFileHistoryTableModel(colNames2, 0);
@@ -920,6 +917,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         }
         
+        //this.currencyFormat.setParseIntegerOnly(false);
         this.splitDocuments.setDividerLocation(0.7d);
         ComponentUtils.restoreSplitPane(splitDocuments, this.getClass(), "splitDocuments");
         ComponentUtils.persistSplitPane(splitDocuments, this.getClass(), "splitDocuments");
@@ -1044,10 +1042,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
             Hashtable<String, ArrayList<String>> docTags = remote.getDocumentTagsForCase(this.dto.getId());
             String docTagsHtml = TagUtils.getDocumentTagsOverviewAsHtml(docTags);
-            //this.lblDocumentTags.setText(docTagsHtml);
-            //this.taDocumentTags.setText(docTagsHtml);
             this.cmdDocumentTagFilter.setToolTipText(docTagsHtml);
-            //this.lblDocumentTags.setSize(this.splitDocuments.getWidth(), this.lblDocumentTags.getHeight());
         } catch (Throwable t) {
             log.error("Could not update document tags", t);
         }
@@ -1139,31 +1134,23 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         this.cmdNewRvg.setEnabled(!readOnly && !archived);
 
-        // todo?
-//        this.lstClients.setEnabled(!readOnly);
-//        this.lstOpponentAttorneys.setEnabled(!readOnly);
-//        this.lstOpponents.setEnabled(!readOnly);
         this.mnuRemoveDocument.setEnabled(!readOnly && !archived);
         this.mnuDuplicateDocument.setEnabled(!readOnly && !archived);
         this.mnuDuplicateDocumentAsPdf.setEnabled(!readOnly && !archived);
         this.mnuDuplicateDocumentAs.setEnabled(!readOnly && !archived);
 
         // this can be enabled even if current case is opened readonly
-        //this.mnuCopyDocumentToOtherCase.setEnabled(!readOnly);
         this.mnuRenameDocument.setEnabled(!readOnly && !archived);
         this.mnuSetDocumentDate.setEnabled(!readOnly && !archived);
         this.mnuToggleFavorite.setEnabled(!readOnly && !archived);
-        //        this.mnuSendDocument.setEnabled(!readOnly);
         this.tblHistory.setEnabled(!readOnly && !archived);
         this.tblReviewReasons.setEnabled(!readOnly && !archived);
         this.txtClaimNumber.setEnabled(!readOnly && !archived);
         this.txtClaimValue.setEnabled(!readOnly && !archived);
-        //this.txtFileNumber.setEnabled(!readOnly);
         // the server calculates this
         this.txtFileNumber.setEnabled(false);
         this.txtName.setEnabled(!readOnly && !archived);
         this.txtNotice.setEnabled(!readOnly && !archived);
-        //this.txtReviewDate.setEnabled(!readOnly);
         this.cmdShowReviewSelector.setEnabled(!readOnly && !archived);
 
         this.cmdShowHistorySelector.setEnabled(!readOnly && !archived);
@@ -1229,12 +1216,10 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.lblHeaderInfo.setText(this.dto.getFileNumber() + " " + StringUtils.nonEmpty(this.dto.getName()) + " " + StringUtils.nonEmpty(this.dto.getReason()));
 
         this.txtClaimNumber.setText(dto.getClaimNumber());
-        //this.txtClaimValue.setText("" + dto.getClaimValue());
         this.txtClaimValue.setText(this.currencyFormat.format(dto.getClaimValue()));
         this.txtFileNumber.setText(dto.getFileNumber());
         this.txtName.setText(dto.getName());
         this.txtNotice.setText(dto.getNotice());
-        //this.cmbDictateSign.setSelectedItem(dto.getDictateSign());
         this.chkArchived.setSelected(dto.getArchivedBoolean());
 
         this.cmbLawyer.setSelectedItem(dto.getLawyer());
@@ -5798,7 +5783,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
             CaseFolder newRoot=remote.applyFolderTemplate(this.dto.getId(), s);
-            this.caseFolderPanel1.setRootFolder(newRoot);
+            this.caseFolderPanel1.setRootFolder(newRoot, remote.getCaseFolderSettings(newRoot.getAllFolderIds()));
 
         } catch (Exception ioe) {
             log.error("Error applying document template", ioe);

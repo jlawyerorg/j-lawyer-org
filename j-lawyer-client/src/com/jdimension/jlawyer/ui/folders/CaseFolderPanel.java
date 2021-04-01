@@ -669,6 +669,7 @@ import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.CaseFolder;
+import com.jdimension.jlawyer.persistence.CaseFolderSettings;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -678,6 +679,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
 import javax.swing.BoxLayout;
@@ -785,8 +787,13 @@ public class CaseFolderPanel extends javax.swing.JPanel {
 
     }
 
-    public void setRootFolder(CaseFolder rootFolder) {
-        this.setRootFolder(rootFolder, new ArrayList<String>());
+    public void setRootFolder(CaseFolder rootFolder, HashMap<String,CaseFolderSettings> folderSettings) {
+        ArrayList<String> unselectedIds= new ArrayList<>();
+        for(String id: folderSettings.keySet()) {
+            if(folderSettings.get(id).getHiddenBoolean())
+                unselectedIds.add(id);
+        }
+        this.setRootFolder(rootFolder, unselectedIds);
 
     }
 

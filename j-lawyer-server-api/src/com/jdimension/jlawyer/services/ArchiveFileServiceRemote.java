@@ -667,6 +667,7 @@ import com.jdimension.jlawyer.persistence.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
 import javax.ejb.Remote;
@@ -848,5 +849,9 @@ public interface ArchiveFileServiceRemote {
     Collection<Keyword> extractKeywordsFromDocument(String docId) throws Exception;
 
     Collection<Keyword> extractKeywordsFromText(String text) throws Exception;
+
+    void setCaseFolderSettings(String folderId, CaseFolderSettings folderSettings) throws Exception;
+
+    HashMap<String,CaseFolderSettings> getCaseFolderSettings(List<String> folderIds) throws Exception;
 
 }

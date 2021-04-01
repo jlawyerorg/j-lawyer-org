@@ -689,6 +689,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import javax.swing.*;
@@ -782,9 +783,6 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
         Collection documents = null;
         List<AddressBean> addressesForCase = null;
         List<ArchiveFileAddressesBean> involvementForCase = null;
-        //Collection clients = null;
-        //Collection opponents = null;
-        //Collection opponentAttorneys = null;
         Collection reviews = null;
         Collection tags = null;
 
@@ -798,7 +796,6 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
             this.progress("Lade Akte: Falldatenblätter...");
-            //this.
             this.cmbFormTypes.removeAllItems();
             List<FormTypeBean> formTypes = locator.lookupFormsServiceRemote().getAllFormTypes();
             for (FormTypeBean ftb : formTypes) {
@@ -902,8 +899,13 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
             reviews = fileService.getReviews(this.archiveFileKey);
             this.progress("Lade Akte: Dokumente...");
             documents = fileService.getDocuments(this.archiveFileKey);
+            List<String> folderIds=new ArrayList<>();
+            if(this.caseDto.getRootFolder()!=null) {
+                folderIds=this.caseDto.getRootFolder().getAllFolderIds();
+            }
+            HashMap<String,CaseFolderSettings> folderSettings=fileService.getCaseFolderSettings(folderIds);
             caseFolders.setReadOnly(readOnly || this.caseDto.getArchivedBoolean());
-            caseFolders.setRootFolder(this.caseDto.getRootFolder());
+            caseFolders.setRootFolder(this.caseDto.getRootFolder(), folderSettings);
             caseFolders.setCaseId(archiveFileKey);
             caseFolders.setDocuments(new ArrayList(documents));
             caseFolders.sortByDateDesc();
@@ -1096,4 +1098,5 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
         return true;
 
     }
+    
 }

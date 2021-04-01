@@ -672,6 +672,7 @@ import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.CaseFolder;
+import com.jdimension.jlawyer.persistence.CaseFolderSettings;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Color;
 import java.awt.datatransfer.DataFlavor;
@@ -738,12 +739,13 @@ public class FolderListCell extends javax.swing.JPanel implements DropTargetList
     public void setValue(Object value) {
         this.txtFolderName.setText(value.toString());
     }
-    
+
     public void setEmpty(boolean empty) {
-        if(empty)
+        if (empty) {
             lblFolderName.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/jdimension/jlawyer/ui/folders/folder-empty.png")));
-        else
+        } else {
             lblFolderName.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/jdimension/jlawyer/ui/folders/folder-filled.png")));
+        }
     }
 
     @Override
@@ -1034,12 +1036,35 @@ public class FolderListCell extends javax.swing.JPanel implements DropTargetList
      * @param selected the selected to set
      */
     public void setSelected(boolean selected) {
+
+        this.setSelected(selected, true);
+    }
+
+    public void setSelected(boolean selected, boolean saveSettings) {
+
+        if (saveSettings) {
+            try {
+                if (this.folder != null) {
+                    ClientSettings settings = ClientSettings.getInstance();
+                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                    CaseFolderSettings s = new CaseFolderSettings();
+                    s.setHiddenBoolean(!selected);
+                    locator.lookupArchiveFileServiceRemote().setCaseFolderSettings(this.folder.getId(), s);
+                } else {
+                    log.warn("Folder is null when setting folder list cell selected");
+                }
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Speichern der Ordnereinstellungen: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+
         this.selected = selected;
         if (this.selected) {
             this.setBackground(DefaultColorTheme.COLOR_LOGO_GREEN);
         } else {
             this.setBackground(this.defaultBackground);
         }
+
         //this.repaint();
     }
 

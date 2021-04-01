@@ -748,7 +748,9 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     private DocumentFolderFacadeLocal folderFacade;
     @EJB
     private CaseFolderFacadeLocal caseFolderFacade;
-
+    @EJB
+    private CaseFolderSettingsFacadeLocal caseFolderSettingsFacade;
+    
     private static final String PS_SEARCHENHANCED_2 = "select id from cases where ucase(name) like ? or ucase(fileNumber) like ? or ucase(filenumberext) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(subjectField) like ?";
     private static final String PS_SEARCHENHANCED_4 = "select id from cases where (ucase(name) like ? or ucase(fileNumber) like ? or ucase(filenumberext) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(subjectField) like ?) and archived=0";
 
@@ -4633,6 +4635,50 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         }
     
         return result;
+    }
+
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public void setCaseFolderSettings(String folderId, CaseFolderSettings folderSettings) throws Exception {
+        CaseFolder folder=this.caseFolderFacade.find(folderId);
+        if(folder==null) {
+            log.error("case folder with id " + folderId + " could not be found");
+            throw new Exception("Ordner nicht gefunden - Einstellungen werden nicht gespeichert.");
+        }
+        
+        CaseFolderSettings currentSettings=this.caseFolderSettingsFacade.findByFolderAndPrincipal(folder, context.getCallerPrincipal().getName());
+        
+        if(currentSettings==null && folderSettings.getHiddenBoolean()) {
+            // not blacklisted - create blacklist entry
+            StringGenerator idGen = new StringGenerator();
+            folderSettings.setId(idGen.getID().toString());
+            folderSettings.setPrincipal(context.getCallerPrincipal().getName());
+            folderSettings.setFolder(folder);
+            this.caseFolderSettingsFacade.create(folderSettings);
+        } else if(currentSettings!=null && !(folderSettings.getHiddenBoolean())) {
+            // blacklisted, but should not be
+            this.caseFolderSettingsFacade.remove(currentSettings);
+        }
+    }
+
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public HashMap<String,CaseFolderSettings> getCaseFolderSettings(List<String> folderIds) throws Exception {
+        HashMap<String,CaseFolderSettings> result=new HashMap<>();
+        for(String folderId: folderIds) {
+            CaseFolder f=this.caseFolderFacade.find(folderId);
+            if(f!=null) {
+                CaseFolderSettings fs=this.caseFolderSettingsFacade.findByFolderAndPrincipal(f, context.getCallerPrincipal().getName());
+                if(fs!=null)
+                    result.put(folderId, fs);
+            } else {
+                log.warn("Folder does not exist, returning no settings for it" + folderId);
+            }
+            
+        }
+        
+        return result;
+        
     }
 
 }
