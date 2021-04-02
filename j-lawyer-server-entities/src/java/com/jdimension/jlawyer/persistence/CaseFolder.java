@@ -774,7 +774,7 @@ public class CaseFolder implements Serializable {
     }
     
     private void collectFolderIds(CaseFolder f, List<String> idList) {
-        idList.add(f.getId());;
+        idList.add(f.getId());
         for(CaseFolder child: f.getChildren()) {
             collectFolderIds(child, idList);
         }

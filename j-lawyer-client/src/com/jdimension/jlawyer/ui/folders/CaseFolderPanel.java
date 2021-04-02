@@ -682,6 +682,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
+import java.util.Map;
 import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JMenuItem;
@@ -787,7 +788,7 @@ public class CaseFolderPanel extends javax.swing.JPanel {
 
     }
 
-    public void setRootFolder(CaseFolder rootFolder, HashMap<String,CaseFolderSettings> folderSettings) {
+    public void setRootFolder(CaseFolder rootFolder, Map<String,CaseFolderSettings> folderSettings) {
         ArrayList<String> unselectedIds= new ArrayList<>();
         for(String id: folderSettings.keySet()) {
             if(folderSettings.get(id).getHiddenBoolean())
