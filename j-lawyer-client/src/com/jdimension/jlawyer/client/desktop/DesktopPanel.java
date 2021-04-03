@@ -825,7 +825,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         BoxLayout boxLayout2=new BoxLayout(this.pnlTagged, BoxLayout.Y_AXIS);
         this.pnlTagged.setLayout(boxLayout2);
         Timer timer5 = new Timer();
-        TimerTask taggedTask = new TaggedTimerTask(this, this.pnlTagged, this.jSplitPane2, this.cmdTagFilter, this.cmdDocumentTagFilter, this.popTagFilter, this.popDocumentTagFilter);
+        TimerTask taggedTask = new TaggedTimerTask(this, this.tabPaneTagged, this.pnlTagged, this.jSplitPane2, this.cmdTagFilter, this.cmdDocumentTagFilter, this.popTagFilter, this.popDocumentTagFilter);
         timer5.schedule(taggedTask, 1000, 33000);
 
         Timer timer6 = new Timer();
@@ -927,13 +927,14 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         cmdRefreshLastChanged = new javax.swing.JButton();
         jPanel3 = new javax.swing.JPanel();
         jLabel9 = new javax.swing.JLabel();
-        jScrollPane4 = new javax.swing.JScrollPane();
-        pnlTagged = new javax.swing.JPanel();
-        jLabel10 = new javax.swing.JLabel();
         chkOnlyMyTagged = new javax.swing.JCheckBox();
         cmdRefreshTagged = new javax.swing.JButton();
         cmdTagFilter = new javax.swing.JButton();
         cmdDocumentTagFilter = new javax.swing.JButton();
+        tabPaneTagged = new javax.swing.JTabbedPane();
+        jScrollPane4 = new javax.swing.JScrollPane();
+        pnlTagged = new javax.swing.JPanel();
+        jLabel10 = new javax.swing.JLabel();
         messagesWidget = new com.jdimension.jlawyer.client.desktop.DesktopWidgetPanel();
         lblUnreadMail = new javax.swing.JLabel();
         lblUnreadBea = new javax.swing.JLabel();
@@ -1130,32 +1131,6 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         jLabel9.setForeground(java.awt.Color.white);
         jLabel9.setText(bundle.getString("label.tagged")); // NOI18N
 
-        jScrollPane4.setBorder(null);
-        jScrollPane4.setOpaque(false);
-
-        pnlTagged.setOpaque(false);
-
-        jLabel10.setText(bundle.getString("label.lastchanged.loading")); // NOI18N
-
-        org.jdesktop.layout.GroupLayout pnlTaggedLayout = new org.jdesktop.layout.GroupLayout(pnlTagged);
-        pnlTagged.setLayout(pnlTaggedLayout);
-        pnlTaggedLayout.setHorizontalGroup(
-            pnlTaggedLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(pnlTaggedLayout.createSequentialGroup()
-                .addContainerGap()
-                .add(jLabel10)
-                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
-        pnlTaggedLayout.setVerticalGroup(
-            pnlTaggedLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(pnlTaggedLayout.createSequentialGroup()
-                .addContainerGap()
-                .add(jLabel10)
-                .addContainerGap(226, Short.MAX_VALUE))
-        );
-
-        jScrollPane4.setViewportView(pnlTagged);
-
         chkOnlyMyTagged.setForeground(new java.awt.Color(255, 255, 255));
         chkOnlyMyTagged.setText("nur meine anzeigen");
         chkOnlyMyTagged.addActionListener(new java.awt.event.ActionListener() {
@@ -1206,6 +1181,38 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
             }
         });
 
+        tabPaneTagged.setTabLayoutPolicy(javax.swing.JTabbedPane.SCROLL_TAB_LAYOUT);
+        tabPaneTagged.setTabPlacement(javax.swing.JTabbedPane.BOTTOM);
+        tabPaneTagged.setFont(new java.awt.Font("Dialog", 0, 10)); // NOI18N
+
+        jScrollPane4.setBorder(null);
+        jScrollPane4.setOpaque(false);
+
+        pnlTagged.setOpaque(false);
+
+        jLabel10.setText(bundle.getString("label.lastchanged.loading")); // NOI18N
+
+        org.jdesktop.layout.GroupLayout pnlTaggedLayout = new org.jdesktop.layout.GroupLayout(pnlTagged);
+        pnlTagged.setLayout(pnlTaggedLayout);
+        pnlTaggedLayout.setHorizontalGroup(
+            pnlTaggedLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(pnlTaggedLayout.createSequentialGroup()
+                .addContainerGap()
+                .add(jLabel10)
+                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+        pnlTaggedLayout.setVerticalGroup(
+            pnlTaggedLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(pnlTaggedLayout.createSequentialGroup()
+                .addContainerGap()
+                .add(jLabel10)
+                .addContainerGap(226, Short.MAX_VALUE))
+        );
+
+        jScrollPane4.setViewportView(pnlTagged);
+
+        tabPaneTagged.addTab("alle", jScrollPane4);
+
         org.jdesktop.layout.GroupLayout jPanel3Layout = new org.jdesktop.layout.GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);
         jPanel3Layout.setHorizontalGroup(
@@ -1217,13 +1224,13 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
                         .add(cmdRefreshTagged)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(jLabel9)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 253, Short.MAX_VALUE)
                         .add(chkOnlyMyTagged)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                         .add(cmdTagFilter)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(cmdDocumentTagFilter))
-                    .add(jScrollPane4))
+                    .add(tabPaneTagged))
                 .addContainerGap())
         );
         jPanel3Layout.setVerticalGroup(
@@ -1238,7 +1245,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
                     .add(cmdTagFilter)
                     .add(cmdDocumentTagFilter))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jScrollPane4, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 87, Short.MAX_VALUE)
+                .add(tabPaneTagged, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 98, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -1537,14 +1544,14 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         boolean onlyMyTagged = this.chkOnlyMyTagged.isSelected();
         settings.setSetting(UserSettings.CONF_DESKTOP_ONLYMYTAGGED, "" + onlyMyTagged);
 
-        TimerTask taggedTask = new TaggedTimerTask(this, this.pnlTagged, this.jSplitPane2, this.cmdTagFilter, this.cmdDocumentTagFilter, this.popTagFilter, this.popDocumentTagFilter, true);
+        TimerTask taggedTask = new TaggedTimerTask(this, this.tabPaneTagged, this.pnlTagged, this.jSplitPane2, this.cmdTagFilter, this.cmdDocumentTagFilter, this.popTagFilter, this.popDocumentTagFilter, true);
         new Timer().schedule(taggedTask, 500);
     }//GEN-LAST:event_chkOnlyMyTaggedActionPerformed
 
     private void cmdRefreshTaggedActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRefreshTaggedActionPerformed
 
         Timer timer = new Timer();
-        TimerTask taggedTask = new TaggedTimerTask(this, this.pnlTagged, this.jSplitPane2, this.cmdTagFilter, this.cmdDocumentTagFilter, this.popTagFilter, this.popDocumentTagFilter, true);
+        TimerTask taggedTask = new TaggedTimerTask(this, this.tabPaneTagged, this.pnlTagged, this.jSplitPane2, this.cmdTagFilter, this.cmdDocumentTagFilter, this.popTagFilter, this.popDocumentTagFilter, true);
         timer.schedule(taggedTask, 10);
     }//GEN-LAST:event_cmdRefreshTaggedActionPerformed
 
@@ -1611,6 +1618,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
     private javax.swing.JPopupMenu popDocumentTagFilter;
     private javax.swing.JPopupMenu popTagFilter;
     private com.jdimension.jlawyer.client.desktop.DesktopWidgetPanel systemInformationWidget;
+    private javax.swing.JTabbedPane tabPaneTagged;
     // End of variables declaration//GEN-END:variables
 
     @Override
