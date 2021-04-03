@@ -980,7 +980,6 @@ public class TaggedTimerTask extends java.util.TimerTask {
                         ep.setEntry(lce);
                         
                         if (tags.get(aFile.getId()) != null) {
-                            ArrayList<String> xTags = new ArrayList<String>();
                             for (ArchiveFileTagsBean aftb : tags.get(aFile.getId())) {
                                 TaggedEntryPanel tep = new TaggedEntryPanel(background);
                                 tep.setEntry(lce);
@@ -1023,7 +1022,6 @@ public class TaggedTimerTask extends java.util.TimerTask {
                         ep.setEntry(lce);
 
                         if (documentTags.get(aDoc.getId()) != null) {
-                            ArrayList<String> xTags = new ArrayList<String>();
                             for (DocumentTagsBean dtb : documentTags.get(aDoc.getId())) {
                                 TaggedEntryPanel tep = new TaggedEntryPanel(background);
                                 tep.setEntry(lce);
