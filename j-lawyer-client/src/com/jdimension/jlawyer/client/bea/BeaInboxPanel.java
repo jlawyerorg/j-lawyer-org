@@ -860,7 +860,6 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
         DefaultTreeModel dtm = new DefaultTreeModel(rootNode);
         this.treeFolders.setModel(dtm);
 
-//        DefaultTableModel tm = new DefaultTableModel(new String[]{"eEB", "dringend", "vertraulich", "prüfen", "Betreff", "Absender", "Empfänger", "Gesendet", "Az", "Az (Justiz)"}, 0);
         DefaultTableModel tm = new DefaultTableModel(new String[]{"", "", "", "Betreff", "Absender", "Empfänger", "Datum", "Az Absender", "Az Empfänger"}, 0);
         this.tblMails.setModel(tm);
         TableRowSorter<TableModel> sorter = new TableRowSorter<TableModel>(tm);
@@ -1501,8 +1500,6 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
             IdentityPanel ip = new IdentityPanel();
             ip.setIdentity(i);
             mainSplitter.setRightComponent(ip);
-        } else {
-            // do nothing
         }
     }
 
@@ -1858,7 +1855,6 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
         try {
             MessageHeader mh = (MessageHeader) this.tblMails.getValueAt(selected[0], 3);
             Message m = BeaAccess.getInstance().getMessage(mh.getId(), BeaAccess.getInstance().getLoggedInSafeId());
-            String fromSafeId = m.getSenderSafeId();
 
             String azSender = m.getReferenceNumber();
             String azRecipient = m.getReferenceJustice();
@@ -2532,18 +2528,11 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                             if (newName == null) {
                                 newName = "";
                             }
-                            newName = FileUtils.sanitizeFileName(newName);
-                            java.util.Date receivedPrefix = m.getReceptionTime();
-                            if (receivedPrefix == null) {
-                                receivedPrefix = new java.util.Date();
+                            // file names need to be unique across the entire case, so when saving multiple
+                            // beA messages, there are multiple xjustiz sds
+                            if(newName.equalsIgnoreCase("xjustiz_nachricht.xml")) {
+                                newName=m.getId() + "_" + newName;
                             }
-                            String formerName = newName;
-                            newName = FileUtils.getNewFileName(newName, true, receivedPrefix);
-                            if (newName == null) {
-                                // user may have decided to skip this attachment - continue with next
-                                continue;
-                            }
-                            newName = FileUtils.preserveExtension(formerName, newName);
                             newName = FileUtils.sanitizeFileName(newName);
 
                             if (newName.trim().length() == 0) {
@@ -2622,18 +2611,11 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                         if (newName == null) {
                             newName = "";
                         }
-                        newName = FileUtils.sanitizeFileName(newName);
-                        java.util.Date receivedPrefix = m.getReceptionTime();
-                        if (receivedPrefix == null) {
-                            receivedPrefix = new java.util.Date();
+                        // file names need to be unique across the entire case, so when saving multiple
+                        // beA messages, there are multiple xjustiz sds
+                        if (newName.equalsIgnoreCase("xjustiz_nachricht.xml")) {
+                            newName = m.getId() + "_" + newName;
                         }
-                        String formerName = newName;
-                        newName = FileUtils.getNewFileName(newName, true, receivedPrefix);
-                        if (newName == null) {
-                            // user may have decided to skip this attachment - continue with next
-                            continue;
-                        }
-                        newName = FileUtils.preserveExtension(formerName, newName);
                         newName = FileUtils.sanitizeFileName(newName);
 
                         if (newName.trim().length() == 0) {
