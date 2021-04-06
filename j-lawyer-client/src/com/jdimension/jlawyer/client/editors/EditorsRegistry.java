@@ -663,17 +663,8 @@
  */
 package com.jdimension.jlawyer.client.editors;
 
-import com.jdimension.jlawyer.client.desktop.DesktopPanel;
-import com.jdimension.jlawyer.client.settings.ClientSettings;
-import com.jdimension.jlawyer.server.constants.MonitoringConstants;
-import com.jdimension.jlawyer.client.utils.SystrayUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
-import com.jdimension.jlawyer.client.utils.VersionUtils;
 import java.awt.Component;
-import java.awt.Desktop;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.net.URI;
 import java.util.HashMap;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -688,7 +679,6 @@ public class EditorsRegistry {
     private static EditorsRegistry instance = null;
     private static final String STATUS_READY = java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/editors/EditorsRegistry").getString("status.ready");
     private HashMap editors;
-    //private JScrollPane pane;
     private JPanel pane = null;
     private JLabel statusLabel;
 
@@ -724,9 +714,6 @@ public class EditorsRegistry {
         this.pane = panel;
     }
 
-//    public void setMainEditorsPaneHorizontalScrolling(boolean enabled) {
-//        this.pane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-//    }
     public JPanel getMainEditorsPane() {
         return this.pane;
     }
@@ -761,13 +748,17 @@ public class EditorsRegistry {
     }
 
     public void setMainEditorsPaneView(Component c) {
+        this.setMainEditorsPaneView(c, false);
+    }
+
+    public void setMainEditorsPaneView(Component c, boolean skipReset) {
         if (this.pane == null) {
             return;
         }
 
         if (c != null && this.pane.getComponentCount() == 1) {
             if (c == this.pane.getComponent(0)) {
-                
+
                 return;
             }
         }
@@ -795,9 +786,11 @@ public class EditorsRegistry {
             this.pane.repaint();
         }
 
-        if (c instanceof ResetOnDisplayEditor) {
-            if (((ResetOnDisplayEditor) c).needsReset()) {
-                ((ResetOnDisplayEditor) c).reset();
+        if (!skipReset) {
+            if (c instanceof ResetOnDisplayEditor) {
+                if (((ResetOnDisplayEditor) c).needsReset()) {
+                    ((ResetOnDisplayEditor) c).reset();
+                }
             }
         }
     }
