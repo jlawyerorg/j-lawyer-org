@@ -775,11 +775,11 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
         OptionsComboBoxModel reviewReasonModel = new OptionsComboBoxModel(reviewReasonItems);
         this.cmbReviewReason.setModel(reviewReasonModel);
 
-        AppUserBean[] allUsers = UserSettings.getInstance().getAllUsers();
-        Object[] allUserItems = new Object[allUsers.length + 1];
+        List<AppUserBean> allUsers = UserSettings.getInstance().getLoginEnabledUsers();
+        Object[] allUserItems = new Object[allUsers.size() + 1];
         allUserItems[0] = "";
-        for (int i = 0; i < allUsers.length; i++) {
-            AppUserBean aub = (AppUserBean) allUsers[i];
+        for (int i = 0; i < allUsers.size(); i++) {
+            AppUserBean aub = allUsers.get(i);
             allUserItems[i + 1] = aub.getPrincipalId();
         }
         OptionsComboBoxModel allUserModel = new OptionsComboBoxModel(allUserItems);

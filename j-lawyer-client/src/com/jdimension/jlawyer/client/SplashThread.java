@@ -688,6 +688,7 @@ import com.jdimension.jlawyer.server.modules.ModuleMetadata;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.FormsServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import com.jdimension.jlawyer.services.SecurityServiceRemote;
 import com.jdimension.jlawyer.services.SystemManagementRemote;
 import java.awt.Image;
 import java.io.*;
@@ -792,9 +793,11 @@ public class SplashThread implements Runnable {
         AppUserBean[] lawyerUsers = null;
         AppUserBean[] assistUsers = null;
         AppUserBean[] allUsers = null;
+        List<AppUserBean> loginEnabledUsers=null;
         try {
             SystemManagementRemote mgmt = locator.lookupSystemManagementRemote();
             ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
+            SecurityServiceRemote security = locator.lookupSecurityServiceRemote();
             this.updateProgress(false, 9, 1, "");
             updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.option.1"), true);
             complimentaryCloseDtos = mgmt.getOptionGroup(OptionConstants.OPTIONGROUP_COMPLIMENTARYCLOSE);
@@ -817,6 +820,8 @@ public class SplashThread implements Runnable {
             this.updateProgress(false, 9, 6, "");
             updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.option.6"), true);
 
+            loginEnabledUsers = security.getUsersHavingRole(UserSettings.ROLE_LOGIN);
+            
             List<AppUserBean> users = mgmt.getUsers();
             List<AppUserBean> lawyers = new ArrayList<AppUserBean>();
             List<AppUserBean> assistants = new ArrayList<AppUserBean>();
@@ -866,6 +871,7 @@ public class SplashThread implements Runnable {
         UserSettings.getInstance().setLawyerUsers(lawyerUsers);
         UserSettings.getInstance().setAssistantUsers(assistUsers);
         UserSettings.getInstance().setAllUsers(allUsers);
+        UserSettings.getInstance().setLoginEnabledUsers(loginEnabledUsers);
         settings.setTitles(titles);
         settings.setTitlesInAddress(titlesInAddress);
         settings.setCountries(countries);

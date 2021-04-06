@@ -673,6 +673,7 @@ import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.BorderFactory;
+import javax.swing.ComboBoxModel;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
@@ -719,6 +720,15 @@ public class ComponentUtils {
 
     }
 
+    public static boolean containsItem(JComboBox cmb, Object item) {
+        ComboBoxModel cmbModel=cmb.getModel();
+        for(int i=0;i<cmbModel.getSize();i++) {
+            if(cmbModel.getElementAt(i).equals(item))
+                return true;
+        }
+        return false;
+    }
+    
     public static void addAllItemsToCombobox(JComboBox cmb, Object[] objects) {
         for (int i = 0; i < objects.length; i++) {
             cmb.addItem(objects[i]);

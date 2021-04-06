@@ -1222,10 +1222,21 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.txtNotice.setText(dto.getNotice());
         this.chkArchived.setSelected(dto.getArchivedBoolean());
 
+        if(!ComponentUtils.containsItem(cmbLawyer, dto.getLawyer())) {
+            this.cmbLawyer.addItem(dto.getLawyer());
+        }
         this.cmbLawyer.setSelectedItem(dto.getLawyer());
+        
+        if(!ComponentUtils.containsItem(cmbAssistant, dto.getAssistant())) {
+            this.cmbAssistant.addItem(dto.getAssistant());
+        }
         this.cmbAssistant.setSelectedItem(dto.getAssistant());
         if(dto.getAssistant()!=null) {
-            this.cmbReviewAssignee.setSelectedItem(dto.getAssistant());
+            try {
+                this.cmbReviewAssignee.setSelectedItem(dto.getAssistant());
+            } catch (Exception ex) {
+                log.warn("unable to set default review assignee", ex);
+            }
         }
         this.cmbSubjectField.setSelectedItem(dto.getSubjectField());
         this.txtReason.setText(dto.getReason());
@@ -1477,24 +1488,17 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         AppOptionGroupBean[] subjectFields = settings.getSubjectFieldDtos();
         AppUserBean[] lawyerUsers = UserSettings.getInstance().getLawyerUsers();
         AppUserBean[] assistUsers = UserSettings.getInstance().getAssistantUsers();
-        AppUserBean[] allUsers = UserSettings.getInstance().getAllUsers();
+        List<AppUserBean> allUsers = UserSettings.getInstance().getLoginEnabledUsers();
 
-//        Object[] dictateSignItems = new Object[dictateSigns.length + 1];
         String[] reviewReasonItems = new String[reviewReasons.length];
         String[] subjectFieldItems = new String[subjectFields.length + 1];
-        String[] lawyerItems = new String[lawyerUsers.length + 1];
-        String[] assistItems = new String[assistUsers.length + 1];
-        String[] allUserItems = new String[allUsers.length + 1];
+        String[] lawyerItems = null;
+        String[] assistItems = null;
+        String[] allUserItems = new String[allUsers.size() + 1];
 
-//        dictateSignItems[0] = "";
-//        for (int i = 0; i < dictateSigns.length; i++) {
-//            AppOptionGroupBean aogb = (AppOptionGroupBean) dictateSigns[i];
-//            dictateSignItems[i + 1] = aogb.getValue();
-//        }
         for (int i = 0; i < reviewReasons.length; i++) {
             AppOptionGroupBean aogb = (AppOptionGroupBean) reviewReasons[i];
             reviewReasonItems[i] = aogb.getValue();
-            //reviewReasonItems[i+1]=reviewReasons[i];
         }
         StringUtils.sortIgnoreCase(reviewReasonItems);
 
@@ -1505,23 +1509,29 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
         StringUtils.sortIgnoreCase(subjectFieldItems);
 
-        lawyerItems[0] = "";
+        List<String> l1=new ArrayList<>();
+        l1.add("");
         for (int i = 0; i < lawyerUsers.length; i++) {
             AppUserBean aub = (AppUserBean) lawyerUsers[i];
-            lawyerItems[i + 1] = aub.getPrincipalId();
+            if(allUsers.contains(aub))
+                l1.add(aub.getPrincipalId());
         }
+        lawyerItems=l1.toArray(new String[0]);
         StringUtils.sortIgnoreCase(lawyerItems);
 
-        assistItems[0] = "";
+        List<String> l2=new ArrayList<>();
+        l2.add("");
         for (int i = 0; i < assistUsers.length; i++) {
             AppUserBean aub = (AppUserBean) assistUsers[i];
-            assistItems[i + 1] = aub.getPrincipalId();
+            if(allUsers.contains(aub))
+                l2.add(aub.getPrincipalId());
         }
+        assistItems=l2.toArray(new String[0]);
         StringUtils.sortIgnoreCase(assistItems);
 
         allUserItems[0] = "";
-        for (int i = 0; i < allUsers.length; i++) {
-            AppUserBean aub = (AppUserBean) allUsers[i];
+        for (int i = 0; i < allUsers.size(); i++) {
+            AppUserBean aub = allUsers.get(i);
             allUserItems[i + 1] = aub.getPrincipalId();
         }
         StringUtils.sortIgnoreCase(allUserItems);
