@@ -3484,7 +3484,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             this.txtReviewReason.setText("");
             this.chkArchived.setSelected(false);
             this.lblArchivedSince.setText("");
-            this.cmbReviewAssignee.setSelectedIndex(0);
             this.radioReviewTypeFollowUp.setSelected(true);
             this.quickDateSelectionPanel.reset();
         } else {
