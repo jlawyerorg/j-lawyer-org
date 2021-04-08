@@ -1574,6 +1574,7 @@ public class CaseFolderPanel extends javax.swing.JPanel {
     public void removeDocument(ArchiveFileDocumentsBean doc) {
         this.documents.remove(doc);
         this.hideDocument(doc);
+        this.foldersListPanel.renderEmptyFullState();
     }
     
     public void hideDocument(ArchiveFileDocumentsBean doc) {

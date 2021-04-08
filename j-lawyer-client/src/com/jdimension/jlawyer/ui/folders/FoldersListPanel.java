@@ -872,6 +872,7 @@ public class FoldersListPanel extends javax.swing.JPanel {
         this.revalidate();
         this.repaint();
         this.forceRelayout();
+        this.renderEmptyFullState();
     }
 
     private void collectSubtreeIds(CaseFolder f, ArrayList<String> ids) {
@@ -916,6 +917,7 @@ public class FoldersListPanel extends javax.swing.JPanel {
         this.revalidate();
         this.repaint();
         this.forceRelayout();
+        this.renderEmptyFullState();
     }
     
     private void forceRelayout() {
