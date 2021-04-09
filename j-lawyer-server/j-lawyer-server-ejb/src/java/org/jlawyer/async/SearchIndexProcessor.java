@@ -666,7 +666,6 @@ package org.jlawyer.async;
 import com.jdimension.jlawyer.documents.PreviewGenerator;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBeanFacadeLocal;
-import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import java.util.List;
 import javax.ejb.*;
 import javax.jms.Message;
