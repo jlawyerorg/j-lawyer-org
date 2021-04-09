@@ -2319,6 +2319,8 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 tag.setArchiveFileKey(aFile);
                 this.archiveFileTagsFacade.create(tag);
                 historyText = "Akten-Etikett gesetzt: " + tag.getTagName();
+            } else {
+                historyText = "Akten-Etikett gesetzt: " + tag.getTagName()  + "(war bereits gesetzt)";
             }
         } else if (check.size() > 0) {
             ArchiveFileTagsBean remove = (ArchiveFileTagsBean) check.get(0);
