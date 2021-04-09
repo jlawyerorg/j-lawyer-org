@@ -693,10 +693,6 @@ public class SearchIndexProcessor implements MessageListener {
     @EJB
     private ArchiveFileDocumentsBeanFacadeLocal archiveFileDocumentsFacade;
     
-    @EJB
-    private ArchiveFileServiceRemote archiveFileSvc;
-    
-    
     public SearchIndexProcessor() {
     }
     
@@ -725,9 +721,9 @@ public class SearchIndexProcessor implements MessageListener {
                     PreviewGenerator pg=new PreviewGenerator(this.archiveFileDocumentsFacade);
                     List<ArchiveFileDocumentsBean> allDocs=this.archiveFileDocumentsFacade.findAll();
                     for(ArchiveFileDocumentsBean db: allDocs) {
+                        if(db.isDeleted())
+                            continue;
                         try {
-//                        log.info("indexing document " + db.getName());
-//                        api.addToIndex(db.getId(), db.getName(), pg.getDocumentPreview(db.getId()), db.getArchiveFileKey().getId(), db.getArchiveFileKey().getName(), db.getArchiveFileKey().getFileNumber());
                             this.doAddToIndex(db, pg, api);
                         } catch (Throwable th) {
                             log.error("Could not process search index request for " + db.getName() + ": " + message.toString(), th);
