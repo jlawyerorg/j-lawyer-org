@@ -1020,7 +1020,13 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
 
         txtReviewDateField.setEditable(false);
         txtReviewDateField.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
+        txtReviewDateField.setToolTipText("Doppelklick um heutiges Datum zu übernehmen");
         txtReviewDateField.setEnabled(false);
+        txtReviewDateField.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                txtReviewDateFieldMouseClicked(evt);
+            }
+        });
 
         cmbReviewAssignee.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
         cmbReviewAssignee.setEnabled(false);
@@ -1633,6 +1639,13 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
     private void lstTemplatesKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_lstTemplatesKeyReleased
         this.lstTemplatesMouseClicked(null);
     }//GEN-LAST:event_lstTemplatesKeyReleased
+
+    private void txtReviewDateFieldMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_txtReviewDateFieldMouseClicked
+        if (evt.getClickCount() == 2) {
+            SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
+            this.txtReviewDateField.setText(df.format(new Date()));
+        }
+    }//GEN-LAST:event_txtReviewDateFieldMouseClicked
 
     private void traverseFolders(GenericNode current, DefaultMutableTreeNode currentNode) throws Exception {
 

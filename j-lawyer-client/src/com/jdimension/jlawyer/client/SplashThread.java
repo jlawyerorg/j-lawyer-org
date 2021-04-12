@@ -907,9 +907,8 @@ public class SplashThread implements Runnable {
                 URI uri = Main.class.getResource("/themes/default/backgroundsrandom").toURI();
                 Path path;
                 if (uri.getScheme().equals("jar")) {
-                    try (FileSystem fileSystem = FileSystems.newFileSystem(uri, Collections.<String, Object>emptyMap())) {
-                        path = fileSystem.getPath("/themes/default/backgroundsrandom");
-                    }
+                    FileSystem fileSystem = FileSystems.newFileSystem(uri, Collections.<String, Object>emptyMap());
+                    path = fileSystem.getPath("/themes/default/backgroundsrandom");
                     
                 } else {
                     path = Paths.get(uri);

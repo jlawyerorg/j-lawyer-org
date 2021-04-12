@@ -1516,7 +1516,13 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
 
         txtReviewDateField.setEditable(false);
         txtReviewDateField.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
+        txtReviewDateField.setToolTipText("Doppelklick um heutiges Datum zu übernehmen");
         txtReviewDateField.setEnabled(false);
+        txtReviewDateField.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                txtReviewDateFieldMouseClicked(evt);
+            }
+        });
 
         cmbReviewAssignee.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
         cmbReviewAssignee.setEnabled(false);
@@ -2104,6 +2110,13 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
 
         }
     }//GEN-LAST:event_mnuRemoveAttachmentActionPerformed
+
+    private void txtReviewDateFieldMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_txtReviewDateFieldMouseClicked
+        if (evt.getClickCount() == 2) {
+            SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
+            this.txtReviewDateField.setText(df.format(new Date()));
+        }
+    }//GEN-LAST:event_txtReviewDateFieldMouseClicked
 
     private void enableReviewElements(boolean enable) {
         this.cmbReviewAssignee.setEnabled(enable);

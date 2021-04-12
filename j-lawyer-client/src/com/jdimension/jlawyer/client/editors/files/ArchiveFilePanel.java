@@ -2701,6 +2701,12 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         txtReviewDateField.setEditable(false);
         txtReviewDateField.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
+        txtReviewDateField.setToolTipText("Doppelklick um heutiges Datum zu übernehmen");
+        txtReviewDateField.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                txtReviewDateFieldMouseClicked(evt);
+            }
+        });
 
         cmdShowReviewSelector.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/schedule.png"))); // NOI18N
         cmdShowReviewSelector.setMargin(new java.awt.Insets(2, 4, 2, 4));
@@ -2739,7 +2745,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             .add(jPanel9Layout.createSequentialGroup()
                 .addContainerGap()
                 .add(jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(tblReviewReasonsPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 919, Short.MAX_VALUE)
+                    .add(tblReviewReasonsPane)
                     .add(jPanel9Layout.createSequentialGroup()
                         .add(jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                             .add(jLabel12)
@@ -5582,6 +5588,13 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.jScrollPane7.getViewport().getComponent(0).setPreferredSize(new Dimension(w,h));
         this.jScrollPane7.doLayout();
     }//GEN-LAST:event_splitDocumentsPropertyChange
+
+    private void txtReviewDateFieldMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_txtReviewDateFieldMouseClicked
+        if (evt.getClickCount() == 2) {
+            SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
+            this.txtReviewDateField.setText(df.format(new Date()));
+        }
+    }//GEN-LAST:event_txtReviewDateFieldMouseClicked
 
     private AddressBean[] convertArray(Object[] in) {
         if (in != null) {
