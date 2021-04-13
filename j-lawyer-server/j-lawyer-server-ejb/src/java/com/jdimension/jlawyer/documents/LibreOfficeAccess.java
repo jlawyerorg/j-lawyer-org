@@ -696,7 +696,7 @@ import org.w3c.dom.Node;
 public class LibreOfficeAccess {
 
     private static Logger log = Logger.getLogger(LibreOfficeAccess.class.getName());
-    private static String ERROR_MAYBE_HEADLESS="Failure setting content of table cell - when running on a headless Linux system, please install xvfb libxext6 libxi6 libxtst6 libxrender1 libongoft2-1.0.0";
+    private static final String ERROR_MAYBE_HEADLESS="Failure setting content of table cell - when running on a headless Linux system, please install xvfb libxext6 libxi6 libxtst6 libxrender1 libongoft2-1.0.0";
 
     public static void setPlaceHolders(String file, Hashtable values) throws Exception {
 
