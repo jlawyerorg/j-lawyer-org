@@ -696,6 +696,7 @@ import org.w3c.dom.Node;
 public class LibreOfficeAccess {
 
     private static Logger log = Logger.getLogger(LibreOfficeAccess.class.getName());
+    private static String ERROR_MAYBE_HEADLESS="Failure setting content of table cell - when running on a headless Linux system, please install xvfb libxext6 libxi6 libxtst6 libxrender1 libongoft2-1.0.0";
 
     public static void setPlaceHolders(String file, Hashtable values) throws Exception {
 
@@ -825,7 +826,11 @@ public class LibreOfficeAccess {
                                     firstDataRow = 1;
                                     t.appendRow();
                                     for (int i = 0; i < tab.getColumnLabels().size(); i++) {
-                                        t.getCellByPosition(i, 0).setStringValue(tab.getColumnLabels().get(i));
+                                        try {
+                                            t.getCellByPosition(i, 0).setStringValue(tab.getColumnLabels().get(i));
+                                        } catch (Throwable thr) {
+                                            log.error(ERROR_MAYBE_HEADLESS, thr);
+                                        }
                                         border.setColor(Color.WHITE);
                                         t.getCellByPosition(i, 0).setBorders(CellBordersType.NONE, border);
                                         t.getCellByPosition(i, 0).setHorizontalAlignment(StyleTypeDefinitions.HorizontalAlignmentType.CENTER);
@@ -836,7 +841,11 @@ public class LibreOfficeAccess {
                                 }
                                 for (int i = 0; i < tab.getData()[0].length; i++) {
                                     for (int k = 0; k < tab.getData().length; k++) {
-                                        t.getCellByPosition(i, k + firstDataRow).setStringValue(tab.getData()[k][i]);
+                                        try {
+                                            t.getCellByPosition(i, k + firstDataRow).setStringValue(tab.getData()[k][i]);
+                                        } catch (Throwable thr) {
+                                            log.error(ERROR_MAYBE_HEADLESS, thr);
+                                        }
                                         border.setColor(Color.WHITE);
                                         t.getCellByPosition(i, k + firstDataRow).setBorders(CellBordersType.NONE, border);
                                         // set font to regular
@@ -889,7 +898,14 @@ public class LibreOfficeAccess {
 
                                 for (int i = 0; i < tab.getColumnCount(); i++) {
                                     for (int k = 0; k < tab.getRowCount(); k++) {
-                                        t.getCellByPosition(i, k).setStringValue(tab.getValueAt(k, i));
+                                        // this may fail when running on a headless system
+                                        // need to install these packages on Ubuntu: xvfb libxext6 libxi6 libxtst6 libxrender1 libongoft2-1.0.0
+                                        // in case of an exception, continue with the other placeholders
+                                        try {
+                                            t.getCellByPosition(i, k).setStringValue(tab.getValueAt(k, i));
+                                        } catch (Throwable thr) {
+                                            log.error(ERROR_MAYBE_HEADLESS, thr);
+                                        }
                                         if (tab.isLineBorder()) {
                                             Border b = new Border(Color.BLACK, 0.05, SupportedLinearMeasure.PT);
                                             b.setColor(new org.odftoolkit.odfdom.type.Color(tab.getBorderColor()));
