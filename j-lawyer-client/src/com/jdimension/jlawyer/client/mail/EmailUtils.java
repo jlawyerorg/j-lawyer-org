@@ -768,11 +768,13 @@ public class EmailUtils {
                 } else if (disposition.equalsIgnoreCase(Part.ATTACHMENT)) {
                     //Anhang wird in ein Verzeichnis gespeichert
                     //saveFile(part.getFileName(), part.getInputStream());
-                    attachmentNames.add(EmailUtils.decodeText(part.getFileName()));
+                    if(part.getFileName()!=null)
+                        attachmentNames.add(EmailUtils.decodeText(part.getFileName()));
                 } else if (disposition.equalsIgnoreCase(Part.INLINE)) {
                     //Anhang wird in ein Verzeichnis gespeichert
                     //saveFile(part.getFileName(), part.getInputStream());
-                    attachmentNames.add(EmailUtils.decodeText(part.getFileName()));
+                    if(part.getFileName()!=null)
+                        attachmentNames.add(EmailUtils.decodeText(part.getFileName()));
 
                 }
             }
