@@ -792,6 +792,7 @@ public class Main {
         System.setProperty("apple.awt.application.name", "j-lawyer.org");
 
         ToolTipManager.sharedInstance().setDismissDelay(30000);
+        ToolTipManager.sharedInstance().setInitialDelay(200);
 
         FlatIntelliJLaf.install();
 
