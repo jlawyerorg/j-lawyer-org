@@ -682,7 +682,6 @@ import java.io.FileOutputStream;
 import java.util.*;
 import javax.swing.DefaultListModel;
 import javax.swing.JOptionPane;
-import javax.swing.table.TableModel;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
@@ -824,7 +823,7 @@ public class GenerateMassMailDocumentsDialog extends javax.swing.JDialog {
 
         jSplitPane1.setLeftComponent(jScrollPane3);
 
-        cmdClearFilter.setText("x");
+        cmdClearFilter.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/outline_backspace_black_48dp.png"))); // NOI18N
         cmdClearFilter.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmdClearFilterActionPerformed(evt);
