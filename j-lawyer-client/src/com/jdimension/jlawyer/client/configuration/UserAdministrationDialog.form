@@ -1098,7 +1098,7 @@
                           <Component id="cmdShowWebsite" min="-2" max="-2" attributes="0"/>
                           <Component id="txtNextcloudOrder" min="-2" max="-2" attributes="0"/>
                       </Group>
-                      <EmptySpace pref="214" max="32767" attributes="0"/>
+                      <EmptySpace max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -1236,7 +1236,7 @@
                       </Group>
                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
                       <Component id="jLabel26" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace pref="392" max="32767" attributes="0"/>
+                      <EmptySpace max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
