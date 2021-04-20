@@ -802,7 +802,7 @@ public class DocumentSearchPanel extends javax.swing.JPanel implements Themeable
         lblResultCount.setText("0 Ergebnisse");
 
         jLabel3.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/baseline_help_white_36dp.png"))); // NOI18N
-        jLabel3.setToolTipText("<html><b>Felder: text: dateiname: autor: akte: az:</b><br/>Bsp: text:Kauf\n<p>&nbsp;</p>\n<b>Suchoptionen: AND OR</b>\n<p>&nbsp;</p>\n<b>&quot;Wortgruppe mittels Anf&uuml;hrungszeichen&quot;</b>\n<p>&nbsp;</p>\n<b>Wildcards: ? f&uuml;r ein Zeichen, * f&uuml;r mehrere Zeichen.</b><br/>\nBsp: M?ier (f&uuml;r eine Suche nach Meier und Maier)<br/>\n</html>");
+        jLabel3.setToolTipText("<html><b>Felder: text: dateiname: autor: akte: az:</b><br/>Bsp: text:Kauf\n<p>&nbsp;</p>\n<b>Suchoptionen: AND OR</b>\n<p>&nbsp;</p>\n<b>&quot;Wortgruppe mittels Anf&uuml;hrungszeichen&quot;</b>\n<p>&nbsp;</p>\n<p><b>Ausschluss per vorangestelltem Minuszeichen</b><br/>Bsp: -Klage</p>\n<p>&nbsp;</p>\n<b>Wildcards: ? f&uuml;r ein Zeichen, * f&uuml;r mehrere Zeichen.</b><br/>\nBsp: M?ier (f&uuml;r eine Suche nach Meier und Maier)<br/>\n</html>");
 
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(this);
         this.setLayout(layout);

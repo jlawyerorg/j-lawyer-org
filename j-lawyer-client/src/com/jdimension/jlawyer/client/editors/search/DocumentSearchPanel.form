@@ -165,7 +165,7 @@
         <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
           <Image iconType="3" name="/icons16/baseline_help_white_36dp.png"/>
         </Property>
-        <Property name="toolTipText" type="java.lang.String" value="&lt;html&gt;&lt;b&gt;Felder: text: dateiname: autor: akte: az:&lt;/b&gt;&lt;br/&gt;Bsp: text:Kauf&#xa;&lt;p&gt;&amp;nbsp;&lt;/p&gt;&#xa;&lt;b&gt;Suchoptionen: AND OR&lt;/b&gt;&#xa;&lt;p&gt;&amp;nbsp;&lt;/p&gt;&#xa;&lt;b&gt;&amp;quot;Wortgruppe mittels Anf&amp;uuml;hrungszeichen&amp;quot;&lt;/b&gt;&#xa;&lt;p&gt;&amp;nbsp;&lt;/p&gt;&#xa;&lt;b&gt;Wildcards: ? f&amp;uuml;r ein Zeichen, * f&amp;uuml;r mehrere Zeichen.&lt;/b&gt;&lt;br/&gt;&#xa;Bsp: M?ier (f&amp;uuml;r eine Suche nach Meier und Maier)&lt;br/&gt;&#xa;&lt;/html&gt;"/>
+        <Property name="toolTipText" type="java.lang.String" value="&lt;html&gt;&lt;b&gt;Felder: text: dateiname: autor: akte: az:&lt;/b&gt;&lt;br/&gt;Bsp: text:Kauf&#xa;&lt;p&gt;&amp;nbsp;&lt;/p&gt;&#xa;&lt;b&gt;Suchoptionen: AND OR&lt;/b&gt;&#xa;&lt;p&gt;&amp;nbsp;&lt;/p&gt;&#xa;&lt;b&gt;&amp;quot;Wortgruppe mittels Anf&amp;uuml;hrungszeichen&amp;quot;&lt;/b&gt;&#xa;&lt;p&gt;&amp;nbsp;&lt;/p&gt;&#xa;&lt;p&gt;&lt;b&gt;Ausschluss per vorangestelltem Minuszeichen&lt;/b&gt;&lt;br/&gt;Bsp: -Klage&lt;/p&gt;&#xa;&lt;p&gt;&amp;nbsp;&lt;/p&gt;&#xa;&lt;b&gt;Wildcards: ? f&amp;uuml;r ein Zeichen, * f&amp;uuml;r mehrere Zeichen.&lt;/b&gt;&lt;br/&gt;&#xa;Bsp: M?ier (f&amp;uuml;r eine Suche nach Meier und Maier)&lt;br/&gt;&#xa;&lt;/html&gt;"/>
       </Properties>
     </Component>
   </SubComponents>
