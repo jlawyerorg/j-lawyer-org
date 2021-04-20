@@ -745,6 +745,11 @@ public class SearchAndAssignDialog extends javax.swing.JDialog {
     }
 
     private void initialize() {
+        ComponentUtils.decorateSplitPane(this.split);
+        this.split.setDividerLocation(0.7d);
+        ComponentUtils.restoreSplitPane(split, this.getClass(), "split");
+        ComponentUtils.persistSplitPane(split, this.getClass(), "split");
+        
         this.treeFolders.setCellRenderer(new CaseFolderCellRenderer());
 
         this.tblResults.setDefaultRenderer(Object.class, new QuickArchiveFileSearchCellRenderer());
@@ -872,12 +877,13 @@ public class SearchAndAssignDialog extends javax.swing.JDialog {
         jLabel1 = new javax.swing.JLabel();
         txtSearchString = new javax.swing.JTextField();
         cmdQuickSearch = new javax.swing.JButton();
-        jScrollPane1 = new javax.swing.JScrollPane();
-        tblResults = new javax.swing.JTable();
         cmdCancel = new javax.swing.JButton();
         cmdUseSelection = new javax.swing.JButton();
         cmdTagFilter = new javax.swing.JButton();
         cmdDocumentTagFilter = new javax.swing.JButton();
+        split = new javax.swing.JSplitPane();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        tblResults = new javax.swing.JTable();
         jScrollPane2 = new javax.swing.JScrollPane();
         treeFolders = new javax.swing.JTree();
 
@@ -913,30 +919,6 @@ public class SearchAndAssignDialog extends javax.swing.JDialog {
             }
         });
 
-        tblResults.setModel(new javax.swing.table.DefaultTableModel(
-            new Object [][] {
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null}
-            },
-            new String [] {
-                "Title 1", "Title 2", "Title 3", "Title 4"
-            }
-        ));
-        tblResults.getTableHeader().setReorderingAllowed(false);
-        tblResults.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                tblResultsMouseClicked(evt);
-            }
-        });
-        tblResults.addKeyListener(new java.awt.event.KeyAdapter() {
-            public void keyReleased(java.awt.event.KeyEvent evt) {
-                tblResultsKeyReleased(evt);
-            }
-        });
-        jScrollPane1.setViewportView(tblResults);
-
         cmdCancel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png"))); // NOI18N
         cmdCancel.setText("Schliessen");
         cmdCancel.addActionListener(new java.awt.event.ActionListener() {
@@ -967,6 +949,34 @@ public class SearchAndAssignDialog extends javax.swing.JDialog {
             }
         });
 
+        split.setResizeWeight(1.0);
+
+        tblResults.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null}
+            },
+            new String [] {
+                "Title 1", "Title 2", "Title 3", "Title 4"
+            }
+        ));
+        tblResults.getTableHeader().setReorderingAllowed(false);
+        tblResults.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                tblResultsMouseClicked(evt);
+            }
+        });
+        tblResults.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyReleased(java.awt.event.KeyEvent evt) {
+                tblResultsKeyReleased(evt);
+            }
+        });
+        jScrollPane1.setViewportView(tblResults);
+
+        split.setLeftComponent(jScrollPane1);
+
         treeFolders.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mousePressed(java.awt.event.MouseEvent evt) {
                 treeFoldersMousePressed(evt);
@@ -977,6 +987,8 @@ public class SearchAndAssignDialog extends javax.swing.JDialog {
         });
         jScrollPane2.setViewportView(treeFolders);
 
+        split.setRightComponent(jScrollPane2);
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -984,11 +996,6 @@ public class SearchAndAssignDialog extends javax.swing.JDialog {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addGap(0, 0, Short.MAX_VALUE)
-                        .addComponent(cmdUseSelection)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(cmdCancel))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addComponent(jLabel1)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -1000,9 +1007,11 @@ public class SearchAndAssignDialog extends javax.swing.JDialog {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cmdDocumentTagFilter))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addComponent(jScrollPane1)
+                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addComponent(cmdUseSelection)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 154, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addComponent(cmdCancel))
+                    .addComponent(split))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -1017,9 +1026,7 @@ public class SearchAndAssignDialog extends javax.swing.JDialog {
                     .addComponent(cmdTagFilter)
                     .addComponent(cmdDocumentTagFilter))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 371, Short.MAX_VALUE)
-                    .addComponent(jScrollPane2))
+                .addComponent(split, javax.swing.GroupLayout.DEFAULT_SIZE, 371, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(cmdCancel)
@@ -1309,6 +1316,7 @@ public class SearchAndAssignDialog extends javax.swing.JDialog {
     private javax.swing.JPopupMenu popDocumentTagFilter;
     private javax.swing.JPopupMenu popFolders;
     private javax.swing.JPopupMenu popTagFilter;
+    private javax.swing.JSplitPane split;
     private javax.swing.JTable tblResults;
     private javax.swing.JTree treeFolders;
     private javax.swing.JTextField txtSearchString;
