@@ -924,7 +924,10 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
             if((evt.getModifiers() & InputEvent.SHIFT_MASK) == InputEvent.SHIFT_MASK || (evt.getModifiers() & InputEvent.CTRL_MASK) == InputEvent.CTRL_MASK) {
                 this.documentClicked(evt, false);
             } else {
-                this.documentClicked(evt, true);
+                if(this.isSelected())
+                    this.documentClicked(evt, false);
+                else
+                    this.documentClicked(evt, true);
             }
             this.caseContainer.showDocumentsPopup(evt);
         } else if ((evt.getModifiers() & InputEvent.SHIFT_MASK) == InputEvent.SHIFT_MASK) {
