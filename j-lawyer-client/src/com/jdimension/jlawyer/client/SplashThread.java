@@ -902,12 +902,14 @@ public class SplashThread implements Runnable {
             rootModule.setRandomBackgroundImage(null);
         } else {
             rootModule.setBackgroundImage(null);
+            
+            FileSystem fileSystem=null;
             try {
 
                 URI uri = Main.class.getResource("/themes/default/backgroundsrandom").toURI();
                 Path path;
                 if (uri.getScheme().equals("jar")) {
-                    FileSystem fileSystem = FileSystems.newFileSystem(uri, Collections.<String, Object>emptyMap());
+                    fileSystem = FileSystems.newFileSystem(uri, Collections.<String, Object>emptyMap());
                     path = fileSystem.getPath("/themes/default/backgroundsrandom");
                     
                 } else {
@@ -932,6 +934,14 @@ public class SplashThread implements Runnable {
                 log.error("unable to get random background image", t);
                 rootModule.setBackgroundImage("archivefiles.jpg");
                 rootModule.setRandomBackgroundImage(null);
+            } finally {
+                if(fileSystem!=null) {
+                    try {
+                        fileSystem.close();
+                    } catch (Exception ex) {
+                        log.warn("Could not close filesystem object", ex);
+                    }
+                }
             }
 
         }
