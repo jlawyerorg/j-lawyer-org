@@ -1914,8 +1914,16 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                 AppUserBean caseAssistant=null;
                 AppUserBean author=UserSettings.getInstance().getCurrentUser();
                 if(this.contextArchiveFile!=null) {
-                    caseLawyer=locator.lookupSystemManagementRemote().getUser(this.contextArchiveFile.getLawyer());
-                    caseAssistant=locator.lookupSystemManagementRemote().getUser(this.contextArchiveFile.getAssistant());
+                    try {
+                        caseLawyer = locator.lookupSystemManagementRemote().getUser(this.contextArchiveFile.getLawyer());
+                    } catch (Exception ex) {
+                        log.warn("Unable to load lawyer with id " + this.contextArchiveFile.getLawyer());
+                    }
+                    try {
+                        caseAssistant = locator.lookupSystemManagementRemote().getUser(this.contextArchiveFile.getAssistant());
+                    } catch (Exception ex) {
+                        log.warn("Unable to load assistant with id " + this.contextArchiveFile.getAssistant());
+                    }
                 }
 
                 List<PartiesPanelEntry> selectedParties = this.pnlParties.getSelectedParties(new ArrayList(allPartyTypes));
