@@ -665,9 +665,6 @@ package com.jdimension.jlawyer.client.utils;
 
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.URL;
 import org.apache.log4j.Logger;
 
 /**
@@ -687,7 +684,7 @@ public class VersionUtils {
     }
 
     public static String getBuild() {
-        return "0";
+        return "1";
     }
     
     public static boolean isVersionGreater(String referenceVersion, String compareToVersion) {
