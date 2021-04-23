@@ -1060,18 +1060,18 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
         jScrollPane3 = new javax.swing.JScrollPane();
         tblMails = new javax.swing.JTable();
         jPanel2 = new javax.swing.JPanel();
-        chkCaseTagging = new javax.swing.JCheckBox();
-        cmbCaseTag = new javax.swing.JComboBox<>();
         jSplitPane1 = new javax.swing.JSplitPane();
         jScrollPane4 = new javax.swing.JScrollPane();
         pnlActions = new javax.swing.JPanel();
         pnlActionsChild = new javax.swing.JPanel();
         beaMessageContentUI = new com.jdimension.jlawyer.client.bea.BeaMessageContentUI();
-        chkDocumentTagging = new javax.swing.JCheckBox();
-        cmbDocumentTag = new javax.swing.JComboBox<>();
-        chkMoveToImported = new javax.swing.JCheckBox();
         cmdRefresh = new javax.swing.JButton();
         cmdLogout = new javax.swing.JButton();
+        chkMoveToImported = new javax.swing.JCheckBox();
+        cmbDocumentTag = new javax.swing.JComboBox<>();
+        chkDocumentTagging = new javax.swing.JCheckBox();
+        cmbCaseTag = new javax.swing.JComboBox<>();
+        chkCaseTagging = new javax.swing.JCheckBox();
 
         mnuNewFolder.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit_add.png"))); // NOI18N
         mnuNewFolder.setText("neuer Ordner");
@@ -1275,20 +1275,6 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
 
         splitterFolderDetails.setLeftComponent(jScrollPane3);
 
-        chkCaseTagging.setText("Aktenetikett:");
-        chkCaseTagging.setActionCommand("Zielakte markieren:");
-        chkCaseTagging.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                chkCaseTaggingActionPerformed(evt);
-            }
-        });
-
-        cmbCaseTag.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmbCaseTagActionPerformed(evt);
-            }
-        });
-
         pnlActions.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEADING));
 
         org.jdesktop.layout.GroupLayout pnlActionsChildLayout = new org.jdesktop.layout.GroupLayout(pnlActionsChild);
@@ -1309,59 +1295,17 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
         jSplitPane1.setRightComponent(jScrollPane4);
         jSplitPane1.setLeftComponent(beaMessageContentUI);
 
-        chkDocumentTagging.setText("Dokumentetikett:");
-        chkDocumentTagging.setActionCommand("Zielakte markieren:");
-        chkDocumentTagging.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                chkDocumentTaggingActionPerformed(evt);
-            }
-        });
-
-        cmbDocumentTag.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmbDocumentTagActionPerformed(evt);
-            }
-        });
-
-        chkMoveToImported.setText("in \"importiert\" verschieben");
-        chkMoveToImported.setToolTipText("verschiebt die Nachricht nach Zuordnung in den Ordner \"in Akte importiert\"");
-        chkMoveToImported.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                chkMoveToImportedActionPerformed(evt);
-            }
-        });
-
         org.jdesktop.layout.GroupLayout jPanel2Layout = new org.jdesktop.layout.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
             jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel2Layout.createSequentialGroup()
-                .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jPanel2Layout.createSequentialGroup()
-                        .add(chkCaseTagging)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(cmbCaseTag, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .add(18, 18, 18)
-                        .add(chkDocumentTagging)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(cmbDocumentTag, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .add(18, 18, 18)
-                        .add(chkMoveToImported)
-                        .add(0, 0, Short.MAX_VALUE))
-                    .add(jSplitPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 864, Short.MAX_VALUE))
+                .add(jSplitPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 864, Short.MAX_VALUE)
                 .addContainerGap())
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(jPanel2Layout.createSequentialGroup()
-                .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(cmbCaseTag, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(chkCaseTagging)
-                    .add(cmbDocumentTag, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(chkDocumentTagging)
-                    .add(chkMoveToImported))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jSplitPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 281, Short.MAX_VALUE))
+            .add(org.jdesktop.layout.GroupLayout.TRAILING, jSplitPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 297, Short.MAX_VALUE)
         );
 
         splitterFolderDetails.setRightComponent(jPanel2);
@@ -1384,15 +1328,62 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
             }
         });
 
+        chkMoveToImported.setText("in \"importiert\" verschieben");
+        chkMoveToImported.setToolTipText("verschiebt die Nachricht nach Zuordnung in den Ordner \"in Akte importiert\"");
+        chkMoveToImported.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                chkMoveToImportedActionPerformed(evt);
+            }
+        });
+
+        cmbDocumentTag.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmbDocumentTagActionPerformed(evt);
+            }
+        });
+
+        chkDocumentTagging.setText("Dokumentetikett:");
+        chkDocumentTagging.setActionCommand("Zielakte markieren:");
+        chkDocumentTagging.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                chkDocumentTaggingActionPerformed(evt);
+            }
+        });
+
+        cmbCaseTag.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmbCaseTagActionPerformed(evt);
+            }
+        });
+
+        chkCaseTagging.setText("Aktenetikett:");
+        chkCaseTagging.setActionCommand("Zielakte markieren:");
+        chkCaseTagging.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                chkCaseTaggingActionPerformed(evt);
+            }
+        });
+
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(layout.createSequentialGroup()
+            .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
-                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(mainSplitter)
-                    .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
+                    .add(layout.createSequentialGroup()
+                        .add(0, 0, Short.MAX_VALUE)
+                        .add(chkCaseTagging)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(cmbCaseTag, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                        .add(chkDocumentTagging)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(cmbDocumentTag, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                        .add(chkMoveToImported))
+                    .add(org.jdesktop.layout.GroupLayout.LEADING, mainSplitter)
+                    .add(layout.createSequentialGroup()
                         .add(cmdRefresh)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(cmdLogout)
@@ -1417,7 +1408,14 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                     .add(cmdRefresh)
                     .add(cmdLogout))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(mainSplitter, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 439, Short.MAX_VALUE)
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(chkMoveToImported)
+                    .add(cmbDocumentTag, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(chkDocumentTagging)
+                    .add(cmbCaseTag, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(chkCaseTagging))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(mainSplitter, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 407, Short.MAX_VALUE)
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents

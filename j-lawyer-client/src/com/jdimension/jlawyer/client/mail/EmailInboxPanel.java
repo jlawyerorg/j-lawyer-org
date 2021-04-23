@@ -700,6 +700,7 @@ import com.jdimension.jlawyer.services.AddressServiceRemote;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.services.Keyword;
+import com.jdimension.jlawyer.ui.tagging.WrapLayout;
 import com.sun.mail.pop3.POP3Folder;
 import java.awt.Color;
 import java.awt.Component;
@@ -781,6 +782,8 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         this.initializing = true;
 
         initComponents();
+        
+        //this.pnlSaveOptions.setLayout(new WrapLayout(WrapLayout.LEFT));
 
         ComponentUtils.decorateSplitPane(this.jSplitPane1);
         ComponentUtils.decorateSplitPane(this.jSplitPane2);
@@ -1105,11 +1108,6 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         jScrollPane4 = new javax.swing.JScrollPane();
         pnlActions = new javax.swing.JPanel();
         pnlActionsChild = new javax.swing.JPanel();
-        chkDeleteAfterAction = new javax.swing.JCheckBox();
-        chkCaseTagging = new javax.swing.JCheckBox();
-        cmbCaseTag = new javax.swing.JComboBox<>();
-        chkDocumentTagging = new javax.swing.JCheckBox();
-        cmbDocumentTag = new javax.swing.JComboBox<>();
         cmbDownloadMails = new javax.swing.JComboBox<>();
         jToolBar1 = new javax.swing.JToolBar();
         cmdNew = new javax.swing.JButton();
@@ -1122,6 +1120,11 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         jSeparator4 = new javax.swing.JToolBar.Separator();
         cmdDelete = new javax.swing.JButton();
         cmdRefresh = new javax.swing.JButton();
+        cmbDocumentTag = new javax.swing.JComboBox<>();
+        chkDocumentTagging = new javax.swing.JCheckBox();
+        cmbCaseTag = new javax.swing.JComboBox<>();
+        chkCaseTagging = new javax.swing.JCheckBox();
+        chkDeleteAfterAction = new javax.swing.JCheckBox();
 
         mnuNewFolder.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit_add.png"))); // NOI18N
         mnuNewFolder.setText("neuer Ordner");
@@ -1291,73 +1294,15 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
 
         jSplitPane3.setRightComponent(jScrollPane4);
 
-        chkDeleteAfterAction.setSelected(true);
-        chkDeleteAfterAction.setText("nach Zuordnung löschen");
-        chkDeleteAfterAction.setToolTipText("E-Mail nach Übernahme in eine Akte aus dem Posteingang löschen");
-        chkDeleteAfterAction.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                chkDeleteAfterActionActionPerformed(evt);
-            }
-        });
-
-        chkCaseTagging.setText("Aktenetikett:");
-        chkCaseTagging.setActionCommand("Zielakte markieren:");
-        chkCaseTagging.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                chkCaseTaggingActionPerformed(evt);
-            }
-        });
-
-        cmbCaseTag.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmbCaseTagActionPerformed(evt);
-            }
-        });
-
-        chkDocumentTagging.setText("Dokumentetikett:");
-        chkDocumentTagging.setActionCommand("Zielakte markieren:");
-        chkDocumentTagging.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                chkDocumentTaggingActionPerformed(evt);
-            }
-        });
-
-        cmbDocumentTag.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmbDocumentTagActionPerformed(evt);
-            }
-        });
-
         org.jdesktop.layout.GroupLayout jPanel2Layout = new org.jdesktop.layout.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
             jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jSplitPane3, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 783, Short.MAX_VALUE)
-            .add(jPanel2Layout.createSequentialGroup()
-                .add(chkDeleteAfterAction)
-                .add(18, 18, 18)
-                .add(chkCaseTagging)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(cmbCaseTag, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                .add(chkDocumentTagging)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(cmbDocumentTag, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .add(0, 0, Short.MAX_VALUE))
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel2Layout.createSequentialGroup()
-                .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                        .add(chkDocumentTagging)
-                        .add(cmbDocumentTag, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                    .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                        .add(chkCaseTagging)
-                        .add(cmbCaseTag, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .add(chkDeleteAfterAction)))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jSplitPane3, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 360, Short.MAX_VALUE))
+            .add(org.jdesktop.layout.GroupLayout.TRAILING, jSplitPane3, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 358, Short.MAX_VALUE)
         );
 
         jSplitPane1.setRightComponent(jPanel2);
@@ -1451,6 +1396,43 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
             }
         });
 
+        cmbDocumentTag.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmbDocumentTagActionPerformed(evt);
+            }
+        });
+
+        chkDocumentTagging.setText("Dokumentetikett:");
+        chkDocumentTagging.setActionCommand("Zielakte markieren:");
+        chkDocumentTagging.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                chkDocumentTaggingActionPerformed(evt);
+            }
+        });
+
+        cmbCaseTag.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmbCaseTagActionPerformed(evt);
+            }
+        });
+
+        chkCaseTagging.setText("Aktenetikett:");
+        chkCaseTagging.setActionCommand("Zielakte markieren:");
+        chkCaseTagging.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                chkCaseTaggingActionPerformed(evt);
+            }
+        });
+
+        chkDeleteAfterAction.setSelected(true);
+        chkDeleteAfterAction.setText("nach Zuordnung löschen");
+        chkDeleteAfterAction.setToolTipText("E-Mail nach Übernahme in eine Akte aus dem Posteingang löschen");
+        chkDeleteAfterAction.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                chkDeleteAfterActionActionPerformed(evt);
+            }
+        });
+
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -1468,7 +1450,18 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(lblPanelTitle)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .add(cmbDownloadMails, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
+                        .add(cmbDownloadMails, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
+                        .add(0, 0, Short.MAX_VALUE)
+                        .add(chkDeleteAfterAction)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                        .add(chkCaseTagging)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(cmbCaseTag, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                        .add(chkDocumentTagging)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(cmbDocumentTag, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -1483,7 +1476,14 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                         .add(cmbDownloadMails, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 46, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                     .add(cmdRefresh))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jSplitPane2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 523, Short.MAX_VALUE)
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(cmbDocumentTag, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(chkDocumentTagging)
+                    .add(cmbCaseTag, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(chkCaseTagging)
+                    .add(chkDeleteAfterAction))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jSplitPane2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 491, Short.MAX_VALUE)
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
