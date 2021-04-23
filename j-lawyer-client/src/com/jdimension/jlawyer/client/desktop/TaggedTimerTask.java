@@ -1039,7 +1039,6 @@ public class TaggedTimerTask extends java.util.TimerTask {
 
                     }
 
-                    //split.setDividerLocation(0.5d);
                     split.setDividerLocation(split.getDividerLocation() + 1);
                     split.setDividerLocation(split.getDividerLocation() - 1);
 
