@@ -1531,7 +1531,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
             dbf.setAttribute(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
         } catch (IllegalArgumentException iae) {
             // only available from JAXP 1.5+, but Wildfly still ships 1.4
-            log.warn("Unable to set external entity restrictions in XML parser", iae);
+            log.warn("Unable to set external entity restrictions in XML parser: " + iae.getMessage());
         }
 
         // use the factory to take an instance of the document builder
