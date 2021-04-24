@@ -700,7 +700,6 @@ import com.jdimension.jlawyer.services.AddressServiceRemote;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.services.Keyword;
-import com.jdimension.jlawyer.ui.tagging.WrapLayout;
 import com.sun.mail.pop3.POP3Folder;
 import java.awt.Color;
 import java.awt.Component;
@@ -839,6 +838,15 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         this.treeFolders.setCellRenderer(renderer);
 
         AppUserBean cu = UserSettings.getInstance().getCurrentUser();
+        
+        ComponentUtils.restoreSplitPane(this.jSplitPane1, this.getClass(), "jSplitPane1");
+        ComponentUtils.persistSplitPane(this.jSplitPane1, this.getClass(), "jSplitPane1");
+        
+        ComponentUtils.restoreSplitPane(this.jSplitPane2, this.getClass(), "jSplitPane2");
+        ComponentUtils.persistSplitPane(this.jSplitPane2, this.getClass(), "jSplitPane2");
+        
+        ComponentUtils.restoreSplitPane(this.jSplitPane3, this.getClass(), "jSplitPane3");
+        ComponentUtils.persistSplitPane(this.jSplitPane3, this.getClass(), "jSplitPane3");
 
         // cancel constructur if there is no email configuration
         if (!EmailUtils.hasConfig(cu)) {
