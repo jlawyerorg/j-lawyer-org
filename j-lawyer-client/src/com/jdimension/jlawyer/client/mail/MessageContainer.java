@@ -737,7 +737,6 @@ public class MessageContainer {
                         //this.message.getFolder().close(true);
                     } catch (Exception ex) {
                         log.error(ex);
-                        ex.printStackTrace();
                     }
                 }
             }

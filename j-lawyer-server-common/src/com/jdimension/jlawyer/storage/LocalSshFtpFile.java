@@ -670,7 +670,6 @@ import java.io.FileInputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
-import jcifs.smb.SmbFile;
 import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileSystemManager;
 import org.apache.commons.vfs2.FileSystemOptions;
@@ -778,21 +777,18 @@ public class LocalSshFtpFile extends VirtualFile {
         FileObject target = fsManager.resolveFile(newFileLocation, opts);
 
         target.createFile();
-        OutputStream os = target.getContent().getOutputStream();
-        BufferedOutputStream bos = new BufferedOutputStream(os);
+        try (OutputStream os = target.getContent().getOutputStream();
+                BufferedOutputStream bos = new BufferedOutputStream(os);
+                FileInputStream fin = new FileInputStream(f);
+                BufferedInputStream bfin = new BufferedInputStream(fin)) {
 
-        FileInputStream fin = new FileInputStream(f);
-        BufferedInputStream bfin = new BufferedInputStream(fin);
-
-        byte[] buffer = new byte[4096];
-        int bytesRead = -1;
-        while ((bytesRead = bfin.read(buffer)) > -1) {
-            bos.write(buffer, 0, bytesRead);
+            byte[] buffer = new byte[4096];
+            int bytesRead = -1;
+            while ((bytesRead = bfin.read(buffer)) > -1) {
+                bos.write(buffer, 0, bytesRead);
+            }
+            bos.flush();
         }
-
-        bfin.close();
-        bos.flush();
-        bos.close();
         target.close();
 
     }

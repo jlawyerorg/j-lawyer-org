@@ -663,16 +663,10 @@
  */
 package com.jdimension.jlawyer.client.editors.documents;
 
-import com.jdimension.jlawyer.client.events.EventBroker;
-import com.jdimension.jlawyer.client.events.ScannerStatusEvent;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.Hashtable;
 import org.apache.log4j.Logger;
 
 /**
@@ -682,7 +676,6 @@ import org.apache.log4j.Logger;
 public class ScannerLocalDocumentsUploadTimerTask extends java.util.TimerTask {
 
     private static final Logger log = Logger.getLogger(ScannerLocalDocumentsUploadTimerTask.class.getName());
-    private ArrayList<String> lastFiles = new ArrayList<String>();
 
     /**
      * Creates a new instance of ScannerLocalDocumentsUploadTimerTask
@@ -707,21 +700,35 @@ public class ScannerLocalDocumentsUploadTimerTask extends java.util.TimerTask {
 
                 File[] children = localDir.listFiles();
                 for (File f : children) {
+                    
+                    // avoid two concurrently running clients to upload the same file
+                    if(f.getName().endsWith(".uploading"))
+                        continue;
+                    
+                    // avoid processing files that might still be written by the scanner
+                    if((System.currentTimeMillis() - f.lastModified())<10000l)
+                        continue;
+                    
                     // file needs to be writeable to be uploaded
                     // files that cannot be deleted would cause the servers disk to be filled completely
                     if (f.isFile() && f.canWrite()) {
+                        File uploadInProgress=null;
+                        String realName=f.getName();
                         try {
-                            byte[] content = FileUtils.readFile(f);
-                            locator.lookupSystemManagementRemote().addObservedFile(f.getName(), content);
+                            uploadInProgress=new File(f.getParentFile().getAbsolutePath() + File.separator + f.getName() + ".uploading");
+                            f.renameTo(uploadInProgress);
+                            byte[] content = FileUtils.readFile(uploadInProgress);
+                            locator.lookupSystemManagementRemote().addObservedFile(realName, content);
                         } catch (Exception ex) {
                             log.error("Unable to upload scan " + f.getName() + " from " + localDir.getPath(), ex);
                             // leave scan in local inbox
                             continue;
                         }
                         try {
-                            f.delete();
+                            if(uploadInProgress!=null)
+                                uploadInProgress.delete();
                         } catch (Exception ex) {
-                            log.error("Unable to delete local scan " + f.getName() + " from " + localDir.getPath(), ex);
+                            log.error("Unable to delete local scan " + uploadInProgress.getName() + " from " + localDir.getPath(), ex);
                         }
                     }
                 }

@@ -663,31 +663,22 @@
  */
 package com.jdimension.jlawyer.client.editors.files;
 
-import com.jdimension.jlawyer.client.configuration.UserTableCellRenderer;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.processing.ProgressIndicator;
 import com.jdimension.jlawyer.client.processing.ProgressableAction;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
-import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.persistence.*;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.ui.folders.CaseFolderPanel;
-import com.jdimension.jlawyer.ui.tagging.ArchiveFileTagActionListener;
-import com.jdimension.jlawyer.ui.tagging.TagToggleButton;
 import java.awt.Component;
 import java.io.File;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
-import java.util.Locale;
 import javax.swing.*;
-import javax.swing.table.TableRowSorter;
 import org.apache.log4j.Logger;
 
 /**
@@ -697,25 +688,25 @@ import org.apache.log4j.Logger;
 public class UploadDocumentsAction extends ProgressableAction {
 
     private static final Logger log = Logger.getLogger(UploadDocumentsAction.class.getName());
-    //private JTable table = null;
-    //private SendEmailDialog dlg = null;
-
+    
     private String archiveFileKey;
     private Component owner;
     private CaseFolderPanel docTarget;
+    private CaseFolder targetFolder=null;
 
     private List<File> files;
 
-    public UploadDocumentsAction(ProgressIndicator i, Component owner, String archiveFileKey, CaseFolderPanel docTarget, List<File> files) {
+    public UploadDocumentsAction(ProgressIndicator i, Component owner, String archiveFileKey, CaseFolderPanel docTarget, List<File> files, CaseFolder targetFolder) {
         super(i, false);
 
         this.archiveFileKey = archiveFileKey;
         this.owner = owner;
         this.docTarget = docTarget;
         this.files = files;
+        this.targetFolder=targetFolder;
 
     }
-
+    
     @Override
     public int getMax() {
         return files.size();
@@ -731,7 +722,6 @@ public class UploadDocumentsAction extends ProgressableAction {
 
         try {
 
-            //if(this.isCancelled())
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
@@ -759,24 +749,31 @@ public class UploadDocumentsAction extends ProgressableAction {
                         }
 
                         final ArchiveFileDocumentsBean doc = afs.addDocument(this.archiveFileKey, newName, data, null);
+                        if(this.targetFolder!=null) {
+                            ArrayList<String> docId=new ArrayList<>();
+                            docId.add(doc.getId());
+                            afs.moveDocumentsToFolder(docId, this.targetFolder.getId());
+                        }
                         SwingUtilities.invokeLater(new Runnable() {
                             public void run() {
                                 docTarget.addDocument(doc);
+                                if(targetFolder!=null) {
+                                    ArrayList<ArchiveFileDocumentsBean> docs=new ArrayList<>();
+                                    docs.add(doc);
+                                    docTarget.moveDocumentsToFolder(docs, targetFolder);
+                                }
                             }
                         });
 
                     }
                 }
             }
-            //this.docTarget.sort();
-
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);
             JOptionPane.showMessageDialog(this.indicator, ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
             EditorsRegistry.getInstance().clearStatus(true);
             ThreadUtils.setDefaultCursor(this.owner);
 
-            //ThreadUtils.showErrorDialog(this.owner, ex.getMessage(), "Fehler");
             return true;
         }
 

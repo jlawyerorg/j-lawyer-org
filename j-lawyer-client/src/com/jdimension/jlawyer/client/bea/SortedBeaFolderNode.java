@@ -665,6 +665,7 @@ package com.jdimension.jlawyer.client.bea;
 
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Vector;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.MutableTreeNode;
 import org.jlawyer.bea.model.Folder;
@@ -684,8 +685,8 @@ public class SortedBeaFolderNode extends DefaultMutableTreeNode {
     @Override
     public void add(MutableTreeNode mtn) {
         super.add(mtn);
-
-        Collections.sort(this.children, new Comparator<DefaultMutableTreeNode>() {
+        
+        Collections.sort((Vector)this.children, new Comparator<DefaultMutableTreeNode>() {
             @Override
             public int compare(DefaultMutableTreeNode o1, DefaultMutableTreeNode o2) {
                 

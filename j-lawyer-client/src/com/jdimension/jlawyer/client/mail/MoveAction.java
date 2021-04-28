@@ -688,7 +688,7 @@ import org.apache.log4j.Logger;
 public class MoveAction extends ProgressableAction {
 
     private static final Logger log = Logger.getLogger(MoveAction.class.getName());
-    private static SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy, HH:mm");
+    private SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy, HH:mm");
     private DropTargetDropEvent dtde = null;
     private JTree treeFolders = null;
     private JTable tblMails = null;
@@ -824,7 +824,7 @@ public class MoveAction extends ProgressableAction {
             //            dtde.rejectDrop();
 
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error(e);
             dtde.rejectDrop();
             return false;
         }

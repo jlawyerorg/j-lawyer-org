@@ -664,18 +664,24 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.ui.folders;
 
 import com.jdimension.jlawyer.client.editors.files.ArchiveFilePanel;
+import com.jdimension.jlawyer.client.editors.files.DocumentsTransferable;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Color;
-import java.awt.Font;
+import java.awt.dnd.DnDConstants;
+import java.awt.dnd.DragGestureEvent;
+import java.awt.dnd.DragGestureListener;
+import java.awt.dnd.DragGestureRecognizer;
+import java.awt.dnd.DragSource;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import javax.swing.Icon;
 import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
@@ -685,7 +691,7 @@ import themes.colors.DefaultColorTheme;
  *
  * @author jens
  */
-public class DocumentEntryPanel extends javax.swing.JPanel {
+public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestureListener {
     
     private static final Logger log=Logger.getLogger(DocumentEntryPanel.class.getName());
 
@@ -699,6 +705,10 @@ public class DocumentEntryPanel extends javax.swing.JPanel {
     private Color defaultFilenameColor=null;
     private Color defaultBackColor=null;
     private boolean highlighted=false;
+    
+    private DragSource dragSource = null;
+    
+    
 
     /**
      * Creates new form DocumentEntryPanel
@@ -707,6 +717,13 @@ public class DocumentEntryPanel extends javax.swing.JPanel {
         initComponents();
         this.defaultFilenameColor=this.lblFileName.getForeground();
         this.lblFolder.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
+        
+        this.dragSource = new DragSource();
+        DragGestureRecognizer dgr
+                = dragSource.createDefaultDragGestureRecognizer(
+                        this.lblFileName,
+                        DnDConstants.ACTION_MOVE,
+                        this);
     }
     
 
@@ -718,7 +735,16 @@ public class DocumentEntryPanel extends javax.swing.JPanel {
         this.documentsContainer=documentsContainer;
         this.caseContainer=caseContainer;
         this.readOnly=readonly;
+        if(!this.readOnly)
+            this.lblFileIcon.setCursor(new java.awt.Cursor(java.awt.Cursor.MOVE_CURSOR));
         this.setDocument(doc);
+        
+        this.dragSource = new DragSource();
+        DragGestureRecognizer dgr
+                = dragSource.createDefaultDragGestureRecognizer(
+                        this.lblFileName,
+                        DnDConstants.ACTION_MOVE,
+                        this);
     }
     
     public void highlight(boolean highlight) {
@@ -730,11 +756,11 @@ public class DocumentEntryPanel extends javax.swing.JPanel {
         this.highlighted=highlight;
         if(highlight) {
             //this.lblFileName.setForeground(Color.WHITE);
-            this.lblFileName.setFont(this.lblFileName.getFont().deriveFont(Font.BOLD));
+            //this.lblFileName.setFont(this.lblFileName.getFont().deriveFont(Font.BOLD));
             this.setBackground(DefaultColorTheme.COLOR_LOGO_RED);
         } else {
             //this.lblFileName.setForeground(this.defaultFilenameColor);
-            this.lblFileName.setFont(this.lblFileName.getFont().deriveFont(Font.PLAIN));
+            //this.lblFileName.setFont(this.lblFileName.getFont().deriveFont(Font.PLAIN));
             this.setBackground(this.defaultBackColor);
             
             // set background to selected
@@ -768,7 +794,7 @@ public class DocumentEntryPanel extends javax.swing.JPanel {
         });
 
         lblFileIcon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/fileicons/file_type_odt.png"))); // NOI18N
-        lblFileIcon.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        lblFileIcon.setVerticalAlignment(javax.swing.SwingConstants.TOP);
         lblFileIcon.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 lblFileIconMouseClicked(evt);
@@ -783,7 +809,6 @@ public class DocumentEntryPanel extends javax.swing.JPanel {
 
         lblFileName.setFont(new java.awt.Font("Dialog", 1, 13)); // NOI18N
         lblFileName.setText("document.odt");
-        lblFileName.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         lblFileName.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 lblFileNameMouseClicked(evt);
@@ -836,16 +861,15 @@ public class DocumentEntryPanel extends javax.swing.JPanel {
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGap(2, 2, 2)
+                .addContainerGap()
                 .addComponent(chkSelected)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGap(2, 2, 2)
                 .addComponent(lblFavorite)
                 .addGap(18, 18, 18)
+                .addComponent(lblFileIcon)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(lblFileIcon)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(lblFileName))
+                    .addComponent(lblFileName)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(lblCreationDate)
                         .addGap(18, 18, 18)
@@ -861,19 +885,20 @@ public class DocumentEntryPanel extends javax.swing.JPanel {
             .addGroup(layout.createSequentialGroup()
                 .addGap(4, 4, 4)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(chkSelected)
+                    .addComponent(lblFileIcon, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(lblFileIcon)
-                            .addComponent(lblFileName)
-                            .addComponent(lblFavorite))
-                        .addGap(1, 1, 1)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(chkSelected, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+                            .addComponent(lblFileName, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(lblFavorite, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
+                        .addGap(3, 3, 3)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(lblCreationDate)
                             .addComponent(lblDictateSign)
                             .addComponent(lblFileSize)
-                            .addComponent(lblFolder))))
-                .addGap(0, 3, Short.MAX_VALUE))
+                            .addComponent(lblFolder))
+                        .addGap(3, 3, 3)))
+                .addGap(3, 3, 3))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -894,9 +919,16 @@ public class DocumentEntryPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_lblFileIconMouseExited
 
     private void lblFileNameMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblFileNameMouseClicked
-        if (evt.getModifiers() == evt.BUTTON2_MASK || evt.getModifiers() == evt.BUTTON2_DOWN_MASK || evt.getModifiers() == evt.BUTTON3_MASK || evt.getModifiers() == evt.BUTTON3_DOWN_MASK) {
-            if(this.documentsContainer.getSelectedDocuments().isEmpty())
-                this.documentClicked(evt, true);
+        if ((evt.getModifiers() & InputEvent.BUTTON2_MASK) == evt.BUTTON2_MASK || (evt.getModifiers() & InputEvent.BUTTON2_DOWN_MASK) == evt.BUTTON2_DOWN_MASK || (evt.getModifiers() & InputEvent.BUTTON3_MASK) == evt.BUTTON3_MASK || (evt.getModifiers() & InputEvent.BUTTON3_DOWN_MASK) == evt.BUTTON3_DOWN_MASK) {
+            //if(this.documentsContainer.getSelectedDocuments().isEmpty())
+            if((evt.getModifiers() & InputEvent.SHIFT_MASK) == InputEvent.SHIFT_MASK || (evt.getModifiers() & InputEvent.CTRL_MASK) == InputEvent.CTRL_MASK) {
+                this.documentClicked(evt, false);
+            } else {
+                if(this.isSelected())
+                    this.documentClicked(evt, false);
+                else
+                    this.documentClicked(evt, true);
+            }
             this.caseContainer.showDocumentsPopup(evt);
         } else if ((evt.getModifiers() & InputEvent.SHIFT_MASK) == InputEvent.SHIFT_MASK) {
             this.documentRangeClicked(evt);
@@ -942,9 +974,12 @@ public class DocumentEntryPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_lblFavoriteMouseClicked
 
     private void chkSelectedMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_chkSelectedMouseReleased
-        if (evt.getModifiers() == evt.BUTTON2_MASK || evt.getModifiers() == evt.BUTTON2_DOWN_MASK || evt.getModifiers() == evt.BUTTON3_MASK || evt.getModifiers() == evt.BUTTON3_DOWN_MASK) {
-            if(this.documentsContainer.getSelectedDocuments().size()==0)
+        if ((evt.getModifiers() & InputEvent.BUTTON2_MASK) == evt.BUTTON2_MASK || (evt.getModifiers() & InputEvent.BUTTON2_DOWN_MASK) == evt.BUTTON2_DOWN_MASK || (evt.getModifiers() & InputEvent.BUTTON3_MASK) == evt.BUTTON3_MASK || (evt.getModifiers() & InputEvent.BUTTON3_DOWN_MASK) == evt.BUTTON3_DOWN_MASK) {
+            if((evt.getModifiers() & InputEvent.SHIFT_MASK) == InputEvent.SHIFT_MASK || (evt.getModifiers() & InputEvent.CTRL_MASK) == InputEvent.CTRL_MASK) {
+                this.documentClicked(evt, false);
+            } else {
                 this.documentClicked(evt, true);
+            }
             this.caseContainer.showDocumentsPopup(evt);
         } else if ((evt.getModifiers() & InputEvent.SHIFT_MASK) == InputEvent.SHIFT_MASK) {
             if (this.chkSelected.isSelected()) {
@@ -1050,6 +1085,8 @@ public class DocumentEntryPanel extends javax.swing.JPanel {
     void setDocument(ArchiveFileDocumentsBean doc) {
         this.document=doc;
         this.lblFileName.setText(doc.getName());
+        this.lblFileName.setToolTipText(doc.getName());
+        this.lblFileIcon.setToolTipText(doc.getName());
         this.lblCreationDate.setText(df.format(doc.getCreationDate()));
         this.lblDictateSign.setText(doc.getDictateSign());
         if(this.document.getFolder()==null) {
@@ -1057,13 +1094,14 @@ public class DocumentEntryPanel extends javax.swing.JPanel {
             this.lblFolder.setText("");
         } else {
             this.lblFolder.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/jdimension/jlawyer/ui/folders/folder-empty.png")));
-            this.lblFolder.setText(this.document.getFolder().getName());
+            this.lblFolder.setToolTipText(this.document.getFolder().getName());
+            this.lblFolder.setText(this.documentsContainer.getFolderPath(this.document.getFolder().getId()));
         }
 
         this.setFavorite(this.document.isFavorite());
 
         FileUtils fu = FileUtils.getInstance();
-        Icon icon = fu.getFileTypeIcon(doc.getName());
+        Icon icon = fu.getFileTypeIcon32(doc.getName());
         //this.lblFileIcon.setText(sValue);
         this.lblFileIcon.setIcon(icon);
 
@@ -1087,5 +1125,15 @@ public class DocumentEntryPanel extends javax.swing.JPanel {
             this.caseContainer.documentSelectionChanged();
             evt.consume();
         }
+    }
+
+    @Override
+    public void dragGestureRecognized(DragGestureEvent dge) {
+        ArrayList<ArchiveFileDocumentsBean> selDocs=this.documentsContainer.getSelectedDocuments();
+        if(selDocs==null || selDocs.isEmpty()) {
+            selDocs=new ArrayList<>();
+            selDocs.add(this.document);
+        }
+        this.dragSource.startDrag(dge, null, new DocumentsTransferable(selDocs), null);
     }
 }

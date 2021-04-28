@@ -663,27 +663,21 @@
  */
 package com.jdimension.jlawyer.client.editors.files;
 
-import com.jdimension.jlawyer.client.templates.*;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.processing.ProgressIndicator;
 import com.jdimension.jlawyer.client.processing.ProgressableAction;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.DesktopUtils;
-import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
-import com.sun.glass.ui.Cursor;
 import java.awt.Component;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
-import javax.swing.*;
 import org.apache.log4j.Logger;
-import org.jlawyer.data.tree.GenericNode;
 
 /**
  *
@@ -692,19 +686,17 @@ import org.jlawyer.data.tree.GenericNode;
 public class ExportAsHtmlAction extends ProgressableAction {
 
     private static final Logger log = Logger.getLogger(ExportAsHtmlAction.class.getName());
-    //private JTable table = null;
-    //private SendEmailDialog dlg = null;
 
     private Component owner;
-    private File dir=null;
-    private String caseId=null;
+    private File dir = null;
+    private String caseId = null;
 
     public ExportAsHtmlAction(ProgressIndicator i, Component owner, File dir, String caseId) {
         super(i, false);
 
         this.owner = owner;
-        this.dir=dir;
-        this.caseId=caseId;
+        this.dir = dir;
+        this.caseId = caseId;
 
     }
 
@@ -749,14 +741,13 @@ public class ExportAsHtmlAction extends ProgressableAction {
                 //else you will hit FileNotFoundException for compressed folder
                 new File(newFile.getParent()).mkdirs();
 
-                FileOutputStream fos = new FileOutputStream(newFile);
+                try (FileOutputStream fos = new FileOutputStream(newFile)) {
 
-                int len;
-                while ((len = zis.read(buffer)) > 0) {
-                    fos.write(buffer, 0, len);
+                    int len;
+                    while ((len = zis.read(buffer)) > 0) {
+                        fos.write(buffer, 0, len);
+                    }
                 }
-
-                fos.close();
 
                 try {
                     if (ze.getLastModifiedTime() != null) {
@@ -778,6 +769,7 @@ public class ExportAsHtmlAction extends ProgressableAction {
 
         } catch (Throwable t) {
             log.error("Could not unzip exported case", t);
+            ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Exportieren der Akte: " + t.getMessage(), "Fehler");
             EditorsRegistry.getInstance().clearStatus(true);
             ThreadUtils.setDefaultCursor(this.owner);
         }

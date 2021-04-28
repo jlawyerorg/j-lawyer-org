@@ -670,6 +670,7 @@ import com.jdimension.jlawyer.client.editors.addresses.QuickAddressSearchTableMo
 import com.jdimension.jlawyer.client.editors.addresses.QuickAddressSearchThread;
 import com.jdimension.jlawyer.client.editors.addresses.QuickCreateAddressDialog;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
@@ -711,9 +712,8 @@ public class AddAddressSearchDialog extends javax.swing.JDialog {
     /**
      * Creates new form AddAddressSearchDialog
      */
-    public AddAddressSearchDialog(java.awt.Frame parent, boolean modal, PartyTypeBean targetReferenceType) {
+    public AddAddressSearchDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
-        this.targetReferenceType = targetReferenceType;
         initComponents();
 
         
@@ -734,10 +734,19 @@ public class AddAddressSearchDialog extends javax.swing.JDialog {
             EditorsRegistry.getInstance().clearStatus();
         }
         
+        if(this.partyTypes.size()>0) {
+            this.targetReferenceType=this.partyTypes.get(0);
+        }
+        
+        UserSettings us=UserSettings.getInstance();
+        String lastPartyType=us.getSetting(UserSettings.CONF_CASE_LASTPARTYTYPE, "");
+        
         this.cmbRefType.removeAllItems();
         for(PartyTypeBean ptb: this.partyTypes) {
             this.cmbRefType.addItem(ptb.getName());
-        
+            if(ptb.getName().equals(lastPartyType)) {
+                this.targetReferenceType=ptb;
+            }
         }
         this.cmbRefType.setSelectedItem(this.targetReferenceType.getName());
         
@@ -945,6 +954,13 @@ public class AddAddressSearchDialog extends javax.swing.JDialog {
         //afa.setArchiveFileKey(this.resultAddress);
         afa.setReferenceType(targetReferenceType);
         this.resultInvolvement = afa;
+        
+        try {
+            UserSettings us=UserSettings.getInstance();
+            us.setSetting(UserSettings.CONF_CASE_LASTPARTYTYPE, targetReferenceType.getName());
+        } catch (Throwable t) {
+            log.error("could not store last used party type for user");
+        }
 
         this.setVisible(false);
         this.dispose();
@@ -1035,7 +1051,7 @@ public class AddAddressSearchDialog extends javax.swing.JDialog {
         java.awt.EventQueue.invokeLater(new Runnable() {
 
             public void run() {
-                new AddAddressSearchDialog(new javax.swing.JFrame(), true, null).setVisible(true);
+                new AddAddressSearchDialog(new javax.swing.JFrame(), true).setVisible(true);
             }
         });
     }

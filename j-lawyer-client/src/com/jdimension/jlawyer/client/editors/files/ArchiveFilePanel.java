@@ -668,14 +668,12 @@ import com.jdimension.jlawyer.client.bea.BeaAccess;
 import com.jdimension.jlawyer.client.bea.BeaInboxPanel;
 import com.jdimension.jlawyer.client.bea.BeaLoginCallback;
 import com.jdimension.jlawyer.client.bea.BeaLoginDialog;
-import com.jdimension.jlawyer.client.bea.IdentityPanel;
 import com.jdimension.jlawyer.client.bea.SendBeaMessageDialog;
 import com.jdimension.jlawyer.client.cloud.CloudInstance;
 import com.jdimension.jlawyer.client.cloud.SendCloudShare;
 import com.jdimension.jlawyer.client.drebis.coverage.DrebisCoverageWizardDialog;
 import com.jdimension.jlawyer.client.components.MultiCalDialog;
 import com.jdimension.jlawyer.client.configuration.GroupMembershipsTableModel;
-import com.jdimension.jlawyer.client.configuration.OptionGroupListCellRenderer;
 import com.jdimension.jlawyer.client.configuration.PopulateOptionsEditor;
 import com.jdimension.jlawyer.client.configuration.UserListCellRenderer;
 import com.jdimension.jlawyer.client.configuration.UserTableCellRenderer;
@@ -708,9 +706,7 @@ import com.jdimension.jlawyer.client.plugins.calculation.CalculationPluginDialog
 import com.jdimension.jlawyer.client.plugins.calculation.CalculationPluginUtil;
 import com.jdimension.jlawyer.client.plugins.form.FormInstancePanel;
 import com.jdimension.jlawyer.client.plugins.form.FormPlugin;
-import com.jdimension.jlawyer.client.plugins.form.FormPluginUtil;
 import com.jdimension.jlawyer.client.plugins.form.FormsManagementDialog;
-import org.jlawyer.plugins.calculation.CalculationTable;
 import com.jdimension.jlawyer.client.print.ArchiveFileStub;
 import com.jdimension.jlawyer.client.print.PrintStubGenerator;
 import com.jdimension.jlawyer.client.processing.ProgressIndicator;
@@ -720,16 +716,13 @@ import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.templates.SelectTemplateFolderDialog;
 import com.jdimension.jlawyer.client.utils.*;
-import com.jdimension.jlawyer.client.voip.PlaceCallDialog;
 import com.jdimension.jlawyer.client.voip.SendFaxDialog;
-import com.jdimension.jlawyer.client.voip.SendSmsDialog;
 import com.jdimension.jlawyer.client.wizard.WizardDataContainer;
 import com.jdimension.jlawyer.client.wizard.WizardSteps;
 import com.jdimension.jlawyer.persistence.*;
 import com.jdimension.jlawyer.services.AddressServiceRemote;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
-import com.jdimension.jlawyer.services.SecurityServiceRemote;
 import com.jdimension.jlawyer.ui.tagging.ArchiveFileTagActionListener;
 import com.jdimension.jlawyer.ui.tagging.DocumentTagActionListener;
 import com.jdimension.jlawyer.ui.tagging.TagSelectedAction;
@@ -741,9 +734,7 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
-import java.awt.Font;
 import java.awt.Graphics;
-import java.awt.GridLayout;
 import java.awt.Image;
 import java.awt.Point;
 import java.awt.datatransfer.DataFlavor;
@@ -756,29 +747,13 @@ import java.awt.dnd.DropTargetEvent;
 import java.awt.dnd.DropTargetListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileOutputStream;
-import java.lang.reflect.InvocationTargetException;
-import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
-import javafx.scene.input.KeyCode;
 import javax.swing.*;
-import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableRowSorter;
 import net.sf.jasperreports.engine.JasperFillManager;
@@ -789,7 +764,6 @@ import net.sf.jasperreports.engine.data.JRBeanCollectionDataSource;
 import net.sf.jasperreports.engine.util.JRLoader;
 import net.sf.jasperreports.view.JRViewer;
 import org.apache.log4j.Logger;
-import org.jlawyer.bea.model.Identity;
 import org.jlawyer.data.tree.GenericNode;
 import org.jlawyer.plugins.calculation.GenericCalculationTable;
 import org.jlawyer.plugins.calculation.StyledCalculationTable;
@@ -802,8 +776,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     private static final Logger log = Logger.getLogger(ArchiveFilePanel.class.getName());
 
-    private static SimpleDateFormat dfTime = new SimpleDateFormat("HH:mm");
-    private static SimpleDateFormat dfDay = new SimpleDateFormat("dd.MM.yyyy");
+    private SimpleDateFormat dfTime = new SimpleDateFormat("HH:mm");
+    private SimpleDateFormat dfDay = new SimpleDateFormat("dd.MM.yyyy");
 
     private ArchiveFileBean dto = null;
     private String openedFromEditorClass = null;
@@ -813,10 +787,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     private DropTarget dropTarget;
     private DropTargetHandler dropTargetHandler;
-    private Point dragPoint;
-
-    private boolean dragOver = false;
-    private BufferedImage target;
 
     private boolean initializing = false;
     private boolean groupPrivilegesChanged = false;
@@ -830,22 +800,24 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.dto = null;
         this.initializing = true;
         initComponents();
+        this.quickDateSelectionPanel.setTarget(this.txtReviewDateField);
         this.caseFolderPanel1.setCaseContainer(this);
         this.caseFolderPanel1.setDocumentsPopup(this.documentsPopup);
 
-        if (this.getClass().getName().equals(NewArchiveFilePanel.class.getName())) {
+        if (this instanceof NewArchiveFilePanel) {
             jLabel2.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/Icons2-12.png")));
         } else {
             jLabel2.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder_big.png")));
         }
 
         ComponentUtils.decorateSplitPane(this.splitDocuments);
+        this.splitDocuments.setOneTouchExpandable(true);
+        ComponentUtils.decorateSplitPane(this.splitDocumentsMain);
+        ComponentUtils.decorateSplitPane(this.splitNotes);
 
-        //this.tagPanel.setPreferredSize(new Dimension(this.getWidth()-100, this.tagPanel.getHeight()));
         this.tagPanel.setLayout(new WrapLayout());
         this.documentTagPanel.setLayout(new WrapLayout());
 
-        //GridLayout layout = new GridLayout(1, 1);
         BoxLayout layout = new javax.swing.BoxLayout(this.pnlInvolvedParties, javax.swing.BoxLayout.Y_AXIS);
         this.pnlInvolvedParties.setLayout(layout);
 
@@ -865,7 +837,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         this.currencyFormat.setMinimumFractionDigits(2);
         this.currencyFormat.setMaximumFractionDigits(2);
-        //this.currencyFormat.setParseIntegerOnly(false);
 
         String[] colNames2 = new String[]{"Änderung", "Nutzer", "Beschreibung"};
         ArchiveFileHistoryTableModel model2 = new ArchiveFileHistoryTableModel(colNames2, 0);
@@ -936,7 +907,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.lblCustom3.setText(sset.getSetting(sset.DATA_CUSTOMFIELD_ARCHIVEFILE_PREFIX + "3", "Eigenes Feld 3"));
 
         // support for drag and drop for documents - only when case is shown in edit mode
-        if (this.getClass().getName().equals(EditArchiveFileDetailsPanel.class.getName()) || this.getClass().getName().equals(NewArchiveFilePanel.class.getName())) {
+        if (this instanceof EditArchiveFileDetailsPanel || this instanceof NewArchiveFilePanel) {
 
             try {
                 getMyDropTarget().addDropTargetListener(getDropTargetHandler());
@@ -946,9 +917,18 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         }
         
+        //this.currencyFormat.setParseIntegerOnly(false);
         this.splitDocuments.setDividerLocation(0.7d);
         ComponentUtils.restoreSplitPane(splitDocuments, this.getClass(), "splitDocuments");
         ComponentUtils.persistSplitPane(splitDocuments, this.getClass(), "splitDocuments");
+        
+        this.splitDocumentsMain.setDividerLocation(0.7d);
+        ComponentUtils.restoreSplitPane(splitDocumentsMain, this.getClass(), "splitDocumentsMain");
+        ComponentUtils.persistSplitPane(splitDocumentsMain, this.getClass(), "splitDocumentsMain");
+        
+        this.splitNotes.setDividerLocation(170);
+        ComponentUtils.restoreSplitPane(splitNotes, this.getClass(), "splitNotes");
+        ComponentUtils.persistSplitPane(splitNotes, this.getClass(), "splitNotes");
 
         ArrayList<CalculationPlugin> plugins = CalculationPluginUtil.loadLocalPlugins();
         Collections.sort(plugins);
@@ -1062,10 +1042,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
             Hashtable<String, ArrayList<String>> docTags = remote.getDocumentTagsForCase(this.dto.getId());
             String docTagsHtml = TagUtils.getDocumentTagsOverviewAsHtml(docTags);
-            //this.lblDocumentTags.setText(docTagsHtml);
-            //this.taDocumentTags.setText(docTagsHtml);
             this.cmdDocumentTagFilter.setToolTipText(docTagsHtml);
-            //this.lblDocumentTags.setSize(this.splitDocuments.getWidth(), this.lblDocumentTags.getHeight());
         } catch (Throwable t) {
             log.error("Could not update document tags", t);
         }
@@ -1157,31 +1134,23 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         this.cmdNewRvg.setEnabled(!readOnly && !archived);
 
-        // todo?
-//        this.lstClients.setEnabled(!readOnly);
-//        this.lstOpponentAttorneys.setEnabled(!readOnly);
-//        this.lstOpponents.setEnabled(!readOnly);
         this.mnuRemoveDocument.setEnabled(!readOnly && !archived);
         this.mnuDuplicateDocument.setEnabled(!readOnly && !archived);
         this.mnuDuplicateDocumentAsPdf.setEnabled(!readOnly && !archived);
         this.mnuDuplicateDocumentAs.setEnabled(!readOnly && !archived);
 
         // this can be enabled even if current case is opened readonly
-        //this.mnuCopyDocumentToOtherCase.setEnabled(!readOnly);
         this.mnuRenameDocument.setEnabled(!readOnly && !archived);
         this.mnuSetDocumentDate.setEnabled(!readOnly && !archived);
         this.mnuToggleFavorite.setEnabled(!readOnly && !archived);
-        //        this.mnuSendDocument.setEnabled(!readOnly);
         this.tblHistory.setEnabled(!readOnly && !archived);
         this.tblReviewReasons.setEnabled(!readOnly && !archived);
         this.txtClaimNumber.setEnabled(!readOnly && !archived);
         this.txtClaimValue.setEnabled(!readOnly && !archived);
-        //this.txtFileNumber.setEnabled(!readOnly);
         // the server calculates this
         this.txtFileNumber.setEnabled(false);
         this.txtName.setEnabled(!readOnly && !archived);
         this.txtNotice.setEnabled(!readOnly && !archived);
-        //this.txtReviewDate.setEnabled(!readOnly);
         this.cmdShowReviewSelector.setEnabled(!readOnly && !archived);
 
         this.cmdShowHistorySelector.setEnabled(!readOnly && !archived);
@@ -1247,16 +1216,28 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.lblHeaderInfo.setText(this.dto.getFileNumber() + " " + StringUtils.nonEmpty(this.dto.getName()) + " " + StringUtils.nonEmpty(this.dto.getReason()));
 
         this.txtClaimNumber.setText(dto.getClaimNumber());
-        //this.txtClaimValue.setText("" + dto.getClaimValue());
         this.txtClaimValue.setText(this.currencyFormat.format(dto.getClaimValue()));
         this.txtFileNumber.setText(dto.getFileNumber());
         this.txtName.setText(dto.getName());
         this.txtNotice.setText(dto.getNotice());
-        //this.cmbDictateSign.setSelectedItem(dto.getDictateSign());
         this.chkArchived.setSelected(dto.getArchivedBoolean());
 
+        if(!ComponentUtils.containsItem(cmbLawyer, dto.getLawyer())) {
+            this.cmbLawyer.addItem(dto.getLawyer());
+        }
         this.cmbLawyer.setSelectedItem(dto.getLawyer());
+        
+        if(!ComponentUtils.containsItem(cmbAssistant, dto.getAssistant())) {
+            this.cmbAssistant.addItem(dto.getAssistant());
+        }
         this.cmbAssistant.setSelectedItem(dto.getAssistant());
+        if(dto.getAssistant()!=null) {
+            try {
+                this.cmbReviewAssignee.setSelectedItem(dto.getAssistant());
+            } catch (Exception ex) {
+                log.warn("unable to set default review assignee", ex);
+            }
+        }
         this.cmbSubjectField.setSelectedItem(dto.getSubjectField());
         this.txtReason.setText(dto.getReason());
 
@@ -1279,7 +1260,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         ThreadUtils.setWaitCursor(this);
 
         this.caseFolderPanel1.clearDocuments();
-
+        this.cmdClearSearchActionPerformed(null);
+        
         this.pnlInvolvedParties.removeAll();
 
         for (int t = this.tabPaneForms.getTabCount() - 1; t > 0; t--) {
@@ -1311,6 +1293,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         };
 
         TagUtils.populateTags(ClientSettings.getInstance().getDocumentTagsInUse(), this.cmdDocumentTagFilter, this.popDocumentTagFilter, tagAction);
+        
 
     }
 
@@ -1358,6 +1341,10 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     public void clearInputs() {
         this.dto = null;
+        
+        this.quickDateSelectionPanel.reset();
+        this.txtReviewDateField.setText("");
+        
         this.lblDocumentHits.setText(" ");
         this.lblHeaderInfo.setText("");
         this.txtClaimNumber.setText("");
@@ -1501,24 +1488,17 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         AppOptionGroupBean[] subjectFields = settings.getSubjectFieldDtos();
         AppUserBean[] lawyerUsers = UserSettings.getInstance().getLawyerUsers();
         AppUserBean[] assistUsers = UserSettings.getInstance().getAssistantUsers();
-        AppUserBean[] allUsers = UserSettings.getInstance().getAllUsers();
+        List<AppUserBean> allUsers = UserSettings.getInstance().getLoginEnabledUsers();
 
-//        Object[] dictateSignItems = new Object[dictateSigns.length + 1];
         String[] reviewReasonItems = new String[reviewReasons.length];
         String[] subjectFieldItems = new String[subjectFields.length + 1];
-        String[] lawyerItems = new String[lawyerUsers.length + 1];
-        String[] assistItems = new String[assistUsers.length + 1];
-        String[] allUserItems = new String[allUsers.length + 1];
+        String[] lawyerItems = null;
+        String[] assistItems = null;
+        String[] allUserItems = new String[allUsers.size() + 1];
 
-//        dictateSignItems[0] = "";
-//        for (int i = 0; i < dictateSigns.length; i++) {
-//            AppOptionGroupBean aogb = (AppOptionGroupBean) dictateSigns[i];
-//            dictateSignItems[i + 1] = aogb.getValue();
-//        }
         for (int i = 0; i < reviewReasons.length; i++) {
             AppOptionGroupBean aogb = (AppOptionGroupBean) reviewReasons[i];
             reviewReasonItems[i] = aogb.getValue();
-            //reviewReasonItems[i+1]=reviewReasons[i];
         }
         StringUtils.sortIgnoreCase(reviewReasonItems);
 
@@ -1529,23 +1509,29 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
         StringUtils.sortIgnoreCase(subjectFieldItems);
 
-        lawyerItems[0] = "";
+        List<String> l1=new ArrayList<>();
+        l1.add("");
         for (int i = 0; i < lawyerUsers.length; i++) {
             AppUserBean aub = (AppUserBean) lawyerUsers[i];
-            lawyerItems[i + 1] = aub.getPrincipalId();
+            if(allUsers.contains(aub))
+                l1.add(aub.getPrincipalId());
         }
+        lawyerItems=l1.toArray(new String[0]);
         StringUtils.sortIgnoreCase(lawyerItems);
 
-        assistItems[0] = "";
+        List<String> l2=new ArrayList<>();
+        l2.add("");
         for (int i = 0; i < assistUsers.length; i++) {
             AppUserBean aub = (AppUserBean) assistUsers[i];
-            assistItems[i + 1] = aub.getPrincipalId();
+            if(allUsers.contains(aub))
+                l2.add(aub.getPrincipalId());
         }
+        assistItems=l2.toArray(new String[0]);
         StringUtils.sortIgnoreCase(assistItems);
 
         allUserItems[0] = "";
-        for (int i = 0; i < allUsers.length; i++) {
-            AppUserBean aub = (AppUserBean) allUsers[i];
+        for (int i = 0; i < allUsers.size(); i++) {
+            AppUserBean aub = allUsers.get(i);
             allUserItems[i + 1] = aub.getPrincipalId();
         }
         StringUtils.sortIgnoreCase(allUserItems);
@@ -1581,6 +1567,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         } catch (Exception ex) {
             log.error("Can not load form types", ex);
         }
+        
+        this.quickDateSelectionPanel.reset();
+        this.txtReviewDateField.setText("");
     }
 
     public void selectDocument(String fileName) {
@@ -1651,12 +1640,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         mnuSendMotorCoverage = new javax.swing.JMenuItem();
         tabPaneArchiveFile = new javax.swing.JTabbedPane();
         tabGeneralData = new javax.swing.JPanel();
-        jPanel2 = new javax.swing.JPanel();
-        jScrollPane1 = new javax.swing.JScrollPane();
-        tagPanel = new javax.swing.JPanel();
-        jPanel3 = new javax.swing.JPanel();
-        txtNoticePane = new javax.swing.JScrollPane();
-        txtNotice = new javax.swing.JTextArea();
         jPanel1 = new javax.swing.JPanel();
         jLabel1 = new javax.swing.JLabel();
         txtFileNumber = new javax.swing.JTextField();
@@ -1680,6 +1663,13 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         jPanel6 = new javax.swing.JPanel();
         jScrollPane3 = new javax.swing.JScrollPane();
         tblGroups = new javax.swing.JTable();
+        splitNotes = new javax.swing.JSplitPane();
+        jPanel2 = new javax.swing.JPanel();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        tagPanel = new javax.swing.JPanel();
+        jPanel3 = new javax.swing.JPanel();
+        txtNoticePane = new javax.swing.JScrollPane();
+        txtNotice = new javax.swing.JTextArea();
         tabParties = new javax.swing.JPanel();
         cmdSearchClient = new javax.swing.JButton();
         jScrollPane8 = new javax.swing.JScrollPane();
@@ -1688,20 +1678,21 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         jPanel7 = new javax.swing.JPanel();
         cmdNewDocument = new javax.swing.JButton();
         cmdUploadDocument = new javax.swing.JButton();
-        splitDocuments = new javax.swing.JSplitPane();
-        jScrollPane7 = new javax.swing.JScrollPane();
-        pnlPreview = new javax.swing.JPanel();
-        caseFolderPanel1 = new com.jdimension.jlawyer.ui.folders.CaseFolderPanel();
         jLabel15 = new javax.swing.JLabel();
         txtSearchDocumentNames = new javax.swing.JTextField();
         lblDocumentHits = new javax.swing.JLabel();
         cmdClearSearch = new javax.swing.JButton();
         cmdAddNote = new javax.swing.JButton();
+        cmdDocumentTagFilter = new javax.swing.JButton();
+        cmdDrebis = new javax.swing.JButton();
+        splitDocumentsMain = new javax.swing.JSplitPane();
+        splitDocuments = new javax.swing.JSplitPane();
+        jScrollPane7 = new javax.swing.JScrollPane();
+        pnlPreview = new javax.swing.JPanel();
+        caseFolderPanel1 = new com.jdimension.jlawyer.ui.folders.CaseFolderPanel();
         jPanel4 = new javax.swing.JPanel();
         jScrollPane2 = new javax.swing.JScrollPane();
         documentTagPanel = new javax.swing.JPanel();
-        cmdDocumentTagFilter = new javax.swing.JButton();
-        cmdDrebis = new javax.swing.JButton();
         tabClaims = new javax.swing.JPanel();
         jPanel8 = new javax.swing.JPanel();
         jLabel4 = new javax.swing.JLabel();
@@ -1725,6 +1716,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         jScrollPane9 = new javax.swing.JScrollPane();
         lstReviewReasons = new javax.swing.JList<>();
         txtReviewReason = new javax.swing.JTextField();
+        quickDateSelectionPanel = new com.jdimension.jlawyer.client.components.QuickDateSelectionPanel();
         jPanel11 = new javax.swing.JPanel();
         lblCustom1 = new javax.swing.JLabel();
         txtCustom1 = new javax.swing.JTextField();
@@ -1937,7 +1929,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         documentsPopup.add(mnuRemoveDocument);
         documentsPopup.add(jSeparator1);
 
-        mnuSendDocument.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/mail_send.png"))); // NOI18N
+        mnuSendDocument.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/mail_send_2.png"))); // NOI18N
         mnuSendDocument.setText("senden");
         mnuSendDocument.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -1946,7 +1938,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         });
         documentsPopup.add(mnuSendDocument);
 
-        mnuSendDocumentPDF.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/mail_send.png"))); // NOI18N
+        mnuSendDocumentPDF.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/mail_send_2.png"))); // NOI18N
         mnuSendDocumentPDF.setText("als PDF senden");
         mnuSendDocumentPDF.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -1955,7 +1947,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         });
         documentsPopup.add(mnuSendDocumentPDF);
 
-        mnuOpenInExternalMailer.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/mail_send.png"))); // NOI18N
+        mnuOpenInExternalMailer.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/mail_send_2.png"))); // NOI18N
         mnuOpenInExternalMailer.setText("im externen Mailprogramm öffnen");
         mnuOpenInExternalMailer.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -2094,57 +2086,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 tabPaneArchiveFileStateChanged(evt);
             }
         });
-        tabPaneArchiveFile.addComponentListener(new java.awt.event.ComponentAdapter() {
-            public void componentResized(java.awt.event.ComponentEvent evt) {
-                tabPaneArchiveFileComponentResized(evt);
-            }
-        });
-
-        jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder("Akten-Etiketten"));
-        jPanel2.setLayout(new java.awt.BorderLayout());
-
-        jScrollPane1.setBorder(null);
-
-        org.jdesktop.layout.GroupLayout tagPanelLayout = new org.jdesktop.layout.GroupLayout(tagPanel);
-        tagPanel.setLayout(tagPanelLayout);
-        tagPanelLayout.setHorizontalGroup(
-            tagPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(0, 935, Short.MAX_VALUE)
-        );
-        tagPanelLayout.setVerticalGroup(
-            tagPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(0, 165, Short.MAX_VALUE)
-        );
-
-        jScrollPane1.setViewportView(tagPanel);
-
-        jPanel2.add(jScrollPane1, java.awt.BorderLayout.CENTER);
-
-        jPanel3.setBorder(javax.swing.BorderFactory.createTitledBorder("Notizen"));
-
-        txtNoticePane.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-
-        txtNotice.setColumns(20);
-        txtNotice.setLineWrap(true);
-        txtNotice.setRows(5);
-        txtNotice.setWrapStyleWord(true);
-        txtNoticePane.setViewportView(txtNotice);
-
-        org.jdesktop.layout.GroupLayout jPanel3Layout = new org.jdesktop.layout.GroupLayout(jPanel3);
-        jPanel3.setLayout(jPanel3Layout);
-        jPanel3Layout.setHorizontalGroup(
-            jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(jPanel3Layout.createSequentialGroup()
-                .addContainerGap()
-                .add(txtNoticePane)
-                .addContainerGap())
-        );
-        jPanel3Layout.setVerticalGroup(
-            jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(jPanel3Layout.createSequentialGroup()
-                .add(txtNoticePane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 165, Short.MAX_VALUE)
-                .addContainerGap())
-        );
 
         jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder("Aktenkopf"));
 
@@ -2345,6 +2286,59 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 .addContainerGap())
         );
 
+        splitNotes.setDividerLocation(170);
+        splitNotes.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
+
+        jPanel2.setBorder(javax.swing.BorderFactory.createTitledBorder("Akten-Etiketten"));
+        jPanel2.setLayout(new java.awt.BorderLayout());
+
+        jScrollPane1.setBorder(null);
+
+        org.jdesktop.layout.GroupLayout tagPanelLayout = new org.jdesktop.layout.GroupLayout(tagPanel);
+        tagPanel.setLayout(tagPanelLayout);
+        tagPanelLayout.setHorizontalGroup(
+            tagPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(0, 935, Short.MAX_VALUE)
+        );
+        tagPanelLayout.setVerticalGroup(
+            tagPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(0, 283, Short.MAX_VALUE)
+        );
+
+        jScrollPane1.setViewportView(tagPanel);
+
+        jPanel2.add(jScrollPane1, java.awt.BorderLayout.CENTER);
+
+        splitNotes.setLeftComponent(jPanel2);
+
+        jPanel3.setBorder(javax.swing.BorderFactory.createTitledBorder("Notizen"));
+
+        txtNoticePane.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+
+        txtNotice.setColumns(20);
+        txtNotice.setLineWrap(true);
+        txtNotice.setRows(5);
+        txtNotice.setWrapStyleWord(true);
+        txtNoticePane.setViewportView(txtNotice);
+
+        org.jdesktop.layout.GroupLayout jPanel3Layout = new org.jdesktop.layout.GroupLayout(jPanel3);
+        jPanel3.setLayout(jPanel3Layout);
+        jPanel3Layout.setHorizontalGroup(
+            jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jPanel3Layout.createSequentialGroup()
+                .addContainerGap()
+                .add(txtNoticePane)
+                .addContainerGap())
+        );
+        jPanel3Layout.setVerticalGroup(
+            jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jPanel3Layout.createSequentialGroup()
+                .add(txtNoticePane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 109, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+
+        splitNotes.setRightComponent(jPanel3);
+
         org.jdesktop.layout.GroupLayout tabGeneralDataLayout = new org.jdesktop.layout.GroupLayout(tabGeneralData);
         tabGeneralData.setLayout(tabGeneralDataLayout);
         tabGeneralDataLayout.setHorizontalGroup(
@@ -2352,9 +2346,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             .add(tabGeneralDataLayout.createSequentialGroup()
                 .addContainerGap()
                 .add(tabGeneralDataLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jPanel3, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .add(jPanel2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 953, Short.MAX_VALUE)
-                    .add(jPanel1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .add(jPanel1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(splitNotes, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 953, Short.MAX_VALUE))
                 .addContainerGap())
         );
         tabGeneralDataLayout.setVerticalGroup(
@@ -2363,9 +2356,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 .addContainerGap()
                 .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jPanel2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 119, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jPanel3, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .add(splitNotes, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 324, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -2398,10 +2389,10 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             .add(tabPartiesLayout.createSequentialGroup()
                 .addContainerGap()
                 .add(tabPartiesLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jScrollPane8, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 945, Short.MAX_VALUE)
-                    .add(org.jdesktop.layout.GroupLayout.TRAILING, tabPartiesLayout.createSequentialGroup()
-                        .add(0, 0, Short.MAX_VALUE)
-                        .add(cmdSearchClient)))
+                    .add(jScrollPane8, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 953, Short.MAX_VALUE)
+                    .add(tabPartiesLayout.createSequentialGroup()
+                        .add(cmdSearchClient)
+                        .add(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         tabPartiesLayout.setVerticalGroup(
@@ -2435,20 +2426,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
         });
 
-        splitDocuments.setDividerLocation(400);
-
-        jScrollPane7.addComponentListener(new java.awt.event.ComponentAdapter() {
-            public void componentResized(java.awt.event.ComponentEvent evt) {
-                jScrollPane7ComponentResized(evt);
-            }
-        });
-
-        pnlPreview.setLayout(new java.awt.BorderLayout());
-        jScrollPane7.setViewportView(pnlPreview);
-
-        splitDocuments.setRightComponent(jScrollPane7);
-        splitDocuments.setLeftComponent(caseFolderPanel1);
-
         jLabel15.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/search.png"))); // NOI18N
 
         txtSearchDocumentNames.addKeyListener(new java.awt.event.KeyAdapter() {
@@ -2459,7 +2436,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         lblDocumentHits.setText(" ");
 
-        cmdClearSearch.setText("x");
+        cmdClearSearch.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/outline_backspace_black_48dp.png"))); // NOI18N
+        cmdClearSearch.setToolTipText("Suche zurücksetzen");
         cmdClearSearch.setEnabled(false);
         cmdClearSearch.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -2474,26 +2452,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 cmdAddNoteActionPerformed(evt);
             }
         });
-
-        jPanel4.setBorder(javax.swing.BorderFactory.createTitledBorder("Dokument-Etiketten"));
-        jPanel4.setLayout(new java.awt.BorderLayout());
-
-        jScrollPane2.setBorder(null);
-
-        org.jdesktop.layout.GroupLayout documentTagPanelLayout = new org.jdesktop.layout.GroupLayout(documentTagPanel);
-        documentTagPanel.setLayout(documentTagPanelLayout);
-        documentTagPanelLayout.setHorizontalGroup(
-            documentTagPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(0, 0, Short.MAX_VALUE)
-        );
-        documentTagPanelLayout.setVerticalGroup(
-            documentTagPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(0, 0, Short.MAX_VALUE)
-        );
-
-        jScrollPane2.setViewportView(documentTagPanel);
-
-        jPanel4.add(jScrollPane2, java.awt.BorderLayout.CENTER);
 
         cmdDocumentTagFilter.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/favorites.png"))); // NOI18N
         cmdDocumentTagFilter.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -2519,6 +2477,53 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
         });
 
+        splitDocumentsMain.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
+
+        splitDocuments.setDividerLocation(400);
+        splitDocuments.setOneTouchExpandable(true);
+        splitDocuments.addPropertyChangeListener(new java.beans.PropertyChangeListener() {
+            public void propertyChange(java.beans.PropertyChangeEvent evt) {
+                splitDocumentsPropertyChange(evt);
+            }
+        });
+
+        jScrollPane7.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        jScrollPane7.addComponentListener(new java.awt.event.ComponentAdapter() {
+            public void componentResized(java.awt.event.ComponentEvent evt) {
+                jScrollPane7ComponentResized(evt);
+            }
+        });
+
+        pnlPreview.setLayout(new java.awt.BorderLayout());
+        jScrollPane7.setViewportView(pnlPreview);
+
+        splitDocuments.setRightComponent(jScrollPane7);
+        splitDocuments.setLeftComponent(caseFolderPanel1);
+
+        splitDocumentsMain.setLeftComponent(splitDocuments);
+
+        jPanel4.setBorder(javax.swing.BorderFactory.createTitledBorder("Dokument-Etiketten"));
+        jPanel4.setLayout(new java.awt.BorderLayout());
+
+        jScrollPane2.setBorder(null);
+
+        org.jdesktop.layout.GroupLayout documentTagPanelLayout = new org.jdesktop.layout.GroupLayout(documentTagPanel);
+        documentTagPanel.setLayout(documentTagPanelLayout);
+        documentTagPanelLayout.setHorizontalGroup(
+            documentTagPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(0, 0, Short.MAX_VALUE)
+        );
+        documentTagPanelLayout.setVerticalGroup(
+            documentTagPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(0, 0, Short.MAX_VALUE)
+        );
+
+        jScrollPane2.setViewportView(documentTagPanel);
+
+        jPanel4.add(jScrollPane2, java.awt.BorderLayout.CENTER);
+
+        splitDocumentsMain.setRightComponent(jPanel4);
+
         org.jdesktop.layout.GroupLayout jPanel7Layout = new org.jdesktop.layout.GroupLayout(jPanel7);
         jPanel7.setLayout(jPanel7Layout);
         jPanel7Layout.setHorizontalGroup(
@@ -2526,7 +2531,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             .add(jPanel7Layout.createSequentialGroup()
                 .addContainerGap()
                 .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel7Layout.createSequentialGroup()
+                    .add(jPanel7Layout.createSequentialGroup()
                         .add(jLabel15)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(txtSearchDocumentNames, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 272, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
@@ -2536,7 +2541,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                         .add(cmdClearSearch)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(lblDocumentHits)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 35, Short.MAX_VALUE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 48, Short.MAX_VALUE)
                         .add(cmdNewDocument)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(cmdUploadDocument)
@@ -2544,8 +2549,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                         .add(cmdAddNote)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(cmdDrebis))
-                    .add(jPanel4, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .add(splitDocuments))
+                    .add(splitDocumentsMain))
                 .addContainerGap())
         );
         jPanel7Layout.setVerticalGroup(
@@ -2563,9 +2567,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                         .add(cmdAddNote))
                     .add(cmdDocumentTagFilter))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                .add(splitDocuments, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 331, Short.MAX_VALUE)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jPanel4, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 161, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .add(splitDocumentsMain)
                 .addContainerGap())
         );
 
@@ -2700,6 +2702,12 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         txtReviewDateField.setEditable(false);
         txtReviewDateField.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
+        txtReviewDateField.setToolTipText("Doppelklick um heutiges Datum zu übernehmen");
+        txtReviewDateField.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                txtReviewDateFieldMouseClicked(evt);
+            }
+        });
 
         cmdShowReviewSelector.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/schedule.png"))); // NOI18N
         cmdShowReviewSelector.setMargin(new java.awt.Insets(2, 4, 2, 4));
@@ -2738,29 +2746,30 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             .add(jPanel9Layout.createSequentialGroup()
                 .addContainerGap()
                 .add(jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(tblReviewReasonsPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 919, Short.MAX_VALUE)
+                    .add(tblReviewReasonsPane)
                     .add(jPanel9Layout.createSequentialGroup()
                         .add(jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                             .add(jLabel12)
                             .add(jLabel7))
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
-                            .add(jPanel9Layout.createSequentialGroup()
-                                .add(txtReviewDateField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 145, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                .add(cmdShowReviewSelector))
+                        .add(jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                             .add(jPanel9Layout.createSequentialGroup()
                                 .add(radioReviewTypeFollowUp)
                                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                                 .add(radioReviewTypeRespite))
-                            .add(cmbReviewAssignee, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                        .add(18, 18, 18)
+                            .add(cmbReviewAssignee, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 186, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                            .add(quickDateSelectionPanel, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                            .add(jPanel9Layout.createSequentialGroup()
+                                .add(txtReviewDateField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 145, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(cmdShowReviewSelector)))
+                        .add(12, 12, 12)
                         .add(jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                            .add(jScrollPane9)
                             .add(jPanel9Layout.createSequentialGroup()
                                 .add(cmdNewReview)
                                 .add(0, 0, Short.MAX_VALUE))
-                            .add(org.jdesktop.layout.GroupLayout.TRAILING, txtReviewReason))))
+                            .add(org.jdesktop.layout.GroupLayout.TRAILING, txtReviewReason)
+                            .add(org.jdesktop.layout.GroupLayout.TRAILING, jScrollPane9))))
                 .addContainerGap())
         );
         jPanel9Layout.setVerticalGroup(
@@ -2769,24 +2778,27 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 .addContainerGap()
                 .add(jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(jPanel9Layout.createSequentialGroup()
+                        .add(jScrollPane9, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 110, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(txtReviewReason, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(cmdNewReview))
+                    .add(jPanel9Layout.createSequentialGroup()
                         .add(jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
                             .add(jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                                 .add(jLabel7)
                                 .add(txtReviewDateField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                             .add(cmdShowReviewSelector))
-                        .add(7, 7, 7)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(quickDateSelectionPanel, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                         .add(jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                             .add(cmbReviewAssignee, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                             .add(jLabel12))
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                         .add(jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                             .add(radioReviewTypeFollowUp)
-                            .add(radioReviewTypeRespite)))
-                    .add(jScrollPane9, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 110, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(txtReviewReason, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(cmdNewReview)
+                            .add(radioReviewTypeRespite))))
                 .add(18, 18, 18)
                 .add(tblReviewReasonsPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 339, Short.MAX_VALUE)
                 .addContainerGap())
@@ -3445,6 +3457,13 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 
                 if (selectionCount<=1 && !StringUtils.isEmpty(this.txtReviewReason.getText())) {
                     this.addReview(this.txtReviewReason.getText(), d);
+                    
+                    // clear selection
+                    for (int i = 0; i < ((DefaultListModel) this.lstReviewReasons.getModel()).size(); i++) {
+                        CheckboxListItem item = (CheckboxListItem) ((DefaultListModel) this.lstReviewReasons.getModel()).getElementAt(i);
+                        item.setSelected(false);
+                        this.lstReviewReasons.repaint(this.lstReviewReasons.getCellBounds(i, i));
+                    }
                 } else {
                     if(!StringUtils.isEmpty(this.txtReviewReason.getText()))
                         this.addReview(this.txtReviewReason.getText(), d);
@@ -3472,8 +3491,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             this.txtReviewReason.setText("");
             this.chkArchived.setSelected(false);
             this.lblArchivedSince.setText("");
-            this.cmbReviewAssignee.setSelectedIndex(0);
             this.radioReviewTypeFollowUp.setSelected(true);
+            this.quickDateSelectionPanel.reset();
         } else {
             JOptionPane.showMessageDialog(this, "Es muss ein Datum angegeben werden.", "Fehler", JOptionPane.ERROR_MESSAGE);
 
@@ -3513,19 +3532,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     }
 
     private void cmdSearchClientActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSearchClientActionPerformed
-        //AddAddressSearchDialog dlg = new AddAddressSearchDialog(EditorsRegistry.getInstance().getMainWindow(), true, ArchiveFileAddressesBean.REFERENCETYPE_CLIENT);
 
-        PartyTypeBean targetType = null;
-        try {
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
-            ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
-            targetType = fileService.getAllPartyTypes().get(0);
-        } catch (Exception ex) {
-            log.error("Error getting target type for AddAddressSearchDialog", ex);
-            JOptionPane.showMessageDialog(this, "Fehler beim Ermitteln der Beteiligtentypen: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
-        }
-
-        AddAddressSearchDialog dlg = new AddAddressSearchDialog(EditorsRegistry.getInstance().getMainWindow(), true, targetType);
+        AddAddressSearchDialog dlg = new AddAddressSearchDialog(EditorsRegistry.getInstance().getMainWindow(), true);
         dlg.setTitle("Beteiligte hinzufügen");
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
@@ -3618,10 +3626,10 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     private void tabPaneArchiveFileStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_tabPaneArchiveFileStateChanged
 
-        if (this.tabPaneArchiveFile.getSelectedIndex() == 2 || this.tabPaneArchiveFile.getSelectedIndex() == 4 || this.tabPaneArchiveFile.getSelectedIndex() == 7) {
+        if (this.tabPaneArchiveFile.getSelectedIndex() == 1 || this.tabPaneArchiveFile.getSelectedIndex() == 2 || this.tabPaneArchiveFile.getSelectedIndex() == 4 || this.tabPaneArchiveFile.getSelectedIndex() == 7) {
 
             if (this.dto == null || this.dto.getId() == null) {
-                this.confirmSave("Bevor Dokumente/Wiedervorlagen/Falldaten hinzugefügt werden können,\nmuß die Akte gespeichert werden.\n\nJetzt speichern?", null);
+                this.confirmSave("Bevor Beteiligte/Dokumente/Wiedervorlagen/Falldaten hinzugefügt werden können,\nmuß die Akte gespeichert werden.\n\nJetzt speichern?", null);
             }
 
         } else if (this.tabPaneArchiveFile.getSelectedIndex() == 6) {
@@ -3768,7 +3776,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private void newDocumentActionPerformedImpl(StyledCalculationTable table) {
 
         // save all forms to have the latest data available for document creation
-        for (int f = 1; f < this.tabPaneForms.getComponentCount(); f++) {
+        for (int f = 1; f < this.tabPaneForms.getTabCount(); f++) {
             FormInstancePanel fip = (FormInstancePanel) this.tabPaneForms.getComponentAt(f);
             fip.save();
         }
@@ -3976,7 +3984,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 ThreadUtils.setWaitCursor(this);
                 ProgressIndicator pi = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
                 pi.setShowCancelButton(true);
-                UploadDocumentsAction a = new UploadDocumentsAction(pi, this, dto.getId(), this.caseFolderPanel1, files);
+                UploadDocumentsAction a = new UploadDocumentsAction(pi, this, dto.getId(), this.caseFolderPanel1, files, null);
 
                 a.start();
 
@@ -3996,7 +4004,16 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
             ArrayList<ArchiveFileDocumentsBean> selectedDocs = this.caseFolderPanel1.getSelectedDocuments();
             if (selectedDocs.size() > 0) {
-                int response = JOptionPane.showConfirmDialog(this, "Ausgewählte Dokumente löschen?", "Dokumente löschen", JOptionPane.YES_NO_OPTION);
+                StringBuffer sb=new StringBuffer();
+                sb.append("<html>");
+                sb.append("<p>Ausgew&auml;hlte Dokumente l&ouml;schen?</p>");
+                sb.append("<ul>");
+                for(ArchiveFileDocumentsBean deldoc: selectedDocs) {
+                    sb.append("<li>").append(deldoc.getName()).append("</li>");
+                }
+                sb.append("</ul>");
+                sb.append("</html>");
+                int response = JOptionPane.showConfirmDialog(this, sb.toString(), "Dokumente löschen", JOptionPane.YES_NO_OPTION);
                 if (response != JOptionPane.YES_OPTION) {
                     return;
                 }
@@ -4169,7 +4186,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             if (newName == null) {
                 return;
             }
-            if(newName.equalsIgnoreCase(doc.getName()))
+            if(newName.equals(doc.getName()))
                 return;
             boolean renamed = remote.renameDocument(doc.getId(), newName);
 
@@ -4305,9 +4322,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     }//GEN-LAST:event_mnuOpenInExternalMailerActionPerformed
 
     private void mnuSendDocumentFaxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSendDocumentFaxActionPerformed
-        ServerSettings set = ServerSettings.getInstance();
-        String mode = set.getSetting(set.SERVERCONF_VOIPMODE, "on");
-        if ("on".equalsIgnoreCase(mode)) {
+        if (UserSettings.getInstance().getCurrentUser().isVoipEnabled()) {
             ArrayList<AddressBean> faxList = new ArrayList<AddressBean>();
 
             for (ArchiveFileAddressesBean aab : this.pnlInvolvedParties.getInvolvedParties()) {
@@ -4383,7 +4398,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         WizardSteps steps = new WizardSteps(dlg);
         steps.addStep(new com.jdimension.jlawyer.client.drebis.coverage.ClientSelectionStep());
         steps.addStep(new com.jdimension.jlawyer.client.drebis.coverage.OthersSelectionStep());
-        steps.addStep(new com.jdimension.jlawyer.client.drebis.coverage.DocumentsStep());
+        steps.addStep(new com.jdimension.jlawyer.client.drebis.DocumentsStep(DocumentsStep.TYPE_GENERIC));
         steps.addStep(new com.jdimension.jlawyer.client.drebis.coverage.FinalReviewCoverageStep());
         steps.addStep(new com.jdimension.jlawyer.client.drebis.coverage.SubmitCoverageStep());
 
@@ -4423,7 +4438,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         steps.addStep(new com.jdimension.jlawyer.client.drebis.claim.ClientSelectionStep());
         steps.addStep(new com.jdimension.jlawyer.client.drebis.claim.OthersSelectionStep());
         steps.addStep(new com.jdimension.jlawyer.client.drebis.claim.ClaimDetailsStep());
-        steps.addStep(new com.jdimension.jlawyer.client.drebis.claim.DocumentsStep());
+        steps.addStep(new com.jdimension.jlawyer.client.drebis.DocumentsStep(DocumentsStep.TYPE_CLAIM));
         steps.addStep(new com.jdimension.jlawyer.client.drebis.claim.FinalReviewClaimStep());
         steps.addStep(new com.jdimension.jlawyer.client.drebis.claim.SubmitClaimStep());
 
@@ -4526,7 +4541,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         WizardSteps steps = new WizardSteps(dlg);
         steps.addStep(new com.jdimension.jlawyer.client.drebis.freetext.ClientSelectionStep());
-        steps.addStep(new com.jdimension.jlawyer.client.drebis.freetext.DocumentsStep());
+        steps.addStep(new com.jdimension.jlawyer.client.drebis.DocumentsStep(DocumentsStep.TYPE_GENERIC));
         steps.addStep(new com.jdimension.jlawyer.client.drebis.freetext.FreeTextStep());
         steps.addStep(new com.jdimension.jlawyer.client.drebis.freetext.FinalReviewFreeTextStep());
         steps.addStep(new com.jdimension.jlawyer.client.drebis.freetext.SubmitFreeTextStep());
@@ -4663,13 +4678,14 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
             ArrayList<ArchiveFileDocumentsBean> selected = this.caseFolderPanel1.getSelectedDocuments();
 
-            if (selected.size() == 0) {
+            if (selected.isEmpty()) {
                 return;
             }
 
-            SearchAndAssignDialog dlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true, null);
+            SearchAndAssignDialog dlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true, null, null);
             dlg.setVisible(true);
-            ArchiveFileBean sel = dlg.getSelection();
+            ArchiveFileBean sel = dlg.getCaseSelection();
+            CaseFolder folder=dlg.getFolderSelection();
 
             dlg.dispose();
 
@@ -4696,6 +4712,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                             }
 
                             ArchiveFileDocumentsBean newDoc = remote.addDocument(sel.getId(), newName, content, doc.getDictateSign());
+                            if(folder != null) {
+                                ArrayList<String> docList = new ArrayList<>();
+                                docList.add(newDoc.getId());
+                                remote.moveDocumentsToFolder(docList, folder.getId());
+                            }
                         } catch (Exception ioe) {
                             log.error("Error duplicating document", ioe);
                             JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Kopieren des Dokuments: " + ioe.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
@@ -4773,7 +4794,17 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                             FileUtils.cleanupTempFile(tempPdfPath);
 
                             ArchiveFileDocumentsBean newDoc = remote.addDocument(dto.getId(), newName, pdfContent, doc.getDictateSign());
+                            
                             newDoc.setSize(pdfContent.length);
+                            
+                            if(doc.getFolder()!=null) {
+                                newDoc.setFolder(doc.getFolder());
+                                ArrayList<String> documentIds=new ArrayList<>();
+                                documentIds.add(newDoc.getId());
+                                remote.moveDocumentsToFolder(documentIds, doc.getFolder().getId());
+                            } else {
+                                log.warn("document folder of source document is null when duplicating as PDF/A");
+                            }
                             caseFolderPanel1.addDocument(newDoc);
 
                         } catch (Throwable t) {
@@ -5293,6 +5324,16 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                             FileUtils.cleanupTempFile(tempTargetPath);
 
                             ArchiveFileDocumentsBean newDoc = remote.addDocument(dto.getId(), newName, targetContent, doc.getDictateSign());
+                            
+                            if(doc.getFolder()!=null) {
+                                newDoc.setFolder(doc.getFolder());
+                                ArrayList<String> documentIds=new ArrayList<>();
+                                documentIds.add(newDoc.getId());
+                                remote.moveDocumentsToFolder(documentIds, doc.getFolder().getId());
+                            } else {
+                                log.warn("document folder of source document is null when duplicating as " + targetFormat);
+                            }
+                            
                             caseFolderPanel1.addDocument(newDoc);
 
                             // we only support duplication of one document at a time
@@ -5542,16 +5583,19 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     }//GEN-LAST:event_mnuShareNextcloudActionPerformed
 
-    private void tabPaneArchiveFileComponentResized(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_tabPaneArchiveFileComponentResized
-//        if(!this.initializing) {
-//            if(this.getWidth()>this.getParent().getWidth()) {
-//                System.out.println("width is messed up");
-//                this.setSize(this.getParent().getWidth(), this.getHeight());
-//            }
-//        }
-    
+    private void splitDocumentsPropertyChange(java.beans.PropertyChangeEvent evt) {//GEN-FIRST:event_splitDocumentsPropertyChange
+        int w=this.jScrollPane7.getHorizontalScrollBar().getWidth();
+        int h=this.jScrollPane7.getVerticalScrollBar().getWidth();
+        this.jScrollPane7.getViewport().getComponent(0).setPreferredSize(new Dimension(w,h));
+        this.jScrollPane7.doLayout();
+    }//GEN-LAST:event_splitDocumentsPropertyChange
 
-    }//GEN-LAST:event_tabPaneArchiveFileComponentResized
+    private void txtReviewDateFieldMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_txtReviewDateFieldMouseClicked
+        if (evt.getClickCount() == 2) {
+            SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
+            this.txtReviewDateField.setText(df.format(new Date()));
+        }
+    }//GEN-LAST:event_txtReviewDateFieldMouseClicked
 
     private AddressBean[] convertArray(Object[] in) {
         if (in != null) {
@@ -5595,7 +5639,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
 
             ((AddressPanel) editor).setAddressDTO(selection);
+            // there is a bug #883 when the user opened the panel to create a new case, then changed tab and confirmed to save, then added a party and navigated to it, then used the back button
             ((AddressPanel) editor).setOpenedFromEditorClass(this.getClass().getName());
+            
             EditorsRegistry.getInstance().setMainEditorsPaneView((Component) editor);
         } catch (Exception ex) {
             log.error("Error creating editor from class " + this.getClass().getName(), ex);
@@ -5760,7 +5806,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
             CaseFolder newRoot=remote.applyFolderTemplate(this.dto.getId(), s);
-            this.caseFolderPanel1.setRootFolder(newRoot);
+            this.caseFolderPanel1.setRootFolder(newRoot, remote.getCaseFolderSettings(newRoot.getAllFolderIds()));
 
         } catch (Exception ioe) {
             log.error("Error applying document template", ioe);
@@ -5833,8 +5879,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
                         ProgressIndicator pi = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
                         pi.setShowCancelButton(true);
-                        UploadDocumentsAction a = new UploadDocumentsAction(pi, p, dto.getId(), caseFolderPanel1, files);
-
+                        UploadDocumentsAction a = new UploadDocumentsAction(pi, p, dto.getId(), caseFolderPanel1, files, null);
+                        
                         a.start();
 
                         dtde.dropComplete(true);
@@ -5843,7 +5889,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                     }
 
                 } catch (Exception ex) {
-                    ex.printStackTrace();
                     log.error("file drop error", ex);
                 }
             } else {
@@ -5998,10 +6043,13 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JPopupMenu popCalculations;
     private javax.swing.JPopupMenu popDocumentFavorites;
     private javax.swing.JPopupMenu popDocumentTagFilter;
+    private com.jdimension.jlawyer.client.components.QuickDateSelectionPanel quickDateSelectionPanel;
     private javax.swing.JRadioButton radioReviewTypeFollowUp;
     private javax.swing.JRadioButton radioReviewTypeRespite;
     private javax.swing.JPopupMenu reviewsPopup;
     private javax.swing.JSplitPane splitDocuments;
+    private javax.swing.JSplitPane splitDocumentsMain;
+    private javax.swing.JSplitPane splitNotes;
     protected javax.swing.JTextArea taCustom3;
     private javax.swing.JPanel tabClaims;
     private javax.swing.JPanel tabDocuments;
@@ -6049,10 +6097,15 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             return false;
         }
 
-        for (int f = 1; f < this.tabPaneForms.getComponentCount(); f++) {
+        for (int f = 1; f < this.tabPaneForms.getTabCount(); f++) {
             FormInstancePanel fip = (FormInstancePanel) this.tabPaneForms.getComponentAt(f);
             fip.save();
         }
+        
+//        for (int f = 1; f < this.tabPaneForms.getComponentCount(); f++) {
+//            FormInstancePanel fip = (FormInstancePanel) this.tabPaneForms.getComponentAt(f);
+//            fip.save();
+//        }
 
         // todo: check all data here for changes
         if (this.dto.getArchivedBoolean() != this.chkArchived.isSelected()) {
@@ -6167,7 +6220,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 }
 
             }
-            if (contains = false) {
+            if (contains == false) {
                 return false;
             }
         }

@@ -663,9 +663,6 @@
  */
 package com.jdimension.jlawyer.client.editors.files;
 
-import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
-import java.util.Date;
-
 /**
  *
  * @author jens
@@ -691,14 +688,13 @@ public class DocumentsSizeComparator implements java.util.Comparator {
         Long l1=(Long)obj1;
         Long l2=(Long)obj2;
         
-        if(l1!=null)
-            return l1.compareTo(l2);
+        return l1.compareTo(l2);
         
-        else
-            return -1;
     }
     
     public boolean equals(Object obj) {
-        return obj.equals(this);
+        if(obj!=null)
+            return obj.equals(this);
+        return false;
     }
 }

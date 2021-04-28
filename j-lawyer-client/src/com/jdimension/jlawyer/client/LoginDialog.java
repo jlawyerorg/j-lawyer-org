@@ -680,7 +680,9 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Rectangle;
+import java.io.IOException;
 import java.io.InputStream;
+import java.net.ServerSocket;
 import java.util.Properties;
 import javax.ejb.EJBAccessException;
 import javax.naming.Context;
@@ -712,7 +714,7 @@ public class LoginDialog extends javax.swing.JFrame {
     /**
      * Creates new form LoginDialog
      */
-    public LoginDialog(String initialStatus, String cmdHost, String cmdPort, String cmdHttpPort, String cmdUser, String cmdPassword, String cmdSsl) {
+    public LoginDialog(String initialStatus, String cmdHost, String cmdPort, String cmdUser, String cmdPassword, String cmdSecMode, String cmdSshHost, String cmdSshPort, String cmdSshUser, String cmdSshPwd, String cmdSshTargetPort) {
         initComponents();
         this.setTitle(this.getTitle() + " | Version " + VersionUtils.getFullClientVersion());
 
@@ -778,7 +780,6 @@ public class LoginDialog extends javax.swing.JFrame {
             this.txtSshPort.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
             this.txtSshUser.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
             this.pwdSshPassword.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
-            this.txtSourcePort.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
             this.txtTargetPort.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
 
             this.cmbServer.setFont(font.deriveFont(Font.BOLD, 12));
@@ -792,7 +793,6 @@ public class LoginDialog extends javax.swing.JFrame {
             this.txtSshPort.setFont(font.deriveFont(Font.BOLD, 12));
             this.txtSshUser.setFont(font.deriveFont(Font.BOLD, 12));
             this.pwdSshPassword.setFont(font.deriveFont(Font.BOLD, 12));
-            this.txtSourcePort.setFont(font.deriveFont(Font.BOLD, 12));
             this.txtTargetPort.setFont(font.deriveFont(Font.BOLD, 12));
 
             this.jLabel5.setFont(font.deriveFont(Font.BOLD, 12));
@@ -800,10 +800,9 @@ public class LoginDialog extends javax.swing.JFrame {
             this.jLabel8.setFont(font.deriveFont(Font.BOLD, 12));
             this.jLabel16.setFont(font.deriveFont(Font.BOLD, 12));
             this.jLabel17.setFont(font.deriveFont(Font.BOLD, 12));
-            this.jLabel18.setFont(font.deriveFont(Font.BOLD, 12));
 
         } catch (Throwable t) {
-            t.printStackTrace();
+            log.error(t);
         }
 
         this.boxProgress.setVisible(false);
@@ -841,9 +840,9 @@ public class LoginDialog extends javax.swing.JFrame {
             }
         } catch (Throwable t) {
             log.error("Unable to decrypt tunnel SSH password", t);
+            p="";
         }
         this.pwdSshPassword.setText(p);
-        this.txtSourcePort.setText(settings.getConfiguration(settings.CONF_LASTSOURCEPORT, "8080"));
         this.txtTargetPort.setText(settings.getConfiguration(settings.CONF_LASTTARGETPORT, "8080"));
 
         BoxAccess box = new BoxAccess(this.txtBoxPassword.getText());
@@ -854,10 +853,17 @@ public class LoginDialog extends javax.swing.JFrame {
             this.txtPort.setText(cmdPort);
             this.txtUser.setText(cmdUser);
             this.pwPassword.setText(cmdPassword);
-            if ("1".equalsIgnoreCase(cmdSsl)) {
+            if ("1".equalsIgnoreCase(cmdSecMode) || "ssl".equalsIgnoreCase(cmdSecMode)) {
                 this.rdSecSsl.setSelected(true);
-            } else {
-                this.rdSecSsl.setSelected(false);
+            } else if("0".equalsIgnoreCase(cmdSecMode) || "standard".equalsIgnoreCase(cmdSecMode)) {
+                this.rdSecNone.setSelected(true);
+            } else if("ssh".equalsIgnoreCase(cmdSecMode)) {
+                this.rdSecTunnel.setSelected(true);
+                this.txtSshHost.setText(cmdSshHost);
+                this.txtSshPort.setText(cmdSshPort);
+                this.txtSshUser.setText(cmdSshUser);
+                this.pwdSshPassword.setText(cmdSshPwd);
+                this.txtTargetPort.setText(cmdSshTargetPort);
             }
             this.cmdLoginActionPerformed(null);
 
@@ -911,10 +917,8 @@ public class LoginDialog extends javax.swing.JFrame {
 
         };
         rdSecTunnel = new javax.swing.JRadioButton();
-        jLabel18 = new javax.swing.JLabel();
         txtSshUser = new javax.swing.JTextField();
         jLabel8 = new javax.swing.JLabel();
-        txtSourcePort = new javax.swing.JTextField();
         jLabel7 = new javax.swing.JLabel();
         txtTargetPort = new javax.swing.JTextField();
         pwdSshPassword = new javax.swing.JPasswordField();
@@ -923,6 +927,7 @@ public class LoginDialog extends javax.swing.JFrame {
         jLabel17 = new javax.swing.JLabel();
         txtSshHost = new javax.swing.JTextField();
         jLabel16 = new javax.swing.JLabel();
+        jLabel19 = new javax.swing.JLabel();
         jPanel3 = new javax.swing.JPanel();
         jLabel6 = new javax.swing.JLabel();
         txtBoxPassword = new javax.swing.JPasswordField();
@@ -1100,13 +1105,8 @@ public class LoginDialog extends javax.swing.JFrame {
             }
         });
 
-        jLabel18.setForeground(new java.awt.Color(255, 255, 255));
-        jLabel18.setText(">>");
-
         jLabel8.setForeground(new java.awt.Color(255, 255, 255));
         jLabel8.setText("Nutzer:");
-
-        txtSourcePort.setText("8080");
 
         jLabel7.setForeground(new java.awt.Color(255, 255, 255));
         jLabel7.setText(":");
@@ -1121,10 +1121,14 @@ public class LoginDialog extends javax.swing.JFrame {
         txtSshPort.setText("22");
 
         jLabel17.setForeground(new java.awt.Color(255, 255, 255));
-        jLabel17.setText("Weiterleitung:");
+        jLabel17.setText("Server lauscht auf Port:");
+        jLabel17.setToolTipText("Port, auf welchem der j-lawyer.org Server auf dem Zielsystem lauscht");
 
         jLabel16.setForeground(new java.awt.Color(255, 255, 255));
         jLabel16.setText("Passwort:");
+
+        jLabel19.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/help.png"))); // NOI18N
+        jLabel19.setToolTipText("Port, auf welchem der j-lawyer.org Server auf dem Zielsystem lauscht");
 
         org.jdesktop.layout.GroupLayout jPanel4Layout = new org.jdesktop.layout.GroupLayout(jPanel4);
         jPanel4.setLayout(jPanel4Layout);
@@ -1145,11 +1149,9 @@ public class LoginDialog extends javax.swing.JFrame {
                     .add(txtSshHost)
                     .add(pwdSshPassword)
                     .add(jPanel4Layout.createSequentialGroup()
-                        .add(txtSourcePort, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .add(txtTargetPort, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 55, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(jLabel18)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .add(txtTargetPort, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 55, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
+                        .add(jLabel19)))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jLabel7)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
@@ -1176,10 +1178,9 @@ public class LoginDialog extends javax.swing.JFrame {
                     .add(pwdSshPassword, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel4Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(txtSourcePort, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(jLabel17)
-                    .add(jLabel18)
-                    .add(txtTargetPort, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                    .add(txtTargetPort, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(jLabel19))
                 .addContainerGap())
         );
 
@@ -1515,14 +1516,14 @@ public class LoginDialog extends javax.swing.JFrame {
         
         
         ClientSettings settings = ClientSettings.getInstance();
-
+        int sourcePort=-1;
         if (this.rdSecTunnel.isSelected()) {
             try {
                 SshTunnel tunnel = SshTunnel.getInstance();
                 // for cases of subsequent tries
                 tunnel.disconnect();
-
-                tunnel.setSourcePort(Integer.parseInt(this.txtSourcePort.getText()));
+                sourcePort=getAvailablePort(Integer.parseInt(this.txtPort.getText()));
+                tunnel.setSourcePort(sourcePort);
                 tunnel.setSshHost(this.txtSshHost.getText());
                 tunnel.setSshPassword(new String(this.pwdSshPassword.getPassword()));
                 tunnel.setSshPort(Integer.parseInt(this.txtSshPort.getText()));
@@ -1532,7 +1533,13 @@ public class LoginDialog extends javax.swing.JFrame {
                 tunnel.connect();
             } catch (Exception ex) {
                 log.error("SSH tunnel failed", ex);
-                JOptionPane.showMessageDialog(this, "Aufbau des SSH-Tunnels gescheitert:" + System.lineSeparator() + ex.getMessage(), "SSH-Fehler", JOptionPane.ERROR_MESSAGE);
+                if("".equals(new String(this.pwdSshPassword.getPassword()))) {
+                    // happens due to the change from DES to AES encryption of this password
+                    // user needs to re-enter password once
+                    JOptionPane.showMessageDialog(this, "Aufbau des SSH-Tunnels gescheitert - bitte SSH-Passwort erneut eingeben:" + System.lineSeparator() + ex.getMessage(), "SSH-Fehler", JOptionPane.ERROR_MESSAGE);
+                } else {
+                    JOptionPane.showMessageDialog(this, "Aufbau des SSH-Tunnels gescheitert:" + System.lineSeparator() + ex.getMessage(), "SSH-Fehler", JOptionPane.ERROR_MESSAGE);
+                }
                 this.cmdLogin.setEnabled(true);
                 launching=false;
                 return;
@@ -1555,6 +1562,22 @@ public class LoginDialog extends javax.swing.JFrame {
             //properties.put("jboss.naming.client.connect.options.org.xnio.Options.SSL_ENABLED", "false");
             properties.put("jboss.naming.client.connect.options.org.xnio.Options.SSL_ENABLED", "true");
             properties.put("jboss.naming.client.connect.options.org.xnio.Options.SSL_STARTTLS", "true");
+        } else if (this.rdSecTunnel.isSelected()) {
+            
+            // need to use dynamically determined source port of ssh tunnel for http-remoting
+            
+            //properties.put(Context.URL_PKG_PREFIXES, "org.jboss.ejb.client.naming");
+            properties.put("jboss.naming.client.ejb.context", true);
+
+            // begin: for JMS only
+            properties.put(Context.INITIAL_CONTEXT_FACTORY, "org.wildfly.naming.client.WildFlyInitialContextFactory");
+            //properties.put(Context.INITIAL_CONTEXT_FACTORY, "org.wildfly.naming.client.WildFlyInitialContextFactory");
+            properties.put(Context.PROVIDER_URL, "http-remoting://" + this.cmbServer.getSelectedItem().toString() + ":" + sourcePort);
+            properties.put(Context.SECURITY_PRINCIPAL, this.txtUser.getText());
+            properties.put(Context.SECURITY_CREDENTIALS, this.pwPassword.getText());
+            properties.put("jboss.naming.client.connect.options.org.xnio.Options.SASL_POLICY_NOPLAINTEXT", "false");
+            properties.put("jboss.naming.client.connect.options.org.xnio.Options.SASL_POLICY_NOANONYMOUS", "false");
+
         } else {
             //properties.put(Context.URL_PKG_PREFIXES, "org.jboss.ejb.client.naming");
             properties.put("jboss.naming.client.ejb.context", true);
@@ -1656,13 +1679,15 @@ public class LoginDialog extends javax.swing.JFrame {
         }
 
         settings.setConfiguration(settings.CONF_LASTPORT, this.txtPort.getText());
-
+        settings.setConfiguration(settings.CONF_LASTPORTDYN, this.txtPort.getText());
+        
         // deprecated
         settings.setConfiguration(settings.CONF_LASTSERVERSSL, "deprecated");
         if (this.rdSecSsl.isSelected()) {
             settings.setConfiguration(settings.CONF_LASTSECMODE, "ssl");
         } else if (this.rdSecTunnel.isSelected()) {
             settings.setConfiguration(settings.CONF_LASTSECMODE, "ssh");
+            settings.setConfiguration(settings.CONF_LASTPORTDYN, ""+sourcePort);
         } else {
             settings.setConfiguration(settings.CONF_LASTSECMODE, "standard");
         }
@@ -1675,7 +1700,6 @@ public class LoginDialog extends javax.swing.JFrame {
             log.error("Unable to encrypt tunnel SSH password", t);
             settings.setConfiguration(settings.CONF_LASTSSHPWD, "");
         }
-        settings.setConfiguration(settings.CONF_LASTSOURCEPORT, this.txtSourcePort.getText());
         settings.setConfiguration(settings.CONF_LASTTARGETPORT, this.txtTargetPort.getText());
 
         String allServers = settings.getConfiguration(settings.CONF_LASTSERVERLIST, "localhost");
@@ -1770,7 +1794,7 @@ public class LoginDialog extends javax.swing.JFrame {
     public static void main(String args[]) {
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                new LoginDialog("", null, null, null, null, null, "0").setVisible(true);
+                new LoginDialog("", null, null, null, null, "standard", null, null, null, null, null).setVisible(true);
             }
         });
     }
@@ -1799,7 +1823,7 @@ public class LoginDialog extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel15;
     private javax.swing.JLabel jLabel16;
     private javax.swing.JLabel jLabel17;
-    private javax.swing.JLabel jLabel18;
+    private javax.swing.JLabel jLabel19;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
@@ -1825,12 +1849,27 @@ public class LoginDialog extends javax.swing.JFrame {
     private javax.swing.JPasswordField txtBoxPassword;
     private javax.swing.JTextField txtCurrentHost;
     private javax.swing.JTextField txtPort;
-    private javax.swing.JTextField txtSourcePort;
     private javax.swing.JTextField txtSshHost;
     private javax.swing.JTextField txtSshPort;
     private javax.swing.JTextField txtSshUser;
     private javax.swing.JTextField txtTargetPort;
     private javax.swing.JTextField txtUser;
     // End of variables declaration//GEN-END:variables
+
+    private int getAvailablePort(int startFrom) {
+        for (int i=startFrom;i<65535;i++) {
+            try {
+                ServerSocket s=new ServerSocket(i);
+                int successPort=s.getLocalPort();
+                s.close();
+                log.info("found available SSH tunneling source port: " + successPort);
+                return successPort;
+            } catch (IOException ex) {
+                log.warn("port " + i + " is not available as a source port for SSH tunnel: " + ex.getMessage());
+                continue; // try next port
+            }
+        }
+        return startFrom;
+    }
 
 }

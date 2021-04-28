@@ -791,7 +791,11 @@ public class DrebisService implements DrebisServiceRemote, DrebisServiceLocal {
         newHistEntry.setId(idGen.getID().toString());
         newHistEntry.setArchiveFileKey(aFile);
         newHistEntry.setChangeDate(new Date());
-        newHistEntry.setChangeDescription("Schadenmeldung an " + insu.getName() + " gesendet");
+        if(insu!=null) {
+            newHistEntry.setChangeDescription("Schadenmeldung an " + insu.getName() + " gesendet");
+        } else {
+            newHistEntry.setChangeDescription("Schadenmeldung (mit Zentralruf) gesendet");
+        }
         newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
         this.archiveFileHistoryFacade.create(newHistEntry);
         

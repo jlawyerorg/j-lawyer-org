@@ -738,7 +738,7 @@ public class ArchiveFileMissingReviewsSearchThread implements Runnable {
             //Object[] row=new Object[]{new ArchiveFileReviewsRowIdentifier(b.getArchiveFileKey(), reviewDateString), b.getReviewTypeName(), b.getArchiveFileKey().getFileNumber(), b.getArchiveFileKey().getName(), b.getReviewReason(), b.getArchiveFileKey().getLawyer(), b.getAssignee()};
             model.addRow(row);
             } catch (Throwable t) {
-                t.printStackTrace();
+                log.error(t);
             }
         }
         TableRowSorter<TableModel> sorter = new TableRowSorter<TableModel>(model);

@@ -665,6 +665,7 @@ package org.jlawyer.test.backup;
 
 import com.jdimension.jlawyer.storage.VirtualFile;
 import com.jdimension.jlawyer.sync.FolderSync;
+import com.jdimension.jlawyer.timer.BackupSyncTask;
 import java.io.File;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -701,9 +702,6 @@ public class SyncTest {
         this.ftpUser=System.getenv("ftpuser");
         this.ftpHome=System.getenv("ftphome");
         
-        this.ftpUser="jens";
-        this.ftpPassword="srv247";
-        this.ftpHome="jens";
         
     }
 
@@ -721,5 +719,18 @@ public class SyncTest {
             t.printStackTrace();
             Assert.fail();
         }
+    }
+    
+    @Test
+    public void testRemovePasswordFromUrl() {
+        String url="sftp://nutzer:passwort@sftp.hidrive.strato.com/users/jd/jlawyerorg-backups/xmg705";
+        Assert.assertTrue(BackupSyncTask.removePasswordFromUrl(url).indexOf("passwort")<0);
+        System.out.println(BackupSyncTask.removePasswordFromUrl(url));
+        
+        url="sftp://nutzer@sftp.hidrive.strato.com/users/jd/jlawyerorg-backups/xmg705";
+        System.out.println(BackupSyncTask.removePasswordFromUrl(url));
+        
+        url="sftp://sftp.hidrive.strato.com/users/jd/jlawyerorg-backups/xmg705";
+        System.out.println(BackupSyncTask.removePasswordFromUrl(url));
     }
 }

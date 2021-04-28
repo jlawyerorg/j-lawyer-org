@@ -746,6 +746,8 @@ public interface ArchiveFileServiceLocal {
     
     public void removeDocument(String id) throws Exception;
     
+    public void removeDocumentInNewTx(String id) throws Exception;
+    
     public boolean setDocumentContent(String id, byte[] content) throws Exception;
 
     ArchiveFileAddressesBean addAddressToCase(ArchiveFileAddressesBean address) throws Exception;
@@ -777,5 +779,11 @@ public interface ArchiveFileServiceLocal {
     void moveDocumentsToFolder(Collection<String> documentIds, String folderId) throws Exception;
     
     CaseFolder applyFolderTemplate(String caseId, String templateName) throws Exception;
+
+    CaseFolder applyFolderTemplateById(String id, String templateId) throws Exception;
+
+    DocumentFolderTemplate getFolderTemplateById(String id);
+
+    void purgeDocumentBin() throws Exception;
     
 }

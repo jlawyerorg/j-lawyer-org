@@ -675,7 +675,7 @@ import org.apache.log4j.Logger;
 public class DateTimeStringComparator implements Comparator {
 
     private static final Logger log = Logger.getLogger(DateTimeStringComparator.class.getName());
-    private static final SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy, HH:mm");
+    private final SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy, HH:mm");
 
     @Override
     public int compare(Object t, Object t1) {

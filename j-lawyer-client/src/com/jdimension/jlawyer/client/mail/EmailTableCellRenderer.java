@@ -736,7 +736,6 @@ public class EmailTableCellRenderer extends DefaultTableCellRenderer {
             }
         } catch (Exception ex) {
             log.error(ex);
-            ex.printStackTrace();
         }
         return (Component) returnRenderer;
     }

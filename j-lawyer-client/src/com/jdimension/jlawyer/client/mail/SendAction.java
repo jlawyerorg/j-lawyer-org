@@ -674,16 +674,16 @@ import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileHistoryBean;
+import com.jdimension.jlawyer.persistence.CaseFolder;
 import com.jdimension.jlawyer.persistence.DocumentTagsBean;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Properties;
-import javax.activation.DataHandler;
 import javax.activation.FileDataSource;
 import javax.mail.*;
 import javax.mail.internet.*;
@@ -697,8 +697,7 @@ import org.apache.log4j.Logger;
 public class SendAction extends ProgressableAction {
 
     private static final Logger log = Logger.getLogger(SendAction.class.getName());
-    private static SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy, HH:mm");
-    private ArrayList<String> attachments = null;
+    private List<String> attachments = null;
     private AppUserBean cu = null;
     private boolean readReceipt = false;
     private String to = "";
@@ -708,9 +707,10 @@ public class SendAction extends ProgressableAction {
     private String body = "";
     private String contentType = "text/plain";
     private ArchiveFileBean archiveFile = null;
+    private CaseFolder caseFolder=null;
     private String documentTag = null;
 
-    public SendAction(ProgressIndicator i, JDialog cleanAfter, ArrayList<String> attachments, AppUserBean cu, boolean readReceipt, String to, String cc, String bcc, String subject, String body, String contentType, String documentTag) {
+    public SendAction(ProgressIndicator i, JDialog cleanAfter, List<String> attachments, AppUserBean cu, boolean readReceipt, String to, String cc, String bcc, String subject, String body, String contentType, String documentTag) {
         super(i, false, cleanAfter);
         this.attachments = attachments;
         this.cu = cu;
@@ -724,9 +724,10 @@ public class SendAction extends ProgressableAction {
         this.documentTag = documentTag;
     }
 
-    public SendAction(ProgressIndicator i, JDialog cleanAfter, ArrayList<String> attachments, AppUserBean cu, boolean readReceipt, String to, String cc, String bcc, String subject, String body, String contentType, ArchiveFileBean af, String documentTag) {
+    public SendAction(ProgressIndicator i, JDialog cleanAfter, List<String> attachments, AppUserBean cu, boolean readReceipt, String to, String cc, String bcc, String subject, String body, String contentType, ArchiveFileBean af, String documentTag, CaseFolder folder) {
         this(i, cleanAfter, attachments, cu, readReceipt, to, cc, bcc, subject, body, contentType, documentTag);
         this.archiveFile = af;
+        this.caseFolder=folder;
     }
 
     @Override
@@ -762,11 +763,9 @@ public class SendAction extends ProgressableAction {
         }
 
         props.put("mail.smtp.host", cu.getEmailOutServer());
-        //props.put("mail.smtp.port", "587");
         props.put("mail.smtp.user", cu.getEmailOutUser());
         props.put("mail.smtp.auth", true);
         props.put("mail.smtps.host", cu.getEmailOutServer());
-        //props.put("mail.smtps.port", "587");
         if (cu.isEmailStartTls()) {
             props.put("mail.smtp.starttls.enable", "true");
         }
@@ -815,12 +814,10 @@ public class SendAction extends ProgressableAction {
 
             msg.setSubject(MimeUtility.encodeText(subject, "utf-8", "B"));
             msg.setSentDate(new Date());
-            //msg.setText(this.taBody.getText());
 
             Multipart multiPart = new MimeMultipart();
 
             MimeBodyPart messageText = new MimeBodyPart();
-            //messageText.setContent(body, "text/plain; charset=UTF-8");
             messageText.setContent(body, this.contentType + "; charset=UTF-8");
             multiPart.addBodyPart(messageText);
 
@@ -828,9 +825,13 @@ public class SendAction extends ProgressableAction {
             for (String url : this.attachments) {
                 MimeBodyPart att = new MimeBodyPart();
                 FileDataSource attFile = new FileDataSource(url);
-                att.setDataHandler(new DataHandler(attFile));
-                att.setFileName(MimeUtility.encodeText(attFile.getName()));
-                att.addHeader("Content-Transfer-Encoding", "base64");
+                
+//                att.setDataHandler(new DataHandler(attFile));
+//                att.setFileName(MimeUtility.encodeText(attFile.getName()));
+//                att.addHeader("Content-Transfer-Encoding", "base64");
+                
+                att.attachFile(url);
+
                 attachmentNames = attachmentNames + attFile.getName() + " ";
                 multiPart.addBodyPart(att);
             }
@@ -838,7 +839,6 @@ public class SendAction extends ProgressableAction {
             msg.setContent(multiPart);
 
             this.progress("Sende...");
-            //Transport.send(msg);
             msg.saveChanges();
             bus.send(msg);
 
@@ -866,7 +866,7 @@ public class SendAction extends ProgressableAction {
                     newName = newName + ".eml";
                     newName = FileUtils.sanitizeFileName(newName);
                     java.util.Date sentPrefix = new Date();
-                    newName = FileUtils.getNewFileName(newName, true, sentPrefix, this.indicator, "Datei umbenennen");
+                    newName = FileUtils.getNewFileName(newName, true, sentPrefix, this.indicator, "Datei benennen");
                     if(newName !=null) {
                         if (newName.trim().length() == 0) {
                             newName = "E-Mail";
@@ -878,7 +878,7 @@ public class SendAction extends ProgressableAction {
                         boolean documentExists = afs.doesDocumentExist(this.archiveFile.getId(), newName);
                         while (documentExists) {
 
-                            newName = FileUtils.getNewFileName(newName, true, sentPrefix, this.indicator, "Datei umbenennen");
+                            newName = FileUtils.getNewFileName(newName, true, sentPrefix, this.indicator, "Datei benennen");
                             if (newName == null || "".equals(newName)) {
                                 break;
                             }
@@ -894,6 +894,12 @@ public class SendAction extends ProgressableAction {
 
                         if (this.documentTag != null && !("".equals(this.documentTag))) {
                             afs.setDocumentTag(newDoc.getId(), new DocumentTagsBean(newDoc.getId(), this.documentTag), true);
+                        }
+                        
+                        if(this.caseFolder != null) {
+                            ArrayList<String> docList = new ArrayList<>();
+                            docList.add(newDoc.getId());
+                            afs.moveDocumentsToFolder(docList, caseFolder.getId());
                         }
 
                         ArchiveFileHistoryBean historyDto = new ArchiveFileHistoryBean();
@@ -919,12 +925,12 @@ public class SendAction extends ProgressableAction {
             Store store = session.getStore(cu.getEmailInType());
             store.connect(cu.getEmailInServer(), cu.getEmailInUser(), cu.getEmailInPwd());
 
-            Folder folder = store.getFolder(FolderContainer.INBOX);
+            Folder folder = EmailUtils.getInboxFolder(store);
             if (!folder.isOpen()) {
                 folder.open(Folder.READ_WRITE);
             }
 
-            Folder sent = EmailUtils.getSentFolder(folder);
+            Folder sent = EmailUtils.getSentFolder(store);
             if (sent != null) {
                 this.progress("Kopiere Nachricht in 'Gesendet'...");
                 sent.open(Folder.READ_WRITE);
@@ -935,7 +941,6 @@ public class SendAction extends ProgressableAction {
 
             try {
                 EmailUtils.closeIfIMAP(folder);
-                //folder.close(true);
             } catch (Throwable t) {
                 log.error(t);
             }
@@ -955,7 +960,6 @@ public class SendAction extends ProgressableAction {
 
         } catch (Exception mex) {
             log.error(mex);
-//            JOptionPane.showMessageDialog(this, "Fehler beim Senden: " + mex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
             throw new Exception("Fehler beim Senden: " + mex.getMessage());
         }
         return true;

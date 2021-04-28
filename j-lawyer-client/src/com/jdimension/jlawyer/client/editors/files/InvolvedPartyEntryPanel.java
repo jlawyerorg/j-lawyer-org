@@ -679,11 +679,14 @@ import com.jdimension.jlawyer.client.events.EventConsumer;
 import com.jdimension.jlawyer.client.mail.SendEmailDialog;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.ServerSettings;
+import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
+import com.jdimension.jlawyer.client.utils.JTextFieldLimit;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.client.voip.PlaceCallDialog;
 import com.jdimension.jlawyer.client.voip.SendFaxDialog;
 import com.jdimension.jlawyer.client.voip.SendSmsDialog;
+import com.jdimension.jlawyer.client.voip.VoipUtils;
 import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
@@ -739,6 +742,10 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
         this.lblCustom1.setText(sset.getSetting(sset.DATA_CUSTOMFIELD_ARCHIVEFILE_INVOLVED_PREFIX + "1", "Eigenes Feld 1"));
         this.lblCustom2.setText(sset.getSetting(sset.DATA_CUSTOMFIELD_ARCHIVEFILE_INVOLVED_PREFIX + "2", "Eigenes Feld 2"));
         this.lblCustom3.setText(sset.getSetting(sset.DATA_CUSTOMFIELD_ARCHIVEFILE_INVOLVED_PREFIX + "3", "Eigenes Feld 3"));
+        
+        this.txtCustom1.setDocument(new JTextFieldLimit(249));
+        this.txtCustom2.setDocument(new JTextFieldLimit(249));
+        this.txtCustom3.setDocument(new JTextFieldLimit(249));
 
         try {
             ClientSettings settings = ClientSettings.getInstance();
@@ -860,7 +867,7 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
         txtCustom3 = new javax.swing.JTextField();
         lblUnderage = new javax.swing.JLabel();
 
-        mnuSendEmail.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/mail_send.png"))); // NOI18N
+        mnuSendEmail.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/mail_send_2.png"))); // NOI18N
         mnuSendEmail.setText("E-Mail verfassen");
         mnuSendEmail.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -1239,9 +1246,7 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
 
         } else {
 
-            ServerSettings set = ServerSettings.getInstance();
-            String mode = set.getSetting(set.SERVERCONF_VOIPMODE, "on");
-            if ("on".equalsIgnoreCase(mode)) {
+            if (UserSettings.getInstance().getCurrentUser().isVoipEnabled()) {
                 SendSmsDialog dlg = new SendSmsDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.a);
                 FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
                 dlg.setVisible(true);
@@ -1260,17 +1265,8 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
 
         } else {
 
-            ServerSettings set = ServerSettings.getInstance();
-            String mode = set.getSetting(set.SERVERCONF_VOIPMODE, "on");
-            if ("on".equalsIgnoreCase(mode)) {
-                PlaceCallDialog dlg = new PlaceCallDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.a, this.a.getMobile());
-                FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
-                dlg.setVisible(true);
-            } else {
-                JOptionPane.showMessageDialog(this, "Voice-over-IP - Integration ist nicht aktiviert!", "Anruf tätigen", JOptionPane.INFORMATION_MESSAGE);
-
-            }
-
+            VoipUtils.placeCall(this.a, this.a.getMobile());
+            
         }
 
     }//GEN-LAST:event_mnuCallMobileActionPerformed
@@ -1281,25 +1277,14 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
 
         } else {
 
-            ServerSettings set = ServerSettings.getInstance();
-            String mode = set.getSetting(set.SERVERCONF_VOIPMODE, "on");
-            if ("on".equalsIgnoreCase(mode)) {
-                PlaceCallDialog dlg = new PlaceCallDialog(EditorsRegistry.getInstance().getMainWindow(), true, this.a, this.a.getPhone());
-                FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
-                dlg.setVisible(true);
-            } else {
-                JOptionPane.showMessageDialog(this, "Voice-over-IP - Integration ist nicht aktiviert!", "Anruf tätigen", JOptionPane.INFORMATION_MESSAGE);
-
-            }
-
+            VoipUtils.placeCall(this.a, this.a.getPhone());
+            
         }
 
     }//GEN-LAST:event_mnuCallPhoneActionPerformed
 
     private void mnuSendFaxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSendFaxActionPerformed
-        ServerSettings set = ServerSettings.getInstance();
-        String mode = set.getSetting(set.SERVERCONF_VOIPMODE, "on");
-        if ("on".equalsIgnoreCase(mode)) {
+        if (UserSettings.getInstance().getCurrentUser().isVoipEnabled()) {
             ArrayList<AddressBean> faxList = new ArrayList<AddressBean>();
 
             faxList.addAll(this.container.getInvolvedPartiesAddress());

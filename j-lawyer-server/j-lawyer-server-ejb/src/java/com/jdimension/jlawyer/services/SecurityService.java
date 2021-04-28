@@ -663,6 +663,10 @@
  */
 package com.jdimension.jlawyer.services;
 
+import com.jdimension.jlawyer.persistence.AppRoleBean;
+import com.jdimension.jlawyer.persistence.AppRoleBeanFacadeLocal;
+import com.jdimension.jlawyer.persistence.AppUserBean;
+import com.jdimension.jlawyer.persistence.AppUserBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.ArchiveFileBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.ArchiveFileGroupsBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.Group;
@@ -702,6 +706,12 @@ public class SecurityService implements SecurityServiceRemote, SecurityServiceLo
     
     @EJB
     private ArchiveFileBeanFacadeLocal archiveFileFacade;
+    
+    @EJB
+    private AppUserBeanFacadeLocal userBeanFacade;
+    
+    @EJB
+    private AppRoleBeanFacadeLocal roleBeanFacade;
 
     @Override
     @RolesAllowed({"loginRole"})
@@ -808,6 +818,23 @@ public class SecurityService implements SecurityServiceRemote, SecurityServiceLo
             }
         }
         return groups;
+    }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public List<AppUserBean> getUsersHavingRole(String role) throws Exception {
+        List<AppUserBean> allUsers=this.userBeanFacade.findAll();
+        List<AppUserBean> resultList=new ArrayList<>();
+        for(AppUserBean u: allUsers) {
+            List<AppRoleBean> userRoles=this.roleBeanFacade.findByPrincipalId(u.getPrincipalId());
+            for(AppRoleBean r: userRoles) {
+                if(r.getRole().equalsIgnoreCase(role)) {
+                    resultList.add(u);
+                    break;
+                }
+            }
+        }
+        return resultList;
     }
 
 }

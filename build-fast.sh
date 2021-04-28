@@ -30,5 +30,5 @@ ant -buildfile j-lawyer-client/build.xml jar
 check_error $?
 
 # there is an OpenJDK bug on Ubuntu, causing Surefire tests to fail - skip tests for now
-mvn -f j-lawyer-backupmgr/pom.xml package -DskipTests
+mvn -f j-lawyer-backupmgr/pom.xml package -DskipTests -Djava.home=/home/jens/bin/jdk8u265-full/jre
 

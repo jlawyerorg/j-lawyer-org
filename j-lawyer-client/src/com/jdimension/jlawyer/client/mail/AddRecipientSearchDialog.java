@@ -696,7 +696,7 @@ public class AddRecipientSearchDialog extends javax.swing.JDialog {
     private JComponent nextFocus=null;
 
     /**
-     * Creates new form AddAddressSearchDialog
+     * Creates new form AddRecipientSearchDialog
      */
     public AddRecipientSearchDialog(JDialog parent, boolean modal, JTextField to, JComponent nextFocus) {
         super(parent, modal);

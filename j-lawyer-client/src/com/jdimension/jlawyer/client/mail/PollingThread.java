@@ -663,7 +663,6 @@
  */
 package com.jdimension.jlawyer.client.mail;
 
-import com.sun.mail.imap.IMAPFolder;
 import javax.mail.Folder;
 import org.apache.log4j.Logger;
 
@@ -695,7 +694,7 @@ public class PollingThread implements Runnable {
                 f.getMessageCount();
 
 
-                Thread.sleep(9*60000);
+                Thread.sleep(9l*60000l);
             }
 
         } catch (Throwable t) {

@@ -696,6 +696,14 @@ public class AppUserBeanFacade extends AbstractFacade<AppUserBean> implements Ap
         
         return u;
     }
+    
+    @Override
+    public AppUserBean findByPrincipalIdUnrestricted(String principalId) {
+        AppUserBean u=(AppUserBean)em.createNamedQuery("AppUserBean.findByPrincipalId").setParameter("principalId", principalId).getSingleResult();
+        
+        
+        return u;
+    }
 
     @Override
     @RolesAllowed("loginRole")

@@ -664,13 +664,13 @@ package org.jlawyer.persistence;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
+import java.sql.Statement;
 import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.sql.DataSource;
 import org.apache.log4j.Logger;
 import org.flywaydb.core.Flyway;
 import org.hibernate.boot.Metadata;
-import org.hibernate.cfg.Configuration;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.integrator.spi.Integrator;
 import org.hibernate.service.spi.SessionFactoryServiceRegistry;
@@ -683,12 +683,12 @@ public class DatabaseMigrator implements Integrator {
 
     private static final Logger log = Logger.getLogger(DatabaseMigrator.class.getName());
 
-    private static final String lock = "lockObject";
+    private static final Object lock = new Object();
 
     private void executeUpdate(String sql, Connection dbCon) {
         log.info("running database migration: " + sql);
-        try {
-            dbCon.createStatement().executeUpdate(sql);
+        try (Statement st=dbCon.createStatement()) {
+            st.executeUpdate(sql);
         } catch (Throwable t) {
             log.error("failed: " + sql, t);
         }
@@ -697,14 +697,13 @@ public class DatabaseMigrator implements Integrator {
     private String getCurrentDatabaseVersion(Connection dbCon) {
         // select settingValue from ServerSettingsBean where settingKey = 'jlawyer.server.database.version'
         String dbVersion = "unknown";
-        try {
-            ResultSet rs = dbCon.createStatement().executeQuery("select settingValue from server_settings where settingKey = 'jlawyer.server.database.version'");
+        try (Statement st=dbCon.createStatement();
+                ResultSet rs = st.executeQuery("select settingValue from server_settings where settingKey = 'jlawyer.server.database.version'")) {
+            
             if (rs.next()) {
 
                 dbVersion = rs.getString(1);
             }
-
-            rs.close();
 
         } catch (Throwable t) {
             log.error("Could not determine database schema version", t);
@@ -727,27 +726,11 @@ public class DatabaseMigrator implements Integrator {
             try {
                 Context ctx = new InitialContext();
                 DataSource ds = (DataSource) ctx.lookup("java:/jlawyerdb");
-                //Connection con = ds.getConnection();
-
+                
                 Flyway flyway = Flyway.configure().dataSource(ds).baselineVersion("1.9.1.0").baselineOnMigrate(true).load();
                 
                 flyway.migrate();
 
-//
-//                String currentDbVersion = this.getCurrentDatabaseVersion(con);
-//                if ("01910".equals(currentDbVersion) || "01900".equals(currentDbVersion)) {
-//                    // migrate
-//                    log.info("migrating to 1.10.0.0");
-//                    this.executeUpdate("insert into ServerSettingsBean(settingKey, settingValue) values('jlawyer.server.database.version','1.10.0.0') ON DUPLICATE KEY UPDATE settingValue     = '1.10.0.0'", con);
-//
-//                }
-//
-//                currentDbVersion = this.getCurrentDatabaseVersion(con);
-//                if ("1.10.0.0".equals(currentDbVersion)) {
-//                    // migrate
-//                }
-//
-//                con.close();
             } catch (Throwable me) {
                 log.error("exception caught", me);
             }

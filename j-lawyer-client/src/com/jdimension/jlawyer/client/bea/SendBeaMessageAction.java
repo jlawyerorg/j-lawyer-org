@@ -673,6 +673,7 @@ import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileHistoryBean;
+import com.jdimension.jlawyer.persistence.CaseFolder;
 import com.jdimension.jlawyer.persistence.DocumentTagsBean;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
@@ -681,6 +682,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Enumeration;
+import java.util.List;
 import javax.swing.JDialog;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
@@ -693,7 +695,6 @@ import org.jlawyer.bea.model.BeaListItem;
 import org.jlawyer.bea.model.Message;
 import org.jlawyer.bea.model.MessageExport;
 import org.jlawyer.bea.model.ProcessCard;
-import themes.colors.DefaultColorTheme;
 
 /**
  *
@@ -702,24 +703,25 @@ import themes.colors.DefaultColorTheme;
 public class SendBeaMessageAction extends ProgressableAction {
 
     private static final Logger log = Logger.getLogger(SendBeaMessageAction.class.getName());
-    private static SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy, HH:mm");
-    ArrayList<BeaAttachmentMetadata> attachments = null;
+    private SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy, HH:mm");
+    List<BeaAttachmentMetadata> attachments = null;
     private AppUserBean cu = null;
     private boolean readReceipt = false;
     private BeaListItem authority = null;
-    private Enumeration to = null;
+    private Enumeration<Identity> to = null;
     private String subject = "";
     private String body = "";
     private String fromSafeId = "";
     private ArchiveFileBean archiveFile = null;
+    private CaseFolder folder=null;
     private String documentTag = null;
 
     private String azSender = null;
     private String azRecipient = null;
-    
-    private String msgType=Message.MESSAGETYPE_ALLGEMEINE_NACHRICHT;
 
-    public SendBeaMessageAction(ProgressIndicator i, JDialog cleanAfter, String messageType, String fromSafeId, ArrayList<BeaAttachmentMetadata> attachmentMetadata, AppUserBean cu, boolean readReceipt, BeaListItem authority, Enumeration to, String subject, String body, String documentTag, String azSender, String azRecipient) {
+    private String msgType = Message.MESSAGETYPE_ALLGEMEINE_NACHRICHT;
+
+    public SendBeaMessageAction(ProgressIndicator i, JDialog cleanAfter, String messageType, String fromSafeId, List<BeaAttachmentMetadata> attachmentMetadata, AppUserBean cu, boolean readReceipt, BeaListItem authority, Enumeration<Identity> to, String subject, String body, String documentTag, String azSender, String azRecipient) {
         super(i, false, cleanAfter);
         this.attachments = attachmentMetadata;
         this.cu = cu;
@@ -733,12 +735,13 @@ public class SendBeaMessageAction extends ProgressableAction {
         this.authority = authority;
         this.azSender = azSender;
         this.azRecipient = azRecipient;
-        this.msgType=messageType;
+        this.msgType = messageType;
     }
 
-    public SendBeaMessageAction(ProgressIndicator i, JDialog cleanAfter, String messageType, String fromSafeId, ArrayList<BeaAttachmentMetadata> attachmentMetadata, AppUserBean cu, boolean readReceipt, BeaListItem authority, Enumeration to, String subject, String body, ArchiveFileBean af, String documentTag, String azSender, String azRecipient) {
+    public SendBeaMessageAction(ProgressIndicator i, JDialog cleanAfter, String messageType, String fromSafeId, List<BeaAttachmentMetadata> attachmentMetadata, AppUserBean cu, boolean readReceipt, BeaListItem authority, Enumeration<Identity> to, String subject, String body, ArchiveFileBean af, String documentTag, String azSender, String azRecipient, CaseFolder folder) {
         this(i, cleanAfter, messageType, fromSafeId, attachmentMetadata, cu, readReceipt, authority, to, subject, body, documentTag, azSender, azRecipient);
         this.archiveFile = af;
+        this.folder=folder;
     }
 
     @Override
@@ -776,18 +779,12 @@ public class SendBeaMessageAction extends ProgressableAction {
                 msg.setReferenceJustice(this.azRecipient);
             }
 
-//            if (this.archiveFile != null) {
-//                msg.setReferenceNumber(this.archiveFile.getFileNumber());
-//            }
-
             while (this.to.hasMoreElements()) {
-                Object o = this.to.nextElement();
-                if (o instanceof Identity) {
-                    String safeId = ((Identity) o).getSafeId();
-                    recipients.add(safeId);
-                    recipientsText.append(((Identity) o).toString());
-                    recipientsText.append("  ");
-                }
+                Identity o = this.to.nextElement();
+                String safeId = ((Identity) o).getSafeId();
+                recipients.add(safeId);
+                recipientsText.append(((Identity) o).toString());
+                recipientsText.append("  ");
             }
 
             String senderSafeId = this.fromSafeId;
@@ -815,6 +812,7 @@ public class SendBeaMessageAction extends ProgressableAction {
         } catch (BeaWrapperException ex) {
             log.error(ex);
             JOptionPane.showMessageDialog(this.indicator, "Nachricht kann nicht gesendet werden: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            throw ex;
         }
 
         ProcessCard p = sentMessage.getProcessCard();
@@ -837,12 +835,10 @@ public class SendBeaMessageAction extends ProgressableAction {
 
                 this.progress("Laden der Nachricht...");
 
-                //Message msgEx = bea.getMessage("" + sentId, fromSafeId);
                 Message msgEx = sentMessage;
 
                 this.progress("Warten auf EGVP-Laufzettel...");
 
-                
                 if (containsEgvpRecipient && p == null) {
                     long maxWaitTime = 120000l;
                     long start = System.currentTimeMillis();
@@ -874,7 +870,7 @@ public class SendBeaMessageAction extends ProgressableAction {
                     if (receivedPrefix == null) {
                         receivedPrefix = new java.util.Date();
                     }
-                    String newName = com.jdimension.jlawyer.client.utils.FileUtils.getNewFileName(mex.getFileName(), true, receivedPrefix, this.indicator);
+                    String newName = com.jdimension.jlawyer.client.utils.FileUtils.getNewFileName(mex.getFileName(), true, receivedPrefix, this.indicator, "Datei benennen");
                     if (newName == null) {
                         return false;
                     }
@@ -890,19 +886,37 @@ public class SendBeaMessageAction extends ProgressableAction {
                         newName = newName + ".bea";
                     }
 
-                    ArchiveFileDocumentsBean newDoc = afs.addDocument(this.archiveFile.getId(), newName, mex.getContent(), "");
-
-                    if (this.documentTag != null && !("".equals(this.documentTag))) {
-                        afs.setDocumentTag(newDoc.getId(), new DocumentTagsBean(newDoc.getId(), this.documentTag), true);
+                    boolean documentExists = afs.doesDocumentExist(this.archiveFile.getId(), newName);
+                    while (documentExists) {
+                        newName = com.jdimension.jlawyer.client.utils.FileUtils.getNewFileName(newName, true, receivedPrefix, this.indicator, "Datei benennen");
+                        if (newName == null || "".equals(newName)) {
+                            break;
+                        }
+                        documentExists = afs.doesDocumentExist(this.archiveFile.getId(), newName);
                     }
 
-                    ArchiveFileHistoryBean historyDto = new ArchiveFileHistoryBean();
-                    historyDto.setChangeDate(new Date());
-                    historyDto.setChangeDescription("beA-Nachricht gesendet an " + recipientsText.toString() + ": " + msg.getSubject());
-                    afs.addHistory(this.archiveFile.getId(), historyDto);
+                    if (newName != null) {
 
-                    EventBroker eb = EventBroker.getInstance();
-                    eb.publishEvent(new DocumentAddedEvent(newDoc));
+                        ArchiveFileDocumentsBean newDoc = afs.addDocument(this.archiveFile.getId(), newName, mex.getContent(), "");
+
+                        if (this.documentTag != null && !("".equals(this.documentTag))) {
+                            afs.setDocumentTag(newDoc.getId(), new DocumentTagsBean(newDoc.getId(), this.documentTag), true);
+                        }
+                        
+                        if(this.folder != null) {
+                            ArrayList<String> docList = new ArrayList<>();
+                            docList.add(newDoc.getId());
+                            afs.moveDocumentsToFolder(docList, folder.getId());
+                        }
+
+                        ArchiveFileHistoryBean historyDto = new ArchiveFileHistoryBean();
+                        historyDto.setChangeDate(new Date());
+                        historyDto.setChangeDescription("beA-Nachricht gesendet an " + recipientsText.toString() + ": " + msg.getSubject());
+                        afs.addHistory(this.archiveFile.getId(), historyDto);
+
+                        EventBroker eb = EventBroker.getInstance();
+                        eb.publishEvent(new DocumentAddedEvent(newDoc));
+                    }
                 }
             } else {
                 this.progress("Überspringe Speichern in Akte...");
@@ -913,10 +927,10 @@ public class SendBeaMessageAction extends ProgressableAction {
             storeException = t;
         }
 
-        boolean egvpError=false;
-        final ProcessCard pCheck=p;
+        boolean egvpError = false;
+        final ProcessCard pCheck = p;
         if (containsEgvpRecipient && p == null) {
-            egvpError=true;
+            egvpError = true;
             SwingUtilities.invokeLater(new Runnable() {
                 @Override
                 public void run() {
@@ -926,18 +940,18 @@ public class SendBeaMessageAction extends ProgressableAction {
             });
             Thread.sleep(3000);
         } else if (containsEgvpRecipient && p != null) {
-            if(!(p.isSuccess())) {
-                egvpError=true;
+            if (!(p.isSuccess())) {
+                egvpError = true;
             }
             SwingUtilities.invokeLater(new Runnable() {
                 @Override
                 public void run() {
-                    if(pCheck.isSuccess()) {
+                    if (pCheck.isSuccess()) {
                         indicator.setProgressStringSuccess("Nachricht erfolgreich verschickt.");
                     } else {
                         indicator.setProgressStringError("EGVP-Laufzettel: fehlerhafter Nachrichtenversand!");
                     }
-                    
+
                 }
 
             });
@@ -955,8 +969,8 @@ public class SendBeaMessageAction extends ProgressableAction {
         if (storeException != null) {
             throw new Exception("Fehler beim Speichern: " + storeException.getMessage());
         }
-        
-        if(egvpError) {
+
+        if (egvpError) {
             throw new Exception("Nachricht enthielt keinen EGVP-Laufzettel oder der Laufzettel enthielt Fehler - bitte Nachrichtenversand im beA prüfen.");
         }
 

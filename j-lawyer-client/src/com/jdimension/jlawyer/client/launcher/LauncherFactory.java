@@ -687,9 +687,6 @@ public class LauncherFactory {
 
     private static final Logger log = Logger.getLogger(LauncherFactory.class.getName());
 
-//    public static Launcher getLauncher(String fileName, byte[] content, boolean readOnly) throws Exception {
-//        return getLauncher(fileName, content, readOnly, null, null);
-//    }
     public static Launcher getMicrosoftOfficeLauncher(String fileName, byte[] content, ObservedDocumentStore store) throws Exception {
         String url = createTempFile(fileName, content, store.isReadOnly());
 
@@ -751,7 +748,7 @@ public class LauncherFactory {
         // first check for internal launchers
         String lowerFileName = fileName.toLowerCase();
 
-        if (lowerFileName.equalsIgnoreCase("xjustiz_nachricht.xml")) {
+        if (lowerFileName.endsWith("xjustiz_nachricht.xml")) {
             XjustizLauncher xjl = new XjustizLauncher(url, store);
             xjl.setContent(new String(content));
             return xjl;

@@ -664,9 +664,9 @@
 package com.jdimension.jlawyer.persistence.utils;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
@@ -678,51 +678,47 @@ import org.apache.log4j.Logger;
  * @author jens
  */
 public class JDBCUtils {
-    
-    private static Logger log=Logger.getLogger(JDBCUtils.class.getName());
-    
-    private DataSource ds=null;
-    
-    /** Creates a new instance of JDBCUtils */
+
+    private static Logger log = Logger.getLogger(JDBCUtils.class.getName());
+
+    private DataSource ds = null;
+
+    /**
+     * Creates a new instance of JDBCUtils
+     */
     public JDBCUtils() {
         try {
             Context c = new InitialContext();
             ds = (DataSource) c.lookup("java:/jlawyerdb");
-        } catch(NamingException ne) {
-            log.error("exception caught" ,ne);
+        } catch (NamingException ne) {
+            log.error("exception caught", ne);
         }
     }
-    
+
     public Connection getConnection() throws SQLException {
         return this.ds.getConnection();
     }
-    
+
     public int getRowCount(String tableName) throws SQLException {
-        Connection con=null;
-        Statement st=null;
-        ResultSet rs=null;
-        int count=0;
-        try {
-            con=this.ds.getConnection();
-            st=con.createStatement();
-            rs=st.executeQuery("select count(*) from " + tableName);
-            
-            if(rs.next())
-                count=rs.getInt(1);
-            
-        } finally {
-            try {
-                rs.close();
-            } catch (Throwable t) {log.error(t);}
-            try {
-                st.close();
-            } catch (Throwable t) {log.error(t);}
-            try {
-                con.close();
-            } catch (Throwable t) {log.error(t);}
+
+        // avoid SQL injections
+        if (!(tableName.matches("[A-Za-z_]+"))) {
+            log.error(tableName + " is not a valid table name!");
+            return 0;
+        }
+
+        int count = 0;
+        try (Connection con = this.ds.getConnection();
+                PreparedStatement st = con.prepareStatement("select count(*) from " + tableName);
+                ResultSet rs = st.executeQuery();) {
+
+            if (rs.next()) {
+                count = rs.getInt(1);
+            }
+
         }
         return count;
-        
+
     }
-    
+
 }

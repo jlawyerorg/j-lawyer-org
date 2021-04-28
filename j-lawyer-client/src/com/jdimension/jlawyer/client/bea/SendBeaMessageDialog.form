@@ -594,10 +594,15 @@
                                   <EmptySpace max="-2" attributes="0"/>
                                   <Group type="103" groupAlignment="0" attributes="0">
                                       <Component id="cmbReviewAssignee" alignment="0" max="32767" attributes="0"/>
-                                      <Group type="102" alignment="0" attributes="0">
-                                          <Component id="txtReviewDateField" min="-2" pref="135" max="-2" attributes="0"/>
-                                          <EmptySpace max="-2" attributes="0"/>
-                                          <Component id="cmdShowReviewSelector" min="-2" max="-2" attributes="0"/>
+                                      <Group type="102" attributes="0">
+                                          <Group type="103" groupAlignment="0" attributes="0">
+                                              <Component id="quickDateSelectionPanel" min="-2" max="-2" attributes="0"/>
+                                              <Group type="102" alignment="0" attributes="0">
+                                                  <Component id="txtReviewDateField" min="-2" pref="135" max="-2" attributes="0"/>
+                                                  <EmptySpace max="-2" attributes="0"/>
+                                                  <Component id="cmdShowReviewSelector" min="-2" max="-2" attributes="0"/>
+                                              </Group>
+                                          </Group>
                                           <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                                       </Group>
                                   </Group>
@@ -630,6 +635,9 @@
                               </Group>
                               <Component id="cmdShowReviewSelector" alignment="0" min="-2" max="-2" attributes="0"/>
                           </Group>
+                          <EmptySpace max="-2" attributes="0"/>
+                          <Component id="quickDateSelectionPanel" min="-2" max="-2" attributes="0"/>
+                          <EmptySpace max="32767" attributes="0"/>
                       </Group>
                   </Group>
                 </DimensionLayout>
@@ -701,8 +709,12 @@
                   <Properties>
                     <Property name="editable" type="boolean" value="false"/>
                     <Property name="horizontalAlignment" type="int" value="4"/>
+                    <Property name="toolTipText" type="java.lang.String" value="Doppelklick um heutiges Datum zu &#xfc;bernehmen"/>
                     <Property name="enabled" type="boolean" value="false"/>
                   </Properties>
+                  <Events>
+                    <EventHandler event="mouseClicked" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="txtReviewDateFieldMouseClicked"/>
+                  </Events>
                 </Component>
                 <Component class="javax.swing.JComboBox" name="cmbReviewAssignee">
                   <Properties>
@@ -728,6 +740,8 @@
                   <Events>
                     <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="radioReviewTypeNoneActionPerformed"/>
                   </Events>
+                </Component>
+                <Component class="com.jdimension.jlawyer.client.components.QuickDateSelectionPanel" name="quickDateSelectionPanel">
                 </Component>
               </SubComponents>
             </Container>
@@ -875,7 +889,7 @@
                           <EmptySpace max="-2" attributes="0"/>
                           <Component id="cmbTemplates" min="-2" max="-2" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
-                          <Component id="pnlParties" pref="171" max="32767" attributes="0"/>
+                          <Component id="pnlParties" pref="128" max="32767" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
                       </Group>
                   </Group>

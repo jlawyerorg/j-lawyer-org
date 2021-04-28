@@ -681,13 +681,11 @@ public abstract class ScanAction {
     protected String archiveFileId=null;
     protected String description=null;
     protected JTable actionsTable=null;
-    protected JTable filesTable=null;
     private String caseTag=null;
     private String documentTag=null;
     
-    public ScanAction(JTable actionsTable, JTable filesTable) {
+    public ScanAction(JTable actionsTable) {
         this.actionsTable=actionsTable;
-        this.filesTable=filesTable;
     }
     
     public ScanAction(String fileName, String description, String archiveFileKey) {

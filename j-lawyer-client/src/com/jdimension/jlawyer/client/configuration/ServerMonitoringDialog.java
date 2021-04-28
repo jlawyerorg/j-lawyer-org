@@ -680,19 +680,19 @@ import themes.colors.DefaultColorTheme;
  * @author jens
  */
 public class ServerMonitoringDialog extends javax.swing.JDialog {
-    
+
     private static Logger log = Logger.getLogger(ServerMonitoringDialog.class.getName());
-    private static DecimalFormat diskFormat=new DecimalFormat("0.0");
-    
+    private static DecimalFormat diskFormat = new DecimalFormat("0.0");
+
     /**
      * Creates new form BackupConfigurationDialog
      */
     public ServerMonitoringDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
-        
-        boolean currentlyAdmin=false;
-        
+
+        boolean currentlyAdmin = false;
+
         ClientSettings settings = ClientSettings.getInstance();
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
@@ -709,6 +709,8 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
                 this.cmbVMMemError.setEnabled(false);
                 this.cmbVMMemWarn.setEnabled(false);
                 this.chkWarnings.setEnabled(false);
+                this.chkWarningsBackupSuccess.setEnabled(false);
+                this.chkWarningsBackupFailure.setEnabled(false);
                 this.chkMonitorCpu.setEnabled(false);
                 this.chkMonitorDisk.setEnabled(false);
                 this.chkMonitorJava.setEnabled(false);
@@ -726,126 +728,163 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
             log.error(ex);
             //JOptionPane.showMessageDialog(this, "Datensicherungsdialog kann nicht gestartet werden: " + ex.getMessage(), "Fehler", JOptionPane.INFORMATION_MESSAGE);
         }
-        
-        ServerSettings set=ServerSettings.getInstance();
-        String cpuE=set.getSetting(set.SERVERCONF_MONITOR_CPUERROR, "90");
+
+        ServerSettings set = ServerSettings.getInstance();
+        String cpuE = set.getSetting(set.SERVERCONF_MONITOR_CPUERROR, "90");
         this.cmbCpuError.setSelectedItem(cpuE);
-        String cpuW=set.getSetting(set.SERVERCONF_MONITOR_CPUWARN, "80");
+        String cpuW = set.getSetting(set.SERVERCONF_MONITOR_CPUWARN, "80");
         this.cmbCpuWarn.setSelectedItem(cpuW);
-        String memE=set.getSetting(set.SERVERCONF_MONITOR_MEMERROR, "90");
+        String memE = set.getSetting(set.SERVERCONF_MONITOR_MEMERROR, "90");
         this.cmbMemError.setSelectedItem(memE);
-        String memW=set.getSetting(set.SERVERCONF_MONITOR_MEMWARN, "80");
+        String memW = set.getSetting(set.SERVERCONF_MONITOR_MEMWARN, "80");
         this.cmbMemWarn.setSelectedItem(memW);
-        String diskE=set.getSetting(set.SERVERCONF_MONITOR_DISKERROR, "90");
+        String diskE = set.getSetting(set.SERVERCONF_MONITOR_DISKERROR, "90");
         this.cmbDiskError.setSelectedItem(diskE);
-        String diskW=set.getSetting(set.SERVERCONF_MONITOR_DISKWARN, "80");
+        String diskW = set.getSetting(set.SERVERCONF_MONITOR_DISKWARN, "80");
         this.cmbDiskWarn.setSelectedItem(diskW);
-        String vmE=set.getSetting(set.SERVERCONF_MONITOR_VMERROR, "85");
+        String vmE = set.getSetting(set.SERVERCONF_MONITOR_VMERROR, "85");
         this.cmbVMMemError.setSelectedItem(vmE);
-        String vmW=set.getSetting(set.SERVERCONF_MONITOR_VMWARN, "75");
+        String vmW = set.getSetting(set.SERVERCONF_MONITOR_VMWARN, "75");
         this.cmbVMMemWarn.setSelectedItem(vmW);
-        
-        if(currentlyAdmin) {
-            String notify=set.getSetting(set.SERVERCONF_MONITOR_NOTIFY, "off");
-            if("off".equalsIgnoreCase(notify))
+
+        if (currentlyAdmin) {
+            String notify = set.getSetting(set.SERVERCONF_MONITOR_NOTIFY, "off");
+            if ("off".equalsIgnoreCase(notify)) {
                 this.chkWarnings.setSelected(false);
-            else
+            } else {
                 this.chkWarnings.setSelected(true);
+            }
             
-            String cpuEnabled=set.getSetting(set.SERVERCONF_MONITOR_ENABLED_CPU, "on");
-            if("off".equalsIgnoreCase(cpuEnabled))
+            notify = set.getSetting(set.SERVERCONF_MONITOR_NOTIFY_BACKUPSUCCESS, "on");
+            if ("off".equalsIgnoreCase(notify)) {
+                this.chkWarningsBackupSuccess.setSelected(false);
+            } else {
+                this.chkWarningsBackupSuccess.setSelected(true);
+            }
+            notify = set.getSetting(set.SERVERCONF_MONITOR_NOTIFY_BACKUPFAILURE, "on");
+            if ("off".equalsIgnoreCase(notify)) {
+                this.chkWarningsBackupFailure.setSelected(false);
+            } else {
+                this.chkWarningsBackupFailure.setSelected(true);
+            }
+
+            String cpuEnabled = set.getSetting(set.SERVERCONF_MONITOR_ENABLED_CPU, "on");
+            if ("off".equalsIgnoreCase(cpuEnabled)) {
                 this.chkMonitorCpu.setSelected(false);
-            else
+            } else {
                 this.chkMonitorCpu.setSelected(true);
-            
-            String ramEnabled=set.getSetting(set.SERVERCONF_MONITOR_ENABLED_RAM, "on");
-            if("off".equalsIgnoreCase(ramEnabled))
+            }
+
+            String ramEnabled = set.getSetting(set.SERVERCONF_MONITOR_ENABLED_RAM, "on");
+            if ("off".equalsIgnoreCase(ramEnabled)) {
                 this.chkMonitorRam.setSelected(false);
-            else
+            } else {
                 this.chkMonitorRam.setSelected(true);
-            
-            String diskEnabled=set.getSetting(set.SERVERCONF_MONITOR_ENABLED_DISK, "on");
-            if("off".equalsIgnoreCase(diskEnabled))
+            }
+
+            String diskEnabled = set.getSetting(set.SERVERCONF_MONITOR_ENABLED_DISK, "on");
+            if ("off".equalsIgnoreCase(diskEnabled)) {
                 this.chkMonitorDisk.setSelected(false);
-            else
+            } else {
                 this.chkMonitorDisk.setSelected(true);
-            
-            String javaEnabled=set.getSetting(set.SERVERCONF_MONITOR_ENABLED_JAVA, "on");
-            if("off".equalsIgnoreCase(javaEnabled))
+            }
+
+            String javaEnabled = set.getSetting(set.SERVERCONF_MONITOR_ENABLED_JAVA, "on");
+            if ("off".equalsIgnoreCase(javaEnabled)) {
                 this.chkMonitorJava.setSelected(false);
-            else
+            } else {
                 this.chkMonitorJava.setSelected(true);
-            
+            }
+
             this.txtPassword.setText(set.getSetting(set.SERVERCONF_MONITOR_SMTPPASSWORD, ""));
             this.txtSmtp.setText(set.getSetting(set.SERVERCONF_MONITOR_SMTPSERVER, ""));
             this.txtSmtpPort.setText(set.getSetting(set.SERVERCONF_MONITOR_SMTPPORT, ""));
             this.txtUser.setText(set.getSetting(set.SERVERCONF_MONITOR_SMTPUSER, ""));
             this.txtSenderName.setText(set.getSetting(set.SERVERCONF_MONITOR_SMTPSENDERNAME, ""));
             this.txtRecipient.setText(set.getSetting(set.SERVERCONF_MONITOR_SMTPTO, ""));
-            
-            String ssl=set.getSetting(set.SERVERCONF_MONITOR_SMTPSSL, "false");
-            if("true".equalsIgnoreCase(ssl))
+
+            String ssl = set.getSetting(set.SERVERCONF_MONITOR_SMTPSSL, "false");
+            if ("true".equalsIgnoreCase(ssl)) {
                 this.chkSsl.setSelected(true);
-            else
+            } else {
                 this.chkSsl.setSelected(false);
-            
-            String startTls=set.getSetting(set.SERVERCONF_MONITOR_SMTPSTARTTLS, "false");
-            if("true".equalsIgnoreCase(startTls))
+            }
+
+            String startTls = set.getSetting(set.SERVERCONF_MONITOR_SMTPSTARTTLS, "false");
+            if ("true".equalsIgnoreCase(startTls)) {
                 this.chkEmailStartTls.setSelected(true);
-            else
+            } else {
                 this.chkEmailStartTls.setSelected(false);
+            }
         }
-        
+
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            MonitoringSnapshot s=locator.lookupSystemManagementRemote().getMonitoringSnapshot();
+            MonitoringSnapshot s = locator.lookupSystemManagementRemote().getMonitoringSnapshot();
             this.taStatus.setText(s.getLastStatus());
             this.prgCpu.setBackground(DefaultColorTheme.COLOR_LIGHT_GREY);
             this.prgCpu.setMaximum(100);
             this.prgCpu.setMinimum(0);
-            int value=(int)s.getCpuAverage();
+            int value = (int) s.getCpuAverage();
             this.prgCpu.setValue(value);
             this.prgCpu.setString(value + "%");
             this.setForeground(prgCpu, cpuE, cpuW, value);
-            
+
             this.prgDisk.setBackground(DefaultColorTheme.COLOR_LIGHT_GREY);
             this.prgDisk.setMinimum(0);
             this.prgDisk.setMaximum(100);
-            this.prgDisk.setValue((int)(s.getDiskUse()/(s.getDiskMax()/100)));
-            this.prgDisk.setString(diskFormat.format(s.getDiskUse()/(1024*1024*1024)) + "GB / " + diskFormat.format(s.getDiskMax()/(1024*1024*1024)) + "GB");
+            if (s.getDiskMax() > 0) {
+                this.prgDisk.setValue((int) (s.getDiskUse() / (s.getDiskMax() / 100)));
+                this.prgDisk.setString(diskFormat.format(s.getDiskUse() / (1024 * 1024 * 1024)) + "GB / " + diskFormat.format(s.getDiskMax() / (1024 * 1024 * 1024)) + "GB");
+            } else {
+                log.warn("disk max value is 0!");
+                this.prgDisk.setValue(99);
+                this.prgDisk.setString("unbekannt");
+            }
             this.setForeground(prgDisk, diskE, diskW, prgDisk.getValue());
-            
+
             this.prgMemory.setBackground(DefaultColorTheme.COLOR_LIGHT_GREY);
             this.prgMemory.setMinimum(0);
             this.prgMemory.setMaximum(100);
-            this.prgMemory.setValue((int)(s.getMemoryUse()/(s.getMemoryMax()/100)));
-            this.prgMemory.setString(diskFormat.format(s.getMemoryUse()/(1024*1024)) + "MB / " + diskFormat.format(s.getMemoryMax()/(1024*1024)) + "MB");
+            if (s.getMemoryMax() > 0) {
+                this.prgMemory.setValue((int) (s.getMemoryUse() / (s.getMemoryMax() / 100)));
+                this.prgMemory.setString(diskFormat.format(s.getMemoryUse() / (1024 * 1024)) + "MB / " + diskFormat.format(s.getMemoryMax() / (1024 * 1024)) + "MB");
+            } else {
+                this.prgMemory.setValue(99);
+                this.prgMemory.setString("unbekannt");
+            }
             this.setForeground(prgMemory, memE, memW, prgMemory.getValue());
-            
+
             this.prgVMMemory.setBackground(DefaultColorTheme.COLOR_LIGHT_GREY);
             this.prgVMMemory.setMinimum(0);
             this.prgVMMemory.setMaximum(100);
-            this.prgVMMemory.setValue((int)(s.getVmMemoryUse()/(s.getVmMemoryMax()/100)));
-            this.prgVMMemory.setString(diskFormat.format(s.getVmMemoryUse()/(1024*1024)) + "MB / " + diskFormat.format(s.getVmMemoryMax()/(1024*1024)) + "MB");
+            if (s.getVmMemoryMax() > 0) {
+                this.prgVMMemory.setValue((int) (s.getVmMemoryUse() / (s.getVmMemoryMax() / 100)));
+                this.prgVMMemory.setString(diskFormat.format(s.getVmMemoryUse() / (1024 * 1024)) + "MB / " + diskFormat.format(s.getVmMemoryMax() / (1024 * 1024)) + "MB");
+            } else {
+                this.prgVMMemory.setValue(99);
+                this.prgVMMemory.setString("unbekannt");
+            }
             this.setForeground(prgVMMemory, vmE, vmW, prgVMMemory.getValue());
-            
+
         } catch (Exception ex) {
             log.error(ex);
             JOptionPane.showMessageDialog(this, "Monitoringwerte können nicht geladen werden: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
-            
+
         }
-        
+
     }
-    
-    private void setForeground (JProgressBar b, String errorLevel, String warnLevel, int value) {
-        int e=Integer.parseInt(errorLevel);
-        int w=Integer.parseInt(warnLevel);
-        if(value>=e)
+
+    private void setForeground(JProgressBar b, String errorLevel, String warnLevel, int value) {
+        int e = Integer.parseInt(errorLevel);
+        int w = Integer.parseInt(warnLevel);
+        if (value >= e) {
             b.setForeground(DefaultColorTheme.COLOR_LOGO_RED);
-        else if(value>=w)
+        } else if (value >= w) {
             b.setForeground(Color.ORANGE.darker().darker());
-        else
+        } else {
             b.setForeground(DefaultColorTheme.COLOR_LOGO_GREEN);
+        }
     }
 
     /**
@@ -914,6 +953,8 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
         jLabel21 = new javax.swing.JLabel();
         txtSmtpPort = new javax.swing.JTextField();
         cmdTestMail = new javax.swing.JButton();
+        chkWarningsBackupFailure = new javax.swing.JCheckBox();
+        chkWarningsBackupSuccess = new javax.swing.JCheckBox();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Servermonitoring");
@@ -1013,7 +1054,7 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jLabel5)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 283, Short.MAX_VALUE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 343, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -1181,6 +1222,10 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
             }
         });
 
+        chkWarningsBackupFailure.setText("bei fehlgeschlagener Datensicherung");
+
+        chkWarningsBackupSuccess.setText("bei erfolgreicher Datensicherung (Zusammenfassung)");
+
         javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
         jPanel4.setLayout(jPanel4Layout);
         jPanel4Layout.setHorizontalGroup(
@@ -1214,7 +1259,9 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
                                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                         .addComponent(chkEmailStartTls)
                                         .addGap(2, 2, 2)
-                                        .addComponent(chkSsl)))
+                                        .addComponent(chkSsl))
+                                    .addComponent(chkWarningsBackupFailure)
+                                    .addComponent(chkWarningsBackupSuccess))
                                 .addGap(0, 0, Short.MAX_VALUE)))))
                 .addContainerGap())
         );
@@ -1222,6 +1269,10 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
             jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel4Layout.createSequentialGroup()
                 .addComponent(chkWarnings)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(chkWarningsBackupSuccess)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(chkWarningsBackupFailure)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel6)
@@ -1299,8 +1350,7 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(cmdCancel)
-                    .addComponent(cmdSave))
-                .addContainerGap())
+                    .addComponent(cmdSave)))
         );
 
         jTabbedPane1.getAccessibleContext().setAccessibleDescription("");
@@ -1309,7 +1359,7 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void cmdSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveActionPerformed
-        ServerSettings set=ServerSettings.getInstance();
+        ServerSettings set = ServerSettings.getInstance();
 
         set.setSetting(set.SERVERCONF_MONITOR_CPUERROR, this.cmbCpuError.getSelectedItem().toString());
         set.setSetting(set.SERVERCONF_MONITOR_CPUWARN, this.cmbCpuWarn.getSelectedItem().toString());
@@ -1318,49 +1368,67 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
         set.setSetting(set.SERVERCONF_MONITOR_DISKERROR, this.cmbDiskError.getSelectedItem().toString());
         set.setSetting(set.SERVERCONF_MONITOR_DISKWARN, this.cmbDiskWarn.getSelectedItem().toString());
         set.setSetting(set.SERVERCONF_MONITOR_VMERROR, this.cmbVMMemError.getSelectedItem().toString());
-        set.setSetting(set.SERVERCONF_MONITOR_VMWARN, this.cmbVMMemWarn.getSelectedItem().toString());        
-        
-        if(this.chkWarnings.isSelected())
+        set.setSetting(set.SERVERCONF_MONITOR_VMWARN, this.cmbVMMemWarn.getSelectedItem().toString());
+
+        if (this.chkWarnings.isSelected()) {
             set.setSetting(set.SERVERCONF_MONITOR_NOTIFY, "on");
-        else 
+        } else {
             set.setSetting(set.SERVERCONF_MONITOR_NOTIFY, "off");
+        }
         
-        if(this.chkMonitorCpu.isSelected())
+        if (this.chkWarningsBackupSuccess.isSelected()) {
+            set.setSetting(set.SERVERCONF_MONITOR_NOTIFY_BACKUPSUCCESS, "on");
+        } else {
+            set.setSetting(set.SERVERCONF_MONITOR_NOTIFY_BACKUPSUCCESS, "off");
+        }
+        if (this.chkWarningsBackupFailure.isSelected()) {
+            set.setSetting(set.SERVERCONF_MONITOR_NOTIFY_BACKUPFAILURE, "on");
+        } else {
+            set.setSetting(set.SERVERCONF_MONITOR_NOTIFY_BACKUPFAILURE, "off");
+        }
+
+        if (this.chkMonitorCpu.isSelected()) {
             set.setSetting(set.SERVERCONF_MONITOR_ENABLED_CPU, "on");
-        else 
+        } else {
             set.setSetting(set.SERVERCONF_MONITOR_ENABLED_CPU, "off");
-        
-        if(this.chkMonitorRam.isSelected())
+        }
+
+        if (this.chkMonitorRam.isSelected()) {
             set.setSetting(set.SERVERCONF_MONITOR_ENABLED_RAM, "on");
-        else 
+        } else {
             set.setSetting(set.SERVERCONF_MONITOR_ENABLED_RAM, "off");
-        
-        if(this.chkMonitorDisk.isSelected())
+        }
+
+        if (this.chkMonitorDisk.isSelected()) {
             set.setSetting(set.SERVERCONF_MONITOR_ENABLED_DISK, "on");
-        else 
+        } else {
             set.setSetting(set.SERVERCONF_MONITOR_ENABLED_DISK, "off");
-        
-        if(this.chkMonitorJava.isSelected())
+        }
+
+        if (this.chkMonitorJava.isSelected()) {
             set.setSetting(set.SERVERCONF_MONITOR_ENABLED_JAVA, "on");
-        else 
+        } else {
             set.setSetting(set.SERVERCONF_MONITOR_ENABLED_JAVA, "off");
-        
+        }
+
         set.setSetting(set.SERVERCONF_MONITOR_SMTPPASSWORD, new String(this.txtPassword.getPassword()));
         set.setSetting(set.SERVERCONF_MONITOR_SMTPUSER, this.txtUser.getText());
         set.setSetting(set.SERVERCONF_MONITOR_SMTPSENDERNAME, this.txtSenderName.getText());
         set.setSetting(set.SERVERCONF_MONITOR_SMTPSERVER, this.txtSmtp.getText());
         set.setSetting(set.SERVERCONF_MONITOR_SMTPPORT, this.txtSmtpPort.getText());
         set.setSetting(set.SERVERCONF_MONITOR_SMTPTO, this.txtRecipient.getText());
-        String ssl="false";
-        if(this.chkSsl.isSelected())
-            ssl="true";
+        String ssl = "false";
+        if (this.chkSsl.isSelected()) {
+            ssl = "true";
+        }
         set.setSetting(set.SERVERCONF_MONITOR_SMTPSSL, ssl);
-        
-        String startTls="false";
-        if(this.chkEmailStartTls.isSelected())
-            startTls="true";
+
+        String startTls = "false";
+        if (this.chkEmailStartTls.isSelected()) {
+            startTls = "true";
+        }
         set.setSetting(set.SERVERCONF_MONITOR_SMTPSTARTTLS, startTls);
-        
+
         this.setVisible(false);
         this.dispose();
     }//GEN-LAST:event_cmdSaveActionPerformed
@@ -1374,17 +1442,19 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
         ClientSettings settings = ClientSettings.getInstance();
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            SystemManagementRemote sysMan=locator.lookupSystemManagementRemote();
-            int port=-1;
-            if(!("".equals(this.txtSmtpPort.getText()))) {
-                port=Integer.parseInt(this.txtSmtpPort.getText());
+            SystemManagementRemote sysMan = locator.lookupSystemManagementRemote();
+            int port = -1;
+            if (!("".equals(this.txtSmtpPort.getText()))) {
+                port = Integer.parseInt(this.txtSmtpPort.getText());
             }
             sysMan.testSendMail(this.txtSmtp.getText(), port, this.txtUser.getText(), new String(this.txtPassword.getPassword()), this.chkSsl.isSelected(), this.chkEmailStartTls.isSelected(), this.txtRecipient.getText());
             JOptionPane.showMessageDialog(this, "Testnachricht erfolgreich  verschickt - bitte Posteingang prüfen", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
         } catch (Exception ex) {
-            String exMsg=ex.getMessage();
-            if(ex.getCause()!=null)
-                exMsg=exMsg + "; " + ex.getCause().getMessage();
+            log.error(ex);
+            String exMsg = ex.getMessage();
+            if (ex.getCause() != null) {
+                exMsg = exMsg + "; " + ex.getCause().getMessage();
+            }
             JOptionPane.showMessageDialog(this, "E-Mail-Einstellungen nicht korrekt: " + exMsg, "Fehler", JOptionPane.WARNING_MESSAGE);
         }
     }//GEN-LAST:event_cmdTestMailActionPerformed
@@ -1447,6 +1517,8 @@ public class ServerMonitoringDialog extends javax.swing.JDialog {
     private javax.swing.JCheckBox chkMonitorRam;
     private javax.swing.JCheckBox chkSsl;
     private javax.swing.JCheckBox chkWarnings;
+    private javax.swing.JCheckBox chkWarningsBackupFailure;
+    private javax.swing.JCheckBox chkWarningsBackupSuccess;
     private javax.swing.JComboBox cmbCpuError;
     private javax.swing.JComboBox cmbCpuWarn;
     private javax.swing.JComboBox cmbDiskError;

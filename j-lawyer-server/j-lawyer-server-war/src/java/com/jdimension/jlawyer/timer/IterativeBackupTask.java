@@ -699,9 +699,9 @@ public class IterativeBackupTask extends java.util.TimerTask implements Cancella
     private static boolean isRunning=false;
 
     private static Logger log = Logger.getLogger(IterativeBackupTask.class.getName());
-    private static SimpleDateFormat dfMailDate = new SimpleDateFormat("dd.MM.yyyy");
-    private static SimpleDateFormat dfMailTime = new SimpleDateFormat("HH:mm:ss");
-    private static DecimalFormat mbFormat = new DecimalFormat("0.0");
+    private SimpleDateFormat dfMailDate = new SimpleDateFormat("dd.MM.yyyy");
+    private SimpleDateFormat dfMailTime = new SimpleDateFormat("HH:mm:ss");
+    private DecimalFormat mbFormat = new DecimalFormat("0.0");
     private boolean adHoc = false;
 
     public IterativeBackupTask() {
@@ -728,12 +728,15 @@ public class IterativeBackupTask extends java.util.TimerTask implements Cancella
         String dbPassword = "";
         String dbPort = "3306";
         String syncLocation = "";
+        boolean backupSuccess=true;
         boolean syncSuccess = true;
         boolean exportSuccess = true;
         boolean exportEnabled = true;
         String exportLocation = "";
         String encryptionPassword = "";
         boolean encrypt = false;
+        boolean notifySuccess=true;
+        boolean notifyFailure=true;
 
         try {
             InitialContext ic = new InitialContext();
@@ -806,6 +809,21 @@ public class IterativeBackupTask extends java.util.TimerTask implements Cancella
                     exportLocation = exportLocation.trim();
                 } else {
                     exportLocation = "";
+                }
+            }
+            
+            ServerSettingsBean notifySuccessSetting = settings.find("jlawyer.server.monitor.notify.backupsuccess");
+            if (notifySuccessSetting != null) {
+                String temp = notifySuccessSetting.getSettingValue();
+                if (temp != null) {
+                    notifySuccess="on".equalsIgnoreCase(temp);
+                }
+            }
+            ServerSettingsBean notifyFailureSetting = settings.find("jlawyer.server.monitor.notify.backupfailure");
+            if (notifyFailureSetting != null) {
+                String temp = notifyFailureSetting.getSettingValue();
+                if (temp != null) {
+                    notifyFailure="on".equalsIgnoreCase(temp);
                 }
             }
 
@@ -882,10 +900,12 @@ public class IterativeBackupTask extends java.util.TimerTask implements Cancella
             log.info("starting backup");
             backupResult=ibe.execute();
         } catch (Throwable t) {
+            backupSuccess=false;
             log.error("backup executor failed", t);
             subject = "Fehlgeschlagen: ";
             body.append(t.getMessage()).append("\r\n\r\n");
         }
+        log.info("Backup finished");
 
         File exportDir = null;
         if (exportLocation.length() > 0) {
@@ -893,30 +913,8 @@ public class IterativeBackupTask extends java.util.TimerTask implements Cancella
             exportDir = new File(exportLocation);
             exportDir.mkdirs();
         }
-
+        
         try {
-
-            log.info("Backup finished");
-
-            if (syncLocation.length() > 0) {
-                log.info("Starting sync to " + syncLocation);
-                syncStart = new Date();
-
-                try {
-                    VirtualFile vf = VirtualFile.getFile(syncLocation);
-                    FolderSync sync = new FolderSync(new File(backupDir), vf, null);
-                    // we can be sure the file is written, so sync without lastmodified check
-                    sync.synchronize(0);
-                    vf.close();
-                } catch (Throwable t) {
-                    log.error("failed to sync: " + t.getMessage(), t);
-                    syncSuccess = false;
-                    subject = "Fehlgeschlagen: ";
-                }
-
-                syncEnd = new Date();
-                log.info("Sync finished");
-            }
 
             exportEnabled = exportLocation.length() > 0;
             exportStart = new Date();
@@ -957,11 +955,39 @@ public class IterativeBackupTask extends java.util.TimerTask implements Cancella
             }
 
         } catch (Throwable ex) {
-            log.error("Errors creating backup", ex);
+            exportSuccess=false;
+            log.error("Errors creating export", ex);
             subject = "Fehlgeschlagen: ";
             body.append(ex.getMessage()).append("\r\n\r\n");
         }
         exportEnd = new Date();
+
+        try {
+            if (syncLocation.length() > 0) {
+                log.info("Starting sync to " + BackupSyncTask.removePasswordFromUrl(syncLocation));
+                syncStart = new Date();
+
+                try {
+                    VirtualFile vf = VirtualFile.getFile(syncLocation);
+                    FolderSync sync = new FolderSync(new File(backupDir), vf, null);
+                    // we can be sure the file is written, so sync without lastmodified check
+                    sync.synchronize(0);
+                    vf.close();
+                } catch (Throwable t) {
+                    log.error("failed to sync: " + t.getMessage(), t);
+                    syncSuccess = false;
+                    subject = "Fehlgeschlagen: ";
+                }
+
+                syncEnd = new Date();
+                log.info("Sync finished");
+            }
+        } catch (Throwable ex) {
+            log.error("Errors syncing backup", ex);
+            subject = "Fehlgeschlagen: ";
+            body.append(ex.getMessage()).append("\r\n\r\n");
+        }
+        
 
         Date backupEnd = new Date();
         try {
@@ -1008,7 +1034,11 @@ public class IterativeBackupTask extends java.util.TimerTask implements Cancella
             body.append("\r\n");
             body.append("Hinweis: Speichern Sie die Sicherungsdatei regelmäßig auf einem anderen Medium, idealerweise in anderen Räumlichkeiten (für den Fall eines Diebstahls oder Brandes).");
 
-            sysMan.statusMail(subject, body.toString());
+            if(exportSuccess && syncSuccess && backupSuccess && notifySuccess) {
+                sysMan.statusMail(subject, body.toString());
+            } else if((!exportSuccess || !syncSuccess || !backupSuccess) && notifyFailure) {
+                sysMan.statusMail(subject, body.toString());
+            }
         } catch (Throwable t) {
             log.error("Could not send status mail", t);
         }

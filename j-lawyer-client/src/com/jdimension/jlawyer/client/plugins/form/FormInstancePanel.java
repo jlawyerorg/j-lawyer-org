@@ -703,6 +703,7 @@ public class FormInstancePanel extends javax.swing.JPanel {
         try {
             ui = plugin.getUi();
             this.scrollPlugin.setViewportView(ui);
+            this.scrollPlugin.getVerticalScrollBar().setUnitIncrement(16);
         } catch (Exception ex) {
             log.error("Can not initialize plugin " + plugin.getId(), ex);
             this.scrollPlugin.setViewportView(ui);
@@ -827,9 +828,10 @@ public class FormInstancePanel extends javax.swing.JPanel {
 
     private void cmdShowPlaceHoldersActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdShowPlaceHoldersActionPerformed
         Hashtable placeHolders = this.plugin.getPlaceHolderValues();
+        Hashtable descriptions = this.plugin.getPlaceHolderDescriptions();
         FormPluginPlaceholderDialog dlg = new FormPluginPlaceholderDialog(EditorsRegistry.getInstance().getMainWindow(), true);
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
-        dlg.setPlaceHolders(placeHolders);
+        dlg.setPlaceHolders(placeHolders, descriptions);
         dlg.setVisible(true);
 
     }//GEN-LAST:event_cmdShowPlaceHoldersActionPerformed

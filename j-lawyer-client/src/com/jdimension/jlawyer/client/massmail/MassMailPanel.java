@@ -714,7 +714,6 @@ public class MassMailPanel extends javax.swing.JPanel implements ThemeableEditor
             this.refreshList();
         } catch (Throwable ex) {
             log.error(ex);
-            ex.printStackTrace();
             JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Serien können nicht geladen werden: " + ex.getMessage(), "Serien laden", JOptionPane.ERROR_MESSAGE);
         }
 
@@ -975,7 +974,6 @@ public class MassMailPanel extends javax.swing.JPanel implements ThemeableEditor
                 }
             } catch (Throwable ex) {
                 log.error(ex);
-                ex.printStackTrace();
                 JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Adressen können nicht ermittelt werden: " + ex.getMessage(), "Serie laden", JOptionPane.ERROR_MESSAGE);
             }
 
@@ -1042,7 +1040,6 @@ public class MassMailPanel extends javax.swing.JPanel implements ThemeableEditor
                 ((DefaultTableModel) this.tblResults.getModel()).removeRow(this.tblResults.convertRowIndexToModel(selected[i]));
             } catch (Throwable ex) {
                 log.error(ex);
-                ex.printStackTrace();
             }
         }
     }//GEN-LAST:event_mnuRemoveFromCampaignActionPerformed

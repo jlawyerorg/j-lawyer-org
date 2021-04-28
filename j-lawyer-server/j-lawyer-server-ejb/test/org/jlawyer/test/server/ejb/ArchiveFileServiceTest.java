@@ -663,9 +663,6 @@
  */
 package org.jlawyer.test.server.ejb;
 
-import com.jdimension.jlawyer.services.ArchiveFileService;
-import javax.ejb.embeddable.EJBContainer;
-import junit.framework.Assert;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -703,22 +700,8 @@ public class ArchiveFileServiceTest {
     @Test
     public void hello() {
         
-        
-//        ArchiveFileService svc=new ArchiveFileService();
-//        svc.getLastChanged("admin", true, 100);
+        // intentionally left blank
 
-//        try {
-//            System.setProperty("jboss.home", "/home/jens/bin/jboss-6.1.0.Final/");
-//        EJBContainer container = javax.ejb.embeddable.EJBContainer.createEJBContainer();
-//        ArchiveFileService instance = (ArchiveFileService) container.getContext().lookup("java:global/classes/ArchiveFileService");
-////        int expResult = 3;
-////        int result = instance.addNumbers(numberA, numberB);
-////        assertEquals(expResult, result);
-//        container.close();
-//        } catch (Exception ex) {
-//            ex.printStackTrace();
-//            Assert.fail(ex.getMessage());
-//        }
     }
 
 }

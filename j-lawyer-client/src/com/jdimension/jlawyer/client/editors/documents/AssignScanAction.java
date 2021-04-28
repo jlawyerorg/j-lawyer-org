@@ -684,8 +684,8 @@ public class AssignScanAction extends DeleteScanAction {
 
     private static final Logger log = Logger.getLogger(AssignScanAction.class.getName());
 
-    public AssignScanAction(JTable actionsTable, JTable filesTable, boolean delete) {
-        super(actionsTable, filesTable, delete);
+    public AssignScanAction(JTable actionsTable, boolean delete) {
+        super(actionsTable, delete);
         this.setDescription("Datei der Akte zuordnen");
         this.setArchiveFile("");
     }

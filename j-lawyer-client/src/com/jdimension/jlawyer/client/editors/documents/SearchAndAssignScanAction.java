@@ -669,6 +669,7 @@ import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileTagsBean;
+import com.jdimension.jlawyer.persistence.CaseFolder;
 import com.jdimension.jlawyer.persistence.DocumentTagsBean;
 import com.jdimension.jlawyer.services.IntegrationServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
@@ -685,8 +686,8 @@ public class SearchAndAssignScanAction extends DeleteScanAction {
 
     private static final Logger log = Logger.getLogger(SearchAndAssignScanAction.class.getName());
 
-    public SearchAndAssignScanAction(JTable actionsTable, JTable filesTable, boolean delete) {
-        super(actionsTable, filesTable, delete);
+    public SearchAndAssignScanAction(JTable actionsTable, boolean delete) {
+        super(actionsTable, delete);
         this.setDescription("Akte suchen, Datei zuordnen");
         this.setArchiveFile("");
     }
@@ -699,9 +700,10 @@ public class SearchAndAssignScanAction extends DeleteScanAction {
 
             IntegrationServiceRemote is = locator.lookupIntegrationServiceRemote();
 
-            SearchAndAssignDialog dlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true, null);
+            SearchAndAssignDialog dlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true, null, null);
             dlg.setVisible(true);
-            ArchiveFileBean sel = dlg.getSelection();
+            ArchiveFileBean sel = dlg.getCaseSelection();
+            CaseFolder folder=dlg.getFolderSelection();
 
             dlg.dispose();
 
@@ -739,6 +741,13 @@ public class SearchAndAssignScanAction extends DeleteScanAction {
                             ArchiveFileDocumentsBean doc = (ArchiveFileDocumentsBean) d;
                             if (newName.equals(doc.getName())) {
                                 locator.lookupArchiveFileServiceRemote().setDocumentTag(doc.getId(), new DocumentTagsBean(null, this.getDocumentTag()), true);
+                                
+                                if (folder != null) {
+                                    ArrayList<String> dList = new ArrayList<>();
+                                    dList.add(doc.getId());
+                                    locator.lookupArchiveFileServiceRemote().moveDocumentsToFolder(dList, folder.getId());
+                                }
+                                
                                 break;
                             }
                         }

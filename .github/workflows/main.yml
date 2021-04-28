@@ -1,0 +1,89 @@
+# This is a basic workflow to help you get started with Actions
+
+name: CI
+
+# Controls when the action will run. 
+on:
+  # Triggers the workflow on push or pull request events but only for the master branch
+  push:
+    branches: [ master ]
+  # pull_request:
+  #   branches: [ master ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  build:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+      - uses: actions/setup-java@v1
+        with:
+          java-version: '8' # The JDK version to make available on the path.
+          java-package: jdk+fx # (jre, jdk, or jdk+fx) - defaults to jdk
+          architecture: x64 # (x64 or x86) - defaults to x64
+
+      - name: Prepare environment
+        run:  |
+          sudo systemctl start mysql
+          mkdir /home/runner/j-lawyer-backup
+          mkdir /home/runner/j-lawyer-data
+          mkdir /home/runner/j-lawyer-data/archivefiles
+          mkdir /home/runner/j-lawyer-data/emailtemplates
+          mkdir /home/runner/j-lawyer-data/templates
+          mkdir /home/runner/j-lawyer-data/mastertemplates
+          mysql -uroot -h127.0.0.1 -proot -e 'CREATE DATABASE IF NOT EXISTS jlawyerdb;'
+          sudo apt-get update
+          sudo apt-get install wget tar ant ant-optional junit4
+          wget -O /home/runner/j-lawyer-backup/backups.tar.gz https://www.j-lawyer.org/downloads/travisci/backups/backups.tar.gz
+          tar -m -xvzf /home/runner/j-lawyer-backup/backups.tar.gz -C /home/runner/j-lawyer-backup
+          
+
+      - name: Build
+        run: ant -buildfile j-lawyer-fax/build.xml default && ant -Dj2ee.server.home=/home/travis -buildfile j-lawyer-server-entities/build.xml default && ant -buildfile j-lawyer-server-common/build.xml default && ant -buildfile j-lawyer-server-api/build.xml default && ant -Dj2ee.server.home=/home/travis -buildfile j-lawyer-server/build.xml default test && ant -buildfile j-lawyer-io-common/build.xml default && ant -buildfile j-lawyer-client/build.xml default
+        # removed temporarily:  && mvn -f j-lawyer-backupmgr/pom.xml clean package test
+        env:
+          ftpuser: ${{ secrets.FTPUSER }}
+          ftppassword: ${{ secrets.FTPPASSWORD }}
+          ftphost: ${{ secrets.FTPHOST }}
+          ftphome: ${{ secrets.FTPHOME }}
+          sipuser: ${{ secrets.SIPUSER }}
+          sippassword: ${{ secrets.SIPPASSWORD }}
+          runsontravisci: ${{ secrets.RUNSONTRAVISCI }}
+          mysqlpwd: root
+          backupdirectory: /home/runner/j-lawyer-backup
+          datadirectory: /home/runner/j-lawyer-data
+          encryptionpwd:  
+
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        with:
+          args: >
+            -Dsonar.organization=jlawyerorg
+            -Dsonar.projectKey=jlawyerorg_j-lawyer-org
+            -Dsonar.projectName=j-lawyer-org
+            -Dsonar.projectVersion=1.14.0
+            -Dsonar.java.binaries=.
+            -Dsonar.java.source=8
+            
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          JAVA_HOME: '' # Avoid 'java: not found' error
+          
+      - name: Docker Images
+        run:  |
+          docker login --username="$dockeruser" --password="$dockerpassword"
+          cd /home/runner/work/j-lawyer-org/j-lawyer-org/docker && bash build.sh && bash push.sh
+        env:
+          dockeruser: ${{ secrets.DOCKERUSER }}
+          dockerpassword: ${{ secrets.DOCKERPASSWORD }}

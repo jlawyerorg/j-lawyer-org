@@ -737,12 +737,6 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
     @RolesAllowed({"writeAddressRole"})
     public void updateAddress(AddressBean dto) {
 
-//            AddressBean uDTO=this.addressFacade.find(dto.getId());
-//            
-//            uDTO.setLastModifier(context.getCallerPrincipal().getName());
-//            uDTO.setModificationDate(new Date());
-//            
-//            this.addressFacade.edit(uDTO);
         dto.setLastModifier(context.getCallerPrincipal().getName());
         dto.setModificationDate(new Date());
 
@@ -778,13 +772,11 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
             return new AddressBean[0];
         
         JDBCUtils utils = new JDBCUtils();
-        Connection con = null;
         ResultSet rs = null;
-        PreparedStatement st = null;
-        ArrayList<AddressBean> list = new ArrayList<AddressBean>();
-        try {
-            con = utils.getConnection();
-            st = con.prepareStatement("select id from contacts where ucase(name) like ? or ucase(firstname) like ? or ucase(department) like ? or ucase(company) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(email) like ? or ucase(beaSafeId) like ? or ucase(phone) like ? or ucase(mobile) like ? or ucase(district) like ? or ucase(birthName) like ? or zipCode like ?");
+        ArrayList<AddressBean> list = new ArrayList<>();
+        try (Connection con = utils.getConnection();
+            PreparedStatement st = con.prepareStatement("select id from contacts where ucase(name) like ? or ucase(firstname) like ? or ucase(department) like ? or ucase(company) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(email) like ? or ucase(beaSafeId) like ? or ucase(phone) like ? or ucase(mobile) like ? or ucase(district) like ? or ucase(birthName) like ? or zipCode like ?")) {
+            
             String wildCard = "%" + StringUtils.germanToUpperCase(query) + "%";
             st.setString(1, wildCard);
             st.setString(2, wildCard);
@@ -802,32 +794,18 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
             st.setString(14, wildCard);
             rs = st.executeQuery();
 
-            //AddressLocalHome home=this.lookupAddressBean();
             while (rs.next()) {
                 String id = rs.getString(1);
-                //AddressLocal address=home.findByPrimaryKey(id);
                 AddressBean address = this.addressFacade.find(id);
                 list.add(address);
             }
         } catch (SQLException sqle) {
             log.error("Error finding addresses", sqle);
             throw new EJBException("Addressensuche konnte nicht ausgeführt werden.", sqle);
-//        } catch (FinderException fe) {
-//            log.error("Error finding address", fe);
-//            throw new EJBException("Addressensuche konnte nicht ausgeführt werden.", fe);
         } finally {
             try {
-                rs.close();
-            } catch (Throwable t) {
-                log.error(t);
-            }
-            try {
-                st.close();
-            } catch (Throwable t) {
-                log.error(t);
-            }
-            try {
-                con.close();
+                if(rs!=null)
+                    rs.close();
             } catch (Throwable t) {
                 log.error(t);
             }
@@ -853,10 +831,7 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
     @RolesAllowed({"readAddressRole"})
     public boolean addressExists(String id) {
         Object o = this.addressFacade.find(id);
-        if (o == null) {
-            return false;
-        }
-        return true;
+        return o != null;
     }
 
     @Override
@@ -906,15 +881,11 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
     @RolesAllowed({"loginRole"})
     public List<String> searchTagsInUse() {
         JDBCUtils utils = new JDBCUtils();
-        Connection con = null;
-        ResultSet rs = null;
-        PreparedStatement st = null;
-        ArrayList<String> list = new ArrayList<String>();
-        try {
-            con = utils.getConnection();
-            st = con.prepareStatement("select distinct(tagName) from contact_tags order by tagName asc");
-            rs = st.executeQuery();
-
+        ArrayList<String> list = new ArrayList<>();
+        try (Connection con = utils.getConnection();
+            PreparedStatement st = con.prepareStatement("select distinct(tagName) from contact_tags order by tagName asc");
+            ResultSet rs = st.executeQuery()) {
+            
             while (rs.next()) {
                 String t = rs.getString(1);
                 list.add(t);
@@ -922,22 +893,6 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
         } catch (SQLException sqle) {
             log.error("Error finding tags in use", sqle);
             throw new EJBException("Aktuelle genutzte Tags konnten nicht gefunden werden.", sqle);
-        } finally {
-            try {
-                rs.close();
-            } catch (Throwable t) {
-                log.error(t);
-            }
-            try {
-                st.close();
-            } catch (Throwable t) {
-                log.error(t);
-            }
-            try {
-                con.close();
-            } catch (Throwable t) {
-                log.error(t);
-            }
         }
 
         return list;
@@ -953,7 +908,6 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
         query=query.trim();
         
         JDBCUtils utils = new JDBCUtils();
-        Connection con = null;
         ResultSet rs = null;
         PreparedStatement st = null;
 
@@ -968,8 +922,9 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
         }
 
         ArrayList<AddressBean> list = new ArrayList<AddressBean>();
-        try {
-            con = utils.getConnection();
+        ArrayList<String> idList=new ArrayList<>();
+        try (Connection con = utils.getConnection()) {
+            
 
             if (withTag) {
 
@@ -1022,32 +977,28 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
             }
             rs = st.executeQuery();
 
-            //AddressLocalHome home=this.lookupAddressBean();
             while (rs.next()) {
                 String id = rs.getString(1);
-                //AddressLocal address=home.findByPrimaryKey(id);
-                AddressBean address = this.addressFacade.find(id);
-                list.add(address);
+                if (!idList.contains(id)) {
+                    //AddressLocal address=home.findByPrimaryKey(id);
+                    AddressBean address = this.addressFacade.find(id);
+                    list.add(address);
+                    idList.add(id);
+                }
             }
         } catch (SQLException sqle) {
             log.error("Error finding addresses", sqle);
             throw new EJBException("Addressensuche konnte nicht ausgeführt werden.", sqle);
-//        } catch (FinderException fe) {
-//            log.error("Error finding address", fe);
-//            throw new EJBException("Addressensuche konnte nicht ausgeführt werden.", fe);
         } finally {
             try {
-                rs.close();
+                if(rs!=null)
+                    rs.close();
             } catch (Throwable t) {
                 log.error(t);
             }
             try {
-                st.close();
-            } catch (Throwable t) {
-                log.error(t);
-            }
-            try {
-                con.close();
+                if(st!=null)
+                    st.close();
             } catch (Throwable t) {
                 log.error(t);
             }
@@ -1066,7 +1017,6 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
         query=query.trim();
         
         JDBCUtils utils = new JDBCUtils();
-        Connection con = null;
         ResultSet rs = null;
         PreparedStatement st = null;
 
@@ -1081,9 +1031,8 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
         }
 
         Hashtable<String, ArrayList<String>> list = new Hashtable<String, ArrayList<String>>();
-        try {
-            con = utils.getConnection();
-
+        try (Connection con = utils.getConnection();) {
+            
             if (withTag) {
 
                 String inClause = "";
@@ -1107,7 +1056,7 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
                 st.setString(11, wildCard);
                 st.setString(12, wildCard);
                 st.setString(13, wildCard);
-                //st.setString(10, tag);
+                
                 int index = 14;
                 for (String t : tagName) {
                     st.setString(index, t);
@@ -1133,12 +1082,11 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
             }
             rs = st.executeQuery();
 
-            //AddressLocalHome home=this.lookupAddressBean();
             while (rs.next()) {
                 String id = rs.getString(1);
                 String tag = rs.getString(2);
                 if (!list.containsKey(id)) {
-                    list.put(id, new ArrayList<String>());
+                    list.put(id, new ArrayList<>());
                 }
                 ArrayList<String> tagList = list.get(id);
                 tagList.add(tag);
@@ -1146,22 +1094,16 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
         } catch (SQLException sqle) {
             log.error("Error finding addresses", sqle);
             throw new EJBException("Addressensuche konnte nicht ausgeführt werden.", sqle);
-//        } catch (FinderException fe) {
-//            log.error("Error finding address", fe);
-//            throw new EJBException("Addressensuche konnte nicht ausgeführt werden.", fe);
         } finally {
             try {
-                rs.close();
+                if(rs!=null)
+                    rs.close();
             } catch (Throwable t) {
                 log.error(t);
             }
             try {
-                st.close();
-            } catch (Throwable t) {
-                log.error(t);
-            }
-            try {
-                con.close();
+                if(st!=null)
+                    st.close();
             } catch (Throwable t) {
                 log.error(t);
             }
@@ -1186,16 +1128,12 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
     @Override
     public ArrayList<String> getAllAddressIds() {
         JDBCUtils utils = new JDBCUtils();
-        Connection con = null;
-        ResultSet rs = null;
-        PreparedStatement st = null;
-        ArrayList<String> list = new ArrayList<String>();
-        try {
-            con = utils.getConnection();
-            st = con.prepareStatement("select id from contacts");
-            rs = st.executeQuery();
+        ArrayList<String> list = new ArrayList<>();
+        try (Connection con = utils.getConnection();
+            PreparedStatement st = con.prepareStatement("select id from contacts");
+            ResultSet rs = st.executeQuery()) {
+            
 
-            //ArchiveFileLocalHome home = this.lookupArchiveFileBean();
             while (rs.next()) {
                 String id = rs.getString(1);
                 list.add(id);
@@ -1203,25 +1141,6 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
         } catch (SQLException sqle) {
             log.error("Error finding addresses", sqle);
             throw new EJBException("Adressensuche konnte nicht ausgeführt werden.", sqle);
-//        } catch (FinderException fe) {
-//            log.error("Error finding archive file", fe);
-//            throw new EJBException("Aktensuche konnte nicht ausgeführt werden.", fe);
-        } finally {
-            try {
-                rs.close();
-            } catch (Throwable t) {
-                log.error(t);
-            }
-            try {
-                st.close();
-            } catch (Throwable t) {
-                log.error(t);
-            }
-            try {
-                con.close();
-            } catch (Throwable t) {
-                log.error(t);
-            }
         }
 
         return list;

@@ -498,70 +498,9 @@ alter table campaign_addresses add index `IDX_CAMPAIGNADDRESSES_ADDRESSKEY` (add
 alter table ArchiveFileBean MODIFY `reason` VARCHAR(250) BINARY;
 
 ##############################################
-# Introduced with change from 1.9.1 to 1.10
-# This is just for documentation purposes.
-# It MUST NOT be executed because starting 
-# with this version Flyway will handle the 
+# From this version on Flyway will handle the 
 # migrations
 ##############################################
-
--- insert into ServerSettingsBean(settingKey, settingValue) values('jlawyer.server.database.version','1.10.0.3') ON DUPLICATE KEY UPDATE settingValue     = '1.10.0.3';
--- 
--- alter table ArchiveFileBean add index `IDX_ARCHIVEFILEBEAN_SUBJECTFIELD` (subjectField);
--- 
--- rename table AddressBean to contacts;
--- rename table AddressTagsBean to contact_tags;
--- 
--- rename table AppOptionGroupBean to server_options;
--- rename table ServerSettingsBean to server_settings;
--- -- required for j-lawyer.BOX
--- CREATE VIEW ServerSettingsBean AS SELECT * FROM server_settings;
--- 
--- -- views are required for the login module whose configuration will not change
--- rename table AppRoleBean to security_roles;
--- CREATE VIEW AppRoleBean AS SELECT * FROM security_roles;
--- rename table AppUserBean to security_users;
--- CREATE VIEW AppUserBean AS SELECT * FROM security_users;
--- 
--- rename table ArchiveFileBean to cases;
--- rename table ArchiveFileAddressesBean to case_contacts;
--- rename table ArchiveFileDocumentsBean to case_documents;
--- rename table ArchiveFileHistoryBean to case_history;
--- rename table ArchiveFileReviewsBean to case_followups;
--- rename table ArchiveFileTagsBean to case_tags;
--- rename table BankDataBean to directory_banks;
--- rename table CityDataBean to directory_cities;
--- rename table FaxQueueBean to communication_fax;
--- 
--- rename table campaign to campaigns;
--- rename table campaign_addresses to campaign_contacts;
-
--- delete from security_roles where role='readOptionGroupRole';
--- insert into ServerSettingsBean(settingKey, settingValue) values('jlawyer.server.database.version','1.10.0.5') ON DUPLICATE KEY UPDATE settingValue     = '1.10.0.5';
-
--- alter table contacts add index `IDX_BEASAFEID` (beaSafeId);
-
-
-
--- insert into ServerSettingsBean(settingKey, settingValue) values('jlawyer.server.database.version','1.10.0.6') ON DUPLICATE KEY UPDATE settingValue     = '1.10.0.6';
-
--- CREATE TABLE document_tags (
--- `id` VARCHAR(250) BINARY NOT NULL, 
--- `documentKey` VARCHAR(250) BINARY, 
--- `tagName` VARCHAR(250) BINARY, 
--- CONSTRAINT `pk_document_tags` PRIMARY KEY (`id`),
--- FOREIGN KEY (documentKey) REFERENCES case_documents(id) ON DELETE CASCADE
--- ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
--- 
--- alter table document_tags add index `IDX_TAGNAME` (tagName);
--- alter table document_tags add index `IDX_DOCUMENTKEY` (documentKey);
--- 
--- alter table document_tags add index `IDX_DOCUMENTKEY_TAGNAME` (documentKey, tagName);
--- alter table document_tags add unique index `IDX_DOCUMENTKEY_TAGNAME_UQ` (documentKey, tagName);
-
--- insert into ServerSettingsBean(settingKey, settingValue) values('jlawyer.server.bea.beaendpoint','https://ksw.bea-brak.de') ON DUPLICATE KEY UPDATE settingValue     = 'https://ksw.bea-brak.de';
--- insert into ServerSettingsBean(settingKey, settingValue) values('jlawyer.server.database.version','1.10.0.7') ON DUPLICATE KEY UPDATE settingValue     = '1.10.0.7';
-
 
 commit;
 

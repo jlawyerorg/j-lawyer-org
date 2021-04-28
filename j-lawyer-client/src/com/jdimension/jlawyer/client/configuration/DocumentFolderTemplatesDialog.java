@@ -670,7 +670,6 @@ import com.jdimension.jlawyer.persistence.DocumentFolder;
 import com.jdimension.jlawyer.persistence.DocumentFolderTemplate;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import javax.swing.JOptionPane;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -710,7 +709,6 @@ public class DocumentFolderTemplatesDialog extends javax.swing.JDialog {
 
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);
-            //JOptionPane.showMessageDialog(this.owner, "Verbindungsfehler: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
             JOptionPane.showMessageDialog(this, ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
             return;
         }
@@ -881,7 +879,6 @@ public class DocumentFolderTemplatesDialog extends javax.swing.JDialog {
 
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);
-            //JOptionPane.showMessageDialog(this.owner, "Verbindungsfehler: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
             JOptionPane.showMessageDialog(this, ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
             return;
         }
@@ -902,7 +899,6 @@ public class DocumentFolderTemplatesDialog extends javax.swing.JDialog {
 
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);
-            //JOptionPane.showMessageDialog(this.owner, "Verbindungsfehler: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
             JOptionPane.showMessageDialog(this, ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
             return;
         }
@@ -930,7 +926,6 @@ public class DocumentFolderTemplatesDialog extends javax.swing.JDialog {
 
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);
-            //JOptionPane.showMessageDialog(this.owner, "Verbindungsfehler: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
             JOptionPane.showMessageDialog(this, ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
             return;
         }
@@ -947,13 +942,11 @@ public class DocumentFolderTemplatesDialog extends javax.swing.JDialog {
             if (template == null) {
                 return;
             }
-            DefaultMutableTreeNode root = new DefaultMutableTreeNode(template.getName());
             DefaultTreeModel tm = new DefaultTreeModel(buildTree(template.getRootFolder()));
             this.treeFolders.setModel(tm);
             ComponentUtils.expandTree(treeFolders);
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);
-            //JOptionPane.showMessageDialog(this.owner, "Verbindungsfehler: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
             JOptionPane.showMessageDialog(this, ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
             return;
         }
@@ -970,7 +963,6 @@ public class DocumentFolderTemplatesDialog extends javax.swing.JDialog {
             return;
         }
         newFolderName = newNameObject.toString();
-        //EditorsRegistry.getInstance().updateStatus("Adresse wird gespeichert...");
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             DocumentFolder newFld = new DocumentFolder();
@@ -1036,7 +1028,6 @@ public class DocumentFolderTemplatesDialog extends javax.swing.JDialog {
             }
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);
-            //JOptionPane.showMessageDialog(this.owner, "Verbindungsfehler: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
             JOptionPane.showMessageDialog(this, ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
             return;
         }
@@ -1063,10 +1054,8 @@ public class DocumentFolderTemplatesDialog extends javax.swing.JDialog {
             DocumentFolder df = (DocumentFolder) tn.getUserObject();
             if (df.getParentId() == null) {
                 this.mnuRemoveFolder.setEnabled(false);
-//                this.mnuRenameFolder.setEnabled(false);
             } else {
                 this.mnuRemoveFolder.setEnabled(true);
-//                this.mnuRenameFolder.setEnabled(true);
             }
 
             this.popFolders.show(evt.getComponent(), evt.getX(), evt.getY());

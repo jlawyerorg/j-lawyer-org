@@ -673,9 +673,11 @@ import com.jdimension.jlawyer.fax.SipUri;
 import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.sip.SipUtils;
+import java.awt.Window;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import javax.swing.DefaultComboBoxModel;
+import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 import org.apache.log4j.Logger;
 
@@ -690,7 +692,7 @@ public class PlaceCallDialog extends javax.swing.JDialog {
     /**
      * Creates new form SendSmsDialog
      */
-    public PlaceCallDialog(java.awt.Frame parent, boolean modal, AddressBean ab, String phone) {
+    public PlaceCallDialog(JFrame parent, boolean modal, AddressBean ab, String phone) {
         super(parent, modal);
         initComponents();
        
@@ -699,7 +701,10 @@ public class PlaceCallDialog extends javax.swing.JDialog {
         if("".equals(phone))
             phone="0";
         
-        this.lblTo.setText(ab.toDisplayName() + " (" + phone + ")");
+        String displayName="unbekannt";
+        if(ab!=null)
+            displayName=ab.toDisplayName();
+        this.lblTo.setText(displayName + " (" + phone + ")");
         this.txtE164.setText(SipUtils.E164Number(phone));
         
         ServerSettings set=ServerSettings.getInstance();

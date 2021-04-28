@@ -781,7 +781,6 @@ public abstract class ProgressableAction {
 
                 } catch (Throwable t) {
                     log.error(t);
-                    t.printStackTrace();
                     success = false;
                     error = t.getMessage();
 
@@ -793,7 +792,7 @@ public abstract class ProgressableAction {
                     public void run() {
                         if (!succeeded && !("".equals(errorS))) {
                             String displayedError = getErrorMessageAndHints(errorS);
-                            JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), displayedError, "Fehler", JOptionPane.ERROR_MESSAGE);
+                            JOptionPane.showMessageDialog(indicator, displayedError, "Fehler", JOptionPane.ERROR_MESSAGE);
 
                         }
                         indicator.setVisible(false);

@@ -669,19 +669,24 @@ import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.CaseFolder;
+import com.jdimension.jlawyer.persistence.CaseFolderSettings;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.Hashtable;
+import java.util.List;
+import java.util.Map;
+import javax.swing.BoxLayout;
+import javax.swing.ImageIcon;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import themes.colors.DefaultColorTheme;
 
@@ -692,9 +697,10 @@ import themes.colors.DefaultColorTheme;
 public class CaseFolderPanel extends javax.swing.JPanel {
 
     private boolean readonly = false;
-    private ArrayList<ArchiveFileDocumentsBean> documents = new ArrayList<ArchiveFileDocumentsBean>();
+    private ArrayList<ArchiveFileDocumentsBean> documents = new ArrayList<>();
     private ArchiveFilePanel caseContainer = null;
     private JPopupMenu documentsPopup = null;
+    private String caseId = null;
 
     /**
      * Creates new form CaseFolderPanel
@@ -706,11 +712,31 @@ public class CaseFolderPanel extends javax.swing.JPanel {
         this.jScrollPane1.getVerticalScrollBar().setUnitIncrement(16);
         this.jScrollPane2.getVerticalScrollBar().setUnitIncrement(16);
         this.sortByDateDesc();
-        
+
         this.cmdSelectAll.setBackground(this.jPanel2.getBackground());
         this.cmdSelectNone.setBackground(this.jPanel2.getBackground());
         this.cmdSelectAll1.setBackground(this.jPanel2.getBackground());
         this.cmdSelectNone1.setBackground(this.jPanel2.getBackground());
+
+        ImageIcon sortDateNoneIcon = new ImageIcon(CaseFolderPanel.class.getResource("/com/jdimension/jlawyer/ui/folders/baseline_query_builder_white_18dp.png"));
+        sortDate.setNoneIcon(sortDateNoneIcon);
+        ImageIcon sortNameNoneIcon = new ImageIcon(CaseFolderPanel.class.getResource("/com/jdimension/jlawyer/ui/folders/baseline_insert_drive_file_white_18dp.png"));
+        sortName.setNoneIcon(sortNameNoneIcon);
+        ImageIcon sortFavoriteNoneIcon = new ImageIcon(CaseFolderPanel.class.getResource("/com/jdimension/jlawyer/ui/folders/baseline_star_white_18dp.png"));
+        sortFavorite.setNoneIcon(sortFavoriteNoneIcon);
+        ImageIcon sortSizeNoneIcon = new ImageIcon(CaseFolderPanel.class.getResource("/com/jdimension/jlawyer/ui/folders/baseline_pie_chart_white_18dp.png"));
+        sortSize.setNoneIcon(sortSizeNoneIcon);
+        ImageIcon sortFolderNoneIcon = new ImageIcon(CaseFolderPanel.class.getResource("/com/jdimension/jlawyer/ui/folders/baseline_folder_open_white_18dp.png"));
+        sortFolder.setNoneIcon(sortFolderNoneIcon);
+
+    }
+
+    public String getCaseId() {
+        return this.caseId;
+    }
+
+    public void setCaseId(String caseId) {
+        this.caseId = caseId;
     }
 
     public CaseFolderPanel() {
@@ -720,11 +746,22 @@ public class CaseFolderPanel extends javax.swing.JPanel {
         this.jScrollPane1.getVerticalScrollBar().setUnitIncrement(16);
         this.jScrollPane2.getVerticalScrollBar().setUnitIncrement(16);
         this.sortByDateDesc();
-        
+
         this.cmdSelectAll.setBackground(this.jPanel2.getBackground());
         this.cmdSelectNone.setBackground(this.jPanel2.getBackground());
         this.cmdSelectAll1.setBackground(this.jPanel2.getBackground());
         this.cmdSelectNone1.setBackground(this.jPanel2.getBackground());
+
+        ImageIcon sortDateNoneIcon = new ImageIcon(CaseFolderPanel.class.getResource("/com/jdimension/jlawyer/ui/folders/baseline_query_builder_white_18dp.png"));
+        sortDate.setNoneIcon(sortDateNoneIcon);
+        ImageIcon sortNameNoneIcon = new ImageIcon(CaseFolderPanel.class.getResource("/com/jdimension/jlawyer/ui/folders/baseline_insert_drive_file_white_18dp.png"));
+        sortName.setNoneIcon(sortNameNoneIcon);
+        ImageIcon sortFavoriteNoneIcon = new ImageIcon(CaseFolderPanel.class.getResource("/com/jdimension/jlawyer/ui/folders/baseline_star_white_18dp.png"));
+        sortFavorite.setNoneIcon(sortFavoriteNoneIcon);
+        ImageIcon sortSizeNoneIcon = new ImageIcon(CaseFolderPanel.class.getResource("/com/jdimension/jlawyer/ui/folders/baseline_pie_chart_white_18dp.png"));
+        sortSize.setNoneIcon(sortSizeNoneIcon);
+        ImageIcon sortFolderNoneIcon = new ImageIcon(CaseFolderPanel.class.getResource("/com/jdimension/jlawyer/ui/folders/baseline_folder_open_white_18dp.png"));
+        sortFolder.setNoneIcon(sortFolderNoneIcon);
     }
 
     public void setRootFolder(CaseFolder rootFolder, ArrayList<String> unselectedFolderIds) {
@@ -749,10 +786,46 @@ public class CaseFolderPanel extends javax.swing.JPanel {
         }
 
     }
-    
-    public void setRootFolder(CaseFolder rootFolder) {
-        this.setRootFolder(rootFolder, new ArrayList<String>());
 
+    public void setRootFolder(CaseFolder rootFolder, Map<String,CaseFolderSettings> folderSettings) {
+        ArrayList<String> unselectedIds= new ArrayList<>();
+        for(String id: folderSettings.keySet()) {
+            if(folderSettings.get(id).getHiddenBoolean())
+                unselectedIds.add(id);
+        }
+        this.setRootFolder(rootFolder, unselectedIds);
+
+    }
+
+    public String getFolderPath(String folderId) {
+        return this.foldersListPanel.getFolderPath(folderId);
+    }
+
+    public void moveDocumentsToFolder(ArrayList<ArchiveFileDocumentsBean> selectedDocs, CaseFolder folder) {
+        try {
+
+            List<String> docIds = new ArrayList<>();
+            for (ArchiveFileDocumentsBean doc : selectedDocs) {
+                docIds.add(doc.getId());
+            }
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+
+            locator.lookupArchiveFileServiceRemote().moveDocumentsToFolder(docIds, folder.getId());
+
+            for (ArchiveFileDocumentsBean doc : selectedDocs) {
+                doc.setFolder(folder);
+                updateDocument(doc);
+
+                // called for cases where documents are moved to a folder that is not selected
+                if (!(this.getSelectedFolders().contains(folder))) {
+                    this.hideDocument(doc);
+                }
+            }
+
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Ändern des Ordners: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     private void buildMoveToFolderMenu(ArrayList<JMenuItem> items, CaseFolder folder, String path) {
@@ -760,26 +833,9 @@ public class CaseFolderPanel extends javax.swing.JPanel {
         menu.setFolder(folder);
         menu.addActionListener((ActionEvent ae) -> {
 
-            try {
-                ArrayList<ArchiveFileDocumentsBean> selectedDocs = this.getSelectedDocuments();
-                ArrayList<String> docIds = new ArrayList<>();
-                for (ArchiveFileDocumentsBean doc : selectedDocs) {
-                    docIds.add(doc.getId());
-                }
-                ClientSettings settings = ClientSettings.getInstance();
-                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            ArrayList<ArchiveFileDocumentsBean> selectedDocs = this.getSelectedDocuments();
+            moveDocumentsToFolder(selectedDocs, folder);
 
-                locator.lookupArchiveFileServiceRemote().moveDocumentsToFolder(docIds, folder.getId());
-
-                for (ArchiveFileDocumentsBean doc : selectedDocs) {
-                    doc.setFolder(folder);
-                    updateDocument(doc);
-                }
-
-            } catch (Exception ex) {
-                JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Ändern des Ordners: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
         });
 
         String itemName = path;
@@ -831,18 +887,22 @@ public class CaseFolderPanel extends javax.swing.JPanel {
             } else if (sortName.getSortState() == SortButton.SORT_ASC) {
                 String s1 = d1.getName();
                 String s2 = d2.getName();
-                if(s1==null)
-                    s1="";
-                if(s2==null)
-                    s2="";
+                if (s1 == null) {
+                    s1 = "";
+                }
+                if (s2 == null) {
+                    s2 = "";
+                }
                 return s1.toLowerCase().compareTo(s2.toLowerCase());
             } else if (sortName.getSortState() == SortButton.SORT_DESC) {
                 String s1 = d1.getName();
                 String s2 = d2.getName();
-                if(s1==null)
-                    s1="";
-                if(s2==null)
-                    s2="";
+                if (s1 == null) {
+                    s1 = "";
+                }
+                if (s2 == null) {
+                    s2 = "";
+                }
                 return s2.toLowerCase().compareTo(s1.toLowerCase());
             } else if (sortFavorite.getSortState() == SortButton.SORT_ASC) {
                 Boolean b1 = d1.isFavorite();
@@ -858,16 +918,18 @@ public class CaseFolderPanel extends javax.swing.JPanel {
 
                 String s1 = "";
                 if (f1 != null) {
-                    s1 = f1.getName();
+                    s1 = this.getFolderPath(f1.getId());
                 }
                 String s2 = "";
                 if (f2 != null) {
-                    s2 = f2.getName();
+                    s2 = this.getFolderPath(f2.getId());
                 }
-                if(s1==null)
-                    s1="";
-                if(s2==null)
-                    s2="";
+                if (s1 == null) {
+                    s1 = "";
+                }
+                if (s2 == null) {
+                    s2 = "";
+                }
                 return s1.toLowerCase().compareTo(s2.toLowerCase());
             } else if (sortFolder.getSortState() == SortButton.SORT_DESC) {
                 CaseFolder f1 = d1.getFolder();
@@ -875,16 +937,18 @@ public class CaseFolderPanel extends javax.swing.JPanel {
 
                 String s1 = "";
                 if (f1 != null) {
-                    s1 = f1.getName();
+                    s1 = this.getFolderPath(f1.getId());
                 }
                 String s2 = "";
                 if (f2 != null) {
-                    s2 = f2.getName();
+                    s2 = this.getFolderPath(f2.getId());
                 }
-                if(s1==null)
-                    s1="";
-                if(s2==null)
-                    s2="";
+                if (s1 == null) {
+                    s1 = "";
+                }
+                if (s2 == null) {
+                    s2 = "";
+                }
                 return s2.toLowerCase().compareTo(s1.toLowerCase());
             }
 
@@ -909,6 +973,10 @@ public class CaseFolderPanel extends javax.swing.JPanel {
     public void setReadOnly(boolean readOnly) {
         this.readonly = readOnly;
         this.foldersListPanel.setReadOnly(readOnly);
+    }
+
+    public boolean getReadOnly() {
+        return this.readonly;
     }
 
     /**
@@ -944,7 +1012,7 @@ public class CaseFolderPanel extends javax.swing.JPanel {
         foldersListPanel = new com.jdimension.jlawyer.ui.folders.FoldersListPanel();
 
         cmdOptions.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/package_system.png"))); // NOI18N
-        cmdOptions.setToolTipText("Ordnereinstellungen");
+        cmdOptions.setToolTipText("Ordnervorlagen");
         cmdOptions.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseReleased(java.awt.event.MouseEvent evt) {
                 cmdOptionsMouseReleased(evt);
@@ -999,6 +1067,8 @@ public class CaseFolderPanel extends javax.swing.JPanel {
         );
 
         sortDate.setText("Datum");
+        sortDate.setToolTipText("nach Erstellungsdatum sortieren");
+        sortDate.setIconTextGap(2);
         sortDate.setInheritsPopupMenu(true);
         sortDate.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
@@ -1007,6 +1077,8 @@ public class CaseFolderPanel extends javax.swing.JPanel {
         });
 
         sortName.setText("Name");
+        sortName.setToolTipText("nach Dateiname sortieren");
+        sortName.setIconTextGap(2);
         sortName.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 sortNameMouseClicked(evt);
@@ -1014,6 +1086,8 @@ public class CaseFolderPanel extends javax.swing.JPanel {
         });
 
         sortFavorite.setText("Favorit");
+        sortFavorite.setToolTipText("nach Favoritenstatus sortieren");
+        sortFavorite.setIconTextGap(2);
         sortFavorite.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 sortFavoriteMouseClicked(evt);
@@ -1021,6 +1095,8 @@ public class CaseFolderPanel extends javax.swing.JPanel {
         });
 
         sortSize.setText("Größe");
+        sortSize.setToolTipText("nach Dateigröße sortieren");
+        sortSize.setIconTextGap(2);
         sortSize.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 sortSizeMouseClicked(evt);
@@ -1043,6 +1119,8 @@ public class CaseFolderPanel extends javax.swing.JPanel {
         });
 
         sortFolder.setText("Ordner");
+        sortFolder.setToolTipText("nach Ordnernamen sortieren");
+        sortFolder.setIconTextGap(2);
         sortFolder.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 sortFolderMouseClicked(evt);
@@ -1091,13 +1169,13 @@ public class CaseFolderPanel extends javax.swing.JPanel {
                 .addComponent(cmdSelectNone1)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(sortDate, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGap(2, 2, 2)
                 .addComponent(sortName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGap(2, 2, 2)
                 .addComponent(sortFavorite, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGap(2, 2, 2)
                 .addComponent(sortSize, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGap(2, 2, 2)
                 .addComponent(sortFolder, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
@@ -1165,44 +1243,44 @@ public class CaseFolderPanel extends javax.swing.JPanel {
             }
         }
     }
-    
+
     public void selectDocumentsRangeTo(String docId) {
         // find currently selected, which may be BEFORE or AFTER the clicked document
-        int rangeStart=-1;
-        int rangeEnd=-1;
-        int index=-1;
+        int rangeStart = -1;
+        int rangeEnd = -1;
+        int index = -1;
         for (Component c : this.pnlDocumentEntries.getComponents()) {
-            index=index+1;
+            index = index + 1;
             if (c instanceof DocumentEntryPanel) {
                 // find the former select that is NOT equal to the clicked
-                if(((DocumentEntryPanel) c).isSelected() && !(docId.equals(((DocumentEntryPanel) c).getDocument().getId()))) {
-                    rangeStart=index;
-                    
+                if (((DocumentEntryPanel) c).isSelected() && !(docId.equals(((DocumentEntryPanel) c).getDocument().getId()))) {
+                    rangeStart = index;
+
                 }
-                if(docId.equals(((DocumentEntryPanel) c).getDocument().getId())) {
-                    rangeEnd=index;
-                    
+                if (docId.equals(((DocumentEntryPanel) c).getDocument().getId())) {
+                    rangeEnd = index;
+
                 }
             }
         }
-        
-        if(rangeStart==-1) {
-            rangeStart=rangeEnd;
+
+        if (rangeStart == -1) {
+            rangeStart = rangeEnd;
         }
-        
-        int selectionStart=Math.min(rangeStart, rangeEnd);
-        int selectionEnd=Math.max(rangeStart, rangeEnd);
-        
-        index=-1;
+
+        int selectionStart = Math.min(rangeStart, rangeEnd);
+        int selectionEnd = Math.max(rangeStart, rangeEnd);
+
+        index = -1;
         for (Component c : this.pnlDocumentEntries.getComponents()) {
-            index=index+1;
+            index = index + 1;
             if (c instanceof DocumentEntryPanel) {
-                if(index>=selectionStart && index <=selectionEnd) {
+                if (index >= selectionStart && index <= selectionEnd) {
                     ((DocumentEntryPanel) c).setSelected(true);
                 }
             }
         }
-        
+
     }
 
     private void sortDateMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_sortDateMouseClicked
@@ -1214,8 +1292,9 @@ public class CaseFolderPanel extends javax.swing.JPanel {
         }
         if (this.sortFolder.getSortState() == SortButton.SORT_NONE && this.sortDate.getSortState() == SortButton.SORT_NONE && this.sortFavorite.getSortState() == SortButton.SORT_NONE && this.sortName.getSortState() == SortButton.SORT_NONE && this.sortSize.getSortState() == SortButton.SORT_NONE) {
             //this.sortDate.setSortState(SortButton.SORT_DESC);
-            if(this.sortDate.getSortState() == SortButton.SORT_NONE)
+            if (this.sortDate.getSortState() == SortButton.SORT_NONE) {
                 this.sortDate.setSortState(SortButton.SORT_ASC);
+            }
         }
 
         this.sort();
@@ -1439,7 +1518,10 @@ public class CaseFolderPanel extends javax.swing.JPanel {
         }
 
         this.pnlDocumentEntries.removeAll();
+        BoxLayout boxLayout = new BoxLayout(this.pnlDocumentEntries, BoxLayout.Y_AXIS);
+        this.pnlDocumentEntries.setLayout(boxLayout);
 //        this.pnlDocumentEntries.repaint();
+        double prefHeight = 0;
         for (int i = 0; i < docsInSelectedFolders.size(); i++) {
             ArchiveFileDocumentsBean d = docsInSelectedFolders.get(i);
             DocumentEntryPanel p = new DocumentEntryPanel(this.caseContainer, this, d, this.readonly);
@@ -1452,12 +1534,20 @@ public class CaseFolderPanel extends javax.swing.JPanel {
                 p.setSelected(true);
             }
             this.pnlDocumentEntries.add(p);
+            prefHeight = prefHeight + p.getPreferredSize().getHeight();
+        }
+        if (prefHeight < this.pnlDocumentEntries.getHeight()) {
+            JPanel glue = new JPanel();
+            glue.setPreferredSize(new Dimension(3, (this.pnlDocumentEntries.getHeight() - (int) prefHeight)));
+            this.pnlDocumentEntries.add(glue);
         }
         this.jScrollPane2.getVerticalScrollBar().setValue(0);
 //        this.pnlDocumentEntries.revalidate();
 //        this.pnlDocumentEntries.repaint();
         this.jScrollPane2.repaint();
         this.jScrollPane2.revalidate();
+        
+        this.foldersListPanel.renderEmptyFullState();
     }
 
     public void addDocument(ArchiveFileDocumentsBean newDoc) {
@@ -1472,15 +1562,22 @@ public class CaseFolderPanel extends javax.swing.JPanel {
         this.pnlDocumentEntries.repaint();
         this.pnlDocumentEntries.revalidate();
         this.sort();
+        this.foldersListPanel.renderEmptyFullState();
     }
 
     public void clearDocuments() {
         this.documents.clear();
         this.pnlDocumentEntries.removeAll();
+        this.foldersListPanel.renderEmptyFullState();
     }
 
     public void removeDocument(ArchiveFileDocumentsBean doc) {
         this.documents.remove(doc);
+        this.hideDocument(doc);
+        this.foldersListPanel.renderEmptyFullState();
+    }
+    
+    public void hideDocument(ArchiveFileDocumentsBean doc) {
         for (Component c : this.pnlDocumentEntries.getComponents()) {
             if (c instanceof DocumentEntryPanel) {
 
@@ -1505,6 +1602,15 @@ public class CaseFolderPanel extends javax.swing.JPanel {
                 }
             }
         }
+        
+        // document might have been dragged onto a different folder
+        for(ArchiveFileDocumentsBean db: this.documents) {
+            if(db.getId().equals(doc.getId())) {
+                db.setFolder(doc.getFolder());
+            }
+        }
+        
+        this.foldersListPanel.renderEmptyFullState();
     }
 
     public int highlightDocuments(String text, String[] selectedTags, Hashtable<String, ArrayList<String>> allTags) {
@@ -1553,6 +1659,7 @@ public class CaseFolderPanel extends javax.swing.JPanel {
 
     void folderSelectionChanged() {
         this.setDocuments(this.documents);
+        this.caseContainer.documentSelectionChanged();
     }
 
     void removeDocumentsInFolders(ArrayList<String> folderIds) {
@@ -1574,6 +1681,8 @@ public class CaseFolderPanel extends javax.swing.JPanel {
 
         this.pnlDocumentEntries.repaint();
         this.pnlDocumentEntries.revalidate();
+        
+        this.foldersListPanel.renderEmptyFullState();
     }
 
     void updateDocumentsInFolder(CaseFolder folder) {
@@ -1597,41 +1706,41 @@ public class CaseFolderPanel extends javax.swing.JPanel {
     }
 
     void selectNextDocument() {
-        
-        boolean selectNext=false;
+
+        boolean selectNext = false;
         for (Component c : this.pnlDocumentEntries.getComponents()) {
             if (c instanceof DocumentEntryPanel) {
-                if(selectNext) {
+                if (selectNext) {
                     this.selectAllDocuments(false);
                     ((DocumentEntryPanel) c).setSelected(true);
                     return;
                 }
                 if (((DocumentEntryPanel) c).isSelected()) {
-                    selectNext=true;
+                    selectNext = true;
                 }
             }
         }
     }
 
     void selectPreviousDocument() {
-        int previousIndex=0;
-        for (int i=0;i<this.pnlDocumentEntries.getComponentCount();i++) {
-            Component c=this.pnlDocumentEntries.getComponent(i);
+        int previousIndex = 0;
+        for (int i = 0; i < this.pnlDocumentEntries.getComponentCount(); i++) {
+            Component c = this.pnlDocumentEntries.getComponent(i);
             if (c instanceof DocumentEntryPanel) {
-                
+
                 if (((DocumentEntryPanel) c).isSelected()) {
-                    previousIndex=i-1;
-                    previousIndex=Math.max(previousIndex, 0);
+                    previousIndex = i - 1;
+                    previousIndex = Math.max(previousIndex, 0);
                 }
             }
         }
-        
-        Component prev=this.pnlDocumentEntries.getComponent(previousIndex);
-        if(prev instanceof DocumentEntryPanel) {
+
+        Component prev = this.pnlDocumentEntries.getComponent(previousIndex);
+        if (prev instanceof DocumentEntryPanel) {
             this.selectAllDocuments(false);
             ((DocumentEntryPanel) prev).setSelected(true);
         }
-        
+
     }
 
 }

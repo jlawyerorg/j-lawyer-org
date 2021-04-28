@@ -800,5 +800,9 @@ public interface SystemManagementRemote {
     void removePartyType(PartyTypeBean partyType) throws Exception;
 
     void addObservedFile(String fileName, byte[] content) throws Exception;
+
+    boolean updatePassword(String newPassword) throws Exception;
+
+    boolean updatePasswordForUser(String principalId, String newPassword) throws Exception;
     
 }

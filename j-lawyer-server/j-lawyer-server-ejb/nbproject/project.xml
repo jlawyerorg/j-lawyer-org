@@ -53,6 +53,7 @@
             <included-library dirs="200">file.reference.poi-scratchpad-4.1.1.jar</included-library>
             <included-library dirs="200">file.reference.curvesapi-1.06.jar</included-library>
             <included-library dirs="200">file.reference.xmlbeans-3.1.0.jar</included-library>
+            <included-library dirs="200">file.reference.libphonenumber-8.12.18.jar</included-library>
             <source-roots>
                 <root id="src.dir"/>
             </source-roots>

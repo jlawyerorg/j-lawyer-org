@@ -679,19 +679,15 @@ import com.jdimension.jlawyer.client.utils.*;
 import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
+import com.jdimension.jlawyer.persistence.CaseFolder;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
-import java.awt.Color;
 import java.awt.Dimension;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
-import javax.mail.Multipart;
-import javax.mail.Part;
-import javax.mail.internet.MimeBodyPart;
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
@@ -715,7 +711,7 @@ import org.jlawyer.bea.model.ProcessCardEntry;
 public class BeaMessageContentUI extends javax.swing.JPanel implements HyperlinkListener {
 
     private static final Logger log = Logger.getLogger(BeaMessageContentUI.class.getName());
-    private static SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy HH:mm");
+    private static final String DATEFORMAT="dd.MM.yyyy HH:mm";
     private static String HTML_WARNING = "<html><font color=\"red\">HTML-Inhalte werden zum Schutz vor Spam erst auf Knopfdruck im Kopfbereich dieser E-Mail oder nach Doppelklick auf diese Warnung angezeigt.<br/>Der Absender dieser E-Mail wird dann permanent als vertrauensw&uuml;rdig eingestuft.</font></html>";
     private Message msgContainer = null;
     private String cachedHtml = null;
@@ -774,15 +770,6 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
 
         return this.editBody.getText();
 
-//        if("text/plain".equalsIgnoreCase(this.editBody.getContentType()))
-//            return this.editBody.getText();
-//        else
-//            return "";
-//        try {
-//            return this.editBody.getDocument().getText(0, editBody.getDocument().getLength());
-//        } catch (Throwable t) {
-//            return "";
-//        }
     }
 
     public String getContentType() {
@@ -804,13 +791,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
         }
         try {
 
-            if (msg == null) {
-                return;
-            }
-
             System.out.println("TODO: set message read");
-//            if (!(msgC.isRead()))
-//                msgC.setRead(true);
 
             System.out.println("TODO: load with progressindicator");
             if (false) {
@@ -818,10 +799,6 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
                 ProgressIndicator dlg = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
                 dlg.setShowCancelButton(false);
                 dlg.setInfinite(true);
-                DecimalFormat df = new DecimalFormat("###0.00");
-//                dlg.progress("Lade Email... (" + df.format(msg.getSize() / 1024 / 1024) + "MB)");
-//                LoadEmailAction lea = new LoadEmailAction(dlg, this, msg, this.lblSubject, this.lblSentDate, this.lblTo, this.lblCC, this.lblFrom, this.editBody, this.lstAttachments, this.cmdShowHtml);
-//                lea.start();
                 return;
             } else {
                 BeaMessageContentUI.setMessageImpl(this, msg, this.lblSubject, this.lblSentDate, this.lblTo, this.lblFrom, this.lblCaseNumber, this.lblReferenceJustice, this.editBody, this.lstAttachments, false, this.tblJournal, this.tblProcessCard, this.lblEeb, this.jTabbedPane1);
@@ -830,7 +807,6 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
         } catch (Exception ex) {
             log.error("Error getting contents of beA message", ex);
             JOptionPane.showMessageDialog(this, "Fehler beim Öffnen der Nachricht: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
-            //EditorsRegistry.getInstance().clearStatus();
         }
     }
 
@@ -838,18 +814,13 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
         // we copy the message to avoid the "Unable to load BODYSTRUCTURE" issue
 
         AppUserBean cu = UserSettings.getInstance().getCurrentUser();
-//        if (EmailUtils.isReceiptRequested(msg)) {
-//            int response = JOptionPane.showConfirmDialog(contentUI, "Der Absender hat eine Lesebestätigung angefordert - jetzt senden?", "Lesebestätigung", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
-//            if (response == JOptionPane.YES_OPTION) {
-//                EmailUtils.sendReceipt(cu, msg.getSubject(), MimeUtility.decodeText(msg.getFrom()[0].toString()));
-//            }
-//        }
 
         if (msg.getReceptionTime() == null) {
             log.warn("beA mesage " + msg.getId() + " - " + msg.getSubject() + " does not have a reception time yet!");
             lblSentDate.setText("");
         } else {
-            lblSentDate.setText(df.format(msg.getReceptionTime()));
+            SimpleDateFormat df2 = new SimpleDateFormat(DATEFORMAT);
+            lblSentDate.setText(df2.format(msg.getReceptionTime()));
         }
         lblSubject.setText(msg.getSubject());
         lblSubject.setToolTipText(lblSubject.getText());
@@ -874,172 +845,12 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
         lblTo.setText(to);
         lblTo.setToolTipText(to);
 
-//        String cc = "";
-//        if (copiedMsg.getRecipients(RecipientType.CC) != null && copiedMsg.getRecipients(RecipientType.CC).length > 0) {
-//            cc = copiedMsg.getRecipients(RecipientType.CC)[0].toString();
-//            for (int i = 1; i < copiedMsg.getRecipients(RecipientType.CC).length; i++) {
-//                cc = cc + ", " + copiedMsg.getRecipients(RecipientType.CC)[i].toString();
-//            }
-//        }
-//        lblCC.setText(cc);
-//        lblCC.setToolTipText(cc);
         ((DefaultListModel) lstAttachments.getModel()).removeAllElements();
         ArrayList<Attachment> attachments = msg.getAttachments();
         for (Attachment a : attachments) {
             ((DefaultListModel) lstAttachments.getModel()).addElement(a);
         }
 
-//
-//        if (copiedMsg.isMimeType("multipart/*")) {
-//            String html = recursiveFindPart(copiedMsg.getContent(), "text/html");
-//            if (html != null) {
-//                editBody.setContentType("text/html");
-//                //html = this.cleanUpHTML(html);
-//
-//                // do this AFTER setContentType and BEFORE setText!!!
-//                editBody.getDocument().putProperty("IgnoreCharsetDirective", Boolean.TRUE);
-//
-//
-//                try {
-//                    Font font = new Font("Arial", Font.PLAIN, 13);
-//                    String bodyRule = "body { font-family: " + font.getFamily() + "; "
-//                            + "font-size: " + font.getSize() + "pt; }";
-//
-//                    String pRule = "p { font-family: " + font.getFamily() + "; "
-//                            + "font-size: " + font.getSize() + "pt; }";
-//
-//                    String spanRule = "span { font-family: " + font.getFamily() + "; "
-//                            + "font-size: " + font.getSize() + "pt; }";
-//
-//                    String divRule = "p { font-family: " + font.getFamily() + "; "
-//                            + "font-size: " + font.getSize() + "pt; }";
-//
-//                    ((HTMLDocument) editBody.getDocument()).getStyleSheet().addRule(bodyRule);
-//                    ((HTMLDocument) editBody.getDocument()).getStyleSheet().addRule(pRule);
-//                    ((HTMLDocument) editBody.getDocument()).getStyleSheet().addRule(spanRule);
-//                    ((HTMLDocument) editBody.getDocument()).getStyleSheet().addRule(divRule);
-//
-//                } catch (Throwable t) {
-//                    log.error("could not set default font for HTML mail", t);
-//                }
-//
-//                html = html.replaceAll("font-size:.{1,7}pt", "font-size:13pt");
-//
-//                ClientSettings s = ClientSettings.getInstance();
-//                String whitelist = s.getConfiguration(s.CONF_MAIL_HTMLWHITELIST, "");
-//                int index = whitelist.indexOf(lblFrom.getText());
-//                if (index > -1) {
-//                    cmdShowHtml.setEnabled(false);
-//                    Dimension d=editBody.getParent().getParent().getSize();
-//                    editBody.setText(html);
-//                    editBody.getParent().getParent().setSize(d);
-//                } else {
-//                    contentUI.setCachedHtml(html);
-//                    //this.cachedHtml = html;
-//                    cmdShowHtml.setEnabled(true);
-//                    Dimension d=editBody.getParent().getParent().getSize();
-//                    editBody.setText(HTML_WARNING);
-//                    editBody.getParent().getParent().setSize(d);
-//                }
-//                editBody.setCaretPosition(0);
-//
-////                    File t=File.createTempFile("" + System.currentTimeMillis(), ".html");
-////                    FileWriter fw=new FileWriter(t);
-////                    fw.write(html);
-////                    fw.close();
-////                    try {
-////                    this.editBody.setPage(t.toURI().toURL());
-////                    } catch (Throwable th) {
-////                        th.printStackTrace();
-////                    }
-//            } else {
-//                String text = recursiveFindPart(copiedMsg.getContent(), "text/plain");
-//                if (text != null) {
-//                    editBody.setContentType("text/plain");
-//
-//                    Dimension d=editBody.getParent().getParent().getSize();
-//                    editBody.setText(text);
-//                    editBody.setCaretPosition(0);
-//                    editBody.getParent().getParent().setSize(d);
-//                } else {
-//                    editBody.setContentType("text/plain");
-//
-//                    Dimension d=editBody.getParent().getParent().getSize();
-//                    editBody.setText("unknown message content");
-//                    editBody.setCaretPosition(0);
-//                    editBody.getParent().getParent().setSize(d);
-//                }
-//            }
-//        } else {
-//            if (copiedMsg.isMimeType("text/plain")) {
-//                //this.editBody.setContentType(msg.getContentType());
-//                editBody.setContentType("text/plain");
-//                Dimension d=editBody.getParent().getParent().getSize();
-//                editBody.setText(copiedMsg.getContent().toString());
-//                editBody.setCaretPosition(0);
-//                editBody.getParent().getParent().setSize(d);
-//            } else if (copiedMsg.isMimeType("text/html")) {
-//                editBody.setContentType("text/html");
-//                String body = copiedMsg.getContent().toString();
-//
-//                //body = body.replaceAll("<meta content=\"text/html;charset=ISO-8859-1\" http-equiv=\"Content-Type\">", "");
-////                    body = this.cleanUpHTML(body);
-////                    this.editBody.setText(body);
-////                    
-//
-//                editBody.setContentType("text/html");
-//                //html = this.cleanUpHTML(html);
-//
-//                // do this AFTER setContentType and BEFORE setText!!!
-//                editBody.getDocument().putProperty("IgnoreCharsetDirective", Boolean.TRUE);
-//
-//
-//                try {
-//                    Font font = new Font("Arial", Font.PLAIN, 13);
-//                    String bodyRule = "body { font-family: " + font.getFamily() + "; "
-//                            + "font-size: " + font.getSize() + "pt; }";
-//
-//                    String pRule = "p { font-family: " + font.getFamily() + "; "
-//                            + "font-size: " + font.getSize() + "pt; }";
-//
-//                    String spanRule = "span { font-family: " + font.getFamily() + "; "
-//                            + "font-size: " + font.getSize() + "pt; }";
-//
-//                    String divRule = "p { font-family: " + font.getFamily() + "; "
-//                            + "font-size: " + font.getSize() + "pt; }";
-//
-//                    ((HTMLDocument) editBody.getDocument()).getStyleSheet().addRule(bodyRule);
-//                    ((HTMLDocument) editBody.getDocument()).getStyleSheet().addRule(pRule);
-//                    ((HTMLDocument) editBody.getDocument()).getStyleSheet().addRule(spanRule);
-//                    ((HTMLDocument) editBody.getDocument()).getStyleSheet().addRule(divRule);
-//
-//                } catch (Throwable t) {
-//                    log.error("could not set default font for HTML mail", t);
-//                }
-//
-//                body = body.replaceAll("font-size:.{1,7}pt", "font-size:13pt");
-//
-//                ClientSettings s = ClientSettings.getInstance();
-//                String whitelist = s.getConfiguration(s.CONF_MAIL_HTMLWHITELIST, "");
-//                int index = whitelist.indexOf(lblFrom.getText());
-//                if (index > -1) {
-//                    cmdShowHtml.setEnabled(false);
-//                    Dimension d=editBody.getParent().getParent().getSize();
-//                    editBody.setText(body);
-//                    editBody.getParent().getParent().setSize(d);
-//                } else {
-//                    contentUI.setCachedHtml(body);
-//                    //this.cachedHtml = body;
-//                    cmdShowHtml.setEnabled(true);
-//                    Dimension d=editBody.getParent().getParent().getSize();
-//                    editBody.setText(HTML_WARNING);
-//                    editBody.getParent().getParent().setSize(d);
-//                }
-//                editBody.setCaretPosition(0);
-//            }
-//            //this.editBody.setText(msg.getContent().toString());
-//        }
-//        editBody.setCaretPosition(0);
         editBody.setText(msg.getBody());
 
         DefaultTableModel tm = new DefaultTableModel(new String[]{"Benutzer (Ereignis)", "Benutzername (Ereignis)", "Dateiname des Anhangs", "Ereignis", "Zeitpunkt"}, 0);
@@ -1047,9 +858,10 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
         TableRowSorter<TableModel> sorter = new TableRowSorter<TableModel>(tm);
         sorter.setComparator(4, new DescendingDateTimeStringComparator());
         journalTable.setRowSorter(sorter);
+        SimpleDateFormat df2 = new SimpleDateFormat(DATEFORMAT);
         if (msg.getJournal() != null) {
             for (MessageJournalEntry e : msg.getJournal()) {
-                ((DefaultTableModel) journalTable.getModel()).addRow(new Object[]{e.getFromSurnameFirstname(), e.getFromUsername(), e.getAttachmentReference(), e.getEventType(), df.format(e.getTimestamp())});
+                ((DefaultTableModel) journalTable.getModel()).addRow(new Object[]{e.getFromSurnameFirstname(), e.getFromUsername(), e.getAttachmentReference(), e.getEventType(), df2.format(e.getTimestamp())});
 
             }
         }
@@ -1479,7 +1291,6 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
             try {
                 byte[] data = ((Attachment) this.lstAttachments.getSelectedValue()).getContent();
                 String fileName = ((Attachment) this.lstAttachments.getSelectedValue()).getFileName();
-                //String tmpFile = FileUtils.createTempFile(this.lstAttachments.getSelectedValue().toString(), data);
                 ReadOnlyDocumentStore store = new ReadOnlyDocumentStore("beaattachment-" + fileName, fileName);
                 Launcher launcher = LauncherFactory.getLauncher(fileName, data, store);
                 launcher.launch(false);
@@ -1533,9 +1344,9 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
                 }
                 selectedFolder = f.getParentFile().getAbsolutePath();
 
-                FileOutputStream fOut = new FileOutputStream(f);
-                fOut.write(data);
-                fOut.close();
+                try (FileOutputStream fOut = new FileOutputStream(f)) {
+                    fOut.write(data);
+                }
             }
 
         } catch (Exception ex) {
@@ -1555,9 +1366,10 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
         if (this.msgContainer != null) {
             searchContext = "" + msgContainer.getReferenceJustice() + msgContainer.getReferenceNumber() + msgContainer.getSubject() + msgContainer.getBody();
         }
-        SearchAndAssignDialog dlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true, searchContext);
+        SearchAndAssignDialog dlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true, searchContext, null);
         dlg.setVisible(true);
-        ArchiveFileBean sel = dlg.getSelection();
+        ArchiveFileBean sel = dlg.getCaseSelection();
+        CaseFolder folder=dlg.getFolderSelection();
 
         dlg.dispose();
 
@@ -1578,6 +1390,12 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
                     }
 
                     ArchiveFileDocumentsBean newDoc = afs.addDocument(sel.getId(), newName, data, "");
+                    
+                    if (folder != null) {
+                        ArrayList<String> docList = new ArrayList<>();
+                        docList.add(newDoc.getId());
+                        afs.moveDocumentsToFolder(docList, folder.getId());
+                    }
 
                     EventBroker eb = EventBroker.getInstance();
                     eb.publishEvent(new DocumentAddedEvent(newDoc));

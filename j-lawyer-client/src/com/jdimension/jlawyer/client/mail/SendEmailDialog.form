@@ -252,9 +252,6 @@
             <Component class="javax.swing.JTextField" name="txtSubject">
             </Component>
             <Component class="javax.swing.JTextField" name="txtBcc">
-              <Events>
-                <EventHandler event="keyReleased" listener="java.awt.event.KeyListener" parameters="java.awt.event.KeyEvent" handler="txtBccKeyReleased"/>
-              </Events>
             </Component>
             <Container class="javax.swing.JPanel" name="jPanel5">
 
@@ -392,9 +389,6 @@
               </SubComponents>
             </Container>
             <Component class="javax.swing.JTextField" name="txtCc">
-              <Events>
-                <EventHandler event="keyReleased" listener="java.awt.event.KeyListener" parameters="java.awt.event.KeyEvent" handler="txtCcKeyReleased"/>
-              </Events>
             </Component>
             <Component class="javax.swing.JLabel" name="jLabel9">
               <Properties>
@@ -402,9 +396,6 @@
               </Properties>
             </Component>
             <Component class="javax.swing.JTextField" name="txtTo">
-              <Events>
-                <EventHandler event="keyReleased" listener="java.awt.event.KeyListener" parameters="java.awt.event.KeyEvent" handler="txtToKeyReleased"/>
-              </Events>
             </Component>
           </SubComponents>
         </Container>
@@ -557,7 +548,6 @@
                   </Properties>
                   <Events>
                     <EventHandler event="stateChanged" listener="javax.swing.event.ChangeListener" parameters="javax.swing.event.ChangeEvent" handler="chkEncryptionStateChanged"/>
-                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="chkEncryptionActionPerformed"/>
                   </Events>
                 </Component>
                 <Component class="javax.swing.JLabel" name="lblEncryption">
@@ -627,11 +617,16 @@
                                   <EmptySpace max="-2" attributes="0"/>
                                   <Group type="103" groupAlignment="0" attributes="0">
                                       <Component id="cmbReviewAssignee" alignment="0" max="32767" attributes="0"/>
-                                      <Group type="102" alignment="0" attributes="0">
-                                          <Component id="txtReviewDateField" min="-2" pref="135" max="-2" attributes="0"/>
-                                          <EmptySpace max="-2" attributes="0"/>
-                                          <Component id="cmdShowReviewSelector" min="-2" max="-2" attributes="0"/>
-                                          <EmptySpace min="0" pref="80" max="32767" attributes="0"/>
+                                      <Group type="102" attributes="0">
+                                          <Group type="103" groupAlignment="0" attributes="0">
+                                              <Component id="quickDateSelectionPanel" min="-2" max="-2" attributes="0"/>
+                                              <Group type="102" alignment="0" attributes="0">
+                                                  <Component id="txtReviewDateField" min="-2" pref="135" max="-2" attributes="0"/>
+                                                  <EmptySpace max="-2" attributes="0"/>
+                                                  <Component id="cmdShowReviewSelector" min="-2" max="-2" attributes="0"/>
+                                              </Group>
+                                          </Group>
+                                          <EmptySpace min="0" pref="13" max="32767" attributes="0"/>
                                       </Group>
                                   </Group>
                               </Group>
@@ -663,6 +658,8 @@
                               </Group>
                               <Component id="cmdShowReviewSelector" alignment="0" min="-2" max="-2" attributes="0"/>
                           </Group>
+                          <EmptySpace max="-2" attributes="0"/>
+                          <Component id="quickDateSelectionPanel" min="-2" max="-2" attributes="0"/>
                       </Group>
                   </Group>
                 </DimensionLayout>
@@ -734,8 +731,12 @@
                   <Properties>
                     <Property name="editable" type="boolean" value="false"/>
                     <Property name="horizontalAlignment" type="int" value="4"/>
+                    <Property name="toolTipText" type="java.lang.String" value="Doppelklick um heutiges Datum zu &#xfc;bernehmen"/>
                     <Property name="enabled" type="boolean" value="false"/>
                   </Properties>
+                  <Events>
+                    <EventHandler event="mouseClicked" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="txtReviewDateFieldMouseClicked"/>
+                  </Events>
                 </Component>
                 <Component class="javax.swing.JComboBox" name="cmbReviewAssignee">
                   <Properties>
@@ -761,6 +762,8 @@
                   <Events>
                     <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="radioReviewTypeNoneActionPerformed"/>
                   </Events>
+                </Component>
+                <Component class="com.jdimension.jlawyer.client.components.QuickDateSelectionPanel" name="quickDateSelectionPanel">
                 </Component>
               </SubComponents>
             </Container>
@@ -802,7 +805,7 @@
                           <EmptySpace max="-2" attributes="0"/>
                           <Component id="cmbTemplates" min="-2" max="-2" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
-                          <Component id="pnlParties" pref="152" max="32767" attributes="0"/>
+                          <Component id="pnlParties" pref="121" max="32767" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
                       </Group>
                   </Group>

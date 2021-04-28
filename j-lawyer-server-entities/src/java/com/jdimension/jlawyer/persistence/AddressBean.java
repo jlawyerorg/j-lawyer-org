@@ -1159,7 +1159,7 @@ public class AddressBean implements Serializable {
             toolTip = toolTip + "<br>";
         }
         if (getStreet() != null && !("".equals(getStreet()))) {
-            toolTip = toolTip + "<b>Straße:</b> " + getStreet() + "<br>";
+            toolTip = toolTip + "<b>Straße:</b> " + getStreet() + " " + getStreetNumber() + "<br>";
         }
         if (getPhone() != null && !("".equals(getPhone()))) {
             toolTip = toolTip + "<b>Telefon:</b> " + getPhone() + "<br>";

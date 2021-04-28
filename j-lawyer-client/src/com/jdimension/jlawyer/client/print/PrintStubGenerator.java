@@ -677,8 +677,6 @@ import java.util.ArrayList;
  */
 public class PrintStubGenerator {
 
-    private static SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
-
     public static ReviewsStub getStub(ArrayList<ArchiveFileReviewsBean> revList, ArrayList<ArchiveFileBean> fileList, String criteriaString) {
         ArrayList<ReviewsDetail> result = new ArrayList<ReviewsDetail>();
         for (int i = 0; i < revList.size(); i++) {
@@ -752,9 +750,10 @@ public class PrintStubGenerator {
         det.setAssignee(rev.getAssignee());
         det.setFileNumber(ar.getFileNumber());
         det.setReviewTypeName(rev.getReviewTypeName());
-        if(rev.getReviewDate()!=null)
-            det.setReviewDate(df.format(rev.getReviewDate()));
-        else
+        if(rev.getReviewDate()!=null) {
+            SimpleDateFormat df2 = new SimpleDateFormat("dd.MM.yyyy");
+            det.setReviewDate(df2.format(rev.getReviewDate()));
+        } else
             det.setReviewDate("");
         det.setReviewReason(rev.getReviewReason());
 

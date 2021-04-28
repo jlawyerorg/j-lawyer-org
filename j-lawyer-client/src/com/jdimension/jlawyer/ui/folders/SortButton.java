@@ -664,6 +664,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.ui.folders;
 
 import java.awt.Font;
+import java.awt.Insets;
 import java.awt.event.MouseEvent;
 import java.io.InputStream;
 import javax.swing.ImageIcon;
@@ -685,9 +686,11 @@ public class SortButton extends JButton {
     
     private static ImageIcon ICON_ASC=new javax.swing.ImageIcon(SortButton.class.getResource("/icons16/material/baseline_expand_less_white_48dp.png"));
     private static ImageIcon ICON_DESC=new javax.swing.ImageIcon(SortButton.class.getResource("/icons16/material/baseline_expand_more_white_48dp.png"));
-    private static ImageIcon ICON_NONE=new javax.swing.ImageIcon(SortButton.class.getResource("/icons16/material/empty_20_1px.png"));
+    private ImageIcon ICON_NONE=new javax.swing.ImageIcon(SortButton.class.getResource("/icons16/material/empty_20_1px.png"));
 
     private int sortState = SORT_NONE;
+    
+    private String activeText=" ";
 
     public SortButton() {
         super();
@@ -713,7 +716,24 @@ public class SortButton extends JButton {
         this.setBackground(DefaultColorTheme.COLOR_LIGHT_GREY);
         this.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
         setIcon(ICON_NONE);
+        setMargin(new Insets(5, 5, 5, 5));
     }
+    
+    public void setNoneIcon(ImageIcon icon) {
+        this.ICON_NONE=icon;
+        if (this.getSortState() == SORT_NONE) {
+            this.setIcon(ICON_NONE);
+        }
+    }
+
+    @Override
+    public void setText(String string) {
+        this.activeText=string;
+        if(this.sortState!=SORT_NONE)
+            super.setText(string); 
+    }
+    
+    
 
     private void buttonClicked(MouseEvent evt) {
         if (this.getSortState() == SORT_NONE) {
@@ -722,7 +742,7 @@ public class SortButton extends JButton {
             this.setSortState(SORT_DESC);
             
         } else if (this.getSortState() == SORT_DESC) {
-            this.setSortState(SORT_NONE);
+            this.setSortState(SORT_ASC);
             
         }
     }
@@ -743,15 +763,21 @@ public class SortButton extends JButton {
         if (this.getSortState() == SORT_ASC) {
             this.setBackground(DefaultColorTheme.COLOR_LOGO_GREEN);
             this.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
+            super.setText(activeText);
             setIcon(ICON_ASC);
+            setMargin(new Insets(3, 2, 3, 9));
         } else if (this.getSortState() == SORT_DESC) {
             this.setBackground(DefaultColorTheme.COLOR_LOGO_BLUE);
             this.setForeground(DefaultColorTheme.COLOR_LIGHT_GREY);
+            super.setText(activeText);
             setIcon(ICON_DESC);
+            setMargin(new Insets(3, 2, 3, 9));
         } else if (this.getSortState() == SORT_NONE) {
             this.setBackground(DefaultColorTheme.COLOR_LIGHT_GREY);
             this.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
             setIcon(ICON_NONE);
+            super.setText(null);
+            setMargin(new Insets(5, 5, 5, 5));
         }
         
     }

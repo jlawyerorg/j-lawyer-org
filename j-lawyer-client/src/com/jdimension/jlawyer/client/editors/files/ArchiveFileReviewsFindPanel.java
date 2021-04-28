@@ -887,7 +887,7 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
 
         jLabel1.setText("nach Typ:");
 
-        cmdReset.setText("x");
+        cmdReset.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/outline_backspace_black_48dp.png"))); // NOI18N
         cmdReset.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmdResetActionPerformed(evt);
@@ -928,7 +928,7 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
                     .add(rdAllTypes)
                     .add(rdTypeRespite)
                     .add(rdTypeReview))
-                .addContainerGap(244, Short.MAX_VALUE))
+                .addContainerGap(255, Short.MAX_VALUE))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)

@@ -664,6 +664,7 @@
 package com.jdimension.jlawyer.client.editors.documents;
 
 import com.jdimension.jlawyer.client.editors.documents.viewer.DocumentViewerFactory;
+import com.jdimension.jlawyer.client.editors.documents.viewer.GifJpegPngImageWithTextPanel;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
@@ -685,20 +686,20 @@ public class LoadDocumentPreviewThread implements Runnable {
 
     private static final Logger log = Logger.getLogger(LoadDocumentPreviewThread.class.getName());
 
-    private static boolean running=false;
-    
+    private static boolean running = false;
+
     private String id = null;
     private JPanel pnlPreview = null;
     private String fileName = null;
-    private boolean readOnly=false;
+    private boolean readOnly = false;
 
     public LoadDocumentPreviewThread(String docId, String fileName, boolean readOnly, JPanel pnlPreview) {
         this.id = docId;
         this.pnlPreview = pnlPreview;
         this.fileName = fileName;
-        this.readOnly=readOnly;
+        this.readOnly = readOnly;
     }
-    
+
     public static boolean isRunning() {
         return running;
     }
@@ -707,7 +708,7 @@ public class LoadDocumentPreviewThread implements Runnable {
     public void run() {
 
         try {
-            running=true;
+            running = true;
             //this.pnlPreview.setVisible(false);
             ThreadUtils.setVisible(pnlPreview, false);
             //this.pnlPreview.removeAll();
@@ -735,16 +736,33 @@ public class LoadDocumentPreviewThread implements Runnable {
             ThreadUtils.addComponent(pnlPreview, preview, BorderLayout.CENTER);
             //this.pnlPreview.add(preview, BorderLayout.CENTER);
             ThreadUtils.setVisible(pnlPreview, true);
-                    //this.pnlPreview.setBounds(this.pnlPreview.getBounds());
 
+            if (preview instanceof GifJpegPngImageWithTextPanel) {
+                // automatically scroll to the most relevant part of the text
+                // scrolling is only possible after text area has been layed out --> first add component, then do the scrolling
+                try {
+                    Thread.sleep(200);
+                } catch (Throwable t) {
+                    log.error(t);
+                }
+                SwingUtilities.invokeLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        ((GifJpegPngImageWithTextPanel) preview).intelligentScrolling();
+                    }
+
+                });
+            }
+
+            //this.pnlPreview.setBounds(this.pnlPreview.getBounds());
             //preview.setBounds(0,0,this.pnlPreview.getWidth(),this.pnlPreview.getHeight());
             //this.pnlPreview.revalidate();
             //this.pnlPreview.repaint();
             //System.out.println(pnlPreview.getBounds());
             //System.out.println(preview.getBounds());
-            running=false;
+            running = false;
         } catch (Exception ex) {
-            running=false;
+            running = false;
             log.error(ex);
 //            ThreadUtils.setVisible(pnlPreview, false);
 //            ThreadUtils.removeAll(pnlPreview);
@@ -756,13 +774,13 @@ public class LoadDocumentPreviewThread implements Runnable {
             SwingUtilities.invokeLater(
                     new Runnable() {
 
-                        public void run() {
-                            pnlPreview.setVisible(false);
-                            pnlPreview.removeAll();
-                            pnlPreview.add(new JLabel("Vorschau nicht verfügbar."));
-                            pnlPreview.setVisible(true);
-                        }
-                    });
+                public void run() {
+                    pnlPreview.setVisible(false);
+                    pnlPreview.removeAll();
+                    pnlPreview.add(new JLabel("Vorschau nicht verfügbar."));
+                    pnlPreview.setVisible(true);
+                }
+            });
             //ThreadUtils.setVisible(pnlPreview, true);
             //this.pnlPreview.add(new JLabel("Vorschau nicht verfügbar..."));
             //ThreadUtils.showErrorDialog(this, "Fehler beim Generieren der Vorschau: " + ex.getMessage(), "Fehler");

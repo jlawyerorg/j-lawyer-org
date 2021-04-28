@@ -682,6 +682,7 @@ public class NewFilenameOptionPanel extends javax.swing.JPanel {
     public void setFilename(String name) {
         this.txtNewName.setText(name);
         this.lblIcon.setIcon(FileUtils.getInstance().getFileTypeIcon(name));
+        
     }
     
     public String getFilename() {

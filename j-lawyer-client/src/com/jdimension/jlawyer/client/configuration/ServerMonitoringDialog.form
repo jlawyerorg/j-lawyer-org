@@ -54,7 +54,6 @@
                   <Component id="cmdCancel" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="cmdSave" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
-              <EmptySpace max="-2" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
@@ -158,7 +157,7 @@
                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
                       <Component id="jLabel5" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
-                      <Component id="jScrollPane1" pref="283" max="32767" attributes="0"/>
+                      <Component id="jScrollPane1" pref="343" max="32767" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                   </Group>
               </Group>
@@ -667,6 +666,8 @@
                                                   <EmptySpace min="-2" pref="2" max="-2" attributes="0"/>
                                                   <Component id="chkSsl" min="-2" max="-2" attributes="0"/>
                                               </Group>
+                                              <Component id="chkWarningsBackupFailure" alignment="0" min="-2" max="-2" attributes="0"/>
+                                              <Component id="chkWarningsBackupSuccess" alignment="0" min="-2" max="-2" attributes="0"/>
                                           </Group>
                                           <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                                       </Group>
@@ -681,6 +682,10 @@
                   <Group type="103" groupAlignment="0" attributes="0">
                       <Group type="102" alignment="0" attributes="0">
                           <Component id="chkWarnings" min="-2" max="-2" attributes="0"/>
+                          <EmptySpace max="-2" attributes="0"/>
+                          <Component id="chkWarningsBackupSuccess" min="-2" max="-2" attributes="0"/>
+                          <EmptySpace max="-2" attributes="0"/>
+                          <Component id="chkWarningsBackupFailure" min="-2" max="-2" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="3" attributes="0">
                               <Component id="jLabel6" alignment="3" min="-2" max="-2" attributes="0"/>
@@ -785,6 +790,16 @@
                   <Events>
                     <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdTestMailActionPerformed"/>
                   </Events>
+                </Component>
+                <Component class="javax.swing.JCheckBox" name="chkWarningsBackupFailure">
+                  <Properties>
+                    <Property name="text" type="java.lang.String" value="bei fehlgeschlagener Datensicherung"/>
+                  </Properties>
+                </Component>
+                <Component class="javax.swing.JCheckBox" name="chkWarningsBackupSuccess">
+                  <Properties>
+                    <Property name="text" type="java.lang.String" value="bei erfolgreicher Datensicherung (Zusammenfassung)"/>
+                  </Properties>
                 </Component>
               </SubComponents>
             </Container>

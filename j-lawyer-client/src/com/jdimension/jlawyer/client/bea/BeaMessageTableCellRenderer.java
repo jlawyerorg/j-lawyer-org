@@ -685,7 +685,13 @@ public class BeaMessageTableCellRenderer extends DefaultTableCellRenderer {
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, 
                                                   boolean hasFocus, int row, int column) {
         
-        org.jlawyer.bea.model.MessageHeader msgh= (MessageHeader)table.getValueAt(row, 3);
+        org.jlawyer.bea.model.MessageHeader msgh=null;
+        try {
+            msgh= (MessageHeader)table.getValueAt(row, 3);
+        } catch (ArrayIndexOutOfBoundsException aioe) {
+            log.error("beA table cell renderer requested for invalid row/column " + row + ":" + column + "; table: " + table.getRowCount() + ":" + table.getColumnCount());
+            return super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+        }
         
         Object returnRenderer=null;
         //Object returnRenderer=super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
@@ -745,7 +751,6 @@ public class BeaMessageTableCellRenderer extends DefaultTableCellRenderer {
         
         } catch (Exception ex) {
             log.error(ex);
-            ex.printStackTrace();
         } 
         return (Component)returnRenderer;
     }

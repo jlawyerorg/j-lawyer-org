@@ -684,6 +684,8 @@ public class ClientSettings {
     public static final String CONF_LASTSERVER="connection.lastserver";
     public static final String CONF_LASTSERVERLIST="connection.lastserverlist";
     public static final String CONF_LASTPORT="connection.lastport";
+    // in case of SSH tunneling, the client determines an available port automatically, which must not be saved for future connections --> dedicated property
+    public static final String CONF_LASTPORTDYN="connection.lastportdyn";
     public static final String CONF_LASTUSER="connection.lastuser";
     
     // deprecated! use LASTSECMODE instead
@@ -695,7 +697,6 @@ public class ClientSettings {
     public static final String CONF_LASTSSHPORT="connection.lastsshport";
     public static final String CONF_LASTSSHUSER="connection.lastsshuser";
     public static final String CONF_LASTSSHPWD="connection.lastsshpwd";
-    public static final String CONF_LASTSOURCEPORT="connection.lastsshsourceport";
     public static final String CONF_LASTTARGETPORT="connection.lastsshtargetport";
     
     public static final String CONF_THEME="client.theme";
@@ -741,7 +742,6 @@ public class ClientSettings {
     
     public static final String CONF_MAILS_TAGGINGENABLED="client.mails.taggingenabled";
     public static final String CONF_MAILS_DOCUMENTTAGGINGENABLED="client.mails.documenttaggingenabled";
-    public static final String CONF_MAILS_LASTTAG="client.mails.lasttag";
     public static final String CONF_MAILS_DELETEENABLED="client.mails.deleteenabled";
     
     public static final String CONF_MAILSEND_DOCUMENTTAGGINGENABLED="client.mailsend.documenttaggingenabled";
@@ -771,6 +771,12 @@ public class ClientSettings {
     public static final String CONF_VOIP_LASTSIPFAX="client.voip.lastsipfax";
     public static final String CONF_VOIP_LASTSIPSMS="client.voip.lastsipsms";
     public static final String CONF_VOIP_LASTSIPVOICE="client.voip.lastsipvoice";
+    
+    // may be "protocolhandler" or "exectuable
+    public static final String CONF_VOIP_SOFTPHONE_MODE="client.voip.softphone.mode";
+    public static final String CONF_VOIP_SOFTPHONE_PROTOCOL_NAME="client.voip.softphone.protocol.name";
+    public static final String CONF_VOIP_SOFTPHONE_EXECUTABLE_PATH="client.voip.softphone.executable.name";
+    public static final String CONF_VOIP_SOFTPHONE_EXECUTABLE_PARAMS="client.voip.softphone.executable.parameters";
     
     public static final String CONF_APPS_XJUSTIZVIEWER_PATH="client.apps.xjustiz.path";
     
@@ -832,8 +838,8 @@ public class ClientSettings {
                 log.error("Could not create new client configuration file", ex);
             }
         }
-        try {
-            this.clientConfiguration.load(new FileInputStream(clientConfFile));
+        try (FileInputStream fis=new FileInputStream(clientConfFile)) {
+            this.clientConfiguration.load(fis);
         } catch (Exception ex) {
             log.error("Could not load client configuration file", ex);
         }
@@ -849,7 +855,9 @@ public class ClientSettings {
     public void saveConfiguration() throws Exception {
         String clientConfFileLocation=System.getProperty("user.home") + System.getProperty("file.separator") + ".j-lawyer-client" + System.getProperty("file.separator") + "clientConfiguration.properties";
         File clientConfFile=new File(clientConfFileLocation);
-        this.clientConfiguration.store(new FileOutputStream(clientConfFile), "j-lawyer Client configuration");
+        try (FileOutputStream fos=new FileOutputStream(clientConfFile)) {
+            this.clientConfiguration.store(fos, "j-lawyer Client configuration");
+        }
     }
     
     public String getConfiguration(String key, String defaultValue) {

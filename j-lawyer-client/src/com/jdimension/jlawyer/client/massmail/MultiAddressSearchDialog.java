@@ -695,7 +695,7 @@ public class MultiAddressSearchDialog extends javax.swing.JDialog {
     private HashMap<AddressBean, String> resultAddresses = new HashMap<AddressBean, String>();
 
     /**
-     * Creates new form AddAddressSearchDialog
+     * Creates new form MultiAddressSearchDialog
      */
     public MultiAddressSearchDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);

@@ -693,10 +693,15 @@ public class AppOptionGroupBeanComparator implements Comparator {
                 s2 = t1.toString();
             }
             
-            if(s1!=null && s2!=null)
+            if(s1!=null && s2!=null) {
                 return s1.toLowerCase().compareTo(s2.toLowerCase());
-            else
-                return s1.compareTo(s2);
+            } else {
+                if(s1!=null)
+                    return s1.compareTo(s2);
+                else
+                    return -1;
+                    
+            }
 
         } catch (Throwable thr) {
             log.error("error sorting option group", thr);

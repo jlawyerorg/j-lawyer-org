@@ -677,11 +677,13 @@ import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.net.URL;
 import java.net.URLConnection;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import org.apache.log4j.Logger;
@@ -726,7 +728,7 @@ public class FormsManagementDialog extends javax.swing.JDialog implements FormAc
             urlCon.setReadTimeout(5000);
 
             InputStream is = urlCon.getInputStream();
-            InputStreamReader reader = new InputStreamReader(is, "UTF-8");
+            InputStreamReader reader = new InputStreamReader(is, StandardCharsets.UTF_8);
 
             char[] buffer = new char[1024];
             int len = 0;
@@ -739,6 +741,13 @@ public class FormsManagementDialog extends javax.swing.JDialog implements FormAc
             String formsContent = sb.toString();
 
             DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+            try {
+                dbf.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+                dbf.setAttribute(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
+            } catch (IllegalArgumentException iae) {
+                // only available from JAXP 1.5+, but Wildfly still ships 1.4
+                log.warn("Unable to set external entity restrictions in XML parser", iae);
+            }
             DocumentBuilder remoteDb = dbf.newDocumentBuilder();
             InputSource inSrc1 = new InputSource(new StringReader(formsContent));
             inSrc1.setEncoding("UTF-8");
@@ -802,13 +811,12 @@ public class FormsManagementDialog extends javax.swing.JDialog implements FormAc
             }
             Iterator i = formPlugins.entrySet().iterator();
             while (i.hasNext()) {
-                Map.Entry me=(Map.Entry)i.next();
-                this.formPluginsPanel.add((Component)me.getValue());
+                Map.Entry me = (Map.Entry) i.next();
+                this.formPluginsPanel.add((Component) me.getValue());
             }
 
         } catch (Throwable t) {
             log.error("Error downloading calculation plugins", t);
-            t.printStackTrace();
         }
 
         // check for local plugins
@@ -819,20 +827,26 @@ public class FormsManagementDialog extends javax.swing.JDialog implements FormAc
                 return;
             }
 
-            InputStream is = new FileInputStream(internalXml);
-            InputStreamReader reader = new InputStreamReader(is, "UTF-8");
+            StringBuilder sb = new StringBuilder();
+            try (InputStream is = new FileInputStream(internalXml);
+                    InputStreamReader reader = new InputStreamReader(is, StandardCharsets.UTF_8)) {
 
-            char[] buffer = new char[1024];
-            int len = 0;
-            StringBuffer sb = new StringBuffer();
-            while ((len = reader.read(buffer)) > -1) {
-                sb.append(buffer, 0, len);
+                char[] buffer = new char[1024];
+                int len = 0;
+                while ((len = reader.read(buffer)) > -1) {
+                    sb.append(buffer, 0, len);
+                }
             }
-            reader.close();
-            is.close();
             String formsContent = sb.toString();
 
             DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+            try {
+                dbf.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+                dbf.setAttribute(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
+            } catch (IllegalArgumentException iae) {
+                // only available from JAXP 1.5+, but Wildfly still ships 1.4
+                log.warn("Unable to set external entity restrictions in XML parser", iae);
+            }
             DocumentBuilder remoteDb = dbf.newDocumentBuilder();
             InputSource inSrc1 = new InputSource(new StringReader(formsContent));
             inSrc1.setEncoding("UTF-8");
@@ -897,7 +911,6 @@ public class FormsManagementDialog extends javax.swing.JDialog implements FormAc
 
         } catch (Throwable t) {
             log.error("Error downloading calculation plugins", t);
-            t.printStackTrace();
         }
 
     }

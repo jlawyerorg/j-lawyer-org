@@ -677,19 +677,25 @@ import org.jlawyer.bea.model.Identity;
  * @author jens
  */
 public class BeaFolderTreeCellRenderer extends DefaultTreeCellRenderer {
-    
+
     private static final Logger log = Logger.getLogger(BeaFolderTreeCellRenderer.class.getName());
-    
-    
-    /** Creates a new instance of ModuleTreeCellRenderer */
+
+    /**
+     * Creates a new instance of ModuleTreeCellRenderer
+     */
     public BeaFolderTreeCellRenderer() {
         super();
     }
 
-    public Component getTreeCellRendererComponent(JTree jTree, Object object, boolean b, boolean b0, boolean b1, int row, boolean b2) {
-        
-        super.getTreeCellRendererComponent(jTree, object, b, b0, b1, row, b2);
-        
+    @Override
+    public Component getTreeCellRendererComponent(JTree jTree, Object object, boolean sel,
+            boolean expanded,
+            boolean leaf,
+            int row,
+            boolean hasFocus) {
+
+        super.getTreeCellRendererComponent(jTree, object, sel, expanded, leaf, row, hasFocus);
+
         JTree.DropLocation dropLocation = jTree.getDropLocation();
         if (dropLocation != null
                 && dropLocation.getChildIndex() == -1
@@ -697,57 +703,52 @@ public class BeaFolderTreeCellRenderer extends DefaultTreeCellRenderer {
             // this row represents the current drop location
             // so render it specially, perhaps with a different color
             this.setForeground(Color.GREEN);
-            
+
         }
 
-        
-        //this.setLeafIcon(leafIcon);
-        
-        if(((DefaultMutableTreeNode)object).getUserObject()==null)
+        if (((DefaultMutableTreeNode) object).getUserObject() == null) {
             return this;
-        
-        //new javax.swing.ImageIcon(getClass().getResource("/icons/scanner_big.png"))
-        
-        try {
-        
-            Object o=((DefaultMutableTreeNode)object).getUserObject();
-            if(o instanceof org.jlawyer.bea.model.Folder) {
-            org.jlawyer.bea.model.Folder f=(org.jlawyer.bea.model.Folder)((DefaultMutableTreeNode)object).getUserObject();
-            
-            if("trash".equalsIgnoreCase(f.getType()))
-                this.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/trashcan_full.png")));
-            
-            if("sent".equalsIgnoreCase(f.getType()))
-                this.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder_sent_mail.png")));
-            
-            if("inbox".equalsIgnoreCase(f.getType()))
-                this.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder_inbox.png")));
-            
-            if(BeaAccess.FOLDER_NAME_JLAWYER_PROCESSED.equals(f.getName())) {
-                this.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/jlawyerorg.png")));
-            }
-            
-            int unread=f.getUnreadMessageCount();
-            if(unread>0) {
-                this.setFont(this.getFont().deriveFont(Font.BOLD));
-            } else {
-                this.setFont(this.getFont().deriveFont(Font.PLAIN));
-            }
-            
-            
-        } else if (o instanceof Identity) {
-            this.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/identity.png")));
         }
-        
+
+        try {
+
+            Object o = ((DefaultMutableTreeNode) object).getUserObject();
+            if (o instanceof org.jlawyer.bea.model.Folder) {
+                org.jlawyer.bea.model.Folder f = (org.jlawyer.bea.model.Folder) ((DefaultMutableTreeNode) object).getUserObject();
+
+                if ("trash".equalsIgnoreCase(f.getType())) {
+                    this.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/trashcan_full.png")));
+                }
+
+                if ("sent".equalsIgnoreCase(f.getType())) {
+                    this.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder_sent_mail.png")));
+                }
+
+                if ("inbox".equalsIgnoreCase(f.getType())) {
+                    this.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder_inbox.png")));
+                }
+
+                if (BeaAccess.FOLDER_NAME_JLAWYER_PROCESSED.equals(f.getName())) {
+                    this.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/jlawyerorg.png")));
+                }
+
+                int unread = f.getUnreadMessageCount();
+                if (unread > 0) {
+                    this.setFont(this.getFont().deriveFont(Font.BOLD));
+                } else {
+                    this.setFont(this.getFont().deriveFont(Font.PLAIN));
+                }
+
+            } else if (o instanceof Identity) {
+                this.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/identity.png")));
+            }
+
         } catch (Exception ex) {
             log.error(ex);
             log.error(ex.getMessage());
-            ex.printStackTrace();
         }
-        
+
         return this;
     }
-    
-    
-    
+
 }

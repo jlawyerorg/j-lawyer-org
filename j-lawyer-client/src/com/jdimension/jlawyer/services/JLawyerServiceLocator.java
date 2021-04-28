@@ -678,7 +678,6 @@ import javax.jms.Destination;
 import javax.jms.Topic;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
-import javax.rmi.PortableRemoteObject;
 import javax.sql.DataSource;
 import javax.mail.Session;
 
@@ -896,17 +895,6 @@ public class JLawyerServiceLocator {
      */
     public EJBLocalHome getLocalHome(String jndiHomeName) throws NamingException {
         return (EJBLocalHome) lookup(jndiHomeName);
-    }
-
-    /**
-     * will get the ejb Remote home factory. If this ejb home factory has
-     * already been clients need to cast to the type of EJBHome they desire
-     *
-     * @return the EJB Home corresponding to the homeName
-     */
-    public EJBHome getRemoteHome(String jndiHomeName, Class className) throws NamingException {
-        Object objref = lookup(jndiHomeName);
-        return (EJBHome) PortableRemoteObject.narrow(objref, className);
     }
 
     /**

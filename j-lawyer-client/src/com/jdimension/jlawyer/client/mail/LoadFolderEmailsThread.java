@@ -681,7 +681,7 @@ import org.apache.log4j.Logger;
 public class LoadFolderEmailsThread implements Runnable {
     
     private static final Logger log = Logger.getLogger(LoadFolderEmailsThread.class.getName());
-    private static SimpleDateFormat df=new SimpleDateFormat("dd.MM.yyyy, HH:mm");
+    private SimpleDateFormat df=new SimpleDateFormat("dd.MM.yyyy, HH:mm");
     
     
     

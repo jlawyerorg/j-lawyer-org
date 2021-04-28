@@ -683,6 +683,7 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLEncoder;
 import java.security.MessageDigest;
+import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import org.apache.log4j.Logger;
@@ -745,7 +746,10 @@ public class AutoUpdateTimerTask extends java.util.TimerTask {
             String company = set.getSetting(set.PROFILE_COMPANYNAME, "x");
             String zip = set.getSetting(set.PROFILE_COMPANYZIP, "x");
 
-            String voipmode = set.getSetting(set.SERVERCONF_VOIPMODE, "off");
+            String voipmode = "off";
+            if (UserSettings.getInstance().getCurrentUser().isVoipEnabled()) {
+                voipmode = "on";
+            }
             String drebismode = set.getSetting(set.SERVERCONF_DREBISMODE, "off");
             String backupmode = set.getSetting(set.SERVERCONF_BACKUP_MODE, "off");
 
@@ -753,7 +757,7 @@ public class AutoUpdateTimerTask extends java.util.TimerTask {
             String installationHash = md5(zip + " " + company);
             String userHash = md5(UserSettings.getInstance().getCurrentUser().getPrincipalId());
 
-            String csession = installationHash +",user=" + userHash + ",java=" + javaVersion + ",os=" + osName + ",osversion=" + osVersion + ",adrc=" + addressCount + ",afc=" + archiveFileCount + ",docc=" + docCount + ",j-lawyer=" + VersionUtils.getFullClientVersion() + ",drebis=" + drebismode + ",voip=" + voipmode + ",backup=" + backupmode;
+            String csession = installationHash + ",user=" + userHash + ",java=" + javaVersion + ",os=" + osName + ",osversion=" + osVersion + ",adrc=" + addressCount + ",afc=" + archiveFileCount + ",docc=" + docCount + ",j-lawyer=" + VersionUtils.getFullClientVersion() + ",drebis=" + drebismode + ",voip=" + voipmode + ",backup=" + backupmode;
 
             URL updateURL = new URL("https://www.j-lawyer.org/downloads/updatecheck.xml?csession=" + Crypto.encrypt(csession));
             URLConnection urlCon = updateURL.openConnection();
@@ -774,6 +778,13 @@ public class AutoUpdateTimerTask extends java.util.TimerTask {
 //            System.out.println(updateContent);
 
             DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+            try {
+                dbf.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+                dbf.setAttribute(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
+            } catch (IllegalArgumentException iae) {
+                // only available from JAXP 1.5+, but Wildfly still ships 1.4
+                log.warn("Unable to set external entity restrictions in XML parser", iae);
+            }
             DocumentBuilder db = dbf.newDocumentBuilder();
             Document doc = db.parse(new InputSource(new StringReader(updateContent)));
 
@@ -797,7 +808,7 @@ public class AutoUpdateTimerTask extends java.util.TimerTask {
             String newsSummary = nl.item(0).getTextContent();
 
             //if (!VersionUtils.getFullClientVersion().equals(version)) {
-            if(VersionUtils.isVersionGreater(version, VersionUtils.getFullClientVersion())) {
+            if (VersionUtils.isVersionGreater(version, VersionUtils.getFullClientVersion())) {
                 EventBroker b = EventBroker.getInstance();
                 b.publishEvent(new AutoUpdateEvent(version, published, changelog));
             }
@@ -817,11 +828,11 @@ public class AutoUpdateTimerTask extends java.util.TimerTask {
             nl = doc.getElementsByTagName("urlhelp");
             String urlHelp = nl.item(0).getTextContent();
             settings.setUrlHelp(urlHelp);
-            
+
             nl = doc.getElementsByTagName("urlxjustiz");
             String urlXjustiz = nl.item(0).getTextContent();
             settings.setUrlXjustiz(urlXjustiz);
-            
+
             nl = doc.getElementsByTagName("bea-enabled-versions");
             String beaEnabledVersions = nl.item(0).getTextContent();
             set.setSetting(ServerSettings.SERVERCONF_BEAENABLEDVERSIONS, beaEnabledVersions);

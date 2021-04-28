@@ -701,7 +701,8 @@ public class CaseFolder implements Serializable {
     @OneToMany(cascade = CascadeType.REMOVE, mappedBy = "folder")
     private List<ArchiveFileDocumentsBean> documents;
     
-    
+    @OneToMany(cascade = CascadeType.REMOVE, mappedBy = "folder", fetch = FetchType.LAZY)
+    protected List<CaseFolderSettings> settings;
     
     public CaseFolder() {
     }
@@ -766,6 +767,19 @@ public class CaseFolder implements Serializable {
         return children;
     }
     
+    public List<String> getAllFolderIds() {
+        ArrayList<String> idList=new ArrayList<>();
+        this.collectFolderIds(this, idList);
+        return idList;
+    }
+    
+    private void collectFolderIds(CaseFolder f, List<String> idList) {
+        idList.add(f.getId());
+        for(CaseFolder child: f.getChildren()) {
+            collectFolderIds(child, idList);
+        }
+    }
+    
     public boolean hasChild(String name) {
         if(this.children!=null) {
             for(CaseFolder c: this.children) {
@@ -800,6 +814,20 @@ public class CaseFolder implements Serializable {
      */
     public void setDocuments(List<ArchiveFileDocumentsBean> documents) {
         this.documents = documents;
+    }
+
+    /**
+     * @return the settings
+     */
+    public List<CaseFolderSettings> getSettings() {
+        return settings;
+    }
+
+    /**
+     * @param settings the settings to set
+     */
+    public void setSettings(List<CaseFolderSettings> settings) {
+        this.settings = settings;
     }
 
     

@@ -809,9 +809,9 @@ public class BeaAccess {
                             .heap(50, MemoryUnit.MB)
                             //.offheap(1, MemoryUnit.MB)
                             .disk(250, MemoryUnit.MB, true)
-            ).withExpiry(ExpiryPolicyBuilder.timeToLiveExpiration(Duration.ofSeconds(60 * 60 * 2))));
+            ).withExpiry(ExpiryPolicyBuilder.timeToLiveExpiration(Duration.ofSeconds(60l * 60l * 2l))));
         } catch (Throwable t) {
-            t.printStackTrace();
+            log.error(t);
         }
 
         //this.folderOverviewCache= cacheManager.getCache("bea-messageheaders-cache", Long.class, Collection.class);
@@ -824,7 +824,7 @@ public class BeaAccess {
             ).withExpiry(ExpiryPolicyBuilder.timeToLiveExpiration(Duration.ofSeconds(300))));
 
         } catch (Throwable t) {
-            t.printStackTrace();
+            log.error(t);
         }
 
 //        Cache<Long, String> myCache = cacheManager.createCache("myCache",
@@ -974,6 +974,11 @@ public class BeaAccess {
             }
         }
         return this.inboxes;
+    }
+    
+    public boolean isOutboxEmpty(String safeId) throws BeaWrapperException {
+        this.checkValidBeaClient();
+        return this.wrapper.isOutboxEmpty(safeId);
     }
 
     public Identity getIdentity(String safeId) throws BeaWrapperException {

@@ -664,13 +664,15 @@
 package com.jdimension.jlawyer.security;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
+import java.security.spec.KeySpec;
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.PBEKeySpec;
-import javax.crypto.spec.PBEParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 
 /**
  *
@@ -678,41 +680,25 @@ import javax.crypto.spec.PBEParameterSpec;
  */
 public class Crypto {
 
-    private static final char[] PASSWORD = "enfldsgbnlsngdlksdsgm".toCharArray();
-    private static final byte[] SALT = {
-        (byte) 0xde, (byte) 0x33, (byte) 0x10, (byte) 0x12,
-        (byte) 0xde, (byte) 0x33, (byte) 0x10, (byte) 0x12,
-    };
+    private static final char[] DROW_SSAP = ("enfld" + "sgbnlsn" + "gdlksdsgm").toCharArray();
+    
+    private static final byte[] SALT_AES = {
+        (byte) 0xde, (byte) 0x33, (byte) 0x10, (byte) 0x12, (byte) 0xde, (byte) 0x33, (byte) 0x10, (byte) 0x12,
+        (byte) 0xde, (byte) 0x33, (byte) 0x10, (byte) 0x12, (byte) 0xde, (byte) 0x33, (byte) 0x10, (byte) 0x12,
+        (byte) 0xde, (byte) 0x33, (byte) 0x10, (byte) 0x12, (byte) 0xde, (byte) 0x33, (byte) 0x10, (byte) 0x12,
+        (byte) 0xde, (byte) 0x33, (byte) 0x10, (byte) 0x12, (byte) 0xde, (byte) 0x33, (byte) 0x10, (byte) 0x12,
+        (byte) 0xde, (byte) 0x33, (byte) 0x10, (byte) 0x12, (byte) 0xde, (byte) 0x33, (byte) 0x10, (byte) 0x12,
+        (byte) 0xde, (byte) 0x33, (byte) 0x10, (byte) 0x12, (byte) 0xde, (byte) 0x33, (byte) 0x10, (byte) 0x12,
+        (byte) 0xde, (byte) 0x33, (byte) 0x10, (byte) 0x12, (byte) 0xde, (byte) 0x33, (byte) 0x10, (byte) 0x12,
+        (byte) 0xde, (byte) 0x33, (byte) 0x10, (byte) 0x12, (byte) 0xde, (byte) 0x33, (byte) 0x10, (byte) 0x12};
+    
+    private static final byte[] NONCE_AES = {
+        (byte) 0xde, (byte) 0x33, (byte) 0x10, (byte) 0x12, (byte) 0xde, (byte) 0x33, (byte) 0x10, (byte) 0x12,
+        (byte) 0xde, (byte) 0x33, (byte) 0x10, (byte) 0x12, (byte) 0xde, (byte) 0x33, (byte) 0x10, (byte) 0x12,
+        (byte) 0xde, (byte) 0x33, (byte) 0x10, (byte) 0x12, (byte) 0xde, (byte) 0x33, (byte) 0x10, (byte) 0x12,
+        (byte) 0xde, (byte) 0x33, (byte) 0x10, (byte) 0x12, (byte) 0xde, (byte) 0x33, (byte) 0x10, (byte) 0x12};
 
     public static void main(String[] args) throws Exception {
-
-//        boolean valid=true;
-//        if(args.length!=2) {
-//            valid=false;
-//        }
-//
-//        if(valid)
-//        if(!("encrypt".equalsIgnoreCase(args[0])) && !("decrypt".equalsIgnoreCase(args[0]))) {
-//            valid=false;
-//        }
-//
-//        if(valid)
-//        if(args[1].length()<2)
-//            valid=false;
-//
-//        if(!valid) {
-//            System.out.println("Usage: Crypto <decrypt|encrypt> <string>");
-//            System.exit(0);
-//        }
-//
-//        String mode=args[0];
-//        String str=args[1];
-//
-//        if("decrypt".equalsIgnoreCase(args[0])) {
-//            System.out.println("decrypted: " + decrypt(args[1]));
-//        } else if ("encrypt".equalsIgnoreCase(args[0])) {
-//            System.out.println("encrypted: " + encrypt(args[1]));
-//        }
 
         String originalPassword = "nix";
         System.out.println("Original password: " + originalPassword);
@@ -720,45 +706,79 @@ public class Crypto {
         System.out.println("Encrypted password: " + encryptedPassword);
         String decryptedPassword = decrypt(encryptedPassword);
         System.out.println("Decrypted password: " + decryptedPassword);
-        
-        System.out.println(encrypt("<kanzlei-passwort>"));
+
     }
 
-    public static String encrypt(String property) throws GeneralSecurityException, UnsupportedEncodingException {
-        return encrypt(property, PASSWORD);
+    public static String encrypt(String property) throws GeneralSecurityException {
+        return encrypt(property, DROW_SSAP);
     }
-    
-    public static String encrypt(String property, char[] password) throws GeneralSecurityException, UnsupportedEncodingException {
-        SecretKeyFactory keyFactory = SecretKeyFactory.getInstance("PBEWithMD5AndDES");
-        SecretKey key = keyFactory.generateSecret(new PBEKeySpec(password));
-        Cipher pbeCipher = Cipher.getInstance("PBEWithMD5AndDES");
-        pbeCipher.init(Cipher.ENCRYPT_MODE, key, new PBEParameterSpec(SALT, 20));
-        return base64Encode(pbeCipher.doFinal(property.getBytes("UTF-8")));
+
+    public static String encrypt(String property, char[] password) throws GeneralSecurityException {
+        // GENERATE random salt (needed for PBKDF2)
+//        final byte[] salt = new byte[64];
+//        SecureRandom random = SecureRandom.getInstanceStrong();
+//        random.nextBytes(salt);
+        final byte[] salt = SALT_AES;
+
+        // DERIVE key (from password and salt)
+        SecretKeyFactory secretKeyFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA512");
+        KeySpec passwordBasedEncryptionKeySpec = new PBEKeySpec(password, salt, 10000, 256);
+        SecretKey secretKeyFromPBKDF2 = secretKeyFactory.generateSecret(passwordBasedEncryptionKeySpec);
+        SecretKey key = new SecretKeySpec(secretKeyFromPBKDF2.getEncoded(), "AES");
+
+        // GENERATE random nonce (number used once)
+//        final byte[] nonce = new byte[32];
+//        random.nextBytes(nonce);
+
+        // ENCRYPTION
+        Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+        GCMParameterSpec spec = new GCMParameterSpec(16 * 8, NONCE_AES);
+        cipher.init(Cipher.ENCRYPT_MODE, key, spec);
+
+        byte[] cipherTextBytes = cipher.doFinal(property.getBytes(StandardCharsets.UTF_8));
+        
+        // CONVERSION of raw bytes to BASE64 representation
+        return base64Encode(cipherTextBytes);
     }
 
     private static String base64Encode(byte[] bytes) {
-        // class is internal, probably should use another implementation
         return new Base64().encode(bytes);
-        //return new BASE64Encoder().encode(bytes);
     }
 
     public static String decrypt(String property) throws GeneralSecurityException, IOException {
-        return decrypt(property, PASSWORD);
+        return decrypt(property, DROW_SSAP);
     }
-    
+
     public static String decrypt(String property, char[] password) throws GeneralSecurityException, IOException {
-        SecretKeyFactory keyFactory = SecretKeyFactory.getInstance("PBEWithMD5AndDES");
-        SecretKey key = keyFactory.generateSecret(new PBEKeySpec(password));
-        Cipher pbeCipher = Cipher.getInstance("PBEWithMD5AndDES");
-        pbeCipher.init(Cipher.DECRYPT_MODE, key, new PBEParameterSpec(SALT, 20));
-        return new String(pbeCipher.doFinal(base64Decode(property)), "UTF-8");
+
+//        final byte[] salt = new byte[64];
+//      SecureRandom random = SecureRandom.getInstanceStrong();
+//      random.nextBytes(salt);
+        final byte[] salt = SALT_AES;
+
+        // DERIVE key (from password and salt)
+        SecretKeyFactory secretKeyFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA512");
+        KeySpec passwordBasedEncryptionKeySpec = new PBEKeySpec(password, salt, 10000, 256);
+        SecretKey secretKeyFromPBKDF2 = secretKeyFactory.generateSecret(passwordBasedEncryptionKeySpec);
+        SecretKey key = new SecretKeySpec(secretKeyFromPBKDF2.getEncoded(), "AES");
+
+//        // GENERATE random nonce (number used once)
+//        final byte[] nonce = new byte[32];
+//        random.nextBytes(nonce);
+
+        // ENCRYPTION
+        Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+        GCMParameterSpec spec = new GCMParameterSpec(16 * 8, NONCE_AES);
+        //cipher.init(Cipher.ENCRYPT_MODE, key, spec);
+
+        // DECRYPTION
+        cipher.init(Cipher.DECRYPT_MODE, key, spec);
+        byte[] decryptedCipherTextBytes = cipher.doFinal(base64Decode(property));
+        return new String(decryptedCipherTextBytes, StandardCharsets.UTF_8);
     }
 
     private static byte[] base64Decode(String property) throws IOException {
-        // NB: This class is internal, and you probably should use another impl
-        //return new BASE64Decoder().decodeBuffer(property);
         return new Base64().decode(property);
     }
 
 }
-

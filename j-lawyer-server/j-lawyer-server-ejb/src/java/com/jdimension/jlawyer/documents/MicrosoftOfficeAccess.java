@@ -1139,7 +1139,7 @@ public class MicrosoftOfficeAccess {
                     tfCache.put(xmlText.hashCode(), ctr);
 
                 } else {
-                    System.out.println("cache hit");
+                    //System.out.println("cache hit");
                 }
                 CTR ctr = tfCache.get(xmlText.hashCode());
                 //faster, but does not work: CTR ctr = CTR.Factory.parse(obj.getDomNode());

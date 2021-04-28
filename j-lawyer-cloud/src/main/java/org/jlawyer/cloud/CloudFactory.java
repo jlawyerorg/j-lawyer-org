@@ -675,8 +675,11 @@ public class CloudFactory {
     
     private static final Logger log=Logger.getLogger(CloudFactory.class.getName());
     
-    public static NextcloudConnector getCloud(String serverName, boolean useHTTPS, int port, String userName, String password) {
+    public static NextcloudConnector getCloud(String serverName, boolean useHTTPS, int port, String path, String userName, String password) {
         NextcloudConnector con=new NextcloudConnector(serverName, useHTTPS, port, userName, password);
+        if(path!=null && !"".equals(path)) {
+            con.setSubpathPrefix(path);
+        }
         return con;
     }
     
@@ -684,7 +687,7 @@ public class CloudFactory {
         if(cloud!=null) {
             try {
                 cloud.shutdown();
-            } catch (IOException ex) {
+            } catch (Throwable ex) {
                 log.error(ex);
             }
         }

@@ -673,6 +673,7 @@ import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileHistoryBean;
+import com.jdimension.jlawyer.persistence.CaseFolder;
 import com.jdimension.jlawyer.persistence.DocumentTagsBean;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
@@ -699,7 +700,7 @@ import org.jlawyer.bea.model.MessageExport;
 public class SaveBeaMessageAction extends ProgressableAction {
 
     private static final Logger log = Logger.getLogger(SaveBeaMessageAction.class.getName());
-    private static SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy, HH:mm");
+    private SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy, HH:mm");
     private ArrayList<String> attachments = null;
     private AppUserBean cu = null;
     private boolean readReceipt = false;
@@ -713,6 +714,8 @@ public class SaveBeaMessageAction extends ProgressableAction {
 
     private String azSender = null;
     private String azRecipient = null;
+    
+    private CaseFolder folder=null;
 
     public SaveBeaMessageAction(ProgressIndicator i, JDialog cleanAfter, String fromSafeId, ArrayList<String> attachments, AppUserBean cu, boolean readReceipt, BeaListItem authority, Enumeration to, String subject, String body, String documentTag, String azSender, String azRecipient) {
         super(i, false, cleanAfter);
@@ -730,9 +733,10 @@ public class SaveBeaMessageAction extends ProgressableAction {
         this.azRecipient = azRecipient;
     }
 
-    public SaveBeaMessageAction(ProgressIndicator i, JDialog cleanAfter, String fromSafeId, ArrayList<String> attachments, AppUserBean cu, boolean readReceipt, BeaListItem authority, Enumeration to, String subject, String body, ArchiveFileBean af, String documentTag, String azSender, String azRecipient) {
+    public SaveBeaMessageAction(ProgressIndicator i, JDialog cleanAfter, String fromSafeId, ArrayList<String> attachments, AppUserBean cu, boolean readReceipt, BeaListItem authority, Enumeration to, String subject, String body, ArchiveFileBean af, String documentTag, String azSender, String azRecipient, CaseFolder folder) {
         this(i, cleanAfter, fromSafeId, attachments, cu, readReceipt, authority, to, subject, body, documentTag, azSender, azRecipient);
         this.archiveFile = af;
+        this.folder=folder;
     }
 
     @Override
@@ -843,6 +847,12 @@ public class SaveBeaMessageAction extends ProgressableAction {
 
                 if (this.documentTag != null && !("".equals(this.documentTag))) {
                     afs.setDocumentTag(newDoc.getId(), new DocumentTagsBean(newDoc.getId(), this.documentTag), true);
+                }
+                
+                if(this.folder!=null) {
+                    ArrayList<String> docIds=new ArrayList<>();
+                    docIds.add(newDoc.getId());
+                    afs.moveDocumentsToFolder(docIds, this.folder.getId());
                 }
 
                 ArchiveFileHistoryBean historyDto = new ArchiveFileHistoryBean();

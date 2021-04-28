@@ -701,9 +701,6 @@ public class ServerSettings {
     public static final String PROFILE_COMPANYBANKCODE_AK="profile.company.ak.bankcode";
     public static final String PROFILE_COMPANYACCOUNTNO_AK="profile.company.ak.accountno";
     
-    public static final String SERVERCONF_VOIPMODE="jlawyer.server.voip.voipmode";
-    public static final String SERVERCONF_VOIPUSER="jlawyer.server.voip.voipuser";
-    public static final String SERVERCONF_VOIPPWD="jlawyer.server.voip.voippwd";
     public static final String SERVERCONF_VOIPENDPOINT="jlawyer.server.voip.voipendpoint";
     public static final String SERVERCONF_VOIPSIPPREFIX="jlawyer.server.voip.sipprefix";
     public static final String SERVERCONF_VOIPSIPSUFFIX="jlawyer.server.voip.sipsuffix";
@@ -748,6 +745,8 @@ public class ServerSettings {
     public static final String SERVERCONF_MONITOR_VMWARN="jlawyer.server.monitor.vmwarn";
     public static final String SERVERCONF_MONITOR_VMERROR="jlawyer.server.monitor.vmerror";
     public static final String SERVERCONF_MONITOR_NOTIFY="jlawyer.server.monitor.notify";
+    public static final String SERVERCONF_MONITOR_NOTIFY_BACKUPSUCCESS="jlawyer.server.monitor.notify.backupsuccess";
+    public static final String SERVERCONF_MONITOR_NOTIFY_BACKUPFAILURE="jlawyer.server.monitor.notify.backupfailure";
     public static final String SERVERCONF_MONITOR_SMTPSERVER="jlawyer.server.monitor.smtpserver";
     public static final String SERVERCONF_MONITOR_SMTPPORT="jlawyer.server.monitor.smtpport";
     public static final String SERVERCONF_MONITOR_SMTPUSER="jlawyer.server.monitor.smtpuser";
@@ -782,6 +781,8 @@ public class ServerSettings {
     public static final String DATA_CUSTOMFIELD_ARCHIVEFILE_INVOLVED_PREFIX="data.customfields.archivefile.involved.";
     
     public static final String SERVERCONF_DOCUMENTS_WAITFOR_MAC="jlawyer.server.documents.waitforprocess.mac";
+    
+    public static final String SERVERCONF_DOCUMENTS_BIN_RETENTIONDAYS="jlawyer.server.documents.bin.retentiondays";
     
     private SystemManagementRemote mgmt=null;
     

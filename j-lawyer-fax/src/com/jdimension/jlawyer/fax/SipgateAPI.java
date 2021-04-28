@@ -695,7 +695,7 @@ public class SipgateAPI {
     
     private String endpoint = "https://samurai.sipgate.net/RPC2";
     private static final Logger log = Logger.getLogger(SipgateAPI.class.getName());
-    private static SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
+    private SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
     private String user;
     private String password;
     private String clientName;

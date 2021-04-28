@@ -752,7 +752,7 @@ public class ThreadUtils {
                     }
                     if(model.getRowCount()>0) {
                     ComponentUtils.autoSizeColumns(table);
-                    if (selectionIndexFrom > -1 && selectionIndexFrom > -1) {
+                    if (selectionIndexFrom > -1 && selectionIndexTo > -1) {
                         table.getSelectionModel().setSelectionInterval(selectionIndexFrom, selectionIndexTo);
                     }
                     }
@@ -768,7 +768,7 @@ public class ThreadUtils {
             }
             if(model.getRowCount()>0) {
             ComponentUtils.autoSizeColumns(table);
-            if (selectionIndexFrom > -1 && selectionIndexFrom > -1) {
+            if (selectionIndexFrom > -1 && selectionIndexTo > -1) {
                 table.getSelectionModel().setSelectionInterval(selectionIndexFrom, selectionIndexTo);
             }
             }

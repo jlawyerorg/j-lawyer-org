@@ -663,6 +663,7 @@
  */
 package com.jdimension.jlawyer.services;
 
+import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.Group;
 import com.jdimension.jlawyer.persistence.GroupMembership;
 import java.util.Collection;
@@ -695,5 +696,7 @@ public interface SecurityServiceRemote {
     List<GroupMembership> getGroupMembershipsForUser(String principalId) throws Exception;
 
     List<Group> getGroupsForUser(String principalId) throws Exception;
+
+    List<AppUserBean> getUsersHavingRole(String role) throws Exception;
     
 }

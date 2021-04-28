@@ -667,6 +667,7 @@ import com.jdimension.jlawyer.client.editors.files.PartiesPanelEntry;
 import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.documents.PlaceHolders;
 import com.jdimension.jlawyer.persistence.AddressBean;
+import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.PartyTypeBean;
@@ -691,7 +692,7 @@ public class PlaceHolderUtils extends PlaceHolders {
 
     }
 
-    public static Hashtable getPlaceHolderValues(Hashtable placeHolders, ArchiveFileBean aFile, List<PartiesPanelEntry> selectedParties, String dictateSign, GenericCalculationTable calculationTable, Hashtable<String,String> formsPlaceHolderValues) {
+    public static Hashtable getPlaceHolderValues(Hashtable placeHolders, ArchiveFileBean aFile, List<PartiesPanelEntry> selectedParties, String dictateSign, GenericCalculationTable calculationTable, Hashtable<String,String> formsPlaceHolderValues, AppUserBean caseLawyer, AppUserBean caseAssistant, AppUserBean author) {
 
         NumberFormat currencyFormat = NumberFormat.getNumberInstance();
         currencyFormat.setMinimumFractionDigits(2);
@@ -1423,8 +1424,20 @@ public class PlaceHolderUtils extends PlaceHolders {
             if (placeHolders.containsKey(AKTE_ANWALT)) {
                 placeHolders.put(AKTE_ANWALT, val(aFile.getLawyer()));
             }
+            if (placeHolders.containsKey(AKTE_ANWALT_AN)) {
+                if(caseLawyer!=null)
+                    placeHolders.put(AKTE_ANWALT_AN, val(caseLawyer.getDisplayName()));
+                else
+                    placeHolders.put(AKTE_ANWALT_AN, "");
+            }
             if (placeHolders.containsKey(AKTE_SACHBEARBEITER)) {
                 placeHolders.put(AKTE_SACHBEARBEITER, val(aFile.getAssistant()));
+            }
+            if (placeHolders.containsKey(AKTE_SACHBEARBEITER_AN)) {
+                if(caseAssistant!=null)
+                    placeHolders.put(AKTE_SACHBEARBEITER_AN, val(caseAssistant.getDisplayName()));
+                else
+                    placeHolders.put(AKTE_SACHBEARBEITER_AN, "");
             }
             if (placeHolders.containsKey(AKTE_EIGENE1)) {
                 placeHolders.put(AKTE_EIGENE1, val(aFile.getCustom1()));
@@ -1437,6 +1450,15 @@ public class PlaceHolderUtils extends PlaceHolders {
             }
 
         }
+        
+        if (placeHolders.containsKey(AUTOR_AN)) {
+            if (author != null) {
+                placeHolders.put(AUTOR_AN, val(author.getDisplayName()));
+            } else {
+                placeHolders.put(AUTOR_AN, "");
+            }
+        }
+        
 //        } else {
 //            placeHolders.put(AKTE_NR, "");
 //            placeHolders.put(AKTE_ZEICHEN, "");

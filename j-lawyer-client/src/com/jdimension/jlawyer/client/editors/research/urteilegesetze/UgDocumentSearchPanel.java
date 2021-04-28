@@ -665,6 +665,7 @@ package com.jdimension.jlawyer.client.editors.research.urteilegesetze;
 
 import com.jdimension.jlawyer.client.editors.search.*;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import com.jdimension.jlawyer.client.editors.ResetOnDisplayEditor;
 import com.jdimension.jlawyer.client.editors.ThemeableEditor;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.DesktopUtils;
@@ -686,7 +687,7 @@ import org.jlawyer.search.SearchHit;
  *
  * @author jens
  */
-public class UgDocumentSearchPanel extends javax.swing.JPanel implements ThemeableEditor {
+public class UgDocumentSearchPanel extends javax.swing.JPanel implements ThemeableEditor, ResetOnDisplayEditor {
 
     private static final Logger log = Logger.getLogger(UgDocumentSearchPanel.class.getName());
     private Image backgroundImage = null;
@@ -1037,4 +1038,14 @@ public class UgDocumentSearchPanel extends javax.swing.JPanel implements Themeab
     private javax.swing.JScrollPane scrollResults;
     private javax.swing.JTextField txtSearchString;
     // End of variables declaration//GEN-END:variables
+
+    @Override
+    public void reset() {
+        this.txtSearchString.requestFocus();
+    }
+
+    @Override
+    public boolean needsReset() {
+        return true;
+    }
 }

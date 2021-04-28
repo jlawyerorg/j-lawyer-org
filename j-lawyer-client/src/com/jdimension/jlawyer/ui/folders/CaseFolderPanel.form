@@ -99,7 +99,7 @@
             <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
               <Image iconType="3" name="/icons/package_system.png"/>
             </Property>
-            <Property name="toolTipText" type="java.lang.String" value="Ordnereinstellungen"/>
+            <Property name="toolTipText" type="java.lang.String" value="Ordnervorlagen"/>
           </Properties>
           <Events>
             <EventHandler event="mouseReleased" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="cmdOptionsMouseReleased"/>
@@ -157,13 +157,13 @@
                   <Component id="cmdSelectNone1" min="-2" max="-2" attributes="0"/>
                   <EmptySpace type="unrelated" max="-2" attributes="0"/>
                   <Component id="sortDate" min="-2" max="-2" attributes="0"/>
-                  <EmptySpace max="-2" attributes="0"/>
+                  <EmptySpace min="-2" pref="2" max="-2" attributes="0"/>
                   <Component id="sortName" min="-2" max="-2" attributes="0"/>
-                  <EmptySpace max="-2" attributes="0"/>
+                  <EmptySpace min="-2" pref="2" max="-2" attributes="0"/>
                   <Component id="sortFavorite" min="-2" max="-2" attributes="0"/>
-                  <EmptySpace max="-2" attributes="0"/>
+                  <EmptySpace min="-2" pref="2" max="-2" attributes="0"/>
                   <Component id="sortSize" min="-2" max="-2" attributes="0"/>
-                  <EmptySpace max="-2" attributes="0"/>
+                  <EmptySpace min="-2" pref="2" max="-2" attributes="0"/>
                   <Component id="sortFolder" min="-2" max="-2" attributes="0"/>
                   <EmptySpace max="32767" attributes="0"/>
               </Group>
@@ -194,6 +194,8 @@
         <Component class="com.jdimension.jlawyer.ui.folders.SortButton" name="sortDate">
           <Properties>
             <Property name="text" type="java.lang.String" value="Datum"/>
+            <Property name="toolTipText" type="java.lang.String" value="nach Erstellungsdatum sortieren"/>
+            <Property name="iconTextGap" type="int" value="2"/>
             <Property name="inheritsPopupMenu" type="boolean" value="true"/>
           </Properties>
           <Events>
@@ -203,6 +205,8 @@
         <Component class="com.jdimension.jlawyer.ui.folders.SortButton" name="sortName">
           <Properties>
             <Property name="text" type="java.lang.String" value="Name"/>
+            <Property name="toolTipText" type="java.lang.String" value="nach Dateiname sortieren"/>
+            <Property name="iconTextGap" type="int" value="2"/>
           </Properties>
           <Events>
             <EventHandler event="mouseClicked" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="sortNameMouseClicked"/>
@@ -211,6 +215,8 @@
         <Component class="com.jdimension.jlawyer.ui.folders.SortButton" name="sortFavorite">
           <Properties>
             <Property name="text" type="java.lang.String" value="Favorit"/>
+            <Property name="toolTipText" type="java.lang.String" value="nach Favoritenstatus sortieren"/>
+            <Property name="iconTextGap" type="int" value="2"/>
           </Properties>
           <Events>
             <EventHandler event="mouseClicked" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="sortFavoriteMouseClicked"/>
@@ -219,6 +225,8 @@
         <Component class="com.jdimension.jlawyer.ui.folders.SortButton" name="sortSize">
           <Properties>
             <Property name="text" type="java.lang.String" value="Gr&#xf6;&#xdf;e"/>
+            <Property name="toolTipText" type="java.lang.String" value="nach Dateigr&#xf6;&#xdf;e sortieren"/>
+            <Property name="iconTextGap" type="int" value="2"/>
           </Properties>
           <Events>
             <EventHandler event="mouseClicked" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="sortSizeMouseClicked"/>
@@ -239,6 +247,8 @@
         <Component class="com.jdimension.jlawyer.ui.folders.SortButton" name="sortFolder">
           <Properties>
             <Property name="text" type="java.lang.String" value="Ordner"/>
+            <Property name="toolTipText" type="java.lang.String" value="nach Ordnernamen sortieren"/>
+            <Property name="iconTextGap" type="int" value="2"/>
           </Properties>
           <Events>
             <EventHandler event="mouseClicked" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="sortFolderMouseClicked"/>

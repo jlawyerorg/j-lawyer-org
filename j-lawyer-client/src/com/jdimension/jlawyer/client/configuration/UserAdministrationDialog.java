@@ -749,17 +749,17 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
             DefaultComboBoxModel countryModel = new DefaultComboBoxModel(countryNames.toArray());
             this.cmbCountry.setModel(countryModel);
             this.cmbCountryItemStateChanged(null);
-            
+
             this.cmbPrimaryGroup.removeAllItems();
             this.cmbPrimaryGroup.addItem("");
             String[] colNames3 = new String[]{"", "Gruppe"};
             GroupMembershipsTableModel model = new GroupMembershipsTableModel(colNames3, 0);
             this.tblGroups.setModel(model);
             //((DefaultTableModel)this.tblGroups.getModel())
-            Collection<Group> allGroups=locator.lookupSecurityServiceRemote().getAllGroups();
-            for(Group g: allGroups) {
-                ((DefaultComboBoxModel)this.cmbPrimaryGroup.getModel()).addElement(g);
-                ((DefaultTableModel)this.tblGroups.getModel()).addRow(new Object[]{true, g});
+            Collection<Group> allGroups = locator.lookupSecurityServiceRemote().getAllGroups();
+            for (Group g : allGroups) {
+                ((DefaultComboBoxModel) this.cmbPrimaryGroup.getModel()).addElement(g);
+                ((DefaultTableModel) this.tblGroups.getModel()).addRow(new Object[]{true, g});
             }
             ComponentUtils.autoSizeColumns(tblGroups);
 
@@ -782,6 +782,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
 
         popDelete = new javax.swing.JPopupMenu();
         mnuDelete = new javax.swing.JMenuItem();
+        mnuUpdatePassword = new javax.swing.JMenuItem();
         btGrpAutoLogin = new javax.swing.ButtonGroup();
         jScrollPane1 = new javax.swing.JScrollPane();
         lstUsers = new javax.swing.JList();
@@ -790,8 +791,6 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         txtUser = new javax.swing.JTextField();
         cmdSave = new javax.swing.JButton();
         jLabel1 = new javax.swing.JLabel();
-        jLabel2 = new javax.swing.JLabel();
-        txtPassword = new javax.swing.JPasswordField();
         jTabbedPane1 = new javax.swing.JTabbedPane();
         jPanel5 = new javax.swing.JPanel();
         jPanel1 = new javax.swing.JPanel();
@@ -813,6 +812,8 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         chkCreateOption = new javax.swing.JCheckBox();
         chkRemoveOption = new javax.swing.JCheckBox();
         chkLawyer = new javax.swing.JCheckBox();
+        jLabel27 = new javax.swing.JLabel();
+        txtDisplayName = new javax.swing.JTextField();
         jPanel6 = new javax.swing.JPanel();
         jLabel3 = new javax.swing.JLabel();
         jLabel4 = new javax.swing.JLabel();
@@ -870,6 +871,14 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         txtNextcloudOrder = new javax.swing.JTextField();
         cmdShowWebsite = new javax.swing.JButton();
         lblNextcloudOrder1 = new javax.swing.JLabel();
+        txtCloudPath = new javax.swing.JTextField();
+        lblCloudPath = new javax.swing.JLabel();
+        jPanel11 = new javax.swing.JPanel();
+        jLabel2 = new javax.swing.JLabel();
+        jLabel25 = new javax.swing.JLabel();
+        txtVoipUser = new javax.swing.JTextField();
+        txtVoipPassword = new javax.swing.JTextField();
+        jLabel26 = new javax.swing.JLabel();
         jPanel9 = new javax.swing.JPanel();
         jLabel18 = new javax.swing.JLabel();
         cmbPrimaryGroup = new javax.swing.JComboBox<>();
@@ -887,6 +896,15 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
             }
         });
         popDelete.add(mnuDelete);
+
+        mnuUpdatePassword.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/ksysv.png"))); // NOI18N
+        mnuUpdatePassword.setText("Passwort ändern");
+        mnuUpdatePassword.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuUpdatePasswordActionPerformed(evt);
+            }
+        });
+        popDelete.add(mnuUpdatePassword);
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Nutzerverwaltung");
@@ -939,8 +957,6 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         });
 
         jLabel1.setText("Nutzername:");
-
-        jLabel2.setText("Passwort:");
 
         jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder("Allgemein"));
         jPanel1.setName(""); // NOI18N
@@ -1068,7 +1084,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                     .add(chkWriteOption)
                     .add(chkCreateOption)
                     .add(chkRemoveOption))
-                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(218, Short.MAX_VALUE))
         );
         jPanel4Layout.setVerticalGroup(
             jPanel4Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -1082,6 +1098,8 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         );
 
         chkLawyer.setText("Nutzer ist Anwalt");
+
+        jLabel27.setText("Anzeigename:");
 
         org.jdesktop.layout.GroupLayout jPanel5Layout = new org.jdesktop.layout.GroupLayout(jPanel5);
         jPanel5.setLayout(jPanel5Layout);
@@ -1097,17 +1115,24 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(jPanel3, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(jPanel4, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .add(jPanel5Layout.createSequentialGroup()
+                        .add(jPanel4, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addContainerGap())
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel5Layout.createSequentialGroup()
+                        .add(jLabel27)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(txtDisplayName)
+                        .add(18, 18, 18)
                         .add(chkLawyer)
-                        .add(0, 0, Short.MAX_VALUE)))
-                .addContainerGap())
+                        .add(189, 189, 189))))
         );
         jPanel5Layout.setVerticalGroup(
             jPanel5Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel5Layout.createSequentialGroup()
                 .addContainerGap()
-                .add(chkLawyer)
+                .add(jPanel5Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(chkLawyer)
+                    .add(jLabel27)
+                    .add(txtDisplayName, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                 .add(jPanel5Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(jPanel4, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
@@ -1239,7 +1264,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                                         .add(jLabel7)
                                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)))
                                 .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                                    .add(txtOutServer, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 254, Short.MAX_VALUE)
+                                    .add(txtOutServer)
                                     .add(txtOutUsername)))
                             .add(jPanel7Layout.createSequentialGroup()
                                 .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -1449,6 +1474,10 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         lblNextcloudOrder1.setFont(new java.awt.Font("Dialog", 1, 14)); // NOI18N
         lblNextcloudOrder1.setText("Hier Nextcloud-Nutzer anfordern:");
 
+        txtCloudPath.setToolTipText("Unterverzeichnis des Webservers, ohne führende oder abschließende /");
+
+        lblCloudPath.setText("Pfad:");
+
         org.jdesktop.layout.GroupLayout jPanel10Layout = new org.jdesktop.layout.GroupLayout(jPanel10);
         jPanel10.setLayout(jPanel10Layout);
         jPanel10Layout.setHorizontalGroup(
@@ -1459,7 +1488,8 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                     .add(jLabel21)
                     .add(jLabel22)
                     .add(jLabel23)
-                    .add(jLabel24))
+                    .add(jLabel24)
+                    .add(lblCloudPath))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel10Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(txtCloudHost)
@@ -1474,8 +1504,9 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                             .add(lblNextcloudOrder1)
                             .add(lblNextcloudOrder)
                             .add(chkCloudSsl)
-                            .add(txtCloudPort, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 165, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                        .add(0, 270, Short.MAX_VALUE)))
+                            .add(txtCloudPort, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 64, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                        .add(0, 270, Short.MAX_VALUE))
+                    .add(txtCloudPath))
                 .addContainerGap())
         );
         jPanel10Layout.setVerticalGroup(
@@ -1491,7 +1522,11 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                     .add(txtCloudPort, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(chkCloudSsl)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel10Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(txtCloudPath, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(lblCloudPath))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel10Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(txtCloudUser, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(jLabel23))
@@ -1507,10 +1542,53 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 .add(jPanel10Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
                     .add(cmdShowWebsite)
                     .add(txtNextcloudOrder, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(222, Short.MAX_VALUE))
+                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("Nextcloud", jPanel10);
+
+        jLabel2.setText("Sipgate-Kundennummer:");
+
+        jLabel25.setText("Sipgate-Passwort:");
+
+        jLabel26.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/info.png"))); // NOI18N
+        jLabel26.setText("Änderung erfordert Neustart des j-lawyer.org Clients");
+
+        org.jdesktop.layout.GroupLayout jPanel11Layout = new org.jdesktop.layout.GroupLayout(jPanel11);
+        jPanel11.setLayout(jPanel11Layout);
+        jPanel11Layout.setHorizontalGroup(
+            jPanel11Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jPanel11Layout.createSequentialGroup()
+                .addContainerGap()
+                .add(jPanel11Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(jLabel2)
+                    .add(jLabel25))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel11Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(jPanel11Layout.createSequentialGroup()
+                        .add(jLabel26)
+                        .add(0, 258, Short.MAX_VALUE))
+                    .add(txtVoipUser)
+                    .add(txtVoipPassword))
+                .addContainerGap())
+        );
+        jPanel11Layout.setVerticalGroup(
+            jPanel11Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jPanel11Layout.createSequentialGroup()
+                .addContainerGap()
+                .add(jPanel11Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(jLabel2)
+                    .add(txtVoipUser, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel11Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(jLabel25)
+                    .add(txtVoipPassword, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                .add(jLabel26)
+                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+
+        jTabbedPane1.addTab("Sipgate", jPanel11);
 
         jLabel18.setText("Primäre Gruppe:");
 
@@ -1602,16 +1680,12 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(jTabbedPane1)
                     .add(layout.createSequentialGroup()
-                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                            .add(jLabel2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 92, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                            .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
-                                .add(cmdAdd)
-                                .add(layout.createSequentialGroup()
-                                    .add(jLabel1)
-                                    .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                    .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
-                                        .add(txtPassword, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 216, Short.MAX_VALUE)
-                                        .add(txtUser)))))
+                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
+                            .add(cmdAdd)
+                            .add(layout.createSequentialGroup()
+                                .add(jLabel1)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(txtUser, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 216, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
                         .add(18, 18, 18)
                         .add(jScrollPane1))
                     .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
@@ -1630,10 +1704,6 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                         .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                             .add(txtUser, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                             .add(jLabel1))
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                            .add(jLabel2)
-                            .add(txtPassword, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(cmdAdd))
                     .add(jScrollPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 137, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
@@ -1686,12 +1756,17 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
 
     private void cmdAddActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdAddActionPerformed
 
+        String newPassword = this.getNewPassword();
+        if (newPassword == null) {
+            newPassword = "";
+        }
+
         boolean valid = true;
-        if ("".equals(this.txtUser.getText().trim()) || "".equals(this.txtPassword.getText().trim())) {
+        if ("".equals(this.txtUser.getText().trim()) || "".equals(newPassword)) {
             valid = false;
         }
 
-        if (this.txtPassword.getText().length() == 0) {
+        if (newPassword.length() == 0) {
             valid = false;
         }
 
@@ -1711,7 +1786,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
             //SystemManagementRemoteHome home = (SystemManagementRemoteHome)locator.getRemoteHome("ejb/SystemManagementBean", SystemManagementRemoteHome.class);
             SystemManagementRemote mgmt = locator.lookupSystemManagementRemote();
             AppUserBean u = new AppUserBean();
-            u.setPassword(this.txtPassword.getText());
+            u.setPassword(newPassword);
             u.setPrincipalId(this.txtUser.getText());
 
             AppUserBean newUser = mgmt.createUser(u, this.getInitialRolesForUser(u.getPrincipalId()));
@@ -1728,19 +1803,48 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
             return;
         }
         this.txtUser.setText("");
-        this.txtPassword.setText("");
         this.chkEmailInSsl.setSelected(true);
         this.chkEmailOutSsl.setSelected(true);
         this.chkEmailStartTls.setSelected(false);
         this.txtAbbreviation.setText("");
         this.cmbPrimaryGroup.setSelectedIndex(0);
         this.txtCloudHost.setText("");
-        this.txtCloudPort.setText(""+443);
+        this.txtCloudPath.setText("");
+        this.txtCloudPort.setText("" + 443);
         this.txtCloudUser.setText("");
         this.pwCloudPassword.setText("");
         this.chkCloudSsl.setSelected(true);
+        this.txtVoipPassword.setText("");
+        this.txtVoipUser.setText("");
+        this.txtDisplayName.setText("");
         this.txtUser.requestFocus();
     }//GEN-LAST:event_cmdAddActionPerformed
+
+    private String getNewPassword() {
+        boolean changed = false;
+
+        Object newPwd = JOptionPane.showInputDialog(this, "neues Passwort: ", "Passwort ändern", JOptionPane.QUESTION_MESSAGE, null, null, "");
+        if (newPwd == null || "".equals(newPwd)) {
+            // user cancelled
+        } else {
+            // confirm
+            Object confirmPwd = JOptionPane.showInputDialog(this, "Passwort bestätigen: ", "Passwort ändern", JOptionPane.QUESTION_MESSAGE, null, null, "");
+            if (confirmPwd == null || "".equals(confirmPwd)) {
+                // cancelled
+            } else {
+                if (confirmPwd.equals(newPwd)) {
+                    changed = true;
+                }
+            }
+        }
+
+        if (changed) {
+            return newPwd.toString();
+        } else {
+            JOptionPane.showMessageDialog(this, "Passworteingaben ungültig!", "Hinweis", JOptionPane.WARNING_MESSAGE);
+            return null;
+        }
+    }
 
     private void lstUsersMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lstUsersMousePressed
         if (evt.getModifiers() == evt.BUTTON2_MASK || evt.getModifiers() == evt.BUTTON2_DOWN_MASK || evt.getModifiers() == evt.BUTTON3_MASK || evt.getModifiers() == evt.BUTTON3_DOWN_MASK) {
@@ -1766,7 +1870,6 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 List<AppRoleBean> roles = mgmt.getRoles(u.getPrincipalId());
                 this.setRoles(roles);
                 this.chkLawyer.setSelected(u.isLawyer());
-                this.txtPassword.setText(u.getPassword());
 
                 CalendarUtils cu = CalendarUtils.getInstance();
                 //ArrayList<CalendarRegion> countries=cu.getCountryCodes();
@@ -1813,12 +1916,18 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 this.chkEmailStartTls.setSelected(u.isEmailStartTls());
                 this.txtAbbreviation.setText(u.getAbbreviation());
                 this.cmbPrimaryGroup.setSelectedItem(u.getPrimaryGroup());
-                
+
                 this.txtCloudHost.setText(u.getCloudHost());
-                this.txtCloudPort.setText(""+u.getCloudPort());
+                this.txtCloudPath.setText(u.getCloudPath());
+                this.txtCloudPort.setText("" + u.getCloudPort());
                 this.txtCloudUser.setText(u.getCloudUser());
                 this.pwCloudPassword.setText(u.getCloudPassword());
                 this.chkCloudSsl.setSelected(u.isCloudSsl());
+                
+                this.txtVoipPassword.setText(u.getVoipPassword());
+                this.txtVoipUser.setText(u.getVoipUser());
+                
+                this.txtDisplayName.setText(u.getDisplayName());
 
                 if (u.isBeaCertificateAutoLogin()) {
                     this.rdAutoLogin.setSelected(true);
@@ -1839,13 +1948,13 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                         this.taBeaCertificate.setText(this.taBeaCertificate.getText() + key.toString() + ": " + ht.get(key).toString() + System.getProperty("line.separator"));
                     }
                 }
-                
-                List<GroupMembership> groups=locator.lookupSecurityServiceRemote().getGroupMembershipsForUser(u.getPrincipalId());
-                for(int i=0;i<this.tblGroups.getRowCount();i++) {
-                    Group g=(Group)this.tblGroups.getValueAt(i, 1);
+
+                List<GroupMembership> groups = locator.lookupSecurityServiceRemote().getGroupMembershipsForUser(u.getPrincipalId());
+                for (int i = 0; i < this.tblGroups.getRowCount(); i++) {
+                    Group g = (Group) this.tblGroups.getValueAt(i, 1);
                     this.tblGroups.setValueAt(false, i, 0);
-                    for(GroupMembership gm: groups) {
-                        if(g.getId().equals(gm.getGroupId())) {
+                    for (GroupMembership gm : groups) {
+                        if (g.getId().equals(gm.getGroupId())) {
                             this.tblGroups.setValueAt(true, i, 0);
                             break;
                         }
@@ -1862,16 +1971,8 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_lstUsersValueChanged
 
     private void cmdSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveActionPerformed
-        if ("".equals(this.txtPassword.getText().trim())) {
-            return;
-        }
-
-        if (this.txtPassword.getText().length() == 0) {
-            return;
-        }
-
         boolean valid = true;
-        if (this.currentCertificate != null && ("".equals(this.pwdBeaCertificatePassword.getText().trim()) || "".equals(this.pwdBeaCertificatePassword.getText().trim()))) {
+        if (this.currentCertificate != null && "".equals(this.pwdBeaCertificatePassword.getText().trim())) {
             valid = false;
         }
 
@@ -1887,9 +1988,9 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
             JOptionPane.showMessageDialog(this, "beA-Zertifikatpasswort darf nicht leer und nicht kürzer als 4 Zeichen sein.", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
             return;
         }
-        
+
         try {
-            int cloudPort=Integer.parseInt(this.txtCloudPort.getText());
+            int cloudPort = Integer.parseInt(this.txtCloudPort.getText());
         } catch (Throwable t) {
             JOptionPane.showMessageDialog(this, this.txtCloudPort.getText() + " ist keine gültige Port-Angabe für Nextcloud", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
             return;
@@ -1903,10 +2004,10 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
             SystemManagementRemote mgmt = locator.lookupSystemManagementRemote();
             AppUserBean u = (AppUserBean) this.lstUsers.getSelectedValue();
             if (u != null) {
-                u.setPassword(this.txtPassword.getText());
+                //u.setPassword(this.txtPassword.getText());
                 u.setLawyer(this.chkLawyer.isSelected());
                 u.setAbbreviation(this.txtAbbreviation.getText());
-                u.setPrimaryGroup((Group)this.cmbPrimaryGroup.getSelectedItem());
+                u.setPrimaryGroup((Group) this.cmbPrimaryGroup.getSelectedItem());
 
                 String countryName = this.cmbCountry.getSelectedItem().toString();
                 Object regionNameO = this.cmbArea.getSelectedItem();
@@ -1953,12 +2054,31 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 u.setBeaCertificate(this.currentCertificate);
                 u.setBeaCertificatePassword(this.pwdBeaCertificatePassword.getText().trim());
                 u.setBeaCertificateAutoLogin(this.rdAutoLogin.isSelected());
-                
+
                 u.setCloudHost(this.txtCloudHost.getText());
+                String cloudPath = null;
+                if (txtCloudPath.getText().trim().length() > 0) {
+                    cloudPath = txtCloudPath.getText();
+                    if (cloudPath.startsWith("/")) {
+                        cloudPath = cloudPath.substring(1, cloudPath.length() - 1);
+                    }
+                    if (cloudPath.endsWith("/")) {
+                        cloudPath = cloudPath.substring(0, cloudPath.length() - 2);
+                    }
+                    if (cloudPath.length() == 0) {
+                        cloudPath = null;
+                    }
+                }
+                u.setCloudPath(cloudPath);
                 u.setCloudPassword(new String(this.pwCloudPassword.getPassword()));
                 u.setCloudPort(Integer.parseInt(this.txtCloudPort.getText()));
                 u.setCloudSsl(this.chkCloudSsl.isSelected());
                 u.setCloudUser(this.txtCloudUser.getText());
+                
+                u.setVoipPassword(this.txtVoipPassword.getText());
+                u.setVoipUser(this.txtVoipUser.getText());
+                
+                u.setDisplayName(this.txtDisplayName.getText());
 
                 AppUserBean newUser = mgmt.updateUser(u, this.getRolesFromUI(u.getPrincipalId()));
                 //mgmt.remove();
@@ -1980,7 +2100,6 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
             return;
         }
         this.txtUser.setText("");
-        this.txtPassword.setText("");
 
         this.txtAddress.setText("");
         this.cmbAccountType.setSelectedIndex(0);
@@ -2003,12 +2122,18 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         this.taBeaCertificate.setText("");
         this.txtAbbreviation.setText("");
         this.cmbPrimaryGroup.setSelectedIndex(0);
-        
+
         this.txtCloudHost.setText("");
+        this.txtCloudPath.setText("");
         this.txtCloudPort.setText("443");
         this.txtCloudUser.setText("");
         this.pwCloudPassword.setText("");
         this.chkCloudSsl.setSelected(true);
+        
+        this.txtVoipPassword.setText("");
+        this.txtVoipUser.setText("");
+        
+        this.txtDisplayName.setText("");
 
         this.txtUser.requestFocus();
     }//GEN-LAST:event_cmdSaveActionPerformed
@@ -2089,24 +2214,25 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
 
     private void tblGroupsMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblGroupsMouseClicked
         if (evt.getClickCount() == 1 && !evt.isPopupTrigger() && evt.getComponent().isEnabled()) {
-            
+
             AppUserBean u = (AppUserBean) this.lstUsers.getSelectedValue();
-            if(u==null)
+            if (u == null) {
                 return;
-            
+            }
+
             Point p = evt.getPoint();
             int col = this.tblGroups.columnAtPoint(p);
             if (col == 0) {
                 // click on checkbox in table
                 int row = this.tblGroups.rowAtPoint(p);
                 Group g = (Group) this.tblGroups.getValueAt(row, 1);
-                Boolean newValue=!((Boolean)this.tblGroups.getValueAt(row, 0));
-                
+                Boolean newValue = !((Boolean) this.tblGroups.getValueAt(row, 0));
+
                 ClientSettings settings = ClientSettings.getInstance();
                 try {
                     JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                     SecurityServiceRemote svc = locator.lookupSecurityServiceRemote();
-                    if(newValue) {
+                    if (newValue) {
                         svc.addUserToGroup(u.getPrincipalId(), g.getId());
                     } else {
                         svc.removeUserFromGroup(u.getPrincipalId(), g.getId());
@@ -2124,25 +2250,24 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_tblGroupsMouseClicked
 
     private void cmbPrimaryGroupItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cmbPrimaryGroupItemStateChanged
-        
-        
-        Object selectedGroup=this.cmbPrimaryGroup.getSelectedItem();
-        if(selectedGroup==null)
+
+        Object selectedGroup = this.cmbPrimaryGroup.getSelectedItem();
+        if (selectedGroup == null) {
             return;
-        if(!(selectedGroup instanceof Group))
+        }
+        if (!(selectedGroup instanceof Group)) {
             return;
-        
-        Group selection=(Group)selectedGroup;
-        
-        
-        
-        for(int i=0;i<this.tblGroups.getRowCount();i++) {
-            Group tableGroup=(Group)this.tblGroups.getValueAt(i, 1);
-            if(tableGroup.equals(selection)) {
+        }
+
+        Group selection = (Group) selectedGroup;
+
+        for (int i = 0; i < this.tblGroups.getRowCount(); i++) {
+            Group tableGroup = (Group) this.tblGroups.getValueAt(i, 1);
+            if (tableGroup.equals(selection)) {
                 this.tblGroups.setValueAt(true, i, 0);
             }
         }
-        
+
         AppUserBean u = (AppUserBean) this.lstUsers.getSelectedValue();
         if (u == null) {
             return;
@@ -2160,18 +2285,18 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
             EditorsRegistry.getInstance().clearStatus();
             return;
         }
-        
+
     }//GEN-LAST:event_cmbPrimaryGroupItemStateChanged
 
     private void cmdTestMailActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdTestMailActionPerformed
-        
+
         ProgressIndicator pi = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
         pi.setShowCancelButton(false);
         MailSettingsTestAction a = new MailSettingsTestAction(pi, this, this.cmdTestMail, this.txtAddress.getText(), this.txtOutServer.getText(), this.txtOutPort.getText(), this.txtOutUsername.getText(), new String(this.pwdOutPassword.getPassword()), this.chkEmailOutSsl.isSelected(), this.chkEmailStartTls.isSelected(), this.txtInServer.getText(), this.txtInUser.getText(), new String(this.pwdInPassword.getPassword()), this.chkEmailInSsl.isSelected(), this.cmbAccountType.getSelectedItem().toString());
 
         a.start();
-        
-        
+
+
     }//GEN-LAST:event_cmdTestMailActionPerformed
 
     private void cmdShowWebsiteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdShowWebsiteActionPerformed
@@ -2179,6 +2304,65 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
             DesktopUtils.openBrowser(this.txtNextcloudOrder.getText());
         }
     }//GEN-LAST:event_cmdShowWebsiteActionPerformed
+
+    private void mnuUpdatePasswordActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuUpdatePasswordActionPerformed
+        if (this.lstUsers.getSelectedValues().length > 0) {
+
+            Object[] resetUsers = this.lstUsers.getSelectedValues();
+            if (resetUsers.length != 1) {
+                return;
+            }
+
+            Object o = resetUsers[0];
+            String principalId = ((AppUserBean) o).getPrincipalId();
+            
+            if (principalId.equals(UserSettings.getInstance().getCurrentUser().getPrincipalId())) {
+                int response = JOptionPane.showConfirmDialog(this, "Nach Passwortänderung muss die Anwendung neu gestartet werden. Stellen Sie sicher dass alle Dokumente / Akten geschlossen sind. Fortfahren?", "Passwort ändern", JOptionPane.YES_NO_OPTION);
+                if (response == JOptionPane.NO_OPTION) {
+                    return;
+                }
+            }
+
+            boolean changed = false;
+
+            Object newPwd = JOptionPane.showInputDialog(this, "neues Passwort: ", "Passwort ändern", JOptionPane.QUESTION_MESSAGE, null, null, "");
+            if (newPwd == null || "".equals(newPwd)) {
+                // user cancelled
+            } else {
+                // confirm
+                Object confirmPwd = JOptionPane.showInputDialog(this, "Passwort bestätigen: ", "Passwort ändern", JOptionPane.QUESTION_MESSAGE, null, null, "");
+                if (confirmPwd == null || "".equals(confirmPwd)) {
+                    // cancelled
+                } else {
+                    if (confirmPwd.equals(newPwd)) {
+                        changed = true;
+                    }
+                }
+            }
+
+            if (changed) {
+                ClientSettings settings = ClientSettings.getInstance();
+                try {
+                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+
+                    //SystemManagementRemoteHome home = (SystemManagementRemoteHome)locator.getRemoteHome("ejb/SystemManagementBean", SystemManagementRemoteHome.class);
+                    SystemManagementRemote mgmt = locator.lookupSystemManagementRemote();
+                    AppUserBean u = mgmt.getUser(UserSettings.getInstance().getCurrentUser().getPrincipalId());
+                    if (u != null) {
+                        mgmt.updatePasswordForUser(principalId, newPwd.toString());
+                    }
+
+                } catch (Exception ex) {
+                    log.error("Error connecting to server", ex);
+                    //JOptionPane.showMessageDialog(this.owner, "Verbindungsfehler: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(this, ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+            } else {
+                JOptionPane.showMessageDialog(this, "Passwort NICHT aktualisiert!", "Hinweis", JOptionPane.WARNING_MESSAGE);
+            }
+        }
+    }//GEN-LAST:event_mnuUpdatePasswordActionPerformed
 
     private List<AppRoleBean> getRolesFromUI(String principalId) {
         List<AppRoleBean> result = new ArrayList<AppRoleBean>();
@@ -2230,7 +2414,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
             r4.setRoleGroup("Roles");
             result.add(r4);
         }
-        
+
         if (this.chkCreateFile.isSelected()) {
             AppRoleBean r6 = new AppRoleBean();
             r6.setPrincipalId(principalId);
@@ -2459,6 +2643,9 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
     private javax.swing.JLabel jLabel22;
     private javax.swing.JLabel jLabel23;
     private javax.swing.JLabel jLabel24;
+    private javax.swing.JLabel jLabel25;
+    private javax.swing.JLabel jLabel26;
+    private javax.swing.JLabel jLabel27;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
@@ -2468,6 +2655,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
     private javax.swing.JLabel jLabel9;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel10;
+    private javax.swing.JPanel jPanel11;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
     private javax.swing.JPanel jPanel4;
@@ -2480,11 +2668,13 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane4;
     private javax.swing.JTabbedPane jTabbedPane1;
+    private javax.swing.JLabel lblCloudPath;
     private javax.swing.JLabel lblNextcloudOrder;
     private javax.swing.JLabel lblNextcloudOrder1;
     private javax.swing.JLabel lblTestProgress;
     private javax.swing.JList lstUsers;
     private javax.swing.JMenuItem mnuDelete;
+    private javax.swing.JMenuItem mnuUpdatePassword;
     private javax.swing.JPopupMenu popDelete;
     private javax.swing.JPasswordField pwCloudPassword;
     private javax.swing.JPasswordField pwdBeaCertificatePassword;
@@ -2497,8 +2687,10 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
     private javax.swing.JTextField txtAbbreviation;
     private javax.swing.JTextField txtAddress;
     private javax.swing.JTextField txtCloudHost;
+    private javax.swing.JTextField txtCloudPath;
     private javax.swing.JTextField txtCloudPort;
     private javax.swing.JTextField txtCloudUser;
+    private javax.swing.JTextField txtDisplayName;
     private javax.swing.JTextField txtEmailSender;
     private javax.swing.JTextField txtInServer;
     private javax.swing.JTextField txtInUser;
@@ -2506,8 +2698,9 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
     private javax.swing.JTextField txtOutPort;
     private javax.swing.JTextField txtOutServer;
     private javax.swing.JTextField txtOutUsername;
-    private javax.swing.JPasswordField txtPassword;
     private javax.swing.JTextField txtUser;
+    private javax.swing.JTextField txtVoipPassword;
+    private javax.swing.JTextField txtVoipUser;
     // End of variables declaration//GEN-END:variables
 
 }

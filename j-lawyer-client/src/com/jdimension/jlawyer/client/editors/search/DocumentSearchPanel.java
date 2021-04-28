@@ -664,6 +664,7 @@
 package com.jdimension.jlawyer.client.editors.search;
 
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import com.jdimension.jlawyer.client.editors.ResetOnDisplayEditor;
 import com.jdimension.jlawyer.client.editors.ThemeableEditor;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
@@ -683,7 +684,7 @@ import org.jlawyer.search.SearchHit;
  *
  * @author jens
  */
-public class DocumentSearchPanel extends javax.swing.JPanel implements ThemeableEditor {
+public class DocumentSearchPanel extends javax.swing.JPanel implements ThemeableEditor, ResetOnDisplayEditor {
 
     private static final Logger log = Logger.getLogger(DocumentSearchPanel.class.getName());
     private Image backgroundImage = null;
@@ -755,6 +756,7 @@ public class DocumentSearchPanel extends javax.swing.JPanel implements Themeable
         pnlResults = new javax.swing.JPanel();
         cmbMaxDocs = new javax.swing.JComboBox();
         lblResultCount = new javax.swing.JLabel();
+        jLabel3 = new javax.swing.JLabel();
 
         jLabel1.setForeground(new java.awt.Color(255, 255, 255));
         jLabel1.setText("Suchanfrage:");
@@ -799,6 +801,9 @@ public class DocumentSearchPanel extends javax.swing.JPanel implements Themeable
         lblResultCount.setForeground(new java.awt.Color(255, 255, 255));
         lblResultCount.setText("0 Ergebnisse");
 
+        jLabel3.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/baseline_help_white_36dp.png"))); // NOI18N
+        jLabel3.setToolTipText("<html><b>Felder: text: dateiname: autor: akte: az:</b><br/>Bsp: text:Kauf\n<p>&nbsp;</p>\n<b>Suchoptionen: AND OR</b>\n<p>&nbsp;</p>\n<b>&quot;Wortgruppe mittels Anf&uuml;hrungszeichen&quot;</b>\n<p>&nbsp;</p>\n<p><b>Ausschluss per vorangestelltem Minuszeichen</b><br/>Bsp: -Klage</p>\n<p>&nbsp;</p>\n<b>Wildcards: ? f&uuml;r ein Zeichen, * f&uuml;r mehrere Zeichen.</b><br/>\nBsp: M?ier (f&uuml;r eine Suche nach Meier und Maier)<br/>\n</html>");
+
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -820,7 +825,9 @@ public class DocumentSearchPanel extends javax.swing.JPanel implements Themeable
                     .add(layout.createSequentialGroup()
                         .add(jLabel2)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                        .add(lblPanelTitle)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .add(jLabel3)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -829,7 +836,8 @@ public class DocumentSearchPanel extends javax.swing.JPanel implements Themeable
                 .addContainerGap()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(jLabel2)
-                    .add(lblPanelTitle, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 34, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                    .add(lblPanelTitle, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 34, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(jLabel3))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
@@ -922,10 +930,21 @@ public class DocumentSearchPanel extends javax.swing.JPanel implements Themeable
     private javax.swing.JButton cmdQuickSearch;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel jLabel3;
     protected javax.swing.JLabel lblPanelTitle;
     private javax.swing.JLabel lblResultCount;
     private javax.swing.JPanel pnlResults;
     private javax.swing.JScrollPane scrollResults;
     private javax.swing.JTextField txtSearchString;
     // End of variables declaration//GEN-END:variables
+
+    @Override
+    public void reset() {
+        this.txtSearchString.requestFocus();
+    }
+
+    @Override
+    public boolean needsReset() {
+        return true;
+    }
 }

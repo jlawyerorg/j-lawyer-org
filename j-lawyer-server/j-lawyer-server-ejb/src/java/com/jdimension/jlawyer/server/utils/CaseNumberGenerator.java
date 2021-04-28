@@ -676,298 +676,329 @@ import java.util.regex.Pattern;
  * @author jens
  */
 public class CaseNumberGenerator {
-    
-    private static final SimpleDateFormat shortYear=new SimpleDateFormat("yy");
-    private static final SimpleDateFormat longYear=new SimpleDateFormat("yyyy");
-    
-    private static final SimpleDateFormat shortMonth=new SimpleDateFormat("M");
-    private static final SimpleDateFormat longMonth=new SimpleDateFormat("MM");
-    
-    private static final SimpleDateFormat shortDay=new SimpleDateFormat("d");
-    private static final SimpleDateFormat longDay=new SimpleDateFormat("dd");
-    
-    private static final String shortCodeChars="ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    
-    private static final boolean DBG=false;
-    
-    
+
+    private static final String shortCodeChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+    private static final boolean DBG = false;
+
     public static boolean compilePattern(String pattern) throws InvalidCaseNumberPatternException {
-        
-        if(pattern.indexOf("YYY")>-1 && !(pattern.indexOf("YYYY")>-1))
+
+        if (pattern.indexOf("YYY") > -1 && !(pattern.indexOf("YYYY") > -1)) {
             throw new InvalidCaseNumberPatternException("Y muss als YY oder YYYY enthalten sein");
-        if(pattern.indexOf("YYYYY")>-1)
+        }
+        if (pattern.indexOf("YYYYY") > -1) {
             throw new InvalidCaseNumberPatternException("Y muss als YY oder YYYY enthalten sein");
-        
-        if(pattern.indexOf("MMM")>-1)
+        }
+
+        if (pattern.indexOf("MMM") > -1) {
             throw new InvalidCaseNumberPatternException("M muss als M oder MM enthalten sein");
-        if(pattern.indexOf("DDD")>-1)
+        }
+        if (pattern.indexOf("DDD") > -1) {
             throw new InvalidCaseNumberPatternException("D muss als D oder DD enthalten sein");
-     
+        }
+
 //        if(pattern.indexOf('r')>-1 && !(pattern.indexOf("rrr")>-1))
 //            throw new InvalidCaseNumberPatternException("r must be contained as at least rrr (999 cases per year)");
-        if(pattern.indexOf('n')>-1 && !(pattern.indexOf("nnn")>-1))
+        if (pattern.indexOf('n') > -1 && !(pattern.indexOf("nnn") > -1)) {
             throw new InvalidCaseNumberPatternException("n muss mindestens als nnn (999 Akten innerhalb der anderen Angaben) enthalten sein");
-        
-        if(pattern.indexOf('R')>-1 && !(pattern.indexOf("RRR")>-1))
+        }
+
+        if (pattern.indexOf('R') > -1 && !(pattern.indexOf("RRR") > -1)) {
             throw new InvalidCaseNumberPatternException("R muss mindestens als RRR (max. 999 Akten) enthalten sein");
-        if(pattern.indexOf('N')>-1 && !(pattern.indexOf("NNNNN")>-1))
+        }
+        if (pattern.indexOf('N') > -1 && !(pattern.indexOf("NNNNN") > -1)) {
             throw new InvalidCaseNumberPatternException("N muss mindestens als NNNNN (max. 99999 Akten)");
-        
-        
-        int allNumberComponents=0;
-        
+        }
+
+        int allNumberComponents = 0;
+
         Pattern randNoPattern = Pattern.compile("\\.*(R+)\\.*");
         Matcher m = randNoPattern.matcher(pattern);
-        int count=0;
+        int count = 0;
         while (m.find()) {
-            count=count+1;
+            count = count + 1;
             allNumberComponents++;
-            if(count==2)
+            if (count == 2) {
                 throw new InvalidCaseNumberPatternException("Es kann nur EINE Zufallszahlenangabe R geben");
+            }
         }
-        
+
         randNoPattern = Pattern.compile("\\.*(N+)\\.*");
         m = randNoPattern.matcher(pattern);
-        count=0;
+        count = 0;
         while (m.find()) {
-            count=count+1;
+            count = count + 1;
             allNumberComponents++;
-            if(count==2)
+            if (count == 2) {
                 throw new InvalidCaseNumberPatternException("Es kann nur EINE globale Indexangabe N geben");
+            }
         }
-        
+
         randNoPattern = Pattern.compile("\\.*(n+)\\.*");
         m = randNoPattern.matcher(pattern);
-        count=0;
+        count = 0;
         while (m.find()) {
-            count=count+1;
+            count = count + 1;
             allNumberComponents++;
-            if(count==2)
+            if (count == 2) {
                 throw new InvalidCaseNumberPatternException("Es kan nur EINE lokale Indexangabe n geben");
+            }
         }
-        
-        if(allNumberComponents>1)
+
+        if (allNumberComponents > 1) {
             throw new InvalidCaseNumberPatternException("Es kann nur EIN Vorkommen einer N- n- oder R-Angabe geben");
-        
+        }
+
         randNoPattern = Pattern.compile("\\.*(C+)\\.*");
         m = randNoPattern.matcher(pattern);
-        count=0;
+        count = 0;
         while (m.find()) {
-            count=count+1;
+            count = count + 1;
             allNumberComponents++;
         }
-        if(allNumberComponents==0)
+        if (allNumberComponents == 0) {
             throw new InvalidCaseNumberPatternException("Es muss zumindest eine dynamische Angabe geben");
-        
+        }
+
         return true;
     }
-    
+
     public static String getNextCaseNumber(ArrayList<String> allExisting, String pattern, int startFromIndex) throws InvalidCaseNumberPatternException {
-        
+
         compilePattern(pattern);
-        
+
         return next(allExisting, pattern, startFromIndex);
     }
-    
+
     public static String getNextCaseNumber(ArrayList<String> allExisting, String pattern, Date date, int startFromIndex) throws InvalidCaseNumberPatternException {
-        
+
         compilePattern(pattern);
-        
+
         return next(allExisting, pattern, date, startFromIndex);
     }
-    
+
     public static String getExtension(boolean extension, String dividerMain, String dividerExt, boolean bPrefix, String prefix, boolean bSuffix, String suffix, boolean bUserAbbr, String userAbbr, boolean bGroupAbbr, String groupAbbr) throws Exception {
-        
-        if(extension) {
-            StringBuffer sb=new StringBuffer();
+
+        if (extension) {
+            StringBuffer sb = new StringBuffer();
             sb.append(dividerMain);
-            if(bPrefix) {
-                if(prefix==null || "".equals(prefix))
+            if (bPrefix) {
+                if (prefix == null || "".equals(prefix)) {
                     throw new Exception("Es wird ein erweitertes Aktenzeichen mit Präfix verwendet, aber der Präfix ist leer!");
+                }
                 sb.append(prefix);
                 sb.append(dividerExt);
             }
-            if(bUserAbbr) {
-                
-                if(userAbbr==null || "".equals(userAbbr))
+            if (bUserAbbr) {
+
+                if (userAbbr == null || "".equals(userAbbr)) {
                     throw new Exception("Es wird ein erweitertes Aktenzeichen mit Anwaltskürzel verwendet, aber das Kürzel ist leer!");
-                
+                }
+
                 sb.append(userAbbr);
                 sb.append(dividerExt);
             }
-            if(bGroupAbbr) {
-                if(groupAbbr==null || "".equals(groupAbbr))
+            if (bGroupAbbr) {
+                if (groupAbbr == null || "".equals(groupAbbr)) {
                     throw new Exception("Es wird ein erweitertes Aktenzeichen mit Gruppenkürzel verwendet, aber das Kürzel ist leer!");
-                
+                }
+
                 sb.append(groupAbbr);
                 sb.append(dividerExt);
             }
-            if(bSuffix) {
-                if(suffix==null || "".equals(suffix))
+            if (bSuffix) {
+                if (suffix == null || "".equals(suffix)) {
                     throw new Exception("Es wird ein erweitertes Aktenzeichen mit Suffix verwendet, aber das Suffix ist leer!");
-                
+                }
+
                 sb.append(suffix);
                 sb.append(dividerExt);
             }
-            String result=sb.toString();
-            if(result.endsWith(dividerExt)) {
-                result=result.substring(0, result.length()-dividerExt.length());
+            String result = sb.toString();
+            if (result.endsWith(dividerExt)) {
+                result = result.substring(0, result.length() - dividerExt.length());
             }
             return result;
         }
         return "";
     }
-    
+
     private static synchronized String next(ArrayList<String> allExisting, String pattern, int startFromIndex) throws InvalidCaseNumberPatternException {
         return next(allExisting, pattern, new Date(), startFromIndex);
     }
-    
+
     private static synchronized String next(ArrayList<String> allExisting, String pattern, Date date, int startFromIndex) throws InvalidCaseNumberPatternException {
+
+        SimpleDateFormat shortYear = new SimpleDateFormat("yy");
+    SimpleDateFormat longYear = new SimpleDateFormat("yyyy");
+
+    SimpleDateFormat shortMonth = new SimpleDateFormat("M");
+    SimpleDateFormat longMonth = new SimpleDateFormat("MM");
+
+    SimpleDateFormat shortDay = new SimpleDateFormat("d");
+    SimpleDateFormat longDay = new SimpleDateFormat("dd");
         
-        Date current=date;
-        if(current==null)
-            current=new Date();
-        
+        Date current = date;
+        if (current == null) {
+            current = new Date();
+        }
+
         // fixed values
-        while(pattern.indexOf("YYYY")>-1)
-            pattern=pattern.replace("YYYY", longYear.format(current));
-        while(pattern.indexOf("YY")>-1)
-            pattern=pattern.replace("YY", shortYear.format(current));
-        
-        while(pattern.indexOf("MM")>-1)
-            pattern=pattern.replace("MM", longMonth.format(current));
-        while(pattern.indexOf("M")>-1)
-            pattern=pattern.replace("M", shortMonth.format(current));
-        
-        while(pattern.indexOf("DD")>-1)
-            pattern=pattern.replace("DD", longDay.format(current));
-        while(pattern.indexOf("D")>-1)
-            pattern=pattern.replace("D", shortDay.format(current));
-        
+        while (pattern.indexOf("YYYY") > -1) {
+            pattern = pattern.replace("YYYY", longYear.format(current));
+        }
+        while (pattern.indexOf("YY") > -1) {
+            pattern = pattern.replace("YY", shortYear.format(current));
+        }
+
+        while (pattern.indexOf("MM") > -1) {
+            pattern = pattern.replace("MM", longMonth.format(current));
+        }
+        while (pattern.indexOf("M") > -1) {
+            pattern = pattern.replace("M", shortMonth.format(current));
+        }
+
+        while (pattern.indexOf("DD") > -1) {
+            pattern = pattern.replace("DD", longDay.format(current));
+        }
+        while (pattern.indexOf("D") > -1) {
+            pattern = pattern.replace("D", shortDay.format(current));
+        }
+
         // variable values
-        
         // random numbers
         Pattern randNoPattern = Pattern.compile("\\.*(R+)\\.*");
-        char[] patternChar=null;
+        char[] patternChar = null;
         do {
-        Matcher m = randNoPattern.matcher(pattern);
-        patternChar=pattern.toCharArray();
-        if(DBG)
-            System.out.println("10");
-        while (m.find()) {
-            if(DBG)
-                System.out.println("20");
-            String s = m.group(1);
-            for(int i=0;i<s.length();i++) {
-                if(DBG)
-                System.out.println("30");
-                int randDigit=(int)(Math.random() * 10);
-                patternChar[m.start()+i]=Integer.toString(randDigit).charAt(0);;
+            Matcher m = randNoPattern.matcher(pattern);
+            patternChar = pattern.toCharArray();
+            if (DBG) {
+                System.out.println("10");
             }
-        }
-        if(DBG)
-        System.out.println("40");
+            while (m.find()) {
+                if (DBG) {
+                    System.out.println("20");
+                }
+                String s = m.group(1);
+                for (int i = 0; i < s.length(); i++) {
+                    if (DBG) {
+                        System.out.println("30");
+                    }
+                    int randDigit = (int) (Math.random() * 10);
+                    patternChar[m.start() + i] = Integer.toString(randDigit).charAt(0);;
+                }
+            }
+            if (DBG) {
+                System.out.println("40");
+            }
         } while (allExisting.contains(new String(patternChar)));
-        pattern=new String(patternChar);
-        
-        int globalIndex=1;
-        if(startFromIndex!=-1) {
-            globalIndex=startFromIndex;
+        pattern = new String(patternChar);
+
+        int globalIndex = 1;
+        if (startFromIndex != -1) {
+            globalIndex = startFromIndex;
         }
-        int localIndex=1;
-        if(startFromIndex!=-1) {
-            localIndex=startFromIndex;
+        int localIndex = 1;
+        if (startFromIndex != -1) {
+            localIndex = startFromIndex;
         }
         String currentPattern = null;
         do {
-            if(DBG)
-            System.out.println("50");
+            if (DBG) {
+                System.out.println("50");
+            }
             currentPattern = pattern;
             // global index
             Pattern NPattern = Pattern.compile("\\.*(N+)\\.*");
             Matcher mN = NPattern.matcher(currentPattern);
             char[] NPatternChar = currentPattern.toCharArray();
             while (mN.find()) {
-                if(DBG)
-                System.out.println("60");
+                if (DBG) {
+                    System.out.println("60");
+                }
                 String s = mN.group(1);
-                
-                DecimalFormat df=new DecimalFormat(s.replaceAll("N", "0"));
-                String dfs=df.format(globalIndex);
-                
+
+                DecimalFormat df = new DecimalFormat(s.replaceAll("N", "0"));
+                String dfs = df.format(globalIndex);
+
                 // get all current globa index values
-                ArrayList<String> allExistingGlobals=new ArrayList<String>();
-                for(String existing: allExisting) {
-                    if(DBG)
-                    System.out.println("70");
-                    if(existing.length()>mN.start()+s.length()) {
-                        allExistingGlobals.add(existing.substring(mN.start(),mN.start()+dfs.length()));
+                ArrayList<String> allExistingGlobals = new ArrayList<String>();
+                for (String existing : allExisting) {
+                    if (DBG) {
+                        System.out.println("70");
+                    }
+                    if (existing.length() > mN.start() + s.length()) {
+                        allExistingGlobals.add(existing.substring(mN.start(), mN.start() + dfs.length()));
                     }
                 }
-                
+
                 // lookup the next non-existing global index
-                while(allExistingGlobals.contains(dfs)) {
-                    if(DBG)
-                    System.out.println("80");
+                while (allExistingGlobals.contains(dfs)) {
+                    if (DBG) {
+                        System.out.println("80");
+                    }
                     globalIndex++;
-                    dfs=df.format(globalIndex);
+                    dfs = df.format(globalIndex);
                 }
-                
-                for(int i=0;i<s.length();i++) {
-                    NPatternChar[mN.start()+i]=dfs.charAt(i);
+
+                for (int i = 0; i < s.length(); i++) {
+                    NPatternChar[mN.start() + i] = dfs.charAt(i);
                 }
             }
             currentPattern = new String(NPatternChar);
-            
-            
-            
+
             // C short code
             Pattern cPattern = Pattern.compile("\\.*(C+)\\.*");
             Matcher mc = cPattern.matcher(currentPattern);
             char[] cPatternChar = currentPattern.toCharArray();
             while (mc.find()) {
-                if(DBG)
-                System.out.println("100");
+                Random r = new Random();
+                if (DBG) {
+                    System.out.println("100");
+                }
                 String s = mc.group(1);
                 for (int i = 0; i < s.length(); i++) {
-                    if(DBG)
-                    System.out.println("110");
-                    Random r = new Random();
-                    char shortCode=shortCodeChars.charAt(r.nextInt(shortCodeChars.length()));
+                    if (DBG) {
+                        System.out.println("110");
+                    }
+
+                    char shortCode = shortCodeChars.charAt(r.nextInt(shortCodeChars.length()));
                     cPatternChar[mc.start() + i] = shortCode;
                 }
             }
             currentPattern = new String(cPatternChar);
-            
+
             // local index
             Pattern nPattern = Pattern.compile("\\.*(n+)\\.*");
             Matcher mn = nPattern.matcher(currentPattern);
             char[] nPatternChar = currentPattern.toCharArray();
             while (mn.find()) {
-                if(DBG)
-                System.out.println("120");
+                if (DBG) {
+                    System.out.println("120");
+                }
                 String s = mn.group(1);
-                
-                if(("" + localIndex).length()>s.length()) {
+
+                if (("" + localIndex).length() > s.length()) {
                     throw new InvalidCaseNumberPatternException("Case number " + localIndex + " has exceeded maximum value of " + s + "!");
                 }
-                
-                DecimalFormat df=new DecimalFormat(s.replaceAll("n", "0"));
-                String dfs=df.format(localIndex);
-                for(int i=0;i<s.length();i++) {
-                    if(DBG)
-                    System.out.println("130");
-                    nPatternChar[mn.start()+i]=dfs.charAt(i);
+
+                DecimalFormat df = new DecimalFormat(s.replaceAll("n", "0"));
+                String dfs = df.format(localIndex);
+                for (int i = 0; i < s.length(); i++) {
+                    if (DBG) {
+                        System.out.println("130");
+                    }
+                    nPatternChar[mn.start() + i] = dfs.charAt(i);
                 }
             }
             currentPattern = new String(nPatternChar);
-            
+
             localIndex++;
             globalIndex++;
-            
+
         } while (allExisting.contains(currentPattern));
-        
+
         return currentPattern;
     }
-     
+
 }

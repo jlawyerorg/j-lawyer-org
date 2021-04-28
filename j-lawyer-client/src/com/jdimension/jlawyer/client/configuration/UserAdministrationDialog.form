@@ -19,6 +19,17 @@
             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuDeleteActionPerformed"/>
           </Events>
         </MenuItem>
+        <MenuItem class="javax.swing.JMenuItem" name="mnuUpdatePassword">
+          <Properties>
+            <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+              <Image iconType="3" name="/icons/ksysv.png"/>
+            </Property>
+            <Property name="text" type="java.lang.String" value="Passwort &#xe4;ndern"/>
+          </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuUpdatePasswordActionPerformed"/>
+          </Events>
+        </MenuItem>
       </SubComponents>
     </Container>
     <Component class="javax.swing.ButtonGroup" name="btGrpAutoLogin">
@@ -52,18 +63,12 @@
               <Group type="103" groupAlignment="0" attributes="0">
                   <Component id="jTabbedPane1" alignment="0" max="32767" attributes="0"/>
                   <Group type="102" attributes="0">
-                      <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="jLabel2" min="-2" pref="92" max="-2" attributes="0"/>
-                          <Group type="103" alignment="0" groupAlignment="1" attributes="0">
-                              <Component id="cmdAdd" min="-2" max="-2" attributes="0"/>
-                              <Group type="102" attributes="0">
-                                  <Component id="jLabel1" min="-2" max="-2" attributes="0"/>
-                                  <EmptySpace max="-2" attributes="0"/>
-                                  <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                                      <Component id="txtPassword" pref="216" max="32767" attributes="0"/>
-                                      <Component id="txtUser" max="32767" attributes="0"/>
-                                  </Group>
-                              </Group>
+                      <Group type="103" groupAlignment="1" attributes="0">
+                          <Component id="cmdAdd" min="-2" max="-2" attributes="0"/>
+                          <Group type="102" attributes="0">
+                              <Component id="jLabel1" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Component id="txtUser" min="-2" pref="216" max="-2" attributes="0"/>
                           </Group>
                       </Group>
                       <EmptySpace type="separate" max="-2" attributes="0"/>
@@ -89,11 +94,6 @@
                       <Group type="103" groupAlignment="3" attributes="0">
                           <Component id="txtUser" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="jLabel1" alignment="3" min="-2" max="-2" attributes="0"/>
-                      </Group>
-                      <EmptySpace max="-2" attributes="0"/>
-                      <Group type="103" groupAlignment="3" attributes="0">
-                          <Component id="jLabel2" alignment="3" min="-2" max="-2" attributes="0"/>
-                          <Component id="txtPassword" alignment="3" min="-2" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="cmdAdd" min="-2" max="-2" attributes="0"/>
@@ -182,13 +182,6 @@
         <Property name="text" type="java.lang.String" value="Nutzername:"/>
       </Properties>
     </Component>
-    <Component class="javax.swing.JLabel" name="jLabel2">
-      <Properties>
-        <Property name="text" type="java.lang.String" value="Passwort:"/>
-      </Properties>
-    </Component>
-    <Component class="javax.swing.JPasswordField" name="txtPassword">
-    </Component>
     <Container class="javax.swing.JTabbedPane" name="jTabbedPane1">
 
       <Layout class="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout"/>
@@ -205,10 +198,10 @@
           <Layout>
             <DimensionLayout dim="0">
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Group type="102" alignment="0" attributes="0">
+                  <Group type="102" attributes="0">
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Group type="102" attributes="0">
+                          <Group type="102" alignment="0" attributes="0">
                               <Component id="jPanel1" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="jPanel2" min="-2" max="-2" attributes="0"/>
@@ -216,13 +209,17 @@
                               <Component id="jPanel3" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="jPanel4" max="32767" attributes="0"/>
+                              <EmptySpace max="-2" attributes="0"/>
                           </Group>
-                          <Group type="102" attributes="0">
+                          <Group type="102" alignment="1" attributes="0">
+                              <Component id="jLabel27" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Component id="txtDisplayName" max="32767" attributes="0"/>
+                              <EmptySpace type="separate" max="-2" attributes="0"/>
                               <Component id="chkLawyer" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                              <EmptySpace min="-2" pref="189" max="-2" attributes="0"/>
                           </Group>
                       </Group>
-                      <EmptySpace max="-2" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -230,7 +227,11 @@
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" alignment="0" attributes="0">
                       <EmptySpace max="-2" attributes="0"/>
-                      <Component id="chkLawyer" min="-2" max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="3" attributes="0">
+                          <Component id="chkLawyer" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="jLabel27" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="txtDisplayName" alignment="3" min="-2" max="-2" attributes="0"/>
+                      </Group>
                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Component id="jPanel4" min="-2" max="-2" attributes="0"/>
@@ -451,7 +452,7 @@
                               <Component id="chkCreateOption" alignment="0" min="-2" max="-2" attributes="0"/>
                               <Component id="chkRemoveOption" alignment="0" min="-2" max="-2" attributes="0"/>
                           </Group>
-                          <EmptySpace max="32767" attributes="0"/>
+                          <EmptySpace pref="218" max="32767" attributes="0"/>
                       </Group>
                   </Group>
                 </DimensionLayout>
@@ -490,6 +491,13 @@
               <Properties>
                 <Property name="text" type="java.lang.String" value="Nutzer ist Anwalt"/>
               </Properties>
+            </Component>
+            <Component class="javax.swing.JLabel" name="jLabel27">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="Anzeigename:"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JTextField" name="txtDisplayName">
             </Component>
           </SubComponents>
         </Container>
@@ -627,7 +635,7 @@
                                           </Group>
                                       </Group>
                                       <Group type="103" groupAlignment="0" attributes="0">
-                                          <Component id="txtOutServer" pref="254" max="32767" attributes="0"/>
+                                          <Component id="txtOutServer" max="32767" attributes="0"/>
                                           <Component id="txtOutUsername" max="32767" attributes="0"/>
                                       </Group>
                                   </Group>
@@ -1024,6 +1032,7 @@
                           <Component id="jLabel22" alignment="0" min="-2" max="-2" attributes="0"/>
                           <Component id="jLabel23" alignment="0" min="-2" max="-2" attributes="0"/>
                           <Component id="jLabel24" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Component id="lblCloudPath" alignment="0" min="-2" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
@@ -1040,10 +1049,11 @@
                                   <Component id="lblNextcloudOrder1" min="-2" max="-2" attributes="0"/>
                                   <Component id="lblNextcloudOrder" min="-2" max="-2" attributes="0"/>
                                   <Component id="chkCloudSsl" min="-2" max="-2" attributes="0"/>
-                                  <Component id="txtCloudPort" alignment="0" min="-2" pref="165" max="-2" attributes="0"/>
+                                  <Component id="txtCloudPort" alignment="0" min="-2" pref="64" max="-2" attributes="0"/>
                               </Group>
                               <EmptySpace min="0" pref="270" max="32767" attributes="0"/>
                           </Group>
+                          <Component id="txtCloudPath" alignment="0" max="32767" attributes="0"/>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
                   </Group>
@@ -1064,7 +1074,12 @@
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="chkCloudSsl" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="3" attributes="0">
+                          <Component id="txtCloudPath" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="lblCloudPath" alignment="3" min="-2" max="-2" attributes="0"/>
+                      </Group>
+                      <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="3" attributes="0">
                           <Component id="txtCloudUser" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="jLabel23" alignment="3" min="-2" max="-2" attributes="0"/>
@@ -1083,7 +1098,7 @@
                           <Component id="cmdShowWebsite" min="-2" max="-2" attributes="0"/>
                           <Component id="txtNextcloudOrder" min="-2" max="-2" attributes="0"/>
                       </Group>
-                      <EmptySpace pref="222" max="32767" attributes="0"/>
+                      <EmptySpace max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -1161,6 +1176,92 @@
                   <Font name="Dialog" size="14" style="1"/>
                 </Property>
                 <Property name="text" type="java.lang.String" value="Hier Nextcloud-Nutzer anfordern:"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JTextField" name="txtCloudPath">
+              <Properties>
+                <Property name="toolTipText" type="java.lang.String" value="Unterverzeichnis des Webservers, ohne f&#xfc;hrende oder abschlie&#xdf;ende /"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JLabel" name="lblCloudPath">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="Pfad:"/>
+              </Properties>
+            </Component>
+          </SubComponents>
+        </Container>
+        <Container class="javax.swing.JPanel" name="jPanel11">
+          <Constraints>
+            <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout" value="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout$JTabbedPaneConstraintsDescription">
+              <JTabbedPaneConstraints tabName="Sipgate">
+                <Property name="tabTitle" type="java.lang.String" value="Sipgate"/>
+              </JTabbedPaneConstraints>
+            </Constraint>
+          </Constraints>
+
+          <Layout>
+            <DimensionLayout dim="0">
+              <Group type="103" groupAlignment="0" attributes="0">
+                  <Group type="102" alignment="0" attributes="0">
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="0" attributes="0">
+                          <Component id="jLabel2" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Component id="jLabel25" alignment="0" min="-2" max="-2" attributes="0"/>
+                      </Group>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="0" attributes="0">
+                          <Group type="102" attributes="0">
+                              <Component id="jLabel26" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace min="0" pref="258" max="32767" attributes="0"/>
+                          </Group>
+                          <Component id="txtVoipUser" max="32767" attributes="0"/>
+                          <Component id="txtVoipPassword" max="32767" attributes="0"/>
+                      </Group>
+                      <EmptySpace max="-2" attributes="0"/>
+                  </Group>
+              </Group>
+            </DimensionLayout>
+            <DimensionLayout dim="1">
+              <Group type="103" groupAlignment="0" attributes="0">
+                  <Group type="102" alignment="0" attributes="0">
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="3" attributes="0">
+                          <Component id="jLabel2" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="txtVoipUser" alignment="3" min="-2" max="-2" attributes="0"/>
+                      </Group>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="3" attributes="0">
+                          <Component id="jLabel25" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="txtVoipPassword" alignment="3" min="-2" max="-2" attributes="0"/>
+                      </Group>
+                      <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                      <Component id="jLabel26" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="32767" attributes="0"/>
+                  </Group>
+              </Group>
+            </DimensionLayout>
+          </Layout>
+          <SubComponents>
+            <Component class="javax.swing.JLabel" name="jLabel2">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="Sipgate-Kundennummer:"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JLabel" name="jLabel25">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="Sipgate-Passwort:"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JTextField" name="txtVoipUser">
+            </Component>
+            <Component class="javax.swing.JTextField" name="txtVoipPassword">
+            </Component>
+            <Component class="javax.swing.JLabel" name="jLabel26">
+              <Properties>
+                <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                  <Image iconType="3" name="/icons/info.png"/>
+                </Property>
+                <Property name="text" type="java.lang.String" value="&#xc4;nderung erfordert Neustart des j-lawyer.org Clients"/>
               </Properties>
             </Component>
           </SubComponents>

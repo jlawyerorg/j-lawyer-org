@@ -690,7 +690,7 @@ public interface VoipServiceRemote {
 
     ArrayList<FaxQueueBean> queueList() throws Exception;
 
-    String getSessionStatus(String sessionId) throws SipgateException;
+    String getSessionStatus(String sessionId, String senderPrincipalId) throws SipgateException;
 
     void deleteQueueEntries(List<String> sessionIds) throws SipgateException;
 

@@ -678,6 +678,7 @@ import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
 import org.apache.log4j.Logger;
@@ -691,7 +692,7 @@ public class EditorOrDuplicateReviewDialog extends javax.swing.JDialog {
     public static final int MODE_DUPLICATE = 10;
     public static final int MODE_EDIT = 20;
 
-    private static SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
+    private SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
     private static final Logger log = Logger.getLogger(EditorOrDuplicateReviewDialog.class.getName());
 
     private ArchiveFileReviewsBean targetReview = null;
@@ -711,13 +712,15 @@ public class EditorOrDuplicateReviewDialog extends javax.swing.JDialog {
         this.tblReviewReasons = tblReviewReasons;
         this.archiveFileId = archiveFileId;
         initComponents();
+        
+        this.quickDateSelectionPanel.setTarget(this.txtReviewDate);
 
         ClientSettings settings = ClientSettings.getInstance();
-        AppUserBean[] allUsers = UserSettings.getInstance().getAllUsers();
-        Object[] allUserItems = new Object[allUsers.length + 1];
+        List<AppUserBean> allUsers = UserSettings.getInstance().getLoginEnabledUsers();
+        Object[] allUserItems = new Object[allUsers.size() + 1];
         allUserItems[0] = "";
-        for (int i = 0; i < allUsers.length; i++) {
-            AppUserBean aub = (AppUserBean) allUsers[i];
+        for (int i = 0; i < allUsers.size(); i++) {
+            AppUserBean aub = allUsers.get(i);
             allUserItems[i + 1] = aub.getPrincipalId();
         }
         OptionsComboBoxModel allUserModel = new OptionsComboBoxModel(allUserItems);
@@ -786,6 +789,7 @@ public class EditorOrDuplicateReviewDialog extends javax.swing.JDialog {
         cmbAssignee = new javax.swing.JComboBox();
         cmdShowReviewSelector = new javax.swing.JButton();
         cmbReviewReason = new javax.swing.JComboBox();
+        quickDateSelectionPanel = new com.jdimension.jlawyer.client.components.QuickDateSelectionPanel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Wiedervorlage/Frist bearbeiten oder duplizieren");
@@ -854,7 +858,9 @@ public class EditorOrDuplicateReviewDialog extends javax.swing.JDialog {
                                     .addComponent(jLabel3)
                                     .addComponent(cmbAssignee, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(cmdShowReviewSelector)))
+                                .addComponent(cmdShowReviewSelector)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(quickDateSelectionPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
                         .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
@@ -870,16 +876,20 @@ public class EditorOrDuplicateReviewDialog extends javax.swing.JDialog {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(txtReviewDate, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(txtReviewDate, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(cmdShowReviewSelector))
+                        .addGap(18, 18, 18)
                         .addComponent(jLabel3)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(cmbAssignee, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(cmdShowReviewSelector))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(cmdOK)
-                    .addComponent(cmdCancel))
+                        .addComponent(cmbAssignee, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(cmdOK)
+                            .addComponent(cmdCancel)))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(quickDateSelectionPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
 
@@ -1020,6 +1030,7 @@ public class EditorOrDuplicateReviewDialog extends javax.swing.JDialog {
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
+    private com.jdimension.jlawyer.client.components.QuickDateSelectionPanel quickDateSelectionPanel;
     private javax.swing.JTextField txtReviewDate;
     // End of variables declaration//GEN-END:variables
 }

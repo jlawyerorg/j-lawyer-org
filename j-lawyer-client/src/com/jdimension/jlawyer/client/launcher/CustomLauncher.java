@@ -665,8 +665,6 @@ package com.jdimension.jlawyer.client.launcher;
 
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
-import com.jdimension.jlawyer.persistence.ArchiveFileBean;
-import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
@@ -734,7 +732,6 @@ public class CustomLauncher extends Launcher {
                         ProcessBuilder pb = new ProcessBuilder(execParams);
                         pb.redirectErrorStream(true);
 
-                        //odoc.setStatus(ObservedDocument.STATUS_OPEN);
                         odoc.setStatus(ObservedDocument.STATUS_MONITORING);
                         Process process = pb.start();
                         BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
@@ -758,11 +755,11 @@ public class CustomLauncher extends Launcher {
 
                     } catch (Throwable t) {
                         log.error("error in custom launcher for " + extension, t);
-                        t.printStackTrace();
                     }
 
                 } catch (final Throwable t) {
-                    odoc.setClosed(true);
+                    if(odoc!=null)
+                        odoc.setClosed(true);
                     SwingUtilities.invokeLater(new Runnable() {
 
                         public void run() {

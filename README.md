@@ -1,4 +1,6 @@
-[![Build Status](https://api.travis-ci.org/jlawyerorg/j-lawyer-org.svg?branch=master)](https://travis-ci.org/jlawyerorg/j-lawyer-org)
+![CI](https://github.com/jlawyerorg/j-lawyer-org/workflows/CI/badge.svg)
+
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=jlawyerorg_j-lawyer-org&metric=alert_status)](https://sonarcloud.io/dashboard?id=jlawyerorg_j-lawyer-org)
 
 # j-lawyer-org
 j-lawyer.org core project and builds

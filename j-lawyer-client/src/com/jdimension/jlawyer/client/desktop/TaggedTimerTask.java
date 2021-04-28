@@ -677,10 +677,9 @@ import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Color;
 import java.awt.Component;
-import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.ItemListener;
+import java.nio.channels.ClosedChannelException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -688,7 +687,7 @@ import java.util.Collections;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.TimerTask;
-import java.util.logging.Level;
+import javax.ejb.EJBException;
 import javax.swing.*;
 import org.apache.log4j.Logger;
 import themes.colors.DefaultColorTheme;
@@ -710,14 +709,16 @@ public class TaggedTimerTask extends java.util.TimerTask {
     private JPopupMenu popDocumentTags = null;
     private JButton tagMenu = null;
     private JButton tagDocumentMenu = null;
+    private JTabbedPane tagsPane = null;
 
     /**
      * Creates a new instance of SystemStateTimerTask
      */
-    public TaggedTimerTask(Component owner, JPanel resultPanel, JSplitPane split, JButton tagMenu, JButton tagDocumentMenu, JPopupMenu popTags, JPopupMenu popDocumentTags, boolean ignoreCurrentEditorParam, boolean rebuildPopup) {
+    public TaggedTimerTask(Component owner, JTabbedPane tagsPane, JPanel resultPanel, JSplitPane split, JButton tagMenu, JButton tagDocumentMenu, JPopupMenu popTags, JPopupMenu popDocumentTags, boolean ignoreCurrentEditorParam, boolean rebuildPopup) {
         super();
         this.owner = owner;
         this.resultUI = resultPanel;
+        this.tagsPane = tagsPane;
         this.split = split;
         this.ignoreCurrentEditor = ignoreCurrentEditorParam;
         this.rebuildPopup = rebuildPopup;
@@ -727,12 +728,12 @@ public class TaggedTimerTask extends java.util.TimerTask {
         this.tagDocumentMenu = tagDocumentMenu;
     }
 
-    public TaggedTimerTask(Component owner, JPanel resultPanel, JSplitPane split, JButton tagMenu, JButton tagDocumentMenu, JPopupMenu popTags, JPopupMenu popDocumentTags, boolean ignoreCurrentEditorParam) {
-        this(owner, resultPanel, split, tagMenu, tagDocumentMenu, popTags, popDocumentTags, ignoreCurrentEditorParam, true);
+    public TaggedTimerTask(Component owner, JTabbedPane tagsPane, JPanel resultPanel, JSplitPane split, JButton tagMenu, JButton tagDocumentMenu, JPopupMenu popTags, JPopupMenu popDocumentTags, boolean ignoreCurrentEditorParam) {
+        this(owner, tagsPane, resultPanel, split, tagMenu, tagDocumentMenu, popTags, popDocumentTags, ignoreCurrentEditorParam, true);
     }
 
-    public TaggedTimerTask(Component owner, JPanel resultPanel, JSplitPane split, JButton tagMenu, JButton tagDocumentMenu, JPopupMenu popTags, JPopupMenu popDocumentTags) {
-        this(owner, resultPanel, split, tagMenu, tagDocumentMenu, popTags, popDocumentTags, false);
+    public TaggedTimerTask(Component owner, JTabbedPane tagsPane, JPanel resultPanel, JSplitPane split, JButton tagMenu, JButton tagDocumentMenu, JPopupMenu popTags, JPopupMenu popDocumentTags) {
+        this(owner, tagsPane, resultPanel, split, tagMenu, tagDocumentMenu, popTags, popDocumentTags, false);
     }
 
     private void buildPopup(JButton button, JPopupMenu popup, List<String> tagsInUse, String[] lastFilterTags, String userSettingsKey) {
@@ -763,7 +764,7 @@ public class TaggedTimerTask extends java.util.TimerTask {
                     mi.setSelected(false);
                 }
                 popup.add(mi);
-                
+
             }
             if (hasSelection) {
                 button.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_label_green_36dp.png")));
@@ -775,8 +776,6 @@ public class TaggedTimerTask extends java.util.TimerTask {
                     @Override
                     public void actionPerformed(ActionEvent e) {
                         boolean selected = false;
-                        System.out.println("source: " + ((JCheckBoxMenuItem) e.getSource()).getText() + ((JCheckBoxMenuItem) e.getSource()).isSelected());
-                        System.out.println("10");
                         ArrayList<String> al = new ArrayList<String>();
                         for (MenuElement me : popup.getSubElements()) {
                             JCheckBoxMenuItem mi = ((JCheckBoxMenuItem) me.getComponent());
@@ -792,9 +791,8 @@ public class TaggedTimerTask extends java.util.TimerTask {
                             button.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_label_white_36dp.png")));
                         }
 
-                        System.out.println("60: " + al);
                         UserSettings.getInstance().setSettingArray(userSettingsKey, al.toArray(new String[al.size()]));
-                        TimerTask taggedTask = new TaggedTimerTask(EditorsRegistry.getInstance().getMainWindow(), resultUI, split, tagMenu, tagDocumentMenu, popTags, popDocumentTags, true, false);
+                        TimerTask taggedTask = new TaggedTimerTask(EditorsRegistry.getInstance().getMainWindow(), tagsPane, resultUI, split, tagMenu, tagDocumentMenu, popTags, popDocumentTags, true, false);
                         new java.util.Timer().schedule(taggedTask, 1000);
 
                     }
@@ -813,13 +811,16 @@ public class TaggedTimerTask extends java.util.TimerTask {
 
         running = true;
 
-        List<ArchiveFileBean> myNewList = new ArrayList<ArchiveFileBean>();
+        List<ArchiveFileBean> myNewList = new ArrayList<>();
         List<ArchiveFileBean> filteredList = new ArrayList<ArchiveFileBean>();
         Hashtable<String, List<ArchiveFileTagsBean>> tags = new Hashtable<String, List<ArchiveFileTagsBean>>();
 
-        List<ArchiveFileDocumentsBean> myNewDocumentList = new ArrayList<ArchiveFileDocumentsBean>();
-        List<ArchiveFileDocumentsBean> filteredDocumentList = new ArrayList<ArchiveFileDocumentsBean>();
+        List<ArchiveFileDocumentsBean> myNewDocumentList = new ArrayList<>();
+        List<ArchiveFileDocumentsBean> filteredDocumentList = new ArrayList<>();
         Hashtable<String, List<DocumentTagsBean>> documentTags = new Hashtable<String, List<DocumentTagsBean>>();
+        
+        String[] lastFilterDocumentTags=null;
+        String[] lastFilterTags=null;
 
         try {
             //System.out.println("TaggedTimerTask#run @ " + System.currentTimeMillis() + " from " + source);
@@ -827,7 +828,7 @@ public class TaggedTimerTask extends java.util.TimerTask {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
             UserSettings.getInstance().migrateFrom(settings, UserSettings.CONF_DESKTOP_LASTFILTERTAG);
-            String[] lastFilterTags = UserSettings.getInstance().getSettingArray(UserSettings.CONF_DESKTOP_LASTFILTERTAG, new String[]{""});
+            lastFilterTags = UserSettings.getInstance().getSettingArray(UserSettings.CONF_DESKTOP_LASTFILTERTAG, new String[]{""});
             List<String> caseTagsInUse = settings.getArchiveFileTagsInUse();
             AppOptionGroupBean[] allCaseTags = settings.getArchiveFileTagDtos();
             List<String> allCaseTagsAsString = new ArrayList<String>();
@@ -846,7 +847,7 @@ public class TaggedTimerTask extends java.util.TimerTask {
             }
 
             UserSettings.getInstance().migrateFrom(settings, UserSettings.CONF_DESKTOP_LASTFILTERDOCUMENTTAG);
-            String[] lastFilterDocumentTags = UserSettings.getInstance().getSettingArray(UserSettings.CONF_DESKTOP_LASTFILTERDOCUMENTTAG, new String[]{""});
+            lastFilterDocumentTags = UserSettings.getInstance().getSettingArray(UserSettings.CONF_DESKTOP_LASTFILTERDOCUMENTTAG, new String[]{""});
             List<String> docTagsInUse = settings.getDocumentTagsInUse();
             AppOptionGroupBean[] allDocTags = settings.getDocumentTagDtos();
             List<String> allDocTagsAsString = new ArrayList<String>();
@@ -915,6 +916,18 @@ public class TaggedTimerTask extends java.util.TimerTask {
             }
             //running=false;
 
+        } catch (EJBException | ClosedChannelException ex) {
+            log.error("Error connecting to server", ex);
+            if (ex instanceof ClosedChannelException) {
+                // ignore connection loss
+            } else if (ex instanceof EJBException && ex.getCause() != null && ex.getCause() instanceof ClosedChannelException) {
+                // ignore connection loss
+            } else {
+                // could be a SQL error or whatever - display to user
+                ThreadUtils.showErrorDialog(this.owner, java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/TaggedTimerTask").getString("msg.connectionerror"), new Object[]{ex.getMessage()}), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/TaggedTimerTask").getString("msg.error"));
+            }
+            running = false;
+            return;
         } catch (Throwable ex) {
             log.error("Error connecting to server", ex);
             //JOptionPane.showMessageDialog(this.owner, "Verbindungsfehler: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
@@ -926,25 +939,29 @@ public class TaggedTimerTask extends java.util.TimerTask {
         try {
             final List<ArchiveFileBean> l1 = myNewList;
             final List<ArchiveFileDocumentsBean> l2 = myNewDocumentList;
-            //final List<ArchiveFileBean> l2 = othersNewList;
+            final String[] caseTags=lastFilterTags.clone();
+            final String[] docTags=lastFilterDocumentTags.clone();
             SwingUtilities.invokeAndWait(
                     new Runnable() {
                 public void run() {
 
-                    //split.setDividerLocation(0.5d);
                     resultUI.removeAll();
-                    //GridLayout layout = new GridLayout(l1.size(), 1);
+
+                    // remove all tabs except for the first one
+                    for (int i = tagsPane.getTabCount() - 1; i > 0; i--) {
+                        tagsPane.removeTabAt(i);
+                    }
+
                     BoxLayout layout = new BoxLayout(resultUI, BoxLayout.Y_AXIS);
                     resultUI.setLayout(layout);
                     int i = 0;
-                    //ArrayList containedIds = new ArrayList();
                     for (ArchiveFileBean aFile : l1) {
                         Color background = DefaultColorTheme.DESKTOP_ENTRY_BACKGROUND;
                         if (i % 2 == 0) {
                             background = background.brighter();
                         }
                         TaggedEntryPanel ep = new TaggedEntryPanel(background);
-                        
+
                         TaggedEntry lce = new TaggedEntry();
                         lce.setFileNumber(aFile.getFileNumber());
                         lce.setCaseId(aFile.getId());
@@ -955,29 +972,35 @@ public class TaggedTimerTask extends java.util.TimerTask {
                             ArrayList<String> xTags = new ArrayList<String>();
                             for (ArchiveFileTagsBean aftb : tags.get(aFile.getId())) {
                                 xTags.add(aftb.getTagName());
+                                addTagsTab(aftb.getTagName());
                             }
                             Collections.sort(xTags);
                             lce.setTags(xTags);
                         }
                         ep.setEntry(lce);
+                        
+                        if (tags.get(aFile.getId()) != null) {
+                            for (ArchiveFileTagsBean aftb : tags.get(aFile.getId())) {
+                                TaggedEntryPanel tep = new TaggedEntryPanel(background);
+                                tep.setEntry(lce);
+                                addEntryToTab(aftb.getTagName(), tep);
+                            }
 
-                        //if (!containedIds.contains(lce.getId())) {
+                        }
+
                         resultUI.add(ep);
                         i++;
                         if (i == 50) {
-                            //layout.setRows(i);
                             running = false;
                             return;
                         }
-                        //    containedIds.add(lce.getId());
-                        //}
                     }
 
                     for (ArchiveFileDocumentsBean aDoc : l2) {
                         Color background = DefaultColorTheme.DESKTOP_ENTRY_BACKGROUND;
-                            if (i % 2 == 0) {
-                                background = background.brighter();
-                            }
+                        if (i % 2 == 0) {
+                            background = background.brighter();
+                        }
                         TaggedEntryPanel ep = new TaggedEntryPanel(background);
                         TaggedEntry lce = new TaggedEntry();
                         lce.setFileNumber(aDoc.getArchiveFileKey().getFileNumber());
@@ -991,28 +1014,72 @@ public class TaggedTimerTask extends java.util.TimerTask {
                             ArrayList<String> xTags = new ArrayList<String>();
                             for (DocumentTagsBean dtb : documentTags.get(aDoc.getId())) {
                                 xTags.add(dtb.getTagName());
+                                addTagsTab(dtb.getTagName());
                             }
                             Collections.sort(xTags);
                             lce.setTags(xTags);
                         }
                         ep.setEntry(lce);
 
-                        //if (!containedIds.contains(lce.getId())) {
+                        if (documentTags.get(aDoc.getId()) != null) {
+                            for (DocumentTagsBean dtb : documentTags.get(aDoc.getId())) {
+                                TaggedEntryPanel tep = new TaggedEntryPanel(background);
+                                tep.setEntry(lce);
+                                addEntryToTab(dtb.getTagName(), tep);
+                            }
+
+                        }
+
                         resultUI.add(ep);
                         i++;
                         if (i == 50) {
-                            //layout.setRows(i);
                             running = false;
                             return;
                         }
-                        //    containedIds.add(lce.getId());
-                        //}
+
                     }
 
                     //split.setDividerLocation(0.5d);
                     split.setDividerLocation(split.getDividerLocation() + 1);
                     split.setDividerLocation(split.getDividerLocation() - 1);
 
+                }
+
+                private void addTagsTab(String tagName) {
+                    if(Arrays.asList(caseTags).indexOf(tagName)>-1 || Arrays.asList(docTags).indexOf(tagName)>-1) {
+                    
+                    boolean hasTab = false;
+                    for (int i = 0; i < tagsPane.getTabCount(); i++) {
+                        if (tagsPane.getTitleAt(i).equals(tagName)) {
+                            hasTab = true;
+                            break;
+                        }
+                    }
+                    if (!hasTab) {
+                        JScrollPane scroll = new JScrollPane();
+
+                        JPanel tPanel = new JPanel();
+                        BoxLayout layout = new BoxLayout(tPanel, BoxLayout.Y_AXIS);
+                        tPanel.setLayout(layout);
+                        tPanel.setOpaque(false);
+
+                        scroll.getViewport().add(tPanel);
+                        scroll.getViewport().setOpaque(false);
+                        tagsPane.addTab(tagName, scroll);
+                    }
+                    }
+                }
+
+                private void addEntryToTab(String tagName, TaggedEntryPanel tep) {
+                    
+                    for (int i = 0; i < tagsPane.getTabCount(); i++) {
+                        if (tagsPane.getTitleAt(i).equals(tagName)) {
+                            JScrollPane sp = (JScrollPane) tagsPane.getComponentAt(i);
+                            JViewport p = (JViewport) sp.getComponent(0);
+                            ((JPanel)p.getComponent(0)).add(tep);
+                            break;
+                        }
+                    }
                 }
             });
             running = false;

@@ -674,8 +674,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Reader;
 import java.io.StringWriter;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import junit.framework.Assert;
@@ -705,9 +703,8 @@ public class LibreOfficeODFTest {
 
     @Before
     public void setUp() {
-        
-         //org.slf4j.helpers.Util.
 
+        //org.slf4j.helpers.Util.
     }
 
     @After
@@ -718,7 +715,7 @@ public class LibreOfficeODFTest {
     public void getPlaceHolders() {
         try {
             //ArrayList l = new ArrayList(LibreOfficeAccess.getPlaceHolders("/home/jens/jenkins-home/workspace/j-lawyer-server/j-lawyer-server-ejb/test/data/template.odt"));
-            ArrayList<String> allPartyTypesPlaceholders=new ArrayList<>();
+            ArrayList<String> allPartyTypesPlaceholders = new ArrayList<>();
             allPartyTypesPlaceholders.add("MANDANT");
             allPartyTypesPlaceholders.add("GEGNER");
             allPartyTypesPlaceholders.add("DRITTE");
@@ -734,14 +731,14 @@ public class LibreOfficeODFTest {
         try {
             //Files.copy(new File("/home/jens/dev/projects/j-lawyer-server/j-lawyer-server-ejb/test/data/template.odt").toPath(), new File("/home/jens/dev/projects/j-lawyer-server/j-lawyer-server-ejb/test/data/template-run.odt").toPath(), StandardCopyOption.REPLACE_EXISTING);
             //File f=new File("/home/jens/jenkins-home/workspace/j-lawyer-server/j-lawyer-server-ejb/test/data/template-run.odt");
-            File f=new File("test/data/template-run.odt");
+            File f = new File("test/data/template-run.odt");
             f.delete();
             //copyFileUsingStream(new File("/home/jens/jenkins-home/workspace/j-lawyer-server/j-lawyer-server-ejb/test/data/template.odt"), new File("/home/jens/jenkins-home/workspace/j-lawyer-server/j-lawyer-server-ejb/test/data/template-run.odt"));
             copyFileUsingStream(new File("test/data/template.odt"), new File("test/data/template-run.odt"));
         } catch (Throwable t) {
             t.printStackTrace();
             Assert.fail();
-            
+
         }
 
         Hashtable ph = new Hashtable();
@@ -757,7 +754,7 @@ public class LibreOfficeODFTest {
             Assert.fail();
         }
 
-        String content="";
+        String content = "";
         Tika tika = new Tika();
         try {
             //Reader r = tika.parse(new File("/home/jens/jenkins-home/workspace/j-lawyer-server/j-lawyer-server-ejb/test/data/template-run.odt"));
@@ -780,7 +777,7 @@ public class LibreOfficeODFTest {
             t.printStackTrace();
             Assert.fail();
         }
-        
+
         Assert.assertEquals(0, content.indexOf("otto. test"));
         Assert.assertEquals(11, content.indexOf("otto, test"));
         Assert.assertEquals(22, content.indexOf("otto; test"));
@@ -792,29 +789,29 @@ public class LibreOfficeODFTest {
         Assert.assertEquals(88, content.indexOf("otto test"));
         Assert.assertEquals(98, content.indexOf("hans otto"));
         Assert.assertEquals(109, content.indexOf("hans otto 2"));
-        Assert.assertTrue(content.indexOf("MANDANT_ANREDE")<0);
-        
+        Assert.assertTrue(content.indexOf("MANDANT_ANREDE") < 0);
+
     }
-    
+
     @Test
     public void setReplaceEmptyLine() {
         try {
             //Files.copy(new File("/home/jens/dev/projects/j-lawyer-server/j-lawyer-server-ejb/test/data/template.odt").toPath(), new File("/home/jens/dev/projects/j-lawyer-server/j-lawyer-server-ejb/test/data/template-run.odt").toPath(), StandardCopyOption.REPLACE_EXISTING);
             //File f=new File("/home/jens/jenkins-home/workspace/j-lawyer-server/j-lawyer-server-ejb/test/data/template-run.odt");
-            File f=new File("test/data/template-emptyline-run.odt");
+            File f = new File("test/data/template-emptyline-run.odt");
             f.delete();
             //copyFileUsingStream(new File("/home/jens/jenkins-home/workspace/j-lawyer-server/j-lawyer-server-ejb/test/data/template.odt"), new File("/home/jens/jenkins-home/workspace/j-lawyer-server/j-lawyer-server-ejb/test/data/template-run.odt"));
             copyFileUsingStream(new File("test/data/template-emptyline.odt"), new File("test/data/template-emptyline-run.odt"));
         } catch (Throwable t) {
             t.printStackTrace();
             Assert.fail();
-            
+
         }
 
         Hashtable ph = new Hashtable();
         // replace with empty value
         ph.put("{{MANDANT_NAME}}", "");
-        
+
         try {
             //LibreOfficeAccess.setPlaceHolders("/home/jens/jenkins-home/workspace/j-lawyer-server/j-lawyer-server-ejb/test/data/template-run.odt", ph);
             LibreOfficeAccess.setPlaceHolders("test/data/template-emptyline-run.odt", ph);
@@ -823,7 +820,7 @@ public class LibreOfficeODFTest {
             Assert.fail();
         }
 
-        String content="";
+        String content = "";
         Tika tika = new Tika();
         try {
             //Reader r = tika.parse(new File("/home/jens/jenkins-home/workspace/j-lawyer-server/j-lawyer-server-ejb/test/data/template-run.odt"));
@@ -846,33 +843,32 @@ public class LibreOfficeODFTest {
             t.printStackTrace();
             Assert.fail();
         }
-        
-        int lineCount=1;
-        content=content.trim();
+
+        int lineCount = 1;
+        content = content.trim();
 //        if(content.endsWith(System.lineSeparator()))
 //            content=content.substring(0,content.lastIndexOf(System.lineSeparator()))
-        while(content.contains(System.lineSeparator())) {
-            content=content.substring(0, content.lastIndexOf(System.lineSeparator())-System.lineSeparator().length()+1);
+        while (content.contains(System.lineSeparator())) {
+            content = content.substring(0, content.lastIndexOf(System.lineSeparator()) - System.lineSeparator().length() + 1);
             lineCount++;
         }
-        Assert.assertTrue(lineCount==2);
-        
-        
+        Assert.assertTrue(lineCount == 2);
+
     }
-    
+
     @Test
     public void setReplaceEmptyLine2() {
         try {
             //Files.copy(new File("/home/jens/dev/projects/j-lawyer-server/j-lawyer-server-ejb/test/data/template.odt").toPath(), new File("/home/jens/dev/projects/j-lawyer-server/j-lawyer-server-ejb/test/data/template-run.odt").toPath(), StandardCopyOption.REPLACE_EXISTING);
             //File f=new File("/home/jens/jenkins-home/workspace/j-lawyer-server/j-lawyer-server-ejb/test/data/template-run.odt");
-            File f=new File("test/data/j-lawyer-allgemeiner-Brief-Mandant-run.odt");
+            File f = new File("test/data/j-lawyer-allgemeiner-Brief-Mandant-run.odt");
             f.delete();
             //copyFileUsingStream(new File("/home/jens/jenkins-home/workspace/j-lawyer-server/j-lawyer-server-ejb/test/data/template.odt"), new File("/home/jens/jenkins-home/workspace/j-lawyer-server/j-lawyer-server-ejb/test/data/template-run.odt"));
             copyFileUsingStream(new File("test/data/j-lawyer-allgemeiner-Brief-Mandant.odt"), new File("test/data/j-lawyer-allgemeiner-Brief-Mandant-run.odt"));
         } catch (Throwable t) {
             t.printStackTrace();
             Assert.fail();
-            
+
         }
 
         Hashtable ph = new Hashtable();
@@ -881,7 +877,7 @@ public class LibreOfficeODFTest {
         ph.put("{{MANDANT_VORNAME}}", "Jens");
         ph.put("{{MANDANT_STRASSE}}", "");
         ph.put("{{MANDANT_PLZ}}", "01689");
-        
+
         try {
             //LibreOfficeAccess.setPlaceHolders("/home/jens/jenkins-home/workspace/j-lawyer-server/j-lawyer-server-ejb/test/data/template-run.odt", ph);
             LibreOfficeAccess.setPlaceHolders("test/data/j-lawyer-allgemeiner-Brief-Mandant-run.odt", ph);
@@ -894,7 +890,7 @@ public class LibreOfficeODFTest {
             Assert.fail();
         }
 
-        String content="";
+        String content = "";
         Tika tika = new Tika();
         try {
             //Reader r = tika.parse(new File("/home/jens/jenkins-home/workspace/j-lawyer-server/j-lawyer-server-ejb/test/data/template-run.odt"));
@@ -917,24 +913,22 @@ public class LibreOfficeODFTest {
             t.printStackTrace();
             Assert.fail();
         }
-        
-        
-        
+
     }
-    
+
     @Test
     public void setPlaceHoldersODS() {
         try {
             //Files.copy(new File("/home/jens/dev/projects/j-lawyer-server/j-lawyer-server-ejb/test/data/template.odt").toPath(), new File("/home/jens/dev/projects/j-lawyer-server/j-lawyer-server-ejb/test/data/template-run.odt").toPath(), StandardCopyOption.REPLACE_EXISTING);
             //File f=new File("/home/jens/jenkins-home/workspace/j-lawyer-server/j-lawyer-server-ejb/test/data/template-run.ods");
-            File f=new File("test/data/template-run.ods");
+            File f = new File("test/data/template-run.ods");
             f.delete();
             //copyFileUsingStream(new File("/home/jens/jenkins-home/workspace/j-lawyer-server/j-lawyer-server-ejb/test/data/template.ods"), new File("/home/jens/jenkins-home/workspace/j-lawyer-server/j-lawyer-server-ejb/test/data/template-run.ods"));
             copyFileUsingStream(new File("test/data/template.ods"), new File("test/data/template-run.ods"));
         } catch (Throwable t) {
             System.out.println(t.getMessage());
             Assert.fail();
-            
+
         }
 
         Hashtable ph = new Hashtable();
@@ -951,7 +945,7 @@ public class LibreOfficeODFTest {
             Assert.fail();
         }
 
-        String content="";
+        String content = "";
         Tika tika = new Tika();
         try {
             Reader r = tika.parse(new File("test/data/template-run.ods"));
@@ -973,7 +967,7 @@ public class LibreOfficeODFTest {
             System.out.println(t.getMessage());
             Assert.fail();
         }
-        
+
         Assert.assertEquals(1, content.indexOf("otto. test"));
         Assert.assertEquals(14, content.indexOf("otto, test"));
         Assert.assertEquals(27, content.indexOf("otto; test"));
@@ -985,24 +979,19 @@ public class LibreOfficeODFTest {
         Assert.assertEquals(105, content.indexOf("otto test"));
         Assert.assertEquals(117, content.indexOf("hans otto"));
         Assert.assertEquals(130, content.indexOf("hans otto 2"));
-        Assert.assertTrue(content.indexOf("MANDANT_ANREDE")<0);
-        
+        Assert.assertTrue(content.indexOf("MANDANT_ANREDE") < 0);
+
     }
 
     private static void copyFileUsingStream(File source, File dest) throws IOException {
-        InputStream is = null;
-        OutputStream os = null;
-        try {
-            is = new FileInputStream(source);
-            os = new FileOutputStream(dest);
+        try (InputStream is = new FileInputStream(source);
+                OutputStream os = new FileOutputStream(dest)) {
+
             byte[] buffer = new byte[1024];
             int length;
             while ((length = is.read(buffer)) > 0) {
                 os.write(buffer, 0, length);
             }
-        } finally {
-            is.close();
-            os.close();
         }
     }
 

@@ -663,6 +663,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.ui.folders;
 
+import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.CaseFolder;
 import java.awt.Component;
 import java.awt.GridBagConstraints;
@@ -670,9 +671,9 @@ import java.awt.GridBagLayout;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Hashtable;
 import java.util.List;
-import javax.swing.Box;
-import javax.swing.JScrollPane;
+import javax.swing.JSplitPane;
 
 /**
  *
@@ -691,11 +692,9 @@ public class FoldersListPanel extends javax.swing.JPanel {
      */
     public FoldersListPanel() {
         initComponents();
+        
 
-//        this.jScrollPane2.setAlignmentX(JScrollPane.LEFT_ALIGNMENT);
-//        this.jScrollPane2.setAlignmentY(JScrollPane.TOP_ALIGNMENT);
         this.pnlFolders.setLayout(gbl);
-        //gbc = new GridBagConstraints();
         gbc.anchor = GridBagConstraints.NORTHWEST;
         gbc.fill = GridBagConstraints.NONE;
         gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -705,7 +704,7 @@ public class FoldersListPanel extends javax.swing.JPanel {
 
         this.pnlFolders.removeAll();
         FolderListCell cell = new FolderListCell(this, 0, "Dokumente", this.readOnly);
-        cell.setSelected(true);
+        cell.setSelected(true, false);
 
         this.pnlFolders.add(cell, gbc);
 
@@ -719,6 +718,26 @@ public class FoldersListPanel extends javax.swing.JPanel {
         }
 
     }
+    
+    public void renderEmptyFullState() {
+        for (Component c : this.pnlFolders.getComponents()) {
+            if (c instanceof FolderListCell) {
+                boolean folderHasDocuments=false;
+                for(ArchiveFileDocumentsBean db: this.caseFolderPanel.getDocuments()) {
+                    if(db.getFolder()!=null) {
+                        if(db.getFolder().getId().equals(((FolderListCell) c).getFolder().getId())) {
+                            folderHasDocuments=true;
+                            break;
+                        }
+                    }
+                }
+                
+                
+                ((FolderListCell) c).setEmpty(!folderHasDocuments);
+            }
+        }
+
+    }
 
     public void setRootFolder(CaseFolder rootFolder, ArrayList<String> unselectedIds) {
         this.rootFolder = rootFolder;
@@ -728,7 +747,7 @@ public class FoldersListPanel extends javax.swing.JPanel {
         FolderListCell cell = new FolderListCell(this, 0, rootFolder.getName(), this.readOnly);
         cell.setFolder(rootFolder);
         cell.setParentFolder(null);
-        cell.setSelected(true);
+        cell.setSelected(true, false);
         if (unselectedIds.contains(rootFolder.getId())) {
             cell.setSelected(false);
         }
@@ -807,7 +826,7 @@ public class FoldersListPanel extends javax.swing.JPanel {
                 FolderListCell childNode = new FolderListCell(this, level, child.getName(), this.readOnly);
                 childNode.setFolder(child);
                 childNode.setParentFolder(folder);
-                childNode.setSelected(true);
+                childNode.setSelected(true, false);
                 if (unselectedIds.contains(child.getId())) {
                     childNode.setSelected(false);
                 }
@@ -839,28 +858,21 @@ public class FoldersListPanel extends javax.swing.JPanel {
     }
 
     public void folderRemoved(CaseFolder parent, CaseFolder removedFolder) {
-//        for(Component c: this.pnlFolders.getComponents()) {
-//            if(c instanceof FolderListCell) {
-//                CaseFolder cf=((FolderListCell)c).getFolder();
-//                if(cf.getId().equals(folder.getId())) {
-//                    this.remove(c);
-//                    this.repaint();
-//                    this.revalidate();
-//                    this.doLayout();
-//                    break;
-//                }
-//            }
-//        }
 
         ArrayList<String> folderIds = new ArrayList<>();
         this.collectSubtreeIds(removedFolder, folderIds);
 
         this.caseFolderPanel.removeDocumentsInFolders(folderIds);
-
+        
         parent.getChildren().remove(removedFolder);
-        this.setRootFolder(this.rootFolder, this.getUnselectedFolderIds());
+        
+        // need to rebuild the popup menu with all the folders
+        this.caseFolderPanel.setRootFolder(this.rootFolder, this.getUnselectedFolderIds());
+        
         this.revalidate();
         this.repaint();
+        this.forceRelayout();
+        this.renderEmptyFullState();
     }
 
     private void collectSubtreeIds(CaseFolder f, ArrayList<String> ids) {
@@ -871,14 +883,50 @@ public class FoldersListPanel extends javax.swing.JPanel {
             }
         }
     }
+    
+    public String getFolderPath(String folderId) {
+        Hashtable<String,String> folderPaths=new Hashtable<String,String>();
+        this.collectFolderPaths(folderPaths, this.rootFolder, "");
+        if(folderPaths.containsKey(folderId)) {
+            return folderPaths.get(folderId);
+        } else {
+            return "(unbekannter Ordner)";
+        }
+    }
+    
+    private void collectFolderPaths(Hashtable<String,String> items, CaseFolder folder, String path) {
+        String itemName = path;
+        if (path.length() > 0) {
+            itemName = itemName + " > ";
+        }
+        itemName = itemName + folder.getName();
+
+        items.put(folder.getId(), itemName);
+        
+        if (folder.getChildren() != null) {
+            for (CaseFolder child : folder.getChildren()) {
+                collectFolderPaths(items, child, itemName);
+            }
+        }
+    }
 
     public void folderAdded(CaseFolder parent, CaseFolder newFolder) {
         
         parent.getChildren().add(newFolder);
-        //this.setRootFolder(this.rootFolder, this.getUnselectedFolderIds());
         this.caseFolderPanel.setRootFolder(this.rootFolder, this.getUnselectedFolderIds());
         this.revalidate();
         this.repaint();
+        this.forceRelayout();
+        this.renderEmptyFullState();
+    }
+    
+    private void forceRelayout() {
+        Object split=this.caseFolderPanel.getParent();
+        if(split!=null && split instanceof JSplitPane) {
+            int loc=((JSplitPane)split).getDividerLocation();
+            ((JSplitPane)split).setDividerLocation(loc+1);
+            ((JSplitPane)split).setDividerLocation(loc);
+        }
     }
 
     private ArrayList<String> getUnselectedFolderIds() {
@@ -928,6 +976,6 @@ public class FoldersListPanel extends javax.swing.JPanel {
 
     void folderUpdated(CaseFolder folder) {
         this.caseFolderPanel.updateDocumentsInFolder(folder);
-
+        this.forceRelayout();
     }
 }

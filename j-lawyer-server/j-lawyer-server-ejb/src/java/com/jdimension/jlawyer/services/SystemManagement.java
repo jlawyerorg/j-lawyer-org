@@ -663,11 +663,11 @@
  */
 package com.jdimension.jlawyer.services;
 
-import com.jdimension.jlawyer.server.utils.ServerFileUtils;
 import com.jdimension.jlawyer.documents.LibreOfficeAccess;
 import com.jdimension.jlawyer.persistence.*;
 import com.jdimension.jlawyer.persistence.utils.JDBCUtils;
 import com.jdimension.jlawyer.persistence.utils.StringGenerator;
+import com.jdimension.jlawyer.security.PasswordsUtil;
 import com.jdimension.jlawyer.server.services.MonitoringSnapshot;
 import com.jdimension.jlawyer.server.services.ServerInformation;
 import com.jdimension.jlawyer.server.utils.ServerFileUtils;
@@ -688,11 +688,13 @@ import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Properties;
+import javax.annotation.Resource;
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.Asynchronous;
 import javax.ejb.EJB;
 import javax.ejb.EJBException;
+import javax.ejb.SessionContext;
 import javax.ejb.Stateless;
 import javax.mail.Folder;
 import javax.mail.Message;
@@ -702,6 +704,10 @@ import javax.mail.Store;
 import javax.mail.Transport;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
+import javax.management.MBeanServer;
+import javax.management.MBeanServerFactory;
+import javax.management.ObjectName;
+import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.Transformer;
@@ -731,6 +737,8 @@ import org.w3c.dom.NodeList;
 public class SystemManagement implements SystemManagementRemote, SystemManagementLocal {
 
     private static Logger log = Logger.getLogger(SystemManagement.class.getName());
+    @Resource
+    private SessionContext context;
     @EJB
     private AppOptionGroupBeanFacadeLocal appOptionGroupBeanFacade;
     @EJB
@@ -760,13 +768,10 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     @RolesAllowed({"loginRole"})
     public BankDataBean[] searchBankData(String query) {
         JDBCUtils utils = new JDBCUtils();
-        Connection con = null;
         ResultSet rs = null;
-        PreparedStatement st = null;
         ArrayList<BankDataBean> list = new ArrayList<BankDataBean>();
-        try {
-            con = utils.getConnection();
-            st = con.prepareStatement("select id, name, bankCode from directory_banks where ucase(name) like ? or bankCode like ? order by bankCode, name");
+        try (Connection con = utils.getConnection();
+                PreparedStatement st = con.prepareStatement("select id, name, bankCode from directory_banks where ucase(name) like ? or bankCode like ? order by bankCode, name")) {
             String wildCard1 = StringUtils.germanToUpperCase(query) + "%";
             String wildCard2 = "%" + wildCard1;
             st.setString(1, wildCard2);
@@ -788,17 +793,8 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
             throw new EJBException("Bankensuche konnte nicht ausgeführt werden.", sqle);
         } finally {
             try {
-                rs.close();
-            } catch (Throwable t) {
-                log.error(t);
-            }
-            try {
-                st.close();
-            } catch (Throwable t) {
-                log.error(t);
-            }
-            try {
-                con.close();
+                if(rs!=null)
+                    rs.close();
             } catch (Throwable t) {
                 log.error(t);
             }
@@ -811,13 +807,11 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     @RolesAllowed({"loginRole"})
     public CityDataBean[] searchCityData(String query) {
         JDBCUtils utils = new JDBCUtils();
-        Connection con = null;
         ResultSet rs = null;
-        PreparedStatement st = null;
-        ArrayList<CityDataBean> list = new ArrayList<CityDataBean>();
-        try {
-            con = utils.getConnection();
-            st = con.prepareStatement("select id, city, zipCode from directory_cities where ucase(city) like ? or zipCode like ? order by zipCode");
+        ArrayList<CityDataBean> list = new ArrayList<>();
+        try (Connection con = utils.getConnection();
+                PreparedStatement st = con.prepareStatement("select id, city, zipCode from directory_cities where ucase(city) like ? or zipCode like ? order by zipCode")) {
+
             String wildCard1 = StringUtils.germanToUpperCase(query) + "%";
             String wildCard2 = "%" + wildCard1;
             st.setString(1, wildCard2);
@@ -839,17 +833,8 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
             throw new EJBException("Postleitzahlensuche konnte nicht ausgeführt werden.", sqle);
         } finally {
             try {
-                rs.close();
-            } catch (Throwable t) {
-                log.error(t);
-            }
-            try {
-                st.close();
-            } catch (Throwable t) {
-                log.error(t);
-            }
-            try {
-                con.close();
+                if(rs!=null)
+                    rs.close();
             } catch (Throwable t) {
                 log.error(t);
             }
@@ -886,29 +871,14 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     @RolesAllowed({"adminRole"})
     public void removeAllBankData() {
         JDBCUtils utils = new JDBCUtils();
-        Connection con = null;
-        Statement st = null;
-        try {
-            con = utils.getConnection();
-            st = con.createStatement();
+        try (Connection con = utils.getConnection();
+                Statement st = con.createStatement()) {
+
             st.execute("delete from directory_banks");
         } catch (SQLException sqle) {
             log.error("Error deleting bank data", sqle);
             throw new EJBException("Bankdaten konnten nicht gelöscht werden.", sqle);
-        } finally {
-            try {
-                st.close();
-            } catch (Throwable t) {
-                log.error(t);
-            }
-            try {
-                con.close();
-            } catch (Throwable t) {
-                log.error(t);
-            }
         }
-
-        return;
     }
 
     @Override
@@ -932,29 +902,13 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     @RolesAllowed({"adminRole"})
     public void removeAllCityData() {
         JDBCUtils utils = new JDBCUtils();
-        Connection con = null;
-        Statement st = null;
-        try {
-            con = utils.getConnection();
-            st = con.createStatement();
+        try (Connection con = utils.getConnection();
+                Statement st = con.createStatement()) {
             st.execute("delete from directory_cities");
         } catch (SQLException sqle) {
             log.error("Error deleting city data", sqle);
             throw new EJBException("Postleitzahldaten konnten nicht gelöscht werden.", sqle);
-        } finally {
-            try {
-                st.close();
-            } catch (Throwable t) {
-                log.error(t);
-            }
-            try {
-                con.close();
-            } catch (Throwable t) {
-                log.error(t);
-            }
         }
-
-        return;
     }
 
     @Override
@@ -1009,10 +963,10 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     }
 
     public static void createFile(String file, byte[] data) throws Exception {
-        FileOutputStream fos = new FileOutputStream(file);
-        fos.write(data);
+        try (FileOutputStream fos = new FileOutputStream(file)) {
+            fos.write(data);
 
-        fos.close();
+        }
 
     }
 
@@ -1025,43 +979,40 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
             throw new Exception("Zieldatei existiert bereits!");
         }
 
-        InputStream in = new FileInputStream(f1);
+        try (InputStream in = new FileInputStream(f1);
+                OutputStream out = new FileOutputStream(f2)) {
 
-        OutputStream out = new FileOutputStream(f2);
-
-        byte[] buf = new byte[1024];
-        int len;
-        while ((len = in.read(buf)) > 0) {
-            out.write(buf, 0, len);
+            byte[] buf = new byte[1024];
+            int len;
+            while ((len = in.read(buf)) > 0) {
+                out.write(buf, 0, len);
+            }
         }
-        in.close();
-        out.close();
-        //System.out.println("File copied.");
 
     }
 
     public static byte[] readFile(File file) throws Exception {
-        FileInputStream fileInputStream = new FileInputStream(file);
-        byte[] data = new byte[(int) file.length()];
-        fileInputStream.read(data);
-        fileInputStream.close();
-        return data;
+        try (FileInputStream fileInputStream = new FileInputStream(file);) {
+            byte[] data = new byte[(int) file.length()];
+            fileInputStream.read(data);
+            return data;
+        }
     }
 
     public static String readTextFile(File file) throws Exception {
-        FileReader fr = new FileReader(file);
+        try (FileReader fr = new FileReader(file)) {
 
-        char[] data = new char[(int) file.length()];
-        fr.read(data);
-        fr.close();
-        return new String(data);
+            char[] data = new char[(int) file.length()];
+            fr.read(data);
+            return new String(data);
+        }
     }
 
     public static void writeFile(File file, byte[] content) throws Exception {
-        FileOutputStream fileOutputStream = new FileOutputStream(file, false);
-        fileOutputStream.write(content);
-        fileOutputStream.flush();
-        fileOutputStream.close();
+        try (FileOutputStream fileOutputStream = new FileOutputStream(file, false);) {
+            fileOutputStream.write(content);
+            fileOutputStream.flush();
+        }
     }
 
     @Override
@@ -1080,25 +1031,10 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     @Override
     @RolesAllowed({"adminRole"})
     public AppUserBean createUser(AppUserBean user, List<AppRoleBean> roles) throws Exception {
-//        boolean userExists=false;
-//        try {
-//            AppUserBean u=this.userBeanFacade..findByPrincipalId(user.getPrincipalId());
-//            userExists=true;
-//        } catch (Exception nre) {
-//            boolean nfe=false;
-//            if(nre.getCause()!=null) {
-//                if(nre.getCause() instanceof NoResultException) {
-//                    nfe=true;
-//                }
-//            }
-//            if(!nfe) {
-//                throw nre;
-//            }
-//        }
-//        if(userExists)
-//            throw new Exception ("Nutzer existiert bereits: " + user.getPrincipalId());
 
         StringGenerator idGen = new StringGenerator();
+        // create password hash
+        user.setPassword(PasswordsUtil.createPasswordHash(user.getPassword()));
         this.userBeanFacade.create(user);
 
         for (AppRoleBean r : roles) {
@@ -1112,6 +1048,15 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     @Override
     @RolesAllowed({"adminRole"})
     public AppUserBean updateUser(AppUserBean user, List<AppRoleBean> roles) throws Exception {
+
+        AppUserBean outdated = this.userBeanFacade.findByPrincipalId(user.getPrincipalId());
+        if (outdated == null) {
+            throw new Exception("No user with name " + user.getPrincipalId());
+        }
+
+        // no password change via updateUser, only by using updatePassword service
+        // preserve current password hash
+        user.setPassword(outdated.getPassword());
         this.userBeanFacade.edit(user);
 
         List<AppRoleBean> delRoles = this.roleBeanFacade.findByPrincipalId(user.getPrincipalId());
@@ -1125,7 +1070,22 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
             this.roleBeanFacade.create(r);
         }
 
+        this.flushUserCache(user.getPrincipalId());
+
         return user;
+    }
+
+    private void flushUserCache(String principalId) {
+        try {
+
+            ObjectName jaasMgr = new ObjectName("jboss.as:subsystem=security,security-domain=j-lawyer-security");
+            Object[] params = {principalId};
+            String[] signature = {"java.lang.String"};
+            MBeanServer server = (MBeanServer) MBeanServerFactory.findMBeanServer(null).get(0);
+            server.invoke(jaasMgr, "flushCache", params, signature);
+        } catch (Throwable ex) {
+            log.warn("Could not flush authorization cache", ex);
+        }
     }
 
     @Override
@@ -1468,21 +1428,12 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     @Override
     @PermitAll
     public String getServerVersion() {
-//        ServerSettingsBean srvVersion = this.settingsFacade.find("jlawyer.server.database.version");
-//        if(srvVersion!=null)
-//            return srvVersion.getSettingValue();
-//        else 
-//            return "unknown";
 
         String version = "unknown";
         JDBCUtils utils = new JDBCUtils();
-        Connection con = null;
-        ResultSet rs = null;
-        PreparedStatement st = null;
-        try {
-            con = utils.getConnection();
-            st = con.prepareStatement("SELECT version FROM flyway_schema_history where success =1 order by installed_rank desc limit 1");
-            rs = st.executeQuery();
+        try (Connection con = utils.getConnection();
+                PreparedStatement st = con.prepareStatement("SELECT version FROM flyway_schema_history where success =1 order by installed_rank desc limit 1");
+                ResultSet rs = st.executeQuery()) {
 
             if (rs.next()) {
                 version = rs.getString(1);
@@ -1490,22 +1441,6 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
             }
         } catch (SQLException sqle) {
             log.error("Error getting database / server version", sqle);
-        } finally {
-            try {
-                rs.close();
-            } catch (Throwable t) {
-                log.error(t);
-            }
-            try {
-                st.close();
-            } catch (Throwable t) {
-                log.error(t);
-            }
-            try {
-                con.close();
-            } catch (Throwable t) {
-                log.error(t);
-            }
         }
 
         return version;
@@ -1591,6 +1526,13 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         Document dom;
         // Make an  instance of the DocumentBuilderFactory
         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+        try {
+            dbf.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+            dbf.setAttribute(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
+        } catch (IllegalArgumentException iae) {
+            // only available from JAXP 1.5+, but Wildfly still ships 1.4
+            log.warn("Unable to set external entity restrictions in XML parser", iae);
+        }
 
         // use the factory to take an instance of the document builder
         DocumentBuilder db = dbf.newDocumentBuilder();
@@ -1609,9 +1551,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
 
             String interfaceType = ((Element) n.getParentNode()).getAttribute("name");
 
-            //((Element)aNode).setAttribute("name", "value");
             String interfaceBound = (((Element) n).getAttribute("value"));
-            //((Element) n).setAttribute("value", "nixda");
             bindString = bindString + interfaceType + "=" + interfaceBound + ", ";
 
         }
@@ -1619,12 +1559,6 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
             bindString = bindString.substring(0, bindString.length() - 2);
         }
 
-//            TransformerFactory transformerFactory = TransformerFactory.newInstance();
-//            Transformer transformer = transformerFactory.newTransformer();
-//            DOMSource source = new DOMSource(doc);
-//            StreamResult result = new StreamResult(new File("src/testout.xml"));
-//
-//            transformer.transform(source, result);
         return bindString;
     }
 
@@ -1643,6 +1577,13 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         Document dom;
         // Make an  instance of the DocumentBuilderFactory
         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+        try {
+            dbf.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+            dbf.setAttribute(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
+        } catch (IllegalArgumentException iae) {
+            // only available from JAXP 1.5+, but Wildfly still ships 1.4
+            log.warn("Unable to set external entity restrictions in XML parser", iae);
+        }
 
         // use the factory to take an instance of the document builder
         DocumentBuilder db = dbf.newDocumentBuilder();
@@ -1666,6 +1607,14 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         }
 
         TransformerFactory transformerFactory = TransformerFactory.newInstance();
+        try {
+            transformerFactory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, ""); // Compliant
+            transformerFactory.setAttribute(XMLConstants.ACCESS_EXTERNAL_STYLESHEET, ""); // Compliant
+        } catch (IllegalArgumentException iae) {
+            // only available from JAXP 1.5+, but Wildfly still ships 1.4
+            log.warn("Unable to set external entity restrictions in XML parser", iae);
+        }
+        
         Transformer transformer = transformerFactory.newTransformer();
         DOMSource source = new DOMSource(doc);
         StreamResult result = new StreamResult(wildFlyConf);
@@ -1694,11 +1643,11 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
             throw new Exception("Zieldatei existiert bereits!");
         }
 
-        OutputStream out = new FileOutputStream(f2);
+        try (OutputStream out = new FileOutputStream(f2)) {
 
-        out.write(data);
+            out.write(data);
 
-        out.close();
+        }
 
         return true;
     }
@@ -2016,25 +1965,29 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     @Override
     @RolesAllowed({"loginRole"})
     public Collection<PartyTypeBean> getPartyTypes() {
-        List<PartyTypeBean> all= this.partyTypesFacade.findAll();
+        List<PartyTypeBean> all = this.partyTypesFacade.findAll();
         Collections.sort(all, new Comparator() {
             @Override
             public int compare(Object t, Object t1) {
-                Object u1=t;
-                Object u2=t1;
-                if(u1==null)
+                Object u1 = t;
+                Object u2 = t1;
+                if (u1 == null) {
                     return -1;
-                if(u2==null)
+                }
+                if (u2 == null) {
                     return 1;
-                
-                if(!(u1 instanceof PartyTypeBean))
+                }
+
+                if (!(u1 instanceof PartyTypeBean)) {
                     return -1;
-                if(!(u2 instanceof PartyTypeBean))
+                }
+                if (!(u2 instanceof PartyTypeBean)) {
                     return 1;
-                
-                PartyTypeBean f1=(PartyTypeBean)u1;
-                PartyTypeBean f2=(PartyTypeBean)u2;
-                
+                }
+
+                PartyTypeBean f1 = (PartyTypeBean) u1;
+                PartyTypeBean f2 = (PartyTypeBean) u2;
+
                 String f1name = "";
                 if (f1.getName() != null) {
                     f1name = f1.getName().toLowerCase();
@@ -2043,10 +1996,10 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
                 if (f2.getName() != null) {
                     f2name = f2.getName().toLowerCase();
                 }
-                
+
                 return f1name.compareTo(f2name);
             }
-            
+
         });
         return all;
     }
@@ -2162,33 +2115,77 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
             log.error("Server directory for scans is not a directory: " + scanDir);
             throw new Exception("Server directory for scans is not a directory: " + scanDir);
         }
-        
-        File[] children=scanDirectory.listFiles();
-        if(children.length>5000) {
+
+        File[] children = scanDirectory.listFiles();
+        if (children.length > 5000) {
             log.error("Scan directory has exceeded maximum of 5000 files!");
             throw new Exception("Scan directory has exceeded maximum of 5000 files!");
         }
-        
-        String fullDir=scanDir;
-        if(!scanDir.endsWith(File.separator))
-            fullDir=fullDir+File.separator;
-        String fullPath=fullDir+fileName;
-        
-        File uploadFile=new File(fullPath);
-        if(uploadFile.exists()) {
-            int copy=1;
-            
-            while(uploadFile.exists())  {
-                copy=copy+1;
-                fullPath=fullDir+"(" +copy + ") " + fileName;
-                uploadFile=new File(fullPath);
+
+        String fullDir = scanDir;
+        if (!scanDir.endsWith(File.separator)) {
+            fullDir = fullDir + File.separator;
+        }
+        String fullPath = fullDir + fileName;
+
+        File uploadFile = new File(fullPath);
+        if (uploadFile.exists()) {
+            int copy = 1;
+
+            while (uploadFile.exists()) {
+                copy = copy + 1;
+                if (copy == 6) {
+                    log.warn("observed file " + fileName + " can not be stored, already has more than 5 copies");
+                    return;
+                }
+                fullPath = fullDir + "(" + copy + ") " + fileName;
+                uploadFile = new File(fullPath);
             }
         }
-        
-        FileOutputStream fout=new FileOutputStream(uploadFile);
-        fout.write(content);
-        fout.close();
-        
+
+        try (FileOutputStream fout = new FileOutputStream(uploadFile)) {
+            fout.write(content);
+        }
+
+    }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public boolean updatePassword(String newPassword) throws Exception {
+        String principalId = context.getCallerPrincipal().getName();
+        AppUserBean u = this.userBeanFacade.findByPrincipalId(principalId);
+        if (u == null) {
+            throw new Exception("Error resetting password for " + principalId);
+        }
+
+        // persist the hash of the password
+        newPassword = PasswordsUtil.createPasswordHash(newPassword);
+
+        u.setPassword(newPassword);
+        this.userBeanFacade.edit(u);
+
+        this.flushUserCache(principalId);
+
+        return true;
+    }
+
+    @Override
+    @RolesAllowed({"adminRole"})
+    public boolean updatePasswordForUser(String principalId, String newPassword) throws Exception {
+        AppUserBean u = this.userBeanFacade.findByPrincipalId(principalId);
+        if (u == null) {
+            throw new Exception("Error resetting password for " + principalId);
+        }
+
+        // persist the hash of the password
+        newPassword = PasswordsUtil.createPasswordHash(newPassword);
+
+        u.setPassword(newPassword);
+        this.userBeanFacade.edit(u);
+
+        this.flushUserCache(principalId);
+
+        return true;
     }
 
 }

@@ -842,11 +842,12 @@ public class ModuleBar extends javax.swing.JPanel {
         setOpaque(false);
 
         cmdSettings.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_settings_applications_black_36dp.png"))); // NOI18N
-        cmdSettings.setText("Einstellungen");
+        cmdSettings.setText("Vorlagen");
         cmdSettings.setBorder(null);
         cmdSettings.setBorderPainted(false);
         cmdSettings.setContentAreaFilled(false);
         cmdSettings.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        cmdSettings.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
         cmdSettings.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_settings_applications_green_36dp.png"))); // NOI18N
         cmdSettings.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mousePressed(java.awt.event.MouseEvent evt) {
@@ -870,7 +871,9 @@ public class ModuleBar extends javax.swing.JPanel {
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 180, Short.MAX_VALUE)
-            .addComponent(cmdSettings, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
+                .addGap(8, 8, 8)
+                .addComponent(cmdSettings, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)

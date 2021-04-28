@@ -755,7 +755,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
             int selectedRow = tblDirContent.getSelectedRow();
             Hashtable<File, Date> fileNames = ((ScannerStatusEvent) e).getFileNames();
             SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy, HH:mm", Locale.GERMAN);
-            String[] colNames = new String[]{"Dateiname", "geändert"};
+            String[] colNames = new String[]{"geändert", "Dateiname"};
             DefaultTableModel model = new DefaultTableModel(colNames, 0) {
                 public boolean isCellEditable(int i, int i0) {
                     return false;
@@ -764,13 +764,13 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
             if (fileNames != null) {
                 for (File f : fileNames.keySet()) {
                     Date lastModified = fileNames.get(f);
-                    Object[] row = new Object[]{f.getName(), df.format(lastModified)};
+                    Object[] row = new Object[]{df.format(lastModified), f.getName()};
                     model.addRow(row);
                 }
             }
             
             TableRowSorter<TableModel> sorter = new TableRowSorter<TableModel>(model);
-            sorter.setComparator(1, new DateTimeStringComparator());
+            sorter.setComparator(0, new DateTimeStringComparator());
             ThreadUtils.setTableModel(tblDirContent, model, sorter);
             final int rowCount = model.getRowCount();
             
@@ -779,8 +779,8 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
                     selectedRow = 0;
                 }
                 // call the sorter twice so we have a sort by date descending
-                sorter.toggleSortOrder(1);
-                sorter.toggleSortOrder(1);
+                sorter.toggleSortOrder(0);
+                sorter.toggleSortOrder(0);
                 
                 tblDirContent.changeSelection(selectedRow, 0, false, false);
             } catch (Throwable t) {
@@ -882,7 +882,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
                 
                 JLabel label = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
                 
-                if (column == 0) {
+                if (column == 1) {
                     String sValue = (String) value;
                     FileUtils fu = FileUtils.getInstance();
                     Icon icon = fu.getFileTypeIcon(sValue);
@@ -923,6 +923,9 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
         
         ComponentUtils.persistSplitPane(this.splitTop, this.getClass(), "splitTop");
         ComponentUtils.persistSplitPane(this.splitMain, this.getClass(), "splitMain");
+        
+        if(this.splitMain.getDividerLocation()<100)
+            this.splitMain.setDividerLocation(100);
 
 //        final int numberOfScans=this.tblDirContent.getModel().getRowCount();
 //        new Thread(new Runnable() {
@@ -1203,7 +1206,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
     private void selectDirContent() {
         int selRow = this.tblDirContent.getSelectedRow();
         if (selRow > -1) {
-            String fileName = this.tblDirContent.getValueAt(selRow, 0).toString();
+            String fileName = this.tblDirContent.getValueAt(selRow, 1).toString();
             String[] colNames = new String[]{"Aktion", "Akte", ""};
             DefaultTableModel model = new DefaultTableModel(colNames, 0) {
                 public boolean isCellEditable(int i, int i0) {
@@ -1227,11 +1230,11 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
             };
             this.tblActions.setDefaultRenderer(Object.class, r2);
             // prepare proposed actions
-            DeleteScanAction da = new DeleteScanAction(this.tblActions, this.tblDirContent, true);
+            DeleteScanAction da = new DeleteScanAction(this.tblActions, true);
             da.setFileName(fileName);
             model.addRow(new Object[]{da.getDescription(), da.getArchiveFile(), da});
             
-            SearchAndAssignScanAction aa = new SearchAndAssignScanAction(this.tblActions, this.tblDirContent, this.chkDeleteAfterAction.isSelected());
+            SearchAndAssignScanAction aa = new SearchAndAssignScanAction(this.tblActions, this.chkDeleteAfterAction.isSelected());
             aa.setFileName(fileName);
             model.addRow(new Object[]{aa.getDescription(), aa.getArchiveFile(), aa});
             
@@ -1264,7 +1267,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
                     if (!proposedAssignmentFiles.contains(af.getFileNumber())) {
                         proposedAssignmentFiles.add(af.getFileNumber());
                         
-                        AssignScanAction asa = new AssignScanAction(this.tblActions, this.tblDirContent, this.chkDeleteAfterAction.isSelected());
+                        AssignScanAction asa = new AssignScanAction(this.tblActions, this.chkDeleteAfterAction.isSelected());
                         asa.setFileName(fileName);
                         asa.setArchiveFileId(af.getId());
                         asa.setArchiveFile(af.getFileNumber() + " " + af.getName());
@@ -1277,7 +1280,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
                 for (ArchiveFileBean af : myNewList) {
                     if (!proposedAssignmentFiles.contains(af.getFileNumber())) {
                         proposedAssignmentFiles.add(af.getFileNumber());
-                        AssignScanAction asa = new AssignScanAction(this.tblActions, this.tblDirContent, this.chkDeleteAfterAction.isSelected());
+                        AssignScanAction asa = new AssignScanAction(this.tblActions, this.chkDeleteAfterAction.isSelected());
                         asa.setFileName(fileName);
                         asa.setArchiveFile(af.getFileNumber() + " " + af.getName());
                         asa.setArchiveFileId(af.getId());
@@ -1288,7 +1291,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
                 for (ArchiveFileBean af : othersNewList) {
                     if (!proposedAssignmentFiles.contains(af.getFileNumber())) {
                         proposedAssignmentFiles.add(af.getFileNumber());
-                        AssignScanAction asa = new AssignScanAction(this.tblActions, this.tblDirContent, this.chkDeleteAfterAction.isSelected());
+                        AssignScanAction asa = new AssignScanAction(this.tblActions, this.chkDeleteAfterAction.isSelected());
                         asa.setFileName(fileName);
                         asa.setArchiveFileId(af.getId());
                         asa.setArchiveFile(af.getFileNumber() + " " + af.getName());
@@ -1357,7 +1360,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
             
             int selRow = this.tblDirContent.getSelectedRow();
             if (selRow > -1) {
-                String fileName = this.tblDirContent.getValueAt(selRow, 0).toString();
+                String fileName = this.tblDirContent.getValueAt(selRow, 1).toString();
                 
                 try {
                     ClientSettings settings = ClientSettings.getInstance();

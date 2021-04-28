@@ -768,11 +768,13 @@ public class EmailUtils {
                 } else if (disposition.equalsIgnoreCase(Part.ATTACHMENT)) {
                     //Anhang wird in ein Verzeichnis gespeichert
                     //saveFile(part.getFileName(), part.getInputStream());
-                    attachmentNames.add(EmailUtils.decodeText(part.getFileName()));
+                    if(part.getFileName()!=null)
+                        attachmentNames.add(EmailUtils.decodeText(part.getFileName()));
                 } else if (disposition.equalsIgnoreCase(Part.INLINE)) {
                     //Anhang wird in ein Verzeichnis gespeichert
                     //saveFile(part.getFileName(), part.getInputStream());
-                    attachmentNames.add(EmailUtils.decodeText(part.getFileName()));
+                    if(part.getFileName()!=null)
+                        attachmentNames.add(EmailUtils.decodeText(part.getFileName()));
 
                 }
             }
@@ -910,19 +912,106 @@ public class EmailUtils {
 
         return false;
     }
+    
+    public static Folder getSentFolder(Store store) throws Exception {
+        Folder[] accountFolders = null;
+        try {
+            accountFolders = store.getDefaultFolder().list();
+        } catch (Throwable t) {
+            log.warn("Unable to get email accounts folder list - falling back to inbox listing...", t);
+            accountFolders = new Folder[1];
+            accountFolders[0] = (Folder) store.getFolder(FolderContainer.INBOX);
+        }
+        return getSentFolder(accountFolders);
+    }
+    
+    public static Folder getInboxFolder(Store store) throws Exception {
+        Folder[] accountFolders = null;
+        try {
+            accountFolders = store.getDefaultFolder().list();
+        } catch (Throwable t) {
+            log.warn("Unable to get email accounts folder list - falling back to inbox listing...", t);
+            accountFolders = new Folder[1];
+            accountFolders[0] = (Folder) store.getFolder(FolderContainer.INBOX);
+        }
+        return getInboxFolder(accountFolders);
+    }
 
     public static Folder getSentFolder(Folder inbox) throws Exception {
+        return getFolderByName(inbox, FolderContainer.SENT);
+    }
+
+    public static Folder getSentFolder(Folder[] folders) throws Exception {
+        return getFolderByName(folders, FolderContainer.SENT);
+    }
+
+    public static Folder getInboxFolder(Folder inbox) throws Exception {
+        return getFolderByName(inbox, FolderContainer.INBOX);
+    }
+
+    public static Folder getInboxFolder(Folder[] folders) throws Exception {
+        return getFolderByName(folders, FolderContainer.INBOX);
+    }
+
+    public static Folder getFolderByName(Folder inbox, String name) throws Exception {
         if (!isIMAP(inbox)) {
             return null;
         }
 
+        if (inbox.getName().equalsIgnoreCase(name)) {
+            return inbox;
+        }
+
+        ArrayList<String> aliases = getFolderAliases(name);
+        for (String a : aliases) {
+            if (inbox.getName().equalsIgnoreCase(a)) {
+                return inbox;
+            }
+        }
+
         Folder[] children = inbox.list();
         for (Folder f : children) {
-            if (f.getName().equalsIgnoreCase(FolderContainer.SENT)) {
+            if (f.getName().equalsIgnoreCase(name)) {
                 return f;
+            }
+            for (String a : aliases) {
+                if (f.getName().equalsIgnoreCase(a)) {
+                    return f;
+                }
             }
         }
         return null;
+    }
+
+    public static ArrayList<String> getFolderAliases(String folderName) {
+        if (FolderContainer.TRASH.equalsIgnoreCase(folderName)) {
+            ArrayList<String> a = new ArrayList<>();
+            a.add("Papierkorb");
+            a.add("Gelöscht");
+            return a;
+        } else if (FolderContainer.SENT.equalsIgnoreCase(folderName)) {
+            ArrayList<String> a = new ArrayList<>();
+            a.add("Gesendet");
+            return a;
+        } else if (FolderContainer.INBOX.equalsIgnoreCase(folderName)) {
+            ArrayList<String> a = new ArrayList<>();
+            a.add("Posteingang");
+            return a;
+        } else {
+            return new ArrayList<String>();
+        }
+    }
+
+    public static Folder getFolderByName(Folder[] folders, String name) throws Exception {
+
+        for (Folder f : folders) {
+            Folder sent = getFolderByName(f, name);
+            if (sent != null) {
+                return sent;
+            }
+        }
+        return null;
+
     }
 
     public static String decodeText(String t) {
@@ -947,17 +1036,11 @@ public class EmailUtils {
     }
 
     public static Folder getTrashFolder(Folder inbox) throws Exception {
-        if (!isIMAP(inbox)) {
-            return null;
-        }
+        return getFolderByName(inbox, FolderContainer.TRASH);
+    }
 
-        Folder[] children = inbox.list();
-        for (Folder f : children) {
-            if (f.getName().equalsIgnoreCase(FolderContainer.TRASH)) {
-                return f;
-            }
-        }
-        return null;
+    public static Folder getTrashFolder(Folder[] inbox) throws Exception {
+        return getFolderByName(inbox, FolderContainer.TRASH);
     }
 
     public static boolean isIMAP(Folder f) {
