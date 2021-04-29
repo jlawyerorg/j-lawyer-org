@@ -704,8 +704,8 @@ public class ReviewDueEntryPanel extends javax.swing.JPanel {
     private static final Logger log = Logger.getLogger(ReviewDueEntryPanel.class.getName());
     private SimpleDateFormat df = new SimpleDateFormat("dd.MM.yy");
 
-    private static Color lightGreen = new Color(153, 255, 102);
-    private static Color lightRed = new Color(255, 153, 153);
+    private static final Color lightGreen = new Color(153, 255, 102);
+    private static final Color lightRed = new Color(255, 153, 153);
 
     private ReviewDueEntry e = null;
 
@@ -829,14 +829,6 @@ public class ReviewDueEntryPanel extends javax.swing.JPanel {
         this.lblResponsible.setText(e.getResponsible());
         if(e.getResponsible()!=null && !("".equalsIgnoreCase(e.getResponsible())))
             this.lblResponsible.setIcon(UserSettings.getInstance().getUserSmallIcon(e.getResponsible()));
-        //this.lblFileName.setToolTipText("<html>" + StringUtils.addHtmlLinebreaks(sh.getText(), 60) + "</html>");
-        //this.lblDescription.setToolTipText(sh.getText());
-        //this.lblDescription.setIcon(FileUtils.getInstance().getFileTypeIcon(sh.getFileName()));
-//        if (ClientSettings.getInstance().getCurrentUser().getPrincipalId().equals(e.getResponsible())) {            
-//            this.lblResponsible.setFont(this.lblResponsible.getFont().deriveFont(Font.BOLD));
-//            //this.chkDescription.setFont(this.chkDescription.getFont().deriveFont(Font.BOLD));
-//            this.setBackground(Color.GREEN.brighter());
-//        }
 
         this.chkDescription.setSelected(false);
 
@@ -844,11 +836,9 @@ public class ReviewDueEntryPanel extends javax.swing.JPanel {
         if (e.getType() == ArchiveFileConstants.REVIEWTYPE_RESPITE) {
             this.lblIcon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/clicknrunred.png")));
             this.cmdPostpone.setEnabled(false);
-            //this.setBackground(lightRed);
         } else if (UserSettings.getInstance().getCurrentUser().getPrincipalId().equals(e.getResponsible())) {
             this.lblIcon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/clicknrun.png")));
             this.lblResponsible.setFont(this.lblResponsible.getFont().deriveFont(Font.BOLD));
-            //this.setBackground(lightGreen);
         } else {
             this.lblIcon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/clicknrungrey.png")));
         }
@@ -857,16 +847,6 @@ public class ReviewDueEntryPanel extends javax.swing.JPanel {
         
         this.lblTags.setText("");
         if(e.getTags()!=null) {
-//            StringBuffer sb=new StringBuffer();
-//            sb.append("<html>");
-//            for(String t: e.getTags()) {
-//                //sb.append(t).append(", ");
-//                sb.append(t).append("<br/>");
-//            }
-//            sb.append("</html>");
-//            String tagString=sb.toString();
-//            
-//            this.lblTags.setText(tagString);
 
             String tagList=TagUtils.getTagList(e.getTags());
             String shortenedTagList=tagList;
@@ -1114,7 +1094,6 @@ public class ReviewDueEntryPanel extends javax.swing.JPanel {
             SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
             d = df.parse(hiddenField.getText());
         } catch (Throwable t) {
-            //JOptionPane.showMessageDialog(this, "Wiedervorlagedatum ungültig", "Wiedervorlage verschieben", JOptionPane.INFORMATION_MESSAGE);
             return;
         }
         this.e.setDue(d);
@@ -1137,8 +1116,10 @@ public class ReviewDueEntryPanel extends javax.swing.JPanel {
         }
         EditorsRegistry.getInstance().clearStatus();
             
-            // update UI
-            this.setEntry(e);
+        boolean postPonedDone=this.chkDescription.isSelected();
+        // update UI
+        this.setEntry(e);
+        this.chkDescription.setSelected(postPonedDone);
     }//GEN-LAST:event_cmdPostponeActionPerformed
 
     private void formMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_formMouseEntered
