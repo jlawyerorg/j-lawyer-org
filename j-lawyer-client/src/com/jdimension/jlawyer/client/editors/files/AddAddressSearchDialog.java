@@ -676,7 +676,6 @@ import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
-import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.PartyTypeBean;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
@@ -684,16 +683,10 @@ import com.jdimension.jlawyer.ui.tagging.TagUtils;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Hashtable;
 import java.util.List;
 import javax.swing.AbstractAction;
-import javax.swing.DefaultListModel;
 import javax.swing.JComponent;
-import javax.swing.JList;
 import javax.swing.JOptionPane;
-import javax.swing.JPanel;
 import javax.swing.KeyStroke;
 import org.apache.log4j.Logger;
 
@@ -932,7 +925,6 @@ public class AddAddressSearchDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_tblResultsMouseClicked
 
     private void cmdQuickSearchActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdQuickSearchActionPerformed
-// perform search here
         EditorsRegistry.getInstance().updateStatus("Suche Adressen...");
         ThreadUtils.setWaitCursor(this);
 
