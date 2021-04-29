@@ -663,11 +663,6 @@
  */
 package com.jdimension.jlawyer.client.processing;
 
-import com.jdimension.jlawyer.client.editors.EditorsRegistry;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 import javax.swing.JDialog;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
@@ -769,10 +764,6 @@ public abstract class ProgressableAction {
 
         new Thread(new Runnable() {
             public void run() {
-//                try {
-//                    Thread.sleep(100);
-//                } catch (Throwable t) {
-//                }
 
                 boolean success = true;
                 String error = "";
@@ -791,6 +782,7 @@ public abstract class ProgressableAction {
                 SwingUtilities.invokeLater(new Thread(new Runnable() {
                     public void run() {
                         if (!succeeded && !("".equals(errorS))) {
+                            log.error("ProgressableAction error:" + errorS);
                             String displayedError = getErrorMessageAndHints(errorS);
                             JOptionPane.showMessageDialog(indicator, displayedError, "Fehler", JOptionPane.ERROR_MESSAGE);
 
