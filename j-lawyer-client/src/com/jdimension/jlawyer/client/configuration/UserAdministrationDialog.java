@@ -2007,7 +2007,9 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 //u.setPassword(this.txtPassword.getText());
                 u.setLawyer(this.chkLawyer.isSelected());
                 u.setAbbreviation(this.txtAbbreviation.getText());
-                u.setPrimaryGroup((Group) this.cmbPrimaryGroup.getSelectedItem());
+                u.setPrimaryGroup(null);
+                if(this.cmbPrimaryGroup.getSelectedItem() instanceof Group)
+                    u.setPrimaryGroup((Group) this.cmbPrimaryGroup.getSelectedItem());
 
                 String countryName = this.cmbCountry.getSelectedItem().toString();
                 Object regionNameO = this.cmbArea.getSelectedItem();
