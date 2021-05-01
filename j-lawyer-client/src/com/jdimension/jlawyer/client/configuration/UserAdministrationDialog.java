@@ -663,7 +663,6 @@
  */
 package com.jdimension.jlawyer.client.configuration;
 
-//import bsh.This;
 import com.jdimension.jlawyer.calendar.CalendarRegion;
 import com.jdimension.jlawyer.client.bea.BeaAccess;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
@@ -673,10 +672,6 @@ import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.services.SystemManagementRemote;
 import java.util.ArrayList;
 import java.util.List;
-//import com.jdimension.jkanzlei.server.persistence.AppOptionGroupDTO;
-//import com.jdimension.jkanzlei.server.services.JKanzleiServiceLocator;
-//import com.jdimension.jkanzlei.server.services.SystemManagementRemote;
-//import com.jdimension.jkanzlei.server.services.SystemManagementRemoteHome;
 import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
 import com.jdimension.jlawyer.client.calendar.CalendarUtils;
@@ -686,7 +681,6 @@ import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.DesktopUtils;
 import com.jdimension.jlawyer.client.utils.FileUtils;
-import com.jdimension.jlawyer.client.utils.TableUtils;
 import com.jdimension.jlawyer.persistence.Group;
 import com.jdimension.jlawyer.persistence.GroupMembership;
 import com.jdimension.jlawyer.services.SecurityServiceRemote;
@@ -696,7 +690,6 @@ import java.util.Collection;
 import java.util.Enumeration;
 import java.util.Hashtable;
 import javax.swing.DefaultComboBoxModel;
-import javax.swing.DefaultListModel;
 import javax.swing.JFileChooser;
 import javax.swing.table.DefaultTableModel;
 import themes.colors.DefaultColorTheme;
@@ -733,7 +726,6 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
-            //SystemManagementRemoteHome home = (SystemManagementRemoteHome)locator.getRemoteHome("ejb/SystemManagementBean", SystemManagementRemoteHome.class);
             SystemManagementRemote mgmt = locator.lookupSystemManagementRemote();
             List<AppUserBean> allUsers = mgmt.getUsers();
             for (AppUserBean u : allUsers) {
@@ -755,7 +747,6 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
             String[] colNames3 = new String[]{"", "Gruppe"};
             GroupMembershipsTableModel model = new GroupMembershipsTableModel(colNames3, 0);
             this.tblGroups.setModel(model);
-            //((DefaultTableModel)this.tblGroups.getModel())
             Collection<Group> allGroups = locator.lookupSecurityServiceRemote().getAllGroups();
             for (Group g : allGroups) {
                 ((DefaultComboBoxModel) this.cmbPrimaryGroup.getModel()).addElement(g);
@@ -765,7 +756,6 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
 
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);
-            //JOptionPane.showMessageDialog(this.owner, "Verbindungsfehler: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
             JOptionPane.showMessageDialog(this, ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
             return;
         }
@@ -1737,7 +1727,6 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
             try {
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
-                //SystemManagementRemoteHome home = (SystemManagementRemoteHome)locator.getRemoteHome("ejb/SystemManagementBean", SystemManagementRemoteHome.class);
                 SystemManagementRemote mgmt = locator.lookupSystemManagementRemote();
                 Object[] delUsers = this.lstUsers.getSelectedValues();
                 for (Object o : delUsers) {
@@ -1747,9 +1736,8 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 }
             } catch (Exception ex) {
                 log.error("Error connecting to server", ex);
-                //JOptionPane.showMessageDialog(this.owner, "Verbindungsfehler: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
                 JOptionPane.showMessageDialog(this, ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
-                return;
+                
             }
         }
     }//GEN-LAST:event_mnuDeleteActionPerformed
@@ -1783,7 +1771,6 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
-            //SystemManagementRemoteHome home = (SystemManagementRemoteHome)locator.getRemoteHome("ejb/SystemManagementBean", SystemManagementRemoteHome.class);
             SystemManagementRemote mgmt = locator.lookupSystemManagementRemote();
             AppUserBean u = new AppUserBean();
             u.setPassword(newPassword);
@@ -1793,12 +1780,11 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
             newUser.setLawyer(true);
             newUser.setCloudPort(443);
             newUser.setCloudSsl(true);
-            //mgmt.remove();
+            
             ((UserListModel) this.lstUsers.getModel()).addElement(newUser);
             this.lstUsers.setSelectedIndex(this.lstUsers.getMaxSelectionIndex());
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);
-            //JOptionPane.showMessageDialog(this.owner, "Verbindungsfehler: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
             JOptionPane.showMessageDialog(this, ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
             return;
         }
@@ -1872,7 +1858,6 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 this.chkLawyer.setSelected(u.isLawyer());
 
                 CalendarUtils cu = CalendarUtils.getInstance();
-                //ArrayList<CalendarRegion> countries=cu.getCountryCodes();
                 String countryId = null;
                 for (CalendarRegion cr : this.countries) {
                     if (cr.getCountryId().equals(u.getCountryCode())) {
@@ -1898,7 +1883,6 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                     this.cmbAccountType.setSelectedItem(u.getEmailInType());
                 }
                 this.txtEmailSender.setText(u.getEmailSenderName());
-//                this.taEmailSignature.setText(u.getEmailSignature());
                 String sig = u.getEmailSignature();
                 if (sig == null) {
                     sig = "";
@@ -1963,9 +1947,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
 
             } catch (Exception ex) {
                 log.error("Error connecting to server", ex);
-                //JOptionPane.showMessageDialog(this.owner, "Verbindungsfehler: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
                 JOptionPane.showMessageDialog(this, ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
-                return;
             }
         }
     }//GEN-LAST:event_lstUsersValueChanged
@@ -2000,11 +1982,9 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
-            //SystemManagementRemoteHome home = (SystemManagementRemoteHome)locator.getRemoteHome("ejb/SystemManagementBean", SystemManagementRemoteHome.class);
             SystemManagementRemote mgmt = locator.lookupSystemManagementRemote();
             AppUserBean u = (AppUserBean) this.lstUsers.getSelectedValue();
             if (u != null) {
-                //u.setPassword(this.txtPassword.getText());
                 u.setLawyer(this.chkLawyer.isSelected());
                 u.setAbbreviation(this.txtAbbreviation.getText());
                 u.setPrimaryGroup(null);
@@ -2040,7 +2020,6 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 u.setEmailAddress(this.txtAddress.getText());
                 u.setEmailInType(this.cmbAccountType.getSelectedItem().toString());
                 u.setEmailSenderName(this.txtEmailSender.getText());
-                //u.setEmailSignature(this.taEmailSignature.getText());
                 u.setEmailSignature(this.htmlEmailSig.getText());
                 u.setEmailInServer(this.txtInServer.getText());
                 u.setEmailInUser(this.txtInUser.getText());
@@ -2083,9 +2062,6 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 u.setDisplayName(this.txtDisplayName.getText());
 
                 AppUserBean newUser = mgmt.updateUser(u, this.getRolesFromUI(u.getPrincipalId()));
-                //mgmt.remove();
-                //((UserListModel)this.lstUsers.getModel()).addElement(newUser);
-                //this.lstUsers.setSelectedIndex(this.lstUsers.getMaxSelectionIndex());
                 ((UserListModel) this.lstUsers.getModel()).set(this.lstUsers.getSelectedIndex(), newUser);
 
                 // if the user edited his own settings, put it into ClientSettings
@@ -2097,7 +2073,6 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
 
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);
-            //JOptionPane.showMessageDialog(this.owner, "Verbindungsfehler: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
             JOptionPane.showMessageDialog(this, ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
             return;
         }
@@ -2106,7 +2081,6 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         this.txtAddress.setText("");
         this.cmbAccountType.setSelectedIndex(0);
         this.txtEmailSender.setText("");
-//        this.taEmailSignature.setText("");
         this.htmlEmailSig.setText("");
         this.txtInServer.setText("");
         this.txtInUser.setText("");
@@ -2347,7 +2321,6 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 try {
                     JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
-                    //SystemManagementRemoteHome home = (SystemManagementRemoteHome)locator.getRemoteHome("ejb/SystemManagementBean", SystemManagementRemoteHome.class);
                     SystemManagementRemote mgmt = locator.lookupSystemManagementRemote();
                     AppUserBean u = mgmt.getUser(UserSettings.getInstance().getCurrentUser().getPrincipalId());
                     if (u != null) {
@@ -2356,9 +2329,8 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
 
                 } catch (Exception ex) {
                     log.error("Error connecting to server", ex);
-                    //JOptionPane.showMessageDialog(this.owner, "Verbindungsfehler: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
                     JOptionPane.showMessageDialog(this, ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
-                    return;
+                    
                 }
             } else {
                 JOptionPane.showMessageDialog(this, "Passwort NICHT aktualisiert!", "Hinweis", JOptionPane.WARNING_MESSAGE);
