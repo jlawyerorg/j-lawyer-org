@@ -860,6 +860,8 @@ public class SaveBeaMessageAction extends ProgressableAction {
                 historyDto.setChangeDescription("beA-Nachricht als Entwurf gespeichert " + recipientsText.toString() + ": " + msg.getSubject());
                 afs.addHistory(this.archiveFile.getId(), historyDto);
 
+                if(folder!=null)
+                    newDoc.setFolder(folder);
                 EventBroker eb = EventBroker.getInstance();
                 eb.publishEvent(new DocumentAddedEvent(newDoc));
 

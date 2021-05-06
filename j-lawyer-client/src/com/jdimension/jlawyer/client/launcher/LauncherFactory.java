@@ -923,7 +923,12 @@ public class LauncherFactory {
     public static void directPrint(List<String> urls) throws Exception {
 
         final ArrayList<String> cmdLine = new ArrayList<String>();
-        cmdLine.add("soffice");
+        String osName = System.getProperty("os.name").toLowerCase();
+        if (osName.startsWith("mac")) {
+            cmdLine.add("/Applications/LibreOffice.app/Contents/MacOS/soffice");
+        } else {
+            cmdLine.add("soffice");
+        }
         cmdLine.add("-p");
         cmdLine.add("-nologo");
         for (String u : urls) {

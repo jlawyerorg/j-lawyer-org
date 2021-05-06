@@ -2459,7 +2459,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                             }
 
                         }
-                    } catch (Exception ex) {
+                    } catch (Throwable ex) {
                         log.error("Error checking for unread mails", ex);
                     }
                 }

@@ -914,6 +914,8 @@ public class SendBeaMessageAction extends ProgressableAction {
                         historyDto.setChangeDescription("beA-Nachricht gesendet an " + recipientsText.toString() + ": " + msg.getSubject());
                         afs.addHistory(this.archiveFile.getId(), historyDto);
 
+                        if(folder!=null)
+                            newDoc.setFolder(folder);
                         EventBroker eb = EventBroker.getInstance();
                         eb.publishEvent(new DocumentAddedEvent(newDoc));
                     }

@@ -1608,6 +1608,8 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
                         afs.moveDocumentsToFolder(docList, folder.getId());
                     }
 
+                    if(folder!=null)
+                        newDoc.setFolder(folder);
                     EventBroker eb = EventBroker.getInstance();
                     eb.publishEvent(new DocumentAddedEvent(newDoc));
 
