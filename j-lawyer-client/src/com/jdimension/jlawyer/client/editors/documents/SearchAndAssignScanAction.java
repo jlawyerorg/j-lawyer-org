@@ -741,13 +741,23 @@ public class SearchAndAssignScanAction extends DeleteScanAction {
                             ArchiveFileDocumentsBean doc = (ArchiveFileDocumentsBean) d;
                             if (newName.equals(doc.getName())) {
                                 locator.lookupArchiveFileServiceRemote().setDocumentTag(doc.getId(), new DocumentTagsBean(null, this.getDocumentTag()), true);
-                                
-                                if (folder != null) {
-                                    ArrayList<String> dList = new ArrayList<>();
-                                    dList.add(doc.getId());
-                                    locator.lookupArchiveFileServiceRemote().moveDocumentsToFolder(dList, folder.getId());
-                                }
-                                
+                                break;
+                            }
+                        }
+                    }
+                }
+                
+                if (folder != null) {
+                    Collection docs = locator.lookupArchiveFileServiceRemote().getDocuments(sel.getId());
+                    for (Object d : docs) {
+                        if (d instanceof ArchiveFileDocumentsBean) {
+                            ArchiveFileDocumentsBean doc = (ArchiveFileDocumentsBean) d;
+                            if (newName.equals(doc.getName())) {
+
+                                ArrayList<String> dList = new ArrayList<>();
+                                dList.add(doc.getId());
+                                locator.lookupArchiveFileServiceRemote().moveDocumentsToFolder(dList, folder.getId());
+
                                 break;
                             }
                         }
@@ -761,7 +771,5 @@ public class SearchAndAssignScanAction extends DeleteScanAction {
             log.error(ex);
             ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Löschen des Scans: " + ex.getMessage(), "Fehler");
         }
-
-        //super.execute();
     }
 }
