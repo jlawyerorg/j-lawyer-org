@@ -666,6 +666,7 @@ package com.jdimension.jlawyer.client.launcher;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.FileUtils;
+import com.jdimension.jlawyer.client.utils.StringUtils;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -818,9 +819,9 @@ public class LauncherFactory {
     public static void cleanupTempDocuments() {
         FileUtils.cleanupTempFilesWithRetentionTime();
     }
-    
+
     private static String createTempFile(String fileName, byte[] content, boolean readOnly) throws Exception {
-        return FileUtils.createTempFile(fileName, content, readOnly,false,7l);
+        return FileUtils.createTempFile(fileName, content, readOnly, false, 7l);
     }
 
     private static String getExtension(String url) {
@@ -868,7 +869,7 @@ public class LauncherFactory {
     public static boolean supportedByMicrosoftOffice(String url) {
         return (supportedByMicrosoftOfficeWord(url) || supportedByMicrosoftOfficeExcel(url) || supportedByMicrosoftOfficePowerPoint(url));
     }
-    
+
     public static boolean supportedByMicrosoftOfficeWord(String url) {
         String lcaseUrl = url.toLowerCase();
         for (String ext : MS_OFFICEFILETYPES_WORD) {
@@ -878,7 +879,7 @@ public class LauncherFactory {
         }
         return false;
     }
-    
+
     public static boolean supportedByMicrosoftOfficePowerPoint(String url) {
         String lcaseUrl = url.toLowerCase();
         for (String ext : MS_OFFICEFILETYPES_POWERPOINT) {
@@ -888,7 +889,7 @@ public class LauncherFactory {
         }
         return false;
     }
-    
+
     public static boolean supportedByMicrosoftOfficeExcel(String url) {
         String lcaseUrl = url.toLowerCase();
         for (String ext : MS_OFFICEFILETYPES_EXCEL) {
@@ -930,7 +931,12 @@ public class LauncherFactory {
             cmdLine.add("soffice");
         }
         cmdLine.add("-p");
-        cmdLine.add("-nologo");
+        if (osName.startsWith("mac")) {
+            cmdLine.add("--nologo");
+        } else {
+            cmdLine.add("-nologo");
+        }
+
         for (String u : urls) {
             //cmdLine.add("\"" + u + "\"");
             cmdLine.add(u);
@@ -947,12 +953,17 @@ public class LauncherFactory {
                     Process p = null;
                     boolean libreOffice = false;
                     try {
-                        cmdLine.set(0, "libreoffice");
+                        if (osName.startsWith("mac")) {
+                            cmdLine.set(0, "/Applications/LibreOffice.app/Contents/MacOS/libreoffice");
+                        } else {
+                            cmdLine.set(0, "libreoffice");
+                        }
+
                         p = Runtime.getRuntime().exec(cmdLine.toArray(new String[0]));
 
                         libreOffice = true;
                     } catch (Throwable ex) {
-                        log.error("error starting libreoffice" + ex.getMessage());
+                        log.error("error starting libreoffice" + ex.getMessage() + "; command line was: " + StringUtils.toString(cmdLine.toArray(new String[0])), ex);
                         libreOffice = false;
                     }
 
@@ -968,7 +979,11 @@ public class LauncherFactory {
                     if (!libreOffice) {
                         try {
 
-                            cmdLine.set(0, "soffice");
+                            if (osName.startsWith("mac")) {
+                                cmdLine.set(0, "/Applications/LibreOffice.app/Contents/MacOS/soffice");
+                            } else {
+                                cmdLine.set(0, "soffice");
+                            }
                             p = Runtime.getRuntime().exec(cmdLine.toArray(new String[0]));
 
                             int exit = p.waitFor();
@@ -976,8 +991,8 @@ public class LauncherFactory {
                                 throw new Exception("LibreOffice / OpenOffice nicht installiert!");
                             }
                         } catch (Throwable ex) {
-                            log.error("error starting soffice", ex);
-                            throw new Exception("LibreOffice / OpenOffice nicht installiert oder PATH nicht gesetzt: " + ex.getMessage());
+                            log.error("error starting soffice" + "; command line was: " + StringUtils.toString(cmdLine.toArray(new String[0])), ex);
+                            throw new Exception("LibreOffice / OpenOffice nicht installiert oder PATH nicht gesetzt: " + ex.getMessage() + "; command line was: " + StringUtils.toString(cmdLine.toArray(new String[0])));
                         }
 
                     }
