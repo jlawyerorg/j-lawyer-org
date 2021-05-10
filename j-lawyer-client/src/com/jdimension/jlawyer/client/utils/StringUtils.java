@@ -695,6 +695,17 @@ public class StringUtils extends ServerStringUtils {
         return s;
     }
     
+    public static String toString(String[] stringArray) {
+        StringBuilder sb=new StringBuilder();
+        if(stringArray!=null) {
+            for(String s: stringArray) {
+                sb.append(s);
+                sb.append(" ");
+            }
+        }
+        return sb.toString();
+    }
+    
     static class SortIgnoreCase implements Comparator<Object> {
         public int compare(Object o1, Object o2) {
             String s1 = (String) o1;
