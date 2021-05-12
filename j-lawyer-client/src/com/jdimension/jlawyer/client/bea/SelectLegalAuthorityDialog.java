@@ -671,6 +671,7 @@ import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
 import javax.swing.DefaultListModel;
+import javax.swing.JDialog;
 import org.jlawyer.bea.model.LegalAuthorities;
 import org.jlawyer.bea.model.BeaListItem;
 
@@ -690,7 +691,17 @@ public class SelectLegalAuthorityDialog extends javax.swing.JDialog {
     public SelectLegalAuthorityDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
+        this.initialize();
+    }
+    
+    public SelectLegalAuthorityDialog(JDialog parent, boolean modal) {
+        super(parent, modal);
+        initComponents();
+        this.initialize();
         
+    }
+    
+    private void initialize() {
         DefaultListModel lm=new DefaultListModel();
         List<BeaListItem> auths=LegalAuthorities.getAuthorities();
         ArrayList<String> authNames=new ArrayList<String>();

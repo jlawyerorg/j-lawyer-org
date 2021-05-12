@@ -664,11 +664,9 @@
 package com.jdimension.jlawyer.client.bea;
 
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
-import com.jdimension.jlawyer.client.editors.addresses.QuickAddressSearchRowIdentifier;
 import com.jdimension.jlawyer.client.editors.addresses.QuickAddressSearchTableModel;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
-import com.jdimension.jlawyer.persistence.AddressBean;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
@@ -676,7 +674,6 @@ import javax.swing.AbstractAction;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
-import javax.swing.JTextField;
 import javax.swing.KeyStroke;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
