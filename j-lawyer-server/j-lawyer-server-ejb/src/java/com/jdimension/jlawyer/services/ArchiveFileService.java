@@ -725,6 +725,8 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     @EJB
     private ArchiveFileTagsBeanFacadeLocal archiveFileTagsFacade;
     @EJB
+    private AppUserBeanFacadeLocal userFacade;
+    @EJB
     private DocumentTagsBeanFacadeLocal documentTagsFacade;
     @EJB
     private ArchiveFileDocumentsBeanFacadeLocal archiveFileDocumentsFacade;
@@ -1204,7 +1206,13 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             String lawyer = dto.getLawyer();
             String lawyerAbbr = "";
             if (lawyer != null && !("".equalsIgnoreCase(lawyer))) {
-                AppUserBean u = this.sysFacade.getUser(lawyer);
+                AppUserBean u = null;
+                if(this.userFacade.hasPrincipalId(lawyer)) {
+                    u=this.userFacade.findByPrincipalId(lawyer);
+                } else {
+                    // lawyer not found
+                    log.warn("there is no lawyer with user name " + lawyer);
+                }
                 if (u != null) {
                     lawyerAbbr = u.getAbbreviation();
                 }
@@ -1294,7 +1302,13 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         String lawyer = dto.getLawyer();
         String lawyerAbbr = "";
         if (lawyer != null && !("".equalsIgnoreCase(lawyer))) {
-            AppUserBean u = this.sysFacade.getUser(lawyer);
+            AppUserBean u = null;
+            if(this.userFacade.hasPrincipalId(lawyer)) {
+                u=this.userFacade.findByPrincipalId(lawyer);
+            } else {
+                // lawyer not found
+                log.warn("there is no lawyer with user name " + lawyer);
+            }
             if (u != null) {
                 lawyerAbbr = u.getAbbreviation();
             }
