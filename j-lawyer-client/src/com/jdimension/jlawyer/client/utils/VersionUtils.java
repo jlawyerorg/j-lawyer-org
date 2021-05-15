@@ -676,11 +676,11 @@ public class VersionUtils {
     private static final Logger log = Logger.getLogger(VersionUtils.class.getName());
 
     public static String getClientVersion() {
-        return "1.14";
+        return "1.15";
     }
 
     public static String getPatchLevel() {
-        return "1";
+        return "0";
     }
 
     public static String getBuild() {
