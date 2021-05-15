@@ -905,14 +905,24 @@ public class ImportContactsDialog extends javax.swing.JDialog {
                         try {
                             ab.setBirthDate(df.format(v.getBirthday().getDate()));
                         } catch (Throwable t) {
-                            log.error("Could not import birth date for " + v.getStructuredName().getFamily(), t);
+                            String logName="unknown";
+                            if(v.getStructuredName()!=null) {
+                                if(v.getStructuredName().getFamily()!=null)
+                                    logName=v.getStructuredName().getFamily();
+                            }
+                            log.error("Could not import birth date for " + logName, t);
                         }
                     }
                     if (v.getDeathdate() != null) {
                         try {
                             ab.setDateOfDeath(df.format(v.getDeathdate().getDate()));
                         } catch (Throwable t) {
-                            log.error("Could not import death date for " + v.getStructuredName().getFamily(), t);
+                            String logName="unknown";
+                            if(v.getStructuredName()!=null) {
+                                if(v.getStructuredName().getFamily()!=null)
+                                    logName=v.getStructuredName().getFamily();
+                            }
+                            log.error("Could not import death date for " + logName, t);
                         }
                     }
 

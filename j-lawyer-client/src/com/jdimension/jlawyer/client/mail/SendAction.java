@@ -907,6 +907,8 @@ public class SendAction extends ProgressableAction {
                         historyDto.setChangeDescription("E-Mail gesendet an " + to + ": " + msg.getSubject());
                         afs.addHistory(this.archiveFile.getId(), historyDto);
 
+                        if(caseFolder!=null)
+                            newDoc.setFolder(caseFolder);
                         EventBroker eb = EventBroker.getInstance();
                         eb.publishEvent(new DocumentAddedEvent(newDoc));
                     }

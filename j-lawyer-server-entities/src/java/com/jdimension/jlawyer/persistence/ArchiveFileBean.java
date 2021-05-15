@@ -871,6 +871,9 @@ public class ArchiveFileBean implements Serializable {
 
     @Override
     public boolean equals(Object object) {
+        if(object==null)
+            return false;
+        
         // TODO: Warning - this method won't work in the case the id fields are not set
         if (!(object instanceof ArchiveFileBean)) {
             return false;

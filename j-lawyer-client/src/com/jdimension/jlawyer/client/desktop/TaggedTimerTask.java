@@ -823,7 +823,6 @@ public class TaggedTimerTask extends java.util.TimerTask {
         String[] lastFilterTags=null;
 
         try {
-            //System.out.println("TaggedTimerTask#run @ " + System.currentTimeMillis() + " from " + source);
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
@@ -841,7 +840,6 @@ public class TaggedTimerTask extends java.util.TimerTask {
                 }
             }
             if (this.rebuildPopup && !(this.popTags.isVisible())) {
-                //this.buildPopup(this.tagMenu, this.popTags, tagsInUse, lastFilterTags, settings.CONF_DESKTOP_LASTFILTERTAG);
                 UserSettings.getInstance().migrateFrom(settings, UserSettings.CONF_DESKTOP_LASTFILTERTAG);
                 this.buildPopup(this.tagMenu, this.popTags, allCaseTagsAsString, lastFilterTags, UserSettings.CONF_DESKTOP_LASTFILTERTAG);
             }
@@ -860,7 +858,6 @@ public class TaggedTimerTask extends java.util.TimerTask {
                 }
             }
             if (this.rebuildPopup && !(this.popDocumentTags.isVisible())) {
-                //this.buildPopup(this.tagDocumentMenu, this.popDocumentTags, tagsInUse, lastFilterDocumentTags, settings.CONF_DESKTOP_LASTFILTERDOCUMENTTAG);
                 UserSettings.getInstance().migrateFrom(settings, UserSettings.CONF_DESKTOP_LASTFILTERDOCUMENTTAG);
                 this.buildPopup(this.tagDocumentMenu, this.popDocumentTags, allDocTagsAsString, lastFilterDocumentTags, UserSettings.CONF_DESKTOP_LASTFILTERDOCUMENTTAG);
             }
@@ -881,7 +878,7 @@ public class TaggedTimerTask extends java.util.TimerTask {
 
             ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
 
-            myNewList = fileService.getTagged(lastFilterTags, null, 50);
+            myNewList = fileService.getTagged(lastFilterTags, null, 200);
             UserSettings.getInstance().migrateFrom(settings, UserSettings.CONF_DESKTOP_ONLYMYTAGGED);
             String temp = UserSettings.getInstance().getSetting(UserSettings.CONF_DESKTOP_ONLYMYTAGGED, "false");
             if ("true".equalsIgnoreCase(temp)) {
@@ -899,7 +896,7 @@ public class TaggedTimerTask extends java.util.TimerTask {
                 tags.put(a.getId(), (List<ArchiveFileTagsBean>) xTags);
             }
 
-            myNewDocumentList = fileService.getTaggedDocuments(lastFilterDocumentTags, 50);
+            myNewDocumentList = fileService.getTaggedDocuments(lastFilterDocumentTags, 200);
             if ("true".equalsIgnoreCase(temp)) {
                 String principalId = UserSettings.getInstance().getCurrentUser().getPrincipalId();
                 for (ArchiveFileDocumentsBean x : myNewDocumentList) {
@@ -914,7 +911,6 @@ public class TaggedTimerTask extends java.util.TimerTask {
                 Collection<DocumentTagsBean> xTags = fileService.getDocumentTags(a.getId());
                 documentTags.put(a.getId(), (List<DocumentTagsBean>) xTags);
             }
-            //running=false;
 
         } catch (EJBException | ClosedChannelException ex) {
             log.error("Error connecting to server", ex);
@@ -930,7 +926,6 @@ public class TaggedTimerTask extends java.util.TimerTask {
             return;
         } catch (Throwable ex) {
             log.error("Error connecting to server", ex);
-            //JOptionPane.showMessageDialog(this.owner, "Verbindungsfehler: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
             ThreadUtils.showErrorDialog(this.owner, java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/TaggedTimerTask").getString("msg.connectionerror"), new Object[]{ex.getMessage()}), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/TaggedTimerTask").getString("msg.error"));
             running = false;
             return;
@@ -1039,7 +1034,6 @@ public class TaggedTimerTask extends java.util.TimerTask {
 
                     }
 
-                    //split.setDividerLocation(0.5d);
                     split.setDividerLocation(split.getDividerLocation() + 1);
                     split.setDividerLocation(split.getDividerLocation() - 1);
 
@@ -1057,6 +1051,7 @@ public class TaggedTimerTask extends java.util.TimerTask {
                     }
                     if (!hasTab) {
                         JScrollPane scroll = new JScrollPane();
+                        scroll.getVerticalScrollBar().setUnitIncrement(16);
 
                         JPanel tPanel = new JPanel();
                         BoxLayout layout = new BoxLayout(tPanel, BoxLayout.Y_AXIS);

@@ -2044,7 +2044,7 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
 
     private void rdXjustizActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rdXjustizActionPerformed
         if (this.rdXjustiz.isSelected() && this.authority == null) {
-            SelectLegalAuthorityDialog dlg = new SelectLegalAuthorityDialog(EditorsRegistry.getInstance().getMainWindow(), true);
+            SelectLegalAuthorityDialog dlg = new SelectLegalAuthorityDialog(this, true);
             FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
             dlg.setVisible(true);
             this.authority = dlg.getSelectedAuthority();
@@ -2070,7 +2070,7 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
 
     private void rdXjustizEebActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rdXjustizEebActionPerformed
         if (this.rdXjustizEeb.isSelected() && this.authority == null) {
-            SelectLegalAuthorityDialog dlg = new SelectLegalAuthorityDialog(EditorsRegistry.getInstance().getMainWindow(), true);
+            SelectLegalAuthorityDialog dlg = new SelectLegalAuthorityDialog(this, true);
             FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
             dlg.setVisible(true);
             this.authority = dlg.getSelectedAuthority();

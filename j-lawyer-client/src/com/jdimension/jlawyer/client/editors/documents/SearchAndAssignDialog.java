@@ -749,7 +749,7 @@ public class SearchAndAssignDialog extends javax.swing.JDialog {
         this.split.setDividerLocation(0.7d);
         ComponentUtils.restoreSplitPane(split, this.getClass(), "split");
         ComponentUtils.persistSplitPane(split, this.getClass(), "split");
-        
+
         this.treeFolders.setCellRenderer(new CaseFolderCellRenderer());
 
         this.tblResults.setDefaultRenderer(Object.class, new QuickArchiveFileSearchCellRenderer());
@@ -810,15 +810,15 @@ public class SearchAndAssignDialog extends javax.swing.JDialog {
                     model.addRow(row);
                 }
             } else {
-                
+
                 // dialog is forced to provide only one specific case
                 this.txtSearchString.setEnabled(false);
                 this.cmdDocumentTagFilter.setEnabled(false);
                 this.cmdTagFilter.setEnabled(false);
                 this.cmdQuickSearch.setEnabled(false);
-                
-                ArchiveFileBean forcedCase=fileService.getArchiveFile(forceCaseId);
-                if(forcedCase!=null) {
+
+                ArchiveFileBean forcedCase = fileService.getArchiveFile(forceCaseId);
+                if (forcedCase != null) {
                     Object[] row = new Object[]{new QuickArchiveFileSearchRowIdentifier(forcedCase), forcedCase.getName(), forcedCase.getReason(), new Boolean(forcedCase.getArchivedBoolean()), forcedCase.getLawyer()};
                     model.addRow(row);
                 }
@@ -839,12 +839,18 @@ public class SearchAndAssignDialog extends javax.swing.JDialog {
         QuickArchiveFileSearchRowIdentifier id = (QuickArchiveFileSearchRowIdentifier) this.tblResults.getValueAt(row, 0);
 
         this.caseSelection = id.getArchiveFileDTO();
-        if (this.treeFolders.getSelectionCount() == 1) {
-            DefaultMutableTreeNode tn = (DefaultMutableTreeNode) this.treeFolders.getSelectionPath().getLastPathComponent();
-            if (tn != null && tn.getUserObject() != null && tn.getUserObject() instanceof CaseFolder) {
-                this.folderSelection = (CaseFolder) tn.getUserObject();
-            }
+        if (this.caseSelection.equals(this.lastSelection)) {
+            if (this.treeFolders.getSelectionCount() == 1) {
+                DefaultMutableTreeNode tn = (DefaultMutableTreeNode) this.treeFolders.getSelectionPath().getLastPathComponent();
+                if (tn != null && tn.getUserObject() != null && tn.getUserObject() instanceof CaseFolder) {
+                    this.folderSelection = (CaseFolder) tn.getUserObject();
+                }
 
+            }
+        } else {
+            // user made a double click on a previously unselected case
+            // folder structure probably not loaded --> use root folder
+            this.folderSelection=null;
         }
 
         this.setVisible(false);
@@ -1093,13 +1099,14 @@ public class SearchAndAssignDialog extends javax.swing.JDialog {
             ArchiveFileBean selectedCase = id.getArchiveFileDTO();
 
             if (this.lastSelection == null || !selectedCase.equals(this.lastSelection)) {
-                this.lastSelection = selectedCase;
+
                 CaseFolder rootFolder = selectedCase.getRootFolder();
 
                 DefaultTreeModel tm = new DefaultTreeModel(buildTree(rootFolder));
                 this.treeFolders.setModel(tm);
                 ComponentUtils.expandTree(treeFolders);
                 this.treeFolders.setSelectionRow(0);
+                this.lastSelection = selectedCase;
             } else {
                 // user clicked but there is no change in caseSelection - leave case folder selected as is
             }
@@ -1289,14 +1296,14 @@ public class SearchAndAssignDialog extends javax.swing.JDialog {
                         SearchAndAssignDialog dialog = new SearchAndAssignDialog(new javax.swing.JFrame(), true, null, null);
                         dialog.addWindowListener(new java.awt.event.WindowAdapter() {
 
-                                    @Override
-                                    public void windowClosing(java.awt.event.WindowEvent e
-                                    ) {
-                                        System
-                                                .exit(0);
+                            @Override
+                            public void windowClosing(java.awt.event.WindowEvent e
+                            ) {
+                                System
+                                        .exit(0);
 
-                                    }
-                                });
+                            }
+                        });
                         dialog.setVisible(true);
 
                     }

@@ -703,29 +703,29 @@ public class SearchAndAssignScanAction extends DeleteScanAction {
             SearchAndAssignDialog dlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true, null, null);
             dlg.setVisible(true);
             ArchiveFileBean sel = dlg.getCaseSelection();
-            CaseFolder folder=dlg.getFolderSelection();
+            CaseFolder folder = dlg.getFolderSelection();
 
             dlg.dispose();
 
             if (sel != null) {
 
-                Collection docList=locator.lookupArchiveFileServiceRemote().getDocuments(sel.getId());
-                ArrayList<String> docNames=new ArrayList<String>();
-                for(Object o: docList) {
-                    if(o instanceof ArchiveFileDocumentsBean)
-                        docNames.add(((ArchiveFileDocumentsBean)o).getName().toLowerCase());
+                Collection<ArchiveFileDocumentsBean> docList = locator.lookupArchiveFileServiceRemote().getDocuments(sel.getId());
+                ArrayList<String> docNames = new ArrayList<String>();
+                for (ArchiveFileDocumentsBean o : docList) {
+                    docNames.add(o.getName().toLowerCase());
                 }
                 boolean nameExists = true;
-                String newName=null;
+                String newName = null;
                 while (nameExists) {
                     newName = this.getNewFileName(this.fileName);
                     if (newName == null) {
                         return;
                     }
-                    if(docNames.contains(newName.toLowerCase()))
+                    if (docNames.contains(newName.toLowerCase())) {
                         ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Datei existiert bereits: " + newName, "Hinweis");
-                    else
-                        nameExists=false;
+                    } else {
+                        nameExists = false;
+                    }
                 }
 
                 boolean added = is.assignObservedFile(this.fileName, sel.getId(), newName);
@@ -735,22 +735,31 @@ public class SearchAndAssignScanAction extends DeleteScanAction {
                 }
 
                 if (this.getDocumentTag() != null) {
-                    Collection docs = locator.lookupArchiveFileServiceRemote().getDocuments(sel.getId());
-                    for (Object d : docs) {
-                        if (d instanceof ArchiveFileDocumentsBean) {
-                            ArchiveFileDocumentsBean doc = (ArchiveFileDocumentsBean) d;
-                            if (newName.equals(doc.getName())) {
-                                locator.lookupArchiveFileServiceRemote().setDocumentTag(doc.getId(), new DocumentTagsBean(null, this.getDocumentTag()), true);
-                                
-                                if (folder != null) {
-                                    ArrayList<String> dList = new ArrayList<>();
-                                    dList.add(doc.getId());
-                                    locator.lookupArchiveFileServiceRemote().moveDocumentsToFolder(dList, folder.getId());
-                                }
-                                
-                                break;
-                            }
+                    Collection<ArchiveFileDocumentsBean> docs = locator.lookupArchiveFileServiceRemote().getDocuments(sel.getId());
+                    for (ArchiveFileDocumentsBean d : docs) {
+
+                        ArchiveFileDocumentsBean doc = (ArchiveFileDocumentsBean) d;
+                        if (newName.equals(doc.getName())) {
+                            locator.lookupArchiveFileServiceRemote().setDocumentTag(doc.getId(), new DocumentTagsBean(null, this.getDocumentTag()), true);
+                            break;
                         }
+                    }
+                }
+
+                if (folder != null) {
+                    Collection<ArchiveFileDocumentsBean> docs = locator.lookupArchiveFileServiceRemote().getDocuments(sel.getId());
+                    for (ArchiveFileDocumentsBean d : docs) {
+
+                        ArchiveFileDocumentsBean doc = (ArchiveFileDocumentsBean) d;
+                        if (newName.equals(doc.getName())) {
+
+                            ArrayList<String> dList = new ArrayList<>();
+                            dList.add(doc.getId());
+                            locator.lookupArchiveFileServiceRemote().moveDocumentsToFolder(dList, folder.getId());
+
+                            break;
+                        }
+
                     }
                 }
 
@@ -761,7 +770,5 @@ public class SearchAndAssignScanAction extends DeleteScanAction {
             log.error(ex);
             ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Löschen des Scans: " + ex.getMessage(), "Fehler");
         }
-
-        //super.execute();
     }
 }

@@ -934,6 +934,8 @@ public class SendEncryptedAction extends ProgressableAction {
                             historyDto.setChangeDescription("E-Mail gesendet an " + currentRecipientMail + ": " + msg.getSubject());
                             afs.addHistory(this.archiveFile.getId(), historyDto);
 
+                            if(caseFolder!=null)
+                                newDoc.setFolder(caseFolder);
                             EventBroker eb = EventBroker.getInstance();
                             eb.publishEvent(new DocumentAddedEvent(newDoc));
 
