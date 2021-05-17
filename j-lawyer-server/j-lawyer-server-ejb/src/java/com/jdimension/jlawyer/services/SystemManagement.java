@@ -1836,7 +1836,8 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         File[] files = f.listFiles();
         ArrayList list = new ArrayList();
         for (File curFile : files) {
-            if (!curFile.isDirectory()) {
+            // filter out hidden files
+            if (!curFile.isDirectory() && !(curFile.getName().startsWith("."))) {
                 list.add(curFile.getName());
             }
         }

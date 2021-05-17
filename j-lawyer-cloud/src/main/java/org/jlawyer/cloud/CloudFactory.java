@@ -683,6 +683,14 @@ public class CloudFactory {
         return con;
     }
     
+    public static NextcloudCalendarConnector getCalendarCloud(String serverName, boolean useHTTPS, int port, String path, String userName, String password) {
+        NextcloudCalendarConnector con=new NextcloudCalendarConnector(serverName, useHTTPS, port, userName, password);
+        if(path!=null && !"".equals(path)) {
+            con.setSubpathPrefix(path);
+        }
+        return con;
+    }
+    
     public void close(NextcloudConnector cloud) {
         if(cloud!=null) {
             try {
