@@ -663,6 +663,7 @@
  */
 package com.jdimension.jlawyer.client.editors.files;
 
+import com.jdimension.jlawyer.client.utils.DateUtils;
 import java.text.SimpleDateFormat;
 import java.util.Comparator;
 import java.util.Date;
@@ -675,7 +676,15 @@ import org.apache.log4j.Logger;
 public class DateTimeStringComparator implements Comparator {
 
     private static final Logger log = Logger.getLogger(DateTimeStringComparator.class.getName());
-    private final SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy, HH:mm");
+    private SimpleDateFormat df = null;
+    
+    public DateTimeStringComparator() {
+        this.df=new SimpleDateFormat(DateUtils.DATEFORMAT_DATETIME_DEFAULT);
+    }
+    
+    public DateTimeStringComparator(String format) {
+        this.df=new SimpleDateFormat(format);
+    }
 
     @Override
     public int compare(Object t, Object t1) {

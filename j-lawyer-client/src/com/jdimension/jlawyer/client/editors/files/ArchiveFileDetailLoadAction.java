@@ -674,6 +674,7 @@ import com.jdimension.jlawyer.client.processing.ProgressableAction;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
+import com.jdimension.jlawyer.client.utils.DateUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.persistence.*;
@@ -727,12 +728,10 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
     private JTable tblGroups = null;
     private CaseFolderPanel caseFolders = null;
 
-    private SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy HH:mm");
+    private SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.GERMAN);
 
     public ArchiveFileDetailLoadAction(ProgressIndicator i, ArchiveFilePanel owner, String archiveFileKey, ArchiveFileBean caseDto, CaseFolderPanel caseFolders, JTable historyTarget, InvolvedPartiesPanel contactsForCasePanel, JTable tblReviews, JPanel tagPanel, JPanel documentTagPanel, boolean readOnly, boolean beaEnabled, String selectDocumentWithFileName, JLabel lblArchivedSince, boolean isArchived, JPopupMenu popDocumentFavorites, JComboBox formTypes, JPanel formsPanel, JTabbedPane tabPaneForms, JComboBox cmbGroups, JTable tblGroups) {
         super(i, false);
-        //this.table = table;
-        //this.dlg = dlg;
 
         this.caseFolders = caseFolders;
         this.popDocumentFavorites = popDocumentFavorites;
@@ -930,13 +929,14 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
 
         this.progress("Aktualisiere Dialog...");
 
-        SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy, HH:mm", Locale.GERMAN);
+        
 
         this.progress("Aktualisiere Dialog: Historie...");
+        SimpleDateFormat dfHistory = new SimpleDateFormat(DateUtils.DATEFORMAT_DATETIME_FULL, Locale.GERMAN);
         String[] colNames2 = new String[]{"Änderung", "Nutzer", "Beschreibung"};
         ArchiveFileHistoryTableModel model2 = new ArchiveFileHistoryTableModel(colNames2, 0);
         this.historyTarget.setModel(model2);
-        DateTimeStringComparator dtComparator = new DateTimeStringComparator();
+        DateTimeStringComparator dtComparator = new DateTimeStringComparator(DateUtils.DATEFORMAT_DATETIME_FULL);
         TableRowSorter htrs = new TableRowSorter(model2);
         htrs.setComparator(0, dtComparator);
         this.historyTarget.setRowSorter(htrs);
@@ -944,7 +944,7 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
         Date latestHistory = null;
         if (dtos != null) {
             for (int i = 0; i < dtos.length; i++) {
-                Object[] row = new Object[]{df.format(dtos[i].getChangeDate()), dtos[i].getPrincipal(), dtos[i].getChangeDescription()};
+                Object[] row = new Object[]{dfHistory.format(dtos[i].getChangeDate()), dtos[i].getPrincipal(), dtos[i].getChangeDescription()};
                 model2.addRow(row);
                 if (latestHistory == null) {
                     latestHistory = dtos[i].getChangeDate();

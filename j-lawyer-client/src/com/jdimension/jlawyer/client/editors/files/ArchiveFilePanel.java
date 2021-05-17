@@ -4575,7 +4575,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
             Date d = null;
             SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
-            SimpleDateFormat df2 = new SimpleDateFormat("dd.MM.yyyy, HH:mm", Locale.GERMAN);
+            SimpleDateFormat df2 = new SimpleDateFormat(DateUtils.DATEFORMAT_DATETIME_FULL, Locale.GERMAN);
             try {
                 d = df.parse(this.txtHistoryDate.getText());
             } catch (Throwable t) {
