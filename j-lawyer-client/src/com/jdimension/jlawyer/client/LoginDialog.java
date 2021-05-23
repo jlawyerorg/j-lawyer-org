@@ -1524,10 +1524,10 @@ public class LoginDialog extends javax.swing.JFrame {
                 tunnel.disconnect();
                 sourcePort=getAvailablePort(Integer.parseInt(this.txtPort.getText()));
                 tunnel.setSourcePort(sourcePort);
-                tunnel.setSshHost(this.txtSshHost.getText());
+                tunnel.setSshHost(this.txtSshHost.getText().trim());
                 tunnel.setSshPassword(new String(this.pwdSshPassword.getPassword()));
-                tunnel.setSshPort(Integer.parseInt(this.txtSshPort.getText()));
-                tunnel.setSshUser(this.txtSshUser.getText());
+                tunnel.setSshPort(Integer.parseInt(this.txtSshPort.getText().trim()));
+                tunnel.setSshUser(this.txtSshUser.getText().trim());
                 tunnel.setTargetIp("127.0.0.1");
                 tunnel.setTargetPort(Integer.parseInt(this.txtTargetPort.getText()));
                 tunnel.connect();
@@ -1691,9 +1691,9 @@ public class LoginDialog extends javax.swing.JFrame {
         } else {
             settings.setConfiguration(settings.CONF_LASTSECMODE, "standard");
         }
-        settings.setConfiguration(settings.CONF_LASTSSHHOST, this.txtSshHost.getText());
-        settings.setConfiguration(settings.CONF_LASTSSHPORT, this.txtSshPort.getText());
-        settings.setConfiguration(settings.CONF_LASTSSHUSER, this.txtSshUser.getText());
+        settings.setConfiguration(settings.CONF_LASTSSHHOST, this.txtSshHost.getText().trim());
+        settings.setConfiguration(settings.CONF_LASTSSHPORT, this.txtSshPort.getText().trim());
+        settings.setConfiguration(settings.CONF_LASTSSHUSER, this.txtSshUser.getText().trim());
         try {
             settings.setConfiguration(settings.CONF_LASTSSHPWD, Crypto.encrypt(new String(this.pwdSshPassword.getPassword()), System.getProperty("user.name").toCharArray()));
         } catch (Throwable t) {
