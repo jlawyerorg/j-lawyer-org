@@ -673,7 +673,6 @@ import com.jdimension.jlawyer.documents.PlaceHolders;
 import com.jdimension.jlawyer.email.EmailTemplate;
 import com.jdimension.jlawyer.persistence.PartyTypeBean;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
-import java.awt.Component;
 import java.awt.Graphics;
 import java.awt.Image;
 import java.util.ArrayList;
@@ -720,10 +719,8 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
         
         DefaultListModel lm=new DefaultListModel();
         this.lstPlaceHolders.setModel(lm);
-        //((DefaultListModel)this.lstPlaceHolders.getModel()).removeAllElements();
         
         try {
-            //InitialContext context = new InitialContext(settings.getLookupProperties());
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
             List<PartyTypeBean> allPartyTypes=locator.lookupArchiveFileServiceRemote().getAllPartyTypes();
             List<String> placeHolders=new ArrayList<String>();
@@ -770,7 +767,6 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
         this.lstMailTemplates.setModel(model);
 
         ClientSettings settings = ClientSettings.getInstance();
-        //EditorsRegistry.getInstance().updateStatus("Adresse wird gespeichert...");
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             
@@ -1087,7 +1083,6 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             EmailTemplate tpl=new EmailTemplate();
             EditorImplementation ed=(EditorImplementation)this.contentPanel.getComponent(0);
-//            tpl.setBody(this.taBody.getText());
             tpl.setBody(ed.getText());
             tpl.setFileName(this.lstMailTemplates.getSelectedValue().toString());
             tpl.setFormat(this.cmbFormat.getSelectedItem().toString());
@@ -1110,14 +1105,12 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
             return;
         
         ClientSettings settings = ClientSettings.getInstance();
-        //EditorsRegistry.getInstance().updateStatus("Adresse wird gespeichert...");
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             
             EmailTemplate tpl=locator.lookupIntegrationServiceRemote().getEmailTemplate(this.lstMailTemplates.getSelectedValue().toString());
             this.cmbFormat.setSelectedItem(tpl.getFormat());
             EditorImplementation ed=(EditorImplementation)this.contentPanel.getComponent(0);
-//            this.taBody.setText(tpl.getBody());
             ed.setText(tpl.getBody());
             this.txtSubject.setText(tpl.getSubject());
             this.cmbFormat.setSelectedItem(tpl.getFormat());
@@ -1138,7 +1131,6 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
         }
 
         ClientSettings settings = ClientSettings.getInstance();
-        //EditorsRegistry.getInstance().updateStatus("Adresse wird gespeichert...");
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             EmailTemplate tpl=new EmailTemplate();
@@ -1159,7 +1151,6 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
         if (this.lstMailTemplates.getSelectedValue() != null) {
             
                 ClientSettings settings = ClientSettings.getInstance();
-                //EditorsRegistry.getInstance().updateStatus("Adresse wird gespeichert...");
                 try {
                     JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                     List selectedValues=this.lstMailTemplates.getSelectedValuesList();
@@ -1192,19 +1183,13 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
         if(this.PLACEHOLDERTARGET_SUBJECT.equals(target)) {
             this.txtSubject.setText(PlaceHolderUtils.insertAt(this.txtSubject.getText(), insert, this.txtSubject.getCaretPosition()));
         } else if(this.PLACEHOLDERTARGET_BODY.equals(target)) {
-//            this.taBody.setText(PlaceHolderUtils.insertAt(this.taBody.getText(), insert, this.taBody.getCaretPosition()));
             ed.setText(PlaceHolderUtils.insertAt(ed.getText(), insert, ed.getCaretPosition()));
         }
     }//GEN-LAST:event_cmdAddPlaceHolderActionPerformed
 
     private void contentPanelComponentResized(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_contentPanelComponentResized
-        //Component c=contentPanel.getComponent(0);
         tp.setBounds(0,0, this.contentPanel.getWidth(), this.contentPanel.getHeight());        
-        //tp.setSize(this.contentPanel.getWidth(), this.contentPanel.getHeight());
         hp.setBounds(0,0, this.contentPanel.getWidth(), this.contentPanel.getHeight());        
-        //hp.setSize(this.contentPanel.getWidth(), this.contentPanel.getHeight());
-        //hp.repaint();
-        //tp.repaint();
         SwingUtilities.updateComponentTreeUI(tp);
         SwingUtilities.updateComponentTreeUI(hp);
     }//GEN-LAST:event_contentPanelComponentResized
@@ -1219,22 +1204,14 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
             this.contentPanel.remove(0);
             this.contentPanel.add(hp);
             hp.setBounds(0, 0, this.contentPanel.getWidth(), this.contentPanel.getHeight());
-            //hp.setSize(this.contentPanel.getWidth(), this.contentPanel.getHeight());
             tp.setBounds(0, 0, this.contentPanel.getWidth(), this.contentPanel.getHeight());
-            //tp.setSize(this.contentPanel.getWidth(), this.contentPanel.getHeight());
-            //this.contentPanel.repaint();
-            //hp.repaint();
             SwingUtilities.updateComponentTreeUI(tp);
             SwingUtilities.updateComponentTreeUI(hp);
         } else {
             this.contentPanel.remove(0);
             this.contentPanel.add(tp);
             tp.setBounds(0, 0, this.contentPanel.getWidth(), this.contentPanel.getHeight());
-            //tp.setSize(this.contentPanel.getWidth(), this.contentPanel.getHeight());
             hp.setBounds(0, 0, this.contentPanel.getWidth(), this.contentPanel.getHeight());
-            //hp.setSize(this.contentPanel.getWidth(), this.contentPanel.getHeight());
-            //this.contentPanel.repaint();
-            //tp.repaint();
             SwingUtilities.updateComponentTreeUI(tp);
             SwingUtilities.updateComponentTreeUI(hp);
         }
