@@ -774,6 +774,7 @@ public class DocumentFolderTemplatesDialog extends javax.swing.JDialog {
         jScrollPane1.setViewportView(treeFolders);
 
         cmdAdd.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit_add.png"))); // NOI18N
+        cmdAdd.setToolTipText("neue Ordnerstruktur anlegen");
         cmdAdd.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmdAddActionPerformed(evt);
@@ -781,6 +782,7 @@ public class DocumentFolderTemplatesDialog extends javax.swing.JDialog {
         });
 
         cmdRemove.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editdelete.png"))); // NOI18N
+        cmdRemove.setToolTipText("Struktur löschen");
         cmdRemove.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmdRemoveActionPerformed(evt);
@@ -796,6 +798,7 @@ public class DocumentFolderTemplatesDialog extends javax.swing.JDialog {
         });
 
         cmdEdit.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/kate.png"))); // NOI18N
+        cmdEdit.setToolTipText("Struktur umbenennen");
         cmdEdit.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmdEditActionPerformed(evt);

@@ -762,7 +762,7 @@ public interface ArchiveFileServiceLocal {
 
     List<DocumentFolderTemplate> getAllFolderTemplates();
 
-    void addFolderTemplate(DocumentFolderTemplate template);
+    void addFolderTemplate(DocumentFolderTemplate template) throws Exception;
 
     void removeFolderTemplate(String name);
 

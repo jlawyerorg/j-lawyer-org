@@ -4106,7 +4106,11 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
     @Override
     @RolesAllowed({"adminRole"})
-    public void addFolderTemplate(DocumentFolderTemplate template) {
+    public void addFolderTemplate(DocumentFolderTemplate template) throws Exception {
+        Object o=this.folderTemplateFacade.findByName(template.getName());
+        if(o!=null)
+            throw new Exception("Ordnerstruktur mit diesem Namen existiert bereits. Bitte einen anderen Namen wählen.");
+        
         StringGenerator idGen = new StringGenerator();
 
         // create root folder
