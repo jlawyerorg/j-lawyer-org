@@ -705,6 +705,7 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
         initComponents();
         
         ComponentUtils.decorateSplitPane(jSplitPane1);
+        ComponentUtils.decorateSplitPane(jSplitPane2);
         
         tp=new TextEditorPanel();
         hp=new HtmlEditorPanel();
@@ -753,6 +754,12 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
             this.jSplitPane1.setDividerLocation(Math.max(this.jSplitPane1.getWidth()-280, 600));
         }
         
+        
+        ComponentUtils.restoreSplitPane(this.jSplitPane1, this.getClass(), "jSplitPane1");
+        ComponentUtils.restoreSplitPane(this.jSplitPane2, this.getClass(), "jSplitPane2");
+        
+        ComponentUtils.persistSplitPane(this.jSplitPane1, this.getClass(), "jSplitPane1");
+        ComponentUtils.persistSplitPane(this.jSplitPane2, this.getClass(), "jSplitPane2");
 
     }
 
@@ -802,13 +809,16 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        jLabel18 = new javax.swing.JLabel();
+        lblPanelTitle = new javax.swing.JLabel();
+        cmdRefresh = new javax.swing.JButton();
+        jSplitPane2 = new javax.swing.JSplitPane();
+        jPanel3 = new javax.swing.JPanel();
         cmdSave = new javax.swing.JButton();
         jScrollPane1 = new javax.swing.JScrollPane();
         lstMailTemplates = new javax.swing.JList();
         cmdNew = new javax.swing.JButton();
         cmdDelete = new javax.swing.JButton();
-        jLabel18 = new javax.swing.JLabel();
-        lblPanelTitle = new javax.swing.JLabel();
         jSplitPane1 = new javax.swing.JSplitPane();
         jPanel1 = new javax.swing.JPanel();
         jLabel1 = new javax.swing.JLabel();
@@ -822,7 +832,24 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
         jScrollPane3 = new javax.swing.JScrollPane();
         lstPlaceHolders = new javax.swing.JList();
         cmbPlaceHolderTarget = new javax.swing.JComboBox();
-        cmdRefresh = new javax.swing.JButton();
+
+        jLabel18.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/message_big.png"))); // NOI18N
+
+        lblPanelTitle.setFont(new java.awt.Font("Dialog", 1, 24)); // NOI18N
+        lblPanelTitle.setForeground(new java.awt.Color(255, 255, 255));
+        lblPanelTitle.setText("E-Mail- und beA- Vorlagen");
+
+        cmdRefresh.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_refresh_blue_36dp.png"))); // NOI18N
+        cmdRefresh.setToolTipText("Aktualisieren");
+        cmdRefresh.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdRefreshActionPerformed(evt);
+            }
+        });
+
+        jSplitPane2.setDividerLocation(200);
+        jSplitPane2.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
+        jSplitPane2.setResizeWeight(0.5);
 
         cmdSave.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/filesave.png"))); // NOI18N
         cmdSave.setText("Speichern");
@@ -860,11 +887,32 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
             }
         });
 
-        jLabel18.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/message_big.png"))); // NOI18N
+        org.jdesktop.layout.GroupLayout jPanel3Layout = new org.jdesktop.layout.GroupLayout(jPanel3);
+        jPanel3.setLayout(jPanel3Layout);
+        jPanel3Layout.setHorizontalGroup(
+            jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jScrollPane1)
+            .add(jPanel3Layout.createSequentialGroup()
+                .add(0, 0, Short.MAX_VALUE)
+                .add(cmdNew)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(cmdSave)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(cmdDelete))
+        );
+        jPanel3Layout.setVerticalGroup(
+            jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jPanel3Layout.createSequentialGroup()
+                .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 157, Short.MAX_VALUE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(cmdSave)
+                    .add(cmdNew)
+                    .add(cmdDelete))
+                .add(6, 6, 6))
+        );
 
-        lblPanelTitle.setFont(new java.awt.Font("Dialog", 1, 24)); // NOI18N
-        lblPanelTitle.setForeground(new java.awt.Color(255, 255, 255));
-        lblPanelTitle.setText("E-Mail- und beA- Vorlagen");
+        jSplitPane2.setLeftComponent(jPanel3);
 
         jSplitPane1.setDividerLocation(600);
         jSplitPane1.addComponentListener(new java.awt.event.ComponentAdapter() {
@@ -940,7 +988,7 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
                 .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(jPanel1Layout.createSequentialGroup()
                         .add(jLabel3)
-                        .add(0, 60, Short.MAX_VALUE))
+                        .add(0, 0, Short.MAX_VALUE))
                     .add(jPanel1Layout.createSequentialGroup()
                         .add(1, 1, 1)
                         .add(contentPanel, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
@@ -977,8 +1025,8 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
                 .add(cmdAddPlaceHolder)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jScrollPane3)
-                    .add(cmbPlaceHolderTarget, 0, 193, Short.MAX_VALUE))
+                    .add(jScrollPane3, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 236, Short.MAX_VALUE)
+                    .add(cmbPlaceHolderTarget, 0, 236, Short.MAX_VALUE))
                 .addContainerGap())
         );
         jPanel2Layout.setVerticalGroup(
@@ -994,13 +1042,7 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
 
         jSplitPane1.setRightComponent(jPanel2);
 
-        cmdRefresh.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/baseline_refresh_blue_36dp.png"))); // NOI18N
-        cmdRefresh.setToolTipText("Aktualisieren");
-        cmdRefresh.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdRefreshActionPerformed(evt);
-            }
-        });
+        jSplitPane2.setRightComponent(jSplitPane1);
 
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(this);
         this.setLayout(layout);
@@ -1009,22 +1051,14 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
             .add(layout.createSequentialGroup()
                 .addContainerGap()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(org.jdesktop.layout.GroupLayout.TRAILING, jScrollPane1)
-                    .add(jSplitPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 894, Short.MAX_VALUE)
-                    .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
-                        .add(0, 0, Short.MAX_VALUE)
-                        .add(cmdNew)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(cmdSave)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(cmdDelete))
                     .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
                         .add(cmdRefresh)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                         .add(jLabel18)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(lblPanelTitle)
-                        .add(0, 0, Short.MAX_VALUE)))
+                        .add(0, 455, Short.MAX_VALUE))
+                    .add(jSplitPane2))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -1037,14 +1071,7 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
                         .add(org.jdesktop.layout.GroupLayout.LEADING, jLabel18, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                     .add(cmdRefresh))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jScrollPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 129, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(cmdSave)
-                    .add(cmdNew)
-                    .add(cmdDelete))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                .add(jSplitPane1)
+                .add(jSplitPane2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 398, Short.MAX_VALUE)
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -1232,9 +1259,11 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
     private javax.swing.JLabel jLabel3;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
+    private javax.swing.JPanel jPanel3;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JSplitPane jSplitPane1;
+    private javax.swing.JSplitPane jSplitPane2;
     protected javax.swing.JLabel lblPanelTitle;
     private javax.swing.JList lstMailTemplates;
     private javax.swing.JList lstPlaceHolders;
