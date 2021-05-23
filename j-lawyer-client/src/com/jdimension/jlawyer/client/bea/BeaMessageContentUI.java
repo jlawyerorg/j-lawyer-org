@@ -718,7 +718,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
     private String documentId = null;
 
     /**
-     * Creates new form MailContentUI
+     * Creates new form BeaMessageContentUI
      */
     public BeaMessageContentUI() {
         initComponents();
@@ -745,7 +745,21 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
         DefaultTableModel tm2 = new DefaultTableModel(new String[]{"Code", "Text"}, 0);
         this.tblProcessCard.setModel(tm2);
         this.cmdShowProcessCard.setEnabled(false);
-
+        
+//        ComponentUtils.restoreSplitPane(this.jSplitPane1, this.getClass(), "jSplitPane1");
+//        try {
+//            
+//            if ((this.jSplitPane1.getHeight() - this.jSplitPane1.getDividerLocation()) < 150) {
+//                this.jSplitPane1.setDividerLocation(this.jSplitPane1.getHeight() - 150);
+//            }
+//            double divLoc=(double)this.jSplitPane1.getDividerLocation()/(double)this.jSplitPane1.getHeight();
+//            if(divLoc<0.25d || divLoc > 0.8d)
+//                this.jSplitPane1.setDividerLocation(0.8d);
+//        } catch (Throwable t) {
+//            log.warn("invalid split pane location", t);
+//        }
+//        ComponentUtils.persistSplitPane(this.jSplitPane1, this.getClass(), "jSplitPane1");
+//        
     }
 
     public void clear() {
