@@ -664,6 +664,8 @@
 package com.jdimension.jlawyer.client.configuration;
 
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.settings.ServerSettings;
+import com.jdimension.jlawyer.security.PasswordsUtil;
 import java.net.URL;
 import org.apache.log4j.Logger;
 
@@ -671,30 +673,25 @@ import org.apache.log4j.Logger;
  *
  * @author  jens
  */
-public class WordProcessorConfigurationDialog extends javax.swing.JDialog {
+public class SecurityConfigurationDialog extends javax.swing.JDialog {
     
-    private static Logger log=Logger.getLogger(WordProcessorConfigurationDialog.class.getName());
+    private static Logger log=Logger.getLogger(SecurityConfigurationDialog.class.getName());
     
-    private String categoryKey=null;
-    
-    /** Creates new form WordProcessorConfigurationDialog */
-    public WordProcessorConfigurationDialog(java.awt.Frame parent, boolean modal) {
+    /** Creates new form SecurityConfigurationDialog */
+    public SecurityConfigurationDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
         
-        URL libre=getClass().getResource("/icons16/fileicons/file_type_odt.png");
-        URL word=getClass().getResource("/icons16/fileicons/file_type_docx.png");
-        this.rdLibreOffice.setText("<html><body><img src='" + libre.toString() +"'/> Libre Office</body></html>");
-        this.rdMicrosoftOffice.setText("<html><body><img src='" + word.toString() +"'/> Microsoft Word</body></html>");
-        
-        ClientSettings set=ClientSettings.getInstance();
-        String wordprocessor=set.getConfiguration(ClientSettings.CONF_APPS_WORDPROCESSOR_KEY, "libreoffice");
-        if(ClientSettings.CONF_APPS_WORDPROCESSOR_VALUE_LO.equals(wordprocessor)) {
-            this.rdLibreOffice.setSelected(true);
-            this.rdMicrosoftOffice.setSelected(false);
+        this.jLabel4.setToolTipText(PasswordsUtil.HTML_HINT_PASSWORDCOMPLEXITY);
+       
+        ServerSettings set=ServerSettings.getInstance();
+        boolean complexPasswords=set.getSettingAsBoolean(ServerSettings.SERVERCONF_SECURITY_FORCE_PASSWORDCOMPLEXITY, true);
+        if(complexPasswords) {
+            this.rdForceComplexPasswords.setSelected(true);
+            this.rdAnyPasswords.setSelected(false);
         } else {
-            this.rdLibreOffice.setSelected(false);
-            this.rdMicrosoftOffice.setSelected(true);
+            this.rdForceComplexPasswords.setSelected(false);
+            this.rdAnyPasswords.setSelected(true);
         }
         
     }
@@ -707,16 +704,16 @@ public class WordProcessorConfigurationDialog extends javax.swing.JDialog {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        btnGrpOffice = new javax.swing.ButtonGroup();
+        btnGrpPasswordComplexity = new javax.swing.ButtonGroup();
         cmdClose = new javax.swing.JButton();
         lblCaption = new javax.swing.JLabel();
         cmdSave = new javax.swing.JButton();
         jLabel4 = new javax.swing.JLabel();
-        rdLibreOffice = new javax.swing.JRadioButton();
-        rdMicrosoftOffice = new javax.swing.JRadioButton();
+        rdForceComplexPasswords = new javax.swing.JRadioButton();
+        rdAnyPasswords = new javax.swing.JRadioButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
-        setTitle("Textverarbeitung auswählen");
+        setTitle("Sicherheitseinstellungen");
 
         cmdClose.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png"))); // NOI18N
         java.util.ResourceBundle bundle = java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/configuration/CustomFieldConfigurationDialog"); // NOI18N
@@ -727,7 +724,7 @@ public class WordProcessorConfigurationDialog extends javax.swing.JDialog {
             }
         });
 
-        lblCaption.setText("Primäre Office-Suite auf diesem Gerät:");
+        lblCaption.setText("Anforderungen an komplexe Passwörter");
 
         cmdSave.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png"))); // NOI18N
         cmdSave.setText(bundle.getString("button.save")); // NOI18N
@@ -738,14 +735,14 @@ public class WordProcessorConfigurationDialog extends javax.swing.JDialog {
         });
 
         jLabel4.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/info.png"))); // NOI18N
-        jLabel4.setToolTipText("Primär zu verwendende Textverarbeitung auswählen.\n\nDie Einstellung ist spezifisch für dieses Gerät und den dort angemeldeten Nutzer.");
+        jLabel4.setToolTipText("<html>\nKomplexe Passw&ouml;rter enthalten\n<ul>\n<li>mindestens 8 Zeichen</li>\n<li>Großbuchstaben</li>\n<li>Kleinbuchstaben</li>\n<li>Ziffern</li>\n<li>mindestens eines der Sonderzeichen: -_@#$%^&amp;+=</li>\n</ul>\n</html>");
 
-        btnGrpOffice.add(rdLibreOffice);
-        rdLibreOffice.setSelected(true);
-        rdLibreOffice.setText("Libre Office");
+        btnGrpPasswordComplexity.add(rdForceComplexPasswords);
+        rdForceComplexPasswords.setSelected(true);
+        rdForceComplexPasswords.setText("komplexe Passwörter erzwingen");
 
-        btnGrpOffice.add(rdMicrosoftOffice);
-        rdMicrosoftOffice.setText("Microsoft Office");
+        btnGrpPasswordComplexity.add(rdAnyPasswords);
+        rdAnyPasswords.setText("beliebige Passwörter zulassen");
 
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -769,8 +766,8 @@ public class WordProcessorConfigurationDialog extends javax.swing.JDialog {
                     .add(layout.createSequentialGroup()
                         .add(12, 12, 12)
                         .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                            .add(rdMicrosoftOffice)
-                            .add(rdLibreOffice))
+                            .add(rdAnyPasswords)
+                            .add(rdForceComplexPasswords))
                         .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
         );
         layout.setVerticalGroup(
@@ -781,9 +778,9 @@ public class WordProcessorConfigurationDialog extends javax.swing.JDialog {
                     .add(lblCaption)
                     .add(jLabel4))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                .add(rdLibreOffice)
+                .add(rdForceComplexPasswords)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                .add(rdMicrosoftOffice)
+                .add(rdAnyPasswords)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(cmdClose)
@@ -800,13 +797,9 @@ public class WordProcessorConfigurationDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_cmdCloseActionPerformed
 
     private void cmdSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveActionPerformed
-        String wordProcessor=ClientSettings.CONF_APPS_WORDPROCESSOR_VALUE_LO;
-        if(this.rdMicrosoftOffice.isSelected()) { 
-            wordProcessor=ClientSettings.CONF_APPS_WORDPROCESSOR_VALUE_MSO;
-        }
+        ServerSettings set=ServerSettings.getInstance();
+        set.setSettingAsBoolean(ServerSettings.SERVERCONF_SECURITY_FORCE_PASSWORDCOMPLEXITY, this.rdForceComplexPasswords.isSelected());
 
-        ClientSettings.getInstance().setConfiguration(ClientSettings.CONF_APPS_WORDPROCESSOR_KEY, wordProcessor);
-      
         this.setVisible(false);
         this.dispose();
     }//GEN-LAST:event_cmdSaveActionPerformed
@@ -817,19 +810,19 @@ public class WordProcessorConfigurationDialog extends javax.swing.JDialog {
     public static void main(String args[]) {
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                new WordProcessorConfigurationDialog(new javax.swing.JFrame(), true).setVisible(true);
+                new SecurityConfigurationDialog(new javax.swing.JFrame(), true).setVisible(true);
             }
         });
     }
     
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.ButtonGroup btnGrpOffice;
+    private javax.swing.ButtonGroup btnGrpPasswordComplexity;
     private javax.swing.JButton cmdClose;
     private javax.swing.JButton cmdSave;
     private javax.swing.JLabel jLabel4;
     javax.swing.JLabel lblCaption;
-    private javax.swing.JRadioButton rdLibreOffice;
-    private javax.swing.JRadioButton rdMicrosoftOffice;
+    private javax.swing.JRadioButton rdAnyPasswords;
+    private javax.swing.JRadioButton rdForceComplexPasswords;
     // End of variables declaration//GEN-END:variables
     
     

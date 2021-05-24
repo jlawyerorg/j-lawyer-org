@@ -748,31 +748,24 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
         this.tblProcessCard.setModel(tm2);
         this.cmdShowProcessCard.setEnabled(false);
         
-        jSplitPane1.addPropertyChangeListener(JSplitPane.DIVIDER_LOCATION_PROPERTY, new PropertyChangeListener() {
-
-            @Override
-            public void propertyChange(PropertyChangeEvent evt) {
-                SwingUtilities.invokeLater(new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            
-                            if(jSplitPane1.getHeight()<=0)
-                                return;
-
-                            double divLoc = (double) jSplitPane1.getDividerLocation() / (double) jSplitPane1.getHeight();
-                            if (divLoc < 0.1d) {
-                                jSplitPane1.setDividerLocation(0.1d);
-                            }
-                            if (divLoc > 0.9d) {
-                                jSplitPane1.setDividerLocation(0.9d);
-                            }
-                        } catch (Throwable t) {
-                            log.warn("invalid split pane location", t);
-                        }
+        jSplitPane1.addPropertyChangeListener(JSplitPane.DIVIDER_LOCATION_PROPERTY, (PropertyChangeEvent evt) -> {
+            SwingUtilities.invokeLater(() -> {
+                try {
+                    
+                    if(jSplitPane1.getHeight()<=0)
+                        return;
+                    
+                    double divLoc = (double) jSplitPane1.getDividerLocation() / (double) jSplitPane1.getHeight();
+                    if (divLoc < 0.1d) {
+                        jSplitPane1.setDividerLocation(0.1d);
                     }
-                });
-            }
+                    if (divLoc > 0.9d) {
+                        jSplitPane1.setDividerLocation(0.9d);
+                    }
+                } catch (Throwable t) {
+                    log.warn("invalid split pane location", t);
+                }
+            });
         });
         
     }

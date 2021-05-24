@@ -677,10 +677,12 @@ import org.apache.log4j.Logger;
 import com.jdimension.jlawyer.client.calendar.CalendarUtils;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.processing.ProgressIndicator;
+import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.DesktopUtils;
 import com.jdimension.jlawyer.client.utils.FileUtils;
+import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.persistence.Group;
 import com.jdimension.jlawyer.persistence.GroupMembership;
 import com.jdimension.jlawyer.services.SecurityServiceRemote;
@@ -1737,7 +1739,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
             } catch (Exception ex) {
                 log.error("Error connecting to server", ex);
                 JOptionPane.showMessageDialog(this, ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
-                
+
             }
         }
     }//GEN-LAST:event_mnuDeleteActionPerformed
@@ -1780,7 +1782,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
             newUser.setLawyer(true);
             newUser.setCloudPort(443);
             newUser.setCloudSsl(true);
-            
+
             ((UserListModel) this.lstUsers.getModel()).addElement(newUser);
             this.lstUsers.setSelectedIndex(this.lstUsers.getMaxSelectionIndex());
         } catch (Exception ex) {
@@ -1907,10 +1909,10 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 this.txtCloudUser.setText(u.getCloudUser());
                 this.pwCloudPassword.setText(u.getCloudPassword());
                 this.chkCloudSsl.setSelected(u.isCloudSsl());
-                
+
                 this.txtVoipPassword.setText(u.getVoipPassword());
                 this.txtVoipUser.setText(u.getVoipUser());
-                
+
                 this.txtDisplayName.setText(u.getDisplayName());
 
                 if (u.isBeaCertificateAutoLogin()) {
@@ -1988,8 +1990,9 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 u.setLawyer(this.chkLawyer.isSelected());
                 u.setAbbreviation(this.txtAbbreviation.getText());
                 u.setPrimaryGroup(null);
-                if(this.cmbPrimaryGroup.getSelectedItem() instanceof Group)
+                if (this.cmbPrimaryGroup.getSelectedItem() instanceof Group) {
                     u.setPrimaryGroup((Group) this.cmbPrimaryGroup.getSelectedItem());
+                }
 
                 String countryName = this.cmbCountry.getSelectedItem().toString();
                 Object regionNameO = this.cmbArea.getSelectedItem();
@@ -2055,10 +2058,10 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 u.setCloudPort(Integer.parseInt(this.txtCloudPort.getText()));
                 u.setCloudSsl(this.chkCloudSsl.isSelected());
                 u.setCloudUser(this.txtCloudUser.getText());
-                
+
                 u.setVoipPassword(this.txtVoipPassword.getText());
                 u.setVoipUser(this.txtVoipUser.getText());
-                
+
                 u.setDisplayName(this.txtDisplayName.getText());
 
                 AppUserBean newUser = mgmt.updateUser(u, this.getRolesFromUI(u.getPrincipalId()));
@@ -2105,10 +2108,10 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         this.txtCloudUser.setText("");
         this.pwCloudPassword.setText("");
         this.chkCloudSsl.setSelected(true);
-        
+
         this.txtVoipPassword.setText("");
         this.txtVoipUser.setText("");
-        
+
         this.txtDisplayName.setText("");
 
         this.txtUser.requestFocus();
@@ -2291,7 +2294,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
 
             Object o = resetUsers[0];
             String principalId = ((AppUserBean) o).getPrincipalId();
-            
+
             if (principalId.equals(UserSettings.getInstance().getCurrentUser().getPrincipalId())) {
                 int response = JOptionPane.showConfirmDialog(this, "Nach Passwortänderung muss die Anwendung neu gestartet werden. Stellen Sie sicher dass alle Dokumente / Akten geschlossen sind. Fortfahren?", "Passwort ändern", JOptionPane.YES_NO_OPTION);
                 if (response == JOptionPane.NO_OPTION) {
@@ -2299,24 +2302,14 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 }
             }
 
-            boolean changed = false;
+            boolean complexPasswords = ServerSettings.getInstance().getSettingAsBoolean(ServerSettings.SERVERCONF_SECURITY_FORCE_PASSWORDCOMPLEXITY, true);
+            GetPasswordDialog dlg = new GetPasswordDialog(this, true, complexPasswords);
+            FrameUtils.centerDialog(dlg, this);
+            dlg.setVisible(true);
 
-            Object newPwd = JOptionPane.showInputDialog(this, "neues Passwort: ", "Passwort ändern", JOptionPane.QUESTION_MESSAGE, null, null, "");
-            if (newPwd == null || "".equals(newPwd)) {
-                // user cancelled
-            } else {
-                // confirm
-                Object confirmPwd = JOptionPane.showInputDialog(this, "Passwort bestätigen: ", "Passwort ändern", JOptionPane.QUESTION_MESSAGE, null, null, "");
-                if (confirmPwd == null || "".equals(confirmPwd)) {
-                    // cancelled
-                } else {
-                    if (confirmPwd.equals(newPwd)) {
-                        changed = true;
-                    }
-                }
-            }
+            String newPwd = dlg.getPassword();
 
-            if (changed) {
+            if (newPwd != null) {
                 ClientSettings settings = ClientSettings.getInstance();
                 try {
                     JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
@@ -2324,13 +2317,13 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                     SystemManagementRemote mgmt = locator.lookupSystemManagementRemote();
                     AppUserBean u = mgmt.getUser(UserSettings.getInstance().getCurrentUser().getPrincipalId());
                     if (u != null) {
-                        mgmt.updatePasswordForUser(principalId, newPwd.toString());
+                        mgmt.updatePasswordForUser(principalId, newPwd);
                     }
 
                 } catch (Exception ex) {
                     log.error("Error connecting to server", ex);
                     JOptionPane.showMessageDialog(this, ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
-                    
+
                 }
             } else {
                 JOptionPane.showMessageDialog(this, "Passwort NICHT aktualisiert!", "Hinweis", JOptionPane.WARNING_MESSAGE);

@@ -1101,6 +1101,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuDrebisSettings = new javax.swing.JMenuItem();
         jSeparator5 = new javax.swing.JPopupMenu.Separator();
         mnuBackupConfiguration = new javax.swing.JMenuItem();
+        mnuSecurity = new javax.swing.JMenuItem();
         mnuAdminConsole = new javax.swing.JMenuItem();
         mnuServerMonitor = new javax.swing.JMenuItem();
         mnuCalculations = new javax.swing.JMenu();
@@ -1646,6 +1647,15 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         });
         mnuOptions.add(mnuBackupConfiguration);
 
+        mnuSecurity.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/ksysv.png"))); // NOI18N
+        mnuSecurity.setText("Sicherheit");
+        mnuSecurity.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuSecurityActionPerformed(evt);
+            }
+        });
+        mnuOptions.add(mnuSecurity);
+
         mnuAdminConsole.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/konsole.png"))); // NOI18N
         mnuAdminConsole.setText(bundle.getString("menu.settings.adminconsole")); // NOI18N
         mnuAdminConsole.addActionListener(new java.awt.event.ActionListener() {
@@ -1655,7 +1665,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         });
         mnuOptions.add(mnuAdminConsole);
 
-        mnuServerMonitor.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/ksysv.png"))); // NOI18N
+        mnuServerMonitor.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_show_chart_black_48dp.png"))); // NOI18N
         mnuServerMonitor.setText(bundle.getString("menu.settings.monitoring")); // NOI18N
         mnuServerMonitor.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -2601,12 +2611,28 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
 
     private void mnuVoipSoftphoneSettingsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuVoipSoftphoneSettingsActionPerformed
             VoipSoftphoneConfigurationDialog dlg = new VoipSoftphoneConfigurationDialog(this, true);
-                //dlg.setTitle("Anreden");
-                //dlg.setOptionGroup(OptionConstants.OPTIONGROUP_SALUTATIONS);
                 FrameUtils.centerDialog(dlg, this);
                 dlg.setVisible(true);
             
     }//GEN-LAST:event_mnuVoipSoftphoneSettingsActionPerformed
+
+    private void mnuSecurityActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSecurityActionPerformed
+        ClientSettings settings = ClientSettings.getInstance();
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            boolean currentlyAdmin = locator.lookupSecurityServiceRemote().isAdmin();
+            if (currentlyAdmin) {
+                SecurityConfigurationDialog dlg = new SecurityConfigurationDialog(this, true);
+                FrameUtils.centerDialog(dlg, this);
+                dlg.setVisible(true);
+            } else {
+                JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.adminrequired"), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.hint"), JOptionPane.INFORMATION_MESSAGE);
+            }
+        } catch (Exception ex) {
+            log.error(ex);
+            JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("error.launchsettings") + ex.getMessage(), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.error"), JOptionPane.INFORMATION_MESSAGE);
+        }
+    }//GEN-LAST:event_mnuSecurityActionPerformed
 
     /**
      * @param args the command line arguments
@@ -2685,6 +2711,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     private javax.swing.JMenuItem mnuProfileInfo;
     private javax.swing.JMenuItem mnuScanOptions;
     private javax.swing.JMenuItem mnuSearchIndex;
+    private javax.swing.JMenuItem mnuSecurity;
     private javax.swing.JMenuItem mnuServerMonitor;
     private javax.swing.JMenuItem mnuUserProfile;
     private javax.swing.JMenuItem mnuUsers;

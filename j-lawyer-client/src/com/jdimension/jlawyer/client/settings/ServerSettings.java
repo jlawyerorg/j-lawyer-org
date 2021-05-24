@@ -784,6 +784,8 @@ public class ServerSettings {
     
     public static final String SERVERCONF_DOCUMENTS_BIN_RETENTIONDAYS="jlawyer.server.documents.bin.retentiondays";
     
+    public static final String SERVERCONF_SECURITY_FORCE_PASSWORDCOMPLEXITY="jlawyer.server.security.forcepasswordcomplexity";
+    
     private SystemManagementRemote mgmt=null;
     
     /**
