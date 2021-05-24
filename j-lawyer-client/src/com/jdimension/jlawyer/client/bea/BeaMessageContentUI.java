@@ -683,6 +683,8 @@ import com.jdimension.jlawyer.persistence.CaseFolder;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Dimension;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.text.SimpleDateFormat;
@@ -746,20 +748,33 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
         this.tblProcessCard.setModel(tm2);
         this.cmdShowProcessCard.setEnabled(false);
         
-//        ComponentUtils.restoreSplitPane(this.jSplitPane1, this.getClass(), "jSplitPane1");
-//        try {
-//            
-//            if ((this.jSplitPane1.getHeight() - this.jSplitPane1.getDividerLocation()) < 150) {
-//                this.jSplitPane1.setDividerLocation(this.jSplitPane1.getHeight() - 150);
-//            }
-//            double divLoc=(double)this.jSplitPane1.getDividerLocation()/(double)this.jSplitPane1.getHeight();
-//            if(divLoc<0.25d || divLoc > 0.8d)
-//                this.jSplitPane1.setDividerLocation(0.8d);
-//        } catch (Throwable t) {
-//            log.warn("invalid split pane location", t);
-//        }
-//        ComponentUtils.persistSplitPane(this.jSplitPane1, this.getClass(), "jSplitPane1");
-//        
+        jSplitPane1.addPropertyChangeListener(JSplitPane.DIVIDER_LOCATION_PROPERTY, new PropertyChangeListener() {
+
+            @Override
+            public void propertyChange(PropertyChangeEvent evt) {
+                SwingUtilities.invokeLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            
+                            if(jSplitPane1.getHeight()<=0)
+                                return;
+
+                            double divLoc = (double) jSplitPane1.getDividerLocation() / (double) jSplitPane1.getHeight();
+                            if (divLoc < 0.1d) {
+                                jSplitPane1.setDividerLocation(0.1d);
+                            }
+                            if (divLoc > 0.9d) {
+                                jSplitPane1.setDividerLocation(0.9d);
+                            }
+                        } catch (Throwable t) {
+                            log.warn("invalid split pane location", t);
+                        }
+                    }
+                });
+            }
+        });
+        
     }
 
     public void clear() {
