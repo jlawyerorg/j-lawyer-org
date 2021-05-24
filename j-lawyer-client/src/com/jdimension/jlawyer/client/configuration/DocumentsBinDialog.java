@@ -951,6 +951,11 @@ public class DocumentsBinDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_cmdRestoreActionPerformed
 
     private void cmdEmptyBinActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdEmptyBinActionPerformed
+        int response = JOptionPane.showConfirmDialog(this, "Dokumente im Papierkorb unwiderruflich löschen?", "Papierkorb leeren", JOptionPane.YES_NO_OPTION);
+        if (response == JOptionPane.NO_OPTION) {
+            return;
+        }
+        
         try {
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
