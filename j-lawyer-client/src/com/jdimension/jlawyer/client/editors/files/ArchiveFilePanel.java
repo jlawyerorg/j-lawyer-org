@@ -4816,9 +4816,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
                 this.waitForOpenDocument(doc, callback);
 
-                // we only support duplication of one document at a time
-                break;
-
             }
 
         } catch (Exception ioe) {
@@ -5336,7 +5333,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                             
                             caseFolderPanel1.addDocument(newDoc);
 
-                            // we only support duplication of one document at a time
                         } catch (Exception ioe) {
                             log.error("Error duplicating document", ioe);
                             JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Konvertieren des Dokuments: " + ioe.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
@@ -5346,7 +5342,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
                 this.waitForOpenDocument(doc, callback);
 
-                break;
 
             }
         } catch (Exception ioe) {
