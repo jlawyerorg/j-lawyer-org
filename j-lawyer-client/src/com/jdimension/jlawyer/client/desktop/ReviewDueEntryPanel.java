@@ -718,7 +718,7 @@ public class ReviewDueEntryPanel extends javax.swing.JPanel {
     private float alpha=DefaultColorTheme.DESKTOP_ALPHA_DEFAULT;
 
     /**
-     * Creates new form HitPanel
+     * Creates new form ReviewDueEntryPanel
      */
     public ReviewDueEntryPanel(Color background) {
         initComponents();
@@ -754,13 +754,12 @@ public class ReviewDueEntryPanel extends javax.swing.JPanel {
 
     public void setEntry(ReviewDueEntry entry) {
         this.e = entry;
-        //this.lblFileName.setText(sh.getFileName() + " in " + sh.getArchiveFileNumber() + " " + sh.getArchiveFileName());
 
         String reason = e.getReviewReason();
         if(reason==null)
             reason="";
         
-        if (reason == null || "".equals(e.getReviewReason())) {
+        if ("".equals(e.getReviewReason())) {
             reason = java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/ReviewDueEntryPanel").getString("followup.nodescription");
         }
 
@@ -805,21 +804,21 @@ public class ReviewDueEntryPanel extends javax.swing.JPanel {
             this.lblDescription.setForeground(Color.RED.darker());
         }
 
-        StringBuffer tooltip = new StringBuffer();
+        StringBuilder tooltip = new StringBuilder();
         tooltip.append("<html>");
         if(this.e.getType()==ArchiveFileConstants.REVIEWTYPE_RESPITE) {
             String respiteCaption=java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/ReviewDueEntryPanel").getString("caption.respite");
-            tooltip.append("<b><i><u>! " + respiteCaption + " !</u></i></b><br/>");
+            tooltip.append("<b><i><u>! ").append(respiteCaption).append(" !</u></i></b><br/>");
         } else {
             String followUpCaption=java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/ReviewDueEntryPanel").getString("caption.followup");
-            tooltip.append("<b><i><u>" + followUpCaption + "</u></i></b><br/>");
+            tooltip.append("<b><i><u>").append(followUpCaption).append("</u></i></b><br/>");
         }
         String dueCaption=java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/ReviewDueEntryPanel").getString("caption.due");
-        tooltip.append("<b>" + dueCaption + ": " + dueDate + "</b><br/>" + StringUtils.nonEmpty(e.getReviewReason()));
+        tooltip.append("<b>").append(dueCaption).append(": ").append(dueDate).append("</b><br/>").append(StringUtils.nonEmpty(e.getReviewReason()));
         String caseCaption=java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/ReviewDueEntryPanel").getString("caption.case");
-        tooltip.append("<br/>" + caseCaption + ": " + fileNumber + " " + e.getArchiveFileName());
+        tooltip.append("<br/>").append(caseCaption).append(": ").append(fileNumber).append(" ").append(e.getArchiveFileName());
         String responsibleCaption=java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/ReviewDueEntryPanel").getString("caption.responsible");
-        tooltip.append("<br/>" + responsibleCaption + ": " + StringUtils.nonEmpty(e.getResponsible()));
+        tooltip.append("<br/>").append(responsibleCaption).append(": ").append(StringUtils.nonEmpty(e.getResponsible()));
         tooltip.append("<html>");
         this.lblDescription.setToolTipText(tooltip.toString());
 
@@ -836,9 +835,9 @@ public class ReviewDueEntryPanel extends javax.swing.JPanel {
         if (e.getType() == ArchiveFileConstants.REVIEWTYPE_RESPITE) {
             this.lblIcon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/clicknrunred.png")));
             this.cmdPostpone.setEnabled(false);
-        } else if (UserSettings.getInstance().getCurrentUser().getPrincipalId().equals(e.getResponsible())) {
-            this.lblIcon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/clicknrun.png")));
-            this.lblResponsible.setFont(this.lblResponsible.getFont().deriveFont(Font.BOLD));
+//        } else if (UserSettings.getInstance().getCurrentUser().getPrincipalId().equals(e.getResponsible())) {
+//            this.lblIcon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/clicknrun.png")));
+//            this.lblResponsible.setFont(this.lblResponsible.getFont().deriveFont(Font.BOLD));
         } else {
             this.lblIcon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/clicknrungrey.png")));
         }
@@ -1027,13 +1026,11 @@ public class ReviewDueEntryPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_lblDescriptionMouseClicked
 
     private void lblDescriptionMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblDescriptionMouseEntered
-        //this.lblDescription.setForeground(DefaultColorTheme.COLOR_DARK_GREY);
         this.alpha=DefaultColorTheme.DESKTOP_ALPHA_HIGHLIGHT;
         this.setBackground(new Color(250,250,250));
     }//GEN-LAST:event_lblDescriptionMouseEntered
 
     private void lblDescriptionMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblDescriptionMouseExited
-        //this.lblDescription.setForeground(this.defaultColor);
         this.alpha=DefaultColorTheme.DESKTOP_ALPHA_DEFAULT;
         this.setBackground(this.normalBackground);
     }//GEN-LAST:event_lblDescriptionMouseExited
@@ -1086,7 +1083,6 @@ public class ReviewDueEntryPanel extends javax.swing.JPanel {
     private void cmdPostponeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdPostponeActionPerformed
         JTextField hiddenField=new JTextField();
         MultiCalDialog dlg = new MultiCalDialog(hiddenField, EditorsRegistry.getInstance().getMainWindow(), true);
-        //dlg.setLocation(this.getX() + this.cmdPostpone.getX(), this.getY() + this.cmdPostpone.getY());
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
         Date d = null;

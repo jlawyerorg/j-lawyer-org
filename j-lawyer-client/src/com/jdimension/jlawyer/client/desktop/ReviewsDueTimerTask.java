@@ -666,7 +666,6 @@ package com.jdimension.jlawyer.client.desktop;
 import com.jdimension.jlawyer.client.editors.*;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
-import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileTagsBean;
@@ -675,14 +674,8 @@ import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Color;
 import java.awt.Component;
-import java.awt.Font;
-import java.awt.GridLayout;
 import java.util.*;
 import javax.swing.*;
-import javax.swing.border.Border;
-import javax.swing.border.EmptyBorder;
-import javax.swing.border.LineBorder;
-import javax.swing.border.TitledBorder;
 import org.apache.log4j.Logger;
 import themes.colors.DefaultColorTheme;
 
@@ -699,7 +692,7 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
     private boolean ignoreCurrentEditor = false;
 
     /**
-     * Creates a new instance of SystemStateTimerTask
+     * Creates a new instance of ReviewsDueTimerTask
      */
     public ReviewsDueTimerTask(Component owner, JPanel resultPanel, JSplitPane split, boolean ignoreCurrentEditor) {
         super();
@@ -716,8 +709,6 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
 
     public void run() {
 
-//        ArrayList<String> assignedToMeFileIds=new ArrayList<String>();
-//        ArrayList<String> respiteFileIds=new ArrayList<String>();
         ArrayList<ReviewDueEntry> entries = new ArrayList<ReviewDueEntry>();
         try {
 
@@ -775,57 +766,13 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
                         e.setTags(xTags);
                     }
                     entries.add(e);
-//                    if(ar.getAssignee()!=null) {
-//                        if(ownUser.equals(ar.getAssignee()))
-//                            assignedToMeFileIds.add(ar.getArchiveFileKey().getFileNumber());
-//                        if(ar.getReviewType()==ar.REVIEWTYPE_RESPITE)
-//                            respiteFileIds.add(ar.getArchiveFileKey().getFileNumber());
-//                    }
-//                    fileList.add(ar.getArchiveFileKey());
-
                 }
             }
 
-//            Comparator c = new Comparator() {
-//
-//                @Override
-//                public int compare(Object t, Object t1) {
-//                    ReviewDueEntry a1 = (ReviewDueEntry) t;
-//                    ReviewDueEntry a2 = (ReviewDueEntry) t1;
-//
-//                    if (a2 == null) {
-//                        return 1;
-//                    }
-//
-//                    if (a1 == null) {
-//                        return -1;
-//                    }
-//
-//                    Date date1 = a1.getDue();
-//                    Date date2 = a2.getDue();
-//
-//                    if (date2 == null) {
-//                        return 1;
-//                    }
-//
-//                    if (date1 == null) {
-//                        return -1;
-//                    }
-//
-//                    return date2.compareTo(date1);
-//
-//                }
-//            };
-//
-//            Collections.sort(entries, c);
         } catch (Throwable ex) {
             log.error("Error connecting to server", ex);
-            //JOptionPane.showMessageDialog(this.owner, "Verbindungsfehler: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
-            //ThreadUtils.showErrorDialog(this.owner, java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/ReviewsDueTimerTask").getString("msg.connectionerror"), new Object[]{ex.getMessage()}), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/ReviewsDueTimerTask").getString("msg.error"));
             return;
         }
-//        ThreadUtils.updateLabel(this.myLabel, myText);
-//        ThreadUtils.updateLabel(this.othersLabel, othersText);
 
         final ArrayList<ReviewDueEntry> list = entries;
         try {
@@ -849,13 +796,8 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
                 public void run() {
                     resultUI.removeAll();
 
-//                    split.setDividerLocation(split.getDividerLocation()+1);
-//                    split.setDividerLocation(split.getDividerLocation()-1);
                     int i = 0;
                     int maxCount = Math.min(list.size(), 200);
-                    //resultUI.setLayout(new GridLayout(maxCount-1, 1));
-                    //for (ReviewDueEntry e : list) {
-                    //for(int k=list.size()-1;k>=(list.size()-maxCount);k--) {
                     for (int k = 0; k < maxCount; k++) {
                         try {
                             Color background = DefaultColorTheme.DESKTOP_ENTRY_BACKGROUND;
@@ -864,8 +806,6 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
                             }
                             ReviewDueEntryPanel ep = new ReviewDueEntryPanel(background);
 
-                            //ep.setEntry(e);
-                            //ep.setSize(resultUI.getWidth(), ep.getHeight());
                             ep.setEntry(list.get(k));
                             resultUI.add(ep);
                             i++;
