@@ -677,7 +677,6 @@ import javax.mail.FetchProfile;
 import javax.mail.Flags;
 import javax.mail.Folder;
 import javax.mail.Message;
-import javax.mail.internet.MimeUtility;
 import javax.swing.JTable;
 import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableModel;
@@ -794,8 +793,6 @@ public class LoadFolderAction extends ProgressableAction {
                 if ((i % 20) == 0 || i == (messages.length - 1)) {
                     EditorsRegistry.getInstance().updateStatus("Lade Nachricht " + (i + 1), true);
                 }
-                //System.out.println("*****************************************************************************");
-                //System.out.println("MESSAGE " + (i + 1) + ":");
                 final Message msg = messages[i];
 
                 if (currentRestriction.getRestriction() == LoadFolderRestriction.RESTRICTION_UNREAD) {
@@ -805,15 +802,11 @@ public class LoadFolderAction extends ProgressableAction {
                     }
                 }
 
-                //System.out.println(msg.getMessageNumber());
-                //Object String;
-                //System.out.println(folder.getUID(msg)
                 if (msg.isExpunged()) {
                     continue;
                 }
 
                 if (!(f.isOpen())) {
-                    System.out.println("open folder");
                     f.open(Folder.READ_WRITE);
                 }
 
@@ -829,11 +822,6 @@ public class LoadFolderAction extends ProgressableAction {
                             fromCheck = EmailUtils.decodeText(fromKey);
                             decodedMap.put(fromKey, fromCheck);
                         }
-//                        try {
-//                            fromCheck=MimeUtility.decodeText(fromCheck);
-//                        } catch (Throwable t) {
-//                            log.error("can not decode FROM header");
-//                        }
                     }
 
                 }
@@ -853,8 +841,6 @@ public class LoadFolderAction extends ProgressableAction {
                     }
                 }
 
-//                final String subject=MimeUtility.decodeText(msg.getFrom()[0].toString());
-                //final String toString2 = toString;
                 String sentString="";
                 if(msg.getSentDate()!=null) {
                     sentString=df.format(msg.getSentDate());
@@ -873,7 +859,6 @@ public class LoadFolderAction extends ProgressableAction {
                         public void run() {
                             try {
                                 for (Object[] rowObject : tableRowsClone) {
-                                    //((DefaultTableModel) table.getModel()).addRow(new Object[]{new MessageContainer(msg, msg.getSubject(), msg.isSet(Flags.Flag.SEEN)), from, toString2, df.format(msg.getSentDate())});
                                     ((DefaultTableModel) table.getModel()).addRow(rowObject);
 
                                 }
@@ -928,7 +913,6 @@ public class LoadFolderAction extends ProgressableAction {
                 }
             }));
 
-            //ComponentUtils.autoSizeColumns(table);
             EditorsRegistry.getInstance().clearStatus(true);
 
             new Thread(new Runnable() {
@@ -939,7 +923,6 @@ public class LoadFolderAction extends ProgressableAction {
                         if (f.isOpen()) {
                             EmailUtils.closeIfIMAP(f);
                         }
-                        //f.close(true);
                     } catch (Throwable t) {
                         log.error(t);
                     }

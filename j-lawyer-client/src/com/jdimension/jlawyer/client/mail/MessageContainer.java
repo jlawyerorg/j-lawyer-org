@@ -689,13 +689,6 @@ public class MessageContainer {
     @Override
     public String toString() {
         return this.subject;
-//        try {
-//            return this.message.getSubject();
-//            //return MimeUtility.decodeText(this.message.getSubject());
-//        } catch (Exception ex) {
-//            log.error(ex);
-//            return "";
-//        }
     }
 
     /**
