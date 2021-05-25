@@ -835,11 +835,13 @@ public class ReviewDueEntryPanel extends javax.swing.JPanel {
         if (e.getType() == ArchiveFileConstants.REVIEWTYPE_RESPITE) {
             this.lblIcon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/clicknrunred.png")));
             this.cmdPostpone.setEnabled(false);
-//        } else if (UserSettings.getInstance().getCurrentUser().getPrincipalId().equals(e.getResponsible())) {
-//            this.lblIcon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/clicknrun.png")));
-//            this.lblResponsible.setFont(this.lblResponsible.getFont().deriveFont(Font.BOLD));
         } else {
             this.lblIcon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/clicknrungrey.png")));
+        }
+        
+        if (UserSettings.getInstance().getCurrentUser().getPrincipalId().equals(e.getResponsible())) {
+            this.lblResponsible.setFont(this.lblResponsible.getFont().deriveFont(Font.BOLD));
+            this.lblResponsible.setForeground(DefaultColorTheme.COLOR_LOGO_RED);
         }
 
         this.defaultColor = this.lblDescription.getForeground();
