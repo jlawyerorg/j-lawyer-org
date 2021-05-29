@@ -678,6 +678,7 @@ import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 import com.jdimension.jlawyer.server.constants.ArchiveFileConstants;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
+import com.jdimension.jlawyer.services.CalendarServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.ui.tagging.TagUtils;
 import java.awt.AlphaComposite;
@@ -1067,8 +1068,8 @@ public class ReviewDueEntryPanel extends javax.swing.JPanel {
         ClientSettings settings = ClientSettings.getInstance();
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
-            fileService.updateReview(this.e.getArchiveFileId(), reviewDto);
+            CalendarServiceRemote calService = locator.lookupCalendarServiceRemote();
+            calService.updateReview(this.e.getArchiveFileId(), reviewDto);
         } catch (Exception ex) {
             log.error("Error updating review", ex);
             JOptionPane.showMessageDialog(this, java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/ReviewDueEntryPanel").getString("dialog.error.saving"), new Object[] {ex.getMessage()}), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/ReviewDueEntryPanel").getString("msg.error"), JOptionPane.ERROR_MESSAGE);
@@ -1104,8 +1105,8 @@ public class ReviewDueEntryPanel extends javax.swing.JPanel {
         JLawyerServiceLocator locator = null;
         try {
             locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
-            fileService.updateReview(arb.getArchiveFileKey().getId(), arb);
+            CalendarServiceRemote calService = locator.lookupCalendarServiceRemote();
+            calService.updateReview(arb.getArchiveFileKey().getId(), arb);
         } catch (Exception ex) {
             log.error("Error updating review", ex);
             JOptionPane.showMessageDialog(this, "Fehler beim Bearbeiten der Wiedervorlage: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);

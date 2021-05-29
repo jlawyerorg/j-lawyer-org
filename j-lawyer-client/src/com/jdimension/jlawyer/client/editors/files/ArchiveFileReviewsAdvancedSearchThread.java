@@ -667,7 +667,7 @@ import com.jdimension.jlawyer.client.configuration.UserTableCellRenderer;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
-import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
+import com.jdimension.jlawyer.services.CalendarServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Component;
 import java.text.SimpleDateFormat;
@@ -712,9 +712,8 @@ public class ArchiveFileReviewsAdvancedSearchThread implements Runnable {
             ClientSettings settings=ClientSettings.getInstance();
             JLawyerServiceLocator locator=JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             
-            //ArchiveFileServiceRemoteHome home = (ArchiveFileServiceRemoteHome)locator.getRemoteHome("ejb/ArchiveFileServiceBean", ArchiveFileServiceRemoteHome.class);
-            ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
-            dtos=fileService.searchReviews(statusSearchMode, typeSearchMode, fromDate, toDate);
+            CalendarServiceRemote calService = locator.lookupCalendarServiceRemote();
+            dtos=calService.searchReviews(statusSearchMode, typeSearchMode, fromDate, toDate);
             
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);
@@ -726,12 +725,8 @@ public class ArchiveFileReviewsAdvancedSearchThread implements Runnable {
         String[] colNames=new String[] {"fällig" , "Typ", "Aktenzeichen", "Kurzrubrum", "Grund", "erledigt", "Anwalt", "verantwortlich"};
         ArchiveFileReviewsFindTableModel model=new ArchiveFileReviewsFindTableModel(colNames, 0);
         // adding the model and then adding rows is problematic - addRow on a table with model causes issues when addRow is not performed in the EDT
-        //this.target.setModel(model);
-        //this.target.getColumnModel().getColumn(6).setCellRenderer(new UserTableCellRenderer());
-        //this.target.getColumnModel().getColumn(7).setCellRenderer(new UserTableCellRenderer());
         SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy", Locale.GERMAN);
         for(ArchiveFileReviewsBean b:dtos) {
-            //Object[] row=new Object[]{new QuickArchiveFileSearchRowIdentifier(dtos[i]), dtos[i].getFileNumber(), dtos[i].getName()};
             Date reviewDate=b.getReviewDate();
             String reviewDateString="";
             if(reviewDate!=null)

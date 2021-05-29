@@ -670,6 +670,7 @@ import com.jdimension.jlawyer.persistence.ServerSettingsBeanFacadeLocal;
 import com.jdimension.jlawyer.server.utils.ServerFileUtils;
 import com.jdimension.jlawyer.server.utils.ServerInformation;
 import com.jdimension.jlawyer.services.ArchiveFileServiceLocal;
+import com.jdimension.jlawyer.services.CalendarServiceLocal;
 import com.jdimension.jlawyer.services.SystemManagementLocal;
 import com.jdimension.jlawyer.storage.VirtualFile;
 import com.jdimension.jlawyer.sync.FolderSync;
@@ -914,8 +915,9 @@ public class IterativeBackupTask extends java.util.TimerTask implements Cancella
                 log.info("Starting export to " + exportLocation);
                 InitialContext ic = new InitialContext();
                 ArchiveFileServiceLocal caseSvc = (ArchiveFileServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal");
+                CalendarServiceLocal calendarSvc = (CalendarServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/CalendarService!com.jdimension.jlawyer.services.CalendarServiceLocal");
                 ArrayList<String> caseIds = caseSvc.getAllArchiveFileIds();
-                HTMLExport export = new HTMLExport(exportDir, caseSvc);
+                HTMLExport export = new HTMLExport(exportDir, caseSvc, calendarSvc);
                 for (String id : caseIds) {
                     ArchiveFileBean afb = caseSvc.getArchiveFileUnrestricted(id);
 

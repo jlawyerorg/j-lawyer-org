@@ -675,6 +675,7 @@ import com.jdimension.jlawyer.persistence.PartyTypeBean;
 import com.jdimension.jlawyer.security.Base64;
 import com.jdimension.jlawyer.services.AddressServiceLocal;
 import com.jdimension.jlawyer.services.ArchiveFileServiceLocal;
+import com.jdimension.jlawyer.services.CalendarServiceLocal;
 import com.jdimension.jlawyer.services.FormsServiceLocal;
 import com.jdimension.jlawyer.services.SystemManagementLocal;
 import java.util.ArrayList;
@@ -719,9 +720,6 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
     // when seeing something like
     //  com.fasterxml.jackson.databind.JsonMappingException: failed to lazily initialize a collection of role: com.jdimension.jlawyer.persistence.ArchiveFileBean.archiveFileFormsBeanList, could not initialize proxy - no Session
     // it is not necessarily an issue with fetch type eager or lazy, just put @XmlTransient to the getter of the list in the entity
-    
-    @EJB
-    private ArchiveFileServiceLocal archiveFileSvc;
 
     /**
      * Lists all cases
@@ -921,6 +919,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
 
             InitialContext ic = new InitialContext();
             ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal");
+            CalendarServiceLocal cal = (CalendarServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/CalendarService!com.jdimension.jlawyer.services.CalendarServiceLocal");
 
             ArchiveFileBean currentCase = cases.getArchiveFile(caseData.getId());
             if (currentCase == null) {
@@ -928,7 +927,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
                 Response res = Response.serverError().build();
                 return res;
             }
-            Collection reviews=cases.getReviews(caseData.getId());
+            Collection reviews=cal.getReviews(caseData.getId());
             currentCase.setArchiveFileReviewsBeanList((List<ArchiveFileReviewsBean>)reviews);
             List<ArchiveFileAddressesBean> adds=cases.getInvolvementDetailsForCase(caseData.getId());
             currentCase.setArchiveFileAddressesBeanList(adds);
@@ -1076,6 +1075,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
 
             InitialContext ic = new InitialContext();
             ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal");
+            CalendarServiceLocal cal = (CalendarServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/CalendarService!com.jdimension.jlawyer.services.CalendarServiceLocal");
             ArchiveFileBean currentCase = cases.getArchiveFile(id);
             if (currentCase == null) {
                 log.error("case with id " + id + " does not exist");
@@ -1083,7 +1083,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
                 return res;
             }
 
-            Collection<ArchiveFileReviewsBean> reviews = cases.getReviews(id);
+            Collection<ArchiveFileReviewsBean> reviews = cal.getReviews(id);
             ArrayList<RestfulDueDateV1> ddList = new ArrayList<RestfulDueDateV1>();
             for (ArchiveFileReviewsBean rev : reviews) {
                 RestfulDueDateV1 dd = new RestfulDueDateV1();

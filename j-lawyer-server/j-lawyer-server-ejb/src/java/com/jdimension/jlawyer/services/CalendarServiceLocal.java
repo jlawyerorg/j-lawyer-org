@@ -663,175 +663,34 @@
  */
 package com.jdimension.jlawyer.services;
 
-import com.jdimension.jlawyer.persistence.*;
+import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileGroupsBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileHistoryBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileTagsBean;
+import com.jdimension.jlawyer.persistence.CaseFolder;
+import com.jdimension.jlawyer.persistence.DocumentFolder;
+import com.jdimension.jlawyer.persistence.DocumentFolderTemplate;
+import com.jdimension.jlawyer.persistence.PartyTypeBean;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Hashtable;
 import java.util.List;
-import javax.ejb.Remote;
-import org.jlawyer.data.tree.GenericNode;
+import javax.ejb.Local;
 
 /**
  *
  * @author jens
  */
-@Remote
-public interface ArchiveFileServiceRemote {
+@Local
+public interface CalendarServiceLocal {
 
-    int getArchiveFileCount();
-
-    ArchiveFileBean[] searchSimple(String query);
-
-    void removeArchiveFile(String id) throws Exception;
-
-    ArchiveFileHistoryBean[] getHistoryForArchiveFile(String archiveFileKey) throws Exception;
-
-    ArchiveFileBean createArchiveFile(ArchiveFileBean dto) throws Exception;
-
-    void updateArchiveFile(ArchiveFileBean dto) throws Exception;
-
-    List<ArchiveFileBean> getLastChanged(String lastChangeUser, boolean userOnly, int limit);
-
-    ArchiveFileBean getArchiveFile(String id) throws Exception;
-
-    Collection<ArchiveFileDocumentsBean> getDocuments(String archiveFileKey);
-
-    boolean archiveFileExists(String id);
-
-    ArchiveFileBean createArchiveFile(ArchiveFileBean dto, String id) throws Exception;
-
-    ArchiveFileDocumentsBean addDocument(String archiveFileId, String fileName, byte[] data, String dictateSign) throws Exception;
-
-    int getArchiveFileArchivedCount();
-
-    int getDocumentCount();
-
-    void removeDocument(String id) throws Exception;
-
-    boolean setDocumentContent(String id, byte[] content) throws Exception;
-
-    byte[] getDocumentContent(String id) throws Exception;
+    Collection<ArchiveFileReviewsBean> getAllOpenReviewsUnrestricted();
     
-    ArchiveFileDocumentsBean getDocument(String id) throws Exception;
-
-    Collection<ArchiveFileAddressesBean> getArchiveFileAddressesForAddress(String adressId);
-
-    boolean renameDocument(String id, String newName) throws Exception;
-
-    ArchiveFileBean getArchiveFileByFileNumber(String fileNumber) throws Exception;
-
-    ArchiveFileHistoryBean addHistory(String archiveFileId, ArchiveFileHistoryBean history) throws Exception;
-
-    void setTag(String archiveFileId, ArchiveFileTagsBean tag, boolean active) throws Exception;
+    Collection getReviewsUnrestricted(String archiveFileKey) throws Exception;
     
-    void setDocumentTag(String documentId, DocumentTagsBean tag, boolean active) throws Exception;
-
-    Collection<ArchiveFileTagsBean> getTags(String archiveFileId) throws Exception;
+    public Collection getReviews(String archiveFileKey) throws Exception;
     
-    Collection<DocumentTagsBean> getDocumentTags(String documentId) throws Exception;
-
-    List<String> searchTagsInUse();
-    
-    List<String> searchDocumentTagsInUse();
-
-    ArchiveFileBean[] searchEnhanced(String query, boolean withArchive, String[] tagName, String[] documentTagName);
-
-    String getDocumentPreview(String id) throws Exception;
-
-    Date[] getHistoryInterval(String principalId);
-
-    List<ArchiveFileHistoryBean> getHistoryByDateInterval(Date fromDate, Date toDate, int limit);
-
-    List<ArchiveFileHistoryBean> getHistoryByPrincipalAndDateInterval(String principal, Date fromDate, Date toDate, int limit);
-
-    List<ArchiveFileBean> getLastChanged(int limit);
-
-    String[] previewCaseNumbering(String pattern, int startFrom, boolean extension, String dividerMain, String dividerExt, boolean bPrefix, String prefix, boolean bSuffix, String suffix, boolean userAbbr, boolean groupAbbr) throws Exception;
-
-    Collection<ArchiveFileBean> getAllWithMissingReviews();
-
-    byte[] exportCaseToHtml(String caseId) throws Exception;
-
-    List<ArchiveFileBean> getTagged(String[] tagName, String[] docTagName, int limit);
-
-    boolean setDocumentDate(String id, Date date) throws Exception;
-    
-    boolean setDocumentFavorite(String id, boolean favorite) throws Exception;
-
-    Hashtable<String,ArrayList<String>> searchTagsEnhanced(String query, boolean withArchive, String[] tagName, String[] documentTagName);
-
-    ArchiveFileDocumentsBean addDocumentFromTemplate(String archiveFileId, String fileName, GenericNode templateFolder, String templateName, Hashtable placeHolderValues, String dictateSign) throws Exception;
-
-    List<AddressBean> getAddressesForCase(String archiveFileKey) throws Exception;
-
-    List<ArchiveFileAddressesBean> getInvolvementDetailsForCase(String archiveFileKey);
-
-    boolean udpateFileNumber(String from, String to) throws Exception;
-
-    boolean doesDocumentExist(String caseId, String documentName);
-    
-    boolean doesDocumentExist(String id);
-
-    List<ArchiveFileDocumentsBean> getTaggedDocuments(java.lang.String[] docTagName, int limit);
-
-    Hashtable<String, ArrayList<String>> getDocumentTagsForCase(String caseId);
-
-    void renameTag(String fromName, String toName) throws Exception;
-
-    void renameDocumentTag(String fromName, String toName) throws Exception;
-
-    List<PartyTypeBean> getAllPartyTypes();
-
-    List<ArchiveFileGroupsBean> getAllowedGroups(String caseId) throws Exception;
-
-    void updateAllowedGroups(String caseId, Collection<Group> allowedGroups) throws Exception;
-
-    String getFileNumber(String id);
-
-    List<DocumentFolderTemplate> getAllFolderTemplates();
-
-    void addFolderTemplate(DocumentFolderTemplate template) throws Exception;
-
-    void removeFolderTemplate(String name);
-
-    void updateFolderTemplate(DocumentFolderTemplate template);
-
-    DocumentFolderTemplate getFolderTemplate(String name);
-
-    DocumentFolder addFolderToTemplate(String templateName, DocumentFolder folder) throws Exception;
-
-    void removeFolderFromTemplate(String folderId) throws Exception;
-
-    void cloneFolderTemplate(String sourceTemplateName, String targetTemplateName) throws Exception;
-
-    CaseFolder createCaseFolder(String parentId, String name) throws Exception;
-
-    CaseFolder updateCaseFolder(CaseFolder folder) throws Exception;
-
-    void deleteCaseFolder(String folderId) throws Exception;
-
-    void moveDocumentsToFolder(Collection<String> documentIds, String folderId) throws Exception;
-
-    CaseFolder applyFolderTemplate(String caseId, String templateName) throws Exception;
-
-    CaseFolder applyFolderTemplateById(String id, String templateId) throws Exception;
-
-    DocumentFolderTemplate getFolderTemplateById(String id);
-
-    Collection<ArchiveFileDocumentsBean> getDocumentsBin();
-
-    void removeDocumentFromBin(String docId) throws Exception;
-
-    boolean restoreDocumentFromBin(String docId) throws Exception;
-
-    Collection<Keyword> extractKeywordsFromDocument(String docId) throws Exception;
-
-    Collection<Keyword> extractKeywordsFromText(String text) throws Exception;
-
-    void setCaseFolderSettings(String folderId, CaseFolderSettings folderSettings) throws Exception;
-
-    HashMap<String,CaseFolderSettings> getCaseFolderSettings(List<String> folderIds) throws Exception;
-
 }

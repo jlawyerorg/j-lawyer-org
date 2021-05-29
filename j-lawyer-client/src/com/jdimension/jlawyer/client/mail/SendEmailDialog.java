@@ -697,7 +697,7 @@ import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 import com.jdimension.jlawyer.persistence.CaseFolder;
 import com.jdimension.jlawyer.persistence.PartyTypeBean;
 import com.jdimension.jlawyer.services.AddressServiceRemote;
-import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
+import com.jdimension.jlawyer.services.CalendarServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Color;
 import java.awt.event.ActionEvent;
@@ -1789,9 +1789,9 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
             EditorsRegistry.getInstance().updateStatus("Wiedervorlage/Frist wird gespeichert...");
             try {
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
+                CalendarServiceRemote calService = locator.lookupCalendarServiceRemote();
 
-                reviewDto = fileService.addReview(this.contextArchiveFile.getId(), reviewDto);
+                reviewDto = calService.addReview(this.contextArchiveFile.getId(), reviewDto);
                 EditorsRegistry.getInstance().updateStatus("Wiedervorlage/Frist gespeichert.", 5000);
 
             } catch (Exception ex) {

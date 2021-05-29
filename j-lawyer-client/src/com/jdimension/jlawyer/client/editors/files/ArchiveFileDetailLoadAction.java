@@ -679,6 +679,7 @@ import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.persistence.*;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
+import com.jdimension.jlawyer.services.CalendarServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.ui.folders.CaseFolderPanel;
 import com.jdimension.jlawyer.ui.tagging.ArchiveFileTagActionListener;
@@ -895,7 +896,8 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
             involvementForCase = fileService.getInvolvementDetailsForCase(archiveFileKey);
 
             this.progress("Lade Akte: Wiedervorlagen und Fristen...");
-            reviews = fileService.getReviews(this.archiveFileKey);
+            CalendarServiceRemote calService = locator.lookupCalendarServiceRemote();
+            reviews = calService.getReviews(this.archiveFileKey);
             this.progress("Lade Akte: Dokumente...");
             documents = fileService.getDocuments(this.archiveFileKey);
             List<String> folderIds=new ArrayList<>();

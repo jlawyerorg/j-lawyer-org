@@ -674,7 +674,7 @@ import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
 import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
-import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
+import com.jdimension.jlawyer.services.CalendarServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -920,11 +920,11 @@ public class EditorOrDuplicateReviewDialog extends javax.swing.JDialog {
         ClientSettings settings = ClientSettings.getInstance();
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
+            CalendarServiceRemote calService = locator.lookupCalendarServiceRemote();
             if (this.mode == MODE_DUPLICATE) {
-                targetReview = fileService.addReview(this.archiveFileId, targetReview);
+                targetReview = calService.addReview(this.archiveFileId, targetReview);
             } else if (this.mode == MODE_EDIT) {
-                targetReview = fileService.updateReview(this.archiveFileId, targetReview);
+                targetReview = calService.updateReview(this.archiveFileId, targetReview);
             }
         } catch (Exception ex) {
             log.error("Error updating review", ex);

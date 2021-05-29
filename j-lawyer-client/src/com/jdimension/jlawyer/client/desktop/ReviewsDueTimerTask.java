@@ -671,6 +671,7 @@ import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileTagsBean;
 import com.jdimension.jlawyer.server.constants.ArchiveFileConstants;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
+import com.jdimension.jlawyer.services.CalendarServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Color;
 import java.awt.Component;
@@ -725,7 +726,8 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
             String ownUser = UserSettings.getInstance().getCurrentUser().getPrincipalId();
 
             ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
-            Collection<ArchiveFileReviewsBean> myNewList = fileService.searchReviews(ArchiveFileConstants.REVIEWSTATUS_OPEN, ArchiveFileConstants.REVIEWTYPE_ANY, null, new Date(), 2500);
+            CalendarServiceRemote calService = locator.lookupCalendarServiceRemote();
+            Collection<ArchiveFileReviewsBean> myNewList = calService.searchReviews(ArchiveFileConstants.REVIEWSTATUS_OPEN, ArchiveFileConstants.REVIEWTYPE_ANY, null, new Date(), 2500);
 
             UserSettings.getInstance().migrateFrom(settings, UserSettings.CONF_DESKTOP_ONLYMYREVIEWS);
             String temp = UserSettings.getInstance().getSetting(UserSettings.CONF_DESKTOP_ONLYMYREVIEWS, "false");

@@ -702,13 +702,7 @@ public interface ArchiveFileServiceLocal {
     public Collection<ArchiveFileDocumentsBean> getDocuments(String archiveFileKey);
     public byte[] getDocumentContent(String id) throws Exception;
     
-    public Collection getReviews(String archiveFileKey) throws Exception;
-    
     public ArchiveFileHistoryBean[] getHistoryForArchiveFile(String archiveFileKey) throws Exception;
-    
-//    public Collection getClients(String archiveFileKey);
-//    public Collection getOpponents(String archiveFileKey);
-//    public Collection getOpponentAttorneys(String archiveFileKey);
     
     byte[] exportCaseToHtml(String caseId) throws Exception;
 
@@ -716,22 +710,12 @@ public interface ArchiveFileServiceLocal {
 
     ArchiveFileHistoryBean[] getHistoryForArchiveFileUnrestricted(String archiveFileKey) throws Exception;
 
-//    Collection getClientsUnrestricted(String archiveFileKey);
-//
-//    Collection getOpponentsUnrestricted(String archiveFileKey);
-//
-//    Collection getOpponentAttorneysUnrestricted(String archiveFileKey);
-
-    Collection getReviewsUnrestricted(String archiveFileKey) throws Exception;
-    
     public Collection<ArchiveFileTagsBean> getTags(String archiveFileId) throws Exception;
 
     Collection getDocumentsUnrestricted(String archiveFileKey);
 
     byte[] getDocumentContentUnrestricted(String id) throws Exception;
 
-    Collection<ArchiveFileReviewsBean> getAllOpenReviewsUnrestricted();
-    
     public List<ArchiveFileAddressesBean> getInvolvementDetailsForCase(String archiveFileKey);
     
     public List<ArchiveFileAddressesBean> getInvolvementDetailsForCaseUnrestricted(String archiveFileKey);
@@ -759,6 +743,8 @@ public interface ArchiveFileServiceLocal {
     void removeParty(String id) throws Exception;
 
     List<ArchiveFileGroupsBean> getAllowedGroups(String caseId) throws Exception;
+    
+    List<ArchiveFileGroupsBean> getAllowedGroups(ArchiveFileBean archiveFile);
 
     List<DocumentFolderTemplate> getAllFolderTemplates();
 

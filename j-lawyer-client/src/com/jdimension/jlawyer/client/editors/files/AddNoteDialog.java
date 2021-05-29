@@ -676,6 +676,7 @@ import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.persistence.*;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
+import com.jdimension.jlawyer.services.CalendarServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.ui.folders.CaseFolderPanel;
 import java.text.SimpleDateFormat;
@@ -1135,9 +1136,9 @@ public class AddNoteDialog extends javax.swing.JDialog {
             EditorsRegistry.getInstance().updateStatus("Wiedervorlage/Frist wird gespeichert...");
             try {
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
+                CalendarServiceRemote calService = locator.lookupCalendarServiceRemote();
 
-                reviewDto = fileService.addReview(this.aFile.getId(), reviewDto);
+                reviewDto = calService.addReview(this.aFile.getId(), reviewDto);
                 EditorsRegistry.getInstance().updateStatus("Wiedervorlage/Frist gespeichert.", 5000);
 
             } catch (Exception ex) {

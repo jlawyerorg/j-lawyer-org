@@ -667,7 +667,7 @@ import com.jdimension.jlawyer.client.configuration.UserTableCellRenderer;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
-import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
+import com.jdimension.jlawyer.services.CalendarServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Component;
 import java.text.SimpleDateFormat;
@@ -705,9 +705,8 @@ public class ArchiveFileReviewsSearchThread implements Runnable {
             ClientSettings settings=ClientSettings.getInstance();
             JLawyerServiceLocator locator=JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             
-            //ArchiveFileServiceRemoteHome home = (ArchiveFileServiceRemoteHome)locator.getRemoteHome("ejb/ArchiveFileServiceBean", ArchiveFileServiceRemoteHome.class);
-            ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
-            dtos=fileService.getAllOpenReviews();
+            CalendarServiceRemote calService = locator.lookupCalendarServiceRemote();
+            dtos=calService.getAllOpenReviews();
             
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);

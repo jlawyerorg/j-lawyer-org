@@ -722,6 +722,7 @@ import com.jdimension.jlawyer.client.wizard.WizardSteps;
 import com.jdimension.jlawyer.persistence.*;
 import com.jdimension.jlawyer.services.AddressServiceRemote;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
+import com.jdimension.jlawyer.services.CalendarServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.ui.tagging.ArchiveFileTagActionListener;
 import com.jdimension.jlawyer.ui.tagging.DocumentTagActionListener;
@@ -3282,7 +3283,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             EditorsRegistry.getInstance().clearStatus();
             return;
         }
-        ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
+        CalendarServiceRemote calService = locator.lookupCalendarServiceRemote();
         EditorsRegistry.getInstance().updateStatus("Wiedervorlage/Frist wird gelöscht...");
 
         int[] selectedRows = this.tblReviewReasons.getSelectedRows();
@@ -3292,7 +3293,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             try {
                 ArchiveFileReviewsBean review = (ArchiveFileReviewsBean) this.tblReviewReasons.getValueAt(selectedRows[i], 0);
 
-                fileService.removeReview(review.getId());
+                calService.removeReview(review.getId());
 
             } catch (Exception ex) {
                 log.error("Error removing review", ex);
@@ -3303,7 +3304,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
             EditorsRegistry.getInstance().updateStatus("Wiedervorlage/Frist gelöscht.", 5000);
 
-            //tModel.removeRow(selectedRows[i]);
             tModel.removeRow(this.tblReviewReasons.convertRowIndexToModel(selectedRows[i]));
         }
     }//GEN-LAST:event_mnuRemoveReviewActionPerformed
@@ -3320,7 +3320,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             EditorsRegistry.getInstance().clearStatus();
             return;
         }
-        ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
+        CalendarServiceRemote calService = locator.lookupCalendarServiceRemote();
         EditorsRegistry.getInstance().updateStatus("Wiedervorlage/Frist wird gespeichert...");
 
         int[] selectedRows = this.tblReviewReasons.getSelectedRows();
@@ -3331,7 +3331,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 ArchiveFileReviewsBean review = (ArchiveFileReviewsBean) this.tblReviewReasons.getValueAt(selectedRows[i], 0);
                 review.setDoneBoolean(false);
 
-                fileService.updateReview(this.dto.getId(), review);
+                calService.updateReview(this.dto.getId(), review);
 
             } catch (Exception ex) {
                 log.error("Error removing review", ex);
@@ -3358,7 +3358,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             EditorsRegistry.getInstance().clearStatus();
             return;
         }
-        ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
+        CalendarServiceRemote calService = locator.lookupCalendarServiceRemote();
         EditorsRegistry.getInstance().updateStatus("Wiedervorlage/Frist wird gespeichert...");
 
         int[] selectedRows = this.tblReviewReasons.getSelectedRows();
@@ -3369,7 +3369,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 ArchiveFileReviewsBean review = (ArchiveFileReviewsBean) this.tblReviewReasons.getValueAt(selectedRows[i], 0);
                 review.setDoneBoolean(true);
 
-                fileService.updateReview(this.dto.getId(), review);
+                calService.updateReview(this.dto.getId(), review);
 
             } catch (Exception ex) {
                 log.error("Error removing review", ex);
@@ -3513,9 +3513,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         ClientSettings settings = ClientSettings.getInstance();
 
         JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-        ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
+        CalendarServiceRemote calService = locator.lookupCalendarServiceRemote();
 
-        reviewDto = fileService.addReview(this.dto.getId(), reviewDto);
+        reviewDto = calService.addReview(this.dto.getId(), reviewDto);
 
         ArchiveFileReviewReasonsTableModel model = (ArchiveFileReviewReasonsTableModel) this.tblReviewReasons.getModel();
         Object[] row = new Object[5];
@@ -4113,8 +4113,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 ClientSettings settings = ClientSettings.getInstance();
                 try {
                     JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                    ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
-                    fileService.updateReview(this.dto.getId(), reviewDto);
+                    CalendarServiceRemote calService = locator.lookupCalendarServiceRemote();
+                    calService.updateReview(this.dto.getId(), reviewDto);
                 } catch (Exception ex) {
                     log.error("Error updating review", ex);
                     JOptionPane.showMessageDialog(this, "Fehler beim Speichern: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
@@ -4859,7 +4859,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             EditorsRegistry.getInstance().clearStatus();
             return;
         }
-        ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
+        CalendarServiceRemote calService = locator.lookupCalendarServiceRemote();
         EditorsRegistry.getInstance().updateStatus("Wiedervorlage/Frist wird gespeichert...");
 
         int[] selectedRows = this.tblReviewReasons.getSelectedRows();
@@ -4874,7 +4874,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 }
                 review.setReviewDate(d);
 
-                fileService.updateReview(this.dto.getId(), review);
+                calService.updateReview(this.dto.getId(), review);
 
             } catch (Exception ex) {
                 log.error("Error removing review", ex);
@@ -6238,12 +6238,10 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         ClientSettings settings = ClientSettings.getInstance();
         EditorsRegistry.getInstance().updateStatus("Adresse wird gespeichert...");
         try {
-            //InitialContext context = new InitialContext(settings.getLookupProperties());
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
-            //Object object = locator.lookup("SystemManagementBean");
-            //ArchiveFileServiceRemoteHome home = (ArchiveFileServiceRemoteHome)locator.getRemoteHome("ejb/ArchiveFileServiceBean", ArchiveFileServiceRemoteHome.class);
             ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
+            CalendarServiceRemote calService = locator.lookupCalendarServiceRemote();
 
             String id = null;
             String fileNumberMain = null;
@@ -6309,7 +6307,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 caseId = this.dto.getId();
                 // in case of updates we need to reload the reviews
                 // they are getting removed and re-added by #updateArchiveFile
-                Collection reviews = fileService.getReviews(id);
+                Collection reviews = calService.getReviews(id);
                 String[] colNames3 = new String[]{"Datum", "Typ", "Grund", "erledigt", "verantwortlich"};
                 ArchiveFileReviewReasonsTableModel model3 = new ArchiveFileReviewReasonsTableModel(colNames3, 0);
                 this.tblReviewReasons.setModel(model3);

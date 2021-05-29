@@ -667,32 +667,63 @@ import com.jdimension.jlawyer.calendar.CalendarRegion;
 import com.jdimension.jlawyer.calendar.HolidayDescriptor;
 import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.AppUserBeanFacadeLocal;
+import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileBeanFacadeLocal;
+import com.jdimension.jlawyer.persistence.ArchiveFileHistoryBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileHistoryBeanFacadeLocal;
+import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBeanFacadeLocal;
+import com.jdimension.jlawyer.persistence.Group;
+import com.jdimension.jlawyer.persistence.utils.JDBCUtils;
+import com.jdimension.jlawyer.persistence.utils.StringGenerator;
+import com.jdimension.jlawyer.server.constants.ArchiveFileConstants;
+import com.jdimension.jlawyer.server.utils.SecurityUtils;
 import de.jollyday.CalendarHierarchy;
 import de.jollyday.Holiday;
 import de.jollyday.HolidayCalendar;
 import de.jollyday.HolidayManager;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import javax.annotation.Resource;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.EJB;
+import javax.ejb.EJBException;
 import javax.ejb.SessionContext;
 import javax.ejb.Stateless;
+import org.apache.log4j.Logger;
 
 /**
  *
  * @author jens
  */
 @Stateless
-public class CalendarService implements CalendarServiceRemote {
+public class CalendarService implements CalendarServiceRemote, CalendarServiceLocal {
+    
+    private static Logger log = Logger.getLogger(CalendarService.class.getName());
 
     @Resource
     private SessionContext context;
     @EJB
     private AppUserBeanFacadeLocal userBeanFacade;
+    @EJB
+    private SecurityServiceLocal securityFacade;
+    @EJB
+    private ArchiveFileBeanFacadeLocal archiveFileFacade;
+    @EJB
+    private ArchiveFileServiceLocal archiveFileService;
+    @EJB
+    private ArchiveFileReviewsBeanFacadeLocal archiveFileReviewsFacade;
+    @EJB
+    private ArchiveFileHistoryBeanFacadeLocal archiveFileHistoryFacade;
     
     @Override
     @RolesAllowed({"loginRole"})
@@ -819,6 +850,296 @@ public class CalendarService implements CalendarServiceRemote {
         AppUserBean u=this.userBeanFacade.find(context.getCallerPrincipal().getName());
         
         return this.isHoliday(d, u.getCountryCode(), u.getAreaCode());
+    }
+    
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public ArchiveFileReviewsBean addReview(String archiveFileId, ArchiveFileReviewsBean review) throws Exception {
+        StringGenerator idGen = new StringGenerator();
+        ArchiveFileBean aFile = this.archiveFileFacade.find(archiveFileId);
+        SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), aFile, this.securityFacade, this.archiveFileService.getAllowedGroups(aFile));
+
+        String revId = idGen.getID().toString();
+        review.setId(revId);
+        review.setArchiveFileKey(aFile);
+        this.archiveFileReviewsFacade.create(review);
+
+        ArchiveFileHistoryBean newHistEntry = new ArchiveFileHistoryBean();
+        newHistEntry.setId(idGen.getID().toString());
+        newHistEntry.setArchiveFileKey(aFile);
+        newHistEntry.setChangeDate(new Date());
+        newHistEntry.setChangeDescription(review.getReviewTypeName() + " hinzugefügt: " + review.getReviewReason() + " (" + review.toString() + ")");
+        newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
+        this.archiveFileHistoryFacade.create(newHistEntry);
+
+        return this.archiveFileReviewsFacade.find(revId);
+    }
+    
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public Collection<ArchiveFileReviewsBean> getAllOpenReviews() {
+        return this.getAllOpenReviewsImpl(context.getCallerPrincipal().getName());
+    }
+    
+    private Collection<ArchiveFileReviewsBean> getAllOpenReviewsImpl(String principalId) {
+
+        List<Group> userGroups = new ArrayList<Group>();
+        if (principalId != null) {
+            try {
+                userGroups = this.securityFacade.getGroupsForUser(principalId);
+            } catch (Throwable t) {
+                log.error("Unable to determine groups for user " + principalId, t);
+            }
+        }
+
+        JDBCUtils utils = new JDBCUtils();
+        Connection con = null;
+        ResultSet rs = null;
+        PreparedStatement st = null;
+        ArrayList<ArchiveFileReviewsBean> list = new ArrayList<ArchiveFileReviewsBean>();
+        try {
+            con = utils.getConnection();
+            st = con.prepareStatement("select id, archiveFileKey from case_followups where done=0 order by reviewDate asc");
+            rs = st.executeQuery();
+
+            while (rs.next()) {
+                String archiveFileKey = rs.getString(2);
+                ArchiveFileBean dto = this.archiveFileFacade.find(archiveFileKey);
+
+                boolean allowed = false;
+                if (principalId != null) {
+                    if (SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), userGroups, dto, this.archiveFileService.getAllowedGroups(dto))) {
+                        allowed = true;
+                    }
+                } else {
+                    allowed = true;
+                }
+
+                if (allowed) {
+                    String id = rs.getString(1);
+                    ArchiveFileReviewsBean rev = this.archiveFileReviewsFacade.find(id);
+                    rev.setArchiveFileKey(dto);
+                    list.add(rev);
+                }
+            }
+        } catch (SQLException sqle) {
+            log.error("Error finding archive files / reviews", sqle);
+            throw new EJBException("Wiedervorlagensuche konnte nicht ausgeführt werden.", sqle);
+//        } catch (FinderException fe) {
+//            log.error("Error finding archive file", fe);
+//            throw new EJBException("Aktensuche konnte nicht ausgeführt werden.", fe);
+        } finally {
+            try {
+                rs.close();
+            } catch (Throwable t) {
+                log.error(t);
+            }
+            try {
+                st.close();
+            } catch (Throwable t) {
+                log.error(t);
+            }
+            try {
+                con.close();
+            } catch (Throwable t) {
+                log.error(t);
+            }
+        }
+
+        return list;
+    }
+    
+    @Override
+    public Collection<ArchiveFileReviewsBean> getAllOpenReviewsUnrestricted() {
+        return this.getAllOpenReviewsImpl(null);
+    }
+    
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public void removeReview(String reviewId) throws Exception {
+        StringGenerator idGen = new StringGenerator();
+        ArchiveFileReviewsBean rb = this.archiveFileReviewsFacade.find(reviewId);
+        ArchiveFileBean aFile = rb.getArchiveFileKey();
+        SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), aFile, this.securityFacade, this.archiveFileService.getAllowedGroups(aFile));
+
+        ArchiveFileHistoryBean newHistEntry = new ArchiveFileHistoryBean();
+        newHistEntry.setId(idGen.getID().toString());
+        newHistEntry.setArchiveFileKey(aFile);
+        newHistEntry.setChangeDate(new Date());
+        newHistEntry.setChangeDescription(rb.getReviewTypeName() + " gelöscht: " + rb.getReviewReason() + " (" + rb.toString() + ")");
+        newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
+        this.archiveFileHistoryFacade.create(newHistEntry);
+
+        this.archiveFileReviewsFacade.remove(rb);
+    }
+    
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public Collection<ArchiveFileReviewsBean> searchReviews(int status, int type, Date fromDate, Date toDate) {
+        return searchReviews(status, type, fromDate, toDate, 5000000);
+    }
+    
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public Collection<ArchiveFileReviewsBean> searchReviews(int status, int type, Date fromDate, Date toDate, int limit) {
+
+        if (fromDate == null) {
+            fromDate = new Date();
+            fromDate.setDate(1);
+            fromDate.setMonth(1);
+            fromDate.setYear(0);
+        }
+
+        if (toDate == null) {
+            toDate = new Date();
+            toDate.setDate(31);
+            toDate.setMonth(11);
+            toDate.setYear(200);
+        }
+
+        fromDate.setHours(0);
+        fromDate.setMinutes(0);
+        fromDate.setSeconds(0);
+
+        toDate.setHours(23);
+        toDate.setMinutes(59);
+        toDate.setSeconds(59);
+
+        JDBCUtils utils = new JDBCUtils();
+        Connection con = null;
+        ResultSet rs = null;
+        PreparedStatement st = null;
+        int dbLimit = limit * 5;
+        ArrayList<ArchiveFileReviewsBean> list = new ArrayList<ArchiveFileReviewsBean>();
+        try {
+            con = utils.getConnection();
+            if (status == ArchiveFileConstants.REVIEWSTATUS_ANY) {
+                if (type == ArchiveFileConstants.REVIEWTYPE_ANY) {
+                    st = con.prepareStatement("select id, archiveFileKey from case_followups where reviewDate >= ? and reviewDate <= ? order by reviewDate asc limit ?");
+                    st.setDate(1, new java.sql.Date(fromDate.getTime()));
+                    st.setDate(2, new java.sql.Date(toDate.getTime()));
+                    st.setInt(3, dbLimit);
+                } else {
+                    st = con.prepareStatement("select id, archiveFileKey from case_followups where reviewType=? and reviewDate >= ? and reviewDate <= ? order by reviewDate asc limit ?");
+                    st.setInt(1, type);
+                    st.setDate(2, new java.sql.Date(fromDate.getTime()));
+                    st.setDate(3, new java.sql.Date(toDate.getTime()));
+                    st.setInt(4, dbLimit);
+                }
+            } else if (type == ArchiveFileConstants.REVIEWTYPE_ANY) {
+                st = con.prepareStatement("select id, archiveFileKey from case_followups where done=? and reviewDate >= ? and reviewDate <= ? order by reviewDate asc limit ?");
+                st.setInt(1, status);
+                st.setDate(2, new java.sql.Date(fromDate.getTime()));
+                st.setDate(3, new java.sql.Date(toDate.getTime()));
+                st.setInt(4, dbLimit);
+            } else {
+                st = con.prepareStatement("select id, archiveFileKey from case_followups where reviewType=? and done=? and reviewDate >= ? and reviewDate <= ? order by reviewDate asc limit ?");
+                st.setInt(1, type);
+                st.setInt(2, status);
+                st.setDate(3, new java.sql.Date(fromDate.getTime()));
+                st.setDate(4, new java.sql.Date(toDate.getTime()));
+                st.setInt(5, dbLimit);
+            }
+            rs = st.executeQuery();
+
+            List<Group> userGroups = new ArrayList<Group>();
+            try {
+                userGroups = this.securityFacade.getGroupsForUser(context.getCallerPrincipal().getName());
+            } catch (Throwable t) {
+                log.error("Unable to determine groups for user " + context.getCallerPrincipal().getName(), t);
+            }
+
+            while (rs.next()) {
+                String id = rs.getString(1);
+                ArchiveFileReviewsBean rev = this.archiveFileReviewsFacade.find(id);
+                String archiveFileKey = rs.getString(2);
+                ArchiveFileBean dto = this.archiveFileFacade.find(archiveFileKey);
+
+                boolean allowed = false;
+                if (SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), userGroups, dto, this.archiveFileService.getAllowedGroups(dto))) {
+                    allowed = true;
+                }
+
+                if (allowed) {
+                    rev.setArchiveFileKey(dto);
+                    list.add(rev);
+                }
+                if (list.size() == limit) {
+                    break;
+                }
+            }
+        } catch (SQLException sqle) {
+            log.error("Error finding archive files / reviews", sqle);
+            throw new EJBException("Wiedervorlagensuche konnte nicht ausgeführt werden.", sqle);
+//        } catch (FinderException fe) {
+//            log.error("Error finding archive file", fe);
+//            throw new EJBException("Aktensuche konnte nicht ausgeführt werden.", fe);
+        } finally {
+            try {
+                rs.close();
+            } catch (Throwable t) {
+                log.error(t);
+            }
+            try {
+                st.close();
+            } catch (Throwable t) {
+                log.error(t);
+            }
+            try {
+                con.close();
+            } catch (Throwable t) {
+                log.error(t);
+            }
+        }
+
+        return list;
+    }
+    
+    @Override
+    @RolesAllowed({"writeArchiveFileRole"})
+    public ArchiveFileReviewsBean updateReview(String archiveFileId, ArchiveFileReviewsBean review) throws Exception {
+        StringGenerator idGen = new StringGenerator();
+        ArchiveFileBean aFile = this.archiveFileFacade.find(archiveFileId);
+        SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), aFile, this.securityFacade, this.archiveFileService.getAllowedGroups(aFile));
+
+        ArchiveFileHistoryBean newHistEntry = new ArchiveFileHistoryBean();
+        newHistEntry.setId(idGen.getID().toString());
+        newHistEntry.setArchiveFileKey(aFile);
+        newHistEntry.setChangeDate(new Date());
+        String status = "offen";
+        if (review.getDoneBoolean()) {
+            status = "erledigt";
+        }
+        newHistEntry.setChangeDescription(review.getReviewTypeName() + " geändert: " + review.getReviewReason() + " (" + review.toString() + ", " + status + ")");
+        newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
+        this.archiveFileHistoryFacade.create(newHistEntry);
+
+        review.setArchiveFileKey(aFile);
+        this.archiveFileReviewsFacade.edit(review);
+        return this.archiveFileReviewsFacade.find(review.getId());
+    }
+    
+    @Override
+    public Collection getReviewsUnrestricted(String archiveFileKey) throws Exception {
+        return getReviewsImpl(archiveFileKey, null);
+    }
+    
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public Collection getReviews(String archiveFileKey) throws Exception {
+
+        return getReviewsImpl(archiveFileKey, context.getCallerPrincipal().getName());
+
+    }
+    
+        private Collection getReviewsImpl(String archiveFileKey, String principalId) throws Exception {
+        ArchiveFileBean aFile = this.archiveFileFacade.find(archiveFileKey);
+        if (principalId != null) {
+            SecurityUtils.checkGroupsForCase(principalId, aFile, this.securityFacade, this.archiveFileService.getAllowedGroups(aFile));
+        }
+
+        List resultList = this.archiveFileReviewsFacade.findByArchiveFileKey(aFile);
+        return resultList;
     }
     
 }
