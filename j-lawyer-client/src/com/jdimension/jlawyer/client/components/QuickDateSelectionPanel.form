@@ -16,16 +16,16 @@
   <Layout>
     <DimensionLayout dim="0">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Group type="102" alignment="0" attributes="0">
-              <Component id="jLabel21" min="-2" max="-2" attributes="0"/>
+          <Group type="102" alignment="1" attributes="0">
+              <Component id="togReview1Day" min="-2" max="-2" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
+              <Component id="togReview2Days" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="togReview1Week" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="togReview2Weeks" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="togReview4Weeks" min="-2" max="-2" attributes="0"/>
-              <EmptySpace max="-2" attributes="0"/>
-              <Component id="jLabel22" min="-2" max="-2" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
@@ -33,23 +33,18 @@
       <Group type="103" groupAlignment="0" attributes="0">
           <Group type="103" groupAlignment="3" attributes="0">
               <Component id="togReview1Week" alignment="3" min="-2" max="-2" attributes="0"/>
-              <Component id="jLabel21" alignment="3" min="-2" max="-2" attributes="0"/>
               <Component id="togReview2Weeks" alignment="3" min="-2" max="-2" attributes="0"/>
               <Component id="togReview4Weeks" alignment="3" min="-2" max="-2" attributes="0"/>
-              <Component id="jLabel22" alignment="3" min="-2" max="-2" attributes="0"/>
+              <Component id="togReview1Day" alignment="3" min="-2" max="-2" attributes="0"/>
+              <Component id="togReview2Days" alignment="3" min="-2" max="-2" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
   </Layout>
   <SubComponents>
-    <Component class="javax.swing.JLabel" name="jLabel21">
-      <Properties>
-        <Property name="text" type="java.lang.String" value="in"/>
-      </Properties>
-    </Component>
     <Component class="javax.swing.JToggleButton" name="togReview1Week">
       <Properties>
-        <Property name="text" type="java.lang.String" value="1"/>
+        <Property name="text" type="java.lang.String" value="1W"/>
       </Properties>
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="togReview1WeekActionPerformed"/>
@@ -57,7 +52,7 @@
     </Component>
     <Component class="javax.swing.JToggleButton" name="togReview2Weeks">
       <Properties>
-        <Property name="text" type="java.lang.String" value="2"/>
+        <Property name="text" type="java.lang.String" value="2W"/>
       </Properties>
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="togReview2WeeksActionPerformed"/>
@@ -65,16 +60,27 @@
     </Component>
     <Component class="javax.swing.JToggleButton" name="togReview4Weeks">
       <Properties>
-        <Property name="text" type="java.lang.String" value="4"/>
+        <Property name="text" type="java.lang.String" value="4W"/>
       </Properties>
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="togReview4WeeksActionPerformed"/>
       </Events>
     </Component>
-    <Component class="javax.swing.JLabel" name="jLabel22">
+    <Component class="javax.swing.JToggleButton" name="togReview1Day">
       <Properties>
-        <Property name="text" type="java.lang.String" value="Woche(n)"/>
+        <Property name="text" type="java.lang.String" value="1T"/>
       </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="togReview1DayActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JToggleButton" name="togReview2Days">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="2T"/>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="togReview2DaysActionPerformed"/>
+      </Events>
     </Component>
   </SubComponents>
 </Form>

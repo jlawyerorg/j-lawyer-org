@@ -665,7 +665,6 @@ package org.jlawyer.io.rest.v1;
 
 import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
-import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileFormsBean;
@@ -682,7 +681,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import javax.annotation.security.RolesAllowed;
-import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.naming.InitialContext;
 import javax.ws.rs.Consumes;
@@ -927,7 +925,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
                 Response res = Response.serverError().build();
                 return res;
             }
-            Collection reviews=cal.getReviews(caseData.getId());
+            Collection<ArchiveFileReviewsBean> reviews=cal.getReviews(caseData.getId());
             currentCase.setArchiveFileReviewsBeanList((List<ArchiveFileReviewsBean>)reviews);
             List<ArchiveFileAddressesBean> adds=cases.getInvolvementDetailsForCase(caseData.getId());
             currentCase.setArchiveFileAddressesBeanList(adds);

@@ -701,13 +701,14 @@ public class QuickDateSelectionPanel extends javax.swing.JPanel {
                 c.add(Calendar.DAY_OF_YEAR, 14);
             } else if (this.togReview4Weeks.isSelected()) {
                 c.add(Calendar.DAY_OF_YEAR, 28);
+            } else if (this.togReview1Day.isSelected()) {
+                c.add(Calendar.DAY_OF_YEAR, 1);
+            } else if (this.togReview2Days.isSelected()) {
+                c.add(Calendar.DAY_OF_YEAR, 2);
             }
             
             CalendarUtils cu = CalendarUtils.getInstance();
             try {
-                //System.out.println(cu.getCountryCodes());
-                //System.out.println(cu.getRegionCodes("DE"));
-
                 boolean holiday = cu.isHolidayForCurrentUser(c.getTime());
                 if (c.get(c.DAY_OF_WEEK) == c.SATURDAY || c.get(c.DAY_OF_WEEK) == c.SUNDAY) {
                     holiday = true;
@@ -739,60 +740,70 @@ public class QuickDateSelectionPanel extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jLabel21 = new javax.swing.JLabel();
         togReview1Week = new javax.swing.JToggleButton();
         togReview2Weeks = new javax.swing.JToggleButton();
         togReview4Weeks = new javax.swing.JToggleButton();
-        jLabel22 = new javax.swing.JLabel();
+        togReview1Day = new javax.swing.JToggleButton();
+        togReview2Days = new javax.swing.JToggleButton();
 
-        jLabel21.setText("in");
-
-        togReview1Week.setText("1");
+        togReview1Week.setText("1W");
         togReview1Week.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 togReview1WeekActionPerformed(evt);
             }
         });
 
-        togReview2Weeks.setText("2");
+        togReview2Weeks.setText("2W");
         togReview2Weeks.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 togReview2WeeksActionPerformed(evt);
             }
         });
 
-        togReview4Weeks.setText("4");
+        togReview4Weeks.setText("4W");
         togReview4Weeks.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 togReview4WeeksActionPerformed(evt);
             }
         });
 
-        jLabel22.setText("Woche(n)");
+        togReview1Day.setText("1T");
+        togReview1Day.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                togReview1DayActionPerformed(evt);
+            }
+        });
+
+        togReview2Days.setText("2T");
+        togReview2Days.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                togReview2DaysActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addComponent(jLabel21)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addComponent(togReview1Day)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(togReview2Days)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(togReview1Week)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(togReview2Weeks)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(togReview4Weeks)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jLabel22))
+                .addComponent(togReview4Weeks))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                 .addComponent(togReview1Week)
-                .addComponent(jLabel21)
                 .addComponent(togReview2Weeks)
                 .addComponent(togReview4Weeks)
-                .addComponent(jLabel22))
+                .addComponent(togReview1Day)
+                .addComponent(togReview2Days))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -800,6 +811,8 @@ public class QuickDateSelectionPanel extends javax.swing.JPanel {
         if (this.togReview1Week.isSelected()) {
             this.togReview2Weeks.setSelected(!this.togReview1Week.isSelected());
             this.togReview4Weeks.setSelected(!this.togReview1Week.isSelected());
+            this.togReview1Day.setSelected(!this.togReview1Week.isSelected());
+            this.togReview2Days.setSelected(!this.togReview1Week.isSelected());
         }
         this.updateTarget();
     }//GEN-LAST:event_togReview1WeekActionPerformed
@@ -808,6 +821,8 @@ public class QuickDateSelectionPanel extends javax.swing.JPanel {
         if (this.togReview2Weeks.isSelected()) {
             this.togReview1Week.setSelected(!this.togReview2Weeks.isSelected());
             this.togReview4Weeks.setSelected(!this.togReview2Weeks.isSelected());
+            this.togReview1Day.setSelected(!this.togReview2Weeks.isSelected());
+            this.togReview2Days.setSelected(!this.togReview2Weeks.isSelected());
         }
         this.updateTarget();
     }//GEN-LAST:event_togReview2WeeksActionPerformed
@@ -816,15 +831,37 @@ public class QuickDateSelectionPanel extends javax.swing.JPanel {
         if (this.togReview4Weeks.isSelected()) {
             this.togReview1Week.setSelected(!this.togReview4Weeks.isSelected());
             this.togReview2Weeks.setSelected(!this.togReview4Weeks.isSelected());
+            this.togReview1Day.setSelected(!this.togReview4Weeks.isSelected());
+            this.togReview2Days.setSelected(!this.togReview4Weeks.isSelected());
         }
         this.updateTarget();
     }//GEN-LAST:event_togReview4WeeksActionPerformed
 
+    private void togReview1DayActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_togReview1DayActionPerformed
+        if (this.togReview1Day.isSelected()) {
+            this.togReview1Week.setSelected(!this.togReview1Day.isSelected());
+            this.togReview2Weeks.setSelected(!this.togReview1Day.isSelected());
+            this.togReview4Weeks.setSelected(!this.togReview1Day.isSelected());
+            this.togReview2Days.setSelected(!this.togReview1Day.isSelected());
+        }
+        this.updateTarget();
+    }//GEN-LAST:event_togReview1DayActionPerformed
+
+    private void togReview2DaysActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_togReview2DaysActionPerformed
+        if (this.togReview2Days.isSelected()) {
+            this.togReview1Week.setSelected(!this.togReview2Days.isSelected());
+            this.togReview2Weeks.setSelected(!this.togReview2Days.isSelected());
+            this.togReview4Weeks.setSelected(!this.togReview2Days.isSelected());
+            this.togReview1Day.setSelected(!this.togReview2Days.isSelected());
+        }
+        this.updateTarget();
+    }//GEN-LAST:event_togReview2DaysActionPerformed
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JLabel jLabel21;
-    private javax.swing.JLabel jLabel22;
+    private javax.swing.JToggleButton togReview1Day;
     private javax.swing.JToggleButton togReview1Week;
+    private javax.swing.JToggleButton togReview2Days;
     private javax.swing.JToggleButton togReview2Weeks;
     private javax.swing.JToggleButton togReview4Weeks;
     // End of variables declaration//GEN-END:variables

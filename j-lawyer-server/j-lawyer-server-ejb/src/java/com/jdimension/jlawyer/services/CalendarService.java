@@ -736,19 +736,12 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
         Calendar c=Calendar.getInstance();
         c.setTime(date);
         
-//        m.getCalendarHierarchy().getDescription(java.util.Locale.GERMANY);
-//        m.getSupportedCalendarCodes();
-          
-        
       if(regionId!=null && !("".equals(regionId)))
         return m.isHoliday(c, regionId);
       else
           return m.isHoliday(c);
         
     }
-
-    // Add business logic below. (Right-click in editor and choose
-    // "Insert Code > Add Business Method")
 
     @Override
     @RolesAllowed({"loginRole"})
@@ -794,35 +787,7 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
         
         return list;
         
-//        CalendarHierarchy h=m.getCalendarHierarchy();
-//        ArrayList<HolidayDescriptor> holidays=new ArrayList<HolidayDescriptor>();
-//        return getHolidays(year, m, holidays, h, new String[0]);
     }
-    
-//    private ArrayList<HolidayDescriptor> getHolidays  (int year, HolidayManager m, ArrayList<HolidayDescriptor> list, CalendarHierarchy ch, String... hierarchyIds) {
-//        Set<Holiday> holidays=m.getHolidays(year, hierarchyIds);
-//        for(Holiday h: holidays) {
-//            HolidayDescriptor hd=new HolidayDescriptor();
-//            hd.setHolidayName(h.getDescription(Locale.GERMAN));
-//            hd.setRegionName(ch.getDescription(Locale.GERMAN));
-//            hd.setDate(h.getDate().toDate());
-//            list.add(hd);
-//        }
-//        
-//        Map<String, CalendarHierarchy> children=ch.getChildren();
-//        for(String key: children.keySet()) {
-//            CalendarHierarchy child=children.get(key);
-//            String[] newHierarchy=new String[hierarchyIds.length+1];
-//            for(int i=0;i<hierarchyIds.length;i++) {
-//                newHierarchy[i]=hierarchyIds[i];
-//            }
-//            newHierarchy[hierarchyIds.length]=child.getId();
-//            getHolidays(year, m, list, child, newHierarchy);
-//        }
-//        
-//        return list;
-//        
-//    }
 
     @Override
     @RolesAllowed({"loginRole"})
@@ -883,7 +848,7 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
     
     private Collection<ArchiveFileReviewsBean> getAllOpenReviewsImpl(String principalId) {
 
-        List<Group> userGroups = new ArrayList<Group>();
+        List<Group> userGroups = new ArrayList<>();
         if (principalId != null) {
             try {
                 userGroups = this.securityFacade.getGroupsForUser(principalId);
@@ -896,7 +861,7 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
         Connection con = null;
         ResultSet rs = null;
         PreparedStatement st = null;
-        ArrayList<ArchiveFileReviewsBean> list = new ArrayList<ArchiveFileReviewsBean>();
+        ArrayList<ArchiveFileReviewsBean> list = new ArrayList<>();
         try {
             con = utils.getConnection();
             st = con.prepareStatement("select id, archiveFileKey from case_followups where done=0 order by reviewDate asc");
@@ -925,9 +890,6 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
         } catch (SQLException sqle) {
             log.error("Error finding archive files / reviews", sqle);
             throw new EJBException("Wiedervorlagensuche konnte nicht ausgeführt werden.", sqle);
-//        } catch (FinderException fe) {
-//            log.error("Error finding archive file", fe);
-//            throw new EJBException("Aktensuche konnte nicht ausgeführt werden.", fe);
         } finally {
             try {
                 rs.close();
@@ -1010,7 +972,7 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
         ResultSet rs = null;
         PreparedStatement st = null;
         int dbLimit = limit * 5;
-        ArrayList<ArchiveFileReviewsBean> list = new ArrayList<ArchiveFileReviewsBean>();
+        ArrayList<ArchiveFileReviewsBean> list = new ArrayList<>();
         try {
             con = utils.getConnection();
             if (status == ArchiveFileConstants.REVIEWSTATUS_ANY) {
@@ -1071,9 +1033,6 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
         } catch (SQLException sqle) {
             log.error("Error finding archive files / reviews", sqle);
             throw new EJBException("Wiedervorlagensuche konnte nicht ausgeführt werden.", sqle);
-//        } catch (FinderException fe) {
-//            log.error("Error finding archive file", fe);
-//            throw new EJBException("Aktensuche konnte nicht ausgeführt werden.", fe);
         } finally {
             try {
                 rs.close();
@@ -1120,26 +1079,25 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
     }
     
     @Override
-    public Collection getReviewsUnrestricted(String archiveFileKey) throws Exception {
+    public Collection<ArchiveFileReviewsBean> getReviewsUnrestricted(String archiveFileKey) throws Exception {
         return getReviewsImpl(archiveFileKey, null);
     }
     
     @Override
     @RolesAllowed({"readArchiveFileRole"})
-    public Collection getReviews(String archiveFileKey) throws Exception {
+    public Collection<ArchiveFileReviewsBean> getReviews(String archiveFileKey) throws Exception {
 
         return getReviewsImpl(archiveFileKey, context.getCallerPrincipal().getName());
 
     }
     
-        private Collection getReviewsImpl(String archiveFileKey, String principalId) throws Exception {
+    private Collection<ArchiveFileReviewsBean> getReviewsImpl(String archiveFileKey, String principalId) throws Exception {
         ArchiveFileBean aFile = this.archiveFileFacade.find(archiveFileKey);
         if (principalId != null) {
             SecurityUtils.checkGroupsForCase(principalId, aFile, this.securityFacade, this.archiveFileService.getAllowedGroups(aFile));
         }
 
-        List resultList = this.archiveFileReviewsFacade.findByArchiveFileKey(aFile);
-        return resultList;
+        return this.archiveFileReviewsFacade.findByArchiveFileKey(aFile);
     }
     
 }

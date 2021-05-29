@@ -700,6 +700,6 @@ public interface CalendarServiceRemote {
     
     ArchiveFileReviewsBean updateReview(String archiveFileId, ArchiveFileReviewsBean review) throws Exception;
     
-    Collection getReviews(String archiveFileKey) throws Exception;
+    Collection<ArchiveFileReviewsBean> getReviews(String archiveFileKey) throws Exception;
     
 }
