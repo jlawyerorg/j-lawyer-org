@@ -2073,7 +2073,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         newHistEntry.setId(histId);
         newHistEntry.setArchiveFileKey(aFile);
 //        newHistEntry.setChangeDate();
-//        newHistEntry.setChangeDescription("Wiedervorlage gelöscht: " + rb.getReviewReason() + " ("  + rb.toString() + ")");
+//        newHistEntry.setChangeDescription("Wiedervorlage gelöscht: " + rb.getSummary() + " ("  + rb.toString() + ")");
         newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
         this.archiveFileHistoryFacade.create(newHistEntry);
         return this.archiveFileHistoryFacade.find(histId);
@@ -2656,7 +2656,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         }
 
         try (Connection con = utils.getConnection();
-                PreparedStatement st = con.prepareStatement("select id from cases where archived=0 and id not in (select archiveFileKey from case_followups where done=0) order by fileNumber asc");
+                PreparedStatement st = con.prepareStatement("select id from cases where archived=0 and id not in (select archiveFileKey from case_events where done=0) order by fileNumber asc");
                 ResultSet rs = st.executeQuery()) {
             
             while (rs.next()) {

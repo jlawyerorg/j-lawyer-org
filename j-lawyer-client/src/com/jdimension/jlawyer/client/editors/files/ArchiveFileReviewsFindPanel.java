@@ -962,7 +962,7 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
         lblPanelTitle.setFont(new java.awt.Font("Dialog", 1, 24)); // NOI18N
         lblPanelTitle.setForeground(new java.awt.Color(255, 255, 255));
         lblPanelTitle.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
-        lblPanelTitle.setText("Wiedervorlagen und Fristen suchen");
+        lblPanelTitle.setText("Wiedervorlagen, Fristen und Termine suchen");
 
         jPanel2.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(255, 255, 255), 2, true));
         jPanel2.setOpaque(false);

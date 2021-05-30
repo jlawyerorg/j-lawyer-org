@@ -691,8 +691,8 @@ public class ReviewsComparator implements java.util.Comparator {
         ArchiveFileReviewsBean dto1=(ArchiveFileReviewsBean)obj1;
         ArchiveFileReviewsBean dto2=(ArchiveFileReviewsBean)obj2;
         
-        Date d1=dto1.getReviewDate();
-        Date d2=dto2.getReviewDate();
+        Date d1=dto1.getBeginDate();
+        Date d2=dto2.getBeginDate();
         if(d1!=null) {
             if(d2!=null) {
                 return d1.compareTo(d2);

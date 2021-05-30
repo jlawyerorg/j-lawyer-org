@@ -727,11 +727,11 @@ public class ArchiveFileReviewsAdvancedSearchThread implements Runnable {
         // adding the model and then adding rows is problematic - addRow on a table with model causes issues when addRow is not performed in the EDT
         SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy", Locale.GERMAN);
         for(ArchiveFileReviewsBean b:dtos) {
-            Date reviewDate=b.getReviewDate();
+            Date reviewDate=b.getBeginDate();
             String reviewDateString="";
             if(reviewDate!=null)
                 reviewDateString=df.format(reviewDate);
-            Object[] row=new Object[]{new ArchiveFileReviewsRowIdentifier(b.getArchiveFileKey(), b, reviewDateString), b.getReviewTypeName(), b.getArchiveFileKey().getFileNumber(), b.getArchiveFileKey().getName(), b.getReviewReason(), new Boolean(b.getDoneBoolean()), b.getArchiveFileKey().getLawyer(), b.getAssignee()};
+            Object[] row=new Object[]{new ArchiveFileReviewsRowIdentifier(b.getArchiveFileKey(), b, reviewDateString), b.getEventTypeName(), b.getArchiveFileKey().getFileNumber(), b.getArchiveFileKey().getName(), b.getSummary(), new Boolean(b.getDoneBoolean()), b.getArchiveFileKey().getLawyer(), b.getAssignee()};
             model.addRow(row);
         }
         TableRowSorter<TableModel> sorter = new TableRowSorter<TableModel>(model);

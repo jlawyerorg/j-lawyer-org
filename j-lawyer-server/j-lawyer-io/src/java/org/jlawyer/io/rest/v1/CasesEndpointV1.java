@@ -1088,10 +1088,10 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
                 dd.setId(rev.getId());
                 dd.setAssignee(rev.getAssignee());
                 dd.setDone(rev.getDoneBoolean());
-                dd.setDueDate(rev.getReviewDate());
-                dd.setReason(rev.getReviewReason());
+                dd.setDueDate(rev.getBeginDate());
+                dd.setReason(rev.getSummary());
                 dd.setType(RestfulDueDateV1.TYPE_RESPITE);
-                if (rev.getReviewType() == ArchiveFileReviewsBean.REVIEWTYPE_FOLLOWUP) {
+                if (rev.getEventType() == ArchiveFileReviewsBean.EVENTTYPE_FOLLOWUP) {
                     dd.setType(RestfulDueDateV1.TYPE_FOLLOWUP);
                 }
                 ddList.add(dd);

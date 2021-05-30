@@ -674,33 +674,41 @@ import javax.xml.bind.annotation.XmlRootElement;
  * @author jens
  */
 @Entity
-@Table(name = "case_followups")
+@Table(name = "case_events")
 @XmlRootElement
 @NamedQueries({
     @NamedQuery(name = "ArchiveFileReviewsBean.findAll", query = "SELECT a FROM ArchiveFileReviewsBean a"),
     @NamedQuery(name = "ArchiveFileReviewsBean.findById", query = "SELECT a FROM ArchiveFileReviewsBean a WHERE a.id = :id"),
-    @NamedQuery(name = "ArchiveFileReviewsBean.findByReviewReason", query = "SELECT a FROM ArchiveFileReviewsBean a WHERE a.reviewReason = :reviewReason"),
-    @NamedQuery(name = "ArchiveFileReviewsBean.findByReviewDate", query = "SELECT a FROM ArchiveFileReviewsBean a WHERE a.reviewDate = :reviewDate"),
+    @NamedQuery(name = "ArchiveFileReviewsBean.findBySummary", query = "SELECT a FROM ArchiveFileReviewsBean a WHERE a.summary = :summary"),
+    @NamedQuery(name = "ArchiveFileReviewsBean.findByBeginDate", query = "SELECT a FROM ArchiveFileReviewsBean a WHERE a.beginDate = :beginDate"),
     @NamedQuery(name = "ArchiveFileReviewsBean.findByArchiveFileKey", query = "SELECT a FROM ArchiveFileReviewsBean a WHERE a.archiveFileKey = :archiveFileKey"),
     @NamedQuery(name = "ArchiveFileReviewsBean.findByDone", query = "SELECT a FROM ArchiveFileReviewsBean a WHERE a.done = :done")})
 public class ArchiveFileReviewsBean implements Serializable {
     private static final long serialVersionUID = 1L;
     
-    public static final int REVIEWTYPE_FOLLOWUP=10;
-    public static final int REVIEWTYPE_RESPITE=20;
+    public static final int EVENTTYPE_FOLLOWUP=10;
+    public static final int EVENTTYPE_RESPITE=20;
+    public static final int EVENTTYPE_EVENT=30;
     
     @Id
     @Basic(optional = false)
     @Column(name = "id")
     private String id;
     @Basic(optional = false)
-    @Column(name = "reviewType")
-    private int reviewType;
-    @Column(name = "reviewReason")
-    private String reviewReason;
-    @Column(name = "reviewDate")
+    @Column(name = "eventType")
+    private int eventType;
+    @Column(name = "summary")
+    private String summary;
+    @Column(name = "description")
+    protected String description;
+    @Column(name = "location")
+    protected String location;
+    @Column(name = "beginDate")
     @Temporal(TemporalType.TIMESTAMP)
-    private Date reviewDate;
+    private Date beginDate;
+    @Column(name = "endDate")
+    @Temporal(TemporalType.TIMESTAMP)
+    protected Date endDate;
     @Basic(optional = false)
     @Column(name = "done", columnDefinition = "TINYINT NOT NULL")
     private short done;
@@ -730,20 +738,20 @@ public class ArchiveFileReviewsBean implements Serializable {
         this.id = id;
     }
 
-    public String getReviewReason() {
-        return reviewReason;
+    public String getSummary() {
+        return summary;
     }
 
-    public void setReviewReason(String reviewReason) {
-        this.reviewReason = reviewReason;
+    public void setSummary(String reviewReason) {
+        this.summary = reviewReason;
     }
 
-    public Date getReviewDate() {
-        return reviewDate;
+    public Date getBeginDate() {
+        return beginDate;
     }
 
-    public void setReviewDate(Date reviewDate) {
-        this.reviewDate = reviewDate;
+    public void setBeginDate(Date beginDate) {
+        this.beginDate = beginDate;
     }
 
     public short getDone() {
@@ -800,9 +808,9 @@ public class ArchiveFileReviewsBean implements Serializable {
     public String toString() {
         //return "com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean[ id=" + id + " ]";
         
-        if(this.reviewDate!=null) {
+        if(this.beginDate!=null) {
             SimpleDateFormat df=new SimpleDateFormat("dd.MM.yyyy");
-            return df.format(this.reviewDate);
+            return df.format(this.beginDate);
         } else {
             return "undefiniert";
         }
@@ -823,26 +831,72 @@ public class ArchiveFileReviewsBean implements Serializable {
     }
 
     /**
-     * @return the reviewType
+     * @return the eventType
      */
-    public int getReviewType() {
-        return reviewType;
+    public int getEventType() {
+        return eventType;
     }
     
-    public String getReviewTypeName() {
-        if(this.getReviewType()==REVIEWTYPE_FOLLOWUP)
-            return "Wiedervorlage";
-        else if(this.getReviewType()==REVIEWTYPE_RESPITE)
-            return "Frist";
-        else
-            return "Wiedervorlage";
+    public String getEventTypeName() {
+        switch (this.getEventType()) {
+            case EVENTTYPE_FOLLOWUP:
+                return "Wiedervorlage";
+            case EVENTTYPE_RESPITE:
+                return "Frist";
+            case EVENTTYPE_EVENT:
+                return "Termin";
+            default:
+                return "Wiedervorlage";
+        }
     }
 
     /**
-     * @param reviewType the reviewType to set
+     * @param eventType the eventType to set
      */
-    public void setReviewType(int reviewType) {
-        this.reviewType = reviewType;
+    public void setEventType(int eventType) {
+        this.eventType = eventType;
+    }
+
+    /**
+     * @return the endDate
+     */
+    public Date getEndDate() {
+        return endDate;
+    }
+
+    /**
+     * @param endDate the endDate to set
+     */
+    public void setEndDate(Date endDate) {
+        this.endDate = endDate;
+    }
+
+    /**
+     * @return the description
+     */
+    public String getDescription() {
+        return description;
+    }
+
+    /**
+     * @param description the description to set
+     */
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    /**
+     * @return the location
+     */
+    public String getLocation() {
+        return location;
+    }
+
+    /**
+     * @param location the location to set
+     */
+    public void setLocation(String location) {
+        this.location = location;
     }
     
 }

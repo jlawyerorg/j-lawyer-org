@@ -736,12 +736,12 @@ public class ArchiveFileReviewsSearchThread implements Runnable {
         this.target.getColumnModel().getColumn(6).setCellRenderer(new UserTableCellRenderer());
         for(ArchiveFileReviewsBean b:dtos) {
             try {
-                Date reviewDate = b.getReviewDate();
+                Date reviewDate = b.getBeginDate();
                 String reviewDateString = "";
                 if (reviewDate != null) {
                     reviewDateString = df.format(reviewDate);
                 }
-                Object[] row = new Object[]{new ArchiveFileReviewsRowIdentifier(b.getArchiveFileKey(), reviewDateString), b.getReviewTypeName(), b.getArchiveFileKey().getFileNumber(), b.getArchiveFileKey().getName(), b.getReviewReason(), b.getArchiveFileKey().getLawyer(), b.getAssignee()};
+                Object[] row = new Object[]{new ArchiveFileReviewsRowIdentifier(b.getArchiveFileKey(), reviewDateString), b.getEventTypeName(), b.getArchiveFileKey().getFileNumber(), b.getArchiveFileKey().getName(), b.getSummary(), b.getArchiveFileKey().getLawyer(), b.getAssignee()};
                 model.addRow(row);
             } catch (Throwable t) {
                 log.error(t);

@@ -728,11 +728,11 @@ public class EditorOrDuplicateReviewDialog extends javax.swing.JDialog {
         this.cmbAssignee.setRenderer(new UserListCellRenderer());
 
         
-//        if(rev.getReviewDate()!=null)
-//            this.jCal.setDate(rev.getReviewDate());
+//        if(rev.getBeginDate()!=null)
+//            this.jCal.setDate(rev.getBeginDate());
 
-        if (rev.getReviewDate() != null) {
-            this.txtReviewDate.setText(df.format(rev.getReviewDate()));
+        if (rev.getBeginDate() != null) {
+            this.txtReviewDate.setText(df.format(rev.getBeginDate()));
         }
         if (rev.getAssignee() != null) {
             this.cmbAssignee.setSelectedItem(rev.getAssignee());
@@ -743,7 +743,7 @@ public class EditorOrDuplicateReviewDialog extends javax.swing.JDialog {
         targetReview = new ArchiveFileReviewsBean();
         targetReview.setArchiveFileKey(rev.getArchiveFileKey());
         targetReview.setAssignee(rev.getAssignee());
-        targetReview.setReviewType(rev.getReviewType());
+        targetReview.setEventType(rev.getEventType());
         if (this.mode == MODE_EDIT) {
             targetReview.setId(rev.getId());
             targetReview.setDoneBoolean(false);
@@ -763,8 +763,8 @@ public class EditorOrDuplicateReviewDialog extends javax.swing.JDialog {
         OptionsComboBoxModel reviewReasonModel = new OptionsComboBoxModel(reviewReasonItems);
         this.cmbReviewReason.setModel(reviewReasonModel);
         
-        if (rev.getReviewReason() != null) {
-            this.cmbReviewReason.setSelectedItem(rev.getReviewReason());
+        if (rev.getSummary() != null) {
+            this.cmbReviewReason.setSelectedItem(rev.getSummary());
         } else {
             this.cmbReviewReason.setSelectedItem(0);
         }
@@ -913,8 +913,8 @@ public class EditorOrDuplicateReviewDialog extends javax.swing.JDialog {
         }
 
         targetReview.setDoneBoolean(false);
-        targetReview.setReviewDate(d);
-        targetReview.setReviewReason(this.cmbReviewReason.getSelectedItem().toString());
+        targetReview.setBeginDate(d);
+        targetReview.setSummary(this.cmbReviewReason.getSelectedItem().toString());
         targetReview.setAssignee(this.cmbAssignee.getSelectedItem().toString());
 
         ClientSettings settings = ClientSettings.getInstance();
@@ -936,8 +936,8 @@ public class EditorOrDuplicateReviewDialog extends javax.swing.JDialog {
         ArchiveFileReviewReasonsTableModel model = (ArchiveFileReviewReasonsTableModel) this.tblReviewReasons.getModel();
         Object[] row = new Object[5];
         row[0] = targetReview;
-        row[1] = targetReview.getReviewTypeName();
-        row[2] = targetReview.getReviewReason();
+        row[1] = targetReview.getEventTypeName();
+        row[2] = targetReview.getSummary();
         row[3] = new Boolean(targetReview.getDoneBoolean());
         row[4] = targetReview.getAssignee();
 
@@ -949,8 +949,8 @@ public class EditorOrDuplicateReviewDialog extends javax.swing.JDialog {
                 if (modelRev instanceof ArchiveFileReviewsBean) {
                     if (((ArchiveFileReviewsBean) modelRev).getId().equals(targetReview.getId())) {
                         model.setValueAt(targetReview, i, 0);
-                        model.setValueAt(targetReview.getReviewTypeName(), i, 1);
-                        model.setValueAt(targetReview.getReviewReason(), i, 2);
+                        model.setValueAt(targetReview.getEventTypeName(), i, 1);
+                        model.setValueAt(targetReview.getSummary(), i, 2);
                         model.setValueAt(new Boolean(targetReview.getDoneBoolean()), i, 3);
                         model.setValueAt(targetReview.getAssignee(), i, 4);
 

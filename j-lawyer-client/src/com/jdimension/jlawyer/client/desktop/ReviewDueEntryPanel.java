@@ -1100,7 +1100,7 @@ public class ReviewDueEntryPanel extends javax.swing.JPanel {
         // update data
         EditorsRegistry.getInstance().updateStatus("Wiedervorlage/Frist wird aktualisiert...");
         ArchiveFileReviewsBean arb = e.getReview();
-        arb.setReviewDate(d);
+        arb.setBeginDate(d);
         ClientSettings settings = ClientSettings.getInstance();
         JLawyerServiceLocator locator = null;
         try {

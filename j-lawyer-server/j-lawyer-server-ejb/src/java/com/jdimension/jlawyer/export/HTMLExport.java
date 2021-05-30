@@ -764,11 +764,11 @@ public class HTMLExport {
 
         for (ArchiveFileReviewsBean rev : reviews) {
 
-            excelStr.append(toDate(df, rev.getReviewDate()));
+            excelStr.append(toDate(df, rev.getBeginDate()));
             excelStr.append(CELL_BREAK);
-            if (rev.getReviewType() == ArchiveFileReviewsBean.REVIEWTYPE_FOLLOWUP) {
+            if (rev.getEventType() == ArchiveFileReviewsBean.EVENTTYPE_FOLLOWUP) {
                 excelStr.append(escape("Wiedervorlage"));
-            } else if (rev.getReviewType() == ArchiveFileReviewsBean.REVIEWTYPE_RESPITE) {
+            } else if (rev.getEventType() == ArchiveFileReviewsBean.EVENTTYPE_RESPITE) {
                 excelStr.append(escape("Frist"));
             } else {
                 excelStr.append(escape("-"));
@@ -778,7 +778,7 @@ public class HTMLExport {
             excelStr.append(CELL_BREAK);
             excelStr.append(escape(rev.getArchiveFileKey().getName()));
             excelStr.append(CELL_BREAK);
-            excelStr.append(escape(rev.getReviewReason()));
+            excelStr.append(escape(rev.getSummary()));
             excelStr.append(LINE_BREAK);
 
         }
@@ -874,11 +874,11 @@ public class HTMLExport {
                 ArchiveFileReviewsBean rb = (ArchiveFileReviewsBean) r;
                 // <tr><td><p class="post_info">01.01.2013</p></td><td><p class="post_info">dings</p></td></tr>
                 sb.append("<tr valign=\"top\"><td><p class=\"post_info\">");
-                sb.append(toDate(dtf, rb.getReviewDate()));
+                sb.append(toDate(dtf, rb.getBeginDate()));
                 sb.append("</p></td><td><p class=\"post_info\">");
-                sb.append(toHtml4(rb.getReviewReason()));
+                sb.append(toHtml4(rb.getSummary()));
                 sb.append("</p></td><td><p class=\"post_info\">");
-                sb.append("(" + toHtml4(rb.getReviewTypeName()) + ")");
+                sb.append("(" + toHtml4(rb.getEventTypeName()) + ")");
                 sb.append("</p></td></tr>");
             }
         }

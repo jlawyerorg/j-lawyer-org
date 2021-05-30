@@ -749,13 +749,13 @@ public class PrintStubGenerator {
         det.setFileName(ar.getName());
         det.setAssignee(rev.getAssignee());
         det.setFileNumber(ar.getFileNumber());
-        det.setReviewTypeName(rev.getReviewTypeName());
-        if(rev.getReviewDate()!=null) {
+        det.setReviewTypeName(rev.getEventTypeName());
+        if(rev.getBeginDate()!=null) {
             SimpleDateFormat df2 = new SimpleDateFormat("dd.MM.yyyy");
-            det.setReviewDate(df2.format(rev.getReviewDate()));
+            det.setReviewDate(df2.format(rev.getBeginDate()));
         } else
             det.setReviewDate("");
-        det.setReviewReason(rev.getReviewReason());
+        det.setReviewReason(rev.getSummary());
 
         return det;
     }

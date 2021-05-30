@@ -752,11 +752,11 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
                     e.setArchiveFileId(afb.getId());
                     e.setArchiveFileName(afb.getName());
                     e.setArchiveFileNumber(afb.getFileNumber());
-                    e.setDue(ar.getReviewDate());
+                    e.setDue(ar.getBeginDate());
                     e.setId(ar.getId());
                     e.setResponsible(ar.getAssignee());
-                    e.setReviewReason(ar.getReviewReason());
-                    e.setType(ar.getReviewType());
+                    e.setReviewReason(ar.getSummary());
+                    e.setType(ar.getEventType());
                     e.setReview(ar);
                     Collection<ArchiveFileTagsBean> tags = fileService.getTags(afb.getId());
                     ArrayList<String> xTags = new ArrayList<String>();

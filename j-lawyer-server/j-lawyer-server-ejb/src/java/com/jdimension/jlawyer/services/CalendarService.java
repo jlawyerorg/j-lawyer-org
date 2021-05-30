@@ -833,7 +833,7 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
         newHistEntry.setId(idGen.getID().toString());
         newHistEntry.setArchiveFileKey(aFile);
         newHistEntry.setChangeDate(new Date());
-        newHistEntry.setChangeDescription(review.getReviewTypeName() + " hinzugefügt: " + review.getReviewReason() + " (" + review.toString() + ")");
+        newHistEntry.setChangeDescription(review.getEventTypeName() + " hinzugefügt: " + review.getSummary() + " (" + review.toString() + ")");
         newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
         this.archiveFileHistoryFacade.create(newHistEntry);
 
@@ -864,7 +864,7 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
         ArrayList<ArchiveFileReviewsBean> list = new ArrayList<>();
         try {
             con = utils.getConnection();
-            st = con.prepareStatement("select id, archiveFileKey from case_followups where done=0 order by reviewDate asc");
+            st = con.prepareStatement("select id, archiveFileKey from case_events where done=0 order by beginDate asc");
             rs = st.executeQuery();
 
             while (rs.next()) {
@@ -928,7 +928,7 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
         newHistEntry.setId(idGen.getID().toString());
         newHistEntry.setArchiveFileKey(aFile);
         newHistEntry.setChangeDate(new Date());
-        newHistEntry.setChangeDescription(rb.getReviewTypeName() + " gelöscht: " + rb.getReviewReason() + " (" + rb.toString() + ")");
+        newHistEntry.setChangeDescription(rb.getEventTypeName() + " gelöscht: " + rb.getSummary() + " (" + rb.toString() + ")");
         newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
         this.archiveFileHistoryFacade.create(newHistEntry);
 
@@ -977,25 +977,25 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
             con = utils.getConnection();
             if (status == ArchiveFileConstants.REVIEWSTATUS_ANY) {
                 if (type == ArchiveFileConstants.REVIEWTYPE_ANY) {
-                    st = con.prepareStatement("select id, archiveFileKey from case_followups where reviewDate >= ? and reviewDate <= ? order by reviewDate asc limit ?");
+                    st = con.prepareStatement("select id, archiveFileKey from case_events where beginDate >= ? and beginDate <= ? order by beginDate asc limit ?");
                     st.setDate(1, new java.sql.Date(fromDate.getTime()));
                     st.setDate(2, new java.sql.Date(toDate.getTime()));
                     st.setInt(3, dbLimit);
                 } else {
-                    st = con.prepareStatement("select id, archiveFileKey from case_followups where reviewType=? and reviewDate >= ? and reviewDate <= ? order by reviewDate asc limit ?");
+                    st = con.prepareStatement("select id, archiveFileKey from case_events where eventType=? and beginDate >= ? and beginDate <= ? order by beginDate asc limit ?");
                     st.setInt(1, type);
                     st.setDate(2, new java.sql.Date(fromDate.getTime()));
                     st.setDate(3, new java.sql.Date(toDate.getTime()));
                     st.setInt(4, dbLimit);
                 }
             } else if (type == ArchiveFileConstants.REVIEWTYPE_ANY) {
-                st = con.prepareStatement("select id, archiveFileKey from case_followups where done=? and reviewDate >= ? and reviewDate <= ? order by reviewDate asc limit ?");
+                st = con.prepareStatement("select id, archiveFileKey from case_events where done=? and beginDate >= ? and beginDate <= ? order by beginDate asc limit ?");
                 st.setInt(1, status);
                 st.setDate(2, new java.sql.Date(fromDate.getTime()));
                 st.setDate(3, new java.sql.Date(toDate.getTime()));
                 st.setInt(4, dbLimit);
             } else {
-                st = con.prepareStatement("select id, archiveFileKey from case_followups where reviewType=? and done=? and reviewDate >= ? and reviewDate <= ? order by reviewDate asc limit ?");
+                st = con.prepareStatement("select id, archiveFileKey from case_events where eventType=? and done=? and beginDate >= ? and beginDate <= ? order by beginDate asc limit ?");
                 st.setInt(1, type);
                 st.setInt(2, status);
                 st.setDate(3, new java.sql.Date(fromDate.getTime()));
@@ -1069,7 +1069,7 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
         if (review.getDoneBoolean()) {
             status = "erledigt";
         }
-        newHistEntry.setChangeDescription(review.getReviewTypeName() + " geändert: " + review.getReviewReason() + " (" + review.toString() + ", " + status + ")");
+        newHistEntry.setChangeDescription(review.getEventTypeName() + " geändert: " + review.getSummary() + " (" + review.toString() + ", " + status + ")");
         newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
         this.archiveFileHistoryFacade.create(newHistEntry);
 

@@ -546,7 +546,7 @@
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="jPanel1" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
-                      <Component id="splitNotes" pref="324" max="32767" attributes="0"/>
+                      <Component id="splitNotes" pref="371" max="32767" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                   </Group>
               </Group>
@@ -996,7 +996,7 @@
                     <DimensionLayout dim="1">
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Group type="102" alignment="0" attributes="0">
-                              <Component id="txtNoticePane" pref="109" max="32767" attributes="0"/>
+                              <Component id="txtNoticePane" pref="154" max="32767" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
                           </Group>
                       </Group>
@@ -1066,7 +1066,7 @@
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="cmdSearchClient" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
-                      <Component id="jScrollPane8" pref="550" max="32767" attributes="0"/>
+                      <Component id="jScrollPane8" pref="612" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -1484,7 +1484,7 @@
                           </Group>
                           <EmptySpace max="-2" attributes="0"/>
                           <Component id="cmdNewRvg" min="-2" max="-2" attributes="0"/>
-                          <EmptySpace pref="477" max="32767" attributes="0"/>
+                          <EmptySpace pref="531" max="32767" attributes="0"/>
                       </Group>
                   </Group>
                 </DimensionLayout>
@@ -1530,8 +1530,8 @@
         <Container class="javax.swing.JPanel" name="tabReviews">
           <Constraints>
             <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout" value="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout$JTabbedPaneConstraintsDescription">
-              <JTabbedPaneConstraints tabName="Wiedervorlagen und Fristen">
-                <Property name="tabTitle" type="java.lang.String" value="Wiedervorlagen und Fristen"/>
+              <JTabbedPaneConstraints tabName="Kalender">
+                <Property name="tabTitle" type="java.lang.String" value="Kalender"/>
                 <Property name="tabIcon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
                   <Image iconType="3" name="/icons/schedule.png"/>
                 </Property>
@@ -1564,7 +1564,7 @@
               <Properties>
                 <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
                   <Border info="org.netbeans.modules.form.compat2.border.TitledBorderInfo">
-                    <TitledBorder title="Wiedervorlagen und Fristen"/>
+                    <TitledBorder title="Wiedervorlagen, Fristen und Termine"/>
                   </Border>
                 </Property>
               </Properties>
@@ -1574,34 +1574,56 @@
                   <Group type="103" groupAlignment="0" attributes="0">
                       <Group type="102" attributes="0">
                           <EmptySpace max="-2" attributes="0"/>
-                          <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                              <Group type="102" alignment="1" attributes="0">
-                                  <Group type="103" groupAlignment="0" attributes="0">
-                                      <Component id="jLabel12" alignment="0" min="-2" max="-2" attributes="0"/>
-                                      <Component id="jLabel7" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Group type="103" groupAlignment="0" attributes="0">
+                              <Group type="103" groupAlignment="1" max="-2" attributes="0">
+                                  <Component id="txtReviewReason" alignment="0" max="32767" attributes="0"/>
+                                  <Group type="102" alignment="0" attributes="0">
+                                      <Component id="jLabel12" min="-2" max="-2" attributes="0"/>
+                                      <EmptySpace max="-2" attributes="0"/>
+                                      <Group type="103" groupAlignment="0" attributes="0">
+                                          <Component id="cmdNewReview" min="-2" max="-2" attributes="0"/>
+                                          <Component id="cmbReviewAssignee" max="32767" attributes="0"/>
+                                      </Group>
                                   </Group>
-                                  <EmptySpace max="-2" attributes="0"/>
+                                  <Component id="jScrollPane9" pref="345" max="32767" attributes="0"/>
+                                  <Component id="jScrollPane5" max="32767" attributes="0"/>
+                              </Group>
+                              <Group type="102" alignment="0" attributes="0">
                                   <Group type="103" groupAlignment="0" attributes="0">
+                                      <Component id="jLabel7" min="-2" max="-2" attributes="0"/>
+                                      <Component id="jLabel21" min="-2" max="-2" attributes="0"/>
+                                      <Component id="jLabel22" alignment="0" min="-2" max="-2" attributes="0"/>
+                                  </Group>
+                                  <EmptySpace min="-2" pref="33" max="-2" attributes="0"/>
+                                  <Group type="103" groupAlignment="0" max="-2" attributes="0">
                                       <Group type="102" alignment="0" attributes="0">
-                                          <Component id="radioReviewTypeFollowUp" min="-2" max="-2" attributes="0"/>
+                                          <Component id="txtEventBeginDateField" min="-2" pref="102" max="-2" attributes="0"/>
                                           <EmptySpace max="-2" attributes="0"/>
-                                          <Component id="radioReviewTypeRespite" min="-2" max="-2" attributes="0"/>
+                                          <Component id="cmdEventBeginDateSelector" min="-2" max="-2" attributes="0"/>
+                                          <EmptySpace max="-2" attributes="0"/>
+                                          <Component id="cmbEventBeginTime" min="-2" max="-2" attributes="0"/>
                                       </Group>
-                                      <Component id="cmbReviewAssignee" min="-2" pref="186" max="-2" attributes="0"/>
+                                      <Group type="102" alignment="0" attributes="0">
+                                          <Component id="txtEventEndDateField" min="-2" pref="102" max="-2" attributes="0"/>
+                                          <EmptySpace max="-2" attributes="0"/>
+                                          <Component id="cmdEventEndDateSelector" min="-2" max="-2" attributes="0"/>
+                                          <EmptySpace max="-2" attributes="0"/>
+                                          <Component id="cmbEventEndTime" min="-2" max="-2" attributes="0"/>
+                                      </Group>
                                       <Component id="quickDateSelectionPanel" min="-2" max="-2" attributes="0"/>
-                                      <Group type="102" attributes="0">
-                                          <Component id="txtReviewDateField" min="-2" pref="145" max="-2" attributes="0"/>
+                                      <Group type="102" alignment="0" attributes="0">
+                                          <Component id="radioEventTypeFollowUp" min="-2" max="-2" attributes="0"/>
                                           <EmptySpace max="-2" attributes="0"/>
-                                          <Component id="cmdShowReviewSelector" min="-2" max="-2" attributes="0"/>
+                                          <Component id="radioEventTypeRespite" min="-2" max="-2" attributes="0"/>
+                                          <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                                          <Component id="radioEventTypeEvent" min="-2" max="-2" attributes="0"/>
                                       </Group>
-                                      <Component id="cmdNewReview" alignment="0" min="-2" max="-2" attributes="0"/>
+                                      <Component id="txtEventLocation" alignment="0" max="32767" attributes="0"/>
                                   </Group>
                               </Group>
-                              <Component id="jScrollPane9" max="32767" attributes="0"/>
-                              <Component id="txtReviewReason" max="32767" attributes="0"/>
                           </Group>
                           <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                          <Component id="tblReviewReasonsPane" pref="577" max="32767" attributes="0"/>
+                          <Component id="tblReviewReasonsPane" pref="614" max="32767" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
                       </Group>
                   </Group>
@@ -1611,34 +1633,51 @@
                       <Group type="102" alignment="0" attributes="0">
                           <Group type="103" groupAlignment="0" attributes="0">
                               <Group type="102" attributes="0">
-                                  <EmptySpace max="-2" attributes="0"/>
+                                  <Group type="103" groupAlignment="3" attributes="0">
+                                      <Component id="radioEventTypeFollowUp" alignment="3" min="-2" max="-2" attributes="0"/>
+                                      <Component id="radioEventTypeRespite" alignment="3" min="-2" max="-2" attributes="0"/>
+                                      <Component id="radioEventTypeEvent" alignment="3" min="-2" max="-2" attributes="0"/>
+                                  </Group>
+                                  <EmptySpace type="unrelated" max="-2" attributes="0"/>
                                   <Group type="103" groupAlignment="1" attributes="0">
-                                      <Group type="103" groupAlignment="3" attributes="0">
+                                      <Group type="103" alignment="1" groupAlignment="3" attributes="0">
                                           <Component id="jLabel7" alignment="3" min="-2" max="-2" attributes="0"/>
-                                          <Component id="txtReviewDateField" alignment="3" min="-2" max="-2" attributes="0"/>
+                                          <Component id="txtEventBeginDateField" alignment="3" min="-2" max="-2" attributes="0"/>
                                       </Group>
-                                      <Component id="cmdShowReviewSelector" min="-2" max="-2" attributes="0"/>
+                                      <Component id="cmbEventBeginTime" min="-2" max="-2" attributes="0"/>
+                                      <Component id="cmdEventBeginDateSelector" min="-2" max="-2" attributes="0"/>
                                   </Group>
                                   <EmptySpace max="-2" attributes="0"/>
                                   <Component id="quickDateSelectionPanel" min="-2" max="-2" attributes="0"/>
-                                  <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                                  <Group type="103" groupAlignment="3" attributes="0">
-                                      <Component id="cmbReviewAssignee" alignment="3" min="-2" max="-2" attributes="0"/>
-                                      <Component id="jLabel12" alignment="3" min="-2" max="-2" attributes="0"/>
+                                  <EmptySpace max="-2" attributes="0"/>
+                                  <Group type="103" groupAlignment="1" attributes="0">
+                                      <Group type="103" alignment="1" groupAlignment="3" attributes="0">
+                                          <Component id="txtEventEndDateField" alignment="3" min="-2" max="-2" attributes="0"/>
+                                          <Component id="jLabel21" alignment="3" min="-2" max="-2" attributes="0"/>
+                                      </Group>
+                                      <Component id="cmdEventEndDateSelector" min="-2" max="-2" attributes="0"/>
+                                      <Component id="cmbEventEndTime" min="-2" max="-2" attributes="0"/>
                                   </Group>
-                                  <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                                  <EmptySpace max="-2" attributes="0"/>
                                   <Group type="103" groupAlignment="3" attributes="0">
-                                      <Component id="radioReviewTypeFollowUp" alignment="3" min="-2" max="-2" attributes="0"/>
-                                      <Component id="radioReviewTypeRespite" alignment="3" min="-2" max="-2" attributes="0"/>
+                                      <Component id="jLabel22" alignment="3" min="-2" max="-2" attributes="0"/>
+                                      <Component id="txtEventLocation" alignment="3" min="-2" max="-2" attributes="0"/>
+                                  </Group>
+                                  <EmptySpace max="-2" attributes="0"/>
+                                  <Group type="103" groupAlignment="3" attributes="0">
+                                      <Component id="jLabel12" alignment="3" min="-2" max="-2" attributes="0"/>
+                                      <Component id="cmbReviewAssignee" alignment="3" min="-2" max="-2" attributes="0"/>
                                   </Group>
                                   <EmptySpace max="-2" attributes="0"/>
                                   <Component id="cmdNewReview" min="-2" max="-2" attributes="0"/>
                                   <EmptySpace type="unrelated" max="-2" attributes="0"/>
                                   <Component id="txtReviewReason" min="-2" max="-2" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
+                                  <Component id="jScrollPane5" min="-2" max="-2" attributes="0"/>
+                                  <EmptySpace max="-2" attributes="0"/>
                                   <Component id="jScrollPane9" max="32767" attributes="0"/>
                               </Group>
-                              <Component id="tblReviewReasonsPane" pref="558" max="32767" attributes="0"/>
+                              <Component id="tblReviewReasonsPane" pref="600" max="32767" attributes="0"/>
                           </Group>
                           <EmptySpace max="-2" attributes="0"/>
                       </Group>
@@ -1660,7 +1699,7 @@
                 </Component>
                 <Component class="javax.swing.JLabel" name="jLabel7">
                   <Properties>
-                    <Property name="text" type="java.lang.String" value="Datum:"/>
+                    <Property name="text" type="java.lang.String" value="von:"/>
                   </Properties>
                 </Component>
                 <Container class="javax.swing.JScrollPane" name="tblReviewReasonsPane">
@@ -1692,17 +1731,17 @@
                     </Component>
                   </SubComponents>
                 </Container>
-                <Component class="javax.swing.JTextField" name="txtReviewDateField">
+                <Component class="javax.swing.JTextField" name="txtEventBeginDateField">
                   <Properties>
                     <Property name="editable" type="boolean" value="false"/>
                     <Property name="horizontalAlignment" type="int" value="4"/>
                     <Property name="toolTipText" type="java.lang.String" value="Doppelklick um heutiges Datum zu &#xfc;bernehmen"/>
                   </Properties>
                   <Events>
-                    <EventHandler event="mouseClicked" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="txtReviewDateFieldMouseClicked"/>
+                    <EventHandler event="mouseClicked" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="txtEventBeginDateFieldMouseClicked"/>
                   </Events>
                 </Component>
-                <Component class="javax.swing.JButton" name="cmdShowReviewSelector">
+                <Component class="javax.swing.JButton" name="cmdEventBeginDateSelector">
                   <Properties>
                     <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
                       <Image iconType="3" name="/icons/schedule.png"/>
@@ -1712,7 +1751,7 @@
                     </Property>
                   </Properties>
                   <Events>
-                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdShowReviewSelectorActionPerformed"/>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdEventBeginDateSelectorActionPerformed"/>
                   </Events>
                 </Component>
                 <Component class="javax.swing.JLabel" name="jLabel12">
@@ -1733,15 +1772,18 @@
                     </Property>
                   </Properties>
                 </Component>
-                <Component class="javax.swing.JRadioButton" name="radioReviewTypeRespite">
+                <Component class="javax.swing.JRadioButton" name="radioEventTypeRespite">
                   <Properties>
                     <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
                       <ComponentRef name="btGrpReviewType"/>
                     </Property>
                     <Property name="text" type="java.lang.String" value="Frist"/>
                   </Properties>
+                  <Events>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="radioEventTypeRespiteActionPerformed"/>
+                  </Events>
                 </Component>
-                <Component class="javax.swing.JRadioButton" name="radioReviewTypeFollowUp">
+                <Component class="javax.swing.JRadioButton" name="radioEventTypeFollowUp">
                   <Properties>
                     <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
                       <ComponentRef name="btGrpReviewType"/>
@@ -1749,6 +1791,9 @@
                     <Property name="selected" type="boolean" value="true"/>
                     <Property name="text" type="java.lang.String" value="Wiedervorlage"/>
                   </Properties>
+                  <Events>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="radioEventTypeFollowUpActionPerformed"/>
+                  </Events>
                 </Component>
                 <Container class="javax.swing.JScrollPane" name="jScrollPane9">
                   <AuxValues>
@@ -1779,8 +1824,195 @@
                   </SubComponents>
                 </Container>
                 <Component class="javax.swing.JTextField" name="txtReviewReason">
+                  <Properties>
+                    <Property name="toolTipText" type="java.lang.String" value="Zusammenfassung"/>
+                  </Properties>
                 </Component>
                 <Component class="com.jdimension.jlawyer.client.components.QuickDateSelectionPanel" name="quickDateSelectionPanel">
+                </Component>
+                <Component class="javax.swing.JRadioButton" name="radioEventTypeEvent">
+                  <Properties>
+                    <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
+                      <ComponentRef name="btGrpReviewType"/>
+                    </Property>
+                    <Property name="text" type="java.lang.String" value="Termin"/>
+                  </Properties>
+                  <Events>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="radioEventTypeEventActionPerformed"/>
+                  </Events>
+                </Component>
+                <Component class="javax.swing.JComboBox" name="cmbEventBeginTime">
+                  <Properties>
+                    <Property name="editable" type="boolean" value="true"/>
+                    <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
+                      <StringArray count="48">
+                        <StringItem index="0" value="00:00"/>
+                        <StringItem index="1" value="00:30"/>
+                        <StringItem index="2" value="01:00"/>
+                        <StringItem index="3" value="01:30"/>
+                        <StringItem index="4" value="02:00"/>
+                        <StringItem index="5" value="02:30"/>
+                        <StringItem index="6" value="03:00"/>
+                        <StringItem index="7" value="03:30"/>
+                        <StringItem index="8" value="04:00"/>
+                        <StringItem index="9" value="04:30"/>
+                        <StringItem index="10" value="05:00"/>
+                        <StringItem index="11" value="05:30"/>
+                        <StringItem index="12" value="06:00"/>
+                        <StringItem index="13" value="06:30"/>
+                        <StringItem index="14" value="07:00"/>
+                        <StringItem index="15" value="07:30"/>
+                        <StringItem index="16" value="08:00"/>
+                        <StringItem index="17" value="08:30"/>
+                        <StringItem index="18" value="09:00"/>
+                        <StringItem index="19" value="09:30"/>
+                        <StringItem index="20" value="10:00"/>
+                        <StringItem index="21" value="10:30"/>
+                        <StringItem index="22" value="11:00"/>
+                        <StringItem index="23" value="11:30"/>
+                        <StringItem index="24" value="12:00"/>
+                        <StringItem index="25" value="12:30"/>
+                        <StringItem index="26" value="13:00"/>
+                        <StringItem index="27" value="13:30"/>
+                        <StringItem index="28" value="14:00"/>
+                        <StringItem index="29" value="14:30"/>
+                        <StringItem index="30" value="15:00"/>
+                        <StringItem index="31" value="15:30"/>
+                        <StringItem index="32" value="16:00"/>
+                        <StringItem index="33" value="16:30"/>
+                        <StringItem index="34" value="17:00"/>
+                        <StringItem index="35" value="17:30"/>
+                        <StringItem index="36" value="18:00"/>
+                        <StringItem index="37" value="18:30"/>
+                        <StringItem index="38" value="19:00"/>
+                        <StringItem index="39" value="19:30"/>
+                        <StringItem index="40" value="20:00"/>
+                        <StringItem index="41" value="20:30"/>
+                        <StringItem index="42" value="21:00"/>
+                        <StringItem index="43" value="21:30"/>
+                        <StringItem index="44" value="22:00"/>
+                        <StringItem index="45" value="22:30"/>
+                        <StringItem index="46" value="23:00"/>
+                        <StringItem index="47" value="23:30"/>
+                      </StringArray>
+                    </Property>
+                  </Properties>
+                  <AuxValues>
+                    <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;String&gt;"/>
+                  </AuxValues>
+                </Component>
+                <Component class="javax.swing.JTextField" name="txtEventEndDateField">
+                  <Properties>
+                    <Property name="editable" type="boolean" value="false"/>
+                    <Property name="horizontalAlignment" type="int" value="4"/>
+                    <Property name="toolTipText" type="java.lang.String" value="Doppelklick um heutiges Datum zu &#xfc;bernehmen"/>
+                  </Properties>
+                  <Events>
+                    <EventHandler event="mouseClicked" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="txtEventEndDateFieldMouseClicked"/>
+                  </Events>
+                </Component>
+                <Component class="javax.swing.JLabel" name="jLabel21">
+                  <Properties>
+                    <Property name="text" type="java.lang.String" value="bis:"/>
+                  </Properties>
+                </Component>
+                <Component class="javax.swing.JButton" name="cmdEventEndDateSelector">
+                  <Properties>
+                    <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                      <Image iconType="3" name="/icons/schedule.png"/>
+                    </Property>
+                    <Property name="margin" type="java.awt.Insets" editor="org.netbeans.beaninfo.editors.InsetsEditor">
+                      <Insets value="[2, 4, 2, 4]"/>
+                    </Property>
+                  </Properties>
+                  <Events>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdEventEndDateSelectorActionPerformed"/>
+                  </Events>
+                </Component>
+                <Component class="javax.swing.JComboBox" name="cmbEventEndTime">
+                  <Properties>
+                    <Property name="editable" type="boolean" value="true"/>
+                    <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
+                      <StringArray count="48">
+                        <StringItem index="0" value="00:00"/>
+                        <StringItem index="1" value="00:30"/>
+                        <StringItem index="2" value="01:00"/>
+                        <StringItem index="3" value="01:30"/>
+                        <StringItem index="4" value="02:00"/>
+                        <StringItem index="5" value="02:30"/>
+                        <StringItem index="6" value="03:00"/>
+                        <StringItem index="7" value="03:30"/>
+                        <StringItem index="8" value="04:00"/>
+                        <StringItem index="9" value="04:30"/>
+                        <StringItem index="10" value="05:00"/>
+                        <StringItem index="11" value="05:30"/>
+                        <StringItem index="12" value="06:00"/>
+                        <StringItem index="13" value="06:30"/>
+                        <StringItem index="14" value="07:00"/>
+                        <StringItem index="15" value="07:30"/>
+                        <StringItem index="16" value="08:00"/>
+                        <StringItem index="17" value="08:30"/>
+                        <StringItem index="18" value="09:00"/>
+                        <StringItem index="19" value="09:30"/>
+                        <StringItem index="20" value="10:00"/>
+                        <StringItem index="21" value="10:30"/>
+                        <StringItem index="22" value="11:00"/>
+                        <StringItem index="23" value="11:30"/>
+                        <StringItem index="24" value="12:00"/>
+                        <StringItem index="25" value="12:30"/>
+                        <StringItem index="26" value="13:00"/>
+                        <StringItem index="27" value="13:30"/>
+                        <StringItem index="28" value="14:00"/>
+                        <StringItem index="29" value="14:30"/>
+                        <StringItem index="30" value="15:00"/>
+                        <StringItem index="31" value="15:30"/>
+                        <StringItem index="32" value="16:00"/>
+                        <StringItem index="33" value="16:30"/>
+                        <StringItem index="34" value="17:00"/>
+                        <StringItem index="35" value="17:30"/>
+                        <StringItem index="36" value="18:00"/>
+                        <StringItem index="37" value="18:30"/>
+                        <StringItem index="38" value="19:00"/>
+                        <StringItem index="39" value="19:30"/>
+                        <StringItem index="40" value="20:00"/>
+                        <StringItem index="41" value="20:30"/>
+                        <StringItem index="42" value="21:00"/>
+                        <StringItem index="43" value="21:30"/>
+                        <StringItem index="44" value="22:00"/>
+                        <StringItem index="45" value="22:30"/>
+                        <StringItem index="46" value="23:00"/>
+                        <StringItem index="47" value="23:30"/>
+                      </StringArray>
+                    </Property>
+                  </Properties>
+                  <AuxValues>
+                    <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;String&gt;"/>
+                  </AuxValues>
+                </Component>
+                <Container class="javax.swing.JScrollPane" name="jScrollPane5">
+                  <AuxValues>
+                    <AuxValue name="autoScrollPane" type="java.lang.Boolean" value="true"/>
+                  </AuxValues>
+
+                  <Layout class="org.netbeans.modules.form.compat2.layouts.support.JScrollPaneSupportLayout"/>
+                  <SubComponents>
+                    <Component class="javax.swing.JTextArea" name="taEventDescription">
+                      <Properties>
+                        <Property name="columns" type="int" value="20"/>
+                        <Property name="lineWrap" type="boolean" value="true"/>
+                        <Property name="rows" type="int" value="5"/>
+                        <Property name="toolTipText" type="java.lang.String" value="Beschreibung"/>
+                        <Property name="wrapStyleWord" type="boolean" value="true"/>
+                      </Properties>
+                    </Component>
+                  </SubComponents>
+                </Container>
+                <Component class="javax.swing.JLabel" name="jLabel22">
+                  <Properties>
+                    <Property name="text" type="java.lang.String" value="Ort:"/>
+                  </Properties>
+                </Component>
+                <Component class="javax.swing.JTextField" name="txtEventLocation">
                 </Component>
               </SubComponents>
             </Container>
@@ -1835,7 +2067,7 @@
                       <Component id="lblCustom3" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="jScrollPane6" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace pref="383" max="32767" attributes="0"/>
+                      <EmptySpace pref="425" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -1912,7 +2144,7 @@
             </DimensionLayout>
             <DimensionLayout dim="1">
               <Group type="103" groupAlignment="0" attributes="0">
-                  <EmptySpace min="0" pref="598" max="32767" attributes="0"/>
+                  <EmptySpace min="0" pref="660" max="32767" attributes="0"/>
               </Group>
             </DimensionLayout>
           </Layout>
@@ -2032,7 +2264,7 @@
                               </Group>
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="cmdAddForm" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace pref="397" max="32767" attributes="0"/>
+                              <EmptySpace pref="453" max="32767" attributes="0"/>
                           </Group>
                       </Group>
                     </DimensionLayout>
@@ -2212,7 +2444,7 @@
                           <EmptySpace max="-2" attributes="0"/>
                           <Component id="cmdAddHistory" min="-2" max="-2" attributes="0"/>
                           <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                          <Component id="jScrollPane4" pref="437" max="32767" attributes="0"/>
+                          <Component id="jScrollPane4" pref="495" max="32767" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
                       </Group>
                   </Group>

@@ -1399,14 +1399,14 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
             }
 
             ArchiveFileReviewsBean reviewDto = new ArchiveFileReviewsBean();
-            reviewDto.setReviewType(reviewDto.REVIEWTYPE_FOLLOWUP);
+            reviewDto.setEventType(reviewDto.EVENTTYPE_FOLLOWUP);
             if (this.radioReviewTypeRespite.isSelected()) {
-                reviewDto.setReviewType(reviewDto.REVIEWTYPE_RESPITE);
+                reviewDto.setEventType(reviewDto.EVENTTYPE_RESPITE);
             }
             reviewDto.setDoneBoolean(false);
-            reviewDto.setReviewDate(d);
+            reviewDto.setBeginDate(d);
             reviewDto.setAssignee(this.cmbReviewAssignee.getSelectedItem().toString());
-            reviewDto.setReviewReason(this.cmbReviewReason.getModel().getSelectedItem().toString());
+            reviewDto.setSummary(this.cmbReviewReason.getModel().getSelectedItem().toString());
 
             EditorsRegistry.getInstance().updateStatus("Wiedervorlage/Frist wird gespeichert...");
             try {
@@ -1426,8 +1426,8 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
             ArchiveFileReviewReasonsTableModel model = (ArchiveFileReviewReasonsTableModel) this.tblReviewReasons.getModel();
             Object[] row = new Object[5];
             row[0] = reviewDto;
-            row[1] = reviewDto.getReviewTypeName();
-            row[2] = reviewDto.getReviewReason();
+            row[1] = reviewDto.getEventTypeName();
+            row[2] = reviewDto.getSummary();
             row[3] = new Boolean(reviewDto.getDoneBoolean());
             row[4] = reviewDto.getAssignee();
             model.addRow(row);

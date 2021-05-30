@@ -895,7 +895,7 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
             addressesForCase = fileService.getAddressesForCase(archiveFileKey);
             involvementForCase = fileService.getInvolvementDetailsForCase(archiveFileKey);
 
-            this.progress("Lade Akte: Wiedervorlagen und Fristen...");
+            this.progress("Lade Akte: Kalender...");
             CalendarServiceRemote calService = locator.lookupCalendarServiceRemote();
             reviews = calService.getReviews(this.archiveFileKey);
             this.progress("Lade Akte: Dokumente...");
@@ -1007,7 +1007,7 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
 
         this.progress("Aktualisiere Dialog: Dritte...");
 
-        this.progress("Aktualisiere Dialog: Wiedervorlagen und Fristen...");
+        this.progress("Aktualisiere Dialog: Kalender...");
         String[] colNames3 = new String[]{"Datum", "Typ", "Grund", "erledigt", "verantwortlich"};
         ArchiveFileReviewReasonsTableModel model3 = new ArchiveFileReviewReasonsTableModel(colNames3, 0);
         this.tblReviews.setModel(model3);
@@ -1021,8 +1021,8 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
                 ArchiveFileReviewsBean reviewDto = (ArchiveFileReviewsBean) reviewObject;
                 Object[] row = new Object[5];
                 row[0] = reviewDto;
-                row[1] = reviewDto.getReviewTypeName();
-                row[2] = reviewDto.getReviewReason();
+                row[1] = reviewDto.getEventTypeName();
+                row[2] = reviewDto.getSummary();
                 row[3] = new Boolean(reviewDto.getDoneBoolean());
                 row[4] = reviewDto.getAssignee();
                 model3.addRow(row);

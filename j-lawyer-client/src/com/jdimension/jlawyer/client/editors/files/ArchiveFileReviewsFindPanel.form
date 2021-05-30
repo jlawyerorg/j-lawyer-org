@@ -329,7 +329,7 @@
           <Color blue="ff" green="ff" red="ff" type="rgb"/>
         </Property>
         <Property name="horizontalAlignment" type="int" value="2"/>
-        <Property name="text" type="java.lang.String" value="Wiedervorlagen und Fristen suchen"/>
+        <Property name="text" type="java.lang.String" value="Wiedervorlagen, Fristen und Termine suchen"/>
       </Properties>
       <AuxValues>
         <AuxValue name="JavaCodeGenerator_VariableModifier" type="java.lang.Integer" value="4"/>
