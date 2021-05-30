@@ -875,6 +875,8 @@ public class Main {
         // todo: load this from the server
         ModuleMetadata root = new ModuleMetadata(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/Modules").getString("mod.mydesktop"));
 
+        String MODULE_CALENDAR="Kalender";
+        
         //root.setEditorClass("com.jdimension.jlawyer.client.editors.MainPanel");
         root.setEditorClass("com.jdimension.jlawyer.client.desktop.DesktopPanel");
         root.setFullName("Mein Desktop");
@@ -942,7 +944,7 @@ public class Main {
         reviewsDue.setBackgroundImage("reviews.jpg");
         reviewsDue.setFullName("fällige Wiedervorlagen, Fristen oder Termine");
         reviewsDue.setEditorName("fällig");
-        reviewsDue.setModuleName("Kalender");
+        reviewsDue.setModuleName(MODULE_CALENDAR);
         reviewsDue.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-22-blue.png")));
         reviewsDue.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-22-green.png")));
         reviewsDue.setHotKey(KeyStroke.getKeyStroke(KeyEvent.VK_F6, 0), "F6");
@@ -952,7 +954,7 @@ public class Main {
         reviewsSearch.setBackgroundImage("reviews.jpg");
         reviewsSearch.setFullName("Suche nach Wiedervorlagen, Fristen und Terminen");
         reviewsSearch.setEditorName("suchen");
-        reviewsSearch.setModuleName("Kalender");
+        reviewsSearch.setModuleName(MODULE_CALENDAR);
         reviewsSearch.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-15-blue.png")));
         reviewsSearch.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-15-green.png")));
         reviews.addChildModule(reviewsSearch);
@@ -961,7 +963,7 @@ public class Main {
         reviewsMissing.setBackgroundImage("reviews.jpg");
         reviewsMissing.setFullName("fehlende Wiedervorlagen / Fristen");
         reviewsMissing.setEditorName("fehlende");
-        reviewsMissing.setModuleName("Kalender");
+        reviewsMissing.setModuleName(MODULE_CALENDAR);
         reviewsMissing.setDefaultIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-14-blue.png")));
         reviewsMissing.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/icons32/material/Icons2-14-green.png")));
         reviews.addChildModule(reviewsMissing);

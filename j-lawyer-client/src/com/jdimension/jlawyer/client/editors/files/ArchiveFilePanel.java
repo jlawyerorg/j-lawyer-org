@@ -5549,8 +5549,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             boolean currentlyAdmin = locator.lookupSecurityServiceRemote().isAdmin();
             if (currentlyAdmin) {
                 FormsManagementDialog dlg = new FormsManagementDialog(EditorsRegistry.getInstance().getMainWindow(), true);
-                //dlg.setSummary("Anreden");
-                //dlg.setOptionGroup(OptionConstants.OPTIONGROUP_SALUTATIONS);
                 FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
                 dlg.setVisible(true);
             } else {
@@ -5584,25 +5582,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                     this.tblGroups.setValueAt(newValue, row, col);
                 }
 
-//
-//                    ClientSettings settings = ClientSettings.getInstance();
-//                    try {
-//                        JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-//                        SecurityServiceRemote svc = locator.lookupSecurityServiceRemote();
-//                        if (newValue) {
-//                            svc.addUserToGroup(u.getPrincipalId(), g.getId());
-//                        } else {
-//                            svc.removeUserFromGroup(u.getPrincipalId(), g.getId());
-//                        }
-//                    } catch (Exception ex) {
-//                        log.error("Error updating group membership", ex);
-//                        JOptionPane.showMessageDialog(this, "Fehler beim Speichern: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
-//                        EditorsRegistry.getInstance().clearStatus();
-//                        return;
-//                    }
-//
-//                    this.tblGroups.setValueAt(newValue, row, col);
-//                }
             }
         }
     }//GEN-LAST:event_tblGroupsMouseClicked
@@ -5617,14 +5596,12 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             ArchiveFileDocumentsBean value = selectedDocs.get(0);
 
             if (value != null) {
-                //boolean readOnly = !this.cmdSave.isEnabled();
                 ClientSettings settings = ClientSettings.getInstance();
                 String tmpUrl = null;
                 byte[] content = null;
                 try {
                     JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                     content = locator.lookupArchiveFileServiceRemote().getDocumentContent(value.getId());
-                    //tmpUrl = appLauncher.createTempFile(value.getName(), content);
                 } catch (Exception ex) {
                     JOptionPane.showMessageDialog(this, "Fehler beim Laden des Dokuments: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
                     return;
