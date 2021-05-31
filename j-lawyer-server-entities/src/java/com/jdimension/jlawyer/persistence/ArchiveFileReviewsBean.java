@@ -669,7 +669,7 @@ import java.util.Date;
 import javax.persistence.*;
 import javax.xml.bind.annotation.XmlRootElement;
 
-/** 
+/**
  *
  * @author jens
  */
@@ -684,12 +684,13 @@ import javax.xml.bind.annotation.XmlRootElement;
     @NamedQuery(name = "ArchiveFileReviewsBean.findByArchiveFileKey", query = "SELECT a FROM ArchiveFileReviewsBean a WHERE a.archiveFileKey = :archiveFileKey"),
     @NamedQuery(name = "ArchiveFileReviewsBean.findByDone", query = "SELECT a FROM ArchiveFileReviewsBean a WHERE a.done = :done")})
 public class ArchiveFileReviewsBean implements Serializable {
+
     private static final long serialVersionUID = 1L;
-    
-    public static final int EVENTTYPE_FOLLOWUP=10;
-    public static final int EVENTTYPE_RESPITE=20;
-    public static final int EVENTTYPE_EVENT=30;
-    
+
+    public static final int EVENTTYPE_FOLLOWUP = 10;
+    public static final int EVENTTYPE_RESPITE = 20;
+    public static final int EVENTTYPE_EVENT = 30;
+
     @Id
     @Basic(optional = false)
     @Column(name = "id")
@@ -761,19 +762,20 @@ public class ArchiveFileReviewsBean implements Serializable {
     public void setDone(short done) {
         this.done = done;
     }
-    
+
     public boolean getDoneBoolean() {
-        if(this.done==1) {
+        if (this.done == 1) {
             return true;
         }
         return false;
     }
 
     public void setDoneBoolean(boolean done) {
-        if(done)
-            this.done=1;
-        else
-            this.done=0;
+        if (done) {
+            this.done = 1;
+        } else {
+            this.done = 0;
+        }
     }
 
     public ArchiveFileBean getArchiveFileKey() {
@@ -806,13 +808,36 @@ public class ArchiveFileReviewsBean implements Serializable {
 
     @Override
     public String toString() {
-        //return "com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean[ id=" + id + " ]";
-        
-        if(this.beginDate!=null) {
-            SimpleDateFormat df=new SimpleDateFormat("dd.MM.yyyy");
-            return df.format(this.beginDate);
+        String undefined="undefiniert";
+        if (this.hasEndDateAndTime()) {
+            SimpleDateFormat df1 = new SimpleDateFormat("dd.MM.yyyy HH:mm");
+            SimpleDateFormat df2 = new SimpleDateFormat("HH:mm");
+            StringBuilder sb=new StringBuilder();
+            if (this.beginDate != null) {
+                sb.append(df1.format(this.beginDate));
+                if(this.endDate!=null) {
+                    sb.append(" - ");
+                    if(this.beginDate.getDate()==this.endDate.getDate() && this.beginDate.getMonth()==this.endDate.getMonth() && this.beginDate.getYear()==this.endDate.getYear()) {
+                        // same day
+                        sb.append(df2.format(this.endDate));
+                    } else {
+                        // spans multiple days
+                        sb.append(df1.format(this.endDate));
+                    }
+                    return sb.toString();
+                } else {
+                    return undefined;
+                }
+            } else {
+                return undefined;
+            }
         } else {
-            return "undefiniert";
+            if (this.beginDate != null) {
+                SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
+                return df.format(this.beginDate);
+            } else {
+                return undefined;
+            }
         }
     }
 
@@ -836,7 +861,11 @@ public class ArchiveFileReviewsBean implements Serializable {
     public int getEventType() {
         return eventType;
     }
-    
+
+    public boolean hasEndDateAndTime() {
+        return (this.eventType == EVENTTYPE_EVENT);
+    }
+
     public String getEventTypeName() {
         switch (this.getEventType()) {
             case EVENTTYPE_FOLLOWUP:
@@ -898,5 +927,5 @@ public class ArchiveFileReviewsBean implements Serializable {
     public void setLocation(String location) {
         this.location = location;
     }
-    
+
 }

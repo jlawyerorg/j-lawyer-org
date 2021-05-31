@@ -663,6 +663,8 @@
  */
 package com.jdimension.jlawyer.client.editors.files;
 
+import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
+import java.util.Date;
 import javax.swing.table.DefaultTableModel;
 
 /**
@@ -670,6 +672,24 @@ import javax.swing.table.DefaultTableModel;
  * @author jens
  */
 public class ArchiveFileReviewReasonsTableModel extends DefaultTableModel {
+    
+    private static String[] columnNames=new String[]{"Datum / Zeit", "Typ", "Grund", "Ort", "erledigt", "verantwortlich", "Beschreibung"};
+
+    public static String[] getColumnNames() {
+        return columnNames;
+    }
+    
+    public static Object[] eventToRow(ArchiveFileReviewsBean event) {
+        Object[] row = new Object[7];
+        row[0] = event;
+        row[1] = event.getEventTypeName();
+        row[2] = event.getSummary();
+        row[3] = event.getLocation();
+        row[4] = new Boolean(event.getDoneBoolean());
+        row[5] = event.getAssignee();
+        row[6] = event.getDescription();
+        return row;
+    }
     
     /**
      * Creates a new instance of ArchiveFileReviewReasonsTableModel
@@ -687,10 +707,11 @@ public class ArchiveFileReviewReasonsTableModel extends DefaultTableModel {
     }
 
     public Class<?> getColumnClass(int index) {
-        if (index == 3) {
-            return Boolean.class;
-        } else {
-            return String.class;
+        switch (index) {
+            case 4:
+                return Boolean.class;
+            default:
+                return String.class;
         }
     }
     

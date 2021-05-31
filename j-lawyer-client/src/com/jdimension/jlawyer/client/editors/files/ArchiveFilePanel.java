@@ -844,7 +844,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.tblHistory.setModel(model2);
         this.tblHistory.getColumnModel().getColumn(1).setCellRenderer(new UserTableCellRenderer());
 
-        String[] colNames3 = new String[]{"Datum", "Typ", "Grund", "erledigt", "verantwortlich"};
+        String[] colNames3 = ArchiveFileReviewReasonsTableModel.getColumnNames();
         ArchiveFileReviewReasonsTableModel model3 = new ArchiveFileReviewReasonsTableModel(colNames3, 0);
         this.tblReviewReasons.setModel(model3);
 
@@ -1125,6 +1125,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.cmbSubjectField.setEnabled(!readOnly && !archived);
         this.txtReason.setEnabled(!readOnly && !archived);
         this.txtReviewReason.setEnabled(!readOnly && !archived);
+        this.txtEventLocation.setEnabled(!readOnly && !archived);
+        this.taEventDescription.setEnabled(!readOnly && !archived);
         this.lstReviewReasons.setEnabled(!readOnly && !archived);
         this.cmdNewDocument.setEnabled(!readOnly && !archived);
         this.cmdAddNote.setEnabled(!readOnly && !archived);
@@ -3436,7 +3438,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
             EditorsRegistry.getInstance().updateStatus("Wiedervorlage/Frist gespeichert.", 5000);
 
-            this.tblReviewReasons.setValueAt(Boolean.FALSE, selectedRows[i], 3);
+            this.tblReviewReasons.setValueAt(Boolean.FALSE, selectedRows[i], 4);
         }
 
     }//GEN-LAST:event_mnuSetReviewOpenActionPerformed
@@ -3474,7 +3476,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
             EditorsRegistry.getInstance().updateStatus("Wiedervorlage/Frist gespeichert.", 5000);
 
-            this.tblReviewReasons.setValueAt(Boolean.TRUE, selectedRows[i], 3);
+            this.tblReviewReasons.setValueAt(Boolean.TRUE, selectedRows[i], 4);
         }
     }//GEN-LAST:event_mnuSetReviewDoneActionPerformed
 
@@ -3601,7 +3603,10 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             EditorsRegistry.getInstance().updateStatus("Wiedervorlage/Frist gespeichert.", 5000);
 
             this.txtEventBeginDateField.setText("");
+            this.txtEventEndDateField.setText("");
             this.txtReviewReason.setText("");
+            this.taEventDescription.setText("");
+            this.txtEventLocation.setText("");
             this.chkArchived.setSelected(false);
             this.lblArchivedSince.setText("");
             this.radioEventTypeFollowUp.setSelected(true);
@@ -3627,6 +3632,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         reviewDto.setAssignee(this.cmbReviewAssignee.getSelectedItem().toString());
         reviewDto.setSummary(reason);
         reviewDto.setDescription(description);
+        reviewDto.setLocation(this.txtEventLocation.getText());
 
         ClientSettings settings = ClientSettings.getInstance();
 
@@ -3636,12 +3642,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         reviewDto = calService.addReview(this.dto.getId(), reviewDto);
 
         ArchiveFileReviewReasonsTableModel model = (ArchiveFileReviewReasonsTableModel) this.tblReviewReasons.getModel();
-        Object[] row = new Object[5];
-        row[0] = reviewDto;
-        row[1] = reviewDto.getEventTypeName();
-        row[2] = reviewDto.getSummary();
-        row[3] = new Boolean(reviewDto.getDoneBoolean());
-        row[4] = reviewDto.getAssignee();
+        Object[] row = ArchiveFileReviewReasonsTableModel.eventToRow(reviewDto);
         model.addRow(row);
     }
 
@@ -4221,7 +4222,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         if (evt.getClickCount() == 1 && !evt.isPopupTrigger() && evt.getComponent().isEnabled()) {
             Point p = evt.getPoint();
             int col = this.tblReviewReasons.columnAtPoint(p);
-            if (col == 3) {
+            if (col == 4) {
                 // click on checkbox in table
                 int row = this.tblReviewReasons.rowAtPoint(p);
                 ArchiveFileReviewsBean reviewDto = (ArchiveFileReviewsBean) this.tblReviewReasons.getValueAt(row, 0);
@@ -4253,7 +4254,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         for (int i = 0; i < selectedRows.length; i++) {
             evt.getSource();
             ArchiveFileReviewsBean review = (ArchiveFileReviewsBean) this.tblReviewReasons.getValueAt(selectedRows[i], 0);
-            EditorOrDuplicateReviewDialog dlg = new EditorOrDuplicateReviewDialog(EditorOrDuplicateReviewDialog.MODE_DUPLICATE, EditorsRegistry.getInstance().getMainWindow(), true, this.dto.getId(), review, this.tblReviewReasons);
+            EditorOrDuplicateEventDialog dlg = new EditorOrDuplicateEventDialog(EditorOrDuplicateEventDialog.MODE_DUPLICATE, EditorsRegistry.getInstance().getMainWindow(), true, this.dto.getId(), review, this.tblReviewReasons);
             FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
             dlg.setVisible(true);
 
@@ -4989,6 +4990,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                     EditorsRegistry.getInstance().clearStatus();
                     continue;
                 }
+                d.setHours(review.getBeginDate().getHours());
+                d.setMinutes(review.getBeginDate().getMinutes());
+                long difference=d.getTime() - review.getBeginDate().getTime();
+                if(review.getEndDate()!=null)
+                    review.setEndDate(new Date(review.getEndDate().getTime()+difference));
                 review.setBeginDate(d);
 
                 calService.updateReview(this.dto.getId(), review);
@@ -5179,7 +5185,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         for (int i = 0; i < selectedRows.length; i++) {
             //evt.getSource();
             ArchiveFileReviewsBean review = (ArchiveFileReviewsBean) this.tblReviewReasons.getValueAt(selectedRows[i], 0);
-            EditorOrDuplicateReviewDialog dlg = new EditorOrDuplicateReviewDialog(EditorOrDuplicateReviewDialog.MODE_EDIT, EditorsRegistry.getInstance().getMainWindow(), true, this.dto.getId(), review, this.tblReviewReasons);
+            EditorOrDuplicateEventDialog dlg = new EditorOrDuplicateEventDialog(EditorOrDuplicateEventDialog.MODE_EDIT, EditorsRegistry.getInstance().getMainWindow(), true, this.dto.getId(), review, this.tblReviewReasons);
             FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
             dlg.setVisible(true);
 
@@ -5710,7 +5716,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     private void toggleEventUi() {
         
-        this.txtEventEndDateField.setEnabled(this.radioEventTypeEvent.isSelected());
         this.cmbEventBeginTime.setEnabled(this.radioEventTypeEvent.isSelected());
         this.cmbEventEndTime.setEnabled(this.radioEventTypeEvent.isSelected());
         this.cmdEventEndDateSelector.setEnabled(this.radioEventTypeEvent.isSelected());
@@ -5883,12 +5888,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                     ArchiveFileReviewsBean eventRev = ((ReviewAddedEvent) e).getReview();
                     if (this.dto.getId().equals(eventRev.getArchiveFileKey().getId())) {
                         ArchiveFileReviewReasonsTableModel model = (ArchiveFileReviewReasonsTableModel) this.tblReviewReasons.getModel();
-                        Object[] row = new Object[5];
-                        row[0] = eventRev;
-                        row[1] = eventRev.getEventTypeName();
-                        row[2] = eventRev.getSummary();
-                        row[3] = new Boolean(eventRev.getDoneBoolean());
-                        row[4] = eventRev.getAssignee();
+                        Object[] row = ArchiveFileReviewReasonsTableModel.eventToRow(eventRev);
                         model.addRow(row);
                         ComponentUtils.autoSizeColumns(tblReviewReasons);
                     }
@@ -6456,14 +6456,14 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 // in case of updates we need to reload the reviews
                 // they are getting removed and re-added by #updateArchiveFile
                 Collection reviews = calService.getReviews(id);
-                String[] colNames3 = new String[]{"Datum", "Typ", "Grund", "erledigt", "verantwortlich"};
+                String[] colNames3 = ArchiveFileReviewReasonsTableModel.getColumnNames();
                 ArchiveFileReviewReasonsTableModel model3 = new ArchiveFileReviewReasonsTableModel(colNames3, 0);
                 this.tblReviewReasons.setModel(model3);
                 ReviewsComparator reviewsComparator = new ReviewsComparator();
                 TableRowSorter rtrs = new TableRowSorter(model3);
                 rtrs.setComparator(0, reviewsComparator);
                 this.tblReviewReasons.setRowSorter(rtrs);
-                this.tblReviewReasons.getColumnModel().getColumn(4).setCellRenderer(new UserTableCellRenderer());
+                this.tblReviewReasons.getColumnModel().getColumn(5).setCellRenderer(new UserTableCellRenderer());
                 if (reviews != null) {
                     for (Object reviewObject : reviews) {
                         ArchiveFileReviewsBean reviewDto = (ArchiveFileReviewsBean) reviewObject;
