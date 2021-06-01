@@ -710,20 +710,17 @@ public class ArchiveFileReviewsSearchThread implements Runnable {
             
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);
-            //JOptionPane.showMessageDialog(this.owner, "Verbindungsfehler: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
             ThreadUtils.showErrorDialog(this.owner, ex.getMessage(), "Fehler");
             return;
         }
         
-        String[] colNames=new String[] {"fällig", "Typ", "Aktenzeichen", "Kurzrubrum", "Grund", "Anwalt", "verantwortlich"};
-        //QuickArchiveFileSearchTableModel model=new QuickArchiveFileSearchTableModel(colNames, 0);
+        String[] colNames=new String[] {"Datum / Zeit", "Typ", "Aktenzeichen", "Kurzrubrum", "Grund", "Beschreibung", "Anwalt", "verantwortlich"};
         DefaultTableModel model = new DefaultTableModel(colNames, 0) {
 
             public boolean isCellEditable(int i, int i0) {
                 return false;
             }
         };
-        //this.target.setModel(model);
         ThreadUtils.setTableModel(this.target, model);
         try {
             Thread.sleep(750);
@@ -732,28 +729,21 @@ public class ArchiveFileReviewsSearchThread implements Runnable {
         }
         
         SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy", Locale.GERMAN);
-        this.target.getColumnModel().getColumn(5).setCellRenderer(new UserTableCellRenderer());
         this.target.getColumnModel().getColumn(6).setCellRenderer(new UserTableCellRenderer());
+        this.target.getColumnModel().getColumn(7).setCellRenderer(new UserTableCellRenderer());
         for(ArchiveFileReviewsBean b:dtos) {
             try {
-                Date reviewDate = b.getBeginDate();
-                String reviewDateString = "";
-                if (reviewDate != null) {
-                    reviewDateString = df.format(reviewDate);
-                }
-                Object[] row = new Object[]{new ArchiveFileReviewsRowIdentifier(b.getArchiveFileKey(), reviewDateString), b.getEventTypeName(), b.getArchiveFileKey().getFileNumber(), b.getArchiveFileKey().getName(), b.getSummary(), b.getArchiveFileKey().getLawyer(), b.getAssignee()};
+                String reviewDateString=b.toString();
+                Object[] row = new Object[]{new ArchiveFileReviewsRowIdentifier(b.getArchiveFileKey(), reviewDateString), b.getEventTypeName(), b.getArchiveFileKey().getFileNumber(), b.getArchiveFileKey().getName(), b.getSummary(), b.getDescription(), b.getArchiveFileKey().getLawyer(), b.getAssignee()};
                 model.addRow(row);
             } catch (Throwable t) {
                 log.error(t);
             }
         }
-        TableRowSorter<TableModel> sorter = new TableRowSorter<TableModel>(model);
+        TableRowSorter<TableModel> sorter = new TableRowSorter<>(model);
         sorter.setComparator(2, new FileNumberComparator());
         sorter.setComparator(0, new DateStringComparator());
         ThreadUtils.setTableModel(this.target, model, sorter);
-        //this.target.getColumnModel().getColumn(5).setCellRenderer(new UserTableCellRenderer());
-        //this.target.getColumnModel().getColumn(6).setCellRenderer(new UserTableCellRenderer());
-        //EditorsRegistry.getInstance().clearStatus(true);
         ThreadUtils.setDefaultCursor(this.owner);
         
     }

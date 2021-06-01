@@ -664,7 +664,6 @@
 package com.jdimension.jlawyer.client.editors.files;
 
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
-import java.util.Date;
 import javax.swing.table.DefaultTableModel;
 
 /**

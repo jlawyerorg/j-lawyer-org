@@ -978,28 +978,28 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
             if (status == ArchiveFileConstants.REVIEWSTATUS_ANY) {
                 if (type == ArchiveFileConstants.REVIEWTYPE_ANY) {
                     st = con.prepareStatement("select id, archiveFileKey from case_events where beginDate >= ? and beginDate <= ? order by beginDate asc limit ?");
-                    st.setDate(1, new java.sql.Date(fromDate.getTime()));
-                    st.setDate(2, new java.sql.Date(toDate.getTime()));
+                    st.setTimestamp(1, new java.sql.Timestamp(fromDate.getTime()));
+                    st.setTimestamp(2, new java.sql.Timestamp(toDate.getTime()));
                     st.setInt(3, dbLimit);
                 } else {
                     st = con.prepareStatement("select id, archiveFileKey from case_events where eventType=? and beginDate >= ? and beginDate <= ? order by beginDate asc limit ?");
                     st.setInt(1, type);
-                    st.setDate(2, new java.sql.Date(fromDate.getTime()));
-                    st.setDate(3, new java.sql.Date(toDate.getTime()));
+                    st.setTimestamp(2, new java.sql.Timestamp(fromDate.getTime()));
+                    st.setTimestamp(3, new java.sql.Timestamp(toDate.getTime()));
                     st.setInt(4, dbLimit);
                 }
             } else if (type == ArchiveFileConstants.REVIEWTYPE_ANY) {
                 st = con.prepareStatement("select id, archiveFileKey from case_events where done=? and beginDate >= ? and beginDate <= ? order by beginDate asc limit ?");
                 st.setInt(1, status);
-                st.setDate(2, new java.sql.Date(fromDate.getTime()));
-                st.setDate(3, new java.sql.Date(toDate.getTime()));
+                st.setTimestamp(2, new java.sql.Timestamp(fromDate.getTime()));
+                st.setTimestamp(3, new java.sql.Timestamp(toDate.getTime()));
                 st.setInt(4, dbLimit);
             } else {
                 st = con.prepareStatement("select id, archiveFileKey from case_events where eventType=? and done=? and beginDate >= ? and beginDate <= ? order by beginDate asc limit ?");
                 st.setInt(1, type);
                 st.setInt(2, status);
-                st.setDate(3, new java.sql.Date(fromDate.getTime()));
-                st.setDate(4, new java.sql.Date(toDate.getTime()));
+                st.setTimestamp(3, new java.sql.Timestamp(fromDate.getTime()));
+                st.setTimestamp(4, new java.sql.Timestamp(toDate.getTime()));
                 st.setInt(5, dbLimit);
             }
             rs = st.executeQuery();

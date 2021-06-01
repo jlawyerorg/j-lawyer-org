@@ -672,6 +672,7 @@ public interface ArchiveFileConstants {
     public static final int REVIEWSTATUS_OPEN=0;
     public static final int REVIEWSTATUS_ANY=-1;
     
+    public static final int REVIEWTYPE_EVENT=30;
     public static final int REVIEWTYPE_RESPITE=20;
     public static final int REVIEWTYPE_FOLLOWUP=10;
     public static final int REVIEWTYPE_ANY=-1;

@@ -781,12 +781,13 @@ public class ReviewDueEntryPanel extends javax.swing.JPanel {
             fileName = fileName.substring(0, 45) + "...";
         }
 
-        String dueDate = "";
-        if (e.getDue() == null) {
-            dueDate = "";
-        } else {
-            dueDate = df.format(e.getDue()) + ": ";
-        }
+        String dueDate = e.getReview().toString() + ": ";
+//        String dueDate = "";
+//        if (e.getDue() == null) {
+//            dueDate = "";
+//        } else {
+//            dueDate = df.format(e.getDue()) + ": ";
+//        }
 
         Date now = new Date();
         Date due = e.getDue();
@@ -836,6 +837,8 @@ public class ReviewDueEntryPanel extends javax.swing.JPanel {
         if (e.getType() == ArchiveFileConstants.REVIEWTYPE_RESPITE) {
             this.lblIcon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/clicknrunred.png")));
             this.cmdPostpone.setEnabled(false);
+        } else if (e.getType() == ArchiveFileConstants.REVIEWTYPE_EVENT) {
+            this.lblIcon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/clicknrun.png")));
         } else {
             this.lblIcon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/clicknrungrey.png")));
         }

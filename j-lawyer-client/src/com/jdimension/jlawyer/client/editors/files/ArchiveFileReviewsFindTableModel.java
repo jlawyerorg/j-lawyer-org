@@ -687,7 +687,7 @@ public class ArchiveFileReviewsFindTableModel extends DefaultTableModel {
     }
 
     public Class<?> getColumnClass(int index) {
-        if (index == 5) {
+        if (index == 6) {
             return Boolean.class;
         } else {
             return String.class;

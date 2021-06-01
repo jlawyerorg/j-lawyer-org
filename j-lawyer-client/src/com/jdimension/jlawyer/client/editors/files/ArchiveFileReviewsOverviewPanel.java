@@ -687,7 +687,7 @@ public class ArchiveFileReviewsOverviewPanel extends javax.swing.JPanel implemen
     private Image backgroundImage=null;
     
     /**
-     * Creates new form QuickArchiveFileSearchPanel
+     * Creates new form ArchiveFileReviewsOverviewPanel
      */
     public ArchiveFileReviewsOverviewPanel() {
         initComponents();
@@ -696,14 +696,12 @@ public class ArchiveFileReviewsOverviewPanel extends javax.swing.JPanel implemen
         } else {
             this.detailsEditorClass = ViewArchiveFileDetailsPanel.class.getName();
         }
-        String[] colNames=new String[] {"fällig", "Typ" , "Aktenzeichen", "Kurzrubrum", "Grund", "Anwalt"};
+        String[] colNames=new String[] {"Datum / Zeit", "Typ", "Aktenzeichen", "Kurzrubrum", "Grund", "Beschreibung", "Anwalt", "verantwortlich"};
         QuickArchiveFileSearchTableModel model=new QuickArchiveFileSearchTableModel(colNames, 0);
         this.tblResults.setModel(model);
         
         this.cmdRefreshActionPerformed(null);
         
-        /*RowSorter<TableModel> sorter = new TableRowSorter<TableModel>(model);
-        this.tblResults.setRowSorter(sorter);*/
     }
     
     public void setBackgroundImage(Image image) {
@@ -905,7 +903,6 @@ public class ArchiveFileReviewsOverviewPanel extends javax.swing.JPanel implemen
     private void cmdRefreshActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRefreshActionPerformed
         // perform search here
         ThreadUtils.setWaitCursor(this);
-        //EditorsRegistry.getInstance().updateStatus("Suche Wiedervorlagen...");
         new Thread(new ArchiveFileReviewsSearchThread(this, this.tblResults)).start();
         
     }//GEN-LAST:event_cmdRefreshActionPerformed

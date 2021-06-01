@@ -691,26 +691,28 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
     private JPanel resultUI;
     private JSplitPane split;
     private boolean ignoreCurrentEditor = false;
+    private JTabbedPane eventPane=null;
 
     /**
      * Creates a new instance of ReviewsDueTimerTask
      */
-    public ReviewsDueTimerTask(Component owner, JPanel resultPanel, JSplitPane split, boolean ignoreCurrentEditor) {
+    public ReviewsDueTimerTask(Component owner, JTabbedPane eventPane, JPanel resultPanel, JSplitPane split, boolean ignoreCurrentEditor) {
         super();
         this.owner = owner;
         this.owner = owner;
         this.resultUI = resultPanel;
         this.split = split;
         this.ignoreCurrentEditor = ignoreCurrentEditor;
+        this.eventPane=eventPane;
     }
 
-    public ReviewsDueTimerTask(Component owner, JPanel resultPanel, JSplitPane split) {
-        this(owner, resultPanel, split, false);
+    public ReviewsDueTimerTask(Component owner, JTabbedPane eventPane, JPanel resultPanel, JSplitPane split) {
+        this(owner, eventPane, resultPanel, split, false);
     }
 
     public void run() {
 
-        ArrayList<ReviewDueEntry> entries = new ArrayList<ReviewDueEntry>();
+        ArrayList<ReviewDueEntry> entries = new ArrayList<>();
         try {
 
             EditorsRegistry reg = EditorsRegistry.getInstance();
@@ -797,6 +799,11 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
                     new Runnable() {
                 public void run() {
                     resultUI.removeAll();
+                    
+                    // remove all tabs except for the first one
+                    for (int i = eventPane.getTabCount() - 1; i > 0; i--) {
+                        eventPane.removeTabAt(i);
+                    }
 
                     int i = 0;
                     int maxCount = Math.min(list.size(), 200);
@@ -810,6 +817,12 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
 
                             ep.setEntry(list.get(k));
                             resultUI.add(ep);
+                            addEventTypeTab(list.get(k).getReview().getEventTypeName());
+                            
+                            // need new identical child, one child component cannot have two parents
+                            ReviewDueEntryPanel ep2 = new ReviewDueEntryPanel(background);
+                            ep2.setEntry(list.get(k));
+                            addEntryToTab(list.get(k).getReview().getEventTypeName(), ep2);
                             i++;
                         } catch (Throwable t) {
                             log.error("Error adding review entry to desktop", t);
@@ -818,6 +831,42 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
                     }
                     split.setDividerLocation(split.getDividerLocation() + 1);
                     split.setDividerLocation(split.getDividerLocation() - 1);
+                }
+                
+                private void addEventTypeTab(String eventTypeName) {
+                    boolean hasTab = false;
+                    for (int i = 0; i < eventPane.getTabCount(); i++) {
+                        if (eventPane.getTitleAt(i).equals(eventTypeName)) {
+                            hasTab = true;
+                            break;
+                        }
+                    }
+                    if (!hasTab) {
+                        JScrollPane scroll = new JScrollPane();
+                        scroll.getVerticalScrollBar().setUnitIncrement(16);
+
+                        JPanel tPanel = new JPanel();
+                        BoxLayout layout = new BoxLayout(tPanel, BoxLayout.Y_AXIS);
+                        tPanel.setLayout(layout);
+                        tPanel.setOpaque(false);
+
+                        scroll.getViewport().add(tPanel);
+                        scroll.getViewport().setOpaque(false);
+                        eventPane.addTab(eventTypeName, scroll);
+                    }
+                    
+                }
+
+                private void addEntryToTab(String eventTypeName, ReviewDueEntryPanel ep) {
+                    
+                    for (int i = 0; i < eventPane.getTabCount(); i++) {
+                        if (eventPane.getTitleAt(i).equals(eventTypeName)) {
+                            JScrollPane sp = (JScrollPane) eventPane.getComponentAt(i);
+                            JViewport p = (JViewport) sp.getComponent(0);
+                            ((JPanel)p.getComponent(0)).add(ep);
+                            break;
+                        }
+                    }
                 }
 
             }

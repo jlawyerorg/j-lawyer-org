@@ -964,7 +964,7 @@ public class TaggedTimerTask extends java.util.TimerTask {
                         lce.setName(aFile.getName());
                         lce.setReason(aFile.getReason());
                         if (tags.get(aFile.getId()) != null) {
-                            ArrayList<String> xTags = new ArrayList<String>();
+                            ArrayList<String> xTags = new ArrayList<>();
                             for (ArchiveFileTagsBean aftb : tags.get(aFile.getId())) {
                                 xTags.add(aftb.getTagName());
                                 addTagsTab(aftb.getTagName());

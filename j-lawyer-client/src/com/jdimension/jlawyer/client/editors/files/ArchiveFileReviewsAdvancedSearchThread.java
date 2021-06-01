@@ -717,28 +717,24 @@ public class ArchiveFileReviewsAdvancedSearchThread implements Runnable {
             
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);
-            //JOptionPane.showMessageDialog(this.owner, "Verbindungsfehler: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
             ThreadUtils.showErrorDialog(this.owner, ex.getMessage(), "Fehler");
             return;
         }
         
-        String[] colNames=new String[] {"fällig" , "Typ", "Aktenzeichen", "Kurzrubrum", "Grund", "erledigt", "Anwalt", "verantwortlich"};
+        String[] colNames=new String[] {"Datum / Zeit" , "Typ", "Aktenzeichen", "Kurzrubrum", "Grund", "Beschreibung", "erledigt", "Anwalt", "verantwortlich"};
         ArchiveFileReviewsFindTableModel model=new ArchiveFileReviewsFindTableModel(colNames, 0);
         // adding the model and then adding rows is problematic - addRow on a table with model causes issues when addRow is not performed in the EDT
         SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy", Locale.GERMAN);
         for(ArchiveFileReviewsBean b:dtos) {
             Date reviewDate=b.getBeginDate();
-            String reviewDateString="";
-            if(reviewDate!=null)
-                reviewDateString=df.format(reviewDate);
-            Object[] row=new Object[]{new ArchiveFileReviewsRowIdentifier(b.getArchiveFileKey(), b, reviewDateString), b.getEventTypeName(), b.getArchiveFileKey().getFileNumber(), b.getArchiveFileKey().getName(), b.getSummary(), new Boolean(b.getDoneBoolean()), b.getArchiveFileKey().getLawyer(), b.getAssignee()};
+            String reviewDateString=b.toString();
+            Object[] row=new Object[]{new ArchiveFileReviewsRowIdentifier(b.getArchiveFileKey(), b, reviewDateString), b.getEventTypeName(), b.getArchiveFileKey().getFileNumber(), b.getArchiveFileKey().getName(), b.getSummary(), b.getDescription(), new Boolean(b.getDoneBoolean()), b.getArchiveFileKey().getLawyer(), b.getAssignee()};
             model.addRow(row);
         }
-        TableRowSorter<TableModel> sorter = new TableRowSorter<TableModel>(model);
+        TableRowSorter<TableModel> sorter = new TableRowSorter<>(model);
         sorter.setComparator(2, new FileNumberComparator());
         sorter.setComparator(0, new DateStringComparator());
         ThreadUtils.setTableModel(this.target, model, sorter);
-        //EditorsRegistry.getInstance().clearStatus(true);
         ThreadUtils.setDefaultCursor(this.owner);
         // give the EDT some time to process the new table model
         try {
@@ -746,10 +742,9 @@ public class ArchiveFileReviewsAdvancedSearchThread implements Runnable {
         } catch (Throwable t) {
             
         }
-        ThreadUtils.setCellRenderer(target, new UserTableCellRenderer(), 6);
         ThreadUtils.setCellRenderer(target, new UserTableCellRenderer(), 7);
-        //this.target.getColumnModel().getColumn(6).setCellRenderer(new UserTableCellRenderer());
-        //this.target.getColumnModel().getColumn(7).setCellRenderer(new UserTableCellRenderer());
+        ThreadUtils.setCellRenderer(target, new UserTableCellRenderer(), 8);
+        ThreadUtils.repaintComponent(target);
         
     }
     

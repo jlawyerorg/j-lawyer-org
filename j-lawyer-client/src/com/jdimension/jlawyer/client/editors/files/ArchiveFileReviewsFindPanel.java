@@ -702,7 +702,7 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
     private Image backgroundImage=null;
     
     /**
-     * Creates new form QuickArchiveFileSearchPanel
+     * Creates new form ArchiveFileReviewsFindPanel
      */
     public ArchiveFileReviewsFindPanel() {
         initComponents();
@@ -713,14 +713,11 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
             this.detailsEditorClass = ViewArchiveFileDetailsPanel.class.getName();
         }
         
-        String[] colNames=new String[] {"fällig" , "Typ", "Aktenzeichen", "Kurzrubrum", "Grund", "Anwalt", "verantwortlich"};
+        String[] colNames=new String[] {"Datum / Zeit" , "Typ", "Aktenzeichen", "Kurzrubrum", "Grund", "Beschreibung", "erledigt", "Anwalt", "verantwortlich"};
         QuickArchiveFileSearchTableModel model=new QuickArchiveFileSearchTableModel(colNames, 0);
         this.tblResults.setModel(model);
         
         this.cmdRefreshActionPerformed(null);
-        
-        /*RowSorter<TableModel> sorter = new TableRowSorter<TableModel>(model);
-        this.tblResults.setRowSorter(sorter);*/
     }
     
     public void setBackgroundImage(Image image) {
@@ -764,6 +761,7 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
         rdTypeReview = new javax.swing.JRadioButton();
         jLabel1 = new javax.swing.JLabel();
         cmdReset = new javax.swing.JButton();
+        rdTypeEvent = new javax.swing.JRadioButton();
         jLabel18 = new javax.swing.JLabel();
         lblPanelTitle = new javax.swing.JLabel();
         jPanel2 = new javax.swing.JPanel();
@@ -894,67 +892,85 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
             }
         });
 
+        grpType.add(rdTypeEvent);
+        rdTypeEvent.setText("Termine");
+        rdTypeEvent.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                rdTypeEventActionPerformed(evt);
+            }
+        });
+
         org.jdesktop.layout.GroupLayout jPanel1Layout = new org.jdesktop.layout.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel1Layout.createSequentialGroup()
                 .add(6, 6, 6)
-                .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
+                .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(jPanel1Layout.createSequentialGroup()
+                        .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            .add(jLabel1)
+                            .add(jLabel5))
+                        .add(15, 15, 15)
+                        .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            .add(jPanel1Layout.createSequentialGroup()
+                                .add(rdAllStatuses)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(rdDoneStatus)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(rdNotDoneStatus))
+                            .add(jPanel1Layout.createSequentialGroup()
+                                .add(rdAllTypes)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(rdTypeRespite)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(rdTypeReview)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(rdTypeEvent))))
                     .add(jPanel1Layout.createSequentialGroup()
                         .add(jLabel4)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                         .add(jLabel2)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(txtFromDate, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 157, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                    .add(jPanel1Layout.createSequentialGroup()
-                        .add(jLabel5)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                            .add(rdDoneStatus)
-                            .add(jPanel1Layout.createSequentialGroup()
-                                .add(rdAllStatuses)
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .add(jLabel1))
-                            .add(rdNotDoneStatus))))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jPanel1Layout.createSequentialGroup()
+                        .add(txtFromDate, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 157, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                         .add(jLabel3)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(txtToDate, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 162, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .add(18, 18, 18)
-                        .add(cmdReset))
-                    .add(rdAllTypes)
-                    .add(rdTypeRespite)
-                    .add(rdTypeReview))
-                .addContainerGap(255, Short.MAX_VALUE))
+                        .add(6, 6, 6)
+                        .add(txtToDate, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 162, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
+                .add(18, 18, 18)
+                .add(cmdReset)
+                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel1Layout.createSequentialGroup()
-                .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
-                    .add(txtToDate, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(jLabel3)
-                    .add(txtFromDate, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                        .add(jLabel2)
-                        .add(jLabel4))
+                .add(10, 10, 10)
+                .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(jPanel1Layout.createSequentialGroup()
+                        .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
+                                .add(jLabel3)
+                                .add(txtToDate, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                            .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
+                                .add(txtFromDate, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                                    .add(jLabel2)
+                                    .add(jLabel4))))
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                            .add(rdAllTypes)
+                            .add(jLabel1)
+                            .add(rdTypeRespite)
+                            .add(rdTypeReview)
+                            .add(rdTypeEvent))
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                            .add(jLabel5)
+                            .add(rdNotDoneStatus)
+                            .add(rdDoneStatus)
+                            .add(rdAllStatuses)))
                     .add(cmdReset))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(jLabel5)
-                    .add(rdAllStatuses)
-                    .add(rdAllTypes)
-                    .add(jLabel1))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(rdDoneStatus)
-                    .add(rdTypeRespite))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(rdNotDoneStatus)
-                    .add(rdTypeReview)))
+                .addContainerGap())
         );
 
         jLabel18.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/Icons2-15.png"))); // NOI18N
@@ -1029,7 +1045,7 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                         .add(jLabel18)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                        .add(lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 566, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -1044,7 +1060,7 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 230, Short.MAX_VALUE)
+                .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 247, Short.MAX_VALUE)
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -1109,7 +1125,6 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
     private void cmdRefreshActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRefreshActionPerformed
         // perform search here
         ThreadUtils.setWaitCursor(this);
-        //EditorsRegistry.getInstance().updateStatus("Suche Wiedervorlagen...");
         Date fromDate=this.txtFromDate.getDate();
         if(fromDate!=null) {
         fromDate.setHours(0);
@@ -1133,6 +1148,8 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
             type=ArchiveFileConstants.REVIEWTYPE_RESPITE;
         if(this.rdTypeReview.isSelected())
             type=ArchiveFileConstants.REVIEWTYPE_FOLLOWUP;
+        if(this.rdTypeEvent.isSelected())
+            type=ArchiveFileConstants.REVIEWTYPE_EVENT;
         
         new Thread(new ArchiveFileReviewsAdvancedSearchThread(this, this.tblResults, status, type, fromDate, toDate)).start();
         
@@ -1150,14 +1167,11 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
             
             Object report = JRLoader.loadObjectFromFile(ClientSettings.getInstance().getLocalReportsDirectory() + "reviews.jasper");
             JasperReport jasperReport = (JasperReport) report;
-//            Object subReport = JRLoader.loadObjectFromFile(ClientSettings.getInstance().getLocalReportsDirectory() + "reviews_detail.jasper");
-//            JasperReport jasperSubReport = (JasperReport) subReport;
             
-            HashMap<String, Object> parameter = new HashMap<String, Object>();
+            HashMap<String, Object> parameter = new HashMap<>();
             parameter.put("SubReportDir", ClientSettings.getInstance().getLocalReportsDirectory());
 
             JasperPrint jasperPrint = JasperFillManager.fillReport(jasperReport, parameter, colIn);
-            //JasperExportManager.exportReportToPdfFile(jasperPrint, "C:/MyData/netbeansws/ReportDemo/output/report.pdf");
             JasperPrintManager.printReport(jasperPrint, true);
         } catch (Exception ex) {
             log.error("Error printing archive file reviews", ex);
@@ -1229,12 +1243,16 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
     private void rdTypeReviewActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rdTypeReviewActionPerformed
         this.cmdRefreshActionPerformed(null);
     }//GEN-LAST:event_rdTypeReviewActionPerformed
+
+    private void rdTypeEventActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rdTypeEventActionPerformed
+        this.cmdRefreshActionPerformed(null);
+    }//GEN-LAST:event_rdTypeEventActionPerformed
     
     private ReviewsStub getPrintValues() {
-        ArrayList<ArchiveFileReviewsBean> revList=new ArrayList<ArchiveFileReviewsBean>();
-        ArrayList<ArchiveFileBean> fileList=new ArrayList<ArchiveFileBean>();
+        ArrayList<ArchiveFileReviewsBean> revList=new ArrayList<>();
+        ArrayList<ArchiveFileBean> fileList=new ArrayList<>();
         
-        StringBuffer critBuffer=new StringBuffer();
+        StringBuilder critBuffer=new StringBuilder();
         SimpleDateFormat df=new SimpleDateFormat("dd.MM.yyyy");
         Date fromDate=this.txtFromDate.getDate();
         if(fromDate!=null) {
@@ -1255,6 +1273,8 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
             typeString="Fristen";
         if(this.rdTypeReview.isSelected())
             typeString="Wiedervorlagen";
+        if(this.rdTypeEvent.isSelected())
+            typeString="Termine";
         critBuffer.append("  Typen: ").append(typeString);
         
         String statusString="alle";
@@ -1301,6 +1321,7 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
     private javax.swing.JRadioButton rdAllTypes;
     private javax.swing.JRadioButton rdDoneStatus;
     private javax.swing.JRadioButton rdNotDoneStatus;
+    private javax.swing.JRadioButton rdTypeEvent;
     private javax.swing.JRadioButton rdTypeRespite;
     private javax.swing.JRadioButton rdTypeReview;
     private javax.swing.JTable tblResults;

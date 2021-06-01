@@ -819,7 +819,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         timer3.schedule(autoUpdateTask, 20000, 24l * 60l * 60l * 1000l);
 
         Timer timer4 = new Timer();
-        TimerTask revDueTask = new ReviewsDueTimerTask(this, this.pnlRevDue, this.jSplitPane1);
+        TimerTask revDueTask = new ReviewsDueTimerTask(this, this.tabPaneDue, this.pnlRevDue, this.jSplitPane1);
         timer4.schedule(revDueTask, 1000, 31000);
 
         BoxLayout boxLayout2=new BoxLayout(this.pnlTagged, BoxLayout.Y_AXIS);
@@ -912,11 +912,12 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         jSplitPane1 = new javax.swing.JSplitPane();
         jPanel2 = new javax.swing.JPanel();
         jLabel6 = new javax.swing.JLabel();
+        chkOnlyMyReviews = new javax.swing.JCheckBox();
+        cmdRefreshRevDue = new javax.swing.JButton();
+        tabPaneDue = new javax.swing.JTabbedPane();
         jScrollPane1 = new javax.swing.JScrollPane();
         pnlRevDue = new javax.swing.JPanel();
         jLabel8 = new javax.swing.JLabel();
-        chkOnlyMyReviews = new javax.swing.JCheckBox();
-        cmdRefreshRevDue = new javax.swing.JButton();
         jSplitPane2 = new javax.swing.JSplitPane();
         jPanel1 = new javax.swing.JPanel();
         jLabel5 = new javax.swing.JLabel();
@@ -978,17 +979,6 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         java.util.ResourceBundle bundle = java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/DesktopPanel"); // NOI18N
         jLabel6.setText(bundle.getString("label.due")); // NOI18N
 
-        jScrollPane1.setBorder(null);
-        jScrollPane1.setOpaque(false);
-
-        pnlRevDue.setOpaque(false);
-        pnlRevDue.setLayout(new javax.swing.BoxLayout(pnlRevDue, javax.swing.BoxLayout.Y_AXIS));
-
-        jLabel8.setText(bundle.getString("label.due.loading")); // NOI18N
-        pnlRevDue.add(jLabel8);
-
-        jScrollPane1.setViewportView(pnlRevDue);
-
         chkOnlyMyReviews.setForeground(new java.awt.Color(255, 255, 255));
         chkOnlyMyReviews.setText("nur meine anzeigen");
         chkOnlyMyReviews.setOpaque(false);
@@ -1008,6 +998,23 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
             }
         });
 
+        tabPaneDue.setTabLayoutPolicy(javax.swing.JTabbedPane.SCROLL_TAB_LAYOUT);
+        tabPaneDue.setTabPlacement(javax.swing.JTabbedPane.BOTTOM);
+        tabPaneDue.setFont(new java.awt.Font("Dialog", 0, 10)); // NOI18N
+
+        jScrollPane1.setBorder(null);
+        jScrollPane1.setOpaque(false);
+
+        pnlRevDue.setOpaque(false);
+        pnlRevDue.setLayout(new javax.swing.BoxLayout(pnlRevDue, javax.swing.BoxLayout.Y_AXIS));
+
+        jLabel8.setText(bundle.getString("label.due.loading")); // NOI18N
+        pnlRevDue.add(jLabel8);
+
+        jScrollPane1.setViewportView(pnlRevDue);
+
+        tabPaneDue.addTab("alle", jScrollPane1);
+
         org.jdesktop.layout.GroupLayout jPanel2Layout = new org.jdesktop.layout.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
@@ -1015,13 +1022,13 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
             .add(jPanel2Layout.createSequentialGroup()
                 .addContainerGap()
                 .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 350, Short.MAX_VALUE)
                     .add(jPanel2Layout.createSequentialGroup()
                         .add(cmdRefreshRevDue)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(jLabel6)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .add(chkOnlyMyReviews)))
+                        .add(chkOnlyMyReviews))
+                    .add(tabPaneDue))
                 .addContainerGap())
         );
         jPanel2Layout.setVerticalGroup(
@@ -1033,7 +1040,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
                     .add(chkOnlyMyReviews)
                     .add(cmdRefreshRevDue))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 306, Short.MAX_VALUE)
+                .add(tabPaneDue)
                 .addContainerGap())
         );
 
@@ -1436,7 +1443,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
                         .add(lblDay, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(desktopWidgetPanel2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                    .add(jSplitPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 984, Short.MAX_VALUE)
+                    .add(jSplitPane1)
                     .add(systemInformationWidget, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
@@ -1514,7 +1521,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         boolean onlyMyReviews = this.chkOnlyMyReviews.isSelected();
         settings.setSetting(UserSettings.CONF_DESKTOP_ONLYMYREVIEWS, "" + onlyMyReviews);
 
-        TimerTask revDueTask = new ReviewsDueTimerTask(this, this.pnlRevDue, this.jSplitPane1, true);
+        TimerTask revDueTask = new ReviewsDueTimerTask(this, this.tabPaneDue, this.pnlRevDue, this.jSplitPane1, true);
         new Timer().schedule(revDueTask, 500);
 
     }//GEN-LAST:event_chkOnlyMyReviewsActionPerformed
@@ -1530,7 +1537,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
     private void cmdRefreshRevDueActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRefreshRevDueActionPerformed
         Timer timer = new Timer();
 
-        TimerTask revDueTask = new ReviewsDueTimerTask(this, this.pnlRevDue, this.jSplitPane1, true);
+        TimerTask revDueTask = new ReviewsDueTimerTask(this, this.tabPaneDue, this.pnlRevDue, this.jSplitPane1, true);
         timer.schedule(revDueTask, 10);
     }//GEN-LAST:event_cmdRefreshRevDueActionPerformed
 
@@ -1618,6 +1625,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
     private javax.swing.JPopupMenu popDocumentTagFilter;
     private javax.swing.JPopupMenu popTagFilter;
     private com.jdimension.jlawyer.client.desktop.DesktopWidgetPanel systemInformationWidget;
+    private javax.swing.JTabbedPane tabPaneDue;
     private javax.swing.JTabbedPane tabPaneTagged;
     // End of variables declaration//GEN-END:variables
 
