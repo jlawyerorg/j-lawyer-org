@@ -497,7 +497,7 @@ license to downstream recipients.  "Knowingly relying" means you have
 actual knowledge that, but for the patent license, your conveying the
 covered work in a country, or your recipient's use of the covered work
 in a country, would infringe one or more identifiable patents in that
-country that you have reason to believe are valid.
+country that you have summary to believe are valid.
 
   If, pursuant to or in connection with a single transaction or
 arrangement, you convey, or propagate by procuring conveyance of, a
@@ -661,44 +661,161 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package org.jlawyer.io.rest.v1;
+package org.jlawyer.io.rest.v4.pojo;
 
-import javax.ejb.Stateless;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import org.jlawyer.io.rest.v1.pojo.ApiMetadataV1;
+import org.jlawyer.io.rest.v1.pojo.*;
+import java.util.Date;
 
 /**
  *
- * http://localhost:8080/j-lawyer-io/rest/security/metadata
+ * @author jens
  */
-@Stateless
-@Path("/v1/security")
-@Consumes({"application/json"})
-@Produces({"application/json"})
-public class SecurityEndpointV1 implements SecurityEndpointLocalV1 {
+public class RestfulDueDateV4 {
+    
+    public static final transient String TYPE_RESPITE="RESPITE";
+    public static final transient String TYPE_FOLLOWUP="FOLLOWUP";
+    public static final transient String TYPE_EVENT="EVENT";
+    
+    private String id=null;
+    private String summary=null;
+    protected String description=null;
+    protected String location=null;
+    private Date beginDate=null;
+    protected Date endDate=null;
+    private boolean done=false;
+    private String assignee=null;
+    private String type=null;
 
-    /**
-     * Returns this API backends metadata, such as API level. This can be used by a client to determine the capabilities of this backend.
-     * @response 401 User not authorized
-     * @response 403 User not authenticated
-     */
-    @Override
-    @Path("/metadata")
-    @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response getApiMetadata() {
-
-        ApiMetadataV1 meta = new ApiMetadataV1();
-        meta.setApiLevel(4);
-
-        Response res = Response.ok(meta).build();
-        return res;
-
+    public RestfulDueDateV4() {
     }
 
+    /**
+     * @return the id
+     */
+    public String getId() {
+        return id;
+    }
+
+    /**
+     * @param id the id to set
+     */
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    /**
+     * @return the summary
+     */
+    public String getSummary() {
+        return summary;
+    }
+
+    /**
+     * @param summary the summary to set
+     */
+    public void setSummary(String summary) {
+        this.summary = summary;
+    }
+
+    /**
+     * @return the beginDate
+     */
+    public Date getBeginDate() {
+        return beginDate;
+    }
+
+    /**
+     * @param beginDate the beginDate to set
+     */
+    public void setBeginDate(Date beginDate) {
+        this.beginDate = beginDate;
+    }
+
+    /**
+     * @return the done
+     */
+    public boolean isDone() {
+        return done;
+    }
+
+    /**
+     * @param done the done to set
+     */
+    public void setDone(boolean done) {
+        this.done = done;
+    }
+
+    /**
+     * @return the assignee
+     */
+    public String getAssignee() {
+        return assignee;
+    }
+
+    /**
+     * @param assignee the assignee to set
+     */
+    public void setAssignee(String assignee) {
+        this.assignee = assignee;
+    }
+
+    /**
+     * @return the type
+     */
+    public String getType() {
+        return type;
+    }
+
+    /**
+     * @param type the type to set
+     */
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    /**
+     * @return the endDate
+     */
+    public Date getEndDate() {
+        return endDate;
+    }
+
+    /**
+     * @param endDate the endDate to set
+     */
+    public void setEndDate(Date endDate) {
+        this.endDate = endDate;
+    }
+
+    /**
+     * @return the description
+     */
+    public String getDescription() {
+        return description;
+    }
+
+    /**
+     * @param description the description to set
+     */
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    /**
+     * @return the location
+     */
+    public String getLocation() {
+        return location;
+    }
+
+    /**
+     * @param location the location to set
+     */
+    public void setLocation(String location) {
+        this.location = location;
+    }
+
+    
+    
+    
 }

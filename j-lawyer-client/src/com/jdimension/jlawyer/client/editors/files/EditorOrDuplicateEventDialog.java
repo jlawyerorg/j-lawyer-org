@@ -828,7 +828,7 @@ public class EditorOrDuplicateEventDialog extends javax.swing.JDialog {
         setModal(true);
         setResizable(false);
 
-        jLabel1.setText("Grund:");
+        jLabel1.setText("Grund / Beschreibung:");
 
         txtEventBeginDateField.setEnabled(false);
 

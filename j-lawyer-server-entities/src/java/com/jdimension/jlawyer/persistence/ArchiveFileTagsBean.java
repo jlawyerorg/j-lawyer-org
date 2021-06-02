@@ -664,8 +664,6 @@
 package com.jdimension.jlawyer.persistence;
 
 import java.io.Serializable;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import javax.persistence.*;
 import javax.xml.bind.annotation.XmlRootElement;
 
@@ -751,14 +749,6 @@ public class ArchiveFileTagsBean implements Serializable {
 
     @Override
     public String toString() {
-        //return "com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean[ id=" + id + " ]";
-        
-//        if(this.reviewDate!=null) {
-//            SimpleDateFormat df=new SimpleDateFormat("dd.MM.yyyy");
-//            return df.format(this.reviewDate);
-//        } else {
-//            return "undefiniert";
-//        }
         
         return this.tagName;
         

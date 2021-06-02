@@ -703,7 +703,6 @@ import themes.colors.DefaultColorTheme;
 public class ReviewDueEntryPanel extends javax.swing.JPanel {
 
     private static final Logger log = Logger.getLogger(ReviewDueEntryPanel.class.getName());
-    private SimpleDateFormat df = new SimpleDateFormat("dd.MM.yy");
 
     private static final Color lightGreen = new Color(153, 255, 102);
     private static final Color lightRed = new Color(255, 153, 153);
@@ -768,26 +767,28 @@ public class ReviewDueEntryPanel extends javax.swing.JPanel {
             reason = reason.substring(0, 45) + "...";
         }
 
-        String fileNumber = e.getArchiveFileNumber();
-        if (fileNumber == null) {
-            fileNumber = "";
+        String caseNumber = e.getArchiveFileNumber();
+        if (caseNumber == null) {
+            caseNumber = "";
         }
 
-        String fileName = e.getArchiveFileName();
-        if (fileName == null) {
-            fileName = "";
+        String caseName = e.getArchiveFileName();
+        if (caseName == null) {
+            caseName = "";
         }
-        if (fileName.length() > 45) {
-            fileName = fileName.substring(0, 45) + "...";
+        if (caseName.length() > 45) {
+            caseName = caseName.substring(0, 45) + "...";
+        }
+        
+        String caseReason = e.getArchiveFileReason();
+        if (caseReason == null) {
+            caseReason = "";
+        }
+        if (caseReason.length() > 53) {
+            caseReason = caseReason.substring(0, 53) + "...";
         }
 
         String dueDate = e.getReview().toString() + ": ";
-//        String dueDate = "";
-//        if (e.getDue() == null) {
-//            dueDate = "";
-//        } else {
-//            dueDate = df.format(e.getDue()) + ": ";
-//        }
 
         Date now = new Date();
         Date due = e.getDue();
@@ -818,14 +819,14 @@ public class ReviewDueEntryPanel extends javax.swing.JPanel {
         String dueCaption=java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/ReviewDueEntryPanel").getString("caption.due");
         tooltip.append("<b>").append(dueCaption).append(": ").append(dueDate).append("</b><br/>").append(StringUtils.nonEmpty(e.getReviewReason()));
         String caseCaption=java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/ReviewDueEntryPanel").getString("caption.case");
-        tooltip.append("<br/>").append(caseCaption).append(": ").append(fileNumber).append(" ").append(e.getArchiveFileName());
+        tooltip.append("<br/>").append(caseCaption).append(": ").append(caseNumber).append(" ").append(e.getArchiveFileName());
         String responsibleCaption=java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/ReviewDueEntryPanel").getString("caption.responsible");
         tooltip.append("<br/>").append(responsibleCaption).append(": ").append(StringUtils.nonEmpty(e.getResponsible()));
         tooltip.append("<html>");
         this.lblDescription.setToolTipText(tooltip.toString());
 
-        this.unDoneDescription="<html><b>" + dueDate + reason + "</b><br/>" + fileNumber + " " + fileName + "</html>";
-        this.doneDescription="<html><s><b>" + dueDate + reason + "</b><br/>" + fileNumber + " " + fileName + "</s></html>";
+        this.unDoneDescription="<html><b>" + dueDate + reason + "</b><br/>" + caseNumber + " " + caseName + "<br/>" + caseReason + "</html>";
+        this.doneDescription="<html><s><b>" + dueDate + reason + "</b><br/>" + caseNumber + " " + caseName + "<br/>" + caseReason + "</s></html>";
         this.lblDescription.setText(unDoneDescription);
         this.lblResponsible.setText(e.getResponsible());
         if(e.getResponsible()!=null && !("".equalsIgnoreCase(e.getResponsible())))

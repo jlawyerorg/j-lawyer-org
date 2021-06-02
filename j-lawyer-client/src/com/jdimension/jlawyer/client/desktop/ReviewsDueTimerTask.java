@@ -754,6 +754,7 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
                     e.setArchiveFileId(afb.getId());
                     e.setArchiveFileName(afb.getName());
                     e.setArchiveFileNumber(afb.getFileNumber());
+                    e.setArchiveFileReason(afb.getReason());
                     e.setDue(ar.getBeginDate());
                     e.setId(ar.getId());
                     e.setResponsible(ar.getAssignee());

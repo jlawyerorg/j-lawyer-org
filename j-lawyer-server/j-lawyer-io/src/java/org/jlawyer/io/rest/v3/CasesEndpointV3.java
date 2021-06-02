@@ -663,34 +663,16 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package org.jlawyer.io.rest.v3;
 
-import org.jlawyer.io.rest.v2.*;
-import com.jdimension.jlawyer.persistence.AddressBean;
-import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
-import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
-import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
-import com.jdimension.jlawyer.persistence.ArchiveFileFormsBean;
-import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
-import com.jdimension.jlawyer.persistence.ArchiveFileTagsBean;
 import com.jdimension.jlawyer.persistence.CaseFolder;
 import com.jdimension.jlawyer.persistence.DocumentFolderTemplate;
-import com.jdimension.jlawyer.persistence.Group;
-import com.jdimension.jlawyer.persistence.PartyTypeBean;
-import com.jdimension.jlawyer.security.Base64;
-import com.jdimension.jlawyer.services.AddressServiceLocal;
 import com.jdimension.jlawyer.services.ArchiveFileServiceLocal;
-import com.jdimension.jlawyer.services.FormsServiceLocal;
-import com.jdimension.jlawyer.services.SecurityServiceLocal;
-import com.jdimension.jlawyer.services.SystemManagementLocal;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import javax.annotation.security.RolesAllowed;
-import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.naming.InitialContext;
 import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -699,15 +681,6 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import org.jboss.logging.Logger;
-import org.jlawyer.io.rest.v1.pojo.RestfulCaseOverviewV1;
-import org.jlawyer.io.rest.v1.pojo.RestfulCaseV2;
-import org.jlawyer.io.rest.v1.pojo.RestfulDocumentV1;
-import org.jlawyer.io.rest.v1.pojo.RestfulDocumentContentV1;
-import org.jlawyer.io.rest.v1.pojo.RestfulDueDateV1;
-import org.jlawyer.io.rest.v1.pojo.RestfulFormV1;
-import org.jlawyer.io.rest.v1.pojo.RestfulPartyTypeV1;
-import org.jlawyer.io.rest.v1.pojo.RestfulPartyV1;
-import org.jlawyer.io.rest.v1.pojo.RestfulTagV1;
 import org.jlawyer.io.rest.v3.pojo.RestfulCaseFolderV3;
 import org.jlawyer.io.rest.v3.pojo.RestfulFolderTemplateV3;
 
@@ -744,7 +717,7 @@ public class CasesEndpointV3 implements CasesEndpointLocalV3 {
             ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal");
             List<DocumentFolderTemplate> templates = cases.getAllFolderTemplates();
 
-            ArrayList<RestfulFolderTemplateV3> returnList = new ArrayList<RestfulFolderTemplateV3>();
+            ArrayList<RestfulFolderTemplateV3> returnList = new ArrayList<>();
             for (DocumentFolderTemplate tpl : templates) {
                 RestfulFolderTemplateV3 ft = new RestfulFolderTemplateV3();
                 ft.setId(tpl.getId());

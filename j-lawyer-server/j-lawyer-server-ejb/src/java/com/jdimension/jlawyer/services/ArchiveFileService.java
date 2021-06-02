@@ -1151,16 +1151,6 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             }
         }
 
-//        List<ArchiveFileHistoryBean> histories = dto.getArchiveFileHistoryBeanList();
-//        if (histories != null) {
-//            for (ArchiveFileHistoryBean ah : histories) {
-//                ah.setId(idGen.getID().toString());
-//                ah.setArchiveFileKey(dto);
-//                ah.setChangeDate(new Date());
-//                ah.setChangeDescription("Akte erstellt");
-//                ah.setPrincipal(context.getCallerPrincipal().getName());
-//            }
-//        }
         ArchiveFileHistoryBean initialEntry = new ArchiveFileHistoryBean();
         initialEntry.setId(idGen.getID().toString());
         initialEntry.setArchiveFileKey(dto);

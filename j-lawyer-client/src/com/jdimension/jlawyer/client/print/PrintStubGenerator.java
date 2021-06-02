@@ -678,7 +678,7 @@ import java.util.ArrayList;
 public class PrintStubGenerator {
 
     public static ReviewsStub getStub(ArrayList<ArchiveFileReviewsBean> revList, ArrayList<ArchiveFileBean> fileList, String criteriaString) {
-        ArrayList<ReviewsDetail> result = new ArrayList<ReviewsDetail>();
+        ArrayList<ReviewsDetail> result = new ArrayList<>();
         for (int i = 0; i < revList.size(); i++) {
             ArchiveFileReviewsBean rev = revList.get(i);
             ArchiveFileBean ar = fileList.get(i);
@@ -696,7 +696,6 @@ public class PrintStubGenerator {
 
         s.setClaimNumber(file.getClaimNumber());
         s.setClaimValue(file.getClaimValue());
-        //s.setDictateSign(file.getDictateSign());
         s.setFileNumber(file.getFileNumber());
         s.setName(file.getName());
         s.setNotice(file.getNotice());
@@ -728,6 +727,9 @@ public class PrintStubGenerator {
         if (file.getArchiveFileReviewsBeanList() != null) {
             for (int i = 0; i < file.getArchiveFileReviewsBeanList().size(); i++) {
                 ArchiveFileReviewsBean rev = file.getArchiveFileReviewsBeanList().get(i);
+                // events are very dynamic anyways, might not need to be printed
+                if(rev.hasEndDateAndTime())
+                    continue;
                 ReviewsDetail rdet = getReviewDetail(rev, file);
                 s.getReviews().add(rdet);
             }
@@ -750,11 +752,7 @@ public class PrintStubGenerator {
         det.setAssignee(rev.getAssignee());
         det.setFileNumber(ar.getFileNumber());
         det.setReviewTypeName(rev.getEventTypeName());
-        if(rev.getBeginDate()!=null) {
-            SimpleDateFormat df2 = new SimpleDateFormat("dd.MM.yyyy");
-            det.setReviewDate(df2.format(rev.getBeginDate()));
-        } else
-            det.setReviewDate("");
+        det.setReviewDate(rev.toString());
         det.setReviewReason(rev.getSummary());
 
         return det;

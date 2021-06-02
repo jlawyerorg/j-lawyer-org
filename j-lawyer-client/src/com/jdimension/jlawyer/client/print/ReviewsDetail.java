@@ -663,9 +663,6 @@
  */
 package com.jdimension.jlawyer.client.print;
 
-import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
-import java.util.List;
-
 /**
  *
  * @author jens

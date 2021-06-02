@@ -766,13 +766,7 @@ public class HTMLExport {
 
             excelStr.append(toDate(df, rev.getBeginDate()));
             excelStr.append(CELL_BREAK);
-            if (rev.getEventType() == ArchiveFileReviewsBean.EVENTTYPE_FOLLOWUP) {
-                excelStr.append(escape("Wiedervorlage"));
-            } else if (rev.getEventType() == ArchiveFileReviewsBean.EVENTTYPE_RESPITE) {
-                excelStr.append(escape("Frist"));
-            } else {
-                excelStr.append(escape("-"));
-            }
+            excelStr.append(escape(rev.getEventTypeName()));
             excelStr.append(CELL_BREAK);
             excelStr.append(escape(rev.getArchiveFileKey().getFileNumber()));
             excelStr.append(CELL_BREAK);
@@ -872,7 +866,6 @@ public class HTMLExport {
         for (Object r : reviewsList) {
             if (r instanceof ArchiveFileReviewsBean) {
                 ArchiveFileReviewsBean rb = (ArchiveFileReviewsBean) r;
-                // <tr><td><p class="post_info">01.01.2013</p></td><td><p class="post_info">dings</p></td></tr>
                 sb.append("<tr valign=\"top\"><td><p class=\"post_info\">");
                 sb.append(toDate(dtf, rb.getBeginDate()));
                 sb.append("</p></td><td><p class=\"post_info\">");
@@ -885,8 +878,6 @@ public class HTMLExport {
         sContent = sContent.replaceAll("\\{\\{reviews\\}\\}", sb.toString());
 
         sContent = sContent.replaceAll("\\{\\{parties\\}\\}", this.getPartiesList(parties));
-//        sContent = sContent.replaceAll("\\{\\{opponents\\}\\}", this.getPartiesList(opponents));
-//        sContent = sContent.replaceAll("\\{\\{opponentattorneys\\}\\}", this.getPartiesList(opponentAttorneys));
 
         ArrayList docList = new ArrayList(documents);
         Collections.sort(docList, new DocumentsComparator());

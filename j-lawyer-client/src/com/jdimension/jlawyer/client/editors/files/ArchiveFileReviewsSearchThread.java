@@ -672,7 +672,6 @@ import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Component;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
-import java.util.Date;
 import java.util.Locale;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
@@ -728,7 +727,6 @@ public class ArchiveFileReviewsSearchThread implements Runnable {
             log.error(t);
         }
         
-        SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy", Locale.GERMAN);
         this.target.getColumnModel().getColumn(6).setCellRenderer(new UserTableCellRenderer());
         this.target.getColumnModel().getColumn(7).setCellRenderer(new UserTableCellRenderer());
         for(ArchiveFileReviewsBean b:dtos) {

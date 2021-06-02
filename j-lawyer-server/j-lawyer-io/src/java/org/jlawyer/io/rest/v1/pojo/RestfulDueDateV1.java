@@ -673,6 +673,7 @@ public class RestfulDueDateV1 {
     
     public static final transient String TYPE_RESPITE="RESPITE";
     public static final transient String TYPE_FOLLOWUP="FOLLOWUP";
+    public static final transient String TYPE_EVENT="EVENT";
     
     private String id=null;
     private String reason=null;

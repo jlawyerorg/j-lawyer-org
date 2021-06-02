@@ -661,44 +661,96 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package org.jlawyer.io.rest.v1;
+package org.jlawyer.io.rest.v4;
 
+import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
+import com.jdimension.jlawyer.services.ArchiveFileServiceLocal;
+import com.jdimension.jlawyer.services.CalendarServiceLocal;
+import java.util.ArrayList;
+import java.util.Collection;
+import javax.annotation.security.RolesAllowed;
 import javax.ejb.Stateless;
+import javax.naming.InitialContext;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import org.jlawyer.io.rest.v1.pojo.ApiMetadataV1;
+import org.jboss.logging.Logger;
+import org.jlawyer.io.rest.v4.pojo.RestfulDueDateV4;
 
 /**
  *
- * http://localhost:8080/j-lawyer-io/rest/security/metadata
+ * http://localhost:8080/j-lawyer-io/rest/cases/list
  */
 @Stateless
-@Path("/v1/security")
+@Path("/v4/cases")
 @Consumes({"application/json"})
 @Produces({"application/json"})
-public class SecurityEndpointV1 implements SecurityEndpointLocalV1 {
+public class CasesEndpointV4 implements CasesEndpointLocalV4 {
 
+    private static final Logger log = Logger.getLogger(CasesEndpointV4.class.getName());
+
+    // when seeing something like
+    //  com.fasterxml.jackson.databind.JsonMappingException: failed to lazily initialize a collection of role: com.jdimension.jlawyer.persistence.ArchiveFileBean.archiveFileFormsBeanList, could not initialize proxy - no Session
+    // it is not necessarily an issue with fetch type eager or lazy, just put @XmlTransient to the getter of the list in the entity
     /**
-     * Returns this API backends metadata, such as API level. This can be used by a client to determine the capabilities of this backend.
+     * Returns all due dates for a given case
+     *
+     * @param id case ID
      * @response 401 User not authorized
      * @response 403 User not authenticated
      */
     @Override
-    @Path("/metadata")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getApiMetadata() {
+    @Path("/{id}/duedates")
+    @RolesAllowed({"readArchiveFileRole"})
+    public Response getDueDates(@PathParam("id") String id) {
+        //http://localhost:8080/j-lawyer-io/rest/cases/0c79112f7f000101327bf357f0b6010c/duedates
+        try {
 
-        ApiMetadataV1 meta = new ApiMetadataV1();
-        meta.setApiLevel(4);
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal");
+            CalendarServiceLocal cal = (CalendarServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/CalendarService!com.jdimension.jlawyer.services.CalendarServiceLocal");
+            ArchiveFileBean currentCase = cases.getArchiveFile(id);
+            if (currentCase == null) {
+                log.error("case with id " + id + " does not exist");
+                Response res = Response.serverError().build();
+                return res;
+            }
 
-        Response res = Response.ok(meta).build();
-        return res;
+            Collection<ArchiveFileReviewsBean> reviews = cal.getReviews(id);
+            ArrayList<RestfulDueDateV4> ddList = new ArrayList<>();
+            for (ArchiveFileReviewsBean rev : reviews) {
+                RestfulDueDateV4 dd = new RestfulDueDateV4();
+                dd.setId(rev.getId());
+                dd.setAssignee(rev.getAssignee());
+                dd.setDone(rev.getDoneBoolean());
+                dd.setBeginDate(rev.getBeginDate());
+                dd.setEndDate(rev.getEndDate());
+                dd.setSummary(rev.getSummary());
+                dd.setDescription(rev.getDescription());
+                dd.setLocation(rev.getLocation());
+                dd.setType(RestfulDueDateV4.TYPE_RESPITE);
+                if (rev.getEventType() == ArchiveFileReviewsBean.EVENTTYPE_FOLLOWUP) {
+                    dd.setType(RestfulDueDateV4.TYPE_FOLLOWUP);
+                } else if (rev.getEventType() == ArchiveFileReviewsBean.EVENTTYPE_EVENT) {
+                    dd.setType(RestfulDueDateV4.TYPE_EVENT);
+                }
+                ddList.add(dd);
+            }
 
+            Response res = Response.ok(ddList).build();
+            return res;
+        } catch (Exception ex) {
+            log.error("can not get case " + id, ex);
+            Response res = Response.serverError().build();
+            return res;
+        }
     }
 
 }

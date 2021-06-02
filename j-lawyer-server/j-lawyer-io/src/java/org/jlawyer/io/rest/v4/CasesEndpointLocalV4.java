@@ -661,44 +661,19 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package org.jlawyer.io.rest.v1;
+package org.jlawyer.io.rest.v4;
 
-import javax.ejb.Stateless;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
+import javax.ejb.Local;
 import javax.ws.rs.core.Response;
-import org.jlawyer.io.rest.v1.pojo.ApiMetadataV1;
 
 /**
  *
- * http://localhost:8080/j-lawyer-io/rest/security/metadata
+ * @author jens
  */
-@Stateless
-@Path("/v1/security")
-@Consumes({"application/json"})
-@Produces({"application/json"})
-public class SecurityEndpointV1 implements SecurityEndpointLocalV1 {
+@Local
+public interface CasesEndpointLocalV4 {
 
-    /**
-     * Returns this API backends metadata, such as API level. This can be used by a client to determine the capabilities of this backend.
-     * @response 401 User not authorized
-     * @response 403 User not authenticated
-     */
-    @Override
-    @Path("/metadata")
-    @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response getApiMetadata() {
-
-        ApiMetadataV1 meta = new ApiMetadataV1();
-        meta.setApiLevel(4);
-
-        Response res = Response.ok(meta).build();
-        return res;
-
-    }
-
+    Response getDueDates(String id);
+    
+    
 }

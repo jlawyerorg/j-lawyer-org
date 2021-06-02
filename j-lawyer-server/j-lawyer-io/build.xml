@@ -78,7 +78,7 @@
                   maxmemory="256m" 
                   output="build/web/swagger-ui/swagger.json"
                   error="jaxrs-analyzer-error.log">
-            <arg line="-n j-lawyer-io -v 3 -b swagger --swaggerSchemes http,https ${basedir}/build/web/WEB-INF/classes/ -sp ${basedir}/src/java/"/>
+            <arg line="-n j-lawyer-io -v 4 -b swagger --swaggerSchemes http,https ${basedir}/build/web/WEB-INF/classes/ -sp ${basedir}/src/java/"/>
             <classpath>
                 <pathelement location="tools/jaxrs-analyzer.jar"/>
                 <pathelement location="../../j-lawyer-server-entities/dist/j-lawyer-server-entities.jar"/>

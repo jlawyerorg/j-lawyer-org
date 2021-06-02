@@ -827,6 +827,15 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
         String revId = idGen.getID().toString();
         review.setId(revId);
         review.setArchiveFileKey(aFile);
+        
+        if(!review.hasEndDateAndTime() && review.getBeginDate()!=null) {
+            Date endDate=new Date(review.getBeginDate().getTime());
+            endDate.setHours(23);
+            endDate.setMinutes(59);
+            endDate.setSeconds(59);
+            review.setEndDate(endDate);
+        }
+        
         this.archiveFileReviewsFacade.create(review);
 
         ArchiveFileHistoryBean newHistEntry = new ArchiveFileHistoryBean();
@@ -1074,6 +1083,13 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
         this.archiveFileHistoryFacade.create(newHistEntry);
 
         review.setArchiveFileKey(aFile);
+        if(!review.hasEndDateAndTime() && review.getBeginDate()!=null) {
+            Date endDate=new Date(review.getBeginDate().getTime());
+            endDate.setHours(23);
+            endDate.setMinutes(59);
+            endDate.setSeconds(59);
+            review.setEndDate(endDate);
+        }
         this.archiveFileReviewsFacade.edit(review);
         return this.archiveFileReviewsFacade.find(review.getId());
     }

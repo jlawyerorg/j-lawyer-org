@@ -670,10 +670,8 @@ import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 import com.jdimension.jlawyer.services.CalendarServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Component;
-import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
-import java.util.Locale;
 import javax.swing.JTable;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
@@ -724,9 +722,7 @@ public class ArchiveFileReviewsAdvancedSearchThread implements Runnable {
         String[] colNames=new String[] {"Datum / Zeit" , "Typ", "Aktenzeichen", "Kurzrubrum", "Grund", "Beschreibung", "erledigt", "Anwalt", "verantwortlich"};
         ArchiveFileReviewsFindTableModel model=new ArchiveFileReviewsFindTableModel(colNames, 0);
         // adding the model and then adding rows is problematic - addRow on a table with model causes issues when addRow is not performed in the EDT
-        SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy", Locale.GERMAN);
         for(ArchiveFileReviewsBean b:dtos) {
-            Date reviewDate=b.getBeginDate();
             String reviewDateString=b.toString();
             Object[] row=new Object[]{new ArchiveFileReviewsRowIdentifier(b.getArchiveFileKey(), b, reviewDateString), b.getEventTypeName(), b.getArchiveFileKey().getFileNumber(), b.getArchiveFileKey().getName(), b.getSummary(), b.getDescription(), new Boolean(b.getDoneBoolean()), b.getArchiveFileKey().getLawyer(), b.getAssignee()};
             model.addRow(row);

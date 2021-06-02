@@ -712,7 +712,6 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
         this.initializing = true;
         initComponents();
         UserSettings userSet = UserSettings.getInstance();
-        //this.detailsEditorClass=detailsEditorClass;
         if (userSet.isCurrentUserInRole(UserSettings.ROLE_WRITECASE)) {
             this.userCanEdit=true;
             this.detailsEditorClass = EditArchiveFileDetailsPanel.class.getName();
@@ -742,8 +741,6 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
             }
         });
 
-        /*RowSorter<TableModel> sorter = new TableRowSorter<TableModel>(model);
-        this.tblResults.setRowSorter(sorter);*/
         this.initializing = false;
     }
 
@@ -1025,11 +1022,8 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
         EditorsRegistry.getInstance().updateStatus("Lösche " + ids.size() + " Akte(n)...", false);
         ClientSettings settings = ClientSettings.getInstance();
         try {
-            //InitialContext context = new InitialContext(settings.getLookupProperties());
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
-            //Object object = locator.lookup("SystemManagementBean");
-            //ArchiveFileServiceRemoteHome home = (ArchiveFileServiceRemoteHome)locator.getRemoteHome("ejb/ArchiveFileServiceBean", ArchiveFileServiceRemoteHome.class);
             ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
             for (int i = ids.size() - 1; i > -1; i--) {
                 fileService.removeArchiveFile(ids.get(i));
@@ -1038,7 +1032,6 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
 
             }
 
-            //fileService.remove();
             EditorsRegistry.getInstance().clearStatus(false);
 
         } catch (Exception ex) {
@@ -1070,7 +1063,6 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
             }
             ((ArchiveFilePanel) editor).setArchiveFileDTO(id.getArchiveFileDTO());
             ((ArchiveFilePanel) editor).setOpenedFromEditorClass(this.getClass().getName());
-//            ((ArchiveFilePanel) editor).setReadOnly(!this.userCanEdit);
             EditorsRegistry.getInstance().setMainEditorsPaneView((Component) editor);
 
         } catch (Exception ex) {
@@ -1185,11 +1177,8 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
         EditorsRegistry.getInstance().updateStatus("Dupliziere " + ids.size() + " Akte(n)...", false);
         ClientSettings settings = ClientSettings.getInstance();
         try {
-            //InitialContext context = new InitialContext(settings.getLookupProperties());
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
-            //Object object = locator.lookup("SystemManagementBean");
-            //ArchiveFileServiceRemoteHome home = (ArchiveFileServiceRemoteHome)locator.getRemoteHome("ejb/ArchiveFileServiceBean", ArchiveFileServiceRemoteHome.class);
             ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
             for (int i = ids.size() - 1; i > -1; i--) {
                 ArchiveFileBean source=fileService.getArchiveFile(ids.get(i));

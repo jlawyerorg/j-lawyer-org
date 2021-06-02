@@ -1082,7 +1082,7 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
             }
 
             Collection<ArchiveFileReviewsBean> reviews = cal.getReviews(id);
-            ArrayList<RestfulDueDateV1> ddList = new ArrayList<RestfulDueDateV1>();
+            ArrayList<RestfulDueDateV1> ddList = new ArrayList<>();
             for (ArchiveFileReviewsBean rev : reviews) {
                 RestfulDueDateV1 dd = new RestfulDueDateV1();
                 dd.setId(rev.getId());
@@ -1093,6 +1093,8 @@ public class CasesEndpointV1 implements CasesEndpointLocalV1 {
                 dd.setType(RestfulDueDateV1.TYPE_RESPITE);
                 if (rev.getEventType() == ArchiveFileReviewsBean.EVENTTYPE_FOLLOWUP) {
                     dd.setType(RestfulDueDateV1.TYPE_FOLLOWUP);
+                } else if (rev.getEventType() == ArchiveFileReviewsBean.EVENTTYPE_EVENT) {
+                    dd.setType(RestfulDueDateV1.TYPE_EVENT);
                 }
                 ddList.add(dd);
             }

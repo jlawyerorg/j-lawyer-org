@@ -1777,9 +1777,9 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
             }
 
             ArchiveFileReviewsBean reviewDto = new ArchiveFileReviewsBean();
-            reviewDto.setEventType(reviewDto.EVENTTYPE_FOLLOWUP);
+            reviewDto.setEventType(ArchiveFileReviewsBean.EVENTTYPE_FOLLOWUP);
             if (this.radioReviewTypeRespite.isSelected()) {
-                reviewDto.setEventType(reviewDto.EVENTTYPE_RESPITE);
+                reviewDto.setEventType(ArchiveFileReviewsBean.EVENTTYPE_RESPITE);
             }
             reviewDto.setDoneBoolean(false);
             reviewDto.setBeginDate(d);
