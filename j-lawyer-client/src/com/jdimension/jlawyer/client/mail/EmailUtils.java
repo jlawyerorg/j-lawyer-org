@@ -782,19 +782,27 @@ public class EmailUtils {
         return attachmentNames;
     }
 
-    private static Part getAttachmentPart(String name, Object partObject) throws Exception {
+    private static Part getAttachmentPart(String name, Object partObject, Folder folder) throws Exception {
 
+        if(folder!=null) {
+            if(!folder.isOpen())
+                folder.open(Folder.READ_WRITE);
+        }
+        
         if (partObject instanceof Multipart) {
             Multipart mp = (Multipart) partObject;
             for (int i = 0; i < mp.getCount(); i++) {
                 Part childPart = mp.getBodyPart(i);
-                Part attPart = getAttachmentPart(name, childPart);
+                Part attPart = getAttachmentPart(name, childPart, folder);
                 if (attPart != null) {
                     return attPart;
                 }
 
             }
         } else {
+
+            if(partObject==null)
+                return null;
 
             Part part = (Part) partObject;
             String disposition = part.getDisposition();
@@ -803,7 +811,7 @@ public class EmailUtils {
                 MimeBodyPart mimePart = (MimeBodyPart) part;
 
                 if (mimePart.getContent() instanceof Multipart) {
-                    Part attPart = getAttachmentPart(name, mimePart.getContent());
+                    Part attPart = getAttachmentPart(name, mimePart.getContent(), folder);
                     if (attPart != null) {
                         return attPart;
                     }
@@ -832,7 +840,7 @@ public class EmailUtils {
             msgContainer.getMessage().getFolder().open(Folder.READ_WRITE);
         }
 
-        Part att = getAttachmentPart(name, msgContainer.getMessage().getContent());
+        Part att = getAttachmentPart(name, msgContainer.getMessage().getContent(), msgContainer.getMessage().getFolder());
 
         closed = false;
         if (msgContainer.getMessage().getFolder() != null) {
