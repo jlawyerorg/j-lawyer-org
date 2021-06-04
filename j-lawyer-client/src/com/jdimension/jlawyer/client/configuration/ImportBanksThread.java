@@ -692,7 +692,7 @@ public class ImportBanksThread implements Runnable {
     private JButton closeButton;
 
     /**
-     * Creates a new instance of LoadOptionGroupThread
+     * Creates a new instance of ImportBanksThread
      */
     public ImportBanksThread(Component owner, JProgressBar target, JButton closeButton, JButton importButton) {
         this.owner = owner;
@@ -788,7 +788,7 @@ public class ImportBanksThread implements Runnable {
             
             String line = null;
             int lineCounter = 0;
-            ArrayList<BankDataBean> newBankData = new ArrayList<BankDataBean>();
+            ArrayList<BankDataBean> newBankData = new ArrayList<>();
             while ((line = br.readLine()) != null) {
                 if (lineCounter == 0) {
                     lineCounter++;
@@ -809,7 +809,7 @@ public class ImportBanksThread implements Runnable {
                     newBankData.add(dto);
                     if (newBankData.size() == 100) {
                         mgmt.createBankData(newBankData.toArray(new BankDataBean[0]));
-                        newBankData = new ArrayList<BankDataBean>();
+                        newBankData = new ArrayList<>();
                     }
                 }
 

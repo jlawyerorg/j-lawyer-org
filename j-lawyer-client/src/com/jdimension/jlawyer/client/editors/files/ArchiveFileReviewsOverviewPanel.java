@@ -669,6 +669,7 @@ import com.jdimension.jlawyer.client.editors.ThemeableEditor;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.TableUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
+import de.costache.calendar.demo.JCalendarFrameDemo;
 import java.awt.Component;
 import java.awt.Graphics;
 import java.awt.Image;
@@ -726,13 +727,15 @@ public class ArchiveFileReviewsOverviewPanel extends javax.swing.JPanel implemen
 
         popupArchiveFileActions = new javax.swing.JPopupMenu();
         mnuOpenArchiveFile = new javax.swing.JMenuItem();
-        jScrollPane1 = new javax.swing.JScrollPane();
-        tblResults = new javax.swing.JTable();
         jLabel18 = new javax.swing.JLabel();
         lblPanelTitle = new javax.swing.JLabel();
         jPanel1 = new javax.swing.JPanel();
         cmdExport = new javax.swing.JButton();
         cmdRefresh = new javax.swing.JButton();
+        jTabbedPane1 = new javax.swing.JTabbedPane();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        tblResults = new javax.swing.JTable();
+        calendarPanel1 = new de.costache.calendar.CalendarPanel();
 
         mnuOpenArchiveFile.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder.png"))); // NOI18N
         mnuOpenArchiveFile.setText("Akte bearbeiten");
@@ -744,33 +747,16 @@ public class ArchiveFileReviewsOverviewPanel extends javax.swing.JPanel implemen
         });
         popupArchiveFileActions.add(mnuOpenArchiveFile);
 
-        tblResults.setModel(new javax.swing.table.DefaultTableModel(
-            new Object [][] {
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null}
-            },
-            new String [] {
-                "Title 1", "Title 2", "Title 3", "Title 4"
-            }
-        ));
-        tblResults.getTableHeader().setReorderingAllowed(false);
-        tblResults.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mousePressed(java.awt.event.MouseEvent evt) {
-                tblResultsMousePressed(evt);
-            }
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                tblResultsMouseClicked(evt);
-            }
-        });
-        jScrollPane1.setViewportView(tblResults);
-
         jLabel18.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/Icons2-22.png"))); // NOI18N
 
         lblPanelTitle.setFont(new java.awt.Font("Dialog", 1, 24)); // NOI18N
         lblPanelTitle.setForeground(new java.awt.Color(255, 255, 255));
         lblPanelTitle.setText("Wiedervorlagen und Fristen nach Fälligkeit");
+        lblPanelTitle.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                lblPanelTitleMouseClicked(evt);
+            }
+        });
 
         jPanel1.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(255, 255, 255), 2, true));
         jPanel1.setOpaque(false);
@@ -812,6 +798,31 @@ public class ArchiveFileReviewsOverviewPanel extends javax.swing.JPanel implemen
                 .addContainerGap())
         );
 
+        tblResults.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null}
+            },
+            new String [] {
+                "Title 1", "Title 2", "Title 3", "Title 4"
+            }
+        ));
+        tblResults.getTableHeader().setReorderingAllowed(false);
+        tblResults.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                tblResultsMousePressed(evt);
+            }
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                tblResultsMouseClicked(evt);
+            }
+        });
+        jScrollPane1.setViewportView(tblResults);
+
+        jTabbedPane1.addTab("Liste", jScrollPane1);
+        jTabbedPane1.addTab("Kalender", calendarPanel1);
+
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -819,13 +830,13 @@ public class ArchiveFileReviewsOverviewPanel extends javax.swing.JPanel implemen
             .add(layout.createSequentialGroup()
                 .addContainerGap()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 879, Short.MAX_VALUE)
                     .add(layout.createSequentialGroup()
                         .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                         .add(jLabel18)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                        .add(lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .add(jTabbedPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 879, Short.MAX_VALUE))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -838,7 +849,7 @@ public class ArchiveFileReviewsOverviewPanel extends javax.swing.JPanel implemen
                         .add(org.jdesktop.layout.GroupLayout.LEADING, lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .add(org.jdesktop.layout.GroupLayout.LEADING, jLabel18, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 240, Short.MAX_VALUE)
+                .add(jTabbedPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 356, Short.MAX_VALUE)
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -903,7 +914,7 @@ public class ArchiveFileReviewsOverviewPanel extends javax.swing.JPanel implemen
     private void cmdRefreshActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRefreshActionPerformed
         // perform search here
         ThreadUtils.setWaitCursor(this);
-        new Thread(new ArchiveFileReviewsSearchThread(this, this.tblResults)).start();
+        new Thread(new ArchiveFileReviewsSearchThread(this, this.tblResults, this.calendarPanel1)).start();
         
     }//GEN-LAST:event_cmdRefreshActionPerformed
 
@@ -919,14 +930,23 @@ public class ArchiveFileReviewsOverviewPanel extends javax.swing.JPanel implemen
     private void tblResultsMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblResultsMousePressed
         TableUtils.handleRowClick(tblResults, evt);
     }//GEN-LAST:event_tblResultsMousePressed
+
+    private void lblPanelTitleMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblPanelTitleMouseClicked
+        if(evt.getClickCount()==2) {
+            final JCalendarFrameDemo frameTest = new JCalendarFrameDemo();
+		frameTest.setVisible(true);
+        }
+    }//GEN-LAST:event_lblPanelTitleMouseClicked
     
     
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private de.costache.calendar.CalendarPanel calendarPanel1;
     private javax.swing.JButton cmdExport;
     private javax.swing.JButton cmdRefresh;
     private javax.swing.JLabel jLabel18;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JTabbedPane jTabbedPane1;
     protected javax.swing.JLabel lblPanelTitle;
     private javax.swing.JMenuItem mnuOpenArchiveFile;
     private javax.swing.JPopupMenu popupArchiveFileActions;

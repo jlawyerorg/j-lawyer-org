@@ -669,10 +669,9 @@ import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 import com.jdimension.jlawyer.services.CalendarServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
+import de.costache.calendar.CalendarPanel;
 import java.awt.Component;
-import java.text.SimpleDateFormat;
 import java.util.Collection;
-import java.util.Locale;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableModel;
@@ -689,6 +688,7 @@ public class ArchiveFileReviewsSearchThread implements Runnable {
     
     private Component owner;
     private JTable target;
+    private CalendarPanel calendarTarget;
     
     /**
      * Creates a new instance of ArchiveFileReviewsSearchThread
@@ -696,6 +696,13 @@ public class ArchiveFileReviewsSearchThread implements Runnable {
     public ArchiveFileReviewsSearchThread(Component owner, JTable target) {
         this.owner=owner;
         this.target=target;
+        this.calendarTarget=null;
+    }
+    
+    public ArchiveFileReviewsSearchThread(Component owner, JTable target, CalendarPanel calendar) {
+        this.owner=owner;
+        this.target=target;
+        this.calendarTarget=calendar;
     }
 
     public void run() {
@@ -742,6 +749,8 @@ public class ArchiveFileReviewsSearchThread implements Runnable {
         sorter.setComparator(2, new FileNumberComparator());
         sorter.setComparator(0, new DateStringComparator());
         ThreadUtils.setTableModel(this.target, model, sorter);
+        if(this.calendarTarget!=null)
+            ThreadUtils.setCalendarItems(this.calendarTarget,dtos);
         ThreadUtils.setDefaultCursor(this.owner);
         
     }

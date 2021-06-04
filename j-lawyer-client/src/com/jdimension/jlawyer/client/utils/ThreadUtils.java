@@ -664,11 +664,14 @@
 package com.jdimension.jlawyer.client.utils;
 
 import com.jdimension.jlawyer.client.mail.HtmlEditorPanel;
+import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
+import de.costache.calendar.CalendarPanel;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.LayoutManager;
 import java.util.Arrays;
+import java.util.Collection;
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableModel;
@@ -1123,6 +1126,16 @@ public class ThreadUtils {
 
             public void run() {
                 label.setForeground(c);
+            }
+        });
+    }
+
+    public static void setCalendarItems(CalendarPanel calendarTarget, Collection<ArchiveFileReviewsBean> dtos) {
+        SwingUtilities.invokeLater(
+                new Runnable() {
+
+            public void run() {
+                calendarTarget.setData(dtos);
             }
         });
     }

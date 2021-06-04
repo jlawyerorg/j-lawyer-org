@@ -724,6 +724,8 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
     private ArchiveFileReviewsBeanFacadeLocal archiveFileReviewsFacade;
     @EJB
     private ArchiveFileHistoryBeanFacadeLocal archiveFileHistoryFacade;
+    @EJB
+    private CalendarSyncServiceLocal calendarSync;
     
     @Override
     @RolesAllowed({"loginRole"})
@@ -845,6 +847,12 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
         newHistEntry.setChangeDescription(review.getEventTypeName() + " hinzugefügt: " + review.getSummary() + " (" + review.toString() + ")");
         newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
         this.archiveFileHistoryFacade.create(newHistEntry);
+        
+        try {
+            this.calendarSync.asyncMethod();
+        } catch (Exception ex) {
+            log.error("Failed to sync event to cloud", ex);
+        }
 
         return this.archiveFileReviewsFacade.find(revId);
     }

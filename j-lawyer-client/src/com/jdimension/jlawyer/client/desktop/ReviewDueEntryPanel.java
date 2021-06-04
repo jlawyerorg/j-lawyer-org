@@ -706,6 +706,8 @@ public class ReviewDueEntryPanel extends javax.swing.JPanel {
 
     private static final Color lightGreen = new Color(153, 255, 102);
     private static final Color lightRed = new Color(255, 153, 153);
+    
+    private static final String HTML_BR="<br/>";
 
     private ReviewDueEntry e = null;
 
@@ -819,14 +821,14 @@ public class ReviewDueEntryPanel extends javax.swing.JPanel {
         String dueCaption=java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/ReviewDueEntryPanel").getString("caption.due");
         tooltip.append("<b>").append(dueCaption).append(": ").append(dueDate).append("</b><br/>").append(StringUtils.nonEmpty(e.getReviewReason()));
         String caseCaption=java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/ReviewDueEntryPanel").getString("caption.case");
-        tooltip.append("<br/>").append(caseCaption).append(": ").append(caseNumber).append(" ").append(e.getArchiveFileName());
+        tooltip.append(HTML_BR).append(caseCaption).append(": ").append(caseNumber).append(" ").append(e.getArchiveFileName());
         String responsibleCaption=java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/ReviewDueEntryPanel").getString("caption.responsible");
-        tooltip.append("<br/>").append(responsibleCaption).append(": ").append(StringUtils.nonEmpty(e.getResponsible()));
+        tooltip.append(HTML_BR).append(responsibleCaption).append(": ").append(StringUtils.nonEmpty(e.getResponsible()));
         tooltip.append("<html>");
         this.lblDescription.setToolTipText(tooltip.toString());
 
-        this.unDoneDescription="<html><b>" + dueDate + reason + "</b><br/>" + caseNumber + " " + caseName + "<br/>" + caseReason + "</html>";
-        this.doneDescription="<html><s><b>" + dueDate + reason + "</b><br/>" + caseNumber + " " + caseName + "<br/>" + caseReason + "</s></html>";
+        this.unDoneDescription="<html><b>" + dueDate + reason + "</b><br/>" + caseNumber + " " + caseName + HTML_BR + caseReason + "</html>";
+        this.doneDescription="<html><s><b>" + dueDate + reason + "</b><br/>" + caseNumber + " " + caseName + HTML_BR + caseReason + "</s></html>";
         this.lblDescription.setText(unDoneDescription);
         this.lblResponsible.setText(e.getResponsible());
         if(e.getResponsible()!=null && !("".equalsIgnoreCase(e.getResponsible())))
