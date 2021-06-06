@@ -28,7 +28,7 @@ jobs:
           fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
       - uses: actions/setup-java@v1
         with:
-          java-version: '8' # The JDK version to make available on the path.
+          java-version: '11' # The JDK version to make available on the path.
           java-package: jdk+fx # (jre, jdk, or jdk+fx) - defaults to jdk
           architecture: x64 # (x64 or x86) - defaults to x64
 
