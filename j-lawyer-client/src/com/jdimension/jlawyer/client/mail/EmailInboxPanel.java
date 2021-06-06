@@ -1098,6 +1098,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         mnuSearchSave = new javax.swing.JMenuItem();
         mnuSearchSaveNoAttachments = new javax.swing.JMenuItem();
         mnuSearchSaveOnlyAttachments = new javax.swing.JMenuItem();
+        mnuSearchSaveSeparate = new javax.swing.JMenuItem();
         mnuOpenInExternalMailer = new javax.swing.JMenuItem();
         jMenuItem1 = new javax.swing.JMenuItem();
         jLabel18 = new javax.swing.JLabel();
@@ -1203,6 +1204,15 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
             }
         });
         popEmailList.add(mnuSearchSaveOnlyAttachments);
+
+        mnuSearchSaveSeparate.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/filesave-separate.png"))); // NOI18N
+        mnuSearchSaveSeparate.setText("in Akte speichern (Nachricht und Anhänge separat)...");
+        mnuSearchSaveSeparate.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuSearchSaveSeparateActionPerformed(evt);
+            }
+        });
+        popEmailList.add(mnuSearchSaveSeparate);
 
         mnuOpenInExternalMailer.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/mail_send_2.png"))); // NOI18N
         mnuOpenInExternalMailer.setText("in externem Mailprogramm öffnen");
@@ -2272,6 +2282,10 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         this.saveToCase(null, false, false, true);
     }//GEN-LAST:event_mnuSearchSaveOnlyAttachmentsActionPerformed
 
+    private void mnuSearchSaveSeparateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSearchSaveSeparateActionPerformed
+        this.saveToCase(null, true, true, false);
+    }//GEN-LAST:event_mnuSearchSaveSeparateActionPerformed
+
     private void displayMessage() {
 
         if (this.tblMails.getSelectedRow() < 0 || this.tblMails.getSelectedRows().length > 1) {
@@ -2949,6 +2963,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
     private javax.swing.JMenuItem mnuSearchSave;
     private javax.swing.JMenuItem mnuSearchSaveNoAttachments;
     private javax.swing.JMenuItem mnuSearchSaveOnlyAttachments;
+    private javax.swing.JMenuItem mnuSearchSaveSeparate;
     private javax.swing.JPanel pnlActions;
     private javax.swing.JPanel pnlActionsChild;
     private javax.swing.JPopupMenu popEmailList;
