@@ -711,7 +711,7 @@ public class AddAddressSearchDialog extends javax.swing.JDialog {
 
         
         
-        String[] colNames = new String[]{"Name", "Vorname", "Unternehmen", "Abteilung", "PLZ", "Ort", "Strasse", "Land", "Etiketten"};
+        String[] colNames = new String[]{"Name", "Vorname", "Unternehmen", "Abteilung", "PLZ", "Ort", "Strasse", "Nr.", "Land", "Etiketten"};
         QuickAddressSearchTableModel model = new QuickAddressSearchTableModel(colNames, 0);
         this.tblResults.setModel(model);
         ComponentUtils.autoSizeColumns(tblResults);
@@ -935,15 +935,11 @@ public class AddAddressSearchDialog extends javax.swing.JDialog {
         int row = this.tblResults.getSelectedRow();
         QuickAddressSearchRowIdentifier id = (QuickAddressSearchRowIdentifier) this.tblResults.getValueAt(row, 0);
 
-        //DefaultListModel model = (DefaultListModel) this.targetListBox.getModel();
-        //model.addElement(id.getAddressDTO());
-        
         ConflictOfInterestUtils.checkForConflicts(id.getAddressDTO(), targetReferenceType, this);
 
         this.resultAddress = id.getAddressDTO();
         ArchiveFileAddressesBean afa = new ArchiveFileAddressesBean();
         afa.setAddressKey(resultAddress);
-        //afa.setArchiveFileKey(this.resultAddress);
         afa.setReferenceType(targetReferenceType);
         this.resultInvolvement = afa;
         
@@ -997,7 +993,7 @@ public class AddAddressSearchDialog extends javax.swing.JDialog {
         if (result != null) {
             QuickAddressSearchTableModel model = (QuickAddressSearchTableModel) this.tblResults.getModel();
             QuickAddressSearchRowIdentifier identifier = new QuickAddressSearchRowIdentifier(result);
-            Object[] row = new Object[]{identifier, result.getFirstName(), result.getCompany(), result.getDepartment(), result.getZipCode(), result.getCity(), result.getStreet(), result.getCountry(), ""};
+            Object[] row = new Object[]{identifier, result.getFirstName(), result.getCompany(), result.getDepartment(), result.getZipCode(), result.getCity(), result.getStreet(), result.getStreetNumber(), result.getCountry(), ""};
             model.addRow(row);
             int scrollToRow = getRowForObject(identifier);
             if (scrollToRow > -1) {
@@ -1013,7 +1009,6 @@ public class AddAddressSearchDialog extends javax.swing.JDialog {
 
     private void cmbRefTypeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbRefTypeActionPerformed
         
-        PartyTypeBean selected=null;
         for(PartyTypeBean ptb: this.partyTypes) {
             if (ptb.getName().equals(this.cmbRefType.getSelectedItem())) {
                 this.targetReferenceType=ptb;
@@ -1040,11 +1035,8 @@ public class AddAddressSearchDialog extends javax.swing.JDialog {
      * @param args the command line arguments
      */
     public static void main(String args[]) {
-        java.awt.EventQueue.invokeLater(new Runnable() {
-
-            public void run() {
-                new AddAddressSearchDialog(new javax.swing.JFrame(), true).setVisible(true);
-            }
+        java.awt.EventQueue.invokeLater(() -> {
+            new AddAddressSearchDialog(new javax.swing.JFrame(), true).setVisible(true);
         });
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
