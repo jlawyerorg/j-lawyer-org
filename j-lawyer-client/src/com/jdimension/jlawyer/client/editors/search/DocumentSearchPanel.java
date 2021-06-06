@@ -691,7 +691,7 @@ public class DocumentSearchPanel extends javax.swing.JPanel implements Themeable
     DecimalFormat df = new DecimalFormat("0.000");
 
     /**
-     * Creates new form QuickArchiveFileSearchPanel
+     * Creates new form DocumentSearchPanel
      */
     public DocumentSearchPanel() {
         initComponents();
@@ -700,26 +700,6 @@ public class DocumentSearchPanel extends javax.swing.JPanel implements Themeable
         DefaultTableModel model = new DefaultTableModel(colNames, 0);
         ((JLabel)this.cmbMaxDocs.getRenderer()).setHorizontalAlignment(SwingConstants.RIGHT);
         
-//        Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
-//
-//            public void run() {
-//                ClientSettings settings = ClientSettings.getInstance();
-//                JLawyerServiceLocator locator = null;
-//                try {
-//                    locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-//                    locator.lookupSearchServiceRemote().reOpenIndex();
-//                    
-//                } catch (Throwable ex) {
-//                    log.error("Error re-opening search index", ex);
-//                    return;
-//                }
-//            }
-//        }));
-
-        /*
-         * RowSorter<TableModel> sorter = new TableRowSorter<TableModel>(model);
-         * this.tblResults.setRowSorter(sorter);
-         */
     }
 
     public void setBackgroundImage(Image image) {
@@ -861,14 +841,6 @@ public class DocumentSearchPanel extends javax.swing.JPanel implements Themeable
 
     private void cmdQuickSearchActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdQuickSearchActionPerformed
         // perform search here
-//        ThreadUtils.setWaitCursor(this);
-//        EditorsRegistry.getInstance().updateStatus("Suche Akten...");
-//        String tag=null;
-//        Object selectedTag=this.cmbTags.getSelectedItem();
-//        if(selectedTag!=null)
-//            tag=selectedTag.toString();
-//        new Thread(new QuickArchiveFileSearchThread(this, this.txtSearchString.getText(), this.chkIncludeArchive.isSelected(), tag, this.tblResults)).start();
-
         String[] colNames = new String[]{"Suchergebnisse"};
         DefaultTableModel model = new DefaultTableModel(colNames, 0) {
 
@@ -921,7 +893,6 @@ public class DocumentSearchPanel extends javax.swing.JPanel implements Themeable
             log.error("Error performing index search", ex);
             JOptionPane.showMessageDialog(this, "Fehler bei der Suche: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
             EditorsRegistry.getInstance().clearStatus();
-            return;
         }
 
     }//GEN-LAST:event_cmdQuickSearchActionPerformed
