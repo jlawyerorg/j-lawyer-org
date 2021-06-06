@@ -665,7 +665,6 @@ package com.jdimension.jlawyer.services;
 
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBeanFacadeLocal;
-import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.ArchiveFileGroupsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileGroupsBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.Group;
@@ -711,7 +710,7 @@ public class SearchService implements SearchServiceRemote, SearchServiceLocal {
     @RolesAllowed({"readArchiveFileRole"})
     public ArrayList<SearchHit> search(String queryString, int maxDocs) throws SearchException {
 
-        List<Group> userGroups = new ArrayList<Group>();
+        List<Group> userGroups = new ArrayList<>();
         try {
             userGroups = this.securityFacade.getGroupsForUser(context.getCallerPrincipal().getName());
         } catch (Throwable t) {
@@ -720,7 +719,7 @@ public class SearchService implements SearchServiceRemote, SearchServiceLocal {
 
         ArrayList<SearchHit> hits = SearchAPI.getInstance().search(queryString, maxDocs * 5);
         ArrayList<SearchHit> returnList = new ArrayList<>();
-        Hashtable<String, ArchiveFileBean> caseCache = new Hashtable<String, ArchiveFileBean>();
+        Hashtable<String, ArchiveFileBean> caseCache = new Hashtable<>();
         for (SearchHit h : hits) {
 
             if (!caseCache.containsKey(h.getArchiveFileId())) {
