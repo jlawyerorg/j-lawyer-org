@@ -1107,8 +1107,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
         }
         editBody.setCaretPosition(0);
 
-        if (closed)
-        {
+        if (closed) {
             EmailUtils.closeIfIMAP(msg.getFolder());
         }
 
@@ -1545,20 +1544,42 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
                 if (selectedFolder != null) {
                     useFolder = selectedFolder;
                 }
-                JFileChooser chooser = new JFileChooser(useFolder);
-                chooser.setSelectedFile(new File(selected.toString()));
-                chooser.showSaveDialog(this);
-                File f = chooser.getSelectedFile();
-                if (f == null) {
-                    return;
+
+                boolean validName = false;
+                File f = null;
+                boolean skipToNext = false;
+                while (!validName) {
+                    JFileChooser chooser = new JFileChooser(useFolder);
+                    chooser.setSelectedFile(new File(selected.toString()));
+                    int result = chooser.showSaveDialog(this);
+                    if (result == JFileChooser.CANCEL_OPTION) {
+                        skipToNext=true;
+                        break;
+                    }
+                    f = chooser.getSelectedFile();
+                    if (f == null) {
+                        return;
+                    }
+                    
+                    if(f.exists()) {
+                        int response = JOptionPane.showConfirmDialog(this, "Die Datei existiert bereits. Überschreiben?", "Datei überschreiben", JOptionPane.YES_NO_OPTION);
+                        if (response == JOptionPane.YES_OPTION) {
+                            validName=true;
+                        }
+                    } else {
+                        validName=true;
+                    }
                 }
+                
+                if(skipToNext)
+                    continue;
 
                 if (!f.exists()) {
                     f.createNewFile();
                 }
                 selectedFolder = f.getParentFile().getAbsolutePath();
 
-                try (FileOutputStream fOut = new FileOutputStream(f)) {
+                try ( FileOutputStream fOut = new FileOutputStream(f)) {
                     fOut.write(data);
                 }
 
@@ -1580,7 +1601,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
         SearchAndAssignDialog dlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true, "" + this.lblSubject.getText() + this.editBody.getText(), null);
         dlg.setVisible(true);
         ArchiveFileBean sel = dlg.getCaseSelection();
-        CaseFolder folder=dlg.getFolderSelection();
+        CaseFolder folder = dlg.getFolderSelection();
 
         dlg.dispose();
 
@@ -1601,15 +1622,16 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
                     }
 
                     ArchiveFileDocumentsBean newDoc = afs.addDocument(sel.getId(), newName, data, "");
-                    
-                    if(folder != null) {
+
+                    if (folder != null) {
                         ArrayList<String> docList = new ArrayList<>();
                         docList.add(newDoc.getId());
                         afs.moveDocumentsToFolder(docList, folder.getId());
                     }
 
-                    if(folder!=null)
+                    if (folder != null) {
                         newDoc.setFolder(folder);
+                    }
                     EventBroker eb = EventBroker.getInstance();
                     eb.publishEvent(new DocumentAddedEvent(newDoc));
 
