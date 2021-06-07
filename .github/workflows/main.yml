@@ -76,6 +76,9 @@ jobs:
           architecture: x64
           targets: 'JDK_11'
 
+      - name: populate JAVA_HOME to Java 11
+        runs: |
+          ::set-env name=JAVA_HOME::$JDK_11
       
       - name: Build client with JDK11
         run: ant -buildfile j-lawyer-client/build.xml default
