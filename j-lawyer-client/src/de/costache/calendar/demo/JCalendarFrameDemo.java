@@ -1,19 +1,13 @@
 package de.costache.calendar.demo;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.Date;
 import java.util.Locale;
-import java.util.Random;
 
 import javax.imageio.ImageIO;
 import javax.management.InstanceAlreadyExistsException;
@@ -45,10 +39,6 @@ import de.costache.calendar.events.ModelChangedListener;
 import de.costache.calendar.events.SelectionChangedEvent;
 import de.costache.calendar.events.SelectionChangedListener;
 import de.costache.calendar.model.CalendarEvent;
-import de.costache.calendar.model.EventType;
-import de.costache.calendar.ui.strategy.DisplayStrategy;
-import de.costache.calendar.ui.strategy.DisplayStrategy.Type;
-import de.costache.calendar.util.CalendarUtil;
 
 /**
  * @author costache
@@ -62,7 +52,7 @@ public class JCalendarFrameDemo extends JFrame {
 	private static final long serialVersionUID = 1L;
 
 	private final SimpleDateFormat sdf = new SimpleDateFormat("dd MM yyyy HH:mm:ss:SSS");
-	private final Random r = new Random();
+	//private final Random r = new Random();
 
 	private JMenuBar menuBar;
 	private JMenu fileMenu;
@@ -84,7 +74,7 @@ public class JCalendarFrameDemo extends JFrame {
 	public JCalendarFrameDemo() {
 
 		initGui();
-		initData();
+//		initData();
 		bindListeners();
 
 	}
@@ -145,48 +135,48 @@ public class JCalendarFrameDemo extends JFrame {
 
 	}
 
-	private void initData() {
-
-		final EventType type1 = new EventType();
-
-		final EventType type2 = new EventType();
-		type2.setBackgroundColor(new Color(255, 103, 0, 128));
-
-		final EventType type3 = new EventType();
-		type3.setBackgroundColor(new Color(165, 103, 230, 128));
-
-		final EventType[] types = new EventType[3];
-		types[0] = type1;
-		types[1] = type2;
-		types[2] = type3;
-
-		CalendarEvent calendarEvent;
-		for (int i = 0; i < 1000; i++) {
-			int hour = r.nextInt(19);
-			hour = hour > 17 ? 17 : hour;
-			hour = hour < 8 ? 8 : hour;
-			final int min = r.nextInt(59);
-			final int day = r.nextInt(28);
-			final int month = r.nextInt(11);
-			final int year = 2021;
-			final Date start = CalendarUtil.createDate(year, month, day, hour, min, 0, 0);
-			final Date end = CalendarUtil.createDate(year, month, day, hour + 1 + r.nextInt(4), r.nextInt(59), 0, 0);
-			calendarEvent = new CalendarEvent(names[r.nextInt(3)], start, end);
-			calendarEvent.setType(types[r.nextInt(3)]);
-			calendarEvent.setAllDay(i % 2 == 0);
-			jCalendar.addCalendarEvent(calendarEvent);
-		}
-
-		Date start = CalendarUtil.createDate(2013, 1, 31, 12, 45, 0, 0);
-		Date end = CalendarUtil.createDate(2013, 1, 31, 16, 35, 0, 0);
-		calendarEvent = new CalendarEvent("Overlapping", start, end);
-		jCalendar.addCalendarEvent(calendarEvent);
-
-		start = CalendarUtil.createDate(2013, 1, 31, 8, 45, 0, 0);
-		end = CalendarUtil.createDate(2013, 1, 31, 15, 35, 0, 0);
-		calendarEvent = new CalendarEvent("Overlapping 2", start, end);
-		jCalendar.addCalendarEvent(calendarEvent);
-	}
+//	private void initData() {
+//
+//		final EventType type1 = new EventType();
+//
+//		final EventType type2 = new EventType();
+//		type2.setBackgroundColor(new Color(255, 103, 0, 128));
+//
+//		final EventType type3 = new EventType();
+//		type3.setBackgroundColor(new Color(165, 103, 230, 128));
+//
+//		final EventType[] types = new EventType[3];
+//		types[0] = type1;
+//		types[1] = type2;
+//		types[2] = type3;
+//
+//		CalendarEvent calendarEvent;
+//		for (int i = 0; i < 1000; i++) {
+//			int hour = r.nextInt(19);
+//			hour = hour > 17 ? 17 : hour;
+//			hour = hour < 8 ? 8 : hour;
+//			final int min = r.nextInt(59);
+//			final int day = r.nextInt(28);
+//			final int month = r.nextInt(11);
+//			final int year = 2021;
+//			final Date start = CalendarUtil.createDate(year, month, day, hour, min, 0, 0);
+//			final Date end = CalendarUtil.createDate(year, month, day, hour + 1 + r.nextInt(4), r.nextInt(59), 0, 0);
+//			calendarEvent = new CalendarEvent(names[r.nextInt(3)], start, end);
+//			calendarEvent.setType(types[r.nextInt(3)]);
+//			calendarEvent.setAllDay(i % 2 == 0);
+//			jCalendar.addCalendarEvent(calendarEvent);
+//		}
+//
+//		Date start = CalendarUtil.createDate(2013, 1, 31, 12, 45, 0, 0);
+//		Date end = CalendarUtil.createDate(2013, 1, 31, 16, 35, 0, 0);
+//		calendarEvent = new CalendarEvent("Overlapping", start, end);
+//		jCalendar.addCalendarEvent(calendarEvent);
+//
+//		start = CalendarUtil.createDate(2013, 1, 31, 8, 45, 0, 0);
+//		end = CalendarUtil.createDate(2013, 1, 31, 15, 35, 0, 0);
+//		calendarEvent = new CalendarEvent("Overlapping 2", start, end);
+//		jCalendar.addCalendarEvent(calendarEvent);
+//	}
 
 	private void bindListeners() {
 		exitMenuItem.addActionListener(new ActionListener() {
@@ -202,17 +192,17 @@ public class JCalendarFrameDemo extends JFrame {
 			@Override
 			public void actionPerformed(final ActionEvent arg0) {
 
-				final int hour = r.nextInt(19);
-				final int min = r.nextInt(59);
-				final int day = r.nextInt(28);
-				final int month = r.nextInt(11);
-				final int year = 2021;
-                                final Date start = CalendarUtil.createDate(year, month, day, hour, min, 0, 0);
-				final Date end = CalendarUtil.createDate(year, month, day, hour + 1 + r.nextInt(4), r.nextInt(59), 0, 0);
-				final CalendarEvent calendarEvent = new CalendarEvent("Added ", start, end);
-
-				jCalendar.addCalendarEvent(calendarEvent);
-				jCalendar.setDisplayStrategy(DisplayStrategy.Type.DAY, start);
+//				final int hour = r.nextInt(19);
+//				final int min = r.nextInt(59);
+//				final int day = r.nextInt(28);
+//				final int month = r.nextInt(11);
+//				final int year = 2021;
+//                                final Date start = CalendarUtil.createDate(year, month, day, hour, min, 0, 0);
+//				final Date end = CalendarUtil.createDate(year, month, day, hour + 1 + r.nextInt(4), r.nextInt(59), 0, 0);
+//				final CalendarEvent calendarEvent = new CalendarEvent("Added ", start, end);
+//
+//				jCalendar.addCalendarEvent(calendarEvent);
+//				jCalendar.setDisplayStrategy(DisplayStrategy.Type.DAY, start);
 			}
 		});
 
