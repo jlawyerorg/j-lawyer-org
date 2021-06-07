@@ -712,7 +712,7 @@ import org.jlawyer.bea.model.ProcessCardEntry;
 public class BeaMessageContentUI extends javax.swing.JPanel implements HyperlinkListener {
 
     private static final Logger log = Logger.getLogger(BeaMessageContentUI.class.getName());
-    private static final String DATEFORMAT="dd.MM.yyyy HH:mm";
+    private static final String DATEFORMAT = "dd.MM.yyyy HH:mm";
     private static String HTML_WARNING = "<html><font color=\"red\">HTML-Inhalte werden zum Schutz vor Spam erst auf Knopfdruck im Kopfbereich dieser E-Mail oder nach Doppelklick auf diese Warnung angezeigt.<br/>Der Absender dieser E-Mail wird dann permanent als vertrauensw&uuml;rdig eingestuft.</font></html>";
     private Message msgContainer = null;
     private String cachedHtml = null;
@@ -739,21 +739,22 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
 
         DefaultTableModel tm = new DefaultTableModel(new String[]{"Benutzer (Ereignis)", "Benutzername (Ereignis)", "Dateiname des Anhangs", "Ereignis", "Zeitpunkt"}, 0);
         this.tblJournal.setModel(tm);
-        TableRowSorter<TableModel> sorter = new TableRowSorter<TableModel>(tm);
+        TableRowSorter<TableModel> sorter = new TableRowSorter<>(tm);
         sorter.setComparator(4, new DescendingDateTimeStringComparator());
         this.tblJournal.setRowSorter(sorter);
 
         DefaultTableModel tm2 = new DefaultTableModel(new String[]{"Code", "Text"}, 0);
         this.tblProcessCard.setModel(tm2);
         this.cmdShowProcessCard.setEnabled(false);
-        
+
         jSplitPane1.addPropertyChangeListener(JSplitPane.DIVIDER_LOCATION_PROPERTY, (PropertyChangeEvent evt) -> {
             SwingUtilities.invokeLater(() -> {
                 try {
-                    
-                    if(jSplitPane1.getHeight()<=0)
+
+                    if (jSplitPane1.getHeight() <= 0) {
                         return;
-                    
+                    }
+
                     double divLoc = (double) jSplitPane1.getDividerLocation() / (double) jSplitPane1.getHeight();
                     if (divLoc < 0.1d) {
                         jSplitPane1.setDividerLocation(0.1d);
@@ -766,7 +767,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
                 }
             });
         });
-        
+
     }
 
     public void clear() {
@@ -876,7 +877,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
 
         DefaultTableModel tm = new DefaultTableModel(new String[]{"Benutzer (Ereignis)", "Benutzername (Ereignis)", "Dateiname des Anhangs", "Ereignis", "Zeitpunkt"}, 0);
         journalTable.setModel(tm);
-        TableRowSorter<TableModel> sorter = new TableRowSorter<TableModel>(tm);
+        TableRowSorter<TableModel> sorter = new TableRowSorter<>(tm);
         sorter.setComparator(4, new DescendingDateTimeStringComparator());
         journalTable.setRowSorter(sorter);
         SimpleDateFormat df2 = new SimpleDateFormat(DATEFORMAT);
@@ -1348,24 +1349,43 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
                 if (selectedFolder != null) {
                     useFolder = selectedFolder;
                 }
-                JFileChooser chooser = new JFileChooser(useFolder);
-                chooser.setSelectedFile(new File(selected.toString()));
-                int result = chooser.showSaveDialog(this);
-                if (result == JFileChooser.CANCEL_OPTION) {
-                    continue;
-                }
 
-                File f = chooser.getSelectedFile();
-                if (f == null) {
-                    return;
+                boolean validName = false;
+                File f = null;
+                boolean skipToNext=false;
+                while (!validName) {
+                    JFileChooser chooser = new JFileChooser(useFolder);
+                    chooser.setSelectedFile(new File(selected.toString()));
+                    int result = chooser.showSaveDialog(this);
+                    if (result == JFileChooser.CANCEL_OPTION) {
+                        skipToNext=true;
+                        break;
+                    }
+
+                    f = chooser.getSelectedFile();
+                    if (f == null) {
+                        return;
+                    }
+                    
+                    if(f.exists()) {
+                        int response = JOptionPane.showConfirmDialog(this, "Die Datei existiert bereits. Überschreiben?", "Datei überschreiben", JOptionPane.YES_NO_OPTION);
+                        if (response == JOptionPane.YES_OPTION) {
+                            validName=true;
+                        }
+                    } else {
+                        validName=true;
+                    }
+
                 }
+                if(skipToNext)
+                    continue;
 
                 if (!f.exists()) {
                     f.createNewFile();
                 }
                 selectedFolder = f.getParentFile().getAbsolutePath();
 
-                try (FileOutputStream fOut = new FileOutputStream(f)) {
+                try ( FileOutputStream fOut = new FileOutputStream(f)) {
                     fOut.write(data);
                 }
             }
@@ -1390,7 +1410,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
         SearchAndAssignDialog dlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true, searchContext, null);
         dlg.setVisible(true);
         ArchiveFileBean sel = dlg.getCaseSelection();
-        CaseFolder folder=dlg.getFolderSelection();
+        CaseFolder folder = dlg.getFolderSelection();
 
         dlg.dispose();
 
@@ -1411,15 +1431,16 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
                     }
 
                     ArchiveFileDocumentsBean newDoc = afs.addDocument(sel.getId(), newName, data, "");
-                    
+
                     if (folder != null) {
                         ArrayList<String> docList = new ArrayList<>();
                         docList.add(newDoc.getId());
                         afs.moveDocumentsToFolder(docList, folder.getId());
                     }
 
-                    if(folder!=null)
+                    if (folder != null) {
                         newDoc.setFolder(folder);
+                    }
                     EventBroker eb = EventBroker.getInstance();
                     eb.publishEvent(new DocumentAddedEvent(newDoc));
 
@@ -1536,7 +1557,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
         if (this.msgContainer != null) {
             try {
                 byte[] pdf = this.msgContainer.toPdf("j-lawyer.org " + VersionUtils.getFullClientVersion());
-                String fileName="beA-Nachricht-"+this.msgContainer.getId() + ".pdf";
+                String fileName = "beA-Nachricht-" + this.msgContainer.getId() + ".pdf";
                 ReadOnlyDocumentStore store = new ReadOnlyDocumentStore("beacontentui-" + fileName, fileName);
                 Launcher launcher = LauncherFactory.getLauncher(fileName, pdf, store);
                 launcher.launch(false);
