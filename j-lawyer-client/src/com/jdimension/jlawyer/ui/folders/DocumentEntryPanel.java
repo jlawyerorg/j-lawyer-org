@@ -682,6 +682,7 @@ import java.awt.event.MouseEvent;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.List;
 import javax.swing.Icon;
 import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
@@ -1002,13 +1003,27 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
     }//GEN-LAST:event_chkSelectedMouseReleased
 
     private void chkSelectedKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_chkSelectedKeyReleased
-        System.out.println("case folders key pressed 2 " + this.document.getName());
-        if(evt.getKeyCode()==KeyEvent.VK_DOWN) {
-            this.documentsContainer.selectNextDocument();
-            this.caseContainer.documentSelectionChanged();
-        } else if(evt.getKeyCode()==KeyEvent.VK_UP) {
-            this.documentsContainer.selectPreviousDocument();
-            this.caseContainer.documentSelectionChanged();
+        switch (evt.getKeyCode()) {
+            case KeyEvent.VK_DOWN:
+                this.documentsContainer.selectNextDocument();
+                this.caseContainer.documentSelectionChanged();
+                break;
+            case KeyEvent.VK_UP:
+                this.documentsContainer.selectPreviousDocument();
+                this.caseContainer.documentSelectionChanged();
+                break;
+            case KeyEvent.VK_ENTER:
+                if (this.documentsContainer != null) {
+                    List<ArchiveFileDocumentsBean> selDocs=this.documentsContainer.getSelectedDocuments();
+                    for(ArchiveFileDocumentsBean openDoc: selDocs) {
+                        this.caseContainer.openSelectedDocument(openDoc);
+                    }
+                } else {
+                    this.caseContainer.openSelectedDocument(this.document);
+                }
+                break;
+            default:
+                break;
         }
     }//GEN-LAST:event_chkSelectedKeyReleased
 
