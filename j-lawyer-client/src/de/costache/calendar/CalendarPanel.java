@@ -674,7 +674,6 @@ import de.costache.calendar.events.SelectionChangedEvent;
 import de.costache.calendar.events.SelectionChangedListener;
 import de.costache.calendar.model.CalendarEvent;
 import de.costache.calendar.model.EventType;
-import de.costache.calendar.ui.strategy.DisplayStrategy;
 import de.costache.calendar.util.CalendarUtil;
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -685,11 +684,9 @@ import java.awt.event.ActionListener;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
-import java.util.Random;
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
-import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
@@ -710,7 +707,7 @@ import themes.colors.DefaultColorTheme;
 public class CalendarPanel extends javax.swing.JPanel {
 
     private final SimpleDateFormat sdf = new SimpleDateFormat("dd MM yyyy HH:mm:ss:SSS");
-    private final Random r = new Random();
+    //private final Random r = new Random();
 
     private JMenuBar menuBar;
     private JMenu fileMenu;
@@ -752,8 +749,12 @@ public class CalendarPanel extends javax.swing.JPanel {
         //setJMenuBar(menuBar);
 
         toolBar = new JToolBar("Controls");
+//        addButton = new JButton("Hinzufügen");
+//        removeButton = new JButton("Löschen");
         addButton = new JButton("Hinzufügen");
+        addButton.setBackground(DefaultColorTheme.COLOR_LOGO_GREEN);
         removeButton = new JButton("Löschen");
+        removeButton.setBackground(DefaultColorTheme.COLOR_LOGO_RED);
 
         Image addImg = null;
         Image removeImg = null;
@@ -795,48 +796,48 @@ public class CalendarPanel extends javax.swing.JPanel {
 
     }
 
-    private void initData() {
-
-        final EventType type1 = new EventType();
-
-        final EventType type2 = new EventType();
-        type2.setBackgroundColor(new Color(255, 103, 0, 128));
-
-        final EventType type3 = new EventType();
-        type3.setBackgroundColor(new Color(165, 103, 230, 128));
-
-        final EventType[] types = new EventType[3];
-        types[0] = type1;
-        types[1] = type2;
-        types[2] = type3;
-
-        CalendarEvent calendarEvent;
-        for (int i = 0; i < 1000; i++) {
-            int hour = r.nextInt(19);
-            hour = hour > 17 ? 17 : hour;
-            hour = hour < 8 ? 8 : hour;
-            final int min = r.nextInt(59);
-            final int day = r.nextInt(28);
-            final int month = r.nextInt(11);
-            final int year = 2021;
-            final Date start = CalendarUtil.createDate(year, month, day, hour, min, 0, 0);
-            final Date end = CalendarUtil.createDate(year, month, day, hour + 1 + r.nextInt(4), r.nextInt(59), 0, 0);
-            calendarEvent = new CalendarEvent(names[r.nextInt(3)], start, end);
-            calendarEvent.setType(types[r.nextInt(3)]);
-            calendarEvent.setAllDay(i % 2 == 0);
-            jCalendar.addCalendarEvent(calendarEvent);
-        }
-
-        Date start = CalendarUtil.createDate(2013, 1, 31, 12, 45, 0, 0);
-        Date end = CalendarUtil.createDate(2013, 1, 31, 16, 35, 0, 0);
-        calendarEvent = new CalendarEvent("Overlapping", start, end);
-        jCalendar.addCalendarEvent(calendarEvent);
-
-        start = CalendarUtil.createDate(2013, 1, 31, 8, 45, 0, 0);
-        end = CalendarUtil.createDate(2013, 1, 31, 15, 35, 0, 0);
-        calendarEvent = new CalendarEvent("Overlapping 2", start, end);
-        jCalendar.addCalendarEvent(calendarEvent);
-    }
+//    private void initData() {
+//
+//        final EventType type1 = new EventType();
+//
+//        final EventType type2 = new EventType();
+//        type2.setBackgroundColor(new Color(255, 103, 0, 128));
+//
+//        final EventType type3 = new EventType();
+//        type3.setBackgroundColor(new Color(165, 103, 230, 128));
+//
+//        final EventType[] types = new EventType[3];
+//        types[0] = type1;
+//        types[1] = type2;
+//        types[2] = type3;
+//
+//        CalendarEvent calendarEvent;
+//        for (int i = 0; i < 1000; i++) {
+//            int hour = r.nextInt(19);
+//            hour = hour > 17 ? 17 : hour;
+//            hour = hour < 8 ? 8 : hour;
+//            final int min = r.nextInt(59);
+//            final int day = r.nextInt(28);
+//            final int month = r.nextInt(11);
+//            final int year = 2021;
+//            final Date start = CalendarUtil.createDate(year, month, day, hour, min, 0, 0);
+//            final Date end = CalendarUtil.createDate(year, month, day, hour + 1 + r.nextInt(4), r.nextInt(59), 0, 0);
+//            calendarEvent = new CalendarEvent(names[r.nextInt(3)], start, end);
+//            calendarEvent.setType(types[r.nextInt(3)]);
+//            calendarEvent.setAllDay(i % 2 == 0);
+//            jCalendar.addCalendarEvent(calendarEvent);
+//        }
+//
+//        Date start = CalendarUtil.createDate(2013, 1, 31, 12, 45, 0, 0);
+//        Date end = CalendarUtil.createDate(2013, 1, 31, 16, 35, 0, 0);
+//        calendarEvent = new CalendarEvent("Overlapping", start, end);
+//        jCalendar.addCalendarEvent(calendarEvent);
+//
+//        start = CalendarUtil.createDate(2013, 1, 31, 8, 45, 0, 0);
+//        end = CalendarUtil.createDate(2013, 1, 31, 15, 35, 0, 0);
+//        calendarEvent = new CalendarEvent("Overlapping 2", start, end);
+//        jCalendar.addCalendarEvent(calendarEvent);
+//    }
     
     public void setData(Collection<ArchiveFileReviewsBean> dtos) {
         
@@ -931,17 +932,17 @@ public class CalendarPanel extends javax.swing.JPanel {
             @Override
             public void actionPerformed(final ActionEvent arg0) {
 
-                final int hour = r.nextInt(19);
-                final int min = r.nextInt(59);
-                final int day = r.nextInt(28);
-                final int month = r.nextInt(11);
-                final int year = 2021;
-                final Date start = CalendarUtil.createDate(year, month, day, hour, min, 0, 0);
-                final Date end = CalendarUtil.createDate(year, month, day, hour + 1 + r.nextInt(4), r.nextInt(59), 0, 0);
-                final CalendarEvent calendarEvent = new CalendarEvent("Added ", start, end);
-
-                jCalendar.addCalendarEvent(calendarEvent);
-                jCalendar.setDisplayStrategy(DisplayStrategy.Type.DAY, start);
+//                final int hour = r.nextInt(19);
+//                final int min = r.nextInt(59);
+//                final int day = r.nextInt(28);
+//                final int month = r.nextInt(11);
+//                final int year = 2021;
+//                final Date start = CalendarUtil.createDate(year, month, day, hour, min, 0, 0);
+//                final Date end = CalendarUtil.createDate(year, month, day, hour + 1 + r.nextInt(4), r.nextInt(59), 0, 0);
+//                final CalendarEvent calendarEvent = new CalendarEvent("Added ", start, end);
+//
+//                jCalendar.addCalendarEvent(calendarEvent);
+//                jCalendar.setDisplayStrategy(DisplayStrategy.Type.DAY, start);
             }
         });
 
