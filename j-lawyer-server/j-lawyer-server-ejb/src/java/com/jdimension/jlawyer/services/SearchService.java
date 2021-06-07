@@ -669,7 +669,7 @@ import com.jdimension.jlawyer.persistence.ArchiveFileGroupsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileGroupsBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.Group;
 import java.util.ArrayList;
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.List;
 import javax.annotation.Resource;
 import javax.annotation.security.RolesAllowed;
@@ -719,7 +719,7 @@ public class SearchService implements SearchServiceRemote, SearchServiceLocal {
 
         ArrayList<SearchHit> hits = SearchAPI.getInstance().search(queryString, maxDocs * 5);
         ArrayList<SearchHit> returnList = new ArrayList<>();
-        Hashtable<String, ArchiveFileBean> caseCache = new Hashtable<>();
+        HashMap<String, ArchiveFileBean> caseCache = new HashMap<>();
         for (SearchHit h : hits) {
 
             if (!caseCache.containsKey(h.getArchiveFileId())) {
@@ -730,11 +730,11 @@ public class SearchService implements SearchServiceRemote, SearchServiceLocal {
             }
             ArchiveFileBean aFile = caseCache.get(h.getArchiveFileId());
             if (aFile != null) {
-                
-                if(this.checkGroupsForCase(context.getCallerPrincipal().getName(), userGroups, aFile)) {
+
+                if (this.checkGroupsForCase(context.getCallerPrincipal().getName(), userGroups, aFile)) {
                     returnList.add(h);
                 }
-                
+
             }
 
             if (returnList.size() == maxDocs) {
@@ -746,26 +746,24 @@ public class SearchService implements SearchServiceRemote, SearchServiceLocal {
         return returnList;
 
     }
-    
+
     private List<ArchiveFileGroupsBean> getAllowedGroups(ArchiveFileBean archiveFile) {
         if (archiveFile == null) {
-            return new ArrayList<ArchiveFileGroupsBean>();
+            return new ArrayList<>();
         }
         return this.caseGroupsFacade.findByCase(archiveFile);
 
     }
-    
+
     private boolean checkGroupsForCase(String principalId, List<Group> userGroups, ArchiveFileBean aFile) {
         Group owner = aFile.getGroup();
         if (owner == null) {
             return true;
         }
 
-        if (owner != null) {
-            for (Group g : userGroups) {
-                if (g.equals(owner)) {
-                    return true;
-                }
+        for (Group g : userGroups) {
+            if (g.equals(owner)) {
+                return true;
             }
         }
 
