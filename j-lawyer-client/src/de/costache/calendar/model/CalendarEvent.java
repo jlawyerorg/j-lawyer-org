@@ -190,7 +190,7 @@ public class CalendarEvent extends Observable implements Comparable<CalendarEven
     }
 
     /**
-     * @param type the type to set
+     * @param value
      */
     public void setAllDay(final boolean value) {
         this.allDay = value;
@@ -207,7 +207,7 @@ public class CalendarEvent extends Observable implements Comparable<CalendarEven
     }
 
     /**
-     * @param priority the priority to set
+     * @param value the priority to set
      */
     public void setPriority(final int value) {
         this.priority = value;
