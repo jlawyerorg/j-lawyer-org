@@ -133,7 +133,7 @@ public class CalendarUtil {
 
     public static long getTotalSeconds(final Date date) {
         final Calendar c = CalendarUtil.getCalendar(date, false);
-        long seconds = c.get(Calendar.HOUR_OF_DAY) * 60 * 60;
+        long seconds = c.get(Calendar.HOUR_OF_DAY) * 60l * 60l;
         seconds += c.get(Calendar.MINUTE) * 60;
         seconds += c.get(Calendar.SECOND);
         return seconds;
