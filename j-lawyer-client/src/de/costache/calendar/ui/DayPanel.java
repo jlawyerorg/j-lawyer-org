@@ -45,8 +45,8 @@ public class DayPanel {
 	/**
 	 * Creates a new instance of {@link DayPanel}
 	 * 
+	 * @param owner
 	 * @param date
-	 * @param headerRatio
 	 */
 	public DayPanel(final JCalendar owner, final Date date) {
 
@@ -69,6 +69,7 @@ public class DayPanel {
 
 	/**
 	 * 
+         * @param owner
 	 * @param date
 	 * @param headerRatio
 	 */
