@@ -3676,7 +3676,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         ipep.setEntry(adrb, afab, false);
         ipep.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        //GridLayout layout = new GridLayout(this.pnlInvolvedParties.getComponentCount() + 1, 1);
         BoxLayout layout = new javax.swing.BoxLayout(this.pnlInvolvedParties, javax.swing.BoxLayout.Y_AXIS);
         this.pnlInvolvedParties.setLayout(layout);
 
@@ -3957,32 +3956,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     public void openSelectedDocument(ArchiveFileDocumentsBean value) {
         try {
 
-            if (value != null) {
-                //boolean readOnly = !this.cmdSave.isEnabled();
-                ClientSettings settings = ClientSettings.getInstance();
-                String tmpUrl = null;
-                byte[] content = null;
-                try {
-                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                    content = locator.lookupArchiveFileServiceRemote().getDocumentContent(value.getId());
-                    //tmpUrl = appLauncher.createTempFile(value.getName(), content);
-                } catch (Exception ex) {
-                    JOptionPane.showMessageDialog(this, "Fehler beim Laden des Dokuments: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
-                    return;
-                }
-
-                CaseDocumentStore store = new CaseDocumentStore(value.getId(), value.getName(), this.readOnly, value, dto);
-                Launcher launcher = LauncherFactory.getLauncher(value.getName(), content, store);
-                int response = JOptionPane.NO_OPTION;
-                if (launcher.isDocumentOpen(value.getId())) {
-                    response = JOptionPane.showConfirmDialog(EditorsRegistry.getInstance().getMainWindow(), "Dokument " + value.getName() + " ist bereits geöffnet. Trotzdem fortfahren?", "Dokument öffnen", JOptionPane.YES_NO_OPTION);
-                    if (response == JOptionPane.NO_OPTION) {
-                        return;
-                    }
-                }
-                launcher.launch(response == JOptionPane.YES_OPTION);
-
-            }
+            CaseUtils.openDocument(dto, value, this.readOnly, this);
 
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Fehler beim Öffnen des Dokuments: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
@@ -3993,7 +3967,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         try {
             this.pnlPreview.setVisible(false);
             this.pnlPreview.removeAll();
-            //JLabel loading=new JLabel("Lade Vorschau...");
             ThreadUtils.setLayout(pnlPreview, new FlowLayout());
             JProgressBar loading = new JProgressBar();
             loading.setIndeterminate(true);
@@ -4005,11 +3978,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 Thread.sleep(100);
             } catch (Throwable t) {
             }
-//                    ClientSettings settings = ClientSettings.getInstance();
-//                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-//                    IntegrationServiceRemote is = locator.lookupIntegrationServiceRemote();
-//                    byte[] data = is.getObservedFile(fileName);
-//                    String previewText=is.getObservedFilePreview(fileName);
 
             JComponent preview = DocumentViewerFactory.getDocumentViewer(null, "dummy.txt", true, newText, null, this.pnlPreview.getWidth(), this.pnlPreview.getHeight());
             this.pnlPreview.setVisible(false);
@@ -4017,13 +3985,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             ThreadUtils.setLayout(pnlPreview, new BorderLayout());
             this.pnlPreview.add(preview, BorderLayout.CENTER);
             this.pnlPreview.setVisible(true);
-            //this.pnlPreview.setBounds(this.pnlPreview.getBounds());
-
-            //preview.setBounds(0,0,this.pnlPreview.getWidth(),this.pnlPreview.getHeight());
-            //this.pnlPreview.revalidate();
-            //this.pnlPreview.repaint();
-            //System.out.println(pnlPreview.getBounds());
-            //System.out.println(preview.getBounds());
         } catch (Exception ex) {
             log.error(ex);
             this.pnlPreview.removeAll();
@@ -4060,14 +4021,10 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
             Object report = JRLoader.loadObjectFromFile(ClientSettings.getInstance().getLocalReportsDirectory() + "archivefile.jasper");
             JasperReport jasperReport = (JasperReport) report;
-//            Object subReport = JRLoader.loadObjectFromFile(ClientSettings.getInstance().getLocalReportsDirectory() + "reviews_detail.jasper");
-//            JasperReport jasperSubReport = (JasperReport) subReport;
-
             HashMap<String, Object> parameter = new HashMap<String, Object>();
             parameter.put("SubReportDir", ClientSettings.getInstance().getLocalReportsDirectory());
 
             JasperPrint jasperPrint = JasperFillManager.fillReport(jasperReport, parameter, colIn);
-            //JasperExportManager.exportReportToPdfFile(jasperPrint, "C:/MyData/netbeansws/ReportDemo/output/report.pdf");
             JasperPrintManager.printReport(jasperPrint, true);
         } catch (Exception ex) {
             log.error("Error printing archive file reviews", ex);
@@ -4093,9 +4050,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         int returnVal = chooser.showOpenDialog(this);
         if (returnVal == JFileChooser.APPROVE_OPTION) {
             try {
-                //this.txtImportFile.setText(chooser.getSelectedFile().getCanonicalPath());
                 File[] fileArray = chooser.getSelectedFiles();
-                ArrayList<File> files = new ArrayList<File>();
+                ArrayList<File> files = new ArrayList<>();
                 boolean lastUploadSaved = false;
                 for (File f : fileArray) {
                     files.add(f);
@@ -4188,7 +4144,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                             ArchiveFileDocumentsBean orgDoc=remote.getDocument(doc.getId());
                             String newName = FileUtils.getNewFileName(doc.getName(), false, new Date(), EditorsRegistry.getInstance().getMainWindow(), "Dokument duplizieren");
 
-                            //Object newNameObject = JOptionPane.showInputDialog(this, "Dateiname mit Erweiterung: ", "Dokument duplizieren", JOptionPane.QUESTION_MESSAGE, null, null, doc.getName());
                             if (newName == null || "".equals(newName)) {
                                 return;
                             }
@@ -4359,7 +4314,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         try {
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
             for (ArchiveFileDocumentsBean doc : selectedDocs) {
                 byte[] content = locator.lookupArchiveFileServiceRemote().getDocumentContent(doc.getId());
                 String tmpUrl = FileUtils.createTempFile(doc.getName(), content);
@@ -4421,12 +4375,10 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             if (value != null) {
 
                 ClientSettings settings = ClientSettings.getInstance();
-                String tmpUrl = null;
                 byte[] content = null;
                 try {
                     JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                     content = locator.lookupArchiveFileServiceRemote().getDocumentContent(value.getId());
-                    //tmpUrl = FileUtils.createTempFile(value.getName(), content);
                 } catch (Exception ex) {
                     JOptionPane.showMessageDialog(this, "Fehler beim Laden des Dokuments: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
                     return;
@@ -4440,8 +4392,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 } catch (Exception ex) {
                     JOptionPane.showMessageDialog(this, "Fehler beim Öffnen des Dokuments: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
                 }
-
-                //appLauncher.cleanupTempFile(tmpUrl);
             }
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Fehler beim Öffnen des Dokuments: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
@@ -4450,13 +4400,13 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     private void mnuSendDocumentFaxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSendDocumentFaxActionPerformed
         if (UserSettings.getInstance().getCurrentUser().isVoipEnabled()) {
-            ArrayList<AddressBean> faxList = new ArrayList<AddressBean>();
+            ArrayList<AddressBean> faxList = new ArrayList<>();
 
             for (ArchiveFileAddressesBean aab : this.pnlInvolvedParties.getInvolvedParties()) {
                 faxList.add(aab.getAddressKey());
             }
 
-            if (faxList.size() == 0) {
+            if (faxList.isEmpty()) {
                 JOptionPane.showMessageDialog(this, "Akte hat keine Beteiligte!", "Fehler", JOptionPane.ERROR_MESSAGE);
                 return;
             }
@@ -4465,7 +4415,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             try {
                 ClientSettings settings = ClientSettings.getInstance();
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
                 ArrayList<ArchiveFileDocumentsBean> selectedDocs = this.caseFolderPanel1.getSelectedDocuments();
 
                 if (selectedDocs.size() != 1) {
@@ -4507,12 +4456,12 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     private void mnuCoverageActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuCoverageActionPerformed
 
-        ArrayList<AddressBean> clients = new ArrayList<AddressBean>();
+        ArrayList<AddressBean> clients = new ArrayList<>();
         for (AddressBean abean : this.pnlInvolvedParties.getInvolvedPartiesAddress()) {
             clients.add(abean);
         }
 
-        ArrayList<AddressBean> others = new ArrayList<AddressBean>();
+        ArrayList<AddressBean> others = new ArrayList<>();
         for (AddressBean abean : this.pnlInvolvedParties.getInvolvedPartiesAddress()) {
             others.add(abean);
         }
@@ -4547,12 +4496,12 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     private void mnuMotorCoverageActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuMotorCoverageActionPerformed
 
-        ArrayList<AddressBean> clients = new ArrayList<AddressBean>();
+        ArrayList<AddressBean> clients = new ArrayList<>();
         for (AddressBean abean : this.pnlInvolvedParties.getInvolvedPartiesAddress()) {
             clients.add(abean);
         }
 
-        ArrayList<AddressBean> others = new ArrayList<AddressBean>();
+        ArrayList<AddressBean> others = new ArrayList<>();
         for (AddressBean abean : this.pnlInvolvedParties.getInvolvedPartiesAddress()) {
             others.add(abean);
         }
@@ -4583,7 +4532,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         ClientSettings settings = ClientSettings.getInstance();
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
             List<ArchiveFileFormsBean> forms = locator.lookupFormsServiceRemote().getFormsForCase(this.dto.getId());
             for (ArchiveFileFormsBean f : forms) {
                 if ("verkehr01".equalsIgnoreCase(f.getFormType().getId())) {
@@ -4657,7 +4605,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     private void mnuFreeTextMessageActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuFreeTextMessageActionPerformed
 
-        ArrayList<AddressBean> clients = new ArrayList<AddressBean>();
+        ArrayList<AddressBean> clients = new ArrayList<>();
         for (AddressBean abean : this.pnlInvolvedParties.getInvolvedPartiesAddress()) {
             clients.add(abean);
         }
@@ -4692,7 +4640,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     private void cmdShowHistorySelectorActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdShowHistorySelectorActionPerformed
         MultiCalDialog dlg = new MultiCalDialog(this.txtHistoryDate, EditorsRegistry.getInstance().getMainWindow(), true);
-        //dlg.setLocation(this.getX() + this.cmdShowHistorySelector.getX(), this.getY() + this.cmdShowHistorySelector.getY());
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
     }//GEN-LAST:event_cmdShowHistorySelectorActionPerformed
@@ -4741,7 +4688,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             ArchiveFileHistoryTableModel model = (ArchiveFileHistoryTableModel) this.tblHistory.getModel();
             Object[] row = new Object[]{df2.format(historyDto.getChangeDate()), historyDto.getPrincipal(), historyDto.getChangeDescription()};
             model.addRow(row);
-//            this.txtHistoryDate.setText("");
             this.txtHistoryDesc.setText("");
 
         } else {
@@ -4754,10 +4700,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         try {
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
             ArrayList<ArchiveFileDocumentsBean> selectedDocs = this.caseFolderPanel1.getSelectedDocuments();
-            ArrayList<String> notSupported = new ArrayList<String>();
-            ArrayList<String> supported = new ArrayList<String>();
+            ArrayList<String> notSupported = new ArrayList<>();
+            ArrayList<String> supported = new ArrayList<>();
             for (ArchiveFileDocumentsBean doc : selectedDocs) {
                 if (LauncherFactory.printSupportedByLibreOffice(doc.getName())) {
                     byte[] content = locator.lookupArchiveFileServiceRemote().getDocumentContent(doc.getId());
@@ -4964,7 +4909,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private void mnuPostponeReviewActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuPostponeReviewActionPerformed
         JTextField hiddenField = new JTextField();
         MultiCalDialog dlg = new MultiCalDialog(hiddenField, EditorsRegistry.getInstance().getMainWindow(), true);
-        //dlg.setLocation(this.getX() + this.mnuPostponeReview.getX(), this.getY() + this.mnuPostponeReview.getY());
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
         Date d = null;
@@ -4972,7 +4916,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
             d = df.parse(hiddenField.getText());
         } catch (Throwable t) {
-            //JOptionPane.showMessageDialog(this, "Wiedervorlagedatum ungültig", "Wiedervorlage verschieben", JOptionPane.INFORMATION_MESSAGE);
             return;
         }
 
@@ -5021,19 +4964,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
     }//GEN-LAST:event_mnuPostponeReviewActionPerformed
 
-    private List<AddressBean> getInvolvedParties(PartyTypeBean referenceType) {
-        ArrayList<AddressBean> parties = new ArrayList<AddressBean>();
-        for (Component c : this.pnlInvolvedParties.getComponents()) {
-            if (c instanceof InvolvedPartyEntryPanel) {
-                InvolvedPartyEntryPanel ipep = (InvolvedPartyEntryPanel) c;
-                if (ipep.getInvolvement().getReferenceType().equals(referenceType)) {
-                    parties.add(ipep.getAdress());
-                }
-            }
-        }
-        return parties;
-    }
-
     private void mnuSendBeaDocumentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSendBeaDocumentActionPerformed
         ArrayList<ArchiveFileDocumentsBean> selectedDocs = this.caseFolderPanel1.getSelectedDocuments();
         ArrayList<String> open = this.getDocumentsOpenForWrite(selectedDocs);
@@ -5064,20 +4994,17 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
 
         SendBeaMessageDialog dlg = new SendBeaMessageDialog(EditorsRegistry.getInstance().getMainWindow(), false);
-        //dlg.setTo(ab.getEmail());
 
         dlg.setArchiveFile(dto);
         dlg.setInvolvedInCase(this.pnlInvolvedParties.getInvolvedParties());
 
         for (ArchiveFileAddressesBean aab : this.pnlInvolvedParties.getInvolvedParties()) {
-            //dlg.addParty(aab.getAddressKey(), aab.getReferenceType());
             dlg.addParty(aab);
         }
 
         try {
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
             for (ArchiveFileDocumentsBean doc : selectedDocs) {
                 byte[] content = locator.lookupArchiveFileServiceRemote().getDocumentContent(doc.getId());
                 String tmpUrl = FileUtils.createTempFile(doc.getName(), content);
@@ -5126,12 +5053,10 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
 
         SendBeaMessageDialog dlg = new SendBeaMessageDialog(EditorsRegistry.getInstance().getMainWindow(), false);
-        //dlg.setTo(ab.getEmail());
 
         dlg.setArchiveFile(dto);
         dlg.setInvolvedInCase(this.pnlInvolvedParties.getInvolvedParties());
         for (ArchiveFileAddressesBean aab : this.pnlInvolvedParties.getInvolvedParties()) {
-            //dlg.addParty(aab.getAddressKey(), aab.getReferenceType());
             dlg.addParty(aab);
         }
 
@@ -5152,14 +5077,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             ArchiveFileDocumentsBean value = selectedDocs.get(0);
 
             if (value != null) {
-                //boolean readOnly = !this.cmdSave.isEnabled();
                 ClientSettings settings = ClientSettings.getInstance();
-                String tmpUrl = null;
                 byte[] content = null;
                 try {
                     JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                     content = locator.lookupArchiveFileServiceRemote().getDocumentContent(value.getId());
-                    //tmpUrl = appLauncher.createTempFile(value.getName(), content);
                 } catch (Exception ex) {
                     JOptionPane.showMessageDialog(this, "Fehler beim Laden des Dokuments: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
                     return;
@@ -5236,7 +5158,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             SelectTemplateFolderDialog stf = new SelectTemplateFolderDialog(EditorsRegistry.getInstance().getMainWindow(), true);
             FrameUtils.centerDialog(stf, EditorsRegistry.getInstance().getMainWindow());
             stf.setVisible(true);
-            //FrameUtils.centerDialog(stf, EditorsRegistry.getInstance().getMainWindow());
             GenericNode targetFolder = stf.getSelectedFolder();
             if (targetFolder == null) {
                 return;
@@ -5251,7 +5172,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                     byte[] content = remote.getDocumentContent(doc.getId());
                     String newName = FileUtils.getNewFileName(doc.getName(), false, new Date(), this, "Dokument als Vorlage speichern");
 
-                    //Object newNameObject = JOptionPane.showInputDialog(this, "Dateiname mit Erweiterung: ", "Dokument duplizieren", JOptionPane.QUESTION_MESSAGE, null, null, doc.getName());
                     if (newName == null || "".equals(newName)) {
                         continue;
                     }
@@ -5279,7 +5199,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         try {
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
             ArrayList<ArchiveFileDocumentsBean> selectedDocs = this.caseFolderPanel1.getSelectedDocuments();
             for (ArchiveFileDocumentsBean doc : selectedDocs) {
                 byte[] content = locator.lookupArchiveFileServiceRemote().getDocumentContent(doc.getId());
@@ -5318,7 +5237,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                 ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
                 Hashtable<String, ArrayList<String>> allTags = remote.getDocumentTagsForCase(this.dto.getId());
-                //this.documentCellRenderer.setRenderTags(allTags);
                 int matches = this.caseFolderPanel1.highlightDocuments(this.txtSearchDocumentNames.getText(), selectedTags, allTags);
                 lblDocumentHits.setText(matches + " Treffer");
             } catch (Exception ioe) {
@@ -5612,7 +5530,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
             if (value != null) {
                 ClientSettings settings = ClientSettings.getInstance();
-                String tmpUrl = null;
                 byte[] content = null;
                 try {
                     JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
@@ -5663,7 +5580,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         try {
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
             ArrayList<ArchiveFileDocumentsBean> selectedDocs = this.caseFolderPanel1.getSelectedDocuments();
 
             if (selectedDocs.isEmpty()) {
@@ -5744,17 +5660,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         
     }
     
-    private AddressBean[] convertArray(Object[] in) {
-        if (in != null) {
-            AddressBean[] out = new AddressBean[in.length];
-            for (int i = 0; i < in.length; i++) {
-                out[i] = (AddressBean) in[i];
-            }
-            return out;
-        }
-        return null;
-    }
-
     public void switchToAddressView(AddressBean selection) {
         try {
             Object editor = null;
@@ -6009,7 +5914,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
                         ThreadUtils.setWaitCursor(p);
 
-                        ArrayList<File> files = new ArrayList<File>();
+                        ArrayList<File> files = new ArrayList<>();
                         for (Object fo : transferData) {
                             if (fo instanceof File) {
                                 files.add((File) fo);
