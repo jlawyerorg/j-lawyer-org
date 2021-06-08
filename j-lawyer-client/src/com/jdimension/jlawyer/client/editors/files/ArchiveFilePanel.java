@@ -5578,8 +5578,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
         
         try {
-            ClientSettings settings = ClientSettings.getInstance();
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             ArrayList<ArchiveFileDocumentsBean> selectedDocs = this.caseFolderPanel1.getSelectedDocuments();
 
             if (selectedDocs.isEmpty()) {
