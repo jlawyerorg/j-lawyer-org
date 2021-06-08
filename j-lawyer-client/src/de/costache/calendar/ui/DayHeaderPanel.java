@@ -83,10 +83,12 @@ public class DayHeaderPanel extends JPanel {
 		g2d.setColor(bgColor);
 		g2d.drawRect(0, 0, width, height);
 		g2d.setColor(fgColor);
-		int fontSize = Math.round(height * 0.5f);
-		fontSize = fontSize > 12 ? 12 : fontSize;
+//		int fontSize = Math.round(height * 0.75f);
+//		fontSize = fontSize > 12 ? 12 : fontSize;
 
-		final Font font = new Font("Verdana", Font.PLAIN, fontSize);
+                int fontSize=12;
+
+		final Font font = new Font("Verdana", Font.BOLD, fontSize);
 		final FontMetrics metrics = g2d.getFontMetrics(font);
 		g2d.setFont(font);
 

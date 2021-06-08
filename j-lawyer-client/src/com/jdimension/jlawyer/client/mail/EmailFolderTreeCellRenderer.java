@@ -677,19 +677,20 @@ import org.apache.log4j.Logger;
  * @author jens
  */
 public class EmailFolderTreeCellRenderer extends DefaultTreeCellRenderer {
-    
+
     private static final Logger log = Logger.getLogger(EmailFolderTreeCellRenderer.class.getName());
-    
-    
-    /** Creates a new instance of ModuleTreeCellRenderer */
+
+    /**
+     * Creates a new instance of EmailFolderTreeCellRenderer
+     */
     public EmailFolderTreeCellRenderer() {
         super();
     }
 
     public Component getTreeCellRendererComponent(JTree jTree, Object object, boolean b, boolean b0, boolean b1, int row, boolean b2) {
-        
+
         super.getTreeCellRendererComponent(jTree, object, b, b0, b1, row, b2);
-        
+
         JTree.DropLocation dropLocation = jTree.getDropLocation();
         if (dropLocation != null
                 && dropLocation.getChildIndex() == -1
@@ -697,84 +698,71 @@ public class EmailFolderTreeCellRenderer extends DefaultTreeCellRenderer {
             // this row represents the current drop location
             // so render it specially, perhaps with a different color
             this.setForeground(Color.GREEN);
-            
+
         }
 
-        
-        //this.setLeafIcon(leafIcon);
-        
-        if(((DefaultMutableTreeNode)object).getUserObject()==null)
+        if (((DefaultMutableTreeNode) object).getUserObject() == null) {
             return this;
-        
-        if(((DefaultMutableTreeNode)object).isRoot()) {
-                this.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/mail_send_2.png")));
-                this.setFont(this.getFont().deriveFont(Font.BOLD));
-                return this;
         }
-        
-        //new javax.swing.ImageIcon(getClass().getResource("/icons/scanner_big.png"))
-        
+
+        if (((DefaultMutableTreeNode) object).isRoot()) {
+            this.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/mail_send_2.png")));
+            this.setFont(this.getFont().deriveFont(Font.BOLD));
+            return this;
+        }
+
         try {
-        if(((DefaultMutableTreeNode)object).getUserObject() instanceof FolderContainer) {
-            FolderContainer fc=(FolderContainer)((DefaultMutableTreeNode)object).getUserObject();
-            Folder f=fc.getFolder();
-//            boolean closed=!f.isOpen();
-//            if(closed) {
-//                f.open(Folder.READ_WRITE);
-//            }
-            
-            if("trash".equalsIgnoreCase(f.getName()))
-                this.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/trashcan_full.png")));
-            
-            for(String a: EmailUtils.getFolderAliases(FolderContainer.TRASH)) {
-                if(a.equalsIgnoreCase(f.getName()))
+            if (((DefaultMutableTreeNode) object).getUserObject() instanceof FolderContainer) {
+                FolderContainer fc = (FolderContainer) ((DefaultMutableTreeNode) object).getUserObject();
+                Folder f = fc.getFolder();
+
+                if ("trash".equalsIgnoreCase(f.getName())) {
                     this.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/trashcan_full.png")));
-            }
-            
-            if("sent".equalsIgnoreCase(f.getName()))
-                this.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder_sent_mail.png")));
-            
-            for(String a: EmailUtils.getFolderAliases(FolderContainer.SENT)) {
-                if(a.equalsIgnoreCase(f.getName()))
+                }
+
+                for (String a : EmailUtils.getFolderAliases(FolderContainer.TRASH)) {
+                    if (a.equalsIgnoreCase(f.getName())) {
+                        this.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/trashcan_full.png")));
+                    }
+                }
+
+                if ("sent".equalsIgnoreCase(f.getName())) {
                     this.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder_sent_mail.png")));
-            }
-            
-            if("inbox".equalsIgnoreCase(f.getName()))
-                this.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder_inbox.png")));
-            
-            for(String a: EmailUtils.getFolderAliases(FolderContainer.INBOX)) {
-                if(a.equalsIgnoreCase(f.getName()))
+                }
+
+                for (String a : EmailUtils.getFolderAliases(FolderContainer.SENT)) {
+                    if (a.equalsIgnoreCase(f.getName())) {
+                        this.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder_sent_mail.png")));
+                    }
+                }
+
+                if ("inbox".equalsIgnoreCase(f.getName())) {
                     this.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder_inbox.png")));
+                }
+
+                for (String a : EmailUtils.getFolderAliases(FolderContainer.INBOX)) {
+                    if (a.equalsIgnoreCase(f.getName())) {
+                        this.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder_inbox.png")));
+                    }
+                }
+
+                int unread = f.getUnreadMessageCount();
+                boolean wasBold=this.getFont().isBold();
+                if (unread > 0) {
+                    this.setFont(this.getFont().deriveFont(Font.BOLD));
+                } else {
+                    this.setFont(this.getFont().deriveFont(Font.PLAIN));
+                }
+//                if(this.getFont().isBold() != wasBold)
+//                    ((DefaultTreeModel)jTree.getModel()).nodeChanged((DefaultMutableTreeNode) object);
+
             }
-            
-            
-            
-            int unread=f.getUnreadMessageCount();
-            if(unread>0) {
-                this.setFont(this.getFont().deriveFont(Font.BOLD));
-            } else {
-                this.setFont(this.getFont().deriveFont(Font.PLAIN));
-            }
-            
-//            try {
-//                if(!("inbox".equalsIgnoreCase(f.getName()))) {
-//                    if(closed) {
-//                        f.close(true);
-//                    }
-//                }
-//            } catch (Throwable t) {
-//                log.error(t);
-//            }
-            
-        }
         } catch (Exception ex) {
             log.error(ex);
             log.error(ex.getMessage());
         }
-        
+
         return this;
     }
-    
-    
-    
+
 }

@@ -90,8 +90,10 @@ public class HeaderPanel extends JPanel {
 		Image left = null;
 		Image right = null;
 		try {
-			left = ImageIO.read(getClass().getClassLoader().getResource("de/costache/calendar/resources/left.png"));
-			right = ImageIO.read(getClass().getClassLoader().getResource("de/costache/calendar/resources/right.png"));
+                        
+                        left = ImageIO.read(getClass().getClassLoader().getResource("icons/1leftarrow.png"));
+			right = ImageIO.read(getClass().getClassLoader().getResource("icons/1rightarrow.png"));
+                        
 			scrollLeftButton.setIcon(new ImageIcon(left));
 			scrollRightButton.setIcon(new ImageIcon(right));
 		} catch (final Exception e) {

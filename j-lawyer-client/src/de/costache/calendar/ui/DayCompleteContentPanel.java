@@ -153,8 +153,9 @@ public class DayCompleteContentPanel extends JPanel {
 				graphics2d.fillRect(2, pos, getWidth() - 4, 15);
 
 				final String eventString = event.getSummary();
-				int fontSize = Math.round(getHeight() * 0.5f);
-				fontSize = fontSize > 9 ? 9 : fontSize;
+//				int fontSize = Math.round(getHeight() * 0.5f);
+//				fontSize = fontSize > 9 ? 9 : fontSize;
+                                int fontSize=12;
 
 				final Font font = new Font("Verdana", Font.BOLD, fontSize);
 				final FontMetrics metrics = graphics2d.getFontMetrics(font);

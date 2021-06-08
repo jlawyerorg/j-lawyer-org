@@ -356,16 +356,16 @@ public class DayContentPanel extends JPanel {
                         / conflictingEventsSize, eventStart, (getWidth() - 4)
                         / conflictingEventsSize - 2, eventYEnd - eventStart,
                         12, 12);
-                final String eventString = sdf.format(event.getStart()) + " "
+                final String eventString = sdf.format(event.getStart()) + " - "
                         + sdf.format(event.getEnd()) + " " + event.getSummary();
 
-                graphics2d.setFont(new Font("Verdana", Font.BOLD, 9));
+                graphics2d.setFont(new Font("Verdana", Font.BOLD, 12));
                 graphics2d
                         .setColor(!event.isSelected() ? fgColor : Color.white);
 
                 GraphicsUtil.drawString(graphics2d, eventString, conflictIndex
                         * (getWidth() - 4) / conflictingEventsSize + 3,
-                        eventStart + 11, (getWidth() - 4)
+                        eventStart + 15, (getWidth() - 4)
                         / conflictingEventsSize - 3, eventYEnd
                         - eventStart);
 
