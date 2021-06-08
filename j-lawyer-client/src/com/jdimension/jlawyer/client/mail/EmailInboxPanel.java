@@ -774,7 +774,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
     private boolean statusBarNotified = false;
 
     /**
-     * Creates new form AddressPanel
+     * Creates new form EmailInboxPanel
      */
     public EmailInboxPanel() {
 
@@ -1542,7 +1542,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                 }
             };
             this.tblMails.setModel(tm);
-            TableRowSorter<TableModel> sorter = new TableRowSorter<TableModel>(tm);
+            TableRowSorter<TableModel> sorter = new TableRowSorter<>(tm);
             sorter.setComparator(3, new DescendingDateTimeStringComparator());
             this.tblMails.setRowSorter(sorter);
             this.tblMails.setDefaultRenderer(Object.class, new EmailTableCellRenderer());
@@ -1565,7 +1565,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                 }
             };
             this.tblMails.setModel(tm);
-            TableRowSorter<TableModel> sorter = new TableRowSorter<TableModel>(tm);
+            TableRowSorter<TableModel> sorter = new TableRowSorter<>(tm);
             sorter.setComparator(3, new DescendingDateTimeStringComparator());
             this.tblMails.setRowSorter(sorter);
             this.tblMails.setDefaultRenderer(Object.class, new EmailTableCellRenderer());
