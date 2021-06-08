@@ -32,7 +32,9 @@
       <Group type="103" groupAlignment="0" attributes="0">
           <Group type="102" alignment="1" attributes="0">
               <EmptySpace max="32767" attributes="0"/>
-              <Component id="cmdAddDocument" min="-2" max="-2" attributes="0"/>
+              <Component id="cmdAddAndOpen" min="-2" max="-2" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
+              <Component id="cmdAdd" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="cmdCancel" min="-2" max="-2" attributes="0"/>
               <EmptySpace min="-2" pref="10" max="-2" attributes="0"/>
@@ -47,7 +49,8 @@
               <EmptySpace type="unrelated" max="-2" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
                   <Component id="cmdCancel" alignment="3" min="-2" max="-2" attributes="0"/>
-                  <Component id="cmdAddDocument" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="cmdAdd" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="cmdAddAndOpen" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
           </Group>
@@ -67,16 +70,15 @@
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdCancelActionPerformed"/>
       </Events>
     </Component>
-    <Component class="javax.swing.JButton" name="cmdAddDocument">
+    <Component class="javax.swing.JButton" name="cmdAdd">
       <Properties>
         <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
           <Image iconType="3" name="/icons/agt_action_success.png"/>
         </Property>
         <Property name="text" type="java.lang.String" value="Erstellen"/>
-        <Property name="toolTipText" type="java.lang.String" value=""/>
       </Properties>
       <Events>
-        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdAddDocumentActionPerformed"/>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdAddActionPerformed"/>
       </Events>
     </Component>
     <Container class="javax.swing.JSplitPane" name="splitMain">
@@ -628,5 +630,16 @@
         </Container>
       </SubComponents>
     </Container>
+    <Component class="javax.swing.JButton" name="cmdAddAndOpen">
+      <Properties>
+        <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+          <Image iconType="3" name="/icons/agt_action_success.png"/>
+        </Property>
+        <Property name="text" type="java.lang.String" value="Erstellen und &#xd6;ffnen"/>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdAddAndOpenActionPerformed"/>
+      </Events>
+    </Component>
   </SubComponents>
 </Form>
