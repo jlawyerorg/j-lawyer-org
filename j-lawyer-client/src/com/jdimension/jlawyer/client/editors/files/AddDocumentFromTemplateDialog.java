@@ -867,8 +867,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
                 if (prefix2 != null) {
                     l2 = prefix2.length();
                 }
-
-                return new Integer(l1).compareTo(l2);
+                return Integer.compare(l1, l2);
 
             }
         };
