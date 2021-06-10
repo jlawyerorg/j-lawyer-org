@@ -694,23 +694,35 @@ public class QuickDateSelectionPanel extends javax.swing.JPanel {
 
     private void updateTarget() {
         if (this.target != null) {
+            // all buttons are toggle buttons. it may happen that none is selected.
+            boolean noneSelected=true;
             Calendar c = Calendar.getInstance();
             if (this.togReview1Week.isSelected()) {
                 c.add(Calendar.DAY_OF_YEAR, 7);
+                noneSelected=false;
             } else if (this.togReview2Weeks.isSelected()) {
                 c.add(Calendar.DAY_OF_YEAR, 14);
+                noneSelected=false;
             } else if (this.togReview4Weeks.isSelected()) {
                 c.add(Calendar.DAY_OF_YEAR, 28);
+                noneSelected=false;
             } else if (this.togReview1Day.isSelected()) {
                 c.add(Calendar.DAY_OF_YEAR, 1);
+                noneSelected=false;
             } else if (this.togReview2Days.isSelected()) {
                 c.add(Calendar.DAY_OF_YEAR, 2);
+                noneSelected=false;
+            }
+            
+            if(noneSelected) {
+                this.target.setText("");
+                return;
             }
             
             CalendarUtils cu = CalendarUtils.getInstance();
             try {
                 boolean holiday = cu.isHolidayForCurrentUser(c.getTime());
-                if (c.get(c.DAY_OF_WEEK) == c.SATURDAY || c.get(c.DAY_OF_WEEK) == c.SUNDAY) {
+                if (c.get(Calendar.DAY_OF_WEEK) == Calendar.SATURDAY || c.get(Calendar.DAY_OF_WEEK) == Calendar.SUNDAY) {
                     holiday = true;
                 }
 
