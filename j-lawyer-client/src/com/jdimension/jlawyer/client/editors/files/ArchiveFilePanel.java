@@ -1125,7 +1125,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.cmbSubjectField.setEnabled(!readOnly && !archived);
         this.txtReason.setEnabled(!readOnly && !archived);
         this.txtReviewReason.setEnabled(!readOnly && !archived);
-        this.txtEventLocation.setEnabled(!readOnly && !archived);
+        this.txtEventLocation.setEnabled(!readOnly && this.txtEventLocation.isEnabled());
         this.taEventDescription.setEnabled(!readOnly && !archived);
         this.lstReviewReasons.setEnabled(!readOnly && !archived);
         this.cmdNewDocument.setEnabled(!readOnly && !archived);
@@ -1366,6 +1366,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
         this.cmbReviewAssignee.setSelectedItem("");
         this.radioEventTypeFollowUp.setSelected(true);
+        this.toggleEventUi();
         this.cmbSubjectField.setSelectedItem("");
         this.txtReason.setText("");
         this.chkArchived.setSelected(false);
@@ -2809,6 +2810,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         jLabel22.setText("Ort:");
 
+        txtEventLocation.setEnabled(false);
+
         jLabel23.setText("Grund / Beschreibung:");
 
         org.jdesktop.layout.GroupLayout jPanel9Layout = new org.jdesktop.layout.GroupLayout(jPanel9);
@@ -2817,11 +2820,20 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel9Layout.createSequentialGroup()
                 .addContainerGap()
-                .add(jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
-                        .add(org.jdesktop.layout.GroupLayout.LEADING, txtReviewReason)
-                        .add(jScrollPane9, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 345, Short.MAX_VALUE)
-                        .add(jScrollPane5))
+                .add(jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
+                    .add(jPanel9Layout.createSequentialGroup()
+                        .add(jLabel12)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            .add(cmdNewReview)
+                            .add(cmbReviewAssignee, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                    .add(jLabel23)
+                    .add(jPanel9Layout.createSequentialGroup()
+                        .add(jLabel22)
+                        .add(33, 33, 33)
+                        .add(txtEventLocation))
+                    .add(jScrollPane5)
+                    .add(txtReviewReason)
                     .add(jPanel9Layout.createSequentialGroup()
                         .add(jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                             .add(jLabel7)
@@ -2829,7 +2841,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                         .add(33, 33, 33)
                         .add(jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                             .add(jPanel9Layout.createSequentialGroup()
-                                .add(txtEventBeginDateField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 102, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                .add(txtEventBeginDateField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 112, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                                 .add(cmdEventBeginDateSelector)
                                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
@@ -2847,20 +2859,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                                 .add(radioEventTypeRespite)
                                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                                 .add(radioEventTypeEvent))))
-                    .add(jLabel23)
-                    .add(jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
-                        .add(org.jdesktop.layout.GroupLayout.LEADING, jPanel9Layout.createSequentialGroup()
-                            .add(jLabel22)
-                            .add(33, 33, 33)
-                            .add(txtEventLocation, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 288, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                        .add(org.jdesktop.layout.GroupLayout.LEADING, jPanel9Layout.createSequentialGroup()
-                            .add(jLabel12)
-                            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                            .add(jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                                .add(cmdNewReview)
-                                .add(cmbReviewAssignee, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                .add(tblReviewReasonsPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 614, Short.MAX_VALUE)
+                    .add(jScrollPane9))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(tblReviewReasonsPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 610, Short.MAX_VALUE)
                 .addContainerGap())
         );
         jPanel9Layout.setVerticalGroup(
