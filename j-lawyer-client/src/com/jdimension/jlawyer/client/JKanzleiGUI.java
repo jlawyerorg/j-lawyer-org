@@ -2702,16 +2702,6 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
      */
     public static void main(String args[]) {
         
-        System.out.println("" + DefaultColorTheme.COLOR_LOGO_GREEN.getRGB());
-        System.out.println("" + DefaultColorTheme.COLOR_LOGO_RED.getRGB());
-        System.out.println("" + DefaultColorTheme.COLOR_LOGO_BLUE.getRGB());
-        
-//        java.awt.EventQueue.invokeLater(new Runnable() {
-//
-//            public void run() {
-//                new JKanzleiGUI().setVisible(true);
-//            }
-//        });
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JMenuBar jMenuBar1;

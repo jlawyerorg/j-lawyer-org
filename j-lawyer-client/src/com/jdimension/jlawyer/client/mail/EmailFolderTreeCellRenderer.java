@@ -747,14 +747,11 @@ public class EmailFolderTreeCellRenderer extends DefaultTreeCellRenderer {
                 }
 
                 int unread = f.getUnreadMessageCount();
-                boolean wasBold=this.getFont().isBold();
                 if (unread > 0) {
                     this.setFont(this.getFont().deriveFont(Font.BOLD));
                 } else {
                     this.setFont(this.getFont().deriveFont(Font.PLAIN));
                 }
-//                if(this.getFont().isBold() != wasBold)
-//                    ((DefaultTreeModel)jTree.getModel()).nodeChanged((DefaultMutableTreeNode) object);
 
             }
         } catch (Exception ex) {

@@ -1619,6 +1619,8 @@
                                           <Component id="radioEventTypeRespite" min="-2" max="-2" attributes="0"/>
                                           <EmptySpace type="unrelated" max="-2" attributes="0"/>
                                           <Component id="radioEventTypeEvent" min="-2" max="-2" attributes="0"/>
+                                          <EmptySpace max="-2" attributes="0"/>
+                                          <Component id="calendarSelectionButton" min="-2" max="-2" attributes="0"/>
                                       </Group>
                                   </Group>
                               </Group>
@@ -1639,6 +1641,7 @@
                                       <Component id="radioEventTypeFollowUp" alignment="3" min="-2" max="-2" attributes="0"/>
                                       <Component id="radioEventTypeRespite" alignment="3" min="-2" max="-2" attributes="0"/>
                                       <Component id="radioEventTypeEvent" alignment="3" min="-2" max="-2" attributes="0"/>
+                                      <Component id="calendarSelectionButton" alignment="1" min="-2" max="-2" attributes="0"/>
                                   </Group>
                                   <EmptySpace type="unrelated" max="-2" attributes="0"/>
                                   <Group type="103" groupAlignment="1" attributes="0">
@@ -2025,6 +2028,8 @@
                   <Properties>
                     <Property name="text" type="java.lang.String" value="Grund / Beschreibung:"/>
                   </Properties>
+                </Component>
+                <Component class="com.jdimension.jlawyer.client.calendar.CalendarSelectionButton" name="calendarSelectionButton">
                 </Component>
               </SubComponents>
             </Container>

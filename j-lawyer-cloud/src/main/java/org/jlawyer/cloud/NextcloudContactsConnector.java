@@ -829,7 +829,6 @@ public class NextcloudContactsConnector {
                             } else if ("resourcetype".equalsIgnoreCase(propName)) {
                                 if (p.getValue() instanceof ArrayList) {
                                     ArrayList pList = (ArrayList) p.getValue();
-                                    pList.size();
                                     for (Object o : pList) {
                                         if (o instanceof org.w3c.dom.Node) {
                                             String nodeName = ((org.w3c.dom.Node) o).getNodeName();

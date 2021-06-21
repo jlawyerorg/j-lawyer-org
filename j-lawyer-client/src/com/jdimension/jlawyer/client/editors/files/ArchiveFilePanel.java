@@ -1576,6 +1576,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         
         this.quickDateSelectionPanel.reset();
         this.txtEventBeginDateField.setText("");
+        
+        this.calendarSelectionButton.refresh();
     }
 
     public void selectDocument(String fileName) {
@@ -1734,6 +1736,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         jLabel22 = new javax.swing.JLabel();
         txtEventLocation = new javax.swing.JTextField();
         jLabel23 = new javax.swing.JLabel();
+        calendarSelectionButton = new com.jdimension.jlawyer.client.calendar.CalendarSelectionButton();
         jPanel11 = new javax.swing.JPanel();
         lblCustom1 = new javax.swing.JLabel();
         txtCustom1 = new javax.swing.JTextField();
@@ -2858,7 +2861,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                                 .add(radioEventTypeRespite)
                                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                                .add(radioEventTypeEvent))))
+                                .add(radioEventTypeEvent)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(calendarSelectionButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))))
                     .add(jScrollPane9))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(tblReviewReasonsPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 610, Short.MAX_VALUE)
@@ -2872,7 +2877,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                         .add(jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                             .add(radioEventTypeFollowUp)
                             .add(radioEventTypeRespite)
-                            .add(radioEventTypeEvent))
+                            .add(radioEventTypeEvent)
+                            .add(calendarSelectionButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                         .add(jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
                             .add(jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
@@ -5956,6 +5962,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.ButtonGroup btGrpReviewType;
+    private com.jdimension.jlawyer.client.calendar.CalendarSelectionButton calendarSelectionButton;
     private com.jdimension.jlawyer.ui.folders.CaseFolderPanel caseFolderPanel1;
     private javax.swing.JCheckBox chkArchived;
     protected javax.swing.JComboBox cmbAssistant;

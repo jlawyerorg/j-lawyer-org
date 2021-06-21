@@ -665,7 +665,6 @@ package com.jdimension.jlawyer.client.controls;
 
 import java.awt.Component;
 import java.util.List;
-import static javax.swing.GroupLayout.Alignment.CENTER;
 import javax.swing.Icon;
 import javax.swing.JTable;
 import javax.swing.RowSorter;

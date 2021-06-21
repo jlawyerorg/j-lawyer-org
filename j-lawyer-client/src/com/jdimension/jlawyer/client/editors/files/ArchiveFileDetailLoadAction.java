@@ -711,7 +711,6 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
     private ArchiveFileBean caseDto;
     private ArchiveFilePanel owner;
     private JTable historyTarget;
-    private JTable partiesTarget;
     private InvolvedPartiesPanel contactsForCasePanel;
     private JTable tblReviews;
     private JPanel tagPanel;
@@ -740,7 +739,6 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
         this.caseDto = caseDto;
         this.owner = owner;
         this.historyTarget = historyTarget;
-        this.partiesTarget = partiesTarget;
         this.contactsForCasePanel = contactsForCasePanel;
         this.tblReviews = tblReviews;
         this.tagPanel = tagPanel;

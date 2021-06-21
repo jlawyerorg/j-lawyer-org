@@ -700,8 +700,7 @@ public class ArchiveFileReviewsBeanFacade extends AbstractFacade<ArchiveFileRevi
         if (done) {
             isDone = 1;
         }
-        List<ArchiveFileReviewsBean> l = (List<ArchiveFileReviewsBean>) em.createNamedQuery("ArchiveFileReviewsBean.findByDone").setParameter("done", isDone).getResultList();
-        return l;
+        return (List<ArchiveFileReviewsBean>) em.createNamedQuery("ArchiveFileReviewsBean.findByDone").setParameter("done", isDone).getResultList();
     }
 
 }
