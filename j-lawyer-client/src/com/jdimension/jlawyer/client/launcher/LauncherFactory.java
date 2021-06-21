@@ -773,7 +773,7 @@ public class LauncherFactory {
 
         // first check if MS Office is requested
         if (wordProcessorMicrosoft && supportedByMicrosoftOffice(url) && (osName.indexOf("win") > -1 || osName.startsWith("mac"))) {
-            if (osName.indexOf("win") > -1) {
+            if (osName.contains("win")) {
                 log.debug(new java.util.Date().toString() + " launching Microsoft Office on Windows");
                 WindowsMicrosoftOfficeLauncher wl = new WindowsMicrosoftOfficeLauncher(url, store);
                 return wl;
@@ -787,11 +787,11 @@ public class LauncherFactory {
         // then use LibreOffice launcher
         if (supportedByLibreOffice(url)) {
 
-            if (osName.indexOf("win") > -1) {
+            if (osName.contains("win")) {
                 log.debug(new java.util.Date().toString() + " launching LO on Windows");
                 WindowsOfficeLauncher wl = new WindowsOfficeLauncher(url, store);
                 return wl;
-            } else if (osName.indexOf("linux") > -1) {
+            } else if (osName.contains("linux")) {
                 log.debug(new java.util.Date().toString() + " launching LO on Linux");
                 LinuxOfficeLauncher ll = new LinuxOfficeLauncher(url, store);
                 return ll;
@@ -804,9 +804,9 @@ public class LauncherFactory {
         }
 
         // if all fails, use Desktop API
-        if (osName.indexOf("win") > -1) {
+        if (osName.contains("win")) {
             return new WindowsNativeLauncher(url, store);
-        } else if (osName.indexOf("linux") > -1) {
+        } else if (osName.contains("linux")) {
             return new LinuxNativeLauncher(url, store);
         } else if (osName.startsWith("mac")) {
             return new MacNativeLauncher(url, store);
@@ -834,7 +834,7 @@ public class LauncherFactory {
 
     public static boolean isMicrosoftOfficeSupported() {
         String osName = System.getProperty("os.name").toLowerCase();
-        if (osName.indexOf("win") > -1 || osName.startsWith("mac")) {
+        if (osName.contains("win") || osName.startsWith("mac")) {
             return true;
         }
         return false;
@@ -918,12 +918,11 @@ public class LauncherFactory {
 
     public static void cleanupTempFile(String url) throws Exception {
         FileUtils.cleanupTempFile(url);
-        return;
     }
 
     public static void directPrint(List<String> urls) throws Exception {
 
-        final ArrayList<String> cmdLine = new ArrayList<String>();
+        final ArrayList<String> cmdLine = new ArrayList<>();
         String osName = System.getProperty("os.name").toLowerCase();
         if (osName.startsWith("mac")) {
             cmdLine.add("/Applications/LibreOffice.app/Contents/MacOS/soffice");

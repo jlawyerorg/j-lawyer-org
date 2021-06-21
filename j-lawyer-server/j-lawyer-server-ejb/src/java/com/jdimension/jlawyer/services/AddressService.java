@@ -703,6 +703,9 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
 
     @EJB
     private AddressTagsBeanFacadeLocal addressTagsFacade;
+    
+    @EJB
+    private ContactSyncServiceLocal contactSync;
 
     private static final String PS_SEARCHENHANCED_2 = "select id from contacts where ucase(name) like ? or ucase(firstname) like ? or ucase(company) like ? or ucase(department) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(email) like ? or ucase(beaSafeId) like ? or ucase(phone) like ? or ucase(mobile) like ? or ucase(district) like ? or ucase(birthName) like ? or zipCode like ?";
 
@@ -730,6 +733,13 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
         dto.setLastModifier(context.getCallerPrincipal().getName());
         dto.setModificationDate(d);
         this.addressFacade.create(dto);
+        
+        try {
+            this.contactSync.contactAdded(dto);
+        } catch (Throwable ex) {
+            log.error("Failed to sync added contact to cloud", ex);
+        }
+        
         return this.addressFacade.find(dto.getId());
     }
 
@@ -741,6 +751,12 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
         dto.setModificationDate(new Date());
 
         this.addressFacade.edit(dto);
+        
+        try {
+            this.contactSync.contactUpdated(dto);
+        } catch (Throwable ex) {
+            log.error("Failed to sync updated contact to cloud", ex);
+        }
 
     }
 
@@ -758,6 +774,12 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
         }
 
         this.addressFacade.remove(dto);
+        
+        try {
+            this.contactSync.contactDeleted(dto);
+        } catch (Throwable ex) {
+            log.error("Failed to sync deleted contact to cloud", ex);
+        }
     }
 
     @Override
@@ -825,6 +847,12 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
         dto.setLastModifier(context.getCallerPrincipal().getName());
         dto.setModificationDate(d);
         this.addressFacade.create(dto);
+        
+        try {
+            this.contactSync.contactAdded(dto);
+        } catch (Throwable ex) {
+            log.error("Failed to sync added contact to cloud", ex);
+        }
     }
 
     @Override
@@ -1144,5 +1172,11 @@ public class AddressService implements AddressServiceRemote, AddressServiceLocal
         }
 
         return list;
+    }
+
+    @Override
+    @RolesAllowed({"adminRole"})
+    public void runFullAddressBookSync() {
+        this.contactSync.runFullAddressBookSync();
     }
 }

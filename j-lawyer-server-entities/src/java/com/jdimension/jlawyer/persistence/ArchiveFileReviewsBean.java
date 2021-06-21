@@ -683,13 +683,9 @@ import javax.xml.bind.annotation.XmlRootElement;
     @NamedQuery(name = "ArchiveFileReviewsBean.findByBeginDate", query = "SELECT a FROM ArchiveFileReviewsBean a WHERE a.beginDate = :beginDate"),
     @NamedQuery(name = "ArchiveFileReviewsBean.findByArchiveFileKey", query = "SELECT a FROM ArchiveFileReviewsBean a WHERE a.archiveFileKey = :archiveFileKey"),
     @NamedQuery(name = "ArchiveFileReviewsBean.findByDone", query = "SELECT a FROM ArchiveFileReviewsBean a WHERE a.done = :done")})
-public class ArchiveFileReviewsBean implements Serializable {
+public class ArchiveFileReviewsBean implements Serializable, EventTypes {
 
     private static final long serialVersionUID = 1L;
-
-    public static final int EVENTTYPE_FOLLOWUP = 10;
-    public static final int EVENTTYPE_RESPITE = 20;
-    public static final int EVENTTYPE_EVENT = 30;
 
     @Id
     @Basic(optional = false)
@@ -718,6 +714,10 @@ public class ArchiveFileReviewsBean implements Serializable {
     private ArchiveFileBean archiveFileKey;
     @Column(name = "assignee")
     private String assignee;
+    
+    @JoinColumn(name = "calendar_setup", referencedColumnName = "id")
+    @ManyToOne
+    private CalendarSetup calendarSetup;
 
     public ArchiveFileReviewsBean() {
     }
@@ -926,6 +926,20 @@ public class ArchiveFileReviewsBean implements Serializable {
      */
     public void setLocation(String location) {
         this.location = location;
+    }
+
+    /**
+     * @return the calendarSetup
+     */
+    public CalendarSetup getCalendarSetup() {
+        return calendarSetup;
+    }
+
+    /**
+     * @param calendarSetup the calendarSetup to set
+     */
+    public void setCalendarSetup(CalendarSetup calendarSetup) {
+        this.calendarSetup = calendarSetup;
     }
 
 }

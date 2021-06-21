@@ -717,5 +717,12 @@ public class CloudCalendar {
     public void setcTag(String cTag) {
         this.cTag = cTag;
     }
+
+    @Override
+    public String toString() {
+        return displayName;
+    }
+    
+    
     
 }

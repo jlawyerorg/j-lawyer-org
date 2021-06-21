@@ -663,6 +663,8 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.services;
 
+import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 import javax.ejb.Local;
 
 /**
@@ -672,8 +674,12 @@ import javax.ejb.Local;
 @Local
 public interface CalendarSyncServiceLocal {
 
-    void timedMethod();
+    void fullCalendarSync();
 
-    void asyncMethod();
+    void eventAdded(ArchiveFileBean caseContext, ArchiveFileReviewsBean event);
+    
+    void eventUpdated(ArchiveFileBean caseContext, ArchiveFileReviewsBean event);
+    
+    void eventDeleted(ArchiveFileReviewsBean event);
     
 }

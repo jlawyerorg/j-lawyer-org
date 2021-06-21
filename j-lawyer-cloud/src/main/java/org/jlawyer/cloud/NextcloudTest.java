@@ -663,21 +663,28 @@
  */
 package org.jlawyer.cloud;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.InputStream;
+import java.util.Date;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import net.fortuna.ical4j.model.component.VEvent;
 import org.aarboard.nextcloud.api.NextcloudConnector;
 import org.apache.commons.httpclient.Credentials;
-import org.apache.commons.httpclient.methods.InputStreamRequestEntity;
-import org.apache.commons.httpclient.methods.RequestEntity;
 import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.HttpException;
 import org.apache.commons.httpclient.UsernamePasswordCredentials;
 import org.apache.commons.httpclient.auth.AuthScope;
-import org.apache.jackrabbit.webdav.client.methods.PutMethod;
+import org.apache.jackrabbit.webdav.DavConstants;
+import org.apache.jackrabbit.webdav.MultiStatus;
+import org.apache.jackrabbit.webdav.MultiStatusResponse;
+import org.apache.jackrabbit.webdav.Status;
+import org.apache.jackrabbit.webdav.client.methods.PropFindMethod;
+import org.apache.jackrabbit.webdav.property.DavProperty;
+import org.apache.jackrabbit.webdav.property.DavPropertyIterator;
+import org.apache.jackrabbit.webdav.property.DavPropertySet;
+import org.jlawyer.cloud.calendar.CloudCalendar;
 
 /**
  *
@@ -690,15 +697,67 @@ public class NextcloudTest {
      */
     public static void main(String[] args) {
         try {
-            NextcloudConnector nc = new NextcloudConnector("bla.com", true, 443, "jens", "opensesame");
+            NextcloudCalendarConnector nc = new NextcloudCalendarConnector("cloud.advobox.com", true, 443, "someuser", "secret");
+//            List<CloudCalendar> calendars= nc.getAllCalendars();
+//            for(CloudCalendar c: calendars) {
+//                
+//            }
+
+//            List<CloudCalendar> calendars = nc.getAllCalendars();
+//            for (CloudCalendar cc : calendars) {
+//                System.out.println(cc.getHref());
+//                List<VEvent> events = nc.getAllEvents(cc.getHref(), new Date(), new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 24 * 3));
+//                for (VEvent ev : events) {
+//                    System.out.println("  " + ev.getUid() + " - " + ev.getSummary());
+//                }
+//            }
+//            
+//            String uid="" + System.currentTimeMillis();
+//            String newEventHref=nc.createEvent(uid, "/remote.php/dav/calendars/jens/test/", "test" + uid, "description", "irgendwo", new Date(), new Date(System.currentTimeMillis()+60000l*60l), false);
+//            System.out.println("new event:     " + newEventHref);
+//            
+//            String updatedEventHref=nc.updateEvent(uid, "/remote.php/dav/calendars/jens/test/", "test" + uid + "-2", "irgendwo", "description", new Date(), new Date(System.currentTimeMillis()+60000l*60l), false);
+//            System.out.println("updated event: " + updatedEventHref);
+//            
+//            
+            
+            //nc.deleteContact(updatedEventHref);
+            
+            //  event d4036f0a7f0001013cf37a3
+            // nc.getEventByUid("nix-f7efe92f7f00010149717f93ee481553", "/remote.php/dav/calendars/jens/test/");
+            
+            
+            
+//            NextcloudContactsConnector nc2 = new NextcloudContactsConnector("h28....stratoserver.net", true, 443, "j-lawyer_test", "nothing");
+//            nc2.setSubpathPrefix("nextcloud");
+//            nc2.getAllAddressBooks();
+            
+//            NextcloudContactsConnector nc2 = new NextcloudContactsConnector("cloud.advobox.com", true, 443, "someuser", "secret");
+//            nc2.getAllAddressBooks();
+            
+//            String uid="" + System.currentTimeMillis();
+//            System.out.println(uid);
+//            nc2.createContact(uid, "/remote.php/dav/addressbooks/users/jens/test/", null);
+//            nc2.hasContactWithUid(uid, "/remote.php/dav/addressbooks/users/jens/test/");
+            
+            // e6090bb97f0001014a40a1bee7c96054
+            //nc2.deleteContact("e6090bb97f0001014a40a1bee7c96054", "/remote.php/dav/addressbooks/users/jens/test-1/");
+            
+
+        } catch (Throwable ex) {
+            Logger.getLogger(NextcloudTest.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    private static void tryNextcloudConnector() {
+        try {
+            NextcloudConnector nc = new NextcloudConnector("bla.com", true, 443, "someuser", "opensesame");
             //nc.setSubpathPrefix("nextcloud");
-            
-            
+
 //            List<String> contents=nc.getUsers();
 //            for(String s: contents) {
 //                System.out.println(s);
 //            }
-
 //            contents=nc.listFolderContent("");
 //            for(String s: contents) {
 //                System.out.println(s);
@@ -732,17 +791,13 @@ public class NextcloudTest {
 //            //nc.uploadFile(new FileInputStream("/home/jens/briefkopf.odt"), "/temp/briefkopf.odt", true);
 //            nc.uploaome/jens/briefkopf.odt"), "/temp/briefkopf.odt", true);
 //            nc.uploadFile(new File("/home/jens/briefkopf.odt"), "/temp/briefkopf.odt");
-
 //            System.out.println("upload 4");
 //            nc.uploadFile(new ByteArrayInputStream(bytes), "/temp/briefkopf3.odt");
-
-
-
 //            final String baseUrl = "https://cloud.j-dimension.com/remote.php/webdav";
 //// Send the File to the destination:
 //            try {
 //                HttpClient client = new HttpClient();
-//                Credentials creds = new UsernamePasswordCredentials("jens", "j-dim-0305");
+//                Credentials creds = new UsernamePasswordCredentials("someuser", "j-dim-0305");
 //                client.getState().setCredentials(AuthScope.ANY, creds);
 //                PutMethod method = new PutMethod(baseUrl + "/" + "temp/briefkopf.odt");
 ////                RequestEntity requestEntity = new InputStreamRequestEntity(
@@ -758,7 +813,7 @@ public class NextcloudTest {
 //
 //            try {
 //                HttpClient client = new HttpClient();
-//                Credentials creds = new UsernamePasswordCredentials("jens", "j-dim-0305");
+//                Credentials creds = new UsernamePasswordCredentials("someuser", "j-dim-0305");
 //                client.getState().setCredentials(AuthScope.ANY, creds);
 //                PutMethod method = new PutMethod(baseUrl + "/" + "temp/42033_42034_Digital.pdf");
 //                RequestEntity requestEntity = new InputStreamRequestEntity(
@@ -769,7 +824,6 @@ public class NextcloudTest {
 //            } catch (HttpException ex) {
 //// Handle HTTP Exception
 //            }
-
             nc.shutdown();
         } catch (Throwable ex) {
             Logger.getLogger(NextcloudTest.class.getName()).log(Level.SEVERE, null, ex);

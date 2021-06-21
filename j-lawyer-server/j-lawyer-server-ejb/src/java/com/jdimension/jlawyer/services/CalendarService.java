@@ -673,6 +673,8 @@ import com.jdimension.jlawyer.persistence.ArchiveFileHistoryBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileHistoryBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBeanFacadeLocal;
+import com.jdimension.jlawyer.persistence.CalendarSetup;
+import com.jdimension.jlawyer.persistence.CalendarSetupFacadeLocal;
 import com.jdimension.jlawyer.persistence.Group;
 import com.jdimension.jlawyer.persistence.utils.JDBCUtils;
 import com.jdimension.jlawyer.persistence.utils.StringGenerator;
@@ -726,6 +728,8 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
     private ArchiveFileHistoryBeanFacadeLocal archiveFileHistoryFacade;
     @EJB
     private CalendarSyncServiceLocal calendarSync;
+    @EJB
+    private CalendarSetupFacadeLocal calendarSetups;
     
     @Override
     @RolesAllowed({"loginRole"})
@@ -849,9 +853,9 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
         this.archiveFileHistoryFacade.create(newHistEntry);
         
         try {
-            this.calendarSync.asyncMethod();
-        } catch (Exception ex) {
-            log.error("Failed to sync event to cloud", ex);
+            this.calendarSync.eventAdded(aFile, review);
+        } catch (Throwable ex) {
+            log.error("Failed to sync added event to cloud", ex);
         }
 
         return this.archiveFileReviewsFacade.find(revId);
@@ -950,6 +954,12 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
         this.archiveFileHistoryFacade.create(newHistEntry);
 
         this.archiveFileReviewsFacade.remove(rb);
+        
+        try {
+            this.calendarSync.eventDeleted(rb);
+        } catch (Throwable ex) {
+            log.error("Failed to sync deleted event to cloud", ex);
+        }
     }
     
     @Override
@@ -1099,6 +1109,13 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
             review.setEndDate(endDate);
         }
         this.archiveFileReviewsFacade.edit(review);
+        
+        try {
+            this.calendarSync.eventUpdated(aFile, review);
+        } catch (Throwable ex) {
+            log.error("Failed to sync updated event to cloud", ex);
+        }
+        
         return this.archiveFileReviewsFacade.find(review.getId());
     }
     
@@ -1122,6 +1139,35 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
         }
 
         return this.archiveFileReviewsFacade.findByArchiveFileKey(aFile);
+    }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public List<CalendarSetup> getAllCalendarSetups() {
+        return this.calendarSetups.findAll();
+    }
+
+    @Override
+    @RolesAllowed({"adminRole"})
+    public CalendarSetup addCalendarSetup(CalendarSetup cs) {
+        StringGenerator idGen = new StringGenerator();
+        String csId=idGen.getID().toString();
+        cs.setId(csId);
+        this.calendarSetups.create(cs);
+        return this.calendarSetups.find(csId);
+    }
+
+    @Override
+    @RolesAllowed({"adminRole"})
+    public CalendarSetup updateCalendarSetup(CalendarSetup cs) {
+        this.calendarSetups.edit(cs);
+        return this.calendarSetups.find(cs.getId());
+    }
+
+    @Override
+    @RolesAllowed({"adminRole"})
+    public void removeCalendarSetup(CalendarSetup cs) {
+        this.calendarSetups.remove(cs);
     }
     
 }

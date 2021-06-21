@@ -681,6 +681,8 @@ import net.fortuna.ical4j.model.TimeZoneRegistry;
 import net.fortuna.ical4j.model.component.VEvent;
 import net.fortuna.ical4j.model.component.VTimeZone;
 import net.fortuna.ical4j.model.property.CalScale;
+import net.fortuna.ical4j.model.property.Description;
+import net.fortuna.ical4j.model.property.Location;
 import net.fortuna.ical4j.model.property.ProdId;
 import net.fortuna.ical4j.model.property.Uid;
 import net.fortuna.ical4j.model.property.Version;
@@ -705,6 +707,7 @@ import org.apache.log4j.Logger;
 import org.jlawyer.cloud.calendar.CloudCalendar;
 import org.osaf.caldav4j.CalDAVCollection;
 import org.osaf.caldav4j.CalDAVConstants;
+import org.osaf.caldav4j.exceptions.CalDAV4JException;
 import org.osaf.caldav4j.exceptions.ResourceNotFoundException;
 import org.osaf.caldav4j.methods.CalDAV4JMethodFactory;
 import org.osaf.caldav4j.model.request.CalendarQuery;
@@ -733,7 +736,7 @@ public class NextcloudCalendarConnector {
         this.password = password;
     }
 
-    public List<CloudCalendar> getAllCalendars() {
+    public List<CloudCalendar> getAllCalendars() throws Exception {
         ArrayList<CloudCalendar> calendars = new ArrayList<>();
         try {
             HttpClient client = new HttpClient();
@@ -747,6 +750,7 @@ public class NextcloudCalendarConnector {
                     + "  </d:prop>\n"
                     + "</d:propfind>");
 
+            client.getHttpConnectionManager().getParams().setSoTimeout(15000);
             client.executeMethod(method);
 
             MultiStatus multiStatus = method.getResponseBodyAsMultiStatus();
@@ -787,12 +791,14 @@ public class NextcloudCalendarConnector {
                 }
 
             }
+            return calendars;
 
         } catch (Throwable ex) {
             log.error("Error listing calendars", ex);
+            throw ex;
         }
 
-        return calendars;
+        
     }
 
     public List<VEvent> getAllEvents(String calendarHref, Date from, Date to) {
@@ -839,7 +845,7 @@ public class NextcloudCalendarConnector {
         return events;
     }
 
-    public VEvent getEventByUid(String calendarHref, String uid) {
+    public VEvent getEventByUid(String uid, String calendarHref) throws Exception {
         if (uid == null || calendarHref == null || calendarHref.isEmpty() || uid.isEmpty()) {
             return null;
         }
@@ -867,7 +873,8 @@ public class NextcloudCalendarConnector {
             }
 
             try {
-                Calendar event = collection.getCalendarForEventUID(client, uid);
+                //Calendar event = collection.getCalendarForEventUID(client, uid);
+                Calendar event = collection.getCalendar(client, uid + ".ics");
                 ComponentList componentList = event.getComponents().getComponents(Component.VEVENT);
                 Iterator<VEvent> eventIterator = componentList.iterator();
                 while (eventIterator.hasNext()) {
@@ -879,23 +886,32 @@ public class NextcloudCalendarConnector {
                 log.info("no calendar event with UID " + uid + " in calendar " + calendarHref + "; " + rnfe.getMessage());
             }
 
-        } catch (Throwable ex) {
-            log.error("Error getting calendar event", ex);
+        } catch (CalDAV4JException ex) {
+            if(ex.getCause() instanceof ResourceNotFoundException) {
+                return null;
+            } else {
+                log.error("Error getting calendar event " + uid, ex);
+                throw ex;
+            }
+            
+        } catch (Throwable t) {
+            log.error("Error getting calendar event " + uid, t);
+            throw t;
         }
         return null;
 
     }
 
-    public String createEvent(String uid, String calendarHref, String summary) {
-        return this.putEvent(uid, calendarHref, summary, true);
+    public String createEvent(String uid, String calendarHref, String summary, String description, String location, Date start, Date end, boolean allDayEvent) {
+        return this.putEvent(uid, calendarHref, true, summary, description, location, start, end, allDayEvent);
     }
-    
-    public String updateEvent(String uid, String calendarHref, String summary) {
-        return this.putEvent(uid, calendarHref, summary, false);
+
+    public String updateEvent(String uid, String calendarHref, String summary, String description, String location, Date start, Date end, boolean allDayEvent) {
+        return this.putEvent(uid, calendarHref, false, summary, description, location, start, end, allDayEvent);
     }
-    
+
     // create or update
-    private String putEvent(String uid, String calendarHref, String summary, boolean avoidOverwrite) {
+    private String putEvent(String uid, String calendarHref, boolean avoidOverwrite, String summary, String description, String location, Date start, Date end, boolean allDayEvent) {
         org.osaf.caldav4j.methods.HttpClient client = new org.osaf.caldav4j.methods.HttpClient();
         Credentials creds = new UsernamePasswordCredentials(this.userName, this.password);
         client.getState().setCredentials(AuthScope.ANY, creds);
@@ -907,26 +923,36 @@ public class NextcloudCalendarConnector {
         try {
             CalendarBuilder builder = new CalendarBuilder();
             net.fortuna.ical4j.model.Calendar c = new net.fortuna.ical4j.model.Calendar();
-            c.getProperties().add(new ProdId("-//Ben Fortuna//iCal4j 1.0//EN"));
+            c.getProperties().add(new ProdId("-//j-lawyer.org//iCal4j 1.0//EN"));
             c.getProperties().add(Version.VERSION_2_0);
             c.getProperties().add(CalScale.GREGORIAN);
             TimeZoneRegistry registry = builder.getRegistry();
             VTimeZone tz = registry.getTimeZone("Europe/Berlin").getVTimeZone();
             c.getComponents().add(tz);
-            VEvent vevent = new VEvent(new net.fortuna.ical4j.model.Date(),
-                    new Dur(0, 1, 0, 0), summary);
+//            VEvent vevent = new VEvent(new net.fortuna.ical4j.model.Date(),
+//                    new Dur(0, 1, 0, 0), summary);
+            VEvent vevent = null;
+            if (allDayEvent) {
+                vevent = new VEvent(new net.fortuna.ical4j.model.Date(start), summary);
+            } else {
+                vevent = new VEvent(new net.fortuna.ical4j.model.DateTime(start), new net.fortuna.ical4j.model.DateTime(end), summary);
+            }
+
+            vevent.getProperties().add(new Location(location));
+            vevent.getProperties().add(new Description(description));
             vevent.getProperties().add(new Uid(uid));
-            
+
             XProperty jlp = new XProperty("X-ALT-JLAWYERORG");
             jlp.setValue("1");
             vevent.getProperties().add(jlp);
-            
+
             vevent.getProperties().add(new Uid(uid));
             c.getComponents().add(vevent);
             String href = calendarHref + uid + ".ics";
             put = new PutMethod(href);
-            if(avoidOverwrite)
+            if (avoidOverwrite) {
                 put.addRequestHeader("If-None-Match", "*");
+            }
             put.setRequestEntity(new StringRequestEntity(c.toString(), "text/calendar", "UTF-8"));
             client.executeMethod(put);
             return href;
@@ -940,7 +966,7 @@ public class NextcloudCalendarConnector {
         return null;
     }
 
-    public String deleteEvent(String calendarHref) {
+    public void deleteEvent(String uid, String calendarHref) throws Exception {
         org.osaf.caldav4j.methods.HttpClient client = new org.osaf.caldav4j.methods.HttpClient();
         Credentials creds = new UsernamePasswordCredentials(this.userName, this.password);
         client.getState().setCredentials(AuthScope.ANY, creds);
@@ -949,16 +975,17 @@ public class NextcloudCalendarConnector {
         client.getParams().setAuthenticationPreemptive(true);
         DeleteMethod delete = null;
         try {
-            delete = new DeleteMethod(calendarHref);
+            String href = calendarHref + uid + ".ics";
+            delete = new DeleteMethod(href);
             client.executeMethod(delete);
         } catch (Exception ex) {
             log.error(ex);
+            throw ex;
         } finally {
             if (delete != null) {
                 delete.releaseConnection();
             }
         }
-        return null;
     }
 
     private String getBaseUrl() {

@@ -663,7 +663,6 @@
  */
 package com.jdimension.jlawyer.client.configuration;
 
-import com.jdimension.jlawyer.client.editors.files.*;
 import javax.swing.table.DefaultTableModel;
 
 /**
@@ -673,20 +672,21 @@ import javax.swing.table.DefaultTableModel;
 public class GroupMembershipsTableModel extends DefaultTableModel {
     
     /**
-     * Creates a new instance of ArchiveFileReviewReasonsTableModel
+     * Creates a new instance of GroupMembershipsTableModel
+     * @param colNames
+     * @param rowCount
      */
     public GroupMembershipsTableModel(Object[] colNames, int rowCount) {
         super(colNames, rowCount);
     }
 
+    @Override
     public boolean isCellEditable(int i, int i0) {
-        /*boolean retValue;
         
-        retValue = super.isCellEditable(i, i0);
-        return retValue;*/
         return false;
     }
 
+    @Override
     public Class<?> getColumnClass(int index) {
         if (index == 0) {
             return Boolean.class;

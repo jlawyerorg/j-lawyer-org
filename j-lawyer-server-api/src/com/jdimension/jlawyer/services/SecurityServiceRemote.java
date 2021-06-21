@@ -664,6 +664,8 @@
 package com.jdimension.jlawyer.services;
 
 import com.jdimension.jlawyer.persistence.AppUserBean;
+import com.jdimension.jlawyer.persistence.CalendarAccess;
+import com.jdimension.jlawyer.persistence.CalendarSetup;
 import com.jdimension.jlawyer.persistence.Group;
 import com.jdimension.jlawyer.persistence.GroupMembership;
 import java.util.Collection;
@@ -690,12 +692,20 @@ public interface SecurityServiceRemote {
     Group updateGroup(Group group) throws Exception;
 
     boolean addUserToGroup(String principalId, String groupId) throws Exception;
+    
+    boolean addUserToCalendar(String principalId, String calendarId) throws Exception;
 
     boolean removeUserFromGroup(String principalId, String groupId) throws Exception;
     
+    boolean removeUserFromCalendar(String principalId, String calendarId) throws Exception;
+    
     List<GroupMembership> getGroupMembershipsForUser(String principalId) throws Exception;
+    
+    List<CalendarAccess> getCalendarAccessForUser(String principalId) throws Exception;
 
     List<Group> getGroupsForUser(String principalId) throws Exception;
+    
+    List<CalendarSetup> getCalendarsForUser(String principalId) throws Exception;
 
     List<AppUserBean> getUsersHavingRole(String role) throws Exception;
     

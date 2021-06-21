@@ -18,6 +18,7 @@
             <configuration>
               <target>
                 <copy />
+                <copy />
               </target>
             </configuration>
           </execution>

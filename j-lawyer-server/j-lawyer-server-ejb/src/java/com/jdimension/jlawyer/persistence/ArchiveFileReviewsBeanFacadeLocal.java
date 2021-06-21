@@ -689,4 +689,6 @@ public interface ArchiveFileReviewsBeanFacadeLocal {
     
     public List<ArchiveFileReviewsBean> findByArchiveFileKey(ArchiveFileBean archiveFileKey);
     
+    public List<ArchiveFileReviewsBean> findByDone(boolean done);
+    
 }

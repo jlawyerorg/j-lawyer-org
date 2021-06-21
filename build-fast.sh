@@ -10,6 +10,8 @@ function check_error {
 	fi
 }
 
+export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64/
+
 # there is an OpenJDK bug on Ubuntu, causing Surefire tests to fail - skip tests for now
 mvn -f j-lawyer-cloud/pom.xml install -DskipTests
 check_error $?
@@ -26,9 +28,11 @@ ant -Dj2ee.server.home=/home/travis -buildfile j-lawyer-server/build.xml dist
 check_error $?
 ant -buildfile j-lawyer-io-common/build.xml jar
 check_error $?
+export JAVA_HOME=/home/jens/bin/jdk-11.0.9.1-full/
 ant -buildfile j-lawyer-client/build.xml jar
 check_error $?
 
+export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64/
 # there is an OpenJDK bug on Ubuntu, causing Surefire tests to fail - skip tests for now
 mvn -f j-lawyer-backupmgr/pom.xml package -DskipTests -Djava.home=/home/jens/bin/jdk8u265-full/jre
 

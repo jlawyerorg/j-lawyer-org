@@ -705,5 +705,7 @@ public interface AddressServiceRemote {
     Hashtable<String,ArrayList<String>> searchTagsEnhanced(String query, String[] tagName);
 
     void renameTag(String fromName, String toName) throws Exception;
+
+    void runFullAddressBookSync();
     
 }

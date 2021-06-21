@@ -957,7 +957,7 @@ public class FileUtils extends ServerFileUtils {
 
             for (File f : fTmpDir.listFiles()) {
                 if (f.isDirectory()) {
-                    if (f.getName().indexOf("_") > -1) {
+                    if (f.getName().contains("_")) {
                         String datePart = f.getName().substring(0, f.getName().indexOf("_"));
                         try {
                             long lDeletionTime = Long.parseLong(datePart);
