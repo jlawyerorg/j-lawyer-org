@@ -1035,9 +1035,11 @@ public class QuickAddressSearchPanel extends javax.swing.JPanel implements Theme
         if (evt.getClickCount() == 2 && evt.getButton() == evt.BUTTON1) {
             this.useSelection();
         } else if (evt.getClickCount() == 1 && evt.getButton() == evt.BUTTON3) {
-            if (this.tblResults.getSelectedRowCount() < 1) {
+            int selectionCount=this.tblResults.getSelectedRowCount();
+            if (selectionCount < 1) {
                 return;
             }
+            this.mnuOpenSelectedAddress.setEnabled(selectionCount==1);
             this.popupAddressActions.show(this.tblResults, evt.getX(), evt.getY());
         } else if (evt.getClickCount() == 1 && evt.getButton() == evt.BUTTON1) {
             if (this.tblResults.getSelectedRowCount() == 1) {
