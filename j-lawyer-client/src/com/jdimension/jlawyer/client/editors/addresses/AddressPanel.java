@@ -2239,9 +2239,9 @@ public class AddressPanel extends javax.swing.JPanel implements BeaLoginCallback
 
         jLabel12.setText("Bank:");
 
-        jLabel13.setText("BIC / BLZ:");
+        jLabel13.setText("BIC:");
 
-        jLabel14.setText("IBAN / Kontonr.:");
+        jLabel14.setText("IBAN:");
 
         cmdChooseBank.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/find.png"))); // NOI18N
         cmdChooseBank.addActionListener(new java.awt.event.ActionListener() {
