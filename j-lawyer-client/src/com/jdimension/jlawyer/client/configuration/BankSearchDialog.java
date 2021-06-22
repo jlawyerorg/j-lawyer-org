@@ -701,6 +701,22 @@ public class BankSearchDialog extends javax.swing.JDialog {
                 useSelection();
             }
         });
+        
+        boolean searchPerformed=false;
+        if(bankCodeTarget!=null)
+            if(bankCodeTarget.getText()!=null && bankCodeTarget.getText().length()>1) {
+                this.txtSearchText.setText(bankCodeTarget.getText());
+                this.cmdSearchActionPerformed(null);
+                searchPerformed=true;
+            }
+        
+        if(!searchPerformed)
+            if(bankNameTarget!=null)
+            if(bankNameTarget.getText()!=null && bankNameTarget.getText().length()>1) {
+                this.txtSearchText.setText(bankNameTarget.getText());
+                this.cmdSearchActionPerformed(null);
+                
+            }
     }
     
     private void useSelection() {
@@ -857,10 +873,8 @@ public class BankSearchDialog extends javax.swing.JDialog {
      * @param args the command line arguments
      */
     public static void main(String args[]) {
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                new BankSearchDialog(new javax.swing.JFrame(), true, null, null).setVisible(true);
-            }
+        java.awt.EventQueue.invokeLater(() -> {
+            new BankSearchDialog(new javax.swing.JFrame(), true, null, null).setVisible(true);
         });
     }
     
