@@ -787,11 +787,12 @@ public class CaseFolderPanel extends javax.swing.JPanel {
 
     }
 
-    public void setRootFolder(CaseFolder rootFolder, Map<String,CaseFolderSettings> folderSettings) {
-        ArrayList<String> unselectedIds= new ArrayList<>();
-        for(String id: folderSettings.keySet()) {
-            if(folderSettings.get(id).getHiddenBoolean())
+    public void setRootFolder(CaseFolder rootFolder, Map<String, CaseFolderSettings> folderSettings) {
+        ArrayList<String> unselectedIds = new ArrayList<>();
+        for (String id : folderSettings.keySet()) {
+            if (folderSettings.get(id).getHiddenBoolean()) {
                 unselectedIds.add(id);
+            }
         }
         this.setRootFolder(rootFolder, unselectedIds);
 
@@ -1467,22 +1468,45 @@ public class CaseFolderPanel extends javax.swing.JPanel {
         return selectedFolders;
     }
 
+    public void scrollToDocumentByName(String fileName) {
+        for (Component c : this.pnlDocumentEntries.getComponents()) {
+            if (c instanceof DocumentEntryPanel) {
+
+                if (((DocumentEntryPanel) c).getDocument().getName().equals(fileName)) {
+                    this.jScrollPane2.getVerticalScrollBar().setValue(c.getY());
+                }
+            }
+        }
+    }
+    
     public void selectDocumentByName(String fileName) {
+        // begin: if desired document is in a hidden folder, unhide the folder
+        for (ArchiveFileDocumentsBean relevantDoc : this.documents) {
+            if (relevantDoc.getName().equals(fileName)) {
+                CaseFolder cf = relevantDoc.getFolder();
+                if (cf != null) {
+                    List<CaseFolder> selFolders = this.foldersListPanel.getSelectedFolders();
+                    if (!selFolders.contains(cf)) {
+                        this.foldersListPanel.setSelected(cf);
+                        this.folderSelectionChanged();
+                        break;
+                    }
+                }
+            }
+        }
+        // auto-folder unhide
+
         int count = 0;
         for (Component c : this.pnlDocumentEntries.getComponents()) {
             if (c instanceof DocumentEntryPanel) {
 
                 if (((DocumentEntryPanel) c).getDocument().getName().equals(fileName)) {
                     ((DocumentEntryPanel) c).setSelected(true);
-                    //this.jScrollPane2.scrollRectToVisible(((DocumentEntryPanel)c).getBounds());
-                    //System.out.println("location: " + (int)((DocumentEntryPanel)c).getY() + location);
-                    //this.jScrollPane2.getVerticalScrollBar().setValue((int)((DocumentEntryPanel)c).getY());
-                    Rectangle bounds = pnlDocumentEntries.getBounds(((DocumentEntryPanel) c).getVisibleRect());
-                    double height = bounds.getHeight();
-                    double perComponent = height / this.pnlDocumentEntries.getComponentCount();
-                    this.jScrollPane2.getVerticalScrollBar().setValue(count * (int) (perComponent));
-                    //System.out.println("calc: " + count*(perComponent));
-
+//                    Rectangle bounds = pnlDocumentEntries.getBounds(((DocumentEntryPanel) c).getVisibleRect());
+//                    double height = bounds.getHeight();
+//                    double perComponent = height / this.pnlDocumentEntries.getComponentCount();
+//                    this.jScrollPane2.getVerticalScrollBar().setValue(count * (int) (perComponent));
+                    this.jScrollPane2.getVerticalScrollBar().setValue(c.getY());
                 }
                 count = count + 1;
             }
@@ -1546,7 +1570,7 @@ public class CaseFolderPanel extends javax.swing.JPanel {
 //        this.pnlDocumentEntries.repaint();
         this.jScrollPane2.repaint();
         this.jScrollPane2.revalidate();
-        
+
         this.foldersListPanel.renderEmptyFullState();
     }
 
@@ -1576,7 +1600,7 @@ public class CaseFolderPanel extends javax.swing.JPanel {
         this.hideDocument(doc);
         this.foldersListPanel.renderEmptyFullState();
     }
-    
+
     public void hideDocument(ArchiveFileDocumentsBean doc) {
         for (Component c : this.pnlDocumentEntries.getComponents()) {
             if (c instanceof DocumentEntryPanel) {
@@ -1602,14 +1626,14 @@ public class CaseFolderPanel extends javax.swing.JPanel {
                 }
             }
         }
-        
+
         // document might have been dragged onto a different folder
-        for(ArchiveFileDocumentsBean db: this.documents) {
-            if(db.getId().equals(doc.getId())) {
+        for (ArchiveFileDocumentsBean db : this.documents) {
+            if (db.getId().equals(doc.getId())) {
                 db.setFolder(doc.getFolder());
             }
         }
-        
+
         this.foldersListPanel.renderEmptyFullState();
     }
 
@@ -1681,7 +1705,7 @@ public class CaseFolderPanel extends javax.swing.JPanel {
 
         this.pnlDocumentEntries.repaint();
         this.pnlDocumentEntries.revalidate();
-        
+
         this.foldersListPanel.renderEmptyFullState();
     }
 

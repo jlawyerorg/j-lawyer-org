@@ -993,8 +993,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
                 Collection<DocumentTagsBean> tags = remote.getDocumentTags(selectedDoc.getId());
 
-                ArrayList<String> activeTags = new ArrayList<String>();
-                ArrayList<String> sortedTags = new ArrayList<String>();
+                ArrayList<String> activeTags = new ArrayList<>();
+                ArrayList<String> sortedTags = new ArrayList<>();
                 for (Object t : tags) {
                     DocumentTagsBean tag = (DocumentTagsBean) t;
                     activeTags.add(tag.getTagName());
@@ -1583,9 +1583,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     public void selectDocument(String fileName) {
         this.caseFolderPanel1.selectDocumentByName(fileName);
         this.tabPaneArchiveFile.setSelectedIndex(2);
-        //this.updateDocumentPreview();
         this.documentSelectionChanged();
-
+        this.caseFolderPanel1.scrollToDocumentByName(fileName);
     }
 
     /**
@@ -2874,11 +2873,12 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             .add(jPanel9Layout.createSequentialGroup()
                 .add(jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(jPanel9Layout.createSequentialGroup()
-                        .add(jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                            .add(radioEventTypeFollowUp)
-                            .add(radioEventTypeRespite)
-                            .add(radioEventTypeEvent)
-                            .add(calendarSelectionButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                        .add(jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            .add(org.jdesktop.layout.GroupLayout.TRAILING, calendarSelectionButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                            .add(jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                                .add(radioEventTypeFollowUp)
+                                .add(radioEventTypeRespite)
+                                .add(radioEventTypeEvent)))
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                         .add(jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
                             .add(jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)

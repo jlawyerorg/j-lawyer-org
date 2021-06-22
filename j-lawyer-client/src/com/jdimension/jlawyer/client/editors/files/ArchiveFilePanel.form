@@ -1637,11 +1637,13 @@
                       <Group type="102" alignment="0" attributes="0">
                           <Group type="103" groupAlignment="0" attributes="0">
                               <Group type="102" attributes="0">
-                                  <Group type="103" groupAlignment="3" attributes="0">
-                                      <Component id="radioEventTypeFollowUp" alignment="3" min="-2" max="-2" attributes="0"/>
-                                      <Component id="radioEventTypeRespite" alignment="3" min="-2" max="-2" attributes="0"/>
-                                      <Component id="radioEventTypeEvent" alignment="3" min="-2" max="-2" attributes="0"/>
+                                  <Group type="103" groupAlignment="0" attributes="0">
                                       <Component id="calendarSelectionButton" alignment="1" min="-2" max="-2" attributes="0"/>
+                                      <Group type="103" groupAlignment="3" attributes="0">
+                                          <Component id="radioEventTypeFollowUp" alignment="3" min="-2" max="-2" attributes="0"/>
+                                          <Component id="radioEventTypeRespite" alignment="3" min="-2" max="-2" attributes="0"/>
+                                          <Component id="radioEventTypeEvent" alignment="3" min="-2" max="-2" attributes="0"/>
+                                      </Group>
                                   </Group>
                                   <EmptySpace type="unrelated" max="-2" attributes="0"/>
                                   <Group type="103" groupAlignment="1" attributes="0">

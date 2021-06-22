@@ -973,6 +973,17 @@ public class FoldersListPanel extends javax.swing.JPanel {
         }
         return ids;
     }
+    
+    void setSelected(CaseFolder cf) {
+        for (Component c : this.pnlFolders.getComponents()) {
+            if (c instanceof FolderListCell) {
+                if (((FolderListCell) c).getFolder().getId().equals(cf.getId())) {
+                    ((FolderListCell) c).setSelected(true);
+                    return;
+                }
+            }
+        }
+    }
 
     void folderUpdated(CaseFolder folder) {
         this.caseFolderPanel.updateDocumentsInFolder(folder);
