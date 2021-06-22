@@ -14,7 +14,7 @@
               <Image iconType="3" name="/icons/vcard.png"/>
             </Property>
             <Property name="text" type="java.lang.String" value="&#xf6;ffnen"/>
-            <Property name="toolTipText" type="java.lang.String" value="gew&#xe4;hlte Adressen l&#xf6;schen"/>
+            <Property name="toolTipText" type="java.lang.String" value="gew&#xe4;hlte Adresse &#xf6;ffnen"/>
           </Properties>
           <Events>
             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuOpenSelectedAddressActionPerformed"/>

@@ -800,7 +800,7 @@ public class QuickAddressSearchPanel extends javax.swing.JPanel implements Theme
 
         mnuOpenSelectedAddress.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/vcard.png"))); // NOI18N
         mnuOpenSelectedAddress.setText("öffnen");
-        mnuOpenSelectedAddress.setToolTipText("gewählte Adressen löschen");
+        mnuOpenSelectedAddress.setToolTipText("gewählte Adresse öffnen");
         mnuOpenSelectedAddress.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 mnuOpenSelectedAddressActionPerformed(evt);
