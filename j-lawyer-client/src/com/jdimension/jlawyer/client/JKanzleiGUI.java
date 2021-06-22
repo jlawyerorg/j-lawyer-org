@@ -1797,17 +1797,21 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     }//GEN-LAST:event_mnuArchiveFileOptionsDictateSignActionPerformed
 
     private void mnuZipCodeImportActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuZipCodeImportActionPerformed
+        if(checkAdmin()) {
         ImportZipCodesDialog dlg = new ImportZipCodesDialog(this, true);
         dlg.setTitle(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("dialog.title.importzipcodes"));
         FrameUtils.centerDialog(dlg, this);
         dlg.setVisible(true);
+        }
     }//GEN-LAST:event_mnuZipCodeImportActionPerformed
 
     private void mnuBankImportActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuBankImportActionPerformed
+        if(checkAdmin()) {
         ImportBanksDialog dlg = new ImportBanksDialog(this, true);
         dlg.setTitle(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("dialog.title.importbanks"));
         FrameUtils.centerDialog(dlg, this);
         dlg.setVisible(true);
+        }
     }//GEN-LAST:event_mnuBankImportActionPerformed
 
     private void mnuAddressOptionsComplimentaryCloseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuAddressOptionsComplimentaryCloseActionPerformed
@@ -1820,24 +1824,11 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
 
     private void mnuUsersActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuUsersActionPerformed
 
-        ClientSettings settings = ClientSettings.getInstance();
-        try {
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            boolean currentlyAdmin = locator.lookupSecurityServiceRemote().isAdmin();
-            if (currentlyAdmin) {
+            if (checkAdmin()) {
                 UserAdministrationDialog dlg = new UserAdministrationDialog(this, true);
-                //dlg.setTitle("Anreden");
-                //dlg.setOptionGroup(OptionConstants.OPTIONGROUP_SALUTATIONS);
                 FrameUtils.centerDialog(dlg, this);
                 dlg.setVisible(true);
-            } else {
-                JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.adminrequired"), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.hint"), JOptionPane.INFORMATION_MESSAGE);
             }
-        } catch (Exception ex) {
-            log.error(ex);
-            JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("error.launchsettings") + ex.getMessage(), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.error"), JOptionPane.INFORMATION_MESSAGE);
-        }
-
 
     }//GEN-LAST:event_mnuUsersActionPerformed
 
@@ -1912,33 +1903,33 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     }//GEN-LAST:event_formWindowClosed
 
     private void mnuExitActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuExitActionPerformed
-//        ClientSettings settings = ClientSettings.getInstance();
-//        try {
-//            log.debug("storing client configuration");
-//            settings.saveConfiguration();
-//        } catch (Exception ex) {
-//            log.error("Error saving client configuration", ex);
-//            JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("error.savingsettings") + ex.getMessage(), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.error"), JOptionPane.ERROR_MESSAGE);
-//        }
+
         this.formWindowClosing(null);
         System.exit(0);
     }//GEN-LAST:event_mnuExitActionPerformed
 
-    private void mnuAdminConsoleActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuAdminConsoleActionPerformed
+    private boolean checkAdmin() {
         ClientSettings settings = ClientSettings.getInstance();
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             boolean currentlyAdmin = locator.lookupSecurityServiceRemote().isAdmin();
-            if (currentlyAdmin) {
-                AdminConsoleFrame frm = new AdminConsoleFrame();
-                frm.setVisible(true);
-            } else {
+            if (!currentlyAdmin) {
                 JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.adminrequired"), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.hint"), JOptionPane.INFORMATION_MESSAGE);
             }
+            return currentlyAdmin;
         } catch (Exception ex) {
             log.error(ex);
             JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("error.launchconsole") + ex.getMessage(), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.error"), JOptionPane.INFORMATION_MESSAGE);
+            return false;
         }
+    }
+    
+    private void mnuAdminConsoleActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuAdminConsoleActionPerformed
+        
+            if (checkAdmin()) {
+                AdminConsoleFrame frm = new AdminConsoleFrame();
+                frm.setVisible(true);
+            }
     }//GEN-LAST:event_mnuAdminConsoleActionPerformed
 
     private void formComponentResized(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentResized
@@ -2003,43 +1994,21 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     }//GEN-LAST:event_mnuArchiveFileOptionsSubjectFieldsActionPerformed
 
     private void mnuProfileInfoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuProfileInfoActionPerformed
-        ClientSettings settings = ClientSettings.getInstance();
-        try {
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            boolean currentlyAdmin = locator.lookupSecurityServiceRemote().isAdmin();
-            if (currentlyAdmin) {
+        
+            if (checkAdmin()) {
                 ProfileDialog dlg = new ProfileDialog(this, true);
-                //dlg.setTitle("Anreden");
-                //dlg.setOptionGroup(OptionConstants.OPTIONGROUP_SALUTATIONS);
                 FrameUtils.centerDialog(dlg, this);
                 dlg.setVisible(true);
-            } else {
-                JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.adminrequired"), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.hint"), JOptionPane.INFORMATION_MESSAGE);
             }
-        } catch (Exception ex) {
-            log.error(ex);
-            JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("error.launchsettings") + ex.getMessage(), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.error"), JOptionPane.INFORMATION_MESSAGE);
-        }
     }//GEN-LAST:event_mnuProfileInfoActionPerformed
 
     private void mnuBackupConfigurationActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuBackupConfigurationActionPerformed
-        ClientSettings settings = ClientSettings.getInstance();
-        try {
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            boolean currentlyAdmin = locator.lookupSecurityServiceRemote().isAdmin();
-            if (currentlyAdmin) {
+        
+            if (checkAdmin()) {
                 BackupConfigurationDialog dlg = new BackupConfigurationDialog(this, true);
-                //dlg.setTitle("Anreden");
-                //dlg.setOptionGroup(OptionConstants.OPTIONGROUP_SALUTATIONS);
                 FrameUtils.centerDialog(dlg, this);
                 dlg.setVisible(true);
-            } else {
-                JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.adminrequired"), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.hint"), JOptionPane.INFORMATION_MESSAGE);
             }
-        } catch (Exception ex) {
-            log.error(ex);
-            JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("error.launchsettings") + ex.getMessage(), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.error"), JOptionPane.INFORMATION_MESSAGE);
-        }
     }//GEN-LAST:event_mnuBackupConfigurationActionPerformed
 
     private void mnuServerMonitorActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuServerMonitorActionPerformed
@@ -2064,89 +2033,41 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     }//GEN-LAST:event_mnuForumActionPerformed
 
     private void mnuScanOptionsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuScanOptionsActionPerformed
-        ClientSettings settings = ClientSettings.getInstance();
-        try {
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            boolean currentlyAdmin = locator.lookupSecurityServiceRemote().isAdmin();
-            if (currentlyAdmin) {
+        
+            if (checkAdmin()) {
                 ScanOptionsDialog dlg = new ScanOptionsDialog(this, true);
-                //dlg.setTitle("Anreden");
-                //dlg.setOptionGroup(OptionConstants.OPTIONGROUP_SALUTATIONS);
                 FrameUtils.centerDialog(dlg, this);
                 dlg.setVisible(true);
-            } else {
-                JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.adminrequired"), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.hint"), JOptionPane.INFORMATION_MESSAGE);
             }
-        } catch (Exception ex) {
-            log.error(ex);
-            JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("error.launchsettings") + ex.getMessage(), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.error"), JOptionPane.INFORMATION_MESSAGE);
-        }
     }//GEN-LAST:event_mnuScanOptionsActionPerformed
 
     private void mnuVoipSipgateSettingsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuVoipSipgateSettingsActionPerformed
-        ClientSettings settings = ClientSettings.getInstance();
-        try {
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            boolean currentlyAdmin = locator.lookupSecurityServiceRemote().isAdmin();
-            if (currentlyAdmin) {
+        if (checkAdmin()) {
                 VoipSipgateConfigurationDialog dlg = new VoipSipgateConfigurationDialog(this, true);
-                //dlg.setTitle("Anreden");
-                //dlg.setOptionGroup(OptionConstants.OPTIONGROUP_SALUTATIONS);
                 FrameUtils.centerDialog(dlg, this);
                 dlg.setVisible(true);
-            } else {
-                JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.adminrequired"), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.hint"), JOptionPane.INFORMATION_MESSAGE);
             }
-        } catch (Exception ex) {
-            log.error(ex);
-            JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("error.launchsettings") + ex.getMessage(), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.error"), JOptionPane.INFORMATION_MESSAGE);
-        }
     }//GEN-LAST:event_mnuVoipSipgateSettingsActionPerformed
 
     private void mnuDrebisSettingsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuDrebisSettingsActionPerformed
-        ClientSettings settings = ClientSettings.getInstance();
-        try {
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            boolean currentlyAdmin = locator.lookupSecurityServiceRemote().isAdmin();
-            if (currentlyAdmin) {
+        
+            if (checkAdmin()) {
                 DrebisConfigurationDialog dlg = new DrebisConfigurationDialog(this, true);
-                //dlg.setTitle("Anreden");
-                //dlg.setOptionGroup(OptionConstants.OPTIONGROUP_SALUTATIONS);
                 FrameUtils.centerDialog(dlg, this);
                 dlg.setVisible(true);
-            } else {
-                JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.adminrequired"), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.hint"), JOptionPane.INFORMATION_MESSAGE);
             }
-        } catch (Exception ex) {
-            log.error(ex);
-            JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("error.launchsettings") + ex.getMessage(), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.error"), JOptionPane.INFORMATION_MESSAGE);
-        }
     }//GEN-LAST:event_mnuDrebisSettingsActionPerformed
 
     private void mnuAddressImportActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuAddressImportActionPerformed
-        ClientSettings settings = ClientSettings.getInstance();
-        try {
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            boolean currentlyAdmin = locator.lookupSecurityServiceRemote().isAdmin();
-            if (currentlyAdmin) {
+        if (checkAdmin()) {
                 ImportContactsDialog dlg = new ImportContactsDialog(this, true);
                 FrameUtils.centerDialog(dlg, this);
                 dlg.setVisible(true);
-            } else {
-                JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.adminrequired"), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.hint"), JOptionPane.INFORMATION_MESSAGE);
             }
-        } catch (Exception ex) {
-            log.error(ex);
-            JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("error.launchimport") + ex.getMessage(), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.error"), JOptionPane.INFORMATION_MESSAGE);
-        }
     }//GEN-LAST:event_mnuAddressImportActionPerformed
 
     private void mnuArchiveFileTagsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuArchiveFileTagsActionPerformed
-        ClientSettings settings = ClientSettings.getInstance();
-        try {
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            boolean currentlyAdmin = locator.lookupSecurityServiceRemote().isAdmin();
-            if (currentlyAdmin) {
+        if (checkAdmin()) {
                 OptionGroupCaseTagRename ren = new OptionGroupCaseTagRename();
                 OptionGroupConfigurationDialog dlg = new OptionGroupConfigurationDialog(this, ren, true);
                 dlg.setTitle(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("dialog.title.casetags"));
@@ -2163,14 +2084,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
                     log.error("Could not set up timer task for tag updates", t);
                 }
 
-            } else {
-                JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.adminrequired"), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.hint"), JOptionPane.INFORMATION_MESSAGE);
             }
-        } catch (Exception ex) {
-            log.error(ex);
-            JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("error.launchsettings") + ex.getMessage(), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.error"), JOptionPane.INFORMATION_MESSAGE);
-        }
-
 
     }//GEN-LAST:event_mnuArchiveFileTagsActionPerformed
 
@@ -2183,31 +2097,17 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     }//GEN-LAST:event_mnuAddressOptionsTitleActionPerformed
 
     private void mnuSearchIndexActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSearchIndexActionPerformed
-        ClientSettings settings = ClientSettings.getInstance();
-        try {
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            boolean currentlyAdmin = locator.lookupSecurityServiceRemote().isAdmin();
-            if (currentlyAdmin) {
+        
+            if (checkAdmin()) {
                 SearchIndexOptionsDialog dlg = new SearchIndexOptionsDialog(this, true);
-                //dlg.setTitle("Anreden");
-                //dlg.setOptionGroup(OptionConstants.OPTIONGROUP_SALUTATIONS);
                 FrameUtils.centerDialog(dlg, this);
                 dlg.setVisible(true);
-            } else {
-                JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.adminrequired"), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.hint"), JOptionPane.INFORMATION_MESSAGE);
             }
-        } catch (Exception ex) {
-            log.error(ex);
-            JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("error.launchsettings") + ex.getMessage(), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.error"), JOptionPane.INFORMATION_MESSAGE);
-        }
     }//GEN-LAST:event_mnuSearchIndexActionPerformed
 
     private void mnuAddressTagsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuAddressTagsActionPerformed
-        ClientSettings settings = ClientSettings.getInstance();
-        try {
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            boolean currentlyAdmin = locator.lookupSecurityServiceRemote().isAdmin();
-            if (currentlyAdmin) {
+        
+            if (checkAdmin()) {
                 OptionGroupAddressTagRename ren = new OptionGroupAddressTagRename();
                 OptionGroupConfigurationDialog dlg = new OptionGroupConfigurationDialog(this, ren, true);
                 dlg.setTitle(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("dialog.title.addresstags"));
@@ -2221,99 +2121,55 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
                 } catch (Throwable t) {
                     log.error("Could not set up timer task for tag updates", t);
                 }
-            } else {
-                JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.adminrequired"), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.hint"), JOptionPane.INFORMATION_MESSAGE);
             }
-        } catch (Exception ex) {
-            log.error(ex);
-            JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("error.launchsettings") + ex.getMessage(), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.error"), JOptionPane.INFORMATION_MESSAGE);
-        }
     }//GEN-LAST:event_mnuAddressTagsActionPerformed
 
     private void mnuCustomLauncherOptionsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuCustomLauncherOptionsActionPerformed
-        ClientSettings settings = ClientSettings.getInstance();
-        try {
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            boolean currentlyAdmin = locator.lookupSecurityServiceRemote().isAdmin();
-            if (currentlyAdmin) {
+        
+            if (checkAdmin()) {
                 CustomLauncherOptionsDialog dlg = new CustomLauncherOptionsDialog(this, true);
                 FrameUtils.centerDialog(dlg, this);
                 dlg.setVisible(true);
-            } else {
-                JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.adminrequired"), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.hint"), JOptionPane.INFORMATION_MESSAGE);
             }
-        } catch (Exception ex) {
-            log.error(ex);
-            JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("error.launchsettings") + ex.getMessage(), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.error"), JOptionPane.INFORMATION_MESSAGE);
-        }
     }//GEN-LAST:event_mnuCustomLauncherOptionsActionPerformed
 
     private void mnuAddressCustomFieldsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuAddressCustomFieldsActionPerformed
-        ClientSettings settings = ClientSettings.getInstance();
-        try {
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            boolean currentlyAdmin = locator.lookupSecurityServiceRemote().isAdmin();
-            if (currentlyAdmin) {
+        
+            if (checkAdmin()) {
                 CustomFieldConfigurationDialog dlg = new CustomFieldConfigurationDialog(this, true);
                 dlg.setTitle(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("dialog.title.addresscustomfields"));
                 dlg.setConfigCategoryPrefix(ServerSettings.DATA_CUSTOMFIELD_ADDRESS_PREFIX);
                 FrameUtils.centerDialog(dlg, this);
                 dlg.setVisible(true);
-            } else {
-                JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.adminrequired"), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.hint"), JOptionPane.INFORMATION_MESSAGE);
             }
-        } catch (Exception ex) {
-            log.error(ex);
-            JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("error.launchsettings") + ex.getMessage(), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.error"), JOptionPane.INFORMATION_MESSAGE);
-        }
     }//GEN-LAST:event_mnuAddressCustomFieldsActionPerformed
 
     private void mnuArchiveFileCustomFieldsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuArchiveFileCustomFieldsActionPerformed
-        ClientSettings settings = ClientSettings.getInstance();
-        try {
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            boolean currentlyAdmin = locator.lookupSecurityServiceRemote().isAdmin();
-            if (currentlyAdmin) {
+        
+            if (checkAdmin()) {
                 CustomFieldConfigurationDialog dlg = new CustomFieldConfigurationDialog(this, true);
                 dlg.setTitle(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("dialog.title.casecustomfields"));
                 dlg.setConfigCategoryPrefix(ServerSettings.DATA_CUSTOMFIELD_ARCHIVEFILE_PREFIX);
                 FrameUtils.centerDialog(dlg, this);
                 dlg.setVisible(true);
-            } else {
-                JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.adminrequired"), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.hint"), JOptionPane.INFORMATION_MESSAGE);
             }
-        } catch (Exception ex) {
-            log.error(ex);
-            JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("error.launchsettings") + ex.getMessage(), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.error"), JOptionPane.INFORMATION_MESSAGE);
-        }
     }//GEN-LAST:event_mnuArchiveFileCustomFieldsActionPerformed
 
     private void mnuUserProfileActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuUserProfileActionPerformed
 
         UserProfileDialog dlg = new UserProfileDialog(this, true);
-        //dlg.setTitle("Anreden");
-        //dlg.setOptionGroup(OptionConstants.OPTIONGROUP_SALUTATIONS);
         FrameUtils.centerDialog(dlg, this);
         dlg.setVisible(true);
 
     }//GEN-LAST:event_mnuUserProfileActionPerformed
 
     private void mnuArchiveFileOptionsCaseNumberingActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuArchiveFileOptionsCaseNumberingActionPerformed
-        ClientSettings settings = ClientSettings.getInstance();
-        try {
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            boolean currentlyAdmin = locator.lookupSecurityServiceRemote().isAdmin();
-            if (currentlyAdmin) {
+        
+            if (checkAdmin()) {
                 CaseNumberingConfigurationDialog dlg = new CaseNumberingConfigurationDialog(this, true);
                 FrameUtils.centerDialog(dlg, this);
                 dlg.setVisible(true);
-            } else {
-                JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.adminrequired"), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.hint"), JOptionPane.INFORMATION_MESSAGE);
             }
-        } catch (Exception ex) {
-            log.error(ex);
-            JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("error.launchsettings") + ex.getMessage(), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.error"), JOptionPane.INFORMATION_MESSAGE);
-        }
     }//GEN-LAST:event_mnuArchiveFileOptionsCaseNumberingActionPerformed
 
     private void mnuDocumentMonitorActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuDocumentMonitorActionPerformed
@@ -2323,51 +2179,28 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     }//GEN-LAST:event_mnuDocumentMonitorActionPerformed
 
     private void mnuBeaSettingsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuBeaSettingsActionPerformed
-        ClientSettings settings = ClientSettings.getInstance();
-        try {
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            boolean currentlyAdmin = locator.lookupSecurityServiceRemote().isAdmin();
-            if (currentlyAdmin) {
+        
+            if (checkAdmin()) {
                 BeaConfigurationDialog dlg = new BeaConfigurationDialog(this, true);
-                //dlg.setTitle("Anreden");
-                //dlg.setOptionGroup(OptionConstants.OPTIONGROUP_SALUTATIONS);
                 FrameUtils.centerDialog(dlg, this);
                 dlg.setVisible(true);
-            } else {
-                JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.adminrequired"), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.hint"), JOptionPane.INFORMATION_MESSAGE);
             }
-        } catch (Exception ex) {
-            log.error(ex);
-            JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("error.launchsettings") + ex.getMessage(), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.error"), JOptionPane.INFORMATION_MESSAGE);
-        }
     }//GEN-LAST:event_mnuBeaSettingsActionPerformed
 
     private void mnuArchiveFileCustomFieldsInvolvementsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuArchiveFileCustomFieldsInvolvementsActionPerformed
-        ClientSettings settings = ClientSettings.getInstance();
-        try {
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            boolean currentlyAdmin = locator.lookupSecurityServiceRemote().isAdmin();
-            if (currentlyAdmin) {
+        
+            if (checkAdmin()) {
                 CustomFieldConfigurationDialog dlg = new CustomFieldConfigurationDialog(this, true);
                 dlg.setTitle(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("dialog.title.casecustomfields"));
                 dlg.setConfigCategoryPrefix(ServerSettings.DATA_CUSTOMFIELD_ARCHIVEFILE_INVOLVED_PREFIX);
                 FrameUtils.centerDialog(dlg, this);
                 dlg.setVisible(true);
-            } else {
-                JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.adminrequired"), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.hint"), JOptionPane.INFORMATION_MESSAGE);
             }
-        } catch (Exception ex) {
-            log.error(ex);
-            JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("error.launchsettings") + ex.getMessage(), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.error"), JOptionPane.INFORMATION_MESSAGE);
-        }
     }//GEN-LAST:event_mnuArchiveFileCustomFieldsInvolvementsActionPerformed
 
     private void mnuDocumentTagsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuDocumentTagsActionPerformed
-        ClientSettings settings = ClientSettings.getInstance();
-        try {
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            boolean currentlyAdmin = locator.lookupSecurityServiceRemote().isAdmin();
-            if (currentlyAdmin) {
+        
+            if (checkAdmin()) {
                 OptionGroupCaseDocumentTagRename ren = new OptionGroupCaseDocumentTagRename();
                 OptionGroupConfigurationDialog dlg = new OptionGroupConfigurationDialog(this, ren, true);
                 dlg.setTitle("Dokumenten-Etiketten");
@@ -2384,71 +2217,34 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
                     log.error("Could not set up timer task for tag updates", t);
                 }
 
-            } else {
-                JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.adminrequired"), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.hint"), JOptionPane.INFORMATION_MESSAGE);
             }
-        } catch (Exception ex) {
-            log.error(ex);
-            JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("error.launchsettings") + ex.getMessage(), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.error"), JOptionPane.INFORMATION_MESSAGE);
-        }
     }//GEN-LAST:event_mnuDocumentTagsActionPerformed
 
     private void mnuBeaCourtAddressImportActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuBeaCourtAddressImportActionPerformed
-        ClientSettings settings = ClientSettings.getInstance();
-        try {
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            boolean currentlyAdmin = locator.lookupSecurityServiceRemote().isAdmin();
-            if (currentlyAdmin) {
+        
+            if (checkAdmin()) {
                 ImportCourtsFromBeaDialog dlg = new ImportCourtsFromBeaDialog(this, true);
                 FrameUtils.centerDialog(dlg, this);
                 dlg.setVisible(true);
-            } else {
-                JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.adminrequired"), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.hint"), JOptionPane.INFORMATION_MESSAGE);
             }
-        } catch (Exception ex) {
-            log.error(ex);
-            JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("error.launchimport") + ex.getMessage(), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.error"), JOptionPane.INFORMATION_MESSAGE);
-        }
     }//GEN-LAST:event_mnuBeaCourtAddressImportActionPerformed
 
     private void mnuPartyTypesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuPartyTypesActionPerformed
-        ClientSettings settings = ClientSettings.getInstance();
-        try {
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            boolean currentlyAdmin = locator.lookupSecurityServiceRemote().isAdmin();
-            if (currentlyAdmin) {
+        
+            if (checkAdmin()) {
                 PartyTypesDialog dlg = new PartyTypesDialog(this, true);
-                //dlg.setTitle("Anreden");
-                //dlg.setOptionGroup(OptionConstants.OPTIONGROUP_SALUTATIONS);
                 FrameUtils.centerDialog(dlg, this);
                 dlg.setVisible(true);
-            } else {
-                JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.adminrequired"), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.hint"), JOptionPane.INFORMATION_MESSAGE);
             }
-        } catch (Exception ex) {
-            log.error(ex);
-            JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("error.launchsettings") + ex.getMessage(), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.error"), JOptionPane.INFORMATION_MESSAGE);
-        }
     }//GEN-LAST:event_mnuPartyTypesActionPerformed
 
     private void mnuFormsManagerActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuFormsManagerActionPerformed
-        ClientSettings settings = ClientSettings.getInstance();
-        try {
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            boolean currentlyAdmin = locator.lookupSecurityServiceRemote().isAdmin();
-            if (currentlyAdmin) {
+        
+            if (checkAdmin()) {
                 FormsManagementDialog dlg = new FormsManagementDialog(this, true);
-                //dlg.setTitle("Anreden");
-                //dlg.setOptionGroup(OptionConstants.OPTIONGROUP_SALUTATIONS);
                 FrameUtils.centerDialog(dlg, this);
                 dlg.setVisible(true);
-            } else {
-                JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.adminrequired"), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.hint"), JOptionPane.INFORMATION_MESSAGE);
             }
-        } catch (Exception ex) {
-            log.error(ex);
-            JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("error.launchsettings") + ex.getMessage(), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.error"), JOptionPane.INFORMATION_MESSAGE);
-        }
     }//GEN-LAST:event_mnuFormsManagerActionPerformed
 
     private void mnuXjustizViewerActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuXjustizViewerActionPerformed
@@ -2514,21 +2310,12 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     }//GEN-LAST:event_mnuXjustizViewerActionPerformed
 
     private void mnuGroupsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuGroupsActionPerformed
-        ClientSettings settings = ClientSettings.getInstance();
-        try {
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            boolean currentlyAdmin = locator.lookupSecurityServiceRemote().isAdmin();
-            if (currentlyAdmin) {
+        
+            if (checkAdmin()) {
                 GroupAdministrationDialog dlg = new GroupAdministrationDialog(this, true);
                 FrameUtils.centerDialog(dlg, this);
                 dlg.setVisible(true);
-            } else {
-                JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.adminrequired"), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.hint"), JOptionPane.INFORMATION_MESSAGE);
             }
-        } catch (Exception ex) {
-            log.error(ex);
-            JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("error.launchsettings") + ex.getMessage(), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.error"), JOptionPane.INFORMATION_MESSAGE);
-        }
     }//GEN-LAST:event_mnuGroupsActionPerformed
 
     private void mnuWordProcessorActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuWordProcessorActionPerformed
@@ -2613,21 +2400,12 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     }//GEN-LAST:event_mnuAddressOptionsTitleInAddressActionPerformed
 
     private void mnuDocumentFolderTemplatesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuDocumentFolderTemplatesActionPerformed
-        ClientSettings settings = ClientSettings.getInstance();
-        try {
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            boolean currentlyAdmin = locator.lookupSecurityServiceRemote().isAdmin();
-            if (currentlyAdmin) {
+        
+            if (checkAdmin()) {
                 DocumentFolderTemplatesDialog dlg = new DocumentFolderTemplatesDialog(this, true);
                 FrameUtils.centerDialog(dlg, this);
                 dlg.setVisible(true);
-            } else {
-                JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.adminrequired"), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.hint"), JOptionPane.INFORMATION_MESSAGE);
             }
-        } catch (Exception ex) {
-            log.error(ex);
-            JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("error.launchsettings") + ex.getMessage(), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.error"), JOptionPane.INFORMATION_MESSAGE);
-        }
     }//GEN-LAST:event_mnuDocumentFolderTemplatesActionPerformed
 
     private void mnuDocumentsBinActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuDocumentsBinActionPerformed
@@ -2644,57 +2422,30 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     }//GEN-LAST:event_mnuVoipSoftphoneSettingsActionPerformed
 
     private void mnuSecurityActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSecurityActionPerformed
-        ClientSettings settings = ClientSettings.getInstance();
-        try {
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            boolean currentlyAdmin = locator.lookupSecurityServiceRemote().isAdmin();
-            if (currentlyAdmin) {
+        
+            if (checkAdmin()) {
                 SecurityConfigurationDialog dlg = new SecurityConfigurationDialog(this, true);
                 FrameUtils.centerDialog(dlg, this);
                 dlg.setVisible(true);
-            } else {
-                JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.adminrequired"), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.hint"), JOptionPane.INFORMATION_MESSAGE);
             }
-        } catch (Exception ex) {
-            log.error(ex);
-            JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("error.launchsettings") + ex.getMessage(), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.error"), JOptionPane.INFORMATION_MESSAGE);
-        }
     }//GEN-LAST:event_mnuSecurityActionPerformed
 
     private void mnuCalendarSetupActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuCalendarSetupActionPerformed
-        ClientSettings settings = ClientSettings.getInstance();
-        try {
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            boolean currentlyAdmin = locator.lookupSecurityServiceRemote().isAdmin();
-            if (currentlyAdmin) {
+        
+            if (checkAdmin()) {
                 CalendarSetupDialog dlg = new CalendarSetupDialog(this, true);
                 FrameUtils.centerDialog(dlg, this);
                 dlg.setVisible(true);
-            } else {
-                JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.adminrequired"), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.hint"), JOptionPane.INFORMATION_MESSAGE);
             }
-        } catch (Exception ex) {
-            log.error(ex);
-            JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("error.launchsettings") + ex.getMessage(), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.error"), JOptionPane.INFORMATION_MESSAGE);
-        }
     }//GEN-LAST:event_mnuCalendarSetupActionPerformed
 
     private void mnuAddressBookSyncActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuAddressBookSyncActionPerformed
-        ClientSettings settings = ClientSettings.getInstance();
-        try {
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            boolean currentlyAdmin = locator.lookupSecurityServiceRemote().isAdmin();
-            if (currentlyAdmin) {
+        
+            if (checkAdmin()) {
                 AddressBookSetupDialog dlg = new AddressBookSetupDialog(this, true);
                 FrameUtils.centerDialog(dlg, this);
                 dlg.setVisible(true);
-            } else {
-                JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.adminrequired"), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.hint"), JOptionPane.INFORMATION_MESSAGE);
             }
-        } catch (Exception ex) {
-            log.error(ex);
-            JOptionPane.showMessageDialog(this, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("error.launchsettings") + ex.getMessage(), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.error"), JOptionPane.INFORMATION_MESSAGE);
-        }
     }//GEN-LAST:event_mnuAddressBookSyncActionPerformed
 
     /**
