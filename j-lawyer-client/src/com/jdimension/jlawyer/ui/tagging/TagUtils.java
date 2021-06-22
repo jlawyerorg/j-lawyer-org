@@ -672,7 +672,6 @@ import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Hashtable;
 import java.util.List;
@@ -752,8 +751,8 @@ public class TagUtils {
 
         };
 
-        List<String> currentComboItems = new ArrayList<String>();
-        List<String> lastFilterTags = new ArrayList<String>();
+        List<String> currentComboItems = new ArrayList<>();
+        List<String> lastFilterTags = new ArrayList<>();
         MenuElement[] elements = popTagFilter.getSubElements();
         for (MenuElement e : elements) {
             currentComboItems.add(((JCheckBoxMenuItem) e.getComponent()).getText());
@@ -763,7 +762,7 @@ public class TagUtils {
         }
         Collections.sort(currentComboItems);
         if (tags == null) {
-            tags = new ArrayList<String>();
+            tags = new ArrayList<>();
         }
         if (!tags.equals(currentComboItems)) {
 
@@ -771,7 +770,6 @@ public class TagUtils {
             for (String t : tags) {
                 JCheckBoxMenuItem mi = new JCheckBoxMenuItem(t);
                 if (lastFilterTags.contains(t)) {
-                    //if(Arrays.binarySearch(lastFilterTags.toArray(), t)>-1) {
                     mi.setSelected(true);
                 } else {
                     mi.setSelected(false);
@@ -787,11 +785,9 @@ public class TagUtils {
 
     public static String getDocumentTagsOverviewAsHtml(Hashtable<String, ArrayList<String>> docTags) {
         StringBuffer sb = new StringBuffer();
-        //sb.append("<html>");
-        //sb.append("<font color=\"blue\">");
         if (docTags != null) {
-            Hashtable<String, Integer> activeTags = new Hashtable<String, Integer>();
-            ArrayList<String> sortedTags = new ArrayList<String>();
+            Hashtable<String, Integer> activeTags = new Hashtable<>();
+            ArrayList<String> sortedTags = new ArrayList<>();
             for (ArrayList<String> dTags : docTags.values()) {
                 for (String t : dTags) {
                     if (!sortedTags.contains(t)) {
@@ -807,18 +803,15 @@ public class TagUtils {
             StringUtils.sortIgnoreCase(sortedTags);
             for (String dTag : sortedTags) {
                 sb.append(dTag);
-                //sb.append(" (" + activeTags.get(dTag) + ")&nbsp;&nbsp;&nbsp;");
-                sb.append(" (" + activeTags.get(dTag) + ")");
+                sb.append(" (").append(activeTags.get(dTag)).append(")");
                 sb.append(System.lineSeparator());
             }
         }
-        //sb.append("</font>");
-        //sb.append("</html>");
         return sb.toString();
     }
 
     public static String[] getSelectedTags(JPopupMenu popup) {
-        ArrayList<String> selected = new ArrayList<String>();
+        ArrayList<String> selected = new ArrayList<>();
         MenuElement[] elements = popup.getSubElements();
         for (MenuElement e : elements) {
             if (((JCheckBoxMenuItem) e.getComponent()).isSelected()) {
@@ -828,21 +821,5 @@ public class TagUtils {
         return selected.toArray(new String[0]);
     }
 
-    public static void updateTagSelector(Component owner, JPopupMenu popTags, ActionListener menuItemActionListener, List<String> tagsInUse, String[] lastFilterTags) {
-        Hashtable<String, List<ArchiveFileTagsBean>> tags = new Hashtable<String, List<ArchiveFileTagsBean>>();
-        //List<ArchiveFileBean> othersNewList = new ArrayList<ArchiveFileBean>();
-        try {
-            //System.out.println("TaggedTimerTask#run @ " + System.currentTimeMillis() + " from " + source);
-            ClientSettings settings = ClientSettings.getInstance();
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-
-            // update combobox with tags that are currently in use, but only if there was an actual change
-        } catch (Throwable ex) {
-            log.error("Error connecting to server", ex);
-            //JOptionPane.showMessageDialog(this.owner, "Verbindungsfehler: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
-            ThreadUtils.showErrorDialog(owner, java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/TaggedTimerTask").getString("msg.connectionerror"), new Object[]{ex.getMessage()}), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/TaggedTimerTask").getString("msg.error"));
-            return;
-        }
-    }
 
 }

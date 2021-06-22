@@ -734,10 +734,6 @@ public class QuickAddressSearchPanel extends javax.swing.JPanel implements Theme
         ComponentUtils.autoSizeColumns(tblResults);
         
         
-        
-//        List<String> tagsInUse = ClientSettings.getInstance().getAddressTagsInUse();
-//        String[] lastFilterTags = ClientSettings.getInstance().getConfigurationArray(ClientSettings.CONF_ADDRESS_LASTFILTERTAG, new String[]{""});
-//        TagUtils.updateTagSelector(this, popTagFilter, al, tagsInUse, lastFilterTags);
     }
 
     public void populateTags(List<String> tags) {
