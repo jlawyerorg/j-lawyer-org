@@ -3778,8 +3778,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
                 Object report = JRLoader.loadObjectFromFile(ClientSettings.getInstance().getLocalReportsDirectory() + "archivefile.jasper");
                 JasperReport jasperReport = (JasperReport) report;
-//            Object subReport = JRLoader.loadObjectFromFile(ClientSettings.getInstance().getLocalReportsDirectory() + "reviews_detail.jasper");
-//            JasperReport jasperSubReport = (JasperReport) subReport;
 
                 HashMap<String, Object> parameter = new HashMap<String, Object>();
                 parameter.put("SubReportDir", ClientSettings.getInstance().getLocalReportsDirectory());
