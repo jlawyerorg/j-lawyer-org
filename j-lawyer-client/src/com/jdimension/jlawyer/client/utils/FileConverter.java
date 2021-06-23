@@ -676,15 +676,15 @@ public class FileConverter {
 
     private static final Logger log = Logger.getLogger(FileConverter.class.getName());
 
-    public static final List<String> INPUTTYPES = Arrays.asList(".xml", ".html", ".doc", ".docx", ".odt", ".txt", ".rtf", ".sdw", ".eps", ".gif", ".jpg", ".odd", ".png", ".tiff", ".bmp", ".csv", ".xls", ".xlsx", ".ods", ".sdc", ".odp", ".ppt", ".pptx", ".sda", ".fodp", ".fodt");
+    public static final List<String> INPUTTYPES = Arrays.asList(".xml", ".html", ".doc", ".docx", ".odt", ".txt", ".rtf", ".sdw", ".eps", ".gif", ".jpg", ".jpeg", ".odd", ".png", ".tiff", ".bmp", ".csv", ".xls", ".xlsx", ".ods", ".sdc", ".odp", ".ppt", ".pptx", ".sda", ".fodp", ".fodt");
     public static final List<String> OUTPUTTYPES = Arrays.asList("bmp", "csv", "doc", "docx", "jpg", "odp", "ods", "odt", "pdf", "png", "ppt", "pptx", "rtf", "tiff", "txt", "xls", "xlsx");
 
     public static FileConverter getInstance() {
         String osName = System.getProperty("os.name").toLowerCase();
-        if (osName.indexOf("win") > -1) {
+        if (osName.contains("win")) {
             WindowsFileConverter wfc = new WindowsFileConverter();
             return wfc;
-        } else if (osName.indexOf("linux") > -1) {
+        } else if (osName.contains("linux")) {
             LinuxFileConverter lfc = new LinuxFileConverter();
             return lfc;
         } else if (osName.startsWith("mac")) {
@@ -739,9 +739,7 @@ public class FileConverter {
                 throw new Exception("Konvertierung nach " + targetFileExtension + " ist nicht verfügbar!");
             }
 
-            String tempPath = url.substring(0, url.length() - new File(url).getName().length());
-
-            // String clientLocation=System.getProperty("client.location");
+            
             String clientLocation = System.getenv("JLAWYERCLIENTHOME");
             if (clientLocation == null) {
                 log.error("JLAWYERCLIENTHOME environment variable not set - document conversion not possible");
@@ -777,9 +775,7 @@ public class FileConverter {
                 throw new Exception("Format nicht unterstützt: " + new File(url).getName());
             }
 
-            String tempPath = url.substring(0, url.length() - new File(url).getName().length());
-
-            // String clientLocation=System.getProperty("client.location");
+            
             String clientLocation = System.getenv("JLAWYERCLIENTHOME");
             if (clientLocation == null) {
                 log.error("JLAWYERCLIENTHOME environment variable not set - PDF conversion not possible");
@@ -792,10 +788,7 @@ public class FileConverter {
 
             boolean isRetry = false;
             for (int i = 0; i < 2; i++) {
-                //Process p = Runtime.getRuntime().exec(new String[]{"soffice.exe", "--headless", "--convert-to", "pdf", "--outdir", "\"" + tempPath + "\"", "\"" + url+ "\""});
-                //Process p = Runtime.getRuntime().exec(new String[]{"soffice.exe", "--headless", "--convert-to", "pdf", "--outdir", tempPath, url});
                 Process p = Runtime.getRuntime().exec(new String[]{"python.exe", clientLocation + "unoconv-master\\unoconv", "-eSelectPdfVersion=1", "-f", "pdf", url});
-                //Process p = Runtime.getRuntime().exec(new String[]{"unoconv.bat", url});
                 int exit = p.waitFor();
 
                 if (exit != 0) {
