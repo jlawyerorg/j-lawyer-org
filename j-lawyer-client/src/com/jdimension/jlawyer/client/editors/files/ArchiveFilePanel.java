@@ -3512,12 +3512,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     }
 
     public void showDocumentsPopup(MouseEvent evt) {
-        //if (evt.isPopupTrigger() && evt.getComponent().isEnabled()) {
         this.mnuOpenInExternalMailer.setEnabled(false);
         ArrayList<ArchiveFileDocumentsBean> selectedDocs = this.caseFolderPanel1.getSelectedDocuments();
         if (selectedDocs.size() == 1) {
-            // copying to other cases only supported for one document at a time for now
-            this.mnuCopyDocumentToOtherCase.setEnabled(true);
 
             ArchiveFileDocumentsBean value = selectedDocs.get(0);
             if (value.getName().toLowerCase().endsWith(".eml")) {
@@ -3537,12 +3534,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
 
         } else {
-            this.mnuCopyDocumentToOtherCase.setEnabled(false);
             this.mnuOpenDocumentMicrosoftOffice.setEnabled(false);
             this.mnuUseDocumentAsTemplate.setEnabled(true);
         }
         this.documentsPopup.show(evt.getComponent(), evt.getX(), evt.getY());
-        //}
+
     }
 
     private void cmdNewReviewActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdNewReviewActionPerformed
@@ -4804,9 +4800,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 };
 
                 this.waitForOpenDocument(doc, callback);
-
-                // we only support duplication of one document at a time
-                break;
 
             }
 
