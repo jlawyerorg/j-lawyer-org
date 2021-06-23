@@ -663,12 +663,7 @@
  */
 package com.jdimension.jlawyer.ui.tagging;
 
-import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.StringUtils;
-import com.jdimension.jlawyer.client.utils.ThreadUtils;
-import com.jdimension.jlawyer.persistence.ArchiveFileTagsBean;
-import com.jdimension.jlawyer.services.JLawyerServiceLocator;
-import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -679,7 +674,6 @@ import javax.swing.JButton;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JPopupMenu;
 import javax.swing.MenuElement;
-import org.apache.log4j.Logger;
 
 /**
  *
@@ -687,11 +681,9 @@ import org.apache.log4j.Logger;
  */
 public class TagUtils {
 
-    private static final Logger log = Logger.getLogger(TagUtils.class.getName());
-
     public static String getTagList(ArrayList<String> tags) {
 
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
 
         Collections.sort(tags);
         for (String t : tags) {
@@ -708,7 +700,7 @@ public class TagUtils {
 
     public static String getTagList(String id, Hashtable<String, ArrayList<String>> tags) {
         if (tags.containsKey(id)) {
-            StringBuffer sb = new StringBuffer();
+            StringBuilder sb = new StringBuilder();
             ArrayList<String> list = tags.get(id);
             Collections.sort(list);
             for (String t : list) {
@@ -784,7 +776,7 @@ public class TagUtils {
     }
 
     public static String getDocumentTagsOverviewAsHtml(Hashtable<String, ArrayList<String>> docTags) {
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         if (docTags != null) {
             Hashtable<String, Integer> activeTags = new Hashtable<>();
             ArrayList<String> sortedTags = new ArrayList<>();
