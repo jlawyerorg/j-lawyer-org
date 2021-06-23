@@ -785,6 +785,11 @@ public class PrintStubGenerator {
             d.setMobile(b.getMobile());
         }
         d.setStreet(b.getStreet());
+        if(b.getStreetNumber()==null) {
+            d.setStreetNumber("");
+        } else {
+            d.setStreetNumber(b.getStreetNumber());
+        }
         d.setWebsite(b.getWebsite());
         d.setZipCode(b.getZipCode());
         
