@@ -668,6 +668,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
 import javax.swing.JButton;
@@ -778,7 +779,7 @@ public class TagUtils {
     public static String getDocumentTagsOverviewAsHtml(Hashtable<String, ArrayList<String>> docTags) {
         StringBuilder sb = new StringBuilder();
         if (docTags != null) {
-            Hashtable<String, Integer> activeTags = new Hashtable<>();
+            HashMap<String, Integer> activeTags = new HashMap<>();
             ArrayList<String> sortedTags = new ArrayList<>();
             for (ArrayList<String> dTags : docTags.values()) {
                 for (String t : dTags) {
