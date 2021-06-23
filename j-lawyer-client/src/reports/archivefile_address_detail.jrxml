@@ -11,6 +11,7 @@
 	<field name="name" class="java.lang.String"/>
 	<field name="firstName" class="java.lang.String"/>
 	<field name="street" class="java.lang.String"/>
+        <field name="streetNumber" class="java.lang.String"/>
 	<field name="zipCode" class="java.lang.String"/>
 	<field name="city" class="java.lang.String"/>
 	<field name="phone" class="java.lang.String"/>
@@ -76,7 +77,7 @@ $F{zipCode}.trim().length()>0)]]></printWhenExpression>
 					<font size="10"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{street} +
-" " + $F{zipCode} + " " + $F{city}]]></textFieldExpression>
+" " + $F{streetNumber} + ", " + $F{zipCode} + " " + $F{city}]]></textFieldExpression>
 			</textField>
 			<textField isStretchWithOverflow="true">
 				<reportElement positionType="Float" x="0" y="70" width="480" height="13" isRemoveLineWhenBlank="true" />
