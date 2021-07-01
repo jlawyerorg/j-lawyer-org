@@ -702,9 +702,9 @@ public class BeaAccess {
 
     public static String FOLDER_NAME_JLAWYER_PROCESSED = "in Akte importiert";
 
-    private String productName = "j-lawyer.org 1.9";
-    private String producer = "j-lawyer.org";
-    private String registrationId = "1012.0001.0001.000224";
+    private final String productName = "j-lawyer.org 1.9";
+    private final String producer = "j-lawyer.org";
+    private final String registrationId = "1012.0001.0001.000224";
 
     private BeaWrapper wrapper = null;
 
@@ -717,6 +717,8 @@ public class BeaAccess {
     private PersistentCacheManager cacheManager = null;
     private Cache<String, Message> messageCache = null;
     private Cache<Long, ArrayList> folderOverviewCache = null;
+    
+    private String cachePrefix="";
 
     private BeaAccess(byte[] certificate, String password) throws BeaWrapperException {
 //        byte[] certificate = null;
@@ -746,6 +748,7 @@ public class BeaAccess {
 
         this.wrapper = new BeaWrapper(endpoint, certificate, password, productName, producer, registrationId);
 
+        this.cachePrefix=""+System.currentTimeMillis();
         this.initializeCaches();
 
     }
@@ -756,6 +759,7 @@ public class BeaAccess {
         String endpoint = set.getSetting(set.SERVERCONF_BEAENDPOINT, "https://schulung-ksw.bea-brak.de");
         this.wrapper = new BeaWrapper(endpoint, productName, producer, registrationId);
 
+        this.cachePrefix=""+System.currentTimeMillis();
         this.initializeCaches();
     }
 
@@ -783,7 +787,7 @@ public class BeaAccess {
         storage.mkdirs();
 
         this.cacheManager = CacheManagerBuilder.newCacheManagerBuilder()
-                .with(CacheManagerBuilder.persistence(new File(storagePath, "bea")))
+                .with(CacheManagerBuilder.persistence(new File(storagePath, this.cachePrefix + "-bea")))
                 //                .withCache("bea-messageheaders-cache",
                 //                        CacheConfigurationBuilder.newCacheConfigurationBuilder(Long.class, Message.class,
                 //                                ResourcePoolsBuilder.newResourcePoolsBuilder()
@@ -925,6 +929,14 @@ public class BeaAccess {
 
         // close cache manager
         cacheManager.close();
+        
+        String storagePath = System.getProperty("user.home") + System.getProperty("file.separator") + ".j-lawyer-client" + System.getProperty("file.separator") + "cache" + System.getProperty("file.separator") + this.cachePrefix + "-bea";
+        File storage = new File(storagePath);
+        try {
+            ServerFileUtils.getInstance().deleteRecursively(storage);
+        } catch (Throwable t) {
+            log.error("Could not clear bea cache directory", t);
+        }
 
         instance = null;
     }
