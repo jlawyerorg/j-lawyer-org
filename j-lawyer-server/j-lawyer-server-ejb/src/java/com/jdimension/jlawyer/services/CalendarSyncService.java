@@ -667,6 +667,8 @@ import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.CalendarSetup;
+import com.jdimension.jlawyer.server.utils.ServerStringUtils;
+import com.jdimension.jlawyer.server.utils.StringUtils;
 import java.util.List;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.Asynchronous;
@@ -686,96 +688,151 @@ import org.jlawyer.cloud.NextcloudCalendarConnector;
 public class CalendarSyncService implements CalendarSyncServiceLocal {
 
     private static final Logger log = Logger.getLogger(CalendarSyncService.class.getName());
-    
+
     @EJB
     private ArchiveFileReviewsBeanFacadeLocal archiveFileReviewsFacade;
 
     @Override
     @Schedule(dayOfWeek = "*", hour = "6,12,19", minute = "1", second = "0", persistent = false)
     public void fullCalendarSync() {
-        log.info("full calendar sync requested");
-        
-        List<ArchiveFileReviewsBean> openEvents=this.archiveFileReviewsFacade.findByDone(false);
-        log.info("found " + openEvents.size() + " open events");
-        long updated=0;
-        for(ArchiveFileReviewsBean event: openEvents) {
-            try {
-                  updated=updated+1;
-                  this.eventUpdated(event.getArchiveFileKey(), event);
-                  
-            } catch (Exception ex) {
-                log.error("Unable to sync event " + event.getId() + " during full calendar sync. Skipping...", ex);
-            }
-        }
-        
-        log.info("Finished full calendar sync. Updated: " + updated);
-        
+        this.fullCalendarSyncImpl();
+    }
+
+    @Override
+    @RolesAllowed({"adminRole"})
+    @Asynchronous
+    public void runFullCalendarSync() {
+        this.fullCalendarSyncImpl();
     }
 
     @Override
     @RolesAllowed({"loginRole"})
     @Asynchronous
     public void eventAdded(ArchiveFileBean caseContext, ArchiveFileReviewsBean event) {
-        
-        if(event.getCalendarSetup()==null) {
-            log.warn("Calendar setup for event " + event.getId() + " is empty!");
-            return;
-        }
-        
-        log.info("Syncing new event to cloud: " + event.getId());
+        if (canSync(event)) {
 
-        try {
-            StringBuilder description=new StringBuilder();
-            description.append(caseContext.getFileNumber()).append(" - ").append(caseContext.getName()).append(System.lineSeparator()).append("(").append(caseContext.getReason()).append(")");
-            description.append(System.lineSeparator());
-            description.append(System.lineSeparator());
-            description.append(event.getDescription());
-            CalendarSetup cs=event.getCalendarSetup();
-            NextcloudCalendarConnector nc = this.getConnector(cs);
-            String newEventHref = nc.createEvent(event.getId(), cs.getHref(), event.getSummary(), description.toString(), event.getLocation(), event.getBeginDate(), event.getEndDate(), !event.hasEndDateAndTime());
+            log.info("Syncing new event to cloud: " + event.getId());
 
-        } catch (Exception ex) {
-            log.error("Syncing new event to cloud failed: " + event.getId(), ex);
+            try {
+                StringBuilder description = new StringBuilder();
+                description.append(caseContext.getFileNumber()).append(" - ").append(caseContext.getName()).append(System.lineSeparator()).append("(").append(caseContext.getReason()).append(")");
+                description.append(System.lineSeparator());
+                description.append(System.lineSeparator());
+                description.append(event.getDescription());
+                CalendarSetup cs = event.getCalendarSetup();
+                NextcloudCalendarConnector nc = this.getConnector(cs);
+                if (nc == null) {
+                    return;
+                }
+                String newEventHref = nc.createEvent(event.getId(), cs.getHref(), event.getSummary(), description.toString(), event.getLocation(), event.getBeginDate(), event.getEndDate(), !event.hasEndDateAndTime());
+
+            } catch (Exception ex) {
+                log.error("Syncing new event to cloud failed: " + event.getId(), ex);
+            }
         }
     }
-    
+
     private NextcloudCalendarConnector getConnector(CalendarSetup cs) {
+        if (ServerStringUtils.isEmpty(cs.getCloudHost()) || ServerStringUtils.isEmpty(cs.getCloudUser()) || ServerStringUtils.isEmpty(cs.getCloudPassword())) {
+            log.info("No or invalid calendar sync configuration for calendar setup " + cs.getDisplayName());
+            return null;
+        }
+
         NextcloudCalendarConnector nc = new NextcloudCalendarConnector(cs.getCloudHost(), cs.isCloudSsl(), cs.getCloudPort(), cs.getCloudUser(), cs.getCloudPassword());
-        if(cs.getCloudPath()!=null && !("".equals(cs.getCloudPath())))
+        if (cs.getCloudPath() != null && !("".equals(cs.getCloudPath()))) {
             nc.setSubpathPrefix(cs.getCloudPath());
+        }
         return nc;
     }
 
     @Override
     public void eventUpdated(ArchiveFileBean caseContext, ArchiveFileReviewsBean event) {
-        log.info("Syncing updated event to cloud: " + event.getId());
+        if (canSync(event)) {
 
-        try {
-            StringBuilder description=new StringBuilder();
-            description.append(caseContext.getFileNumber()).append(" - ").append(caseContext.getName()).append(System.lineSeparator()).append("(").append(caseContext.getReason()).append(")");
-            description.append(System.lineSeparator());
-            description.append(System.lineSeparator());
-            description.append(event.getDescription());
-            CalendarSetup cs=event.getCalendarSetup();
-            NextcloudCalendarConnector nc = this.getConnector(cs);
-            String updatedEventHref = nc.updateEvent(event.getId(), cs.getHref(), event.getSummary(), description.toString(), event.getLocation(), event.getBeginDate(), event.getEndDate(), !event.hasEndDateAndTime());
+            log.info("Syncing updated event to cloud: " + event.getId());
 
-        } catch (Exception ex) {
-            log.error("Syncing updated event to cloud failed: " + event.getId(), ex);
+            // followups and respites that are done can be deleted, others need to be updated
+            if (event.getDoneBoolean() && (event.getEventType() == ArchiveFileReviewsBean.EVENTTYPE_FOLLOWUP || event.getEventType() == ArchiveFileReviewsBean.EVENTTYPE_RESPITE)) {
+                this.eventDeleted(event);
+            } else {
+
+                try {
+                    StringBuilder description = new StringBuilder();
+                    description.append(caseContext.getFileNumber()).append(" - ").append(caseContext.getName()).append(System.lineSeparator()).append("(").append(caseContext.getReason()).append(")");
+                    description.append(System.lineSeparator());
+                    description.append(System.lineSeparator());
+                    description.append(event.getDescription());
+                    CalendarSetup cs = event.getCalendarSetup();
+                    NextcloudCalendarConnector nc = this.getConnector(cs);
+                    if (nc == null) {
+                        return;
+                    }
+                    
+                    String updatedEventHref = nc.updateEvent(event.getId(), cs.getHref(), event.getSummary(), description.toString(), event.getLocation(), event.getBeginDate(), event.getEndDate(), !event.hasEndDateAndTime());
+
+                } catch (Exception ex) {
+                    log.error("Syncing updated event to cloud failed: " + event.getId(), ex);
+                }
+            }
         }
     }
 
     @Override
     public void eventDeleted(ArchiveFileReviewsBean event) {
-        log.info("Syncing deleted event to cloud: " + event.getId());
 
-        try {
-            CalendarSetup cs=event.getCalendarSetup();
-            NextcloudCalendarConnector nc = this.getConnector(cs);
-            nc.deleteEvent(event.getId(), cs.getHref());
+        if (canSync(event)) {
 
-        } catch (Exception ex) {
-            log.error("Syncing deleted event to cloud failed: " + event.getId(), ex);
+            // type "event" is never deleted
+            if (event.getEventType() == ArchiveFileReviewsBean.EVENTTYPE_EVENT) {
+                return;
+            }
+
+            log.info("Syncing deleted event to cloud: " + event.getId());
+
+            try {
+                CalendarSetup cs = event.getCalendarSetup();
+                NextcloudCalendarConnector nc = this.getConnector(cs);
+                if (nc == null) {
+                    return;
+                }
+                nc.deleteEvent(event.getId(), cs.getHref());
+
+            } catch (Exception ex) {
+                log.error("Syncing deleted event to cloud failed: " + event.getId(), ex);
+            }
         }
+    }
+
+    private boolean canSync(ArchiveFileReviewsBean event) {
+        if (event == null) {
+            return false;
+        }
+
+        if (event.getCalendarSetup() == null) {
+            log.warn("Calendar setup for event " + event.getId() + " is empty!");
+            return false;
+        }
+
+        return true;
+    }
+
+    private void fullCalendarSyncImpl() {
+        log.info("full calendar sync requested");
+
+        List<ArchiveFileReviewsBean> openEvents = this.archiveFileReviewsFacade.findByDone(false);
+        log.info("found " + openEvents.size() + " open events");
+        long updated = 0;
+        for (ArchiveFileReviewsBean event : openEvents) {
+            try {
+                updated = updated + 1;
+                this.eventUpdated(event.getArchiveFileKey(), event);
+
+            } catch (Exception ex) {
+                log.error("Unable to sync event " + event.getId() + " during full calendar sync. Skipping...", ex);
+            }
+        }
+
+        log.info("Finished full calendar sync. Updated: " + updated);
+
     }
 }

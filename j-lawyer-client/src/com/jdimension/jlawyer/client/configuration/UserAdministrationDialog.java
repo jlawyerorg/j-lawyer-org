@@ -686,6 +686,7 @@ import com.jdimension.jlawyer.persistence.CalendarAccess;
 import com.jdimension.jlawyer.persistence.CalendarSetup;
 import com.jdimension.jlawyer.persistence.Group;
 import com.jdimension.jlawyer.persistence.GroupMembership;
+import com.jdimension.jlawyer.security.Crypto;
 import com.jdimension.jlawyer.services.SecurityServiceRemote;
 import java.awt.Point;
 import java.io.File;
@@ -1582,13 +1583,12 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                     .add(jLabel19))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jScrollPane4, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 767, Short.MAX_VALUE)
                     .add(jPanel9Layout.createSequentialGroup()
                         .add(jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
                             .add(cmbPrimaryGroup, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .add(txtAbbreviation))
-                        .add(0, 0, Short.MAX_VALUE)))
-                .addContainerGap())
+                        .addContainerGap(712, Short.MAX_VALUE))
+                    .add(jScrollPane4)))
         );
         jPanel9Layout.setVerticalGroup(
             jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -1871,14 +1871,14 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                     this.rdAutoLogin.setSelected(false);
                     this.rdManualLogin.setSelected(true);
                 }
-                this.pwdBeaCertificatePassword.setText(u.getBeaCertificatePassword());
+                this.pwdBeaCertificatePassword.setText(Crypto.decrypt(u.getBeaCertificatePassword()));
                 this.currentCertificate = u.getBeaCertificate();
 
                 if (u.getBeaCertificate() == null) {
                     this.taBeaCertificate.setText("kein Zertifikat hinterlegt");
                 } else {
                     this.taBeaCertificate.setText("");
-                    Hashtable ht = BeaAccess.getCertificateInformation(u.getBeaCertificate(), u.getBeaCertificatePassword());
+                    Hashtable ht = BeaAccess.getCertificateInformation(u.getBeaCertificate(), Crypto.decrypt(u.getBeaCertificatePassword()));
                     for (Object key : ht.keySet()) {
                         this.taBeaCertificate.setText(this.taBeaCertificate.getText() + key.toString() + ": " + ht.get(key).toString() + System.getProperty("line.separator"));
                     }
@@ -1990,7 +1990,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 u.setEmailStartTls(this.chkEmailStartTls.isSelected());
 
                 u.setBeaCertificate(this.currentCertificate);
-                u.setBeaCertificatePassword(this.pwdBeaCertificatePassword.getText().trim());
+                u.setBeaCertificatePassword(Crypto.encrypt(this.pwdBeaCertificatePassword.getText().trim()));
                 u.setBeaCertificateAutoLogin(this.rdAutoLogin.isSelected());
 
                 u.setCloudHost(this.pnlCloudConnection.getCloudHost());

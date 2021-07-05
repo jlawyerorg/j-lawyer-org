@@ -705,11 +705,15 @@ public interface CalendarServiceRemote {
     Collection<ArchiveFileReviewsBean> getReviews(String archiveFileKey) throws Exception;
 
     List<CalendarSetup> getAllCalendarSetups();
+    
+    List<CalendarSetup> getCalendarSetupsForUser(String principalId);
 
     CalendarSetup addCalendarSetup(CalendarSetup cs);
 
     CalendarSetup updateCalendarSetup(CalendarSetup cs);
 
     void removeCalendarSetup(CalendarSetup cs);
+
+    void runFullCalendarSync();
     
 }

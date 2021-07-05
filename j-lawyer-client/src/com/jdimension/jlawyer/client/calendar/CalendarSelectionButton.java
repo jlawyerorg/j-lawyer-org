@@ -664,6 +664,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.client.calendar;
 
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.persistence.CalendarSetup;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Color;
@@ -699,7 +700,7 @@ public class CalendarSelectionButton extends javax.swing.JPanel {
         ClientSettings settings = ClientSettings.getInstance();
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            List<CalendarSetup> setups=locator.lookupCalendarServiceRemote().getAllCalendarSetups();
+            List<CalendarSetup> setups=locator.lookupCalendarServiceRemote().getCalendarSetupsForUser(UserSettings.getInstance().getCurrentUser().getPrincipalId());
             Collections.sort(setups, (Object arg0, Object arg1) -> {
                 String name1="";
                 String name2="";

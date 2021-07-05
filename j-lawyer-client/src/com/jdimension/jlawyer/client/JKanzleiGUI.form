@@ -300,12 +300,21 @@
                     <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
                       <Image iconType="3" name="/icons16/material/baseline_share_black_48dp.png"/>
                     </Property>
-                    <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                      <ResourceString bundle="com/jdimension/jlawyer/client/JKanzleiGUI.properties" key="menu.settings.documents.scanner" replaceFormat="java.util.ResourceBundle.getBundle(&quot;{bundleNameSlashes}&quot;).getString(&quot;{key}&quot;)"/>
-                    </Property>
+                    <Property name="text" type="java.lang.String" value="Synchronisation konfigurieren"/>
                   </Properties>
                   <Events>
                     <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuAddressBookSyncActionPerformed"/>
+                  </Events>
+                </MenuItem>
+                <MenuItem class="javax.swing.JMenuItem" name="mnuAddressBookSyncNow">
+                  <Properties>
+                    <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                      <Image iconType="3" name="/icons16/material/baseline_share_black_48dp.png"/>
+                    </Property>
+                    <Property name="text" type="java.lang.String" value="Synchronisation ausf&#xfc;hren"/>
+                  </Properties>
+                  <Events>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuAddressBookSyncNowActionPerformed"/>
                   </Events>
                 </MenuItem>
               </SubComponents>
@@ -513,11 +522,22 @@
                     <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
                       <Image iconType="3" name="/icons16/material/baseline_share_black_48dp.png"/>
                     </Property>
-                    <Property name="text" type="java.lang.String" value="kalender und Synchronisation"/>
+                    <Property name="text" type="java.lang.String" value="Kalender und Synchronisation konfigurieren"/>
                     <Property name="actionCommand" type="java.lang.String" value="Kalender-Synchronisation"/>
                   </Properties>
                   <Events>
                     <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuCalendarSetupActionPerformed"/>
+                  </Events>
+                </MenuItem>
+                <MenuItem class="javax.swing.JMenuItem" name="mnuCalendarSyncNow">
+                  <Properties>
+                    <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                      <Image iconType="3" name="/icons16/material/baseline_share_black_48dp.png"/>
+                    </Property>
+                    <Property name="text" type="java.lang.String" value="Synchronisation durchf&#xfc;hren"/>
+                  </Properties>
+                  <Events>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuCalendarSyncNowActionPerformed"/>
                   </Events>
                 </MenuItem>
               </SubComponents>

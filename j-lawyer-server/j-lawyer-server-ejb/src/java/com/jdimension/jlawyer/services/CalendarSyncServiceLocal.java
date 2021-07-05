@@ -675,6 +675,8 @@ import javax.ejb.Local;
 public interface CalendarSyncServiceLocal {
 
     void fullCalendarSync();
+    
+    void runFullCalendarSync();
 
     void eventAdded(ArchiveFileBean caseContext, ArchiveFileReviewsBean event);
     

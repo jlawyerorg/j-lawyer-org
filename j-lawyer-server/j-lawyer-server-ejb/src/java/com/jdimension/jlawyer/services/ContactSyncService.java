@@ -669,6 +669,7 @@ import com.jdimension.jlawyer.persistence.ServerSettingsBean;
 import com.jdimension.jlawyer.persistence.ServerSettingsBeanFacadeLocal;
 import com.jdimension.jlawyer.security.Crypto;
 import com.jdimension.jlawyer.server.services.settings.ServerSettingsKeys;
+import com.jdimension.jlawyer.server.utils.ServerStringUtils;
 import java.util.List;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.Asynchronous;
@@ -788,6 +789,11 @@ public class ContactSyncService implements ContactSyncServiceLocal {
             if (s != null) {
                 pwd = s.getSettingValue();
                 pwd = Crypto.decrypt(pwd);
+            }
+            
+            if(ServerStringUtils.isEmpty(host) || ServerStringUtils.isEmpty(user) || ServerStringUtils.isEmpty(pwd)) {
+                log.info("No or invalid address book sync configuration");
+                return null;
             }
 
             NextcloudContactsConnector nc = new NextcloudContactsConnector(host, ssl, port, user, pwd);

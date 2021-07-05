@@ -668,6 +668,7 @@ import com.jdimension.jlawyer.client.processing.*;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.persistence.AppUserBean;
+import com.jdimension.jlawyer.security.Crypto;
 import java.awt.Color;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
@@ -689,10 +690,12 @@ public class BeaLoginDialog extends javax.swing.JDialog {
     private GlassPane glass = null;
     private ProgressableAction action = null;
     private BeaLoginCallback callback = null;
-//    private boolean clearParent=false;
 
     /**
      * Creates new form ProgressIndicator
+     * @param parent
+     * @param modal
+     * @param callback
      */
     public BeaLoginDialog(JFrame parent, boolean modal, BeaLoginCallback callback) {
         super(parent, modal);
@@ -713,7 +716,7 @@ public class BeaLoginDialog extends javax.swing.JDialog {
         this.callback = callback;
 
         AppUserBean cu = UserSettings.getInstance().getCurrentUser();
-        if (cu.getBeaCertificate() == null || StringUtils.isEmpty(cu.getBeaCertificatePassword())) {
+        if (this.hasNoCertificate(cu)) {
             this.cmdCertificateLogin.setEnabled(false);
             this.lblCertificateLogin.setText("<html>F&uuml;r den Nutzer ist kein Zertifikat hinterlegt.</html>");
             this.lblCertificateLogin.setForeground(DefaultColorTheme.COLOR_LOGO_RED);
@@ -721,26 +724,18 @@ public class BeaLoginDialog extends javax.swing.JDialog {
             this.cmdCertificateLogin.setEnabled(true);
 
         }
-        //this.glass.setVisible(true);
 
-//        new Thread(new Runnable() { 
-//            public void run() {
-//                action.execute();
-//            }
-//        }).start();
+    }
+    
+    private boolean hasNoCertificate(AppUserBean cu) {
+        return cu.getBeaCertificate() == null || StringUtils.isEmpty(cu.getBeaCertificatePassword());
     }
 
-//    public ProgressIndicator(JFrame parent, boolean modal, boolean clearParent) {
-//        this(parent, modal);
-//        this.clearParent=clearParent;
-//    }
-//    
-//    public ProgressIndicator(JDialog parent, boolean modal, boolean clearParent) {
-//        this(parent, modal);
-//        this.clearParent=clearParent;
-//    }
     /**
      * Creates new form ProgressIndicator
+     * @param parent
+     * @param modal
+     * @param callback
      */
     public BeaLoginDialog(JDialog parent, boolean modal, BeaLoginCallback callback) {
         super(parent, modal);
@@ -760,7 +755,7 @@ public class BeaLoginDialog extends javax.swing.JDialog {
         this.callback = callback;
 
         AppUserBean cu = UserSettings.getInstance().getCurrentUser();
-        if (cu.getBeaCertificate() == null || StringUtils.isEmpty(cu.getBeaCertificatePassword())) {
+        if (this.hasNoCertificate(cu)) {
             this.cmdCertificateLogin.setEnabled(false);
             this.lblCertificateLogin.setText("Für den Nutzer ist kein Zertifikat hinterlegt.");
             this.lblCertificateLogin.setForeground(Color.red.darker());
@@ -793,22 +788,10 @@ public class BeaLoginDialog extends javax.swing.JDialog {
         }
 
         super.setVisible(b);
-//        if(this.fParent!=null)
-//            this.fParent.setVisible(false);
-//        if(this.dParent!=null)
-//            this.dParent.setVisible(false);
 
     }
 
-//    @Override
-//    public void dispose() {
-//        super.dispose();
-//        
-//        if(this.fParent!=null)
-//            this.fParent.dispose();
-//        if(this.dParent!=null)
-//            this.dParent.dispose();
-//    }
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -953,43 +936,34 @@ public class BeaLoginDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_cmdCancelActionPerformed
 
     private void cmdCertificateLoginActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCertificateLoginActionPerformed
-//        Object editor=EditorsRegistry.getInstance().getCurrentEditor();
-//        if(editor instanceof BeaInboxPanel) {
-//            BeaInboxPanel beain=(BeaInboxPanel)editor;
+
         try {
             this.lblCertLogin.setText("Verbinde zum beA...");
 
             prgCertLogin.setIndeterminate(true);
 
-            SwingUtilities.invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        lblCertLogin.setText("Verbinde zum beA... einloggen...");
-
-                        AppUserBean cu = UserSettings.getInstance().getCurrentUser();
-                        BeaAccess bea = BeaAccess.getInstance(cu.getBeaCertificate(), cu.getBeaCertificatePassword());
-                        bea.login();
-                        //beain.initWithCertificate();
-                        lblCertLogin.setText("Verbinde zum beA... laden...");
-                        if (callback != null) {
-                            callback.loginSuccess();
-                        }
-                        //beain.refreshFolders(true);
-                        lblCertLogin.setText("Verbinde zum beA... fertig.");
-                    } catch (Throwable t) {
-                        log.error(t);
-                        if (callback != null) {
-                            callback.loginFailure(t.getMessage());
-                        }
+            SwingUtilities.invokeLater(() -> {
+                try {
+                    lblCertLogin.setText("Verbinde zum beA... einloggen...");
+                    
+                    AppUserBean cu = UserSettings.getInstance().getCurrentUser();
+                    BeaAccess bea = BeaAccess.getInstance(cu.getBeaCertificate(), Crypto.decrypt(cu.getBeaCertificatePassword()));
+                    bea.login();
+                    lblCertLogin.setText("Verbinde zum beA... laden...");
+                    if (callback != null) {
+                        callback.loginSuccess();
                     }
-                    setVisible(false);
-                    dispose();
+                    //beain.refreshFolders(true);
+                    lblCertLogin.setText("Verbinde zum beA... fertig.");
+                } catch (Throwable t) {
+                    log.error(t);
+                    if (callback != null) {
+                        callback.loginFailure(t.getMessage());
+                    }
                 }
+                setVisible(false);
+                dispose();
             });
-            //beain.initWithCertificate();
-            //beain.refreshFolders(true);
-            //this.prgCertLogin.setIndeterminate(false);
         } catch (Exception ex) {
             this.lblCertLogin.setText("Verbinde zum beA... fehlgeschlagen: " + ex.getMessage());
             log.error(ex);
@@ -1020,31 +994,7 @@ public class BeaLoginDialog extends javax.swing.JDialog {
         
         dispose();
 
-//        try {
-//            this.lblCardLogin.setText("Verbinde zum beA...");
-//
-//            setVisible(false);
-//            try {
-//                BeaAccess bea = BeaAccess.getInstance();
-//                bea.login();
-//                if (callback != null) {
-//                    callback.loginSuccess();
-//                }
-//
-//            } catch (Throwable t) {
-//                log.error(t);
-//                if (callback != null) {
-//                    callback.loginFailure(t.getMessage());
-//                }
-//            }
-//
-//            dispose();
-//        } catch (Exception ex) {
-//            setVisible(true);
-//            this.lblCardLogin.setText("Verbinde zum beA... fehlgeschlagen: " + ex.getMessage());
-//            log.error(ex);
-//            ThreadUtils.showErrorDialog(this, "Fehler beim beA-Login: " + ex.getMessage(), "Fehler");
-//        }
+
     }//GEN-LAST:event_cmdCardLoginActionPerformed
 
     /**
@@ -1076,17 +1026,15 @@ public class BeaLoginDialog extends javax.swing.JDialog {
         //</editor-fold>
 
         /* Create and display the dialog */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                BeaLoginDialog dialog = new BeaLoginDialog(new javax.swing.JFrame(), true, null);
-                dialog.addWindowListener(new java.awt.event.WindowAdapter() {
-                    @Override
-                    public void windowClosing(java.awt.event.WindowEvent e) {
-                        System.exit(0);
-                    }
-                });
-                dialog.setVisible(true);
-            }
+        java.awt.EventQueue.invokeLater(() -> {
+            BeaLoginDialog dialog = new BeaLoginDialog(new javax.swing.JFrame(), true, null);
+            dialog.addWindowListener(new java.awt.event.WindowAdapter() {
+                @Override
+                public void windowClosing(java.awt.event.WindowEvent e) {
+                    System.exit(0);
+                }
+            });
+            dialog.setVisible(true);
         });
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables

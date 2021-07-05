@@ -673,6 +673,8 @@ import com.jdimension.jlawyer.persistence.ArchiveFileHistoryBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileHistoryBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBeanFacadeLocal;
+import com.jdimension.jlawyer.persistence.CalendarAccess;
+import com.jdimension.jlawyer.persistence.CalendarAccessFacadeLocal;
 import com.jdimension.jlawyer.persistence.CalendarSetup;
 import com.jdimension.jlawyer.persistence.CalendarSetupFacadeLocal;
 import com.jdimension.jlawyer.persistence.Group;
@@ -688,6 +690,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
@@ -710,7 +713,7 @@ import org.apache.log4j.Logger;
 @Stateless
 public class CalendarService implements CalendarServiceRemote, CalendarServiceLocal {
     
-    private static Logger log = Logger.getLogger(CalendarService.class.getName());
+    private static final Logger log = Logger.getLogger(CalendarService.class.getName());
 
     @Resource
     private SessionContext context;
@@ -730,6 +733,8 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
     private CalendarSyncServiceLocal calendarSync;
     @EJB
     private CalendarSetupFacadeLocal calendarSetups;
+    @EJB
+    private CalendarAccessFacadeLocal calendarAccess;
     
     @Override
     @RolesAllowed({"loginRole"})
@@ -782,12 +787,14 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
         else
             holidays=m.getHolidays(year, regionId);
                 
-        ArrayList<HolidayDescriptor> list=new ArrayList<HolidayDescriptor>();
+        ArrayList<HolidayDescriptor> list=new ArrayList<>();
         for(Holiday h: holidays) {
             HolidayDescriptor hd=new HolidayDescriptor();
             hd.setHolidayName(h.getDescription(Locale.GERMAN));
             hd.setRegionName(ch.getDescription(Locale.GERMAN));
-            hd.setDate(h.getDate().toDate());
+            Date tempDate=Date.from(h.getDate().atStartOfDay(ZoneId.systemDefault()).toInstant());
+            hd.setDate(tempDate);
+            //hd.setDate(h.getDate().toDate());
             list.add(hd);
         }
         
@@ -802,7 +809,7 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
         if(countryId==null || "".equals(countryId))
             countryId=HolidayCalendar.GERMANY.getId();
         
-        ArrayList<CalendarRegion> areas=new ArrayList<CalendarRegion>();
+        ArrayList<CalendarRegion> areas=new ArrayList<>();
         HolidayManager m=HolidayManager.getInstance(countryId);
         String countryName=m.getCalendarHierarchy().getDescription(Locale.GERMAN);
         for(CalendarHierarchy ch: m.getCalendarHierarchy().getChildren().values()) {
@@ -1031,7 +1038,7 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
             }
             rs = st.executeQuery();
 
-            List<Group> userGroups = new ArrayList<Group>();
+            List<Group> userGroups = new ArrayList<>();
             try {
                 userGroups = this.securityFacade.getGroupsForUser(context.getCallerPrincipal().getName());
             } catch (Throwable t) {
@@ -1146,6 +1153,21 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
     public List<CalendarSetup> getAllCalendarSetups() {
         return this.calendarSetups.findAll();
     }
+    
+    @Override
+    @RolesAllowed({"loginRole"})
+    public List<CalendarSetup> getCalendarSetupsForUser(String principalId) {
+        List<CalendarSetup> returnList=new ArrayList<>();
+        List<CalendarAccess> acc=this.calendarAccess.findByUser(principalId);
+        if(acc!=null) {
+            for(CalendarAccess ca: acc) {
+                CalendarSetup cs=this.calendarSetups.find(ca.getCalendarId());
+                if(cs!=null)
+                    returnList.add(cs);
+            }
+        }
+        return returnList;
+    }
 
     @Override
     @RolesAllowed({"adminRole"})
@@ -1168,6 +1190,12 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
     @RolesAllowed({"adminRole"})
     public void removeCalendarSetup(CalendarSetup cs) {
         this.calendarSetups.remove(cs);
+    }
+
+    @Override
+    @RolesAllowed({"adminRole"})
+    public void runFullCalendarSync() {
+        this.calendarSync.runFullCalendarSync();
     }
     
 }

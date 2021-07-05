@@ -682,7 +682,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 @NamedQueries({
     @NamedQuery(name = "CalendarSetup.findAll", query = "SELECT p FROM CalendarSetup p"),
     @NamedQuery(name = "CalendarSetup.findById", query = "SELECT p FROM CalendarSetup p WHERE p.id = :id"),
-    @NamedQuery(name = "CalendarSetup.findByName", query = "SELECT p FROM CalendarSetup p WHERE p.name = :name")})
+    @NamedQuery(name = "CalendarSetup.findByHref", query = "SELECT p FROM CalendarSetup p WHERE p.href = :href")})
 public class CalendarSetup implements Serializable, EventTypes {
 
     protected static long serialVersionUID = 1L;

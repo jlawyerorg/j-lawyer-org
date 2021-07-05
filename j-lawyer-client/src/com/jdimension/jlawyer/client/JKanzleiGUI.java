@@ -1074,6 +1074,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuAddressCustomFields = new javax.swing.JMenuItem();
         mnuPartyTypes = new javax.swing.JMenuItem();
         mnuAddressBookSync = new javax.swing.JMenuItem();
+        mnuAddressBookSyncNow = new javax.swing.JMenuItem();
         mnuArchiveFileOptions = new javax.swing.JMenu();
         mnuArchiveFileOptionsDictateSign = new javax.swing.JMenuItem();
         mnuArchiveFileOptionsReviewReasons = new javax.swing.JMenuItem();
@@ -1092,6 +1093,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuCustomLauncherOptions = new javax.swing.JMenuItem();
         mnuCalendarOptions = new javax.swing.JMenu();
         mnuCalendarSetup = new javax.swing.JMenuItem();
+        mnuCalendarSyncNow = new javax.swing.JMenuItem();
         jSeparator2 = new javax.swing.JSeparator();
         mnuUserProfile = new javax.swing.JMenuItem();
         mnuProfileInfo = new javax.swing.JMenuItem();
@@ -1429,13 +1431,22 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuAddressOptions.add(mnuPartyTypes);
 
         mnuAddressBookSync.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_share_black_48dp.png"))); // NOI18N
-        mnuAddressBookSync.setText(bundle.getString("menu.settings.documents.scanner")); // NOI18N
+        mnuAddressBookSync.setText("Synchronisation konfigurieren");
         mnuAddressBookSync.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 mnuAddressBookSyncActionPerformed(evt);
             }
         });
         mnuAddressOptions.add(mnuAddressBookSync);
+
+        mnuAddressBookSyncNow.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_share_black_48dp.png"))); // NOI18N
+        mnuAddressBookSyncNow.setText("Synchronisation ausführen");
+        mnuAddressBookSyncNow.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuAddressBookSyncNowActionPerformed(evt);
+            }
+        });
+        mnuAddressOptions.add(mnuAddressBookSyncNow);
 
         mnuOptions.add(mnuAddressOptions);
 
@@ -1579,7 +1590,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuCalendarOptions.setText("Kalender");
 
         mnuCalendarSetup.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_share_black_48dp.png"))); // NOI18N
-        mnuCalendarSetup.setText("kalender und Synchronisation");
+        mnuCalendarSetup.setText("Kalender und Synchronisation konfigurieren");
         mnuCalendarSetup.setActionCommand("Kalender-Synchronisation");
         mnuCalendarSetup.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -1587,6 +1598,15 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             }
         });
         mnuCalendarOptions.add(mnuCalendarSetup);
+
+        mnuCalendarSyncNow.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_share_black_48dp.png"))); // NOI18N
+        mnuCalendarSyncNow.setText("Synchronisation durchführen");
+        mnuCalendarSyncNow.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuCalendarSyncNowActionPerformed(evt);
+            }
+        });
+        mnuCalendarOptions.add(mnuCalendarSyncNow);
 
         mnuOptions.add(mnuCalendarOptions);
         mnuOptions.add(jSeparator2);
@@ -2448,6 +2468,34 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             }
     }//GEN-LAST:event_mnuAddressBookSyncActionPerformed
 
+    private void mnuCalendarSyncNowActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuCalendarSyncNowActionPerformed
+        if (checkAdmin()) {
+            ClientSettings settings = ClientSettings.getInstance();
+            try {
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                locator.lookupCalendarServiceRemote().runFullCalendarSync();
+                JOptionPane.showMessageDialog(this, "Synchronisation gestartet.", java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.hint"), JOptionPane.INFORMATION_MESSAGE);
+            } catch (Exception ex) {
+                log.error(ex);
+                JOptionPane.showMessageDialog(this, "Synchronisation konnte nicht gestartet werden: " + ex.getMessage(), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.error"), JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }//GEN-LAST:event_mnuCalendarSyncNowActionPerformed
+
+    private void mnuAddressBookSyncNowActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuAddressBookSyncNowActionPerformed
+        if (checkAdmin()) {
+            ClientSettings settings = ClientSettings.getInstance();
+            try {
+                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                locator.lookupAddressServiceRemote().runFullAddressBookSync();
+                JOptionPane.showMessageDialog(this, "Synchronisation gestartet.", java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.hint"), JOptionPane.INFORMATION_MESSAGE);
+            } catch (Exception ex) {
+                log.error(ex);
+                JOptionPane.showMessageDialog(this, "Synchronisation konnte nicht gestartet werden: " + ex.getMessage(), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.error"), JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }//GEN-LAST:event_mnuAddressBookSyncNowActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -2471,6 +2519,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     private javax.swing.JLabel lblUpdateStatus;
     private javax.swing.JMenuItem mnuAbout;
     private javax.swing.JMenuItem mnuAddressBookSync;
+    private javax.swing.JMenuItem mnuAddressBookSyncNow;
     private javax.swing.JMenuItem mnuAddressCustomFields;
     private javax.swing.JMenuItem mnuAddressImport;
     private javax.swing.JMenu mnuAddressOptions;
@@ -2502,6 +2551,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     private javax.swing.JMenu mnuCalculations;
     private javax.swing.JMenu mnuCalendarOptions;
     private javax.swing.JMenuItem mnuCalendarSetup;
+    private javax.swing.JMenuItem mnuCalendarSyncNow;
     private javax.swing.JCheckBoxMenuItem mnuChkRandomBackground;
     private javax.swing.JMenuItem mnuCustomLauncherOptions;
     private javax.swing.JMenuItem mnuDocumentFolderTemplates;

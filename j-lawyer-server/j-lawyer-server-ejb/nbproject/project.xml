@@ -10,7 +10,6 @@
             <included-library dirs="200">reference.j-lawyer-server-common.jar</included-library>
             <included-library dirs="200">file.reference.joda-time-2.1.jar</included-library>
             <included-library dirs="200">file.reference.log4j-1.2.17.jar</included-library>
-            <included-library dirs="200">file.reference.jollyday-0.4.7.jar</included-library>
             <included-library dirs="200">file.reference.j-lawyer-drebis-stubs.jar</included-library>
             <included-library dirs="200">file.reference.lucene-analyzers-common-4.7.0.jar</included-library>
             <included-library dirs="200">file.reference.lucene-core-4.7.0.jar</included-library>
@@ -55,6 +54,7 @@
             <included-library dirs="200">file.reference.xmlbeans-3.1.0.jar</included-library>
             <included-library dirs="200">file.reference.libphonenumber-8.12.18.jar</included-library>
             <included-library dirs="200">file.reference.j-lawyer-cloud.jar</included-library>
+            <included-library dirs="200">file.reference.jollyday-0.5.10.jar</included-library>
             <source-roots>
                 <root id="src.dir"/>
             </source-roots>
