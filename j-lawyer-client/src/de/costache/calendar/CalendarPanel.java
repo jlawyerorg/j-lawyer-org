@@ -663,11 +663,14 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package de.costache.calendar;
 
+import com.jdimension.jlawyer.client.configuration.PopulateOptionsEditor;
+import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import com.jdimension.jlawyer.client.editors.ThemeableEditor;
+import com.jdimension.jlawyer.client.editors.files.ArchiveFilePanel;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 import de.costache.calendar.events.IntervalChangedEvent;
 import de.costache.calendar.events.IntervalChangedListener;
 import de.costache.calendar.events.IntervalSelectionEvent;
-import de.costache.calendar.events.IntervalSelectionListener;
 import de.costache.calendar.events.ModelChangedEvent;
 import de.costache.calendar.events.ModelChangedListener;
 import de.costache.calendar.events.SelectionChangedEvent;
@@ -677,6 +680,7 @@ import de.costache.calendar.model.EventType;
 import de.costache.calendar.util.CalendarUtil;
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Image;
 import java.awt.event.ActionEvent;
@@ -688,14 +692,16 @@ import java.util.HashMap;
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
-import javax.swing.JSeparator;
 import javax.swing.JToolBar;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
+import org.apache.log4j.Logger;
 import themes.colors.DefaultColorTheme;
 
 /**
@@ -704,29 +710,41 @@ import themes.colors.DefaultColorTheme;
  */
 public class CalendarPanel extends javax.swing.JPanel {
 
+    private static final Logger log=Logger.getLogger(CalendarPanel.class.getName());
     private final SimpleDateFormat sdf = new SimpleDateFormat("dd MM yyyy HH:mm:ss:SSS");
-    
+
     private JMenuBar menuBar;
     private JMenu fileMenu;
     private JMenuItem exitMenuItem;
     private JCalendar jCalendar;
     private JToolBar toolBar;
     private JPopupMenu popup;
-    private JMenuItem removeMenuItem;
+    private JMenuItem mnuOpenCase;
 
-    private JButton removeButton;
-
-    private JButton addButton;
+//    private JButton removeButton;
+//    private JButton addButton;
+    
+    private String detailsEditorClass;
+    private Image backgroundImage=null;
+    private String parentClass=null;
 
     /**
      * Creates new form CalendarPanel
      */
     public CalendarPanel() {
+        
+        
         initComponents();
 
         initGui();
         //initData();
         bindListeners();
+    }
+    
+    public void setParentEditor(String parentClass, String detailsEditorClass, Image backgroundImage) {
+        this.detailsEditorClass=detailsEditorClass;
+        this.backgroundImage=backgroundImage;
+        this.parentClass=parentClass;
     }
 
     private void initGui() {
@@ -743,30 +761,57 @@ public class CalendarPanel extends javax.swing.JPanel {
         toolBar = new JToolBar("Controls");
 //        addButton = new JButton("Hinzufügen");
 //        removeButton = new JButton("Löschen");
-        addButton = new JButton("Hinzufügen");
-        addButton.setBackground(DefaultColorTheme.COLOR_LOGO_GREEN);
-        removeButton = new JButton("Löschen");
-        removeButton.setBackground(DefaultColorTheme.COLOR_LOGO_RED);
+//        addButton = new JButton("Hinzufügen");
+//        addButton.setBackground(DefaultColorTheme.COLOR_LOGO_GREEN);
+//        removeButton = new JButton("Löschen");
+//        removeButton.setBackground(DefaultColorTheme.COLOR_LOGO_RED);
 
-        Image addImg = null;
-        Image removeImg = null;
-        try {
-            addImg = ImageIO.read(getClass().getResource("/icons/edit_add.png"));
-            removeImg = ImageIO.read(getClass().getResource("/icons/editdelete.png"));
-            addButton.setIcon(new ImageIcon(addImg));
-            removeButton.setIcon(new ImageIcon(removeImg));
-        } catch (final Exception e) {
+//        Image addImg = null;
+//        Image removeImg = null;
+//        try {
+//            addImg = ImageIO.read(getClass().getResource("/icons/edit_add.png"));
+//            removeImg = ImageIO.read(getClass().getResource("/icons/editdelete.png"));
+//            addButton.setIcon(new ImageIcon(addImg));
+//            removeButton.setIcon(new ImageIcon(removeImg));
+//        } catch (final Exception e) {
+//
+//        }
+//        toolBar.add(addButton);
+//        toolBar.add(removeButton);
 
-        }
-        toolBar.add(addButton);
-        toolBar.add(removeButton);
+        mnuOpenCase = new JMenuItem("Akte bearbeiten");
+        mnuOpenCase.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder.png")));
+        mnuOpenCase.setToolTipText("gewählte Akte bearbeiten");
+        mnuOpenCase.addActionListener((java.awt.event.ActionEvent evt) -> {
+            Collection<CalendarEvent> selected = this.jCalendar.getSelectedCalendarEvents();
+            if (!selected.isEmpty()) {
+                CalendarEvent ce=selected.iterator().next();
+                Object editor;
+                try {
+                    editor = EditorsRegistry.getInstance().getEditor(this.detailsEditorClass);
+                    if(editor==null)
+                        return;
+                    
+                    if (editor instanceof ThemeableEditor) {
+                        // inherit the background to newly created child editors
+                        ((ThemeableEditor) editor).setBackgroundImage(this.backgroundImage);
+                    }
+                    if (editor instanceof PopulateOptionsEditor) {
+                        ((PopulateOptionsEditor) editor).populateOptions();
+                    }
+                    ((ArchiveFilePanel) editor).setArchiveFileDTO(ce.getCaseDto());
+                    ((ArchiveFilePanel) editor).setOpenedFromEditorClass(this.parentClass);
+                    EditorsRegistry.getInstance().setMainEditorsPaneView((Component) editor);
 
-        removeMenuItem = new JMenuItem("Remove");
-        removeMenuItem.setIcon(new ImageIcon(removeImg));
+                } catch (Exception ex) {
+                    log.error("Error creating editor from class " + this.detailsEditorClass, ex);
+                    JOptionPane.showMessageDialog(this, "Fehler beim Laden des Editors: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        });
 
         popup = new JPopupMenu();
-        popup.add(removeMenuItem);
-        popup.add(new JSeparator());
+        popup.add(mnuOpenCase);
 
         jCalendar = new JCalendar();
         jCalendar.setPreferredSize(new Dimension(1024, 768));
@@ -821,53 +866,72 @@ public class CalendarPanel extends javax.swing.JPanel {
 //        calendarEvent = new CalendarEvent("Overlapping 2", start, end);
 //        jCalendar.addCalendarEvent(calendarEvent);
 //    }
-    
     public void setData(Collection<ArchiveFileReviewsBean> dtos) {
+
+        this.toolBar.removeAll();
         
-        for(CalendarEvent ce: this.jCalendar.getCalendarEvents())
+        for (CalendarEvent ce : this.jCalendar.getCalendarEvents()) {
             this.jCalendar.removeCalendarEvent(ce);
+        }
 
-        HashMap<String,EventType> types = new HashMap<>();
+        HashMap<String, EventType> types = new HashMap<>();
 
-        CalendarEvent calendarEvent;
-        for (ArchiveFileReviewsBean rev: dtos) {
-            
-            if(rev.getCalendarSetup()!=null) {
-                if(!types.containsKey(rev.getCalendarSetup().getId())) {
-                    EventType t=new EventType();
-                    t.setBackgroundColor(new Color(rev.getCalendarSetup().getBackground()));
+        for (ArchiveFileReviewsBean rev : dtos) {
+            CalendarEvent calendarEvent;
+            if (rev.getCalendarSetup() != null) {
+                if (!types.containsKey(rev.getCalendarSetup().getId())) {
+                    EventType t = new EventType();
+                    Color backColor=new Color(rev.getCalendarSetup().getBackground());
+                    t.setBackgroundColor(backColor);
                     t.setForegroundColor(Color.WHITE);
                     t.setName(rev.getCalendarSetup().getDisplayName() + " (" + rev.getEventTypeName() + ")");
                     types.put(rev.getCalendarSetup().getId(), t);
+                    
+                    JLabel lbl=new JLabel();
+                    lbl.setText(" " + rev.getCalendarSetup().getDisplayName() + " ");
+                    lbl.setToolTipText(rev.getCalendarSetup().getDisplayName() + " (" + rev.getEventTypeName() + ")");
+                    lbl.setBackground(backColor);
+                    lbl.setOpaque(true);
+                    lbl.setForeground(Color.WHITE);
+                    this.toolBar.add(lbl);
+                    JLabel lbl2=new JLabel();
+                    lbl2.setText("  ");
+                    this.toolBar.add(lbl2);
                 }
             }
-            
+
             int hour = rev.getBeginDate().getHours();
             final int min = rev.getBeginDate().getMinutes();
             final int day = rev.getBeginDate().getDate();
-            final int month = rev.getBeginDate().getMonth()+1;
-            final int year = rev.getBeginDate().getYear()+1900;
+            final int month = rev.getBeginDate().getMonth() + 1;
+            final int year = rev.getBeginDate().getYear() + 1900;
             final Date start = CalendarUtil.createDate(year, month, day, hour, min, 0, 0);
-            
+
             Date end = null;
-            if(rev.getEndDate()!=null) {
-            int ehour = rev.getEndDate().getHours();
-            final int emin = rev.getEndDate().getMinutes();
-            final int eday = rev.getEndDate().getDate();
-            final int emonth = rev.getEndDate().getMonth()+1;
-            final int eyear = rev.getEndDate().getYear()+1900;
-             end = CalendarUtil.createDate(eyear, emonth, eday, ehour, emin, 0, 0);
+            if (rev.getEndDate() != null) {
+                int ehour = rev.getEndDate().getHours();
+                final int emin = rev.getEndDate().getMinutes();
+                final int eday = rev.getEndDate().getDate();
+                final int emonth = rev.getEndDate().getMonth() + 1;
+                final int eyear = rev.getEndDate().getYear() + 1900;
+                end = CalendarUtil.createDate(eyear, emonth, eday, ehour, emin, 0, 0);
             } else {
-                end=CalendarUtil.createDate(year, month, day, hour+1, min, 0, 0);
+                end = CalendarUtil.createDate(year, month, day, hour + 1, min, 0, 0);
             }
             calendarEvent = new CalendarEvent(rev.getSummary(), start, end);
             calendarEvent.setDescription(rev.getDescription());
             calendarEvent.setLocation(rev.getLocation());
-            
-            if(rev.getCalendarSetup()!=null) {
+
+            if (rev.getCalendarSetup() != null) {
                 calendarEvent.setType(types.get(rev.getCalendarSetup().getId()));
             }
+
+            if (rev.getArchiveFileKey() != null) {
+                calendarEvent.setCaseDto(rev.getArchiveFileKey());
+            }
             
+            calendarEvent.setAssignee(rev.getAssignee());
+
             calendarEvent.setAllDay(!rev.hasEndDateAndTime());
             jCalendar.addCalendarEvent(calendarEvent);
         }
@@ -883,37 +947,37 @@ public class CalendarPanel extends javax.swing.JPanel {
             }
         });
 
-        addButton.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(final ActionEvent arg0) {
-
-//                final int hour = r.nextInt(19);
-//                final int min = r.nextInt(59);
-//                final int day = r.nextInt(28);
-//                final int month = r.nextInt(11);
-//                final int year = 2021;
-//                final Date start = CalendarUtil.createDate(year, month, day, hour, min, 0, 0);
-//                final Date end = CalendarUtil.createDate(year, month, day, hour + 1 + r.nextInt(4), r.nextInt(59), 0, 0);
-//                final CalendarEvent calendarEvent = new CalendarEvent("Added ", start, end);
+//        addButton.addActionListener(new ActionListener() {
 //
-//                jCalendar.addCalendarEvent(calendarEvent);
-//                jCalendar.setDisplayStrategy(DisplayStrategy.Type.DAY, start);
-            }
-        });
+//            @Override
+//            public void actionPerformed(final ActionEvent arg0) {
+//
+////                final int hour = r.nextInt(19);
+////                final int min = r.nextInt(59);
+////                final int day = r.nextInt(28);
+////                final int month = r.nextInt(11);
+////                final int year = 2021;
+////                final Date start = CalendarUtil.createDate(year, month, day, hour, min, 0, 0);
+////                final Date end = CalendarUtil.createDate(year, month, day, hour + 1 + r.nextInt(4), r.nextInt(59), 0, 0);
+////                final CalendarEvent calendarEvent = new CalendarEvent("Added ", start, end);
+////
+////                jCalendar.addCalendarEvent(calendarEvent);
+////                jCalendar.setDisplayStrategy(DisplayStrategy.Type.DAY, start);
+//            }
+//        });
 
-        removeButton.addActionListener(new ActionListener() {
+//        removeButton.addActionListener(new ActionListener() {
+//
+//            @Override
+//            public void actionPerformed(final ActionEvent arg0) {
+//                final Collection<CalendarEvent> selected = jCalendar.getSelectedCalendarEvents();
+//                for (final CalendarEvent event : selected) {
+//                    jCalendar.removeCalendarEvent(event);
+//                }
+//            }
+//        });
 
-            @Override
-            public void actionPerformed(final ActionEvent arg0) {
-                final Collection<CalendarEvent> selected = jCalendar.getSelectedCalendarEvents();
-                for (final CalendarEvent event : selected) {
-                    jCalendar.removeCalendarEvent(event);
-                }
-            }
-        });
-
-        removeMenuItem.addActionListener(new ActionListener() {
+        mnuOpenCase.addActionListener(new ActionListener() {
 
             @Override
             public void actionPerformed(ActionEvent arg0) {
@@ -977,7 +1041,7 @@ public class CalendarPanel extends javax.swing.JPanel {
 
             @Override
             public void popupMenuWillBecomeVisible(PopupMenuEvent arg0) {
-//				removeMenuItem.setEnabled(jCalendar.getSelectedEvents().size() > 0);
+//				mnuOpenCase.setEnabled(jCalendar.getSelectedEvents().size() > 0);
             }
 
             @Override

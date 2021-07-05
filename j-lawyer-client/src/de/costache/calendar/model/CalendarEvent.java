@@ -15,6 +15,7 @@
  */
 package de.costache.calendar.model;
 
+import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import java.util.Date;
 import java.util.Observable;
 
@@ -27,6 +28,7 @@ public class CalendarEvent extends Observable implements Comparable<CalendarEven
     private String summary;
     private String description;
     private String location;
+    protected String assignee;
     private Date start;
     private Date end;
     private EventType type;
@@ -34,6 +36,8 @@ public class CalendarEvent extends Observable implements Comparable<CalendarEven
     private boolean allDay;
     private int priority;
     private boolean holiday;
+    
+    protected ArchiveFileBean caseDto=null;
 
     /**
      *
@@ -279,8 +283,66 @@ public class CalendarEvent extends Observable implements Comparable<CalendarEven
         return "CalendarEvent [start=" + start + ", end=" + end + ", type=" + type + "]";
     }
 
+    public String getCaseLawyer() {
+        return this.getCaseDto().getLawyer();
+    }
+
+    public String getAssignee() {
+        return this.assignee;
+    }
+
     public enum Property {
         SUMMARY, DESCRIPTION, LOCATION, START, END, TYPE, ALLDAY, PRIORITY
     }
 
+    /**
+     * @return the caseId
+     */
+    public String getCaseId() {
+        return this.getCaseDto().getId();
+    }
+
+    /**
+     * @return the caseNumber
+     */
+    public String getCaseNumber() {
+        return this.getCaseDto().getFileNumber();
+    }
+
+    /**
+     * @return the caseName
+     */
+    public String getCaseName() {
+        return this.getCaseDto().getName();
+    }
+
+    /**
+     * @return the caseReason
+     */
+    public String getCaseReason() {
+        return this.getCaseDto().getReason();
+    }
+
+    /**
+     * @return the caseDto
+     */
+    public ArchiveFileBean getCaseDto() {
+        return caseDto;
+    }
+
+    /**
+     * @param caseDto the caseDto to set
+     */
+    public void setCaseDto(ArchiveFileBean caseDto) {
+        this.caseDto = caseDto;
+    }
+
+    /**
+     * @param assignee the assignee to set
+     */
+    public void setAssignee(String assignee) {
+        this.assignee = assignee;
+    }
+
+    
 }

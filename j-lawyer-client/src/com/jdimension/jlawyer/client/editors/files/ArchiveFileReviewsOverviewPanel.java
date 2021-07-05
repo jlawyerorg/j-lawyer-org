@@ -696,6 +696,7 @@ public class ArchiveFileReviewsOverviewPanel extends javax.swing.JPanel implemen
         } else {
             this.detailsEditorClass = ViewArchiveFileDetailsPanel.class.getName();
         }
+        this.calendarPanel1.setParentEditor(this.getClass().getName(), detailsEditorClass, backgroundImage);
         String[] colNames=new String[] {"Datum / Zeit", "Typ", "Aktenzeichen", "Kurzrubrum", "Grund", "Beschreibung", "Anwalt", "verantwortlich"};
         QuickArchiveFileSearchTableModel model=new QuickArchiveFileSearchTableModel(colNames, 0);
         this.tblResults.setModel(model);
@@ -706,6 +707,7 @@ public class ArchiveFileReviewsOverviewPanel extends javax.swing.JPanel implemen
     
     public void setBackgroundImage(Image image) {
         this.backgroundImage=image;
+        this.calendarPanel1.setParentEditor(this.getClass().getName(), detailsEditorClass, backgroundImage);
         this.tblResults.setOpaque(false);
         
     }

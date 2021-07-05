@@ -39,8 +39,30 @@ public class DefaultCalendarEventFormat implements CalendarEventFormat {
         formatted.append("</tr>");
         
         formatted.append("<tr>");
+        formatted.append("<td><b>Akte: </b></td>");
+        formatted.append("<td>").append(calendarEvent.getCaseNumber()).append("</td>");
+        formatted.append("</tr>");
+        
+        formatted.append("<tr>");
+        formatted.append("<td></td>");
+        formatted.append("<td>").append(calendarEvent.getCaseName()).append("</td>");
+        formatted.append("</tr>");
+        formatted.append("<tr>");
+        formatted.append("<td></td>");
+        formatted.append("<td>").append(calendarEvent.getCaseReason()).append("</td>");
+        formatted.append("</tr>");
+        formatted.append("<tr>");
+        formatted.append("<td></td>");
+        formatted.append("<td>").append("Anwalt: " + calendarEvent.getCaseLawyer()).append("</td>");
+        formatted.append("</tr>");
+        
+        formatted.append("<tr>");
         formatted.append("<td><b>Grund: </b></td>");
         formatted.append("<td>").append(calendarEvent.getSummary()).append("</td>");
+        formatted.append("</tr>");
+        formatted.append("<tr>");
+        formatted.append("<td><b>verantwortlich: </b></td>");
+        formatted.append("<td>").append(calendarEvent.getAssignee()).append("</td>");
         formatted.append("</tr>");
 
         if (calendarEvent.getDescription() != null) {
