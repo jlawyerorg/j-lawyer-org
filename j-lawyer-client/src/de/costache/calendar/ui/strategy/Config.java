@@ -52,9 +52,9 @@ public class Config {
         middleLineColor = new Color(240, 240, 240);
 
         //todayHeaderBackgroundColor = new Color(240, 230, 140, 128);
-        todayHeaderBackgroundColor = DefaultColorTheme.COLOR_LOGO_GREEN;
+        todayHeaderBackgroundColor = DefaultColorTheme.COLOR_LOGO_BLUE;
         //dayHeaderBackgroundColor = new Color(173, 216, 230, 200);
-        dayHeaderBackgroundColor = DefaultColorTheme.COLOR_LOGO_GREEN.brighter();
+        dayHeaderBackgroundColor = DefaultColorTheme.COLOR_LOGO_GREEN;
 
         //todayHeaderForegroundColor = Color.black;
         todayHeaderForegroundColor = Color.white;

@@ -49,7 +49,7 @@ class WeekDisplayStrategy implements DisplayStrategy {
 
 	private final ContentPanel parent;
     private final JCalendar calendar;
-	private final SimpleDateFormat sdf = new SimpleDateFormat("dd MMMM yyyy");
+	private final SimpleDateFormat sdf = new SimpleDateFormat("dd. MMMM yyyy");
 	private final DayPanel[] days = new DayPanel[7];
 
 	private JPanel displayPanel;
@@ -102,6 +102,7 @@ class WeekDisplayStrategy implements DisplayStrategy {
 		final Calendar c = CalendarUtil.copyCalendar(start, true);
 		for (int i = 0; i < 7; i++) {
 			days[i] = new DayPanel(parent.getOwner(), c.getTime(), 0.02f);
+                        //days[i] = new DayPanel(parent.getOwner(), c.getTime(), 0.1f);
 			headersPanel.add(days[i].getHeaderPanel());
 			gbc.gridx = i + 1;
 			gbc.gridy = 0;
@@ -115,7 +116,8 @@ class WeekDisplayStrategy implements DisplayStrategy {
 
 		gbc.gridx = 0;
 		gbc.gridy = 0;
-		gbc.weighty = 0.02;
+		//gbc.weighty = 0.02;
+                gbc.weighty = 0.1;
 		gbc.weightx = 1;
 		gbc.insets = new Insets(0, 41, 0, swidth);
 		displayPanel.add(headersPanel, gbc);

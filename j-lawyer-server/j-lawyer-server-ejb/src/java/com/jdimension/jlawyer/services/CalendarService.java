@@ -794,7 +794,6 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
             hd.setRegionName(ch.getDescription(Locale.GERMAN));
             Date tempDate=Date.from(h.getDate().atStartOfDay(ZoneId.systemDefault()).toInstant());
             hd.setDate(tempDate);
-            //hd.setDate(h.getDate().toDate());
             list.add(hd);
         }
         
@@ -920,17 +919,20 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
             throw new EJBException("Wiedervorlagensuche konnte nicht ausgeführt werden.", sqle);
         } finally {
             try {
-                rs.close();
+                if(rs!=null)
+                    rs.close();
             } catch (Throwable t) {
                 log.error(t);
             }
             try {
-                st.close();
+                if(st!=null)
+                    st.close();
             } catch (Throwable t) {
                 log.error(t);
             }
             try {
-                con.close();
+                if(con!=null)
+                    con.close();
             } catch (Throwable t) {
                 log.error(t);
             }

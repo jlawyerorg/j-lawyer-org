@@ -664,15 +664,12 @@
 package com.jdimension.jlawyer.client.bea;
 
 import com.jdimension.jlawyer.persistence.AppUserBean;
-import org.apache.log4j.Logger;
 
 /**
  *
  * @author jens
  */
 public class BeaUtils {
-
-    private static final Logger log = Logger.getLogger(BeaUtils.class.getName());
 
     public static boolean hasCertificateConfig(AppUserBean u) {
 

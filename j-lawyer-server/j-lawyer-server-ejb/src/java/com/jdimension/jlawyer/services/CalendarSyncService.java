@@ -705,6 +705,15 @@ public class CalendarSyncService implements CalendarSyncServiceLocal {
         this.fullCalendarSyncImpl();
     }
 
+    private String getEventDescription(ArchiveFileBean caseContext, ArchiveFileReviewsBean event) {
+        StringBuilder description = new StringBuilder();
+        description.append(caseContext.getFileNumber()).append(" - ").append(caseContext.getName()).append(System.lineSeparator()).append("(").append(caseContext.getReason()).append(")");
+        description.append(System.lineSeparator());
+        description.append(System.lineSeparator());
+        description.append(event.getDescription());
+        return description.toString();
+    }
+
     @Override
     @RolesAllowed({"loginRole"})
     @Asynchronous
@@ -714,17 +723,12 @@ public class CalendarSyncService implements CalendarSyncServiceLocal {
             log.info("Syncing new event to cloud: " + event.getId());
 
             try {
-                StringBuilder description = new StringBuilder();
-                description.append(caseContext.getFileNumber()).append(" - ").append(caseContext.getName()).append(System.lineSeparator()).append("(").append(caseContext.getReason()).append(")");
-                description.append(System.lineSeparator());
-                description.append(System.lineSeparator());
-                description.append(event.getDescription());
                 CalendarSetup cs = event.getCalendarSetup();
                 NextcloudCalendarConnector nc = this.getConnector(cs);
                 if (nc == null) {
                     return;
                 }
-                String newEventHref = nc.createEvent(event.getId(), cs.getHref(), event.getSummary(), description.toString(), event.getLocation(), event.getBeginDate(), event.getEndDate(), !event.hasEndDateAndTime());
+                String newEventHref = nc.createEvent(event.getId(), cs.getHref(), event.getSummary(), this.getEventDescription(caseContext, event), event.getLocation(), event.getBeginDate(), event.getEndDate(), !event.hasEndDateAndTime());
 
             } catch (Exception ex) {
                 log.error("Syncing new event to cloud failed: " + event.getId(), ex);
@@ -757,18 +761,13 @@ public class CalendarSyncService implements CalendarSyncServiceLocal {
             } else {
 
                 try {
-                    StringBuilder description = new StringBuilder();
-                    description.append(caseContext.getFileNumber()).append(" - ").append(caseContext.getName()).append(System.lineSeparator()).append("(").append(caseContext.getReason()).append(")");
-                    description.append(System.lineSeparator());
-                    description.append(System.lineSeparator());
-                    description.append(event.getDescription());
                     CalendarSetup cs = event.getCalendarSetup();
                     NextcloudCalendarConnector nc = this.getConnector(cs);
                     if (nc == null) {
                         return;
                     }
-                    
-                    String updatedEventHref = nc.updateEvent(event.getId(), cs.getHref(), event.getSummary(), description.toString(), event.getLocation(), event.getBeginDate(), event.getEndDate(), !event.hasEndDateAndTime());
+
+                    String updatedEventHref = nc.updateEvent(event.getId(), cs.getHref(), event.getSummary(), this.getEventDescription(caseContext, event), event.getLocation(), event.getBeginDate(), event.getEndDate(), !event.hasEndDateAndTime());
 
                 } catch (Exception ex) {
                     log.error("Syncing updated event to cloud failed: " + event.getId(), ex);

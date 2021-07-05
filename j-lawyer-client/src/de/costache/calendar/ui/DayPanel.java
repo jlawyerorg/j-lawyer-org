@@ -34,7 +34,7 @@ import de.costache.calendar.ui.strategy.DisplayStrategy.Type;
  */
 public class DayPanel {
 
-	private final SimpleDateFormat sdf = new SimpleDateFormat("EEE dd MMM");
+	private final SimpleDateFormat sdf = new SimpleDateFormat("EEE dd. MMM");
 	private Date date;
 	private final DayHeaderPanel headerPanel;
 	private final DayContentPanel contentPanel;

@@ -48,7 +48,7 @@ class DayDisplayStrategy implements DisplayStrategy {
 
 	private final ContentPanel parent;
     private final JCalendar calendar;
-	private final SimpleDateFormat sdf = new SimpleDateFormat("dd MMMM yyyy");
+	private final SimpleDateFormat sdf = new SimpleDateFormat("dd. MMMM yyyy");
 	private DayPanel day;
 	private JPanel displayPanel;
 
@@ -100,7 +100,8 @@ class DayDisplayStrategy implements DisplayStrategy {
 
 		gbc.gridx = 0;
 		gbc.gridy = 0;
-		gbc.weighty = 0.02;
+		//gbc.weighty = 0.02;
+                gbc.weighty = 0.1;
 		gbc.insets = new Insets(0, 40, 0, swidth);
 		displayPanel.add(day.getHeaderPanel(), gbc);
 		gbc.gridx = 0;

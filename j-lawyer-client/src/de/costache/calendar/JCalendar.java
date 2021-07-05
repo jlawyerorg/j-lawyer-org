@@ -55,7 +55,7 @@ public class JCalendar extends JPanel {
      * Creates a new instance of {@link JCalendar}
      */
     public JCalendar() {
-        intervalChangedListener = new ArrayList<IntervalChangedListener>();
+        intervalChangedListener = new ArrayList<>();
         config = new Config();
         formater = new DefaultCalendarEventFormat();
         selectedDay = Calendar.getInstance();

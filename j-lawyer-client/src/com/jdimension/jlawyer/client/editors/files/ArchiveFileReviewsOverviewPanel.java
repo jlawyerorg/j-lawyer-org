@@ -669,7 +669,6 @@ import com.jdimension.jlawyer.client.editors.ThemeableEditor;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.TableUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
-import de.costache.calendar.demo.JCalendarFrameDemo;
 import java.awt.Component;
 import java.awt.Graphics;
 import java.awt.Image;
@@ -752,11 +751,6 @@ public class ArchiveFileReviewsOverviewPanel extends javax.swing.JPanel implemen
         lblPanelTitle.setFont(new java.awt.Font("Dialog", 1, 24)); // NOI18N
         lblPanelTitle.setForeground(new java.awt.Color(255, 255, 255));
         lblPanelTitle.setText("Wiedervorlagen und Fristen nach Fälligkeit");
-        lblPanelTitle.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                lblPanelTitleMouseClicked(evt);
-            }
-        });
 
         jPanel1.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(255, 255, 255), 2, true));
         jPanel1.setOpaque(false);
@@ -930,13 +924,6 @@ public class ArchiveFileReviewsOverviewPanel extends javax.swing.JPanel implemen
     private void tblResultsMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblResultsMousePressed
         TableUtils.handleRowClick(tblResults, evt);
     }//GEN-LAST:event_tblResultsMousePressed
-
-    private void lblPanelTitleMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblPanelTitleMouseClicked
-        if(evt.getClickCount()==2) {
-            final JCalendarFrameDemo frameTest = new JCalendarFrameDemo();
-		frameTest.setVisible(true);
-        }
-    }//GEN-LAST:event_lblPanelTitleMouseClicked
     
     
     // Variables declaration - do not modify//GEN-BEGIN:variables

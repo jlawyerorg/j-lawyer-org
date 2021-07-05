@@ -25,7 +25,7 @@ import java.util.Collection;
  */
 public class DefaultCalendarEventFormat implements CalendarEventFormat {
 
-    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+    SimpleDateFormat sdf = new SimpleDateFormat("dd.MM.yyyy hh:mm");
 
     @Override
     public String format(CalendarEvent calendarEvent) {
@@ -34,7 +34,7 @@ public class DefaultCalendarEventFormat implements CalendarEventFormat {
         formatted.append("<table>");
 
         formatted.append("<tr>");
-        formatted.append("<td><b>Typ: </b></td>");
+        formatted.append("<td><b>Kalender: </b></td>");
         formatted.append("<td>").append(calendarEvent.getType().getName()).append("</td>");
         formatted.append("</tr>");
         
@@ -79,7 +79,7 @@ public class DefaultCalendarEventFormat implements CalendarEventFormat {
 
     @Override
     public String format(Collection<CalendarEvent> holidays) {
-        if (holidays.size() == 0) {
+        if (holidays.isEmpty()) {
             return null;
         }
         StringBuilder formatted = new StringBuilder();

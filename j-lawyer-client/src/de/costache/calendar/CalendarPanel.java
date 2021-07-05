@@ -684,6 +684,7 @@ import java.awt.event.ActionListener;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -691,10 +692,7 @@ import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
-import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
-import javax.swing.JSplitPane;
-import javax.swing.JTextArea;
 import javax.swing.JToolBar;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
@@ -707,20 +705,14 @@ import themes.colors.DefaultColorTheme;
 public class CalendarPanel extends javax.swing.JPanel {
 
     private final SimpleDateFormat sdf = new SimpleDateFormat("dd MM yyyy HH:mm:ss:SSS");
-    //private final Random r = new Random();
-
+    
     private JMenuBar menuBar;
     private JMenu fileMenu;
     private JMenuItem exitMenuItem;
     private JCalendar jCalendar;
-//    private JSplitPane content;
     private JToolBar toolBar;
-    //private JTextArea description;
     private JPopupMenu popup;
     private JMenuItem removeMenuItem;
-
-    private final String[] names = new String[]{"Team meeting", "Code review", "Project review",
-        "Telephone conference"};
 
     private JButton removeButton;
 
@@ -780,12 +772,6 @@ public class CalendarPanel extends javax.swing.JPanel {
         jCalendar.setPreferredSize(new Dimension(1024, 768));
         jCalendar.setJPopupMenu(popup);
         jCalendar.getConfig().setAllDayPanelVisible(false);
-//		jCalendar.getConfig().setHolidays(Arrays.asList(new Date()));
-
-//        content = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
-//        content.add(jCalendar);
-//        content.add(new JScrollPane(description));
-//        content.setDividerLocation(0.8d);
 
         this.setLayout(new BorderLayout(10, 10));
         this.add(toolBar, BorderLayout.PAGE_START);
@@ -841,25 +827,21 @@ public class CalendarPanel extends javax.swing.JPanel {
         for(CalendarEvent ce: this.jCalendar.getCalendarEvents())
             this.jCalendar.removeCalendarEvent(ce);
 
-        final EventType followup = new EventType();
-        followup.setBackgroundColor(DefaultColorTheme.COLOR_LOGO_BLUE);
-        followup.setForegroundColor(Color.WHITE);
-
-        final EventType respite = new EventType();
-        respite.setBackgroundColor(DefaultColorTheme.COLOR_LOGO_RED);
-        respite.setForegroundColor(Color.WHITE);
-
-        final EventType event = new EventType();
-        event.setBackgroundColor(DefaultColorTheme.COLOR_LOGO_GREEN);
-        event.setForegroundColor(Color.WHITE);
-
-        final EventType[] types = new EventType[3];
-        types[0] = followup;
-        types[1] = respite;
-        types[2] = event;
+        HashMap<String,EventType> types = new HashMap<>();
 
         CalendarEvent calendarEvent;
         for (ArchiveFileReviewsBean rev: dtos) {
+            
+            if(rev.getCalendarSetup()!=null) {
+                if(!types.containsKey(rev.getCalendarSetup().getId())) {
+                    EventType t=new EventType();
+                    t.setBackgroundColor(new Color(rev.getCalendarSetup().getBackground()));
+                    t.setForegroundColor(Color.WHITE);
+                    t.setName(rev.getCalendarSetup().getDisplayName() + " (" + rev.getEventTypeName() + ")");
+                    types.put(rev.getCalendarSetup().getId(), t);
+                }
+            }
+            
             int hour = rev.getBeginDate().getHours();
             final int min = rev.getBeginDate().getMinutes();
             final int day = rev.getBeginDate().getDate();
@@ -882,37 +864,14 @@ public class CalendarPanel extends javax.swing.JPanel {
             calendarEvent.setDescription(rev.getDescription());
             calendarEvent.setLocation(rev.getLocation());
             
-            switch (rev.getEventType()) {
-                case ArchiveFileReviewsBean.EVENTTYPE_EVENT:
-                    calendarEvent.setType(event);
-                    event.setName(rev.getEventTypeName());
-                    break;
-                case ArchiveFileReviewsBean.EVENTTYPE_FOLLOWUP:
-                    calendarEvent.setType(followup);
-                    followup.setName(rev.getEventTypeName());
-                    break;
-                case ArchiveFileReviewsBean.EVENTTYPE_RESPITE:
-                    calendarEvent.setType(respite);
-                    respite.setName(rev.getEventTypeName());
-                    break;
-                default:
-                    calendarEvent.setType(followup);
-                    break;
+            if(rev.getCalendarSetup()!=null) {
+                calendarEvent.setType(types.get(rev.getCalendarSetup().getId()));
             }
             
             calendarEvent.setAllDay(!rev.hasEndDateAndTime());
             jCalendar.addCalendarEvent(calendarEvent);
         }
 
-//        Date start = CalendarUtil.createDate(2013, 1, 31, 12, 45, 0, 0);
-//        Date end = CalendarUtil.createDate(2013, 1, 31, 16, 35, 0, 0);
-//        calendarEvent = new CalendarEvent("Overlapping", start, end);
-//        jCalendar.addCalendarEvent(calendarEvent);
-//
-//        start = CalendarUtil.createDate(2013, 1, 31, 8, 45, 0, 0);
-//        end = CalendarUtil.createDate(2013, 1, 31, 15, 35, 0, 0);
-//        calendarEvent = new CalendarEvent("Overlapping 2", start, end);
-//        jCalendar.addCalendarEvent(calendarEvent);
     }
 
     private void bindListeners() {
@@ -1009,13 +968,9 @@ public class CalendarPanel extends javax.swing.JPanel {
             }
         });
 
-        jCalendar.addIntervalSelectionListener(new IntervalSelectionListener() {
-
-            @Override
-            public void intervalSelected(IntervalSelectionEvent event) {
-                System.out.println("Interval selection changed " + sdf.format(event.getIntervalStart()) + " "
-                        + sdf.format(event.getIntervalEnd()) + "\n");
-            }
+        jCalendar.addIntervalSelectionListener((IntervalSelectionEvent event) -> {
+            System.out.println("Interval selection changed " + sdf.format(event.getIntervalStart()) + " "
+                    + sdf.format(event.getIntervalEnd()) + "\n");
         });
 
         popup.addPopupMenuListener(new PopupMenuListener() {
