@@ -713,9 +713,9 @@ public class CalendarPanel extends javax.swing.JPanel {
     private JMenu fileMenu;
     private JMenuItem exitMenuItem;
     private JCalendar jCalendar;
-    private JSplitPane content;
+//    private JSplitPane content;
     private JToolBar toolBar;
-    private JTextArea description;
+    //private JTextArea description;
     private JPopupMenu popup;
     private JMenuItem removeMenuItem;
 
@@ -776,23 +776,20 @@ public class CalendarPanel extends javax.swing.JPanel {
         popup.add(removeMenuItem);
         popup.add(new JSeparator());
 
-        description = new JTextArea();
-        description.setLineWrap(true);
-        description.setRows(10);
         jCalendar = new JCalendar();
         jCalendar.setPreferredSize(new Dimension(1024, 768));
         jCalendar.setJPopupMenu(popup);
         jCalendar.getConfig().setAllDayPanelVisible(false);
 //		jCalendar.getConfig().setHolidays(Arrays.asList(new Date()));
 
-        content = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
-        content.add(jCalendar);
-        content.add(new JScrollPane(description));
-        content.setDividerLocation(0.8d);
+//        content = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
+//        content.add(jCalendar);
+//        content.add(new JScrollPane(description));
+//        content.setDividerLocation(0.8d);
 
         this.setLayout(new BorderLayout(10, 10));
         this.add(toolBar, BorderLayout.PAGE_START);
-        this.add(content, BorderLayout.CENTER);
+        this.add(jCalendar, BorderLayout.CENTER);
 
     }
 
@@ -972,17 +969,17 @@ public class CalendarPanel extends javax.swing.JPanel {
 
             @Override
             public void eventRemoved(final ModelChangedEvent event) {
-                description.append("Event removed " + event.getCalendarEvent() + "\n");
+                System.out.println("Event removed " + event.getCalendarEvent() + "\n");
             }
 
             @Override
             public void eventChanged(final ModelChangedEvent event) {
-                description.append("Event changed " + event.getCalendarEvent() + "\n");
+                System.out.println("Event changed " + event.getCalendarEvent() + "\n");
             }
 
             @Override
             public void eventAdded(final ModelChangedEvent event) {
-                description.append("Event added " + event.getCalendarEvent() + "\n");
+                System.out.println("Event added " + event.getCalendarEvent() + "\n");
             }
         });
 
@@ -992,14 +989,14 @@ public class CalendarPanel extends javax.swing.JPanel {
             public void selectionChanged(final SelectionChangedEvent event) {
                 if (event.getCalendarEvent() != null) {
                     if (event.getCalendarEvent().isSelected()) {
-                        description.append("Event selected " + event.getCalendarEvent());
+                        System.out.println("Event selected " + event.getCalendarEvent());
                     } else {
-                        description.append("Event deselected " + event.getCalendarEvent());
+                        System.out.println("Event deselected " + event.getCalendarEvent());
                     }
                 } else {
-                    description.append("Selection cleared");
+                    System.out.println("Selection cleared");
                 }
-                description.append("\n");
+                System.out.println("\n");
             }
         });
 
@@ -1007,7 +1004,7 @@ public class CalendarPanel extends javax.swing.JPanel {
 
             @Override
             public void intervalChanged(final IntervalChangedEvent event) {
-                description.append("Interval changed " + sdf.format(event.getIntervalStart()) + " "
+                System.out.println("Interval changed " + sdf.format(event.getIntervalStart()) + " "
                         + sdf.format(event.getIntervalEnd()) + "\n");
             }
         });
@@ -1016,7 +1013,7 @@ public class CalendarPanel extends javax.swing.JPanel {
 
             @Override
             public void intervalSelected(IntervalSelectionEvent event) {
-                description.append("Interval selection changed " + sdf.format(event.getIntervalStart()) + " "
+                System.out.println("Interval selection changed " + sdf.format(event.getIntervalStart()) + " "
                         + sdf.format(event.getIntervalEnd()) + "\n");
             }
         });

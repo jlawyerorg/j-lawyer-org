@@ -18,9 +18,9 @@ check_error $?
 
 ant -buildfile j-lawyer-fax/build.xml jar
 check_error $?
-ant -Dj2ee.server.home=/home/travis -buildfile j-lawyer-server-entities/build.xml dist
-check_error $?
 ant -buildfile j-lawyer-server-common/build.xml jar
+check_error $?
+ant -Dj2ee.server.home=/home/travis -buildfile j-lawyer-server-entities/build.xml dist
 check_error $?
 ant -buildfile j-lawyer-server-api/build.xml jar
 check_error $?
