@@ -679,6 +679,7 @@ import java.awt.Component;
 import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import javax.swing.JOptionPane;
@@ -713,19 +714,21 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
             this.detailsEditorClass = ViewArchiveFileDetailsPanel.class.getName();
         }
         
-        String[] colNames=new String[] {"Datum / Zeit" , "Typ", "Aktenzeichen", "Kurzrubrum", "Grund", "Beschreibung", "erledigt", "Anwalt", "verantwortlich"};
+        String[] colNames=new String[] {"Datum / Zeit" , "Typ", "Aktenzeichen", "Kurzrubrum", "Grund", "Beschreibung", "erledigt", "Anwalt", "verantwortlich", "Kalender"};
         QuickArchiveFileSearchTableModel model=new QuickArchiveFileSearchTableModel(colNames, 0);
         this.tblResults.setModel(model);
         
         this.cmdRefreshActionPerformed(null);
     }
     
+    @Override
     public void setBackgroundImage(Image image) {
         this.backgroundImage=image;
         this.tblResults.setOpaque(false);
         
     }
     
+    @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
         if(this.backgroundImage != null)
@@ -1090,7 +1093,7 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
     }//GEN-LAST:event_mnuOpenArchiveFileActionPerformed
 
     private void tblResultsMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblResultsMouseClicked
-        if(evt.getClickCount()==2 && evt.getButton()==evt.BUTTON1) {
+        if(evt.getClickCount()==2 && evt.getButton()==MouseEvent.BUTTON1) {
             int row=this.tblResults.getSelectedRow();
             ArchiveFileReviewsRowIdentifier id=(ArchiveFileReviewsRowIdentifier)this.tblResults.getValueAt(row, 0);
             Object editor=null;
@@ -1113,7 +1116,7 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
                 JOptionPane.showMessageDialog(this, "Fehler beim Laden des Editors: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
             }
                 
-        } else if(evt.getClickCount()==1 && evt.getButton()==evt.BUTTON3) {
+        } else if(evt.getClickCount()==1 && evt.getButton()==MouseEvent.BUTTON3) {
             if(this.tblResults.getSelectedRowCount()<1) {
                 return;
             }

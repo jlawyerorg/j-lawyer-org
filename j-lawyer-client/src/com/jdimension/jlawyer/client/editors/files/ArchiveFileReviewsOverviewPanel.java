@@ -672,6 +672,7 @@ import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import java.awt.Component;
 import java.awt.Graphics;
 import java.awt.Image;
+import java.awt.event.MouseEvent;
 import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
 
@@ -697,7 +698,7 @@ public class ArchiveFileReviewsOverviewPanel extends javax.swing.JPanel implemen
             this.detailsEditorClass = ViewArchiveFileDetailsPanel.class.getName();
         }
         this.calendarPanel1.setParentEditor(this.getClass().getName(), detailsEditorClass, backgroundImage);
-        String[] colNames=new String[] {"Datum / Zeit", "Typ", "Aktenzeichen", "Kurzrubrum", "Grund", "Beschreibung", "Anwalt", "verantwortlich"};
+        String[] colNames=new String[] {"Datum / Zeit", "Typ", "Aktenzeichen", "Kurzrubrum", "Grund", "Beschreibung", "Anwalt", "verantwortlich", "Kalender"};
         QuickArchiveFileSearchTableModel model=new QuickArchiveFileSearchTableModel(colNames, 0);
         this.tblResults.setModel(model);
         
@@ -875,7 +876,7 @@ public class ArchiveFileReviewsOverviewPanel extends javax.swing.JPanel implemen
     }//GEN-LAST:event_mnuOpenArchiveFileActionPerformed
 
     private void tblResultsMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblResultsMouseClicked
-        if(evt.getClickCount()==2 && evt.getButton()==evt.BUTTON1) {
+        if(evt.getClickCount()==2 && evt.getButton()==MouseEvent.BUTTON1) {
             int row=this.tblResults.getSelectedRow();
             ArchiveFileReviewsRowIdentifier id=(ArchiveFileReviewsRowIdentifier)this.tblResults.getValueAt(row, 0);
             Object editor=null;

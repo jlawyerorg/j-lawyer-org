@@ -682,49 +682,61 @@ import org.apache.log4j.Logger;
  * @author jens
  */
 public class ArchiveFileReviewsAdvancedSearchThread implements Runnable {
-    
-    private static final Logger log=Logger.getLogger(ArchiveFileReviewsAdvancedSearchThread.class.getName());
-    
+
+    private static final Logger log = Logger.getLogger(ArchiveFileReviewsAdvancedSearchThread.class.getName());
+
     private Component owner;
     private JTable target;
-    private int statusSearchMode=0;
-    private int typeSearchMode=0;
-    private Date toDate=null;
-    private Date fromDate=null;
-    
+    private int statusSearchMode = 0;
+    private int typeSearchMode = 0;
+    private Date toDate = null;
+    private Date fromDate = null;
+
     /**
      * Creates a new instance of ArchiveFileReviewsAdvancedSearchThread
+     *
+     * @param owner
+     * @param target
+     * @param statusSearchMode
+     * @param typeSearchMode
+     * @param fromDate
+     * @param toDate
      */
     public ArchiveFileReviewsAdvancedSearchThread(Component owner, JTable target, int statusSearchMode, int typeSearchMode, Date fromDate, Date toDate) {
-        this.owner=owner;
-        this.target=target;
-        this.statusSearchMode=statusSearchMode;
-        this.typeSearchMode=typeSearchMode;
-        this.toDate=toDate;
-        this.fromDate=fromDate;
+        this.owner = owner;
+        this.target = target;
+        this.statusSearchMode = statusSearchMode;
+        this.typeSearchMode = typeSearchMode;
+        this.toDate = toDate;
+        this.fromDate = fromDate;
     }
 
+    @Override
     public void run() {
-        Collection<ArchiveFileReviewsBean> dtos=null;
+        Collection<ArchiveFileReviewsBean> dtos = null;
         try {
-            ClientSettings settings=ClientSettings.getInstance();
-            JLawyerServiceLocator locator=JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+
             CalendarServiceRemote calService = locator.lookupCalendarServiceRemote();
-            dtos=calService.searchReviews(statusSearchMode, typeSearchMode, fromDate, toDate);
-            
+            dtos = calService.searchReviews(statusSearchMode, typeSearchMode, fromDate, toDate);
+
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);
             ThreadUtils.showErrorDialog(this.owner, ex.getMessage(), "Fehler");
             return;
         }
-        
-        String[] colNames=new String[] {"Datum / Zeit" , "Typ", "Aktenzeichen", "Kurzrubrum", "Grund", "Beschreibung", "erledigt", "Anwalt", "verantwortlich"};
-        ArchiveFileReviewsFindTableModel model=new ArchiveFileReviewsFindTableModel(colNames, 0);
+
+        String[] colNames = new String[]{"Datum / Zeit", "Typ", "Aktenzeichen", "Kurzrubrum", "Grund", "Beschreibung", "erledigt", "Anwalt", "verantwortlich", "Kalender"};
+        ArchiveFileReviewsFindTableModel model = new ArchiveFileReviewsFindTableModel(colNames, 0);
         // adding the model and then adding rows is problematic - addRow on a table with model causes issues when addRow is not performed in the EDT
-        for(ArchiveFileReviewsBean b:dtos) {
-            String reviewDateString=b.toString();
-            Object[] row=new Object[]{new ArchiveFileReviewsRowIdentifier(b.getArchiveFileKey(), b, reviewDateString), b.getEventTypeName(), b.getArchiveFileKey().getFileNumber(), b.getArchiveFileKey().getName(), b.getSummary(), b.getDescription(), new Boolean(b.getDoneBoolean()), b.getArchiveFileKey().getLawyer(), b.getAssignee()};
+        for (ArchiveFileReviewsBean b : dtos) {
+            String reviewDateString = b.toString();
+            String calendar = "";
+            if (b.getCalendarSetup() != null) {
+                calendar = b.getCalendarSetup().getDisplayName();
+            }
+            Object[] row = new Object[]{new ArchiveFileReviewsRowIdentifier(b.getArchiveFileKey(), b, reviewDateString), b.getEventTypeName(), b.getArchiveFileKey().getFileNumber(), b.getArchiveFileKey().getName(), b.getSummary(), b.getDescription(), new Boolean(b.getDoneBoolean()), b.getArchiveFileKey().getLawyer(), b.getAssignee(), calendar};
             model.addRow(row);
         }
         TableRowSorter<TableModel> sorter = new TableRowSorter<>(model);
@@ -736,12 +748,12 @@ public class ArchiveFileReviewsAdvancedSearchThread implements Runnable {
         try {
             Thread.sleep(500);
         } catch (Throwable t) {
-            
+
         }
         ThreadUtils.setCellRenderer(target, new UserTableCellRenderer(), 7);
         ThreadUtils.setCellRenderer(target, new UserTableCellRenderer(), 8);
         ThreadUtils.repaintComponent(target);
-        
+
     }
-    
+
 }

@@ -688,22 +688,28 @@ import org.apache.log4j.Logger;
  * @author jens
  */
 public class EditorOrDuplicateEventDialog extends javax.swing.JDialog {
-
+    
     public static final int MODE_DUPLICATE = 10;
     public static final int MODE_EDIT = 20;
-
-    private SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
-    private SimpleDateFormat df2 = new SimpleDateFormat("HH:mm");
+    
+    private final SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
+    private final SimpleDateFormat df2 = new SimpleDateFormat("HH:mm");
     private static final Logger log = Logger.getLogger(EditorOrDuplicateEventDialog.class.getName());
-
+    
     private ArchiveFileReviewsBean targetReview = null;
     private JTable tblReviewReasons = null;
     private String archiveFileId = null;
-
+    
     private int mode = MODE_DUPLICATE;
 
     /**
      * Creates new form EditorOrDuplicateEventDialog
+     * @param editMode
+     * @param parent
+     * @param modal
+     * @param archiveFileId
+     * @param rev
+     * @param tblReviewReasons
      */
     public EditorOrDuplicateEventDialog(int editMode, java.awt.Frame parent, boolean modal, String archiveFileId, ArchiveFileReviewsBean rev, JTable tblReviewReasons) {
         super(parent, modal);
@@ -715,7 +721,7 @@ public class EditorOrDuplicateEventDialog extends javax.swing.JDialog {
         initComponents();
         
         this.quickDateSelectionPanel.setTarget(this.txtEventBeginDateField);
-
+        
         ClientSettings settings = ClientSettings.getInstance();
         List<AppUserBean> allUsers = UserSettings.getInstance().getLoginEnabledUsers();
         Object[] allUserItems = new Object[allUsers.size() + 1];
@@ -727,7 +733,7 @@ public class EditorOrDuplicateEventDialog extends javax.swing.JDialog {
         OptionsComboBoxModel allUserModel = new OptionsComboBoxModel(allUserItems);
         this.cmbAssignee.setModel(allUserModel);
         this.cmbAssignee.setRenderer(new UserListCellRenderer());
-
+        
         if (rev.getBeginDate() != null) {
             this.txtEventBeginDateField.setText(df.format(rev.getBeginDate()));
             this.cmbEventBeginTime.setSelectedItem(df2.format(rev.getBeginDate()));
@@ -742,7 +748,7 @@ public class EditorOrDuplicateEventDialog extends javax.swing.JDialog {
             this.cmbAssignee.setSelectedItem("");
         }
         this.taEventDescription.setText(rev.getDescription());
-
+        
         targetReview = new ArchiveFileReviewsBean();
         targetReview.setArchiveFileKey(rev.getArchiveFileKey());
         targetReview.setAssignee(rev.getAssignee());
@@ -750,7 +756,7 @@ public class EditorOrDuplicateEventDialog extends javax.swing.JDialog {
         if (this.mode == MODE_EDIT) {
             targetReview.setId(rev.getId());
             targetReview.setDoneBoolean(false);
-
+            
         }
         
         this.cmbReviewReason.setRenderer(new OptionGroupListCellRenderer());
@@ -774,9 +780,10 @@ public class EditorOrDuplicateEventDialog extends javax.swing.JDialog {
         
         this.txtEventLocation.setText(rev.getLocation());
         
-        
+        this.calendarSelectionButton1.refreshCalendarSetups();
         this.toggleEventUi();
-
+        this.calendarSelectionButton1.restrictToType(rev.getEventType(), rev.getCalendarSetup());
+        
     }
     
     private void toggleEventUi() {
@@ -818,6 +825,7 @@ public class EditorOrDuplicateEventDialog extends javax.swing.JDialog {
         taEventDescription = new javax.swing.JTextArea();
         cmbEventBeginTime = new javax.swing.JComboBox<>();
         cmbEventEndTime = new javax.swing.JComboBox<>();
+        calendarSelectionButton1 = new com.jdimension.jlawyer.client.calendar.CalendarSelectionButton();
 
         jTextArea1.setColumns(20);
         jTextArea1.setRows(5);
@@ -909,48 +917,55 @@ public class EditorOrDuplicateEventDialog extends javax.swing.JDialog {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cmdCancel))
                     .addComponent(jScrollPane2)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                                    .addComponent(jLabel1, javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
-                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                            .addComponent(jLabel4)
-                                            .addComponent(jLabel5))
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                                            .addComponent(txtEventBeginDateField, javax.swing.GroupLayout.DEFAULT_SIZE, 96, Short.MAX_VALUE)
-                                            .addComponent(txtEventEndDateField))
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                            .addGroup(layout.createSequentialGroup()
-                                                .addComponent(cmdEventBeginDateSelector)
-                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                                .addComponent(cmbEventBeginTime, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                            .addGroup(layout.createSequentialGroup()
-                                                .addComponent(cmdEventEndDateSelector)
-                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                                .addComponent(cmbEventEndTime, javax.swing.GroupLayout.PREFERRED_SIZE, 102, javax.swing.GroupLayout.PREFERRED_SIZE)))))
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(quickDateSelectionPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(jLabel3)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(cmbAssignee, javax.swing.GroupLayout.PREFERRED_SIZE, 176, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(jLabel6)
-                                .addGap(47, 47, 47)
-                                .addComponent(txtEventLocation, javax.swing.GroupLayout.PREFERRED_SIZE, 494, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                        .addGap(0, 0, Short.MAX_VALUE)))
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addGroup(layout.createSequentialGroup()
+                            .addComponent(jLabel1)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(calendarSelectionButton1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGroup(layout.createSequentialGroup()
+                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                .addGroup(layout.createSequentialGroup()
+                                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                        .addComponent(jLabel4)
+                                        .addComponent(jLabel5))
+                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                        .addComponent(txtEventBeginDateField, javax.swing.GroupLayout.DEFAULT_SIZE, 96, Short.MAX_VALUE)
+                                        .addComponent(txtEventEndDateField))
+                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                        .addGroup(layout.createSequentialGroup()
+                                            .addComponent(cmdEventBeginDateSelector)
+                                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                            .addComponent(cmbEventBeginTime, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                        .addGroup(layout.createSequentialGroup()
+                                            .addComponent(cmdEventEndDateSelector)
+                                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                            .addComponent(cmbEventEndTime, javax.swing.GroupLayout.PREFERRED_SIZE, 102, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                    .addComponent(quickDateSelectionPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addGroup(layout.createSequentialGroup()
+                                    .addComponent(jLabel3)
+                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                    .addComponent(cmbAssignee, javax.swing.GroupLayout.PREFERRED_SIZE, 176, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addGroup(layout.createSequentialGroup()
+                                    .addComponent(jLabel6)
+                                    .addGap(47, 47, 47)
+                                    .addComponent(txtEventLocation, javax.swing.GroupLayout.PREFERRED_SIZE, 494, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                            .addGap(0, 69, Short.MAX_VALUE))))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jLabel1)
-                .addGap(8, 8, 8)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jLabel1)
+                        .addGap(8, 8, 8))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addComponent(calendarSelectionButton1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)))
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
@@ -997,38 +1012,39 @@ public class EditorOrDuplicateEventDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_cmdCancelActionPerformed
 
     private void cmdOKActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdOKActionPerformed
-
+        
         Date beginDate = null;
-            SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy HH:mm");
-            try {
-                beginDate = df.parse(this.txtEventBeginDateField.getText() + " " + this.cmbEventBeginTime.getSelectedItem().toString());
-                
-            } catch (Throwable t) {
-                log.error(t);
-                JOptionPane.showMessageDialog(this, "Ungültiges Beginndatum / Zeit", "Fehler", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
+        SimpleDateFormat dformat = new SimpleDateFormat("dd.MM.yyyy HH:mm");
+        try {
+            beginDate = dformat.parse(this.txtEventBeginDateField.getText() + " " + this.cmbEventBeginTime.getSelectedItem().toString());
             
-            Date endDate=null;
-            if(this.txtEventEndDateField.getText().isEmpty() || !(targetReview.hasEndDateAndTime()))
-                this.txtEventEndDateField.setText(this.txtEventBeginDateField.getText());
-            try {
-                endDate = df.parse(this.txtEventEndDateField.getText() + " " + this.cmbEventEndTime.getSelectedItem().toString());
-            } catch (Throwable t) {
-                log.error(t);
-                JOptionPane.showMessageDialog(this, "Ungültiges Enddatum / Zeit", "Fehler", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-            if(!targetReview.hasEndDateAndTime()) {
-                endDate.setHours(23);
-                endDate.setMinutes(59);
-            }
-            
-            if(endDate.getTime() - beginDate.getTime()<=0) {
-                JOptionPane.showMessageDialog(this, "Angaben ungültig - Eintrag endet vor Start oder Termin dauert 0 Minuten?", "Fehler", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-
+        } catch (Throwable t) {
+            log.error(t);
+            JOptionPane.showMessageDialog(this, "Ungültiges Beginndatum / Zeit", "Fehler", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        
+        Date endDate = null;
+        if (this.txtEventEndDateField.getText().isEmpty() || !(targetReview.hasEndDateAndTime())) {
+            this.txtEventEndDateField.setText(this.txtEventBeginDateField.getText());
+        }
+        try {
+            endDate = dformat.parse(this.txtEventEndDateField.getText() + " " + this.cmbEventEndTime.getSelectedItem().toString());
+        } catch (Throwable t) {
+            log.error(t);
+            JOptionPane.showMessageDialog(this, "Ungültiges Enddatum / Zeit", "Fehler", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        if (!targetReview.hasEndDateAndTime()) {
+            endDate.setHours(23);
+            endDate.setMinutes(59);
+        }
+        
+        if (endDate.getTime() - beginDate.getTime() <= 0) {
+            JOptionPane.showMessageDialog(this, "Angaben ungültig - Eintrag endet vor Start oder Termin dauert 0 Minuten?", "Fehler", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        
         targetReview.setDoneBoolean(false);
         targetReview.setBeginDate(beginDate);
         targetReview.setEndDate(endDate);
@@ -1036,8 +1052,8 @@ public class EditorOrDuplicateEventDialog extends javax.swing.JDialog {
         targetReview.setDescription(this.taEventDescription.getText());
         targetReview.setLocation(this.txtEventLocation.getText());
         targetReview.setAssignee(this.cmbAssignee.getSelectedItem().toString());
+        targetReview.setCalendarSetup(this.calendarSelectionButton1.getSelectedSetup());
         
-
         ClientSettings settings = ClientSettings.getInstance();
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
@@ -1053,7 +1069,7 @@ public class EditorOrDuplicateEventDialog extends javax.swing.JDialog {
             EditorsRegistry.getInstance().clearStatus();
             return;
         }
-
+        
         ArchiveFileReviewReasonsTableModel model = (ArchiveFileReviewReasonsTableModel) this.tblReviewReasons.getModel();
         Object[] row = ArchiveFileReviewReasonsTableModel.eventToRow(targetReview);
         
@@ -1071,18 +1087,18 @@ public class EditorOrDuplicateEventDialog extends javax.swing.JDialog {
                         model.setValueAt(new Boolean(targetReview.getDoneBoolean()), i, 4);
                         model.setValueAt(targetReview.getAssignee(), i, 5);
                         model.setValueAt(targetReview.getDescription(), i, 6);
-
+                        model.setValueAt(targetReview.getCalendarSetup().getDisplayName(), i, 7);
                     }
                 }
             }
         }
-
+        
         this.setVisible(false);
         this.dispose();
     }//GEN-LAST:event_cmdOKActionPerformed
 
     private void cmdEventBeginDateSelectorActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdEventBeginDateSelectorActionPerformed
-
+        
         MultiCalDialog dlg = new MultiCalDialog(this.txtEventBeginDateField, this, true);
         FrameUtils.centerDialog(dlg, this);
         dlg.setVisible(true);
@@ -1135,22 +1151,20 @@ public class EditorOrDuplicateEventDialog extends javax.swing.JDialog {
         /*
          * Create and display the dialog
          */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-
-            public void run() {
-                EditorOrDuplicateEventDialog dialog = new EditorOrDuplicateEventDialog(MODE_DUPLICATE, new javax.swing.JFrame(), true, null, null, null);
-                dialog.addWindowListener(new java.awt.event.WindowAdapter() {
-
-                    @Override
-                    public void windowClosing(java.awt.event.WindowEvent e) {
-                        System.exit(0);
-                    }
-                });
-                dialog.setVisible(true);
-            }
+        java.awt.EventQueue.invokeLater(() -> {
+            EditorOrDuplicateEventDialog dialog = new EditorOrDuplicateEventDialog(MODE_DUPLICATE, new javax.swing.JFrame(), true, null, null, null);
+            dialog.addWindowListener(new java.awt.event.WindowAdapter() {
+                
+                @Override
+                public void windowClosing(java.awt.event.WindowEvent e) {
+                    System.exit(0);
+                }
+            });
+            dialog.setVisible(true);
         });
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private com.jdimension.jlawyer.client.calendar.CalendarSelectionButton calendarSelectionButton1;
     private javax.swing.JComboBox cmbAssignee;
     private javax.swing.JComboBox<String> cmbEventBeginTime;
     private javax.swing.JComboBox<String> cmbEventEndTime;

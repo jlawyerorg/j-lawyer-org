@@ -669,9 +669,8 @@ import com.jdimension.jlawyer.persistence.CalendarSetup;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Color;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
@@ -683,51 +682,94 @@ import org.apache.log4j.Logger;
  */
 public class CalendarSelectionButton extends javax.swing.JPanel {
     
-    private static final Logger log=Logger.getLogger(CalendarSelectionButton.class.getName());
-
-    private CalendarSetup selectedSetup=null;
+    private static final Logger log = Logger.getLogger(CalendarSelectionButton.class.getName());
     
+    private List<CalendarSetup> allSetups = null;
+    protected CalendarSetup selectedSetup = null;
+
     /**
      * Creates new form CalendarSelectionButton
      */
     public CalendarSelectionButton() {
         initComponents();
+        this.allSetups = new ArrayList<>();
+    }
+
+    @Override
+    public void setEnabled(boolean enabled) {
+        super.setEnabled(enabled); 
+        this.cmdSelectCalendarSetup.setEnabled(enabled);
     }
     
-    public void refresh() {
+    public void restrictToType(int eventType, CalendarSetup preSelected) {
         this.popCalendarSetups.removeAll();
-        this.selectedSetup=null;
+        this.selectedSetup = null;
+        UserSettings uSettings=UserSettings.getInstance();
+        String lastSelectedCalendarSetup=uSettings.getSetting(UserSettings.CONF_CALENDAR_LASTSELECTED + eventType, null);
+        for (CalendarSetup cs : allSetups) {
+            if (cs.getEventType() != eventType) {
+                continue;
+            }
+            
+            if (this.getSelectedSetup() == null) {
+                this.updateSelection(cs);
+            }
+            
+            if(preSelected==null && lastSelectedCalendarSetup!=null && cs.getId().equals(lastSelectedCalendarSetup)) {
+                this.updateSelection(cs);
+            }
+            
+            if(preSelected!=null && preSelected.getId().equals(cs.getId())) {
+                this.updateSelection(cs);
+            }
+            
+            JMenuItem mi = new JMenuItem();
+            mi.setText(cs.getDisplayName());
+            mi.setOpaque(true);
+            mi.setBackground(new Color(cs.getBackground()));
+            mi.addActionListener((ActionEvent arg0) -> {
+                updateSelection(cs);
+                UserSettings uSet=UserSettings.getInstance();
+                uSet.setSetting(UserSettings.CONF_CALENDAR_LASTSELECTED + cs.getEventType(), cs.getId());
+            });
+            this.popCalendarSetups.add(mi);
+        }
+        
+        if(this.selectedSetup==null) {
+            JOptionPane.showMessageDialog(this, "Kalenderkonfiguration ist ungültig - Kalender für diesen Typ existiert nicht, oder Nutzer hat keinen Zugriff.", "Fehler", JOptionPane.ERROR_MESSAGE);
+        }
+        
+        this.updateSelection(getSelectedSetup());
+    }
+    
+    public void restrictToType(int eventType) {
+        this.restrictToType(eventType, null);
+    }
+    
+    public void refreshCalendarSetups() {
+        this.popCalendarSetups.removeAll();
+        this.selectedSetup = null;
         ClientSettings settings = ClientSettings.getInstance();
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            List<CalendarSetup> setups=locator.lookupCalendarServiceRemote().getCalendarSetupsForUser(UserSettings.getInstance().getCurrentUser().getPrincipalId());
-            Collections.sort(setups, (Object arg0, Object arg1) -> {
-                String name1="";
-                String name2="";
-                if(arg0 instanceof CalendarSetup)
-                    name1=((CalendarSetup)arg0).getDisplayName();
+            allSetups = locator.lookupCalendarServiceRemote().getCalendarSetupsForUser(UserSettings.getInstance().getCurrentUser().getPrincipalId());
+            Collections.sort(allSetups, (Object arg0, Object arg1) -> {
+                String name1 = "";
+                String name2 = "";
+                if (arg0 instanceof CalendarSetup) {
+                    name1 = ((CalendarSetup) arg0).getDisplayName();
+                }
                 
-                if(arg1 instanceof CalendarSetup)
-                    name2=((CalendarSetup)arg1).getDisplayName();
+                if (arg1 instanceof CalendarSetup) {
+                    name2 = ((CalendarSetup) arg1).getDisplayName();
+                }
                 
-                if(name1==null)
-                    name1="";
+                if (name1 == null) {
+                    name1 = "";
+                }
                 
                 return name1.compareTo(name2);
             });
-            for(CalendarSetup cs: setups) {
-                if(this.selectedSetup==null) {
-                    this.updateSelection(cs);
-                }
-                JMenuItem mi=new JMenuItem();
-                mi.setText(cs.getDisplayName());
-                mi.setOpaque(true);
-                mi.setBackground(new Color(cs.getBackground()));
-                mi.addActionListener((ActionEvent arg0) -> {
-                    updateSelection(cs);
-                });
-                this.popCalendarSetups.add(mi);
-            }
             
         } catch (Exception ex) {
             log.error("Error getting calendar setups", ex);
@@ -736,9 +778,9 @@ public class CalendarSelectionButton extends javax.swing.JPanel {
     }
     
     private void updateSelection(CalendarSetup cs) {
-        this.selectedSetup=cs;
-                    this.cmdSelectCalendarSetup.setBackground(new Color(cs.getBackground()));
-                    this.cmdSelectCalendarSetup.setToolTipText(cs.getDisplayName());
+        this.selectedSetup = cs;
+        this.cmdSelectCalendarSetup.setBackground(new Color(cs.getBackground()));
+        this.cmdSelectCalendarSetup.setToolTipText(cs.getDisplayName());
     }
 
     /**
@@ -773,7 +815,8 @@ public class CalendarSelectionButton extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void cmdSelectCalendarSetupMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdSelectCalendarSetupMousePressed
-        this.popCalendarSetups.show(this.cmdSelectCalendarSetup, evt.getX(), evt.getY());
+        if(this.cmdSelectCalendarSetup.isEnabled())
+            this.popCalendarSetups.show(this.cmdSelectCalendarSetup, evt.getX(), evt.getY());
     }//GEN-LAST:event_cmdSelectCalendarSetupMousePressed
 
 
@@ -781,4 +824,11 @@ public class CalendarSelectionButton extends javax.swing.JPanel {
     private javax.swing.JButton cmdSelectCalendarSetup;
     private javax.swing.JPopupMenu popCalendarSetups;
     // End of variables declaration//GEN-END:variables
+
+    /**
+     * @return the selectedSetup
+     */
+    public CalendarSetup getSelectedSetup() {
+        return selectedSetup;
+    }
 }

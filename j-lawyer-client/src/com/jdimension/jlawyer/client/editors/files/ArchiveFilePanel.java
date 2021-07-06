@@ -1207,6 +1207,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         this.radioEventTypeFollowUp.setSelected(true);
         this.toggleEventUi();
+        this.calendarSelectionButton.restrictToType(CalendarSetup.EVENTTYPE_FOLLOWUP);
 
         this.pnlInvolvedParties.removeAll();
 
@@ -1367,6 +1368,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.cmbReviewAssignee.setSelectedItem("");
         this.radioEventTypeFollowUp.setSelected(true);
         this.toggleEventUi();
+        this.calendarSelectionButton.restrictToType(CalendarSetup.EVENTTYPE_FOLLOWUP);
         this.cmbSubjectField.setSelectedItem("");
         this.txtReason.setText("");
         this.chkArchived.setSelected(false);
@@ -1426,6 +1428,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         this.radioEventTypeFollowUp.setSelected(true);
         this.toggleEventUi();
+        this.calendarSelectionButton.restrictToType(CalendarSetup.EVENTTYPE_FOLLOWUP);
 
         for (int t = this.tabPaneForms.getTabCount() - 1; t > 0; t--) {
             this.tabPaneForms.remove(t);
@@ -1577,7 +1580,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.quickDateSelectionPanel.reset();
         this.txtEventBeginDateField.setText("");
         
-        this.calendarSelectionButton.refresh();
+        this.calendarSelectionButton.refreshCalendarSetups();
     }
 
     public void selectDocument(String fileName) {
@@ -3623,6 +3626,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             this.lblArchivedSince.setText("");
             this.radioEventTypeFollowUp.setSelected(true);
             this.toggleEventUi();
+            this.calendarSelectionButton.restrictToType(CalendarSetup.EVENTTYPE_FOLLOWUP);
             this.quickDateSelectionPanel.reset();
         } else {
             JOptionPane.showMessageDialog(this, "Es muss ein Datum angegeben werden.", "Fehler", JOptionPane.ERROR_MESSAGE);
@@ -3645,6 +3649,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         reviewDto.setSummary(reason);
         reviewDto.setDescription(description);
         reviewDto.setLocation(this.txtEventLocation.getText());
+        reviewDto.setCalendarSetup(this.calendarSelectionButton.getSelectedSetup());
 
         ClientSettings settings = ClientSettings.getInstance();
 
@@ -5625,14 +5630,17 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     private void radioEventTypeFollowUpActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_radioEventTypeFollowUpActionPerformed
         this.toggleEventUi();
+        this.calendarSelectionButton.restrictToType(CalendarSetup.EVENTTYPE_FOLLOWUP);
     }//GEN-LAST:event_radioEventTypeFollowUpActionPerformed
 
     private void radioEventTypeRespiteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_radioEventTypeRespiteActionPerformed
         this.toggleEventUi();
+        this.calendarSelectionButton.restrictToType(CalendarSetup.EVENTTYPE_RESPITE);
     }//GEN-LAST:event_radioEventTypeRespiteActionPerformed
 
     private void radioEventTypeEventActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_radioEventTypeEventActionPerformed
         this.toggleEventUi();
+        this.calendarSelectionButton.restrictToType(CalendarSetup.EVENTTYPE_EVENT);
     }//GEN-LAST:event_radioEventTypeEventActionPerformed
 
     private void toggleEventUi() {

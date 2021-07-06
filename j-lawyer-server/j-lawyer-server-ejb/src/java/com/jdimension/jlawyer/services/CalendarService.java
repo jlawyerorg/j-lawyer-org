@@ -832,6 +832,9 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
     @Override
     @RolesAllowed({"writeArchiveFileRole"})
     public ArchiveFileReviewsBean addReview(String archiveFileId, ArchiveFileReviewsBean review) throws Exception {
+        
+        this.validateCalendarSetup(review);
+        
         StringGenerator idGen = new StringGenerator();
         ArchiveFileBean aFile = this.archiveFileFacade.find(archiveFileId);
         SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), aFile, this.securityFacade, this.archiveFileService.getAllowedGroups(aFile));
@@ -1090,9 +1093,22 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
         return list;
     }
     
+    private void validateCalendarSetup(ArchiveFileReviewsBean review) throws Exception {
+        if(review.getCalendarSetup()==null) {
+            throw new Exception ("Frist/WV/Termin verweist nicht auf einen existierenden Kalender");
+        }
+        
+        if(review.getEventType()!=review.getCalendarSetup().getEventType()) {
+            throw new Exception ("Gewählter Kalender unterstützt den gewählten Kalendereintragstyp (Frist/WV/Termin) nicht");
+        }
+    }
+    
     @Override
     @RolesAllowed({"writeArchiveFileRole"})
     public ArchiveFileReviewsBean updateReview(String archiveFileId, ArchiveFileReviewsBean review) throws Exception {
+        
+        this.validateCalendarSetup(review);
+        
         StringGenerator idGen = new StringGenerator();
         ArchiveFileBean aFile = this.archiveFileFacade.find(archiveFileId);
         SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), aFile, this.securityFacade, this.archiveFileService.getAllowedGroups(aFile));

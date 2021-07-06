@@ -720,6 +720,13 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
 
     /**
      * Creates new form AddDocumentDialog
+     * @param parent
+     * @param modal
+     * @param targetTable
+     * @param calculationTable
+     * @param involved
+     * @param tblReviewReasons
+     * @param aFile
      */
     public AddDocumentFromTemplateDialog(java.awt.Frame parent, boolean modal, CaseFolderPanel targetTable, ArchiveFileBean aFile, List<ArchiveFileAddressesBean> involved, JTable tblReviewReasons, GenericCalculationTable calculationTable) {
         super(parent, modal);
@@ -823,6 +830,9 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
         if (this.aFile.getAssistant() != null) {
             this.cmbReviewAssignee.setSelectedItem(this.aFile.getAssistant());
         }
+        
+        this.calendarSelectionButton1.refreshCalendarSetups();
+        this.calendarSelectionButton1.setEnabled(false);
 
     }
 
@@ -847,29 +857,25 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
 
         // avoid ANWALT being replaced before ANWALT2 --> start with longest placeholders first
         ArrayList<PartyTypeBean> apt = new ArrayList(this.allPartyTypes);
-        Comparator<PartyTypeBean> prefixLengthComparator = new Comparator<PartyTypeBean>() {
-            @Override
-            public int compare(PartyTypeBean t1, PartyTypeBean t2) {
-                String prefix1 = null;
-                String prefix2 = null;
-                if (t1 != null) {
-                    prefix1 = t1.getPlaceHolder();
-                }
-                if (t2 != null) {
-                    prefix2 = t2.getPlaceHolder();
-                }
-
-                int l1 = 0;
-                if (prefix1 != null) {
-                    l1 = prefix1.length();
-                }
-                int l2 = 0;
-                if (prefix2 != null) {
-                    l2 = prefix2.length();
-                }
-                return Integer.compare(l1, l2);
-
+        Comparator<PartyTypeBean> prefixLengthComparator = (PartyTypeBean t1, PartyTypeBean t2) -> {
+            String prefix1 = null;
+            String prefix2 = null;
+            if (t1 != null) {
+                prefix1 = t1.getPlaceHolder();
             }
+            if (t2 != null) {
+                prefix2 = t2.getPlaceHolder();
+            }
+            
+            int l1 = 0;
+            if (prefix1 != null) {
+                l1 = prefix1.length();
+            }
+            int l2 = 0;
+            if (prefix2 != null) {
+                l2 = prefix2.length();
+            }
+            return Integer.compare(l1, l2);
         };
         Collections.sort(apt, prefixLengthComparator);
         Collections.reverse(apt);
@@ -929,6 +935,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
         cmbReviewAssignee = new javax.swing.JComboBox();
         radioReviewTypeNone = new javax.swing.JRadioButton();
         quickDateSelectionPanel = new com.jdimension.jlawyer.client.components.QuickDateSelectionPanel();
+        calendarSelectionButton1 = new com.jdimension.jlawyer.client.calendar.CalendarSelectionButton();
         jPanel2 = new javax.swing.JPanel();
         splitPlaceholders = new javax.swing.JSplitPane();
         jScrollPane1 = new javax.swing.JScrollPane();
@@ -1051,6 +1058,8 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
                         .add(radioReviewTypeFollowUp)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                         .add(radioReviewTypeRespite)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                        .add(calendarSelectionButton1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .add(0, 0, Short.MAX_VALUE))
                     .add(jPanel4Layout.createSequentialGroup()
                         .add(jPanel4Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -1066,16 +1075,18 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
                                         .add(txtReviewDateField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 135, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                                         .add(cmdShowReviewSelector)))
-                                .add(0, 0, Short.MAX_VALUE)))))
+                                .add(0, 34, Short.MAX_VALUE)))))
                 .addContainerGap())
         );
         jPanel4Layout.setVerticalGroup(
             jPanel4Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel4Layout.createSequentialGroup()
-                .add(jPanel4Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(radioReviewTypeFollowUp)
-                    .add(radioReviewTypeRespite)
-                    .add(radioReviewTypeNone))
+                .add(jPanel4Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(jPanel4Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                        .add(radioReviewTypeFollowUp)
+                        .add(radioReviewTypeRespite)
+                        .add(radioReviewTypeNone))
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, calendarSelectionButton1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(cmbReviewReason, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .add(7, 7, 7)
@@ -1128,7 +1139,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel2Layout.createSequentialGroup()
-                .add(splitPlaceholders, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 595, Short.MAX_VALUE)
+                .add(splitPlaceholders, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 589, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -1326,7 +1337,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(cmdCancel)
                 .add(10, 10, 10))
-            .add(splitMain, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 745, Short.MAX_VALUE)
+            .add(splitMain, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 790, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -1420,6 +1431,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
             reviewDto.setBeginDate(d);
             reviewDto.setAssignee(this.cmbReviewAssignee.getSelectedItem().toString());
             reviewDto.setSummary(this.cmbReviewReason.getModel().getSelectedItem().toString());
+            reviewDto.setCalendarSetup(this.calendarSelectionButton1.getSelectedSetup());
 
             EditorsRegistry.getInstance().updateStatus("Wiedervorlage/Frist wird gespeichert...");
             try {
@@ -1437,12 +1449,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
             }
 
             ArchiveFileReviewReasonsTableModel model = (ArchiveFileReviewReasonsTableModel) this.tblReviewReasons.getModel();
-            Object[] row = new Object[5];
-            row[0] = reviewDto;
-            row[1] = reviewDto.getEventTypeName();
-            row[2] = reviewDto.getSummary();
-            row[3] = new Boolean(reviewDto.getDoneBoolean());
-            row[4] = reviewDto.getAssignee();
+            Object[] row=ArchiveFileReviewReasonsTableModel.eventToRow(reviewDto);
             model.addRow(row);
             ComponentUtils.autoSizeColumns(tblReviewReasons);
 
@@ -1545,15 +1552,19 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
 
     private void radioReviewTypeNoneActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_radioReviewTypeNoneActionPerformed
         this.enableReviewElements(false);
+        this.calendarSelectionButton1.setEnabled(false);
     }//GEN-LAST:event_radioReviewTypeNoneActionPerformed
 
     private void radioReviewTypeFollowUpActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_radioReviewTypeFollowUpActionPerformed
         this.enableReviewElements(true);
+        this.calendarSelectionButton1.restrictToType(CalendarSetup.EVENTTYPE_FOLLOWUP);
+        this.calendarSelectionButton1.setEnabled(true);
     }//GEN-LAST:event_radioReviewTypeFollowUpActionPerformed
 
     private void radioReviewTypeRespiteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_radioReviewTypeRespiteActionPerformed
         this.enableReviewElements(true);
-
+        this.calendarSelectionButton1.restrictToType(CalendarSetup.EVENTTYPE_RESPITE);
+        this.calendarSelectionButton1.setEnabled(true);
     }//GEN-LAST:event_radioReviewTypeRespiteActionPerformed
 
     private void formComponentResized(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentResized
@@ -1618,7 +1629,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
                 }
                 ThreadUtils.setTableModel(this.tblPlaceHolders, model);
 
-                ArrayList<PartyTypeBean> partiesInTemplate = new ArrayList<PartyTypeBean>();
+                ArrayList<PartyTypeBean> partiesInTemplate = new ArrayList<>();
                 for (PartyTypeBean p : this.allPartyTypes) {
                     for (Object key : ht.keySet()) {
                         String keyName = key.toString();
@@ -1746,7 +1757,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
             for (Object o : fileNames) {
                 if ("".equals(this.txtTemplateFilter.getText().trim())) {
                     model.addElement(o);
-                } else if (o.toString().toLowerCase().indexOf(this.txtTemplateFilter.getText().trim().toLowerCase()) > -1) {
+                } else if (o.toString().toLowerCase().contains(this.txtTemplateFilter.getText().trim().toLowerCase())) {
                     model.addElement(o);
                 }
             }
@@ -1781,6 +1792,7 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.ButtonGroup btGrpReviews;
+    private com.jdimension.jlawyer.client.calendar.CalendarSelectionButton calendarSelectionButton1;
     private javax.swing.JComboBox cmbDictateSigns;
     private javax.swing.JComboBox cmbReviewAssignee;
     private javax.swing.JComboBox cmbReviewReason;

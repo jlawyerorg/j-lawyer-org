@@ -722,6 +722,9 @@ public class UserSettings {
     
     public static final String CONF_CASE_LASTPARTYTYPE="user.case.lastpartytype";
     
+    // will be used with a suffix indicating the event type (see CalendarSetup class)
+    public static final String CONF_CALENDAR_LASTSELECTED="user.calendar.lastcalsetup.";
+    
     private static String ARRAY_DELIMITER="#####";
 
     private static final Logger log = Logger.getLogger(UserSettings.class.getName());

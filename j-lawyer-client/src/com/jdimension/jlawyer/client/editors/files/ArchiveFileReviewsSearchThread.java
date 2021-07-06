@@ -683,46 +683,47 @@ import org.apache.log4j.Logger;
  * @author jens
  */
 public class ArchiveFileReviewsSearchThread implements Runnable {
-    
-    private static final Logger log=Logger.getLogger(ArchiveFileReviewsSearchThread.class.getName());
-    
+
+    private static final Logger log = Logger.getLogger(ArchiveFileReviewsSearchThread.class.getName());
+
     private Component owner;
     private JTable target;
     private CalendarPanel calendarTarget;
-    
+
     /**
      * Creates a new instance of ArchiveFileReviewsSearchThread
      */
     public ArchiveFileReviewsSearchThread(Component owner, JTable target) {
-        this.owner=owner;
-        this.target=target;
-        this.calendarTarget=null;
+        this.owner = owner;
+        this.target = target;
+        this.calendarTarget = null;
     }
-    
+
     public ArchiveFileReviewsSearchThread(Component owner, JTable target, CalendarPanel calendar) {
-        this.owner=owner;
-        this.target=target;
-        this.calendarTarget=calendar;
+        this.owner = owner;
+        this.target = target;
+        this.calendarTarget = calendar;
     }
 
     public void run() {
-        Collection<ArchiveFileReviewsBean> dtos=null;
+        Collection<ArchiveFileReviewsBean> dtos = null;
         try {
-            ClientSettings settings=ClientSettings.getInstance();
-            JLawyerServiceLocator locator=JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+
             CalendarServiceRemote calService = locator.lookupCalendarServiceRemote();
-            dtos=calService.getAllOpenReviews();
-            
+            dtos = calService.getAllOpenReviews();
+
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);
             ThreadUtils.showErrorDialog(this.owner, ex.getMessage(), "Fehler");
             return;
         }
-        
-        String[] colNames=new String[] {"Datum / Zeit", "Typ", "Aktenzeichen", "Kurzrubrum", "Grund", "Beschreibung", "Anwalt", "verantwortlich"};
+
+        String[] colNames = new String[]{"Datum / Zeit", "Typ", "Aktenzeichen", "Kurzrubrum", "Grund", "Beschreibung", "Anwalt", "verantwortlich", "Kalender"};
         DefaultTableModel model = new DefaultTableModel(colNames, 0) {
 
+            @Override
             public boolean isCellEditable(int i, int i0) {
                 return false;
             }
@@ -733,13 +734,17 @@ public class ArchiveFileReviewsSearchThread implements Runnable {
         } catch (Throwable t) {
             log.error(t);
         }
-        
+
         this.target.getColumnModel().getColumn(6).setCellRenderer(new UserTableCellRenderer());
         this.target.getColumnModel().getColumn(7).setCellRenderer(new UserTableCellRenderer());
-        for(ArchiveFileReviewsBean b:dtos) {
+        for (ArchiveFileReviewsBean b : dtos) {
             try {
-                String reviewDateString=b.toString();
-                Object[] row = new Object[]{new ArchiveFileReviewsRowIdentifier(b.getArchiveFileKey(), reviewDateString), b.getEventTypeName(), b.getArchiveFileKey().getFileNumber(), b.getArchiveFileKey().getName(), b.getSummary(), b.getDescription(), b.getArchiveFileKey().getLawyer(), b.getAssignee()};
+                String reviewDateString = b.toString();
+                String calendar = "";
+                if (b.getCalendarSetup() != null) {
+                    calendar = b.getCalendarSetup().getDisplayName();
+                }
+                Object[] row = new Object[]{new ArchiveFileReviewsRowIdentifier(b.getArchiveFileKey(), reviewDateString), b.getEventTypeName(), b.getArchiveFileKey().getFileNumber(), b.getArchiveFileKey().getName(), b.getSummary(), b.getDescription(), b.getArchiveFileKey().getLawyer(), b.getAssignee(), calendar};
                 model.addRow(row);
             } catch (Throwable t) {
                 log.error(t);
@@ -749,10 +754,11 @@ public class ArchiveFileReviewsSearchThread implements Runnable {
         sorter.setComparator(2, new FileNumberComparator());
         sorter.setComparator(0, new DateStringComparator());
         ThreadUtils.setTableModel(this.target, model, sorter);
-        if(this.calendarTarget!=null)
-            ThreadUtils.setCalendarItems(this.calendarTarget,dtos);
+        if (this.calendarTarget != null) {
+            ThreadUtils.setCalendarItems(this.calendarTarget, dtos);
+        }
         ThreadUtils.setDefaultCursor(this.owner);
-        
+
     }
-    
+
 }
