@@ -752,6 +752,8 @@ public class CalendarSyncService implements CalendarSyncServiceLocal {
     }
 
     @Override
+    @RolesAllowed({"loginRole"})
+    @Asynchronous
     public void eventUpdated(ArchiveFileBean caseContext, ArchiveFileReviewsBean event) {
         if (canSync(event)) {
 
@@ -779,6 +781,8 @@ public class CalendarSyncService implements CalendarSyncServiceLocal {
     }
 
     @Override
+    @RolesAllowed({"loginRole"})
+    @Asynchronous
     public void eventDeleted(ArchiveFileReviewsBean event) {
 
         if (canSync(event)) {

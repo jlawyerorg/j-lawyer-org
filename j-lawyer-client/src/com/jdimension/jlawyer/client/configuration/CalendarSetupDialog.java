@@ -1061,9 +1061,8 @@ public class CalendarSetupDialog extends javax.swing.JDialog {
 
         int row = this.tblCalendars.getSelectedRow();
 
-        if (row < 0) {
+        if (row >= 0) {
 
-        } else {
 
             if (this.cmbName.getSelectedItem() == null) {
                 if (!StringUtils.isEmpty(this.pnlCloud.getCloudHost()) && !StringUtils.isEmpty(this.pnlCloud.getCloudUser()) && !StringUtils.isEmpty(this.pnlCloud.getCloudPassword())) {
@@ -1128,10 +1127,8 @@ public class CalendarSetupDialog extends javax.swing.JDialog {
     private void cmdRemoveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdRemoveActionPerformed
         int row = this.tblCalendars.getSelectedRow();
 
-        if (row < 0) {
-            
-        } else {
-
+        if (row >= 0) {
+        
             CalendarSetup cs = (CalendarSetup) this.tblCalendars.getValueAt(row, 0);
             ClientSettings settings = ClientSettings.getInstance();
             try {

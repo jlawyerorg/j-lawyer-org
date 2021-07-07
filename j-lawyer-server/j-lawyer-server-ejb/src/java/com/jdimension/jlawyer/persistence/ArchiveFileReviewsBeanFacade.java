@@ -690,15 +690,13 @@ public class ArchiveFileReviewsBeanFacade extends AbstractFacade<ArchiveFileRevi
     @Override
     public List<ArchiveFileReviewsBean> findByArchiveFileKey(ArchiveFileBean archiveFileKey) {
 
-        List<ArchiveFileReviewsBean> list = getEntityManager().createQuery("from ArchiveFileReviewsBean where archiveFileKey = ?1").setParameter(1, archiveFileKey).getResultList();
-        return list;
+        return getEntityManager().createQuery("from ArchiveFileReviewsBean where archiveFileKey = ?1").setParameter(1, archiveFileKey).getResultList();
     }
     
     @Override
     public List<ArchiveFileReviewsBean> findByCalendarSetup(CalendarSetup setup) {
 
-        List<ArchiveFileReviewsBean> list = getEntityManager().createQuery("from ArchiveFileReviewsBean where calendarSetup = ?1").setParameter(1, setup).getResultList();
-        return list;
+        return getEntityManager().createQuery("from ArchiveFileReviewsBean where calendarSetup = ?1").setParameter(1, setup).getResultList();
     }
 
     @Override

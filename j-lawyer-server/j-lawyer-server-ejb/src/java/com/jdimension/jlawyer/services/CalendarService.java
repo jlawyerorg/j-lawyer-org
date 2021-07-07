@@ -1227,8 +1227,8 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
     @Override
     @RolesAllowed({"loginRole"})
     public boolean hasEvents(CalendarSetup calendar) throws Exception {
-        List list = this.archiveFileReviewsFacade.findByCalendarSetup(calendar);
-        return list.size() > 0;
+        List<ArchiveFileReviewsBean> list = this.archiveFileReviewsFacade.findByCalendarSetup(calendar);
+        return !list.isEmpty();
     }
 
     @Override
