@@ -1077,7 +1077,6 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuAddressBookSyncNow = new javax.swing.JMenuItem();
         mnuArchiveFileOptions = new javax.swing.JMenu();
         mnuArchiveFileOptionsDictateSign = new javax.swing.JMenuItem();
-        mnuArchiveFileOptionsReviewReasons = new javax.swing.JMenuItem();
         mnuArchiveFileOptionsSubjectFields = new javax.swing.JMenuItem();
         mnuArchiveFileTags = new javax.swing.JMenuItem();
         mnuDocumentTags = new javax.swing.JMenuItem();
@@ -1092,6 +1091,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuSearchIndex = new javax.swing.JMenuItem();
         mnuCustomLauncherOptions = new javax.swing.JMenuItem();
         mnuCalendarOptions = new javax.swing.JMenu();
+        mnuArchiveFileOptionsReviewReasons = new javax.swing.JMenuItem();
         mnuCalendarSetup = new javax.swing.JMenuItem();
         mnuCalendarSyncNow = new javax.swing.JMenuItem();
         jSeparator2 = new javax.swing.JSeparator();
@@ -1462,15 +1462,6 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         });
         mnuArchiveFileOptions.add(mnuArchiveFileOptionsDictateSign);
 
-        mnuArchiveFileOptionsReviewReasons.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/schedule.png"))); // NOI18N
-        mnuArchiveFileOptionsReviewReasons.setText(bundle.getString("menu.settings.cases.reviews")); // NOI18N
-        mnuArchiveFileOptionsReviewReasons.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                mnuArchiveFileOptionsReviewReasonsActionPerformed(evt);
-            }
-        });
-        mnuArchiveFileOptions.add(mnuArchiveFileOptionsReviewReasons);
-
         mnuArchiveFileOptionsSubjectFields.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/man.png"))); // NOI18N
         mnuArchiveFileOptionsSubjectFields.setText(bundle.getString("menu.settings.cases.subjectfields")); // NOI18N
         mnuArchiveFileOptionsSubjectFields.addActionListener(new java.awt.event.ActionListener() {
@@ -1588,6 +1579,15 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
 
         mnuCalendarOptions.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/package_system.png"))); // NOI18N
         mnuCalendarOptions.setText("Kalender");
+
+        mnuArchiveFileOptionsReviewReasons.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/schedule.png"))); // NOI18N
+        mnuArchiveFileOptionsReviewReasons.setText(bundle.getString("menu.settings.cases.reviews")); // NOI18N
+        mnuArchiveFileOptionsReviewReasons.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuArchiveFileOptionsReviewReasonsActionPerformed(evt);
+            }
+        });
+        mnuCalendarOptions.add(mnuArchiveFileOptionsReviewReasons);
 
         mnuCalendarSetup.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_share_black_48dp.png"))); // NOI18N
         mnuCalendarSetup.setText("Kalender und Synchronisation konfigurieren");

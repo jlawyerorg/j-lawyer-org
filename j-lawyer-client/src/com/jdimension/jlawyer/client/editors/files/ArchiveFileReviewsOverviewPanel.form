@@ -88,7 +88,7 @@
         <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
           <Color blue="ff" green="ff" red="ff" type="rgb"/>
         </Property>
-        <Property name="text" type="java.lang.String" value="Wiedervorlagen und Fristen nach F&#xe4;lligkeit"/>
+        <Property name="text" type="java.lang.String" value="Kalendereintr&#xe4;ge (chronologisch)"/>
       </Properties>
       <AuxValues>
         <AuxValue name="JavaCodeGenerator_VariableModifier" type="java.lang.Integer" value="4"/>
@@ -198,8 +198,8 @@
         <Component class="de.costache.calendar.CalendarPanel" name="calendarPanel1">
           <Constraints>
             <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout" value="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout$JTabbedPaneConstraintsDescription">
-              <JTabbedPaneConstraints tabName="Kalender">
-                <Property name="tabTitle" type="java.lang.String" value="Kalender"/>
+              <JTabbedPaneConstraints tabName="Kalenderblatt">
+                <Property name="tabTitle" type="java.lang.String" value="Kalenderblatt"/>
               </JTabbedPaneConstraints>
             </Constraint>
           </Constraints>

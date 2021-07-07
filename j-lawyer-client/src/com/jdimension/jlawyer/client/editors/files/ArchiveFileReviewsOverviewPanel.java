@@ -753,7 +753,7 @@ public class ArchiveFileReviewsOverviewPanel extends javax.swing.JPanel implemen
 
         lblPanelTitle.setFont(new java.awt.Font("Dialog", 1, 24)); // NOI18N
         lblPanelTitle.setForeground(new java.awt.Color(255, 255, 255));
-        lblPanelTitle.setText("Wiedervorlagen und Fristen nach Fälligkeit");
+        lblPanelTitle.setText("Kalendereinträge (chronologisch)");
 
         jPanel1.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(255, 255, 255), 2, true));
         jPanel1.setOpaque(false);
@@ -818,7 +818,7 @@ public class ArchiveFileReviewsOverviewPanel extends javax.swing.JPanel implemen
         jScrollPane1.setViewportView(tblResults);
 
         jTabbedPane1.addTab("Liste", jScrollPane1);
-        jTabbedPane1.addTab("Kalender", calendarPanel1);
+        jTabbedPane1.addTab("Kalenderblatt", calendarPanel1);
 
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(this);
         this.setLayout(layout);
