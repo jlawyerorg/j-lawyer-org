@@ -712,7 +712,7 @@ import org.apache.log4j.Logger;
  */
 @Stateless
 public class CalendarService implements CalendarServiceRemote, CalendarServiceLocal {
-    
+
     private static final Logger log = Logger.getLogger(CalendarService.class.getName());
 
     @Resource
@@ -735,106 +735,110 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
     private CalendarSetupFacadeLocal calendarSetups;
     @EJB
     private CalendarAccessFacadeLocal calendarAccess;
-    
+
     @Override
     @RolesAllowed({"loginRole"})
     public boolean isHoliday(Date date, String countryId, String regionId) {
-        
-        if(countryId==null || "".equals(countryId))
-            countryId=HolidayCalendar.GERMANY.getId();
-        
+
+        if (countryId == null || "".equals(countryId)) {
+            countryId = HolidayCalendar.GERMANY.getId();
+        }
+
         HolidayManager m = HolidayManager.getInstance(countryId);
-        Calendar c=Calendar.getInstance();
+        Calendar c = Calendar.getInstance();
         c.setTime(date);
-        
-      if(regionId!=null && !("".equals(regionId)))
-        return m.isHoliday(c, regionId);
-      else
-          return m.isHoliday(c);
-        
+
+        if (regionId != null && !("".equals(regionId))) {
+            return m.isHoliday(c, regionId);
+        } else {
+            return m.isHoliday(c);
+        }
+
     }
 
     @Override
     @RolesAllowed({"loginRole"})
     public ArrayList<CalendarRegion> getCountryCodes() {
-        ArrayList<CalendarRegion> areas=new ArrayList<CalendarRegion>();
-        areas.add(new CalendarRegion(HolidayCalendar.BELGIUM.getId(),HolidayManager.getInstance(HolidayCalendar.BELGIUM).getCalendarHierarchy().getDescription(Locale.GERMAN)));
-        
-        areas.add(new CalendarRegion(HolidayCalendar.GERMANY.getId(),HolidayManager.getInstance(HolidayCalendar.GERMANY).getCalendarHierarchy().getDescription(Locale.GERMAN)));
-        areas.add(new CalendarRegion(HolidayCalendar.NETHERLANDS.getId(),HolidayManager.getInstance(HolidayCalendar.NETHERLANDS).getCalendarHierarchy().getDescription(Locale.GERMAN)));
-        areas.add(new CalendarRegion(HolidayCalendar.AUSTRIA.getId(),HolidayManager.getInstance(HolidayCalendar.AUSTRIA).getCalendarHierarchy().getDescription(Locale.GERMAN)));
-        areas.add(new CalendarRegion(HolidayCalendar.SWITZERLAND.getId(),HolidayManager.getInstance(HolidayCalendar.SWITZERLAND).getCalendarHierarchy().getDescription(Locale.GERMAN)));
-        
+        ArrayList<CalendarRegion> areas = new ArrayList<>();
+        areas.add(new CalendarRegion(HolidayCalendar.BELGIUM.getId(), HolidayManager.getInstance(HolidayCalendar.BELGIUM).getCalendarHierarchy().getDescription(Locale.GERMAN)));
+
+        areas.add(new CalendarRegion(HolidayCalendar.GERMANY.getId(), HolidayManager.getInstance(HolidayCalendar.GERMANY).getCalendarHierarchy().getDescription(Locale.GERMAN)));
+        areas.add(new CalendarRegion(HolidayCalendar.NETHERLANDS.getId(), HolidayManager.getInstance(HolidayCalendar.NETHERLANDS).getCalendarHierarchy().getDescription(Locale.GERMAN)));
+        areas.add(new CalendarRegion(HolidayCalendar.AUSTRIA.getId(), HolidayManager.getInstance(HolidayCalendar.AUSTRIA).getCalendarHierarchy().getDescription(Locale.GERMAN)));
+        areas.add(new CalendarRegion(HolidayCalendar.SWITZERLAND.getId(), HolidayManager.getInstance(HolidayCalendar.SWITZERLAND).getCalendarHierarchy().getDescription(Locale.GERMAN)));
+
         return areas;
     }
 
     @Override
     @RolesAllowed({"loginRole"})
     public ArrayList<HolidayDescriptor> getAllHolidays(int year, String countryId, String regionId) {
-        
-        if(countryId==null || "".equals(countryId))
-            countryId=HolidayCalendar.GERMANY.getId();
-        
-        HolidayManager m = HolidayManager.getInstance(countryId);
-        CalendarHierarchy ch=m.getCalendarHierarchy();
-        if(regionId!=null && !("".equals(regionId))) {
-                ch=ch.getChildren().get(regionId);
+
+        if (countryId == null || "".equals(countryId)) {
+            countryId = HolidayCalendar.GERMANY.getId();
         }
-        
+
+        HolidayManager m = HolidayManager.getInstance(countryId);
+        CalendarHierarchy ch = m.getCalendarHierarchy();
+        if (regionId != null && !("".equals(regionId))) {
+            ch = ch.getChildren().get(regionId);
+        }
+
         Set<Holiday> holidays;
-        if(regionId==null || "".equals(regionId))
-            holidays=m.getHolidays(year);
-        else
-            holidays=m.getHolidays(year, regionId);
-                
-        ArrayList<HolidayDescriptor> list=new ArrayList<>();
-        for(Holiday h: holidays) {
-            HolidayDescriptor hd=new HolidayDescriptor();
+        if (regionId == null || "".equals(regionId)) {
+            holidays = m.getHolidays(year);
+        } else {
+            holidays = m.getHolidays(year, regionId);
+        }
+
+        ArrayList<HolidayDescriptor> list = new ArrayList<>();
+        for (Holiday h : holidays) {
+            HolidayDescriptor hd = new HolidayDescriptor();
             hd.setHolidayName(h.getDescription(Locale.GERMAN));
             hd.setRegionName(ch.getDescription(Locale.GERMAN));
-            Date tempDate=Date.from(h.getDate().atStartOfDay(ZoneId.systemDefault()).toInstant());
+            Date tempDate = Date.from(h.getDate().atStartOfDay(ZoneId.systemDefault()).toInstant());
             hd.setDate(tempDate);
             list.add(hd);
         }
-        
+
         return list;
-        
+
     }
 
     @Override
     @RolesAllowed({"loginRole"})
     public ArrayList<CalendarRegion> getRegionCodes(String countryId) {
-        
-        if(countryId==null || "".equals(countryId))
-            countryId=HolidayCalendar.GERMANY.getId();
-        
-        ArrayList<CalendarRegion> areas=new ArrayList<>();
-        HolidayManager m=HolidayManager.getInstance(countryId);
-        String countryName=m.getCalendarHierarchy().getDescription(Locale.GERMAN);
-        for(CalendarHierarchy ch: m.getCalendarHierarchy().getChildren().values()) {
-            CalendarRegion reg=new CalendarRegion(countryId, countryName);
+
+        if (countryId == null || "".equals(countryId)) {
+            countryId = HolidayCalendar.GERMANY.getId();
+        }
+
+        ArrayList<CalendarRegion> areas = new ArrayList<>();
+        HolidayManager m = HolidayManager.getInstance(countryId);
+        String countryName = m.getCalendarHierarchy().getDescription(Locale.GERMAN);
+        for (CalendarHierarchy ch : m.getCalendarHierarchy().getChildren().values()) {
+            CalendarRegion reg = new CalendarRegion(countryId, countryName);
             reg.setRegionId(ch.getId());
             reg.setRegionName(ch.getDescription(Locale.GERMAN));
             areas.add(reg);
         }
-        
-        
+
         return areas;
     }
 
     @Override
     public boolean isHolidayForCurrentUser(Date d) throws Exception {
-        AppUserBean u=this.userBeanFacade.find(context.getCallerPrincipal().getName());
-        
+        AppUserBean u = this.userBeanFacade.find(context.getCallerPrincipal().getName());
+
         return this.isHoliday(d, u.getCountryCode(), u.getAreaCode());
     }
-    
+
     @Override
     @RolesAllowed({"writeArchiveFileRole"})
     public ArchiveFileReviewsBean addReview(String archiveFileId, ArchiveFileReviewsBean review) throws Exception {
-        
+
         this.validateCalendarSetup(review);
-        
+
         StringGenerator idGen = new StringGenerator();
         ArchiveFileBean aFile = this.archiveFileFacade.find(archiveFileId);
         SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), aFile, this.securityFacade, this.archiveFileService.getAllowedGroups(aFile));
@@ -842,15 +846,15 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
         String revId = idGen.getID().toString();
         review.setId(revId);
         review.setArchiveFileKey(aFile);
-        
-        if(!review.hasEndDateAndTime() && review.getBeginDate()!=null) {
-            Date endDate=new Date(review.getBeginDate().getTime());
+
+        if (!review.hasEndDateAndTime() && review.getBeginDate() != null) {
+            Date endDate = new Date(review.getBeginDate().getTime());
             endDate.setHours(23);
             endDate.setMinutes(59);
             endDate.setSeconds(59);
             review.setEndDate(endDate);
         }
-        
+
         this.archiveFileReviewsFacade.create(review);
 
         ArchiveFileHistoryBean newHistEntry = new ArchiveFileHistoryBean();
@@ -860,7 +864,7 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
         newHistEntry.setChangeDescription(review.getEventTypeName() + " hinzugefügt: " + review.getSummary() + " (" + review.toString() + ")");
         newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
         this.archiveFileHistoryFacade.create(newHistEntry);
-        
+
         try {
             this.calendarSync.eventAdded(aFile, review);
         } catch (Throwable ex) {
@@ -869,13 +873,13 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
 
         return this.archiveFileReviewsFacade.find(revId);
     }
-    
+
     @Override
     @RolesAllowed({"readArchiveFileRole"})
     public Collection<ArchiveFileReviewsBean> getAllOpenReviews() {
         return this.getAllOpenReviewsImpl(context.getCallerPrincipal().getName());
     }
-    
+
     private Collection<ArchiveFileReviewsBean> getAllOpenReviewsImpl(String principalId) {
 
         List<Group> userGroups = new ArrayList<>();
@@ -922,20 +926,23 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
             throw new EJBException("Wiedervorlagensuche konnte nicht ausgeführt werden.", sqle);
         } finally {
             try {
-                if(rs!=null)
+                if (rs != null) {
                     rs.close();
+                }
             } catch (Throwable t) {
                 log.error(t);
             }
             try {
-                if(st!=null)
+                if (st != null) {
                     st.close();
+                }
             } catch (Throwable t) {
                 log.error(t);
             }
             try {
-                if(con!=null)
+                if (con != null) {
                     con.close();
+                }
             } catch (Throwable t) {
                 log.error(t);
             }
@@ -943,12 +950,12 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
 
         return list;
     }
-    
+
     @Override
     public Collection<ArchiveFileReviewsBean> getAllOpenReviewsUnrestricted() {
         return this.getAllOpenReviewsImpl(null);
     }
-    
+
     @Override
     @RolesAllowed({"writeArchiveFileRole"})
     public void removeReview(String reviewId) throws Exception {
@@ -966,20 +973,20 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
         this.archiveFileHistoryFacade.create(newHistEntry);
 
         this.archiveFileReviewsFacade.remove(rb);
-        
+
         try {
             this.calendarSync.eventDeleted(rb);
         } catch (Throwable ex) {
             log.error("Failed to sync deleted event to cloud", ex);
         }
     }
-    
+
     @Override
     @RolesAllowed({"readArchiveFileRole"})
     public Collection<ArchiveFileReviewsBean> searchReviews(int status, int type, Date fromDate, Date toDate) {
         return searchReviews(status, type, fromDate, toDate, 5000000);
     }
-    
+
     @Override
     @RolesAllowed({"readArchiveFileRole"})
     public Collection<ArchiveFileReviewsBean> searchReviews(int status, int type, Date fromDate, Date toDate, int limit) {
@@ -1092,23 +1099,23 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
 
         return list;
     }
-    
+
     private void validateCalendarSetup(ArchiveFileReviewsBean review) throws Exception {
-        if(review.getCalendarSetup()==null) {
-            throw new Exception ("Frist/WV/Termin verweist nicht auf einen existierenden Kalender");
+        if (review.getCalendarSetup() == null) {
+            throw new Exception("Frist/WV/Termin verweist nicht auf einen existierenden Kalender");
         }
-        
-        if(review.getEventType()!=review.getCalendarSetup().getEventType()) {
-            throw new Exception ("Gewählter Kalender unterstützt den gewählten Kalendereintragstyp (Frist/WV/Termin) nicht");
+
+        if (review.getEventType() != review.getCalendarSetup().getEventType()) {
+            throw new Exception("Gewählter Kalender unterstützt den gewählten Kalendereintragstyp (Frist/WV/Termin) nicht");
         }
     }
-    
+
     @Override
     @RolesAllowed({"writeArchiveFileRole"})
     public ArchiveFileReviewsBean updateReview(String archiveFileId, ArchiveFileReviewsBean review) throws Exception {
-        
+
         this.validateCalendarSetup(review);
-        
+
         StringGenerator idGen = new StringGenerator();
         ArchiveFileBean aFile = this.archiveFileFacade.find(archiveFileId);
         SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), aFile, this.securityFacade, this.archiveFileService.getAllowedGroups(aFile));
@@ -1126,29 +1133,29 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
         this.archiveFileHistoryFacade.create(newHistEntry);
 
         review.setArchiveFileKey(aFile);
-        if(!review.hasEndDateAndTime() && review.getBeginDate()!=null) {
-            Date endDate=new Date(review.getBeginDate().getTime());
+        if (!review.hasEndDateAndTime() && review.getBeginDate() != null) {
+            Date endDate = new Date(review.getBeginDate().getTime());
             endDate.setHours(23);
             endDate.setMinutes(59);
             endDate.setSeconds(59);
             review.setEndDate(endDate);
         }
         this.archiveFileReviewsFacade.edit(review);
-        
+
         try {
             this.calendarSync.eventUpdated(aFile, review);
         } catch (Throwable ex) {
             log.error("Failed to sync updated event to cloud", ex);
         }
-        
+
         return this.archiveFileReviewsFacade.find(review.getId());
     }
-    
+
     @Override
     public Collection<ArchiveFileReviewsBean> getReviewsUnrestricted(String archiveFileKey) throws Exception {
         return getReviewsImpl(archiveFileKey, null);
     }
-    
+
     @Override
     @RolesAllowed({"readArchiveFileRole"})
     public Collection<ArchiveFileReviewsBean> getReviews(String archiveFileKey) throws Exception {
@@ -1156,7 +1163,7 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
         return getReviewsImpl(archiveFileKey, context.getCallerPrincipal().getName());
 
     }
-    
+
     private Collection<ArchiveFileReviewsBean> getReviewsImpl(String archiveFileKey, String principalId) throws Exception {
         ArchiveFileBean aFile = this.archiveFileFacade.find(archiveFileKey);
         if (principalId != null) {
@@ -1171,17 +1178,18 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
     public List<CalendarSetup> getAllCalendarSetups() {
         return this.calendarSetups.findAll();
     }
-    
+
     @Override
     @RolesAllowed({"loginRole"})
     public List<CalendarSetup> getCalendarSetupsForUser(String principalId) {
-        List<CalendarSetup> returnList=new ArrayList<>();
-        List<CalendarAccess> acc=this.calendarAccess.findByUser(principalId);
-        if(acc!=null) {
-            for(CalendarAccess ca: acc) {
-                CalendarSetup cs=this.calendarSetups.find(ca.getCalendarId());
-                if(cs!=null)
+        List<CalendarSetup> returnList = new ArrayList<>();
+        List<CalendarAccess> acc = this.calendarAccess.findByUser(principalId);
+        if (acc != null) {
+            for (CalendarAccess ca : acc) {
+                CalendarSetup cs = this.calendarSetups.find(ca.getCalendarId());
+                if (cs != null) {
                     returnList.add(cs);
+                }
             }
         }
         return returnList;
@@ -1191,7 +1199,7 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
     @RolesAllowed({"adminRole"})
     public CalendarSetup addCalendarSetup(CalendarSetup cs) {
         StringGenerator idGen = new StringGenerator();
-        String csId=idGen.getID().toString();
+        String csId = idGen.getID().toString();
         cs.setId(csId);
         this.calendarSetups.create(cs);
         return this.calendarSetups.find(csId);
@@ -1215,5 +1223,47 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
     public void runFullCalendarSync() {
         this.calendarSync.runFullCalendarSync();
     }
-    
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public boolean hasEvents(CalendarSetup calendar) throws Exception {
+        List list = this.archiveFileReviewsFacade.findByCalendarSetup(calendar);
+        return list.size() > 0;
+    }
+
+    @Override
+    @RolesAllowed({"adminRole"})
+    public void migrateEvents(CalendarSetup fromCalendar, CalendarSetup toCalendar) throws Exception {
+        if (fromCalendar.getEventType() != toCalendar.getEventType()) {
+            throw new Exception("Kalender haben unterschiedliche Eintragstypen");
+        }
+        
+        if(fromCalendar.equals(toCalendar)) {
+            throw new Exception("Quell- und Zielkalender sind identisch");
+        }
+
+        List<ArchiveFileReviewsBean> events = this.archiveFileReviewsFacade.findByCalendarSetup(fromCalendar);
+        for (ArchiveFileReviewsBean e : events) {
+            
+            try {
+                // delete from old calendar
+                this.calendarSync.eventDeleted(e);
+            } catch (Throwable ex) {
+                log.error("Failed to sync migrated event to cloud (delete)", ex);
+            }
+            
+            
+            e.setCalendarSetup(toCalendar);
+            this.archiveFileReviewsFacade.edit(e);
+
+            try {
+                // add to new calendar
+                this.calendarSync.eventAdded(e.getArchiveFileKey(), e);
+            } catch (Throwable ex) {
+                log.error("Failed to sync migrated event to cloud (add)", ex);
+            }
+        }
+
+    }
+
 }

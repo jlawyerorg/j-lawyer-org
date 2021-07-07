@@ -702,6 +702,10 @@ public class CalendarSelectionButton extends javax.swing.JPanel {
     }
     
     public void restrictToType(int eventType, CalendarSetup preSelected) {
+        this.restrictToType(eventType, preSelected, false);
+    }
+    
+    public void restrictToType(int eventType, CalendarSetup preSelected, boolean suppressWarnings) {
         this.popCalendarSetups.removeAll();
         this.selectedSetup = null;
         UserSettings uSettings=UserSettings.getInstance();
@@ -735,7 +739,7 @@ public class CalendarSelectionButton extends javax.swing.JPanel {
             this.popCalendarSetups.add(mi);
         }
         
-        if(this.selectedSetup==null) {
+        if(this.selectedSetup==null && !suppressWarnings) {
             JOptionPane.showMessageDialog(this, "Kalenderkonfiguration ist ungültig - Kalender für diesen Typ existiert nicht, oder Nutzer hat keinen Zugriff.", "Fehler", JOptionPane.ERROR_MESSAGE);
         }
         
@@ -743,7 +747,11 @@ public class CalendarSelectionButton extends javax.swing.JPanel {
     }
     
     public void restrictToType(int eventType) {
-        this.restrictToType(eventType, null);
+        this.restrictToType(eventType, null, false);
+    }
+    
+    public void restrictToType(int eventType, boolean suppressWarnings) {
+        this.restrictToType(eventType, null, suppressWarnings);
     }
     
     public void refreshCalendarSetups() {
@@ -778,9 +786,11 @@ public class CalendarSelectionButton extends javax.swing.JPanel {
     }
     
     private void updateSelection(CalendarSetup cs) {
-        this.selectedSetup = cs;
-        this.cmdSelectCalendarSetup.setBackground(new Color(cs.getBackground()));
-        this.cmdSelectCalendarSetup.setToolTipText(cs.getDisplayName());
+        if (cs != null) {
+            this.selectedSetup = cs;
+            this.cmdSelectCalendarSetup.setBackground(new Color(cs.getBackground()));
+            this.cmdSelectCalendarSetup.setToolTipText(cs.getDisplayName());
+        }
     }
 
     /**

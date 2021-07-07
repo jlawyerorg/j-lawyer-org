@@ -1833,7 +1833,6 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
         ProgressIndicator dlg = new ProgressIndicator(this, true);
         dlg.setShowCancelButton(false);
         EditorImplementation ed = (EditorImplementation) this.contentPanel.getComponent(0);
-//        String contentType = ed.getContentType();
         String fromSafeId = ((Identity) this.cmbFrom.getSelectedItem()).getSafeId();
         SendBeaMessageAction a = null;
 

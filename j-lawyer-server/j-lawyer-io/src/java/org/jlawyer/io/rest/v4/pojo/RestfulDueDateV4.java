@@ -663,7 +663,6 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package org.jlawyer.io.rest.v4.pojo;
 
-import org.jlawyer.io.rest.v1.pojo.*;
 import java.util.Date;
 
 /**
@@ -685,6 +684,7 @@ public class RestfulDueDateV4 {
     private boolean done=false;
     private String assignee=null;
     private String type=null;
+    protected String calendar=null;
 
     public RestfulDueDateV4() {
     }
@@ -813,6 +813,20 @@ public class RestfulDueDateV4 {
      */
     public void setLocation(String location) {
         this.location = location;
+    }
+
+    /**
+     * @return the calendar
+     */
+    public String getCalendar() {
+        return calendar;
+    }
+
+    /**
+     * @param calendar the calendar to set
+     */
+    public void setCalendar(String calendar) {
+        this.calendar = calendar;
     }
 
     

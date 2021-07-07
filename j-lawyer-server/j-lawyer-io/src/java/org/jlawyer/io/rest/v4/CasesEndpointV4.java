@@ -741,6 +741,8 @@ public class CasesEndpointV4 implements CasesEndpointLocalV4 {
                 } else if (rev.getEventType() == ArchiveFileReviewsBean.EVENTTYPE_EVENT) {
                     dd.setType(RestfulDueDateV4.TYPE_EVENT);
                 }
+                if(rev.getCalendarSetup()!=null)
+                    dd.setCalendar(rev.getCalendarSetup().getId());
                 ddList.add(dd);
             }
 

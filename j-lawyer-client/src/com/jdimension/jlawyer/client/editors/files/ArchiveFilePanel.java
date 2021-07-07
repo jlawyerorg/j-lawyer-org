@@ -1207,7 +1207,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         this.radioEventTypeFollowUp.setSelected(true);
         this.toggleEventUi();
-        this.calendarSelectionButton.restrictToType(CalendarSetup.EVENTTYPE_FOLLOWUP);
+        this.calendarSelectionButton.restrictToType(CalendarSetup.EVENTTYPE_FOLLOWUP, true);
 
         this.pnlInvolvedParties.removeAll();
 

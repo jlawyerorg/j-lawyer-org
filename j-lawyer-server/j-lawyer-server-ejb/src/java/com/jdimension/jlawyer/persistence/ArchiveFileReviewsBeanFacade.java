@@ -693,6 +693,13 @@ public class ArchiveFileReviewsBeanFacade extends AbstractFacade<ArchiveFileRevi
         List<ArchiveFileReviewsBean> list = getEntityManager().createQuery("from ArchiveFileReviewsBean where archiveFileKey = ?1").setParameter(1, archiveFileKey).getResultList();
         return list;
     }
+    
+    @Override
+    public List<ArchiveFileReviewsBean> findByCalendarSetup(CalendarSetup setup) {
+
+        List<ArchiveFileReviewsBean> list = getEntityManager().createQuery("from ArchiveFileReviewsBean where calendarSetup = ?1").setParameter(1, setup).getResultList();
+        return list;
+    }
 
     @Override
     public List<ArchiveFileReviewsBean> findByDone(boolean done) {

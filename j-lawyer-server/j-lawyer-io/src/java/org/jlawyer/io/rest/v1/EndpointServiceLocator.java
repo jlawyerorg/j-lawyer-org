@@ -670,14 +670,16 @@ import javax.ws.rs.ApplicationPath;
 import javax.ws.rs.core.Application;
 import org.jlawyer.io.rest.v2.ContactsEndpointV2;
 import org.jlawyer.io.rest.v3.CasesEndpointV3;
+import org.jlawyer.io.rest.v4.CalendarEndpointV4;
 import org.jlawyer.io.rest.v4.CasesEndpointV4;
 
 @ApplicationPath("/rest")
 public class EndpointServiceLocator extends Application
 {
+    @Override
     public Set<Class<?>> getClasses()
     {
-        Set<Class<?>> s = new HashSet<Class<?>>();
+        Set<Class<?>> s = new HashSet<>();
         s.add(SecurityEndpointV1.class);
         s.add(CasesEndpointV1.class);
         s.add(CasesEndpointV2.class);
@@ -686,6 +688,7 @@ public class EndpointServiceLocator extends Application
         s.add(ContactsEndpointV1.class);
         s.add(ContactsEndpointV2.class);
         s.add(FormsEndpointV1.class);
+        s.add(CalendarEndpointV4.class);
         return s;
     }
 }

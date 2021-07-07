@@ -682,6 +682,7 @@ import javax.xml.bind.annotation.XmlRootElement;
     @NamedQuery(name = "ArchiveFileReviewsBean.findBySummary", query = "SELECT a FROM ArchiveFileReviewsBean a WHERE a.summary = :summary"),
     @NamedQuery(name = "ArchiveFileReviewsBean.findByBeginDate", query = "SELECT a FROM ArchiveFileReviewsBean a WHERE a.beginDate = :beginDate"),
     @NamedQuery(name = "ArchiveFileReviewsBean.findByArchiveFileKey", query = "SELECT a FROM ArchiveFileReviewsBean a WHERE a.archiveFileKey = :archiveFileKey"),
+    @NamedQuery(name = "ArchiveFileReviewsBean.findByCalendarSetup", query = "SELECT a FROM ArchiveFileReviewsBean a WHERE a.calendarSetup = :calendarSetup"),
     @NamedQuery(name = "ArchiveFileReviewsBean.findByDone", query = "SELECT a FROM ArchiveFileReviewsBean a WHERE a.done = :done")})
 public class ArchiveFileReviewsBean implements Serializable, EventTypes {
 
@@ -764,10 +765,7 @@ public class ArchiveFileReviewsBean implements Serializable, EventTypes {
     }
 
     public boolean getDoneBoolean() {
-        if (this.done == 1) {
-            return true;
-        }
-        return false;
+        return this.done == 1;
     }
 
     public void setDoneBoolean(boolean done) {

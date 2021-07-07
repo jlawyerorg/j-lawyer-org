@@ -663,20 +663,9 @@
  */
 package com.jdimension.jlawyer.services;
 
-import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
-import com.jdimension.jlawyer.persistence.ArchiveFileBean;
-import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
-import com.jdimension.jlawyer.persistence.ArchiveFileGroupsBean;
-import com.jdimension.jlawyer.persistence.ArchiveFileHistoryBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
-import com.jdimension.jlawyer.persistence.ArchiveFileTagsBean;
-import com.jdimension.jlawyer.persistence.CaseFolder;
-import com.jdimension.jlawyer.persistence.DocumentFolder;
-import com.jdimension.jlawyer.persistence.DocumentFolderTemplate;
-import com.jdimension.jlawyer.persistence.PartyTypeBean;
-import java.util.ArrayList;
+import com.jdimension.jlawyer.persistence.CalendarSetup;
 import java.util.Collection;
-import java.util.Date;
 import java.util.List;
 import javax.ejb.Local;
 
@@ -692,5 +681,7 @@ public interface CalendarServiceLocal {
     Collection<ArchiveFileReviewsBean> getReviewsUnrestricted(String archiveFileKey) throws Exception;
     
     public Collection<ArchiveFileReviewsBean> getReviews(String archiveFileKey) throws Exception;
+    
+    public List<CalendarSetup> getAllCalendarSetups();
     
 }

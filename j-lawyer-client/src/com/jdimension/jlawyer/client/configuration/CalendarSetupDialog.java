@@ -667,10 +667,11 @@ import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.persistence.CalendarSetup;
-import com.jdimension.jlawyer.persistence.PartyTypeBean;
+import com.jdimension.jlawyer.security.Crypto;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.services.SystemManagementRemote;
 import java.awt.Color;
+import java.util.ArrayList;
 import java.util.List;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
@@ -688,10 +689,12 @@ import themes.colors.DefaultColorTheme;
  */
 public class CalendarSetupDialog extends javax.swing.JDialog {
 
-    private static Logger log = Logger.getLogger(CalendarSetupDialog.class.getName());
+    private static final Logger log = Logger.getLogger(CalendarSetupDialog.class.getName());
 
     /**
      * Creates new form CalendarSetupDialog
+     * @param parent
+     * @param modal
      */
     public CalendarSetupDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
@@ -1033,8 +1036,6 @@ public class CalendarSetupDialog extends javax.swing.JDialog {
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
-            SystemManagementRemote mgmt = locator.lookupSystemManagementRemote();
-
             CalendarSetup cs = new CalendarSetup();
             cs.setDisplayName(newNameObject.toString());
             if(this.rdFollowups.isSelected())
@@ -1052,7 +1053,6 @@ public class CalendarSetupDialog extends javax.swing.JDialog {
         } catch (Exception ex) {
             log.error("Error creating new calendar", ex);
             JOptionPane.showMessageDialog(this, ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
-            return;
         }
 
     }//GEN-LAST:event_cmdAddActionPerformed
@@ -1062,7 +1062,7 @@ public class CalendarSetupDialog extends javax.swing.JDialog {
         int row = this.tblCalendars.getSelectedRow();
 
         if (row < 0) {
-            return;
+
         } else {
 
             if (this.cmbName.getSelectedItem() == null) {
@@ -1072,6 +1072,8 @@ public class CalendarSetupDialog extends javax.swing.JDialog {
                     return;
                 }
             }
+            
+            
 
             CalendarSetup cs = (CalendarSetup) this.tblCalendars.getValueAt(row, 0);
             cs.setDisplayName(this.txtDisplayName.getText());
@@ -1080,6 +1082,11 @@ public class CalendarSetupDialog extends javax.swing.JDialog {
             } else {
                 cs.setHref(null);
             }
+            if (StringUtils.isEmpty(this.pnlCloud.getCloudHost()) && StringUtils.isEmpty(this.pnlCloud.getCloudUser()) && StringUtils.isEmpty(this.pnlCloud.getCloudPassword())) {
+                // cloud sync has been removed
+                cs.setHref(null);
+            }
+            
             if(this.rdFollowups.isSelected())
                 cs.setEventType(CalendarSetup.EVENTTYPE_FOLLOWUP);
             else if(this.rdRespites.isSelected())
@@ -1088,7 +1095,12 @@ public class CalendarSetupDialog extends javax.swing.JDialog {
                 cs.setEventType(CalendarSetup.EVENTTYPE_EVENT);
             cs.setBackground(this.cmdColor.getBackground().getRGB());
             cs.setCloudHost(this.pnlCloud.getCloudHost());
-            cs.setCloudPassword(this.pnlCloud.getCloudPassword());
+            try {
+                cs.setCloudPassword(Crypto.encrypt(this.pnlCloud.getCloudPassword()));
+            } catch (Exception ex) {
+                log.error("Error accessing cloud credentials", ex);
+                JOptionPane.showMessageDialog(this, "Fehler bzgl. Nextcloud-Zugangsdaten" + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            }
             cs.setCloudPath(this.pnlCloud.getCloudPath());
             cs.setCloudPort(this.pnlCloud.getCloudPort());
             cs.setCloudSsl(this.pnlCloud.isSsl());
@@ -1107,7 +1119,6 @@ public class CalendarSetupDialog extends javax.swing.JDialog {
             } catch (Exception ex) {
                 log.error("Error updating calendar setup", ex);
                 JOptionPane.showMessageDialog(this, ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
-                return;
             }
         }
 
@@ -1118,7 +1129,7 @@ public class CalendarSetupDialog extends javax.swing.JDialog {
         int row = this.tblCalendars.getSelectedRow();
 
         if (row < 0) {
-            return;
+            
         } else {
 
             CalendarSetup cs = (CalendarSetup) this.tblCalendars.getValueAt(row, 0);
@@ -1126,6 +1137,36 @@ public class CalendarSetupDialog extends javax.swing.JDialog {
             try {
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
+                List<CalendarSetup> allSetups=locator.lookupCalendarServiceRemote().getAllCalendarSetups();
+                List<CalendarSetup> setupsOfType=new ArrayList<>();
+                for(CalendarSetup cals: allSetups) {
+                    if(cals.getEventType()==cs.getEventType())
+                        setupsOfType.add(cals);
+                }
+                if(setupsOfType.size()==1) {
+                    // we must have at least one calendar per type at all times
+                    JOptionPane.showMessageDialog(this, "Kalender ist der letzte dieses Typs (WV/Frist/Termin)" + System.lineSeparator() + "Bitte erst einen alternativen Kalender anlegen und danach diesen löschen", "Kalender löschen", JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
+                
+                setupsOfType.remove(cs);
+                if(locator.lookupCalendarServiceRemote().hasEvents(cs)) {
+                    // transfer events to other calendar
+                    CalendarSetup s = (CalendarSetup)JOptionPane.showInputDialog(
+                    this,
+                    "Zu löschender Kalender enthält noch Einträge - in welchen Kalender sollen diese transferiert werden?",
+                    "Kalendereinträge transferieren",
+                    JOptionPane.QUESTION_MESSAGE,
+                    null,
+                    setupsOfType.toArray(),
+                    null);
+                    
+                    if(s==null)
+                        return;
+                    
+                    locator.lookupCalendarServiceRemote().migrateEvents(cs, s);
+                }
+                
                 locator.lookupCalendarServiceRemote().removeCalendarSetup(cs);
                 ((DefaultTableModel) this.tblCalendars.getModel()).removeRow(row);
 
@@ -1133,14 +1174,12 @@ public class CalendarSetupDialog extends javax.swing.JDialog {
             } catch (Exception ex) {
                 log.error("Error removing calendar setup", ex);
                 JOptionPane.showMessageDialog(this, ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
-                return;
             }
         }
     }//GEN-LAST:event_cmdRemoveActionPerformed
 
     private void cmdColorActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdColorActionPerformed
-        JColorChooser lineColorChooser2 = new JColorChooser();
-        Color currentColor = lineColorChooser2.showDialog(this, "Farbe wählen", cmdColor.getBackground());
+        Color currentColor = JColorChooser.showDialog(this, "Farbe wählen", cmdColor.getBackground());
         if (currentColor != null) {
             cmdColor.setBackground(currentColor);
 
@@ -1178,13 +1217,13 @@ public class CalendarSetupDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_cmdGetCloudCalendarsActionPerformed
 
     private void updatedUI(CalendarSetup cs) {
-
+        this.cmbName.removeAllItems();
         if (!StringUtils.isEmpty(cs.getCloudHost()) && !StringUtils.isEmpty(cs.getCloudUser()) && !StringUtils.isEmpty(cs.getCloudPassword())) {
             try {
 
-                NextcloudCalendarConnector nc = new NextcloudCalendarConnector(cs.getCloudHost(), cs.isCloudSsl(), cs.getCloudPort(), cs.getCloudUser(), cs.getCloudPassword());
+                NextcloudCalendarConnector nc = new NextcloudCalendarConnector(cs.getCloudHost(), cs.isCloudSsl(), cs.getCloudPort(), cs.getCloudUser(), Crypto.decrypt(cs.getCloudPassword()));
                 List<CloudCalendar> cals = nc.getAllCalendars();
-                this.cmbName.removeAllItems();
+                
                 CloudCalendar selected = null;
                 for (CloudCalendar ab : cals) {
                     ((DefaultComboBoxModel) this.cmbName.getModel()).addElement(ab);
@@ -1199,11 +1238,17 @@ public class CalendarSetupDialog extends javax.swing.JDialog {
             }
         }
 
+        try {
+            this.pnlCloud.setCloudPassword(Crypto.decrypt(cs.getCloudPassword()));
+        } catch (Exception ex) {
+            log.error("Error accessing cloud credentials", ex);
+            JOptionPane.showMessageDialog(this, "Fehler bzgl. Nextcloud-Zugangsdaten" + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+        }
+        
         this.txtDisplayName.setText(cs.getDisplayName());
         this.cmdColor.setBackground(new Color(cs.getBackground()));
         this.pnlCloud.setSsl(cs.isCloudSsl());
         this.pnlCloud.setCloudHost(cs.getCloudHost());
-        this.pnlCloud.setCloudPassword(cs.getCloudPassword());
         this.pnlCloud.setCloudPath(cs.getCloudPath());
         this.pnlCloud.setCloudPort(cs.getCloudPort());
         this.pnlCloud.setCloudUser(cs.getCloudUser());

@@ -667,6 +667,7 @@ import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.CalendarSetup;
+import com.jdimension.jlawyer.security.Crypto;
 import com.jdimension.jlawyer.server.utils.ServerStringUtils;
 import com.jdimension.jlawyer.server.utils.StringUtils;
 import java.util.List;
@@ -736,13 +737,14 @@ public class CalendarSyncService implements CalendarSyncServiceLocal {
         }
     }
 
-    private NextcloudCalendarConnector getConnector(CalendarSetup cs) {
+    private NextcloudCalendarConnector getConnector(CalendarSetup cs) throws Exception {
+        
         if (ServerStringUtils.isEmpty(cs.getCloudHost()) || ServerStringUtils.isEmpty(cs.getCloudUser()) || ServerStringUtils.isEmpty(cs.getCloudPassword())) {
             log.info("No or invalid calendar sync configuration for calendar setup " + cs.getDisplayName());
             return null;
         }
 
-        NextcloudCalendarConnector nc = new NextcloudCalendarConnector(cs.getCloudHost(), cs.isCloudSsl(), cs.getCloudPort(), cs.getCloudUser(), cs.getCloudPassword());
+        NextcloudCalendarConnector nc = new NextcloudCalendarConnector(cs.getCloudHost(), cs.isCloudSsl(), cs.getCloudPort(), cs.getCloudUser(), Crypto.decrypt(cs.getCloudPassword()));
         if (cs.getCloudPath() != null && !("".equals(cs.getCloudPath()))) {
             nc.setSubpathPrefix(cs.getCloudPath());
         }

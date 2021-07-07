@@ -725,7 +725,7 @@ public class CalendarPanel extends javax.swing.JPanel {
 //    private JButton addButton;
     
     private String detailsEditorClass;
-    private Image backgroundImage=null;
+    private transient Image backgroundImage=null;
     private String parentClass=null;
 
     /**
@@ -939,12 +939,8 @@ public class CalendarPanel extends javax.swing.JPanel {
     }
 
     private void bindListeners() {
-        exitMenuItem.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(final ActionEvent arg0) {
-                System.exit(0);
-            }
+        exitMenuItem.addActionListener((final ActionEvent arg0) -> {
+            System.exit(0);
         });
 
 //        addButton.addActionListener(new ActionListener() {
@@ -977,15 +973,11 @@ public class CalendarPanel extends javax.swing.JPanel {
 //            }
 //        });
 
-        mnuOpenCase.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent arg0) {
+        mnuOpenCase.addActionListener((ActionEvent arg0) -> {
 //				final Collection<CalendarEvent> selected = jCalendar.getSelectedEvents();
 //				for (final CalendarEvent event : selected) {
 //					jCalendar.removeCalendarEvent(event);
 //				}
-            }
         });
 
         jCalendar.addCollectionChangedListener(new ModelChangedListener() {
@@ -1006,30 +998,22 @@ public class CalendarPanel extends javax.swing.JPanel {
             }
         });
 
-        jCalendar.addSelectionChangedListener(new SelectionChangedListener() {
-
-            @Override
-            public void selectionChanged(final SelectionChangedEvent event) {
-                if (event.getCalendarEvent() != null) {
-                    if (event.getCalendarEvent().isSelected()) {
-                        System.out.println("Event selected " + event.getCalendarEvent());
-                    } else {
-                        System.out.println("Event deselected " + event.getCalendarEvent());
-                    }
+        jCalendar.addSelectionChangedListener((final SelectionChangedEvent event) -> {
+            if (event.getCalendarEvent() != null) {
+                if (event.getCalendarEvent().isSelected()) {
+                    System.out.println("Event selected " + event.getCalendarEvent());
                 } else {
-                    System.out.println("Selection cleared");
+                    System.out.println("Event deselected " + event.getCalendarEvent());
                 }
-                System.out.println("\n");
+            } else {
+                System.out.println("Selection cleared");
             }
+            System.out.println("\n");
         });
 
-        jCalendar.addIntervalChangedListener(new IntervalChangedListener() {
-
-            @Override
-            public void intervalChanged(final IntervalChangedEvent event) {
-                System.out.println("Interval changed " + sdf.format(event.getIntervalStart()) + " "
-                        + sdf.format(event.getIntervalEnd()) + "\n");
-            }
+        jCalendar.addIntervalChangedListener((final IntervalChangedEvent event) -> {
+            System.out.println("Interval changed " + sdf.format(event.getIntervalStart()) + " "
+                    + sdf.format(event.getIntervalEnd()) + "\n");
         });
 
         jCalendar.addIntervalSelectionListener((IntervalSelectionEvent event) -> {

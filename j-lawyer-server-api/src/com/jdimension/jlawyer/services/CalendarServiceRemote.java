@@ -715,5 +715,9 @@ public interface CalendarServiceRemote {
     void removeCalendarSetup(CalendarSetup cs);
 
     void runFullCalendarSync();
+
+    boolean hasEvents(CalendarSetup calendar) throws Exception;
+
+    void migrateEvents(CalendarSetup fromCalendar, CalendarSetup toCalendar) throws Exception;
     
 }
