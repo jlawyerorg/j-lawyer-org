@@ -910,7 +910,7 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
 
                 boolean allowed = false;
                 if (principalId != null) {
-                    if (SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), userGroups, dto, this.caseGroupsFacade)) {
+                    if (SecurityUtils.checkGroupsForCase(userGroups, dto, this.caseGroupsFacade)) {
                         allowed = true;
                     }
                 } else {
@@ -1067,7 +1067,7 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
                 ArchiveFileBean dto = this.archiveFileFacade.find(archiveFileKey);
 
                 boolean allowed = false;
-                if (SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), userGroups, dto, this.caseGroupsFacade)) {
+                if (SecurityUtils.checkGroupsForCase(userGroups, dto, this.caseGroupsFacade)) {
                     allowed = true;
                 }
 

@@ -719,7 +719,7 @@ public class SecurityUtils {
 
     }
 
-    public static boolean checkGroupsForCase(String principalId, List<Group> userGroups, ArchiveFileBean aFile, ArchiveFileGroupsBeanFacadeLocal caseGroupsFacade) {
+    public static boolean checkGroupsForCase(List<Group> userGroups, ArchiveFileBean aFile, ArchiveFileGroupsBeanFacadeLocal caseGroupsFacade) {
         Group owner = aFile.getGroup();
         if (owner == null) {
             return true;
