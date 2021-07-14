@@ -1009,12 +1009,14 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 log.error(t);
             }
             try {
-                st.close();
+                if(st!=null)
+                    st.close();
             } catch (Throwable t) {
                 log.error(t);
             }
             try {
-                con.close();
+                if(con!=null)
+                    con.close();
             } catch (Throwable t) {
                 log.error(t);
             }
