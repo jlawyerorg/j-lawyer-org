@@ -964,7 +964,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             return new ArchiveFileBean[0];
         }
 
-        List<Group> userGroups = new ArrayList<Group>();
+        List<Group> userGroups = new ArrayList<>();
         try {
             userGroups = this.securityFacade.getGroupsForUser(context.getCallerPrincipal().getName());
         } catch (Throwable t) {
@@ -975,7 +975,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         Connection con = null;
         ResultSet rs = null;
         PreparedStatement st = null;
-        ArrayList<ArchiveFileBean> list = new ArrayList<ArchiveFileBean>();
+        ArrayList<ArchiveFileBean> list = new ArrayList<>();
         try {
             con = utils.getConnection();
             st = con.prepareStatement("select id from cases where ucase(name) like ? or ucase(fileNumber) like ? or ucase(filenumberext) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(subjectField) like ?");
@@ -993,7 +993,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             while (rs.next()) {
                 String id = rs.getString(1);
                 ArchiveFileBean dto = this.archiveFileFacade.find(id);
-                if (SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), userGroups, dto, this.getAllowedGroups(dto))) {
+                if (SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), userGroups, dto, this.caseGroupsFacade)) {
                     list.add(dto);
                 }
 
@@ -1317,7 +1317,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         // userOnly = true  --> only files for this user#
         // userOnly = false  --> only files NOT changed by this user
 
-        List<Group> userGroups = new ArrayList<Group>();
+        List<Group> userGroups = new ArrayList<>();
         try {
             userGroups = this.securityFacade.getGroupsForUser(context.getCallerPrincipal().getName());
         } catch (Throwable t) {
@@ -1329,7 +1329,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         Connection con = null;
         ResultSet rs = null;
         PreparedStatement st = null;
-        List<ArchiveFileBean> returnList = new ArrayList<ArchiveFileBean>();
+        List<ArchiveFileBean> returnList = new ArrayList<>();
 
         try {
             con = utils.getConnection();
@@ -1351,7 +1351,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             while (rs.next()) {
                 String id = rs.getString(1);
                 ArchiveFileBean aFile = this.archiveFileFacade.find(id);
-                if (SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), userGroups, aFile, this.getAllowedGroups(aFile))) {
+                if (SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), userGroups, aFile, this.caseGroupsFacade)) {
                     returnList.add(aFile);
                 }
 
@@ -1421,13 +1421,13 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         ArchiveFileBean aFile = this.archiveFileFacade.find(archiveFileKey);
         boolean allowed = false;
         if (principalId != null) {
-            List<Group> userGroups = new ArrayList<Group>();
+            List<Group> userGroups = new ArrayList<>();
             try {
                 userGroups = this.securityFacade.getGroupsForUser(principalId);
             } catch (Throwable t) {
                 log.error("Unable to determine groups for user " + principalId, t);
             }
-            if (SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), userGroups, aFile, this.getAllowedGroups(aFile))) {
+            if (SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), userGroups, aFile, this.caseGroupsFacade)) {
                 allowed = true;
             }
         } else {
@@ -1881,7 +1881,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     @Override
     public Collection<ArchiveFileAddressesBean> getArchiveFileAddressesForAddress(String adressId) {
 
-        List<Group> userGroups = new ArrayList<Group>();
+        List<Group> userGroups = new ArrayList<>();
         try {
             userGroups = this.securityFacade.getGroupsForUser(context.getCallerPrincipal().getName());
         } catch (Throwable t) {
@@ -1893,7 +1893,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         ArrayList<ArchiveFileAddressesBean> l2 = new ArrayList<>();
         for (ArchiveFileAddressesBean aab : l) {
 
-            if (SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), userGroups, aab.getArchiveFileKey(), this.getAllowedGroups(aab.getArchiveFileKey()))) {
+            if (SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), userGroups, aab.getArchiveFileKey(), this.caseGroupsFacade)) {
                 l2.add(aab);
             }
 
@@ -2217,7 +2217,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
         query = query.trim();
 
-        List<Group> userGroups = new ArrayList<Group>();
+        List<Group> userGroups = new ArrayList<>();
         try {
             userGroups = this.securityFacade.getGroupsForUser(context.getCallerPrincipal().getName());
         } catch (Throwable t) {
@@ -2259,7 +2259,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             }
         }
 
-        ArrayList<ArchiveFileBean> list = new ArrayList<ArchiveFileBean>();
+        ArrayList<ArchiveFileBean> list = new ArrayList<>();
         try {
             con = utils.getConnection();
             String wildCard = "%" + StringUtils.germanToUpperCase(query) + "%";
@@ -2389,12 +2389,10 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
             rs = st.executeQuery();
 
-            //ArchiveFileLocalHome home = this.lookupArchiveFileBean();
             while (rs.next()) {
                 String id = rs.getString(1);
-                //ArchiveFileLocal file = home.findByPrimaryKey(id);
                 ArchiveFileBean dto = this.archiveFileFacade.find(id);
-                if (SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), userGroups, dto, this.getAllowedGroups(dto))) {
+                if (SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), userGroups, dto, this.caseGroupsFacade)) {
                     list.add(dto);
                 }
 
@@ -2505,7 +2503,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     }
 
     private List<ArchiveFileHistoryBean> filterHistory(List<ArchiveFileHistoryBean> inputList, String principalId) {
-        List<Group> userGroups = new ArrayList<Group>();
+        List<Group> userGroups = new ArrayList<>();
         try {
             userGroups = this.securityFacade.getGroupsForUser(principalId);
         } catch (Throwable t) {
@@ -2519,7 +2517,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         ArrayList<ArchiveFileHistoryBean> outputList = new ArrayList<>();
         for (ArchiveFileHistoryBean h : inputList) {
 
-            if (SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), userGroups, h.getArchiveFileKey(), this.getAllowedGroups(h.getArchiveFileKey()))) {
+            if (SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), userGroups, h.getArchiveFileKey(), this.caseGroupsFacade)) {
                 outputList.add(h);
             }
 
@@ -2534,7 +2532,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         ResultSet rs = null;
         List<ArchiveFileBean> returnList = new ArrayList<>();
 
-        List<Group> userGroups = new ArrayList<Group>();
+        List<Group> userGroups = new ArrayList<>();
         try {
             userGroups = this.securityFacade.getGroupsForUser(context.getCallerPrincipal().getName());
         } catch (Throwable t) {
@@ -2550,7 +2548,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 String id = rs.getString(1);
                 ArchiveFileBean aFile = this.archiveFileFacade.find(id);
 
-                if (SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), userGroups, aFile, this.getAllowedGroups(aFile))) {
+                if (SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), userGroups, aFile, this.caseGroupsFacade)) {
                     returnList.add(aFile);
                 }
 
@@ -2636,9 +2634,9 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     @RolesAllowed({"readArchiveFileRole"})
     public Collection<ArchiveFileBean> getAllWithMissingReviews() {
         JDBCUtils utils = new JDBCUtils();
-        ArrayList<ArchiveFileBean> list = new ArrayList<ArchiveFileBean>();
+        ArrayList<ArchiveFileBean> list = new ArrayList<>();
 
-        List<Group> userGroups = new ArrayList<Group>();
+        List<Group> userGroups = new ArrayList<>();
         try {
             userGroups = this.securityFacade.getGroupsForUser(context.getCallerPrincipal().getName());
         } catch (Throwable t) {
@@ -2653,7 +2651,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 String id = rs.getString(1);
                 ArchiveFileBean dto = this.archiveFileFacade.find(id);
 
-                if (SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), userGroups, dto, this.getAllowedGroups(dto))) {
+                if (SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), userGroups, dto, this.caseGroupsFacade)) {
                     list.add(dto);
                 }
 
@@ -2856,7 +2854,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
             st.setInt(index, 5 * limit);
             rs = st.executeQuery();
-            ArrayList<String> keyCache = new ArrayList<String>();
+            ArrayList<String> keyCache = new ArrayList<>();
             while (rs.next()) {
                 String id = rs.getString(1);
                 // there might be duplicate cases in the result set
@@ -2865,7 +2863,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
                     ArchiveFileBean dto = this.archiveFileFacade.find(id);
 
-                    if (SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), userGroups, dto, this.getAllowedGroups(dto))) {
+                    if (SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), userGroups, dto, this.caseGroupsFacade)) {
                         returnList.add(dto);
                     }
 
@@ -3420,7 +3418,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
             st.setInt(index, limit);
             rs = st.executeQuery();
-            ArrayList<String> keyCache = new ArrayList<String>();
+            ArrayList<String> keyCache = new ArrayList<>();
             while (rs.next()) {
                 String id = rs.getString(1);
                 // there might be duplicate cases in the result set
@@ -3428,7 +3426,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                     keyCache.add(id);
                     ArchiveFileDocumentsBean docb = this.archiveFileDocumentsFacade.find(id);
 
-                    if (!docb.isDeleted() && SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), userGroups, docb.getArchiveFileKey(), this.getAllowedGroups(docb.getArchiveFileKey()))) {
+                    if (!docb.isDeleted() && SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), userGroups, docb.getArchiveFileKey(), this.caseGroupsFacade)) {
                         returnList.add(docb);
                     }
 
@@ -3685,7 +3683,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     @RolesAllowed({"readArchiveFileRole"})
     public List<ArchiveFileGroupsBean> getAllowedGroups(ArchiveFileBean archiveFile) {
         if (archiveFile == null) {
-            return new ArrayList<ArchiveFileGroupsBean>();
+            return new ArrayList<>();
         }
         return this.caseGroupsFacade.findByCase(archiveFile);
 
@@ -4107,7 +4105,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         ArrayList<ArchiveFileDocumentsBean> deletedAllowed = new ArrayList<>();
 
         String principalId = context.getCallerPrincipal().getName();
-        List<Group> userGroups = new ArrayList<Group>();
+        List<Group> userGroups = new ArrayList<>();
         try {
             userGroups = this.securityFacade.getGroupsForUser(principalId);
         } catch (Throwable t) {
@@ -4115,7 +4113,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         }
 
         for (ArchiveFileDocumentsBean doc : deleted) {
-            if (SecurityUtils.checkGroupsForCase(principalId, userGroups, doc.getArchiveFileKey(), this.getAllowedGroups(doc.getArchiveFileKey()))) {
+            if (SecurityUtils.checkGroupsForCase(principalId, userGroups, doc.getArchiveFileKey(), this.caseGroupsFacade)) {
                 deletedAllowed.add(doc);
             }
         }

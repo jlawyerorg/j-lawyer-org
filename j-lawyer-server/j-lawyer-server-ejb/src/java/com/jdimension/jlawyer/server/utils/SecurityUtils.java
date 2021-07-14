@@ -665,6 +665,7 @@ package com.jdimension.jlawyer.server.utils;
 
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileGroupsBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileGroupsBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.Group;
 import com.jdimension.jlawyer.services.SecurityServiceLocal;
 import java.util.ArrayList;
@@ -676,9 +677,9 @@ import org.apache.log4j.Logger;
  * @author jens
  */
 public class SecurityUtils {
-    
+
     private static Logger log = Logger.getLogger(SecurityUtils.class.getName());
-    
+
     public static void checkGroupsForCase(String principalId, ArchiveFileBean aFile, SecurityServiceLocal securityFacade, List<ArchiveFileGroupsBean> caseGroups) throws Exception {
         if (aFile == null) {
             return;
@@ -693,19 +694,16 @@ public class SecurityUtils {
             return;
         }
 
-        List<Group> userGroups = new ArrayList<Group>();
+        List<Group> userGroups = new ArrayList<>();
         try {
             userGroups = securityFacade.getGroupsForUser(principalId);
         } catch (Throwable t) {
             log.error("Unable to determine groups for user " + principalId, t);
         }
 
-        boolean isAllowed = false;
-        if (owner != null) {
-            for (Group g : userGroups) {
-                if (g.equals(owner)) {
-                    return;
-                }
+        for (Group g : userGroups) {
+            if (g.equals(owner)) {
+                return;
             }
         }
 
@@ -721,20 +719,20 @@ public class SecurityUtils {
 
     }
 
-    public static boolean checkGroupsForCase(String principalId, List<Group> userGroups, ArchiveFileBean aFile, List<ArchiveFileGroupsBean> caseGroups) {
+    public static boolean checkGroupsForCase(String principalId, List<Group> userGroups, ArchiveFileBean aFile, ArchiveFileGroupsBeanFacadeLocal caseGroupsFacade) {
         Group owner = aFile.getGroup();
         if (owner == null) {
             return true;
         }
 
-        if (owner != null) {
-            for (Group g : userGroups) {
-                if (g.equals(owner)) {
-                    return true;
-                }
+        for (Group g : userGroups) {
+            if (g.equals(owner)) {
+                return true;
             }
         }
 
+        List<ArchiveFileGroupsBean> caseGroups=caseGroupsFacade.findByCase(aFile);
+        
         for (Group g : userGroups) {
             for (ArchiveFileGroupsBean cg : caseGroups) {
                 if (g.equals(cg.getAllowedGroup())) {
@@ -746,5 +744,5 @@ public class SecurityUtils {
         return false;
 
     }
-    
+
 }

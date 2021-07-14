@@ -669,6 +669,7 @@ import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.AppUserBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBeanFacadeLocal;
+import com.jdimension.jlawyer.persistence.ArchiveFileGroupsBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.ArchiveFileHistoryBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileHistoryBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
@@ -729,6 +730,8 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
     private ArchiveFileReviewsBeanFacadeLocal archiveFileReviewsFacade;
     @EJB
     private ArchiveFileHistoryBeanFacadeLocal archiveFileHistoryFacade;
+    @EJB
+    private ArchiveFileGroupsBeanFacadeLocal caseGroupsFacade;
     @EJB
     private CalendarSyncServiceLocal calendarSync;
     @EJB
@@ -907,7 +910,7 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
 
                 boolean allowed = false;
                 if (principalId != null) {
-                    if (SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), userGroups, dto, this.archiveFileService.getAllowedGroups(dto))) {
+                    if (SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), userGroups, dto, this.caseGroupsFacade)) {
                         allowed = true;
                     }
                 } else {
@@ -1064,7 +1067,7 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
                 ArchiveFileBean dto = this.archiveFileFacade.find(archiveFileKey);
 
                 boolean allowed = false;
-                if (SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), userGroups, dto, this.archiveFileService.getAllowedGroups(dto))) {
+                if (SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), userGroups, dto, this.caseGroupsFacade)) {
                     allowed = true;
                 }
 
