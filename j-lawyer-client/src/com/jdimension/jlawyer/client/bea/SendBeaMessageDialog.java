@@ -813,7 +813,8 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
         }
 
         this.lblFrom.setText(cu.getPrincipalId() + "<" + fromIdentity + ">");
-        this.tp.setText(EmailUtils.Html2Text(cu.getEmailSignature()));
+        //this.tp.setText(EmailUtils.Html2Text(cu.getEmailSignature()));
+        this.tp.setText("");
         this.lstTo.setModel(new DefaultListModel());
 
         try {
@@ -1110,9 +1111,7 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
     }
 
     public void setBody(String b) {
-        AppUserBean cu = UserSettings.getInstance().getCurrentUser();
-
-        this.tp.setText(b + EmailUtils.Html2Text(cu.getEmailSignature()));
+        this.tp.setText(b);
         this.tp.setCaretPosition(0);
 
     }
@@ -2040,7 +2039,7 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
                 }
                 htValues = PlaceHolderUtils.getPlaceHolderValues(ht, this.contextArchiveFile, selectedParties, this.contextDictateSign, null, new Hashtable<>(), caseLawyer, caseAssistant, author);
                 
-                this.tp.setText(EmailTemplateAccess.replacePlaceHolders(tpl.getBody(), htValues) + System.getProperty("line.separator") + System.getProperty("line.separator") + EmailUtils.Html2Text(this.cu.getEmailSignature()));
+                this.tp.setText(EmailTemplateAccess.replacePlaceHolders(tpl.getBody(), htValues) + System.getProperty("line.separator"));
                 
             } catch (Exception ex) {
                 log.error("Error applying template", ex);

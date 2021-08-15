@@ -696,10 +696,13 @@ import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileTagsBean;
 import com.jdimension.jlawyer.persistence.CaseFolder;
 import com.jdimension.jlawyer.persistence.DocumentTagsBean;
+import com.jdimension.jlawyer.persistence.MailboxSetup;
+import com.jdimension.jlawyer.security.Crypto;
 import com.jdimension.jlawyer.services.AddressServiceRemote;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.services.Keyword;
+import com.jdimension.jlawyer.services.SecurityServiceRemote;
 import com.sun.mail.pop3.POP3Folder;
 import java.awt.Color;
 import java.awt.Component;
@@ -719,9 +722,13 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import javax.mail.*;
 import javax.mail.Flags.Flag;
 import javax.mail.Message.RecipientType;
@@ -756,17 +763,17 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
     private SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy, HH:mm");
     private Image backgroundImage = null;
     private EmailFolderTreeCellRenderer renderer = null;
-    private Store store = null;
+    private HashMap<MailboxSetup, Store> stores = new HashMap<>();
     private boolean connected = false;
 
-    private IDLEThread idleThread = null;
-    private PollingThread pollingThread = null;
+    private HashMap<MailboxSetup, IDLEThread> idleThreads = new HashMap<>();
+    private HashMap<MailboxSetup, PollingThread> pollingThreads = new HashMap<>();
 
-    private FolderContainer inboxFolder = null;
-    private FolderContainer trashFolder = null;
-    private FolderContainer sentFolder = null;
+    private HashMap<MailboxSetup, FolderContainer> inboxFolders = new HashMap<>();
+    private HashMap<MailboxSetup, FolderContainer> trashFolders = new HashMap<>();
+    private HashMap<MailboxSetup, FolderContainer> sentFolders = new HashMap<>();
 
-    private DefaultMutableTreeNode inboxFolderNode = null;
+    private HashMap<MailboxSetup, DefaultMutableTreeNode> inboxFolderNodes = new HashMap<>();
 
     private DragSource dragSource = null;
 
@@ -781,7 +788,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         this.initializing = true;
 
         initComponents();
-        
+
         ComponentUtils.decorateSplitPane(this.jSplitPane1);
         ComponentUtils.decorateSplitPane(this.jSplitPane2);
         ComponentUtils.decorateSplitPane(this.jSplitPane3);
@@ -836,13 +843,13 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         this.treeFolders.setCellRenderer(renderer);
 
         AppUserBean cu = UserSettings.getInstance().getCurrentUser();
-        
+
         ComponentUtils.restoreSplitPane(this.jSplitPane1, this.getClass(), "jSplitPane1");
         ComponentUtils.persistSplitPane(this.jSplitPane1, this.getClass(), "jSplitPane1");
-        
+
         ComponentUtils.restoreSplitPane(this.jSplitPane2, this.getClass(), "jSplitPane2");
         ComponentUtils.persistSplitPane(this.jSplitPane2, this.getClass(), "jSplitPane2");
-        
+
         ComponentUtils.restoreSplitPane(this.jSplitPane3, this.getClass(), "jSplitPane3");
         ComponentUtils.persistSplitPane(this.jSplitPane3, this.getClass(), "jSplitPane3");
 
@@ -863,7 +870,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
 
         this.treeFolders.setDropMode(DropMode.ON);
 
-        Runtime.getRuntime().addShutdownHook(new Thread(new EmailObjectsCleanUp(this.store)));
+        Runtime.getRuntime().addShutdownHook(new Thread(new EmailObjectsCleanUp(this.stores)));
 
         DropTarget dt = new DropTarget(this.treeFolders, this);
 
@@ -877,7 +884,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         this.initializing = false;
     }
 
-    private void connect(boolean showErrorDialogOnFailure) throws Exception {
+    private void connect(boolean showErrorDialogOnFailure, MailboxSetup ms) throws Exception {
         if (!this.connected) {
             AppUserBean cu = UserSettings.getInstance().getCurrentUser();
 
@@ -889,16 +896,17 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
 //                props.setProperty("mail.imaps.ssl.protocols", "TLSv1.2");
 //                props.setProperty("mail.imap.ssl.protocols", "TLSv1.2");
                 //props.setProperty("mail.store.protocol", "imaps");
-                props.setProperty("mail.store.protocol", cu.getEmailInType());
-                if (cu.isEmailInSsl()) {
-                    props.setProperty("mail." + cu.getEmailInType() + ".ssl.enable", "true");
+                props.setProperty("mail.store.protocol", ms.getEmailInType());
+                if (ms.isEmailInSsl()) {
+                    props.setProperty("mail." + ms.getEmailInType() + ".ssl.enable", "true");
                 }
 
                 Session session = Session.getDefaultInstance(props, null);
 
-                store = session.getStore(cu.getEmailInType());
-                server = cu.getEmailInServer();
-                store.connect(server, cu.getEmailInUser(), cu.getEmailInPwd());
+                Store store = session.getStore(ms.getEmailInType());
+                this.stores.put(ms, store);
+                server = ms.getEmailInServer();
+                store.connect(server, ms.getEmailInUser(), Crypto.decrypt(ms.getEmailInPwd()));
             } catch (Exception ex) {
                 log.error("Error connecting to server " + server, ex);
                 if (showErrorDialogOnFailure) {
@@ -953,68 +961,90 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
     }
 
     private void refreshFolders(boolean showErrorDialogOnFailure) throws Exception {
-        this.connect(showErrorDialogOnFailure);
 
-        String subject = null;
-        Flag flag = null;
-
-        Folder[] accountFolders = null;
-        try {
-            accountFolders = store.getDefaultFolder().list();
-        } catch (Throwable t) {
-            log.warn("Unable to get email accounts folder list - falling back to inbox listing...", t);
-            accountFolders = new Folder[1];
-            accountFolders[0] = (Folder) store.getFolder(FolderContainer.INBOX);
-        }
+        DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode("E-Mail-Postfächer");
         
-        Folder inboxFolderF = EmailUtils.getInboxFolder(accountFolders);
-        Folder trashFolderF = EmailUtils.getTrashFolder(accountFolders);
-        Folder sentFolderF = EmailUtils.getSentFolder(accountFolders);
+        UserSettings uset=UserSettings.getInstance();
+        List<MailboxSetup> mailboxes = uset.getMailboxes(uset.getCurrentUser().getPrincipalId());
+        
+        ExecutorService pool = Executors.newFixedThreadPool(1);
+        
+        for (MailboxSetup ms : mailboxes) {
+            this.connect(showErrorDialogOnFailure, ms);
 
-        if (EmailUtils.isIMAP(accountFolders[0])) {
-            if (sentFolderF == null) {
-                sentFolderF = inboxFolderF.getFolder(FolderContainer.SENT);
-                if (!sentFolderF.exists()) {
-                    sentFolderF.create(Folder.HOLDS_MESSAGES);
+            Folder[] accountFolders = null;
+            try {
+                accountFolders = stores.get(ms).getDefaultFolder().list();
+            } catch (Throwable t) {
+                log.warn("Unable to get email accounts folder list - falling back to inbox listing...", t);
+                accountFolders = new Folder[1];
+                accountFolders[0] = (Folder) stores.get(ms).getFolder(FolderContainer.INBOX);
+            }
+
+            Folder inboxFolderF = EmailUtils.getInboxFolder(accountFolders);
+            Folder trashFolderF = EmailUtils.getTrashFolder(accountFolders);
+            Folder sentFolderF = EmailUtils.getSentFolder(accountFolders);
+
+            if (EmailUtils.isIMAP(accountFolders[0])) {
+                if (sentFolderF == null) {
+                    sentFolderF = inboxFolderF.getFolder(FolderContainer.SENT);
+                    if (!sentFolderF.exists()) {
+                        sentFolderF.create(Folder.HOLDS_MESSAGES);
+                    }
+                }
+
+                if (trashFolderF == null) {
+                    trashFolderF = inboxFolderF.getFolder(FolderContainer.TRASH);
+                    if (!trashFolderF.exists()) {
+                        trashFolderF.create(Folder.HOLDS_MESSAGES);
+                    }
                 }
             }
 
-            if (trashFolderF == null) {
-                trashFolderF = inboxFolderF.getFolder(FolderContainer.TRASH);
-                if (!trashFolderF.exists()) {
-                    trashFolderF.create(Folder.HOLDS_MESSAGES);
-                }
+            this.inboxFolders.put(ms, new FolderContainer(inboxFolderF));
+            this.trashFolders.put(ms, new FolderContainer(trashFolderF));
+            this.sentFolders.put(ms, new FolderContainer(sentFolderF));
+
+            inboxFolderF.addMessageCountListener(this);
+            inboxFolderF.addMessageChangedListener(this);
+
+            if (this.idleThreads.containsKey(ms)) {
+                this.idleThreads.get(ms).cancel();
             }
-        }
 
-        this.inboxFolder = new FolderContainer(inboxFolderF);
-        this.trashFolder = new FolderContainer(trashFolderF);
-        this.sentFolder = new FolderContainer(sentFolderF);
+            if (this.pollingThreads.containsKey(ms)) {
+                this.pollingThreads.get(ms).cancel();
+            }
 
-        inboxFolderF.addMessageCountListener(this);
-        inboxFolderF.addMessageChangedListener(this);
+            this.idleThreads.put(ms, new IDLEThread((Folder) inboxFolderF));
+            this.pollingThreads.put(ms, new PollingThread((Folder) inboxFolderF));
 
-        if (this.idleThread != null) {
-            this.idleThread.cancel();
-        }
+            new Thread(this.idleThreads.get(ms)).start();
+            new Thread(this.pollingThreads.get(ms)).start();
 
-        if (this.pollingThread != null) {
-            this.pollingThread.cancel();
-        }
+            DefaultMutableTreeNode mailboxRootNode = new DefaultMutableTreeNode(ms.getEmailAddress());
+            rootNode.add(mailboxRootNode);
+            final Folder[] accountFoldersFinal = accountFolders;
+//            new Thread(new Runnable() {
+//                @Override
+//                public void run() {
+//                    try {
+//                        traverseFolders(ms, accountFoldersFinal, mailboxRootNode);
+//                        DefaultTreeModel tm = new DefaultTreeModel(rootNode);
+//                        treeFolders.setModel(tm);
+//                        JTreeUtils.expandAll(treeFolders);
+//                        treeFolders.setCellRenderer(renderer);
+//                        notifyStatusBarReady();
+//                    } catch (Throwable t) {
+//                        log.error("Could not load folder");
+//                    }
+//                }
+//
+//            }).start();
 
-        this.idleThread = new IDLEThread((Folder) inboxFolderF);
-        this.pollingThread = new PollingThread((Folder) inboxFolderF);
-
-        new Thread(this.idleThread).start();
-        new Thread(this.pollingThread).start();
-
-        DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode(UserSettings.getInstance().getCurrentUser().getEmailAddress());
-        final Folder[] accountFoldersFinal = accountFolders;
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
+            Runnable r=() -> {
                 try {
-                    traverseFolders(accountFoldersFinal, rootNode);
+                    traverseFolders(ms, accountFoldersFinal, mailboxRootNode);
                     DefaultTreeModel tm = new DefaultTreeModel(rootNode);
                     treeFolders.setModel(tm);
                     JTreeUtils.expandAll(treeFolders);
@@ -1023,15 +1053,24 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                 } catch (Throwable t) {
                     log.error("Could not load folder");
                 }
-            }
+            };
+            pool.execute(r);
 
-        }).start();
+        }
+        
+        pool.shutdown();
+        try {
+            pool.awaitTermination(60, TimeUnit.SECONDS);
+        } catch (Throwable t) {
+            log.error("error loading mailboxes", t);
+        }
+
     }
 
-    private void traverseFolders(Folder[] children, DefaultMutableTreeNode currentNode) throws Exception {
+    private void traverseFolders(MailboxSetup ms, Folder[] children, DefaultMutableTreeNode currentNode) throws Exception {
 
-        Hashtable<String, FolderContainer> childHt = new Hashtable<String, FolderContainer>();
-        ArrayList<String> htKeys = new ArrayList<String>();
+        Hashtable<String, FolderContainer> childHt = new Hashtable<>();
+        ArrayList<String> htKeys = new ArrayList<>();
 
         for (Folder child : children) {
 
@@ -1051,11 +1090,11 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         for (String key : htKeysSorted) {
             FolderContainer childContainer = childHt.get(key);
             DefaultMutableTreeNode childNode = new DefaultMutableTreeNode(childContainer);
-            if (childContainer.getFolder().equals(this.inboxFolder.getFolder())) {
-                this.inboxFolderNode = childNode;
+            if (childContainer.getFolder().equals(this.inboxFolders.get(ms).getFolder())) {
+                this.inboxFolderNodes.put(ms, childNode);
             }
             currentNode.add(childNode);
-            traverseFolders(childContainer.getFolder().list(), childNode);
+            traverseFolders(ms, childContainer.getFolder().list(), childNode);
 
             try {
                 if (childContainer.getFolder().isOpen()) {
@@ -1614,8 +1653,8 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
             MessageContainer msgC = (MessageContainer) this.tblMails.getValueAt(this.tblMails.getSelectedRow(), 0);
 
             ViewEmailDialog view = new ViewEmailDialog(EditorsRegistry.getInstance().getMainWindow(), false, null);
-            view.setMessage(msgC);
             try {
+                view.setMessage(msgC, EmailUtils.getMailboxSetup(msgC.getMessage()));
                 view.setTitle(msgC.getMessage().getSubject());
             } catch (Throwable t) {
                 log.error(t);
@@ -1796,8 +1835,9 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         Folder expungeFolder = null;
         boolean expungeClosed = true;
         int scrollToRow = -1;
+        MessageContainer msgC = null;
         if (selected.length > 0) {
-            MessageContainer msgC = (MessageContainer) this.tblMails.getValueAt(selected[0], 0);
+            msgC = (MessageContainer) this.tblMails.getValueAt(selected[0], 0);
 
             expungeFolder = msgC.getMessage().getFolder();
             expungeClosed = !expungeFolder.isOpen();
@@ -1814,9 +1854,19 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
 
         }
 
+        MailboxSetup ms = null;
+        try {
+            ms = EmailUtils.getMailboxSetup(msgC.getMessage());
+        } catch (Exception ex) {
+            try {
+                log.error("Unable to determine mailbox for message " + msgC.getMessage().getSubject());
+            } catch (Throwable t) {
+                log.error("Unable to determine mailbox for message " + msgC.getMessage().getMessageNumber());
+            }
+        }
         Folder trashFolderCheck = null;
-        if (this.trashFolder != null) {
-            trashFolderCheck = this.trashFolder.getFolder();
+        if (this.trashFolders.containsKey(ms)) {
+            trashFolderCheck = this.trashFolders.get(ms).getFolder();
             try {
                 if (!trashFolderCheck.isOpen()) {
                     trashFolderCheck.open(Folder.READ_WRITE);
@@ -1829,7 +1879,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         ArrayList<MessageContainer> msgContainers = new ArrayList<>();
         ArrayList<Message> messages = new ArrayList<>();
         for (int i = selected.length - 1; i > -1; i--) {
-            MessageContainer msgC = (MessageContainer) this.tblMails.getValueAt(selected[i], 0);
+            msgC = (MessageContainer) this.tblMails.getValueAt(selected[i], 0);
             msgContainers.add(msgC);
             messages.add(msgC.getMessage());
         }
@@ -1851,17 +1901,17 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                     Message[] msgArray = new Message[0];
                     msgArray = messages.toArray(msgArray);
                     try {
-                        expungeFolder.copyMessages(msgArray, this.trashFolder.getFolder());
+                        expungeFolder.copyMessages(msgArray, this.trashFolders.get(ms).getFolder());
                     } catch (Throwable t) {
                         log.warn("Unable to delete messages", t);
                         // retry in case of closed folder
                         trashFolderCheck = null;
-                        if (this.trashFolder != null) {
-                            trashFolderCheck = this.trashFolder.getFolder();
+                        if (this.trashFolders.containsKey(ms)) {
+                            trashFolderCheck = this.trashFolders.get(ms).getFolder();
                             try {
                                 if (!trashFolderCheck.isOpen()) {
                                     trashFolderCheck.open(Folder.READ_WRITE);
-                                    expungeFolder.copyMessages(msgArray, this.trashFolder.getFolder());
+                                    expungeFolder.copyMessages(msgArray, this.trashFolders.get(ms).getFolder());
                                 }
                             } catch (MessagingException mex) {
                                 log.error(mex);
@@ -1883,7 +1933,6 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         }
 
         scrollToRow = tblMails.getSelectedRow();
-
 
         this.mailContentUI.clear();
         this.pnlActionsChild.removeAll();
@@ -1913,7 +1962,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
 //                    if(!expungeFolder.isOpen())
 //                        expungeFolder.open(Folder.READ_WRITE);
 //                    expungeFolder.close(true);
-                    this.inboxFolder.getFolder().close(true);
+                    this.inboxFolders.get(ms).getFolder().close(true);
                 }
 
             }
@@ -1935,30 +1984,30 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
     }//GEN-LAST:event_cmdDeleteActionPerformed
 
     private void mnuEmptyTrashActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuEmptyTrashActionPerformed
-        Folder tf = this.trashFolder.getFolder();
-        try {
-            if (!tf.isOpen()) {
-                tf.open(Folder.READ_WRITE);
-            }
-            Message[] all = tf.getMessages();
-            for (int i = 0; i < all.length; i++) {
-                Message m = all[i];
-                EditorsRegistry.getInstance().updateStatus("Lösche Nachricht " + (i + 1) + " von " + all.length + "...", true);
-                m.setFlag(Flag.DELETED, true);
-            }
-            this.tblMails.setModel(new DefaultTableModel(new String[]{"Betreff", "Absender", "Empfänger", "Gesendet"}, 0));
-
-            try {
-                tf.close(true);
-            } catch (Throwable t) {
-                log.error(t);
-            }
-
-            EditorsRegistry.getInstance().clearStatus();
-        } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Papierkorbe konnte nicht geleert werden: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
-            EditorsRegistry.getInstance().clearStatus();
-        }
+//        Folder tf = this.trashFolder.getFolder();
+//        try {
+//            if (!tf.isOpen()) {
+//                tf.open(Folder.READ_WRITE);
+//            }
+//            Message[] all = tf.getMessages();
+//            for (int i = 0; i < all.length; i++) {
+//                Message m = all[i];
+//                EditorsRegistry.getInstance().updateStatus("Lösche Nachricht " + (i + 1) + " von " + all.length + "...", true);
+//                m.setFlag(Flag.DELETED, true);
+//            }
+//            this.tblMails.setModel(new DefaultTableModel(new String[]{"Betreff", "Absender", "Empfänger", "Gesendet"}, 0));
+//            
+//            try {
+//                tf.close(true);
+//            } catch (Throwable t) {
+//                log.error(t);
+//            }
+//            
+//            EditorsRegistry.getInstance().clearStatus();
+//        } catch (Exception ex) {
+//            JOptionPane.showMessageDialog(this, "Papierkorbe konnte nicht geleert werden: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+//            EditorsRegistry.getInstance().clearStatus();
+//        }
 
     }//GEN-LAST:event_mnuEmptyTrashActionPerformed
 
@@ -2298,22 +2347,24 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
 
         MessageContainer msgC = (MessageContainer) this.tblMails.getValueAt(selectionIndex, 0);
 
-        this.mailContentUI.setMessage(msgC);
-
         this.pnlActionsChild.removeAll();
-        ArrayList<Component> actionPanelEntries = new ArrayList<Component>();
+        ArrayList<Component> actionPanelEntries = new ArrayList<>();
         ClientSettings settings = ClientSettings.getInstance();
         try {
+            MailboxSetup ms = EmailUtils.getMailboxSetup(msgC.getMessage());
+            this.mailContentUI.setMessage(msgC, ms);
+
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             AddressServiceRemote ads = locator.lookupAddressServiceRemote();
             ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
 
-            ArrayList<String> phoneNumbers=new ArrayList<>();        
+            ArrayList<String> phoneNumbers = new ArrayList<>();
             try {
                 Collection<Keyword> keywords = afs.extractKeywordsFromText(this.mailContentUI.getBody());
-                for(Keyword w: keywords) {
-                    if(w.getType()==Keyword.TYPE_PHONENR)
+                for (Keyword w : keywords) {
+                    if (w.getType() == Keyword.TYPE_PHONENR) {
                         phoneNumbers.add(w.getValue());
+                    }
                 }
             } catch (Throwable t) {
                 log.error("Could not extract keywords from email", t);
@@ -2345,9 +2396,9 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                         cce.setArchived(false);
                         sp.setEntry(cce, this);
                         actionPanelEntries.add(sp);
-                        
-                        if(phoneNumbers.size()>0) {
-                            ExtractedPhoneNumbersPanel pnp=new ExtractedPhoneNumbersPanel();
+
+                        if (phoneNumbers.size() > 0) {
+                            ExtractedPhoneNumbersPanel pnp = new ExtractedPhoneNumbersPanel();
                             pnp.setPhoneNumbers(phoneNumbers);
                             actionPanelEntries.add(pnp);
                         }
@@ -2445,37 +2496,40 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
 
         final Object root = this.treeFolders.getModel().getRoot();
         try {
-            new Thread(new Runnable() {
-
-                @Override
-                public void run() {
-                    try {
-                        Thread.sleep(5000);
-                        if (root instanceof DefaultMutableTreeNode) {
-                            Object userObject = inboxFolder;
+            new Thread(() -> {
+                try {
+                    Thread.sleep(5000);
+                    if (root instanceof DefaultMutableTreeNode) {
+                        UserSettings uset=UserSettings.getInstance();
+                        List<MailboxSetup> mailboxes = uset.getMailboxes(uset.getCurrentUser().getPrincipalId());
+                        int unread = 0;
+                        for (MailboxSetup ms : mailboxes) {
+                            
+                            Object userObject = inboxFolders.get(ms);
                             if (userObject instanceof FolderContainer) {
                                 Folder f = ((FolderContainer) userObject).getFolder();
                                 if (!f.isOpen()) {
                                     f.open(Folder.READ_WRITE);
                                 }
-                                int unread = f.getUnreadMessageCount();
-                                EventBroker eb = EventBroker.getInstance();
-                                eb.publishEvent(new EmailStatusEvent(unread));
-                                statusBarNotified = true;
-                                log.info(unread + " unread emails event has been published");
+                                unread = unread + f.getUnreadMessageCount();
                                 try {
                                     EmailUtils.closeIfIMAP(f);
                                 } catch (Throwable t) {
                                     log.error(t);
                                 }
+                                
                             } else {
                                 log.warn("Email root folder is not of correct type during #notifyStatusBarReady");
                             }
-
                         }
-                    } catch (Throwable ex) {
-                        log.error("Error checking for unread mails", ex);
+                        EventBroker eb = EventBroker.getInstance();
+                        eb.publishEvent(new EmailStatusEvent(unread));
+                        statusBarNotified = true;
+                        log.info(unread + " unread emails event has been published");
+                        
                     }
+                } catch (Throwable ex) {
+                    log.error("Error checking for unread mails", ex);
                 }
             }).start();
         } catch (Exception ex) {
@@ -2486,60 +2540,89 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
 
     @Override
     public void messageChanged(MessageChangedEvent mce) {
-        DefaultTreeModel dm = (DefaultTreeModel) this.treeFolders.getModel();
-        ThreadUtils.updateTreeNode(dm, this.inboxFolderNode);
-        final int unread = this.getInboxUnread();
-        EventBroker eb = EventBroker.getInstance();
-        eb.publishEvent(new EmailStatusEvent(unread));
-
-        return;
-
+        try {
+            MailboxSetup ms = EmailUtils.getMailboxSetup(mce.getMessage());
+            DefaultTreeModel dm = (DefaultTreeModel) this.treeFolders.getModel();
+            ThreadUtils.updateTreeNode(dm, this.inboxFolderNodes.get(ms));
+            final int unread = this.getInboxUnread();
+            EventBroker eb = EventBroker.getInstance();
+            eb.publishEvent(new EmailStatusEvent(unread));
+        } catch (Exception ex) {
+            log.error("Unable to handle messageChanged event", ex);
+        }
     }
 
     public int getInboxUnread() {
-        Object uo = this.inboxFolder;
-        if (uo instanceof FolderContainer) {
-            FolderContainer fc = (FolderContainer) uo;
-            Folder f = fc.getFolder();
-            try {
-                if (!f.isOpen()) {
-                    f.open(Folder.READ_WRITE);
-                }
-                int unread = f.getUnreadMessageCount();
+        try {
+            UserSettings uset=UserSettings.getInstance();
+            List<MailboxSetup> mailboxes = uset.getMailboxes(uset.getCurrentUser().getPrincipalId());
+            int unread = 0;
+            for (MailboxSetup ms : mailboxes) {
 
-                try {
-                    EmailUtils.closeIfIMAP(f);
-                } catch (Throwable t) {
-                    log.error(t);
-                }
+                Object uo = this.inboxFolders.get(ms);
+                if (uo instanceof FolderContainer) {
+                    FolderContainer fc = (FolderContainer) uo;
+                    Folder f = fc.getFolder();
+                    try {
+                        if (!f.isOpen()) {
+                            f.open(Folder.READ_WRITE);
+                        }
+                        unread = unread + f.getUnreadMessageCount();
 
-                return unread;
-            } catch (Exception ex) {
-                log.error(ex);
+                        try {
+                            EmailUtils.closeIfIMAP(f);
+                        } catch (Throwable t) {
+                            log.error(t);
+                        }
+
+                        return unread;
+                    } catch (Exception ex) {
+                        log.error(ex);
+                    }
+                }
             }
-        }
 
-        return 0;
+            return unread;
+        } catch (Throwable t) {
+            log.error("Unable to determine number of unread messages", t);
+            return 0;
+        }
     }
 
     @Override
     public void messagesAdded(MessageCountEvent mce) {
-        // currently only INBOX is observed
-        DefaultTreeModel dm = (DefaultTreeModel) this.treeFolders.getModel();
-        ThreadUtils.updateTreeNode(dm, this.inboxFolderNode);
-        int unread = this.getInboxUnread();
-        EventBroker eb = EventBroker.getInstance();
-        eb.publishEvent(new EmailStatusEvent(unread));
+        try {
+            if (mce.getMessages().length == 0) {
+                return;
+            }
+            MailboxSetup ms = EmailUtils.getMailboxSetup(mce.getMessages()[0]);
+            // currently only INBOX is observed
+            DefaultTreeModel dm = (DefaultTreeModel) this.treeFolders.getModel();
+            ThreadUtils.updateTreeNode(dm, this.inboxFolderNodes.get(ms));
+            int unread = this.getInboxUnread();
+            EventBroker eb = EventBroker.getInstance();
+            eb.publishEvent(new EmailStatusEvent(unread));
+        } catch (Exception ex) {
+            log.error("Unable to handle messagesAdded event", ex);
+        }
     }
 
     @Override
     public void messagesRemoved(MessageCountEvent mce) {
-        // currently only INBOX is observed
-        DefaultTreeModel dm = (DefaultTreeModel) this.treeFolders.getModel();
-        ThreadUtils.updateTreeNode(dm, this.inboxFolderNode);
-        int unread = this.getInboxUnread();
-        EventBroker eb = EventBroker.getInstance();
-        eb.publishEvent(new EmailStatusEvent(unread));
+        try {
+            if (mce.getMessages().length == 0) {
+                return;
+            }
+            MailboxSetup ms = EmailUtils.getMailboxSetup(mce.getMessages()[0]);
+            // currently only INBOX is observed
+            DefaultTreeModel dm = (DefaultTreeModel) this.treeFolders.getModel();
+            ThreadUtils.updateTreeNode(dm, this.inboxFolderNodes.get(ms));
+            int unread = this.getInboxUnread();
+            EventBroker eb = EventBroker.getInstance();
+            eb.publishEvent(new EmailStatusEvent(unread));
+        } catch (Exception ex) {
+            log.error("Unable to handle messagesRemoved event", ex);
+        }
     }
 
     @Override
@@ -2605,7 +2688,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
 
             scrollToRow = tblMails.getSelectedRow();
             for (int i = selectedRows.length - 1; i > -1; i--) {
-            
+
                 try {
 
                     int sel = selectedRows[i];
@@ -2659,15 +2742,15 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
                 ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
 
-                AppUserBean cu = UserSettings.getInstance().getCurrentUser();
-                Properties props = System.getProperties();
-                props.setProperty("mail.store.protocol", cu.getEmailInType());
-                if (cu.isEmailInSsl()) {
-                    props.setProperty("mail." + cu.getEmailInType() + ".ssl.enable", "true");
-                }
-
                 MessageContainer msgC = (MessageContainer) this.tblMails.getValueAt(this.tblMails.getSelectedRow(), 0);
                 Message m = msgC.getMessage();
+                MailboxSetup ms = EmailUtils.getMailboxSetup(m);
+                Properties props = System.getProperties();
+                props.setProperty("mail.store.protocol", ms.getEmailInType());
+                if (ms.isEmailInSsl()) {
+                    props.setProperty("mail." + ms.getEmailInType() + ".ssl.enable", "true");
+                }
+
                 Date sentDate = m.getSentDate();
                 Folder f = m.getFolder();
                 boolean closed = !f.isOpen();
@@ -2709,7 +2792,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                     data = bOut.toByteArray();
                 }
 
-                String folderId=null;
+                String folderId = null;
                 if (caseId == null) {
                     SearchAndAssignDialog dlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true, "" + m.getSubject() + mailContentUI.getBody(), null);
                     dlg.setVisible(true);
@@ -2719,17 +2802,17 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                     if (sel != null) {
                         caseId = sel.getId();
                     }
-                    CaseFolder caseFolder=dlg.getFolderSelection();
-                    if(caseFolder!=null) {
-                        folderId=caseFolder.getId();
+                    CaseFolder caseFolder = dlg.getFolderSelection();
+                    if (caseFolder != null) {
+                        folderId = caseFolder.getId();
                     }
                 } else {
                     SearchAndAssignDialog dlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true, "" + m.getSubject() + mailContentUI.getBody(), caseId);
                     dlg.setVisible(true);
                     dlg.dispose();
-                    CaseFolder caseFolder=dlg.getFolderSelection();
-                    if(caseFolder!=null) {
-                        folderId=caseFolder.getId();
+                    CaseFolder caseFolder = dlg.getFolderSelection();
+                    if (caseFolder != null) {
+                        folderId = caseFolder.getId();
                     }
                 }
 
@@ -2773,8 +2856,8 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                             if (sentDate != null) {
                                 afs.setDocumentDate(newlyAddedDocument.getId(), sentDate);
                             }
-                            if(folderId!=null) {
-                                ArrayList<String> docList=new ArrayList<>();
+                            if (folderId != null) {
+                                ArrayList<String> docList = new ArrayList<>();
                                 docList.add(newlyAddedDocument.getId());
                                 afs.moveDocumentsToFolder(docList, folderId);
                             }
@@ -2820,7 +2903,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                     if (sentDate != null) {
                         afs.setDocumentDate(newlyAddedDocument.getId(), sentDate);
                     }
-                    if(folderId != null) {
+                    if (folderId != null) {
                         ArrayList<String> docList = new ArrayList<>();
                         docList.add(newlyAddedDocument.getId());
                         afs.moveDocumentsToFolder(docList, folderId);
@@ -2874,7 +2957,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                         if (sentDate != null) {
                             afs.setDocumentDate(newlyAddedDocument.getId(), sentDate);
                         }
-                        if(folderId != null) {
+                        if (folderId != null) {
                             ArrayList<String> docList = new ArrayList<>();
                             docList.add(newlyAddedDocument.getId());
                             afs.moveDocumentsToFolder(docList, folderId);
@@ -2908,16 +2991,18 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
 
     public static class EmailObjectsCleanUp implements Runnable {
 
-        private Store s;
+        private HashMap<MailboxSetup, Store> s;
 
-        public EmailObjectsCleanUp(Store s) {
+        public EmailObjectsCleanUp(HashMap<MailboxSetup, Store> s) {
             this.s = s;
         }
 
         @Override
         public void run() {
             try {
-                this.s.close();
+                for (Store store : this.s.values()) {
+                    store.close();
+                }
 
             } catch (Exception ex) {
                 log.error(ex);

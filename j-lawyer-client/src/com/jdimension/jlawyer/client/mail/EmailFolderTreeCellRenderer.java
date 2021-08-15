@@ -671,6 +671,7 @@ import javax.swing.JTree;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeCellRenderer;
 import org.apache.log4j.Logger;
+import themes.colors.DefaultColorTheme;
 
 /**
  *
@@ -705,12 +706,6 @@ public class EmailFolderTreeCellRenderer extends DefaultTreeCellRenderer {
             return this;
         }
 
-        if (((DefaultMutableTreeNode) object).isRoot()) {
-            this.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/mail_send_2.png")));
-            this.setFont(this.getFont().deriveFont(Font.BOLD));
-            return this;
-        }
-
         try {
             if (((DefaultMutableTreeNode) object).getUserObject() instanceof FolderContainer) {
                 FolderContainer fc = (FolderContainer) ((DefaultMutableTreeNode) object).getUserObject();
@@ -718,31 +713,35 @@ public class EmailFolderTreeCellRenderer extends DefaultTreeCellRenderer {
 
                 if ("trash".equalsIgnoreCase(f.getName())) {
                     this.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/trashcan_full.png")));
-                }
-
-                for (String a : EmailUtils.getFolderAliases(FolderContainer.TRASH)) {
-                    if (a.equalsIgnoreCase(f.getName())) {
-                        this.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/trashcan_full.png")));
-                    }
-                }
-
-                if ("sent".equalsIgnoreCase(f.getName())) {
+                } else if ("sent".equalsIgnoreCase(f.getName())) {
                     this.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder_sent_mail.png")));
-                }
-
-                for (String a : EmailUtils.getFolderAliases(FolderContainer.SENT)) {
-                    if (a.equalsIgnoreCase(f.getName())) {
-                        this.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder_sent_mail.png")));
-                    }
-                }
-
-                if ("inbox".equalsIgnoreCase(f.getName())) {
+                } else if ("inbox".equalsIgnoreCase(f.getName())) {
                     this.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder_inbox.png")));
-                }
-
-                for (String a : EmailUtils.getFolderAliases(FolderContainer.INBOX)) {
-                    if (a.equalsIgnoreCase(f.getName())) {
-                        this.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder_inbox.png")));
+                } else {
+                    boolean iconIsSet = false;
+                    for (String a : EmailUtils.getFolderAliases(FolderContainer.TRASH)) {
+                        if (a.equalsIgnoreCase(f.getName())) {
+                            this.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/trashcan_full.png")));
+                            iconIsSet = true;
+                            break;
+                        }
+                    }
+                    if (!iconIsSet) {
+                        for (String a : EmailUtils.getFolderAliases(FolderContainer.SENT)) {
+                            if (a.equalsIgnoreCase(f.getName())) {
+                                this.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder_sent_mail.png")));
+                                iconIsSet = true;
+                                break;
+                            }
+                        }
+                    }
+                    if (!iconIsSet) {
+                        for (String a : EmailUtils.getFolderAliases(FolderContainer.INBOX)) {
+                            if (a.equalsIgnoreCase(f.getName())) {
+                                this.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder_inbox.png")));
+                                break;
+                            }
+                        }
                     }
                 }
 
@@ -753,6 +752,13 @@ public class EmailFolderTreeCellRenderer extends DefaultTreeCellRenderer {
                     this.setFont(this.getFont().deriveFont(Font.PLAIN));
                 }
 
+            } else {
+                if (((DefaultMutableTreeNode) object).toString().contains("@")) {
+                    this.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/mail_send_2.png")));
+                    this.setFont(this.getFont().deriveFont(Font.BOLD));
+                    this.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
+                    return this;
+                }
             }
         } catch (Exception ex) {
             log.error(ex);

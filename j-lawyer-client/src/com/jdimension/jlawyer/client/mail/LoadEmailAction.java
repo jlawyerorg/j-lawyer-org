@@ -666,6 +666,7 @@ package com.jdimension.jlawyer.client.mail;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.processing.ProgressIndicator;
 import com.jdimension.jlawyer.client.processing.ProgressableAction;
+import com.jdimension.jlawyer.persistence.MailboxSetup;
 import java.text.SimpleDateFormat;
 import javax.mail.Address;
 import javax.mail.Folder;
@@ -695,12 +696,14 @@ public class LoadEmailAction extends ProgressableAction {
     JList lstAttachments;
     JButton cmdShowHtml;
     ProgressIndicator i;
+    MailboxSetup ms;
     
-    public LoadEmailAction(ProgressIndicator i, MailContentUI contentUI, Message msg, JLabel lblSubject, JLabel lblSentDate, JLabel lblTo, JLabel lblCC, JLabel lblBCC, JLabel lblFrom, JEditorPane editBody, JList lstAttachments, JButton cmdShowHtml) {
+    public LoadEmailAction(ProgressIndicator i, MailContentUI contentUI, Message msg, MailboxSetup ms, JLabel lblSubject, JLabel lblSentDate, JLabel lblTo, JLabel lblCC, JLabel lblBCC, JLabel lblFrom, JEditorPane editBody, JList lstAttachments, JButton cmdShowHtml) {
         super(i, false);
         this.i=i;
         this.contentUI=contentUI;
         this.msg=msg;
+        this.ms=ms;
         this.lblSubject=lblSubject;
         this.lblSentDate=lblSentDate;
         this.lblTo=lblTo;
@@ -748,7 +751,7 @@ public class LoadEmailAction extends ProgressableAction {
                         try {
                             i.setVisible(true);
                             i.repaint();
-                            MailContentUI.setMessageImpl(contentUI, msg, lblSubject, lblSentDate, lblTo, lblCC, lblBCC, lblFrom, editBody, lstAttachments, cmdShowHtml, true);
+                            MailContentUI.setMessageImpl(contentUI, msg, ms, lblSubject, lblSentDate, lblTo, lblCC, lblBCC, lblFrom, editBody, lstAttachments, cmdShowHtml, true);
                         } catch (Throwable t) {
                             log.error(t);
                         }

@@ -724,7 +724,6 @@ public class LoadFolderAction extends ProgressableAction {
 
     @Override
     public boolean execute() throws Exception {
-        long start = System.currentTimeMillis();
         try {
             EditorsRegistry.getInstance().updateStatus("Öffne Ordner " + f.getName(), true);
 
@@ -751,17 +750,21 @@ public class LoadFolderAction extends ProgressableAction {
 
             int fromIndex = 1;
             int toIndex = f.getMessageCount();
-            if (currentRestriction.getRestriction() == LoadFolderRestriction.RESTRICTION_20) {
-                fromIndex = Math.max(1, toIndex - 20);
-            }
-            if (currentRestriction.getRestriction() == LoadFolderRestriction.RESTRICTION_50) {
-                fromIndex = Math.max(1, toIndex - 50);
-            }
-            if (currentRestriction.getRestriction() == LoadFolderRestriction.RESTRICTION_100) {
-                fromIndex = Math.max(1, toIndex - 100);
-            }
-            if (currentRestriction.getRestriction() == LoadFolderRestriction.RESTRICTION_500) {
-                fromIndex = Math.max(1, toIndex - 500);
+            switch (currentRestriction.getRestriction()) {
+                case LoadFolderRestriction.RESTRICTION_20:
+                    fromIndex = Math.max(1, toIndex - 20);
+                    break;
+                case LoadFolderRestriction.RESTRICTION_50:
+                    fromIndex = Math.max(1, toIndex - 50);
+                    break;
+                case LoadFolderRestriction.RESTRICTION_100:
+                    fromIndex = Math.max(1, toIndex - 100);
+                    break;
+                case LoadFolderRestriction.RESTRICTION_500:
+                    fromIndex = Math.max(1, toIndex - 500);
+                    break;
+                default:
+                    break;
             }
 
             Message[] messages = f.getMessages(fromIndex, toIndex);
@@ -771,7 +774,7 @@ public class LoadFolderAction extends ProgressableAction {
             fp.add(FetchProfile.Item.FLAGS);
             f.fetch(messages, fp);
 
-            HashMap<String, String> decodedMap = new HashMap<String, String>();
+            HashMap<String, String> decodedMap = new HashMap<>();
             final int indexMax = messages.length - 1;
             ArrayList<Object[]> tableRows = new ArrayList<>();
             for (int i = 0; i < messages.length; i++) {
@@ -788,11 +791,9 @@ public class LoadFolderAction extends ProgressableAction {
                 // this.progress("Lade Nachrichten " + (i + 1) + "/" + this.getMax());
                 if ((i % 20) == 0 || i == (messages.length - 1)) {
                     this.progress("Lade Nachrichten... " + (i + 1));
-                }
-
-                if ((i % 20) == 0 || i == (messages.length - 1)) {
                     EditorsRegistry.getInstance().updateStatus("Lade Nachricht " + (i + 1), true);
                 }
+
                 final Message msg = messages[i];
 
                 if (currentRestriction.getRestriction() == LoadFolderRestriction.RESTRICTION_UNREAD) {
@@ -854,47 +855,44 @@ public class LoadFolderAction extends ProgressableAction {
                     final ArrayList<Object[]> tableRowsClone = (ArrayList<Object[]>) tableRows.clone();
                     tableRows.clear();
 
-                    SwingUtilities.invokeLater(new Thread(new Runnable() {
-
-                        public void run() {
-                            try {
-                                for (Object[] rowObject : tableRowsClone) {
-                                    ((DefaultTableModel) table.getModel()).addRow(rowObject);
-
-                                }
-                                if (scrollToRow > 0) {
-                                    if (currentIndex == (indexMax)) {
-                                        if (table.getRowCount() > scrollToRow) {
-                                            table.scrollRectToVisible(new Rectangle(table.getCellRect(scrollToRow, 0, true)));
-                                        }
+                    SwingUtilities.invokeLater(new Thread(() -> {
+                        try {
+                            for (Object[] rowObject : tableRowsClone) {
+                                ((DefaultTableModel) table.getModel()).addRow(rowObject);
+                                
+                            }
+                            if (scrollToRow > 0) {
+                                if (currentIndex == (indexMax)) {
+                                    if (table.getRowCount() > scrollToRow) {
+                                        table.scrollRectToVisible(new Rectangle(table.getCellRect(scrollToRow, 0, true)));
                                     }
                                 }
-                            } catch (Throwable t) {
-                                log.error(t);
                             }
+                        } catch (Throwable t) {
+                            log.error(t);
                         }
                     }));
 
                 }
 
-                try {
-                    if (i == (messages.length - 1) || i == (messages.length / 2)) {
-                        ComponentUtils.autoSizeColumns(table);
-                    }
-                } catch (Throwable t) {
-                    log.error(t);
-                }
+//                try {
+////                    if (i == (messages.length - 1) || i == (messages.length / 2)) {
+////                        ComponentUtils.autoSizeColumns(table);
+////                    }
+//                    if (i == (messages.length - 1)) {
+//                        ComponentUtils.autoSizeColumns(table);
+//                    }
+//                } catch (Throwable t) {
+//                    log.error(t);
+//                }
 
                 if (i == 20 && currentRestriction.getRestriction() == LoadFolderRestriction.RESTRICTION_20) {
                     break;
-                }
-                if (i == 50 && currentRestriction.getRestriction() == LoadFolderRestriction.RESTRICTION_50) {
+                } else if (i == 50 && currentRestriction.getRestriction() == LoadFolderRestriction.RESTRICTION_50) {
                     break;
-                }
-                if (i == 100 && currentRestriction.getRestriction() == LoadFolderRestriction.RESTRICTION_100) {
+                } else if (i == 100 && currentRestriction.getRestriction() == LoadFolderRestriction.RESTRICTION_100) {
                     break;
-                }
-                if (i == 500 && currentRestriction.getRestriction() == LoadFolderRestriction.RESTRICTION_500) {
+                } else if (i == 500 && currentRestriction.getRestriction() == LoadFolderRestriction.RESTRICTION_500) {
                     break;
                 }
             }
@@ -906,26 +904,20 @@ public class LoadFolderAction extends ProgressableAction {
                 log.error("Error sorting mails", t);
             }
 
-            SwingUtilities.invokeLater(new Thread(new Runnable() {
-
-                public void run() {
-                    ComponentUtils.autoSizeColumns(table);
-                }
+            SwingUtilities.invokeLater(new Thread(() -> {
+                ComponentUtils.autoSizeColumns(table);
             }));
 
             EditorsRegistry.getInstance().clearStatus(true);
 
-            new Thread(new Runnable() {
-
-                public void run() {
-                    try {
-                        Thread.sleep(5000);
-                        if (f.isOpen()) {
-                            EmailUtils.closeIfIMAP(f);
-                        }
-                    } catch (Throwable t) {
-                        log.error(t);
+            new Thread(() -> {
+                try {
+                    Thread.sleep(5000);
+                    if (f.isOpen()) {
+                        EmailUtils.closeIfIMAP(f);
                     }
+                } catch (Throwable t) {
+                    log.error(t);
                 }
             }).start();
 

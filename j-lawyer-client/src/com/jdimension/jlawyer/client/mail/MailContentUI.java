@@ -679,6 +679,7 @@ import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.CaseFolder;
+import com.jdimension.jlawyer.persistence.MailboxSetup;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Dimension;
@@ -774,7 +775,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
         this.editBody.setText(errorMessage);
     }
 
-    public void setMessage(MessageContainer msgC) {
+    public void setMessage(MessageContainer msgC, MailboxSetup ms) {
 
         this.cmdShowHtml.setEnabled(false);
 
@@ -808,11 +809,11 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
                 dlg.setInfinite(true);
                 DecimalFormat df = new DecimalFormat("###0.00");
                 dlg.progress("Lade E-Mail... (" + df.format(msg.getSize() / 1024 / 1024) + "MB)");
-                LoadEmailAction lea = new LoadEmailAction(dlg, this, msg, this.lblSubject, this.lblSentDate, this.lblTo, this.lblCC, this.lblBCC, this.lblFrom, this.editBody, this.lstAttachments, this.cmdShowHtml);
+                LoadEmailAction lea = new LoadEmailAction(dlg, this, msg, ms, this.lblSubject, this.lblSentDate, this.lblTo, this.lblCC, this.lblBCC, this.lblFrom, this.editBody, this.lstAttachments, this.cmdShowHtml);
                 lea.start();
                 return;
             } else {
-                MailContentUI.setMessageImpl(this, msg, this.lblSubject, this.lblSentDate, this.lblTo, this.lblCC, this.lblBCC, this.lblFrom, this.editBody, this.lstAttachments, this.cmdShowHtml, false);
+                MailContentUI.setMessageImpl(this, msg, ms, this.lblSubject, this.lblSentDate, this.lblTo, this.lblCC, this.lblBCC, this.lblFrom, this.editBody, this.lstAttachments, this.cmdShowHtml, false);
             }
 
             try {
@@ -833,7 +834,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
         }
     }
 
-    public static void setMessageImpl(MailContentUI contentUI, Message msg, JLabel lblSubject, JLabel lblSentDate, JLabel lblTo, JLabel lblCC, JLabel lblBCC, JLabel lblFrom, JEditorPane editBody, JList lstAttachments, JButton cmdShowHtml, boolean edt) throws Exception {
+    public static void setMessageImpl(MailContentUI contentUI, Message msg, MailboxSetup ms, JLabel lblSubject, JLabel lblSentDate, JLabel lblTo, JLabel lblCC, JLabel lblBCC, JLabel lblFrom, JEditorPane editBody, JList lstAttachments, JButton cmdShowHtml, boolean edt) throws Exception {
         // we copy the message to avoid the "Unable to load BODYSTRUCTURE" issue
 
         boolean closed = false;
@@ -844,18 +845,17 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
             msg.getFolder().open(Folder.READ_WRITE);
         }
 
-        AppUserBean cu = UserSettings.getInstance().getCurrentUser();
         if (EmailUtils.isReceiptRequested(msg)) {
             int response = JOptionPane.showConfirmDialog(contentUI, "Der Absender hat eine Lesebestätigung angefordert - jetzt senden?", "Lesebestätigung", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
             if (response == JOptionPane.YES_OPTION) {
-                EmailUtils.sendReceipt(cu, msg.getSubject(), MimeUtility.decodeText(msg.getFrom()[0].toString()));
+                EmailUtils.sendReceipt(ms, msg.getSubject(), MimeUtility.decodeText(msg.getFrom()[0].toString()));
             }
         }
 
         Properties props = System.getProperties();
-        props.setProperty("mail.store.protocol", cu.getEmailInType());
-        if (cu.isEmailInSsl()) {
-            props.setProperty("mail." + cu.getEmailInType() + ".ssl.enable", "true");
+        props.setProperty("mail.store.protocol", ms.getEmailInType());
+        if (ms.isEmailInSsl()) {
+            props.setProperty("mail." + ms.getEmailInType() + ".ssl.enable", "true");
         }
 
         //Session session = Session.getDefaultInstance(props, null);

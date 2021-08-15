@@ -667,6 +667,7 @@ import com.jdimension.jlawyer.client.mail.*;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
+import com.jdimension.jlawyer.persistence.MailboxSetup;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import javax.mail.Flags.Flag;
@@ -715,7 +716,8 @@ public class EMLInternalLauncher extends InternalLauncher {
                 archiveFile=((CaseDocumentStore)store).getCase();
             }
             ViewEmailDialog view = new ViewEmailDialog(EditorsRegistry.getInstance().getMainWindow(), false, archiveFile, odoc);
-            view.setMessage(new MessageContainer(message, message.getSubject(), true));
+            MailboxSetup ms=EmailUtils.getMailboxSetup(message);
+            view.setMessage(new MessageContainer(message, message.getSubject(), true), ms);
             try {
                 view.setTitle(message.getSubject());
             } catch (Throwable t) {

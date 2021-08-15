@@ -696,6 +696,7 @@ import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 import com.jdimension.jlawyer.persistence.CalendarSetup;
 import com.jdimension.jlawyer.persistence.CaseFolder;
+import com.jdimension.jlawyer.persistence.MailboxSetup;
 import com.jdimension.jlawyer.persistence.PartyTypeBean;
 import com.jdimension.jlawyer.services.AddressServiceRemote;
 import com.jdimension.jlawyer.services.CalendarServiceRemote;
@@ -723,6 +724,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
 
     private static final Logger log = Logger.getLogger(SendEmailDialog.class.getName());
     private AppUserBean cu = null;
+    private Collection<MailboxSetup> mailboxes = new ArrayList<>();
     private Hashtable<String, String> attachments = new Hashtable<String, String>();
 
     private ArchiveFileBean contextArchiveFile = null;
@@ -732,16 +734,17 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
     private HtmlEditorPanel hp;
 
     private ArrayList<ArchiveFileAddressesBean> caseInvolvements = null;
-    
+
     private Collection<PartyTypeBean> allPartyTypes = new ArrayList<PartyTypeBean>();
     private List<String> allPartyTypesPlaceholders = new ArrayList<String>();
-    
+
     // can be set by code that constructs the SendEmailDialog to "inject" a recently created link to a Nextcloud share
     // will be made available as a placeholder
-    private String cloudLink=null;
+    private String cloudLink = null;
 
     /**
      * Creates new form SendEmailDialog
+     *
      * @param parent
      * @param modal
      */
@@ -749,9 +752,10 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         super(parent, modal);
         this.initialize();
     }
-    
+
     /**
      * Creates new form SendEmailDialog
+     *
      * @param parent
      * @param modal
      */
@@ -759,12 +763,12 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         super(parent, modal);
         this.initialize();
     }
-    
+
     private void initialize() {
         initComponents();
-        
+
         this.quickDateSelectionPanel.setTarget(this.txtReviewDateField);
-        
+
         ComponentUtils.decorateSplitPane(jSplitPane1);
 
         this.pnlParties.initialize(new ArrayList<>());
@@ -777,7 +781,8 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         tp.setBounds(0, 0, this.contentPanel.getWidth(), this.contentPanel.getHeight());
 
         ClientSettings settings = ClientSettings.getInstance();
-        this.cu = UserSettings.getInstance().getCurrentUser();
+        UserSettings usettings=UserSettings.getInstance();
+        this.cu = usettings.getCurrentUser();
         if (!EmailUtils.hasConfig(cu)) {
             this.cmdSend.setEnabled(false);
             this.cmdAttach.setEnabled(false);
@@ -794,10 +799,28 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
             this.chkSaveAsDocument.setSelected(false);
         }
 
-        this.lblFrom.setText(cu.getEmailSenderName() + "<" + cu.getEmailAddress() + ">");
-        //this.taBody.setText(cu.getEmailSignature());
-        this.tp.setText(EmailUtils.Html2Text(cu.getEmailSignature()));
-        this.hp.setText(cu.getEmailSignature());
+        try {
+            this.mailboxes = usettings.getMailboxes(cu.getPrincipalId());
+            this.cmbFrom.removeAllItems();
+            for (MailboxSetup t : mailboxes) {
+                this.cmbFrom.addItem(t.getDisplayName());
+            }
+            if (this.cmbFrom.getItemCount() > 0) {
+                this.cmbFrom.setSelectedIndex(0);
+            }
+
+            if (!mailboxes.isEmpty()) {
+                MailboxSetup ms = mailboxes.iterator().next();
+                this.lblFrom.setText(ms.getEmailSenderName() + "<" + ms.getEmailAddress() + ">");
+                //this.taBody.setText(cu.getEmailSignature());
+                this.tp.setText(EmailUtils.Html2Text(ms.getEmailSignature()));
+                this.hp.setText(ms.getEmailSignature());
+            }
+
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Fehler beim Ermitteln der Postfächer: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+        }
+
         this.lstAttachments.setModel(new DefaultListModel());
 
         try {
@@ -813,7 +836,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Fehler beim Erstellen der Vorlage: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
         }
-        
+
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
@@ -825,7 +848,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Fehler beim Ermitteln der Beteiligtentypen: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
         }
-        
+
         ComponentUtils.restoreDialogSize(this);
 
         this.txtTo.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "Enter");
@@ -965,17 +988,17 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         if ("true".equalsIgnoreCase(temp)) {
             this.chkDocumentTagging.setSelected(true);
         }
-        
+
         this.calendarSelectionButton1.refreshCalendarSetups();
         this.calendarSelectionButton1.setEnabled(false);
-        
+
         ComponentUtils.restoreSplitPane(jSplitPane1, this.getClass(), "jSplitPane1");
         ComponentUtils.persistSplitPane(jSplitPane1, this.getClass(), "jSplitPane1");
 
     }
-    
+
     public void setCloudLink(String link) {
-        this.cloudLink=link;
+        this.cloudLink = link;
     }
 
     @Override
@@ -1013,21 +1036,22 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
     }
 
     public void addParty(AddressBean addr, PartyTypeBean ptb) {
-        
+
         this.pnlParties.addParty(new PartiesPanelEntry(addr, ptb));
-        
+
         this.addRecipientCandidate(addr, ptb);
-        
+
     }
-    
+
     public void addParty(ArchiveFileAddressesBean p) {
-        if(p==null)
+        if (p == null) {
             return;
-        
+        }
+
         this.pnlParties.addParty(new PartiesPanelEntry(p));
-        
+
         this.addRecipientCandidate(p.getAddressKey(), p.getReferenceType());
-        
+
     }
 
     public void setDictateSign(String dictateSign) {
@@ -1043,8 +1067,9 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
             this.chkSaveAsDocument.setEnabled(true);
             this.chkSaveAsDocument.setText("als Dokument speichern");
         }
-        if(af!=null && this.contextArchiveFile.getAssistant()!=null)
+        if (af != null && this.contextArchiveFile.getAssistant() != null) {
             this.cmbReviewAssignee.setSelectedItem(this.contextArchiveFile.getAssistant());
+        }
     }
 
     public void setTo(String t) {
@@ -1059,22 +1084,37 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         this.txtBcc.setText(bcc);
     }
 
+    private MailboxSetup getSelectedMailbox() {
+        if (this.cmbFrom.getSelectedItem() != null) {
+            String name = this.cmbFrom.getSelectedItem().toString();
+            for (MailboxSetup ms : this.mailboxes) {
+                if (ms.getDisplayName().equals(name)) {
+                    return ms;
+                }
+            }
+        }
+        return null;
+    }
+
     public void setBody(String b, String contentType) {
         AppUserBean cu = UserSettings.getInstance().getCurrentUser();
 
+        MailboxSetup ms = this.getSelectedMailbox();
+
         if (contentType.toLowerCase().startsWith("text/plain")) {
-
-            this.tp.setText(b + EmailUtils.Html2Text(cu.getEmailSignature()));
-            this.tp.setCaretPosition(0);
-
-        } else {
-
-            String sig = cu.getEmailSignature();
-            if (sig == null) {
-                sig = "";
+            if (ms != null) {
+                this.tp.setText(b + EmailUtils.Html2Text(ms.getEmailSignature()));
+                this.tp.setCaretPosition(0);
             }
-            this.hp.setText(b + "<br/><div><blockquote style=\"border-left: #ccc 0px solid; margin: 0px 0px 0px 0.8ex; padding-left: 1ex\">" + sig + "</blockquote></div>");
-            this.hp.setCaretPosition(0);
+        } else {
+            if (ms != null) {
+                String sig = ms.getEmailSignature();
+                if (sig == null) {
+                    sig = "";
+                }
+                this.hp.setText(b + "<br/><div><blockquote style=\"border-left: #ccc 0px solid; margin: 0px 0px 0px 0.8ex; padding-left: 1ex\">" + sig + "</blockquote></div>");
+                this.hp.setCaretPosition(0);
+            }
         }
     }
 
@@ -1136,6 +1176,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         txtCc = new javax.swing.JTextField();
         jLabel9 = new javax.swing.JLabel();
         txtTo = new javax.swing.JTextField();
+        cmbFrom = new javax.swing.JComboBox<>();
         jPanel6 = new javax.swing.JPanel();
         jPanel2 = new javax.swing.JPanel();
         text = new javax.swing.JRadioButton();
@@ -1315,6 +1356,13 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
 
         jLabel9.setText("BCC:");
 
+        cmbFrom.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+        cmbFrom.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmbFromActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);
         jPanel3Layout.setHorizontalGroup(
@@ -1334,7 +1382,6 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                             .addComponent(jLabel3))
                         .addGap(18, 18, 18)
                         .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(lblFrom, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addGroup(jPanel3Layout.createSequentialGroup()
                                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addComponent(txtCc)
@@ -1345,7 +1392,11 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                                     .addComponent(cmdRecipients)
                                     .addComponent(cmdRecipientsCc)
-                                    .addComponent(cmdRecipientsBcc)))))
+                                    .addComponent(cmdRecipientsBcc)))
+                            .addGroup(jPanel3Layout.createSequentialGroup()
+                                .addComponent(lblFrom)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(cmbFrom, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
                     .addComponent(jPanel5, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
@@ -1355,7 +1406,8 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                 .addContainerGap()
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel1)
-                    .addComponent(lblFrom))
+                    .addComponent(lblFrom)
+                    .addComponent(cmbFrom, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(cmdRecipients)
@@ -1684,6 +1736,8 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
 
     private void cmdSendActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSendActionPerformed
 
+        MailboxSetup ms = this.getSelectedMailbox();
+
         ClientSettings settings = ClientSettings.getInstance();
         if (this.chkSaveAsDocument.isSelected()) {
             settings.setConfiguration(ClientSettings.CONF_MAIL_SAVETOARCHIVEFILE, "1");
@@ -1698,10 +1752,10 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         ArrayList<String> mails = EmailUtils.getAllMailAddressesFromString(this.txtTo.getText());
         mails.addAll(EmailUtils.getAllMailAddressesFromString(this.txtCc.getText()));
         mails.addAll(EmailUtils.getAllMailAddressesFromString(this.txtBcc.getText()));
-        
-        String editorContent=ed.getText();
-        editorContent=editorContent.replaceAll("<p>[\\s ]*</p>", "<p>&nbsp;</p>");
-        editorContent=editorContent.replaceAll("<div>[\\s ]*</div>", "<div>&nbsp;</div>");
+
+        String editorContent = ed.getText();
+        editorContent = editorContent.replaceAll("<p>[\\s ]*</p>", "<p>&nbsp;</p>");
+        editorContent = editorContent.replaceAll("<div>[\\s ]*</div>", "<div>&nbsp;</div>");
         ed.setText(editorContent);
 
         if (mails.isEmpty()) {
@@ -1709,13 +1763,13 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
             return;
         }
 
-        CaseFolder folder=null;
+        CaseFolder folder = null;
         if (this.chkSaveAsDocument.isSelected() || !(this.radioReviewTypeNone.isSelected())) {
             if (this.contextArchiveFile == null) {
-                SearchAndAssignDialog saDlg = new SearchAndAssignDialog(this, true, ""+this.txtSubject.getText()+ed.getText(), null);
+                SearchAndAssignDialog saDlg = new SearchAndAssignDialog(this, true, "" + this.txtSubject.getText() + ed.getText(), null);
                 saDlg.setVisible(true);
                 this.contextArchiveFile = saDlg.getCaseSelection();
-                folder=saDlg.getFolderSelection();
+                folder = saDlg.getFolderSelection();
 
                 saDlg.dispose();
 
@@ -1749,9 +1803,10 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                         return;
                     }
                 }
-                a = new SendEncryptedAction(dlg, this, new ArrayList<>(this.attachments.values()), this.cu, this.chkReadReceipt.isSelected(), this.txtTo.getText(), this.txtCc.getText(), this.txtBcc.getText(), this.txtSubject.getText(), ed.getText(), contentType, this.contextArchiveFile, createDocumentTag, folder);
+                a = new SendEncryptedAction(dlg, this, new ArrayList<>(this.attachments.values()), ms, this.chkReadReceipt.isSelected(), this.txtTo.getText(), this.txtCc.getText(), this.txtBcc.getText(), this.txtSubject.getText(), ed.getText(), contentType, this.contextArchiveFile, createDocumentTag, folder);
             } else {
-                a = new SendAction(dlg, this, new ArrayList<>(this.attachments.values()), this.cu, this.chkReadReceipt.isSelected(), this.txtTo.getText(), this.txtCc.getText(), this.txtBcc.getText(), this.txtSubject.getText(), ed.getText(), contentType, this.contextArchiveFile, createDocumentTag, folder);
+
+                a = new SendAction(dlg, this, new ArrayList<>(this.attachments.values()), ms, this.chkReadReceipt.isSelected(), this.txtTo.getText(), this.txtCc.getText(), this.txtBcc.getText(), this.txtSubject.getText(), ed.getText(), contentType, this.contextArchiveFile, createDocumentTag, folder);
             }
 
         } else if (this.chkEncryption.isSelected()) {
@@ -1768,9 +1823,9 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                     return;
                 }
             }
-            a = new SendEncryptedAction(dlg, this, new ArrayList<>(this.attachments.values()), this.cu, this.chkReadReceipt.isSelected(), this.txtTo.getText(), this.txtCc.getText(), this.txtBcc.getText(), this.txtSubject.getText(), ed.getText(), contentType, createDocumentTag);
+            a = new SendEncryptedAction(dlg, this, new ArrayList<>(this.attachments.values()), ms, this.chkReadReceipt.isSelected(), this.txtTo.getText(), this.txtCc.getText(), this.txtBcc.getText(), this.txtSubject.getText(), ed.getText(), contentType, createDocumentTag);
         } else {
-            a = new SendAction(dlg, this, new ArrayList<>(this.attachments.values()), this.cu, this.chkReadReceipt.isSelected(), this.txtTo.getText(), this.txtCc.getText(), this.txtBcc.getText(), this.txtSubject.getText(), ed.getText(), contentType, createDocumentTag);
+            a = new SendAction(dlg, this, new ArrayList<>(this.attachments.values()), ms, this.chkReadReceipt.isSelected(), this.txtTo.getText(), this.txtCc.getText(), this.txtBcc.getText(), this.txtSubject.getText(), ed.getText(), contentType, createDocumentTag);
         }
         a.start();
 
@@ -1904,6 +1959,8 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
     }//GEN-LAST:event_cmdRecipientsActionPerformed
 
     private void cmbTemplatesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbTemplatesActionPerformed
+        MailboxSetup ms = this.getSelectedMailbox();
+
         Object selected = this.cmbTemplates.getSelectedItem();
         if (selected == null) {
             return;
@@ -1916,17 +1973,17 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
                 EmailTemplate tpl = locator.lookupIntegrationServiceRemote().getEmailTemplate(tplName);
-                
+
                 ArrayList<String> placeHolderNames = EmailTemplateAccess.getPlaceHoldersInTemplate(tpl.getSubject(), allPartyTypesPlaceholders);
                 Hashtable<String, String> ht = new Hashtable<>();
                 for (String ph : placeHolderNames) {
                     ht.put(ph, "");
                 }
-                
-                AppUserBean caseLawyer=null;
-                AppUserBean caseAssistant=null;
-                AppUserBean author=UserSettings.getInstance().getCurrentUser();
-                if(this.contextArchiveFile!=null) {
+
+                AppUserBean caseLawyer = null;
+                AppUserBean caseAssistant = null;
+                AppUserBean author = UserSettings.getInstance().getCurrentUser();
+                if (this.contextArchiveFile != null) {
                     try {
                         caseLawyer = locator.lookupSystemManagementRemote().getUser(this.contextArchiveFile.getLawyer());
                     } catch (Exception ex) {
@@ -1949,24 +2006,29 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                     ht.put(ph, "");
                 }
                 htValues = PlaceHolderUtils.getPlaceHolderValues(ht, this.contextArchiveFile, selectedParties, this.contextDictateSign, null, new Hashtable<>(), caseLawyer, caseAssistant, author);
-                
-                if(this.cloudLink!=null)
+
+                if (this.cloudLink != null) {
                     htValues.put("{{CLOUD_LINK}}", this.cloudLink);
-                
+                }
+
                 if (tpl.isText()) {
-                    this.tp.setText(EmailTemplateAccess.replacePlaceHolders(tpl.getBody(), htValues) + System.getProperty("line.separator") + System.getProperty("line.separator") + EmailUtils.Html2Text(this.cu.getEmailSignature()));
-                    this.hp.setText("");
-                    this.text.setSelected(true);
-                    this.textActionPerformed(null);
-                } else {
-                    String sig = this.cu.getEmailSignature();
-                    if (sig == null) {
-                        sig = "";
+                    if (ms != null) {
+                        this.tp.setText(EmailTemplateAccess.replacePlaceHolders(tpl.getBody(), htValues) + System.getProperty("line.separator") + System.getProperty("line.separator") + EmailUtils.Html2Text(ms.getEmailSignature()));
+                        this.hp.setText("");
+                        this.text.setSelected(true);
+                        this.textActionPerformed(null);
                     }
-                    this.hp.setText(EmailTemplateAccess.replacePlaceHolders(tpl.getBody(), htValues) + "<br/><br/><div><blockquote style=\"border-left: #ccc 0px solid; margin: 0px 0px 0px 0.8ex; padding-left: 1ex\">" + sig + "</blockquote></div>");
-                    this.tp.setText("");
-                    this.html.setSelected(true);
-                    this.htmlActionPerformed(null);
+                } else {
+                    if (ms != null) {
+                        String sig = ms.getEmailSignature();
+                        if (sig == null) {
+                            sig = "";
+                        }
+                        this.hp.setText(EmailTemplateAccess.replacePlaceHolders(tpl.getBody(), htValues) + "<br/><br/><div><blockquote style=\"border-left: #ccc 0px solid; margin: 0px 0px 0px 0.8ex; padding-left: 1ex\">" + sig + "</blockquote></div>");
+                        this.tp.setText("");
+                        this.html.setSelected(true);
+                        this.htmlActionPerformed(null);
+                    }
                 }
 
             } catch (Exception ex) {
@@ -2144,6 +2206,10 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         }
     }//GEN-LAST:event_txtReviewDateFieldMouseClicked
 
+    private void cmbFromActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbFromActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_cmbFromActionPerformed
+
     private void enableReviewElements(boolean enable) {
         this.cmbReviewAssignee.setEnabled(enable);
         this.cmbReviewReason.setEnabled(enable);
@@ -2195,7 +2261,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         java.awt.EventQueue.invokeLater(() -> {
             SendEmailDialog dialog = new SendEmailDialog(new javax.swing.JFrame(), true);
             dialog.addWindowListener(new java.awt.event.WindowAdapter() {
-                
+
                 @Override
                 public void windowClosing(java.awt.event.WindowEvent e) {
                     System.exit(0);
@@ -2213,6 +2279,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
     private javax.swing.JCheckBox chkReadReceipt;
     private javax.swing.JCheckBox chkSaveAsDocument;
     private javax.swing.JComboBox<String> cmbDocumentTag;
+    private javax.swing.JComboBox<String> cmbFrom;
     private javax.swing.JComboBox cmbReviewAssignee;
     private javax.swing.JComboBox cmbReviewReason;
     private javax.swing.JComboBox cmbTemplates;

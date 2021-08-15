@@ -664,6 +664,7 @@
 package com.jdimension.jlawyer.client.editors.documents.viewer;
 
 import com.jdimension.jlawyer.client.mail.MessageContainer;
+import com.jdimension.jlawyer.persistence.MailboxSetup;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import javax.mail.Flags.Flag;
@@ -674,17 +675,19 @@ import javax.mail.internet.MimeMessage;
  * @author jens
  */
 public class EmailPanel extends javax.swing.JPanel implements PreviewPanel {
+    
+    protected MailboxSetup mailboxSetup=null;
 
     /**
-     * Creates new form PlaintextPanel
+     * Creates new form EmailPanel
      */
     public EmailPanel() {
         initComponents();
 
     }
 
-    public void setMessage(MessageContainer msgC) {
-        this.content.setMessage(msgC);
+    public void setMessage(MessageContainer msgC, MailboxSetup ms) {
+        this.content.setMessage(msgC, ms);
 
     }
 
@@ -732,10 +735,24 @@ public class EmailPanel extends javax.swing.JPanel implements PreviewPanel {
             MimeMessage message = new MimeMessage(null, source);
             // need to set this to avoid sending read receipts
             message.setFlag(Flag.SEEN, true);
-            this.setMessage(new MessageContainer(message, message.getSubject(), true));
+            this.setMessage(new MessageContainer(message, message.getSubject(), true), this.mailboxSetup);
         } catch (Throwable t) {
             this.showStatus("Fehler beim Laden der Vorschau.");
         }
+    }
+
+    /**
+     * @return the mailboxSetup
+     */
+    public MailboxSetup getMailboxSetup() {
+        return mailboxSetup;
+    }
+
+    /**
+     * @param mailboxSetup the mailboxSetup to set
+     */
+    public void setMailboxSetup(MailboxSetup mailboxSetup) {
+        this.mailboxSetup = mailboxSetup;
     }
 
 }

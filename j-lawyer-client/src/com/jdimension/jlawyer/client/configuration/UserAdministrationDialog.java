@@ -676,7 +676,6 @@ import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
 import com.jdimension.jlawyer.client.calendar.CalendarUtils;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
-import com.jdimension.jlawyer.client.processing.ProgressIndicator;
 import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
@@ -686,6 +685,8 @@ import com.jdimension.jlawyer.persistence.CalendarAccess;
 import com.jdimension.jlawyer.persistence.CalendarSetup;
 import com.jdimension.jlawyer.persistence.Group;
 import com.jdimension.jlawyer.persistence.GroupMembership;
+import com.jdimension.jlawyer.persistence.MailboxAccess;
+import com.jdimension.jlawyer.persistence.MailboxSetup;
 import com.jdimension.jlawyer.security.Crypto;
 import com.jdimension.jlawyer.services.SecurityServiceRemote;
 import java.awt.Point;
@@ -717,7 +718,6 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
     public UserAdministrationDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
-        this.lblTestProgress.setText("");
         this.lstUsers.setCellRenderer(new UserListCellRenderer());
         UserListModel m = new UserListModel();
         this.lstUsers.setModel(m);
@@ -763,6 +763,15 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 ((DefaultTableModel) this.tblCalendars.getModel()).addRow(new Object[]{true, cs});
             }
             ComponentUtils.autoSizeColumns(tblCalendars);
+            
+            String[] colNames5 = new String[]{"", "Postfach"};
+            GroupMembershipsTableModel model3 = new GroupMembershipsTableModel(colNames5, 0);
+            this.tblMailboxes.setModel(model3);
+            Collection<MailboxSetup> allMailboxes = locator.lookupSecurityServiceRemote().getAllMailboxSetups();
+            for (MailboxSetup ms : allMailboxes) {
+                ((DefaultTableModel) this.tblMailboxes.getModel()).addRow(new Object[]{true, ms});
+            }
+            ComponentUtils.autoSizeColumns(tblMailboxes);
 
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);
@@ -822,33 +831,9 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         tblCalendars = new javax.swing.JTable();
         jLabel21 = new javax.swing.JLabel();
         jPanel7 = new javax.swing.JPanel();
-        jLabel5 = new javax.swing.JLabel();
-        jLabel6 = new javax.swing.JLabel();
-        jLabel7 = new javax.swing.JLabel();
-        jLabel8 = new javax.swing.JLabel();
-        jLabel9 = new javax.swing.JLabel();
-        jLabel10 = new javax.swing.JLabel();
-        jLabel11 = new javax.swing.JLabel();
-        jLabel12 = new javax.swing.JLabel();
-        txtOutServer = new javax.swing.JTextField();
-        txtAddress = new javax.swing.JTextField();
-        cmbAccountType = new javax.swing.JComboBox();
-        txtInServer = new javax.swing.JTextField();
-        txtOutUsername = new javax.swing.JTextField();
-        txtEmailSender = new javax.swing.JTextField();
-        jLabel13 = new javax.swing.JLabel();
-        txtInUser = new javax.swing.JTextField();
-        jLabel14 = new javax.swing.JLabel();
-        htmlEmailSig = new com.jdimension.jlawyer.client.mail.HtmlEditorPanel();
-        chkEmailInSsl = new javax.swing.JCheckBox();
-        chkEmailOutSsl = new javax.swing.JCheckBox();
-        chkEmailStartTls = new javax.swing.JCheckBox();
-        pwdInPassword = new javax.swing.JPasswordField();
-        pwdOutPassword = new javax.swing.JPasswordField();
-        jLabel17 = new javax.swing.JLabel();
-        txtOutPort = new javax.swing.JTextField();
-        cmdTestMail = new javax.swing.JButton();
-        lblTestProgress = new javax.swing.JLabel();
+        jLabel22 = new javax.swing.JLabel();
+        jScrollPane6 = new javax.swing.JScrollPane();
+        tblMailboxes = new javax.swing.JTable();
         jPanel8 = new javax.swing.JPanel();
         jLabel15 = new javax.swing.JLabel();
         jScrollPane2 = new javax.swing.JScrollPane();
@@ -1206,55 +1191,42 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                     .add(cmbArea, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                 .add(jPanel6Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jScrollPane5, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 713, Short.MAX_VALUE)
                     .add(jPanel6Layout.createSequentialGroup()
                         .add(jLabel21)
-                        .add(0, 0, Short.MAX_VALUE)))
+                        .add(0, 430, Short.MAX_VALUE))
+                    .add(jScrollPane5))
                 .addContainerGap())
         );
 
         jTabbedPane1.addTab("Kalender", jPanel6);
 
-        jLabel5.setText("Kontentyp:");
+        jLabel22.setText("Zugriff auf:");
 
-        jLabel6.setText("Eingangsserver:");
+        tblMailboxes.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+                {null, null},
+                {null, null},
+                {null, null},
+                {null, null}
+            },
+            new String [] {
+                "", "Postfach"
+            }
+        ) {
+            Class[] types = new Class [] {
+                java.lang.Boolean.class, java.lang.Object.class
+            };
 
-        jLabel7.setText("Ausgangsserver:");
-
-        jLabel8.setText("Nutzername:");
-
-        jLabel9.setText("Passwort:");
-
-        jLabel10.setText("Absendername:");
-
-        jLabel11.setText("E-Mailadresse:");
-
-        jLabel12.setText("Signatur:");
-
-        cmbAccountType.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "imap", "pop3" }));
-
-        jLabel13.setText("Nutzername:");
-
-        jLabel14.setText("Passwort:");
-
-        chkEmailInSsl.setSelected(true);
-        chkEmailInSsl.setText("SSL");
-
-        chkEmailOutSsl.setSelected(true);
-        chkEmailOutSsl.setText("SSL");
-
-        chkEmailStartTls.setText("StartTLS");
-
-        jLabel17.setText("Port (optional):");
-
-        cmdTestMail.setText("Einstellungen testen");
-        cmdTestMail.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdTestMailActionPerformed(evt);
+            public Class getColumnClass(int columnIndex) {
+                return types [columnIndex];
             }
         });
-
-        lblTestProgress.setText("jLabel21");
+        tblMailboxes.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                tblMailboxesMouseClicked(evt);
+            }
+        });
+        jScrollPane6.setViewportView(tblMailboxes);
 
         org.jdesktop.layout.GroupLayout jPanel7Layout = new org.jdesktop.layout.GroupLayout(jPanel7);
         jPanel7.setLayout(jPanel7Layout);
@@ -1262,119 +1234,21 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
             jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel7Layout.createSequentialGroup()
                 .addContainerGap()
-                .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jPanel7Layout.createSequentialGroup()
-                        .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                            .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
-                                .add(jLabel10)
-                                .add(org.jdesktop.layout.GroupLayout.LEADING, jLabel11))
-                            .add(jLabel12))
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                            .add(txtEmailSender)
-                            .add(jPanel7Layout.createSequentialGroup()
-                                .add(cmdTestMail)
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                .add(lblTestProgress, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                            .add(htmlEmailSig, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-                            .add(org.jdesktop.layout.GroupLayout.TRAILING, txtAddress)))
-                    .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel7Layout.createSequentialGroup()
-                        .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                            .add(jPanel7Layout.createSequentialGroup()
-                                .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                                    .add(jPanel7Layout.createSequentialGroup()
-                                        .add(jLabel8)
-                                        .add(20, 20, 20))
-                                    .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel7Layout.createSequentialGroup()
-                                        .add(jLabel7)
-                                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)))
-                                .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                                    .add(txtOutServer)
-                                    .add(txtOutUsername)))
-                            .add(jPanel7Layout.createSequentialGroup()
-                                .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                                    .add(jLabel6)
-                                    .add(jLabel13))
-                                .add(17, 17, 17)
-                                .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                                    .add(txtInUser)
-                                    .add(txtInServer))))
-                        .add(18, 18, 18)
-                        .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
-                            .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel7Layout.createSequentialGroup()
-                                .add(jLabel9)
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 48, Short.MAX_VALUE)
-                                .add(pwdOutPassword, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 274, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                            .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel7Layout.createSequentialGroup()
-                                .add(chkEmailStartTls)
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                .add(chkEmailOutSsl))
-                            .add(jPanel7Layout.createSequentialGroup()
-                                .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                                    .add(jLabel5)
-                                    .add(jLabel14))
-                                .add(41, 41, 41)
-                                .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
-                                    .add(jPanel7Layout.createSequentialGroup()
-                                        .add(cmbAccountType, 0, 221, Short.MAX_VALUE)
-                                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                        .add(chkEmailInSsl))
-                                    .add(pwdInPassword)))
-                            .add(jPanel7Layout.createSequentialGroup()
-                                .add(jLabel17)
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                .add(txtOutPort, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 103, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))))
+                .add(jLabel22)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jScrollPane6, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 799, Short.MAX_VALUE)
                 .addContainerGap())
         );
         jPanel7Layout.setVerticalGroup(
             jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel7Layout.createSequentialGroup()
                 .addContainerGap()
-                .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(jLabel11)
-                    .add(txtAddress, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                 .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jLabel6)
-                    .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                        .add(txtInServer, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .add(cmbAccountType, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .add(jLabel5)
-                        .add(chkEmailInSsl)))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(txtInUser, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(jLabel13)
-                    .add(jLabel14)
-                    .add(pwdInPassword, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .add(18, 18, 18)
-                .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(txtOutServer, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(jLabel7)
-                    .add(chkEmailOutSsl)
-                    .add(chkEmailStartTls)
-                    .add(jLabel17)
-                    .add(txtOutPort, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
-                    .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                        .add(txtOutUsername, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .add(jLabel9)
-                        .add(pwdOutPassword, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                    .add(jLabel8))
-                .add(18, 18, 18)
-                .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(txtEmailSender, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(jLabel10))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jLabel12)
-                    .add(htmlEmailSig, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 205, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                .add(jPanel7Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(cmdTestMail)
-                    .add(lblTestProgress))
-                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .add(jScrollPane6, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 517, Short.MAX_VALUE)
+                    .add(jPanel7Layout.createSequentialGroup()
+                        .add(jLabel22)
+                        .add(0, 0, Short.MAX_VALUE)))
+                .addContainerGap())
         );
 
         jTabbedPane1.addTab("E-Mail", jPanel7);
@@ -1484,7 +1358,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 .add(jPanel10Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(nextcloudTeaserPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(pnlCloudConnection, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(643, Short.MAX_VALUE))
+                .addContainerGap(377, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("Nextcloud", jPanel10);
@@ -1605,7 +1479,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 .add(jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(jPanel9Layout.createSequentialGroup()
                         .add(jLabel19)
-                        .add(0, 701, Short.MAX_VALUE))
+                        .add(0, 435, Short.MAX_VALUE))
                     .add(jScrollPane4))
                 .addContainerGap())
         );
@@ -1649,7 +1523,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                         .add(cmdAdd))
                     .add(jScrollPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 137, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jTabbedPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 836, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .add(jTabbedPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 570, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(cmdClose)
@@ -1740,9 +1614,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
             return;
         }
         this.txtUser.setText("");
-        this.chkEmailInSsl.setSelected(true);
-        this.chkEmailOutSsl.setSelected(true);
-        this.chkEmailStartTls.setSelected(false);
+
         this.txtAbbreviation.setText("");
         this.cmbPrimaryGroup.setSelectedIndex(0);
         this.pnlCloudConnection.setCloudHost("");
@@ -1827,28 +1699,6 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                     }
                 }
 
-                this.txtAddress.setText(u.getEmailAddress());
-                if (u.getEmailInType() == null || "".equals(u.getEmailInType())) {
-                    this.cmbAccountType.setSelectedIndex(0);
-                } else {
-                    this.cmbAccountType.setSelectedItem(u.getEmailInType());
-                }
-                this.txtEmailSender.setText(u.getEmailSenderName());
-                String sig = u.getEmailSignature();
-                if (sig == null) {
-                    sig = "";
-                }
-                this.htmlEmailSig.setText(sig);
-                this.txtInServer.setText(u.getEmailInServer());
-                this.txtInUser.setText(u.getEmailInUser());
-                this.pwdInPassword.setText(u.getEmailInPwd());
-                this.txtOutServer.setText(u.getEmailOutServer());
-                this.txtOutPort.setText(u.getEmailOutPort());
-                this.txtOutUsername.setText(u.getEmailOutUser());
-                this.pwdOutPassword.setText(u.getEmailOutPwd());
-                this.chkEmailInSsl.setSelected(u.isEmailInSsl());
-                this.chkEmailOutSsl.setSelected(u.isEmailOutSsl());
-                this.chkEmailStartTls.setSelected(u.isEmailStartTls());
                 this.txtAbbreviation.setText(u.getAbbreviation());
                 this.cmbPrimaryGroup.setSelectedItem(u.getPrimaryGroup());
 
@@ -1903,6 +1753,18 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                     for (CalendarAccess ca : calendars) {
                         if (cs.getId().equals(ca.getCalendarId())) {
                             this.tblCalendars.setValueAt(true, i, 0);
+                            break;
+                        }
+                    }
+                }
+                
+                List<MailboxAccess> mailboxes = locator.lookupSecurityServiceRemote().getMailboxAccessForUser(u.getPrincipalId());
+                for (int i = 0; i < this.tblMailboxes.getRowCount(); i++) {
+                    MailboxSetup ms = (MailboxSetup) this.tblMailboxes.getValueAt(i, 1);
+                    this.tblMailboxes.setValueAt(false, i, 0);
+                    for (MailboxAccess ma : mailboxes) {
+                        if (ms.getId().equals(ma.getMailboxId())) {
+                            this.tblMailboxes.setValueAt(true, i, 0);
                             break;
                         }
                     }
@@ -1974,21 +1836,6 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 u.setAreaCode(regionId);
                 u.setCountryCode(countryId);
 
-                u.setEmailAddress(this.txtAddress.getText());
-                u.setEmailInType(this.cmbAccountType.getSelectedItem().toString());
-                u.setEmailSenderName(this.txtEmailSender.getText());
-                u.setEmailSignature(this.htmlEmailSig.getText());
-                u.setEmailInServer(this.txtInServer.getText());
-                u.setEmailInUser(this.txtInUser.getText());
-                u.setEmailInPwd(this.pwdInPassword.getText());
-                u.setEmailOutServer(this.txtOutServer.getText());
-                u.setEmailOutPort(this.txtOutPort.getText());
-                u.setEmailOutUser(this.txtOutUsername.getText());
-                u.setEmailOutPwd(this.pwdOutPassword.getText());
-                u.setEmailInSsl(this.chkEmailInSsl.isSelected());
-                u.setEmailOutSsl(this.chkEmailOutSsl.isSelected());
-                u.setEmailStartTls(this.chkEmailStartTls.isSelected());
-
                 u.setBeaCertificate(this.currentCertificate);
                 u.setBeaCertificatePassword(Crypto.encrypt(this.pwdBeaCertificatePassword.getText().trim()));
                 u.setBeaCertificateAutoLogin(this.rdAutoLogin.isSelected());
@@ -2020,7 +1867,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
 
                 AppUserBean newUser = mgmt.updateUser(u, this.getRolesFromUI(u.getPrincipalId()));
                 ((UserListModel) this.lstUsers.getModel()).set(this.lstUsers.getSelectedIndex(), newUser);
-
+                
                 // if the user edited his own settings, put it into ClientSettings
                 // e.g. do not require a restart when the signature has been edited
                 if (UserSettings.getInstance().getCurrentUser().getPrincipalId().equals(newUser.getPrincipalId())) {
@@ -2035,20 +1882,6 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         }
         this.txtUser.setText("");
 
-        this.txtAddress.setText("");
-        this.cmbAccountType.setSelectedIndex(0);
-        this.txtEmailSender.setText("");
-        this.htmlEmailSig.setText("");
-        this.txtInServer.setText("");
-        this.txtInUser.setText("");
-        this.pwdInPassword.setText("");
-        this.txtOutServer.setText("");
-        this.txtOutPort.setText("");
-        this.txtOutUsername.setText("");
-        this.pwdOutPassword.setText("");
-        this.chkEmailInSsl.setSelected(true);
-        this.chkEmailOutSsl.setSelected(true);
-        this.chkEmailStartTls.setSelected(false);
         this.pwdBeaCertificatePassword.setText("");
         this.rdAutoLogin.setSelected(true);
         this.rdManualLogin.setSelected(false);
@@ -2221,17 +2054,6 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
 
     }//GEN-LAST:event_cmbPrimaryGroupItemStateChanged
 
-    private void cmdTestMailActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdTestMailActionPerformed
-
-        ProgressIndicator pi = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
-        pi.setShowCancelButton(false);
-        MailSettingsTestAction a = new MailSettingsTestAction(pi, this, this.cmdTestMail, this.txtAddress.getText(), this.txtOutServer.getText(), this.txtOutPort.getText(), this.txtOutUsername.getText(), new String(this.pwdOutPassword.getPassword()), this.chkEmailOutSsl.isSelected(), this.chkEmailStartTls.isSelected(), this.txtInServer.getText(), this.txtInUser.getText(), new String(this.pwdInPassword.getPassword()), this.chkEmailInSsl.isSelected(), this.cmbAccountType.getSelectedItem().toString());
-
-        a.start();
-
-
-    }//GEN-LAST:event_cmdTestMailActionPerformed
-
     private void mnuUpdatePasswordActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuUpdatePasswordActionPerformed
         if (this.lstUsers.getSelectedValues().length > 0) {
 
@@ -2315,6 +2137,44 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
             }
         }
     }//GEN-LAST:event_tblCalendarsMouseClicked
+
+    private void tblMailboxesMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblMailboxesMouseClicked
+        if (evt.getClickCount() == 1 && !evt.isPopupTrigger() && evt.getComponent().isEnabled()) {
+
+            AppUserBean u = (AppUserBean) this.lstUsers.getSelectedValue();
+            if (u == null) {
+                return;
+            }
+
+            Point p = evt.getPoint();
+            int col = this.tblMailboxes.columnAtPoint(p);
+            if (col == 0) {
+                // click on checkbox in table
+                int row = this.tblMailboxes.rowAtPoint(p);
+                MailboxSetup ms = (MailboxSetup) this.tblMailboxes.getValueAt(row, 1);
+                Boolean newValue = !((Boolean) this.tblMailboxes.getValueAt(row, 0));
+
+                ClientSettings settings = ClientSettings.getInstance();
+                try {
+                    JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                    SecurityServiceRemote svc = locator.lookupSecurityServiceRemote();
+                    if (newValue) {
+                        svc.addUserToMailbox(u.getPrincipalId(), ms.getId());
+                    } else {
+                        svc.removeUserFromMailbox(u.getPrincipalId(), ms.getId());
+                    }
+                    UserSettings.getInstance().invalidateMailboxes(u.getPrincipalId());
+                } catch (Exception ex) {
+                    log.error("Error updating mailbox access", ex);
+                    JOptionPane.showMessageDialog(this, "Fehler beim Speichern: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+                    EditorsRegistry.getInstance().clearStatus();
+                    return;
+                }
+
+                this.tblMailboxes.setValueAt(newValue, row, col);
+            }
+        }
+    }//GEN-LAST:event_tblMailboxesMouseClicked
 
     private List<AppRoleBean> getRolesFromUI(String principalId) {
         List<AppRoleBean> result = new ArrayList<>();
@@ -2551,9 +2411,6 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
     private javax.swing.JCheckBox chkCreateAddress;
     private javax.swing.JCheckBox chkCreateFile;
     private javax.swing.JCheckBox chkCreateOption;
-    private javax.swing.JCheckBox chkEmailInSsl;
-    private javax.swing.JCheckBox chkEmailOutSsl;
-    private javax.swing.JCheckBox chkEmailStartTls;
     private javax.swing.JCheckBox chkImport;
     private javax.swing.JCheckBox chkLawyer;
     private javax.swing.JCheckBox chkLogin;
@@ -2565,7 +2422,6 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
     private javax.swing.JCheckBox chkWriteAddress;
     private javax.swing.JCheckBox chkWriteFile;
     private javax.swing.JCheckBox chkWriteOption;
-    private javax.swing.JComboBox cmbAccountType;
     private javax.swing.JComboBox cmbArea;
     private javax.swing.JComboBox cmbCountry;
     private javax.swing.JComboBox<String> cmbPrimaryGroup;
@@ -2574,32 +2430,20 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
     private javax.swing.JButton cmdRemoveCertificate;
     private javax.swing.JButton cmdSave;
     private javax.swing.JButton cmdSelectCertificate;
-    private javax.swing.JButton cmdTestMail;
-    private com.jdimension.jlawyer.client.mail.HtmlEditorPanel htmlEmailSig;
     private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel10;
-    private javax.swing.JLabel jLabel11;
-    private javax.swing.JLabel jLabel12;
-    private javax.swing.JLabel jLabel13;
-    private javax.swing.JLabel jLabel14;
     private javax.swing.JLabel jLabel15;
     private javax.swing.JLabel jLabel16;
-    private javax.swing.JLabel jLabel17;
     private javax.swing.JLabel jLabel18;
     private javax.swing.JLabel jLabel19;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel20;
     private javax.swing.JLabel jLabel21;
+    private javax.swing.JLabel jLabel22;
     private javax.swing.JLabel jLabel25;
     private javax.swing.JLabel jLabel26;
     private javax.swing.JLabel jLabel27;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
-    private javax.swing.JLabel jLabel5;
-    private javax.swing.JLabel jLabel6;
-    private javax.swing.JLabel jLabel7;
-    private javax.swing.JLabel jLabel8;
-    private javax.swing.JLabel jLabel9;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel10;
     private javax.swing.JPanel jPanel11;
@@ -2615,8 +2459,8 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane4;
     private javax.swing.JScrollPane jScrollPane5;
+    private javax.swing.JScrollPane jScrollPane6;
     private javax.swing.JTabbedPane jTabbedPane1;
-    private javax.swing.JLabel lblTestProgress;
     private javax.swing.JList lstUsers;
     private javax.swing.JMenuItem mnuDelete;
     private javax.swing.JMenuItem mnuUpdatePassword;
@@ -2624,22 +2468,14 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
     private com.jdimension.jlawyer.client.configuration.NextcloudConnectionPanel pnlCloudConnection;
     private javax.swing.JPopupMenu popDelete;
     private javax.swing.JPasswordField pwdBeaCertificatePassword;
-    private javax.swing.JPasswordField pwdInPassword;
-    private javax.swing.JPasswordField pwdOutPassword;
     private javax.swing.JRadioButton rdAutoLogin;
     private javax.swing.JRadioButton rdManualLogin;
     private javax.swing.JTextArea taBeaCertificate;
     private javax.swing.JTable tblCalendars;
     private javax.swing.JTable tblGroups;
+    private javax.swing.JTable tblMailboxes;
     private javax.swing.JTextField txtAbbreviation;
-    private javax.swing.JTextField txtAddress;
     private javax.swing.JTextField txtDisplayName;
-    private javax.swing.JTextField txtEmailSender;
-    private javax.swing.JTextField txtInServer;
-    private javax.swing.JTextField txtInUser;
-    private javax.swing.JTextField txtOutPort;
-    private javax.swing.JTextField txtOutServer;
-    private javax.swing.JTextField txtOutUsername;
     private javax.swing.JTextField txtUser;
     private javax.swing.JTextField txtVoipPassword;
     private javax.swing.JTextField txtVoipUser;

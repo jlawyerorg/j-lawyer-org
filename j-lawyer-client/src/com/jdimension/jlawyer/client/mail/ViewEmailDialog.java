@@ -672,6 +672,7 @@ import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.persistence.MailboxSetup;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.io.File;
@@ -712,8 +713,8 @@ public class ViewEmailDialog extends javax.swing.JDialog {
 
     }
 
-    public void setMessage(MessageContainer msgC) {
-        this.content.setMessage(msgC);
+    public void setMessage(MessageContainer msgC, MailboxSetup ms) {
+        this.content.setMessage(msgC, ms);
         this.msgContainer = msgC;
     }
 

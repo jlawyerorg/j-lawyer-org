@@ -103,7 +103,7 @@ jobs:
             -Dsonar.organization=jlawyerorg
             -Dsonar.projectKey=jlawyerorg_j-lawyer-org
             -Dsonar.projectName=j-lawyer-org
-            -Dsonar.projectVersion=1.15.0
+            -Dsonar.projectVersion=2.0.0
             -Dsonar.java.binaries=.
             -Dsonar.java.source=8
             

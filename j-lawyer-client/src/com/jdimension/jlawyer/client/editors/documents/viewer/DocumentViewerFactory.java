@@ -664,8 +664,10 @@
 package com.jdimension.jlawyer.client.editors.documents.viewer;
 
 import com.jdimension.jlawyer.client.launcher.LauncherFactory;
+import com.jdimension.jlawyer.client.mail.EmailUtils;
 import com.jdimension.jlawyer.client.mail.MessageContainer;
 import com.jdimension.jlawyer.client.utils.FileUtils;
+import com.jdimension.jlawyer.persistence.MailboxSetup;
 import java.awt.Dimension;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -745,7 +747,8 @@ public class DocumentViewerFactory {
                 ep.setSize(new Dimension(width, height));
                 ep.setMaximumSize(new Dimension(width, height));
                 ep.setPreferredSize(new Dimension(width, height));
-                ep.setMessage(new MessageContainer(message, message.getSubject(), true));
+                MailboxSetup ms=EmailUtils.getMailboxSetup(message);
+                ep.setMessage(new MessageContainer(message, message.getSubject(), true), ms);
                 return ep;
             } catch (Throwable t) {
                 EmailPanel ep = new EmailPanel();
