@@ -666,6 +666,7 @@ package com.jdimension.jlawyer.client.configuration;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.processing.ProgressIndicator;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.persistence.MailboxSetup;
@@ -687,13 +688,14 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
 
     /**
      * Creates new form MailboxSetupDialog
+     *
      * @param parent
      * @param modal
      */
     public MailboxSetupDialog(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
         initComponents();
-        
+
         this.lblTestProgress.setText("");
 
         this.resetDetails();
@@ -733,11 +735,10 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
         this.txtOutServer.setText("");
         this.pwdOutPassword.setText("");
         this.htmlEmailSig.setText("");
-        
+
         this.chkEmailInSsl.setSelected(true);
         this.chkEmailOutSsl.setSelected(true);
         this.chkEmailStartTls.setSelected(false);
-        
 
     }
 
@@ -1159,13 +1160,10 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
 
         if (row >= 0) {
 
-
-            
-                if (!StringUtils.isEmpty(this.txtEmailAddress.getText()) && !StringUtils.isEmpty(this.txtInServer.getText()) && !StringUtils.isEmpty(this.txtInUser.getText()) && !StringUtils.isEmpty(this.pwdInPassword.getText())) {
-                    JOptionPane.showMessageDialog(this, "Postfachangaben sind unvollständig", "Warnung", JOptionPane.WARNING_MESSAGE);
-                    return;
-                }
-            
+            if (StringUtils.isEmpty(this.txtEmailAddress.getText()) || StringUtils.isEmpty(this.txtInServer.getText()) || StringUtils.isEmpty(this.txtInUser.getText()) || StringUtils.isEmpty(this.pwdInPassword.getText())) {
+                JOptionPane.showMessageDialog(this, "Postfachangaben sind unvollständig", "Warnung", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
 
             MailboxSetup ms = (MailboxSetup) this.tblMailboxes.getValueAt(row, 0);
             ms.setDisplayName(this.txtDisplayName.getText());
@@ -1175,24 +1173,25 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
             ms.setEmailSignature(this.htmlEmailSig.getText());
             ms.setEmailInServer(this.txtInServer.getText());
             ms.setEmailInUser(this.txtInUser.getText());
-            ms.setEmailInPwd(this.pwdInPassword.getText());
             ms.setEmailOutServer(this.txtOutServer.getText());
             ms.setEmailOutPort(this.txtOutPort.getText());
             ms.setEmailOutUser(this.txtOutUsername.getText());
-            ms.setEmailOutPwd(this.pwdOutPassword.getText());
             ms.setEmailInSsl(this.chkEmailInSsl.isSelected());
             ms.setEmailOutSsl(this.chkEmailOutSsl.isSelected());
             ms.setEmailStartTls(this.chkEmailStartTls.isSelected());
 
             ClientSettings settings = ClientSettings.getInstance();
             try {
+                ms.setEmailOutPwd(Crypto.encrypt(this.pwdOutPassword.getText()));
+                ms.setEmailInPwd(Crypto.encrypt(this.pwdInPassword.getText()));
+                
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
                 MailboxSetup savedMailbox = locator.lookupSecurityServiceRemote().updateMailboxSetup(ms);
 
                 ((DefaultTableModel) this.tblMailboxes.getModel()).setValueAt(savedMailbox, row, 0);
                 ((DefaultTableModel) this.tblMailboxes.getModel()).setValueAt(savedMailbox.getEmailAddress(), row, 1);
-
+                UserSettings.getInstance().invalidateMailboxes(UserSettings.getInstance().getCurrentUser().getPrincipalId());
             } catch (Exception ex) {
                 log.error("Error updating mailbox setup", ex);
                 JOptionPane.showMessageDialog(this, ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
@@ -1206,7 +1205,7 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
         int row = this.tblMailboxes.getSelectedRow();
 
         if (row >= 0) {
-        
+
             MailboxSetup ms = (MailboxSetup) this.tblMailboxes.getValueAt(row, 0);
             ClientSettings settings = ClientSettings.getInstance();
             try {
@@ -1250,39 +1249,39 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_cmdTestMailActionPerformed
 
     private void updatedUI(MailboxSetup ms) {
-        
+
         this.txtDisplayName.setText(ms.getDisplayName());
         this.txtEmailAddress.setText(ms.getEmailAddress());
-                if (ms.getEmailInType() == null || "".equals(ms.getEmailInType())) {
-                    this.cmbAccountType.setSelectedIndex(0);
-                } else {
-                    this.cmbAccountType.setSelectedItem(ms.getEmailInType());
-                }
-                this.txtEmailSender.setText(ms.getEmailSenderName());
-                String sig = ms.getEmailSignature();
-                if (sig == null) {
-                    sig = "";
-                }
-                this.htmlEmailSig.setText(sig);
-                this.txtInServer.setText(ms.getEmailInServer());
-                this.txtInUser.setText(ms.getEmailInUser());
-                String inPwd=ms.getEmailInPwd();
-                String outPwd=ms.getEmailOutPwd();
-                try {
-                    inPwd=Crypto.decrypt(ms.getEmailInPwd());
-                    outPwd=Crypto.decrypt(ms.getEmailOutPwd());
-                } catch (Throwable t) {
-                    log.error(t);
-                }
-                this.pwdInPassword.setText(inPwd);
-                this.txtOutServer.setText(ms.getEmailOutServer());
-                this.txtOutPort.setText(ms.getEmailOutPort());
-                this.txtOutUsername.setText(ms.getEmailOutUser());
-                this.pwdOutPassword.setText(outPwd);
-                this.chkEmailInSsl.setSelected(ms.isEmailInSsl());
-                this.chkEmailOutSsl.setSelected(ms.isEmailOutSsl());
-                this.chkEmailStartTls.setSelected(ms.isEmailStartTls());
-        
+        if (ms.getEmailInType() == null || "".equals(ms.getEmailInType())) {
+            this.cmbAccountType.setSelectedIndex(0);
+        } else {
+            this.cmbAccountType.setSelectedItem(ms.getEmailInType());
+        }
+        this.txtEmailSender.setText(ms.getEmailSenderName());
+        String sig = ms.getEmailSignature();
+        if (sig == null) {
+            sig = "";
+        }
+        this.htmlEmailSig.setText(sig);
+        this.txtInServer.setText(ms.getEmailInServer());
+        this.txtInUser.setText(ms.getEmailInUser());
+        String inPwd = ms.getEmailInPwd();
+        String outPwd = ms.getEmailOutPwd();
+        try {
+            inPwd = Crypto.decrypt(ms.getEmailInPwd());
+            outPwd = Crypto.decrypt(ms.getEmailOutPwd());
+        } catch (Throwable t) {
+            log.error(t);
+        }
+        this.pwdInPassword.setText(inPwd);
+        this.txtOutServer.setText(ms.getEmailOutServer());
+        this.txtOutPort.setText(ms.getEmailOutPort());
+        this.txtOutUsername.setText(ms.getEmailOutUser());
+        this.pwdOutPassword.setText(outPwd);
+        this.chkEmailInSsl.setSelected(ms.isEmailInSsl());
+        this.chkEmailOutSsl.setSelected(ms.isEmailOutSsl());
+        this.chkEmailStartTls.setSelected(ms.isEmailStartTls());
+
     }
 
     /**

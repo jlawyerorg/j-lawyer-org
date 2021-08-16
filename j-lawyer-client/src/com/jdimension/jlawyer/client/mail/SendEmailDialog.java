@@ -811,7 +811,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
 
             if (!mailboxes.isEmpty()) {
                 MailboxSetup ms = mailboxes.iterator().next();
-                this.lblFrom.setText(ms.getEmailSenderName() + "<" + ms.getEmailAddress() + ">");
+                //this.lblFrom.setText(ms.getEmailSenderName() + "<" + ms.getEmailAddress() + ">");
                 //this.taBody.setText(cu.getEmailSignature());
                 this.tp.setText(EmailUtils.Html2Text(ms.getEmailSignature()));
                 this.hp.setText(ms.getEmailSignature());
@@ -1030,9 +1030,16 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
     public void setSubject(String s) {
         this.txtSubject.setText(s);
     }
-
-    public void setFrom(String f) {
-        this.lblFrom.setText(f);
+    
+    public void setFrom(MailboxSetup ms) {
+        if(ms!= null) {
+            for (int i = 0; i < this.cmbFrom.getItemCount(); i++) {
+                String item = this.cmbFrom.getItemAt(i);
+                if (item.equals(ms.getDisplayName())) {
+                    this.cmbFrom.setSelectedItem(item);
+                }
+            }
+        }
     }
 
     public void addParty(AddressBean addr, PartyTypeBean ptb) {
@@ -1168,7 +1175,6 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         cmdRecipientsBcc = new javax.swing.JButton();
         jLabel8 = new javax.swing.JLabel();
         jLabel3 = new javax.swing.JLabel();
-        lblFrom = new javax.swing.JLabel();
         jToolBar1 = new javax.swing.JToolBar();
         cmdSend = new javax.swing.JButton();
         jSeparator4 = new javax.swing.JToolBar.Separator();
@@ -1278,7 +1284,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         );
         contentPanelLayout.setVerticalGroup(
             contentPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 0, Short.MAX_VALUE)
+            .addGap(0, 271, Short.MAX_VALUE)
         );
 
         lstAttachments.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -1323,8 +1329,6 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         jLabel8.setText("CC:");
 
         jLabel3.setText("Betreff:");
-
-        lblFrom.setText("jLabel4");
 
         jToolBar1.setFloatable(false);
         jToolBar1.setRollover(true);
@@ -1393,10 +1397,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                                     .addComponent(cmdRecipients)
                                     .addComponent(cmdRecipientsCc)
                                     .addComponent(cmdRecipientsBcc)))
-                            .addGroup(jPanel3Layout.createSequentialGroup()
-                                .addComponent(lblFrom)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(cmbFrom, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                            .addComponent(cmbFrom, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                     .addComponent(jPanel5, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
@@ -1406,7 +1407,6 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                 .addContainerGap()
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel1)
-                    .addComponent(lblFrom)
                     .addComponent(cmbFrom, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -2313,7 +2313,6 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
     private javax.swing.JSplitPane jSplitPane1;
     private javax.swing.JToolBar jToolBar1;
     private javax.swing.JLabel lblEncryption;
-    private javax.swing.JLabel lblFrom;
     private javax.swing.JList lstAttachments;
     private javax.swing.JMenuItem mnuRemoveAttachment;
     private javax.swing.JMenuItem mnuSearchRecipient;

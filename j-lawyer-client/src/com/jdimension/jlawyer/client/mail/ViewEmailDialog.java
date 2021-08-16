@@ -817,6 +817,10 @@ public class ViewEmailDialog extends javax.swing.JDialog {
         MessageContainer msgC = this.msgContainer;
         try {
             Message m = msgC.getMessage();
+            MailboxSetup ms=EmailUtils.getMailboxSetup(m);
+            if(ms!=null) {
+                dlg.setFrom(ms);
+            }
             Address[] replyTos = m.getReplyTo();
             Address to = null;
             if (replyTos != null) {
@@ -859,7 +863,7 @@ public class ViewEmailDialog extends javax.swing.JDialog {
             }
             dlg.setBody(EmailUtils.getQuotedBody(this.content.getBody(), "text/html", decodedTo, m.getSentDate()), "text/html");
 
-        } catch (MessagingException ex) {
+        } catch (Exception ex) {
             log.error(ex);
         }
 
@@ -880,6 +884,11 @@ public class ViewEmailDialog extends javax.swing.JDialog {
         MessageContainer msgC = this.msgContainer;
         try {
             Message origM = msgC.getMessage();
+            MailboxSetup ms=EmailUtils.getMailboxSetup(origM);
+            if(ms!=null) {
+                dlg.setFrom(ms);
+            }
+            
             Message m = origM.reply(true);
 
             try {
@@ -936,7 +945,7 @@ public class ViewEmailDialog extends javax.swing.JDialog {
             }
             dlg.setBody(EmailUtils.getQuotedBody(this.content.getBody(), "text/html", decodedTo, m.getSentDate()), "text/html");
 
-        } catch (MessagingException ex) {
+        } catch (Exception ex) {
             log.error(ex);
         }
 
@@ -971,6 +980,10 @@ public class ViewEmailDialog extends javax.swing.JDialog {
         MessageContainer msgC = this.msgContainer;
         try {
             Message m = msgC.getMessage();
+            MailboxSetup ms=EmailUtils.getMailboxSetup(m);
+            if(ms!=null) {
+                dlg.setFrom(ms);
+            }
             Address from = m.getFrom()[0];
 
             String subject = m.getSubject();
@@ -1025,7 +1038,7 @@ public class ViewEmailDialog extends javax.swing.JDialog {
                 log.error("Error forwarding attachments", t);
             }
 
-        } catch (MessagingException ex) {
+        } catch (Exception ex) {
             log.error(ex);
         }
 

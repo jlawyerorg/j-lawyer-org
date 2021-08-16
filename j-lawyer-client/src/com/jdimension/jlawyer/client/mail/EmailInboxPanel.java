@@ -886,8 +886,6 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
 
     private void connect(boolean showErrorDialogOnFailure, MailboxSetup ms) throws Exception {
         if (!this.connected) {
-            AppUserBean cu = UserSettings.getInstance().getCurrentUser();
-
             String server = null;
             try {
                 Properties props = System.getProperties();
@@ -912,7 +910,6 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                 if (showErrorDialogOnFailure) {
                     JOptionPane.showMessageDialog(this, "Keine Verbindung zum Mailserver: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
                 }
-                return;
             }
         }
     }
@@ -1025,22 +1022,6 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
             DefaultMutableTreeNode mailboxRootNode = new DefaultMutableTreeNode(ms.getEmailAddress());
             rootNode.add(mailboxRootNode);
             final Folder[] accountFoldersFinal = accountFolders;
-//            new Thread(new Runnable() {
-//                @Override
-//                public void run() {
-//                    try {
-//                        traverseFolders(ms, accountFoldersFinal, mailboxRootNode);
-//                        DefaultTreeModel tm = new DefaultTreeModel(rootNode);
-//                        treeFolders.setModel(tm);
-//                        JTreeUtils.expandAll(treeFolders);
-//                        treeFolders.setCellRenderer(renderer);
-//                        notifyStatusBarReady();
-//                    } catch (Throwable t) {
-//                        log.error("Could not load folder");
-//                    }
-//                }
-//
-//            }).start();
 
             Runnable r=() -> {
                 try {
@@ -2026,6 +2007,10 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         MessageContainer msgC = (MessageContainer) this.tblMails.getValueAt(selected[0], 0);
         try {
             Message m = msgC.getMessage();
+            MailboxSetup ms=EmailUtils.getMailboxSetup(m);
+            if(ms!=null) {
+                dlg.setFrom(ms);
+            }
             Address[] replyTos = m.getReplyTo();
             Address to = null;
             if (replyTos != null) {
@@ -2067,7 +2052,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
             }
             dlg.setBody(EmailUtils.getQuotedBody(this.mailContentUI.getBody(), "text/html", decodedTo, m.getSentDate()), "text/html");
 
-        } catch (MessagingException ex) {
+        } catch (Exception ex) {
             log.error(ex);
         }
 
@@ -2099,6 +2084,10 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         MessageContainer msgC = (MessageContainer) this.tblMails.getValueAt(selected[0], 0);
         try {
             Message m = msgC.getMessage();
+            MailboxSetup ms=EmailUtils.getMailboxSetup(m);
+            if(ms!=null) {
+                dlg.setFrom(ms);
+            }
             Address from = m.getFrom()[0];
 
             String subject = m.getSubject();
@@ -2153,7 +2142,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                 log.error("Error forwarding attachments", t);
             }
 
-        } catch (MessagingException ex) {
+        } catch (Exception ex) {
             log.error(ex);
         }
 
@@ -2170,7 +2159,11 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         try {
             Message origM = msgC.getMessage();
             Message m = origM.reply(true);
-
+            MailboxSetup ms=EmailUtils.getMailboxSetup(m);
+            if(ms!=null) {
+                dlg.setFrom(ms);
+            }
+            
             try {
                 Address[] to = m.getRecipients(RecipientType.TO);
                 String toString = "";
@@ -2225,7 +2218,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
             }
             dlg.setBody(EmailUtils.getQuotedBody(this.mailContentUI.getBody(), "text/html", decodedTo, origM.getSentDate()), "text/html");
 
-        } catch (MessagingException ex) {
+        } catch (Exception ex) {
             log.error(ex);
         }
 
@@ -2575,7 +2568,6 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                             log.error(t);
                         }
 
-                        return unread;
                     } catch (Exception ex) {
                         log.error(ex);
                     }

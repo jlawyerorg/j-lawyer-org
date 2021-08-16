@@ -721,7 +721,7 @@ public class EmailUtils {
     public static boolean hasConfig(AppUserBean u) {
 
         try {
-            UserSettings uset=UserSettings.getInstance();
+            UserSettings uset = UserSettings.getInstance();
             List<MailboxSetup> mailboxes = uset.getMailboxes(u.getPrincipalId());
             if (mailboxes.isEmpty()) {
                 return false;
@@ -784,20 +784,23 @@ public class EmailUtils {
 
             Address[] froms = msg.getFrom();
             for (MailboxSetup ms : mailboxes) {
-                for (Address from : froms) {
-                    if (from.toString().contains(ms.getEmailAddress())) {
-                        return ms;
+                if (froms != null) {
+                    for (Address from : froms) {
+                        if (from.toString().contains(ms.getEmailAddress())) {
+                            return ms;
+                        }
                     }
                 }
-                for (Address to : msg.getAllRecipients()) {
-                    if (to.toString().contains(ms.getEmailAddress())) {
-                        return ms;
+                if (msg.getAllRecipients() != null) {
+                    for (Address to : msg.getAllRecipients()) {
+                        if (to.toString().contains(ms.getEmailAddress())) {
+                            return ms;
+                        }
                     }
                 }
             }
 
-            MailboxSetup ms = mailboxes.get(0);
-            return ms;
+            return mailboxes.get(0);
 
         } catch (Exception ex) {
             log.error("Error determining mailbox for message " + msg.getSubject(), ex);
