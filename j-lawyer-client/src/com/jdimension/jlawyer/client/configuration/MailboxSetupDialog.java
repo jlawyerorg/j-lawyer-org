@@ -1160,7 +1160,7 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
 
         if (row >= 0) {
 
-            if (StringUtils.isEmpty(this.txtEmailAddress.getText()) || StringUtils.isEmpty(this.txtInServer.getText()) || StringUtils.isEmpty(this.txtInUser.getText()) || StringUtils.isEmpty(this.pwdInPassword.getText())) {
+            if (StringUtils.isEmpty(this.txtEmailAddress.getText()) || StringUtils.isEmpty(this.txtInServer.getText()) || StringUtils.isEmpty(this.txtInUser.getText()) || StringUtils.isEmpty(new String(this.pwdInPassword.getPassword()))) {
                 JOptionPane.showMessageDialog(this, "Postfachangaben sind unvollständig", "Warnung", JOptionPane.WARNING_MESSAGE);
                 return;
             }
@@ -1182,8 +1182,8 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
 
             ClientSettings settings = ClientSettings.getInstance();
             try {
-                ms.setEmailOutPwd(Crypto.encrypt(this.pwdOutPassword.getText()));
-                ms.setEmailInPwd(Crypto.encrypt(this.pwdInPassword.getText()));
+                ms.setEmailOutPwd(Crypto.encrypt(new String(this.pwdOutPassword.getPassword())));
+                ms.setEmailInPwd(Crypto.encrypt(new String(this.pwdInPassword.getText())));
                 
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
