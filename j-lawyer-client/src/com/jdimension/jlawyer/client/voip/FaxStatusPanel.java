@@ -797,7 +797,7 @@ public class FaxStatusPanel extends javax.swing.JPanel implements ThemeableEdito
 
                     } catch (Exception ex) {
                         log.error("Error retrieving Sipgate balance", ex);
-                        //JOptionPane.showMessageDialog(this, "Fehler beim Laden der Versicherungen: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+                        //JOptionPane.showMessageDialog(this, "Fehler beim Laden der Versicherungen: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
                         //EditorsRegistry.getInstance().
                     }
                 }
@@ -809,7 +809,7 @@ public class FaxStatusPanel extends javax.swing.JPanel implements ThemeableEdito
 
         } catch (Exception ex) {
             log.error(ex);
-            ThreadUtils.showErrorDialog(this, "Fehler beim Laden des VoIP-Status: " + ex.getMessage(), "Fehler");
+            ThreadUtils.showErrorDialog(this, "Fehler beim Laden des VoIP-Status: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
         }
     }
 
@@ -1138,7 +1138,7 @@ public class FaxStatusPanel extends javax.swing.JPanel implements ThemeableEdito
             locator.lookupVoipServiceRemote().deleteQueueEntries(ids);
         } catch (Exception ex) {
             log.error(ex);
-            ThreadUtils.showErrorDialog(this, "Fehler beim Löschen des Eintrages: " + ex.getMessage(), "Fehler");
+            ThreadUtils.showErrorDialog(this, "Fehler beim Löschen des Eintrages: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
 
         }
         this.clearDetails();
@@ -1154,7 +1154,7 @@ public class FaxStatusPanel extends javax.swing.JPanel implements ThemeableEdito
             }
         } catch (Exception ex) {
             log.error(ex);
-            ThreadUtils.showErrorDialog(this, "Fehler beim Erstellen des Reports: " + ex.getMessage(), "Fehler");
+            ThreadUtils.showErrorDialog(this, "Fehler beim Erstellen des Reports: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
         }
         this.clearDetails();
     }//GEN-LAST:event_cmdSaveReportActionPerformed
@@ -1170,7 +1170,7 @@ public class FaxStatusPanel extends javax.swing.JPanel implements ThemeableEdito
             }
         } catch (Exception ex) {
             log.error(ex);
-            ThreadUtils.showErrorDialog(this, "Fehler beim erneuten Senden: " + ex.getMessage(), "Fehler");
+            ThreadUtils.showErrorDialog(this, "Fehler beim erneuten Senden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
         }
         this.clearDetails();
     }//GEN-LAST:event_cmdResendActionPerformed

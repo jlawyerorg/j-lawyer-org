@@ -838,7 +838,7 @@ public class ViewBeaDialog extends javax.swing.JDialog {
                 dlg.setTo(replyToIdentity);
             } catch (Throwable t) {
                 log.error(t);
-                JOptionPane.showMessageDialog(this, "Fehler beim Ermitteln der Daten zu Safe-ID " + replyToSafeId + ": " + t.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Fehler beim Ermitteln der Daten zu Safe-ID " + replyToSafeId + ": " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
                 return;
             }
 
@@ -893,7 +893,7 @@ public class ViewBeaDialog extends javax.swing.JDialog {
                 dlg.setTo(replyToIdentity);
             } catch (Throwable t) {
                 log.error(t);
-                JOptionPane.showMessageDialog(this, "Fehler beim Ermitteln der Daten zu Safe-ID " + replyToSafeId + ": " + t.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Fehler beim Ermitteln der Daten zu Safe-ID " + replyToSafeId + ": " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
                 return;
             }
 

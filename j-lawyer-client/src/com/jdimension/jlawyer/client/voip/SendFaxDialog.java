@@ -750,7 +750,7 @@ public class SendFaxDialog extends javax.swing.JDialog {
 
         } catch (Exception ex) {
             log.error(ex);
-            ThreadUtils.showErrorDialog(this, "Fehler beim Ermitteln der eigenen SIP-Rufnummern: " + ex.getMessage(), "Fehler");
+            ThreadUtils.showErrorDialog(this, "Fehler beim Ermitteln der eigenen SIP-Rufnummern: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
         }
 
         this.cmbOwnUrisActionPerformed(null);
@@ -777,7 +777,7 @@ public class SendFaxDialog extends javax.swing.JDialog {
 
                 } catch (Exception ex) {
                     log.error(ex);
-                    //ThreadUtils.showErrorDialog(this, "Fehler beim Ermitteln der eigenen SIP-Rufnummern: " + ex.getMessage(), "Fehler");
+                    //ThreadUtils.showErrorDialog(this, "Fehler beim Ermitteln der eigenen SIP-Rufnummern: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
                 }
             }
         }).start();
@@ -1040,12 +1040,12 @@ public class SendFaxDialog extends javax.swing.JDialog {
 
     private void cmdSendActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSendActionPerformed
         if (this.file == null) {
-            JOptionPane.showMessageDialog(this, "Es muss eine Datei gewählt werden!", "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Es muss eine Datei gewählt werden!", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             return;
         }
 
         if (!(this.file.exists())) {
-            JOptionPane.showMessageDialog(this, "Gewählte Datei kann nicht gefunden werden!", "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Gewählte Datei kann nicht gefunden werden!", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             return;
         }
 
@@ -1085,7 +1085,7 @@ public class SendFaxDialog extends javax.swing.JDialog {
 
             } catch (Exception ioe) {
                 log.error("Error converting document", ioe);
-                JOptionPane.showMessageDialog(this, "Fehler beim Konvertieren der Datei: " + ioe.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Fehler beim Konvertieren der Datei: " + ioe.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
                 return;
             }
 
@@ -1108,7 +1108,7 @@ public class SendFaxDialog extends javax.swing.JDialog {
             this.dispose();
         } catch (Exception ex) {
             log.error(ex);
-            ThreadUtils.showErrorDialog(this, "Fehler beim Senden: " + ex.getMessage(), "Fehler");
+            ThreadUtils.showErrorDialog(this, "Fehler beim Senden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
         }
 
 
@@ -1150,7 +1150,7 @@ public class SendFaxDialog extends javax.swing.JDialog {
 
 //            } catch (Exception ioe) {
 //                log.error("Error uploading document", ioe);
-//                JOptionPane.showMessageDialog(this, "Fehler beim Laden der Datei: " + ioe.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+//                JOptionPane.showMessageDialog(this, "Fehler beim Laden der Datei: " + ioe.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
 //            }
         }
     }//GEN-LAST:event_cmdBrowseActionPerformed

@@ -723,7 +723,7 @@ public class AddAddressSearchDialog extends javax.swing.JDialog {
             this.partyTypes=afRem.getAllPartyTypes();
         } catch (Throwable t) {
             log.error("Error getting party types", t);
-            JOptionPane.showMessageDialog(this, "Beteiligtentypen können nicht ermittelt werden: " + t.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Beteiligtentypen können nicht ermittelt werden: " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             EditorsRegistry.getInstance().clearStatus();
         }
         

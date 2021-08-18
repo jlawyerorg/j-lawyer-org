@@ -726,7 +726,7 @@ public class FormInstancePanel extends javax.swing.JPanel {
 
         } catch (Throwable t) {
             log.error("Error removing form", t);
-            JOptionPane.showMessageDialog(this, "Fehler beim Laden des Falldatenblattes: " + t.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Fehler beim Laden des Falldatenblattes: " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
 
     }
@@ -819,7 +819,7 @@ public class FormInstancePanel extends javax.swing.JPanel {
                 this.container.remove(this);
             } catch (Throwable t) {
                 log.error("Error removing form", t);
-                JOptionPane.showMessageDialog(this, "Fehler beim Löschen des Falldatenblattes: " + t.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Fehler beim Löschen des Falldatenblattes: " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             }
         }
 
@@ -859,7 +859,7 @@ public class FormInstancePanel extends javax.swing.JPanel {
             locator.lookupFormsServiceRemote().setFormEntries(this.form.getId(), formEntries);
         } catch (Throwable t) {
             log.error("Error saving form entries", t);
-            JOptionPane.showMessageDialog(this, "Fehler beim Speichern des Falldatenblattes: " + t.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Fehler beim Speichern des Falldatenblattes: " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
 
     }

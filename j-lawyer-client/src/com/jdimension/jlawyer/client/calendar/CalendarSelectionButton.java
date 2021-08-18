@@ -740,7 +740,7 @@ public class CalendarSelectionButton extends javax.swing.JPanel {
         }
         
         if(this.selectedSetup==null && !suppressWarnings) {
-            JOptionPane.showMessageDialog(this, "Kalenderkonfiguration ist ungültig - Kalender für diesen Typ existiert nicht, oder Nutzer hat keinen Zugriff.", "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Kalenderkonfiguration ist ungültig - Kalender für diesen Typ existiert nicht, oder Nutzer hat keinen Zugriff.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
         
         this.updateSelection(getSelectedSetup());
@@ -781,7 +781,7 @@ public class CalendarSelectionButton extends javax.swing.JPanel {
             
         } catch (Exception ex) {
             log.error("Error getting calendar setups", ex);
-            JOptionPane.showMessageDialog(this, "Kalender können nicht geladen werden: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Kalender können nicht geladen werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
     }
     

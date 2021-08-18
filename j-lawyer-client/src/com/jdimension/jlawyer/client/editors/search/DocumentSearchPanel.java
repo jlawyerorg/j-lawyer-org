@@ -891,7 +891,7 @@ public class DocumentSearchPanel extends javax.swing.JPanel implements Themeable
             this.scrollResults.revalidate();
         } catch (Exception ex) {
             log.error("Error performing index search", ex);
-            JOptionPane.showMessageDialog(this, "Fehler bei der Suche: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Fehler bei der Suche: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             EditorsRegistry.getInstance().clearStatus();
         }
 

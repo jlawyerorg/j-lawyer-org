@@ -767,7 +767,7 @@ public class DocumentsBinDialog extends javax.swing.JDialog {
 
         } catch (Throwable t) {
             log.error("Could not load documents bin", t);
-            JOptionPane.showMessageDialog(this, "Fehler beim Laden des Papierkorbs: " + t.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Fehler beim Laden des Papierkorbs: " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -922,7 +922,7 @@ public class DocumentsBinDialog extends javax.swing.JDialog {
 
         } catch (Throwable t) {
             log.error("Could not remove documents from bin", t);
-            JOptionPane.showMessageDialog(this, "Fehler beim Löschen aus dem Papierkorbs: " + t.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Fehler beim Löschen aus dem Papierkorbs: " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
     }//GEN-LAST:event_cmdDeleteActionPerformed
 
@@ -944,7 +944,7 @@ public class DocumentsBinDialog extends javax.swing.JDialog {
 
         } catch (Throwable t) {
             log.error("Could not restore documents from bin", t);
-            JOptionPane.showMessageDialog(this, "Fehler beim Wiederherstellen aus dem Papierkorbs: " + t.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Fehler beim Wiederherstellen aus dem Papierkorbs: " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
     }//GEN-LAST:event_cmdRestoreActionPerformed
 
@@ -968,7 +968,7 @@ public class DocumentsBinDialog extends javax.swing.JDialog {
 
         } catch (Throwable t) {
             log.error("Could not remove documents from bin", t);
-            JOptionPane.showMessageDialog(this, "Fehler beim Löschen aus dem Papierkorbs: " + t.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Fehler beim Löschen aus dem Papierkorbs: " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
     }//GEN-LAST:event_cmdEmptyBinActionPerformed
 

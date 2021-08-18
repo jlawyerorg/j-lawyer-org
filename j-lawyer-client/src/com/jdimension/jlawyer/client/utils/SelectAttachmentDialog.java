@@ -859,7 +859,7 @@ public class SelectAttachmentDialog extends javax.swing.JDialog {
 
         } catch (Exception ex) {
             log.error(ex);
-            JOptionPane.showMessageDialog(this, "Dokument kann nicht vom Server geladen werden" + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Dokument kann nicht vom Server geladen werden" + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             this.selectedFiles = new File[0];
             return;
         }
@@ -876,7 +876,7 @@ public class SelectAttachmentDialog extends javax.swing.JDialog {
 
                 index = index + 1;
             } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this, "Dokument " + doc.getName() + " kann nicht vom Server geladen werden: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Dokument " + doc.getName() + " kann nicht vom Server geladen werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
                 this.selectedFiles = new File[0];
                 return;
             }

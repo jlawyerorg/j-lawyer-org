@@ -838,7 +838,7 @@ public class NavigateToAddressPanel extends javax.swing.JPanel {
                 selection = adService.getAddress(selection.getId());
             } catch (Exception ex) {
                 log.error("Error loading address from server", ex);
-                JOptionPane.showMessageDialog(this, "Fehler beim Laden der Adresse: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Fehler beim Laden der Adresse: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             }
             
             if (editor instanceof PopulateOptionsEditor) {
@@ -850,7 +850,7 @@ public class NavigateToAddressPanel extends javax.swing.JPanel {
             EditorsRegistry.getInstance().setMainEditorsPaneView((Component) editor);
         } catch (Exception ex) {
             log.error("Error creating editor from class " + this.getClass().getName(), ex);
-            JOptionPane.showMessageDialog(this, "Fehler beim Laden des Editors: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Fehler beim Laden des Editors: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
     }//GEN-LAST:event_lblAddressMouseClicked
 

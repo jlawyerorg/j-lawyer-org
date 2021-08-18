@@ -966,7 +966,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
             
         } catch (Exception ex) {
             log.error(ex);
-            ThreadUtils.showErrorDialog(this, "Fehler bei der Ermittlung neuer Scans: " + ex.getMessage(), "Fehler");
+            ThreadUtils.showErrorDialog(this, "Fehler bei der Ermittlung neuer Scans: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
         }
         
     }
@@ -1301,7 +1301,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
                 }
             } catch (Exception ex) {
                 log.error(ex);
-                ThreadUtils.showErrorDialog(this, "Fehler beim Ermitteln der Aktionsvorschläge: " + ex.getMessage(), "Fehler");
+                ThreadUtils.showErrorDialog(this, "Fehler beim Ermitteln der Aktionsvorschläge: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
                 
             }
             
@@ -1344,7 +1344,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
                         log.error(ex);
                         ThreadUtils.removeAll(pnlPreview);
                         ThreadUtils.addComponent(pnlPreview, new JLabel("Vorschau nicht verfügbar..."));
-                        //ThreadUtils.showErrorDialog(this, "Fehler beim Generieren der Vorschau: " + ex.getMessage(), "Fehler");
+                        //ThreadUtils.showErrorDialog(this, "Fehler beim Generieren der Vorschau: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
 
                     }
                 }
@@ -1372,7 +1372,7 @@ public class ScannerPanel extends javax.swing.JPanel implements ThemeableEditor,
                     launcher.launch(false);
                 } catch (Exception ex) {
                     log.error(ex);
-                    ThreadUtils.showErrorDialog(this, "Fehler beim Öffnen der Datei: " + ex.getMessage(), "Fehler");
+                    ThreadUtils.showErrorDialog(this, "Fehler beim Öffnen der Datei: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
                     
                 }
             }

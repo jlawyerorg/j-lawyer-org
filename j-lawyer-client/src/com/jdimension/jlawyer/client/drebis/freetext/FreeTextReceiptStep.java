@@ -745,7 +745,7 @@ public class FreeTextReceiptStep extends javax.swing.JPanel implements WizardSte
 
             } catch (Exception ex) {
                 log.error("Error storing drebis attachments", ex);
-                JOptionPane.showMessageDialog(this, "Fehler beim Speichern des Drebis-Anhangs: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Fehler beim Speichern des Drebis-Anhangs: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
                 return;
                 //EditorsRegistry.getInstance().
             }
@@ -843,7 +843,7 @@ public class FreeTextReceiptStep extends javax.swing.JPanel implements WizardSte
                 //new File(tmpFile).deleteOnExit();
             } catch (Exception ex) {
                 log.error("Error opening attachment", ex);
-                JOptionPane.showMessageDialog(this, "Fehler beim Öffnen des Anhangs: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Fehler beim Öffnen des Anhangs: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
 
             }
         }

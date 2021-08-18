@@ -811,7 +811,7 @@ public class SendBeaMessageAction extends ProgressableAction {
 
         } catch (BeaWrapperException ex) {
             log.error(ex);
-            JOptionPane.showMessageDialog(this.indicator, "Nachricht kann nicht gesendet werden: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this.indicator, "Nachricht kann nicht gesendet werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             throw ex;
         }
 

@@ -1166,7 +1166,7 @@ public class SplashThread implements Runnable {
                     JasperCompileManager.compileReportToStream(is8, os8);
                     JasperCompileManager.compileReportToStream(is9, os9);
                 } catch (Throwable t) {
-                    ThreadUtils.showErrorDialog(owner, "Fehler beim Generieren der Druckvorlagen", "Fehler");
+                    ThreadUtils.showErrorDialog(owner, "Fehler beim Generieren der Druckvorlagen", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
                     log.error("Error compiling reports", t);
 
                 }
@@ -1256,7 +1256,7 @@ public class SplashThread implements Runnable {
                                 }
                             } catch (Exception ex) {
                                 log.error("Fehler beim Laden des Moduls " + editorClass, ex);
-                                ThreadUtils.showErrorDialog(owner, "Fehler beim Laden des Moduls " + editorClass + ": " + ex.getMessage(), "Fehler");
+                                ThreadUtils.showErrorDialog(owner, "Fehler beim Laden des Moduls " + editorClass + ": " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
                             }
                         }
 

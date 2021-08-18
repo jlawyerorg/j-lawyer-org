@@ -756,7 +756,7 @@ public class MacMicrosoftOfficeLauncher extends OfficeLauncher {
                                 errorMsg="Fehler beim Öffnen des Dokuments: " + t.getMessage();
                             else
                                 errorMsg="Fehler beim Öffnen des Dokuments.";
-                            JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), errorMsg, "Fehler", JOptionPane.ERROR_MESSAGE);
+                            JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), errorMsg, com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
                         }
                     });
                 }

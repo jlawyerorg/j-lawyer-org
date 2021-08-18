@@ -1020,7 +1020,7 @@ public class EditorOrDuplicateEventDialog extends javax.swing.JDialog {
             
         } catch (Throwable t) {
             log.error(t);
-            JOptionPane.showMessageDialog(this, "Ungültiges Beginndatum / Zeit", "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Ungültiges Beginndatum / Zeit", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             return;
         }
         
@@ -1032,7 +1032,7 @@ public class EditorOrDuplicateEventDialog extends javax.swing.JDialog {
             endDate = dformat.parse(this.txtEventEndDateField.getText() + " " + this.cmbEventEndTime.getSelectedItem().toString());
         } catch (Throwable t) {
             log.error(t);
-            JOptionPane.showMessageDialog(this, "Ungültiges Enddatum / Zeit", "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Ungültiges Enddatum / Zeit", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             return;
         }
         if (!targetReview.hasEndDateAndTime()) {
@@ -1041,7 +1041,7 @@ public class EditorOrDuplicateEventDialog extends javax.swing.JDialog {
         }
         
         if (endDate.getTime() - beginDate.getTime() <= 0) {
-            JOptionPane.showMessageDialog(this, "Angaben ungültig - Eintrag endet vor Start oder Termin dauert 0 Minuten?", "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Angaben ungültig - Eintrag endet vor Start oder Termin dauert 0 Minuten?", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             return;
         }
         
@@ -1065,7 +1065,7 @@ public class EditorOrDuplicateEventDialog extends javax.swing.JDialog {
             }
         } catch (Exception ex) {
             log.error("Error updating review", ex);
-            JOptionPane.showMessageDialog(this, "Fehler beim Speichern: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Fehler beim Speichern: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             EditorsRegistry.getInstance().clearStatus();
             return;
         }

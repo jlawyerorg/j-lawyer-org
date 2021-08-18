@@ -704,7 +704,7 @@ public class AddressBookSetupDialog extends javax.swing.JDialog {
             this.pnlCloud.setCloudUser(s.getSetting(ServerSettings.SERVERCONF_CLOUDSYNC_ADDRESSBOOK_USER, ""));
         } catch (Throwable t) {
             log.error("Unable to load address book sync configuration", t);
-            JOptionPane.showMessageDialog(this, "Synchronisationseinstellungen können nicht geladen werden: " + t.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Synchronisationseinstellungen können nicht geladen werden: " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
 
         try {
@@ -731,7 +731,7 @@ public class AddressBookSetupDialog extends javax.swing.JDialog {
             this.cmbAddressBook.setSelectedItem(selected);
         } catch (Throwable t) {
             log.error("Unable to load address book sync configuration", t);
-            JOptionPane.showMessageDialog(this, "Synchronisationseinstellungen können nicht geladen werden: " + t.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Synchronisationseinstellungen können nicht geladen werden: " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -847,7 +847,7 @@ public class AddressBookSetupDialog extends javax.swing.JDialog {
 
     private void cmdSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveActionPerformed
         if (!(this.cmbAddressBook.getSelectedItem() instanceof CloudAddressBook)) {
-            JOptionPane.showMessageDialog(this, "Gewähltes Adressbuch ist ungültig", "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Gewähltes Adressbuch ist ungültig", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             return;
         }
 
@@ -864,7 +864,7 @@ public class AddressBookSetupDialog extends javax.swing.JDialog {
 
         } catch (Throwable t) {
             log.error("Unable to save address book sync configuration", t);
-            JOptionPane.showMessageDialog(this, t.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             this.cmdCloseActionPerformed(null);
         }
 
@@ -874,7 +874,7 @@ public class AddressBookSetupDialog extends javax.swing.JDialog {
             locator.lookupAddressServiceRemote().runFullAddressBookSync();
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);
-            JOptionPane.showMessageDialog(this, ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             this.cmdCloseActionPerformed(null);
         }
 
@@ -891,7 +891,7 @@ public class AddressBookSetupDialog extends javax.swing.JDialog {
             });
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);
-            JOptionPane.showMessageDialog(this, ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
     }//GEN-LAST:event_cmdGetAdressBooksActionPerformed
 

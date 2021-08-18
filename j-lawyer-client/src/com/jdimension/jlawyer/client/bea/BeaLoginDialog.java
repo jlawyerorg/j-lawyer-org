@@ -967,7 +967,7 @@ public class BeaLoginDialog extends javax.swing.JDialog {
         } catch (Exception ex) {
             this.lblCertLogin.setText("Verbinde zum beA... fehlgeschlagen: " + ex.getMessage());
             log.error(ex);
-            ThreadUtils.showErrorDialog(this, "Fehler beim beA-Login: " + ex.getMessage(), "Fehler");
+            ThreadUtils.showErrorDialog(this, "Fehler beim beA-Login: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
         }
 
         //}

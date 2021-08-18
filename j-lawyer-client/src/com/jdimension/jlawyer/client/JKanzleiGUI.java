@@ -1885,7 +1885,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
                     }
                 }
                 if (pendingMessages) {
-                    ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Es sind noch Nachrichten im beA-Postausgang - bitte manuell prüfen!", "Warnung");
+                    ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Es sind noch Nachrichten im beA-Postausgang - bitte manuell prüfen!", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_WARNING);
                 }
             }
         } catch (Exception ex) {

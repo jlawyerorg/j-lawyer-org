@@ -690,7 +690,7 @@ public class OptionGroupCaseDocumentTagRename extends OptionGroupRenameHandler {
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);
             if(this.parent!=null) {
-                JOptionPane.showMessageDialog(this.parent, ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this.parent, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             }
             return;
         }

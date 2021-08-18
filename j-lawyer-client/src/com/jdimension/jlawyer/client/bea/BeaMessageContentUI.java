@@ -828,7 +828,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
 
         } catch (Exception ex) {
             log.error("Error getting contents of beA message", ex);
-            JOptionPane.showMessageDialog(this, "Fehler beim Öffnen der Nachricht: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Fehler beim Öffnen der Nachricht: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -1318,7 +1318,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
                 launcher.launch(false);
             } catch (Exception ex) {
                 log.error("Error opening attachment", ex);
-                JOptionPane.showMessageDialog(this, "Fehler Öffnen des Anhangs: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Fehler Öffnen des Anhangs: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
 
             }
 
@@ -1392,7 +1392,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
 
         } catch (Exception ex) {
             log.error("Error saving attachment", ex);
-            JOptionPane.showMessageDialog(this, "Fehler beim Speichern des Anhangs: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Fehler beim Speichern des Anhangs: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
 
         }
     }//GEN-LAST:event_mnuSaveAsFileActionPerformed
@@ -1448,7 +1448,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
 
             } catch (Exception ex) {
                 log.error(ex);
-                ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Speichern des Dokuments: " + ex.getMessage(), "Fehler");
+                ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Speichern des Dokuments: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
             }
         }
     }//GEN-LAST:event_mnuSearchSaveActionPerformed
@@ -1471,7 +1471,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
                 BeaLoginDialog loginPanel = new BeaLoginDialog(EditorsRegistry.getInstance().getMainWindow(), true, callback);
                 loginPanel.setVisible(true);
                 if (!BeaAccess.hasInstance()) {
-                    ThreadUtils.showErrorDialog(this, "beA-Login fehlgeschlagen", "Fehler");
+                    ThreadUtils.showErrorDialog(this, "beA-Login fehlgeschlagen", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
                     return;
                 }
             }
@@ -1485,14 +1485,14 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
                     locator.lookupArchiveFileServiceRemote().setDocumentContent(this.documentId, mex.getContent());
                     //tmpUrl = appLauncher.createTempFile(value.getName(), content);
                 } catch (Exception ex) {
-                    JOptionPane.showMessageDialog(this, "Fehler beim Speichern der beA-Nachricht: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(this, "Fehler beim Speichern der beA-Nachricht: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
                     return;
                 }
             }
             this.setMessage(this.msgContainer, this.documentId);
 
         } catch (Throwable t) {
-            ThreadUtils.showErrorDialog(this, "Fehler beim Laden des Journals: " + t.getMessage(), "Fehler");
+            ThreadUtils.showErrorDialog(this, "Fehler beim Laden des Journals: " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
         }
     }//GEN-LAST:event_cmdRefreshJournalActionPerformed
 
@@ -1510,7 +1510,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
                 BeaLoginDialog loginPanel = new BeaLoginDialog(EditorsRegistry.getInstance().getMainWindow(), true, callback);
                 loginPanel.setVisible(true);
                 if (!BeaAccess.hasInstance()) {
-                    ThreadUtils.showErrorDialog(this, "beA-Login fehlgeschlagen", "Fehler");
+                    ThreadUtils.showErrorDialog(this, "beA-Login fehlgeschlagen", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
                     return;
                 }
             }
@@ -1535,14 +1535,14 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
                     locator.lookupArchiveFileServiceRemote().setDocumentContent(this.documentId, mex.getContent());
                     //tmpUrl = appLauncher.createTempFile(value.getName(), content);
                 } catch (Exception ex) {
-                    JOptionPane.showMessageDialog(this, "Fehler beim Speichern der beA-Nachricht: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(this, "Fehler beim Speichern der beA-Nachricht: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
                     return;
                 }
             }
             this.setMessage(this.msgContainer, this.documentId);
 
         } catch (Throwable t) {
-            ThreadUtils.showErrorDialog(this, "Fehler beim Laden des Journals: " + t.getMessage(), "Fehler");
+            ThreadUtils.showErrorDialog(this, "Fehler beim Laden des Journals: " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
         }
     }//GEN-LAST:event_cmdRefreshProcessCardActionPerformed
 
@@ -1564,7 +1564,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
 
             } catch (Exception ex) {
                 log.error("Could not generate PDF for beA message", ex);
-                JOptionPane.showMessageDialog(this, "Fehler beim Erstellen des PDF: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Fehler beim Erstellen des PDF: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             }
         }
     }//GEN-LAST:event_cmdToPdfActionPerformed

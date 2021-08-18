@@ -784,7 +784,7 @@ public abstract class ProgressableAction {
                         if (!succeeded && !("".equals(errorS))) {
                             log.error("ProgressableAction error:" + errorS);
                             String displayedError = getErrorMessageAndHints(errorS);
-                            JOptionPane.showMessageDialog(indicator, displayedError, "Fehler", JOptionPane.ERROR_MESSAGE);
+                            JOptionPane.showMessageDialog(indicator, displayedError, com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
 
                         }
                         indicator.setVisible(false);

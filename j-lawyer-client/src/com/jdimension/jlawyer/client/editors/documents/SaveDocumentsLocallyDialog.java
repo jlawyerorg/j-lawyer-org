@@ -844,7 +844,7 @@ public class SaveDocumentsLocallyDialog extends javax.swing.JDialog {
             this.dispose();
         } catch (Throwable t) {
             log.error("error saving documents", t);
-            JOptionPane.showMessageDialog(this, "Fehler beim Speichern der Dokumente!", "Warnung", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Fehler beim Speichern der Dokumente!", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_WARNING, JOptionPane.WARNING_MESSAGE);
         }
 
 

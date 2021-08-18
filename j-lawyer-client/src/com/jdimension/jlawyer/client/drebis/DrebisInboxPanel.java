@@ -768,7 +768,7 @@ public class DrebisInboxPanel extends javax.swing.JPanel implements ThemeableEdi
 
                 } catch (Exception ex) {
                     log.error("Error retrieving insurance companies", ex);
-                    //JOptionPane.showMessageDialog(this, "Fehler beim Laden der Versicherungen: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+                    //JOptionPane.showMessageDialog(this, "Fehler beim Laden der Versicherungen: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
                     //EditorsRegistry.getInstance().
                 }
             }
@@ -834,7 +834,7 @@ public class DrebisInboxPanel extends javax.swing.JPanel implements ThemeableEdi
 //            }
 //        } catch (Exception ex) {
 //            log.error("Error retrieving insurance companies", ex);
-//            //JOptionPane.showMessageDialog(this, "Fehler beim Laden der Versicherungen: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+//            //JOptionPane.showMessageDialog(this, "Fehler beim Laden der Versicherungen: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
 //            //EditorsRegistry.getInstance().
 //        }
     }
@@ -1243,7 +1243,7 @@ public class DrebisInboxPanel extends javax.swing.JPanel implements ThemeableEdi
 
             } catch (Exception ex) {
                 log.error("Error opening attachment", ex);
-                JOptionPane.showMessageDialog(this, "Fehler beim Öffnen des Anhangs: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Fehler beim Öffnen des Anhangs: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
 
             }
 
@@ -1268,7 +1268,7 @@ public class DrebisInboxPanel extends javax.swing.JPanel implements ThemeableEdi
             ds.confirmMessage(me);
         } catch (Exception ex) {
             log.error("Error confirming drebis message", ex);
-            JOptionPane.showMessageDialog(this, "Fehler beim Bestätigen der Nachricht: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Fehler beim Bestätigen der Nachricht: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             //EditorsRegistry.getInstance().
         }
 
@@ -1348,7 +1348,7 @@ public class DrebisInboxPanel extends javax.swing.JPanel implements ThemeableEdi
 
         } catch (Exception ex) {
             log.error("Error storing drebis attachments", ex);
-            JOptionPane.showMessageDialog(this, "Fehler beim Speichern der Drebis-Anhänge: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Fehler beim Speichern der Drebis-Anhänge: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             return;
             //EditorsRegistry.getInstance().
         }

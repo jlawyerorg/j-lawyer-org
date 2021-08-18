@@ -872,7 +872,7 @@ public class PDFEncryptionDialog extends javax.swing.JDialog {
     private void cmdEncryptActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdEncryptActionPerformed
 
         if (this.txtPassword.getText().trim().length() < 5) {
-            JOptionPane.showMessageDialog(this, "Password zu kurz oder leer!", "Warnung", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Password zu kurz oder leer!", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_WARNING, JOptionPane.WARNING_MESSAGE);
             return;
         }
 
@@ -893,7 +893,7 @@ public class PDFEncryptionDialog extends javax.swing.JDialog {
             this.dispose();
         } catch (Throwable t) {
             log.error("error during pdf encryption", t);
-            JOptionPane.showMessageDialog(this, "Password zu kurz oder leer!", "Warnung", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Password zu kurz oder leer!", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_WARNING, JOptionPane.WARNING_MESSAGE);
         }
 
 

@@ -715,7 +715,7 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
 
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);
-            JOptionPane.showMessageDialog(this, ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             return;
         }
 
@@ -1149,7 +1149,7 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
 
         } catch (Exception ex) {
             log.error("Error creating new mailbox", ex);
-            JOptionPane.showMessageDialog(this, ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
 
     }//GEN-LAST:event_cmdAddActionPerformed
@@ -1161,7 +1161,7 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
         if (row >= 0) {
 
             if (StringUtils.isEmpty(this.txtEmailAddress.getText()) || StringUtils.isEmpty(this.txtInServer.getText()) || StringUtils.isEmpty(this.txtInUser.getText()) || StringUtils.isEmpty(new String(this.pwdInPassword.getPassword()))) {
-                JOptionPane.showMessageDialog(this, "Postfachangaben sind unvollständig", "Warnung", JOptionPane.WARNING_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Postfachangaben sind unvollständig", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_WARNING, JOptionPane.WARNING_MESSAGE);
                 return;
             }
 
@@ -1183,7 +1183,7 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
             ClientSettings settings = ClientSettings.getInstance();
             try {
                 ms.setEmailOutPwd(Crypto.encrypt(new String(this.pwdOutPassword.getPassword())));
-                ms.setEmailInPwd(Crypto.encrypt(new String(this.pwdInPassword.getText())));
+                ms.setEmailInPwd(Crypto.encrypt(new String(this.pwdInPassword.getPassword())));
                 
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
@@ -1194,7 +1194,7 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
                 UserSettings.getInstance().invalidateMailboxes(UserSettings.getInstance().getCurrentUser().getPrincipalId());
             } catch (Exception ex) {
                 log.error("Error updating mailbox setup", ex);
-                JOptionPane.showMessageDialog(this, ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             }
         }
 
@@ -1217,7 +1217,7 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
                 this.resetDetails();
             } catch (Exception ex) {
                 log.error("Error removing mailbox setup", ex);
-                JOptionPane.showMessageDialog(this, ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             }
         }
     }//GEN-LAST:event_cmdRemoveActionPerformed

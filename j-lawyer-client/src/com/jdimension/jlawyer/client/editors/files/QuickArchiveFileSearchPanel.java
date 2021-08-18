@@ -1036,7 +1036,7 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
 
         } catch (Exception ex) {
             log.error("Error deleting archive files", ex);
-            JOptionPane.showMessageDialog(this, "Fehler beim Löschen: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Fehler beim Löschen: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             EditorsRegistry.getInstance().clearStatus(false);
             return;
         } finally {
@@ -1067,7 +1067,7 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
 
         } catch (Exception ex) {
             log.error("Error creating editor from class " + this.detailsEditorClass, ex);
-            JOptionPane.showMessageDialog(this, "Fehler beim Laden des Editors: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Fehler beim Laden des Editors: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -1150,7 +1150,7 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
             TableUtils.exportAndLaunch("aktensuche-export.csv", this.tblResults);
         } catch (Exception ex) {
             log.error("Error exporting table to CSV", ex);
-            JOptionPane.showMessageDialog(this, "Fehler beim Export: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Fehler beim Export: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
     }//GEN-LAST:event_cmdExportActionPerformed
 
@@ -1225,7 +1225,7 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
             this.cmdQuickSearchActionPerformed(null);
         } catch (Exception ex) {
             log.error("Error duplicating cases", ex);
-            JOptionPane.showMessageDialog(this, "Fehler beim Duplizieren: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Fehler beim Duplizieren: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             EditorsRegistry.getInstance().clearStatus(false);
             return;
         } finally {

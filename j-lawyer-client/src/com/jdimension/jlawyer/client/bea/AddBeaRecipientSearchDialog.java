@@ -865,7 +865,7 @@ public class AddBeaRecipientSearchDialog extends javax.swing.JDialog {
                 
             } catch (Throwable t) {
                 log.error(t);
-                JOptionPane.showMessageDialog(this, "beA-Identität kann nicht ermittelt werden: " + t.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "beA-Identität kann nicht ermittelt werden: " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             }
         } else {
             JOptionPane.showMessageDialog(this, "Kein gültiger beA-Teilnehmer", "Hinweis", JOptionPane.WARNING_MESSAGE);

@@ -723,16 +723,16 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
             List<PartyTypeBean> allPartyTypes=locator.lookupArchiveFileServiceRemote().getAllPartyTypes();
-            List<String> placeHolders=new ArrayList<String>();
+            List<String> placeHolders=new ArrayList<>();
             for(PartyTypeBean ptb: allPartyTypes) {
                 placeHolders.add(ptb.getPlaceHolder());
             }
             
-            for(String s: PlaceHolders.getAllPlaceHolders(placeHolders, new ArrayList<String>()))
+            for(String s: PlaceHolders.getAllPlaceHolders(placeHolders, new ArrayList<>()))
                 ((DefaultListModel)this.lstPlaceHolders.getModel()).addElement(s);
         } catch (Exception ex) {
             log.error("Error getting all party types", ex);
-            JOptionPane.showMessageDialog(this, "Fehler beim Laden der Beteiligtentypen: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Fehler beim Laden der Beteiligtentypen: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             EditorsRegistry.getInstance().clearStatus();
         }
         
@@ -779,7 +779,7 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
 
         } catch (Exception ex) {
             log.error(ex);
-            ThreadUtils.showErrorDialog(this, "Fehler beim Laden der E-Mail - Vorlagen: " + ex.getMessage(), "Fehler");
+            ThreadUtils.showErrorDialog(this, "Fehler beim Laden der E-Mail - Vorlagen: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
         }
     }
 
@@ -1089,7 +1089,7 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
             tpl.setSubject(this.txtSubject.getText());
             locator.lookupIntegrationServiceRemote().saveEmailTemplate(tpl, true);
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Fehler beim Speichern der Vorlage: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Fehler beim Speichern der Vorlage: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             return;
         }
         
@@ -1115,7 +1115,7 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
             this.txtSubject.setText(tpl.getSubject());
             this.cmbFormat.setSelectedItem(tpl.getFormat());
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Fehler beim Laden der Vorlage: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Fehler beim Laden der Vorlage: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
     }//GEN-LAST:event_lstMailTemplatesMouseClicked
 
@@ -1140,7 +1140,7 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
             tpl.setSubject("");
             locator.lookupIntegrationServiceRemote().saveEmailTemplate(tpl, false);
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Fehler beim Erstellen der Vorlage: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Fehler beim Erstellen der Vorlage: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
 
 
@@ -1162,7 +1162,7 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
                     }
                     
                 } catch (Exception ex) {
-                    JOptionPane.showMessageDialog(this, "Fehler beim Löschen der Vorlage: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(this, "Fehler beim Löschen der Vorlage: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
                 }
             
         }

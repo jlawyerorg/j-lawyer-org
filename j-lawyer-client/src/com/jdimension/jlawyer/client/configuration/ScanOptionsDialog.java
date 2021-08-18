@@ -768,13 +768,13 @@ public class ScanOptionsDialog extends javax.swing.JDialog {
                 SystemManagementRemote sys=locator.lookupSystemManagementRemote();
                 boolean valid=sys.validateFileOnServer(new File(this.txtServerDir.getText()), true);
                 if(!valid) {
-                    JOptionPane.showMessageDialog(this, "Verzeichnis existiert am Server nicht: " + this.txtServerDir.getText(), "Fehler", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(this, "Verzeichnis existiert am Server nicht: " + this.txtServerDir.getText(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             
                     return;
                 }
         } catch (Exception ex) {
             log.error("error validating scanner options", ex);
-            JOptionPane.showMessageDialog(this, "Fehler beim Speichern: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Fehler beim Speichern: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             return;
         }
         

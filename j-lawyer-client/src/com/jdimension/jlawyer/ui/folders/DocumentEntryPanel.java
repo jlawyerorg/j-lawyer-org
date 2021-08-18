@@ -969,7 +969,7 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
 
                     } catch (Exception ioe) {
                         log.error("Error setting document as favorite", ioe);
-                        JOptionPane.showMessageDialog(this, "Fehler beim Speichern: " + ioe.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+                        JOptionPane.showMessageDialog(this, "Fehler beim Speichern: " + ioe.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
                     }
         }
     }//GEN-LAST:event_lblFavoriteMouseClicked

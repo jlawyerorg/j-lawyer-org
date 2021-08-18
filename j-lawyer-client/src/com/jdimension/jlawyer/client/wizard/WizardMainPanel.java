@@ -895,7 +895,7 @@ public class WizardMainPanel extends javax.swing.JPanel {
             this.toggleButtonState();
             
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
     }//GEN-LAST:event_cmdNextActionPerformed
 
@@ -932,7 +932,7 @@ public class WizardMainPanel extends javax.swing.JPanel {
             this.toggleButtonState();
             
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
     }//GEN-LAST:event_cmdPreviousActionPerformed
 
@@ -945,7 +945,7 @@ public class WizardMainPanel extends javax.swing.JPanel {
             this.parent.dispose();
             
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
     }//GEN-LAST:event_cmdCancelActionPerformed
 
@@ -958,7 +958,7 @@ public class WizardMainPanel extends javax.swing.JPanel {
             this.parent.dispose();
             
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
     }//GEN-LAST:event_cmdDoneActionPerformed
 

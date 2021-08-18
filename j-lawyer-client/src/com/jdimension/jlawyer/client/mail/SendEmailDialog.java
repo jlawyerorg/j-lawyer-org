@@ -818,7 +818,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
             }
 
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Fehler beim Ermitteln der Postfächer: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Fehler beim Ermitteln der Postfächer: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
 
         this.lstAttachments.setModel(new DefaultListModel());
@@ -834,7 +834,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
             }
             this.cmbTemplates.setSelectedIndex(0);
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Fehler beim Erstellen der Vorlage: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Fehler beim Erstellen der Vorlage: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
 
         try {
@@ -846,7 +846,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                 allPartyTypesPlaceholders.add(ptb.getPlaceHolder());
             }
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Fehler beim Ermitteln der Beteiligtentypen: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Fehler beim Ermitteln der Beteiligtentypen: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
 
         ComponentUtils.restoreDialogSize(this);
@@ -1759,7 +1759,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         ed.setText(editorContent);
 
         if (mails.isEmpty()) {
-            ThreadUtils.showErrorDialog(this, "Liste der Empfänger kann nicht leer sein.", "Fehler");
+            ThreadUtils.showErrorDialog(this, "Liste der Empfänger kann nicht leer sein.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
             return;
         }
 
@@ -1794,7 +1794,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                 try {
                     crypto = this.cryptoRecipients(mails);
                 } catch (Throwable t) {
-                    ThreadUtils.showErrorDialog(this, "Fehler: " + t.getMessage(), "Fehler");
+                    ThreadUtils.showErrorDialog(this, "Fehler: " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
                     return;
                 }
                 if (crypto < mails.size()) {
@@ -1814,7 +1814,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
             try {
                 crypto = this.cryptoRecipients(mails);
             } catch (Throwable t) {
-                ThreadUtils.showErrorDialog(this, "Fehler: " + t.getMessage(), "Fehler");
+                ThreadUtils.showErrorDialog(this, "Fehler: " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
                 return;
             }
             if (crypto < mails.size()) {
@@ -1864,7 +1864,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
 
             } catch (Exception ex) {
                 log.error("Error adding review", ex);
-                JOptionPane.showMessageDialog(this, "Fehler beim Speichern der Wiedervorlage: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Fehler beim Speichern der Wiedervorlage: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
                 EditorsRegistry.getInstance().clearStatus();
                 return;
             }
@@ -1920,7 +1920,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
 
         } catch (Exception ioe) {
             log.error("Error attaching document", ioe);
-            JOptionPane.showMessageDialog(this, "Fehler beim Laden der Datei: " + ioe.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Fehler beim Laden der Datei: " + ioe.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
 
     }//GEN-LAST:event_cmdAttachActionPerformed
@@ -2033,7 +2033,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
 
             } catch (Exception ex) {
                 log.error("Error initiating template", ex);
-                JOptionPane.showMessageDialog(this, "Fehler beim Erstellen der Vorlage: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Fehler beim Erstellen der Vorlage: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             }
         }
     }//GEN-LAST:event_cmbTemplatesActionPerformed
@@ -2134,7 +2134,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                         launcher.launch(false);
                     } catch (Exception ex) {
                         log.error(ex);
-                        ThreadUtils.showErrorDialog(this, "Fehler beim Öffnen der Datei: " + ex.getMessage(), "Fehler");
+                        ThreadUtils.showErrorDialog(this, "Fehler beim Öffnen der Datei: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
 
                     }
                 }

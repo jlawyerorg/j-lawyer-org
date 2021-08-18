@@ -665,14 +665,12 @@ package com.jdimension.jlawyer.client.utils;
 
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.ShowURLDialog;
-import java.awt.Component;
 import java.awt.Desktop;
 import java.awt.Dialog;
 import java.awt.Frame;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
-import java.util.logging.Level;
 import org.apache.log4j.Logger;
 
 /**
@@ -682,6 +680,9 @@ import org.apache.log4j.Logger;
 public class DesktopUtils {
 
     private static final Logger log = Logger.getLogger(DesktopUtils.class.getName());
+    
+    public static final String POPUP_TITLE_ERROR="Fehler";
+    public static final String POPUP_TITLE_WARNING="Warnung";
 
     public static void openFileManager(File folder) {
         if (folder.isDirectory()) {

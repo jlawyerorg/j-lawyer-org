@@ -719,7 +719,7 @@ public class CalendarSetupDialog extends javax.swing.JDialog {
 
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);
-            JOptionPane.showMessageDialog(this, ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             return;
         }
 
@@ -1052,7 +1052,7 @@ public class CalendarSetupDialog extends javax.swing.JDialog {
 
         } catch (Exception ex) {
             log.error("Error creating new calendar", ex);
-            JOptionPane.showMessageDialog(this, ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
 
     }//GEN-LAST:event_cmdAddActionPerformed
@@ -1067,7 +1067,7 @@ public class CalendarSetupDialog extends javax.swing.JDialog {
             if (this.cmbName.getSelectedItem() == null) {
                 if (!StringUtils.isEmpty(this.pnlCloud.getCloudHost()) && !StringUtils.isEmpty(this.pnlCloud.getCloudUser()) && !StringUtils.isEmpty(this.pnlCloud.getCloudPassword())) {
                     // user provided connection but no target calendar
-                    JOptionPane.showMessageDialog(this, "Es ist kein Zielkalender ausgewählt. Entweder Ziel angeben oder Nextcloudverbindung entfernen", "Warnung", JOptionPane.WARNING_MESSAGE);
+                    JOptionPane.showMessageDialog(this, "Es ist kein Zielkalender ausgewählt. Entweder Ziel angeben oder Nextcloudverbindung entfernen", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_WARNING, JOptionPane.WARNING_MESSAGE);
                     return;
                 }
             }
@@ -1098,7 +1098,7 @@ public class CalendarSetupDialog extends javax.swing.JDialog {
                 cs.setCloudPassword(Crypto.encrypt(this.pnlCloud.getCloudPassword()));
             } catch (Exception ex) {
                 log.error("Error accessing cloud credentials", ex);
-                JOptionPane.showMessageDialog(this, "Fehler bzgl. Nextcloud-Zugangsdaten" + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Fehler bzgl. Nextcloud-Zugangsdaten" + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             }
             cs.setCloudPath(this.pnlCloud.getCloudPath());
             cs.setCloudPort(this.pnlCloud.getCloudPort());
@@ -1117,7 +1117,7 @@ public class CalendarSetupDialog extends javax.swing.JDialog {
 
             } catch (Exception ex) {
                 log.error("Error updating calendar setup", ex);
-                JOptionPane.showMessageDialog(this, ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             }
         }
 
@@ -1170,7 +1170,7 @@ public class CalendarSetupDialog extends javax.swing.JDialog {
                 this.resetDetails();
             } catch (Exception ex) {
                 log.error("Error removing calendar setup", ex);
-                JOptionPane.showMessageDialog(this, ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             }
         }
     }//GEN-LAST:event_cmdRemoveActionPerformed
@@ -1209,7 +1209,7 @@ public class CalendarSetupDialog extends javax.swing.JDialog {
             });
         } catch (Throwable ex) {
             log.error("Error connecting to server", ex);
-            JOptionPane.showMessageDialog(this, ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
     }//GEN-LAST:event_cmdGetCloudCalendarsActionPerformed
 
@@ -1231,7 +1231,7 @@ public class CalendarSetupDialog extends javax.swing.JDialog {
                 this.cmbName.setSelectedItem(selected);
             } catch (Exception ex) {
                 log.error("Error connecting to server", ex);
-                JOptionPane.showMessageDialog(this, "Kalender können nicht aus Nextcloud ermittelt werden: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Kalender können nicht aus Nextcloud ermittelt werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             }
         }
 
@@ -1239,7 +1239,7 @@ public class CalendarSetupDialog extends javax.swing.JDialog {
             this.pnlCloud.setCloudPassword(Crypto.decrypt(cs.getCloudPassword()));
         } catch (Exception ex) {
             log.error("Error accessing cloud credentials", ex);
-            JOptionPane.showMessageDialog(this, "Fehler bzgl. Nextcloud-Zugangsdaten" + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Fehler bzgl. Nextcloud-Zugangsdaten" + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
         
         this.txtDisplayName.setText(cs.getDisplayName());

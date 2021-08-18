@@ -846,7 +846,7 @@ public class ShareDocumentsToCloudAction extends ProgressableAction {
 
         } catch (Exception ex) {
             log.error(ex);
-            ThreadUtils.showErrorDialog(parent, "Fehler beim Hochladen der Dateien: " + ex.getMessage(), "Fehler");
+            ThreadUtils.showErrorDialog(parent, "Fehler beim Hochladen der Dateien: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
             SwingUtilities.invokeLater(new Runnable() {
                 @Override
                 public void run() {

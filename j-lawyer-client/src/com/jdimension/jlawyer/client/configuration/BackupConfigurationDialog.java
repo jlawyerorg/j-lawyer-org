@@ -1216,7 +1216,7 @@ public class BackupConfigurationDialog extends javax.swing.JDialog {
 
             } catch (Exception ex) {
                 log.error("error clearing backup directory", ex);
-                JOptionPane.showMessageDialog(this, "Fehler Bereinigen der alten Datensicherung: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Fehler Bereinigen der alten Datensicherung: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             }
         }
 
@@ -1320,13 +1320,13 @@ public class BackupConfigurationDialog extends javax.swing.JDialog {
                 SystemManagementRemote sys = locator.lookupSystemManagementRemote();
                 boolean valid = sys.validateFileOnServer(new File(this.txtExportTarget.getText()), true);
                 if (!valid) {
-                    JOptionPane.showMessageDialog(this, "Verzeichnis existiert am Server nicht: " + this.txtExportTarget.getText(), "Fehler", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(this, "Verzeichnis existiert am Server nicht: " + this.txtExportTarget.getText(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
 
                     return;
                 }
             } catch (Exception ex) {
                 log.error("error validating html export options", ex);
-                JOptionPane.showMessageDialog(this, "Fehler beim Speichern: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Fehler beim Speichern: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
                 return;
             }
         }

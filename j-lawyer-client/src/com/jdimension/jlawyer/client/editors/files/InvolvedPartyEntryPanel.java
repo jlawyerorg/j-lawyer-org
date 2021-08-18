@@ -1131,7 +1131,7 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
     private void mnuSendEmailActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSendEmailActionPerformed
 
         if (this.a.getEmail() == null || "".equals(this.a.getEmail())) {
-            JOptionPane.showMessageDialog(this, "Zu diesem Kontakt ist keine E-Mail-Adresse erfasst.", "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Zu diesem Kontakt ist keine E-Mail-Adresse erfasst.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
 
         } else {
             SendEmailDialog dlg = new SendEmailDialog(EditorsRegistry.getInstance().getMainWindow(), false);
@@ -1166,7 +1166,7 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
         }
 
         if (this.a.getBeaSafeId() == null || "".equals(this.a.getBeaSafeId())) {
-            JOptionPane.showMessageDialog(this, "Zu diesem Kontakt ist keine beA-Adresse erfasst.", "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Zu diesem Kontakt ist keine beA-Adresse erfasst.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
 
         } else {
             Identity iTo = null;
@@ -1175,7 +1175,7 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
                 iTo = bea.getIdentity(this.a.getBeaSafeId());
             } catch (Throwable t) {
                 log.error(t);
-                JOptionPane.showMessageDialog(this, "Identität des beA-Teilnehmers kann nicht ermittelt werden", "Fehler", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Identität des beA-Teilnehmers kann nicht ermittelt werden", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
                 return;
             }
             SendBeaMessageDialog dlg = new SendBeaMessageDialog(EditorsRegistry.getInstance().getMainWindow(), false);
@@ -1232,7 +1232,7 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
 
             } catch (Throwable t) {
                 log.error(t);
-                JOptionPane.showMessageDialog(this, "Identität des beA-Teilnehmers kann nicht ermittelt werden", "Fehler", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Identität des beA-Teilnehmers kann nicht ermittelt werden", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
                 return;
             }
 
@@ -1242,7 +1242,7 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
 
     private void mnuSendSmsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSendSmsActionPerformed
         if (this.a.getMobile() == null || "".equals(this.a.getMobile())) {
-            JOptionPane.showMessageDialog(this, "Zu diesem Kontakt ist keine Mobilnummer erfasst.", "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Zu diesem Kontakt ist keine Mobilnummer erfasst.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
 
         } else {
 
@@ -1261,7 +1261,7 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
 
     private void mnuCallMobileActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuCallMobileActionPerformed
         if (this.a.getMobile() == null || "".equals(this.a.getMobile())) {
-            JOptionPane.showMessageDialog(this, "Zu diesem Kontakt ist keine Mobilnummer erfasst.", "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Zu diesem Kontakt ist keine Mobilnummer erfasst.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
 
         } else {
 
@@ -1273,7 +1273,7 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
 
     private void mnuCallPhoneActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuCallPhoneActionPerformed
         if (this.a.getPhone() == null || "".equals(this.a.getPhone())) {
-            JOptionPane.showMessageDialog(this, "Zu diesem Kontakt ist keine Festnetznummer erfasst.", "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Zu diesem Kontakt ist keine Festnetznummer erfasst.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
 
         } else {
 

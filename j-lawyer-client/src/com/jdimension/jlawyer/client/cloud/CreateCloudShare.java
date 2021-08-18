@@ -1141,7 +1141,7 @@ public class CreateCloudShare extends javax.swing.JDialog {
                     msg = msg + System.lineSeparator();
                     msg = msg + "Evtl. erfüllt das Passwort nicht die Mindestanforderungen der Nextcloud-Installation.";
                 }
-                JOptionPane.showMessageDialog(this, msg, "Fehler", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, msg, com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             }
         }
 

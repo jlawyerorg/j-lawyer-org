@@ -739,7 +739,7 @@ public class ConflictOfInterestUtils {
 
         } catch (Exception ex) {
             log.error("Error getting archive files for address", ex);
-            JOptionPane.showMessageDialog(parent, "Fehler beim Prüfen von Interessenkonflikten: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(parent, "Fehler beim Prüfen von Interessenkonflikten: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             EditorsRegistry.getInstance().clearStatus();
             return;
         }

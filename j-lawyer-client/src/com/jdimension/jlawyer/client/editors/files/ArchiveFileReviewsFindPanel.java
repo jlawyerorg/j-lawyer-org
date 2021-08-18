@@ -1088,7 +1088,7 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
                 
             } catch (Exception ex) {
                 log.error("Error creating editor from class " + this.detailsEditorClass, ex);
-                JOptionPane.showMessageDialog(this, "Fehler beim Laden des Editors: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Fehler beim Laden des Editors: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             }
     }//GEN-LAST:event_mnuOpenArchiveFileActionPerformed
 
@@ -1113,7 +1113,7 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
                 
             } catch (Exception ex) {
                 log.error("Error creating editor from class " + this.detailsEditorClass, ex);
-                JOptionPane.showMessageDialog(this, "Fehler beim Laden des Editors: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Fehler beim Laden des Editors: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             }
                 
         } else if(evt.getClickCount()==1 && evt.getButton()==MouseEvent.BUTTON3) {
@@ -1178,7 +1178,7 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
             JasperPrintManager.printReport(jasperPrint, true);
         } catch (Exception ex) {
             log.error("Error printing archive file reviews", ex);
-            JOptionPane.showMessageDialog(this, "Fehler beim Drucken der Wiedervorlagen: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Fehler beim Drucken der Wiedervorlagen: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
     }//GEN-LAST:event_cmdPrintActionPerformed
 
@@ -1219,7 +1219,7 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
             TableUtils.exportAndLaunch("wiedervorlagen-export.csv", this.tblResults);
         } catch (Exception ex) {
             log.error("Error exporting table to CSV", ex);
-            JOptionPane.showMessageDialog(this, "Fehler beim Export: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Fehler beim Export: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
     }//GEN-LAST:event_cmdExportActionPerformed
 

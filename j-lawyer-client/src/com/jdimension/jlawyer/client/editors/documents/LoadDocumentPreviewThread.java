@@ -783,7 +783,7 @@ public class LoadDocumentPreviewThread implements Runnable {
             });
             //ThreadUtils.setVisible(pnlPreview, true);
             //this.pnlPreview.add(new JLabel("Vorschau nicht verfügbar..."));
-            //ThreadUtils.showErrorDialog(this, "Fehler beim Generieren der Vorschau: " + ex.getMessage(), "Fehler");
+            //ThreadUtils.showErrorDialog(this, "Fehler beim Generieren der Vorschau: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
 
         }
 
@@ -795,7 +795,7 @@ public class LoadDocumentPreviewThread implements Runnable {
 //            ThreadUtils.updateTextArea(this.ta, content);
 //        
 //        } catch (Throwable t) {
-//            //JOptionPane.showMessageDialog(this, "Fehler beim Laden der Dokumentvorschau: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+//            //JOptionPane.showMessageDialog(this, "Fehler beim Laden der Dokumentvorschau: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
 //            log.error("document preview not available", t);
 //            ThreadUtils.updateTextArea(this.ta, "Vorschau nicht verfügbar");
 //        
