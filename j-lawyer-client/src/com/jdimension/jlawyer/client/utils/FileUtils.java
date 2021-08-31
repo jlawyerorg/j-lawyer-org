@@ -1025,9 +1025,9 @@ public class FileUtils extends ServerFileUtils {
             tmpDir = tmpDir + idGen.getID().toString() + System.getProperty("file.separator");
         }
         new File(tmpDir).mkdirs();
-        fileName=fileName.replaceAll("\\\\", "_");
-        fileName=fileName.replaceAll("/", "_");
-        fileName=fileName.replaceAll("\t", "");
+        fileName=fileName.replace("\\", "_");
+        fileName=fileName.replace("/", "_");
+        fileName=fileName.replace("\t", "");
         String tmpFile = tmpDir + fileName;
         try (FileOutputStream fos = new FileOutputStream(new File(tmpFile), false)) {
             fos.write(content);
