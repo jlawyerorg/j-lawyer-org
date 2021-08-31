@@ -726,7 +726,7 @@ public class FileUtils extends ServerFileUtils {
 
             String osName = System.getProperty("os.name").toLowerCase();
 
-            if (osName.indexOf("linux") > -1 || osName.startsWith("mac")) {
+            if (osName.contains("linux") || osName.startsWith("mac")) {
 
                 if (fileExt.startsWith(".")) {
                     fileExt = fileExt.substring(1, fileExt.length());
@@ -810,7 +810,7 @@ public class FileUtils extends ServerFileUtils {
 
             String osName = System.getProperty("os.name").toLowerCase();
 
-            if (osName.indexOf("linux") > -1 || osName.startsWith("mac")) {
+            if (osName.contains("linux") || osName.startsWith("mac")) {
 
                 if (fileExt.startsWith(".")) {
                     fileExt = fileExt.substring(1, fileExt.length());
@@ -1025,6 +1025,9 @@ public class FileUtils extends ServerFileUtils {
             tmpDir = tmpDir + idGen.getID().toString() + System.getProperty("file.separator");
         }
         new File(tmpDir).mkdirs();
+        fileName=fileName.replaceAll("\\\\", "_");
+        fileName=fileName.replaceAll("/", "_");
+        fileName=fileName.replaceAll("\t", "");
         String tmpFile = tmpDir + fileName;
         try (FileOutputStream fos = new FileOutputStream(new File(tmpFile), false)) {
             fos.write(content);
