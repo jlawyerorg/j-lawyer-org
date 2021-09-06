@@ -903,7 +903,7 @@ public class ClientSettings {
     
     public void addToConfigurationArray(String key, String value) {
         String[] values=this.getConfigurationArray(key, new String[0]);
-        ArrayList<String> valueList=new java.util.ArrayList(Arrays.asList(values));
+        ArrayList<String> valueList=new java.util.ArrayList<>(Arrays.asList(values));
         int selectedIndex = valueList.indexOf(value);
         if(selectedIndex<0) {
             valueList.add(value);
@@ -913,7 +913,7 @@ public class ClientSettings {
     
     public void removeFromConfigurationArray(String key, String value) {
         String[] values=this.getConfigurationArray(key, new String[0]);
-        ArrayList<String> valueList=new java.util.ArrayList(Arrays.asList(values));
+        ArrayList<String> valueList=new java.util.ArrayList<>(Arrays.asList(values));
         int selectedIndex = valueList.indexOf(value);
         if(selectedIndex>-1) {
             valueList.remove(value);
@@ -923,7 +923,7 @@ public class ClientSettings {
     
     public boolean arrayContains(String arrayKey, String value) {
         String[] values=this.getConfigurationArray(arrayKey, new String[0]);
-        ArrayList<String> valueList=new java.util.ArrayList(Arrays.asList(values));
+        ArrayList<String> valueList=new java.util.ArrayList<>(Arrays.asList(values));
         int selectedIndex = valueList.indexOf(value);
         return selectedIndex>-1;
     }

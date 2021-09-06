@@ -1032,7 +1032,6 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                         traverseFolders(ms, accountFoldersFinal, mailboxRootNode);
                         DefaultTreeModel tm = new DefaultTreeModel(rootNode);
                         treeFolders.setModel(tm);
-                        //JTreeUtils.expandAll(treeFolders);
                         this.restoreExpansionState();
                         treeFolders.setCellRenderer(renderer);
                         notifyStatusBarReady();
