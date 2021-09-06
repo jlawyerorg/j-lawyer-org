@@ -663,6 +663,7 @@
  */
 package com.jdimension.jlawyer.client.utils;
 
+import java.io.File;
 import javax.swing.JTree;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
@@ -685,7 +686,7 @@ public class JTreeUtils {
 
         if (jTree.getModel().getRoot() != null) {
             if (jTree.getModel().getRoot() instanceof DefaultMutableTreeNode) {
-                DefaultMutableTreeNode currentNode = (DefaultMutableTreeNode)jTree.getModel().getRoot();
+                DefaultMutableTreeNode currentNode = (DefaultMutableTreeNode) jTree.getModel().getRoot();
                 do {
                     if (currentNode.getLevel() < level) {
                         jTree.expandPath(new TreePath(currentNode.getPath()));
@@ -695,5 +696,18 @@ public class JTreeUtils {
             }
         }
 
+    }
+
+    public static String getFullPath(TreePath tp) {
+        StringBuilder sb = new StringBuilder();
+
+        Object[] paths = tp.getPath();
+        for (int i = 0; i < paths.length; i++) {
+            sb.append(paths[i]);
+            if (i + 1 < paths.length) {
+                sb.append(File.separator);
+            }
+        }
+        return sb.toString();
     }
 }

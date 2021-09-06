@@ -666,11 +666,11 @@ package com.jdimension.jlawyer.client.settings;
 import com.jdimension.jlawyer.drebis.InsuranceInfo;
 import com.jdimension.jlawyer.persistence.AppOptionGroupBean;
 import com.jdimension.jlawyer.server.modules.ModuleMetadata;
-//import com.jdimension.jkanzlei.server.persistence.AppOptionGroupDTO;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 import org.apache.log4j.Logger;
@@ -767,6 +767,7 @@ public class ClientSettings {
     public static final String CONF_MAIL_DOWNLOADRESTRICTION="client.mail.downloadrestriction";
     public static final String CONF_MAIL_LASTTAG="client.mail.lasttag";
     public static final String CONF_MAIL_LASTDOCUMENTTAG="client.mail.lastdocumenttag";
+    public static final String CONF_MAIL_COLLAPSEDFOLDERS="client.mail.collapsedfolders";
     
     public static final String CONF_VOIP_LASTSIPFAX="client.voip.lastsipfax";
     public static final String CONF_VOIP_LASTSIPSMS="client.voip.lastsipsms";
@@ -784,7 +785,7 @@ public class ClientSettings {
     public static final String CONF_APPS_WORDPROCESSOR_VALUE_LO="libreoffice";
     public static final String CONF_APPS_WORDPROCESSOR_VALUE_MSO="msoffice";
     
-    private static String ARRAY_DELIMITER="#####";
+    private static final String ARRAY_DELIMITER="#####";
     
     private static final Logger log=Logger.getLogger(ClientSettings.class.getName());
     private static ClientSettings instance=null;
@@ -891,13 +892,40 @@ public class ClientSettings {
     }
     
     public void setConfigurationArray(String key, String[] value) {
-        StringBuffer sb=new StringBuffer();
+        StringBuilder sb=new StringBuilder();
         if(value==null)
             value=new String[]{""};
         for(String v: value) {
             sb.append(v).append(ARRAY_DELIMITER);
         }
         this.clientConfiguration.setProperty(key, sb.toString());
+    }
+    
+    public void addToConfigurationArray(String key, String value) {
+        String[] values=this.getConfigurationArray(key, new String[0]);
+        ArrayList<String> valueList=new java.util.ArrayList(Arrays.asList(values));
+        int selectedIndex = valueList.indexOf(value);
+        if(selectedIndex<0) {
+            valueList.add(value);
+            setConfigurationArray(key, valueList.toArray(new String[0]));
+        }
+    }
+    
+    public void removeFromConfigurationArray(String key, String value) {
+        String[] values=this.getConfigurationArray(key, new String[0]);
+        ArrayList<String> valueList=new java.util.ArrayList(Arrays.asList(values));
+        int selectedIndex = valueList.indexOf(value);
+        if(selectedIndex>-1) {
+            valueList.remove(value);
+            setConfigurationArray(key, valueList.toArray(new String[0]));
+        }
+    }
+    
+    public boolean arrayContains(String arrayKey, String value) {
+        String[] values=this.getConfigurationArray(arrayKey, new String[0]);
+        ArrayList<String> valueList=new java.util.ArrayList(Arrays.asList(values));
+        int selectedIndex = valueList.indexOf(value);
+        return selectedIndex>-1;
     }
     
     public static synchronized ClientSettings getInstance() {

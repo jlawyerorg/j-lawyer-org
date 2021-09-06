@@ -663,13 +663,10 @@
  */
 package com.jdimension.jlawyer.client.mail;
 
-import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.MailboxSetup;
 import com.jdimension.jlawyer.security.Crypto;
-import com.jdimension.jlawyer.services.JLawyerServiceLocator;
-import com.jdimension.jlawyer.services.SecurityServiceRemote;
 import com.sun.mail.imap.IMAPFolder;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
@@ -800,7 +797,7 @@ public class EmailUtils {
                 }
             }
 
-            return mailboxes.get(0);
+            return null;
 
         } catch (Exception ex) {
             log.error("Error determining mailbox for message " + msg.getSubject(), ex);
