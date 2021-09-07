@@ -696,6 +696,7 @@ import themes.colors.DefaultColorTheme;
  */
 public class LoginDialog extends javax.swing.JFrame {
 
+    private static final String SECMODE_STANDARD="standard";
     private static final Logger log = Logger.getLogger(LoginDialog.class.getName());
     private static boolean launching=false;
     
@@ -814,7 +815,7 @@ public class LoginDialog extends javax.swing.JFrame {
         this.rdSecNone.setSelected(true);
 
         String ssl = settings.getConfiguration(ClientSettings.CONF_LASTSERVERSSL, "0");
-        String secMode = settings.getConfiguration(ClientSettings.CONF_LASTSECMODE, "standard");
+        String secMode = settings.getConfiguration(ClientSettings.CONF_LASTSECMODE, SECMODE_STANDARD);
         if ("1".equalsIgnoreCase(ssl) || "ssl".equalsIgnoreCase(secMode)) {
             this.rdSecSsl.setSelected(true);
         }
@@ -846,7 +847,7 @@ public class LoginDialog extends javax.swing.JFrame {
             this.pwPassword.setText(cmdPassword);
             if ("1".equalsIgnoreCase(cmdSecMode) || "ssl".equalsIgnoreCase(cmdSecMode)) {
                 this.rdSecSsl.setSelected(true);
-            } else if("0".equalsIgnoreCase(cmdSecMode) || "standard".equalsIgnoreCase(cmdSecMode)) {
+            } else if("0".equalsIgnoreCase(cmdSecMode) || SECMODE_STANDARD.equalsIgnoreCase(cmdSecMode)) {
                 this.rdSecNone.setSelected(true);
             } else if("ssh".equalsIgnoreCase(cmdSecMode)) {
                 this.rdSecTunnel.setSelected(true);
@@ -1681,7 +1682,7 @@ public class LoginDialog extends javax.swing.JFrame {
             settings.setConfiguration(settings.CONF_LASTSECMODE, "ssh");
             settings.setConfiguration(settings.CONF_LASTPORTDYN, ""+sourcePort);
         } else {
-            settings.setConfiguration(settings.CONF_LASTSECMODE, "standard");
+            settings.setConfiguration(settings.CONF_LASTSECMODE, SECMODE_STANDARD);
         }
         settings.setConfiguration(settings.CONF_LASTSSHHOST, this.txtSshHost.getText().trim());
         settings.setConfiguration(settings.CONF_LASTSSHPORT, this.txtSshPort.getText().trim());
@@ -1786,7 +1787,7 @@ public class LoginDialog extends javax.swing.JFrame {
     public static void main(String args[]) {
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                new LoginDialog("", null, null, null, null, "standard", null, null, null, null, null).setVisible(true);
+                new LoginDialog("", null, null, null, null, SECMODE_STANDARD, null, null, null, null, null).setVisible(true);
             }
         });
     }

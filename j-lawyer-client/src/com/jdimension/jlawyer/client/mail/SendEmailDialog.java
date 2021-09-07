@@ -1841,8 +1841,10 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         }
         a.start();
         
-        UserSettings uset=UserSettings.getInstance();
-        uset.setSetting(UserSettings.CONF_MAIL_LASTUSEDSETUP, ms.getDisplayName());
+        if(ms!=null) {
+            UserSettings uset=UserSettings.getInstance();
+            uset.setSetting(UserSettings.CONF_MAIL_LASTUSEDSETUP, ms.getDisplayName());
+        }
 
         if (!(this.radioReviewTypeNone.isSelected()) && this.contextArchiveFile != null) {
             if (this.txtReviewDateField.getText().length() != 10) {

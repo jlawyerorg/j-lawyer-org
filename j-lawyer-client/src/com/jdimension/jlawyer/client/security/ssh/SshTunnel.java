@@ -715,7 +715,7 @@ public class SshTunnel {
                 return successPort;
             } catch (IOException ex) {
                 log.warn("port " + i + " is not available as a source port for SSH tunnel: " + ex.getMessage());
-                continue; // try next port
+                // try next port
             }
         }
         return startFrom;
@@ -780,15 +780,10 @@ public class SshTunnel {
     }
 
     public void disconnect() {
-        if (this.session != null) {
+        if (this.session != null && session.isConnected()) {
             //  session.delPortForwardingL(1111);
-            if (session.isConnected()) {
                 session.disconnect();
-            }
         }
-//        if (this.timer != null) {
-//            this.timer.cancel();
-//        }
     }
 
     /**
