@@ -1087,7 +1087,7 @@ public class SplashThread implements Runnable {
 
         char[] buffer = new char[1024];
         int len = 0;
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         while ((len = reader.read(buffer)) > -1) {
             sb.append(buffer, 0, len);
         }

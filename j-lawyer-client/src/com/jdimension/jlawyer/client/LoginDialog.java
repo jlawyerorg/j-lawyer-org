@@ -668,12 +668,10 @@ import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.DesktopUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
-import com.jdimension.jlawyer.client.utils.SystemUtils;
 import com.jdimension.jlawyer.client.utils.VersionUtils;
 import com.jdimension.jlawyer.jlawyerbox.BoxAccess;
 import com.jdimension.jlawyer.security.Crypto;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
-//import com.jdimension.jkanzlei.server.services.SecurityServiceRemoteHome;
 import com.jdimension.jlawyer.services.SecurityServiceRemote;
 import com.jdimension.jlawyer.services.SystemManagementRemote;
 import java.awt.Color;
@@ -689,15 +687,8 @@ import javax.naming.Context;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.ImageIcon;
 import javax.swing.JOptionPane;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 import org.apache.log4j.Logger;
-//import org.jboss.ejb.client.ContextSelector;
-//import org.jboss.ejb.client.EJBClientConfiguration;
-import org.jboss.ejb.client.EJBClientContext;
 import themes.colors.DefaultColorTheme;
-//import org.jboss.ejb.client.PropertiesBasedEJBClientConfiguration;
-//import org.jboss.ejb.client.remoting.ConfigBasedEJBClientContextSelector;
 
 /**
  *
@@ -815,25 +806,25 @@ public class LoginDialog extends javax.swing.JFrame {
             allServersModel.addElement(s);
         }
         this.cmbServer.setModel(allServersModel);
-        this.cmbServer.setSelectedItem(settings.getConfiguration(settings.CONF_LASTSERVER, "localhost"));
-        this.txtPort.setText(settings.getConfiguration(settings.CONF_LASTPORT, "8080"));
-        this.txtUser.setText(settings.getConfiguration(settings.CONF_LASTUSER, ""));
+        this.cmbServer.setSelectedItem(settings.getConfiguration(ClientSettings.CONF_LASTSERVER, "localhost"));
+        this.txtPort.setText(settings.getConfiguration(ClientSettings.CONF_LASTPORT, "8080"));
+        this.txtUser.setText(settings.getConfiguration(ClientSettings.CONF_LASTUSER, ""));
 
         // default is no special security
         this.rdSecNone.setSelected(true);
 
-        String ssl = settings.getConfiguration(settings.CONF_LASTSERVERSSL, "0");
-        String secMode = settings.getConfiguration(settings.CONF_LASTSECMODE, "standard");
+        String ssl = settings.getConfiguration(ClientSettings.CONF_LASTSERVERSSL, "0");
+        String secMode = settings.getConfiguration(ClientSettings.CONF_LASTSECMODE, "standard");
         if ("1".equalsIgnoreCase(ssl) || "ssl".equalsIgnoreCase(secMode)) {
             this.rdSecSsl.setSelected(true);
         }
         if ("ssh".equalsIgnoreCase(secMode)) {
             this.rdSecTunnel.setSelected(true);
         }
-        this.txtSshHost.setText(settings.getConfiguration(settings.CONF_LASTSSHHOST, ""));
-        this.txtSshPort.setText(settings.getConfiguration(settings.CONF_LASTSSHPORT, "22"));
-        this.txtSshUser.setText(settings.getConfiguration(settings.CONF_LASTSSHUSER, "root"));
-        String p = settings.getConfiguration(settings.CONF_LASTSSHPWD, "");
+        this.txtSshHost.setText(settings.getConfiguration(ClientSettings.CONF_LASTSSHHOST, ""));
+        this.txtSshPort.setText(settings.getConfiguration(ClientSettings.CONF_LASTSSHPORT, "22"));
+        this.txtSshUser.setText(settings.getConfiguration(ClientSettings.CONF_LASTSSHUSER, "root"));
+        String p = settings.getConfiguration(ClientSettings.CONF_LASTSSHPWD, "");
         try {
             if (p.length() > 0) {
                 p = Crypto.decrypt(p, System.getProperty("user.name").toCharArray());
@@ -843,7 +834,7 @@ public class LoginDialog extends javax.swing.JFrame {
             p="";
         }
         this.pwdSshPassword.setText(p);
-        this.txtTargetPort.setText(settings.getConfiguration(settings.CONF_LASTTARGETPORT, "8080"));
+        this.txtTargetPort.setText(settings.getConfiguration(ClientSettings.CONF_LASTTARGETPORT, "8080"));
 
         BoxAccess box = new BoxAccess(this.txtBoxPassword.getText());
         box.checkReachable(jTabbedPane1, 2, this.cmbServer.getSelectedItem().toString());
@@ -1522,7 +1513,7 @@ public class LoginDialog extends javax.swing.JFrame {
                 SshTunnel tunnel = SshTunnel.getInstance();
                 // for cases of subsequent tries
                 tunnel.disconnect();
-                sourcePort=getAvailablePort(Integer.parseInt(this.txtPort.getText()));
+                sourcePort=SshTunnel.getAvailablePort(Integer.parseInt(this.txtPort.getText()));
                 tunnel.setSourcePort(sourcePort);
                 tunnel.setSshHost(this.txtSshHost.getText().trim());
                 tunnel.setSshPassword(new String(this.pwdSshPassword.getPassword()));
@@ -1531,6 +1522,7 @@ public class LoginDialog extends javax.swing.JFrame {
                 tunnel.setTargetIp("127.0.0.1");
                 tunnel.setTargetPort(Integer.parseInt(this.txtTargetPort.getText()));
                 tunnel.connect();
+                tunnel.startConnectionObserver();
             } catch (Exception ex) {
                 log.error("SSH tunnel failed", ex);
                 if("".equals(new String(this.pwdSshPassword.getPassword()))) {
@@ -1855,21 +1847,5 @@ public class LoginDialog extends javax.swing.JFrame {
     private javax.swing.JTextField txtTargetPort;
     private javax.swing.JTextField txtUser;
     // End of variables declaration//GEN-END:variables
-
-    private int getAvailablePort(int startFrom) {
-        for (int i=startFrom;i<65535;i++) {
-            try {
-                ServerSocket s=new ServerSocket(i);
-                int successPort=s.getLocalPort();
-                s.close();
-                log.info("found available SSH tunneling source port: " + successPort);
-                return successPort;
-            } catch (IOException ex) {
-                log.warn("port " + i + " is not available as a source port for SSH tunnel: " + ex.getMessage());
-                continue; // try next port
-            }
-        }
-        return startFrom;
-    }
 
 }

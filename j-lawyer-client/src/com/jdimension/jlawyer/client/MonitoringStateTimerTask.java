@@ -663,20 +663,10 @@
  */
 package com.jdimension.jlawyer.client;
 
-import com.jdimension.jlawyer.client.desktop.*;
 import com.jdimension.jlawyer.client.events.EventBroker;
 import com.jdimension.jlawyer.client.events.SystemStatusEvent;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
-import com.jdimension.jlawyer.client.utils.ThreadUtils;
-import com.jdimension.jlawyer.fax.BalanceInformation;
-import com.jdimension.jlawyer.fax.SipgateException;
-import com.jdimension.jlawyer.services.AddressServiceRemote;
-import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
-import com.jdimension.jlawyer.services.VoipServiceRemote;
-import java.awt.Component;
-import java.text.NumberFormat;
-import javax.swing.JLabel;
 import org.apache.log4j.Logger;
 
 /**
@@ -694,6 +684,7 @@ public class MonitoringStateTimerTask extends java.util.TimerTask {
         
     }
 
+    @Override
     public void run() {
         try {
             ClientSettings settings=ClientSettings.getInstance();

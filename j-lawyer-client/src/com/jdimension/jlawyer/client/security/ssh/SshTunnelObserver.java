@@ -663,230 +663,41 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.security.ssh;
 
-import com.jcraft.jsch.JSch;
-import com.jcraft.jsch.Session;
-import com.jdimension.jlawyer.client.utils.VersionUtils;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.ServerSocket;
-import java.net.URL;
-import java.net.URLConnection;
-import java.util.Timer;
+import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import com.jdimension.jlawyer.client.utils.ThreadUtils;
+import java.util.TimerTask;
 import org.apache.log4j.Logger;
 
 /**
  *
  * @author jens
  */
-public class SshTunnel {
+public class SshTunnelObserver extends TimerTask {
+    
+    private boolean errorDisplayed=false;
+    
+    private static final Logger log=Logger.getLogger(SshTunnelObserver.class.getName());
 
-    private static final Logger log = Logger.getLogger(SshTunnel.class.getName());
-
-    private static SshTunnel instance = null;
-
-    private String sshHost = null;
-    private int sshPort = 22;
-    private String sshUser = null;
-    private String sshPassword = null;
-    private String targetIp = null;
-    private int targetPort = 8080;
-    private int sourcePort = 8080;
-
-    private Timer timer = null;
-
-    private Session session = null;
-
-    public static synchronized SshTunnel getInstance() {
-        if (instance == null) {
-            instance = new SshTunnel();
-        }
-
-        return instance;
-    }
-
-    public static int getAvailablePort(int startFrom) {
-        for (int i = startFrom; i < 65535; i++) {
+    @Override
+    public void run() {
+        SshTunnel tunnel=SshTunnel.getInstance();
+        if(!tunnel.isConnected()) {
+            log.error("SSH tunnel has been disconnected! Trying to reconnect...");
+            if(!errorDisplayed) {
+                ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Verbindung zum Server unterbrochen, versuche wiederherzustellen...", "Netzwerk");
+                this.errorDisplayed=true;
+            }
+            tunnel.disconnect();
+            int sourcePort=SshTunnel.getAvailablePort(tunnel.getSourcePort());
+            tunnel.setSourcePort(sourcePort);
             try {
-                ServerSocket s = new ServerSocket(i);
-                int successPort = s.getLocalPort();
-                s.close();
-                log.info("found available SSH tunneling source port: " + successPort);
-                return successPort;
-            } catch (IOException ex) {
-                log.warn("port " + i + " is not available as a source port for SSH tunnel: " + ex.getMessage());
-                continue; // try next port
+                tunnel.connect();
+                tunnel.startConnectionObserver(5000l);
+                ThreadUtils.showInformationDialog(EditorsRegistry.getInstance().getMainWindow(), "Verbindung wiederhergestellt.", "Netzwerk");
+            } catch (Exception ex) {
+                log.error("Error reconnecting to SSH tunnel!", ex);
             }
         }
-        return startFrom;
-    }
-
-    public void connect() throws Exception {
-        JSch jsch = new JSch();
-        session = jsch.getSession(this.sshUser, this.sshHost);
-        session.setPassword(this.sshPassword);
-        session.setPort(this.sshPort);
-
-        // disabling StrictHostKeyChecking may help to make connection but makes it insecure
-        // see http://stackoverflow.com/questions/30178936/jsch-sftp-security-with-session-setconfigstricthostkeychecking-no
-        // 
-        java.util.Properties config = new java.util.Properties();
-        config.put("StrictHostKeyChecking", "no");
-        session.setConfig(config);
-
-        session.connect(5000);
-
-        // es ist wichtig, auf was forwarded wird - es können verschiedene services dort lauschen (bspw. webswing vs. wildfly)
-        //session.setPortForwardingL(8023, "116.203.227.76", 8080);
-        //session.setPortForwardingL(8023, "127.0.0.1", 8080);
-        session.setPortForwardingL(this.sourcePort, this.targetIp, this.targetPort);
-
-    }
-
-    public void startConnectionObserver() { 
-        this.startConnectionObserver(60000l);
     }
     
-    public void startConnectionObserver(long initialDelay) {
-        SshTunnelObserver o = new SshTunnelObserver();
-        if (this.timer != null) {
-            this.timer.cancel();
-            this.timer = null;
-        }
-        this.timer = new Timer();
-        this.timer.schedule(o, initialDelay, 15000l);
-    }
-
-    public boolean isConnected() {
-        if (this.session != null) {
-            try {
-                URL u = new URL("http://localhost:" + this.sourcePort);
-                URLConnection urlCon = u.openConnection();
-                urlCon.setRequestProperty("User-Agent", "j-lawyer Client v" + VersionUtils.getFullClientVersion());
-                urlCon.setConnectTimeout(5000);
-                urlCon.setReadTimeout(5000);
-
-                InputStream is = urlCon.getInputStream();
-                is.close();
-                
-            } catch (Throwable t) {
-                log.error("error during ssh tunnel connection validation", t);
-                return false;
-            }
-
-            return session.isConnected();
-        }
-        return false;
-    }
-
-    public void disconnect() {
-        if (this.session != null) {
-            //  session.delPortForwardingL(1111);
-            if (session.isConnected()) {
-                session.disconnect();
-            }
-        }
-//        if (this.timer != null) {
-//            this.timer.cancel();
-//        }
-    }
-
-    /**
-     * @return the sshHost
-     */
-    public String getSshHost() {
-        return sshHost;
-    }
-
-    /**
-     * @param sshHost the sshHost to set
-     */
-    public void setSshHost(String sshHost) {
-        this.sshHost = sshHost;
-    }
-
-    /**
-     * @return the sshPort
-     */
-    public int getSshPort() {
-        return sshPort;
-    }
-
-    /**
-     * @param sshPort the sshPort to set
-     */
-    public void setSshPort(int sshPort) {
-        this.sshPort = sshPort;
-    }
-
-    /**
-     * @return the sshUser
-     */
-    public String getSshUser() {
-        return sshUser;
-    }
-
-    /**
-     * @param sshUser the sshUser to set
-     */
-    public void setSshUser(String sshUser) {
-        this.sshUser = sshUser;
-    }
-
-    /**
-     * @return the sshPassword
-     */
-    public String getSshPassword() {
-        return sshPassword;
-    }
-
-    /**
-     * @param sshPassword the sshPassword to set
-     */
-    public void setSshPassword(String sshPassword) {
-        this.sshPassword = sshPassword;
-    }
-
-    /**
-     * @return the targetIp
-     */
-    public String getTargetIp() {
-        return targetIp;
-    }
-
-    /**
-     * @param targetIp the targetIp to set
-     */
-    public void setTargetIp(String targetIp) {
-        this.targetIp = targetIp;
-    }
-
-    /**
-     * @return the targetPort
-     */
-    public int getTargetPort() {
-        return targetPort;
-    }
-
-    /**
-     * @param targetPort the targetPort to set
-     */
-    public void setTargetPort(int targetPort) {
-        this.targetPort = targetPort;
-    }
-
-    /**
-     * @return the sourcePort
-     */
-    public int getSourcePort() {
-        return sourcePort;
-    }
-
-    /**
-     * @param sourcePort the sourcePort to set
-     */
-    public void setSourcePort(int sourcePort) {
-        this.sourcePort = sourcePort;
-    }
-
 }
