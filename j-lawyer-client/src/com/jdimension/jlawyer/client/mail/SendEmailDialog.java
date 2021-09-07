@@ -808,14 +808,26 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
             if (this.cmbFrom.getItemCount() > 0) {
                 this.cmbFrom.setSelectedIndex(0);
             }
-
+            
             if (!mailboxes.isEmpty()) {
                 MailboxSetup ms = mailboxes.iterator().next();
-                //this.lblFrom.setText(ms.getEmailSenderName() + "<" + ms.getEmailAddress() + ">");
-                //this.taBody.setText(cu.getEmailSignature());
                 this.tp.setText(EmailUtils.Html2Text(ms.getEmailSignature()));
                 this.hp.setText(ms.getEmailSignature());
             }
+            
+            String lastSetup=usettings.getSetting(UserSettings.CONF_MAIL_LASTUSEDSETUP, null);
+            if(lastSetup != null) {
+                this.cmbFrom.setSelectedItem(lastSetup);
+                for (MailboxSetup t : mailboxes) {
+                    if (t.getDisplayName().equals(lastSetup)) {
+                        this.tp.setText(EmailUtils.Html2Text(t.getEmailSignature()));
+                        this.hp.setText(t.getEmailSignature());
+                        break;
+                    }
+                }
+            }
+            
+            
 
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Fehler beim Ermitteln der Postfächer: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
@@ -1828,6 +1840,9 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
             a = new SendAction(dlg, this, new ArrayList<>(this.attachments.values()), ms, this.chkReadReceipt.isSelected(), this.txtTo.getText(), this.txtCc.getText(), this.txtBcc.getText(), this.txtSubject.getText(), ed.getText(), contentType, createDocumentTag);
         }
         a.start();
+        
+        UserSettings uset=UserSettings.getInstance();
+        uset.setSetting(UserSettings.CONF_MAIL_LASTUSEDSETUP, ms.getDisplayName());
 
         if (!(this.radioReviewTypeNone.isSelected()) && this.contextArchiveFile != null) {
             if (this.txtReviewDateField.getText().length() != 10) {

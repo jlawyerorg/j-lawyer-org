@@ -720,13 +720,15 @@ public class UserSettings {
     public static final String CONF_DREBIS_DOCUMENTTAGGINGENABLED = "user.drebis.documenttaggingenabled";
     public static final String CONF_DREBIS_LASTTAG = "user.drebis.lasttag";
     public static final String CONF_DREBIS_LASTDOCUMENTTAG = "user.drebis.lastdocumenttag";
+    
+    public static final String CONF_MAIL_LASTUSEDSETUP = "user.mail.lastusedsetup";
 
     public static final String CONF_CASE_LASTPARTYTYPE = "user.case.lastpartytype";
 
     // will be used with a suffix indicating the event type (see CalendarSetup class)
     public static final String CONF_CALENDAR_LASTSELECTED = "user.calendar.lastcalsetup.";
 
-    private static String ARRAY_DELIMITER = "#####";
+    private static final String ARRAY_DELIMITER = "#####";
 
     private static final Logger log = Logger.getLogger(UserSettings.class.getName());
     private static UserSettings instance = null;
@@ -783,7 +785,7 @@ public class UserSettings {
 
             } catch (Exception ex) {
                 log.error("Error determining mailbox for user " + principalId, ex);
-                this.userMailboxes.put(principalId, new ArrayList<MailboxSetup>());
+                this.userMailboxes.put(principalId, new ArrayList<>());
             }
         }
         return this.userMailboxes.get(principalId);
