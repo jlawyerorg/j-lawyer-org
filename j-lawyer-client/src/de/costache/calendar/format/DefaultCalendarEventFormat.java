@@ -25,7 +25,7 @@ import java.util.Collection;
  */
 public class DefaultCalendarEventFormat implements CalendarEventFormat {
 
-    SimpleDateFormat sdf = new SimpleDateFormat("dd.MM.yyyy hh:mm");
+    SimpleDateFormat sdf = new SimpleDateFormat("dd.MM.yyyy HH:mm");
 
     @Override
     public String format(CalendarEvent calendarEvent) {
