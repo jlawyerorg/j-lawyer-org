@@ -918,7 +918,7 @@ public class CalendarPanel extends javax.swing.JPanel {
             } else {
                 end = CalendarUtil.createDate(year, month, day, hour + 1, min, 0, 0);
             }
-            calendarEvent = new CalendarEvent(rev.getSummary(), start, end);
+            calendarEvent = new CalendarEvent(rev.getSummary() + " (" + rev.getArchiveFileKey().getFileNumber() + " " + rev.getArchiveFileKey().getName() + ")", start, end);
             calendarEvent.setDescription(rev.getDescription());
             calendarEvent.setLocation(rev.getLocation());
 
