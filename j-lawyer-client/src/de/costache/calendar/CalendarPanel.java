@@ -984,41 +984,41 @@ public class CalendarPanel extends javax.swing.JPanel {
 
             @Override
             public void eventRemoved(final ModelChangedEvent event) {
-                System.out.println("Event removed " + event.getCalendarEvent() + "\n");
+                //System.out.println("Event removed " + event.getCalendarEvent() + "\n");
             }
 
             @Override
             public void eventChanged(final ModelChangedEvent event) {
-                System.out.println("Event changed " + event.getCalendarEvent() + "\n");
+                //System.out.println("Event changed " + event.getCalendarEvent() + "\n");
             }
 
             @Override
             public void eventAdded(final ModelChangedEvent event) {
-                System.out.println("Event added " + event.getCalendarEvent() + "\n");
+                //System.out.println("Event added " + event.getCalendarEvent() + "\n");
             }
         });
 
         jCalendar.addSelectionChangedListener((final SelectionChangedEvent event) -> {
-            if (event.getCalendarEvent() != null) {
-                if (event.getCalendarEvent().isSelected()) {
-                    System.out.println("Event selected " + event.getCalendarEvent());
-                } else {
-                    System.out.println("Event deselected " + event.getCalendarEvent());
-                }
-            } else {
-                System.out.println("Selection cleared");
-            }
-            System.out.println("\n");
+//            if (event.getCalendarEvent() != null) {
+//                if (event.getCalendarEvent().isSelected()) {
+//                    System.out.println("Event selected " + event.getCalendarEvent());
+//                } else {
+//                    System.out.println("Event deselected " + event.getCalendarEvent());
+//                }
+//            } else {
+//                System.out.println("Selection cleared");
+//            }
+//            System.out.println("\n");
         });
 
         jCalendar.addIntervalChangedListener((final IntervalChangedEvent event) -> {
-            System.out.println("Interval changed " + sdf.format(event.getIntervalStart()) + " "
-                    + sdf.format(event.getIntervalEnd()) + "\n");
+//            System.out.println("Interval changed " + sdf.format(event.getIntervalStart()) + " "
+//                    + sdf.format(event.getIntervalEnd()) + "\n");
         });
 
         jCalendar.addIntervalSelectionListener((IntervalSelectionEvent event) -> {
-            System.out.println("Interval selection changed " + sdf.format(event.getIntervalStart()) + " "
-                    + sdf.format(event.getIntervalEnd()) + "\n");
+//            System.out.println("Interval selection changed " + sdf.format(event.getIntervalStart()) + " "
+//                    + sdf.format(event.getIntervalEnd()) + "\n");
         });
 
         popup.addPopupMenuListener(new PopupMenuListener() {
