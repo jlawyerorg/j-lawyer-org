@@ -2782,9 +2782,9 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         JDBCUtils utils = new JDBCUtils();
         ResultSet rs = null;
         PreparedStatement st = null;
-        List<ArchiveFileBean> returnList = new ArrayList<ArchiveFileBean>();
+        List<ArchiveFileBean> returnList = new ArrayList<>();
 
-        List<Group> userGroups = new ArrayList<Group>();
+        List<Group> userGroups = new ArrayList<>();
         try {
             userGroups = this.securityFacade.getGroupsForUser(context.getCallerPrincipal().getName());
         } catch (Throwable t) {
@@ -2818,18 +2818,18 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 }
             }
             if (empty) {
-                return new ArrayList<ArchiveFileBean>();
+                return new ArrayList<>();
             }
 
             inClauseCase = inClauseCase.replaceFirst(",", "");
             inClauseDoc = inClauseDoc.replaceFirst(",", "");
 
             st = con.prepareStatement("select distinct(allkeys.archiveFileKey) from (\n"
-                    + "    select a1.archiveFileKey from      (\n"
+                    // any cases with relevant tags or having documents with relevan tags
+                    + "    select a1.archiveFileKey, a1.maxChangeDate from      (\n"
                     + "        SELECT archiveFileKey, MAX(changeDate) as maxChangeDate      \n"
                     + "        FROM case_history      \n"
-                    + "        GROUP BY archiveFileKey      \n"
-                    + "        order by maxChangeDate DESC) a1\n"
+                    + "        GROUP BY archiveFileKey) a1\n"
                     + "    left join cases a2 on a1.archiveFileKey = a2.id\n"
                     + "    left join case_tags a3 on a2.id = a3.archiveFileKey\n"
                     + "    left join case_documents a5 on a5.archiveFileKey=a2.id \n"
@@ -2839,17 +2839,39 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                     + "            (a3.tagName in (" + inClauseCase + ")) or (\n"
                     + "            (a4.tagName in (" + inClauseDoc + "))\n"
                     + "            \n"
-                    + "        )) order by maxChangeDate DESC) allkeys limit 0,?");
+                    + "        )) "
+                    // MySQL does not support FULL OUTER JOIN
+                    + "union "
+                    // any cases without documents but relevant case tags
+                    + "    select a1.archiveFileKey, a1.maxChangeDate from      (\n"
+                    + "        SELECT archiveFileKey, MAX(changeDate) as maxChangeDate      \n"
+                    + "        FROM case_history      \n"
+                    + "        GROUP BY archiveFileKey) a1\n"
+                    + "    left join cases a2 on a1.archiveFileKey = a2.id\n"
+                    + "    left join case_tags a3 on a2.id = a3.archiveFileKey\n"
+                    + "    \n"
+                    + "    where a2.archived=0 and (\n"
+                    + "            (a3.tagName in (" + inClauseCase + ")) ) "
+                    + "order by maxChangeDate DESC) allkeys limit 0,?");
 
             int index = 1;
+            // first union query, case tags
             if (tagName != null && tagName.length > 0) {
                 for (String t : tagName) {
                     st.setString(index, t);
                     index = index + 1;
                 }
             }
+            // first union query, document tags
             if (docTagName != null && docTagName.length > 0) {
                 for (String t : docTagName) {
+                    st.setString(index, t);
+                    index = index + 1;
+                }
+            }
+            // 2nd union query, case tags
+            if (tagName != null && tagName.length > 0) {
+                for (String t : tagName) {
                     st.setString(index, t);
                     index = index + 1;
                 }
@@ -2878,8 +2900,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             }
 
             try {
-                if(rs!=null)
-                    rs.close();
+                rs.close();
             } catch (Exception ex) {
                 log.error(ex);
             }
@@ -3387,9 +3408,9 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         Connection con = null;
         ResultSet rs = null;
         PreparedStatement st = null;
-        List<ArchiveFileDocumentsBean> returnList = new ArrayList<ArchiveFileDocumentsBean>();
+        List<ArchiveFileDocumentsBean> returnList = new ArrayList<>();
 
-        List<Group> userGroups = new ArrayList<Group>();
+        List<Group> userGroups = new ArrayList<>();
         try {
             userGroups = this.securityFacade.getGroupsForUser(context.getCallerPrincipal().getName());
         } catch (Throwable t) {
