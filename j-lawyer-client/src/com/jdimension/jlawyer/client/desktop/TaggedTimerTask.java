@@ -683,7 +683,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.List;
 import java.util.TimerTask;
 import javax.ejb.EJBException;
@@ -805,11 +805,11 @@ public class TaggedTimerTask extends java.util.TimerTask {
 
         List<ArchiveFileBean> myNewList = new ArrayList<>();
         List<ArchiveFileBean> filteredList = new ArrayList<>();
-        Hashtable<String, List<ArchiveFileTagsBean>> tags = new Hashtable<>();
+        HashMap<String, List<ArchiveFileTagsBean>> tags = new HashMap<>();
 
         List<ArchiveFileDocumentsBean> myNewDocumentList = new ArrayList<>();
         List<ArchiveFileDocumentsBean> filteredDocumentList = new ArrayList<>();
-        Hashtable<String, List<DocumentTagsBean>> documentTags = new Hashtable<>();
+        HashMap<String, List<DocumentTagsBean>> documentTags = new HashMap<>();
 
         String[] lastFilterDocumentTags = null;
         String[] lastFilterTags = null;

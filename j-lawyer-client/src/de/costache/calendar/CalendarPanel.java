@@ -669,12 +669,10 @@ import com.jdimension.jlawyer.client.editors.ThemeableEditor;
 import com.jdimension.jlawyer.client.editors.files.ArchiveFilePanel;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 import de.costache.calendar.events.IntervalChangedEvent;
-import de.costache.calendar.events.IntervalChangedListener;
 import de.costache.calendar.events.IntervalSelectionEvent;
 import de.costache.calendar.events.ModelChangedEvent;
 import de.costache.calendar.events.ModelChangedListener;
 import de.costache.calendar.events.SelectionChangedEvent;
-import de.costache.calendar.events.SelectionChangedListener;
 import de.costache.calendar.model.CalendarEvent;
 import de.costache.calendar.model.EventType;
 import de.costache.calendar.util.CalendarUtil;
@@ -684,14 +682,9 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Image;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
-import javax.imageio.ImageIO;
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
@@ -702,7 +695,6 @@ import javax.swing.JToolBar;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 import org.apache.log4j.Logger;
-import themes.colors.DefaultColorTheme;
 
 /**
  *
@@ -711,7 +703,7 @@ import themes.colors.DefaultColorTheme;
 public class CalendarPanel extends javax.swing.JPanel {
 
     private static final Logger log=Logger.getLogger(CalendarPanel.class.getName());
-    private final SimpleDateFormat sdf = new SimpleDateFormat("dd MM yyyy HH:mm:ss:SSS");
+    //private final SimpleDateFormat sdf = new SimpleDateFormat("dd MM yyyy HH:mm:ss:SSS");
 
     private JMenuBar menuBar;
     private JMenu fileMenu;
