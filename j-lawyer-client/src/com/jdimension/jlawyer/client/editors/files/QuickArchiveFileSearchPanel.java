@@ -673,7 +673,9 @@ import com.jdimension.jlawyer.client.utils.TableUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileGroupsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileTagsBean;
+import com.jdimension.jlawyer.persistence.Group;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.ui.tagging.TagUtils;
@@ -682,6 +684,7 @@ import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -1013,7 +1016,7 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
         ThreadUtils.setWaitCursor(this, false);
         int[] selectedIndices = this.tblResults.getSelectedRows();
         Arrays.sort(selectedIndices);
-        ArrayList<String> ids = new ArrayList<String>();
+        ArrayList<String> ids = new ArrayList<>();
         for (int i = 0; i < selectedIndices.length; i++) {
             QuickArchiveFileSearchRowIdentifier id = (QuickArchiveFileSearchRowIdentifier) this.tblResults.getValueAt(selectedIndices[i], 0);
             ids.add(id.getArchiveFileDTO().getId());
@@ -1072,17 +1075,17 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
     }
 
     private void tblResultsMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblResultsMouseClicked
-        if (evt.getClickCount() == 2 && evt.getButton() == evt.BUTTON1) {
+        if (evt.getClickCount() == 2 && evt.getButton() == MouseEvent.BUTTON1) {
             this.useSelection();
 
-        } else if (evt.getClickCount() == 1 && evt.getButton() == evt.BUTTON3) {
+        } else if (evt.getClickCount() == 1 && evt.getButton() == MouseEvent.BUTTON3) {
             int selectionCount=this.tblResults.getSelectedRowCount();
             if (selectionCount < 1) {
                 return;
             }
             this.mnuOpenSelectedArchiveFile.setEnabled(selectionCount==1);
             this.popupArchiveFileActions.show(this.tblResults, evt.getX(), evt.getY());
-        } else if (evt.getClickCount() == 1 && evt.getButton() == evt.BUTTON1) {
+        } else if (evt.getClickCount() == 1 && evt.getButton() == MouseEvent.BUTTON1) {
             if (this.tblResults.getSelectedRowCount() == 1) {
                 int row = this.tblResults.getSelectedRow();
                 QuickArchiveFileSearchRowIdentifier id = (QuickArchiveFileSearchRowIdentifier) this.tblResults.getValueAt(row, 0);
@@ -1096,7 +1099,7 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
     }//GEN-LAST:event_tblResultsMouseClicked
 
     private String getArchiveFileAsHtml(ArchiveFileBean afb) {
-        StringBuffer html = new StringBuffer();
+        StringBuilder html = new StringBuilder();
         html.append("<html><body>");
         html.append("<table>");
         html.append("<tr><td>").append("Aktenzeichen: ").append("</td><td>").append(afb.getFileNumber()).append("</td></tr>");
@@ -1120,7 +1123,7 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
     }
 
     private void txtSearchStringKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtSearchStringKeyPressed
-        if (evt.getKeyCode() == evt.VK_ENTER) {
+        if (evt.getKeyCode() == KeyEvent.VK_ENTER) {
             this.cmdQuickSearchActionPerformed(null);
         }
     }//GEN-LAST:event_txtSearchStringKeyPressed
@@ -1135,7 +1138,7 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
     }//GEN-LAST:event_cmdQuickSearchActionPerformed
 
     private void tblResultsKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_tblResultsKeyReleased
-        if (this.tblResults.getSelectedRowCount() == 1 && (evt.getKeyCode() == evt.VK_DOWN || evt.getKeyCode() == evt.VK_UP)) {
+        if (this.tblResults.getSelectedRowCount() == 1 && (evt.getKeyCode() == KeyEvent.VK_DOWN || evt.getKeyCode() == KeyEvent.VK_UP)) {
             int row = this.tblResults.getSelectedRow();
             QuickArchiveFileSearchRowIdentifier id = (QuickArchiveFileSearchRowIdentifier) this.tblResults.getValueAt(row, 0);
             ArchiveFileBean afb = id.getArchiveFileDTO();
@@ -1170,7 +1173,7 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
         ThreadUtils.setWaitCursor(this, false);
         int[] selectedIndices = this.tblResults.getSelectedRows();
         Arrays.sort(selectedIndices);
-        ArrayList<String> ids = new ArrayList<String>();
+        ArrayList<String> ids = new ArrayList<>();
         for (int i = 0; i < selectedIndices.length; i++) {
             QuickArchiveFileSearchRowIdentifier id = (QuickArchiveFileSearchRowIdentifier) this.tblResults.getValueAt(selectedIndices[i], 0);
             ids.add(id.getArchiveFileDTO().getId());
@@ -1216,18 +1219,21 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
                     fileService.setTag(target.getId(), atb, true);
                 }
                 
-                
+                List<ArchiveFileGroupsBean> allowedGroups=fileService.getAllowedGroups(ids.get(i));
+                ArrayList<Group> targetGroups=new ArrayList<>();
+                for(ArchiveFileGroupsBean afgb: allowedGroups) {
+                    targetGroups.add(afgb.getAllowedGroup());
+                }
+                fileService.updateAllowedGroups(target.getId(), targetGroups);
                 
             }
 
-            //fileService.remove();
             EditorsRegistry.getInstance().clearStatus(false);
             this.cmdQuickSearchActionPerformed(null);
         } catch (Exception ex) {
             log.error("Error duplicating cases", ex);
             JOptionPane.showMessageDialog(this, "Fehler beim Duplizieren: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             EditorsRegistry.getInstance().clearStatus(false);
-            return;
         } finally {
             ThreadUtils.setDefaultCursor(this, false);
         }
