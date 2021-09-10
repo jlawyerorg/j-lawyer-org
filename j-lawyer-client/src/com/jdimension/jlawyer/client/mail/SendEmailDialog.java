@@ -1143,11 +1143,23 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         this.attachments.put(new File(tempUrl).getName(), tempUrl);
         ((DefaultListModel) this.lstAttachments.getModel()).addElement(new File(tempUrl).getName());
         if (!tempUrl.toLowerCase().endsWith(".pdf")) {
+            this.enableEncryption(false);
+        }
+
+    }
+    
+    private void enableEncryption(boolean enable) {
+        if (enable) {
+            if(!this.chkEncryption.isEnabled()) {
+                this.lblEncryption.setText("unverschlüsselt senden");
+                this.chkEncryption.setToolTipText("Dokumente werden ohne Schutz versandt");
+                this.chkEncryption.setEnabled(true);
+            }
+        } else {
             this.chkEncryption.setSelected(false);
             this.chkEncryption.setEnabled(false);
             this.lblEncryption.setText("Verschlüsselung nur für PDF");
         }
-
     }
 
     /**
@@ -2212,8 +2224,18 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                 ((DefaultListModel) this.lstAttachments.getModel()).removeElement(o);
                 this.attachments.remove(o);
             }
-
         }
+        
+        Object[] allEntries=((DefaultListModel) this.lstAttachments.getModel()).toArray();
+        boolean pdfOnly=true;
+        for(Object e: allEntries) {
+            if(!(e.toString().toLowerCase().endsWith(".pdf"))) {
+                pdfOnly=false;
+                break;
+            }
+        }
+        this.enableEncryption(pdfOnly);
+        
     }//GEN-LAST:event_mnuRemoveAttachmentActionPerformed
 
     private void txtReviewDateFieldMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_txtReviewDateFieldMouseClicked
