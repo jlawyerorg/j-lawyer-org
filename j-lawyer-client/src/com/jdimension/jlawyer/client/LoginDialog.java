@@ -703,8 +703,6 @@ public class LoginDialog extends javax.swing.JFrame {
     private StartupSplashFrame splash = null;
     private String initialStatus = null;
 
-    private ConnectionProfile connection = null;
-
     /**
      * Creates new form LoginDialog
      */
@@ -1881,7 +1879,7 @@ public class LoginDialog extends javax.swing.JFrame {
         ConnectionProfile profile=profiles.getProfile(this.cmbProfile.getSelectedItem().toString());
         if(profile!=null) {
             profile.setPort(this.txtPort.getText());
-            profile.setSecurityMode("standard");
+            profile.setSecurityMode(SECMODE_STANDARD);
             if(this.rdSecSsl.isSelected())
                 profile.setSecurityMode("ssl");
             if(this.rdSecTunnel.isSelected())
