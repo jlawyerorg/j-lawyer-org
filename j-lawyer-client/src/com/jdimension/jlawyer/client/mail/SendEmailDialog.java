@@ -1498,7 +1498,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
             }
         });
 
-        lblEncryption.setText("unverschlüsselt senden");
+        lblEncryption.setText(LABEL_SEND_UNENCRYPTED);
 
         chkSaveAsDocument.setSelected(true);
         chkSaveAsDocument.setText("als Dokument speichern");
