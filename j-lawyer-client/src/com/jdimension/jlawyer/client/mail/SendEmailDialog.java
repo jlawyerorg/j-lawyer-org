@@ -723,6 +723,9 @@ import org.apache.log4j.Logger;
 public class SendEmailDialog extends javax.swing.JDialog implements SendCommunicationDialog, PartiesSelectionListener {
 
     private static final Logger log = Logger.getLogger(SendEmailDialog.class.getName());
+    
+    private static final String LABEL_SEND_UNENCRYPTED="unverschlüsselt senden";
+    
     private AppUserBean cu = null;
     private Collection<MailboxSetup> mailboxes = new ArrayList<>();
     private Hashtable<String, String> attachments = new Hashtable<String, String>();
@@ -1151,7 +1154,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
     private void enableEncryption(boolean enable) {
         if (enable) {
             if(!this.chkEncryption.isEnabled()) {
-                this.lblEncryption.setText("unverschlüsselt senden");
+                this.lblEncryption.setText(LABEL_SEND_UNENCRYPTED);
                 this.chkEncryption.setToolTipText("Dokumente werden ohne Schutz versandt");
                 this.chkEncryption.setEnabled(true);
             }
@@ -2145,7 +2148,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
             this.lblEncryption.setText("verschlüsselt senden");
             this.chkEncryption.setToolTipText("<html>Dokumente werden verschlüsselt versandt</html>");
         } else {
-            this.lblEncryption.setText("unverschlüsselt senden");
+            this.lblEncryption.setText(LABEL_SEND_UNENCRYPTED);
             this.chkEncryption.setToolTipText("Dokumente werden ohne Schutz versandt");
         }
     }//GEN-LAST:event_chkEncryptionStateChanged
