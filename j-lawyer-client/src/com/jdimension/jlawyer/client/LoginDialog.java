@@ -678,9 +678,9 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Rectangle;
-import java.io.IOException;
+import java.awt.event.KeyEvent;
 import java.io.InputStream;
-import java.net.ServerSocket;
+import java.util.List;
 import java.util.Properties;
 import javax.ejb.EJBAccessException;
 import javax.naming.Context;
@@ -696,12 +696,14 @@ import themes.colors.DefaultColorTheme;
  */
 public class LoginDialog extends javax.swing.JFrame {
 
-    private static final String SECMODE_STANDARD="standard";
+    private static final String SECMODE_STANDARD = "standard";
     private static final Logger log = Logger.getLogger(LoginDialog.class.getName());
-    private static boolean launching=false;
-    
+    private static boolean launching = false;
+
     private StartupSplashFrame splash = null;
     private String initialStatus = null;
+
+    private ConnectionProfile connection = null;
 
     /**
      * Creates new form LoginDialog
@@ -728,6 +730,9 @@ public class LoginDialog extends javax.swing.JFrame {
 
             this.lblUser.setFont(font.deriveFont(Font.BOLD, 18));
             this.lblUser.setForeground(Color.WHITE);
+            
+            this.lblConnection.setFont(font.deriveFont(Font.BOLD, 18));
+            this.lblConnection.setForeground(Color.WHITE);
 
             this.txtUser.setFont(font.deriveFont(Font.BOLD, 14));
             this.txtUser.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
@@ -736,19 +741,18 @@ public class LoginDialog extends javax.swing.JFrame {
             this.pwPassword.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
 
             this.cmdLogin.setFont(font.deriveFont(Font.BOLD, 20));
+            this.cmdSaveProfile.setFont(font.deriveFont(Font.BOLD, 20));
 
             this.cmdCancel.setFont(font.deriveFont(Font.BOLD, 20));
 
             this.jTabbedPane1.setFont(font.deriveFont(Font.BOLD, 14));
-            //this.jTabbedPane1.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
+            
             this.jTabbedPane1.setForegroundAt(0, DefaultColorTheme.COLOR_LOGO_BLUE);
             this.jTabbedPane1.setForegroundAt(1, DefaultColorTheme.COLOR_LOGO_BLUE);
             this.jTabbedPane1.setForegroundAt(2, DefaultColorTheme.COLOR_LOGO_BLUE);
-//            this.jPanel1.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
-//            this.jPanel1.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
-//            this.jPanel1.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
 
             this.jLabel1.setFont(font.deriveFont(Font.BOLD, 16));
+            this.lblProfile.setFont(font.deriveFont(Font.BOLD, 16));
             this.jLabel2.setFont(font.deriveFont(Font.BOLD, 16));
             this.jLabel4.setFont(font.deriveFont(Font.BOLD, 16));
             this.jLabel5.setFont(font.deriveFont(Font.BOLD, 16));
@@ -764,7 +768,9 @@ public class LoginDialog extends javax.swing.JFrame {
             this.jLabel13.setFont(font.deriveFont(Font.BOLD, 14));
             this.jLabel14.setFont(font.deriveFont(Font.BOLD, 14));
 
-            this.cmbServer.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
+            this.cmbProfile.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
+            this.cmbCurrentConnection.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
+            this.txtServer.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
             this.txtPort.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
             this.txtBoxPassword.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
             this.txtCurrentHost.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
@@ -774,7 +780,9 @@ public class LoginDialog extends javax.swing.JFrame {
             this.pwdSshPassword.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
             this.txtTargetPort.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
 
-            this.cmbServer.setFont(font.deriveFont(Font.BOLD, 12));
+            this.cmbProfile.setFont(font.deriveFont(Font.BOLD, 12));
+            this.cmbCurrentConnection.setFont(font.deriveFont(Font.BOLD, 12));
+            this.txtServer.setFont(font.deriveFont(Font.BOLD, 12));
             this.txtPort.setFont(font.deriveFont(Font.BOLD, 12));
             this.txtBoxPassword.setFont(font.deriveFont(Font.BOLD, 12));
             this.txtCurrentHost.setFont(font.deriveFont(Font.BOLD, 12));
@@ -800,56 +808,79 @@ public class LoginDialog extends javax.swing.JFrame {
         this.boxProgress.setVisible(false);
 
         this.initialStatus = initialStatus;
+
         ClientSettings settings = ClientSettings.getInstance();
-        String allServers = settings.getConfiguration(settings.CONF_LASTSERVERLIST, "localhost");
-        DefaultComboBoxModel allServersModel = new DefaultComboBoxModel();
-        for (String s : allServers.split(",")) {
-            allServersModel.addElement(s);
-        }
-        this.cmbServer.setModel(allServersModel);
-        this.cmbServer.setSelectedItem(settings.getConfiguration(ClientSettings.CONF_LASTSERVER, "localhost"));
-        this.txtPort.setText(settings.getConfiguration(ClientSettings.CONF_LASTPORT, "8080"));
-        this.txtUser.setText(settings.getConfiguration(ClientSettings.CONF_LASTUSER, ""));
-
-        // default is no special security
-        this.rdSecNone.setSelected(true);
-
-        String ssl = settings.getConfiguration(ClientSettings.CONF_LASTSERVERSSL, "0");
-        String secMode = settings.getConfiguration(ClientSettings.CONF_LASTSECMODE, SECMODE_STANDARD);
-        if ("1".equalsIgnoreCase(ssl) || "ssl".equalsIgnoreCase(secMode)) {
-            this.rdSecSsl.setSelected(true);
-        }
-        if ("ssh".equalsIgnoreCase(secMode)) {
-            this.rdSecTunnel.setSelected(true);
-        }
-        this.txtSshHost.setText(settings.getConfiguration(ClientSettings.CONF_LASTSSHHOST, ""));
-        this.txtSshPort.setText(settings.getConfiguration(ClientSettings.CONF_LASTSSHPORT, "22"));
-        this.txtSshUser.setText(settings.getConfiguration(ClientSettings.CONF_LASTSSHUSER, "root"));
-        String p = settings.getConfiguration(ClientSettings.CONF_LASTSSHPWD, "");
-        try {
-            if (p.length() > 0) {
-                p = Crypto.decrypt(p, System.getProperty("user.name").toCharArray());
+        ConnectionProfiles connections = ConnectionProfiles.getInstance();
+        String lastConnectionName = settings.getConfiguration(ClientSettings.CONF_LASTCONNECTION, null);
+        if (lastConnectionName == null) {
+            // migration and initialization logic - first call of the client or first call after an update
+            ConnectionProfile newDefault = new ConnectionProfile();
+            newDefault.setName("Standard");
+            newDefault.setPort(settings.getConfiguration(ClientSettings.CONF_LASTPORT, "8080"));
+            newDefault.setSecurityMode(settings.getConfiguration(ClientSettings.CONF_LASTSECMODE, SECMODE_STANDARD));
+            newDefault.setServer(settings.getConfiguration(ClientSettings.CONF_LASTSERVER, "localhost"));
+            newDefault.setSshHost(settings.getConfiguration(ClientSettings.CONF_LASTSSHHOST, ""));
+            String p = settings.getConfiguration(ClientSettings.CONF_LASTSSHPWD, "");
+            try {
+                if (p.length() > 0) {
+                    p = Crypto.decrypt(p, System.getProperty("user.name").toCharArray());
+                }
+            } catch (Throwable t) {
+                log.error("Unable to decrypt tunnel SSH password", t);
+                p = "";
             }
-        } catch (Throwable t) {
-            log.error("Unable to decrypt tunnel SSH password", t);
-            p="";
+            newDefault.setSshPassword(p);
+            newDefault.setSshPort(settings.getConfiguration(ClientSettings.CONF_LASTSSHPORT, "22"));
+            newDefault.setSshTargetPort(settings.getConfiguration(ClientSettings.CONF_LASTTARGETPORT, "8080"));
+            newDefault.setSshUser(settings.getConfiguration(ClientSettings.CONF_LASTSSHUSER, "root"));
+            newDefault.setUser(settings.getConfiguration(ClientSettings.CONF_LASTUSER, ""));
+            try {
+                connections.addProfile(newDefault);
+            } catch (Exception ex) {
+                log.error("Could not add new standard connection profile", ex);
+            }
+
+//            settings.removeConfiguration(ClientSettings.CONF_LASTPORT);
+//            settings.removeConfiguration(ClientSettings.CONF_LASTSECMODE);
+//            settings.removeConfiguration(ClientSettings.CONF_LASTSERVER);
+//            settings.removeConfiguration(ClientSettings.CONF_LASTSSHHOST);
+//            settings.removeConfiguration(ClientSettings.CONF_LASTSSHPWD);
+//            settings.removeConfiguration(ClientSettings.CONF_LASTSSHPORT);
+//            settings.removeConfiguration(ClientSettings.CONF_LASTTARGETPORT);
+//            settings.removeConfiguration(ClientSettings.CONF_LASTSSHUSER);
+//            settings.removeConfiguration(ClientSettings.CONF_LASTUSER);
+//            settings.removeConfiguration(ClientSettings.CONF_LASTSERVERLIST);
         }
-        this.pwdSshPassword.setText(p);
-        this.txtTargetPort.setText(settings.getConfiguration(ClientSettings.CONF_LASTTARGETPORT, "8080"));
+
+        List<ConnectionProfile> allProfiles = connections.getAllProfiles();
+        DefaultComboBoxModel allConnections1 = new DefaultComboBoxModel();
+        DefaultComboBoxModel allConnections2 = new DefaultComboBoxModel();
+        for (ConnectionProfile p : allProfiles) {
+            allConnections1.addElement(p.getName());
+            allConnections2.addElement(p.getName());
+        }
+
+        this.cmbCurrentConnection.setModel(allConnections1);
+        this.cmbProfile.setModel(allConnections2);
+        if (lastConnectionName != null) {
+            this.cmbCurrentConnection.setSelectedItem(lastConnectionName);
+        } else {
+            this.cmbCurrentConnection.setSelectedIndex(0);
+        }
 
         BoxAccess box = new BoxAccess(this.txtBoxPassword.getText());
-        box.checkReachable(jTabbedPane1, 2, this.cmbServer.getSelectedItem().toString());
+        box.checkReachable(jTabbedPane1, 2, this.txtServer.getText());
 
         if (cmdHost != null && cmdPort != null && cmdUser != null && cmdPassword != null) {
-            this.cmbServer.setSelectedItem(cmdHost);
+            this.txtServer.setText(cmdHost);
             this.txtPort.setText(cmdPort);
             this.txtUser.setText(cmdUser);
             this.pwPassword.setText(cmdPassword);
             if ("1".equalsIgnoreCase(cmdSecMode) || "ssl".equalsIgnoreCase(cmdSecMode)) {
                 this.rdSecSsl.setSelected(true);
-            } else if("0".equalsIgnoreCase(cmdSecMode) || SECMODE_STANDARD.equalsIgnoreCase(cmdSecMode)) {
+            } else if ("0".equalsIgnoreCase(cmdSecMode) || SECMODE_STANDARD.equalsIgnoreCase(cmdSecMode)) {
                 this.rdSecNone.setSelected(true);
-            } else if("ssh".equalsIgnoreCase(cmdSecMode)) {
+            } else if ("ssh".equalsIgnoreCase(cmdSecMode)) {
                 this.rdSecTunnel.setSelected(true);
                 this.txtSshHost.setText(cmdSshHost);
                 this.txtSshPort.setText(cmdSshPort);
@@ -866,7 +897,7 @@ public class LoginDialog extends javax.swing.JFrame {
 
     }
 
-    public void setFocusToPasswordField() {
+    public final void setFocusToPasswordField() {
         this.pwPassword.requestFocus();
     }
 
@@ -890,11 +921,13 @@ public class LoginDialog extends javax.swing.JFrame {
         cmdLogin = new javax.swing.JButton();
         pwPassword = new javax.swing.JPasswordField();
         lblHint = new javax.swing.JLabel();
+        lblConnection = new javax.swing.JLabel();
+        cmbCurrentConnection = new javax.swing.JComboBox<>();
         jPanel2 = new javax.swing.JPanel();
         jLabel1 = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
         txtPort = new javax.swing.JTextField();
-        cmbServer = new javax.swing.JComboBox<>();
+        cmbProfile = new javax.swing.JComboBox<>();
         rdSecNone = new javax.swing.JRadioButton();
         rdSecSsl = new javax.swing.JRadioButton();
         jLabel4 = new javax.swing.JLabel();
@@ -920,6 +953,11 @@ public class LoginDialog extends javax.swing.JFrame {
         txtSshHost = new javax.swing.JTextField();
         jLabel16 = new javax.swing.JLabel();
         jLabel19 = new javax.swing.JLabel();
+        txtServer = new javax.swing.JTextField();
+        lblProfile = new javax.swing.JLabel();
+        cmdSaveProfile = new javax.swing.JButton();
+        cmdDeleteProfile = new javax.swing.JButton();
+        cmdAddProfile = new javax.swing.JButton();
         jPanel3 = new javax.swing.JPanel();
         jLabel6 = new javax.swing.JLabel();
         txtBoxPassword = new javax.swing.JPasswordField();
@@ -997,6 +1035,16 @@ public class LoginDialog extends javax.swing.JFrame {
 
         lblHint.setForeground(new java.awt.Color(255, 102, 0));
 
+        lblConnection.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        lblConnection.setText("Profil:");
+
+        cmbCurrentConnection.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+        cmbCurrentConnection.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmbCurrentConnectionActionPerformed(evt);
+            }
+        });
+
         org.jdesktop.layout.GroupLayout jPanel1Layout = new org.jdesktop.layout.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
@@ -1004,45 +1052,50 @@ public class LoginDialog extends javax.swing.JFrame {
             .add(jPanel1Layout.createSequentialGroup()
                 .add(72, 72, 72)
                 .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(lblPassword)
                     .add(jPanel1Layout.createSequentialGroup()
-                        .add(lblPassword)
-                        .add(348, 348, 348)
-                        .add(lblHint, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 24, Short.MAX_VALUE))
-                    .add(jPanel1Layout.createSequentialGroup()
-                        .add(lblUser)
+                        .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            .add(lblUser)
+                            .add(lblConnection))
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            .add(cmbCurrentConnection, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 330, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                             .add(jPanel1Layout.createSequentialGroup()
                                 .add(cmdLogin)
                                 .add(18, 18, 18)
                                 .add(cmdCancel))
                             .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
-                                .add(pwPassword, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 330, Short.MAX_VALUE)
-                                .add(txtUser)))
-                        .add(0, 0, Short.MAX_VALUE)))
+                                .add(pwPassword)
+                                .add(txtUser, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 330, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))))
+                .add(12, 12, 12)
+                .add(lblHint, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 40, Short.MAX_VALUE)
                 .add(72, 72, 72))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel1Layout.createSequentialGroup()
-                .add(48, 48, 48)
-                .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(lblUser)
-                    .add(txtUser, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(jPanel1Layout.createSequentialGroup()
-                        .add(25, 25, 25)
+                        .add(94, 94, 94)
                         .add(lblHint))
                     .add(jPanel1Layout.createSequentialGroup()
+                        .add(45, 45, 45)
+                        .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                            .add(lblConnection)
+                            .add(cmbCurrentConnection, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                        .add(18, 18, 18)
+                        .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                            .add(lblUser)
+                            .add(txtUser, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                         .add(18, 18, 18)
                         .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                             .add(lblPassword)
-                            .add(pwPassword, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))))
-                .add(18, 18, 18)
-                .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(cmdLogin)
-                    .add(cmdCancel))
-                .addContainerGap(170, Short.MAX_VALUE))
+                            .add(pwPassword, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                        .add(18, 18, 18)
+                        .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                            .add(cmdLogin)
+                            .add(cmdCancel))))
+                .addContainerGap(195, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("Login", jPanel1);
@@ -1057,10 +1110,10 @@ public class LoginDialog extends javax.swing.JFrame {
 
         txtPort.setText("8080");
 
-        cmbServer.setEditable(true);
-        cmbServer.addFocusListener(new java.awt.event.FocusAdapter() {
-            public void focusLost(java.awt.event.FocusEvent evt) {
-                cmbServerFocusLost(evt);
+        cmbProfile.setEditable(true);
+        cmbProfile.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmbProfileActionPerformed(evt);
             }
         });
 
@@ -1176,32 +1229,101 @@ public class LoginDialog extends javax.swing.JFrame {
                 .addContainerGap())
         );
 
+        txtServer.addFocusListener(new java.awt.event.FocusAdapter() {
+            public void focusLost(java.awt.event.FocusEvent evt) {
+                txtServerFocusLost(evt);
+            }
+        });
+
+        lblProfile.setForeground(new java.awt.Color(255, 255, 255));
+        lblProfile.setText("Profil:");
+
+        cmdSaveProfile.setForeground(new java.awt.Color(255, 255, 255));
+        cmdSaveProfile.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png"))); // NOI18N
+        cmdSaveProfile.setText("Speichern");
+        cmdSaveProfile.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(255, 255, 255), 3, true));
+        cmdSaveProfile.setBorderPainted(false);
+        cmdSaveProfile.setContentAreaFilled(false);
+        cmdSaveProfile.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        cmdSaveProfile.setMargin(new java.awt.Insets(8, 24, 8, 24));
+        cmdSaveProfile.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdSaveProfileActionPerformed(evt);
+            }
+        });
+
+        cmdDeleteProfile.setForeground(new java.awt.Color(255, 255, 255));
+        cmdDeleteProfile.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editdelete.png"))); // NOI18N
+        cmdDeleteProfile.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(255, 255, 255), 3, true));
+        cmdDeleteProfile.setBorderPainted(false);
+        cmdDeleteProfile.setContentAreaFilled(false);
+        cmdDeleteProfile.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        cmdDeleteProfile.setMargin(new java.awt.Insets(8, 24, 8, 24));
+        cmdDeleteProfile.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdDeleteProfileActionPerformed(evt);
+            }
+        });
+
+        cmdAddProfile.setForeground(new java.awt.Color(255, 255, 255));
+        cmdAddProfile.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder_new.png"))); // NOI18N
+        cmdAddProfile.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(255, 255, 255), 3, true));
+        cmdAddProfile.setBorderPainted(false);
+        cmdAddProfile.setContentAreaFilled(false);
+        cmdAddProfile.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        cmdAddProfile.setMargin(new java.awt.Insets(8, 24, 8, 24));
+        cmdAddProfile.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdAddProfileActionPerformed(evt);
+            }
+        });
+
         org.jdesktop.layout.GroupLayout jPanel2Layout = new org.jdesktop.layout.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
             jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(jPanel2Layout.createSequentialGroup()
+            .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel2Layout.createSequentialGroup()
                 .addContainerGap()
                 .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(jLabel1)
                     .add(jLabel2)
-                    .add(jLabel4))
+                    .add(jLabel4)
+                    .add(lblProfile))
                 .add(19, 19, 19)
                 .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(txtPort)
-                    .add(cmbServer, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .add(rdSecNone, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .add(rdSecSsl, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .add(jPanel4, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap())
+                    .add(jPanel2Layout.createSequentialGroup()
+                        .add(12, 12, 12)
+                        .add(cmdSaveProfile)
+                        .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .add(jPanel2Layout.createSequentialGroup()
+                        .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            .add(jPanel2Layout.createSequentialGroup()
+                                .add(cmbProfile, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(cmdDeleteProfile)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(cmdAddProfile))
+                            .add(rdSecNone, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .add(rdSecSsl, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .add(jPanel4, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .add(txtServer)
+                            .add(txtPort))
+                        .addContainerGap())))
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel2Layout.createSequentialGroup()
-                .add(45, 45, 45)
+                .add(31, 31, 31)
+                .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
+                    .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                        .add(cmbProfile, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .add(lblProfile))
+                    .add(cmdDeleteProfile)
+                    .add(cmdAddProfile))
+                .add(18, 18, 18)
                 .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(jLabel1)
-                    .add(cmbServer, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                    .add(txtServer, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(jLabel2)
@@ -1214,7 +1336,9 @@ public class LoginDialog extends javax.swing.JFrame {
                 .add(rdSecSsl)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel4, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(73, Short.MAX_VALUE))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(cmdSaveProfile)
+                .addContainerGap(70, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab(bundle.getString("tab.title.connection"), jPanel2); // NOI18N
@@ -1351,7 +1475,7 @@ public class LoginDialog extends javax.swing.JFrame {
                                 .add(cmdRestore)
                                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                                 .add(jLabel9)))
-                        .add(0, 22, Short.MAX_VALUE))
+                        .add(0, 125, Short.MAX_VALUE))
                     .add(lblBoxOutput, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
@@ -1368,13 +1492,13 @@ public class LoginDialog extends javax.swing.JFrame {
                 .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(jPanel3Layout.createSequentialGroup()
                         .add(cmdBoxCheck)
-                        .add(0, 0, Short.MAX_VALUE))
+                        .add(0, 4, Short.MAX_VALUE))
                     .add(jLabel10, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(cmdBoxServiceRestart)
-                    .add(jLabel14, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 32, Short.MAX_VALUE))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
+                    .add(cmdBoxServiceRestart, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(jLabel14, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 39, Short.MAX_VALUE)
                 .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(cmdBoxReboot)
                     .add(jLabel13, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
@@ -1386,7 +1510,7 @@ public class LoginDialog extends javax.swing.JFrame {
                 .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(cmdMgmtConsole)
                     .add(jLabel11, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 13, Short.MAX_VALUE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 44, Short.MAX_VALUE)
                 .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(cmdRestore)
                     .add(jLabel9, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 30, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
@@ -1411,12 +1535,12 @@ public class LoginDialog extends javax.swing.JFrame {
         bgPanelLayout.setHorizontalGroup(
             bgPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(org.jdesktop.layout.GroupLayout.TRAILING, bgPanelLayout.createSequentialGroup()
-                .addContainerGap(73, Short.MAX_VALUE)
+                .addContainerGap(110, Short.MAX_VALUE)
                 .add(jLabel3, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 593, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .add(72, 72, 72))
             .add(bgPanelLayout.createSequentialGroup()
                 .add(72, 72, 72)
-                .add(jTabbedPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 593, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .add(jTabbedPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 623, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         bgPanelLayout.setVerticalGroup(
@@ -1459,12 +1583,12 @@ public class LoginDialog extends javax.swing.JFrame {
         }
 
         BoxAccess box = new BoxAccess(this.txtBoxPassword.getText());
-        box.restore(lblBoxOutput, boxProgress, this.cmbServer.getSelectedItem().toString(), dbPassword.toString(), encPassword.toString());
+        box.restore(lblBoxOutput, boxProgress, this.txtServer.getText(), dbPassword.toString(), encPassword.toString());
     }//GEN-LAST:event_cmdRestoreActionPerformed
 
     private void cmdBoxShutdownActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdBoxShutdownActionPerformed
         BoxAccess box = new BoxAccess(this.txtBoxPassword.getText());
-        box.boxReboot(lblBoxOutput, boxProgress, this.cmbServer.getSelectedItem().toString());
+        box.boxReboot(lblBoxOutput, boxProgress, this.txtServer.getText());
     }//GEN-LAST:event_cmdBoxShutdownActionPerformed
 
     private void cmdScanNetworkActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdScanNetworkActionPerformed
@@ -1473,48 +1597,48 @@ public class LoginDialog extends javax.swing.JFrame {
     }//GEN-LAST:event_cmdScanNetworkActionPerformed
 
     private void cmdMgmtConsoleActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdMgmtConsoleActionPerformed
-        DesktopUtils.openBrowser(BoxAccess.getManagementConsoleUrl(this.cmbServer.getSelectedItem().toString()));
+        DesktopUtils.openBrowser(BoxAccess.getManagementConsoleUrl(this.txtServer.getText()));
     }//GEN-LAST:event_cmdMgmtConsoleActionPerformed
 
     private void cmdBoxRebootActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdBoxRebootActionPerformed
         BoxAccess box = new BoxAccess(this.txtBoxPassword.getText());
-        box.boxReboot(lblBoxOutput, boxProgress, this.cmbServer.getSelectedItem().toString());
+        box.boxReboot(lblBoxOutput, boxProgress, this.txtServer.getText());
     }//GEN-LAST:event_cmdBoxRebootActionPerformed
 
     private void cmdBoxServiceRestartActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdBoxServiceRestartActionPerformed
         BoxAccess box = new BoxAccess(this.txtBoxPassword.getText());
-        box.serviceRestart(lblBoxOutput, boxProgress, this.cmbServer.getSelectedItem().toString());
+        box.serviceRestart(lblBoxOutput, boxProgress, this.txtServer.getText());
     }//GEN-LAST:event_cmdBoxServiceRestartActionPerformed
 
     private void cmdBoxCheckActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdBoxCheckActionPerformed
         BoxAccess box = new BoxAccess(this.txtBoxPassword.getText());
 
-        box.serviceCheck(lblBoxOutput, boxProgress, this.cmbServer.getSelectedItem().toString());
+        box.serviceCheck(lblBoxOutput, boxProgress, this.txtServer.getText());
     }//GEN-LAST:event_cmdBoxCheckActionPerformed
 
     private void pwPasswordKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_pwPasswordKeyPressed
-        if (evt.getKeyCode() == evt.VK_ENTER) {
+        if (evt.getKeyCode() == KeyEvent.VK_ENTER) {
             this.cmdLoginActionPerformed(null);
         }
     }//GEN-LAST:event_pwPasswordKeyPressed
 
     private void cmdLoginActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdLoginActionPerformed
 
-        if(launching)
+        if (launching) {
             return;
-        
-        launching=true;
+        }
+
+        launching = true;
         this.cmdLogin.setEnabled(false);
-        
-        
+
         ClientSettings settings = ClientSettings.getInstance();
-        int sourcePort=-1;
+        int sourcePort = -1;
         if (this.rdSecTunnel.isSelected()) {
             try {
                 SshTunnel tunnel = SshTunnel.getInstance();
                 // for cases of subsequent tries
                 tunnel.disconnect();
-                sourcePort=SshTunnel.getAvailablePort(Integer.parseInt(this.txtPort.getText()));
+                sourcePort = SshTunnel.getAvailablePort(Integer.parseInt(this.txtPort.getText()));
                 tunnel.setSourcePort(sourcePort);
                 tunnel.setSshHost(this.txtSshHost.getText().trim());
                 tunnel.setSshPassword(new String(this.pwdSshPassword.getPassword()));
@@ -1526,7 +1650,7 @@ public class LoginDialog extends javax.swing.JFrame {
                 tunnel.startConnectionObserver();
             } catch (Exception ex) {
                 log.error("SSH tunnel failed", ex);
-                if("".equals(new String(this.pwdSshPassword.getPassword()))) {
+                if ("".equals(new String(this.pwdSshPassword.getPassword()))) {
                     // happens due to the change from DES to AES encryption of this password
                     // user needs to re-enter password once
                     JOptionPane.showMessageDialog(this, "Aufbau des SSH-Tunnels gescheitert - bitte SSH-Passwort erneut eingeben:" + System.lineSeparator() + ex.getMessage(), "SSH-Fehler", JOptionPane.ERROR_MESSAGE);
@@ -1534,7 +1658,7 @@ public class LoginDialog extends javax.swing.JFrame {
                     JOptionPane.showMessageDialog(this, "Aufbau des SSH-Tunnels gescheitert:" + System.lineSeparator() + ex.getMessage(), "SSH-Fehler", JOptionPane.ERROR_MESSAGE);
                 }
                 this.cmdLogin.setEnabled(true);
-                launching=false;
+                launching = false;
                 return;
             }
         }
@@ -1547,7 +1671,7 @@ public class LoginDialog extends javax.swing.JFrame {
             // begin: for JMS only
             properties.put(Context.INITIAL_CONTEXT_FACTORY, "org.wildfly.naming.client.WildFlyInitialContextFactory");
             //properties.put(Context.INITIAL_CONTEXT_FACTORY, "org.wildfly.naming.client.WildFlyInitialContextFactory");
-            properties.put(Context.PROVIDER_URL, "https-remoting://" + this.cmbServer.getSelectedItem().toString() + ":" + this.txtPort.getText());
+            properties.put(Context.PROVIDER_URL, "https-remoting://" + this.txtServer.getText() + ":" + this.txtPort.getText());
             properties.put(Context.SECURITY_PRINCIPAL, this.txtUser.getText());
             properties.put(Context.SECURITY_CREDENTIALS, this.pwPassword.getText());
             properties.put("jboss.naming.client.connect.options.org.xnio.Options.SASL_POLICY_NOPLAINTEXT", "false");
@@ -1556,16 +1680,15 @@ public class LoginDialog extends javax.swing.JFrame {
             properties.put("jboss.naming.client.connect.options.org.xnio.Options.SSL_ENABLED", "true");
             properties.put("jboss.naming.client.connect.options.org.xnio.Options.SSL_STARTTLS", "true");
         } else if (this.rdSecTunnel.isSelected()) {
-            
+
             // need to use dynamically determined source port of ssh tunnel for http-remoting
-            
             //properties.put(Context.URL_PKG_PREFIXES, "org.jboss.ejb.client.naming");
             properties.put("jboss.naming.client.ejb.context", true);
 
             // begin: for JMS only
             properties.put(Context.INITIAL_CONTEXT_FACTORY, "org.wildfly.naming.client.WildFlyInitialContextFactory");
             //properties.put(Context.INITIAL_CONTEXT_FACTORY, "org.wildfly.naming.client.WildFlyInitialContextFactory");
-            properties.put(Context.PROVIDER_URL, "http-remoting://" + this.cmbServer.getSelectedItem().toString() + ":" + sourcePort);
+            properties.put(Context.PROVIDER_URL, "http-remoting://" + this.txtServer.getText() + ":" + sourcePort);
             properties.put(Context.SECURITY_PRINCIPAL, this.txtUser.getText());
             properties.put(Context.SECURITY_CREDENTIALS, this.pwPassword.getText());
             properties.put("jboss.naming.client.connect.options.org.xnio.Options.SASL_POLICY_NOPLAINTEXT", "false");
@@ -1578,7 +1701,7 @@ public class LoginDialog extends javax.swing.JFrame {
             // begin: for JMS only
             properties.put(Context.INITIAL_CONTEXT_FACTORY, "org.wildfly.naming.client.WildFlyInitialContextFactory");
             //properties.put(Context.INITIAL_CONTEXT_FACTORY, "org.wildfly.naming.client.WildFlyInitialContextFactory");
-            properties.put(Context.PROVIDER_URL, "http-remoting://" + this.cmbServer.getSelectedItem().toString() + ":" + this.txtPort.getText());
+            properties.put(Context.PROVIDER_URL, "http-remoting://" + this.txtServer.getText() + ":" + this.txtPort.getText());
             properties.put(Context.SECURITY_PRINCIPAL, this.txtUser.getText());
             properties.put(Context.SECURITY_CREDENTIALS, this.pwPassword.getText());
             properties.put("jboss.naming.client.connect.options.org.xnio.Options.SASL_POLICY_NOPLAINTEXT", "false");
@@ -1660,57 +1783,26 @@ public class LoginDialog extends javax.swing.JFrame {
             this.txtUser.setForeground(Color.RED);
             this.pwPassword.setForeground(Color.RED);
             this.cmdLogin.setEnabled(true);
-            launching=false;
+            launching = false;
             System.exit(1);
         } catch (Exception ex) {
 
             log.error("Error connecting to server", ex);
             JOptionPane.showMessageDialog(this, java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/LoginDialog").getString("msg.error.loginorconnectionfailed"), new Object[]{ex.getMessage()}), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/LoginDialog").getString("msg.error"), JOptionPane.ERROR_MESSAGE);
             this.cmdLogin.setEnabled(true);
-            launching=false;
+            launching = false;
             return;
         }
 
-        settings.setConfiguration(settings.CONF_LASTPORT, this.txtPort.getText());
-        settings.setConfiguration(settings.CONF_LASTPORTDYN, this.txtPort.getText());
+        settings.setConfiguration(ClientSettings.CONF_LASTCONNECTION, this.cmbCurrentConnection.getSelectedItem().toString());
         
-        // deprecated
-        settings.setConfiguration(settings.CONF_LASTSERVERSSL, "deprecated");
-        if (this.rdSecSsl.isSelected()) {
-            settings.setConfiguration(settings.CONF_LASTSECMODE, "ssl");
-        } else if (this.rdSecTunnel.isSelected()) {
-            settings.setConfiguration(settings.CONF_LASTSECMODE, "ssh");
-            settings.setConfiguration(settings.CONF_LASTPORTDYN, ""+sourcePort);
-        } else {
-            settings.setConfiguration(settings.CONF_LASTSECMODE, SECMODE_STANDARD);
-        }
-        settings.setConfiguration(settings.CONF_LASTSSHHOST, this.txtSshHost.getText().trim());
-        settings.setConfiguration(settings.CONF_LASTSSHPORT, this.txtSshPort.getText().trim());
-        settings.setConfiguration(settings.CONF_LASTSSHUSER, this.txtSshUser.getText().trim());
-        try {
-            settings.setConfiguration(settings.CONF_LASTSSHPWD, Crypto.encrypt(new String(this.pwdSshPassword.getPassword()), System.getProperty("user.name").toCharArray()));
-        } catch (Throwable t) {
-            log.error("Unable to encrypt tunnel SSH password", t);
-            settings.setConfiguration(settings.CONF_LASTSSHPWD, "");
-        }
-        settings.setConfiguration(settings.CONF_LASTTARGETPORT, this.txtTargetPort.getText());
-
-        String allServers = settings.getConfiguration(settings.CONF_LASTSERVERLIST, "localhost");
-        if (allServers.indexOf(this.cmbServer.getSelectedItem().toString()) < 0) {
-            allServers = allServers + "," + this.cmbServer.getSelectedItem().toString();
-        }
-
-        settings.setConfiguration(settings.CONF_LASTSERVERLIST, allServers);
-        settings.setConfiguration(settings.CONF_LASTSERVER, this.cmbServer.getSelectedItem().toString());
-        settings.setConfiguration(settings.CONF_LASTUSER, this.txtUser.getText());
-
         String serverVersion = VersionUtils.getServerVersion();
         String clientVersion = VersionUtils.getFullClientVersion();
         if (!VersionUtils.isCompatible(serverVersion, clientVersion)) {
             int response = JOptionPane.showConfirmDialog(this, java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/LoginDialog").getString("msg.compatibilitycheck.failed"), new Object[]{clientVersion, serverVersion, System.getProperty("line.separator")}), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/LoginDialog").getString("msg.compatibilitycheck"), JOptionPane.YES_NO_OPTION);
             if (response == JOptionPane.NO_OPTION) {
                 this.cmdLogin.setEnabled(true);
-                launching=false;
+                launching = false;
                 System.exit(0);
             }
         }
@@ -1728,8 +1820,6 @@ public class LoginDialog extends javax.swing.JFrame {
         splash.addStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/LoginDialog").getString("label.loadingstatus"));
         splash.addStatus(System.getProperty("line.separator"));
         splash.repaint();
-//        this.cmdLogin.setEnabled(true);
-//        launching=false;
 
         new Thread(new SplashThread(splash, settings, this)).start();
     }//GEN-LAST:event_cmdLoginActionPerformed
@@ -1737,10 +1827,6 @@ public class LoginDialog extends javax.swing.JFrame {
     private void cmdCancelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCancelActionPerformed
         System.exit(0);
     }//GEN-LAST:event_cmdCancelActionPerformed
-
-    private void cmbServerFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_cmbServerFocusLost
-        cmbServer.setSelectedItem(cmbServer.getSelectedItem().toString().trim());
-    }//GEN-LAST:event_cmbServerFocusLost
 
     private void rdSecNoneActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rdSecNoneActionPerformed
         this.highlightSecuritySelection();
@@ -1754,41 +1840,123 @@ public class LoginDialog extends javax.swing.JFrame {
         this.highlightSecuritySelection();
     }//GEN-LAST:event_rdSecTunnelActionPerformed
 
+    private void cmbProfileActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbProfileActionPerformed
+        ConnectionProfiles connections = ConnectionProfiles.getInstance();
+        ConnectionProfile profile = connections.getProfile(this.cmbProfile.getSelectedItem().toString());
+        if (profile != null) {
+
+            this.txtPort.setText(profile.getPort());
+            this.txtServer.setText(profile.getServer());
+            this.txtUser.setText(profile.getUser());
+
+            // default is no special security
+            this.rdSecNone.setSelected(true);
+
+            String secMode = profile.getSecurityMode();
+            if ("ssl".equalsIgnoreCase(secMode)) {
+                this.rdSecSsl.setSelected(true);
+            }
+            if ("ssh".equalsIgnoreCase(secMode)) {
+                this.rdSecTunnel.setSelected(true);
+            }
+            this.txtSshHost.setText(profile.getSshHost());
+            this.txtSshPort.setText(profile.getSshPort());
+            this.txtSshUser.setText(profile.getSshUser());
+            this.pwdSshPassword.setText(profile.getSshPassword());
+            this.txtTargetPort.setText(profile.getSshTargetPort());
+            this.highlightSecuritySelection();
+        }
+    }//GEN-LAST:event_cmbProfileActionPerformed
+
+    private void cmbCurrentConnectionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbCurrentConnectionActionPerformed
+        this.cmbProfile.setSelectedItem(this.cmbCurrentConnection.getSelectedItem());
+    }//GEN-LAST:event_cmbCurrentConnectionActionPerformed
+
+    private void txtServerFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_txtServerFocusLost
+        txtServer.setText(txtServer.getText().trim());
+    }//GEN-LAST:event_txtServerFocusLost
+
+    private void cmdSaveProfileActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveProfileActionPerformed
+        ConnectionProfiles profiles=ConnectionProfiles.getInstance();
+        ConnectionProfile profile=profiles.getProfile(this.cmbProfile.getSelectedItem().toString());
+        if(profile!=null) {
+            profile.setPort(this.txtPort.getText());
+            profile.setSecurityMode("standard");
+            if(this.rdSecSsl.isSelected())
+                profile.setSecurityMode("ssl");
+            if(this.rdSecTunnel.isSelected())
+                profile.setSecurityMode("ssh");
+            profile.setServer(this.txtServer.getText());
+            profile.setSshHost(this.txtSshHost.getText());
+            profile.setSshPassword(new String(this.pwdSshPassword.getPassword()));
+            profile.setSshPort(this.txtSshPort.getText());
+            profile.setSshTargetPort(this.txtTargetPort.getText());
+            profile.setSshUser(this.txtSshUser.getText());
+            profile.setUser(this.txtUser.getText());
+            try {
+                profiles.saveProfile(profile);
+            } catch (Exception ex) {
+                log.error("Unable to save profile", ex);
+                JOptionPane.showMessageDialog(this, "Profil konnte nicht gespeichert werden", "Profil speichern", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }//GEN-LAST:event_cmdSaveProfileActionPerformed
+
+    private void cmdDeleteProfileActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdDeleteProfileActionPerformed
+        ConnectionProfiles profiles=ConnectionProfiles.getInstance();
+        String selected=this.cmbProfile.getSelectedItem().toString();
+        profiles.removeProfile(selected);
+        ((DefaultComboBoxModel)this.cmbProfile.getModel()).removeElement(selected);
+        ((DefaultComboBoxModel)this.cmbCurrentConnection.getModel()).removeElement(selected);
+        this.cmbCurrentConnection.setSelectedItem(this.cmbCurrentConnection.getSelectedItem());
+    }//GEN-LAST:event_cmdDeleteProfileActionPerformed
+
+    private void cmdAddProfileActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdAddProfileActionPerformed
+        Object newNameObject = JOptionPane.showInputDialog(this, "Name des Verbindungsprofils: ", "Neues Verbindungsprofil anlegen", JOptionPane.QUESTION_MESSAGE, null, null, "");
+        if (newNameObject == null) {
+            return;
+        }
+        
+        ConnectionProfiles profiles=ConnectionProfiles.getInstance();
+        ConnectionProfile newProfile=new ConnectionProfile();
+        newProfile.setName(newNameObject.toString());
+        newProfile.setServer("localhost");
+        newProfile.setPort("8080");
+        newProfile.setSecurityMode(SECMODE_STANDARD);
+        try {
+            profiles.addProfile(newProfile);
+            ((DefaultComboBoxModel)this.cmbProfile.getModel()).addElement(newNameObject.toString());
+            ((DefaultComboBoxModel)this.cmbCurrentConnection.getModel()).addElement(newNameObject.toString());
+            this.cmbCurrentConnection.setSelectedItem(newNameObject.toString());
+        } catch (Exception ex) {
+            log.error("Unable to add profile", ex);
+            JOptionPane.showMessageDialog(this, "Profil konnte nicht hinzugefügt werden", "Profil hinzufügen", JOptionPane.ERROR_MESSAGE);
+        }
+        
+    }//GEN-LAST:event_cmdAddProfileActionPerformed
+
     private void highlightSecuritySelection() {
-//        this.rdSecNone.setOpaque(true);
-//        this.rdSecSsl.setOpaque(true);
         this.rdSecNone.setBackground(new Color(100, 100, 100, 0));
         this.rdSecSsl.setBackground(new Color(100, 100, 100, 0));
         this.jPanel4.setBackground(new Color(100, 100, 100, 0));
 
         Color highlightColor = new Color(DefaultColorTheme.COLOR_LOGO_GREEN.getRed(), DefaultColorTheme.COLOR_LOGO_GREEN.getGreen(), DefaultColorTheme.COLOR_LOGO_GREEN.getBlue(), 170);
         if (rdSecNone.isSelected()) {
-            //this.rdSecNone.setOpaque(false);
             this.rdSecNone.setBackground(highlightColor);
         } else if (rdSecSsl.isSelected()) {
-            //this.rdSecSsl.setOpaque(false);
             this.rdSecSsl.setBackground(highlightColor);
         } else if (rdSecTunnel.isSelected()) {
-            //this.jPanel4.setOpaque(false);
             this.jPanel4.setBackground(highlightColor);
         }
 
-        //this.jPanel4.revalidate();
-//        this.rdSecNone.repaint();
-//        this.rdSecSsl.repaint();
-//        this.rdSecNone.revalidate();
-//        this.rdSecSsl.revalidate();
-//        this.jPanel2.repaint();
     }
 
     /**
      * @param args the command line arguments
      */
     public static void main(String args[]) {
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                new LoginDialog("", null, null, null, null, SECMODE_STANDARD, null, null, null, null, null).setVisible(true);
-            }
+        java.awt.EventQueue.invokeLater(() -> {
+            new LoginDialog("", null, null, null, null, SECMODE_STANDARD, null, null, null, null, null).setVisible(true);
         });
     }
 
@@ -1796,15 +1964,19 @@ public class LoginDialog extends javax.swing.JFrame {
     private com.jdimension.jlawyer.client.StyledPanel bgPanel;
     private javax.swing.JProgressBar boxProgress;
     private javax.swing.ButtonGroup btnGrpSecurity;
-    private javax.swing.JComboBox<String> cmbServer;
+    private javax.swing.JComboBox<String> cmbCurrentConnection;
+    private javax.swing.JComboBox<String> cmbProfile;
+    private javax.swing.JButton cmdAddProfile;
     private javax.swing.JButton cmdBoxCheck;
     private javax.swing.JButton cmdBoxReboot;
     private javax.swing.JButton cmdBoxServiceRestart;
     private javax.swing.JButton cmdBoxShutdown;
     private javax.swing.JButton cmdCancel;
+    private javax.swing.JButton cmdDeleteProfile;
     private javax.swing.JButton cmdLogin;
     private javax.swing.JButton cmdMgmtConsole;
     private javax.swing.JButton cmdRestore;
+    private javax.swing.JButton cmdSaveProfile;
     private javax.swing.JButton cmdScanNetwork;
     private javax.swing.JButton jButton1;
     private javax.swing.JLabel jLabel1;
@@ -1831,8 +2003,10 @@ public class LoginDialog extends javax.swing.JFrame {
     private javax.swing.JPanel jPanel4;
     private javax.swing.JTabbedPane jTabbedPane1;
     private javax.swing.JLabel lblBoxOutput;
+    private javax.swing.JLabel lblConnection;
     private javax.swing.JLabel lblHint;
     private javax.swing.JLabel lblPassword;
+    private javax.swing.JLabel lblProfile;
     private javax.swing.JLabel lblUser;
     private javax.swing.JPasswordField pwPassword;
     private javax.swing.JPasswordField pwdSshPassword;
@@ -1842,6 +2016,7 @@ public class LoginDialog extends javax.swing.JFrame {
     private javax.swing.JPasswordField txtBoxPassword;
     private javax.swing.JTextField txtCurrentHost;
     private javax.swing.JTextField txtPort;
+    private javax.swing.JTextField txtServer;
     private javax.swing.JTextField txtSshHost;
     private javax.swing.JTextField txtSshPort;
     private javax.swing.JTextField txtSshUser;

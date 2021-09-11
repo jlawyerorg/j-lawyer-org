@@ -699,6 +699,9 @@ public class ClientSettings {
     public static final String CONF_LASTSSHPWD="connection.lastsshpwd";
     public static final String CONF_LASTTARGETPORT="connection.lastsshtargetport";
     
+    // name of the connection profile that was last used successfully
+    public static final String CONF_LASTCONNECTION="connection.lastconnection";
+    
     public static final String CONF_THEME="client.theme";
     
     public static final String CONF_HEIGHT="client.height";

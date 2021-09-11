@@ -727,7 +727,7 @@ public class ImportCourtsFromBeaThread implements Runnable {
             bea = BeaAccess.getInstance();
         } catch (Exception ex) {
             log.error("Error connecting to beA", ex);
-            ThreadUtils.showErrorDialog(this.owner, ex.getMessage(), "Fehler");
+            ThreadUtils.showErrorDialog(this.owner, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
             ThreadUtils.enableComponent(this.closeButton, true);
             ThreadUtils.enableComponent(this.importButton, true);
             ThreadUtils.setDefaultCursor(this.owner);
@@ -745,7 +745,7 @@ public class ImportCourtsFromBeaThread implements Runnable {
             adr = locator.lookupAddressServiceRemote();
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);
-            //JOptionPane.showMessageDialog(this.owner, "Verbindungsfehler: " + ex.getMessage(), "Fehler", JOptionPane.ERROR_MESSAGE);
+            //JOptionPane.showMessageDialog(this.owner, "Verbindungsfehler: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             ThreadUtils.showErrorDialog(this.owner, java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/configuration/ImportZipCodesThread").getString("dialog.connectionerror"), new Object[]{ex.getMessage()}), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/configuration/ImportZipCodesThread").getString("dialog.error"));
             ThreadUtils.enableComponent(this.closeButton, true);
             ThreadUtils.enableComponent(this.importButton, true);
@@ -827,7 +827,7 @@ public class ImportCourtsFromBeaThread implements Runnable {
 
         } catch (Exception ex) {
             log.error("Error importing court adresses", ex);
-            ThreadUtils.showErrorDialog(this.owner, ex.getMessage(), "Fehler");
+            ThreadUtils.showErrorDialog(this.owner, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
             ThreadUtils.enableComponent(this.closeButton, true);
             ThreadUtils.enableComponent(this.importButton, true);
             ThreadUtils.setDefaultCursor(this.owner);
