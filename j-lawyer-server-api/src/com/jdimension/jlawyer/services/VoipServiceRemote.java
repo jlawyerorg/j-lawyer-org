@@ -682,7 +682,7 @@ public interface VoipServiceRemote {
 
     ArrayList<SipUri> getOwnUris() throws SipgateException;
 
-    String initiateSms(String localUri, String remoteUri, String content) throws SipgateException;
+    void initiateSms(String localUri, String remoteUri, String content) throws SipgateException;
 
     String initiateCall(String localUri, String remoteUri) throws SipgateException;
 

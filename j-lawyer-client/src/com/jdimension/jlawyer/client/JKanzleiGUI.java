@@ -809,11 +809,8 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
 //            log.error(ex);
 //        }
         // will initialize the system tray icon for the first time
-        SwingUtilities.invokeLater(new Runnable() {
-
-            public void run() {
-                SystrayUtils.getInstance();
-            }
+        SwingUtilities.invokeLater(() -> {
+            SystrayUtils.getInstance();
         });
 
         Timer timer = new Timer();
@@ -826,23 +823,19 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             JMenuItem mi = new JMenuItem();
             mi.setText(cp.getName());
             mi.setToolTipText(cp.getDescription());
-            mi.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    try {
-                        JPanel ui = cp.getUi(null, 0f);
-                        CalculationPluginDialog dlg = new CalculationPluginDialog(EditorsRegistry.getInstance().getMainWindow(), false, ui);
-                        dlg.setTitle("Plugin: " + cp.getName() + " " + cp.getVersion());
-                        dlg.setHeader(cp.getDescription());
-                        dlg.setFooter("Autor: " + cp.getAuthor() + " - zuletzt aktualisiert: " + cp.getUpdated());
-                        FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
-                        dlg.setVisible(true);
-                    } catch (Exception ex) {
-                        log.error("Error launching plugin UI", ex);
-                        JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Plugin kann nicht gestartet werden: " + ex.getMessage(), "Pluginfehler", JOptionPane.ERROR_MESSAGE);
-                    }
+            mi.addActionListener((ActionEvent e) -> {
+                try {
+                    JPanel ui = cp.getUi(null, 0f);
+                    CalculationPluginDialog dlg = new CalculationPluginDialog(EditorsRegistry.getInstance().getMainWindow(), false, ui);
+                    dlg.setTitle("Plugin: " + cp.getName() + " " + cp.getVersion());
+                    dlg.setHeader(cp.getDescription());
+                    dlg.setFooter("Autor: " + cp.getAuthor() + " - zuletzt aktualisiert: " + cp.getUpdated());
+                    FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
+                    dlg.setVisible(true);
+                } catch (Exception ex) {
+                    log.error("Error launching plugin UI", ex);
+                    JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Plugin kann nicht gestartet werden: " + ex.getMessage(), "Pluginfehler", JOptionPane.ERROR_MESSAGE);
                 }
-
             });
             this.mnuCalculations.add(mi);
         }
@@ -851,51 +844,26 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         if (osName.startsWith("mac")) {
             // this is required because the macOS native menu integration provides a menu entry to quit the client
             // using this button, no #formClosing event is sent, which is where the settings are stored.
-            Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        ClientSettings settings = ClientSettings.getInstance();
-                        settings.saveConfiguration();
-                    } catch (Throwable t) {
-                        log.error("Error storing client settings", t);
-                    }
+            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                try {
+                    ClientSettings settings1 = ClientSettings.getInstance();
+                    settings1.saveConfiguration();
+                }catch (Throwable t) {
+                    log.error("Error storing client settings", t);
                 }
-
             }));
         }
 
-        Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    if (CloudInstance.hasInstance()) {
-                        CloudInstance.getInstance(UserSettings.getInstance().getCurrentUser()).shutdown();
-                    }
-                } catch (Throwable t) {
-                    log.error("Error disposing cloud connection instance", t);
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            try {
+                if (CloudInstance.hasInstance()) {
+                    CloudInstance.getInstance(UserSettings.getInstance().getCurrentUser()).shutdown();
                 }
+            } catch (Throwable t) {
+                log.error("Error disposing cloud connection instance", t);
             }
-
         }));
 
-//        try {
-//            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-//
-//            Topic t = locator.lookupJMSTopic("java:/topic/systemMonitoringTopic");
-//            //Topic t = locator.lookupJMSTopic("java:jboss/exported/jms/topic/systemMonitoringTopic");
-//            ConnectionFactory cf = locator.lookupJMSConnectionFactory();
-//            Connection con = cf.createConnection(UserSettings.getInstance().getCurrentUser().getPrincipalId(), UserSettings.getInstance().getCurrentUser().getPassword());
-//            Session session = con.createSession(false, Session.AUTO_ACKNOWLEDGE);
-//            con.start();
-//            session.createConsumer(t).setMessageListener(new SystemStatusListener());
-//
-//            Runtime.getRuntime().addShutdownHook(new Thread(new JMSCleanUp(con, session)));
-//
-//        } catch (Throwable ex) {
-//            log.error(ex);
-//            ThreadUtils.showErrorDialog(this, java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("error.jms.systemmonitoring"), new Object[]{ex.getMessage()}), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.error"));
-//        }
     }
 
     public void buildModuleBar() {
@@ -918,7 +886,6 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
 
     @Override
     public void onEvent(Event e) {
-        //System.out.println("Consumed event with type " + e.getType());
         if (e instanceof AutoUpdateEvent) {
 
             this.lblUpdateStatus.setIcon(((AutoUpdateEvent) e).getSmallIcon());
@@ -1868,7 +1835,6 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         dlg.setOptionGroup(OptionConstants.OPTIONGROUP_SALUTATIONS);
         FrameUtils.centerDialog(dlg, this);
         dlg.setVisible(true);
-        //FrameUtils.centerDialog(dlg, this);
     }//GEN-LAST:event_mnuAddressOptionsSalutationActionPerformed
 
     private void formWindowClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosing
@@ -1980,33 +1946,8 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
 
     private void mnuOnlineHelpActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuOnlineHelpActionPerformed
 
-        //DesktopUtils.openBrowser("http://www.j-lawyer.org/?page_id=11");
         DesktopUtils.openBrowser(ClientSettings.getInstance().getUrlHelp());
 
-//        boolean browserSupport = true;
-//        String helpUrl="http://www.j-lawyer.org/?page_id=11";
-//        if (Desktop.isDesktopSupported()) {
-//            Desktop desktop = Desktop.getDesktop();
-//            if (desktop.isSupported(Desktop.Action.BROWSE)) {
-//                URI uri = null;
-//                try {
-//                    uri = new URI(helpUrl);
-//                    desktop.browse(uri);
-//                } catch (Throwable t) {
-//                    log.error("Error opening browser", t);
-//                    JOptionPane.showMessageDialog(this, "Internetbrowser kann auf Ihrem System nicht automatisch gestartet werden. Die Hilfe ist verfügbar unter " + helpUrl, "Hinweis", JOptionPane.INFORMATION_MESSAGE);
-//                }
-//
-//            } else {
-//                browserSupport = false;
-//            }
-//        } else {
-//            browserSupport = false;
-//
-//        }
-//        if (!browserSupport) {
-//            JOptionPane.showMessageDialog(this, "Internetbrowser kann auf Ihrem System nicht automatisch gestartet werden. Die Hilfe ist verfügbar unter " + helpUrl, "Hinweis", JOptionPane.INFORMATION_MESSAGE);
-//        }
     }//GEN-LAST:event_mnuOnlineHelpActionPerformed
 
     private void mnuFontSizeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuFontSizeActionPerformed
@@ -2058,7 +1999,6 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     }//GEN-LAST:event_lblSystemStatusMouseClicked
 
     private void mnuForumActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuForumActionPerformed
-        //DesktopUtils.openBrowser("http://www.j-lawyer.org/?page_id=673");
         DesktopUtils.openBrowser(ClientSettings.getInstance().getUrlForum());
     }//GEN-LAST:event_mnuForumActionPerformed
 
@@ -2072,11 +2012,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     }//GEN-LAST:event_mnuScanOptionsActionPerformed
 
     private void mnuVoipSipgateSettingsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuVoipSipgateSettingsActionPerformed
-        if (checkAdmin()) {
-                VoipSipgateConfigurationDialog dlg = new VoipSipgateConfigurationDialog(this, true);
-                FrameUtils.centerDialog(dlg, this);
-                dlg.setVisible(true);
-            }
+        
     }//GEN-LAST:event_mnuVoipSipgateSettingsActionPerformed
 
     private void mnuDrebisSettingsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuDrebisSettingsActionPerformed
@@ -2303,33 +2239,29 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
                 file.delete();
             }
 
-            new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    try (FileOutputStream fout = new FileOutputStream(file)) {
-                        ThreadUtils.showInformationDialog(EditorsRegistry.getInstance().getMainWindow(), "XJustiz-Viewer wird im Hintergrund heruntergeladen...", "Download gestartet");
-                        URL updateURL = new URL(downloadUrl);
-                        URLConnection urlCon = updateURL.openConnection();
-                        urlCon.setRequestProperty("User-Agent", "j-lawyer Client v" + VersionUtils.getFullClientVersion());
-
-                        
-                        InputStream is = urlCon.getInputStream();
-                        byte[] buffer = new byte[1024];
-                        int len = 0;
-                        StringBuffer sb = new StringBuffer();
-                        while ((len = is.read(buffer)) > -1) {
-                            fout.write(buffer, 0, len);
-                        }
-                        is.close();
-                        ThreadUtils.showInformationDialog(EditorsRegistry.getInstance().getMainWindow(), "XJustiz-Viewer zur Installation verfügbar: " + file.getAbsolutePath(), "Download abgeschlossen");
-
-                    } catch (Exception ex) {
-                        log.error(ex);
-                        ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Herunterladen des XJustiz-Viewers", "Download-Fehler");
-
+            new Thread(() -> {
+                try (FileOutputStream fout = new FileOutputStream(file)) {
+                    ThreadUtils.showInformationDialog(EditorsRegistry.getInstance().getMainWindow(), "XJustiz-Viewer wird im Hintergrund heruntergeladen...", "Download gestartet");
+                    URL updateURL = new URL(downloadUrl);
+                    URLConnection urlCon = updateURL.openConnection();
+                    urlCon.setRequestProperty("User-Agent", "j-lawyer Client v" + VersionUtils.getFullClientVersion());
+                    
+                    
+                    InputStream is = urlCon.getInputStream();
+                    byte[] buffer = new byte[1024];
+                    int len = 0;
+                    StringBuilder sb = new StringBuilder();
+                    while ((len = is.read(buffer)) > -1) {
+                        fout.write(buffer, 0, len);
                     }
+                    is.close();
+                    ThreadUtils.showInformationDialog(EditorsRegistry.getInstance().getMainWindow(), "XJustiz-Viewer zur Installation verfügbar: " + file.getAbsolutePath(), "Download abgeschlossen");
+                    
+                } catch (Exception ex) {
+                    log.error(ex);
+                    ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Herunterladen des XJustiz-Viewers", "Download-Fehler");
+                    
                 }
-
             }).start();
 
         } catch (Exception ex) {

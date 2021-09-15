@@ -715,13 +715,13 @@ public class UgAccess {
                 jsonQuery="{\"query\":\"" + query + "\", \"referer\":\"j-lawyer\", \"filter\": {\"categories\":[\"rechtsprechung\"]}}";
             }
             String returnValue = webTarget.request(javax.ws.rs.core.MediaType.APPLICATION_JSON).post(javax.ws.rs.client.Entity.entity(jsonQuery, javax.ws.rs.core.MediaType.APPLICATION_JSON), String.class);
-            ArrayList<UgHit> returnList=new ArrayList<UgHit>();
+            ArrayList<UgHit> returnList=new ArrayList<>();
             Object jsonOutput = Jsoner.deserialize(returnValue);
             if (jsonOutput instanceof JsonObject) {
                 JsonObject result = (JsonObject) jsonOutput;
                 JsonKey hitCountKey = Jsoner.mintJsonKey("anzahlDerTreffer", null);
                 Integer hitCount = result.getInteger(hitCountKey);
-                searchResult.setNumberOfHits(hitCount.intValue());
+                searchResult.setNumberOfHits(hitCount);
                 JsonKey hitListLinkKey = Jsoner.mintJsonKey("linkZurTrefferliste", null);
                 String hitListUrl = result.getString(hitListLinkKey);
                 searchResult.setUrl(hitListUrl);

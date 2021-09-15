@@ -665,7 +665,6 @@ package com.jdimension.jlawyer.fax;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.HashMap;
 import org.apache.log4j.Logger;
 
 /**
@@ -673,35 +672,27 @@ import org.apache.log4j.Logger;
  * @author jens
  */
 public class SipgateInstance {
-    
+
     private static final Logger log = Logger.getLogger(SipgateInstance.class.getName());
 
     private SipgateAPI api = null;
     private static SipgateInstance instance = null;
-    private HashMap<String, Object> resultCache = null;
-    private HashMap<String, Long> lastCalled = null;
     private String currentUser = null;
     private String currentPwd = null;
-    private String currentEndpoint = null;
 
-    private SipgateInstance(String endpoint, String user, String password, String clientName, String clientVersion) throws SipgateException {
-        this.initiate(endpoint, user, password, clientName, clientVersion);
+    private ArrayList<SipUri> uris = null;
+    private long lastUriUpdate = System.currentTimeMillis();
+
+    private SipgateInstance(String user, String password, String clientName, String clientVersion) throws SipgateException {
+        this.initiate(user, password, clientName, clientVersion);
 
     }
 
-    private void initiate(String endpoint, String user, String password, String clientName, String clientVersion) throws SipgateException {
-        this.api = new SipgateAPI(endpoint, user, password, clientName, clientVersion);
-        try {
-            this.api.login();
-            resultCache = new HashMap<String, Object>();
-            lastCalled = new HashMap<String, Long>();
-            this.currentEndpoint = endpoint;
-            this.currentUser = user;
-            this.currentPwd = password;
-        } catch (SipgateException sge) {
-            this.api = null;
-            throw sge;
-        }
+    private void initiate(String user, String password, String clientName, String clientVersion) throws SipgateException {
+        this.api = new SipgateAPI(user, password, clientName, clientVersion);
+
+        this.currentUser = user;
+        this.currentPwd = password;
 
     }
 
@@ -713,100 +704,50 @@ public class SipgateInstance {
         this.api = null;
     }
 
-    public static synchronized SipgateInstance getInstance(String endpoint, String user, String password, String clientName, String clientVersion) throws SipgateException {
+    public static synchronized SipgateInstance getInstance(String user, String password, String clientName, String clientVersion) throws SipgateException {
         if (instance == null) {
-            instance = new SipgateInstance(endpoint, user, password, clientName, clientVersion);
+            instance = new SipgateInstance(user, password, clientName, clientVersion);
         }
 
         if (!instance.isInitiated()) {
-            instance.initiate(endpoint, user, password, clientName, clientVersion);
+            instance.initiate(user, password, clientName, clientVersion);
         }
 
         // check for changed configuration
-        if (!endpoint.equals(instance.getCurrentEndpoint()) || !user.equals(instance.getCurrentUser()) || !password.equals(instance.getCurrentPwd())) {
-            instance.initiate(endpoint, user, password, clientName, clientVersion);
+        if (!user.equals(instance.getCurrentUser()) || !password.equals(instance.getCurrentPwd())) {
+            instance.initiate(user, password, clientName, clientVersion);
         }
 
         return instance;
     }
 
     public BalanceInformation getBalance() throws SipgateException {
-        Long lastCall = this.lastCalled.get(api.METHOD_GETBALANCE);
-        BalanceInformation bi = null;
-        if (lastCall != null) {
-            Integer interval = api.getRecommendedInterval(api.METHOD_GETBALANCE);
-            long current = System.currentTimeMillis();
-            if (interval > ((current - lastCall.longValue()) / 1000)) {
-                return (BalanceInformation) this.resultCache.get(api.METHOD_GETBALANCE);
-            } else {
-                bi = this.api.getBalance();
-                this.lastCalled.put(api.METHOD_GETBALANCE, new Long(current));
-                this.resultCache.put(api.METHOD_GETBALANCE, bi);
-            }
-
-        } else {
-            bi = this.api.getBalance();
-            this.lastCalled.put(api.METHOD_GETBALANCE, new Long(System.currentTimeMillis()));
-            this.resultCache.put(api.METHOD_GETBALANCE, bi);
-        }
+        BalanceInformation bi = this.api.getBalance();
 
         return bi;
     }
 
     public ArrayList<SipUri> getOwnUris() throws SipgateException {
-        Long lastCall = this.lastCalled.get(api.METHOD_GETOWNURIS);
-        ArrayList<SipUri> list = null;
-        if (lastCall != null) {
-            Integer interval = api.getRecommendedInterval(api.METHOD_GETOWNURIS);
-            long current = System.currentTimeMillis();
-            if (interval > ((current - lastCall.longValue()) / 1000)) {
-                return (ArrayList<SipUri>) this.resultCache.get(api.METHOD_GETOWNURIS);
-            } else {
-                list = this.api.getOwnUris();
-                this.lastCalled.put(api.METHOD_GETOWNURIS, new Long(current));
-                this.resultCache.put(api.METHOD_GETOWNURIS, list);
-            }
-
-        } else {
-            list = this.api.getOwnUris();
-            this.lastCalled.put(api.METHOD_GETOWNURIS, new Long(System.currentTimeMillis()));
-            this.resultCache.put(api.METHOD_GETOWNURIS, list);
+        // in case of sipgate configuration changes, it may take up to an hour to become effective
+        if (this.uris == null || ((System.currentTimeMillis() - this.lastUriUpdate) > (1000l * 60l * 60.))) {
+            uris = this.api.getOwnUris();
+            this.lastUriUpdate = System.currentTimeMillis();
         }
 
-        return list;
+        return uris;
     }
 
-    public String getSessionStatus(String sessionId) throws SipgateException {
-        //return this.api.getSessionStatus(sessionId);
-
-        Long lastCall = this.lastCalled.get(api.METHOD_GETSESSIONSTATUS);
-        if (lastCall != null) {
-            Integer interval = api.getRecommendedInterval(api.METHOD_GETSESSIONSTATUS);
-            long current = System.currentTimeMillis();
-            if (interval > ((current - lastCall.longValue()) / 1000)) {
-                try {
-                    long waitTime = ((interval * 1000) - (current - lastCall.longValue()));
-                    if(waitTime<1000l)
-                        waitTime=1000l;
-                    if(waitTime>3500l)
-                        waitTime=3500l;
-                   
-                    log.info("delaying GetSessionStatus by " + waitTime + "ms");
-                    
-                    Thread.sleep(waitTime);
-                } catch (Throwable t) {
-//                    log.error(t);
-                }
-            }
-        }
-
-        this.lastCalled.put(api.METHOD_GETSESSIONSTATUS, new Long(System.currentTimeMillis()));
-        return this.api.getSessionStatus(sessionId);
+    public String getFaxStatus(String sessionId) throws SipgateException {
+        return this.api.getFaxStatus(sessionId);
 
     }
+    
+    public byte[] getFaxReport(String sessionId) throws SipgateException {
+        return this.api.getFaxReport(sessionId);
+    }
 
-    public String initiateSms(String localUri, String remoteUri, String content) throws SipgateException {
-        return this.api.initiateSms(localUri, remoteUri, content);
+    public void initiateSms(String localUri, String remoteUri, String content) throws SipgateException {
+        this.api.initiateSms(localUri, remoteUri, content);
     }
 
     public String initiateCall(String localUri, String remoteUri) throws SipgateException {
@@ -817,8 +758,8 @@ public class SipgateInstance {
         return this.api.initiateFax(localUri, remoteUri, pdf);
     }
 
-    public String initiateFax(String localUri, String remoteUri, byte[] pdfData) throws SipgateException {
-        return this.api.initiateFax(localUri, remoteUri, pdfData);
+    public String initiateFax(String localUri, String remoteUri, byte[] pdfData, String fileName) throws SipgateException {
+        return this.api.initiateFax(localUri, remoteUri, pdfData, fileName);
     }
 
     /**
@@ -835,10 +776,4 @@ public class SipgateInstance {
         return currentPwd;
     }
 
-    /**
-     * @return the currentEndpoint
-     */
-    public String getCurrentEndpoint() {
-        return currentEndpoint;
-    }
 }

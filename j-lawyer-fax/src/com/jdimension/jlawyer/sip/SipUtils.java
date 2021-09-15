@@ -677,6 +677,10 @@ public class SipUtils {
     public static final int STATUSLEVEL_ERROR=30;
     public static final int STATUSLEVEL_SUCCESS=10;
     
+    public static String E164NumberWithPlusSign(String phone) {
+        return "+" + E164Number(phone);
+    }
+    
     public static String E164Number(String phone) {
         phone=phone.replaceAll("\\s", "");
         phone=phone.replaceAll("-", "");

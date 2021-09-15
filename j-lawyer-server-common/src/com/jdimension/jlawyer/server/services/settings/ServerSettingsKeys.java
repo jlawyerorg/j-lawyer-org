@@ -693,10 +693,6 @@ public class ServerSettingsKeys {
     public static final String PROFILE_COMPANYBANKCODE_AK="profile.company.ak.bankcode";
     public static final String PROFILE_COMPANYACCOUNTNO_AK="profile.company.ak.accountno";
     
-    public static final String SERVERCONF_VOIPENDPOINT="jlawyer.server.voip.voipendpoint";
-    public static final String SERVERCONF_VOIPSIPPREFIX="jlawyer.server.voip.sipprefix";
-    public static final String SERVERCONF_VOIPSIPSUFFIX="jlawyer.server.voip.sipsuffix";
-    
     public static final String SERVERCONF_DREBISMODE="jlawyer.server.drebis.drebismode";
     public static final String SERVERCONF_DREBISLOCALUSER="jlawyer.server.drebis.localuser";
     public static final String SERVERCONF_DREBISLOCALPWD="jlawyer.server.drebis.localpwd";
