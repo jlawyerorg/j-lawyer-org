@@ -1241,7 +1241,7 @@ public class SipgateAPI {
     }
 
     public String getFaxStatus(String sessionId) throws SipgateException {
-        log.info("Requesting Sipgate session status");
+        log.info("Requesting Sipgate session status for fax " + sessionId);
 
         String BASE_URI = "https://api.sipgate.com/v2/history/" + sessionId;
         String authString = this.user + ":" + this.password;
