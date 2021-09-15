@@ -722,7 +722,7 @@ public class VoipService implements VoipServiceRemote, VoipServiceLocal {
             return bi;
         }
         
-        SipgateInstance sip = SipgateInstance.getInstance(currentUser.getVoipUser(), currentUser.getVoipPassword(), "j-lawyer Server", sysMan.getServerVersion());
+        SipgateInstance sip = SipgateInstance.getInstance(currentUser.getVoipUser(), currentUser.getVoipPassword());
         return sip.getBalance();
     }
 
@@ -737,7 +737,7 @@ public class VoipService implements VoipServiceRemote, VoipServiceLocal {
             return new ArrayList<>();
         }
 
-        SipgateInstance sip = SipgateInstance.getInstance(currentUser.getVoipUser(), currentUser.getVoipPassword(), "j-lawyer Server", sysMan.getServerVersion());
+        SipgateInstance sip = SipgateInstance.getInstance(currentUser.getVoipUser(), currentUser.getVoipPassword());
         return sip.getOwnUris();
     }
 
@@ -750,7 +750,7 @@ public class VoipService implements VoipServiceRemote, VoipServiceLocal {
             throw new SipgateException("Voice-over-IP - Integration ist nicht aktiviert!");
         }
 
-        SipgateInstance sip = SipgateInstance.getInstance(currentUser.getVoipUser(), currentUser.getVoipPassword(), "j-lawyer Server", sysMan.getServerVersion());
+        SipgateInstance sip = SipgateInstance.getInstance(currentUser.getVoipUser(), currentUser.getVoipPassword());
         sip.initiateSms(localUri, remoteUri, content);
     }
 
@@ -763,7 +763,7 @@ public class VoipService implements VoipServiceRemote, VoipServiceLocal {
             throw new SipgateException("Voice-over-IP - Integration ist nicht aktiviert!");
         }
 
-        SipgateInstance sip = SipgateInstance.getInstance(currentUser.getVoipUser(), currentUser.getVoipPassword(), "j-lawyer Server", sysMan.getServerVersion());
+        SipgateInstance sip = SipgateInstance.getInstance(currentUser.getVoipUser(), currentUser.getVoipPassword());
         return sip.initiateCall(localUri, remoteUri);
     }
 
@@ -777,7 +777,7 @@ public class VoipService implements VoipServiceRemote, VoipServiceLocal {
             throw new SipgateException("Voice-over-IP - Integration ist nicht aktiviert!");
         }
 
-        SipgateInstance sip = SipgateInstance.getInstance(currentUser.getVoipUser(), currentUser.getVoipPassword(), "j-lawyer Server", sysMan.getServerVersion());
+        SipgateInstance sip = SipgateInstance.getInstance(currentUser.getVoipUser(), currentUser.getVoipPassword());
         Date sentDate = new Date();
         String sessionId = sip.initiateFax(localUri, remoteUri, pdfData, pdfName);
 
@@ -857,7 +857,7 @@ public class VoipService implements VoipServiceRemote, VoipServiceLocal {
             throw new SipgateException("Voice-over-IP - Integration ist nicht aktiviert!");
         }
 
-        SipgateInstance sip = SipgateInstance.getInstance(currentUser.getVoipUser(), currentUser.getVoipPassword(), "j-lawyer Server", sysMan.getServerVersion());
+        SipgateInstance sip = SipgateInstance.getInstance(currentUser.getVoipUser(), currentUser.getVoipPassword());
         return sip.getFaxStatus(sessionId);
     }
 
@@ -992,7 +992,7 @@ public class VoipService implements VoipServiceRemote, VoipServiceLocal {
             throw new SipgateException("Voice-over-IP - Integration ist nicht aktiviert!");
         }
 
-        SipgateInstance sip = SipgateInstance.getInstance(currentUser.getVoipUser(), currentUser.getVoipPassword(), "j-lawyer Server", sysMan.getServerVersion());
+        SipgateInstance sip = SipgateInstance.getInstance(currentUser.getVoipUser(), currentUser.getVoipPassword());
         
         try {
             SimpleDateFormat df = new SimpleDateFormat("dd-MM-yyyy_HH-mm-ss");

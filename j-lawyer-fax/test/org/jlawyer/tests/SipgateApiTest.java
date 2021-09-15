@@ -718,7 +718,7 @@ public class SipgateApiTest {
         
         
         try {
-            SipgateAPI api=new SipgateAPI(user,pwd,"j-lawyer Client", "1.8");
+            SipgateAPI api=new SipgateAPI(user,pwd);
             System.out.println(new Date());
         } catch (SipgateException ex) {
             ex.printStackTrace();
@@ -736,7 +736,7 @@ public class SipgateApiTest {
         
         
         try {
-            SipgateAPI api=new SipgateAPI(user,pwd,"j-lawyer Client", "1.8");
+            SipgateAPI api=new SipgateAPI(user,pwd);
             //api.login();
             BalanceInformation bi=api.getBalance();
             System.out.println(bi.getTotal());
@@ -756,7 +756,7 @@ public class SipgateApiTest {
         
         
         try {
-            SipgateAPI api=new SipgateAPI(user,pwd,"j-lawyer Client", "1.8");
+            SipgateAPI api=new SipgateAPI(user,pwd);
             //api.login();
             ArrayList<SipUri> uris=api.getOwnUris();
             Assert.assertTrue(uris.size()>0);
@@ -776,7 +776,7 @@ public class SipgateApiTest {
         
         
         try {
-            SipgateAPI api=new SipgateAPI(user,pwd,"j-lawyer Client", "1.8");
+            SipgateAPI api=new SipgateAPI(user,pwd);
             System.out.println(new Date());      
             // this will exist, at least for some time
             //String status=api.getFaxStatus("575D6B05051D4A6A495544545659795759475251525F5D5D7F0F55");        
@@ -801,7 +801,7 @@ public class SipgateApiTest {
         
         
         try {
-            SipgateAPI api=new SipgateAPI(user,pwd,"j-lawyer Client", "1.8");
+            SipgateAPI api=new SipgateAPI(user,pwd);
             System.out.println(new Date());
             //String status=api.initiateSms("sip:493524344116@sipgate.de", "sip:49172365491612341234@sipgate.de", "test message");
             //api.initiateSms("s0", "+491723654916", "test message mit localuri und 44116");

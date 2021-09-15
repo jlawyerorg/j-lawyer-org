@@ -667,7 +667,6 @@ import com.jdimension.jlawyer.fax.utils.Base64;
 import java.io.File;
 import java.io.FileInputStream;
 import java.net.URL;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -692,16 +691,24 @@ import java.net.URLConnection;
 public class SipgateAPI {
 
     public static final String STATUS_OK = "200";
+    
+    private static final String AUTH_HEADERNAME="Authorization";
+    private static final String AUTH_HEADERPREFIX="Authorization";
+    
+    private static final String MIMETYPE_JSON="application/json";
+    private static final String JSON_ITEMS="items";
+    private static final String JSON_ALIAS="alias";
+    
+    private static final String API_BASE="https://api.sipgate.com/v2/";
 
     private static final Logger log = Logger.getLogger(SipgateAPI.class.getName());
-    private SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
     private String user;
     private String password;
     
     private String internalUserId = null;
     private String internalDefaultDeviceId = null;
 
-    public SipgateAPI(String user, String password, String clientName, String clientVersion) throws SipgateException {
+    public SipgateAPI(String user, String password) throws SipgateException {
         this.user = user;
         this.password = password;
         try {
@@ -712,16 +719,27 @@ public class SipgateAPI {
         }
 
     }
-
-    private void initialize() throws Exception {
-        String BASE_URI = "https://api.sipgate.com/v2/users";
+    
+    private WebTarget getWebTarget(String endpoint) {
+        
+        Client restClient = javax.ws.rs.client.ClientBuilder.newClient();
+        WebTarget webTarget = restClient.target(endpoint);
+        return webTarget;
+    }
+    
+    private String getAuthString() {
         String authString = this.user + ":" + this.password;
         Base64 encoder = new Base64();
         String authStringEnc = encoder.encode(authString.getBytes());
-        Client restClient = javax.ws.rs.client.ClientBuilder.newClient();
-        WebTarget webTarget = restClient.target(BASE_URI);
+        return authStringEnc;
+    }
 
-        Response response = webTarget.request().header("Authorization", "Basic " + authStringEnc).accept("application/json").get();
+    private void initialize() throws Exception {
+        String baseUri = "https://api.sipgate.com/v2/users";
+        String authStringEnc = this.getAuthString();
+        WebTarget webTarget = this.getWebTarget(baseUri);
+
+        Response response = webTarget.request().header(AUTH_HEADERNAME, AUTH_HEADERPREFIX + authStringEnc).accept(MIMETYPE_JSON).get();
         String returnValue = response.readEntity(String.class);
         if (response.getStatus() != 200) {
             log.error("Could not get Sipgate user information information: " + returnValue + " [" + response.getStatus() + "]");
@@ -731,7 +749,7 @@ public class SipgateAPI {
         Object jsonOutput = Jsoner.deserialize(returnValue);
         if (jsonOutput instanceof JsonObject) {
             JsonObject result = (JsonObject) jsonOutput;
-            JsonKey itemsKey = Jsoner.mintJsonKey("items", null);
+            JsonKey itemsKey = Jsoner.mintJsonKey(JSON_ITEMS, null);
             Collection items = result.getCollection(itemsKey);
             if (items.size() > 1) {
                 log.warn("Token has access to multiple users - using first one");
@@ -755,17 +773,14 @@ public class SipgateAPI {
 
         log.info("Requesting own Sipgate URIs");
 
-        String authString = this.user + ":" + this.password;
-        Base64 encoder = new Base64();
-        String authStringEnc = encoder.encode(authString.getBytes());
+        String authStringEnc = this.getAuthString();
 
         HashMap<String, SipUri> allUris = new HashMap<>();
 
         try {
-            String BASE_URI = "https://api.sipgate.com/v2/" + this.internalUserId + "/faxlines";
-            Client restClient = javax.ws.rs.client.ClientBuilder.newClient();
-            WebTarget webTarget = restClient.target(BASE_URI);
-            Response response = webTarget.request().header("Authorization", "Basic " + authStringEnc).accept("application/json").get();
+            String baseUri = API_BASE + this.internalUserId + "/faxlines";
+            WebTarget webTarget = this.getWebTarget(baseUri);
+            Response response = webTarget.request().header(AUTH_HEADERNAME, AUTH_HEADERPREFIX + authStringEnc).accept(MIMETYPE_JSON).get();
             String returnValue = response.readEntity(String.class);
             // {"items":[{"id":"f0","alias":"Fax","tagline":"","canSend":true,"canReceive":false}]}
             if (response.getStatus() != 200) {
@@ -776,7 +791,7 @@ public class SipgateAPI {
             Object jsonOutput = Jsoner.deserialize(returnValue);
             if (jsonOutput instanceof JsonObject) {
                 JsonObject result = (JsonObject) jsonOutput;
-                JsonKey itemsKey = Jsoner.mintJsonKey("items", null);
+                JsonKey itemsKey = Jsoner.mintJsonKey(JSON_ITEMS, null);
                 Collection items = result.getCollection(itemsKey);
                 Iterator itemIt = items.iterator();
                 while (itemIt.hasNext()) {
@@ -791,7 +806,7 @@ public class SipgateAPI {
                     }
                     SipUri uri = allUris.get(id);
 
-                    JsonKey aliasKey = Jsoner.mintJsonKey("alias", null);
+                    JsonKey aliasKey = Jsoner.mintJsonKey(JSON_ALIAS, null);
                     String alias = item0.getString(aliasKey);
                     JsonKey sendKey = Jsoner.mintJsonKey("canSend", null);
                     boolean canSend = item0.getBoolean(sendKey);
@@ -814,10 +829,9 @@ public class SipgateAPI {
         }
 
         try {
-            String BASE_URI = "https://api.sipgate.com/v2/" + this.internalUserId + "/sms";
-            Client restClient = javax.ws.rs.client.ClientBuilder.newClient();
-            WebTarget webTarget = restClient.target(BASE_URI);
-            Response response = webTarget.request().header("Authorization", "Basic " + authStringEnc).accept("application/json").get();
+            String baseUri = API_BASE + this.internalUserId + "/sms";
+            WebTarget webTarget = this.getWebTarget(baseUri);
+            Response response = webTarget.request().header(AUTH_HEADERNAME, AUTH_HEADERPREFIX + authStringEnc).accept(MIMETYPE_JSON).get();
             String returnValue = response.readEntity(String.class);
             // {"items":[{"id":"s0","alias":"Sms","callerId":"sipgate"}]}
             if (response.getStatus() != 200) {
@@ -828,7 +842,7 @@ public class SipgateAPI {
             Object jsonOutput = Jsoner.deserialize(returnValue);
             if (jsonOutput instanceof JsonObject) {
                 JsonObject result = (JsonObject) jsonOutput;
-                JsonKey itemsKey = Jsoner.mintJsonKey("items", null);
+                JsonKey itemsKey = Jsoner.mintJsonKey(JSON_ITEMS, null);
                 Collection items = result.getCollection(itemsKey);
                 Iterator itemIt = items.iterator();
                 while (itemIt.hasNext()) {
@@ -843,7 +857,7 @@ public class SipgateAPI {
                     }
                     SipUri uri = allUris.get(id);
 
-                    JsonKey aliasKey = Jsoner.mintJsonKey("alias", null);
+                    JsonKey aliasKey = Jsoner.mintJsonKey(JSON_ALIAS, null);
                     String alias = item0.getString(aliasKey);
                     JsonKey callerKey = Jsoner.mintJsonKey("callerId", null);
                     String callerId = item0.getString(callerKey);
@@ -864,10 +878,9 @@ public class SipgateAPI {
         }
 
         try {
-            String BASE_URI = "https://api.sipgate.com/v2/" + this.internalUserId + "/phonelines";
-            Client restClient = javax.ws.rs.client.ClientBuilder.newClient();
-            WebTarget webTarget = restClient.target(BASE_URI);
-            Response response = webTarget.request().header("Authorization", "Basic " + authStringEnc).accept("application/json").get();
+            String baseUri = API_BASE + this.internalUserId + "/phonelines";
+            WebTarget webTarget = this.getWebTarget(baseUri);
+            Response response = webTarget.request().header(AUTH_HEADERNAME, AUTH_HEADERPREFIX + authStringEnc).accept(MIMETYPE_JSON).get();
             String returnValue = response.readEntity(String.class);
             // {"items":[{"id":"p0","alias":"VoIP-Telefon von Jens Kutschke","blockAnonymousUrl":"https://api.sipgate.com/v2/w0/phonelines/p0/blockanonymous","devicesUrl":"https://api.sipgate.com/v2/w0/phonelines/p0/devices","forwardingsUrl":"https://api.sipgate.com/v2/w0/phonelines/p0/forwardings","numbersUrl":"https://api.sipgate.com/v2/w0/phonelines/p0/numbers","parallelForwardingsUrl":"https://api.sipgate.com/v2/w0/phonelines/p0/parallelforwardings","voicemailsUrl":"https://api.sipgate.com/v2/w0/phonelines/p0/voicemails"}]}
             if (response.getStatus() != 200) {
@@ -878,7 +891,7 @@ public class SipgateAPI {
             Object jsonOutput = Jsoner.deserialize(returnValue);
             if (jsonOutput instanceof JsonObject) {
                 JsonObject result = (JsonObject) jsonOutput;
-                JsonKey itemsKey = Jsoner.mintJsonKey("items", null);
+                JsonKey itemsKey = Jsoner.mintJsonKey(JSON_ITEMS, null);
                 Collection items = result.getCollection(itemsKey);
                 Iterator itemIt = items.iterator();
                 while (itemIt.hasNext()) {
@@ -893,7 +906,7 @@ public class SipgateAPI {
                     }
                     SipUri uri = allUris.get(id);
 
-                    JsonKey aliasKey = Jsoner.mintJsonKey("alias", null);
+                    JsonKey aliasKey = Jsoner.mintJsonKey(JSON_ALIAS, null);
                     String alias = item0.getString(aliasKey);
                     StringBuilder description = new StringBuilder();
                     description.append(alias);
@@ -912,10 +925,9 @@ public class SipgateAPI {
         }
 
         try {
-            String BASE_URI = "https://api.sipgate.com/v2/" + this.internalUserId + "/numbers";
-            Client restClient = javax.ws.rs.client.ClientBuilder.newClient();
-            WebTarget webTarget = restClient.target(BASE_URI);
-            Response response = webTarget.request().header("Authorization", "Basic " + authStringEnc).accept("application/json").get();
+            String baseUri = API_BASE + this.internalUserId + "/numbers";
+            WebTarget webTarget = this.getWebTarget(baseUri);
+            Response response = webTarget.request().header(AUTH_HEADERNAME, AUTH_HEADERPREFIX + authStringEnc).accept(MIMETYPE_JSON).get();
             String returnValue = response.readEntity(String.class);
             // {"items":[{"id":"9104380","number":"+4935243188822","localized":"035243-188822","type":"LANDLINE","endpointId":"p0","endpointAlias":"VoIP-Telefon von Jens Kutschke","endpointUrl":"https://api.sipgate.com/v2/w0/phonelines/p0"},{"id":"9104381","number":"+493524344116","localized":"035243-44116","type":"LANDLINE","endpointId":"p0","endpointAlias":"VoIP-Telefon von Jens Kutschke","endpointUrl":"https://api.sipgate.com/v2/w0/phonelines/p0"}]}
             if (response.getStatus() != 200) {
@@ -926,7 +938,7 @@ public class SipgateAPI {
             Object jsonOutput = Jsoner.deserialize(returnValue);
             if (jsonOutput instanceof JsonObject) {
                 JsonObject result = (JsonObject) jsonOutput;
-                JsonKey itemsKey = Jsoner.mintJsonKey("items", null);
+                JsonKey itemsKey = Jsoner.mintJsonKey(JSON_ITEMS, null);
                 Collection items = result.getCollection(itemsKey);
                 Iterator itemIt = items.iterator();
                 while (itemIt.hasNext()) {
@@ -968,16 +980,13 @@ public class SipgateAPI {
 
         log.info("Requesting Sipgate balance information");
 
-        String BASE_URI = "https://api.sipgate.com/v2/balance";
-        String authString = this.user + ":" + this.password;
-        Base64 encoder = new Base64();
-        String authStringEnc = encoder.encode(authString.getBytes());
-        Client restClient = javax.ws.rs.client.ClientBuilder.newClient();
-        WebTarget webTarget = restClient.target(BASE_URI);
+        String baseUri = "https://api.sipgate.com/v2/balance";
+        String authStringEnc = this.getAuthString();
+        WebTarget webTarget = this.getWebTarget(baseUri);
         
         BalanceInformation retValue = new BalanceInformation();
         try {
-            Response response = webTarget.request().header("Authorization", "Basic " + authStringEnc).accept("application/json").get();
+            Response response = webTarget.request().header(AUTH_HEADERNAME, AUTH_HEADERPREFIX + authStringEnc).accept(MIMETYPE_JSON).get();
             String returnValue = response.readEntity(String.class);
             if (response.getStatus() != 200) {
                 log.error("Could not get Sipgate balance information: " + returnValue + " [" + response.getStatus() + "]");
@@ -1016,12 +1025,9 @@ public class SipgateAPI {
         //  "message": "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua.",
         //  "sendAt": 1546850272
         // }
-        String BASE_URI = "https://api.sipgate.com/v2/sessions/sms";
-        String authString = this.user + ":" + this.password;
-        Base64 encoder = new Base64();
-        String authStringEnc = encoder.encode(authString.getBytes());
-        Client restClient = javax.ws.rs.client.ClientBuilder.newClient();
-        WebTarget webTarget = restClient.target(BASE_URI);
+        String baseUri = "https://api.sipgate.com/v2/sessions/sms";
+        String authStringEnc = this.getAuthString();
+        WebTarget webTarget = this.getWebTarget(baseUri);
 
         String jsonQuery = "{\n"
                 + "  \"smsId\": \"" + localUri + "\",\n"
@@ -1032,7 +1038,7 @@ public class SipgateAPI {
                 "}";
 
         try {
-            Response response = webTarget.request(javax.ws.rs.core.MediaType.APPLICATION_JSON).header("Authorization", "Basic " + authStringEnc).post(javax.ws.rs.client.Entity.entity(jsonQuery, javax.ws.rs.core.MediaType.APPLICATION_JSON));
+            Response response = webTarget.request(javax.ws.rs.core.MediaType.APPLICATION_JSON).header(AUTH_HEADERNAME, AUTH_HEADERPREFIX + authStringEnc).post(javax.ws.rs.client.Entity.entity(jsonQuery, javax.ws.rs.core.MediaType.APPLICATION_JSON));
             String returnValue = response.readEntity(String.class);
             if (response.getStatus() != 200 && response.getStatus() != 204) {
                 log.error("Could not send SMS: " + returnValue + " [" + response.getStatus() + "]");
@@ -1054,12 +1060,9 @@ public class SipgateAPI {
         //"  \"callee\": \"+4915799912345\",\n" +
         //"  \"callerId\": \"+4915799912345\"\n" +
         //"}"
-        String BASE_URI = "https://api.sipgate.com/v2/sessions/calls";
-        String authString = this.user + ":" + this.password;
-        Base64 encoder = new Base64();
-        String authStringEnc = encoder.encode(authString.getBytes());
-        Client restClient = javax.ws.rs.client.ClientBuilder.newClient();
-        WebTarget webTarget = restClient.target(BASE_URI);
+        String baseUri = "https://api.sipgate.com/v2/sessions/calls";
+        String authStringEnc = this.getAuthString();
+        WebTarget webTarget = this.getWebTarget(baseUri);
 
         String jsonQuery = "{\n"
                 //+ "  \"deviceId\": \"" + localUri + "\",\n"
@@ -1071,11 +1074,11 @@ public class SipgateAPI {
 
         String sessionId = null;
         try {
-            Response response = webTarget.request(javax.ws.rs.core.MediaType.APPLICATION_JSON).header("Authorization", "Basic " + authStringEnc).post(javax.ws.rs.client.Entity.entity(jsonQuery, javax.ws.rs.core.MediaType.APPLICATION_JSON));
+            Response response = webTarget.request(javax.ws.rs.core.MediaType.APPLICATION_JSON).header(AUTH_HEADERNAME, AUTH_HEADERPREFIX + authStringEnc).post(javax.ws.rs.client.Entity.entity(jsonQuery, javax.ws.rs.core.MediaType.APPLICATION_JSON));
             String returnValue = response.readEntity(String.class);
             if (response.getStatus() != 200) {
-                log.error("Could not send SMS: " + returnValue + " [" + response.getStatus() + "]");
-                throw new SipgateException("Could not send SMS: " + returnValue + " [" + response.getStatus() + "]");
+                log.error("Could not initiate call: " + returnValue + " [" + response.getStatus() + "]");
+                throw new SipgateException("Could not initiate call: " + returnValue + " [" + response.getStatus() + "]");
             }
 
             Object jsonOutput = Jsoner.deserialize(returnValue);
@@ -1087,7 +1090,7 @@ public class SipgateAPI {
             }
 
         } catch (Exception ex) {
-            log.error("Could not send SMS", ex);
+            log.error("Could not initiate call", ex);
             throw new SipgateException(ex.getMessage(), ex);
         }
         return sessionId;
@@ -1119,12 +1122,9 @@ public class SipgateAPI {
 //        "  \"filename\": \"fax.pdf\",\n"
 //        "  \"base64Content\": \"TWF5IHRoZSBmb3VydGggYmUgd2l0aCB5b3U=\"\n"
 //        "}"
-        String BASE_URI = "https://api.sipgate.com/v2/sessions/fax";
-        String authString = this.user + ":" + this.password;
-        Base64 encoder = new Base64();
-        String authStringEnc = encoder.encode(authString.getBytes());
-        Client restClient = javax.ws.rs.client.ClientBuilder.newClient();
-        WebTarget webTarget = restClient.target(BASE_URI);
+        String baseUri = "https://api.sipgate.com/v2/sessions/fax";
+        String authStringEnc = this.getAuthString();
+        WebTarget webTarget = this.getWebTarget(baseUri);
 
         String jsonQuery = "{\n"
                 + "  \"faxlineId\": \"" + localUri + "\",\n"
@@ -1135,7 +1135,7 @@ public class SipgateAPI {
 
         String sessionId = null;
         try {
-            Response response = webTarget.request(javax.ws.rs.core.MediaType.APPLICATION_JSON).header("Authorization", "Basic " + authStringEnc).post(javax.ws.rs.client.Entity.entity(jsonQuery, javax.ws.rs.core.MediaType.APPLICATION_JSON));
+            Response response = webTarget.request(javax.ws.rs.core.MediaType.APPLICATION_JSON).header(AUTH_HEADERNAME, AUTH_HEADERPREFIX + authStringEnc).post(javax.ws.rs.client.Entity.entity(jsonQuery, javax.ws.rs.core.MediaType.APPLICATION_JSON));
             String returnValue = response.readEntity(String.class);
             if (response.getStatus() != 200) {
                 log.error("Could not send fax: " + returnValue + " [" + response.getStatus() + "]");
@@ -1189,15 +1189,12 @@ public class SipgateAPI {
     public byte[] getFaxReport(String sessionId) throws SipgateException {
         log.info("Requesting Sipgate fax report");
 
-        String BASE_URI = "https://api.sipgate.com/v2/history/" + sessionId;
-        String authString = this.user + ":" + this.password;
-        Base64 encoder = new Base64();
-        String authStringEnc = encoder.encode(authString.getBytes());
-        Client restClient = javax.ws.rs.client.ClientBuilder.newClient();
-        WebTarget webTarget = restClient.target(BASE_URI);
+        String baseUri = "https://api.sipgate.com/v2/history/" + sessionId;
+        String authStringEnc = this.getAuthString();
+        WebTarget webTarget = this.getWebTarget(baseUri);
         
         try {
-            Response response = webTarget.request().header("Authorization", "Basic " + authStringEnc).accept("application/json").get();
+            Response response = webTarget.request().header(AUTH_HEADERNAME, AUTH_HEADERPREFIX + authStringEnc).accept(MIMETYPE_JSON).get();
             String returnValue = response.readEntity(String.class);
             if (response.getStatus() != 200) {
                 log.error("Could not get Sipgate session information: " + returnValue + " [" + response.getStatus() + "]");
@@ -1243,16 +1240,13 @@ public class SipgateAPI {
     public String getFaxStatus(String sessionId) throws SipgateException {
         log.info("Requesting Sipgate session status for fax " + sessionId);
 
-        String BASE_URI = "https://api.sipgate.com/v2/history/" + sessionId;
-        String authString = this.user + ":" + this.password;
-        Base64 encoder = new Base64();
-        String authStringEnc = encoder.encode(authString.getBytes());
-        Client restClient = javax.ws.rs.client.ClientBuilder.newClient();
-        WebTarget webTarget = restClient.target(BASE_URI);
+        String baseUri = "https://api.sipgate.com/v2/history/" + sessionId;
+        String authStringEnc = this.getAuthString();
+        WebTarget webTarget = this.getWebTarget(baseUri);
         
         String status = null;
         try {
-            Response response = webTarget.request().header("Authorization", "Basic " + authStringEnc).accept("application/json").get();
+            Response response = webTarget.request().header(AUTH_HEADERNAME, AUTH_HEADERPREFIX + authStringEnc).accept(MIMETYPE_JSON).get();
             String returnValue = response.readEntity(String.class);
             if (response.getStatus() != 200) {
                 log.error("Could not get Sipgate session information: " + returnValue + " [" + response.getStatus() + "]");

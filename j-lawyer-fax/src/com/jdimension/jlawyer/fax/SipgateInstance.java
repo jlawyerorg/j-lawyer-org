@@ -665,15 +665,12 @@ package com.jdimension.jlawyer.fax;
 
 import java.io.File;
 import java.util.ArrayList;
-import org.apache.log4j.Logger;
 
 /**
  *
  * @author jens
  */
 public class SipgateInstance {
-
-    private static final Logger log = Logger.getLogger(SipgateInstance.class.getName());
 
     private SipgateAPI api = null;
     private static SipgateInstance instance = null;
@@ -683,13 +680,13 @@ public class SipgateInstance {
     private ArrayList<SipUri> uris = null;
     private long lastUriUpdate = System.currentTimeMillis();
 
-    private SipgateInstance(String user, String password, String clientName, String clientVersion) throws SipgateException {
-        this.initiate(user, password, clientName, clientVersion);
+    private SipgateInstance(String user, String password) throws SipgateException {
+        this.initiate(user, password);
 
     }
 
-    private void initiate(String user, String password, String clientName, String clientVersion) throws SipgateException {
-        this.api = new SipgateAPI(user, password, clientName, clientVersion);
+    private void initiate(String user, String password) throws SipgateException {
+        this.api = new SipgateAPI(user, password);
 
         this.currentUser = user;
         this.currentPwd = password;
@@ -704,27 +701,26 @@ public class SipgateInstance {
         this.api = null;
     }
 
-    public static synchronized SipgateInstance getInstance(String user, String password, String clientName, String clientVersion) throws SipgateException {
+    public static synchronized SipgateInstance getInstance(String user, String password) throws SipgateException {
         if (instance == null) {
-            instance = new SipgateInstance(user, password, clientName, clientVersion);
+            instance = new SipgateInstance(user, password);
         }
 
         if (!instance.isInitiated()) {
-            instance.initiate(user, password, clientName, clientVersion);
+            instance.initiate(user, password);
         }
 
         // check for changed configuration
         if (!user.equals(instance.getCurrentUser()) || !password.equals(instance.getCurrentPwd())) {
-            instance.initiate(user, password, clientName, clientVersion);
+            instance.initiate(user, password);
         }
 
         return instance;
     }
 
     public BalanceInformation getBalance() throws SipgateException {
-        BalanceInformation bi = this.api.getBalance();
+        return this.api.getBalance();
 
-        return bi;
     }
 
     public ArrayList<SipUri> getOwnUris() throws SipgateException {

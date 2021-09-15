@@ -2250,7 +2250,6 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
                     InputStream is = urlCon.getInputStream();
                     byte[] buffer = new byte[1024];
                     int len = 0;
-                    StringBuilder sb = new StringBuilder();
                     while ((len = is.read(buffer)) > -1) {
                         fout.write(buffer, 0, len);
                     }

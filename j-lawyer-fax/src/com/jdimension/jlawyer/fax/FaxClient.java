@@ -674,7 +674,7 @@ public class FaxClient {
      */
     public static void main(String[] args) {
         try {
-            SipgateAPI sg=new SipgateAPI(System.getenv("sipuser"), System.getenv("sippassword"), "j-lawyer Client", "1.9");
+            SipgateAPI sg=new SipgateAPI(System.getenv("sipuser"), System.getenv("sippassword"));
             //System.out.println(sg.getTypesOfService());
             System.out.println(sg.getOwnUris());
             System.out.println(sg.getBalance());

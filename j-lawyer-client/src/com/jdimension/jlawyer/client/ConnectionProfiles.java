@@ -769,7 +769,10 @@ public class ConnectionProfiles {
             if (c.getName().toLowerCase().endsWith(".properties")) {
                 ConnectionProfile profile=loadProfile(c);
                 if(profile.getName().equals(profileName)) {
-                    c.delete();
+                    boolean deleted=c.delete();
+                    if(!deleted) {
+                        log.warn("Could not delete connection profile " + profileName);
+                    }
                     return;
                 }
             }
