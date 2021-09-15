@@ -723,15 +723,13 @@ public class SipgateAPI {
     private WebTarget getWebTarget(String endpoint) {
         
         Client restClient = javax.ws.rs.client.ClientBuilder.newClient();
-        WebTarget webTarget = restClient.target(endpoint);
-        return webTarget;
+        return restClient.target(endpoint);
     }
     
     private String getAuthString() {
         String authString = this.user + ":" + this.password;
         Base64 encoder = new Base64();
-        String authStringEnc = encoder.encode(authString.getBytes());
-        return authStringEnc;
+        return encoder.encode(authString.getBytes());
     }
 
     private void initialize() throws Exception {
