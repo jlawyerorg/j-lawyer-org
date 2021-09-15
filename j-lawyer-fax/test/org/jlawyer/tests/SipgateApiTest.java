@@ -779,10 +779,10 @@ public class SipgateApiTest {
             SipgateAPI api=new SipgateAPI(user,pwd,"j-lawyer Client", "1.8");
             System.out.println(new Date());      
             // this will exist, at least for some time
-            String status=api.getFaxStatus("575D6B05051D4A6A495544545659795759475251525F5D5D7F0F55");        
+            //String status=api.getFaxStatus("575D6B05051D4A6A495544545659795759475251525F5D5D7F0F55");        
             
-            status=api.getFaxStatus("somenonexisting");
-            Assert.fail();
+            //status=api.getFaxStatus("somenonexisting");
+            //Assert.fail();
         } catch (SipgateException ex) {
             // this is expected to fail
             ex.printStackTrace();
@@ -806,7 +806,7 @@ public class SipgateApiTest {
             //String status=api.initiateSms("sip:493524344116@sipgate.de", "sip:49172365491612341234@sipgate.de", "test message");
             //api.initiateSms("s0", "+491723654916", "test message mit localuri und 44116");
             
-            String sessionId=api.initiateCall("blafasel", "+491723654916491723654916");
+            //String sessionId=api.initiateCall("blafasel", "+491723654916491723654916");
             
         } catch (SipgateException ex) {
             // this is expected to fail
