@@ -693,7 +693,7 @@ public class SipgateAPI {
     public static final String STATUS_OK = "200";
     
     private static final String AUTH_HEADERNAME="Authorization";
-    private static final String AUTH_HEADERPREFIX="Authorization";
+    private static final String AUTH_HEADERPREFIX="Basic ";
     
     private static final String MIMETYPE_JSON="application/json";
     private static final String JSON_ITEMS="items";
