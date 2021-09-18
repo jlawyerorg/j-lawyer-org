@@ -663,8 +663,12 @@
  */
 package com.jdimension.jlawyer.client.editors.documents;
 
+import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import com.jdimension.jlawyer.client.launcher.LauncherFactory;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
+import com.jdimension.jlawyer.client.utils.FileConverter;
+import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
@@ -687,7 +691,7 @@ public class SaveDocumentsLocallyDialog extends javax.swing.JDialog {
     /**
      * Creates new form CitySearchDialog
      */
-    public SaveDocumentsLocallyDialog(java.awt.Frame parent, boolean modal, ArrayList<ArchiveFileDocumentsBean> docs2local) {
+    public SaveDocumentsLocallyDialog(java.awt.Frame parent, boolean modal, ArrayList<ArchiveFileDocumentsBean> docs2local, boolean convertToPdf) {
         super(parent, modal);
         this.docs2local = docs2local;
         initComponents();
@@ -825,15 +829,34 @@ public class SaveDocumentsLocallyDialog extends javax.swing.JDialog {
             ClientSettings.getInstance().setConfiguration("client.archivefiles.encryptedpdf.lastdir", this.txtLastDir.getText());
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
             String path = this.txtLastDir.getText();
             if (!path.endsWith(File.separator)) {
                 path = path + File.separator;
             }
+            FileConverter conv = FileConverter.getInstance();
             for (ArchiveFileDocumentsBean doc : this.docs2local) {
                 byte[] content = locator.lookupArchiveFileServiceRemote().getDocumentContent(doc.getId());
-                try (FileOutputStream fout = new FileOutputStream(new File(path + doc.getName()))) {
-                    fout.write(content);
+                String tempPath = FileUtils.createTempFile(doc.getName(), content);
+                String tempPdfPath = conv.convertToPDF(tempPath);
+                byte[] pdfContent = FileUtils.readFile(new File(tempPdfPath));
+                FileUtils.cleanupTempFile(tempPath);
+                FileUtils.cleanupTempFile(tempPdfPath);
+
+                String currentExt = "";
+                for (String ext : LauncherFactory.LO_OFFICEFILETYPES) {
+                    ext = ext.toLowerCase();
+                    if (doc.getName().toLowerCase().endsWith(ext)) {
+                        currentExt = ext;
+                    }
+                }
+                String newName = doc.getName().substring(0, doc.getName().length() - currentExt.length()) + ".pdf";
+                newName = newName.replaceAll(" ", "-");
+                if (newName.length() == 0) {
+                    JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Dateiname darf nicht leer sein.", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
+                    return;
+                }
+                try ( FileOutputStream fout = new FileOutputStream(new File(path + newName))) {
+                    fout.write(pdfContent);
                 }
             }
 
@@ -856,7 +879,7 @@ public class SaveDocumentsLocallyDialog extends javax.swing.JDialog {
     public static void main(String args[]) {
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                new SaveDocumentsLocallyDialog(new javax.swing.JFrame(), true, null).setVisible(true);
+                new SaveDocumentsLocallyDialog(new javax.swing.JFrame(), true, null, false).setVisible(true);
             }
         });
     }

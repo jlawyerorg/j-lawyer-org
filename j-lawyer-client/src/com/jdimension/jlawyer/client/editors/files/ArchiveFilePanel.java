@@ -1614,6 +1614,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         mnuOpenDocumentMicrosoftOffice = new javax.swing.JMenuItem();
         mnuOpenDocumentLibreOffice = new javax.swing.JMenuItem();
         mnuSaveDocumentsLocally = new javax.swing.JMenuItem();
+        mnuSaveDocumentsLocallyPdf = new javax.swing.JMenuItem();
         mnuDuplicateDocument = new javax.swing.JMenuItem();
         mnuDuplicateDocumentAsPdf = new javax.swing.JMenuItem();
         mnuDuplicateDocumentAs = new javax.swing.JMenuItem();
@@ -1881,6 +1882,15 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         });
         documentsPopup.add(mnuSaveDocumentsLocally);
 
+        mnuSaveDocumentsLocallyPdf.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/filesave.png"))); // NOI18N
+        mnuSaveDocumentsLocallyPdf.setText("lokal speichern als PDF");
+        mnuSaveDocumentsLocallyPdf.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuSaveDocumentsLocallyPdfActionPerformed(evt);
+            }
+        });
+        documentsPopup.add(mnuSaveDocumentsLocallyPdf);
+
         mnuDuplicateDocument.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editcopy.png"))); // NOI18N
         mnuDuplicateDocument.setText("duplizieren");
         mnuDuplicateDocument.addActionListener(new java.awt.event.ActionListener() {
@@ -1891,7 +1901,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         documentsPopup.add(mnuDuplicateDocument);
 
         mnuDuplicateDocumentAsPdf.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/pdf.png"))); // NOI18N
-        mnuDuplicateDocumentAsPdf.setText("ablegen als PDF/A");
+        mnuDuplicateDocumentAsPdf.setText("ablegen als PDF");
         mnuDuplicateDocumentAsPdf.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 mnuDuplicateDocumentAsPdfActionPerformed(evt);
@@ -2713,14 +2723,14 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         ));
         tblReviewReasons.getTableHeader().setReorderingAllowed(false);
         tblReviewReasons.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                tblReviewReasonsMouseClicked(evt);
+            }
             public void mousePressed(java.awt.event.MouseEvent evt) {
                 tblReviewReasonsMousePressed(evt);
             }
             public void mouseReleased(java.awt.event.MouseEvent evt) {
                 tblReviewReasonsMouseReleased(evt);
-            }
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                tblReviewReasonsMouseClicked(evt);
             }
         });
         tblReviewReasonsPane.setViewportView(tblReviewReasons);
@@ -5299,33 +5309,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     }//GEN-LAST:event_cmdFavoriteDocumentsMousePressed
 
     private void mnuSaveDocumentsLocallyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSaveDocumentsLocallyActionPerformed
-        try {
-            ArrayList<ArchiveFileDocumentsBean> selectedDocs = this.caseFolderPanel1.getSelectedDocuments();
-            if (selectedDocs.isEmpty()) {
-                return;
-            }
-
-            ArrayList<String> open = this.getDocumentsOpenForWrite(selectedDocs);
-            if (open.size() > 0) {
-                String question = "<html>Soll die Aktion auf geöffnete Dokumente ausgeführt werden? Es besteht das Risiko fehlender / inkonsistenter Inhalte.<br/><ul>";
-                for (String o : open) {
-                    question = question + "<li>" + o + "</li>";
-                }
-                question = question + "</ul></html>";
-                int response = JOptionPane.showConfirmDialog(this, question, "Aktion auf offene Dokumente ausführen", JOptionPane.YES_NO_OPTION);
-                if (response == JOptionPane.NO_OPTION) {
-                    return;
-                }
-            }
-
-            SaveDocumentsLocallyDialog localDlg = new SaveDocumentsLocallyDialog(EditorsRegistry.getInstance().getMainWindow(), true, selectedDocs);
-            FrameUtils.centerDialog(localDlg, EditorsRegistry.getInstance().getMainWindow());
-            localDlg.setVisible(true);
-
-        } catch (Exception ioe) {
-            log.error("Error saving documents locally", ioe);
-            JOptionPane.showMessageDialog(this, "Fehler beim Speichern der Dokumente: " + ioe.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-        }
+        this.saveDocumentsLocally(false);
     }//GEN-LAST:event_mnuSaveDocumentsLocallyActionPerformed
 
     private void cmdNewRvgMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdNewRvgMousePressed
@@ -5671,6 +5655,40 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
         }
     }//GEN-LAST:event_cmbEventBeginTimeActionPerformed
+
+    private void saveDocumentsLocally(boolean convertToPdf) {
+        try {
+            ArrayList<ArchiveFileDocumentsBean> selectedDocs = this.caseFolderPanel1.getSelectedDocuments();
+            if (selectedDocs.isEmpty()) {
+                return;
+            }
+
+            ArrayList<String> open = this.getDocumentsOpenForWrite(selectedDocs);
+            if (open.size() > 0) {
+                String question = "<html>Soll die Aktion auf geöffnete Dokumente ausgeführt werden? Es besteht das Risiko fehlender / inkonsistenter Inhalte.<br/><ul>";
+                for (String o : open) {
+                    question = question + "<li>" + o + "</li>";
+                }
+                question = question + "</ul></html>";
+                int response = JOptionPane.showConfirmDialog(this, question, "Aktion auf offene Dokumente ausführen", JOptionPane.YES_NO_OPTION);
+                if (response == JOptionPane.NO_OPTION) {
+                    return;
+                }
+            }
+
+            SaveDocumentsLocallyDialog localDlg = new SaveDocumentsLocallyDialog(EditorsRegistry.getInstance().getMainWindow(), true, selectedDocs, convertToPdf);
+            FrameUtils.centerDialog(localDlg, EditorsRegistry.getInstance().getMainWindow());
+            localDlg.setVisible(true);
+
+        } catch (Exception ioe) {
+            log.error("Error saving documents locally", ioe);
+            JOptionPane.showMessageDialog(this, "Fehler beim Speichern der Dokumente: " + ioe.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+    }
+    
+    private void mnuSaveDocumentsLocallyPdfActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSaveDocumentsLocallyPdfActionPerformed
+        this.saveDocumentsLocally(true);
+    }//GEN-LAST:event_mnuSaveDocumentsLocallyPdfActionPerformed
 
     private void toggleEventUi() {
 
@@ -6116,6 +6134,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JMenuItem mnuRenameDocument;
     private javax.swing.JMenuItem mnuSaveDocumentEncrypted;
     private javax.swing.JMenuItem mnuSaveDocumentsLocally;
+    private javax.swing.JMenuItem mnuSaveDocumentsLocallyPdf;
     private javax.swing.JMenuItem mnuSendBeaDocument;
     private javax.swing.JMenuItem mnuSendBeaDocumentPDF;
     private javax.swing.JMenuItem mnuSendCoverage;
