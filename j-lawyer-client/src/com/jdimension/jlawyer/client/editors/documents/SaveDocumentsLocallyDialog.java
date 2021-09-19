@@ -687,6 +687,7 @@ public class SaveDocumentsLocallyDialog extends javax.swing.JDialog {
 
     private static final Logger log = Logger.getLogger(SaveDocumentsLocallyDialog.class.getName());
     private ArrayList<ArchiveFileDocumentsBean> docs2local = null;
+    private boolean convertToPdf = false;
 
     /**
      * Creates new form CitySearchDialog
@@ -694,6 +695,7 @@ public class SaveDocumentsLocallyDialog extends javax.swing.JDialog {
     public SaveDocumentsLocallyDialog(java.awt.Frame parent, boolean modal, ArrayList<ArchiveFileDocumentsBean> docs2local, boolean convertToPdf) {
         super(parent, modal);
         this.docs2local = docs2local;
+        this.convertToPdf = convertToPdf;
         initComponents();
 
         ClientSettings settings = ClientSettings.getInstance();
@@ -836,27 +838,33 @@ public class SaveDocumentsLocallyDialog extends javax.swing.JDialog {
             FileConverter conv = FileConverter.getInstance();
             for (ArchiveFileDocumentsBean doc : this.docs2local) {
                 byte[] content = locator.lookupArchiveFileServiceRemote().getDocumentContent(doc.getId());
-                String tempPath = FileUtils.createTempFile(doc.getName(), content);
-                String tempPdfPath = conv.convertToPDF(tempPath);
-                byte[] pdfContent = FileUtils.readFile(new File(tempPdfPath));
-                FileUtils.cleanupTempFile(tempPath);
-                FileUtils.cleanupTempFile(tempPdfPath);
+                if (this.convertToPdf) {
+                    String tempPath = FileUtils.createTempFile(doc.getName(), content);
+                    String tempPdfPath = conv.convertToPDF(tempPath);
+                    byte[] pdfContent = FileUtils.readFile(new File(tempPdfPath));
+                    FileUtils.cleanupTempFile(tempPath);
+                    FileUtils.cleanupTempFile(tempPdfPath);
 
-                String currentExt = "";
-                for (String ext : LauncherFactory.LO_OFFICEFILETYPES) {
-                    ext = ext.toLowerCase();
-                    if (doc.getName().toLowerCase().endsWith(ext)) {
-                        currentExt = ext;
+                    String currentExt = "";
+                    for (String ext : LauncherFactory.LO_OFFICEFILETYPES) {
+                        ext = ext.toLowerCase();
+                        if (doc.getName().toLowerCase().endsWith(ext)) {
+                            currentExt = ext;
+                        }
                     }
-                }
-                String newName = doc.getName().substring(0, doc.getName().length() - currentExt.length()) + ".pdf";
-                newName = newName.replaceAll(" ", "-");
-                if (newName.length() == 0) {
-                    JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Dateiname darf nicht leer sein.", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
-                    return;
-                }
-                try ( FileOutputStream fout = new FileOutputStream(new File(path + newName))) {
-                    fout.write(pdfContent);
+                    String newName = doc.getName().substring(0, doc.getName().length() - currentExt.length()) + ".pdf";
+                    newName = newName.replace(" ", "-");
+                    if (newName.length() == 0) {
+                        JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Dateiname darf nicht leer sein.", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
+                        return;
+                    }
+                    try ( FileOutputStream fout = new FileOutputStream(new File(path + newName))) {
+                        fout.write(pdfContent);
+                    }
+                } else {
+                    try ( FileOutputStream fout = new FileOutputStream(new File(path + doc.getName()))) {
+                        fout.write(content);
+                    }
                 }
             }
 
