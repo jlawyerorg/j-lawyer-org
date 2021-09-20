@@ -852,6 +852,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         this.lstReviewReasons.setCellRenderer(new CheckboxListCellRenderer());
         this.lstReviewReasons.addMouseListener(new MouseAdapter() {
+            @Override
             public void mouseClicked(MouseEvent event) {
                 JList list = (JList) event.getSource();
                 // Get index of item clicked
@@ -906,9 +907,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
 
         ServerSettings sset = ServerSettings.getInstance();
-        this.lblCustom1.setText(sset.getSetting(sset.DATA_CUSTOMFIELD_ARCHIVEFILE_PREFIX + "1", "Eigenes Feld 1"));
-        this.lblCustom2.setText(sset.getSetting(sset.DATA_CUSTOMFIELD_ARCHIVEFILE_PREFIX + "2", "Eigenes Feld 2"));
-        this.lblCustom3.setText(sset.getSetting(sset.DATA_CUSTOMFIELD_ARCHIVEFILE_PREFIX + "3", "Eigenes Feld 3"));
+        this.lblCustom1.setText(sset.getSetting(ServerSettings.DATA_CUSTOMFIELD_ARCHIVEFILE_PREFIX + "1", "Eigenes Feld 1"));
+        this.lblCustom2.setText(sset.getSetting(ServerSettings.DATA_CUSTOMFIELD_ARCHIVEFILE_PREFIX + "2", "Eigenes Feld 2"));
+        this.lblCustom3.setText(sset.getSetting(ServerSettings.DATA_CUSTOMFIELD_ARCHIVEFILE_PREFIX + "3", "Eigenes Feld 3"));
 
         // support for drag and drop for documents - only when case is shown in edit mode
         if (this instanceof EditArchiveFileDetailsPanel || this instanceof NewArchiveFilePanel) {
@@ -940,31 +941,26 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             JMenuItem mi = new JMenuItem();
             mi.setText(cp.getName());
             mi.setToolTipText(cp.getDescription());
-            mi.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
+            mi.addActionListener((ActionEvent e) -> {
+                try {
+                    float claimValueF = 0f;
                     try {
-                        float claimValueF = 0f;
-                        try {
-                            claimValueF = new Float(((Number) currencyFormat.parse(txtClaimValue.getText())).floatValue()).floatValue();
-                        } catch (Exception ex) {
-                            log.error("invalid claim value: " + txtClaimValue.getText(), ex);
-                            claimValueF = 0f;
-                        }
-
-                        JPanel ui = cp.getUi(dto, claimValueF);
-                        CalculationPluginDialog dlg = new CalculationPluginDialog(EditorsRegistry.getInstance().getMainWindow(), false, ui);
-                        dlg.setTitle("Plugin: " + cp.getName() + " " + cp.getVersion());
-                        dlg.setHeader(cp.getDescription());
-                        dlg.setFooter("Autor: " + cp.getAuthor() + " - zuletzt aktualisiert: " + cp.getUpdated());
-                        FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
-                        dlg.setVisible(true);
+                        claimValueF = new Float(((Number) currencyFormat.parse(txtClaimValue.getText())).floatValue()).floatValue();
                     } catch (Exception ex) {
-                        log.error("Error launching plugin UI", ex);
-                        JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Plugin kann nicht gestartet werden: " + ex.getMessage(), "Pluginfehler", JOptionPane.ERROR_MESSAGE);
+                        log.error("invalid claim value: " + txtClaimValue.getText(), ex);
+                        claimValueF = 0f;
                     }
+                    JPanel ui1 = cp.getUi(dto, claimValueF);
+                    CalculationPluginDialog dlg = new CalculationPluginDialog(EditorsRegistry.getInstance().getMainWindow(), false, ui1);
+                    dlg.setTitle("Plugin: " + cp.getName() + " " + cp.getVersion());
+                    dlg.setHeader(cp.getDescription());
+                    dlg.setFooter("Autor: " + cp.getAuthor() + " - zuletzt aktualisiert: " + cp.getUpdated());
+                    FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
+                    dlg.setVisible(true);
+                }catch (Exception ex) {
+                    log.error("Error launching plugin UI", ex);
+                    JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Plugin kann nicht gestartet werden: " + ex.getMessage(), "Pluginfehler", JOptionPane.ERROR_MESSAGE);
                 }
-
             });
             this.popCalculations.add(mi);
         }
@@ -1067,31 +1063,27 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 Icon icon = fu.getFileTypeIcon(db.getName());
                 miFav.setText(db.getName());
                 miFav.setIcon(icon);
-                ActionListener al = new ActionListener() {
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        ArchiveFileDocumentsBean value = db;
-
-                        if (value != null) {
-
-                            ClientSettings settings = ClientSettings.getInstance();
-                            String tmpUrl = null;
-                            byte[] content = null;
-                            try {
-                                JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-                                content = locator.lookupArchiveFileServiceRemote().getDocumentContent(value.getId());
-                                //tmpUrl = appLauncher.createTempFile(value.getName(), content);
-
-                                CaseDocumentStore store = new CaseDocumentStore(value.getId(), value.getName(), readOnly, value, caseDto);
-                                Launcher launcher = LauncherFactory.getLauncher(db.getName(), content, store);
-                                launcher.launch(false);
-                            } catch (Exception ex) {
-                                JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Laden des Dokuments: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-                                return;
-                            }
+                ActionListener al = (ActionEvent e) -> {
+                    ArchiveFileDocumentsBean value = db;
+                    
+                    if (value != null) {
+                        
+                        ClientSettings settings = ClientSettings.getInstance();
+                        String tmpUrl = null;
+                        byte[] content = null;
+                        try {
+                            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+                            content = locator.lookupArchiveFileServiceRemote().getDocumentContent(value.getId());
+                            //tmpUrl = appLauncher.createTempFile(value.getName(), content);
+                            
+                            CaseDocumentStore store = new CaseDocumentStore(value.getId(), value.getName(), readOnly, value, caseDto);
+                            Launcher launcher = LauncherFactory.getLauncher(db.getName(), content, store);
+                            launcher.launch(false);
+                        } catch (Exception ex) {
+                            JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Laden des Dokuments: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                            return;
                         }
                     }
-
                 };
                 miFav.addActionListener(al);
                 popDocumentFavorites.add(miFav);
@@ -1290,13 +1282,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.cmbHistoryTime.setSelectedItem(dfTime.format(now));
         this.txtHistoryDate.setText(dfDay.format(now));
 
-        TagSelectedAction tagAction = new TagSelectedAction() {
-            @Override
-            public void execute() {
-                txtSearchDocumentNamesKeyReleased(null);
-
-            }
-
+        TagSelectedAction tagAction = () -> {
+            txtSearchDocumentNamesKeyReleased(null);
         };
 
         TagUtils.populateTags(ClientSettings.getInstance().getDocumentTagsInUse(), this.cmdDocumentTagFilter, this.popDocumentTagFilter, tagAction);
@@ -1319,7 +1306,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     }
 
     private ArrayList<String> getDocumentsOpenForWrite(ArrayList<ArchiveFileDocumentsBean> selectedDocs) {
-        ArrayList<String> openDocs = new ArrayList<String>();
+        ArrayList<String> openDocs = new ArrayList<>();
 
         for (ArchiveFileDocumentsBean doc : selectedDocs) {
             if (isOpenForWrite(doc.getId())) {
@@ -1388,7 +1375,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.taCustom3.setText("");
 
         this.tagPanel.removeAll();
-        ArrayList<String> sortedTags = new ArrayList<String>();
+        ArrayList<String> sortedTags = new ArrayList<>();
         AppOptionGroupBean[] tagOptions = ClientSettings.getInstance().getArchiveFileTagDtos();
         for (AppOptionGroupBean aog : tagOptions) {
             if (!sortedTags.contains(aog.getValue())) {
@@ -1408,7 +1395,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         ThreadUtils.repaintComponent(tagPanel);
 
         this.documentTagPanel.removeAll();
-        ArrayList<String> sortedDocumentTags = new ArrayList<String>();
+        ArrayList<String> sortedDocumentTags = new ArrayList<>();
         AppOptionGroupBean[] documentTagOptions = ClientSettings.getInstance().getDocumentTagDtos();
         for (AppOptionGroupBean aog : documentTagOptions) {
             if (!sortedDocumentTags.contains(aog.getValue())) {
@@ -1454,8 +1441,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
             this.cmbGroup.setSelectedIndex(0);
 
-//            this.tblGroups.setEnabled(true);
-//            this.cmbGroup.setEnabled(true);
             ComponentUtils.autoSizeColumns(tblGroups);
         } catch (Throwable t) {
             log.error("Unable to load privilege groups", t);
@@ -1470,17 +1455,13 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
     }
 
+    @Override
     public void setBackgroundImage(Image image) {
         this.backgroundImage = image;
-        /*
-         * this.jPanel1.setOpaque(false); this.jPanel2.setOpaque(false);
-         * this.jPanel3.setOpaque(false); this.jPanel4.setOpaque(false);
-         * this.jPanel5.setOpaque(false); this.jPanel6.setOpaque(false);
-         * this.chkLegalProtection.setOpaque(false);
-         */
 
     }
 
+    @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
         if (this.backgroundImage != null) {
@@ -1488,6 +1469,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
     }
 
+    @Override
     public void populateOptions() {
 
         this.tabPaneArchiveFile.setSelectedIndex(0);
@@ -3656,11 +3638,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     private void addReview(String reason, String description, Date beginDate, Date endDate) throws Exception {
         ArchiveFileReviewsBean reviewDto = new ArchiveFileReviewsBean();
-        reviewDto.setEventType(reviewDto.EVENTTYPE_FOLLOWUP);
+        reviewDto.setEventType(ArchiveFileReviewsBean.EVENTTYPE_FOLLOWUP);
         if (this.radioEventTypeRespite.isSelected()) {
-            reviewDto.setEventType(reviewDto.EVENTTYPE_RESPITE);
+            reviewDto.setEventType(ArchiveFileReviewsBean.EVENTTYPE_RESPITE);
         } else if (this.radioEventTypeEvent.isSelected()) {
-            reviewDto.setEventType(reviewDto.EVENTTYPE_EVENT);
+            reviewDto.setEventType(ArchiveFileReviewsBean.EVENTTYPE_EVENT);
         }
         reviewDto.setDoneBoolean(false);
         reviewDto.setBeginDate(beginDate);
@@ -3864,7 +3846,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     private void newDocumentActionPerformedImpl(GenericCalculationTable table) {
 
-        List<ArchiveFileAddressesBean> involved = new ArrayList<ArchiveFileAddressesBean>();
+        List<ArchiveFileAddressesBean> involved = new ArrayList<>();
 
         if (table == null) {
             // not called from a plugin
@@ -3934,7 +3916,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             fip.save();
         }
 
-        List<ArchiveFileAddressesBean> involved = new ArrayList<ArchiveFileAddressesBean>();
+        List<ArchiveFileAddressesBean> involved = new ArrayList<>();
 
         if (table == null) {
             // not called from a plugin
@@ -4047,7 +4029,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
             Object report = JRLoader.loadObjectFromFile(ClientSettings.getInstance().getLocalReportsDirectory() + "archivefile.jasper");
             JasperReport jasperReport = (JasperReport) report;
-            HashMap<String, Object> parameter = new HashMap<String, Object>();
+            HashMap<String, Object> parameter = new HashMap<>();
             parameter.put("SubReportDir", ClientSettings.getInstance().getLocalReportsDirectory());
 
             JasperPrint jasperPrint = JasperFillManager.fillReport(jasperReport, parameter, colIn);
@@ -4114,7 +4096,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
             ArrayList<ArchiveFileDocumentsBean> selectedDocs = this.caseFolderPanel1.getSelectedDocuments();
             if (selectedDocs.size() > 0) {
-                StringBuffer sb = new StringBuffer();
+                StringBuilder sb = new StringBuilder();
                 sb.append("<html>");
                 sb.append("<p>Ausgew&auml;hlte Dokumente l&ouml;schen?</p>");
                 sb.append("<ul>");
@@ -4163,38 +4145,35 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             ArrayList<ArchiveFileDocumentsBean> selectedDocs = this.caseFolderPanel1.getSelectedDocuments();
             for (ArchiveFileDocumentsBean doc : selectedDocs) {
 
-                ProgressableActionCallback callback = new ProgressableActionCallback() {
-                    @Override
-                    public void actionFinished() {
-                        try {
-
-                            byte[] content = remote.getDocumentContent(doc.getId());
-                            ArchiveFileDocumentsBean orgDoc = remote.getDocument(doc.getId());
-                            String newName = FileUtils.getNewFileName(doc.getName(), false, new Date(), EditorsRegistry.getInstance().getMainWindow(), "Dokument duplizieren");
-
-                            if (newName == null || "".equals(newName)) {
-                                return;
-                            }
-
-                            newName = newName.replaceAll(" ", "-");
-                            if (newName.length() == 0) {
-                                JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Dateiname darf nicht leer sein.", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
-                                return;
-                            }
-                            ArchiveFileDocumentsBean newDoc = remote.addDocument(dto.getId(), newName, content, doc.getDictateSign());
-
-                            if (orgDoc.getFolder() != null) {
-                                ArrayList<String> docId = new ArrayList<>();
-                                docId.add(newDoc.getId());
-                                remote.moveDocumentsToFolder(docId, orgDoc.getFolder().getId());
-
-                            }
-                            caseFolderPanel1.addDocument(remote.getDocument(newDoc.getId()));
-
-                        } catch (Exception ioe) {
-                            log.error("Error duplicating document", ioe);
-                            JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Duplizieren des Dokuments: " + ioe.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                ProgressableActionCallback callback = () -> {
+                    try {
+                        
+                        byte[] content = remote.getDocumentContent(doc.getId());
+                        ArchiveFileDocumentsBean orgDoc = remote.getDocument(doc.getId());
+                        String newName = FileUtils.getNewFileName(doc.getName(), false, new Date(), EditorsRegistry.getInstance().getMainWindow(), "Dokument duplizieren");
+                        
+                        if (newName == null || "".equals(newName)) {
+                            return;
                         }
+                        
+                        newName = newName.replaceAll(" ", "-");
+                        if (newName.length() == 0) {
+                            JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Dateiname darf nicht leer sein.", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
+                            return;
+                        }
+                        ArchiveFileDocumentsBean newDoc = remote.addDocument(dto.getId(), newName, content, doc.getDictateSign());
+                        
+                        if (orgDoc.getFolder() != null) {
+                            ArrayList<String> docId = new ArrayList<>();
+                            docId.add(newDoc.getId());
+                            remote.moveDocumentsToFolder(docId, orgDoc.getFolder().getId());
+                            
+                        }
+                        caseFolderPanel1.addDocument(remote.getDocument(newDoc.getId()));
+                        
+                    } catch (Exception ioe) {
+                        log.error("Error duplicating document", ioe);
+                        JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Duplizieren des Dokuments: " + ioe.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
                     }
                 };
 
@@ -4232,7 +4211,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                     return;
                 }
 
-                this.tblReviewReasons.setValueAt(new Boolean(reviewDto.getDoneBoolean()), row, col);
+                this.tblReviewReasons.setValueAt(reviewDto.getDoneBoolean(), row, col);
             }
         } else if (evt.getClickCount() == 2 && !evt.isConsumed()) {
             this.mnuEditReviewActionPerformed(null);
@@ -4746,7 +4725,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
 
             if (notSupported.size() > 0) {
-                StringBuffer msg = new StringBuffer();
+                StringBuilder msg = new StringBuilder();
                 msg.append("Folgende Dateien können nicht direkt gedruckt werden:");
                 msg.append(System.getProperty("line.separator"));
                 msg.append(System.getProperty("line.separator"));
@@ -4796,32 +4775,29 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
             for (ArchiveFileDocumentsBean doc : selected) {
 
-                ProgressableActionCallback callback = new ProgressableActionCallback() {
-                    @Override
-                    public void actionFinished() {
-                        try {
-
-                            byte[] content = remote.getDocumentContent(doc.getId());
-                            String newName = FileUtils.getNewFileName(doc.getName(), false, new Date(), EditorsRegistry.getInstance().getMainWindow(), "Dokument kopieren");
-                            if (newName == null || "".equalsIgnoreCase(newName)) {
-                                return;
-                            }
-                            newName = newName.replaceAll(" ", "-");
-                            if (newName.length() == 0) {
-                                JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Dateiname darf nicht leer sein.", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
-                                return;
-                            }
-
-                            ArchiveFileDocumentsBean newDoc = remote.addDocument(sel.getId(), newName, content, doc.getDictateSign());
-                            if (folder != null) {
-                                ArrayList<String> docList = new ArrayList<>();
-                                docList.add(newDoc.getId());
-                                remote.moveDocumentsToFolder(docList, folder.getId());
-                            }
-                        } catch (Exception ioe) {
-                            log.error("Error duplicating document", ioe);
-                            JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Kopieren des Dokuments: " + ioe.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                ProgressableActionCallback callback = () -> {
+                    try {
+                        
+                        byte[] content = remote.getDocumentContent(doc.getId());
+                        String newName = FileUtils.getNewFileName(doc.getName(), false, new Date(), EditorsRegistry.getInstance().getMainWindow(), "Dokument kopieren");
+                        if (newName == null || "".equalsIgnoreCase(newName)) {
+                            return;
                         }
+                        newName = newName.replaceAll(" ", "-");
+                        if (newName.length() == 0) {
+                            JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Dateiname darf nicht leer sein.", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
+                            return;
+                        }
+                        
+                        ArchiveFileDocumentsBean newDoc = remote.addDocument(sel.getId(), newName, content, doc.getDictateSign());
+                        if (folder != null) {
+                            ArrayList<String> docList = new ArrayList<>();
+                            docList.add(newDoc.getId());
+                            remote.moveDocumentsToFolder(docList, folder.getId());
+                        }
+                    } catch (Exception ioe) {
+                        log.error("Error duplicating document", ioe);
+                        JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Kopieren des Dokuments: " + ioe.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
                     }
                 };
 
@@ -4861,54 +4837,51 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 }
 
                 final String curExt = currentExt;
-                ProgressableActionCallback callback = new ProgressableActionCallback() {
-                    @Override
-                    public void actionFinished() {
-                        try {
-                            byte[] content = remote.getDocumentContent(doc.getId());
-                            String newName = doc.getName().substring(0, doc.getName().length() - curExt.length()) + ".pdf";
-                            newName = newName.replaceAll(" ", "-");
-                            if (newName.length() == 0) {
-                                JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Dateiname darf nicht leer sein.", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
+                ProgressableActionCallback callback = () -> {
+                    try {
+                        byte[] content = remote.getDocumentContent(doc.getId());
+                        String newName = doc.getName().substring(0, doc.getName().length() - curExt.length()) + ".pdf";
+                        newName = newName.replaceAll(" ", "-");
+                        if (newName.length() == 0) {
+                            JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Dateiname darf nicht leer sein.", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
+                            return;
+                        }
+                        
+                        boolean documentExists = remote.doesDocumentExist(dto.getId(), newName);
+                        while (documentExists) {
+                            
+                            newName = FileUtils.getNewFileName(newName, false, new Date(), EditorsRegistry.getInstance().getMainWindow(), "neuer Name für PDF-Dokument");
+                            if (newName == null || "".equals(newName)) {
                                 return;
                             }
-
-                            boolean documentExists = remote.doesDocumentExist(dto.getId(), newName);
-                            while (documentExists) {
-
-                                newName = FileUtils.getNewFileName(newName, false, new Date(), EditorsRegistry.getInstance().getMainWindow(), "neuer Name für PDF-Dokument");
-                                if (newName == null || "".equals(newName)) {
-                                    return;
-                                }
-                                documentExists = remote.doesDocumentExist(dto.getId(), newName);
-
-                            }
-
-                            FileConverter conv = FileConverter.getInstance();
-                            String tempPath = FileUtils.createTempFile(doc.getName(), content);
-                            String tempPdfPath = conv.convertToPDF(tempPath);
-                            byte[] pdfContent = FileUtils.readFile(new File(tempPdfPath));
-                            FileUtils.cleanupTempFile(tempPath);
-                            FileUtils.cleanupTempFile(tempPdfPath);
-
-                            ArchiveFileDocumentsBean newDoc = remote.addDocument(dto.getId(), newName, pdfContent, doc.getDictateSign());
-
-                            newDoc.setSize(pdfContent.length);
-
-                            if (doc.getFolder() != null) {
-                                newDoc.setFolder(doc.getFolder());
-                                ArrayList<String> documentIds = new ArrayList<>();
-                                documentIds.add(newDoc.getId());
-                                remote.moveDocumentsToFolder(documentIds, doc.getFolder().getId());
-                            } else {
-                                log.warn("document folder of source document is null when duplicating as PDF/A");
-                            }
-                            caseFolderPanel1.addDocument(newDoc);
-
-                        } catch (Throwable t) {
-                            log.error("Could not convert document to PDF", t);
-                            JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Konvertierungsfehler: " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                            documentExists = remote.doesDocumentExist(dto.getId(), newName);
+                            
                         }
+                        
+                        FileConverter conv = FileConverter.getInstance();
+                        String tempPath = FileUtils.createTempFile(doc.getName(), content);
+                        String tempPdfPath = conv.convertToPDF(tempPath);
+                        byte[] pdfContent = FileUtils.readFile(new File(tempPdfPath));
+                        FileUtils.cleanupTempFile(tempPath);
+                        FileUtils.cleanupTempFile(tempPdfPath);
+                        
+                        ArchiveFileDocumentsBean newDoc = remote.addDocument(dto.getId(), newName, pdfContent, doc.getDictateSign());
+                        
+                        newDoc.setSize(pdfContent.length);
+                        
+                        if (doc.getFolder() != null) {
+                            newDoc.setFolder(doc.getFolder());
+                            ArrayList<String> documentIds = new ArrayList<>();
+                            documentIds.add(newDoc.getId());
+                            remote.moveDocumentsToFolder(documentIds, doc.getFolder().getId());
+                        } else {
+                            log.warn("document folder of source document is null when duplicating as PDF/A");
+                        }
+                        caseFolderPanel1.addDocument(newDoc);
+                        
+                    } catch (Throwable t) {
+                        log.error("Could not convert document to PDF", t);
+                        JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Konvertierungsfehler: " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
                     }
                 };
 
