@@ -894,6 +894,7 @@ public class IterativeBackupTask extends java.util.TimerTask implements Cancella
             backupResult=ibe.execute();
         } catch (Throwable t) {
             backupSuccess=false;
+            backupResult=new BackupResult();
             log.error("backup executor failed", t);
             subject = "Fehlgeschlagen: ";
             body.append(t.getMessage()).append("\r\n\r\n");
