@@ -1088,7 +1088,7 @@ public class SplashThread implements Runnable {
         }
     }
 
-    private void compileReports() throws Exception {
+    private void compileReports() {
 
         updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.print.0"), true);
         this.updateProgress(false, 6, 0, "");

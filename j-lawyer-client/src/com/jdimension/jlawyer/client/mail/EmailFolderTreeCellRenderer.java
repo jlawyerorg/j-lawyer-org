@@ -687,10 +687,6 @@ public class EmailFolderTreeCellRenderer extends DefaultTreeCellRenderer {
     private static final String FOLDER_TRASH="trash";
     private static final String FOLDER_INBOX="inbox";
 
-//    private static final ImageIcon trashIcon=new javax.swing.ImageIcon(EmailFolderTreeCellRenderer.class.getResource("/icons/trashcan_full.png"));
-//    private static final ImageIcon sentIcon=new javax.swing.ImageIcon(EmailFolderTreeCellRenderer.class.getResource("/icons/folder_sent_mail.png"));
-//    private static final ImageIcon inboxIcon=new javax.swing.ImageIcon(EmailFolderTreeCellRenderer.class.getResource("/icons/folder_inbox.png"));
-//    private static final ImageIcon mailboxIcon=new javax.swing.ImageIcon(EmailFolderTreeCellRenderer.class.getResource("/icons/mail_send_2.png"));
     private final ImageIcon trashIcon = new javax.swing.ImageIcon(EmailFolderTreeCellRenderer.class.getResource("/icons/trashcan_full.png"));
     private final ImageIcon sentIcon = new javax.swing.ImageIcon(EmailFolderTreeCellRenderer.class.getResource("/icons/folder_sent_mail.png"));
     private final ImageIcon inboxIcon = new javax.swing.ImageIcon(EmailFolderTreeCellRenderer.class.getResource("/icons/folder_inbox.png"));
@@ -770,7 +766,6 @@ public class EmailFolderTreeCellRenderer extends DefaultTreeCellRenderer {
                     this.setIcon(mailboxIcon);
                     this.setFont(this.getFont().deriveFont(Font.BOLD));
                     this.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
-                    //return this;
                 }
             }
         } catch (Exception ex) {
