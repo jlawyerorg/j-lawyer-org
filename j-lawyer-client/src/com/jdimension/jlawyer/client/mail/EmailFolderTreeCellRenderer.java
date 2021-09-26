@@ -666,7 +666,9 @@ package com.jdimension.jlawyer.client.mail;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Font;
+import java.util.HashMap;
 import javax.mail.Folder;
+import javax.swing.ImageIcon;
 import javax.swing.JTree;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeCellRenderer;
@@ -680,6 +682,19 @@ import themes.colors.DefaultColorTheme;
 public class EmailFolderTreeCellRenderer extends DefaultTreeCellRenderer {
 
     private static final Logger log = Logger.getLogger(EmailFolderTreeCellRenderer.class.getName());
+    
+    private static final String FOLDER_SENT="sent";
+    private static final String FOLDER_TRASH="trash";
+    private static final String FOLDER_INBOX="inbox";
+
+//    private static final ImageIcon trashIcon=new javax.swing.ImageIcon(EmailFolderTreeCellRenderer.class.getResource("/icons/trashcan_full.png"));
+//    private static final ImageIcon sentIcon=new javax.swing.ImageIcon(EmailFolderTreeCellRenderer.class.getResource("/icons/folder_sent_mail.png"));
+//    private static final ImageIcon inboxIcon=new javax.swing.ImageIcon(EmailFolderTreeCellRenderer.class.getResource("/icons/folder_inbox.png"));
+//    private static final ImageIcon mailboxIcon=new javax.swing.ImageIcon(EmailFolderTreeCellRenderer.class.getResource("/icons/mail_send_2.png"));
+    private final ImageIcon trashIcon = new javax.swing.ImageIcon(EmailFolderTreeCellRenderer.class.getResource("/icons/trashcan_full.png"));
+    private final ImageIcon sentIcon = new javax.swing.ImageIcon(EmailFolderTreeCellRenderer.class.getResource("/icons/folder_sent_mail.png"));
+    private final ImageIcon inboxIcon = new javax.swing.ImageIcon(EmailFolderTreeCellRenderer.class.getResource("/icons/folder_inbox.png"));
+    private final ImageIcon mailboxIcon = new javax.swing.ImageIcon(EmailFolderTreeCellRenderer.class.getResource("/icons/mail_send_2.png"));
 
     /**
      * Creates a new instance of EmailFolderTreeCellRenderer
@@ -691,7 +706,6 @@ public class EmailFolderTreeCellRenderer extends DefaultTreeCellRenderer {
     public Component getTreeCellRendererComponent(JTree jTree, Object object, boolean b, boolean b0, boolean b1, int row, boolean b2) {
 
         super.getTreeCellRendererComponent(jTree, object, b, b0, b1, row, b2);
-
         JTree.DropLocation dropLocation = jTree.getDropLocation();
         if (dropLocation != null
                 && dropLocation.getChildIndex() == -1
@@ -711,17 +725,17 @@ public class EmailFolderTreeCellRenderer extends DefaultTreeCellRenderer {
                 FolderContainer fc = (FolderContainer) ((DefaultMutableTreeNode) object).getUserObject();
                 Folder f = fc.getFolder();
 
-                if ("trash".equalsIgnoreCase(f.getName())) {
-                    this.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/trashcan_full.png")));
-                } else if ("sent".equalsIgnoreCase(f.getName())) {
-                    this.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder_sent_mail.png")));
-                } else if ("inbox".equalsIgnoreCase(f.getName())) {
-                    this.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder_inbox.png")));
+                if (FOLDER_TRASH.equalsIgnoreCase(f.getName())) {
+                    this.setIcon(trashIcon);
+                } else if (FOLDER_SENT.equalsIgnoreCase(f.getName())) {
+                    this.setIcon(sentIcon);
+                } else if (FOLDER_INBOX.equalsIgnoreCase(f.getName())) {
+                    this.setIcon(inboxIcon);
                 } else {
                     boolean iconIsSet = false;
                     for (String a : EmailUtils.getFolderAliases(FolderContainer.TRASH)) {
                         if (a.equalsIgnoreCase(f.getName())) {
-                            this.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/trashcan_full.png")));
+                            this.setIcon(trashIcon);
                             iconIsSet = true;
                             break;
                         }
@@ -729,7 +743,7 @@ public class EmailFolderTreeCellRenderer extends DefaultTreeCellRenderer {
                     if (!iconIsSet) {
                         for (String a : EmailUtils.getFolderAliases(FolderContainer.SENT)) {
                             if (a.equalsIgnoreCase(f.getName())) {
-                                this.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder_sent_mail.png")));
+                                this.setIcon(sentIcon);
                                 iconIsSet = true;
                                 break;
                             }
@@ -738,7 +752,7 @@ public class EmailFolderTreeCellRenderer extends DefaultTreeCellRenderer {
                     if (!iconIsSet) {
                         for (String a : EmailUtils.getFolderAliases(FolderContainer.INBOX)) {
                             if (a.equalsIgnoreCase(f.getName())) {
-                                this.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder_inbox.png")));
+                                this.setIcon(inboxIcon);
                                 break;
                             }
                         }
@@ -751,13 +765,12 @@ public class EmailFolderTreeCellRenderer extends DefaultTreeCellRenderer {
                 } else {
                     this.setFont(this.getFont().deriveFont(Font.PLAIN));
                 }
-
             } else {
                 if (((DefaultMutableTreeNode) object).toString().contains("@")) {
-                    this.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/mail_send_2.png")));
+                    this.setIcon(mailboxIcon);
                     this.setFont(this.getFont().deriveFont(Font.BOLD));
                     this.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
-                    return this;
+                    //return this;
                 }
             }
         } catch (Exception ex) {
@@ -766,6 +779,7 @@ public class EmailFolderTreeCellRenderer extends DefaultTreeCellRenderer {
         }
 
         return this;
+
     }
 
 }

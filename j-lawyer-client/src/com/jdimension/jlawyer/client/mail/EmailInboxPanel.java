@@ -789,6 +789,8 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         this.initializing = true;
 
         initComponents();
+        
+//        this.treeFolders.setLargeModel(true);
 
         ComponentUtils.decorateSplitPane(this.jSplitPane1);
         ComponentUtils.decorateSplitPane(this.jSplitPane2);
