@@ -1660,6 +1660,19 @@ public class LoginDialog extends javax.swing.JFrame {
                 return;
             }
         }
+        
+        // BEGIN: required because backup configuration dialog needs it for constructing URL for ad hoc backups
+        settings.setConfiguration(ClientSettings.CONF_LASTPORTDYN, this.txtPort.getText());
+        if (this.rdSecSsl.isSelected()) {
+            settings.setConfiguration(ClientSettings.CONF_LASTSECMODE, "ssl");
+        } else if (this.rdSecTunnel.isSelected()) {
+            settings.setConfiguration(ClientSettings.CONF_LASTSECMODE, "ssh");
+            settings.setConfiguration(ClientSettings.CONF_LASTPORTDYN, "" + sourcePort);
+        } else {
+            settings.setConfiguration(ClientSettings.CONF_LASTSECMODE, SECMODE_STANDARD);
+            settings.setConfiguration(ClientSettings.CONF_LASTSERVER, this.txtServer.getText());
+        }
+        // END
 
         Properties properties = new Properties();
         if (this.rdSecSsl.isSelected()) {

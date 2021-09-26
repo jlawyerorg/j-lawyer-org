@@ -749,6 +749,7 @@ public class SplashThread implements Runnable {
         this.owner = owner;
     }
 
+    @Override
     public void run() {
         long start = System.currentTimeMillis();
 
@@ -823,8 +824,8 @@ public class SplashThread implements Runnable {
             loginEnabledUsers = security.getUsersHavingRole(UserSettings.ROLE_LOGIN);
             
             List<AppUserBean> users = mgmt.getUsers();
-            List<AppUserBean> lawyers = new ArrayList<AppUserBean>();
-            List<AppUserBean> assistants = new ArrayList<AppUserBean>();
+            List<AppUserBean> lawyers = new ArrayList<>();
+            List<AppUserBean> assistants = new ArrayList<>();
             for (AppUserBean u : users) {
                 assistants.add(u);
                 if (u.isLawyer()) {
@@ -949,33 +950,25 @@ public class SplashThread implements Runnable {
         this.loadTheme(theme, rootModule);
 
         ExecutorService pool = Executors.newFixedThreadPool(3);
-        Runnable reportsRunnable = new Runnable() {
-            @Override
-            public void run() {
-                updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.printstubs"), true);
-                try {
-                    compileReports();
-                } catch (Exception ex) {
-                    log.error("Error compiling reports", ex);
-                    ThreadUtils.showErrorDialog(owner, ex.getMessage(), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("dialog.printstuberror"));
-                    return;
-                }
+        Runnable reportsRunnable = () -> {
+            updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.printstubs"), true);
+            try {
+                compileReports();
+            } catch (Exception ex) {
+                log.error("Error compiling reports", ex);
+                ThreadUtils.showErrorDialog(owner, ex.getMessage(), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("dialog.printstuberror"));
+                return;
             }
-
         };
         pool.execute(reportsRunnable);
 
-        Runnable pluginRunnable = new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.calculations"), true);
-                    loadCalculations();
-                } catch (Throwable t) {
-                    log.error("Error loading calculations", t);
-                }
+        Runnable pluginRunnable = () -> {
+            try {
+                updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.calculations"), true);
+                loadCalculations();
+            } catch (Throwable t) {
+                log.error("Error loading calculations", t);
             }
-
         };
         pool.execute(pluginRunnable);
         pool.shutdown();
@@ -986,17 +979,13 @@ public class SplashThread implements Runnable {
         }
 
         ExecutorService pool2 = Executors.newFixedThreadPool(3);
-        Runnable formsRunnable = new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.forms"), true);
-                    loadForms();
-                } catch (Throwable t) {
-                    log.error("Error loading forms", t);
-                }
+        Runnable formsRunnable = () -> {
+            try {
+                updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.forms"), true);
+                loadForms();
+            } catch (Throwable t) {
+                log.error("Error loading forms", t);
             }
-
         };
         pool2.execute(formsRunnable);
         pool2.shutdown();
@@ -1022,86 +1011,50 @@ public class SplashThread implements Runnable {
         long end = System.currentTimeMillis();
         log.info("client startup in " + (end - start) + "ms, version " + VersionUtils.getFullClientVersion());
 
-        SwingUtilities.invokeLater(
-                new Runnable() {
-            public void run() {
-                //JKanzleiGUI gui=new JKanzleiGUI(SplashThread.addressCount, SplashThread.archiveFileCount);
-                JKanzleiGUI gui = new JKanzleiGUI();
-
-                EditorsRegistry.getInstance().setMainWindow(gui);
-
-                ClientSettings cs = ClientSettings.getInstance();
-                gui.setTitle(gui.getTitle() + " " + VersionUtils.getFullClientVersion() + " [" + UserSettings.getInstance().getCurrentUser().getPrincipalId() + "@" + cs.getConfiguration(ClientSettings.CONF_LASTSERVER, "localhost") + ":" + cs.getConfiguration(ClientSettings.CONF_LASTPORTDYN, "8080") + "-" + cs.getConfiguration(ClientSettings.CONF_LASTSECMODE, "standard") + "]");
-                gui.buildModuleBar();
-
-                gui.pack();
-                gui.doLayout();
-                gui.setVisible(true);
-
-                notifyEditorForStatus(ClientSettings.getInstance().getRootModule());
-
-                ServerSettings serverSettings = ServerSettings.getInstance();
-                if (!serverSettings.hasSetting(serverSettings.PROFILE_COMPANYNAME) || !serverSettings.hasSetting(serverSettings.PROFILE_COMPANYSTREET) || !serverSettings.hasSetting(serverSettings.PROFILE_COMPANYZIP) || !serverSettings.hasSetting(serverSettings.PROFILE_COMPANYCITY)) {
-                    int response = JOptionPane.showConfirmDialog(EditorsRegistry.getInstance().getMainWindow(), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("dlg.newprofile"), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("dlg.newprofile.title"), JOptionPane.YES_NO_OPTION);
-                    if (response == JOptionPane.YES_OPTION) {
-                        openProfileInformationDialog();
-                    }
+        SwingUtilities.invokeLater(() -> {
+            //JKanzleiGUI gui=new JKanzleiGUI(SplashThread.addressCount, SplashThread.archiveFileCount);
+            JKanzleiGUI gui = new JKanzleiGUI();
+            EditorsRegistry.getInstance().setMainWindow(gui);
+            ClientSettings cs = ClientSettings.getInstance();
+            gui.setTitle(gui.getTitle() + " " + VersionUtils.getFullClientVersion() + " [" + UserSettings.getInstance().getCurrentUser().getPrincipalId() + "@" + cs.getConfiguration(ClientSettings.CONF_LASTSERVER, "localhost") + ":" + cs.getConfiguration(ClientSettings.CONF_LASTPORTDYN, "8080") + "-" + cs.getConfiguration(ClientSettings.CONF_LASTSECMODE, "standard") + "]");
+            gui.buildModuleBar();
+            gui.pack();
+            gui.doLayout();
+            gui.setVisible(true);
+            notifyEditorForStatus(ClientSettings.getInstance().getRootModule());
+            ServerSettings serverSettings1 = ServerSettings.getInstance();
+            if (!serverSettings1.hasSetting(ServerSettings.PROFILE_COMPANYNAME) || !serverSettings1.hasSetting(ServerSettings.PROFILE_COMPANYSTREET) || !serverSettings1.hasSetting(ServerSettings.PROFILE_COMPANYZIP) || !serverSettings1.hasSetting(ServerSettings.PROFILE_COMPANYCITY)) {
+                int response = JOptionPane.showConfirmDialog(EditorsRegistry.getInstance().getMainWindow(), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("dlg.newprofile"), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("dlg.newprofile.title"), JOptionPane.YES_NO_OPTION);
+                if (response == JOptionPane.YES_OPTION) {
+                    openProfileInformationDialog();
                 }
-
-                if (!serverSettings.hasSetting(serverSettings.SERVERCONF_BACKUP_MODE)) {
-                    int response = JOptionPane.showConfirmDialog(EditorsRegistry.getInstance().getMainWindow(), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("dlg.newbackup"), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("dlg.newbackup.title"), JOptionPane.YES_NO_OPTION);
-                    if (response == JOptionPane.YES_OPTION) {
-                        openBackupConfigurationDialog();
-                    }
+            }
+            if (!serverSettings1.hasSetting(ServerSettings.SERVERCONF_BACKUP_MODE)) {
+                int response = JOptionPane.showConfirmDialog(EditorsRegistry.getInstance().getMainWindow(), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("dlg.newbackup"), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("dlg.newbackup.title"), JOptionPane.YES_NO_OPTION);
+                if (response == JOptionPane.YES_OPTION) {
+                    openBackupConfigurationDialog();
                 }
-
-                if ("1".equals(serverSettings.getSetting(ServerSettings.SERVERCONF_REPLICATION_ISTARGET, "0"))) {
-                    StringBuffer dialogContent = new StringBuffer();
-                    dialogContent.append("<html>");
-                    dialogContent.append("<b>Diese Installation empf&auml;ngt momentan Daten einer anderen j-lawyer.BOX (Replikation).</b><br/>");
-                    dialogContent.append("Soll die Replikation deaktiviert werden?<b/><br/>");
-                    dialogContent.append("<ul>");
-                    dialogContent.append("<li>W&auml;hlen Sie 'Nein' wenn Sie nur lesend zugreifen möchten oder dies ein Zugriff zu Testzwecken ist (empfohlen)</li>");
-                    dialogContent.append("<li>W&auml;hlen Sie 'Ja' wenn diese Installation aktiv genutzt werden soll</li>");
-                    dialogContent.append("</ul>");
-                    dialogContent.append("</html>");
-                    // int response = JOptionPane.showConfirmDialog(EditorsRegistry.getInstance().getMainWindow(), dialogContent.toString(), "j-lawyer.BOX Replikation", JOptionPane.YES_NO_OPTION);
-                    int response = JOptionPane.showOptionDialog(EditorsRegistry.getInstance().getMainWindow(), dialogContent.toString(), "j-lawyer.BOX Replikation", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, null, new String[]{"Ja", "Nein"}, "Nein");
-                    if (response == JOptionPane.YES_OPTION) {
-                        serverSettings.setSetting(ServerSettings.SERVERCONF_REPLICATION_ISTARGET, "0");
-                    }
+            }
+            if ("1".equals(serverSettings1.getSetting(ServerSettings.SERVERCONF_REPLICATION_ISTARGET, "0"))) {
+                StringBuilder dialogContent = new StringBuilder();
+                dialogContent.append("<html>");
+                dialogContent.append("<b>Diese Installation empf&auml;ngt momentan Daten einer anderen j-lawyer.BOX (Replikation).</b><br/>");
+                dialogContent.append("Soll die Replikation deaktiviert werden?<b/><br/>");
+                dialogContent.append("<ul>");
+                dialogContent.append("<li>W&auml;hlen Sie 'Nein' wenn Sie nur lesend zugreifen möchten oder dies ein Zugriff zu Testzwecken ist (empfohlen)</li>");
+                dialogContent.append("<li>W&auml;hlen Sie 'Ja' wenn diese Installation aktiv genutzt werden soll</li>");
+                dialogContent.append("</ul>");
+                dialogContent.append("</html>");
+                // int response = JOptionPane.showConfirmDialog(EditorsRegistry.getInstance().getMainWindow(), dialogContent.toString(), "j-lawyer.BOX Replikation", JOptionPane.YES_NO_OPTION);
+                int response = JOptionPane.showOptionDialog(EditorsRegistry.getInstance().getMainWindow(), dialogContent.toString(), "j-lawyer.BOX Replikation", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, null, new String[]{"Ja", "Nein"}, "Nein");
+                if (response == JOptionPane.YES_OPTION) {
+                    serverSettings1.setSetting(ServerSettings.SERVERCONF_REPLICATION_ISTARGET, "0");
                 }
             }
         });
     }
 
-    private void download(String url, String localFile) throws Exception {
-        URL u = new URL(url);
-        URLConnection urlCon = u.openConnection();
-        urlCon.setRequestProperty("User-Agent", "j-lawyer Client v" + VersionUtils.getFullClientVersion());
-        urlCon.setConnectTimeout(5000);
-        urlCon.setReadTimeout(5000);
-
-        InputStream is = urlCon.getInputStream();
-        InputStreamReader reader = new InputStreamReader(is);
-
-        char[] buffer = new char[1024];
-        int len = 0;
-        StringBuilder sb = new StringBuilder();
-        while ((len = reader.read(buffer)) > -1) {
-            sb.append(buffer, 0, len);
-        }
-        reader.close();
-        is.close();
-        String content = sb.toString();
-
-        try (FileWriter fw = new FileWriter(localFile)) {
-            fw.write(content);
-        }
-    }
-
     private void openProfileInformationDialog() {
-        ClientSettings settings = ClientSettings.getInstance();
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             boolean currentlyAdmin = locator.lookupSecurityServiceRemote().isAdmin();
@@ -1119,7 +1072,6 @@ public class SplashThread implements Runnable {
     }
 
     private void openBackupConfigurationDialog() {
-        ClientSettings settings = ClientSettings.getInstance();
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             boolean currentlyAdmin = locator.lookupSecurityServiceRemote().isAdmin();
@@ -1138,8 +1090,6 @@ public class SplashThread implements Runnable {
 
     private void compileReports() throws Exception {
 
-        ClientSettings s = ClientSettings.getInstance();
-
         updateStatus(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.print.0"), true);
         this.updateProgress(false, 6, 0, "");
 
@@ -1147,17 +1097,17 @@ public class SplashThread implements Runnable {
             @Override
             public void run() {
                 try (InputStream is4 = this.getClass().getClassLoader().getResourceAsStream("reports/reviews.jrxml");
-                        FileOutputStream os4 = new FileOutputStream(s.getLocalReportsDirectory() + "reviews.jasper");
+                        FileOutputStream os4 = new FileOutputStream(settings.getLocalReportsDirectory() + "reviews.jasper");
                         InputStream is6 = this.getClass().getClassLoader().getResourceAsStream("reports/reviews_detail.jrxml");
-                        FileOutputStream os6 = new FileOutputStream(s.getLocalReportsDirectory() + "reviews_detail.jasper");
+                        FileOutputStream os6 = new FileOutputStream(settings.getLocalReportsDirectory() + "reviews_detail.jasper");
                         InputStream is5 = this.getClass().getClassLoader().getResourceAsStream("reports/archivefile.jrxml");
-                        FileOutputStream os5 = new FileOutputStream(s.getLocalReportsDirectory() + "archivefile.jasper");
+                        FileOutputStream os5 = new FileOutputStream(settings.getLocalReportsDirectory() + "archivefile.jasper");
                         InputStream is7 = this.getClass().getClassLoader().getResourceAsStream("reports/archivefile_address_detail.jrxml");
-                        FileOutputStream os7 = new FileOutputStream(s.getLocalReportsDirectory() + "archivefile_address_detail.jasper");
+                        FileOutputStream os7 = new FileOutputStream(settings.getLocalReportsDirectory() + "archivefile_address_detail.jasper");
                         InputStream is8 = this.getClass().getClassLoader().getResourceAsStream("reports/archivefile_review_detail.jrxml");
-                        FileOutputStream os8 = new FileOutputStream(s.getLocalReportsDirectory() + "archivefile_review_detail.jasper");
+                        FileOutputStream os8 = new FileOutputStream(settings.getLocalReportsDirectory() + "archivefile_review_detail.jasper");
                         InputStream is9 = this.getClass().getClassLoader().getResourceAsStream("reports/archivefile_cost_detail.jrxml");
-                        FileOutputStream os9 = new FileOutputStream(s.getLocalReportsDirectory() + "archivefile_cost_detail.jasper");) {
+                        FileOutputStream os9 = new FileOutputStream(settings.getLocalReportsDirectory() + "archivefile_cost_detail.jasper");) {
 
                     JasperCompileManager.compileReportToStream(is4, os4);
                     JasperCompileManager.compileReportToStream(is5, os5);
@@ -1190,8 +1140,7 @@ public class SplashThread implements Runnable {
         this.updateStatus(java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("status.loadingdesign"), new Object[]{this.loadedMods, this.numberOfMods}), true);
         this.updateProgress(false, this.numberOfMods, this.loadedMods, "");
 
-        ClientSettings settings = ClientSettings.getInstance();
-        String themeName = settings.getConfiguration(settings.CONF_THEME, "default");
+        String themeName = settings.getConfiguration(ClientSettings.CONF_THEME, "default");
         if (module.getBackgroundImage() != null) {
 
             try {
@@ -1239,27 +1188,23 @@ public class SplashThread implements Runnable {
         if (editorClass != null) {
             try {
                 if (!SwingUtilities.isEventDispatchThread()) {
-                    SwingUtilities.invokeAndWait(new Runnable() {
-                        @Override
-                        public void run() {
-                            try {
-                                Object editor = EditorsRegistry.getInstance().getEditor(editorClass);
-                                if (module.getBackgroundImage() != null || module.getRandomBackgroundImage() != null) {
-                                    if (editor instanceof ThemeableEditor) {
-                                        Image image = theme.getBackground(module);
-                                        if (image != null) {
-                                            ((ThemeableEditor) editor).setBackgroundImage(image);
-                                        }
-                                    } else {
-                                        log.warn("Editor " + editorClass + " has a background image set but does not implement interface ThemeableEditor");
+                    SwingUtilities.invokeAndWait(() -> {
+                        try {
+                            Object editor = EditorsRegistry.getInstance().getEditor(editorClass);
+                            if (module.getBackgroundImage() != null || module.getRandomBackgroundImage() != null) {
+                                if (editor instanceof ThemeableEditor) {
+                                    Image image = theme.getBackground(module);
+                                    if (image != null) {
+                                        ((ThemeableEditor) editor).setBackgroundImage(image);
                                     }
+                                } else {
+                                    log.warn("Editor " + editorClass + " has a background image set but does not implement interface ThemeableEditor");
                                 }
-                            } catch (Exception ex) {
-                                log.error("Fehler beim Laden des Moduls " + editorClass, ex);
-                                ThreadUtils.showErrorDialog(owner, "Fehler beim Laden des Moduls " + editorClass + ": " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
                             }
+                        } catch (Exception ex) {
+                            log.error("Fehler beim Laden des Moduls " + editorClass, ex);
+                            ThreadUtils.showErrorDialog(owner, "Fehler beim Laden des Moduls " + editorClass + ": " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
                         }
-
                     });
 
                 } else {
@@ -1310,17 +1255,14 @@ public class SplashThread implements Runnable {
 
     private void updateStatus(final String s, final boolean newLine) {
         if (!SwingUtilities.isEventDispatchThread()) {
-            SwingUtilities.invokeLater(
-                    new Runnable() {
-                public void run() {
-                    if (splash != null) {
-
-                        if (newLine) {
-                            splash.addStatus(System.getProperty("line.separator"));
-                        }
-
-                        splash.addStatus(s);
+            SwingUtilities.invokeLater(() -> {
+                if (splash != null) {
+                    
+                    if (newLine) {
+                        splash.addStatus(System.getProperty("line.separator"));
                     }
+                    
+                    splash.addStatus(s);
                 }
             });
         } else {
@@ -1337,12 +1279,9 @@ public class SplashThread implements Runnable {
 
     private void updateProgress(final boolean indeterminate, final int max, final int value, final String s) {
         if (!SwingUtilities.isEventDispatchThread()) {
-            SwingUtilities.invokeLater(
-                    new Runnable() {
-                public void run() {
-                    if (splash != null) {
-                        splash.setProgress(indeterminate, max, value, s);
-                    }
+            SwingUtilities.invokeLater(() -> {
+                if (splash != null) {
+                    splash.setProgress(indeterminate, max, value, s);
                 }
             });
         } else {
@@ -1367,7 +1306,7 @@ public class SplashThread implements Runnable {
 
             char[] buffer = new char[1024];
             int len = 0;
-            StringBuffer sb = new StringBuffer();
+            StringBuilder sb = new StringBuilder();
             while ((len = reader.read(buffer)) > -1) {
                 sb.append(buffer, 0, len);
             }
@@ -1399,8 +1338,8 @@ public class SplashThread implements Runnable {
                 calcDirFile.mkdirs();
             }
 
-            ArrayList<String> remoteCalcs = new ArrayList<String>();
-            ArrayList<CalculationPlugin> calcPlugins = new ArrayList<CalculationPlugin>();
+            ArrayList<String> remoteCalcs = new ArrayList<>();
+            ArrayList<CalculationPlugin> calcPlugins = new ArrayList<>();
             for (int i = 0; i < remoteList.getLength(); i++) {
                 Node n = remoteList.item(i);
                 String forVersion = n.getAttributes().getNamedItem("for").getNodeValue();
@@ -1424,23 +1363,19 @@ public class SplashThread implements Runnable {
             HashMap<String, String> localCalcs = new HashMap<>();
             for (File c : calcDirFile.listFiles()) {
 
-                Runnable r = new Runnable() {
-                    @Override
-                    public void run() {
-                        if (c.isFile()) {
-                            if (c.getName().toLowerCase().endsWith("_meta.groovy")) {
-                                String plugName = c.getName().substring(0, c.getName().indexOf("_meta"));
-                                String plugVersion = CalculationPluginUtil.checkVersion(c);
-
-                                localCalcs.put(plugName, plugVersion);
-                                if (!remoteCalcs.contains(plugName + plugVersion)) {
-                                    c.delete();
-                                }
-
+                Runnable r = () -> {
+                    if (c.isFile()) {
+                        if (c.getName().toLowerCase().endsWith("_meta.groovy")) {
+                            String plugName = c.getName().substring(0, c.getName().indexOf("_meta"));
+                            String plugVersion = CalculationPluginUtil.checkVersion(c);
+                            
+                            localCalcs.put(plugName, plugVersion);
+                            if (!remoteCalcs.contains(plugName + plugVersion)) {
+                                c.delete();
                             }
+                            
                         }
                     }
-
                 };
                 pluginPool.execute(r);
 
@@ -1469,11 +1404,10 @@ public class SplashThread implements Runnable {
 
         try {
 
-            ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             FormsServiceRemote formsSvc = locator.lookupFormsServiceRemote();
 
-            ArrayList<String> remoteForms = new ArrayList<String>();
+            ArrayList<String> remoteForms = new ArrayList<>();
             List<FormTypeBean> allFormTypes = formsSvc.getAllFormTypes();
             for (FormTypeBean ftb : allFormTypes) {
                 remoteForms.add(ftb.getName() + ftb.getVersion());
@@ -1490,23 +1424,19 @@ public class SplashThread implements Runnable {
             HashMap<String, String> localForms = new HashMap<>();
             for (File c : formDirFile.listFiles()) {
 
-                Runnable r = new Runnable() {
-                    @Override
-                    public void run() {
-                        if (c.isFile()) {
-                            if (c.getName().toLowerCase().endsWith("_meta.groovy")) {
-                                String plugName = c.getName().substring(0, c.getName().indexOf("_meta"));
-                                String plugVersion = FormPluginUtil.checkVersion(c);
-
-                                localForms.put(plugName, plugVersion);
-                                if (!remoteForms.contains(plugName + plugVersion)) {
-                                    c.delete();
-                                }
-
+                Runnable r = () -> {
+                    if (c.isFile()) {
+                        if (c.getName().toLowerCase().endsWith("_meta.groovy")) {
+                            String plugName = c.getName().substring(0, c.getName().indexOf("_meta"));
+                            String plugVersion = FormPluginUtil.checkVersion(c);
+                            
+                            localForms.put(plugName, plugVersion);
+                            if (!remoteForms.contains(plugName + plugVersion)) {
+                                c.delete();
                             }
+                            
                         }
                     }
-
                 };
                 pluginPool.execute(r);
 

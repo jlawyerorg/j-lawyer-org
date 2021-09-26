@@ -1247,8 +1247,7 @@ public class BackupConfigurationDialog extends javax.swing.JDialog {
         ClientSettings settings = ClientSettings.getInstance();
         String server = settings.getConfiguration(settings.CONF_LASTSERVER, "localhost");
         String port = settings.getConfiguration(settings.CONF_LASTPORTDYN, "8080");
-        String themeName = settings.getConfiguration(settings.CONF_THEME, "default");
-
+        
         String protocol = "http";
         if ("ssl".equalsIgnoreCase(settings.getConfiguration(settings.CONF_LASTSECMODE, "standard"))) {
             protocol = "https";
