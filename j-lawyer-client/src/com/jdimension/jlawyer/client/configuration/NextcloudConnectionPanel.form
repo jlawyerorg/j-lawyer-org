@@ -125,8 +125,11 @@
     </Component>
     <Component class="javax.swing.JTextField" name="txtCloudHost">
       <Properties>
-        <Property name="toolTipText" type="java.lang.String" value="Servername ohne Protokoll (ohne http/https)"/>
+        <Property name="toolTipText" type="java.lang.String" value="Servername ohne http:// oder https:// - bspw. nur cloud.advobox.com"/>
       </Properties>
+      <Events>
+        <EventHandler event="keyReleased" listener="java.awt.event.KeyListener" parameters="java.awt.event.KeyEvent" handler="txtCloudHostKeyReleased"/>
+      </Events>
     </Component>
   </SubComponents>
 </Form>

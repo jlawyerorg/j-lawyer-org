@@ -663,6 +663,8 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.configuration;
 
+import com.formdev.flatlaf.FlatClientProperties;
+
 
 /**
  *
@@ -769,7 +771,12 @@ public class NextcloudConnectionPanel extends javax.swing.JPanel {
         txtCloudPort.setText("443");
         txtCloudPort.setToolTipText("in der Regel 443 bei SSL, ansonsten 80");
 
-        txtCloudHost.setToolTipText("Servername ohne Protokoll (ohne http/https)");
+        txtCloudHost.setToolTipText("Servername ohne http:// oder https:// - bspw. nur cloud.advobox.com");
+        txtCloudHost.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyReleased(java.awt.event.KeyEvent evt) {
+                txtCloudHostKeyReleased(evt);
+            }
+        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -821,6 +828,14 @@ public class NextcloudConnectionPanel extends javax.swing.JPanel {
                     .addComponent(pwCloudPassword, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
         );
     }// </editor-fold>//GEN-END:initComponents
+
+    private void txtCloudHostKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtCloudHostKeyReleased
+        if(this.txtCloudHost.getText().trim().startsWith("http")) {
+            this.txtCloudHost.putClientProperty(FlatClientProperties.OUTLINE, FlatClientProperties.OUTLINE_ERROR);
+        } else {
+            this.txtCloudHost.putClientProperty(FlatClientProperties.OUTLINE, null);
+        }
+    }//GEN-LAST:event_txtCloudHostKeyReleased
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
