@@ -908,7 +908,7 @@ public class NextcloudContactsConnector {
         n.setGiven(c.getFirstName());
 //n.getPrefixes().add("Mr");
 
-        if (c.getBirthDate() != null) {
+        if (c.getBirthDate() != null && !("".equals(c.getBirthDate()))) {
             try {
                 SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
                 Date d = df.parse(c.getBirthDate());
@@ -927,7 +927,7 @@ public class NextcloudContactsConnector {
             }
         }
         
-        if (c.getDateOfDeath()!= null) {
+        if (c.getDateOfDeath()!= null && !("".equals(c.getDateOfDeath()))) {
             try {
                 SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
                 Date d = df.parse(c.getDateOfDeath());
