@@ -720,6 +720,8 @@ import org.osaf.caldav4j.util.GenerateQuery;
 public class NextcloudCalendarConnector {
 
     private static final Logger log = Logger.getLogger(NextcloudCalendarConnector.class.getName());
+    
+    private SimpleDateFormat dateFormat=new SimpleDateFormat("yyyyMMdd");
 
     protected String subpathPrefix = null;
     protected String serverName = null;
@@ -933,7 +935,9 @@ public class NextcloudCalendarConnector {
 //                    new Dur(0, 1, 0, 0), summary);
             VEvent vevent = null;
             if (allDayEvent) {
-                vevent = new VEvent(new net.fortuna.ical4j.model.Date(start), summary);
+                // required to use a string as input, because due to the timezones it might be added for one day earlier
+                String dateString=dateFormat.format(start);
+                vevent = new VEvent(new net.fortuna.ical4j.model.Date(dateString), summary);
             } else {
                 vevent = new VEvent(new net.fortuna.ical4j.model.DateTime(start), new net.fortuna.ical4j.model.DateTime(end), summary);
             }
