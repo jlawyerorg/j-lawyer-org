@@ -1373,9 +1373,9 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
 
         jTabbedPane1.addTab("Nextcloud", jPanel10);
 
-        jLabel2.setText("Sipgate-Kundennummer:");
+        jLabel2.setText("Sipgate-Token-ID:");
 
-        jLabel25.setText("Sipgate-Passwort:");
+        jLabel25.setText("Sipgate-Token:");
 
         jLabel26.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/info.png"))); // NOI18N
         jLabel26.setText("Änderung erfordert Neustart des j-lawyer.org Clients");
@@ -1393,7 +1393,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 .add(jPanel11Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(jPanel11Layout.createSequentialGroup()
                         .add(jLabel26)
-                        .add(0, 258, Short.MAX_VALUE))
+                        .add(0, 417, Short.MAX_VALUE))
                     .add(txtVoipUser)
                     .add(txtVoipPassword))
                 .addContainerGap())
@@ -1731,7 +1731,12 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                     this.rdAutoLogin.setSelected(false);
                     this.rdManualLogin.setSelected(true);
                 }
-                this.pwdBeaCertificatePassword.setText(Crypto.decrypt(u.getBeaCertificatePassword()));
+                try {
+                    this.pwdBeaCertificatePassword.setText(Crypto.decrypt(u.getBeaCertificatePassword()));
+                } catch (Throwable t) {
+                    log.warn("Unable to decrypt beA certificate password, might be empty", t);
+                    this.pwdBeaCertificatePassword.setText("");
+                }
                 this.currentCertificate = u.getBeaCertificate();
 
                 if (u.getBeaCertificate() == null) {

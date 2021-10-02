@@ -911,7 +911,7 @@
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Group type="102" attributes="0">
                               <Component id="jLabel26" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace min="0" pref="258" max="32767" attributes="0"/>
+                              <EmptySpace min="0" pref="417" max="32767" attributes="0"/>
                           </Group>
                           <Component id="txtVoipUser" max="32767" attributes="0"/>
                           <Component id="txtVoipPassword" max="32767" attributes="0"/>
@@ -943,12 +943,12 @@
           <SubComponents>
             <Component class="javax.swing.JLabel" name="jLabel2">
               <Properties>
-                <Property name="text" type="java.lang.String" value="Sipgate-Kundennummer:"/>
+                <Property name="text" type="java.lang.String" value="Sipgate-Token-ID:"/>
               </Properties>
             </Component>
             <Component class="javax.swing.JLabel" name="jLabel25">
               <Properties>
-                <Property name="text" type="java.lang.String" value="Sipgate-Passwort:"/>
+                <Property name="text" type="java.lang.String" value="Sipgate-Token:"/>
               </Properties>
             </Component>
             <Component class="javax.swing.JTextField" name="txtVoipUser">
