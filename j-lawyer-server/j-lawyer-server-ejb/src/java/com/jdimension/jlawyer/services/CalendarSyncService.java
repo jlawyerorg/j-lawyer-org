@@ -711,7 +711,7 @@ public class CalendarSyncService implements CalendarSyncServiceLocal {
         description.append(caseContext.getFileNumber()).append(" - ").append(caseContext.getName()).append(System.lineSeparator()).append("(").append(caseContext.getReason()).append(")");
         description.append(System.lineSeparator());
         description.append(System.lineSeparator());
-        description.append(event.getDescription());
+        description.append(ServerStringUtils.nonEmpty(event.getDescription()));
         return description.toString();
     }
 
