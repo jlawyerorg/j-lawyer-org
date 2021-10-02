@@ -1268,10 +1268,16 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
         String inPwd = ms.getEmailInPwd();
         String outPwd = ms.getEmailOutPwd();
         try {
-            inPwd = Crypto.decrypt(ms.getEmailInPwd());
             outPwd = Crypto.decrypt(ms.getEmailOutPwd());
         } catch (Throwable t) {
             log.error(t);
+            outPwd="";
+        }
+        try {
+            inPwd = Crypto.decrypt(ms.getEmailInPwd());
+        } catch (Throwable t) {
+            log.error(t);
+            inPwd="";
         }
         this.pwdInPassword.setText(inPwd);
         this.txtOutServer.setText(ms.getEmailOutServer());
