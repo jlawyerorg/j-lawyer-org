@@ -1242,7 +1242,7 @@ public class EmailUtils {
         props.put("mail.smtps.user", ms.getEmailOutUser());
         props.put("mail.smtps.auth", true);
         props.put("mail.from", ms.getEmailAddress());
-        String outPwd = ms.getEmailOutPwd();
+        String outPwd = "";
         try {
             outPwd = Crypto.decrypt(ms.getEmailOutPwd());
         } catch (Throwable t) {
@@ -1254,7 +1254,7 @@ public class EmailUtils {
 
             @Override
             public PasswordAuthentication getPasswordAuthentication() {
-                String outPwd = ms.getEmailOutPwd();
+                String outPwd = "";
                 try {
                     outPwd = Crypto.decrypt(ms.getEmailOutPwd());
                 } catch (Throwable t) {
