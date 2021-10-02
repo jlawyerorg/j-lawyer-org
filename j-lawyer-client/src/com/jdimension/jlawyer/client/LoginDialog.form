@@ -293,10 +293,8 @@
               </Properties>
               <Constraints>
                 <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout" value="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout$JTabbedPaneConstraintsDescription">
-                  <JTabbedPaneConstraints tabName="Verbindungen">
-                    <Property name="tabTitle" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                      <ResourceString bundle="com/jdimension/jlawyer/client/LoginDialog.properties" key="tab.title.connection" replaceFormat="java.util.ResourceBundle.getBundle(&quot;{bundleNameSlashes}&quot;).getString(&quot;{key}&quot;)"/>
-                    </Property>
+                  <JTabbedPaneConstraints tabName="Profile">
+                    <Property name="tabTitle" type="java.lang.String" value="Profile"/>
                   </JTabbedPaneConstraints>
                 </Constraint>
               </Constraints>
@@ -622,7 +620,7 @@
                     <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
                       <Color blue="ff" green="ff" red="ff" type="rgb"/>
                     </Property>
-                    <Property name="text" type="java.lang.String" value="Profil:"/>
+                    <Property name="text" type="java.lang.String" value="Profilname:"/>
                   </Properties>
                 </Component>
                 <Component class="javax.swing.JButton" name="cmdSaveProfile">

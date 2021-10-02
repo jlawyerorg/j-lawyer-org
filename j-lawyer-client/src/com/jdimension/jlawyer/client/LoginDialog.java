@@ -1234,7 +1234,7 @@ public class LoginDialog extends javax.swing.JFrame {
         });
 
         lblProfile.setForeground(new java.awt.Color(255, 255, 255));
-        lblProfile.setText("Profil:");
+        lblProfile.setText("Profilname:");
 
         cmdSaveProfile.setForeground(new java.awt.Color(255, 255, 255));
         cmdSaveProfile.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png"))); // NOI18N
@@ -1339,7 +1339,7 @@ public class LoginDialog extends javax.swing.JFrame {
                 .addContainerGap(70, Short.MAX_VALUE))
         );
 
-        jTabbedPane1.addTab(bundle.getString("tab.title.connection"), jPanel2); // NOI18N
+        jTabbedPane1.addTab("Profile", jPanel2);
 
         jPanel3.setOpaque(false);
 
