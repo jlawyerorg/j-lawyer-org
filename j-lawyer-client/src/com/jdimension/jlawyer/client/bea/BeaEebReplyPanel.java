@@ -663,23 +663,7 @@
  */
 package com.jdimension.jlawyer.client.bea;
 
-import com.jdimension.jlawyer.client.mail.sidebar.*;
-import com.jdimension.jlawyer.client.editors.addresses.*;
-import com.jdimension.jlawyer.client.configuration.PopulateOptionsEditor;
-import com.jdimension.jlawyer.client.editors.EditorsRegistry;
-import com.jdimension.jlawyer.client.editors.ThemeableEditor;
-import com.jdimension.jlawyer.client.editors.files.ArchiveFilePanel;
-import com.jdimension.jlawyer.client.editors.files.EditArchiveFileDetailsPanel;
-import com.jdimension.jlawyer.client.editors.files.ViewArchiveFileDetailsPanel;
-import com.jdimension.jlawyer.client.mail.SaveToCaseExecutor;
-import com.jdimension.jlawyer.client.settings.ClientSettings;
-import com.jdimension.jlawyer.client.settings.UserSettings;
-import com.jdimension.jlawyer.client.utils.StringUtils;
-import com.jdimension.jlawyer.persistence.ArchiveFileBean;
-import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
-import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Color;
-import java.awt.Component;
 import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
 
@@ -692,7 +676,6 @@ public class BeaEebReplyPanel extends javax.swing.JPanel {
     //public static String 
 
     private static final Logger log = Logger.getLogger(BeaEebReplyPanel.class.getName());
-    //DecimalFormat df = new DecimalFormat("0.00%");
     private EebExecutor executor=null;
     
     private String openedFromEditorClass=null;
@@ -719,30 +702,6 @@ public class BeaEebReplyPanel extends javax.swing.JPanel {
     public void setEntry(EebExecutor executor) {
         this.executor=executor;
         
-        
-        
-        //this.lblFileName.setText(sh.getFileName() + " in " + sh.getArchiveFileNumber() + " " + sh.getArchiveFileName());
-//        String name=e.getName();
-//        if(name==null)
-//            name="";
-//        if(name.length()>25)
-//            name=name.substring(0,25) + "...";
-//        
-//        String reason=e.getReason();
-//        if(reason==null)
-//            reason="";
-//        if(reason.length()>45)
-//            reason=reason.substring(0,45) + "...";
-//        
-//        
-//        this.lblDescription.setText("<html><b>" + StringUtils.nonEmpty(e.getFileNumber()) + " " + name + "</b><br/>" + StringUtils.nonEmpty(reason) + "</html>");
-//        
-//        String contactCaption=java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/editors/addresses/CaseForContactEntryPanel").getString("role");
-//        String tooltip="<html><b>" + StringUtils.nonEmpty(e.getFileNumber()) + " " + e.getName() + "</b><br/>" + e.getReason() + "<br/>"  + contactCaption + ": " + e.getRole() + "</html>";
-//        this.lblDescription.setToolTipText(tooltip);
-        
-        
-
     }
 
     /**
@@ -834,8 +793,6 @@ public class BeaEebReplyPanel extends javax.swing.JPanel {
 
     private void lblDescriptionMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblDescriptionMouseClicked
         
-//        if(this.e==null || this.e.getId()==null)
-//            return;
         
         try {
             this.executor.displayEeb();

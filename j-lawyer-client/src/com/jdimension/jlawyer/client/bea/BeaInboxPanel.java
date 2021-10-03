@@ -748,6 +748,7 @@ import org.jlawyer.bea.model.Message;
 import org.jlawyer.bea.model.PostBox;
 import org.jlawyer.bea.model.ProcessCard;
 import org.jlawyer.bea.model.Recipient;
+import org.jlawyer.bea.xjustiz.EebResponseAttributes;
 
 /**
  *
@@ -758,7 +759,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
     private static final Logger log = Logger.getLogger(BeaInboxPanel.class.getName());
     private Image backgroundImage = null;
     private BeaFolderTreeCellRenderer renderer = null;
-    
+
     private DragSource dragSource = null;
 
     private boolean initializing = true;
@@ -815,13 +816,13 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                         this);
 
         AppUserBean cu = UserSettings.getInstance().getCurrentUser();
-        
+
         ComponentUtils.restoreSplitPane(this.mainSplitter, this.getClass(), "mainSplitter");
         ComponentUtils.persistSplitPane(this.mainSplitter, this.getClass(), "mainSplitter");
-        
+
         ComponentUtils.restoreSplitPane(this.splitterFolderDetails, this.getClass(), "splitterFolderDetails");
         ComponentUtils.persistSplitPane(this.splitterFolderDetails, this.getClass(), "splitterFolderDetails");
-        
+
         ComponentUtils.restoreSplitPane(this.jSplitPane1, this.getClass(), "jSplitPane1");
         ComponentUtils.persistSplitPane(this.jSplitPane1, this.getClass(), "jSplitPane1");
 
@@ -849,7 +850,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
         } catch (Exception ex) {
             log.error(ex);
         }
-        
+
         this.initializing = false;
     }
 
@@ -871,9 +872,9 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
 
     private void initWithCertificate() throws BeaWrapperException {
         AppUserBean cu = UserSettings.getInstance().getCurrentUser();
-        String pwd=null;
+        String pwd = null;
         try {
-            pwd=Crypto.decrypt(cu.getBeaCertificatePassword());
+            pwd = Crypto.decrypt(cu.getBeaCertificatePassword());
         } catch (GeneralSecurityException | IOException ge) {
             log.error("Unable to decrypt beA certificate password");
             throw new BeaWrapperException(ge);
@@ -949,7 +950,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                 DefaultTreeModel tm = new DefaultTreeModel(rootNode);
                 treeFolders.setModel(tm);
                 JTreeUtils.expandAll(treeFolders);
-                
+
                 treeFolders.setCellRenderer(renderer);
             });
         } else {
@@ -1865,7 +1866,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
             dlg.setSubject(subject);
 
             dlg.setBody(BeaUtils.getQuotedBody(this.beaMessageContentUI.getBody(), m.getSenderName()));
-            
+
             for (Attachment att : m.getAttachments()) {
                 byte[] data = att.getContent();
                 if (data != null) {
@@ -2034,11 +2035,11 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
         this.beaMessageContentUI.clear();
         this.beaMessageContentUI.repaint();
         this.beaMessageContentUI.revalidate();
-        
+
         this.pnlActionsChild.removeAll();
         this.pnlActionsChild.repaint();
         this.pnlActionsChild.revalidate();
-        
+
         if (this.tblMails.getSelectedRow() < 0 || this.tblMails.getSelectedRows().length > 1) {
             return;
         }
@@ -2082,18 +2083,19 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             AddressServiceRemote ads = locator.lookupAddressServiceRemote();
             ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
-            
-            ArrayList<String> phoneNumbers=new ArrayList<>();        
+
+            ArrayList<String> phoneNumbers = new ArrayList<>();
             try {
                 Collection<Keyword> keywords = afs.extractKeywordsFromText(this.beaMessageContentUI.getBody());
-                for(Keyword w: keywords) {
-                    if(w.getType()==Keyword.TYPE_PHONENR)
+                for (Keyword w : keywords) {
+                    if (w.getType() == Keyword.TYPE_PHONENR) {
                         phoneNumbers.add(w.getValue());
+                    }
                 }
             } catch (Throwable t) {
                 log.error("Could not extract keywords from email", t);
             }
-            
+
             String sender = msg.getSenderSafeId();
             if (sender != null && sender.length() > 0) {
 
@@ -2119,8 +2121,8 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                 cce.setArchived(false);
                 sp.setEntry(cce, this);
                 actionPanelEntries.add(sp);
-                
-                if(phoneNumbers.size() > 0) {
+
+                if (phoneNumbers.size() > 0) {
                     ExtractedPhoneNumbersPanel pnp = new ExtractedPhoneNumbersPanel();
                     pnp.setPhoneNumbers(phoneNumbers);
                     actionPanelEntries.add(pnp);
@@ -2152,10 +2154,10 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                     Collections.sort(cases, (Object o1, Object o2) -> {
                         ArchiveFileAddressesBean afab1 = (ArchiveFileAddressesBean) o1;
                         ArchiveFileBean aFile1 = afab1.getArchiveFileKey();
-                        
+
                         ArchiveFileAddressesBean afab2 = (ArchiveFileAddressesBean) o2;
                         ArchiveFileBean aFile2 = afab2.getArchiveFileKey();
-                        
+
                         if (aFile2.getArchivedBoolean()) {
                             if (aFile1.getArchivedBoolean()) {
                                 // both archived
@@ -2332,7 +2334,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
     public void reset() {
         this.reset(false);
     }
-    
+
     public void reset(boolean force) {
 
         boolean needsBeaReset = !BeaAccess.hasInstance();
@@ -2352,15 +2354,15 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                 return;
             }
         }
-        
-        if(force) {
+
+        if (force) {
             try {
                 this.refreshFolders(true);
             } catch (Throwable t) {
                 log.error("Error during forced refresh: " + t.getMessage(), t);
             }
         }
-        
+
     }
 
     @Override
@@ -2471,9 +2473,9 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                     data = export.getContent();
                 }
 
-                String folderId=null;
+                String folderId = null;
                 if (caseId == null) {
-                    SearchAndAssignDialog dlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true, ""+m.getReferenceJustice()+m.getReferenceNumber()+m.getSubject()+m.getBody(), null);
+                    SearchAndAssignDialog dlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true, "" + m.getReferenceJustice() + m.getReferenceNumber() + m.getSubject() + m.getBody(), null);
                     dlg.setVisible(true);
                     ArchiveFileBean sel = dlg.getCaseSelection();
 
@@ -2481,17 +2483,17 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                     if (sel != null) {
                         caseId = sel.getId();
                     }
-                    CaseFolder caseFolder=dlg.getFolderSelection();
-                    if(caseFolder!=null) {
-                        folderId=caseFolder.getId();
+                    CaseFolder caseFolder = dlg.getFolderSelection();
+                    if (caseFolder != null) {
+                        folderId = caseFolder.getId();
                     }
                 } else {
-                    SearchAndAssignDialog dlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true, ""+m.getReferenceJustice()+m.getReferenceNumber()+m.getSubject()+m.getBody(), caseId);
+                    SearchAndAssignDialog dlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true, "" + m.getReferenceJustice() + m.getReferenceNumber() + m.getSubject() + m.getBody(), caseId);
                     dlg.setVisible(true);
                     dlg.dispose();
-                    CaseFolder caseFolder=dlg.getFolderSelection();
-                    if(caseFolder!=null) {
-                        folderId=caseFolder.getId();
+                    CaseFolder caseFolder = dlg.getFolderSelection();
+                    if (caseFolder != null) {
+                        folderId = caseFolder.getId();
                     }
                 }
 
@@ -2515,8 +2517,8 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                             }
                             // file names need to be unique across the entire case, so when saving multiple
                             // beA messages, there are multiple xjustiz sds
-                            if(newName.equalsIgnoreCase("xjustiz_nachricht.xml")) {
-                                newName=m.getId() + "_" + newName;
+                            if (newName.equalsIgnoreCase("xjustiz_nachricht.xml")) {
+                                newName = m.getId() + "_" + newName;
                             }
                             newName = FileUtils.sanitizeFileName(newName);
 
@@ -2526,12 +2528,12 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
 
                             ArchiveFileDocumentsBean newlyAddedDocument = afs.addDocument(caseId, newName, attachmentData, "");
 
-                            if(folderId!=null) {
-                                ArrayList<String> docList=new ArrayList<>();
+                            if (folderId != null) {
+                                ArrayList<String> docList = new ArrayList<>();
                                 docList.add(newlyAddedDocument.getId());
                                 afs.moveDocumentsToFolder(docList, folderId);
                             }
-                            
+
                             temp = ClientSettings.getInstance().getConfiguration(ClientSettings.CONF_BEA_DOCUMENTTAGGINGENABLED, "false");
                             if ("true".equalsIgnoreCase(temp)) {
                                 String docTag = ClientSettings.getInstance().getConfiguration(ClientSettings.CONF_BEA_LASTDOCUMENTTAG, "");
@@ -2565,12 +2567,12 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
 
                     ArchiveFileDocumentsBean newlyAddedDocument = afs.addDocument(caseId, newName, export.getContent(), "");
 
-                    if(folderId != null) {
+                    if (folderId != null) {
                         ArrayList<String> docList = new ArrayList<>();
                         docList.add(newlyAddedDocument.getId());
                         afs.moveDocumentsToFolder(docList, folderId);
                     }
-                    
+
                     String temp = ClientSettings.getInstance().getConfiguration(ClientSettings.CONF_BEA_TAGGINGENABLED, "false");
                     if ("true".equalsIgnoreCase(temp)) {
                         String caseTag = ClientSettings.getInstance().getConfiguration(ClientSettings.CONF_BEA_LASTTAG, "");
@@ -2608,8 +2610,8 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                         }
 
                         ArchiveFileDocumentsBean newlyAddedDocument = afs.addDocument(caseId, newName, attachmentData, "");
-                        
-                        if(folderId != null) {
+
+                        if (folderId != null) {
                             ArrayList<String> docList = new ArrayList<>();
                             docList.add(newlyAddedDocument.getId());
                             afs.moveDocumentsToFolder(docList, folderId);
@@ -2811,7 +2813,35 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                 for (Attachment att : m.getAttachments()) {
                     if (att.getFileName().equalsIgnoreCase("xjustiz_nachricht.xml")) {
                         String xjustiz = new String(att.getContent());
-                        String html = BeaAccess.getEebAsHtml(xjustiz);
+                        String html="<html>Unbekannter XJustiz-Datensatztyp</html>";
+                        if (BeaAccess.isEebRequest(xjustiz)) {
+                            html = BeaAccess.getEebAsHtml(xjustiz, null);
+                            
+//                            EebResponseAttributes attrs = BeaAccess.getEebResponseAttributes(xjustiz);
+//                            String otherMessageId = null;
+//                            if (mh.getId().equals(attrs.getOwnMessageId())) {
+//                                otherMessageId = attrs.getForeignMessageId();
+//                            } else {
+//                                otherMessageId = attrs.getOwnMessageId();
+//                            }
+//
+//                            Message otherMessage = BeaAccess.getInstance().getMessage(otherMessageId, BeaAccess.getInstance().getLoggedInSafeId());
+//                            
+//                            String otherXjustiz=null;
+//                            for (Attachment att2 : otherMessage.getAttachments()) {
+//                                if (att2.getFileName().equalsIgnoreCase("xjustiz_nachricht.xml")) {
+//                                    otherXjustiz = new String(att2.getContent());
+//                                }
+//                            }
+//                            request=otherXjustiz;
+
+                        } else if (BeaAccess.isEebResponse(xjustiz)) {
+                            log.warn("TODO: find matching XJustiz file - see ticket https://github.com/jlawyerorg/j-lawyer-org/issues/917");
+                            html = BeaAccess.getEebAsHtml(null, xjustiz);
+                        } else {
+                            log.error("Unknown XJustiz file type!");
+                        }
+                        
                         System.out.println(html);
                         BeaEebDisplayDialog dlg = new BeaEebDisplayDialog(EditorsRegistry.getInstance().getMainWindow(), true);
                         dlg.setHtml(html);

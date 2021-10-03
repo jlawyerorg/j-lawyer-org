@@ -691,6 +691,8 @@ import org.jlawyer.bea.model.MessageHeader;
 import org.jlawyer.bea.model.MessageJournalEntry;
 import org.jlawyer.bea.model.PostBox;
 import org.jlawyer.bea.model.ProcessCard;
+import org.jlawyer.bea.xjustiz.EebRequestAttributes;
+import org.jlawyer.bea.xjustiz.EebResponseAttributes;
 
 /**
  *
@@ -744,7 +746,7 @@ public class BeaAccess {
 //        }
 
         ServerSettings set = ServerSettings.getInstance();
-        String endpoint = set.getSetting(set.SERVERCONF_BEAENDPOINT, "https://schulung-ksw.bea-brak.de");
+        String endpoint = set.getSetting(ServerSettings.SERVERCONF_BEAENDPOINT, "https://schulung-ksw.bea-brak.de");
 
         this.wrapper = new BeaWrapper(endpoint, certificate, password, productName, producer, registrationId);
 
@@ -756,7 +758,7 @@ public class BeaAccess {
     private BeaAccess() throws BeaWrapperException {
 
         ServerSettings set = ServerSettings.getInstance();
-        String endpoint = set.getSetting(set.SERVERCONF_BEAENDPOINT, "https://schulung-ksw.bea-brak.de");
+        String endpoint = set.getSetting(ServerSettings.SERVERCONF_BEAENDPOINT, "https://schulung-ksw.bea-brak.de");
         this.wrapper = new BeaWrapper(endpoint, productName, producer, registrationId);
 
         this.cachePrefix=""+System.currentTimeMillis();
@@ -770,7 +772,7 @@ public class BeaAccess {
     private void checkValidBeaClient() throws BeaWrapperException {
         ServerSettings set = ServerSettings.getInstance();
         String enabledVersions = set.getSetting(ServerSettings.SERVERCONF_BEAENABLEDVERSIONS, "");
-        boolean valid = (enabledVersions.indexOf(VersionUtils.getFullClientVersion()) > -1);
+        boolean valid = (enabledVersions.contains(VersionUtils.getFullClientVersion()));
         if (!valid) {
             throw new BeaWrapperException("j-lawyer.org Client in Version " + VersionUtils.getFullClientVersion() + " ist nicht mehr für die beA-Schnittstelle qualifiziert." + System.lineSeparator() + "Bitte prüfen Sie unter www.j-lawyer.org ob ein Update verfügbar ist oder beA-bezogene Informationen des Herstellers vorliegen.");
         }
@@ -1031,8 +1033,24 @@ public class BeaAccess {
         return success;
     }
 
-    public static String getEebAsHtml(String xmlXjustiz) throws BeaWrapperException {
-        return BeaWrapper.getEebAsHtml(xmlXjustiz);
+    public static String getEebAsHtml(String xmlRequest, String xmlResponse) throws BeaWrapperException {
+        return BeaWrapper.getEebAsHtml(xmlRequest, xmlResponse);
+    }
+    
+    public static boolean isEebResponse(String xmlXjustiz) {
+        return BeaWrapper.isEebResponse(xmlXjustiz);
+    }
+    
+    public static boolean isEebRequest(String xmlXjustiz) {
+        return BeaWrapper.isEebRequest(xmlXjustiz);
+    }
+    
+    public static EebResponseAttributes getEebResponseAttributes(String xmlXjustiz) throws BeaWrapperException {
+        return BeaWrapper.getEebResponseAttributes(xmlXjustiz);
+    }
+    
+    public static EebRequestAttributes getEebRequestAttributes(String xmlXjustiz) throws BeaWrapperException {
+        return BeaWrapper.getEebRequestAttributes(xmlXjustiz);
     }
 
     public synchronized Message getMessage(String messageId, String safeId) throws BeaWrapperException {
