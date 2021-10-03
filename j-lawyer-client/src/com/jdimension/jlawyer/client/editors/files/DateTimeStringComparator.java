@@ -667,6 +667,7 @@ import com.jdimension.jlawyer.client.utils.DateUtils;
 import java.text.SimpleDateFormat;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.Locale;
 import org.apache.log4j.Logger;
 
 /**
@@ -679,11 +680,11 @@ public class DateTimeStringComparator implements Comparator {
     private SimpleDateFormat df = null;
     
     public DateTimeStringComparator() {
-        this.df=new SimpleDateFormat(DateUtils.DATEFORMAT_DATETIME_DEFAULT);
+        this.df=new SimpleDateFormat(DateUtils.DATEFORMAT_DATETIME_DEFAULT, Locale.GERMAN);
     }
     
     public DateTimeStringComparator(String format) {
-        this.df=new SimpleDateFormat(format);
+        this.df=new SimpleDateFormat(format, Locale.GERMAN);
     }
 
     @Override
@@ -716,7 +717,7 @@ public class DateTimeStringComparator implements Comparator {
 
 
         } catch (Throwable thr) {
-            log.error("error sorting by date string", thr);
+            log.error("error sorting by date string: " + this.df.toPattern() + " - " + t.toString() + " - " + t1.toString(), thr);
             return -1;
         }
     }
