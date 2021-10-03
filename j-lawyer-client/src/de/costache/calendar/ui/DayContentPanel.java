@@ -349,8 +349,13 @@ public class DayContentPanel extends JPanel {
 
                 final int conflictIndex = conflictingEvents.get(event).indexOf(
                         event);
-                final int conflictingEventsSize = conflictingEvents.get(event)
+                int conflictingEventsSize = conflictingEvents.get(event)
                         .size();
+                
+                // start jens
+                if(conflictingEventsSize==0)
+                    conflictingEventsSize=1;
+                // stop jens
 
                 graphics2d.fillRoundRect(conflictIndex * (getWidth() - 4)
                         / conflictingEventsSize, eventStart, (getWidth() - 4)
