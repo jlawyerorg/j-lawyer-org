@@ -892,6 +892,9 @@ public class CalendarPanel extends javax.swing.JPanel {
                 }
             }
 
+            if(rev.getBeginDate()==null)
+                continue;
+            
             int hour = rev.getBeginDate().getHours();
             final int min = rev.getBeginDate().getMinutes();
             final int day = rev.getBeginDate().getDate();
