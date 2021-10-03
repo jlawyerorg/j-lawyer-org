@@ -755,7 +755,7 @@ public class SshTunnel {
             this.timer = null;
         }
         this.timer = new Timer();
-        this.timer.schedule(o, initialDelay, 15000l);
+        this.timer.schedule(o, initialDelay, 20000l);
     }
 
     public boolean isConnected() {
