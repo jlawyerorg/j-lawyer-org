@@ -666,6 +666,7 @@ package com.jdimension.jlawyer.client.security.ssh;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.Session;
 import com.jdimension.jlawyer.client.utils.VersionUtils;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -769,6 +770,10 @@ public class SshTunnel {
                 InputStream is = urlCon.getInputStream();
                 is.close();
                 
+            } catch (FileNotFoundException fnfe) {
+                // HTTP 404
+                // happens if the server is configured to not return anything in the web server root, which is the
+                // typical set for the cloud servers
             } catch (Throwable t) {
                 log.error("error during ssh tunnel connection validation", t);
                 return false;
