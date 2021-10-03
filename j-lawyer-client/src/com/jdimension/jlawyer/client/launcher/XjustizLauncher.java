@@ -706,7 +706,7 @@ public class XjustizLauncher extends InternalLauncher {
 
         try {
             
-            String html = BeaAccess.getEebAsHtml(xml);
+            String html = BeaAccess.getEebAsHtml(xml, null);
 
             BeaEebDisplayDialog dlg = new BeaEebDisplayDialog(EditorsRegistry.getInstance().getMainWindow(), true);
             dlg.setHtml(html);
