@@ -1239,6 +1239,7 @@ public class CalendarSetupDialog extends javax.swing.JDialog {
             this.pnlCloud.setCloudPassword(Crypto.decrypt(cs.getCloudPassword()));
         } catch (Exception ex) {
             log.error("Error accessing cloud credentials", ex);
+            this.pnlCloud.setCloudPassword("");
             JOptionPane.showMessageDialog(this, "Fehler bzgl. Nextcloud-Zugangsdaten" + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
         
