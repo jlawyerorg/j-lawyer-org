@@ -665,6 +665,7 @@ package com.jdimension.jlawyer.client.configuration;
 
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.ServerSettings;
+import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.security.Crypto;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.util.List;
@@ -698,8 +699,17 @@ public class AddressBookSetupDialog extends javax.swing.JDialog {
             this.pnlCloud.setCloudHost(s.getSetting(ServerSettings.SERVERCONF_CLOUDSYNC_ADDRESSBOOK_HOST, ""));
 
             this.pnlCloud.setCloudPath(s.getSetting(ServerSettings.SERVERCONF_CLOUDSYNC_ADDRESSBOOK_PATH, ""));
-            this.pnlCloud.setCloudPort(Integer.parseInt(s.getSetting(ServerSettings.SERVERCONF_CLOUDSYNC_ADDRESSBOOK_PORT, "")));
-            this.pnlCloud.setCloudPassword(Crypto.decrypt(s.getSetting(ServerSettings.SERVERCONF_CLOUDSYNC_ADDRESSBOOK_PWD, "")));
+            try {
+                this.pnlCloud.setCloudPort(Integer.parseInt(s.getSetting(ServerSettings.SERVERCONF_CLOUDSYNC_ADDRESSBOOK_PORT, "")));
+            } catch (Throwable t) {
+                log.warn("invalid cloud port: " + s.getSetting(ServerSettings.SERVERCONF_CLOUDSYNC_ADDRESSBOOK_PORT, ""), t);
+            }
+            try {
+                this.pnlCloud.setCloudPassword(Crypto.decrypt(s.getSetting(ServerSettings.SERVERCONF_CLOUDSYNC_ADDRESSBOOK_PWD, "")));
+            } catch (Throwable t) {
+                log.warn("invalid cloud password: " + s.getSetting(ServerSettings.SERVERCONF_CLOUDSYNC_ADDRESSBOOK_PWD, ""), t);
+                this.pnlCloud.setCloudPassword("");
+            }
             this.pnlCloud.setSsl(s.getSettingAsBoolean(ServerSettings.SERVERCONF_CLOUDSYNC_ADDRESSBOOK_SSL, true));
             this.pnlCloud.setCloudUser(s.getSetting(ServerSettings.SERVERCONF_CLOUDSYNC_ADDRESSBOOK_USER, ""));
         } catch (Throwable t) {
@@ -710,10 +720,13 @@ public class AddressBookSetupDialog extends javax.swing.JDialog {
         try {
 
             String currentHref = s.getSetting(ServerSettings.SERVERCONF_CLOUDSYNC_ADDRESSBOOK_HREF, "");
+            this.cmbAddressBook.removeAllItems();
+            
+            if(StringUtils.isEmpty(this.pnlCloud.getCloudHost()) || StringUtils.isEmpty(this.pnlCloud.getCloudUser()) || StringUtils.isEmpty(this.pnlCloud.getCloudPassword()))
+                return;
 
             NextcloudContactsConnector nc = new NextcloudContactsConnector(this.pnlCloud.getCloudHost(), this.pnlCloud.isSsl(), this.pnlCloud.getCloudPort(), this.pnlCloud.getCloudUser(), this.pnlCloud.getCloudPassword());
             List<CloudAddressBook> books = nc.getAllAddressBooks();
-            this.cmbAddressBook.removeAllItems();
             CloudAddressBook selected = null;
             for (CloudAddressBook ab : books) {
                 ((DefaultComboBoxModel) this.cmbAddressBook.getModel()).addElement(ab);
