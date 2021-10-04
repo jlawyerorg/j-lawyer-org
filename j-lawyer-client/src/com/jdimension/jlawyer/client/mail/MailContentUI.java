@@ -853,9 +853,11 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
         }
 
         Properties props = System.getProperties();
-        props.setProperty("mail.store.protocol", ms.getEmailInType());
-        if (ms.isEmailInSsl()) {
-            props.setProperty("mail." + ms.getEmailInType() + ".ssl.enable", "true");
+        if (ms != null) {
+            props.setProperty("mail.store.protocol", ms.getEmailInType());
+            if (ms.isEmailInSsl()) {
+                props.setProperty("mail." + ms.getEmailInType() + ".ssl.enable", "true");
+            }
         }
 
         //Session session = Session.getDefaultInstance(props, null);
