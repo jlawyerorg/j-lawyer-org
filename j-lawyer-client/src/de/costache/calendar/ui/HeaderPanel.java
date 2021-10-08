@@ -19,12 +19,10 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Image;
 import java.awt.Insets;
-import java.util.ResourceBundle;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
 
-import de.costache.calendar.JCalendar;
 
 /**
  * 
@@ -154,7 +152,7 @@ public class HeaderPanel extends JPanel {
 		c.fill = GridBagConstraints.BOTH;
 		c.insets = new Insets(10, 0, 10, 10);
                 JSeparator sep=new JSeparator();
-                sep.setOrientation(JSeparator.VERTICAL);
+                sep.setOrientation(SwingConstants.VERTICAL);
 		this.add(sep, c);
                 c.gridx = 7;
 		c.gridy = 0;
