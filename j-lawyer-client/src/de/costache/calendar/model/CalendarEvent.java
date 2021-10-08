@@ -65,8 +65,8 @@ public class CalendarEvent extends Observable implements Comparable<CalendarEven
         this.type = type;
     }
 
-    public CalendarEvent(final String sumamry, final Date start, final Date end, final EventType type) {
-        this(sumamry, start, end);
+    public CalendarEvent(final String summary, final Date start, final Date end, final EventType type) {
+        this(summary, start, end);
         this.type = type;
     }
 
@@ -262,6 +262,12 @@ public class CalendarEvent extends Observable implements Comparable<CalendarEven
                 return false;
         } else if (!type.equals(other.type))
             return false;
+        
+        String metadata=""+this.summary+this.description+this.location+this.assignee;
+        String metadata2=""+other.summary+other.description+other.location+other.assignee;
+        if(!metadata.equals(metadata2))
+            return false;
+        
         return true;
     }
 

@@ -64,7 +64,7 @@ public class Config {
         eventDefaultForegroundColor = Color.DARK_GRAY;
 
         workingHoursStart = 8;
-        workingHoursEnd = 17;
+        workingHoursEnd = 18;
 
         //outsideWorkingHoursColor = new Color(148, 197, 217, 40);
         outsideWorkingHoursColor = DefaultColorTheme.COLOR_LIGHT_GREY;
