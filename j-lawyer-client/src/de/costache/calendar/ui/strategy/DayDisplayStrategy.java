@@ -169,6 +169,7 @@ class DayDisplayStrategy implements DisplayStrategy {
 	@Override
 	public void setIntervalStart(Date date) {
         Calendar start = calendar.getConfig().getIntervalStart();
+        start.setTime(date);
         Calendar end = CalendarUtil.getCalendar(start.getTime(), true);
         end.add(Calendar.DATE,1);
 

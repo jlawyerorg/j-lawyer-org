@@ -93,51 +93,52 @@ public class JCalendar extends JPanel {
      * Binds listeners to the components
      */
     private void bindListeners() {
-        final ActionListener strategyActionListener = new ActionListener() {
-
-            @Override
-            public void actionPerformed(final ActionEvent e) {
-                final boolean isDay = e.getSource().equals(headerPane.getDayButton());
-                final boolean isWeek = e.getSource().equals(headerPane.getWeekButton());
-                final DisplayStrategy.Type type = isDay ? Type.DAY : isWeek ? Type.WEEK : Type.MONTH;
-
-                if (getDisplayStrategy() != type)
-                    setDisplayStrategy(type, getSelectedDay());
-            }
+        final ActionListener strategyActionListener = (final ActionEvent e) -> {
+            final boolean isDay = e.getSource().equals(headerPane.getDayButton());
+            final boolean isWeek = e.getSource().equals(headerPane.getWeekButton());
+            final DisplayStrategy.Type type = isDay ? Type.DAY : isWeek ? Type.WEEK : Type.MONTH;
+            
+            if (getDisplayStrategy() != type)
+                setDisplayStrategy(type, getSelectedDay());
         };
 
         headerPane.getDayButton().addActionListener(strategyActionListener);
         headerPane.getWeekButton().addActionListener(strategyActionListener);
         headerPane.getMonthButton().addActionListener(strategyActionListener);
 
-        headerPane.getScrollLeft().addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(final ActionEvent e) {
-                final DisplayStrategy strategy = contentPane.getStrategy();
-                strategy.moveIntervalLeft();
-                headerPane.getIntervalLabel().setText(contentPane.getStrategy().getDisplayInterval());
-                final IntervalChangedEvent event = new IntervalChangedEvent(JCalendar.this, strategy.getType(),
-                        config.getIntervalStart().getTime(), config.getIntervalEnd().getTime());
-
-                for (final IntervalChangedListener listener : intervalChangedListener) {
-                    listener.intervalChanged(event);
-                }
-
+        headerPane.getScrollLeft().addActionListener((final ActionEvent e) -> {
+            final DisplayStrategy strategy = contentPane.getStrategy();
+            strategy.moveIntervalLeft();
+            headerPane.getIntervalLabel().setText(contentPane.getStrategy().getDisplayInterval());
+            final IntervalChangedEvent event = new IntervalChangedEvent(JCalendar.this, strategy.getType(),
+                    config.getIntervalStart().getTime(), config.getIntervalEnd().getTime());
+            
+            for (final IntervalChangedListener listener : intervalChangedListener) {
+                listener.intervalChanged(event);
             }
         });
 
-        headerPane.getScrollRight().addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(final ActionEvent e) {
-                final DisplayStrategy strategy = contentPane.getStrategy();
-                strategy.moveIntervalRight();
-                headerPane.getIntervalLabel().setText(contentPane.getStrategy().getDisplayInterval());
-                final IntervalChangedEvent event = new IntervalChangedEvent(JCalendar.this, strategy.getType(),
-                        config.getIntervalStart().getTime(), config.getIntervalEnd().getTime());
-
-                for (final IntervalChangedListener listener : intervalChangedListener) {
-                    listener.intervalChanged(event);
-                }
+        headerPane.getScrollRight().addActionListener((final ActionEvent e) -> {
+            final DisplayStrategy strategy = contentPane.getStrategy();
+            strategy.moveIntervalRight();
+            headerPane.getIntervalLabel().setText(contentPane.getStrategy().getDisplayInterval());
+            final IntervalChangedEvent event = new IntervalChangedEvent(JCalendar.this, strategy.getType(),
+                    config.getIntervalStart().getTime(), config.getIntervalEnd().getTime());
+            
+            for (final IntervalChangedListener listener : intervalChangedListener) {
+                listener.intervalChanged(event);
+            }
+        });
+        
+        headerPane.getTodayButton().addActionListener((final ActionEvent e) -> {
+            final DisplayStrategy strategy = contentPane.getStrategy();
+            strategy.setIntervalStart(new Date());
+            headerPane.getIntervalLabel().setText(contentPane.getStrategy().getDisplayInterval());
+            final IntervalChangedEvent event = new IntervalChangedEvent(JCalendar.this, strategy.getType(),
+                    config.getIntervalStart().getTime(), config.getIntervalEnd().getTime());
+            
+            for (final IntervalChangedListener listener : intervalChangedListener) {
+                listener.intervalChanged(event);
             }
         });
     }

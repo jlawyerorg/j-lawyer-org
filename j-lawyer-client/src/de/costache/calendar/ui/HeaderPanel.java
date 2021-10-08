@@ -46,6 +46,8 @@ public class HeaderPanel extends JPanel {
 	private JButton weekButton;
 
 	private JButton monthButton;
+        
+        private JButton todayButton;
 
 	/**
 	 * Creates a new instance of {@link HeaderPanel}
@@ -67,8 +69,13 @@ public class HeaderPanel extends JPanel {
 		String strMonth = "Monat";
 
 		dayButton = new JButton();
+                dayButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/calendar_day.png")));
 		weekButton = new JButton();
+                weekButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/calendar_week.png")));
 		monthButton = new JButton();
+                monthButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/calendar_month.png")));
+                todayButton=new JButton();
+                todayButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/calendar_today.png")));
 
 		scrollLeftButton = new JButton();
 		scrollRightButton = new JButton();
@@ -78,6 +85,8 @@ public class HeaderPanel extends JPanel {
 		dayButton.setText(strDay);
 		weekButton.setText(strWeek);
 		monthButton.setText(strMonth);
+                todayButton.setText("Heute");
+                
 
 		scrollLeftButton.setBorderPainted(false);
 		scrollLeftButton.setFocusPainted(false);
@@ -104,6 +113,7 @@ public class HeaderPanel extends JPanel {
 		dayButton.setOpaque(false);
 		weekButton.setOpaque(false);
 		monthButton.setOpaque(false);
+                todayButton.setOpaque(false);
 
 		this.setLayout(new GridBagLayout());
 		final GridBagConstraints c = new GridBagConstraints();
@@ -138,6 +148,20 @@ public class HeaderPanel extends JPanel {
 		c.fill = GridBagConstraints.BOTH;
 		c.insets = new Insets(10, 0, 10, 10);
 		this.add(monthButton, c);
+                c.gridx = 6;
+		c.gridy = 0;
+		c.weightx = 0.0;
+		c.fill = GridBagConstraints.BOTH;
+		c.insets = new Insets(10, 0, 10, 10);
+                JSeparator sep=new JSeparator();
+                sep.setOrientation(JSeparator.VERTICAL);
+		this.add(sep, c);
+                c.gridx = 7;
+		c.gridy = 0;
+		c.weightx = 0.0;
+		c.fill = GridBagConstraints.BOTH;
+		c.insets = new Insets(10, 0, 10, 10);
+		this.add(todayButton, c);
 	}
 
 	/**
@@ -173,6 +197,10 @@ public class HeaderPanel extends JPanel {
 	 */
 	public JButton getMonthButton() {
 		return monthButton;
+	}
+        
+        public JButton getTodayButton() {
+		return todayButton;
 	}
 
 	/**
