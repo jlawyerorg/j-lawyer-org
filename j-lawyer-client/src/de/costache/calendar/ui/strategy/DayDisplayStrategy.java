@@ -114,6 +114,7 @@ class DayDisplayStrategy implements DisplayStrategy {
 		content.setBorder(new EmptyBorder(0, 0, 0, 0));
 		content.getViewport().setViewPosition(new Point(0, 500));
 		content.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+                content.getVerticalScrollBar().setUnitIncrement(16);
 		displayPanel.add(content, gbc);
 		gbc.gridx = 0;
 		gbc.gridy = 2;
@@ -124,6 +125,7 @@ class DayDisplayStrategy implements DisplayStrategy {
 		contentAllDay.getViewport().setOpaque(false);
 		contentAllDay.setBorder(BorderFactory.createLineBorder(parent.getOwner().getConfig().getLineColor()));
 		contentAllDay.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+                contentAllDay.getVerticalScrollBar().setUnitIncrement(16);
 		displayPanel.add(contentAllDay, gbc);
 	}
 
