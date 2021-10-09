@@ -699,9 +699,9 @@ public class EmailFolderTreeCellRenderer extends DefaultTreeCellRenderer {
         super();
     }
 
-    public Component getTreeCellRendererComponent(JTree jTree, Object object, boolean b, boolean b0, boolean b1, int row, boolean b2) {
+    public Component getTreeCellRendererComponent(JTree jTree, Object object, boolean selected, boolean b0, boolean b1, int row, boolean b2) {
 
-        super.getTreeCellRendererComponent(jTree, object, b, b0, b1, row, b2);
+        super.getTreeCellRendererComponent(jTree, object, selected, b0, b1, row, b2);
         JTree.DropLocation dropLocation = jTree.getDropLocation();
         if (dropLocation != null
                 && dropLocation.getChildIndex() == -1
@@ -765,7 +765,11 @@ public class EmailFolderTreeCellRenderer extends DefaultTreeCellRenderer {
                 if (((DefaultMutableTreeNode) object).toString().contains("@")) {
                     this.setIcon(mailboxIcon);
                     this.setFont(this.getFont().deriveFont(Font.BOLD));
-                    this.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
+                    if(selected) {
+                        this.setForeground(Color.WHITE);
+                    } else {
+                        this.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
+                    }
                 }
             }
         } catch (Exception ex) {
