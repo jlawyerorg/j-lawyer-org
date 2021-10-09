@@ -728,7 +728,7 @@ public class LoginDialog extends javax.swing.JFrame {
 
             this.lblUser.setFont(font.deriveFont(Font.BOLD, 18));
             this.lblUser.setForeground(Color.WHITE);
-            
+
             this.lblConnection.setFont(font.deriveFont(Font.BOLD, 18));
             this.lblConnection.setForeground(Color.WHITE);
 
@@ -744,7 +744,7 @@ public class LoginDialog extends javax.swing.JFrame {
             this.cmdCancel.setFont(font.deriveFont(Font.BOLD, 20));
 
             this.jTabbedPane1.setFont(font.deriveFont(Font.BOLD, 14));
-            
+
             this.jTabbedPane1.setForegroundAt(0, DefaultColorTheme.COLOR_LOGO_BLUE);
             this.jTabbedPane1.setForegroundAt(1, DefaultColorTheme.COLOR_LOGO_BLUE);
             this.jTabbedPane1.setForegroundAt(2, DefaultColorTheme.COLOR_LOGO_BLUE);
@@ -921,6 +921,7 @@ public class LoginDialog extends javax.swing.JFrame {
         lblHint = new javax.swing.JLabel();
         lblConnection = new javax.swing.JLabel();
         cmbCurrentConnection = new javax.swing.JComboBox<>();
+        cmdImportProfile = new javax.swing.JButton();
         jPanel2 = new javax.swing.JPanel();
         jLabel1 = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
@@ -1043,6 +1044,13 @@ public class LoginDialog extends javax.swing.JFrame {
             }
         });
 
+        cmdImportProfile.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/fileimport.png"))); // NOI18N
+        cmdImportProfile.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdImportProfileActionPerformed(evt);
+            }
+        });
+
         org.jdesktop.layout.GroupLayout jPanel1Layout = new org.jdesktop.layout.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
@@ -1065,9 +1073,15 @@ public class LoginDialog extends javax.swing.JFrame {
                             .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
                                 .add(pwPassword)
                                 .add(txtUser, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 330, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))))
-                .add(12, 12, 12)
-                .add(lblHint, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 40, Short.MAX_VALUE)
-                .add(72, 72, 72))
+                .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(jPanel1Layout.createSequentialGroup()
+                        .add(12, 12, 12)
+                        .add(lblHint, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 40, Short.MAX_VALUE)
+                        .add(72, 72, 72))
+                    .add(jPanel1Layout.createSequentialGroup()
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(cmdImportProfile)
+                        .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -1080,7 +1094,8 @@ public class LoginDialog extends javax.swing.JFrame {
                         .add(45, 45, 45)
                         .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                             .add(lblConnection)
-                            .add(cmbCurrentConnection, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                            .add(cmbCurrentConnection, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                            .add(cmdImportProfile))
                         .add(18, 18, 18)
                         .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                             .add(lblUser)
@@ -1093,7 +1108,7 @@ public class LoginDialog extends javax.swing.JFrame {
                         .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                             .add(cmdLogin)
                             .add(cmdCancel))))
-                .addContainerGap(195, Short.MAX_VALUE))
+                .addContainerGap(191, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("Login", jPanel1);
@@ -1660,7 +1675,7 @@ public class LoginDialog extends javax.swing.JFrame {
                 return;
             }
         }
-        
+
         // BEGIN: required because backup configuration dialog needs it for constructing URL for ad hoc backups
         settings.setConfiguration(ClientSettings.CONF_LASTPORTDYN, this.txtPort.getText());
         if (this.rdSecSsl.isSelected()) {
@@ -1806,7 +1821,7 @@ public class LoginDialog extends javax.swing.JFrame {
         }
 
         settings.setConfiguration(ClientSettings.CONF_LASTCONNECTION, this.cmbCurrentConnection.getSelectedItem().toString());
-        
+
         String serverVersion = VersionUtils.getServerVersion();
         String clientVersion = VersionUtils.getFullClientVersion();
         if (!VersionUtils.isCompatible(serverVersion, clientVersion)) {
@@ -1888,15 +1903,17 @@ public class LoginDialog extends javax.swing.JFrame {
     }//GEN-LAST:event_txtServerFocusLost
 
     private void cmdSaveProfileActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveProfileActionPerformed
-        ConnectionProfiles profiles=ConnectionProfiles.getInstance();
-        ConnectionProfile profile=profiles.getProfile(this.cmbProfile.getSelectedItem().toString());
-        if(profile!=null) {
+        ConnectionProfiles profiles = ConnectionProfiles.getInstance();
+        ConnectionProfile profile = profiles.getProfile(this.cmbProfile.getSelectedItem().toString());
+        if (profile != null) {
             profile.setPort(this.txtPort.getText());
             profile.setSecurityMode(SECMODE_STANDARD);
-            if(this.rdSecSsl.isSelected())
+            if (this.rdSecSsl.isSelected()) {
                 profile.setSecurityMode("ssl");
-            if(this.rdSecTunnel.isSelected())
+            }
+            if (this.rdSecTunnel.isSelected()) {
                 profile.setSecurityMode("ssh");
+            }
             profile.setServer(this.txtServer.getText());
             profile.setSshHost(this.txtSshHost.getText());
             profile.setSshPassword(new String(this.pwdSshPassword.getPassword()));
@@ -1914,11 +1931,11 @@ public class LoginDialog extends javax.swing.JFrame {
     }//GEN-LAST:event_cmdSaveProfileActionPerformed
 
     private void cmdDeleteProfileActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdDeleteProfileActionPerformed
-        ConnectionProfiles profiles=ConnectionProfiles.getInstance();
-        String selected=this.cmbProfile.getSelectedItem().toString();
+        ConnectionProfiles profiles = ConnectionProfiles.getInstance();
+        String selected = this.cmbProfile.getSelectedItem().toString();
         profiles.removeProfile(selected);
-        ((DefaultComboBoxModel)this.cmbProfile.getModel()).removeElement(selected);
-        ((DefaultComboBoxModel)this.cmbCurrentConnection.getModel()).removeElement(selected);
+        ((DefaultComboBoxModel) this.cmbProfile.getModel()).removeElement(selected);
+        ((DefaultComboBoxModel) this.cmbCurrentConnection.getModel()).removeElement(selected);
         this.cmbCurrentConnection.setSelectedItem(this.cmbCurrentConnection.getSelectedItem());
     }//GEN-LAST:event_cmdDeleteProfileActionPerformed
 
@@ -1927,24 +1944,43 @@ public class LoginDialog extends javax.swing.JFrame {
         if (newNameObject == null) {
             return;
         }
-        
-        ConnectionProfiles profiles=ConnectionProfiles.getInstance();
-        ConnectionProfile newProfile=new ConnectionProfile();
+
+        ConnectionProfiles profiles = ConnectionProfiles.getInstance();
+        ConnectionProfile newProfile = new ConnectionProfile();
         newProfile.setName(newNameObject.toString());
         newProfile.setServer("localhost");
         newProfile.setPort("8080");
         newProfile.setSecurityMode(SECMODE_STANDARD);
         try {
             profiles.addProfile(newProfile);
-            ((DefaultComboBoxModel)this.cmbProfile.getModel()).addElement(newNameObject.toString());
-            ((DefaultComboBoxModel)this.cmbCurrentConnection.getModel()).addElement(newNameObject.toString());
+            ((DefaultComboBoxModel) this.cmbProfile.getModel()).addElement(newNameObject.toString());
+            ((DefaultComboBoxModel) this.cmbCurrentConnection.getModel()).addElement(newNameObject.toString());
             this.cmbCurrentConnection.setSelectedItem(newNameObject.toString());
         } catch (Exception ex) {
             log.error("Unable to add profile", ex);
             JOptionPane.showMessageDialog(this, "Profil konnte nicht hinzugefügt werden", "Profil hinzufügen", JOptionPane.ERROR_MESSAGE);
         }
-        
+
     }//GEN-LAST:event_cmdAddProfileActionPerformed
+
+    private void cmdImportProfileActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdImportProfileActionPerformed
+        ImportConnectionProfileDialog dlg = new ImportConnectionProfileDialog(this, true);
+        dlg.setTitle("Profil aus Zwischenablage einfügen");
+        FrameUtils.centerDialog(dlg, this);
+        dlg.setVisible(true);
+        ConnectionProfile profile = dlg.getProfile();
+        if (profile != null) {
+            try {
+                ConnectionProfiles.getInstance().addProfile(profile);
+                ((DefaultComboBoxModel) this.cmbProfile.getModel()).addElement(profile.getName());
+                ((DefaultComboBoxModel) this.cmbCurrentConnection.getModel()).addElement(profile.getName());
+                this.cmbCurrentConnection.setSelectedItem(profile.getName());
+            } catch (Exception ex) {
+                log.error("Unable to add profile", ex);
+                JOptionPane.showMessageDialog(this, "Profil konnte nicht hinzugefügt werden", "Profil hinzufügen", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }//GEN-LAST:event_cmdImportProfileActionPerformed
 
     private void highlightSecuritySelection() {
         this.rdSecNone.setBackground(new Color(100, 100, 100, 0));
@@ -1984,6 +2020,7 @@ public class LoginDialog extends javax.swing.JFrame {
     private javax.swing.JButton cmdBoxShutdown;
     private javax.swing.JButton cmdCancel;
     private javax.swing.JButton cmdDeleteProfile;
+    private javax.swing.JButton cmdImportProfile;
     private javax.swing.JButton cmdLogin;
     private javax.swing.JButton cmdMgmtConsole;
     private javax.swing.JButton cmdRestore;

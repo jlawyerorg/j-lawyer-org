@@ -667,6 +667,7 @@ import com.jdimension.jlawyer.security.Crypto;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -703,17 +704,38 @@ public class ConnectionProfiles {
         File[] connections = dir.listFiles();
         for (File c : connections) {
             if (c.getName().toLowerCase().endsWith(".properties")) {
-                profiles.add(loadProfile(c));
+                profiles.add(fromFile(c));
             }
         }
         return profiles;
     }
-
-    private ConnectionProfile loadProfile(File p) {
+    
+    public ConnectionProfile fromPropertiesString(String s) {
         Properties props = new Properties();
-        ConnectionProfile profile = new ConnectionProfile();
+        try ( StringReader sr = new StringReader(s)) {
+            props.load(sr);
+            return loadProfile(props);
+        } catch (Exception ex) {
+            log.error("Could not load connection profile from string: " + s, ex);
+            return new ConnectionProfile();
+        }
+    }
+
+    private ConnectionProfile fromFile(File p) {
+        Properties props = new Properties();
         try ( FileInputStream fis = new FileInputStream(p)) {
             props.load(fis);
+            return loadProfile(props);
+        } catch (Exception ex) {
+            log.error("Could not load connection profile from file " + p.getName(), ex);
+            return new ConnectionProfile();
+        }
+    }
+    
+    private ConnectionProfile loadProfile(Properties props) {
+        
+        ConnectionProfile profile = new ConnectionProfile();
+        try {
             profile.setName(props.getProperty("name"));
             profile.setPort(props.getProperty("port"));
             profile.setSecurityMode(props.getProperty("securitymode"));
@@ -734,7 +756,7 @@ public class ConnectionProfiles {
             profile.setSshUser(props.getProperty("sshuser"));
             profile.setUser(props.getProperty("user"));
         } catch (Exception ex) {
-            log.error("Could not load connection profile from file " + p.getName(), ex);
+            log.error("Could not load connection profile from properties: " + props.keySet(), ex);
         }
         return profile;
     }
@@ -767,7 +789,7 @@ public class ConnectionProfiles {
         File[] connections = dir.listFiles();
         for (File c : connections) {
             if (c.getName().toLowerCase().endsWith(".properties")) {
-                ConnectionProfile profile=loadProfile(c);
+                ConnectionProfile profile=fromFile(c);
                 if(profile.getName().equals(profileName)) {
                     boolean deleted=c.delete();
                     if(!deleted) {
@@ -791,7 +813,7 @@ public class ConnectionProfiles {
         File propFile=null;
         for (File c : connections) {
             if (c.getName().toLowerCase().endsWith(".properties")) {
-                ConnectionProfile temp=loadProfile(c);
+                ConnectionProfile temp=fromFile(c);
                 if(temp.getName().equals(profile.getName())) {
                     propFile=c;
                     break;
