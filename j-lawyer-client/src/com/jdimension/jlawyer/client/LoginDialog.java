@@ -1045,6 +1045,7 @@ public class LoginDialog extends javax.swing.JFrame {
         });
 
         cmdImportProfile.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/fileimport.png"))); // NOI18N
+        cmdImportProfile.setToolTipText("Profil aus Zwischenablage importieren");
         cmdImportProfile.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmdImportProfileActionPerformed(evt);
