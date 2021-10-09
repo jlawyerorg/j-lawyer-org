@@ -666,7 +666,6 @@ package com.jdimension.jlawyer.client.mail;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Font;
-import java.util.HashMap;
 import javax.mail.Folder;
 import javax.swing.ImageIcon;
 import javax.swing.JTree;
@@ -699,6 +698,7 @@ public class EmailFolderTreeCellRenderer extends DefaultTreeCellRenderer {
         super();
     }
 
+    @Override
     public Component getTreeCellRendererComponent(JTree jTree, Object object, boolean selected, boolean b0, boolean b1, int row, boolean b2) {
 
         super.getTreeCellRendererComponent(jTree, object, selected, b0, b1, row, b2);
