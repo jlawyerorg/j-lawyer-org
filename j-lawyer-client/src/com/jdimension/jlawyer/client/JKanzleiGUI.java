@@ -1068,7 +1068,6 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuGroups = new javax.swing.JMenuItem();
         jSeparator4 = new javax.swing.JPopupMenu.Separator();
         mnuMailboxSettings = new javax.swing.JMenuItem();
-        mnuVoipSipgateSettings = new javax.swing.JMenuItem();
         mnuVoipSoftphoneSettings = new javax.swing.JMenuItem();
         mnuBeaSettings = new javax.swing.JMenuItem();
         mnuDrebisSettings = new javax.swing.JMenuItem();
@@ -1625,17 +1624,8 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         });
         mnuOptions.add(mnuMailboxSettings);
 
-        mnuVoipSipgateSettings.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/sipphone.png"))); // NOI18N
-        mnuVoipSipgateSettings.setText("Telefonie/Fax: Sipgate");
-        mnuVoipSipgateSettings.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                mnuVoipSipgateSettingsActionPerformed(evt);
-            }
-        });
-        mnuOptions.add(mnuVoipSipgateSettings);
-
         mnuVoipSoftphoneSettings.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/sipphone.png"))); // NOI18N
-        mnuVoipSoftphoneSettings.setText("Telefonie: Softphone");
+        mnuVoipSoftphoneSettings.setText("Telefonie per Softphone");
         mnuVoipSoftphoneSettings.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 mnuVoipSoftphoneSettingsActionPerformed(evt);
@@ -2010,10 +2000,6 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
                 dlg.setVisible(true);
             }
     }//GEN-LAST:event_mnuScanOptionsActionPerformed
-
-    private void mnuVoipSipgateSettingsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuVoipSipgateSettingsActionPerformed
-        
-    }//GEN-LAST:event_mnuVoipSipgateSettingsActionPerformed
 
     private void mnuDrebisSettingsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuDrebisSettingsActionPerformed
         
@@ -2528,7 +2514,6 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     private javax.swing.JMenuItem mnuUserProfile;
     private javax.swing.JMenuItem mnuUsers;
     private javax.swing.JMenu mnuView;
-    private javax.swing.JMenuItem mnuVoipSipgateSettings;
     private javax.swing.JMenuItem mnuVoipSoftphoneSettings;
     private javax.swing.JMenuItem mnuWordProcessor;
     private javax.swing.JMenuItem mnuXjustizViewer;
