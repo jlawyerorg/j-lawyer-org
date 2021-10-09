@@ -663,9 +663,6 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package org.jlawyer.cloud;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -675,8 +672,6 @@ import net.fortuna.ical4j.data.CalendarBuilder;
 import net.fortuna.ical4j.model.Calendar;
 import net.fortuna.ical4j.model.Component;
 import net.fortuna.ical4j.model.ComponentList;
-import net.fortuna.ical4j.model.Dur;
-import net.fortuna.ical4j.model.Property;
 import net.fortuna.ical4j.model.TimeZoneRegistry;
 import net.fortuna.ical4j.model.component.VEvent;
 import net.fortuna.ical4j.model.component.VTimeZone;
@@ -721,7 +716,7 @@ public class NextcloudCalendarConnector {
 
     private static final Logger log = Logger.getLogger(NextcloudCalendarConnector.class.getName());
     
-    private SimpleDateFormat dateFormat=new SimpleDateFormat("yyyyMMdd");
+    private final SimpleDateFormat dateFormat=new SimpleDateFormat("yyyyMMdd");
 
     protected String subpathPrefix = null;
     protected String serverName = null;
@@ -824,8 +819,7 @@ public class NextcloudCalendarConnector {
             );
 
             GenerateQuery gq = new GenerateQuery();
-            SimpleDateFormat df = new SimpleDateFormat("yyyyMMdd");
-            gq.setFilter("VEVENT [" + df.format(from) + "T000000Z;" + df.format(to) + "T000000Z] : STATUS!=CANCELLED");
+            gq.setFilter("VEVENT [" + dateFormat.format(from) + "T000000Z;" + dateFormat.format(to) + "T000000Z] : STATUS!=CANCELLED");
             // Get the raw caldav query
             // System.out.println("Query: "+ gq.prettyPrint());
             CalendarQuery calendarQuery = gq.generate();
@@ -1001,7 +995,7 @@ public class NextcloudCalendarConnector {
         sb.append("://");
         sb.append(serverName);
         sb.append(":");
-        sb.append("" + port);
+        sb.append("").append(port);
         sb.append("/");
         if (subpathPrefix != null) {
             sb.append(this.subpathPrefix);
