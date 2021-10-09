@@ -701,9 +701,9 @@ public class ContactSyncService implements ContactSyncServiceLocal {
     @Schedule(dayOfWeek = "*", hour = "7,12,19", minute = "31", second = "0", persistent = false)
     public void fullAddressBookSync() {
         this.fullAddressBookSyncImpl();
-        
+
     }
-    
+
     private void fullAddressBookSyncImpl() {
         log.info("full address book sync requested");
 
@@ -790,8 +790,8 @@ public class ContactSyncService implements ContactSyncServiceLocal {
                 pwd = s.getSettingValue();
                 pwd = Crypto.decrypt(pwd);
             }
-            
-            if(ServerStringUtils.isEmpty(host) || ServerStringUtils.isEmpty(user) || ServerStringUtils.isEmpty(pwd)) {
+
+            if (ServerStringUtils.isEmpty(host) || ServerStringUtils.isEmpty(user) || ServerStringUtils.isEmpty(pwd)) {
                 log.info("No or invalid address book sync configuration");
                 return null;
             }
@@ -810,6 +810,12 @@ public class ContactSyncService implements ContactSyncServiceLocal {
     public void contactAdded(AddressBean contact) {
         log.info("Syncing new contact to cloud: " + contact.getId());
         try {
+
+            AddressBean attachedContact=this.addressFacade.find(contact.getId());
+            // only sync contacts that are part of a case
+            if (attachedContact.getArchiveFileAddressesBeanList().isEmpty()) {
+                return;
+            }
 
             NextcloudContactsConnector nc = this.getConnector();
             if (nc == null) {
@@ -862,6 +868,12 @@ public class ContactSyncService implements ContactSyncServiceLocal {
     public void contactUpdated(AddressBean contact) {
         log.info("Syncing updated contact to cloud: " + contact.getId());
         try {
+            
+            AddressBean attachedContact=this.addressFacade.find(contact.getId());
+            // only sync contacts that are part of a case
+            if (attachedContact.getArchiveFileAddressesBeanList().isEmpty()) {
+                return;
+            }
 
             NextcloudContactsConnector nc = this.getConnector();
             if (nc == null) {
