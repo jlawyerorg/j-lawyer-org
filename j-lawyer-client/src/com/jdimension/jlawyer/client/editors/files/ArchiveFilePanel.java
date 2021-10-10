@@ -945,7 +945,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 try {
                     float claimValueF = 0f;
                     try {
-                        claimValueF = new Float(((Number) currencyFormat.parse(txtClaimValue.getText())).floatValue()).floatValue();
+                        claimValueF = ((Number) currencyFormat.parse(txtClaimValue.getText())).floatValue();
                     } catch (Exception ex) {
                         log.error("invalid claim value: " + txtClaimValue.getText(), ex);
                         claimValueF = 0f;
@@ -5733,7 +5733,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         try {
             //claimValueFloat = Float.parseFloat(this.txtClaimValue.getText());
             //claimValueFloat = ((Double)this.currencyFormat.parse(this.txtClaimValue.getText())).floatValue();
-            claimValueFloat = new Float(((Number) this.currencyFormat.parse(this.txtClaimValue.getText())).floatValue()).floatValue();
+            claimValueFloat = ((Number) this.currencyFormat.parse(this.txtClaimValue.getText())).floatValue();
         } catch (Exception ex) {
             if (this.txtClaimValue.getText() == null || "".equals(this.txtClaimValue.getText().trim())) {
                 claimValueFloat = 0f;
