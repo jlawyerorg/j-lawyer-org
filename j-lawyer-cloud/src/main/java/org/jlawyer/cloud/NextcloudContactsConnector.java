@@ -970,7 +970,7 @@ public class NextcloudContactsConnector {
             v.addTelephoneNumber(c.getMobile(), TelephoneType.CELL);
         
         if(c.getFax()!=null)
-            v.addTelephoneNumber(c.getMobile(), TelephoneType.FAX);
+            v.addTelephoneNumber(c.getFax(), TelephoneType.FAX);
 
         if(c.getEmail()!=null) 
             v.addEmail(c.getEmail(), EmailType.HOME);
