@@ -1071,7 +1071,7 @@ public class NextcloudContactsConnector {
         sb.append("://");
         sb.append(serverName);
         sb.append(":");
-        sb.append("" + port);
+        sb.append("").append(port);
         sb.append("/");
         if (subpathPrefix != null) {
             sb.append(this.subpathPrefix);
@@ -1082,28 +1082,6 @@ public class NextcloudContactsConnector {
         sb.append("remote.php/dav/addressbooks/users/");
         sb.append(this.userName);
         sb.append("/");
-        return sb.toString();
-
-    }
-
-    private String getBaseUrl2() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("http");
-        if (useHTTPS) {
-            sb.append("s");
-        }
-        sb.append("://");
-        sb.append(serverName);
-        sb.append(":");
-        sb.append("" + port);
-        sb.append("/");
-        if (subpathPrefix != null) {
-            sb.append(this.subpathPrefix);
-            if (!subpathPrefix.endsWith("/")) {
-                sb.append("/");
-            }
-        }
-        sb.append("remote.php/dav/addressbooks/");
         return sb.toString();
 
     }
