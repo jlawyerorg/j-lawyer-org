@@ -1205,6 +1205,13 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
         String csId = idGen.getID().toString();
         cs.setId(csId);
         this.calendarSetups.create(cs);
+        String principalId=null;
+        try {
+            principalId=context.getCallerPrincipal().getName();
+            this.securityFacade.addUserToCalendar(principalId, csId);
+        } catch (Exception ex) {
+            log.error("Could not add calendar privilege for calendar setup " + csId + " to user " + principalId, ex);
+        }
         return this.calendarSetups.find(csId);
     }
 

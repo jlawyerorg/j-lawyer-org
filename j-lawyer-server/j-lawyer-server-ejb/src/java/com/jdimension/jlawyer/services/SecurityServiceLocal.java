@@ -685,4 +685,6 @@ public interface SecurityServiceLocal {
     
     public List<MailboxSetup> getAllMailboxSetups();
     
+    boolean addUserToCalendar(String principalId, String calendarId) throws Exception;
+    
 }

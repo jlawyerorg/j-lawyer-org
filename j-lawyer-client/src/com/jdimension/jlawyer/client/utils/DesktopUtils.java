@@ -683,6 +683,7 @@ public class DesktopUtils {
     
     public static final String POPUP_TITLE_ERROR="Fehler";
     public static final String POPUP_TITLE_WARNING="Warnung";
+    public static final String POPUP_TITLE_HINT="Hinweis";
 
     public static void openFileManager(File folder) {
         if (folder.isDirectory()) {

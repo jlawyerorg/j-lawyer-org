@@ -664,12 +664,12 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.client.configuration;
 
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.persistence.CalendarSetup;
 import com.jdimension.jlawyer.security.Crypto;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
-import com.jdimension.jlawyer.services.SystemManagementRemote;
 import java.awt.Color;
 import java.util.ArrayList;
 import java.util.List;
@@ -1049,6 +1049,7 @@ public class CalendarSetupDialog extends javax.swing.JDialog {
             CalendarSetup savedCalendar = locator.lookupCalendarServiceRemote().addCalendarSetup(cs);
 
             ((DefaultTableModel) this.tblCalendars.getModel()).addRow(new Object[]{savedCalendar, savedCalendar.getBackground(), null});
+            JOptionPane.showMessageDialog(this, "Der Kalender ist nur für '" + UserSettings.getInstance().getCurrentUser().getPrincipalId() + "' freigegeben." + System.lineSeparator() + "Kalenderberechtigungen können in der Nutzerverwaltung bearbeitet werden.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_HINT, JOptionPane.INFORMATION_MESSAGE);
 
         } catch (Exception ex) {
             log.error("Error creating new calendar", ex);
