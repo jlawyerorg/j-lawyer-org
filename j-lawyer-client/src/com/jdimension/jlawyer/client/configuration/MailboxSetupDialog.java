@@ -700,7 +700,7 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
 
         this.resetDetails();
 
-        this.tblMailboxes.setSelectionForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
+        //this.tblMailboxes.setSelectionForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
 
         ClientSettings settings = ClientSettings.getInstance();
         try {
