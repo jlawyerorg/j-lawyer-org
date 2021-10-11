@@ -709,7 +709,6 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
     
     private DragSource dragSource = null;
     
-    
 
     /**
      * Creates new form DocumentEntryPanel
@@ -1013,13 +1012,17 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
                 this.caseContainer.documentSelectionChanged();
                 break;
             case KeyEvent.VK_ENTER:
-                if (this.documentsContainer != null) {
-                    List<ArchiveFileDocumentsBean> selDocs=this.documentsContainer.getSelectedDocuments();
-                    for(ArchiveFileDocumentsBean openDoc: selDocs) {
-                        this.caseContainer.openSelectedDocument(openDoc);
+                // see lastpopclosed flag comment
+                long sinceLastPopup=System.currentTimeMillis() - this.caseContainer.getLastPopupClosed();
+                if (sinceLastPopup > 100l) {
+                    if (this.documentsContainer != null) {
+                        List<ArchiveFileDocumentsBean> selDocs = this.documentsContainer.getSelectedDocuments();
+                        for (ArchiveFileDocumentsBean openDoc : selDocs) {
+                            this.caseContainer.openSelectedDocument(openDoc);
+                        }
+                    } else {
+                        this.caseContainer.openSelectedDocument(this.document);
                     }
-                } else {
-                    this.caseContainer.openSelectedDocument(this.document);
                 }
                 break;
             default:
