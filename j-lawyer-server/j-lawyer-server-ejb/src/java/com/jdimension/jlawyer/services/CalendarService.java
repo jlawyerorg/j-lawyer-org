@@ -1118,7 +1118,20 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
     public ArchiveFileReviewsBean updateReview(String archiveFileId, ArchiveFileReviewsBean review) throws Exception {
 
         this.validateCalendarSetup(review);
-
+        
+        ArchiveFileReviewsBean oldReview=this.archiveFileReviewsFacade.find(review.getId());
+        String oldCalendar=oldReview.getCalendarSetup().getId();
+        String newCalendar=review.getCalendarSetup().getId();
+        boolean calendarChanged=!(oldCalendar.equals(newCalendar));
+        if (calendarChanged) {
+            log.info("migrating event to new calendar: " + review.getId());
+            try {
+                this.calendarSync.eventDeleted(oldReview);
+            } catch (Throwable ex) {
+                log.error("Failed to sync updated event to cloud", ex);
+            }
+        }
+        
         StringGenerator idGen = new StringGenerator();
         ArchiveFileBean aFile = this.archiveFileFacade.find(archiveFileId);
         SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), aFile, this.securityFacade, this.archiveFileService.getAllowedGroups(aFile));

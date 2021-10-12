@@ -3485,7 +3485,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         EditorsRegistry.getInstance().updateStatus("Wiedervorlage/Frist wird gespeichert...");
 
         int[] selectedRows = this.tblReviewReasons.getSelectedRows();
-        ArchiveFileReviewReasonsTableModel tModel = (ArchiveFileReviewReasonsTableModel) this.tblReviewReasons.getModel();
         for (int i = 0; i < selectedRows.length; i++) {
 
             try {
@@ -6383,7 +6382,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             if (dto.getArchiveFileReviewsBeanList() == null) {
                 // no review specified
                 reviewsValid = false;
-            } else if (dto.getArchiveFileReviewsBeanList().size() == 0) {
+            } else if (dto.getArchiveFileReviewsBeanList().isEmpty()) {
                 // empty reviews
                 reviewsValid = false;
             } else {

@@ -669,7 +669,6 @@ import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.CalendarSetup;
 import com.jdimension.jlawyer.security.Crypto;
 import com.jdimension.jlawyer.server.utils.ServerStringUtils;
-import com.jdimension.jlawyer.server.utils.StringUtils;
 import java.util.List;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.Asynchronous;
@@ -759,8 +758,8 @@ public class CalendarSyncService implements CalendarSyncServiceLocal {
 
             log.info("Syncing updated event to cloud: " + event.getId());
 
-            // followups and respites that are done can be deleted, others need to be updated
-            if (event.getDoneBoolean() && (event.getEventType() == ArchiveFileReviewsBean.EVENTTYPE_FOLLOWUP || event.getEventType() == ArchiveFileReviewsBean.EVENTTYPE_RESPITE)) {
+            // remove anything that is done
+            if (event.getDoneBoolean()) {
                 this.eventDeleted(event);
             } else {
 
@@ -786,11 +785,6 @@ public class CalendarSyncService implements CalendarSyncServiceLocal {
     public void eventDeleted(ArchiveFileReviewsBean event) {
 
         if (canSync(event)) {
-
-            // type "event" is never deleted
-            if (event.getEventType() == ArchiveFileReviewsBean.EVENTTYPE_EVENT) {
-                return;
-            }
 
             log.info("Syncing deleted event to cloud: " + event.getId());
 
