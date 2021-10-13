@@ -779,6 +779,7 @@ public class EmailUtils {
                 return null;
             }
 
+            openFolder(msg.getFolder());
             Address[] froms = msg.getFrom();
             for (MailboxSetup ms : mailboxes) {
                 if (froms != null) {
@@ -789,6 +790,7 @@ public class EmailUtils {
                     }
                 }
                 if (msg.getAllRecipients() != null) {
+                    openFolder(msg.getFolder());
                     for (Address to : msg.getAllRecipients()) {
                         if (to.toString().contains(ms.getEmailAddress())) {
                             return ms;
@@ -800,7 +802,13 @@ public class EmailUtils {
             return null;
 
         } catch (Exception ex) {
-            log.error("Error determining mailbox for message " + msg.getSubject(), ex);
+            String subject="";
+            try {
+                subject=msg.getSubject();
+            } catch (Throwable t) {
+                log.warn("cannot determine message subject", t);
+            }
+            log.error("Error determining mailbox for message " + subject, ex);
             return null;
         }
     }
@@ -856,11 +864,7 @@ public class EmailUtils {
 
     private static Part getAttachmentPart(String name, Object partObject, Folder folder) throws Exception {
 
-        if (folder != null) {
-            if (!folder.isOpen()) {
-                folder.open(Folder.READ_WRITE);
-            }
-        }
+        openFolder(folder);
 
         if (partObject instanceof Multipart) {
             Multipart mp = (Multipart) partObject;
@@ -904,26 +908,23 @@ public class EmailUtils {
         }
         return null;
     }
+    
+    private static void openFolder(Folder f) throws Exception {
+        boolean closed = false;
+        if (f != null) {
+            closed = !f.isOpen();
+        }
+        if (closed) {
+            f.open(Folder.READ_WRITE);
+        }
+    }
 
     public static byte[] getAttachmentBytes(String name, MessageContainer msgContainer) throws Exception {
-        boolean closed = false;
-        if (msgContainer.getMessage().getFolder() != null) {
-            closed = !msgContainer.getMessage().getFolder().isOpen();
-        }
-        if (closed) {
-            msgContainer.getMessage().getFolder().open(Folder.READ_WRITE);
-        }
-
+        
+        openFolder(msgContainer.getMessage().getFolder());
         Part att = getAttachmentPart(name, msgContainer.getMessage().getContent(), msgContainer.getMessage().getFolder());
 
-        closed = false;
-        if (msgContainer.getMessage().getFolder() != null) {
-            closed = !msgContainer.getMessage().getFolder().isOpen();
-        }
-        if (closed) {
-            msgContainer.getMessage().getFolder().open(Folder.READ_WRITE);
-        }
-
+        openFolder(msgContainer.getMessage().getFolder());
         if (att != null) {
             InputStream is = att.getInputStream();
             byte[] buffer = new byte[1024];
