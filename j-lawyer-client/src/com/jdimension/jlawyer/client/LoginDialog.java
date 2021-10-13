@@ -1679,6 +1679,7 @@ public class LoginDialog extends javax.swing.JFrame {
 
         // BEGIN: required because backup configuration dialog needs it for constructing URL for ad hoc backups
         settings.setConfiguration(ClientSettings.CONF_LASTPORTDYN, this.txtPort.getText());
+        settings.setConfiguration(ClientSettings.CONF_LASTSERVER, this.txtServer.getText());
         if (this.rdSecSsl.isSelected()) {
             settings.setConfiguration(ClientSettings.CONF_LASTSECMODE, "ssl");
         } else if (this.rdSecTunnel.isSelected()) {
@@ -1686,7 +1687,6 @@ public class LoginDialog extends javax.swing.JFrame {
             settings.setConfiguration(ClientSettings.CONF_LASTPORTDYN, "" + sourcePort);
         } else {
             settings.setConfiguration(ClientSettings.CONF_LASTSECMODE, SECMODE_STANDARD);
-            settings.setConfiguration(ClientSettings.CONF_LASTSERVER, this.txtServer.getText());
         }
         // END
 
