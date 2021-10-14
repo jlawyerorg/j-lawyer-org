@@ -695,29 +695,22 @@ public abstract class ProgressableAction {
 
     public void progress() {
 
-        SwingUtilities.invokeLater(new Thread(new Runnable() {
-            public void run() {
-                indicator.progress();
-            }
+        SwingUtilities.invokeLater(new Thread(() -> {
+            indicator.progress();
         }));
     }
 
     public void progress(final String status) {
 
-        SwingUtilities.invokeLater(new Thread(new Runnable() {
-            public void run() {
-                indicator.progress(status);
-
-            }
+        SwingUtilities.invokeLater(new Thread(() -> {
+            indicator.progress(status);
         }));
     }
 
     public void setProgressString(final String status) {
 
-        SwingUtilities.invokeLater(new Thread(new Runnable() {
-            public void run() {
-                indicator.setProgressString(status);
-            }
+        SwingUtilities.invokeLater(new Thread(() -> {
+            indicator.setProgressString(status);
         }));
     }
 
@@ -755,57 +748,47 @@ public abstract class ProgressableAction {
         }
         this.indicator.setAction(this);
 
-        SwingUtilities.invokeLater(new Thread(new Runnable() {
-
-            public void run() {
-                indicator.setVisible(true);
-            }
+        SwingUtilities.invokeLater(new Thread(() -> {
+            indicator.setVisible(true);
         }));
 
-        new Thread(new Runnable() {
-            public void run() {
-
-                boolean success = true;
-                String error = "";
-                try {
-                    success = execute();
-
-                } catch (Throwable t) {
-                    log.error(t);
-                    success = false;
-                    error = t.getMessage();
-
-                }
-
-                final boolean succeeded = success;
-                final String errorS = error;
-                SwingUtilities.invokeLater(new Thread(new Runnable() {
-                    public void run() {
-                        if (!succeeded && !("".equals(errorS))) {
-                            log.error("ProgressableAction error:" + errorS);
-                            String displayedError = getErrorMessageAndHints(errorS);
-                            JOptionPane.showMessageDialog(indicator, displayedError, com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-
-                        }
-                        indicator.setVisible(false);
-                        indicator.dispose();
-
-                        if (succeeded) {
-                            if (cleanAfter != null) {
-                                cleanAfter.setVisible(false);
-                                cleanAfter.dispose();
-                            }
-                        }
-                        if (succeeded) {
-                            if (callback != null) {
-                                callback.actionFinished();
-                            }
-                        }
-
-                    }
-                }));
-
+        new Thread(() -> {
+            boolean success = true;
+            String error = "";
+            try {
+                success = execute();
+                
+            } catch (Throwable t) {
+                log.error(t);
+                success = false;
+                error = t.getMessage();
+                
             }
+            
+            final boolean succeeded = success;
+            final String errorS = error;
+            SwingUtilities.invokeLater(new Thread(() -> {
+                if (!succeeded && !("".equals(errorS))) {
+                    log.error("ProgressableAction error:" + errorS);
+                    String displayedError = getErrorMessageAndHints(errorS);
+                    JOptionPane.showMessageDialog(indicator, displayedError, com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                    
+                }
+                indicator.setVisible(false);
+                indicator.dispose();
+                
+                if (succeeded) {
+                    if (cleanAfter != null) {
+                        cleanAfter.setVisible(false);
+                        cleanAfter.dispose();
+                    }
+                }
+                if (succeeded) {
+                    if (callback != null) {
+                        callback.actionFinished();
+                    }
+                }
+            }));
         }).start();
 
     }

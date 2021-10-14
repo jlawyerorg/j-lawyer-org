@@ -674,8 +674,6 @@ import org.apache.log4j.Logger;
  */
 public class SshTunnelObserver extends TimerTask {
     
-    private boolean errorDisplayed=false;
-    
     private static final Logger log=Logger.getLogger(SshTunnelObserver.class.getName());
 
     @Override
@@ -683,9 +681,9 @@ public class SshTunnelObserver extends TimerTask {
         SshTunnel tunnel=SshTunnel.getInstance();
         if(!tunnel.isConnected()) {
             log.error("SSH tunnel has been disconnected! Trying to reconnect...");
-            if(!errorDisplayed) {
-                ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Verbindung zum Server unterbrochen, versuche wiederherzustellen...", "Netzwerk");
-                this.errorDisplayed=true;
+            if(!tunnel.isFailureMode()) {
+                //ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Verbindung zum Server unterbrochen, versuche wiederherzustellen...", "Netzwerk");
+                tunnel.setFailureMode(true);
             }
             tunnel.disconnect();
             int sourcePort=SshTunnel.getAvailablePort(tunnel.getSourcePort());
@@ -693,7 +691,7 @@ public class SshTunnelObserver extends TimerTask {
             try {
                 tunnel.connect();
                 tunnel.startConnectionObserver(5000l);
-                ThreadUtils.showInformationDialog(EditorsRegistry.getInstance().getMainWindow(), "Verbindung wiederhergestellt.", "Netzwerk");
+                //ThreadUtils.showInformationDialog(EditorsRegistry.getInstance().getMainWindow(), "Verbindung wiederhergestellt.", "Netzwerk");
             } catch (Exception ex) {
                 log.error("Error reconnecting to SSH tunnel!", ex);
             }

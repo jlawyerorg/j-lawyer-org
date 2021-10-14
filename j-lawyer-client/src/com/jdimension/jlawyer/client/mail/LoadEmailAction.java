@@ -663,17 +663,11 @@
  */
 package com.jdimension.jlawyer.client.mail;
 
-import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.processing.ProgressIndicator;
 import com.jdimension.jlawyer.client.processing.ProgressableAction;
 import com.jdimension.jlawyer.persistence.MailboxSetup;
-import java.text.SimpleDateFormat;
-import javax.mail.Address;
-import javax.mail.Folder;
 import javax.mail.Message;
-import javax.mail.internet.MimeUtility;
 import javax.swing.*;
-import javax.swing.table.DefaultTableModel;
 import org.apache.log4j.Logger;
 
 /**
@@ -683,7 +677,7 @@ import org.apache.log4j.Logger;
 public class LoadEmailAction extends ProgressableAction {
 
     private static final Logger log = Logger.getLogger(LoadEmailAction.class.getName());
-    
+
     MailContentUI contentUI;
     Message msg;
     JLabel lblSubject;
@@ -697,24 +691,24 @@ public class LoadEmailAction extends ProgressableAction {
     JButton cmdShowHtml;
     ProgressIndicator i;
     MailboxSetup ms;
-    
+
     public LoadEmailAction(ProgressIndicator i, MailContentUI contentUI, Message msg, MailboxSetup ms, JLabel lblSubject, JLabel lblSentDate, JLabel lblTo, JLabel lblCC, JLabel lblBCC, JLabel lblFrom, JEditorPane editBody, JList lstAttachments, JButton cmdShowHtml) {
         super(i, false);
-        this.i=i;
-        this.contentUI=contentUI;
-        this.msg=msg;
-        this.ms=ms;
-        this.lblSubject=lblSubject;
-        this.lblSentDate=lblSentDate;
-        this.lblTo=lblTo;
-        this.lblCC=lblCC;
-        this.lblBCC=lblBCC;
-        this.lblFrom=lblFrom;
-        this.editBody=editBody;
-        this.lstAttachments=lstAttachments;
-        this.cmdShowHtml=cmdShowHtml;
+        this.i = i;
+        this.contentUI = contentUI;
+        this.msg = msg;
+        this.ms = ms;
+        this.lblSubject = lblSubject;
+        this.lblSentDate = lblSentDate;
+        this.lblTo = lblTo;
+        this.lblCC = lblCC;
+        this.lblBCC = lblBCC;
+        this.lblFrom = lblFrom;
+        this.editBody = editBody;
+        this.lstAttachments = lstAttachments;
+        this.cmdShowHtml = cmdShowHtml;
     }
-    
+
     @Override
     public int getMax() {
         return 1;
@@ -728,44 +722,36 @@ public class LoadEmailAction extends ProgressableAction {
     @Override
     public boolean execute() throws Exception {
         try {
-           
+
             try {
-       SwingUtilities.invokeAndWait(new Thread(new Runnable() {
-                public void run() {
-                        try {
-                            i.setVisible(true);
-                            i.repaint();
-                            //MailContentUI.setMessageImpl(contentUI, msg, lblSubject, lblSentDate, lblTo, lblCC, lblFrom, editBody, lstAttachments, cmdShowHtml, true);
-                        } catch (Throwable t) {
-                            log.error(t);
-                        }
-                }
-                
-            }));
+                SwingUtilities.invokeAndWait(new Thread(() -> {
+                    try {
+                        i.setVisible(true);
+                        i.repaint();
+                        //MailContentUI.setMessageImpl(contentUI, msg, lblSubject, lblSentDate, lblTo, lblCC, lblFrom, editBody, lstAttachments, cmdShowHtml, true);
+                    } catch (Throwable t) {
+                        log.error(t);
+                    }
+                }));
             } catch (Throwable t) {
                 log.error(t);
             }
-                
-                SwingUtilities.invokeLater(new Thread(new Runnable() {
-                public void run() {
-                        try {
-                            i.setVisible(true);
-                            i.repaint();
-                            MailContentUI.setMessageImpl(contentUI, msg, ms, lblSubject, lblSentDate, lblTo, lblCC, lblBCC, lblFrom, editBody, lstAttachments, cmdShowHtml, true);
-                        } catch (Throwable t) {
-                            log.error(t);
-                        }
+
+            SwingUtilities.invokeLater(new Thread(() -> {
+                try {
+                    i.setVisible(true);
+                    i.repaint();
+                    MailContentUI.setMessageImpl(contentUI, msg, ms, lblSubject, lblSentDate, lblTo, lblCC, lblBCC, lblFrom, editBody, lstAttachments, cmdShowHtml, true);
+                } catch (Throwable t) {
+                    log.error(t);
                 }
-                
             }));
-                
-                
-             
-            } catch (Exception ex) {
-                log.error(ex);
-                return false;
-            }
+
+        } catch (Exception ex) {
+            log.error(ex);
+            return false;
+        }
         return true;
     }
-    
+
 }

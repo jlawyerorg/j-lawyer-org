@@ -665,15 +665,17 @@ package com.jdimension.jlawyer.client.security.ssh;
 
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.Session;
+import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import com.jdimension.jlawyer.client.processing.ProgressIndicator;
 import com.jdimension.jlawyer.client.utils.VersionUtils;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.net.ServerSocket;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.Timer;
+import javax.swing.SwingUtilities;
 import org.apache.log4j.Logger;
 
 /**
@@ -697,6 +699,9 @@ public class SshTunnel {
     private Timer timer = null;
 
     private Session session = null;
+
+    protected boolean failureMode = false;
+    private ProgressIndicator connectIndicator = null;
 
     public static synchronized SshTunnel getInstance() {
         if (instance == null) {
@@ -742,12 +747,15 @@ public class SshTunnel {
         //session.setPortForwardingL(8023, "127.0.0.1", 8080);
         session.setPortForwardingL(this.sourcePort, this.targetIp, this.targetPort);
 
+        // upon successful connection, remove failure mode
+        this.setFailureMode(false);
+
     }
 
-    public void startConnectionObserver() { 
+    public void startConnectionObserver() {
         this.startConnectionObserver(60000l);
     }
-    
+
     public void startConnectionObserver(long initialDelay) {
         SshTunnelObserver o = new SshTunnelObserver();
         if (this.timer != null) {
@@ -769,7 +777,7 @@ public class SshTunnel {
 
                 InputStream is = urlCon.getInputStream();
                 is.close();
-                
+
             } catch (FileNotFoundException fnfe) {
                 // HTTP 404
                 // happens if the server is configured to not return anything in the web server root, which is the
@@ -787,7 +795,7 @@ public class SshTunnel {
     public void disconnect() {
         if (this.session != null && session.isConnected()) {
             //  session.delPortForwardingL(1111);
-                session.disconnect();
+            session.disconnect();
         }
     }
 
@@ -887,6 +895,50 @@ public class SshTunnel {
      */
     public void setSourcePort(int sourcePort) {
         this.sourcePort = sourcePort;
+    }
+
+    /**
+     * @return the failureMode
+     */
+    public boolean isFailureMode() {
+        return failureMode;
+    }
+
+    /**
+     * @param newFailureMode the failureMode to set
+     */
+    public void setFailureMode(boolean newFailureMode) {
+
+        this.failureMode = newFailureMode;
+        if (newFailureMode) {
+            if (this.connectIndicator == null) {
+                this.connectIndicator = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
+                //this.connectIndicator.setGlassPaneVisible();
+                this.connectIndicator.setShowCancelButton(false);
+                this.connectIndicator.setMin(0);
+                this.connectIndicator.progress("Verbindung zum Server unterbrochen, versuche wiederherzustellen...");
+                this.connectIndicator.setMax(1);
+                this.connectIndicator.setInfinite(true);
+                this.connectIndicator.setValue(1);
+                SwingUtilities.invokeLater(new Thread(() -> {
+                    connectIndicator.setVisible(true);
+                }));
+            }
+        } else {
+            if (this.connectIndicator != null) {
+                try {
+                    SwingUtilities.invokeAndWait(new Thread(() -> {
+                        connectIndicator.setVisible(false);
+                        connectIndicator.dispose();
+                    }));
+                } catch (Throwable t) {
+                    log.error("unable to dispose SSH tunnel reconnect indicator", t);
+                }
+                connectIndicator = null;
+            }
+
+        }
+
     }
 
 }
