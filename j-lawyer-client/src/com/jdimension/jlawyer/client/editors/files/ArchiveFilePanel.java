@@ -3577,9 +3577,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 return;
             }
 
-            if (endDate.getTime() - beginDate.getTime() <= 0) {
+            if ((endDate.getTime() - beginDate.getTime() <= 0) && this.radioEventTypeEvent.isSelected()) {
                 JOptionPane.showMessageDialog(this, "Angaben ungültig - Eintrag endet vor Start oder Termin dauert 0 Minuten?", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
                 return;
+            } else {
+                endDate=beginDate;
             }
 
             EditorsRegistry.getInstance().updateStatus("Wiedervorlage/Frist wird gespeichert...");
@@ -4140,6 +4142,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         MultiCalDialog dlg = new MultiCalDialog(this.txtEventBeginDateField, EditorsRegistry.getInstance().getMainWindow(), true);
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
+        
+        
+        
         if (this.radioEventTypeEvent.isSelected())
             this.txtEventEndDateField.setText(this.txtEventBeginDateField.getText());
     }//GEN-LAST:event_cmdEventBeginDateSelectorActionPerformed
