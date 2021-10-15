@@ -697,6 +697,8 @@ import org.apache.jackrabbit.webdav.client.methods.PropFindMethod;
 import org.apache.jackrabbit.webdav.client.methods.PutMethod;
 import org.apache.jackrabbit.webdav.property.DavProperty;
 import org.apache.jackrabbit.webdav.property.DavPropertyIterator;
+import org.apache.jackrabbit.webdav.property.DavPropertyName;
+import org.apache.jackrabbit.webdav.property.DavPropertyNameSet;
 import org.apache.jackrabbit.webdav.property.DavPropertySet;
 import org.apache.log4j.Logger;
 import org.jlawyer.cloud.calendar.CloudCalendar;
@@ -705,7 +707,10 @@ import org.osaf.caldav4j.CalDAVConstants;
 import org.osaf.caldav4j.exceptions.CalDAV4JException;
 import org.osaf.caldav4j.exceptions.ResourceNotFoundException;
 import org.osaf.caldav4j.methods.CalDAV4JMethodFactory;
+import org.osaf.caldav4j.methods.CalDAVReportMethod;
+import org.osaf.caldav4j.model.request.CalendarData;
 import org.osaf.caldav4j.model.request.CalendarQuery;
+import org.osaf.caldav4j.model.request.CompFilter;
 import org.osaf.caldav4j.util.GenerateQuery;
 
 /**
@@ -715,8 +720,8 @@ import org.osaf.caldav4j.util.GenerateQuery;
 public class NextcloudCalendarConnector {
 
     private static final Logger log = Logger.getLogger(NextcloudCalendarConnector.class.getName());
-    
-    private final SimpleDateFormat dateFormat=new SimpleDateFormat("yyyyMMdd");
+
+    private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd");
 
     protected String subpathPrefix = null;
     protected String serverName = null;
@@ -795,7 +800,6 @@ public class NextcloudCalendarConnector {
             throw ex;
         }
 
-        
     }
 
     public List<VEvent> getAllEvents(String calendarHref, Date from, Date to) {
@@ -841,6 +845,96 @@ public class NextcloudCalendarConnector {
         return events;
     }
 
+    public String getEtag(String uid, String calendarHref) throws Exception {
+        if (uid == null || calendarHref == null || calendarHref.isEmpty() || uid.isEmpty()) {
+            return null;
+        }
+
+        DavPropertyNameSet properties = new DavPropertyNameSet();
+        properties.add(DavPropertyName.GETETAG);
+
+        // Create a Component filter for VCALENDAR and VEVENT
+        CompFilter vcalendar = new CompFilter(Calendar.VCALENDAR);
+        vcalendar.addCompFilter(new CompFilter(Component.VEVENT));
+
+        // Create a Query XML object with the above properties
+        CalendarQuery query = new CalendarQuery(properties, vcalendar, new CalendarData(), false, false);
+
+        org.osaf.caldav4j.methods.HttpClient client = new org.osaf.caldav4j.methods.HttpClient();
+        Credentials creds = new UsernamePasswordCredentials(this.userName, this.password);
+        client.getState().setCredentials(AuthScope.ANY, creds);
+        client.getHostConfiguration().setHost(this.serverName, this.port, this.useHTTPS ? "https" : "http");
+
+        //httpClient.getHostConfiguration().setHost("CALDAVHOST", 443, "https");
+        client.getParams().setAuthenticationPreemptive(true);
+
+        String href=calendarHref + uid + ".ics";
+        
+        CalDAVReportMethod reportMethod = new CalDAV4JMethodFactory().createCalDAVReportMethod(href);
+        reportMethod.setPath(href);
+        reportMethod.setReportRequest(query);
+        try {
+            client.executeMethod(reportMethod);
+        } catch (Exception he) {
+            throw new CalDAV4JException("Problem executing method", he);
+        }
+
+        MultiStatus m = reportMethod.getResponseBodyAsMultiStatus();
+        if (m.getResponses() != null) {
+            if (m.getResponses().length > 0) {
+                try {
+                    return m.getResponses()[0].getProperties(200).get("getetag").getValue().toString();
+                } catch (Throwable t) {
+                    log.error("unable to etag for " + calendarHref, t);
+                }
+            }
+        }
+        return null;
+//                m.
+//		if (!e.hasMoreElements()) {
+//			throw new ResourceNotFoundException(
+//					ResourceNotFoundException.IdentifierType.UID, uid);
+//		}
+//
+//		calDAVResource = new CalDAVResource(e.nextElement());
+//		cache.putResource(calDAVResource);
+//		return calDAVResource;
+
+//        try {
+//            org.osaf.caldav4j.methods.HttpClient client = new org.osaf.caldav4j.methods.HttpClient();
+//            Credentials creds = new UsernamePasswordCredentials(this.userName, this.password);
+//            client.getState().setCredentials(AuthScope.ANY, creds);
+//            client.getHostConfiguration().setHost(this.serverName, this.port, this.useHTTPS ? "https" : "http");
+//
+//            client.getParams().setAuthenticationPreemptive(true);
+//            
+//            HttpHead headMethod = new HttpHead(calendarHref + uid + ".ics");
+//            Head head;
+//
+//        
+//            HttpResponse response =
+//                    client.execute(headMethod);
+////            int statusCode = response.getStatusLine().getStatusCode();
+////
+////            if (statusCode == CalDAVStatus.SC_NOT_FOUND) {
+////                throw new ResourceNotFoundException(
+////                        ResourceNotFoundException.IdentifierType.PATH, path);
+////            }
+////
+////            if (statusCode != CalDAVStatus.SC_OK) {
+////                throw new BadStatusException(headMethod, response);
+////            }
+//        
+//
+//        Header h = headMethod.getFirstHeader(CalDAVConstants.HEADER_ETAG);
+//        String etag = nul                            l;
+//        if (h != null) {
+//            etag = h.getValue();
+//        } else etag = getETagbyMultiget(httpClient, path);
+//
+//        return etag;
+    }
+
     public VEvent getEventByUid(String uid, String calendarHref) throws Exception {
         if (uid == null || calendarHref == null || calendarHref.isEmpty() || uid.isEmpty()) {
             return null;
@@ -883,13 +977,13 @@ public class NextcloudCalendarConnector {
             }
 
         } catch (CalDAV4JException ex) {
-            if(ex.getCause() instanceof ResourceNotFoundException) {
+            if (ex.getCause() instanceof ResourceNotFoundException) {
                 return null;
             } else {
                 log.error("Error getting calendar event " + uid, ex);
                 throw ex;
             }
-            
+
         } catch (Throwable t) {
             log.error("Error getting calendar event " + uid, t);
             throw t;
@@ -898,16 +992,87 @@ public class NextcloudCalendarConnector {
 
     }
 
+//    public void getETag() {
+//        // Create a set of Dav Properties to query
+//		DavPropertyNameSet properties = new DavPropertyNameSet();
+//		properties.add(DavPropertyName.GETETAG);
+//
+//		// Create a Component filter for VCALENDAR and VEVENT
+//		CompFilter vcalendar = new CompFilter(Calendar.VCALENDAR);
+//		vcalendar.addCompFilter(new CompFilter(Component.VEVENT));
+//
+//		// Create a Query XML object with the above properties
+//		CalendarQuery query = new CalendarQuery(properties, vcalendar, new CalendarData(), false, false);
+//
+//		/*
+//		<C:calendar-query xmlns:C="urn:ietf:params:xml:ns:caldav">
+//		  <D:prop xmlns:D="DAV:">
+//		    <D:getetag/>
+//		    <C:calendar-data/>
+//		  </D:prop>
+//		  <C:filter>
+//		    <C:comp-filter name="VCALENDAR">
+//		      <C:comp-filter name="VEVENT"/>
+//		    </C:comp-filter>
+//		  </C:filter>
+//		</C:calendar-query>
+//		*/
+//		// Print to STDOUT the generated Query
+//		System.out.println(XMLUtils.prettyPrint(query));
+//
+//		HttpCalDAVReportMethod method = null;
+//
+//		try {
+//			method = new HttpCalDAVReportMethod("path://to/caldav/calendar", query, CalDAVConstants.DEPTH_1);
+//                        CloseableHttpClient client = HttpClients.createDefault();
+//
+//			// Execute the method
+//			HttpResponse httpResponse = client.execute(method);
+//
+//			// If successful
+//			if (method.succeeded(httpResponse)) {
+//				// Retrieve all multistatus responses
+//				MultiStatusResponse[] multiStatusResponses = method.getResponseBodyAsMultiStatus(httpResponse).getResponses();
+//
+//				// Iterate through all responses
+//				for (MultiStatusResponse response : multiStatusResponses) {
+//					// If the individual calendar request was succesful
+//					if (response.getStatus()[0].getStatusCode() == SC_OK) {
+//						// Retrieve ETag and  Calendar from response
+//						String etag = CalendarDataProperty.getEtagfromResponse(response);
+//						Calendar ical = CalendarDataProperty.getCalendarfromResponse(response);
+//
+//						// Print to output
+//						System.out.println("Calendar at " + response.getHref() + " with ETag: " + etag);
+//						System.out.println(ical);
+//					}
+//				}
+//			}
+//		} catch (Exception e) {
+//			// No-op
+//		} finally {
+//			if (method != null) {
+//				method.reset();
+//			}
+//		}
+//    }
     public String createEvent(String uid, String calendarHref, String summary, String description, String location, Date start, Date end, boolean allDayEvent) {
-        return this.putEvent(uid, calendarHref, true, summary, description, location, start, end, allDayEvent);
+        return this.putEvent(uid, calendarHref, null, summary, description, location, start, end, allDayEvent);
     }
 
     public String updateEvent(String uid, String calendarHref, String summary, String description, String location, Date start, Date end, boolean allDayEvent) {
-        return this.putEvent(uid, calendarHref, false, summary, description, location, start, end, allDayEvent);
+        String etag = null;
+        try {
+            etag = this.getEtag(uid, calendarHref);
+        } catch (Throwable t) {
+            log.error("unable to get etag for " + calendarHref, t);
+        }
+        return this.putEvent(uid, calendarHref, etag, summary, description, location, start, end, allDayEvent);
     }
 
     // create or update
-    private String putEvent(String uid, String calendarHref, boolean avoidOverwrite, String summary, String description, String location, Date start, Date end, boolean allDayEvent) {
+    private String putEvent(String uid, String calendarHref, String etag, String summary, String description, String location, Date start, Date end, boolean allDayEvent) {
+
         org.osaf.caldav4j.methods.HttpClient client = new org.osaf.caldav4j.methods.HttpClient();
         Credentials creds = new UsernamePasswordCredentials(this.userName, this.password);
         client.getState().setCredentials(AuthScope.ANY, creds);
@@ -930,7 +1095,7 @@ public class NextcloudCalendarConnector {
             VEvent vevent = null;
             if (allDayEvent) {
                 // required to use a string as input, because due to the timezones it might be added for one day earlier
-                String dateString=dateFormat.format(start);
+                String dateString = dateFormat.format(start);
                 vevent = new VEvent(new net.fortuna.ical4j.model.Date(dateString), summary);
             } else {
                 vevent = new VEvent(new net.fortuna.ical4j.model.DateTime(start), new net.fortuna.ical4j.model.DateTime(end), summary);
@@ -944,15 +1109,19 @@ public class NextcloudCalendarConnector {
             jlp.setValue("1");
             vevent.getProperties().add(jlp);
 
-            vevent.getProperties().add(new Uid(uid));
+            //vevent.getProperties().add(new Uid(uid));
             c.getComponents().add(vevent);
             String href = calendarHref + uid + ".ics";
             put = new PutMethod(href);
-            if (avoidOverwrite) {
-                put.addRequestHeader("If-None-Match", "*");
+            if (etag==null) {
+                //put.addRequestHeader("If-None-Match", "*");
+            } else {
+                put.addRequestHeader("If-Match", etag);
             }
             put.setRequestEntity(new StringRequestEntity(c.toString(), "text/calendar", "UTF-8"));
-            client.executeMethod(put);
+            int httpStatus = client.executeMethod(put);
+            //etag: put.getResponseHeader("ETag").getValue();
+            log.info("   HTTP " + httpStatus);
             return href;
         } catch (Exception ex) {
             log.error(ex);

@@ -697,7 +697,8 @@ public class NextcloudTest {
      */
     public static void main(String[] args) {
         try {
-            NextcloudCalendarConnector nc = new NextcloudCalendarConnector("cloud.advobox.com", true, 443, "someuser", "secret");
+            //NextcloudCalendarConnector nc = new NextcloudCalendarConnector("cloud.advobox.com", true, 443, "someuser", "secret");
+            
 //            List<CloudCalendar> calendars= nc.getAllCalendars();
 //            for(CloudCalendar c: calendars) {
 //                
@@ -709,6 +710,7 @@ public class NextcloudTest {
 //                List<VEvent> events = nc.getAllEvents(cc.getHref(), new Date(), new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 24 * 3));
 //                for (VEvent ev : events) {
 //                    System.out.println("  " + ev.getUid() + " - " + ev.getSummary());
+//                    
 //                }
 //            }
 //            
@@ -716,6 +718,8 @@ public class NextcloudTest {
 //            String newEventHref=nc.createEvent(uid, "/remote.php/dav/calendars/jens/test/", "test" + uid, "description", "irgendwo", new Date(), new Date(System.currentTimeMillis()+60000l*60l), false);
 //            System.out.println("new event:     " + newEventHref);
 //            
+//            String etag=nc.getEtag(uid, "/remote.php/dav/calendars/jens/test/");
+////            
 //            String updatedEventHref=nc.updateEvent(uid, "/remote.php/dav/calendars/jens/test/", "test" + uid + "-2", "irgendwo", "description", new Date(), new Date(System.currentTimeMillis()+60000l*60l), false);
 //            System.out.println("updated event: " + updatedEventHref);
 //            
@@ -797,7 +801,7 @@ public class NextcloudTest {
 //// Send the File to the destination:
 //            try {
 //                HttpClient client = new HttpClient();
-//                Credentials creds = new UsernamePasswordCredentials("someuser", "j-dim-0305");
+//                Credentials creds = new UsernamePasswordCredentials("someuser", "pwd");
 //                client.getState().setCredentials(AuthScope.ANY, creds);
 //                PutMethod method = new PutMethod(baseUrl + "/" + "temp/briefkopf.odt");
 ////                RequestEntity requestEntity = new InputStreamRequestEntity(
@@ -813,7 +817,7 @@ public class NextcloudTest {
 //
 //            try {
 //                HttpClient client = new HttpClient();
-//                Credentials creds = new UsernamePasswordCredentials("someuser", "j-dim-0305");
+//                Credentials creds = new UsernamePasswordCredentials("someuser", "pwd");
 //                client.getState().setCredentials(AuthScope.ANY, creds);
 //                PutMethod method = new PutMethod(baseUrl + "/" + "temp/42033_42034_Digital.pdf");
 //                RequestEntity requestEntity = new InputStreamRequestEntity(

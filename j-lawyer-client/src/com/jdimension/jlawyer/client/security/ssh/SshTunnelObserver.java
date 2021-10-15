@@ -663,8 +663,6 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client.security.ssh;
 
-import com.jdimension.jlawyer.client.editors.EditorsRegistry;
-import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import java.util.TimerTask;
 import org.apache.log4j.Logger;
 
@@ -682,7 +680,6 @@ public class SshTunnelObserver extends TimerTask {
         if(!tunnel.isConnected()) {
             log.error("SSH tunnel has been disconnected! Trying to reconnect...");
             if(!tunnel.isFailureMode()) {
-                //ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Verbindung zum Server unterbrochen, versuche wiederherzustellen...", "Netzwerk");
                 tunnel.setFailureMode(true);
             }
             tunnel.disconnect();
@@ -691,7 +688,6 @@ public class SshTunnelObserver extends TimerTask {
             try {
                 tunnel.connect();
                 tunnel.startConnectionObserver(5000l);
-                //ThreadUtils.showInformationDialog(EditorsRegistry.getInstance().getMainWindow(), "Verbindung wiederhergestellt.", "Netzwerk");
             } catch (Exception ex) {
                 log.error("Error reconnecting to SSH tunnel!", ex);
             }
