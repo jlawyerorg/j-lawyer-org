@@ -667,7 +667,10 @@ import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.CalendarSetup;
+import com.jdimension.jlawyer.persistence.ServerSettingsBean;
+import com.jdimension.jlawyer.persistence.ServerSettingsBeanFacadeLocal;
 import com.jdimension.jlawyer.security.Crypto;
+import com.jdimension.jlawyer.server.services.settings.ServerSettingsKeys;
 import com.jdimension.jlawyer.server.utils.ServerStringUtils;
 import java.util.List;
 import javax.annotation.security.RolesAllowed;
@@ -690,11 +693,26 @@ public class CalendarSyncService implements CalendarSyncServiceLocal {
     private static final Logger log = Logger.getLogger(CalendarSyncService.class.getName());
 
     @EJB
+    private ServerSettingsBeanFacadeLocal settings;
+
+    @EJB
     private ArchiveFileReviewsBeanFacadeLocal archiveFileReviewsFacade;
 
     @Override
     @Schedule(dayOfWeek = "*", hour = "6,12,19", minute = "1", second = "0", persistent = false)
     public void fullCalendarSync() {
+
+        // interval syncs seem to cause duplicate display of events on iOS / macOS
+        ServerSettingsBean s = this.settings.find(ServerSettingsKeys.SERVERCONF_CLOUDSYNC_CALENDAR_FULLSYNC);
+        if (s == null) {
+            return;
+        } else {
+            if ("on".equalsIgnoreCase(s.getSettingValue()) || "1".equalsIgnoreCase(s.getSettingValue()) || "true".equalsIgnoreCase(s.getSettingValue())) {
+            } else {
+                return;
+            }
+        }
+
         this.fullCalendarSyncImpl();
     }
 
@@ -737,7 +755,7 @@ public class CalendarSyncService implements CalendarSyncServiceLocal {
     }
 
     private NextcloudCalendarConnector getConnector(CalendarSetup cs) throws Exception {
-        
+
         if (ServerStringUtils.isEmpty(cs.getCloudHost()) || ServerStringUtils.isEmpty(cs.getCloudUser()) || ServerStringUtils.isEmpty(cs.getCloudPassword())) {
             log.info("No or invalid calendar sync configuration for calendar setup " + cs.getDisplayName());
             return null;

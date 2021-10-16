@@ -783,4 +783,6 @@ public class ServerSettingsKeys {
     public static final String SERVERCONF_CLOUDSYNC_ADDRESSBOOK_PWD="jlawyer.server.cloudsync.addressbook.pwd";
     public static final String SERVERCONF_CLOUDSYNC_ADDRESSBOOK_HREF="jlawyer.server.cloudsync.addressbook.href";
     
+    public static final String SERVERCONF_CLOUDSYNC_CALENDAR_FULLSYNC="jlawyer.server.cloudsync.calendar.fullsync";
+    
 }
