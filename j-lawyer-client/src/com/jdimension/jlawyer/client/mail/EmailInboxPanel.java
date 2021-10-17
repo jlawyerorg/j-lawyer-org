@@ -2823,6 +2823,25 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
         return this.backgroundImage;
     }
 
+    private MailboxSetup getSelectedMailbox() {
+        if(this.treeFolders.getSelectionPath()!=null) {
+            DefaultMutableTreeNode selectedNode=(DefaultMutableTreeNode)this.treeFolders.getSelectionPath().getLastPathComponent();
+            while(selectedNode.getUserObject() instanceof FolderContainer) {
+                selectedNode=(DefaultMutableTreeNode)selectedNode.getParent();
+            }
+            if(selectedNode.toString().contains("@")) {
+                String mailAddress=selectedNode.toString();
+                UserSettings uset=UserSettings.getInstance();
+                List<MailboxSetup> mailboxes = uset.getMailboxes(uset.getCurrentUser().getPrincipalId());
+                for (MailboxSetup ms : mailboxes) {
+                    if(ms.getEmailAddress().equalsIgnoreCase(mailAddress))
+                        return ms;
+                }
+            }
+        }
+        return null;
+    }
+    
     @Override
     public boolean saveToCase(String caseId, boolean withAttachments, boolean separateAttachments, boolean attachmentsOnly) {
         if (this.tblMails.getSelectedRowCount() == 1) {
@@ -2833,7 +2852,9 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
 
                 MessageContainer msgC = (MessageContainer) this.tblMails.getValueAt(this.tblMails.getSelectedRow(), 0);
                 Message m = msgC.getMessage();
-                MailboxSetup ms = EmailUtils.getMailboxSetup(m);
+                MailboxSetup ms = this.getSelectedMailbox();
+                if(ms==null)
+                    ms=EmailUtils.getMailboxSetup(m);
                 Properties props = System.getProperties();
                 props.setProperty("mail.store.protocol", ms.getEmailInType());
                 if (ms.isEmailInSsl()) {
@@ -3061,7 +3082,6 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
 
                 if (caseId != null) {
                     String temp = ClientSettings.getInstance().getConfiguration(ClientSettings.CONF_MAILS_DELETEENABLED, "false");
-                    boolean deleteEnabled = true;
                     if ("true".equalsIgnoreCase(temp)) {
                         this.cmdDeleteActionPerformed(null);
                     }
