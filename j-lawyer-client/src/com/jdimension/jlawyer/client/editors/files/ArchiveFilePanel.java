@@ -758,6 +758,7 @@ import java.util.*;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableRowSorter;
+import javax.swing.text.DefaultStyledDocument;
 import net.sf.jasperreports.engine.JasperFillManager;
 import net.sf.jasperreports.engine.JasperPrint;
 import net.sf.jasperreports.engine.JasperPrintManager;
@@ -806,6 +807,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.dto = null;
         this.initializing = true;
         initComponents();
+        
+        DefaultStyledDocument doc = new DefaultStyledDocument();
+        doc.setDocumentFilter(new DocumentSizeFilter(2495));
+        this.txtNotice.setDocument(doc);
+        
         this.quickDateSelectionPanel.setTarget(this.txtEventBeginDateField);
         this.quickDateSelectionPanel.setListener(this);
         this.caseFolderPanel1.setCaseContainer(this);
