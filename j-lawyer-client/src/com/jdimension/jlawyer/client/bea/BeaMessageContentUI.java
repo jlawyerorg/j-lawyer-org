@@ -924,6 +924,9 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
         lblSubject = new javax.swing.JLabel();
         lblFrom = new javax.swing.JLabel();
         lblTo = new javax.swing.JLabel();
+        lblCaseNumber = new javax.swing.JLabel();
+        lblReferenceJustice = new javax.swing.JLabel();
+        lblEeb = new javax.swing.JLabel();
         jSplitPane1 = new javax.swing.JSplitPane();
         jScrollPane1 = new javax.swing.JScrollPane();
         editBody = new javax.swing.JEditorPane();
@@ -931,11 +934,6 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
         jLabel7 = new javax.swing.JLabel();
         jScrollPane2 = new javax.swing.JScrollPane();
         lstAttachments = new javax.swing.JList();
-        jLabel4 = new javax.swing.JLabel();
-        lblCaseNumber = new javax.swing.JLabel();
-        jLabel6 = new javax.swing.JLabel();
-        lblReferenceJustice = new javax.swing.JLabel();
-        lblEeb = new javax.swing.JLabel();
         cmdToPdf = new javax.swing.JButton();
         jPanel4 = new javax.swing.JPanel();
         jScrollPane3 = new javax.swing.JScrollPane();
@@ -987,6 +985,13 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
 
         lblTo.setText(" ");
 
+        lblCaseNumber.setText("<AZ>");
+
+        lblReferenceJustice.setText("<AZ Justiz>");
+
+        lblEeb.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/lassists.png"))); // NOI18N
+        lblEeb.setEnabled(false);
+
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
@@ -1002,8 +1007,17 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
                         .addComponent(lblSubject, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(lblSentDate))
-                    .addComponent(lblFrom, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(lblTo, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addComponent(lblFrom, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(lblEeb)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(lblCaseNumber))
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addComponent(lblTo, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(lblReferenceJustice)))
+                .addContainerGap())
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1015,11 +1029,14 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel2)
-                    .addComponent(lblFrom))
+                    .addComponent(lblFrom)
+                    .addComponent(lblCaseNumber)
+                    .addComponent(lblEeb))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel3)
-                    .addComponent(lblTo))
+                    .addComponent(lblTo)
+                    .addComponent(lblReferenceJustice))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
@@ -1084,18 +1101,6 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
 
         jSplitPane1.setRightComponent(jPanel2);
 
-        jLabel4.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder.png"))); // NOI18N
-        jLabel4.setText("Aktenzeichen Absender:");
-
-        lblCaseNumber.setText("<AZ>");
-
-        jLabel6.setText("Empfänger:");
-
-        lblReferenceJustice.setText("<AZ Justiz>");
-
-        lblEeb.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/lassists.png"))); // NOI18N
-        lblEeb.setEnabled(false);
-
         cmdToPdf.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/fileicons/file_type_pdf.png"))); // NOI18N
         cmdToPdf.setToolTipText("Nachricht als PDF anzeigen / drucken");
         cmdToPdf.addActionListener(new java.awt.event.ActionListener() {
@@ -1111,35 +1116,18 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
             .addGroup(jPanel3Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jSplitPane1)
+                    .addComponent(jSplitPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 816, Short.MAX_VALUE)
                     .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel3Layout.createSequentialGroup()
-                        .addComponent(jLabel4)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(lblCaseNumber)
-                        .addGap(18, 18, 18)
-                        .addComponent(jLabel6)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(lblReferenceJustice)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(lblEeb)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(cmdToPdf)))
+                    .addGroup(jPanel3Layout.createSequentialGroup()
+                        .addComponent(cmdToPdf)
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         jPanel3Layout.setVerticalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel3Layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(jLabel4)
-                            .addComponent(lblCaseNumber)
-                            .addComponent(jLabel6)
-                            .addComponent(lblReferenceJustice))
-                        .addComponent(cmdToPdf, javax.swing.GroupLayout.Alignment.TRAILING))
-                    .addComponent(lblEeb))
+                .addComponent(cmdToPdf)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -1548,8 +1536,6 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
-    private javax.swing.JLabel jLabel4;
-    private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel7;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
