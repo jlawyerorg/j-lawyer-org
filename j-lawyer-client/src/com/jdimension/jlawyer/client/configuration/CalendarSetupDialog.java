@@ -666,6 +666,7 @@ package com.jdimension.jlawyer.client.configuration;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
+import com.jdimension.jlawyer.client.utils.CaseInsensitiveStringComparator;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
 import com.jdimension.jlawyer.persistence.CalendarSetup;
@@ -679,6 +680,8 @@ import javax.swing.JButton;
 import javax.swing.JColorChooser;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableModel;
+import javax.swing.table.TableRowSorter;
 import org.apache.log4j.Logger;
 import org.jlawyer.cloud.NextcloudCalendarConnector;
 import org.jlawyer.cloud.calendar.CloudCalendar;
@@ -720,6 +723,10 @@ public class CalendarSetupDialog extends javax.swing.JDialog {
                 ((DefaultTableModel) this.tblCalendars.getModel()).addRow(new Object[]{cs, cs.getBackground(), cs.getHref()});
 
             }
+            TableRowSorter<TableModel> sorter = new TableRowSorter<>(this.tblCalendars.getModel());
+            sorter.setComparator(0, new CaseInsensitiveStringComparator());
+            this.tblCalendars.setRowSorter(sorter);
+            this.tblCalendars.getRowSorter().toggleSortOrder(0);
 
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);

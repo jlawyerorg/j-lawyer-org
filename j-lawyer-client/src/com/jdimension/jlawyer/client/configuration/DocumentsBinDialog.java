@@ -729,6 +729,7 @@ public class DocumentsBinDialog extends javax.swing.JDialog {
             log.info("found " + deletedDocs.size() + " documents in bin");
 
             DefaultTableCellRenderer r = new DefaultTableCellRenderer() {
+                @Override
                 public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
 
                     JLabel label = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
@@ -751,7 +752,7 @@ public class DocumentsBinDialog extends javax.swing.JDialog {
             DefaultTableModel tm = new DefaultTableModel(new String[]{"gelöscht", "von", "Dateiname", "Akte"}, 0);
             this.tblBinDocuments.setModel(tm);
 
-            TableRowSorter<TableModel> sorter = new TableRowSorter<TableModel>(tm);
+            TableRowSorter<TableModel> sorter = new TableRowSorter<>(tm);
             sorter.setComparator(0, new DescendingDateTimeStringComparator());
             this.tblBinDocuments.setRowSorter(sorter);
 
@@ -911,8 +912,7 @@ public class DocumentsBinDialog extends javax.swing.JDialog {
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
-            Collection<ArchiveFileDocumentsBean> deletedDocs = remote.getDocumentsBin();
-
+            
             int[] selected = this.tblBinDocuments.getSelectedRows();
             for (int sel : selected) {
                 ArchiveFileDocumentsBean db = (ArchiveFileDocumentsBean) this.tblBinDocuments.getValueAt(sel, 2);
@@ -931,8 +931,7 @@ public class DocumentsBinDialog extends javax.swing.JDialog {
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
-            Collection<ArchiveFileDocumentsBean> deletedDocs = remote.getDocumentsBin();
-
+            
             int[] selected = this.tblBinDocuments.getSelectedRows();
             for (int sel : selected) {
                 ArchiveFileDocumentsBean db = (ArchiveFileDocumentsBean) this.tblBinDocuments.getValueAt(sel, 2);
@@ -958,8 +957,7 @@ public class DocumentsBinDialog extends javax.swing.JDialog {
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             ArchiveFileServiceRemote remote = locator.lookupArchiveFileServiceRemote();
-            Collection<ArchiveFileDocumentsBean> deletedDocs = remote.getDocumentsBin();
-
+            
             for (int sel=0;sel<this.tblBinDocuments.getRowCount();sel++) {
                 ArchiveFileDocumentsBean db = (ArchiveFileDocumentsBean) this.tblBinDocuments.getValueAt(sel, 2);
                 remote.removeDocumentFromBin(db.getId());
@@ -1004,17 +1002,15 @@ public class DocumentsBinDialog extends javax.swing.JDialog {
         //</editor-fold>
 
         /* Create and display the dialog */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                DocumentsBinDialog dialog = new DocumentsBinDialog(new javax.swing.JFrame(), true);
-                dialog.addWindowListener(new java.awt.event.WindowAdapter() {
-                    @Override
-                    public void windowClosing(java.awt.event.WindowEvent e) {
-                        System.exit(0);
-                    }
-                });
-                dialog.setVisible(true);
-            }
+        java.awt.EventQueue.invokeLater(() -> {
+            DocumentsBinDialog dialog = new DocumentsBinDialog(new javax.swing.JFrame(), true);
+            dialog.addWindowListener(new java.awt.event.WindowAdapter() {
+                @Override
+                public void windowClosing(java.awt.event.WindowEvent e) {
+                    System.exit(0);
+                }
+            });
+            dialog.setVisible(true);
         });
     }
 
