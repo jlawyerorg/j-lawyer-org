@@ -713,9 +713,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
 
     private static final Logger log = Logger.getLogger(BeaMessageContentUI.class.getName());
     private static final String DATEFORMAT = "dd.MM.yyyy HH:mm";
-    private static String HTML_WARNING = "<html><font color=\"red\">HTML-Inhalte werden zum Schutz vor Spam erst auf Knopfdruck im Kopfbereich dieser E-Mail oder nach Doppelklick auf diese Warnung angezeigt.<br/>Der Absender dieser E-Mail wird dann permanent als vertrauensw&uuml;rdig eingestuft.</font></html>";
     private Message msgContainer = null;
-    private String cachedHtml = null;
     private String documentId = null;
 
     /**
@@ -725,7 +723,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
         initComponents();
 
         ComponentUtils.decorateSplitPane(jSplitPane1);
-
+        
         this.jScrollPane1.setPreferredSize(new Dimension((int) this.jScrollPane1.getSize().getWidth(), (int) this.jScrollPane1.getSize().getHeight()));
 
         this.lblSentDate.setText(" ");
@@ -767,6 +765,8 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
                 }
             });
         });
+        ComponentUtils.restoreSplitPane(this.jSplitPane1, this.getClass(), "jSplitPane1");
+        ComponentUtils.persistSplitPane(this.jSplitPane1, this.getClass(), "jSplitPane1");
 
     }
 
@@ -835,8 +835,6 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
     public static void setMessageImpl(BeaMessageContentUI contentUI, Message msg, JLabel lblSubject, JLabel lblSentDate, JLabel lblTo, JLabel lblFrom, JLabel lblCaseNumber, JLabel lblReferenceJustice, JEditorPane editBody, JList lstAttachments, boolean edt, JTable journalTable, JTable processCardTable, JLabel lblEeb, JTabbedPane tabs) throws Exception {
         // we copy the message to avoid the "Unable to load BODYSTRUCTURE" issue
 
-        AppUserBean cu = UserSettings.getInstance().getCurrentUser();
-
         if (msg.getReceptionTime() == null) {
             log.warn("beA mesage " + msg.getId() + " - " + msg.getSubject() + " does not have a reception time yet!");
             lblSentDate.setText("");
@@ -900,33 +898,6 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
 
             }
         }
-
-    }
-
-    public void setCachedHtml(String html) {
-        this.cachedHtml = html;
-    }
-
-    private String cleanUpHTML(String html) {
-        String lowerHtml = html.toLowerCase();
-
-        String find = "<meta content=\"text/html";
-        int start = lowerHtml.indexOf(find);
-
-        find = "<meta http-equiv=\"content-type\"";
-        int start2 = lowerHtml.indexOf(find);
-
-        if (start2 > start) {
-            start = start2;
-        }
-
-        if (start > -1) {
-            String snip1 = lowerHtml.substring(start + 1);
-            int end = snip1.indexOf(">");
-            String result = html.substring(0, start) + html.substring(end + start + 2);
-            return result;
-        }
-        return html;
 
     }
 
@@ -1296,7 +1267,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
     private void lstAttachmentsMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lstAttachmentsMouseReleased
         if (evt.isPopupTrigger() && evt.getComponent().isEnabled()) {
 
-            if (this.lstAttachments.getSelectedValuesList().size() == 0) {
+            if (this.lstAttachments.getSelectedValuesList().isEmpty()) {
                 int index = lstAttachments.locationToIndex(evt.getPoint());
                 if (index >= 0) {
                     Object o = lstAttachments.getModel().getElementAt(index);
@@ -1514,7 +1485,6 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
                     return;
                 }
             }
-            BeaAccess bea = BeaAccess.getInstance();
             Collection<PostBox> inboxes = BeaAccess.getInstance().getPostBoxes();
             for (PostBox pb : inboxes) {
                 if (msgContainer.getSenderSafeId().equals(pb.getSafeId())) {
