@@ -400,18 +400,18 @@
                       <Group type="102" attributes="0">
                           <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="0" attributes="0">
-                              <Group type="102" alignment="0" attributes="0">
+                              <Group type="102" attributes="0">
                                   <Component id="cmdRefreshTagged" min="-2" max="-2" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
                                   <Component id="jLabel9" min="-2" max="-2" attributes="0"/>
-                                  <EmptySpace pref="253" max="32767" attributes="0"/>
-                                  <Component id="chkOnlyMyTagged" min="-2" max="-2" attributes="0"/>
-                                  <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                                  <EmptySpace max="-2" attributes="0"/>
                                   <Component id="cmdTagFilter" min="-2" max="-2" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
                                   <Component id="cmdDocumentTagFilter" min="-2" max="-2" attributes="0"/>
+                                  <EmptySpace pref="248" max="32767" attributes="0"/>
+                                  <Component id="chkOnlyMyTagged" min="-2" max="-2" attributes="0"/>
                               </Group>
-                              <Component id="tabPaneTagged" alignment="0" max="32767" attributes="0"/>
+                              <Component id="tabPaneTagged" max="32767" attributes="0"/>
                           </Group>
                           <EmptySpace max="-2" attributes="0"/>
                       </Group>
@@ -425,13 +425,13 @@
                               <Group type="103" groupAlignment="3" attributes="0">
                                   <Component id="jLabel9" alignment="3" min="-2" max="-2" attributes="0"/>
                                   <Component id="cmdRefreshTagged" alignment="3" min="-2" max="-2" attributes="0"/>
-                                  <Component id="chkOnlyMyTagged" alignment="3" min="-2" max="-2" attributes="0"/>
                               </Group>
                               <Component id="cmdTagFilter" min="-2" max="-2" attributes="0"/>
                               <Component id="cmdDocumentTagFilter" min="-2" max="-2" attributes="0"/>
+                              <Component id="chkOnlyMyTagged" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <EmptySpace max="-2" attributes="0"/>
-                          <Component id="tabPaneTagged" pref="98" max="32767" attributes="0"/>
+                          <Component id="tabPaneTagged" pref="48" max="32767" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
                       </Group>
                   </Group>
