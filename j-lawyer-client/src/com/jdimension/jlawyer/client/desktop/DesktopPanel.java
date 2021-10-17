@@ -700,6 +700,7 @@ import java.util.TimerTask;
 import javax.swing.BoxLayout;
 import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
+import themes.colors.DefaultColorTheme;
 
 /**
  *
@@ -724,6 +725,12 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
     public DesktopPanel() {
         this.initializing = true;
         initComponents();
+        
+        // semi transparent grey background
+//        this.messagesWidget.setOpaque(true);
+//        Color barColor = new Color(DefaultColorTheme.COLOR_DARK_GREY.getRed(), DefaultColorTheme.COLOR_DARK_GREY.getGreen(), DefaultColorTheme.COLOR_DARK_GREY.getBlue(), 170);
+//        this.messagesWidget.setBackground(barColor);
+        
         this.lblNewsStatus.setText(" ");
         this.lblUpdateStatus.setText(" ");
         this.jScrollPane1.getVerticalScrollBar().setUnitIncrement(16);
