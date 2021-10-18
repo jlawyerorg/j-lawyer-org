@@ -3563,7 +3563,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             Date beginDate = null;
             SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy HH:mm");
             try {
-                System.out.println(this.cmbEventBeginTime.getEditor().getItem().toString() + " - " + this.cmbEventBeginTime.getSelectedItem().toString());
                 beginDate = df.parse(this.txtEventBeginDateField.getText() + " " + this.cmbEventBeginTime.getSelectedItem().toString());
 
             } catch (Throwable t) {
@@ -3577,7 +3576,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 this.txtEventEndDateField.setText(this.txtEventBeginDateField.getText());
             }
             try {
-                System.out.println(this.cmbEventEndTime.getEditor().getItem().toString() + " - " + this.cmbEventEndTime.getSelectedItem().toString());
                 endDate = df.parse(this.txtEventEndDateField.getText() + " " + this.cmbEventEndTime.getSelectedItem().toString());
             } catch (Throwable t) {
                 log.error(t);
