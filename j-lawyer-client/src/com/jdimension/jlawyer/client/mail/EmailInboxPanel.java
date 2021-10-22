@@ -3065,7 +3065,8 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
 
                         ArchiveFileDocumentsBean newlyAddedDocument = afs.addDocument(caseId, newName, attachmentData, "");
                         if (sentDate != null) {
-                            afs.setDocumentDate(newlyAddedDocument.getId(), sentDate);
+                            // attachments should occur AFTER the mail (be more recent)
+                            afs.setDocumentDate(newlyAddedDocument.getId(), new Date(sentDate.getTime() + 2000l));
                         }
                         if (folderId != null) {
                             ArrayList<String> docList = new ArrayList<>();
