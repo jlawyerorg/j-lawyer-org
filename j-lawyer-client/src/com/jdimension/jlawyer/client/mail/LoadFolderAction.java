@@ -677,6 +677,7 @@ import javax.mail.FetchProfile;
 import javax.mail.Flags;
 import javax.mail.Folder;
 import javax.mail.Message;
+import javax.mail.search.FlagTerm;
 import javax.swing.JTable;
 import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableModel;
@@ -689,10 +690,7 @@ import org.apache.log4j.Logger;
 public class LoadFolderAction extends ProgressableAction {
 
     private static final Logger log = Logger.getLogger(LoadFolderAction.class.getName());
-    private SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy, HH:mm");
-
-    private static ArrayList DOWNLOAD_RESTRICTIONS = new ArrayList() {
-    };
+    private final SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy, HH:mm");
 
     private Folder f = null;
     private JTable table = null;
@@ -767,8 +765,11 @@ public class LoadFolderAction extends ProgressableAction {
                     break;
             }
 
-            Message[] messages = f.getMessages(fromIndex, toIndex);
-
+            Message[] messages = f.getMessages(fromIndex, toIndex);;
+            if (currentRestriction.getRestriction() == LoadFolderRestriction.RESTRICTION_UNREAD) {
+                messages=f.search(new FlagTerm(new Flags(Flags.Flag.SEEN), false), messages);
+            }
+            
             FetchProfile fp = new FetchProfile();
             fp.add(FetchProfile.Item.ENVELOPE);
             fp.add(FetchProfile.Item.FLAGS);
@@ -874,17 +875,6 @@ public class LoadFolderAction extends ProgressableAction {
                     }));
 
                 }
-
-//                try {
-////                    if (i == (messages.length - 1) || i == (messages.length / 2)) {
-////                        ComponentUtils.autoSizeColumns(table);
-////                    }
-//                    if (i == (messages.length - 1)) {
-//                        ComponentUtils.autoSizeColumns(table);
-//                    }
-//                } catch (Throwable t) {
-//                    log.error(t);
-//                }
 
                 if (i == 20 && currentRestriction.getRestriction() == LoadFolderRestriction.RESTRICTION_20) {
                     break;
