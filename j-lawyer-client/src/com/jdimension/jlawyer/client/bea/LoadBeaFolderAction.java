@@ -765,46 +765,43 @@ public class LoadBeaFolderAction extends ProgressableAction {
                     table.setRowSorter(sorter);
                 }
 
-                SwingUtilities.invokeLater(new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-
-                            if (Folder.TYPE_TRASH.equalsIgnoreCase(f.getType())) {
-                                // trash folder - show permanent deletion date
-                                if (msgh.getReceptionTime() != null) {
-                                    ((DefaultTableModel) table.getModel()).addRow(new Object[]{new Boolean(msgh.isUrgent()), new Boolean(msgh.isConfidential()), new Boolean(msgh.isCheckRequired()), msgh, msgh.getSender(), toString, dfDateTime.format(msgh.getReceptionTime()), msgh.getReferenceNumber(), msgh.getReferenceJustice(), dfDate.format(msgh.getPermanentDeletion())});
-                                } else {
-                                    if (msgh.getSentTime() != null) {
-                                        ((DefaultTableModel) table.getModel()).addRow(new Object[]{new Boolean(msgh.isUrgent()), new Boolean(msgh.isConfidential()), new Boolean(msgh.isCheckRequired()), msgh, msgh.getSender(), toString, dfDateTime.format(msgh.getSentTime()), msgh.getReferenceNumber(), msgh.getReferenceJustice(), dfDate.format(msgh.getPermanentDeletion())});
-                                    } else {
-                                        ((DefaultTableModel) table.getModel()).addRow(new Object[]{new Boolean(msgh.isUrgent()), new Boolean(msgh.isConfidential()), new Boolean(msgh.isCheckRequired()), msgh, msgh.getSender(), toString, null, msgh.getReferenceNumber(), msgh.getReferenceJustice(), dfDate.format(msgh.getPermanentDeletion())});
-                                    }
-
-                                }
+                SwingUtilities.invokeLater(() -> {
+                    try {
+                        
+                        if (Folder.TYPE_TRASH.equalsIgnoreCase(f.getType())) {
+                            // trash folder - show permanent deletion date
+                            if (msgh.getReceptionTime() != null) {
+                                ((DefaultTableModel) table.getModel()).addRow(new Object[]{new Boolean(msgh.isUrgent()), new Boolean(msgh.isConfidential()), new Boolean(msgh.isCheckRequired()), msgh, msgh.getSender(), toString, dfDateTime.format(msgh.getReceptionTime()), msgh.getReferenceNumber(), msgh.getReferenceJustice(), dfDate.format(msgh.getPermanentDeletion())});
                             } else {
-                                // not the trash folder
-                                if (msgh.getReceptionTime() != null) {
-                                    ((DefaultTableModel) table.getModel()).addRow(new Object[]{new Boolean(msgh.isUrgent()), new Boolean(msgh.isConfidential()), new Boolean(msgh.isCheckRequired()), msgh, msgh.getSender(), toString, dfDateTime.format(msgh.getReceptionTime()), msgh.getReferenceNumber(), msgh.getReferenceJustice()});
+                                if (msgh.getSentTime() != null) {
+                                    ((DefaultTableModel) table.getModel()).addRow(new Object[]{new Boolean(msgh.isUrgent()), new Boolean(msgh.isConfidential()), new Boolean(msgh.isCheckRequired()), msgh, msgh.getSender(), toString, dfDateTime.format(msgh.getSentTime()), msgh.getReferenceNumber(), msgh.getReferenceJustice(), dfDate.format(msgh.getPermanentDeletion())});
                                 } else {
-                                    if (msgh.getSentTime() != null) {
-                                        ((DefaultTableModel) table.getModel()).addRow(new Object[]{new Boolean(msgh.isUrgent()), new Boolean(msgh.isConfidential()), new Boolean(msgh.isCheckRequired()), msgh, msgh.getSender(), toString, dfDateTime.format(msgh.getSentTime()), msgh.getReferenceNumber(), msgh.getReferenceJustice()});
-                                    } else {
-                                        ((DefaultTableModel) table.getModel()).addRow(new Object[]{new Boolean(msgh.isUrgent()), new Boolean(msgh.isConfidential()), new Boolean(msgh.isCheckRequired()), msgh, msgh.getSender(), toString, null, msgh.getReferenceNumber(), msgh.getReferenceJustice()});
-                                    }
-
+                                    ((DefaultTableModel) table.getModel()).addRow(new Object[]{new Boolean(msgh.isUrgent()), new Boolean(msgh.isConfidential()), new Boolean(msgh.isCheckRequired()), msgh, msgh.getSender(), toString, null, msgh.getReferenceNumber(), msgh.getReferenceJustice(), dfDate.format(msgh.getPermanentDeletion())});
                                 }
+                                
                             }
-                            if (scrollToRow > 0) {
-                                if (currentIndex == (indexMax)) {
-                                    if (table.getRowCount() > scrollToRow) {
-                                        table.scrollRectToVisible(new Rectangle(table.getCellRect(scrollToRow, 0, true)));
-                                    }
+                        } else {
+                            // not the trash folder
+                            if (msgh.getReceptionTime() != null) {
+                                ((DefaultTableModel) table.getModel()).addRow(new Object[]{new Boolean(msgh.isUrgent()), new Boolean(msgh.isConfidential()), new Boolean(msgh.isCheckRequired()), msgh, msgh.getSender(), toString, dfDateTime.format(msgh.getReceptionTime()), msgh.getReferenceNumber(), msgh.getReferenceJustice()});
+                            } else {
+                                if (msgh.getSentTime() != null) {
+                                    ((DefaultTableModel) table.getModel()).addRow(new Object[]{new Boolean(msgh.isUrgent()), new Boolean(msgh.isConfidential()), new Boolean(msgh.isCheckRequired()), msgh, msgh.getSender(), toString, dfDateTime.format(msgh.getSentTime()), msgh.getReferenceNumber(), msgh.getReferenceJustice()});
+                                } else {
+                                    ((DefaultTableModel) table.getModel()).addRow(new Object[]{new Boolean(msgh.isUrgent()), new Boolean(msgh.isConfidential()), new Boolean(msgh.isCheckRequired()), msgh, msgh.getSender(), toString, null, msgh.getReferenceNumber(), msgh.getReferenceJustice()});
                                 }
+                                
                             }
-                        } catch (Throwable t) {
-                            log.error(t);
                         }
+                        if (scrollToRow > 0) {
+                            if (currentIndex == (indexMax)) {
+                                if (table.getRowCount() > scrollToRow) {
+                                    table.scrollRectToVisible(new Rectangle(table.getCellRect(scrollToRow, 0, true)));
+                                }
+                            }
+                        }
+                    } catch (Throwable t) {
+                        log.error(t);
                     }
                 });
                 try {
@@ -824,11 +821,8 @@ public class LoadBeaFolderAction extends ProgressableAction {
                 log.error("Error sorting mails", t);
             }
 
-            SwingUtilities.invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                    ComponentUtils.autoSizeColumns(table);
-                }
+            SwingUtilities.invokeLater(() -> {
+                ComponentUtils.autoSizeColumns(table);
             });
 
             //ComponentUtils.autoSizeColumns(table);

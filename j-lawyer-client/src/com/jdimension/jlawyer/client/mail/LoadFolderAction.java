@@ -856,7 +856,7 @@ public class LoadFolderAction extends ProgressableAction {
                     final ArrayList<Object[]> tableRowsClone = (ArrayList<Object[]>) tableRows.clone();
                     tableRows.clear();
 
-                    SwingUtilities.invokeLater(new Thread(() -> {
+                    SwingUtilities.invokeLater(() -> {
                         try {
                             for (Object[] rowObject : tableRowsClone) {
                                 ((DefaultTableModel) table.getModel()).addRow(rowObject);
@@ -872,7 +872,7 @@ public class LoadFolderAction extends ProgressableAction {
                         } catch (Throwable t) {
                             log.error(t);
                         }
-                    }));
+                    });
 
                 }
 
@@ -894,9 +894,9 @@ public class LoadFolderAction extends ProgressableAction {
                 log.error("Error sorting mails", t);
             }
 
-            SwingUtilities.invokeLater(new Thread(() -> {
+            SwingUtilities.invokeLater(() -> {
                 ComponentUtils.autoSizeColumns(table);
-            }));
+            });
 
             EditorsRegistry.getInstance().clearStatus(true);
 
