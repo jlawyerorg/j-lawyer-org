@@ -765,7 +765,7 @@ public class LoadFolderAction extends ProgressableAction {
                     break;
             }
 
-            Message[] messages = f.getMessages(fromIndex, toIndex);;
+            Message[] messages = f.getMessages(fromIndex, toIndex);
             if (currentRestriction.getRestriction() == LoadFolderRestriction.RESTRICTION_UNREAD) {
                 messages=f.search(new FlagTerm(new Flags(Flags.Flag.SEEN), false), messages);
             }
