@@ -2502,35 +2502,31 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                             Collection caseCol = afs.getArchiveFileAddressesForAddress(h.getId());
                             int i = 0;
                             ArrayList cases = new ArrayList(caseCol);
-                            Collections.sort(cases, new Comparator() {
-                                @Override
-                                public int compare(Object o1, Object o2) {
-                                    ArchiveFileAddressesBean afab1 = (ArchiveFileAddressesBean) o1;
-                                    ArchiveFileBean aFile1 = afab1.getArchiveFileKey();
-
-                                    ArchiveFileAddressesBean afab2 = (ArchiveFileAddressesBean) o2;
-                                    ArchiveFileBean aFile2 = afab2.getArchiveFileKey();
-
-                                    if (aFile2.getArchivedBoolean()) {
-                                        if (aFile1.getArchivedBoolean()) {
-                                            // both archived
-                                            // sort by changed date
-                                            //return aFile1.getFileNumber().compareTo(aFile2.getFileNumber());
-                                            return new FileNumberComparator().compare(aFile1, aFile2) * -1;
-                                        } else {
-                                            // only 2 is archived
-                                            return -1;
-                                        }
-                                    } else if (aFile1.getArchivedBoolean()) {
-                                        // only 1 is archived
-                                        return 1;
-                                    } else {
-                                        // both are non-archived
+                            Collections.sort(cases, (Object o1, Object o2) -> {
+                                ArchiveFileAddressesBean afab1 = (ArchiveFileAddressesBean) o1;
+                                ArchiveFileBean aFile1 = afab1.getArchiveFileKey();
+                                
+                                ArchiveFileAddressesBean afab2 = (ArchiveFileAddressesBean) o2;
+                                ArchiveFileBean aFile2 = afab2.getArchiveFileKey();
+                                
+                                if (aFile2.getArchivedBoolean()) {
+                                    if (aFile1.getArchivedBoolean()) {
+                                        // both archived
                                         // sort by changed date
                                         //return aFile1.getFileNumber().compareTo(aFile2.getFileNumber());
                                         return new FileNumberComparator().compare(aFile1, aFile2) * -1;
+                                    } else {
+                                        // only 2 is archived
+                                        return -1;
                                     }
-
+                                } else if (aFile1.getArchivedBoolean()) {
+                                    // only 1 is archived
+                                    return 1;
+                                } else {
+                                    // both are non-archived
+                                    // sort by changed date
+                                    //return aFile1.getFileNumber().compareTo(aFile2.getFileNumber());
+                                    return new FileNumberComparator().compare(aFile1, aFile2) * -1;
                                 }
                             });
                             for (Object c : cases) {

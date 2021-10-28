@@ -675,7 +675,6 @@ import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
-import org.apache.ecs.xhtml.i;
 import org.apache.log4j.Logger;
 
 /**
@@ -697,32 +696,30 @@ public class ArchiveFileMissingReviewsSearchThread implements Runnable {
         this.target=target;
     }
 
+    @Override
     public void run() {
         Collection<ArchiveFileBean> dtos=null;
         try {
             ClientSettings settings=ClientSettings.getInstance();
             JLawyerServiceLocator locator=JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             
-            //ArchiveFileServiceRemoteHome home = (ArchiveFileServiceRemoteHome)locator.getRemoteHome("ejb/ArchiveFileServiceBean", ArchiveFileServiceRemoteHome.class);
             ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
             dtos=fileService.getAllWithMissingReviews();
             
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);
-            //JOptionPane.showMessageDialog(this.owner, "Verbindungsfehler: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             ThreadUtils.showErrorDialog(this.owner, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
             return;
         }
         
         String[] colNames=new String[] {"Aktenzeichen", "Kurzrubrum", "wegen", "Anwalt"};
-        //QuickArchiveFileSearchTableModel model=new QuickArchiveFileSearchTableModel(colNames, 0);
         DefaultTableModel model = new DefaultTableModel(colNames, 0) {
 
+            @Override
             public boolean isCellEditable(int i, int i0) {
                 return false;
             }
         };
-        //this.target.setModel(model);
         ThreadUtils.setTableModel(this.target, model);
         try {
             Thread.sleep(750);
@@ -735,18 +732,14 @@ public class ArchiveFileMissingReviewsSearchThread implements Runnable {
             try {
             Object[] row=new Object[]{new QuickArchiveFileSearchRowIdentifier(b), b.getName(), b.getReason(), b.getLawyer()};
             
-            //Object[] row=new Object[]{new ArchiveFileReviewsRowIdentifier(b.getArchiveFileKey(), reviewDateString), b.getReviewTypeName(), b.getArchiveFileKey().getFileNumber(), b.getArchiveFileKey().getName(), b.getReviewReason(), b.getArchiveFileKey().getLawyer(), b.getAssignee()};
             model.addRow(row);
             } catch (Throwable t) {
                 log.error(t);
             }
         }
-        TableRowSorter<TableModel> sorter = new TableRowSorter<TableModel>(model);
+        TableRowSorter<TableModel> sorter = new TableRowSorter<>(model);
         sorter.setComparator(0, new FileNumberComparator());
         ThreadUtils.setTableModel(this.target, model, sorter);
-        //this.target.getColumnModel().getColumn(5).setCellRenderer(new UserTableCellRenderer());
-        //this.target.getColumnModel().getColumn(6).setCellRenderer(new UserTableCellRenderer());
-        //EditorsRegistry.getInstance().clearStatus(true);
         ThreadUtils.setDefaultCursor(this.owner);
         
     }

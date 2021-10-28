@@ -672,6 +672,7 @@ import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import java.awt.Component;
 import java.awt.Graphics;
 import java.awt.Image;
+import java.awt.event.MouseEvent;
 import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
 
@@ -706,12 +707,14 @@ public class ArchiveFileReviewsMissingPanel extends javax.swing.JPanel implement
         this.tblResults.setRowSorter(sorter);*/
     }
     
+    @Override
     public void setBackgroundImage(Image image) {
         this.backgroundImage=image;
         this.tblResults.setOpaque(false);
         
     }
     
+    @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
         if(this.backgroundImage != null)
@@ -870,7 +873,7 @@ public class ArchiveFileReviewsMissingPanel extends javax.swing.JPanel implement
     }//GEN-LAST:event_mnuOpenArchiveFileActionPerformed
 
     private void tblResultsMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblResultsMouseClicked
-        if(evt.getClickCount()==2 && evt.getButton()==evt.BUTTON1) {
+        if(evt.getClickCount()==2 && evt.getButton()==MouseEvent.BUTTON1) {
             int row=this.tblResults.getSelectedRow();
             QuickArchiveFileSearchRowIdentifier id=(QuickArchiveFileSearchRowIdentifier)this.tblResults.getValueAt(row, 0);
             Object editor=null;
@@ -893,7 +896,7 @@ public class ArchiveFileReviewsMissingPanel extends javax.swing.JPanel implement
                 JOptionPane.showMessageDialog(this, "Fehler beim Laden des Editors: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             }
                 
-        } else if(evt.getClickCount()==1 && evt.getButton()==evt.BUTTON3) {
+        } else if(evt.getClickCount()==1 && evt.getButton()==MouseEvent.BUTTON3) {
             if(this.tblResults.getSelectedRowCount()<1) {
                 return;
             }
