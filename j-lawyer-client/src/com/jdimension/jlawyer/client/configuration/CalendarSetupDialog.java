@@ -1151,7 +1151,7 @@ public class CalendarSetupDialog extends javax.swing.JDialog {
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
                 CalendarSetup savedCalendar = locator.lookupCalendarServiceRemote().updateCalendarSetup(cs);
-
+                row=this.tblCalendars.convertRowIndexToView(row);
                 ((DefaultTableModel) this.tblCalendars.getModel()).setValueAt(savedCalendar, row, 0);
                 ((DefaultTableModel) this.tblCalendars.getModel()).setValueAt(savedCalendar.getBackground(), row, 1);
                 ((DefaultTableModel) this.tblCalendars.getModel()).setValueAt(savedCalendar.getHref(), row, 2);
