@@ -1045,7 +1045,7 @@ public class SearchAndAssignDialog extends javax.swing.JDialog {
 
     private void txtSearchStringKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtSearchStringKeyPressed
         if (evt
-                .getKeyCode() == evt.VK_ENTER) {
+                .getKeyCode() == KeyEvent.VK_ENTER) {
             this.cmdQuickSearchActionPerformed(null);
 
         }
@@ -1290,24 +1290,20 @@ public class SearchAndAssignDialog extends javax.swing.JDialog {
          * Create and display the dialog
          */
         java.awt.EventQueue
-                .invokeLater(new Runnable() {
-
-                    public void run() {
-                        SearchAndAssignDialog dialog = new SearchAndAssignDialog(new javax.swing.JFrame(), true, null, null);
-                        dialog.addWindowListener(new java.awt.event.WindowAdapter() {
-
-                            @Override
-                            public void windowClosing(java.awt.event.WindowEvent e
-                            ) {
-                                System
-                                        .exit(0);
-
-                            }
-                        });
-                        dialog.setVisible(true);
-
-                    }
-                });
+                .invokeLater(() -> {
+                    SearchAndAssignDialog dialog = new SearchAndAssignDialog(new javax.swing.JFrame(), true, null, null);
+                    dialog.addWindowListener(new java.awt.event.WindowAdapter() {
+                        
+                        @Override
+                        public void windowClosing(java.awt.event.WindowEvent e
+                        ) {
+                            System
+                                    .exit(0);
+                            
+                        }
+                    });
+                    dialog.setVisible(true);
+        });
 
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables

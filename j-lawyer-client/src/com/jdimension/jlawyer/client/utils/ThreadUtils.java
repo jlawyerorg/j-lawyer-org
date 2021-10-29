@@ -670,7 +670,6 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.LayoutManager;
-import java.util.Arrays;
 import java.util.Collection;
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
@@ -689,32 +688,20 @@ public class ThreadUtils {
     private static final Logger log=Logger.getLogger(ThreadUtils.class.getName());
 
     public static void showErrorDialog(final Component owner, final String msg, final String title) {
-        SwingUtilities.invokeLater(
-                new Runnable() {
-
-            public void run() {
-                JOptionPane.showMessageDialog(owner, msg, title, JOptionPane.ERROR_MESSAGE);
-            }
+        SwingUtilities.invokeLater(() -> {
+            JOptionPane.showMessageDialog(owner, msg, title, JOptionPane.ERROR_MESSAGE);
         });
     }
     
     public static void showInformationDialog(final Component owner, final String msg, final String title) {
-        SwingUtilities.invokeLater(
-                new Runnable() {
-
-            public void run() {
-                JOptionPane.showMessageDialog(owner, msg, title, JOptionPane.INFORMATION_MESSAGE);
-            }
+        SwingUtilities.invokeLater(() -> {
+            JOptionPane.showMessageDialog(owner, msg, title, JOptionPane.INFORMATION_MESSAGE);
         });
     }
     
     public static void requestFocus(final JComponent c) {
-        SwingUtilities.invokeLater(
-                new Runnable() {
-
-            public void run() {
-                c.requestFocusInWindow();
-            }
+        SwingUtilities.invokeLater(() -> {
+            c.requestFocusInWindow();
         });
     }
 
@@ -727,12 +714,8 @@ public class ThreadUtils {
     }
 
     public static void setCellRenderer(final JTable table, final TableCellRenderer renderer, final int column) {
-        SwingUtilities.invokeLater(
-                new Runnable() {
-
-            public void run() {
-                table.getColumnModel().getColumn(column).setCellRenderer(renderer);
-            }
+        SwingUtilities.invokeLater(() -> {
+            table.getColumnModel().getColumn(column).setCellRenderer(renderer);
         });
     }
 
@@ -742,29 +725,25 @@ public class ThreadUtils {
 
     public static void setTableModel(final JTable table, final TableModel model, final TableRowSorter rowSorter, boolean newThread, final int selectionIndexFrom, final int selectionIndexTo) {
         if (newThread) {
-            SwingUtilities.invokeLater(
-                    new Runnable() {
-
-                public void run() {
-                    table.setModel(model);
-                    if (rowSorter == null) {
-                        RowSorter<TableModel> sorter = new TableRowSorter<TableModel>(model);
-                        table.setRowSorter(sorter);
-                    } else {
-                        table.setRowSorter(rowSorter);
-                    }
-                    if(model.getRowCount()>0) {
+            SwingUtilities.invokeLater(() -> {
+                table.setModel(model);
+                if (rowSorter == null) {
+                    RowSorter<TableModel> sorter = new TableRowSorter<>(model);
+                    table.setRowSorter(sorter);
+                } else {
+                    table.setRowSorter(rowSorter);
+                }
+                if(model.getRowCount()>0) {
                     ComponentUtils.autoSizeColumns(table);
                     if (selectionIndexFrom > -1 && selectionIndexTo > -1) {
                         table.getSelectionModel().setSelectionInterval(selectionIndexFrom, selectionIndexTo);
-                    }
                     }
                 }
             });
         } else {
             table.setModel(model);
             if (rowSorter == null) {
-                RowSorter<TableModel> sorter = new TableRowSorter<TableModel>(model);
+                RowSorter<TableModel> sorter = new TableRowSorter<>(model);
                 table.setRowSorter(sorter);
             } else {
                 table.setRowSorter(rowSorter);
@@ -779,95 +758,59 @@ public class ThreadUtils {
     }
 
     public static void enableComponent(final JComponent component, final boolean enabled) {
-        SwingUtilities.invokeLater(
-                new Runnable() {
-
-            public void run() {
-                component.setEnabled(enabled);
-            }
+        SwingUtilities.invokeLater(() -> {
+            component.setEnabled(enabled);
         });
     }
 
     public static void setTabbedPaneIcon(final JTabbedPane component, final int index, final Icon icon) {
-        SwingUtilities.invokeLater(
-                new Runnable() {
-
-            public void run() {
-                component.setIconAt(index, icon);
-            }
+        SwingUtilities.invokeLater(() -> {
+            component.setIconAt(index, icon);
         });
     }
 
     public static void setLayout(final JComponent component, final LayoutManager layout) {
-        SwingUtilities.invokeLater(
-                new Runnable() {
-
-            public void run() {
-                component.setLayout(layout);
-            }
+        SwingUtilities.invokeLater(() -> {
+            component.setLayout(layout);
         });
     }
 
     public static void setListModel(final JList list, final ListModel model) {
-        SwingUtilities.invokeLater(
-                new Runnable() {
-
-            public void run() {
-                list.setModel(model);
-            }
+        SwingUtilities.invokeLater(() -> {
+            list.setModel(model);
         });
     }
     
     public static void selectRadioButton(final JRadioButton radio, boolean selected) {
-        SwingUtilities.invokeLater(
-                new Runnable() {
-
-            public void run() {
-                radio.setSelected(selected);
-            }
+        SwingUtilities.invokeLater(() -> {
+            radio.setSelected(selected);
         });
     }
 
     public static void updateTextField(final JTextField textField, final String text) {
-        SwingUtilities.invokeLater(
-                new Runnable() {
-
-            public void run() {
-                textField.setText(text);
-            }
+        SwingUtilities.invokeLater(() -> {
+            textField.setText(text);
         });
     }
 
     public static void updateTextArea(final JTextArea textArea, final String text) {
-        SwingUtilities.invokeLater(
-                new Runnable() {
-
-            public void run() {
-                textArea.setText(text);
-                textArea.setCaretPosition(0);
-            }
+        SwingUtilities.invokeLater(() -> {
+            textArea.setText(text);
+            textArea.setCaretPosition(0);
         });
     }
     
     public static void updateEditorPane(final JEditorPane ep, final String text) {
-        SwingUtilities.invokeLater(
-                new Runnable() {
-
-            public void run() {
-                ep.setText(text);
-                ep.setCaretPosition(0);
-            }
+        SwingUtilities.invokeLater(() -> {
+            ep.setText(text);
+            ep.setCaretPosition(0);
         });
     }
     
     public static void updateHtmlEditor(final HtmlEditorPanel hep, final String html) {
-        SwingUtilities.invokeLater(
-                new Runnable() {
-
-            public void run() {
-                hep.setText(html);
-                hep.setCaretPosition(0);
-            }
+        SwingUtilities.invokeLater(() -> {
+            hep.setText(html);
+            hep.setCaretPosition(0);
         });
     }
 
@@ -876,89 +819,59 @@ public class ThreadUtils {
         if (label == null) {
             log.warn("Label to be updated is null", new Exception());
         } else {
-            SwingUtilities.invokeLater(
-                    new Runnable() {
-
-                public void run() {
-
-                    label.setText(text);
-
-                }
+            SwingUtilities.invokeLater(() -> {
+                label.setText(text);
             });
         }
 
     }
 
     public static void updateLabelIcon(final JLabel label, final ImageIcon icon) {
-        SwingUtilities.invokeLater(
-                new Runnable() {
-
-            public void run() {
-                label.setIcon(icon);
-            }
+        SwingUtilities.invokeLater(() -> {
+            label.setIcon(icon);
         });
     }
 
     public static void updateProgressBar(final JProgressBar progress, final String text, final int value, final int max, final boolean indeterminate) {
-        SwingUtilities.invokeLater(
-                new Runnable() {
-
-            public void run() {
-                progress.setString(text);
-                if (progress.isIndeterminate() != indeterminate) {
-                    progress.setIndeterminate(indeterminate);
-                }
-
-                if (progress.getMaximum() != max) {
-                    progress.setMaximum(max);
-                }
-
-                if (!progress.isIndeterminate()) {
-                    progress.setValue(value);
-                }
+        SwingUtilities.invokeLater(() -> {
+            progress.setString(text);
+            if (progress.isIndeterminate() != indeterminate) {
+                progress.setIndeterminate(indeterminate);
+            }
+            
+            if (progress.getMaximum() != max) {
+                progress.setMaximum(max);
+            }
+            
+            if (!progress.isIndeterminate()) {
+                progress.setValue(value);
             }
         });
     }
 
     public static void setCursor(final Component component, final Cursor cursor) {
-        SwingUtilities.invokeLater(
-                new Runnable() {
-
-            public void run() {
-                component.setCursor(cursor);
-            }
+        SwingUtilities.invokeLater(() -> {
+            component.setCursor(cursor);
         });
     }
 
     public static void appendToTextArea(final String s, final JTextArea ta) {
-        SwingUtilities.invokeLater(
-                new Runnable() {
-
-            public void run() {
-                ta.append(s);
-            }
+        SwingUtilities.invokeLater(() -> {
+            ta.append(s);
         });
     }
 
     public static void updateTreeNode(final DefaultTreeModel model, final DefaultMutableTreeNode node) {
-        SwingUtilities.invokeLater(
-                new Runnable() {
-
-            public void run() {
-                node.setUserObject(node.getUserObject());
-                model.nodeChanged(node);
-            }
+        SwingUtilities.invokeLater(() -> {
+            node.setUserObject(node.getUserObject());
+            model.nodeChanged(node);
         });
     }
 
     public static void setDefaultCursor(final Component component, boolean newThread) {
         if (newThread) {
-            SwingUtilities.invokeLater(
-                    new Runnable() {
-
-                public void run() {
-                    component.setCursor(Cursor.getDefaultCursor());
-                }
+            SwingUtilities.invokeLater(() -> {
+                component.setCursor(Cursor.getDefaultCursor());
             });
         } else {
             component.setCursor(Cursor.getDefaultCursor());
@@ -976,12 +889,8 @@ public class ThreadUtils {
 
     public static void setWaitCursor(final Component component, boolean newThread) {
         if (newThread) {
-            SwingUtilities.invokeLater(
-                    new Runnable() {
-
-                public void run() {
-                    component.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-                }
+            SwingUtilities.invokeLater(() -> {
+                component.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
             });
         } else {
             component.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
@@ -989,154 +898,93 @@ public class ThreadUtils {
     }
 
     public static void setVisible(final JComponent component, final boolean visible) {
-        SwingUtilities.invokeLater(
-                new Runnable() {
-
-            public void run() {
-                component.setVisible(visible);
-            }
+        SwingUtilities.invokeLater(() -> {
+            component.setVisible(visible);
         });
     }
     
     public static void setSplitDividerLocation(final JSplitPane component, final int location) {
-        SwingUtilities.invokeLater(
-                new Runnable() {
-
-            public void run() {
-                component.setDividerLocation(location);
-            }
+        SwingUtilities.invokeLater(() -> {
+            component.setDividerLocation(location);
         });
     }
     
     public static void setSplitDividerLocationPercentage(final JSplitPane component, final double location) {
-        SwingUtilities.invokeLater(
-                new Runnable() {
-
-            public void run() {
-                component.setDividerLocation(location);
-            }
+        SwingUtilities.invokeLater(() -> {
+            component.setDividerLocation(location);
         });
     }
 
     public static void removeAll(final JComponent component) {
-        SwingUtilities.invokeLater(
-                new Runnable() {
-
-            public void run() {
-                component.removeAll();
-            }
+        SwingUtilities.invokeLater(() -> {
+            component.removeAll();
         });
     }
 
     public static void remove(final JComponent parent, final JComponent remove) {
-        SwingUtilities.invokeLater(
-                new Runnable() {
-
-            public void run() {
-                parent.remove(remove);
-            }
+        SwingUtilities.invokeLater(() -> {
+            parent.remove(remove);
         });
     }
 
     public static void addComponent(final JComponent parent, final JComponent newChild) {
-        SwingUtilities.invokeLater(
-                new Runnable() {
-
-            public void run() {
-                parent.add(newChild);
-            }
+        SwingUtilities.invokeLater(() -> {
+            parent.add(newChild);
         });
     }
 
     public static void addComponent(final JComponent parent, final JComponent newChild, final String flags) {
-        SwingUtilities.invokeLater(
-                new Runnable() {
-
-            public void run() {
-                parent.add(newChild, flags);
-            }
+        SwingUtilities.invokeLater(() -> {
+            parent.add(newChild, flags);
         });
     }
     
     public static void addComboBoxItem(final JComboBox cmb, Object item) {
-        SwingUtilities.invokeLater(
-                new Runnable() {
-
-            public void run() {
-                cmb.addItem(item);
-            }
+        SwingUtilities.invokeLater(() -> {
+            cmb.addItem(item);
         });
     }
     
     public static void repaintComponent(final JComponent c) {
-        SwingUtilities.invokeLater(
-                new Runnable() {
-
-            public void run() {
-                c.repaint();
-                c.updateUI();
-
-            }
+        SwingUtilities.invokeLater(() -> {
+            c.repaint();
+            c.updateUI();
         });
     }
 
     public static void setLabel(final JLabel label, final String s) {
-        SwingUtilities.invokeLater(
-                new Runnable() {
-
-            public void run() {
-                label.setText(s);
-            }
+        SwingUtilities.invokeLater(() -> {
+            label.setText(s);
         });
     }
     
     public static void setText(final JButton button, final String s) {
-        SwingUtilities.invokeLater(
-                new Runnable() {
-
-            public void run() {
-                button.setText(s);
-            }
+        SwingUtilities.invokeLater(() -> {
+            button.setText(s);
         });
     }
     
     public static void setTextField(final JTextField tf, final String s) {
-        SwingUtilities.invokeLater(
-                new Runnable() {
-
-            public void run() {
-                tf.setText(s);
-            }
+        SwingUtilities.invokeLater(() -> {
+            tf.setText(s);
         });
     }
 
     public static void setToolTipText(final JComponent c, final String s) {
-        SwingUtilities.invokeLater(
-                new Runnable() {
-
-            public void run() {
-                c.setToolTipText(s);
-            }
+        SwingUtilities.invokeLater(() -> {
+            c.setToolTipText(s);
         });
     }
 
     public static void setLabelForeGround(final JLabel label, final Color c) {
-        SwingUtilities.invokeLater(
-                new Runnable() {
-
-            public void run() {
-                label.setForeground(c);
-            }
+        SwingUtilities.invokeLater(() -> {
+            label.setForeground(c);
         });
     }
 
     public static void setCalendarItems(CalendarPanel calendarTarget, Collection<ArchiveFileReviewsBean> dtos) {
-        SwingUtilities.invokeLater(
-                new Runnable() {
-
-            public void run() {
-                calendarTarget.setData(dtos);
-            }
+        SwingUtilities.invokeLater(() -> {
+            calendarTarget.setData(dtos);
         });
     }
 
