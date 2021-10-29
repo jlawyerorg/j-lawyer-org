@@ -1077,7 +1077,7 @@ public class LoginDialog extends javax.swing.JFrame {
                 .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(jPanel1Layout.createSequentialGroup()
                         .add(12, 12, 12)
-                        .add(lblHint, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 40, Short.MAX_VALUE)
+                        .add(lblHint, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 100, Short.MAX_VALUE)
                         .add(72, 72, 72))
                     .add(jPanel1Layout.createSequentialGroup()
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
@@ -1109,7 +1109,7 @@ public class LoginDialog extends javax.swing.JFrame {
                         .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                             .add(cmdLogin)
                             .add(cmdCancel))))
-                .addContainerGap(191, Short.MAX_VALUE))
+                .addContainerGap(195, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("Login", jPanel1);
@@ -1268,11 +1268,6 @@ public class LoginDialog extends javax.swing.JFrame {
 
         cmdDeleteProfile.setForeground(new java.awt.Color(255, 255, 255));
         cmdDeleteProfile.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/editdelete.png"))); // NOI18N
-        cmdDeleteProfile.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(255, 255, 255), 3, true));
-        cmdDeleteProfile.setBorderPainted(false);
-        cmdDeleteProfile.setContentAreaFilled(false);
-        cmdDeleteProfile.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
-        cmdDeleteProfile.setMargin(new java.awt.Insets(8, 24, 8, 24));
         cmdDeleteProfile.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmdDeleteProfileActionPerformed(evt);
@@ -1281,11 +1276,6 @@ public class LoginDialog extends javax.swing.JFrame {
 
         cmdAddProfile.setForeground(new java.awt.Color(255, 255, 255));
         cmdAddProfile.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder_new.png"))); // NOI18N
-        cmdAddProfile.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(255, 255, 255), 3, true));
-        cmdAddProfile.setBorderPainted(false);
-        cmdAddProfile.setContentAreaFilled(false);
-        cmdAddProfile.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
-        cmdAddProfile.setMargin(new java.awt.Insets(8, 24, 8, 24));
         cmdAddProfile.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmdAddProfileActionPerformed(evt);
@@ -1327,13 +1317,13 @@ public class LoginDialog extends javax.swing.JFrame {
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel2Layout.createSequentialGroup()
-                .add(31, 31, 31)
-                .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
+                .add(47, 47, 47)
+                .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
                     .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                         .add(cmbProfile, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .add(lblProfile))
-                    .add(cmdDeleteProfile)
-                    .add(cmdAddProfile))
+                    .add(cmdAddProfile)
+                    .add(cmdDeleteProfile, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .add(18, 18, 18)
                 .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(jLabel1)
@@ -1352,7 +1342,7 @@ public class LoginDialog extends javax.swing.JFrame {
                 .add(jPanel4, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(cmdSaveProfile)
-                .addContainerGap(70, Short.MAX_VALUE))
+                .addContainerGap(54, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("Profile", jPanel2);
@@ -1489,7 +1479,7 @@ public class LoginDialog extends javax.swing.JFrame {
                                 .add(cmdRestore)
                                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                                 .add(jLabel9)))
-                        .add(0, 125, Short.MAX_VALUE))
+                        .add(0, 185, Short.MAX_VALUE))
                     .add(lblBoxOutput, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
@@ -1506,7 +1496,7 @@ public class LoginDialog extends javax.swing.JFrame {
                 .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(jPanel3Layout.createSequentialGroup()
                         .add(cmdBoxCheck)
-                        .add(0, 4, Short.MAX_VALUE))
+                        .add(0, 8, Short.MAX_VALUE))
                     .add(jLabel10, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
@@ -1553,8 +1543,8 @@ public class LoginDialog extends javax.swing.JFrame {
                 .add(jLabel3, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 593, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .add(72, 72, 72))
             .add(bgPanelLayout.createSequentialGroup()
-                .add(72, 72, 72)
-                .add(jTabbedPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 623, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .add(51, 51, 51)
+                .add(jTabbedPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 683, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         bgPanelLayout.setVerticalGroup(
