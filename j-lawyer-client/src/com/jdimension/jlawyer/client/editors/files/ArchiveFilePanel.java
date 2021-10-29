@@ -685,6 +685,7 @@ import com.jdimension.jlawyer.client.drebis.claim.DrebisClaimWizardDialog;
 import com.jdimension.jlawyer.client.drebis.freetext.DrebisFreeTextWizardDialog;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.SaveableEditor;
+import com.jdimension.jlawyer.client.editors.SelfValidatingEditor;
 import com.jdimension.jlawyer.client.editors.ThemeableEditor;
 import com.jdimension.jlawyer.client.editors.addresses.AddressPanel;
 import com.jdimension.jlawyer.client.editors.addresses.EditAddressDetailsPanel;
@@ -775,7 +776,7 @@ import org.jlawyer.plugins.calculation.StyledCalculationTable;
  *
  * @author jens
  */
-public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEditor, PopulateOptionsEditor, SaveableEditor, com.jdimension.jlawyer.client.events.EventConsumer, QuickDateSelectionListener {
+public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEditor, PopulateOptionsEditor, SaveableEditor, SelfValidatingEditor, com.jdimension.jlawyer.client.events.EventConsumer, QuickDateSelectionListener {
 
     private static final Logger log = Logger.getLogger(ArchiveFilePanel.class.getName());
 
@@ -3850,8 +3851,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     }//GEN-LAST:event_cmdBackToSearchActionPerformed
 
     private void cmdSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveActionPerformed
-
-        this.save();
+        if(this.isDataValid())
+            this.save();
 
 
     }//GEN-LAST:event_cmdSaveActionPerformed
@@ -5568,7 +5569,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
         } else {
             if (!this.readOnly) {
-                this.save(false);
+                this.save();
                 this.setArchiveFileDTO(this.dto);
             }
         }
@@ -5919,6 +5920,34 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     @Override
     public void dateSelectionChanged(Date d, String s) {
         this.txtEventEndDateField.setText(s);
+    }
+
+    @Override
+    public boolean isDataValid() {
+        if(this.dto==null)
+            return true;
+        
+        // check for valid reviews
+        boolean reviewsValid = false;
+        ArchiveFileReviewReasonsTableModel reviewsModel = (ArchiveFileReviewReasonsTableModel) this.tblReviewReasons.getModel();
+        for (int i = 0; i < reviewsModel.getRowCount(); i++) {
+            Object row = reviewsModel.getValueAt(i, 0);
+            ArchiveFileReviewsBean reviewDTO = (ArchiveFileReviewsBean) row;
+            if (!reviewDTO.getDoneBoolean()) {
+                reviewsValid = true;
+                break;
+            }
+        }
+
+        // reviews need to be valid for NON-archived cases only
+        if (!reviewsValid && !this.chkArchived.isSelected()) {
+            int response = JOptionPane.showOptionDialog(this, "Keine Wiedervorlage oder keine offene Wiedervorlage in der Zukunft - trotzdem fortfahren?", "Akten - Gültigkeitsprüfung", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, null, null, null);
+            if (response == JOptionPane.NO_OPTION) {
+                EditorsRegistry.getInstance().clearStatus();
+                return false;
+            }
+        }
+        return true;
     }
 
     protected class DropTargetHandler implements DropTargetListener {
@@ -6350,10 +6379,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
     @Override
     public boolean save() {
-        return this.save(true);
-    }
-
-    public boolean save(boolean checkForOpenReviews) {
+        
         if (this.txtName.getText() == null || "".equals(this.txtName.getText())) {
             JOptionPane.showMessageDialog(this, "Es muß mindestens ein Kurzrubrum angegeben werden, um eine Akte zu speichern.", "Akten - Gültigkeitsprüfung", JOptionPane.INFORMATION_MESSAGE);
             return false;
@@ -6388,40 +6414,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
             this.fillDTO(this.dto, true);
 
-            // check for valid reviews
-            boolean reviewsValid = true;
-            Date now = new Date();
-            if (dto.getArchiveFileReviewsBeanList() == null) {
-                // no review specified
-                reviewsValid = false;
-            } else if (dto.getArchiveFileReviewsBeanList().isEmpty()) {
-                // empty reviews
-                reviewsValid = false;
-            } else {
-                // is there any review that is open and due in future?
-                boolean openReview = false;
-                for (ArchiveFileReviewsBean rev : dto.getArchiveFileReviewsBeanList()) {
-                    if (!rev.getDoneBoolean()) {
-                        openReview = true;
-                        break;
-                    }
-                }
-                if (!openReview) {
-                    reviewsValid = false;
-                }
-            }
-
-            if (checkForOpenReviews) {
-                // reviews need to be valid for NON-archived cases only
-                if (!reviewsValid && !this.chkArchived.isSelected()) {
-                    int response = JOptionPane.showOptionDialog(this, "Keine Wiedervorlage oder keine offene Wiedervorlage in der Zukunft - trotzdem speichern?", "Akten - Gültigkeitsprüfung", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, null, null, null);
-                    if (response == JOptionPane.NO_OPTION) {
-                        EditorsRegistry.getInstance().clearStatus();
-                        return false;
-                    }
-                }
-            }
-
             String caseId = null;
             if (id == null) {
                 ArchiveFileBean newCase = fileService.createArchiveFile(this.dto);
@@ -6452,11 +6444,9 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 rtrs.setSortKeys(list);
                 rtrs.sort();
                 SwingUtilities.invokeLater(
-                        new Thread(new Runnable() {
-                            public void run() {
-                                ComponentUtils.autoSizeColumns(tblReviewReasons);
-                            }
-                        }));
+                        new Thread(() -> {
+                            ComponentUtils.autoSizeColumns(tblReviewReasons);
+                }));
 
             }
             if (this.groupPrivilegesChanged) {
