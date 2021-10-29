@@ -811,7 +811,6 @@ public class ImportCourtsFromBeaThread implements Runnable {
                     log.error("Error searching for beA law courts", t);
                     ThreadUtils.showErrorDialog(this.owner, "Fehler beim Import: " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
                     failed=true;
-                    return;
                 }
             }
             
