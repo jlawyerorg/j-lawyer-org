@@ -667,7 +667,6 @@ import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.ArchiveFileGroupsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileGroupsBeanFacadeLocal;
-import com.jdimension.jlawyer.persistence.Group;
 import com.jdimension.jlawyer.server.utils.SecurityUtils;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -754,31 +753,6 @@ public class SearchService implements SearchServiceRemote, SearchServiceLocal {
             return new ArrayList<>();
         }
         return this.caseGroupsFacade.findByCase(archiveFile);
-
-    }
-
-    private boolean checkGroupsForCase(String principalId, List<Group> userGroups, ArchiveFileBean aFile) {
-        Group owner = aFile.getGroup();
-        if (owner == null) {
-            return true;
-        }
-
-        for (Group g : userGroups) {
-            if (g.equals(owner)) {
-                return true;
-            }
-        }
-
-        List<ArchiveFileGroupsBean> caseGroups = this.getAllowedGroups(aFile);
-        for (Group g : userGroups) {
-            for (ArchiveFileGroupsBean cg : caseGroups) {
-                if (g.equals(cg.getAllowedGroup())) {
-                    return true;
-                }
-            }
-        }
-
-        return false;
 
     }
 

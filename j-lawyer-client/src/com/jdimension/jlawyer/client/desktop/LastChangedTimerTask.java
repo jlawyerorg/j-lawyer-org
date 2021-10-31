@@ -675,7 +675,7 @@ import java.awt.Component;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.List;
 import javax.swing.*;
 import org.apache.log4j.Logger;
@@ -711,8 +711,7 @@ public class LastChangedTimerTask extends java.util.TimerTask {
 
         List<ArchiveFileBean> myNewList = new ArrayList<>();
         List<ArchiveFileBean> filteredList = new ArrayList<>();
-        Hashtable<String, List<ArchiveFileTagsBean>> tags = new Hashtable<>();
-        //List<ArchiveFileBean> othersNewList = new ArrayList<ArchiveFileBean>();
+        HashMap<String, List<ArchiveFileTagsBean>> tags = new HashMap<>();
         try {
 
             EditorsRegistry reg = EditorsRegistry.getInstance();
