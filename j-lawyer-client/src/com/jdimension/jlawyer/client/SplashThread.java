@@ -1190,6 +1190,7 @@ public class SplashThread implements Runnable {
                 if (!SwingUtilities.isEventDispatchThread()) {
                     SwingUtilities.invokeAndWait(() -> {
                         try {
+                            long start=System.currentTimeMillis();
                             Object editor = EditorsRegistry.getInstance().getEditor(editorClass);
                             if (module.getBackgroundImage() != null || module.getRandomBackgroundImage() != null) {
                                 if (editor instanceof ThemeableEditor) {
@@ -1201,6 +1202,7 @@ public class SplashThread implements Runnable {
                                     log.warn("Editor " + editorClass + " has a background image set but does not implement interface ThemeableEditor");
                                 }
                             }
+                            log.info("fully initialized module " + editorClass + ": " + (System.currentTimeMillis()-start));
                         } catch (Exception ex) {
                             log.error("Fehler beim Laden des Moduls " + editorClass, ex);
                             ThreadUtils.showErrorDialog(owner, "Fehler beim Laden des Moduls " + editorClass + ": " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
@@ -1208,7 +1210,9 @@ public class SplashThread implements Runnable {
                     });
 
                 } else {
+                    long start=System.currentTimeMillis();
                     Object editor = EditorsRegistry.getInstance().getEditor(editorClass);
+                    log.info("loaded module " + editorClass + ": " + (System.currentTimeMillis()-start));
                     if (module.getBackgroundImage() != null || module.getRandomBackgroundImage() != null) {
                         if (editor instanceof ThemeableEditor) {
                             Image image = theme.getBackground(module);
@@ -1219,6 +1223,7 @@ public class SplashThread implements Runnable {
                             log.warn("Editor " + editorClass + " has a background image set but does not implement interface ThemeableEditor");
                         }
                     }
+                    log.info("fully initialized module " + editorClass + ": " + (System.currentTimeMillis()-start));
                 }
 
             } catch (Exception ex) {

@@ -666,14 +666,12 @@ package com.jdimension.jlawyer.client.desktop;
 import com.jdimension.jlawyer.client.editors.*;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
-import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileTagsBean;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Color;
 import java.awt.Component;
-import java.awt.GridLayout;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -690,7 +688,6 @@ import themes.colors.DefaultColorTheme;
 public class LastChangedTimerTask extends java.util.TimerTask {
 
     private static final Logger log = Logger.getLogger(LastChangedTimerTask.class.getName());
-    private Component owner;
     private JPanel resultUI;
     private JSplitPane split;
     private boolean ignoreCurrentEditor = false;
@@ -700,7 +697,6 @@ public class LastChangedTimerTask extends java.util.TimerTask {
      */
     public LastChangedTimerTask(Component owner, JPanel resultPanel, JSplitPane split, boolean ignoreCurrentEditor) {
         super();
-        this.owner = owner;
         this.resultUI = resultPanel;
         this.split = split;
         this.ignoreCurrentEditor = ignoreCurrentEditor;
@@ -710,11 +706,12 @@ public class LastChangedTimerTask extends java.util.TimerTask {
         this(owner, resultPanel, split, false);
     }
 
+    @Override
     public void run() {
 
-        List<ArchiveFileBean> myNewList = new ArrayList<ArchiveFileBean>();
-        List<ArchiveFileBean> filteredList = new ArrayList<ArchiveFileBean>();
-        Hashtable<String, List<ArchiveFileTagsBean>> tags = new Hashtable<String, List<ArchiveFileTagsBean>>();
+        List<ArchiveFileBean> myNewList = new ArrayList<>();
+        List<ArchiveFileBean> filteredList = new ArrayList<>();
+        Hashtable<String, List<ArchiveFileTagsBean>> tags = new Hashtable<>();
         //List<ArchiveFileBean> othersNewList = new ArrayList<ArchiveFileBean>();
         try {
 
@@ -730,9 +727,6 @@ public class LastChangedTimerTask extends java.util.TimerTask {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
             ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
-            //myNewList = fileService.getLastChanged(settings.getConfiguration(ClientSettings.CONF_LASTUSER, ""), true, 25);
-            //othersNewList = fileService.getLastChanged(settings.getConfiguration(ClientSettings.CONF_LASTUSER, ""), false, 25);
-
             myNewList = fileService.getLastChanged(50);
 
             UserSettings.getInstance().migrateFrom(settings, UserSettings.CONF_DESKTOP_ONLYMYCASES);
@@ -755,62 +749,57 @@ public class LastChangedTimerTask extends java.util.TimerTask {
 
         } catch (Throwable ex) {
             log.error("Error connecting to server", ex);
-            //JOptionPane.showMessageDialog(this.owner, "Verbindungsfehler: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-            //ThreadUtils.showErrorDialog(this.owner, java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/LastChangedTimerTask").getString("msg.connectionerror"), new Object[]{ex.getMessage()}), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/desktop/LastChangedTimerTask").getString("msg.error"));
             return;
         }
 
         try {
             final List<ArchiveFileBean> l1 = myNewList;
             //final List<ArchiveFileBean> l2 = othersNewList;
-            SwingUtilities.invokeLater(
-                    new Runnable() {
-                public void run() {
-
-                    //split.setDividerLocation(0.5d);
-
-                    resultUI.removeAll();
-                    resultUI.repaint();
-                    resultUI.revalidate();
-                    //GridLayout layout = new GridLayout(l1.size(), 1);
-                    BoxLayout layout=new BoxLayout(resultUI, BoxLayout.Y_AXIS);
-                    resultUI.setLayout(layout);
-                    int i = 0;
-                    //ArrayList containedIds = new ArrayList();
-                    for (ArchiveFileBean aFile : l1) {
-                        
-                        Color background=DefaultColorTheme.DESKTOP_ENTRY_BACKGROUND;
-                        if (i % 2 == 0) {
-                            background=background.brighter();
-                        }
-                        LastChangedEntryPanel ep = new LastChangedEntryPanel(background);
-                        LastChangedEntry lce = new LastChangedEntry();
-                        lce.setFileNumber(aFile.getFileNumber());
-                        lce.setId(aFile.getId());
-                        lce.setLastChangedBy(aFile.getLawyer());
-                        lce.setName(aFile.getName());
-                        lce.setReason(aFile.getReason());
-                        if (tags.get(aFile.getId()) != null) {
-                            ArrayList<String> xTags = new ArrayList<String>();
-                            for (ArchiveFileTagsBean aftb : tags.get(aFile.getId())) {
-                                xTags.add(aftb.getTagName());
-                            }
-                            Collections.sort(xTags);
-                            lce.setTags(xTags);
-                        }
-                        ep.setEntry(lce);
-
-                        //if (!containedIds.contains(lce.getId())) {
-                        resultUI.add(ep);
-                        i++;
-                        if (i == 25) {
-                            //layout.setRows(i);
-                            return;
-                        }
-                        //    containedIds.add(lce.getId());
-                        //}
+            SwingUtilities.invokeLater(() -> {
+                //split.setDividerLocation(0.5d);
+                
+                resultUI.removeAll();
+                resultUI.repaint();
+                resultUI.revalidate();
+                //GridLayout layout = new GridLayout(l1.size(), 1);
+                BoxLayout layout=new BoxLayout(resultUI, BoxLayout.Y_AXIS);
+                resultUI.setLayout(layout);
+                int i = 0;
+                //ArrayList containedIds = new ArrayList();
+                for (ArchiveFileBean aFile : l1) {
+                    
+                    Color background=DefaultColorTheme.DESKTOP_ENTRY_BACKGROUND;
+                    if (i % 2 == 0) {
+                        background=background.brighter();
                     }
-
+                    LastChangedEntryPanel ep = new LastChangedEntryPanel(background);
+                    LastChangedEntry lce = new LastChangedEntry();
+                    lce.setFileNumber(aFile.getFileNumber());
+                    lce.setId(aFile.getId());
+                    lce.setLastChangedBy(aFile.getLawyer());
+                    lce.setName(aFile.getName());
+                    lce.setReason(aFile.getReason());
+                    if (tags.get(aFile.getId()) != null) {
+                        ArrayList<String> xTags = new ArrayList<>();
+                        for (ArchiveFileTagsBean aftb : tags.get(aFile.getId())) {
+                            xTags.add(aftb.getTagName());
+                        }
+                        Collections.sort(xTags);
+                        lce.setTags(xTags);
+                    }
+                    ep.setEntry(lce);
+                    
+                    //if (!containedIds.contains(lce.getId())) {
+                    resultUI.add(ep);
+                    i++;
+                    if (i == 25) {
+                        //layout.setRows(i);
+                        return;
+                    }
+                    //    containedIds.add(lce.getId());
+                    //}
+                }
+                
 //                        for (ArchiveFileBean aFile : l2) {
 //                            LastChangedEntryPanel ep = new LastChangedEntryPanel();
 //                            if (i % 2 == 0) {
@@ -834,16 +823,16 @@ public class LastChangedTimerTask extends java.util.TimerTask {
 //                                containedIds.add(lce.getId());
 //                            }
 //                        }
-                    //layout.setRows(i);
-                    //split.setDividerLocation(0.5d);
+//layout.setRows(i);
+//split.setDividerLocation(0.5d);
                     
 //                    resultUI.revalidate();
 //                    resultUI.repaint();
 //                    resultUI.updateUI();
-                    split.setDividerLocation(split.getDividerLocation()+1);
+split.setDividerLocation(split.getDividerLocation()+1);
 //                    split.revalidate();
 //                    split.repaint();
-                    split.setDividerLocation(split.getDividerLocation()-1);
+split.setDividerLocation(split.getDividerLocation()-1);
 //                    split.revalidate();
 //                    split.repaint();
 
@@ -855,7 +844,6 @@ public class LastChangedTimerTask extends java.util.TimerTask {
 //
 //                                }
 //                        );
-                }
             });
         } catch (Throwable t) {
             log.error(t);

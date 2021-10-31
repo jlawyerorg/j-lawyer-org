@@ -667,7 +667,12 @@ import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileGroupsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileGroupsBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.Group;
+import com.jdimension.jlawyer.persistence.utils.JDBCUtils;
 import com.jdimension.jlawyer.services.SecurityServiceLocal;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.log4j.Logger;
@@ -684,6 +689,9 @@ public class SecurityUtils {
         if (aFile == null) {
             return;
         }
+        
+        if(caseGroups==null || caseGroups.isEmpty())
+            return;
 
         Group owner = aFile.getGroup();
         if (owner == null) {
@@ -715,7 +723,7 @@ public class SecurityUtils {
             }
         }
 
-        throw new Exception("Nutzer " + principalId + " ist für diese Akte nicht zugriffsberechtigt!");
+        throw new Exception("Nutzer " + principalId + " ist für die Akte " + aFile.getFileNumber() + " nicht zugriffsberechtigt!");
 
     }
 
@@ -743,6 +751,65 @@ public class SecurityUtils {
 
         return false;
 
+    }
+    
+    public static ArrayList<String> getAllowedCasesForUser(String principalId, SecurityServiceLocal securityFacade) throws Exception {
+        JDBCUtils utils = new JDBCUtils();
+        ArrayList<String> list = new ArrayList<>();
+
+        List<Group> userGroups = new ArrayList<>();
+        try {
+            userGroups = securityFacade.getGroupsForUser(principalId);
+        } catch (Throwable t) {
+            log.error("Unable to determine groups for user " + principalId, t);
+        }
+        StringBuilder sb=new StringBuilder();
+        sb.append("'dummy'");
+        for(Group g: userGroups) {
+            sb.append(", '").append(g.getId()).append("'");
+        }
+        String inClause=sb.toString();
+        
+        //select distinct (t1.id) from (
+        // -- cases where the user is owner
+        //select id from cases where owner_group in ('6a7776fc7f00010136d79a4449cbc199','6a778e437f000101216f38d814330959', '9d3ac0e07f00010160456b7ffc12fbf8', '9d3aa8a17f00010129a7683d54ee39de', 'b869f3e87f00010110962348ac1e4cb9', 'b86a19417f00010125870b81e0fdf216')
+        //union 
+        // -- cases that are unprotected
+        //select id from cases where owner_group is null 
+        //union 
+        // -- cases where the user is in an allowed group
+        //select distinct case_id id from case_groups where group_id in ('6a7776fc7f00010136d79a4449cbc199','6a778e437f000101216f38d814330959', '9d3ac0e07f00010160456b7ffc12fbf8', '9d3aa8a17f00010129a7683d54ee39de', 'b869f3e87f00010110962348ac1e4cb9', 'b86a19417f00010125870b81e0fdf216')
+        //union 
+        // -- cases where there is restriction (althoug there is an owner)
+        //select id from cases where id not in (select case_id from case_groups)
+        //) t1
+        
+        
+        String sql = "select distinct (t1.id) from (\n"
+                + "select id from cases where owner_group in (" + inClause +")\n"
+                + "union \n"
+                + "select id from cases where owner_group is null \n"
+                + "union \n"
+                + "select distinct case_id id from case_groups where group_id in (" + inClause +")\n"
+                + "union \n"
+                + "select id from cases where id not in (select case_id from case_groups)\n"
+                + ") t1";
+
+        try (Connection con = utils.getConnection();
+                PreparedStatement st = con.prepareStatement(sql);
+                ResultSet rs = st.executeQuery()) {
+            
+            while (rs.next()) {
+                String id = rs.getString(1);
+                list.add(id);
+
+            }
+        } catch (SQLException sqle) {
+            log.error("Error finding cases accessible by the user", sqle);
+            throw new Exception("Could not determine cases accessible to the user", sqle);
+        }
+
+        return list;
     }
 
 }

@@ -776,7 +776,6 @@ public class EmailFolderTreeCellRenderer extends DefaultTreeCellRenderer {
             log.error(ex);
             log.error(ex.getMessage());
         }
-
         return this;
 
     }

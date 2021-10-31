@@ -885,12 +885,13 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
 
     private Collection<ArchiveFileReviewsBean> getAllOpenReviewsImpl(String principalId) {
 
-        List<Group> userGroups = new ArrayList<>();
+        ArrayList<String> allowedCases = new ArrayList<>();
         if (principalId != null) {
             try {
-                userGroups = this.securityFacade.getGroupsForUser(principalId);
-            } catch (Throwable t) {
-                log.error("Unable to determine groups for user " + principalId, t);
+                allowedCases = SecurityUtils.getAllowedCasesForUser(principalId, this.securityFacade);
+            } catch (Exception ex) {
+                log.error("Unable to determine allowed cases for user " + context.getCallerPrincipal().getName(), ex);
+                throw new EJBException("Akten für Nutzer " + context.getCallerPrincipal().getName() + "' konnten nicht ermittelt werden.", ex);
             }
         }
 
@@ -906,15 +907,17 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
 
             while (rs.next()) {
                 String archiveFileKey = rs.getString(2);
-                ArchiveFileBean dto = this.archiveFileFacade.find(archiveFileKey);
+                ArchiveFileBean dto = null;
 
                 boolean allowed = false;
                 if (principalId != null) {
-                    if (SecurityUtils.checkGroupsForCase(userGroups, dto, this.caseGroupsFacade)) {
+                    if (allowedCases.contains(archiveFileKey)) {
                         allowed = true;
+                        dto = this.archiveFileFacade.find(archiveFileKey);
                     }
                 } else {
                     allowed = true;
+                    dto = this.archiveFileFacade.find(archiveFileKey);
                 }
 
                 if (allowed) {
@@ -1053,11 +1056,12 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
             }
             rs = st.executeQuery();
 
-            List<Group> userGroups = new ArrayList<>();
+            ArrayList<String> allowedCases = null;
             try {
-                userGroups = this.securityFacade.getGroupsForUser(context.getCallerPrincipal().getName());
-            } catch (Throwable t) {
-                log.error("Unable to determine groups for user " + context.getCallerPrincipal().getName(), t);
+                allowedCases = SecurityUtils.getAllowedCasesForUser(context.getCallerPrincipal().getName(), this.securityFacade);
+            } catch (Exception ex) {
+                log.error("Unable to determine allowed cases for user " + context.getCallerPrincipal().getName(), ex);
+                throw new EJBException("Akten für Nutzer " + context.getCallerPrincipal().getName() + "' konnten nicht ermittelt werden.", ex);
             }
 
             while (rs.next()) {
@@ -1067,7 +1071,7 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
                 ArchiveFileBean dto = this.archiveFileFacade.find(archiveFileKey);
 
                 boolean allowed = false;
-                if (SecurityUtils.checkGroupsForCase(userGroups, dto, this.caseGroupsFacade)) {
+                if (allowedCases.contains(archiveFileKey)) {
                     allowed = true;
                 }
 
@@ -1118,11 +1122,11 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
     public ArchiveFileReviewsBean updateReview(String archiveFileId, ArchiveFileReviewsBean review) throws Exception {
 
         this.validateCalendarSetup(review);
-        
-        ArchiveFileReviewsBean oldReview=this.archiveFileReviewsFacade.find(review.getId());
-        String oldCalendar=oldReview.getCalendarSetup().getId();
-        String newCalendar=review.getCalendarSetup().getId();
-        boolean calendarChanged=!(oldCalendar.equals(newCalendar));
+
+        ArchiveFileReviewsBean oldReview = this.archiveFileReviewsFacade.find(review.getId());
+        String oldCalendar = oldReview.getCalendarSetup().getId();
+        String newCalendar = review.getCalendarSetup().getId();
+        boolean calendarChanged = !(oldCalendar.equals(newCalendar));
         if (calendarChanged) {
             log.info("migrating event to new calendar: " + review.getId());
             try {
@@ -1131,7 +1135,7 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
                 log.error("Failed to sync updated event to cloud", ex);
             }
         }
-        
+
         StringGenerator idGen = new StringGenerator();
         ArchiveFileBean aFile = this.archiveFileFacade.find(archiveFileId);
         SecurityUtils.checkGroupsForCase(context.getCallerPrincipal().getName(), aFile, this.securityFacade, this.archiveFileService.getAllowedGroups(aFile));
@@ -1218,9 +1222,9 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
         String csId = idGen.getID().toString();
         cs.setId(csId);
         this.calendarSetups.create(cs);
-        String principalId=null;
+        String principalId = null;
         try {
-            principalId=context.getCallerPrincipal().getName();
+            principalId = context.getCallerPrincipal().getName();
             this.securityFacade.addUserToCalendar(principalId, csId);
         } catch (Exception ex) {
             log.error("Could not add calendar privilege for calendar setup " + csId + " to user " + principalId, ex);
@@ -1260,22 +1264,21 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
         if (fromCalendar.getEventType() != toCalendar.getEventType()) {
             throw new Exception("Kalender haben unterschiedliche Eintragstypen");
         }
-        
-        if(fromCalendar.equals(toCalendar)) {
+
+        if (fromCalendar.equals(toCalendar)) {
             throw new Exception("Quell- und Zielkalender sind identisch");
         }
 
         List<ArchiveFileReviewsBean> events = this.archiveFileReviewsFacade.findByCalendarSetup(fromCalendar);
         for (ArchiveFileReviewsBean e : events) {
-            
+
             try {
                 // delete from old calendar
                 this.calendarSync.eventDeleted(e);
             } catch (Throwable ex) {
                 log.error("Failed to sync migrated event to cloud (delete)", ex);
             }
-            
-            
+
             e.setCalendarSetup(toCalendar);
             this.archiveFileReviewsFacade.edit(e);
 

@@ -668,6 +668,7 @@ import com.jdimension.jlawyer.persistence.ArchiveFileBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.ArchiveFileGroupsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileGroupsBeanFacadeLocal;
 import com.jdimension.jlawyer.persistence.Group;
+import com.jdimension.jlawyer.server.utils.SecurityUtils;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -710,11 +711,12 @@ public class SearchService implements SearchServiceRemote, SearchServiceLocal {
     @RolesAllowed({"readArchiveFileRole"})
     public ArrayList<SearchHit> search(String queryString, int maxDocs) throws SearchException {
 
-        List<Group> userGroups = new ArrayList<>();
+        ArrayList<String> allowedCases = null;
         try {
-            userGroups = this.securityFacade.getGroupsForUser(context.getCallerPrincipal().getName());
-        } catch (Throwable t) {
-            log.error("Unable to determine groups for user " + context.getCallerPrincipal().getName(), t);
+            allowedCases = SecurityUtils.getAllowedCasesForUser(context.getCallerPrincipal().getName(), this.securityFacade);
+        } catch (Exception ex) {
+            log.error("Unable to determine allowed cases for user " + context.getCallerPrincipal().getName(), ex);
+            throw new SearchException("Akten für Nutzer " + context.getCallerPrincipal().getName() + "' konnten nicht ermittelt werden.");
         }
 
         ArrayList<SearchHit> hits = SearchAPI.getInstance().search(queryString, maxDocs * 5);
@@ -722,16 +724,16 @@ public class SearchService implements SearchServiceRemote, SearchServiceLocal {
         HashMap<String, ArchiveFileBean> caseCache = new HashMap<>();
         for (SearchHit h : hits) {
 
-            if (!caseCache.containsKey(h.getArchiveFileId())) {
-                ArchiveFileBean afb = this.archiveFileFacade.find(h.getArchiveFileId());
-                if (afb != null) {
-                    caseCache.put(h.getArchiveFileId(), afb);
+            if (allowedCases.contains(h.getArchiveFileId())) {
+                if (!caseCache.containsKey(h.getArchiveFileId())) {
+                    ArchiveFileBean afb = this.archiveFileFacade.find(h.getArchiveFileId());
+                    if (afb != null) {
+                        caseCache.put(h.getArchiveFileId(), afb);
+                    }
                 }
-            }
-            ArchiveFileBean aFile = caseCache.get(h.getArchiveFileId());
-            if (aFile != null) {
 
-                if (this.checkGroupsForCase(context.getCallerPrincipal().getName(), userGroups, aFile)) {
+                ArchiveFileBean aFile = caseCache.get(h.getArchiveFileId());
+                if (aFile != null) {
                     returnList.add(h);
                 }
 

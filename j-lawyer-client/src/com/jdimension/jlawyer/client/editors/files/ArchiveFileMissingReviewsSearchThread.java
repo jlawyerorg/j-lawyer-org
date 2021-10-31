@@ -698,13 +698,16 @@ public class ArchiveFileMissingReviewsSearchThread implements Runnable {
 
     @Override
     public void run() {
+        long start=System.currentTimeMillis();
         Collection<ArchiveFileBean> dtos=null;
         try {
             ClientSettings settings=ClientSettings.getInstance();
             JLawyerServiceLocator locator=JLawyerServiceLocator.getInstance(settings.getLookupProperties());
             
             ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
+            
             dtos=fileService.getAllWithMissingReviews();
+            log.info("loaded missing review in " + (System.currentTimeMillis()-start) + "ms");
             
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);
@@ -741,6 +744,7 @@ public class ArchiveFileMissingReviewsSearchThread implements Runnable {
         sorter.setComparator(0, new FileNumberComparator());
         ThreadUtils.setTableModel(this.target, model, sorter);
         ThreadUtils.setDefaultCursor(this.owner);
+        log.info("loaded and rendered missing review in " + (System.currentTimeMillis()-start) + "ms");
         
     }
     
