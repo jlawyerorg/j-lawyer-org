@@ -664,6 +664,10 @@
 package org.jlawyer.test.server.ejb;
 
 import com.jdimension.jlawyer.documents.LibreOfficeAccess;
+import groovy.lang.Binding;
+import groovy.lang.GroovyClassLoader;
+import groovy.lang.GroovyObject;
+import groovy.lang.GroovyShell;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -671,6 +675,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.Reader;
 import java.io.StringWriter;
@@ -719,8 +724,23 @@ public class LibreOfficeODFTest {
             allPartyTypesPlaceholders.add("MANDANT");
             allPartyTypesPlaceholders.add("GEGNER");
             allPartyTypesPlaceholders.add("DRITTE");
-            ArrayList l = new ArrayList(LibreOfficeAccess.getPlaceHolders("test/data/template.odt", allPartyTypesPlaceholders, new ArrayList<String>()));
+            ArrayList l = new ArrayList(LibreOfficeAccess.getPlaceHolders("test/data/template.odt", allPartyTypesPlaceholders, new ArrayList<>()));
             Assert.assertEquals(3, l.size());
+        } catch (Throwable t) {
+            Assert.fail(t.getMessage());
+        }
+    }
+
+    @Test
+    public void getScriptPlaceHolders() {
+        try {
+            //ArrayList l = new ArrayList(LibreOfficeAccess.getPlaceHolders("/home/jens/jenkins-home/workspace/j-lawyer-server/j-lawyer-server-ejb/test/data/template.odt"));
+            ArrayList<String> allPartyTypesPlaceholders = new ArrayList<>();
+            allPartyTypesPlaceholders.add("MANDANT");
+            allPartyTypesPlaceholders.add("GEGNER");
+            allPartyTypesPlaceholders.add("DRITTE");
+            ArrayList l = new ArrayList(LibreOfficeAccess.getPlaceHolders("test/data/template-scripts.odt", allPartyTypesPlaceholders, new ArrayList<>()));
+            Assert.assertEquals(5, l.size());
         } catch (Throwable t) {
             Assert.fail(t.getMessage());
         }
@@ -789,7 +809,265 @@ public class LibreOfficeODFTest {
         Assert.assertEquals(88, content.indexOf("otto test"));
         Assert.assertEquals(98, content.indexOf("hans otto"));
         Assert.assertEquals(109, content.indexOf("hans otto 2"));
-        Assert.assertTrue(content.indexOf("MANDANT_ANREDE") < 0);
+        Assert.assertTrue(!content.contains("MANDANT_ANREDE"));
+
+    }
+
+    @Test
+    public void testSmartTemplateClass() {
+//        Binding sharedData=new Binding();
+//        sharedData.setProperty("key1", "value1");
+//        GroovyShell gs=new GroovyShell(sharedData);
+//        gs.evaluate("System.out.println('test');"
+//                + "System.out.println('test2');");
+
+        try {
+
+            InputStream is = getClass().getResourceAsStream("/templates/smart/smarttemplate.groovy");
+            InputStreamReader isr = new InputStreamReader(is);
+            BufferedReader br = new BufferedReader(isr);
+            StringBuilder sb = new StringBuilder();
+            String line = br.readLine();
+            while (line != null) {
+                sb.append(line).append(System.lineSeparator());
+                line = br.readLine();
+            }
+            br.close();
+
+            //String myclass="class Foo { double doIt(double d1) { println \"ok\"; return 42d-d1; } }";
+            String myclass = sb.toString();
+            GroovyClassLoader gcl = new GroovyClassLoader();
+            //Class calcClass = gcl.parseClass(new File("src/main/groovy/com/baeldung/", "CalcMath.groovy"));
+            Class calcClass = gcl.parseClass(myclass);
+            GroovyObject calc = (GroovyObject) calcClass.newInstance();
+            Double resultDouble = (Double) calc.invokeMethod("doIt", new Object[]{new Double(19)});
+            Assert.assertEquals(23d, resultDouble);
+        } catch (Throwable t) {
+            Assert.fail(t.getMessage());
+        }
+
+    }
+    
+    @Test
+    public void testSmartTemplateMethod() {
+        try {
+
+            InputStream is = getClass().getResourceAsStream("/templates/smart/smarttemplate.groovy");
+            InputStreamReader isr = new InputStreamReader(is);
+            BufferedReader br = new BufferedReader(isr);
+            StringBuilder sb = new StringBuilder();
+            String line = br.readLine();
+            while (line != null) {
+                sb.append(line).append(System.lineSeparator());
+                line = br.readLine();
+            }
+            br.close();
+            
+            String myclass = sb.toString();
+            myclass=myclass.replace("SMARTTEMPLATESCRIPT", "\"schnuffel\"");
+            GroovyClassLoader gcl = new GroovyClassLoader();
+            Class calcClass = gcl.parseClass(myclass);
+            GroovyObject calc = (GroovyObject) calcClass.newInstance();
+            String resultString = (String) calc.invokeMethod("evaluateScript", new Object[]{});
+            System.out.println(resultString);
+            //Assert.assertEquals(23d, resultDouble);
+        } catch (Throwable t) {
+            Assert.fail(t.getMessage());
+        }
+
+    }
+    
+    @Test
+    public void testSmartTemplateWennGleich() {
+        try {
+
+            String resultString=evaluateSmartTemplate("WENNGLEICH(\"s1\",\"s1\",\"gleich\",\"ungleich\")");
+            Assert.assertEquals(resultString, "gleich");
+            
+            resultString=evaluateSmartTemplate("WENNGLEICH(\"s1\",\"s2\",\"gleich\",\"ungleich\")");
+            Assert.assertEquals(resultString, "ungleich");
+            
+            resultString=evaluateSmartTemplate("WENNGLEICH(" + System.lineSeparator() + "\"s1\",\"s1\"," + System.lineSeparator() + "\"gleich\",\"ungleich\"" + System.lineSeparator() + ")");
+            Assert.assertEquals(resultString, "gleich");
+            
+            resultString=evaluateSmartTemplate("WENNGLEICH(\"s1\",\"s1\",\"gleich\")");
+            Assert.assertEquals(resultString, "gleich");
+            
+            resultString=evaluateSmartTemplate("WENNGLEICH(\"s1\",\"s2\",\"gleich\")");
+            Assert.assertEquals(resultString, "");
+            
+        } catch (Throwable t) {
+            Assert.fail(t.getMessage());
+        }
+    }
+    
+    @Test
+    public void testSmartTemplateWennEnthaelt() {
+        try {
+
+            String resultString=evaluateSmartTemplate("WENNENTHAELT(\"bla-s1-bla\",\"s1\",\"ja\",\"nein\")");
+            Assert.assertEquals(resultString, "ja");
+            
+            resultString=evaluateSmartTemplate("WENNENTHAELT(\"bla-s1-bla\",\"s2\",\"ja\",\"nein\")");
+            Assert.assertEquals(resultString, "nein");
+            
+            resultString=evaluateSmartTemplate("WENNENTHAELT(\"bla-s1-bla\",\"s1\",\"ja\")");
+            Assert.assertEquals(resultString, "ja");
+            
+            resultString=evaluateSmartTemplate("WENNENTHAELT(\"s1adsfadsf\",\"s2\",\"ja\")");
+            Assert.assertEquals(resultString, "");
+            
+        } catch (Throwable t) {
+            Assert.fail(t.getMessage());
+        }
+    }
+    
+    @Test
+    public void testSmartTemplateWennGroesser() {
+        try {
+
+            String resultString=evaluateSmartTemplate("WENNGROESSER(\"20\",\"10.5\",\"ja\",\"nein\")");
+            Assert.assertEquals(resultString, "ja");
+            
+            resultString=evaluateSmartTemplate("WENNGROESSER(\"10.5\",\"20.11\",\"ja\",\"nein\")");
+            Assert.assertEquals(resultString, "nein");
+            
+            resultString=evaluateSmartTemplate("WENNGROESSER(\"20\",\"5\",\"ja\")");
+            Assert.assertEquals(resultString, "ja");
+            
+            resultString=evaluateSmartTemplate("WENNGROESSER(\"10\",\"17\",\"ja\")");
+            Assert.assertEquals(resultString, "");
+            
+            // try with comma instead of dot
+            resultString=evaluateSmartTemplate("WENNGROESSER(\"20,5\",\"10\",\"ja\",\"nein\")");
+            Assert.assertEquals(resultString, "ja");
+            
+        } catch (Throwable t) {
+            Assert.fail(t.getMessage());
+        }
+    }
+    
+    @Test
+    public void testSmartTemplateWennLeer() {
+        try {
+
+            String resultString=evaluateSmartTemplate("WENNLEER(\"s1\",\"leer\",\"nicht leer\")");
+            Assert.assertEquals(resultString, "nicht leer");
+            
+            resultString=evaluateSmartTemplate("WENNLEER(\"\",\"leer\",\"nicht leer\")");
+            Assert.assertEquals(resultString, "leer");
+            
+            resultString=evaluateSmartTemplate("WENNLEER(\"s1\",\"leer\")");
+            Assert.assertEquals(resultString, "");
+            
+            resultString=evaluateSmartTemplate("WENNLEER(\"\",\"leer\")");
+            Assert.assertEquals(resultString, "leer");
+            
+        } catch (Throwable t) {
+            Assert.fail(t.getMessage());
+        }
+    }
+    
+    @Test
+    public void testSmartTemplateMultiMethodsChained() {
+        try {
+
+            String resultString=evaluateSmartTemplate("WENNLEER(\"s1\",\"leer\",\"nicht leer\") + TEXT(\": \") + WENNGROESSER(\"10.5\",\"20.11\",\"ja\",\"nein\")");
+            Assert.assertEquals(resultString, "nicht leer: nein");
+            
+            
+        } catch (Throwable t) {
+            Assert.fail(t.getMessage());
+        }
+    }
+    
+    @Test
+    public void testSmartTemplateMultiMethodsStacked() {
+        try {
+
+            String resultString=evaluateSmartTemplate("WENNGROESSER(\"42\",\"23\",TEXT(\"nicht leer\"))");
+            Assert.assertEquals(resultString, "nicht leer");
+            
+            
+        } catch (Throwable t) {
+            Assert.fail(t.getMessage());
+        }
+    }
+    
+    private String evaluateSmartTemplate(String script) throws Exception {
+        InputStream is = getClass().getResourceAsStream("/templates/smart/smarttemplate.groovy");
+            InputStreamReader isr = new InputStreamReader(is);
+            BufferedReader br = new BufferedReader(isr);
+            StringBuilder sb = new StringBuilder();
+            String line = br.readLine();
+            while (line != null) {
+                sb.append(line).append(System.lineSeparator());
+                line = br.readLine();
+            }
+            br.close();
+            
+            String myclass = sb.toString();
+            myclass=myclass.replace("SMARTTEMPLATESCRIPT", script);
+            GroovyClassLoader gcl = new GroovyClassLoader();
+            Class calcClass = gcl.parseClass(myclass);
+            GroovyObject calc = (GroovyObject) calcClass.newInstance();
+            return (String) calc.invokeMethod("evaluateScript", new Object[]{});
+    }
+
+    @Test
+    public void setScriptPlaceHoldersODT() {
+        Binding sharedData = new Binding();
+        sharedData.setProperty("key1", "value1");
+        GroovyShell gs = new GroovyShell(sharedData);
+        gs.evaluate("System.out.println('test')");
+
+        try {
+            File f = new File("test/data/template-scripts-run.odt");
+            f.delete();
+            copyFileUsingStream(new File("test/data/template-scripts.odt"), new File("test/data/template-scripts-run.odt"));
+        } catch (Throwable t) {
+            t.printStackTrace();
+            Assert.fail();
+
+        }
+
+        Hashtable ph = new Hashtable();
+        ph.put("{{MANDANT_NAME}}", "otto");
+        ph.put("{{MANDANT_VORNAME}}", "hans");
+        ph.put("{{MANDANT_ANREDE}}", "");
+
+        try {
+            //LibreOfficeAccess.setPlaceHolders("/home/jens/jenkins-home/workspace/j-lawyer-server/j-lawyer-server-ejb/test/data/template-run.odt", ph);
+            LibreOfficeAccess.setPlaceHolders("test/data/template-scripts-run.odt", ph);
+        } catch (Throwable t) {
+            t.printStackTrace();
+            Assert.fail();
+        }
+
+        String content = "";
+        Tika tika = new Tika();
+        try {
+            Reader r = tika.parse(new File("test/data/template-scripts-run.odt"));
+            BufferedReader br = new BufferedReader(r);
+            StringWriter sw = new StringWriter();
+            BufferedWriter bw = new BufferedWriter(sw);
+            char[] buffer = new char[1024];
+            int bytesRead = -1;
+            while ((bytesRead = br.read(buffer)) > -1) {
+                bw.write(buffer, 0, bytesRead);
+            }
+            bw.close();
+            br.close();
+
+            content = sw.toString();
+            System.out.println(content);
+        } catch (Throwable t) {
+            System.out.println(t.getMessage());
+            t.printStackTrace();
+            Assert.fail();
+        }
+
+        Assert.assertTrue(!content.contains("MANDANT_ANREDE"));
 
     }
 
@@ -984,8 +1262,7 @@ public class LibreOfficeODFTest {
     }
 
     private static void copyFileUsingStream(File source, File dest) throws IOException {
-        try (InputStream is = new FileInputStream(source);
-                OutputStream os = new FileOutputStream(dest)) {
+        try ( InputStream is = new FileInputStream(source);  OutputStream os = new FileOutputStream(dest)) {
 
             byte[] buffer = new byte[1024];
             int length;
