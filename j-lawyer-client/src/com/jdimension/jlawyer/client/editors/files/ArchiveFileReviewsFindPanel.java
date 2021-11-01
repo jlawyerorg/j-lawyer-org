@@ -1129,17 +1129,8 @@ public class ArchiveFileReviewsFindPanel extends javax.swing.JPanel implements T
         // perform search here
         ThreadUtils.setWaitCursor(this);
         Date fromDate=this.txtFromDate.getDate();
-        if(fromDate!=null) {
-        fromDate.setHours(0);
-        fromDate.setMinutes(0);
-        fromDate.setSeconds(0);
-        }
         Date toDate=this.txtToDate.getDate();
-        if(toDate!=null) {
-        toDate.setHours(0);
-        toDate.setMinutes(0);
-        toDate.setSeconds(0);
-        }
+
         int status=ArchiveFileConstants.REVIEWSTATUS_ANY;
         if(this.rdDoneStatus.isSelected())
             status=ArchiveFileConstants.REVIEWSTATUS_DONE;

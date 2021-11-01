@@ -685,8 +685,8 @@ public class ArchiveFileReviewsAdvancedSearchThread implements Runnable {
 
     private static final Logger log = Logger.getLogger(ArchiveFileReviewsAdvancedSearchThread.class.getName());
 
-    private Component owner;
-    private JTable target;
+    private final Component owner;
+    private final JTable target;
     private int statusSearchMode = 0;
     private int typeSearchMode = 0;
     private Date toDate = null;

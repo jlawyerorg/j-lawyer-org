@@ -673,7 +673,6 @@ import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.fax.BalanceInformation;
-import com.jdimension.jlawyer.fax.SipgateException;
 import com.jdimension.jlawyer.persistence.FaxQueueBean;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.sip.SipUtils;
@@ -807,7 +806,6 @@ public class FaxStatusPanel extends javax.swing.JPanel implements ThemeableEdito
     @Override
     public void setBackgroundImage(Image image) {
         this.backgroundImage = image;
-        //this.jPanel1.setOpaque(false);
 
     }
 

@@ -665,12 +665,9 @@ package com.jdimension.jlawyer.services;
 
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBeanFacadeLocal;
-import com.jdimension.jlawyer.persistence.ArchiveFileGroupsBean;
-import com.jdimension.jlawyer.persistence.ArchiveFileGroupsBeanFacadeLocal;
 import com.jdimension.jlawyer.server.utils.SecurityUtils;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import javax.annotation.Resource;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.EJB;
@@ -703,8 +700,6 @@ public class SearchService implements SearchServiceRemote, SearchServiceLocal {
     private SecurityServiceLocal securityFacade;
     @EJB
     private ArchiveFileBeanFacadeLocal archiveFileFacade;
-    @EJB
-    private ArchiveFileGroupsBeanFacadeLocal caseGroupsFacade;
 
     @Override
     @RolesAllowed({"readArchiveFileRole"})
@@ -745,14 +740,6 @@ public class SearchService implements SearchServiceRemote, SearchServiceLocal {
         }
 
         return returnList;
-
-    }
-
-    private List<ArchiveFileGroupsBean> getAllowedGroups(ArchiveFileBean archiveFile) {
-        if (archiveFile == null) {
-            return new ArrayList<>();
-        }
-        return this.caseGroupsFacade.findByCase(archiveFile);
 
     }
 

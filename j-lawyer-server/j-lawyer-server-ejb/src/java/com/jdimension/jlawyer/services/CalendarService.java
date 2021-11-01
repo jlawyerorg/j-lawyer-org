@@ -691,7 +691,9 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.Instant;
 import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
@@ -1014,6 +1016,8 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
         fromDate.setHours(0);
         fromDate.setMinutes(0);
         fromDate.setSeconds(0);
+        // still an issue with some milliseconds in the Date, but the database might have 0 milliseconds --> truncate
+        Instant fromInstant=fromDate.toInstant().truncatedTo(ChronoUnit.SECONDS);
 
         toDate.setHours(23);
         toDate.setMinutes(59);
@@ -1030,27 +1034,27 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
             if (status == ArchiveFileConstants.REVIEWSTATUS_ANY) {
                 if (type == ArchiveFileConstants.REVIEWTYPE_ANY) {
                     st = con.prepareStatement("select id, archiveFileKey from case_events where beginDate >= ? and beginDate <= ? order by beginDate asc limit ?");
-                    st.setTimestamp(1, new java.sql.Timestamp(fromDate.getTime()));
+                    st.setTimestamp(1, new java.sql.Timestamp(fromInstant.toEpochMilli()));
                     st.setTimestamp(2, new java.sql.Timestamp(toDate.getTime()));
                     st.setInt(3, dbLimit);
                 } else {
                     st = con.prepareStatement("select id, archiveFileKey from case_events where eventType=? and beginDate >= ? and beginDate <= ? order by beginDate asc limit ?");
                     st.setInt(1, type);
-                    st.setTimestamp(2, new java.sql.Timestamp(fromDate.getTime()));
+                    st.setTimestamp(2, new java.sql.Timestamp(fromInstant.toEpochMilli()));
                     st.setTimestamp(3, new java.sql.Timestamp(toDate.getTime()));
                     st.setInt(4, dbLimit);
                 }
             } else if (type == ArchiveFileConstants.REVIEWTYPE_ANY) {
                 st = con.prepareStatement("select id, archiveFileKey from case_events where done=? and beginDate >= ? and beginDate <= ? order by beginDate asc limit ?");
                 st.setInt(1, status);
-                st.setTimestamp(2, new java.sql.Timestamp(fromDate.getTime()));
+                st.setTimestamp(2, new java.sql.Timestamp(fromInstant.toEpochMilli()));
                 st.setTimestamp(3, new java.sql.Timestamp(toDate.getTime()));
                 st.setInt(4, dbLimit);
             } else {
                 st = con.prepareStatement("select id, archiveFileKey from case_events where eventType=? and done=? and beginDate >= ? and beginDate <= ? order by beginDate asc limit ?");
                 st.setInt(1, type);
                 st.setInt(2, status);
-                st.setTimestamp(3, new java.sql.Timestamp(fromDate.getTime()));
+                st.setTimestamp(3, new java.sql.Timestamp(fromInstant.toEpochMilli()));
                 st.setTimestamp(4, new java.sql.Timestamp(toDate.getTime()));
                 st.setInt(5, dbLimit);
             }
