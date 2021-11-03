@@ -663,7 +663,6 @@
  */
 package com.jdimension.jlawyer.client.editors.files;
 
-import com.jdimension.jlawyer.comparator.DocumentsComparator;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
@@ -714,14 +713,11 @@ public class QuickArchiveFileSearchThread implements Runnable {
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
-            //ArchiveFileServiceRemoteHome home = (ArchiveFileServiceRemoteHome)locator.getRemoteHome("ejb/ArchiveFileServiceBean", ArchiveFileServiceRemoteHome.class);
             ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
             dtos = fileService.searchEnhanced(query, withArchive, tag, documentTag);
             tags = fileService.searchTagsEnhanced(query, withArchive, tag, documentTag);
-            //fileService.remove();
         } catch (Exception ex) {
             log.error("Error connecting to server", ex);
-            //JOptionPane.showMessageDialog(this.owner, "Verbindungsfehler: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             ThreadUtils.showErrorDialog(this.owner, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
             return;
         }
@@ -729,11 +725,7 @@ public class QuickArchiveFileSearchThread implements Runnable {
         String[] colNames = new String[]{"Aktenzeichen", "Kurzrubrum", "wegen", "archiviert", "Anwalt", "Etiketten"};
         QuickArchiveFileSearchTableModel model = new QuickArchiveFileSearchTableModel(colNames, 0);
 
-//        TableRowSorter<TableModel> sorter = new TableRowSorter<TableModel>(model);
-//        sorter.setComparator(0, new FileNumberComparator());
-//        this.target.setRowSorter(sorter);
         for (int i = 0; i < dtos.length; i++) {
-            //Object[] row=new Object[]{new QuickArchiveFileSearchRowIdentifier(dtos[i]), dtos[i].getFileNumber(), dtos[i].getName()};
             Object[] row = new Object[]{new QuickArchiveFileSearchRowIdentifier(dtos[i]), dtos[i].getName(), dtos[i].getReason(), new Boolean(dtos[i].getArchivedBoolean()), dtos[i].getLawyer(), TagUtils.getTagList(dtos[i].getId(), tags)};
             model.addRow(row);
         }
@@ -741,7 +733,6 @@ public class QuickArchiveFileSearchThread implements Runnable {
             ThreadUtils.setTableModel(this.target, model, 0, 0);
             ThreadUtils.requestFocus(target);
 
-            //DocumentsComparator docComparator = new DocumentsComparator();
             TableRowSorter dtrs = new TableRowSorter(model);
             dtrs.setComparator(0, new FileNumberComparator());
             target.setRowSorter(dtrs);

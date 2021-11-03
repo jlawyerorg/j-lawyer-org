@@ -960,7 +960,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         if ("".equalsIgnoreCase(query)) {
             return new ArchiveFileBean[0];
         }
-        
+
         ArrayList<String> allowedCases = null;
         try {
             allowedCases = SecurityUtils.getAllowedCasesForUser(context.getCallerPrincipal().getName(), this.securityFacade);
@@ -990,7 +990,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
             while (rs.next()) {
                 String id = rs.getString(1);
-                if(allowedCases.contains(id)) {
+                if (allowedCases.contains(id)) {
                     ArchiveFileBean dto = this.archiveFileFacade.find(id);
                     list.add(dto);
                 }
@@ -2255,24 +2255,12 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                     // with archive and tag
                     //st = con.prepareStatement("select distinct(cases.id) from cases, case_tags, case_documents, document_tags where (ucase(cases.name) like ? or ucase(fileNumber) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(subjectField) like ?) and ((case_tags.tagName in (" + inClauseCase + ") and case_tags.archiveFileKey=cases.id) or (document_tags.tagName in (" + inClauseDoc + ") and document_tags.documentKey=case_documents.id and case_documents.archiveFileKey=cases.id))");
                     st = con.prepareStatement("select distinct(cases.id) from cases \n"
-                            + "left join case_tags on case_tags.archiveFileKey=cases.id \n"
-                            + "left join case_documents on case_documents.archiveFileKey=cases.id \n"
-                            + "left join document_tags on document_tags.documentKey=case_documents.id\n"
-                            + "where (ucase(cases.name) like ? or ucase(fileNumber) like ? or ucase(filenumberext) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(subjectField) like ?)\n"
-                            + " and (\n"
-                            + "    (case_tags.tagName in (" + inClauseCase + ")) or \n"
-                            + "    (document_tags.tagName in (" + inClauseDoc + "))\n"
-                            + "    ) and case_documents.deleted=0");
+                            + "left join case_tags on (case_tags.archiveFileKey=cases.id and case_tags.tagName in (" + inClauseCase + ")) \n"
+                            + "left join case_documents on (case_documents.archiveFileKey=cases.id and case_documents.deleted=0) \n"
+                            + "left join document_tags on (document_tags.documentKey=case_documents.id and document_tags.tagName in (" + inClauseDoc + ")) \n"
+                            + "where not (case_tags.tagName is null and document_tags.tagName is null) and (ucase(cases.name) like ? or ucase(fileNumber) like ? or ucase(filenumberext) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(subjectField) like ?)");
 
-                    st.setString(1, wildCard);
-                    st.setString(2, wildCard);
-                    st.setString(3, wildCard);
-                    st.setString(4, wildCard);
-                    st.setString(5, wildCard);
-                    st.setString(6, wildCard);
-                    st.setString(7, wildCard);
-                    st.setString(8, wildCard);
-                    int index = 9;
+                    int index = 1;
                     for (String t : tagName) {
                         st.setString(index, t);
                         index = index + 1;
@@ -2281,6 +2269,15 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                         st.setString(index, t);
                         index = index + 1;
                     }
+                    st.setString(index, wildCard);
+                    st.setString(index + 1, wildCard);
+                    st.setString(index + 2, wildCard);
+                    st.setString(index + 3, wildCard);
+                    st.setString(index + 4, wildCard);
+                    st.setString(index + 5, wildCard);
+                    st.setString(index + 6, wildCard);
+                    st.setString(index + 7, wildCard);
+
                 } else {
                     // with archive but no tag
                     st = con.prepareStatement(PS_SEARCHENHANCED_2);
@@ -2316,23 +2313,12 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 // without archive and with tag
                 //st = con.prepareStatement("select distinct(cases.id) from cases, case_tags, case_documents, document_tags where (ucase(cases.name) like ? or ucase(fileNumber) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(subjectField) like ?) and archived=0 and ((case_tags.tagName in (" + inClauseCase + ") and case_tags.archiveFileKey=cases.id) or (document_tags.tagName in (" + inClauseDoc + ") and document_tags.documentKey=case_documents.id and case_documents.archiveFileKey=cases.id))");
                 st = con.prepareStatement("select distinct(cases.id) from cases \n"
-                        + "left join case_tags on case_tags.archiveFileKey=cases.id \n"
-                        + "left join case_documents on case_documents.archiveFileKey=cases.id \n"
-                        + "left join document_tags on document_tags.documentKey=case_documents.id\n"
-                        + "where cases.archived=0 and (ucase(cases.name) like ? or ucase(fileNumber) like ? or ucase(filenumberext) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(subjectField) like ?)\n"
-                        + " and (\n"
-                        + "    (case_tags.tagName in (" + inClauseCase + ")) or \n"
-                        + "    (document_tags.tagName in (" + inClauseDoc + "))\n"
-                        + "    ) and case_documents.deleted=0");
-                st.setString(1, wildCard);
-                st.setString(2, wildCard);
-                st.setString(3, wildCard);
-                st.setString(4, wildCard);
-                st.setString(5, wildCard);
-                st.setString(6, wildCard);
-                st.setString(7, wildCard);
-                st.setString(8, wildCard);
-                int index = 9;
+                        + "left join case_tags on (case_tags.archiveFileKey=cases.id and case_tags.tagName in (" + inClauseCase + ")) \n"
+                        + "left join case_documents on (case_documents.archiveFileKey=cases.id and case_documents.deleted=0) \n"
+                        + "left join document_tags on (document_tags.documentKey=case_documents.id and document_tags.tagName in (" + inClauseDoc + ")) \n"
+                        + "where cases.archived=0 and not (case_tags.tagName is null and document_tags.tagName is null) and (ucase(cases.name) like ? or ucase(fileNumber) like ? or ucase(filenumberext) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(subjectField) like ?)");
+
+                int index = 1;
                 for (String t : tagName) {
                     st.setString(index, t);
                     index = index + 1;
@@ -2341,6 +2327,14 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                     st.setString(index, t);
                     index = index + 1;
                 }
+                st.setString(index, wildCard);
+                st.setString(index + 1, wildCard);
+                st.setString(index + 2, wildCard);
+                st.setString(index + 3, wildCard);
+                st.setString(index + 4, wildCard);
+                st.setString(index + 5, wildCard);
+                st.setString(index + 6, wildCard);
+                st.setString(index + 7, wildCard);
             } else {
                 // without archive and no tag
                 st = con.prepareStatement(PS_SEARCHENHANCED_4);
@@ -2367,9 +2361,6 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         } catch (SQLException sqle) {
             log.error("Error finding archive files", sqle);
             throw new EJBException("Aktensuche konnte nicht ausgeführt werden.", sqle);
-//        } catch (FinderException fe) {
-//            log.error("Error finding archive file", fe);
-//            throw new EJBException("Aktensuche konnte nicht ausgeführt werden.", fe);
         } finally {
             try {
                 if (rs != null) {
@@ -2966,7 +2957,8 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             }
         }
 
-        Hashtable<String, ArrayList<String>> list = new Hashtable<String, ArrayList<String>>();
+        boolean threeColumns=false;
+        Hashtable<String, ArrayList<String>> list = new Hashtable<>();
         try {
             con = utils.getConnection();
             String wildCard = "%" + StringUtils.germanToUpperCase(query) + "%";
@@ -2993,18 +2985,25 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                     inClauseDoc = inClauseDoc.replaceFirst(",", "");
 
                     // with archive and tag
-                    //st = con.prepareStatement("select distinct case_tags.archiveFileKey, case_tags.tagName, document_tags.tagName from case_tags, case_documents, document_tags where case_tags.archiveFileKey in (" + "select cases.id from cases, case_tags where (ucase(cases.name) like ? or ucase(fileNumber) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(subjectField) like ?) and ((case_tags.tagName in (" + inClauseCase + ") and case_tags.archiveFileKey=cases.id) or (document_tags.tagName in (" + inClauseDoc + ") and document_tags.documentKey=case_documents.id and case_documents.archiveFileKey=cases.id)))");
-                    st = con.prepareStatement("select distinct case_tags.archiveFileKey, case_tags.tagName, document_tags.tagName from case_tags, case_documents, document_tags where case_tags.archiveFileKey in (" + "select cases.id from cases where (ucase(cases.name) like ? or ucase(fileNumber) like ? or ucase(filenumberext) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(subjectField) like ?) and ((case_tags.tagName in (" + inClauseCase + ") and case_tags.archiveFileKey=cases.id) or (document_tags.tagName in (" + inClauseDoc + ") and document_tags.documentKey=case_documents.id and case_documents.archiveFileKey=cases.id and case_documents.deleted=0)))");
-                    st.setString(1, wildCard);
-                    st.setString(2, wildCard);
-                    st.setString(3, wildCard);
-                    st.setString(4, wildCard);
-                    st.setString(5, wildCard);
-                    st.setString(6, wildCard);
-                    st.setString(7, wildCard);
-                    st.setString(8, wildCard);
-                    int index = 9;
-
+                    //st = con.prepareStatement("select distinct case_tags.archiveFileKey, case_tags.tagName, document_tags.tagName from case_tags, case_documents, document_tags where case_tags.archiveFileKey in (" + "select cases.id from cases where (ucase(cases.name) like ? or ucase(fileNumber) like ? or ucase(filenumberext) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(subjectField) like ?) and ((case_tags.tagName in (" + inClauseCase + ") and case_tags.archiveFileKey=cases.id) or (document_tags.tagName in (" + inClauseDoc + ") and document_tags.documentKey=case_documents.id and case_documents.archiveFileKey=cases.id and case_documents.deleted=0)))");
+                    st = con.prepareStatement("select cid, tagname from (\n"
+                            + "select case_tags.archiveFileKey cid, case_tags.tagName tagname from case_tags\n"
+                            + "union \n"
+                            + "select cases.id cid, document_tags.tagName tagname from cases, document_tags, case_documents where document_tags.tagName in (" + inClauseDoc + ") and document_tags.documentKey=case_documents.id and case_documents.archiveFileKey=cases.id and case_documents.deleted=0\n"
+                            + ") alltags1\n"
+                            + "where cid in (\n"
+                            + "    select distinct (cid) from (\n"
+                            + "select case_tags.archiveFileKey cid, case_tags.tagName tagname from case_tags where (case_tags.tagName in (" + inClauseCase + "))\n"
+                            + "union \n"
+                            + "select cases.id cid, document_tags.tagName tagname from cases, document_tags, case_documents where document_tags.tagName in (" + inClauseDoc + ") and document_tags.documentKey=case_documents.id and case_documents.archiveFileKey=cases.id and case_documents.deleted=0\n"
+                            + ") alltags2\n"
+                            + "where cid in (select cases.id from cases where (ucase(cases.name) like ? or ucase(fileNumber) like ? or ucase(filenumberext) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(subjectField) like ?))\n"
+                            + ")");
+                    int index = 1;
+                    for (String t : documentTagNames) {
+                        st.setString(index, t);
+                        index = index + 1;
+                    }
                     for (String t : tagNames) {
                         st.setString(index, t);
                         index = index + 1;
@@ -3013,8 +3012,17 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                         st.setString(index, t);
                         index = index + 1;
                     }
+                    st.setString(index, wildCard);
+                    st.setString(index + 1, wildCard);
+                    st.setString(index + 2, wildCard);
+                    st.setString(index + 3, wildCard);
+                    st.setString(index + 4, wildCard);
+                    st.setString(index + 5, wildCard);
+                    st.setString(index + 6, wildCard);
+                    st.setString(index + 7, wildCard);
                 } else {
                     // with archive but no tag
+                    threeColumns=true;
                     st = con.prepareStatement("select archiveFileKey, tagName, tagName from case_tags where archiveFileKey in (" + PS_SEARCHENHANCED_2 + ")");
                     st.setString(1, wildCard);
                     st.setString(2, wildCard);
@@ -3045,26 +3053,43 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 inClauseDoc = inClauseDoc.replaceFirst(",", "");
                 // without archive and with tag
                 //st = con.prepareStatement("select distinct case_tags.archiveFileKey, case_tags.tagName, document_tags.tagName from case_tags, case_documents, document_tags where case_tags.archiveFileKey in (" + "select cases.id from cases, case_tags where (ucase(cases.name) like ? or ucase(fileNumber) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(subjectField) like ?) and archived=0 and ((case_tags.tagName in (" + inClauseCase + ") and case_tags.archiveFileKey=cases.id) or (document_tags.tagName in (" + inClauseDoc + ") and document_tags.documentKey=case_documents.id and case_documents.archiveFileKey=cases.id)))");
-                st = con.prepareStatement("select distinct case_tags.archiveFileKey, case_tags.tagName, document_tags.tagName from case_tags, case_documents, document_tags where case_tags.archiveFileKey in (" + "select cases.id from cases where (ucase(cases.name) like ? or ucase(fileNumber) like ? or ucase(filenumberext) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(subjectField) like ?) and archived=0 and ((case_tags.tagName in (" + inClauseCase + ") and case_tags.archiveFileKey=cases.id) or (document_tags.tagName in (" + inClauseDoc + ") and document_tags.documentKey=case_documents.id and case_documents.archiveFileKey=cases.id)))");
-                st.setString(1, wildCard);
-                st.setString(2, wildCard);
-                st.setString(3, wildCard);
-                st.setString(4, wildCard);
-                st.setString(5, wildCard);
-                st.setString(6, wildCard);
-                st.setString(7, wildCard);
-                st.setString(8, wildCard);
-                int index = 9;
-
-                for (String t : tagNames) {
-                    st.setString(index, t);
-                    index = index + 1;
-                }
-                for (String t : documentTagNames) {
-                    st.setString(index, t);
-                    index = index + 1;
-                }
+                //st = con.prepareStatement("select distinct case_tags.archiveFileKey, case_tags.tagName, document_tags.tagName from case_tags, case_documents, document_tags where case_tags.archiveFileKey in (" + "select cases.id from cases where (ucase(cases.name) like ? or ucase(fileNumber) like ? or ucase(filenumberext) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(subjectField) like ?) and archived=0 and ((case_tags.tagName in (" + inClauseCase + ") and case_tags.archiveFileKey=cases.id) or (document_tags.tagName in (" + inClauseDoc + ") and document_tags.documentKey=case_documents.id and case_documents.archiveFileKey=cases.id)))");
+                st = con.prepareStatement("select cid, tagname from (\n"
+                            + "select case_tags.archiveFileKey cid, case_tags.tagName tagname from case_tags\n"
+                            + "union \n"
+                            + "select cases.id cid, document_tags.tagName tagname from cases, document_tags, case_documents where document_tags.tagName in (" + inClauseDoc + ") and document_tags.documentKey=case_documents.id and case_documents.archiveFileKey=cases.id and case_documents.deleted=0\n"
+                            + ") alltags1\n"
+                            + "where cid in (\n"
+                            + "    select distinct (cid) from (\n"
+                            + "select case_tags.archiveFileKey cid, case_tags.tagName tagname from case_tags where (case_tags.tagName in (" + inClauseCase + "))\n"
+                            + "union \n"
+                            + "select cases.id cid, document_tags.tagName tagname from cases, document_tags, case_documents where document_tags.tagName in (" + inClauseDoc + ") and document_tags.documentKey=case_documents.id and case_documents.archiveFileKey=cases.id and case_documents.deleted=0\n"
+                            + ") alltags2\n"
+                            + "where cid in (select cases.id from cases where archived=0 and (ucase(cases.name) like ? or ucase(fileNumber) like ? or ucase(filenumberext) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(subjectField) like ?))\n"
+                            + ")");
+                    int index = 1;
+                    for (String t : documentTagNames) {
+                        st.setString(index, t);
+                        index = index + 1;
+                    }
+                    for (String t : tagNames) {
+                        st.setString(index, t);
+                        index = index + 1;
+                    }
+                    for (String t : documentTagNames) {
+                        st.setString(index, t);
+                        index = index + 1;
+                    }
+                    st.setString(index, wildCard);
+                    st.setString(index + 1, wildCard);
+                    st.setString(index + 2, wildCard);
+                    st.setString(index + 3, wildCard);
+                    st.setString(index + 4, wildCard);
+                    st.setString(index + 5, wildCard);
+                    st.setString(index + 6, wildCard);
+                    st.setString(index + 7, wildCard);
             } else {
+                threeColumns=true;
                 // without archive and no tag
                 st = con.prepareStatement("select archiveFileKey, tagName, tagName from case_tags where archiveFileKey in (" + PS_SEARCHENHANCED_4 + ")");
                 st.setString(1, wildCard);
@@ -3083,25 +3108,24 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 String id = rs.getString(1);
                 String tagName = rs.getString(2);
                 if (!list.containsKey(id)) {
-                    list.put(id, new ArrayList<String>());
+                    list.put(id, new ArrayList<>());
                 }
                 ArrayList<String> tagList = list.get(id);
                 if (!tagList.contains(tagName)) {
                     tagList.add(tagName);
                 }
-
-                String docTagName = rs.getString(3);
-                if (!tagList.contains(docTagName)) {
-                    tagList.add(docTagName);
+                
+                if(threeColumns) {
+                    String docTagName = rs.getString(3);
+                    if (!tagList.contains(docTagName)) {
+                        tagList.add(docTagName);
+                    }
                 }
 
             }
         } catch (SQLException sqle) {
             log.error("Error finding archive files", sqle);
             throw new EJBException("Aktensuche konnte nicht ausgeführt werden.", sqle);
-//        } catch (FinderException fe) {
-//            log.error("Error finding archive file", fe);
-//            throw new EJBException("Aktensuche konnte nicht ausgeführt werden.", fe);
         } finally {
             try {
                 rs.close();
