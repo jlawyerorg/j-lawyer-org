@@ -55,3 +55,5 @@
 /docker/wildfly/j-lawyer-server.ear
 /j-lawyer-ide/target/
 /j-lawyer-cloud/target/
+/j-lawyer-server/j-lawyer-server-ejb/test/data/template-emptyline-run.docx
+/j-lawyer-server/j-lawyer-server-ejb/test/data/template-scripts-run.odt
