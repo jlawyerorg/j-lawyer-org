@@ -683,6 +683,7 @@ import com.jdimension.jlawyer.sip.SipUtils;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.net.URLConnection;
+import java.util.List;
 
 /**
  *
@@ -691,92 +692,133 @@ import java.net.URLConnection;
 public class SipgateAPI {
 
     public static final String STATUS_OK = "200";
-    
-    private static final String AUTH_HEADERNAME="Authorization";
-    private static final String AUTH_HEADERPREFIX="Basic ";
-    
-    private static final String MIMETYPE_JSON="application/json";
-    private static final String JSON_ITEMS="items";
-    private static final String JSON_ALIAS="alias";
-    
-    private static final String API_BASE="https://api.sipgate.com/v2/";
+
+    private static final String AUTH_HEADERNAME = "Authorization";
+    private static final String AUTH_HEADERPREFIX = "Basic ";
+
+    private static final String MIMETYPE_JSON = "application/json";
+    private static final String JSON_ITEMS = "items";
+    private static final String JSON_ALIAS = "alias";
+
+    private static final String API_BASE = "https://api.sipgate.com/v2/";
 
     private static final Logger log = Logger.getLogger(SipgateAPI.class.getName());
     private String user;
     private String password;
-    
-    private String internalUserId = null;
-    private String internalDefaultDeviceId = null;
 
     public SipgateAPI(String user, String password) throws SipgateException {
         this.user = user;
         this.password = password;
-        try {
-            this.initialize();
-        } catch (Exception ex) {
-            log.error("Could not initialize Sipgate connection", ex);
-            throw new SipgateException(ex.getMessage(), ex);
-        }
+//        try {
+//            this.initialize();
+//        } catch (Exception ex) {
+//            log.error("Could not initialize Sipgate connection", ex);
+//            throw new SipgateException(ex.getMessage(), ex);
+//        }
 
     }
-    
+
     private WebTarget getWebTarget(String endpoint) {
-        
+
         Client restClient = javax.ws.rs.client.ClientBuilder.newClient();
         return restClient.target(endpoint);
     }
-    
+
     private String getAuthString() {
         String authString = this.user + ":" + this.password;
         Base64 encoder = new Base64();
         return encoder.encode(authString.getBytes());
     }
 
-    private void initialize() throws Exception {
+    public List<SipUser> getUsers() throws SipgateException {
         String baseUri = "https://api.sipgate.com/v2/users";
         String authStringEnc = this.getAuthString();
         WebTarget webTarget = this.getWebTarget(baseUri);
 
-        Response response = webTarget.request().header(AUTH_HEADERNAME, AUTH_HEADERPREFIX + authStringEnc).accept(MIMETYPE_JSON).get();
-        String returnValue = response.readEntity(String.class);
-        if (response.getStatus() != 200) {
-            log.error("Could not get Sipgate user information information: " + returnValue + " [" + response.getStatus() + "]");
-            throw new SipgateException("Could not get Sipgate user information: " + returnValue + " [" + response.getStatus() + "]");
-        }
+        ArrayList<SipUser> userList=new ArrayList<>();
+        try {
 
-        Object jsonOutput = Jsoner.deserialize(returnValue);
-        if (jsonOutput instanceof JsonObject) {
-            JsonObject result = (JsonObject) jsonOutput;
-            JsonKey itemsKey = Jsoner.mintJsonKey(JSON_ITEMS, null);
-            Collection items = result.getCollection(itemsKey);
-            if (items.size() > 1) {
-                log.warn("Token has access to multiple users - using first one");
-            }
-            if (items.isEmpty()) {
-                throw new Exception("Token has no access to any users");
+            Response response = webTarget.request().header(AUTH_HEADERNAME, AUTH_HEADERPREFIX + authStringEnc).accept(MIMETYPE_JSON).get();
+            String returnValue = response.readEntity(String.class);
+            if (response.getStatus() != 200) {
+                log.error("Could not get Sipgate user information information: " + returnValue + " [" + response.getStatus() + "]");
+                throw new SipgateException("Could not get Sipgate user information: " + returnValue + " [" + response.getStatus() + "]");
             }
 
-            JsonObject item0 = (JsonObject) items.iterator().next();
-            JsonKey idKey = Jsoner.mintJsonKey("id", null);
-            this.internalUserId = item0.getString(idKey);
+            Object jsonOutput = Jsoner.deserialize(returnValue);
+            if (jsonOutput instanceof JsonObject) {
+                JsonObject result = (JsonObject) jsonOutput;
+                JsonKey itemsKey = Jsoner.mintJsonKey(JSON_ITEMS, null);
+                Collection items = result.getCollection(itemsKey);
 
-            JsonKey defaultDeviceKey = Jsoner.mintJsonKey("defaultDevice", null);
-            this.internalDefaultDeviceId = item0.getString(defaultDeviceKey);
+                for (Object itm : items) {
+                    SipUser u=new SipUser();
+                    JsonObject item = (JsonObject) itm;
+                    JsonKey idKey = Jsoner.mintJsonKey("id", null);
+                    u.setId(item.getString(idKey));
 
+                    JsonKey fnKey = Jsoner.mintJsonKey("firstname", null);
+                    u.setFirstName(item.getString(fnKey));
+                    
+                    JsonKey lnKey = Jsoner.mintJsonKey("lastname", null);
+                    u.setLastName(item.getString(lnKey));
+                    userList.add(u);
+                }
+
+            }
+        } catch (Exception ex) {
+            log.error("Could not get Sipgate users", ex);
+            throw new SipgateException(ex.getMessage(), ex);
         }
-
+        return userList;
     }
 
-    public ArrayList<SipUri> getOwnUris() throws SipgateException {
+//    private void initialize() throws Exception {
+//        String baseUri = "https://api.sipgate.com/v2/users";
+//        String authStringEnc = this.getAuthString();
+//        WebTarget webTarget = this.getWebTarget(baseUri);
+//
+//        Response response = webTarget.request().header(AUTH_HEADERNAME, AUTH_HEADERPREFIX + authStringEnc).accept(MIMETYPE_JSON).get();
+//        String returnValue = response.readEntity(String.class);
+//        if (response.getStatus() != 200) {
+//            log.error("Could not get Sipgate user information information: " + returnValue + " [" + response.getStatus() + "]");
+//            throw new SipgateException("Could not get Sipgate user information: " + returnValue + " [" + response.getStatus() + "]");
+//        }
+//
+//        Object jsonOutput = Jsoner.deserialize(returnValue);
+//        if (jsonOutput instanceof JsonObject) {
+//            JsonObject result = (JsonObject) jsonOutput;
+//            JsonKey itemsKey = Jsoner.mintJsonKey(JSON_ITEMS, null);
+//            Collection items = result.getCollection(itemsKey);
+//            if (items.size() > 1) {
+//                log.warn("Token has access to multiple users - using first one");
+//            }
+//            if (items.isEmpty()) {
+//                throw new Exception("Token has no access to any users");
+//            }
+//
+//            JsonObject item0 = (JsonObject) items.iterator().next();
+//            JsonKey idKey = Jsoner.mintJsonKey("id", null);
+//            this.internalUserId = item0.getString(idKey);
+//
+//        }
+//
+//    }
+
+    public ArrayList<SipUri> getOwnUris(String internalUserId) throws SipgateException {
 
         log.info("Requesting own Sipgate URIs");
+        
+        if(internalUserId==null || "".equals(internalUserId)) {
+            throw new SipgateException("Sipgate internal user id must not be null");
+        }
 
         String authStringEnc = this.getAuthString();
 
         HashMap<String, SipUri> allUris = new HashMap<>();
 
         try {
-            String baseUri = API_BASE + this.internalUserId + "/faxlines";
+            String baseUri = API_BASE + internalUserId + "/faxlines";
             WebTarget webTarget = this.getWebTarget(baseUri);
             Response response = webTarget.request().header(AUTH_HEADERNAME, AUTH_HEADERPREFIX + authStringEnc).accept(MIMETYPE_JSON).get();
             String returnValue = response.readEntity(String.class);
@@ -827,7 +869,7 @@ public class SipgateAPI {
         }
 
         try {
-            String baseUri = API_BASE + this.internalUserId + "/sms";
+            String baseUri = API_BASE + internalUserId + "/sms";
             WebTarget webTarget = this.getWebTarget(baseUri);
             Response response = webTarget.request().header(AUTH_HEADERNAME, AUTH_HEADERPREFIX + authStringEnc).accept(MIMETYPE_JSON).get();
             String returnValue = response.readEntity(String.class);
@@ -876,7 +918,7 @@ public class SipgateAPI {
         }
 
         try {
-            String baseUri = API_BASE + this.internalUserId + "/phonelines";
+            String baseUri = API_BASE + internalUserId + "/phonelines";
             WebTarget webTarget = this.getWebTarget(baseUri);
             Response response = webTarget.request().header(AUTH_HEADERNAME, AUTH_HEADERPREFIX + authStringEnc).accept(MIMETYPE_JSON).get();
             String returnValue = response.readEntity(String.class);
@@ -923,7 +965,7 @@ public class SipgateAPI {
         }
 
         try {
-            String baseUri = API_BASE + this.internalUserId + "/numbers";
+            String baseUri = API_BASE + internalUserId + "/numbers";
             WebTarget webTarget = this.getWebTarget(baseUri);
             Response response = webTarget.request().header(AUTH_HEADERNAME, AUTH_HEADERPREFIX + authStringEnc).accept(MIMETYPE_JSON).get();
             String returnValue = response.readEntity(String.class);
@@ -981,7 +1023,7 @@ public class SipgateAPI {
         String baseUri = "https://api.sipgate.com/v2/balance";
         String authStringEnc = this.getAuthString();
         WebTarget webTarget = this.getWebTarget(baseUri);
-        
+
         BalanceInformation retValue = new BalanceInformation();
         try {
             Response response = webTarget.request().header(AUTH_HEADERNAME, AUTH_HEADERPREFIX + authStringEnc).accept(MIMETYPE_JSON).get();
@@ -1190,7 +1232,7 @@ public class SipgateAPI {
         String baseUri = "https://api.sipgate.com/v2/history/" + sessionId;
         String authStringEnc = this.getAuthString();
         WebTarget webTarget = this.getWebTarget(baseUri);
-        
+
         try {
             Response response = webTarget.request().header(AUTH_HEADERNAME, AUTH_HEADERPREFIX + authStringEnc).accept(MIMETYPE_JSON).get();
             String returnValue = response.readEntity(String.class);
@@ -1223,7 +1265,7 @@ public class SipgateAPI {
         urlCon.setRequestProperty("User-Agent", "j-lawyer.org Sipgate integration");
 
         ByteArrayOutputStream bOut;
-        try (InputStream is = urlCon.getInputStream()) {
+        try ( InputStream is = urlCon.getInputStream()) {
             bOut = new ByteArrayOutputStream();
             byte[] buffer = new byte[1024];
             int len = 0;
@@ -1241,7 +1283,7 @@ public class SipgateAPI {
         String baseUri = "https://api.sipgate.com/v2/history/" + sessionId;
         String authStringEnc = this.getAuthString();
         WebTarget webTarget = this.getWebTarget(baseUri);
-        
+
         String status = null;
         try {
             Response response = webTarget.request().header(AUTH_HEADERNAME, AUTH_HEADERPREFIX + authStringEnc).accept(MIMETYPE_JSON).get();

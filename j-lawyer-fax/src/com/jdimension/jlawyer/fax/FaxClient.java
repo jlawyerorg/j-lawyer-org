@@ -676,7 +676,7 @@ public class FaxClient {
         try {
             SipgateAPI sg=new SipgateAPI(System.getenv("sipuser"), System.getenv("sippassword"));
             //System.out.println(sg.getTypesOfService());
-            System.out.println(sg.getOwnUris());
+            System.out.println(sg.getOwnUris("w0"));
             System.out.println(sg.getBalance());
             //System.out.println(sg.initiateSession("text", "sip:1404811@sipgate.de", "sip:491723654916@sipgate.de", "Nachricht über Sipgate"));
             sg.initiateSms("sip:1404811@sipgate.de", "sip:491723654916@sipgate.de", "Nachricht über Sipgate");            

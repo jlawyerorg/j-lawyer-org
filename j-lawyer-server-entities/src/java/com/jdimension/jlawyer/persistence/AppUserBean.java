@@ -735,6 +735,9 @@ public class AppUserBean implements Serializable {
     @Column(name = "voipPassword")
     protected String voipPassword;
     
+    @Column(name = "voipId")
+    protected String voipId;
+    
     @Column(name = "cloudPath")
     protected String cloudPath;
     
@@ -1041,6 +1044,20 @@ public class AppUserBean implements Serializable {
      */
     public void setVoipPassword(String voipPassword) {
         this.voipPassword = voipPassword;
+    }
+
+    /**
+     * @return the voipId
+     */
+    public String getVoipId() {
+        return voipId;
+    }
+
+    /**
+     * @param voipId the voipId to set
+     */
+    public void setVoipId(String voipId) {
+        this.voipId = voipId;
     }
     
     

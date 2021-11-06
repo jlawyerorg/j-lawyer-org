@@ -680,11 +680,11 @@ public class VersionUtils {
     }
 
     public static String getPatchLevel() {
-        return "0";
+        return "1";
     }
 
     public static String getBuild() {
-        return "1";
+        return "0";
     }
     
     public static boolean isVersionGreater(String referenceVersion, String compareToVersion) {

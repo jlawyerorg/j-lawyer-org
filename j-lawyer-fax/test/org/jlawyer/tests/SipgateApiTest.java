@@ -669,6 +669,7 @@ import com.jdimension.jlawyer.fax.SipgateAPI;
 import com.jdimension.jlawyer.fax.SipgateException;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import junit.framework.Assert;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -702,6 +703,7 @@ public class SipgateApiTest {
         this.user=System.getenv("sipuser");
         this.pwd=System.getenv("sippassword");
         System.out.println("using sip account " + this.user + ":" + this.pwd);
+        
     }
     
     @After
@@ -747,6 +749,25 @@ public class SipgateApiTest {
     }
     
     @Test
+    public void testGetUsers() {
+        
+        if(user==null || pwd==null) {
+            System.out.println("Sipgate credentials are null, skipping test.");
+            return;
+        }
+        
+        
+        try {
+            SipgateAPI api=new SipgateAPI(user,pwd);
+            List users=api.getUsers();
+            Assert.assertTrue(users.size()>0);
+        } catch (SipgateException ex) {
+            ex.printStackTrace();
+            Assert.fail(ex.getMessage());
+        }
+    }
+    
+    @Test
     public void testGetOwnUris() {
         
         if(user==null || pwd==null) {
@@ -758,7 +779,8 @@ public class SipgateApiTest {
         try {
             SipgateAPI api=new SipgateAPI(user,pwd);
             //api.login();
-            ArrayList<SipUri> uris=api.getOwnUris();
+            
+            ArrayList<SipUri> uris=api.getOwnUris(api.getUsers().get(0).getId());
             Assert.assertTrue(uris.size()>0);
         } catch (SipgateException ex) {
             ex.printStackTrace();

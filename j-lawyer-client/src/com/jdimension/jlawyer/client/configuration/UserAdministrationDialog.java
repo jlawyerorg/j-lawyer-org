@@ -681,6 +681,7 @@ import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
+import com.jdimension.jlawyer.fax.SipUser;
 import com.jdimension.jlawyer.persistence.CalendarAccess;
 import com.jdimension.jlawyer.persistence.CalendarSetup;
 import com.jdimension.jlawyer.persistence.Group;
@@ -688,6 +689,7 @@ import com.jdimension.jlawyer.persistence.GroupMembership;
 import com.jdimension.jlawyer.persistence.MailboxAccess;
 import com.jdimension.jlawyer.persistence.MailboxSetup;
 import com.jdimension.jlawyer.security.Crypto;
+import com.jdimension.jlawyer.server.utils.ServerStringUtils;
 import com.jdimension.jlawyer.services.SecurityServiceRemote;
 import java.awt.Point;
 import java.io.File;
@@ -721,7 +723,6 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         this.lstUsers.setCellRenderer(new UserListCellRenderer());
         UserListModel m = new UserListModel();
         this.lstUsers.setModel(m);
-        
 
         ClientSettings settings = ClientSettings.getInstance();
         try {
@@ -754,7 +755,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 ((DefaultTableModel) this.tblGroups.getModel()).addRow(new Object[]{true, g});
             }
             ComponentUtils.autoSizeColumns(tblGroups);
-            
+
             String[] colNames4 = new String[]{"", "Kalender"};
             GroupMembershipsTableModel model2 = new GroupMembershipsTableModel(colNames4, 0);
             this.tblCalendars.setModel(model2);
@@ -763,7 +764,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 ((DefaultTableModel) this.tblCalendars.getModel()).addRow(new Object[]{true, cs});
             }
             ComponentUtils.autoSizeColumns(tblCalendars);
-            
+
             String[] colNames5 = new String[]{"", "Postfach"};
             GroupMembershipsTableModel model3 = new GroupMembershipsTableModel(colNames5, 0);
             this.tblMailboxes.setModel(model3);
@@ -854,6 +855,9 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         txtVoipUser = new javax.swing.JTextField();
         txtVoipPassword = new javax.swing.JTextField();
         jLabel26 = new javax.swing.JLabel();
+        cmbVoipId = new javax.swing.JComboBox<>();
+        cmdGetVoipIds = new javax.swing.JButton();
+        jLabel6 = new javax.swing.JLabel();
         jPanel9 = new javax.swing.JPanel();
         jLabel18 = new javax.swing.JLabel();
         cmbPrimaryGroup = new javax.swing.JComboBox<>();
@@ -1380,6 +1384,16 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         jLabel26.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/info.png"))); // NOI18N
         jLabel26.setText("Änderung erfordert Neustart des j-lawyer.org Clients");
 
+        cmdGetVoipIds.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/reload.png"))); // NOI18N
+        cmdGetVoipIds.setToolTipText("Addressbücher dieser Nextcloud ermitteln");
+        cmdGetVoipIds.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdGetVoipIdsActionPerformed(evt);
+            }
+        });
+
+        jLabel6.setText("Sipgate-Nutzer:");
+
         org.jdesktop.layout.GroupLayout jPanel11Layout = new org.jdesktop.layout.GroupLayout(jPanel11);
         jPanel11.setLayout(jPanel11Layout);
         jPanel11Layout.setHorizontalGroup(
@@ -1388,9 +1402,14 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 .addContainerGap()
                 .add(jPanel11Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(jLabel2)
-                    .add(jLabel25))
+                    .add(jLabel25)
+                    .add(jLabel6))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel11Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(jPanel11Layout.createSequentialGroup()
+                        .add(cmbVoipId, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(cmdGetVoipIds))
                     .add(jPanel11Layout.createSequentialGroup()
                         .add(jLabel26)
                         .add(0, 417, Short.MAX_VALUE))
@@ -1409,9 +1428,15 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 .add(jPanel11Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(jLabel25)
                     .add(txtVoipPassword, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(jPanel11Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(cmdGetVoipIds)
+                    .add(jPanel11Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                        .add(cmbVoipId, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .add(jLabel6)))
+                .add(18, 18, 18)
                 .add(jLabel26)
-                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(407, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("Sipgate", jPanel11);
@@ -1721,6 +1746,27 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
 
                 this.txtVoipPassword.setText(u.getVoipPassword());
                 this.txtVoipUser.setText(u.getVoipUser());
+                this.cmbVoipId.removeAllItems();
+                try {
+                    if(!ServerStringUtils.isEmpty(u.getVoipUser()) && !ServerStringUtils.isEmpty(u.getVoipPassword())) {
+                    String voipId=u.getVoipId();
+                    List<SipUser> voipUsers = locator.lookupVoipServiceRemote().getUsers(u.getVoipUser(), u.getVoipPassword());
+                    
+                    SipUser selectedVoipUser=null;
+                    for(SipUser su: voipUsers) {
+                        if(selectedVoipUser==null)
+                            selectedVoipUser=su;
+                        ((DefaultComboBoxModel) this.cmbVoipId.getModel()).addElement(su);
+                        if(su.getId().equals(voipId)) {
+                            selectedVoipUser=su;
+                        }
+                    }
+                    this.cmbVoipId.setSelectedItem(selectedVoipUser);
+                    }
+                } catch (Exception ex) {
+                    log.error("Error connecting to server", ex);
+                    JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                }
 
                 this.txtDisplayName.setText(u.getDisplayName());
 
@@ -1760,7 +1806,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                         }
                     }
                 }
-                
+
                 List<CalendarAccess> calendars = locator.lookupSecurityServiceRemote().getCalendarAccessForUser(u.getPrincipalId());
                 for (int i = 0; i < this.tblCalendars.getRowCount(); i++) {
                     CalendarSetup cs = (CalendarSetup) this.tblCalendars.getValueAt(i, 1);
@@ -1772,7 +1818,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                         }
                     }
                 }
-                
+
                 List<MailboxAccess> mailboxes = locator.lookupSecurityServiceRemote().getMailboxAccessForUser(u.getPrincipalId());
                 for (int i = 0; i < this.tblMailboxes.getRowCount(); i++) {
                     MailboxSetup ms = (MailboxSetup) this.tblMailboxes.getValueAt(i, 1);
@@ -1810,7 +1856,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
             JOptionPane.showMessageDialog(this, "beA-Zertifikatpasswort darf nicht leer und nicht kürzer als 4 Zeichen sein.", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
             return;
         }
-        
+
         ClientSettings settings = ClientSettings.getInstance();
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
@@ -1877,12 +1923,16 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
 
                 u.setVoipPassword(this.txtVoipPassword.getText());
                 u.setVoipUser(this.txtVoipUser.getText());
+                if(this.cmbVoipId.getSelectedItem()!=null) {
+                    SipUser su=(SipUser)this.cmbVoipId.getSelectedItem();
+                    u.setVoipId(su.getId());
+                }
 
                 u.setDisplayName(this.txtDisplayName.getText());
 
                 AppUserBean newUser = mgmt.updateUser(u, this.getRolesFromUI(u.getPrincipalId()));
                 ((UserListModel) this.lstUsers.getModel()).set(this.lstUsers.getSelectedIndex(), newUser);
-                
+
                 // if the user edited his own settings, put it into ClientSettings
                 // e.g. do not require a restart when the signature has been edited
                 if (UserSettings.getInstance().getCurrentUser().getPrincipalId().equals(newUser.getPrincipalId())) {
@@ -1913,6 +1963,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
 
         this.txtVoipPassword.setText("");
         this.txtVoipUser.setText("");
+        this.cmbVoipId.removeAllItems();
 
         this.txtDisplayName.setText("");
 
@@ -2191,6 +2242,21 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
         }
     }//GEN-LAST:event_tblMailboxesMouseClicked
 
+    private void cmdGetVoipIdsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdGetVoipIdsActionPerformed
+        try {
+            ClientSettings settings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            List<SipUser> voipUsers = locator.lookupVoipServiceRemote().getUsers(this.txtVoipUser.getText(), this.txtVoipPassword.getText());
+            this.cmbVoipId.removeAllItems();
+            voipUsers.forEach(ab -> {
+                ((DefaultComboBoxModel) this.cmbVoipId.getModel()).addElement(ab);
+            });
+        } catch (Exception ex) {
+            log.error("Error connecting to server", ex);
+            JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+    }//GEN-LAST:event_cmdGetVoipIdsActionPerformed
+
     private List<AppRoleBean> getRolesFromUI(String principalId) {
         List<AppRoleBean> result = new ArrayList<>();
 
@@ -2440,8 +2506,10 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
     private javax.swing.JComboBox cmbArea;
     private javax.swing.JComboBox cmbCountry;
     private javax.swing.JComboBox<String> cmbPrimaryGroup;
+    private javax.swing.JComboBox<String> cmbVoipId;
     private javax.swing.JButton cmdAdd;
     private javax.swing.JButton cmdClose;
+    private javax.swing.JButton cmdGetVoipIds;
     private javax.swing.JButton cmdRemoveCertificate;
     private javax.swing.JButton cmdSave;
     private javax.swing.JButton cmdSelectCertificate;
@@ -2460,6 +2528,7 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
+    private javax.swing.JLabel jLabel6;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel10;
     private javax.swing.JPanel jPanel11;

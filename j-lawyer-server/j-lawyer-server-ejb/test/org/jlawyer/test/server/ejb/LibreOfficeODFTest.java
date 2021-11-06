@@ -687,6 +687,7 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -814,6 +815,7 @@ public class LibreOfficeODFTest {
     }
 
     @Test
+    @Ignore
     public void testSmartTemplateClass() {
 //        Binding sharedData=new Binding();
 //        sharedData.setProperty("key1", "value1");
@@ -849,6 +851,7 @@ public class LibreOfficeODFTest {
     }
     
     @Test
+    @Ignore
     public void testSmartTemplateMethod() {
         try {
 
@@ -878,23 +881,24 @@ public class LibreOfficeODFTest {
     }
     
     @Test
+    @Ignore
     public void testSmartTemplateWennGleich() {
         try {
 
             String resultString=evaluateSmartTemplate("WENNGLEICH(\"s1\",\"s1\",\"gleich\",\"ungleich\")");
-            Assert.assertEquals(resultString, "gleich");
+            Assert.assertEquals("gleich", resultString);
             
             resultString=evaluateSmartTemplate("WENNGLEICH(\"s1\",\"s2\",\"gleich\",\"ungleich\")");
-            Assert.assertEquals(resultString, "ungleich");
+            Assert.assertEquals("ungleich", resultString);
             
             resultString=evaluateSmartTemplate("WENNGLEICH(" + System.lineSeparator() + "\"s1\",\"s1\"," + System.lineSeparator() + "\"gleich\",\"ungleich\"" + System.lineSeparator() + ")");
-            Assert.assertEquals(resultString, "gleich");
+            Assert.assertEquals("gleich", resultString);
             
             resultString=evaluateSmartTemplate("WENNGLEICH(\"s1\",\"s1\",\"gleich\")");
-            Assert.assertEquals(resultString, "gleich");
+            Assert.assertEquals("gleich", resultString);
             
             resultString=evaluateSmartTemplate("WENNGLEICH(\"s1\",\"s2\",\"gleich\")");
-            Assert.assertEquals(resultString, "");
+            Assert.assertEquals("", resultString);
             
         } catch (Throwable t) {
             Assert.fail(t.getMessage());
@@ -902,20 +906,21 @@ public class LibreOfficeODFTest {
     }
     
     @Test
+    @Ignore
     public void testSmartTemplateWennEnthaelt() {
         try {
 
             String resultString=evaluateSmartTemplate("WENNENTHAELT(\"bla-s1-bla\",\"s1\",\"ja\",\"nein\")");
-            Assert.assertEquals(resultString, "ja");
+            Assert.assertEquals("ja", resultString);
             
             resultString=evaluateSmartTemplate("WENNENTHAELT(\"bla-s1-bla\",\"s2\",\"ja\",\"nein\")");
-            Assert.assertEquals(resultString, "nein");
+            Assert.assertEquals("nein", resultString);
             
             resultString=evaluateSmartTemplate("WENNENTHAELT(\"bla-s1-bla\",\"s1\",\"ja\")");
-            Assert.assertEquals(resultString, "ja");
+            Assert.assertEquals("ja", resultString);
             
             resultString=evaluateSmartTemplate("WENNENTHAELT(\"s1adsfadsf\",\"s2\",\"ja\")");
-            Assert.assertEquals(resultString, "");
+            Assert.assertEquals("", resultString);
             
         } catch (Throwable t) {
             Assert.fail(t.getMessage());
@@ -923,24 +928,25 @@ public class LibreOfficeODFTest {
     }
     
     @Test
+    @Ignore
     public void testSmartTemplateWennGroesser() {
         try {
 
             String resultString=evaluateSmartTemplate("WENNGROESSER(\"20\",\"10.5\",\"ja\",\"nein\")");
-            Assert.assertEquals(resultString, "ja");
+            Assert.assertEquals("ja", resultString);
             
             resultString=evaluateSmartTemplate("WENNGROESSER(\"10.5\",\"20.11\",\"ja\",\"nein\")");
-            Assert.assertEquals(resultString, "nein");
+            Assert.assertEquals("nein", resultString);
             
             resultString=evaluateSmartTemplate("WENNGROESSER(\"20\",\"5\",\"ja\")");
-            Assert.assertEquals(resultString, "ja");
+            Assert.assertEquals("ja", resultString);
             
             resultString=evaluateSmartTemplate("WENNGROESSER(\"10\",\"17\",\"ja\")");
-            Assert.assertEquals(resultString, "");
+            Assert.assertEquals("", resultString);
             
             // try with comma instead of dot
             resultString=evaluateSmartTemplate("WENNGROESSER(\"20,5\",\"10\",\"ja\",\"nein\")");
-            Assert.assertEquals(resultString, "ja");
+            Assert.assertEquals("ja", resultString);
             
         } catch (Throwable t) {
             Assert.fail(t.getMessage());
@@ -948,20 +954,21 @@ public class LibreOfficeODFTest {
     }
     
     @Test
+    @Ignore
     public void testSmartTemplateWennLeer() {
         try {
 
             String resultString=evaluateSmartTemplate("WENNLEER(\"s1\",\"leer\",\"nicht leer\")");
-            Assert.assertEquals(resultString, "nicht leer");
+            Assert.assertEquals("nicht leer", resultString);
             
             resultString=evaluateSmartTemplate("WENNLEER(\"\",\"leer\",\"nicht leer\")");
-            Assert.assertEquals(resultString, "leer");
+            Assert.assertEquals("leer", resultString);
             
             resultString=evaluateSmartTemplate("WENNLEER(\"s1\",\"leer\")");
-            Assert.assertEquals(resultString, "");
+            Assert.assertEquals("", resultString);
             
             resultString=evaluateSmartTemplate("WENNLEER(\"\",\"leer\")");
-            Assert.assertEquals(resultString, "leer");
+            Assert.assertEquals("leer", resultString);
             
         } catch (Throwable t) {
             Assert.fail(t.getMessage());
@@ -969,6 +976,7 @@ public class LibreOfficeODFTest {
     }
     
     @Test
+    @Ignore
     public void testSmartTemplateMultiMethodsChained() {
         try {
 
@@ -982,6 +990,7 @@ public class LibreOfficeODFTest {
     }
     
     @Test
+    @Ignore
     public void testSmartTemplateMultiMethodsStacked() {
         try {
 
@@ -1015,6 +1024,7 @@ public class LibreOfficeODFTest {
     }
 
     @Test
+    @Ignore
     public void setScriptPlaceHoldersODT() {
         Binding sharedData = new Binding();
         sharedData.setProperty("key1", "value1");

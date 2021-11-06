@@ -665,6 +665,7 @@ package com.jdimension.jlawyer.services;
 
 import com.jdimension.jlawyer.fax.BalanceInformation;
 import com.jdimension.jlawyer.fax.SipUri;
+import com.jdimension.jlawyer.fax.SipUser;
 import com.jdimension.jlawyer.fax.SipgateException;
 import com.jdimension.jlawyer.persistence.FaxQueueBean;
 import java.util.ArrayList;
@@ -697,5 +698,7 @@ public interface VoipServiceRemote {
     String reInitiateFax(String id) throws SipgateException;
 
     void saveFaxReport(String sessionId) throws SipgateException;
+
+    List<SipUser> getUsers(String user, String password) throws SipgateException;
     
 }

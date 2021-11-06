@@ -665,6 +665,7 @@ package com.jdimension.jlawyer.fax;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  *
@@ -722,13 +723,18 @@ public class SipgateInstance {
         return this.api.getBalance();
 
     }
+    
+    public List<SipUser> getUsers() throws SipgateException {
+        return this.api.getUsers();
 
-    public ArrayList<SipUri> getOwnUris() throws SipgateException {
+    }
+
+    public ArrayList<SipUri> getOwnUris(String internalUserId) throws SipgateException {
         // in case of sipgate configuration changes, it may take up to an hour to become effective
-        if (this.uris == null || ((System.currentTimeMillis() - this.lastUriUpdate) > (1000l * 60l * 60.))) {
-            uris = this.api.getOwnUris();
+        //if (this.uris == null || ((System.currentTimeMillis() - this.lastUriUpdate) > (1000l * 60l * 60.))) {
+            uris = this.api.getOwnUris(internalUserId);
             this.lastUriUpdate = System.currentTimeMillis();
-        }
+        //}
 
         return uris;
     }

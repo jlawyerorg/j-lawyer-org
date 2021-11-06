@@ -666,6 +666,7 @@ package com.jdimension.jlawyer.services;
 import com.jdimension.jlawyer.server.utils.ServerFileUtils;
 import com.jdimension.jlawyer.fax.BalanceInformation;
 import com.jdimension.jlawyer.fax.SipUri;
+import com.jdimension.jlawyer.fax.SipUser;
 import com.jdimension.jlawyer.fax.SipgateException;
 import com.jdimension.jlawyer.fax.SipgateInstance;
 import com.jdimension.jlawyer.persistence.*;
@@ -726,6 +727,8 @@ public class VoipService implements VoipServiceRemote, VoipServiceLocal {
         return sip.getBalance();
     }
 
+    
+    
     // Add business logic below. (Right-click in editor and choose
     // "Insert Code > Add Business Method")
     @Override
@@ -738,7 +741,7 @@ public class VoipService implements VoipServiceRemote, VoipServiceLocal {
         }
 
         SipgateInstance sip = SipgateInstance.getInstance(currentUser.getVoipUser(), currentUser.getVoipPassword());
-        return sip.getOwnUris();
+        return sip.getOwnUris(currentUser.getVoipId());
     }
 
     @Override
@@ -1007,6 +1010,13 @@ public class VoipService implements VoipServiceRemote, VoipServiceLocal {
         ArrayList<String> list = new ArrayList<>();
         list.add(sessionId);
         this.deleteQueueEntries(list);
+    }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public List<SipUser> getUsers(String user, String password) throws SipgateException {
+        SipgateInstance sip = SipgateInstance.getInstance(user, password);
+        return sip.getUsers();
     }
 
 }
