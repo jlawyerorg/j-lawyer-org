@@ -5,6 +5,8 @@
         <data xmlns="http://www.netbeans.org/ns/j2ee-ejbjarproject/3">
             <name>j-lawyer-server-ejb</name>
             <minimum-ant-version>1.6.5</minimum-ant-version>
+            <!-- explicit-platform explicit-source-supported="true"/ -->
+            <explicit-platform explicit-source-supported="true"/>
             <included-library dirs="100">reference.j-lawyer-server-entities.dist</included-library>
             <included-library dirs="200">reference.j-lawyer-server-api.jar</included-library>
             <included-library dirs="200">reference.j-lawyer-server-common.jar</included-library>
@@ -55,6 +57,7 @@
             <included-library dirs="200">file.reference.libphonenumber-8.12.18.jar</included-library>
             <included-library dirs="200">file.reference.j-lawyer-cloud.jar</included-library>
             <included-library dirs="200">file.reference.jollyday-0.5.10.jar</included-library>
+            <included-library dirs="200">file.reference.json-simple-2.3.0.jar</included-library>
             <source-roots>
                 <root id="src.dir"/>
             </source-roots>
