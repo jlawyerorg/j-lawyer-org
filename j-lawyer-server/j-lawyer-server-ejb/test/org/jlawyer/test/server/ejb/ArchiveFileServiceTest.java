@@ -667,12 +667,14 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 /**
  *
  * @author jens
  */
+@Ignore
 public class ArchiveFileServiceTest {
 
     public ArchiveFileServiceTest() {
@@ -698,6 +700,7 @@ public class ArchiveFileServiceTest {
     // The methods must be annotated with annotation @Test. For example:
     //
     @Test
+    @Ignore
     public void hello() {
         
         // intentionally left blank
