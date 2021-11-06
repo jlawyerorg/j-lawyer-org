@@ -74,7 +74,7 @@ is divided into following sections:
         <property file="nbproject/project.properties"/>
     </target>
     <target depends="-pre-init,-init-private,-init-libraries,-init-userdir,-init-user,-init-project,-init-macrodef-property" name="-do-init">
-        <ejbjarproject1:property name="platform.home" value="platforms.${platform.active}.home"/>
+        <!-- <ejbjarproject1:property name="platform.home" value="platforms.${platform.active}.home"/>
         <ejbjarproject1:property name="platform.bootcp" value="platforms.${platform.active}.bootclasspath"/>
         <ejbjarproject1:property name="platform.compiler" value="platforms.${platform.active}.compile"/>
         <ejbjarproject1:property name="platform.javac.tmp" value="platforms.${platform.active}.javac"/>
@@ -110,7 +110,7 @@ is divided into following sections:
  For example like this:
      ant -Duser.properties.file=&lt;path_to_property_file&gt; jar (where you put the property "platforms.${platform.active}.home" in a .properties file)
   or ant -Dplatforms.${platform.active}.home=&lt;path_to_JDK_home&gt; jar (where no properties file is used) 
-  </fail>
+  </fail> -->
         <!-- Ensure configuration directory exists. -->
         <mkdir dir="${meta.inf}"/>
         <property name="runmain.jvmargs" value=""/>
