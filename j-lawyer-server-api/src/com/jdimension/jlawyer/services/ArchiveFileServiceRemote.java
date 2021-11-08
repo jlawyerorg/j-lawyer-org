@@ -760,7 +760,7 @@ public interface ArchiveFileServiceRemote {
     
     boolean setDocumentFavorite(String id, boolean favorite) throws Exception;
 
-    Hashtable<String,ArrayList<String>> searchTagsEnhanced(String query, boolean withArchive, String[] tagName, String[] documentTagName);
+    HashMap<String,ArrayList<String>> searchTagsEnhanced(String query, boolean withArchive, String[] tagName, String[] documentTagName);
 
     ArchiveFileDocumentsBean addDocumentFromTemplate(String archiveFileId, String fileName, GenericNode templateFolder, String templateName, Hashtable placeHolderValues, String dictateSign) throws Exception;
 

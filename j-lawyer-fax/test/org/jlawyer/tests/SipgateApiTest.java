@@ -760,7 +760,7 @@ public class SipgateApiTest {
         try {
             SipgateAPI api=new SipgateAPI(user,pwd);
             List users=api.getUsers();
-            Assert.assertTrue(users.size()>0);
+            Assert.assertTrue(!users.isEmpty());
         } catch (SipgateException ex) {
             ex.printStackTrace();
             Assert.fail(ex.getMessage());

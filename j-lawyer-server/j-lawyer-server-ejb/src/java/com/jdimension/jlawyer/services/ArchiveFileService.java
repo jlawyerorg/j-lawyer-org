@@ -2914,7 +2914,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
     @Override
     @RolesAllowed({"readArchiveFileRole"})
-    public Hashtable<String, ArrayList<String>> searchTagsEnhanced(String query, boolean withArchive, String[] tagNames, String[] documentTagNames) {
+    public HashMap<String, ArrayList<String>> searchTagsEnhanced(String query, boolean withArchive, String[] tagNames, String[] documentTagNames) {
 
         if (query == null) {
             query = "";
@@ -2958,7 +2958,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         }
 
         boolean threeColumns=false;
-        Hashtable<String, ArrayList<String>> list = new Hashtable<>();
+        HashMap<String, ArrayList<String>> list = new HashMap<>();
         try {
             con = utils.getConnection();
             String wildCard = "%" + StringUtils.germanToUpperCase(query) + "%";

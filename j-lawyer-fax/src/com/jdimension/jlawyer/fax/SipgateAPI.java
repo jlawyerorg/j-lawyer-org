@@ -709,12 +709,6 @@ public class SipgateAPI {
     public SipgateAPI(String user, String password) throws SipgateException {
         this.user = user;
         this.password = password;
-//        try {
-//            this.initialize();
-//        } catch (Exception ex) {
-//            log.error("Could not initialize Sipgate connection", ex);
-//            throw new SipgateException(ex.getMessage(), ex);
-//        }
 
     }
 

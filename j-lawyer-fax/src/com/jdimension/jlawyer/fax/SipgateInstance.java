@@ -678,9 +678,6 @@ public class SipgateInstance {
     private String currentUser = null;
     private String currentPwd = null;
 
-    private ArrayList<SipUri> uris = null;
-    private long lastUriUpdate = System.currentTimeMillis();
-
     private SipgateInstance(String user, String password) throws SipgateException {
         this.initiate(user, password);
 
@@ -730,12 +727,7 @@ public class SipgateInstance {
     }
 
     public ArrayList<SipUri> getOwnUris(String internalUserId) throws SipgateException {
-        // in case of sipgate configuration changes, it may take up to an hour to become effective
-        //if (this.uris == null || ((System.currentTimeMillis() - this.lastUriUpdate) > (1000l * 60l * 60.))) {
-            uris = this.api.getOwnUris(internalUserId);
-            this.lastUriUpdate = System.currentTimeMillis();
-        //}
-
+        ArrayList<SipUri> uris = this.api.getOwnUris(internalUserId);
         return uris;
     }
 
