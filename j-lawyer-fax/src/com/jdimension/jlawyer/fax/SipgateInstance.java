@@ -727,8 +727,7 @@ public class SipgateInstance {
     }
 
     public ArrayList<SipUri> getOwnUris(String internalUserId) throws SipgateException {
-        ArrayList<SipUri> uris = this.api.getOwnUris(internalUserId);
-        return uris;
+        return this.api.getOwnUris(internalUserId);
     }
 
     public String getFaxStatus(String sessionId) throws SipgateException {
