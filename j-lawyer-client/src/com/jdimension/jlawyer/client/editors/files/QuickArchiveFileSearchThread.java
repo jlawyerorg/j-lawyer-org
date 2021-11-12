@@ -672,7 +672,7 @@ import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.ui.tagging.TagUtils;
 import java.awt.Component;
 import java.util.ArrayList;
-import java.util.Hashtable;
+import java.util.HashMap;
 import javax.swing.JTable;
 import javax.swing.RowSorter;
 import javax.swing.SortOrder;
@@ -708,7 +708,7 @@ public class QuickArchiveFileSearchThread implements Runnable {
 
     public void run() {
         ArchiveFileBean[] dtos = null;
-        Hashtable<String, ArrayList<String>> tags = null;
+        HashMap<String, ArrayList<String>> tags = null;
         try {
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());

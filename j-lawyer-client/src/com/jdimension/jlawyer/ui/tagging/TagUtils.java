@@ -717,6 +717,25 @@ public class TagUtils {
             return "";
         }
     }
+    
+    public static String getTagList(String id, HashMap<String, ArrayList<String>> tags) {
+        if (tags.containsKey(id)) {
+            StringBuilder sb = new StringBuilder();
+            ArrayList<String> list = tags.get(id);
+            Collections.sort(list);
+            for (String t : list) {
+                sb.append(t);
+                sb.append(", ");
+            }
+            String returnValue = sb.toString();
+            if (returnValue.endsWith(", ")) {
+                returnValue = returnValue.substring(0, returnValue.length() - 2);
+            }
+            return returnValue;
+        } else {
+            return "";
+        }
+    }
 
     public static void populateTags(List<String> tags, JButton cmdTagFilter, JPopupMenu popTagFilter, TagSelectedAction action) {
         ActionListener al = new ActionListener() {
