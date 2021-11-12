@@ -727,6 +727,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import javax.mail.*;
 import javax.mail.Flags.Flag;
 import javax.mail.Message.RecipientType;
@@ -1036,6 +1037,15 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
             }
 
         }
+        
+        long traversalStart=System.currentTimeMillis();
+        pool.shutdown();
+        try {
+            pool.awaitTermination(60, TimeUnit.SECONDS);
+        } catch (Throwable t) {
+            log.error("error loading mailboxes", t);
+        }
+        log.info("Mailbox folder traversals took " + (System.currentTimeMillis()-traversalStart) + "ms");
         
         Runnable r = () -> {
             try {
