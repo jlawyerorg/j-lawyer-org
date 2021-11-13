@@ -663,8 +663,6 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client;
 
-import java.util.Objects;
-
 /**
  *
  * @author jens
