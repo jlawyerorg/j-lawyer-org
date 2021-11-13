@@ -671,13 +671,14 @@ import com.jdimension.jlawyer.client.editors.addresses.QuickCreateAddressDialog;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
+import com.jdimension.jlawyer.client.utils.TableUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.ui.tagging.TagUtils;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
-import java.util.ArrayList;
+import java.awt.event.MouseEvent;
 import java.util.HashMap;
 import java.util.List;
 import javax.swing.AbstractAction;
@@ -865,7 +866,7 @@ public class MultiAddressSearchDialog extends javax.swing.JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void tblResultsMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblResultsMouseClicked
-        if (evt.getClickCount() == 2 && evt.getButton() == evt.BUTTON1) {
+        if (evt.getClickCount() == 2 && evt.getButton() == MouseEvent.BUTTON1) {
             this.useSelection();
 
         }
@@ -897,7 +898,7 @@ public class MultiAddressSearchDialog extends javax.swing.JDialog {
     }
 
     private void txtSearchStringKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtSearchStringKeyPressed
-        if (evt.getKeyCode() == evt.VK_ENTER) {
+        if (evt.getKeyCode() == KeyEvent.VK_ENTER) {
             this.cmdQuickSearchActionPerformed(null);
         }
     }//GEN-LAST:event_txtSearchStringKeyPressed
@@ -929,7 +930,7 @@ public class MultiAddressSearchDialog extends javax.swing.JDialog {
             QuickAddressSearchRowIdentifier identifier = new QuickAddressSearchRowIdentifier(result);
             Object[] row = new Object[]{identifier, result.getFirstName(), result.getCompany(), result.getZipCode(), result.getCity(), result.getStreet(), result.getCountry(), ""};
             model.addRow(row);
-            int scrollToRow = getRowForObject(identifier);
+            int scrollToRow = TableUtils.getRowForObject(tblResults, 0, identifier);
             if (scrollToRow > -1) {
                 this.tblResults.getSelectionModel().setSelectionInterval(scrollToRow, scrollToRow);
                 this.tblResults.scrollRectToVisible(new Rectangle(this.tblResults.getCellRect(scrollToRow, 0, true)));
@@ -941,28 +942,12 @@ public class MultiAddressSearchDialog extends javax.swing.JDialog {
         this.popTagFilter.show(this.cmdTagFilter, evt.getX(), evt.getY());
     }//GEN-LAST:event_cmdTagFilterMousePressed
 
-    private int getRowForObject(QuickAddressSearchRowIdentifier id) {
-        for (int i = 0; i < this.tblResults.getRowCount(); i++) {
-            Object value = this.tblResults.getValueAt(i, 0);
-            if (value instanceof QuickAddressSearchRowIdentifier) {
-                if (id.equals(value)) {
-                    return i;
-                }
-            }
-        }
-
-        return -1;
-    }
-
     /**
      * @param args the command line arguments
      */
     public static void main(String args[]) {
-        java.awt.EventQueue.invokeLater(new Runnable() {
-
-            public void run() {
-                new MultiAddressSearchDialog(new javax.swing.JFrame(), true).setVisible(true);
-            }
+        java.awt.EventQueue.invokeLater(() -> {
+            new MultiAddressSearchDialog(new javax.swing.JFrame(), true).setVisible(true);
         });
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables

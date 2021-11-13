@@ -787,16 +787,6 @@ public class FileConverter {
                 throw new Exception("Format nicht unterstützt: " + new File(url).getName());
             }
 
-//            String clientLocation = System.getenv("JLAWYERCLIENTHOME");
-//            if (clientLocation == null) {
-//                log.error("JLAWYERCLIENTHOME environment variable not set - PDF conversion not possible");
-//                throw new Exception("Umgebungsvariable JLAWYERCLIENTHOME nicht gesetzt - PDF-Konvertierung nicht möglich.");
-//            }
-//
-//            if (!clientLocation.endsWith(File.separator)) {
-//                clientLocation = clientLocation + File.separator;
-//            }
-
             File org = new File(url);
             String orgName = org.getName();
             String path = url.substring(0, url.indexOf(orgName));

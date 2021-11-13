@@ -697,6 +697,7 @@ public class QuickAddressSearchThread implements Runnable {
         this.tag=tag;
     }
 
+    @Override
     public void run() {
         AddressBean[] dtos=null;
         Hashtable<String, ArrayList<String>> tags = null;

@@ -669,6 +669,7 @@ import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.StringUtils;
+import com.jdimension.jlawyer.client.utils.TableUtils;
 import com.jdimension.jlawyer.persistence.MailboxSetup;
 import com.jdimension.jlawyer.security.Crypto;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
@@ -791,6 +792,7 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
         pwdOutPassword = new javax.swing.JPasswordField();
         cmdTestMail = new javax.swing.JButton();
         lblTestProgress = new javax.swing.JLabel();
+        jLabel11 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("E-Mail - Postfächer");
@@ -938,6 +940,10 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
 
         lblTestProgress.setText("jLabel21");
 
+        jLabel11.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel11.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/messagebox_warning.png"))); // NOI18N
+        jLabel11.setText("Zugriff auf neue Postfächer ggf. in der Nutzerverwaltung freischalten.");
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -1024,9 +1030,11 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
                                         .addComponent(chkEmailOutSsl))))))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addGap(0, 0, Short.MAX_VALUE)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(cmdClose, javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(cmdSave, javax.swing.GroupLayout.Alignment.TRAILING))))
+                        .addComponent(cmdSave))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addComponent(jLabel11, javax.swing.GroupLayout.PREFERRED_SIZE, 587, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(cmdClose)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -1101,7 +1109,9 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(jSeparator2, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(cmdClose)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(cmdClose)
+                            .addComponent(jLabel11))
                         .addGap(35, 35, 35))))
         );
 
@@ -1146,6 +1156,9 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
             MailboxSetup savedMailbox = locator.lookupSecurityServiceRemote().addMailboxSetup(ms);
 
             ((DefaultTableModel) this.tblMailboxes.getModel()).addRow(new Object[]{savedMailbox, savedMailbox.getEmailAddress()});
+            int selectedRow=TableUtils.getRowForObject(tblMailboxes, 0, savedMailbox);
+            this.tblMailboxes.getSelectionModel().setSelectionInterval(selectedRow, selectedRow);
+            this.updatedUI(savedMailbox);
 
         } catch (Exception ex) {
             log.error("Error creating new mailbox", ex);
@@ -1343,6 +1356,7 @@ public class MailboxSetupDialog extends javax.swing.JDialog {
     private com.jdimension.jlawyer.client.mail.HtmlEditorPanel htmlEmailSig;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
+    private javax.swing.JLabel jLabel11;
     private javax.swing.JLabel jLabel12;
     private javax.swing.JLabel jLabel13;
     private javax.swing.JLabel jLabel14;

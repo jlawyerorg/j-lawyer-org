@@ -673,6 +673,7 @@ import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
+import com.jdimension.jlawyer.client.utils.TableUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.persistence.AddressBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
@@ -995,7 +996,7 @@ public class AddAddressSearchDialog extends javax.swing.JDialog {
             QuickAddressSearchRowIdentifier identifier = new QuickAddressSearchRowIdentifier(result);
             Object[] row = new Object[]{identifier, result.getFirstName(), result.getCompany(), result.getDepartment(), result.getZipCode(), result.getCity(), result.getStreet(), result.getStreetNumber(), result.getCountry(), ""};
             model.addRow(row);
-            int scrollToRow = getRowForObject(identifier);
+            int scrollToRow = TableUtils.getRowForObject(tblResults, 0, identifier);
             if (scrollToRow > -1) {
                 this.tblResults.getSelectionModel().setSelectionInterval(scrollToRow, scrollToRow);
                 this.tblResults.scrollRectToVisible(new Rectangle(this.tblResults.getCellRect(scrollToRow, 0, true)));
@@ -1017,19 +1018,6 @@ public class AddAddressSearchDialog extends javax.swing.JDialog {
         }
         
     }//GEN-LAST:event_cmbRefTypeActionPerformed
-
-    private int getRowForObject(QuickAddressSearchRowIdentifier id) {
-        for (int i = 0; i < this.tblResults.getRowCount(); i++) {
-            Object value = this.tblResults.getValueAt(i, 0);
-            if (value instanceof QuickAddressSearchRowIdentifier) {
-                if (id.equals(value)) {
-                    return i;
-                }
-            }
-        }
-
-        return -1;
-    }
 
     /**
      * @param args the command line arguments

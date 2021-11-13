@@ -1068,7 +1068,7 @@ public class QuickAddressSearchPanel extends javax.swing.JPanel implements Theme
     }//GEN-LAST:event_tblResultsMouseClicked
 
     private void txtSearchStringKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtSearchStringKeyPressed
-        if (evt.getKeyCode() == evt.VK_ENTER) {
+        if (evt.getKeyCode() == KeyEvent.VK_ENTER) {
             this.cmdQuickSearchActionPerformed(null);
         }
     }//GEN-LAST:event_txtSearchStringKeyPressed
@@ -1083,7 +1083,7 @@ public class QuickAddressSearchPanel extends javax.swing.JPanel implements Theme
     }//GEN-LAST:event_cmdQuickSearchActionPerformed
 
     private void tblResultsKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_tblResultsKeyReleased
-        if (this.tblResults.getSelectedRowCount() == 1 && (evt.getKeyCode() == evt.VK_DOWN || evt.getKeyCode() == evt.VK_UP)) {
+        if (this.tblResults.getSelectedRowCount() == 1 && (evt.getKeyCode() == KeyEvent.VK_DOWN || evt.getKeyCode() == KeyEvent.VK_UP)) {
             try {
                 int row = this.tblResults.getSelectedRow();
                 QuickAddressSearchRowIdentifier id = (QuickAddressSearchRowIdentifier) this.tblResults.getValueAt(row, 0);

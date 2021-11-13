@@ -132,10 +132,12 @@
                   </Group>
                   <Group type="102" alignment="1" attributes="0">
                       <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
-                      <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="cmdClose" alignment="1" min="-2" max="-2" attributes="0"/>
-                          <Component id="cmdSave" alignment="1" min="-2" max="-2" attributes="0"/>
-                      </Group>
+                      <Component id="cmdSave" min="-2" max="-2" attributes="0"/>
+                  </Group>
+                  <Group type="102" alignment="1" attributes="0">
+                      <Component id="jLabel11" min="-2" pref="587" max="-2" attributes="0"/>
+                      <EmptySpace max="32767" attributes="0"/>
+                      <Component id="cmdClose" min="-2" max="-2" attributes="0"/>
                   </Group>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
@@ -229,7 +231,10 @@
                       <EmptySpace max="32767" attributes="0"/>
                       <Component id="jSeparator2" min="-2" pref="10" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
-                      <Component id="cmdClose" min="-2" max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="3" attributes="0">
+                          <Component id="cmdClose" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="jLabel11" alignment="3" min="-2" max="-2" attributes="0"/>
+                      </Group>
                       <EmptySpace min="-2" pref="35" max="-2" attributes="0"/>
                   </Group>
               </Group>
@@ -523,6 +528,15 @@
     <Component class="javax.swing.JLabel" name="lblTestProgress">
       <Properties>
         <Property name="text" type="java.lang.String" value="jLabel21"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JLabel" name="jLabel11">
+      <Properties>
+        <Property name="horizontalAlignment" type="int" value="0"/>
+        <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+          <Image iconType="3" name="/icons/messagebox_warning.png"/>
+        </Property>
+        <Property name="text" type="java.lang.String" value="Zugriff auf neue Postf&#xe4;cher ggf. in der Nutzerverwaltung freischalten."/>
       </Properties>
     </Component>
   </SubComponents>
