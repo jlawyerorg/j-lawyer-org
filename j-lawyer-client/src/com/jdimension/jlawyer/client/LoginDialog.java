@@ -837,17 +837,6 @@ public class LoginDialog extends javax.swing.JFrame {
             } catch (Exception ex) {
                 log.error("Could not add new standard connection profile", ex);
             }
-
-//            settings.removeConfiguration(ClientSettings.CONF_LASTPORT);
-//            settings.removeConfiguration(ClientSettings.CONF_LASTSECMODE);
-//            settings.removeConfiguration(ClientSettings.CONF_LASTSERVER);
-//            settings.removeConfiguration(ClientSettings.CONF_LASTSSHHOST);
-//            settings.removeConfiguration(ClientSettings.CONF_LASTSSHPWD);
-//            settings.removeConfiguration(ClientSettings.CONF_LASTSSHPORT);
-//            settings.removeConfiguration(ClientSettings.CONF_LASTTARGETPORT);
-//            settings.removeConfiguration(ClientSettings.CONF_LASTSSHUSER);
-//            settings.removeConfiguration(ClientSettings.CONF_LASTUSER);
-//            settings.removeConfiguration(ClientSettings.CONF_LASTSERVERLIST);
         }
 
         List<ConnectionProfile> allProfiles = connections.getAllProfiles();

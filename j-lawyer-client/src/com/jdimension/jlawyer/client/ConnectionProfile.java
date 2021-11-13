@@ -663,11 +663,13 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.client;
 
+import java.util.Objects;
+
 /**
  *
  * @author jens
  */
-public class ConnectionProfile {
+public class ConnectionProfile implements Comparable {
     
     protected String name="";
     protected String server="localhost";
@@ -822,7 +824,26 @@ public class ConnectionProfile {
     public void setSshTargetPort(String sshTargetPort) {
         this.sshTargetPort = sshTargetPort;
     }
-    
-    
+
+    @Override
+    public int compareTo(Object obj) {
+        if (this == obj) {
+            return 0;
+        }
+        if (obj == null) {
+            return 1;
+        }
+        if (getClass() != obj.getClass()) {
+            return -1;
+        }
+        final ConnectionProfile other = (ConnectionProfile) obj;
+        String name1=this.name;
+        String name2=other.getName();
+        if(name1!=null && name2!=null) {
+            return name1.toLowerCase().compareTo(name2.toLowerCase());
+        } else {
+            return 1;
+        }
+    }    
     
 }

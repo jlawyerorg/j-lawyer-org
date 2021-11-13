@@ -669,6 +669,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 import org.apache.log4j.Logger;
@@ -707,6 +708,7 @@ public class ConnectionProfiles {
                 profiles.add(fromFile(c));
             }
         }
+        Collections.sort(profiles);
         return profiles;
     }
     
