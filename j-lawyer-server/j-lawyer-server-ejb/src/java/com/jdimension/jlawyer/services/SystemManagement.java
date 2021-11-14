@@ -670,6 +670,7 @@ import com.jdimension.jlawyer.persistence.utils.StringGenerator;
 import com.jdimension.jlawyer.security.PasswordsUtil;
 import com.jdimension.jlawyer.server.services.MonitoringSnapshot;
 import com.jdimension.jlawyer.server.services.ServerInformation;
+import com.jdimension.jlawyer.server.services.settings.ServerSettingsKeys;
 import com.jdimension.jlawyer.server.utils.ServerFileUtils;
 import com.jdimension.jlawyer.server.utils.StringUtils;
 import java.io.*;
@@ -769,7 +770,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     public BankDataBean[] searchBankData(String query) {
         JDBCUtils utils = new JDBCUtils();
         ResultSet rs = null;
-        ArrayList<BankDataBean> list = new ArrayList<BankDataBean>();
+        ArrayList<BankDataBean> list = new ArrayList<>();
         try (Connection con = utils.getConnection();
                 PreparedStatement st = con.prepareStatement("select id, name, bankCode from directory_banks where ucase(name) like ? or bankCode like ? order by bankCode, name")) {
             String wildCard1 = StringUtils.germanToUpperCase(query) + "%";
@@ -895,7 +896,6 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
 
             }
         }
-        return;
     }
 
     @Override
@@ -923,7 +923,6 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
 
             }
         }
-        return;
     }
 
     @Override
@@ -1031,6 +1030,28 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     @Override
     @RolesAllowed({"adminRole"})
     public AppUserBean createUser(AppUserBean user, List<AppRoleBean> roles) throws Exception {
+        
+        ServerSettingsBean s = this.settingsFacade.find(ServerSettingsKeys.SERVERCONF_USAGELIMIT_MAXUSERS);
+        int limit=999;
+        if (s == null) {
+            s = new ServerSettingsBean();
+            s.setSettingKey(ServerSettingsKeys.SERVERCONF_USAGELIMIT_MAXUSERS);
+            s.setSettingValue("999");
+            this.settingsFacade.create(s);
+        } else {
+            try {
+                limit=Integer.parseInt(s.getSettingValue());
+            } catch (Throwable t) {
+                log.error("Invalid value for " + ServerSettingsKeys.SERVERCONF_USAGELIMIT_MAXUSERS + ": " + s.getSettingValue(), t);
+                limit=1;
+            }
+        }
+        
+        int userCount=this.userBeanFacade.count();
+        if(userCount>=limit) {
+            log.error("Unable to create new user - limit has been reached (" + limit + ").");
+            throw new Exception("Die zulässige Anzahl an Nutzern für diese Installation ist überschritten. Kontaktieren Sie Ihren Systemadministrator.");
+        }
 
         StringGenerator idGen = new StringGenerator();
         // create password hash
@@ -1725,7 +1746,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
                     GenericNode gn = new GenericNode(c.getAbsolutePath(), n, c.getName());
                     n.getChildren().add(gn);
                     this.searchForTemplates(c, gn, list, query);
-                } else if (c.getName().toLowerCase().indexOf(query) > -1) {
+                } else if (c.getName().toLowerCase().contains(query)) {
 
                     boolean contains = false;
                     for (GenericNode gn : list) {
@@ -1877,7 +1898,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         localBaseDir = localBaseDir + "templates" + TreeNodeUtils.buildNodePath(folder) + System.getProperty("file.separator") + templateName;
 
         Collection<PartyTypeBean> partyTypes = this.getPartyTypes();
-        ArrayList<String> allPartyTypesPlaceholders = new ArrayList<String>();
+        ArrayList<String> allPartyTypesPlaceholders = new ArrayList<>();
         for (PartyTypeBean ptb : partyTypes) {
             allPartyTypesPlaceholders.add(ptb.getPlaceHolder());
         }
@@ -1900,7 +1921,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
 
         GenericNode root = new GenericNode(localBaseDir, null, "/");
         File rootFolder = new File(localBaseDir);
-        ArrayList<GenericNode> list = new ArrayList<GenericNode>();
+        ArrayList<GenericNode> list = new ArrayList<>();
         this.searchForTemplates(rootFolder, root, list, query);
         return list;
 
@@ -1967,40 +1988,36 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     @RolesAllowed({"loginRole"})
     public Collection<PartyTypeBean> getPartyTypes() {
         List<PartyTypeBean> all = this.partyTypesFacade.findAll();
-        Collections.sort(all, new Comparator() {
-            @Override
-            public int compare(Object t, Object t1) {
-                Object u1 = t;
-                Object u2 = t1;
-                if (u1 == null) {
-                    return -1;
-                }
-                if (u2 == null) {
-                    return 1;
-                }
-
-                if (!(u1 instanceof PartyTypeBean)) {
-                    return -1;
-                }
-                if (!(u2 instanceof PartyTypeBean)) {
-                    return 1;
-                }
-
-                PartyTypeBean f1 = (PartyTypeBean) u1;
-                PartyTypeBean f2 = (PartyTypeBean) u2;
-
-                String f1name = "";
-                if (f1.getName() != null) {
-                    f1name = f1.getName().toLowerCase();
-                }
-                String f2name = "";
-                if (f2.getName() != null) {
-                    f2name = f2.getName().toLowerCase();
-                }
-
-                return f1name.compareTo(f2name);
+        Collections.sort(all, (Object t, Object t1) -> {
+            Object u1 = t;
+            Object u2 = t1;
+            if (u1 == null) {
+                return -1;
             }
-
+            if (u2 == null) {
+                return 1;
+            }
+            
+            if (!(u1 instanceof PartyTypeBean)) {
+                return -1;
+            }
+            if (!(u2 instanceof PartyTypeBean)) {
+                return 1;
+            }
+            
+            PartyTypeBean f1 = (PartyTypeBean) u1;
+            PartyTypeBean f2 = (PartyTypeBean) u2;
+            
+            String f1name = "";
+            if (f1.getName() != null) {
+                f1name = f1.getName().toLowerCase();
+            }
+            String f2name = "";
+            if (f2.getName() != null) {
+                f2name = f2.getName().toLowerCase();
+            }
+            
+            return f1name.compareTo(f2name);
         });
         return all;
     }
@@ -2015,7 +2032,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     @RolesAllowed({"loginRole"})
     public Hashtable<String, PartyTypeBean> getPartyTypesTable() {
         List<PartyTypeBean> allParties = this.partyTypesFacade.findAll();
-        Hashtable<String, PartyTypeBean> result = new Hashtable<String, PartyTypeBean>();
+        Hashtable<String, PartyTypeBean> result = new Hashtable<>();
         for (PartyTypeBean p : allParties) {
             result.put(p.getName(), p);
         }
