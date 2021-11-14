@@ -5564,9 +5564,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 ArchiveFileReviewsBean reviewDTO = (ArchiveFileReviewsBean) row;
                 if (!reviewDTO.getDoneBoolean()) {
                     openCalItems.add(reviewDTO);
-//                    JOptionPane.showMessageDialog(this, "Akte kann nur archiviert werden, wenn alle Wiedervorlagen / Fristen / Termine geschlossen sind.", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
-//                    chkArchived.setSelected(false);
-//                    return;
                 }
             }
             if (!openCalItems.isEmpty()) {
