@@ -2709,6 +2709,11 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
                 return;
             }
             MailboxSetup ms = EmailUtils.getMailboxSetup(mce.getMessages()[0]);
+            if(ms==null) {
+                log.warn("can not determine mailbox setup of removed message");
+                return;
+            }
+            
             // currently only INBOX is observed
             DefaultTreeModel dm = (DefaultTreeModel) this.treeFolders.getModel();
             ThreadUtils.updateTreeNode(dm, this.inboxFolderNodes.get(ms));
