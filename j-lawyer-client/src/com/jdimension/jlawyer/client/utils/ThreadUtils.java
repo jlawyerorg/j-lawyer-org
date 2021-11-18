@@ -862,6 +862,8 @@ public class ThreadUtils {
     }
 
     public static void updateTreeNode(final DefaultTreeModel model, final DefaultMutableTreeNode node) {
+        if(model==null || node==null)
+            return;
         SwingUtilities.invokeLater(() -> {
             node.setUserObject(node.getUserObject());
             model.nodeChanged(node);
