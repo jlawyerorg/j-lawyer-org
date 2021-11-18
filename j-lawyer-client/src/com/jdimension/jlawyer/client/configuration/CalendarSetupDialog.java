@@ -1243,6 +1243,8 @@ public class CalendarSetupDialog extends javax.swing.JDialog {
     private void cmdGetCloudCalendarsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdGetCloudCalendarsActionPerformed
         try {
             NextcloudCalendarConnector nc = new NextcloudCalendarConnector(this.pnlCloud.getCloudHost(), this.pnlCloud.isSsl(), this.pnlCloud.getCloudPort(), this.pnlCloud.getCloudUser(), this.pnlCloud.getCloudPassword());
+            if(!StringUtils.isEmpty(this.pnlCloud.getCloudPath()))
+                nc.setSubpathPrefix(this.pnlCloud.getCloudPath());
             List<CloudCalendar> cals = nc.getAllCalendars();
             this.cmbName.removeAllItems();
             cals.forEach(ab -> {
@@ -1264,6 +1266,8 @@ public class CalendarSetupDialog extends javax.swing.JDialog {
             try {
 
                 NextcloudCalendarConnector nc = new NextcloudCalendarConnector(cs.getCloudHost(), cs.isCloudSsl(), cs.getCloudPort(), cs.getCloudUser(), Crypto.decrypt(cs.getCloudPassword()));
+                if(!StringUtils.isEmpty(this.pnlCloud.getCloudPath()))
+                    nc.setSubpathPrefix(this.pnlCloud.getCloudPath());
                 List<CloudCalendar> cals = nc.getAllCalendars();
                 
                 CloudCalendar selected = null;

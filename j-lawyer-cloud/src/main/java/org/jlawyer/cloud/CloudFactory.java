@@ -663,7 +663,6 @@
  */
 package org.jlawyer.cloud;
 
-import java.io.IOException;
 import org.aarboard.nextcloud.api.NextcloudConnector;
 import org.apache.log4j.Logger;
 

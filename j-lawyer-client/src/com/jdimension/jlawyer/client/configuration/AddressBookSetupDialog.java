@@ -726,6 +726,8 @@ public class AddressBookSetupDialog extends javax.swing.JDialog {
                 return;
 
             NextcloudContactsConnector nc = new NextcloudContactsConnector(this.pnlCloud.getCloudHost(), this.pnlCloud.isSsl(), this.pnlCloud.getCloudPort(), this.pnlCloud.getCloudUser(), this.pnlCloud.getCloudPassword());
+            if(!StringUtils.isEmpty(this.pnlCloud.getCloudPath()))
+                nc.setSubpathPrefix(this.pnlCloud.getCloudPath());
             List<CloudAddressBook> books = nc.getAllAddressBooks();
             CloudAddressBook selected = null;
             for (CloudAddressBook ab : books) {
@@ -897,6 +899,8 @@ public class AddressBookSetupDialog extends javax.swing.JDialog {
     private void cmdGetAdressBooksActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdGetAdressBooksActionPerformed
         try {
             NextcloudContactsConnector nc = new NextcloudContactsConnector(this.pnlCloud.getCloudHost(), this.pnlCloud.isSsl(), this.pnlCloud.getCloudPort(), this.pnlCloud.getCloudUser(), this.pnlCloud.getCloudPassword());
+            if(!StringUtils.isEmpty(this.pnlCloud.getCloudPath()))
+                nc.setSubpathPrefix(this.pnlCloud.getCloudPath());
             List<CloudAddressBook> books = nc.getAllAddressBooks();
             this.cmbAddressBook.removeAllItems();
             books.forEach(ab -> {

@@ -790,6 +790,12 @@ public class ContactSyncService implements ContactSyncServiceLocal {
                 pwd = s.getSettingValue();
                 pwd = Crypto.decrypt(pwd);
             }
+            
+            String subPath = null;
+            s = this.settings.find(ServerSettingsKeys.SERVERCONF_CLOUDSYNC_ADDRESSBOOK_PATH);
+            if (s != null) {
+                subPath = s.getSettingValue();
+            }
 
             if (ServerStringUtils.isEmpty(host) || ServerStringUtils.isEmpty(user) || ServerStringUtils.isEmpty(pwd)) {
                 log.info("No or invalid address book sync configuration");
@@ -797,6 +803,8 @@ public class ContactSyncService implements ContactSyncServiceLocal {
             }
 
             NextcloudContactsConnector nc = new NextcloudContactsConnector(host, ssl, port, user, pwd);
+            if(subPath!=null && !ServerStringUtils.isEmpty(subPath))
+                nc.setSubpathPrefix(subPath);
             return nc;
         } catch (Throwable t) {
             log.error("Unable to get Nextcloud CardDAV connector", t);
