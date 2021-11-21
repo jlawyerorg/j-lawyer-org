@@ -703,14 +703,6 @@ public interface SystemManagementRemote {
     
     public void clearCurrentBackup();
 
-    //boolean deleteTemplate(String fileName) throws Exception;
-    
-    //boolean addTemplateFromTemplate(String fileName, String basedOnTemplateFileName) throws Exception;
-
-    //Collection getAllTemplateNames();
-    
-    //List<String> getPlaceHoldersInTemplate(String templateName) throws Exception;
-
     List<AppUserBean> getUsers();
 
     List<AppRoleBean> getRoles(String principalId);
@@ -720,12 +712,6 @@ public interface SystemManagementRemote {
     AppUserBean updateUser(AppUserBean user, List<AppRoleBean> roles) throws Exception;
 
     void deleteUser(String principalId);
-
-    
-    
-    //byte[] getTemplateContent(String fileName) throws Exception;
-
-    //void setTemplateContent(String fileName, byte[] content) throws Exception;
 
     ServerInformation getServerInformation();
 
@@ -756,8 +742,6 @@ public interface SystemManagementRemote {
     String getServerInterfacesBoundTo() throws Exception;
 
     boolean setServerInterfaceBindings(String ip) throws Exception;
-
-    //boolean addTemplate(String fileName, byte[] data) throws Exception;
 
     boolean addTemplate(GenericNode folder, String fileName, byte[] data) throws Exception;
 
@@ -804,5 +788,11 @@ public interface SystemManagementRemote {
     boolean updatePassword(String newPassword) throws Exception;
 
     boolean updatePasswordForUser(String principalId, String newPassword) throws Exception;
+
+    List<MappingTable> getMappingTables();
+
+    void addMappingTable(MappingTable table) throws Exception;
+
+    void deleteMappingTable(String tableName) throws Exception;
     
 }

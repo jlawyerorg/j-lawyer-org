@@ -40,6 +40,8 @@
     <class>com.jdimension.jlawyer.persistence.CalendarAccess</class>
     <class>com.jdimension.jlawyer.persistence.MailboxAccess</class>
     <class>com.jdimension.jlawyer.persistence.MailboxSetup</class>
+    <class>com.jdimension.jlawyer.persistence.MappingEntry</class>
+    <class>com.jdimension.jlawyer.persistence.MappingTable</class>
     <exclude-unlisted-classes>true</exclude-unlisted-classes>
     <properties>
       <!-- changed from update to validate to avoid deployment during an update installer run to create columns that will be added by a sql script later in the process -->

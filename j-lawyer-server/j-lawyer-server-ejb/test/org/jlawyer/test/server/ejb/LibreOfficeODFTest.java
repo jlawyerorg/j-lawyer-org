@@ -929,6 +929,25 @@ public class LibreOfficeODFTest {
     
     @Test
     @Ignore
+    public void testSmartTemplateFrist() {
+        try {
+
+            String resultString=evaluateSmartTemplate("FRIST(\"01.01.2021\",\"11\")");
+            Assert.assertEquals("12.01.2021", resultString);
+            
+            resultString=evaluateSmartTemplate("FRIST(\"01.01.21\",\"11\")");
+            Assert.assertTrue("12.01.2021".equals(resultString));
+            
+            resultString=evaluateSmartTemplate("FRIST(\"schnuffel\",\"11\")");
+            Assert.assertTrue("??.??.????".equals(resultString));
+            
+        } catch (Throwable t) {
+            Assert.fail(t.getMessage());
+        }
+    }
+    
+    @Test
+    @Ignore
     public void testSmartTemplateWennGroesser() {
         try {
 
@@ -969,6 +988,19 @@ public class LibreOfficeODFTest {
             
             resultString=evaluateSmartTemplate("WENNLEER(\"\",\"leer\")");
             Assert.assertEquals("leer", resultString);
+            
+        } catch (Throwable t) {
+            Assert.fail(t.getMessage());
+        }
+    }
+    
+    @Test
+    @Ignore
+    public void testSmartTemplateGross() {
+        try {
+
+            String resultString=evaluateSmartTemplate("GROSS(\"s11\")");
+            Assert.assertEquals("S11", resultString);
             
         } catch (Throwable t) {
             Assert.fail(t.getMessage());

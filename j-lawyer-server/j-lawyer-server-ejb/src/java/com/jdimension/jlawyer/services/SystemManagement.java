@@ -756,6 +756,10 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     private PartyTypeBeanFacadeLocal partyTypesFacade;
     @EJB
     private ArchiveFileAddressesBeanFacadeLocal archiveFileAddressesFacade;
+    @EJB
+    private MappingTableFacadeLocal mappingTableFacade;
+    @EJB
+    private MappingEntryFacadeLocal mappingEntryFacade;
 
     @Override
     @RolesAllowed({"loginRole"})
@@ -2205,5 +2209,25 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
 
         return true;
     }
+
+    @Override
+    @RolesAllowed({"loginRole"})
+    public List<MappingTable> getMappingTables() {
+        return this.mappingTableFacade.findAll();
+    }
+
+    @Override
+    @RolesAllowed({"adminRole"})
+    public void addMappingTable(MappingTable table) throws Exception {
+        
+    }
+
+    @Override
+    @RolesAllowed({"adminRole"})
+    public void deleteMappingTable(String tableName) throws Exception {
+        
+    }
+    
+    
 
 }

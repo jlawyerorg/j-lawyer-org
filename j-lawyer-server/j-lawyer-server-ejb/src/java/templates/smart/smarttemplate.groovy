@@ -11,13 +11,13 @@ class SmartTemplate {
     
     String WENNGLEICH(String s1, String s2, String then, String otherwise) {
         if(s1==null)
-            s1="";
+        s1="";
         if(s2==null)
-            s2="";
+        s2="";
         if(s1.equalsIgnoreCase(s2))
-            return then;
+        return then;
         else
-            return otherwise;
+        return otherwise;
     }
     
     String WENNGLEICH(String s1, String s2, String then) {
@@ -26,13 +26,13 @@ class SmartTemplate {
     
     String WENNENTHAELT(String s1, String s2, String then, String otherwise) {
         if(s1==null)
-            s1="";
+        s1="";
         if(s2==null)
-            s2="";
+        s2="";
         if(s1.toLowerCase().contains(s2.toLowerCase()))
-            return then;
+        return then;
         else
-            return otherwise;
+        return otherwise;
     }
     
     String WENNENTHAELT(String s1, String s2, String then) {
@@ -41,11 +41,11 @@ class SmartTemplate {
     
     String WENNLEER(String s1, String then, String otherwise) {
         if(s1==null)
-            s1="";
+        s1="";
         if(s1.isEmpty())
-            return then;
+        return then;
         else
-            return otherwise;
+        return otherwise;
     }
     
     String WENNLEER(String s1, String then) {
@@ -56,13 +56,13 @@ class SmartTemplate {
         double d1=0d;
         double d2=0d;
         if(s1==null)
-            s1="0";
+        s1="0";
         if(s2==null)
-            s2="0";
+        s2="0";
         if(s1.isEmpty())
-            s1="0";
+        s1="0";
         if(s2.isEmpty())
-            s2="0";
+        s2="0";
             
         s1=s1.replace(",", ".");
         s2=s2.replace(",", ".");
@@ -78,9 +78,9 @@ class SmartTemplate {
             
         }
         if(d1>d2)
-            return then;
+        return then;
         else
-            return otherwise;
+        return otherwise;
     }
     
     String WENNGROESSER(String s1, String s2, String then) {
@@ -91,6 +91,40 @@ class SmartTemplate {
         if(s1==null)
             s1="";
         return s1;
+    }
+    
+    /*
+    * E.g. when string is taken from a mapping table and the term is used at the beginning of a sentence.
+    */
+    String GROSS(String s1) {
+        if(s1==null)
+            s1="";
+            
+        if(s1.length()>0)
+            s1=s1.substring(0, 1).toUpperCase() + s1.substring(1);
+            
+        return s1;
+    }
+    
+    String FRIST(String fromDate, String addDays) {
+        if(fromDate==null || "".equals(fromDate))
+            return "??.??.????";
+        
+        java.text.SimpleDateFormat df=new java.text.SimpleDateFormat("dd.MM.yyyy");
+        try {
+            java.util.Date testDate = df.parse(fromDate)
+            java.util.Calendar cal = java.util.Calendar.getInstance(); 
+            cal.setTime(testDate);
+            if(cal.get(Calendar.YEAR) < 2000)
+                cal.add(java.util.Calendar.YEAR, 2000);
+            cal.add(java.util.Calendar.DAY_OF_MONTH, Integer.parseInt(addDays));
+            testDate = cal.getTime();
+            System.out.println("1");
+            return df.format(testDate);
+        } catch (Throwable t) {
+            return "??.??.????"
+        }
+        
     }
     
 }
