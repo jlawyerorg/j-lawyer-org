@@ -664,6 +664,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.client;
 
 import com.jdimension.jlawyer.security.Crypto;
+import java.awt.Component;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -672,6 +673,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
+import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
 
 /**
@@ -712,15 +714,19 @@ public class ConnectionProfiles {
         return profiles;
     }
     
-    public ConnectionProfile fromPropertiesString(String s) {
+    public ConnectionProfile fromPropertiesString(String s, Component caller) {
         Properties props = new Properties();
         try ( StringReader sr = new StringReader(s)) {
             props.load(sr);
-            return loadProfile(props);
+            return loadProfile(props, caller);
         } catch (Exception ex) {
             log.error("Could not load connection profile from string: " + s, ex);
             return new ConnectionProfile();
         }
+    }
+    
+    public ConnectionProfile fromPropertiesString(String s) {
+        return this.fromPropertiesString(s, null);
     }
 
     private ConnectionProfile fromFile(File p) {
@@ -735,15 +741,19 @@ public class ConnectionProfiles {
     }
     
     private ConnectionProfile loadProfile(Properties props) {
+        return this.loadProfile(props, null);
+    }
+    
+    private ConnectionProfile loadProfile(Properties props, Component caller) {
         
         ConnectionProfile profile = new ConnectionProfile();
         try {
-            profile.setName(props.getProperty("name"));
-            profile.setPort(props.getProperty("port"));
-            profile.setSecurityMode(props.getProperty("securitymode"));
-            profile.setServer(props.getProperty("server"));
-            profile.setSshHost(props.getProperty("sshhost"));
-            String pwd = props.getProperty("sshpwd");
+            profile.setName(props.getProperty("name").trim());
+            profile.setPort(props.getProperty("port").trim());
+            profile.setSecurityMode(props.getProperty("securitymode").trim());
+            profile.setServer(props.getProperty("server").trim());
+            profile.setSshHost(props.getProperty("sshhost").trim());
+            String pwd = props.getProperty("sshpwd").trim();
             try {
                 if (pwd.length() > 0) {
                     pwd = Crypto.decrypt(pwd, System.getProperty("user.name").toCharArray());
@@ -751,12 +761,18 @@ public class ConnectionProfiles {
             } catch (Throwable t) {
                 log.error("Unable to decrypt tunnel SSH password", t);
                 pwd = "";
+                if ("ssh".equalsIgnoreCase(profile.getSecurityMode()) && caller!=null) {
+                    Object newPwd = JOptionPane.showInputDialog(caller, "SSH-Passwort: ", "SSH-Verbindung", JOptionPane.QUESTION_MESSAGE, null, null, "");
+                    if (newPwd != null && !("".equals(newPwd))) {
+                        pwd=newPwd.toString();
+                    }
+                }
             }
             profile.setSshPassword(pwd);
-            profile.setSshPort(props.getProperty("sshport"));
-            profile.setSshTargetPort(props.getProperty("sshtargetport"));
-            profile.setSshUser(props.getProperty("sshuser"));
-            profile.setUser(props.getProperty("user"));
+            profile.setSshPort(props.getProperty("sshport").trim());
+            profile.setSshTargetPort(props.getProperty("sshtargetport").trim());
+            profile.setSshUser(props.getProperty("sshuser").trim());
+            profile.setUser(props.getProperty("user").trim());
         } catch (Exception ex) {
             log.error("Could not load connection profile from properties: " + props.keySet(), ex);
         }
