@@ -753,7 +753,7 @@ public class ImportConnectionProfileDialog extends javax.swing.JDialog {
 
     private void cmdImportActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdImportActionPerformed
         ConnectionProfiles connections=ConnectionProfiles.getInstance();
-        this.profile=connections.fromPropertiesString(this.jTextArea1.getText());
+        this.profile=connections.fromPropertiesString(this.jTextArea1.getText(), this);
         this.setVisible(false);
         this.dispose();
     }//GEN-LAST:event_cmdImportActionPerformed
@@ -790,17 +790,15 @@ public class ImportConnectionProfileDialog extends javax.swing.JDialog {
         //</editor-fold>
 
         /* Create and display the dialog */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                ImportConnectionProfileDialog dialog = new ImportConnectionProfileDialog(new javax.swing.JFrame(), true);
-                dialog.addWindowListener(new java.awt.event.WindowAdapter() {
-                    @Override
-                    public void windowClosing(java.awt.event.WindowEvent e) {
-                        System.exit(0);
-                    }
-                });
-                dialog.setVisible(true);
-            }
+        java.awt.EventQueue.invokeLater(() -> {
+            ImportConnectionProfileDialog dialog = new ImportConnectionProfileDialog(new javax.swing.JFrame(), true);
+            dialog.addWindowListener(new java.awt.event.WindowAdapter() {
+                @Override
+                public void windowClosing(java.awt.event.WindowEvent e) {
+                    System.exit(0);
+                }
+            });
+            dialog.setVisible(true);
         });
     }
 
