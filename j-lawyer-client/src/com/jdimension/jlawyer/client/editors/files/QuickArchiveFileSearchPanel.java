@@ -1170,7 +1170,7 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
     }//GEN-LAST:event_cmdTagFilterMousePressed
 
     private void mnuDuplicateSelectedArchiveFilesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuDuplicateSelectedArchiveFilesActionPerformed
-        ThreadUtils.setWaitCursor(this, false);
+        
         int[] selectedIndices = this.tblResults.getSelectedRows();
         Arrays.sort(selectedIndices);
         ArrayList<String> ids = new ArrayList<>();
@@ -1178,7 +1178,15 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
             QuickArchiveFileSearchRowIdentifier id = (QuickArchiveFileSearchRowIdentifier) this.tblResults.getValueAt(selectedIndices[i], 0);
             ids.add(id.getArchiveFileDTO().getId());
         }
+        
+        if(ids.size() > 1) {
+            int response = JOptionPane.showConfirmDialog(this, "" + ids.size() + " Akten duplizieren?", "Akten duplizieren", JOptionPane.YES_NO_OPTION);
+            if (response != JOptionPane.YES_OPTION) {
+                return;
+            }
+        }
 
+        ThreadUtils.setWaitCursor(this, false);
         EditorsRegistry.getInstance().updateStatus("Dupliziere " + ids.size() + " Akte(n)...", false);
         ClientSettings settings = ClientSettings.getInstance();
         try {
