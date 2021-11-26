@@ -1132,7 +1132,6 @@ public class QuickAddressSearchPanel extends javax.swing.JPanel implements Theme
     }//GEN-LAST:event_cmdTagFilterMousePressed
 
     private void mnuDuplicateSelectedAddressActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuDuplicateSelectedAddressActionPerformed
-        ThreadUtils.setWaitCursor(this, false);
         int[] selectedIndices = this.tblResults.getSelectedRows();
         Arrays.sort(selectedIndices);
         ArrayList<String> ids = new ArrayList<>();
@@ -1140,7 +1139,15 @@ public class QuickAddressSearchPanel extends javax.swing.JPanel implements Theme
             QuickAddressSearchRowIdentifier id = (QuickAddressSearchRowIdentifier) this.tblResults.getValueAt(selectedIndices[i], 0);
             ids.add(id.getAddressDTO().getId());
         }
+        
+        if (ids.size() > 1) {
+            int response = JOptionPane.showConfirmDialog(this, "" + ids.size() + " Adressen duplizieren?", "Adressen duplizieren", JOptionPane.YES_NO_OPTION);
+            if (response != JOptionPane.YES_OPTION) {
+                return;
+            }
+        }
 
+        ThreadUtils.setWaitCursor(this, false);
         EditorsRegistry.getInstance().updateStatus("Dupliziere " + ids.size() + " Adresse(n)...", false);
         ClientSettings settings = ClientSettings.getInstance();
         try {
