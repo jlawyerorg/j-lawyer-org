@@ -1138,34 +1138,34 @@ public class BeaAccess {
 //        return this.wrapper.sendMessage(msg, senderSafeId, recipientSafeIds, authority);
 //    }
     
-    public Message sendAndRetrieveMessage(Message msg, String senderSafeId, ArrayList<String> recipientSafeIds, BeaListItem authority) throws BeaWrapperException {
+    public Message sendAndRetrieveMessage(Message msg, String senderSafeId, String recipientSafeId, BeaListItem authority) throws BeaWrapperException {
         this.checkValidBeaClient();
         // todo: need to only remove folder overview for sent folder
         this.folderOverviewCache.clear();
-        Message sentMessage=this.wrapper.sendAndRetrieveMessage(msg, senderSafeId, recipientSafeIds, authority);
+        Message sentMessage=this.wrapper.sendAndRetrieveMessage(msg, senderSafeId, recipientSafeId, authority);
         if (!this.messageCache.containsKey(sentMessage.getId())) {
             this.messageCache.put(sentMessage.getId(), sentMessage);
         }
         return sentMessage;
     }
 
-    public String saveMessageToDrafts(Message msg, String senderSafeId, ArrayList<String> recipientSafeIds, BeaListItem authority) throws BeaWrapperException {
+    public String saveMessageToDrafts(Message msg, String senderSafeId, String recipientSafeId, BeaListItem authority) throws BeaWrapperException {
         this.checkValidBeaClient();
         // todo: need to only remove folder overview for sent folder
         this.folderOverviewCache.clear();
-        return this.wrapper.saveMessageToDrafts(msg, senderSafeId, recipientSafeIds, authority);
+        return this.wrapper.saveMessageToDrafts(msg, senderSafeId, recipientSafeId, authority);
     }
 
-    public Message sendEebConfirmation(Message incomingMessage, String senderSafeId, ArrayList<String> recipientSafeIds, Date abgabeDate) throws BeaWrapperException {
+    public Message sendEebConfirmation(Message incomingMessage, String senderSafeId, String recipientSafeId, Date abgabeDate) throws BeaWrapperException {
         this.checkValidBeaClient();
         this.folderOverviewCache.clear();
-        return this.wrapper.sendEebConfirmation(incomingMessage, senderSafeId, recipientSafeIds, abgabeDate);
+        return this.wrapper.sendEebConfirmation(incomingMessage, senderSafeId, recipientSafeId, abgabeDate);
     }
 
-    public Message sendEebRejection(Message incomingMessage, String senderSafeId, ArrayList<String> recipientSafeIds, String code, String comment) throws BeaWrapperException {
+    public Message sendEebRejection(Message incomingMessage, String senderSafeId, String recipientSafeId, String code, String comment) throws BeaWrapperException {
         this.checkValidBeaClient();
         this.folderOverviewCache.clear();
-        return this.wrapper.sendEebRejection(incomingMessage, senderSafeId, recipientSafeIds, code, comment);
+        return this.wrapper.sendEebRejection(incomingMessage, senderSafeId, recipientSafeId, code, comment);
     }
 
     public boolean isMessageReadByIdentity(String messageId, String safeId) throws BeaWrapperException {

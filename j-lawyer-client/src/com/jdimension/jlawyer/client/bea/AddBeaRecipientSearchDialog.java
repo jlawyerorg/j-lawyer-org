@@ -860,8 +860,8 @@ public class AddBeaRecipientSearchDialog extends javax.swing.JDialog {
                 BeaAccess bea = BeaAccess.getInstance();
                 Identity i = bea.getIdentity(safeId);
                 DefaultListModel model=(DefaultListModel)this.to.getModel();
-                if(!model.contains(i))
-                    model.addElement(i);
+                model.removeAllElements();
+                model.addElement(i);
                 
             } catch (Throwable t) {
                 log.error(t);

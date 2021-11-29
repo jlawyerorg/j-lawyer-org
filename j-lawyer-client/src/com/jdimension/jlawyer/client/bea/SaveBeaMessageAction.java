@@ -705,7 +705,7 @@ public class SaveBeaMessageAction extends ProgressableAction {
     private AppUserBean cu = null;
     private boolean readReceipt = false;
     private BeaListItem authority = null;
-    private Enumeration to = null;
+    private Identity to = null;
     private String subject = "";
     private String body = "";
     private String fromSafeId = "";
@@ -714,10 +714,10 @@ public class SaveBeaMessageAction extends ProgressableAction {
 
     private String azSender = null;
     private String azRecipient = null;
-    
-    private CaseFolder folder=null;
 
-    public SaveBeaMessageAction(ProgressIndicator i, JDialog cleanAfter, String fromSafeId, ArrayList<String> attachments, AppUserBean cu, boolean readReceipt, BeaListItem authority, Enumeration to, String subject, String body, String documentTag, String azSender, String azRecipient) {
+    private CaseFolder folder = null;
+
+    public SaveBeaMessageAction(ProgressIndicator i, JDialog cleanAfter, String fromSafeId, ArrayList<String> attachments, AppUserBean cu, boolean readReceipt, BeaListItem authority, Identity to, String subject, String body, String documentTag, String azSender, String azRecipient) {
         super(i, false, cleanAfter);
         this.attachments = attachments;
         this.cu = cu;
@@ -733,10 +733,10 @@ public class SaveBeaMessageAction extends ProgressableAction {
         this.azRecipient = azRecipient;
     }
 
-    public SaveBeaMessageAction(ProgressIndicator i, JDialog cleanAfter, String fromSafeId, ArrayList<String> attachments, AppUserBean cu, boolean readReceipt, BeaListItem authority, Enumeration to, String subject, String body, ArchiveFileBean af, String documentTag, String azSender, String azRecipient, CaseFolder folder) {
+    public SaveBeaMessageAction(ProgressIndicator i, JDialog cleanAfter, String fromSafeId, ArrayList<String> attachments, AppUserBean cu, boolean readReceipt, BeaListItem authority, Identity to, String subject, String body, ArchiveFileBean af, String documentTag, String azSender, String azRecipient, CaseFolder folder) {
         this(i, cleanAfter, fromSafeId, attachments, cu, readReceipt, authority, to, subject, body, documentTag, azSender, azRecipient);
         this.archiveFile = af;
-        this.folder=folder;
+        this.folder = folder;
     }
 
     @Override
@@ -756,7 +756,7 @@ public class SaveBeaMessageAction extends ProgressableAction {
         BeaAccess bea = BeaAccess.getInstance();
         String sentId = null;
         Message msg = new Message();
-        StringBuffer recipientsText = new StringBuffer();
+        String recipientsText = "";
 
         try {
             this.progress("Erstelle Nachricht...");
@@ -775,15 +775,8 @@ public class SaveBeaMessageAction extends ProgressableAction {
                 msg.setReferenceNumber(this.archiveFile.getFileNumber());
             }
 
-            ArrayList<String> recipients = new ArrayList<String>();
-            while (this.to.hasMoreElements()) {
-                Object o = this.to.nextElement();
-                if (o instanceof Identity) {
-                    String safeId = ((Identity) o).getSafeId();
-                    recipients.add(safeId);
-                    recipientsText.append(((Identity) o).toString());
-                    recipientsText.append("  ");
-                }
+            if (this.to != null) {
+                recipientsText = this.to.toString();
             }
 
             String senderSafeId = this.fromSafeId;
@@ -803,7 +796,10 @@ public class SaveBeaMessageAction extends ProgressableAction {
             }
 
             this.progress("Speichere als Entwurf...");
-            sentId = bea.saveMessageToDrafts(msg, senderSafeId, recipients, this.authority);
+            String toSafeId=null;
+            if(this.to!=null)
+                toSafeId=this.to.getSafeId();
+            sentId = bea.saveMessageToDrafts(msg, senderSafeId, toSafeId, this.authority);
 
         } catch (BeaWrapperException ex) {
             log.error(ex);
@@ -848,20 +844,21 @@ public class SaveBeaMessageAction extends ProgressableAction {
                 if (this.documentTag != null && !("".equals(this.documentTag))) {
                     afs.setDocumentTag(newDoc.getId(), new DocumentTagsBean(newDoc.getId(), this.documentTag), true);
                 }
-                
-                if(this.folder!=null) {
-                    ArrayList<String> docIds=new ArrayList<>();
+
+                if (this.folder != null) {
+                    ArrayList<String> docIds = new ArrayList<>();
                     docIds.add(newDoc.getId());
                     afs.moveDocumentsToFolder(docIds, this.folder.getId());
                 }
 
                 ArchiveFileHistoryBean historyDto = new ArchiveFileHistoryBean();
                 historyDto.setChangeDate(new Date());
-                historyDto.setChangeDescription("beA-Nachricht als Entwurf gespeichert " + recipientsText.toString() + ": " + msg.getSubject());
+                historyDto.setChangeDescription("beA-Nachricht als Entwurf gespeichert " + recipientsText + ": " + msg.getSubject());
                 afs.addHistory(this.archiveFile.getId(), historyDto);
 
-                if(folder!=null)
+                if (folder != null) {
                     newDoc.setFolder(folder);
+                }
                 EventBroker eb = EventBroker.getInstance();
                 eb.publishEvent(new DocumentAddedEvent(newDoc));
 

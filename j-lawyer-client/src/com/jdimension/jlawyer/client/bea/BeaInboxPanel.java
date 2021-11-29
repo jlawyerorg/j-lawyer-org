@@ -2665,11 +2665,10 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                 Collection<PostBox> inboxes = BeaAccess.getInstance().getPostBoxes();
                 String senderSafeId = null;
                 for (PostBox inbox : inboxes) {
-                    for (Recipient r : mh.getRecipients()) {
-                        if (r.getSafeId().equals(inbox.getSafeId())) {
-                            senderSafeId = r.getSafeId();
-                            break;
-                        }
+                    Recipient r = mh.getRecipient();
+                    if (r.getSafeId().equals(inbox.getSafeId())) {
+                        senderSafeId = r.getSafeId();
+                        break;
                     }
                     if (senderSafeId != null) {
                         break;
@@ -2720,10 +2719,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                     JOptionPane.showMessageDialog(this, "Eingehende eEB-ID ist leer - eEB bitte über beA im Browser abgeben!", "eEB abgeben", JOptionPane.WARNING_MESSAGE);
                     return false;
                 }
-                ArrayList<String> recipients = new ArrayList<>();
-                recipients.add(m.getSenderSafeId());
-
-                Message sentMessage = BeaAccess.getInstance().sendEebConfirmation(m, senderSafeId, recipients, abgabeDate);
+                Message sentMessage = BeaAccess.getInstance().sendEebConfirmation(m, senderSafeId, m.getSenderSafeId(), abgabeDate);
 
                 return true;
 
@@ -2744,11 +2740,10 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                 Collection<PostBox> inboxes = BeaAccess.getInstance().getPostBoxes();
                 String senderSafeId = null;
                 for (PostBox inbox : inboxes) {
-                    for (Recipient r : mh.getRecipients()) {
-                        if (r.getSafeId().equals(inbox.getSafeId())) {
-                            senderSafeId = r.getSafeId();
-                            break;
-                        }
+                    Recipient r=mh.getRecipient();
+                    if (r.getSafeId().equals(inbox.getSafeId())) {
+                        senderSafeId = r.getSafeId();
+                        break;
                     }
                     if (senderSafeId != null) {
                         break;
@@ -2788,10 +2783,8 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                 }
 
                 Message m = BeaAccess.getInstance().getMessage(mh.getId(), BeaAccess.getInstance().getLoggedInSafeId());
-                ArrayList<String> recipients = new ArrayList<>();
-                recipients.add(m.getSenderSafeId());
-
-                Message sentMessage = BeaAccess.getInstance().sendEebRejection(m, senderSafeId, recipients, code, comment);
+                
+                Message sentMessage = BeaAccess.getInstance().sendEebRejection(m, senderSafeId, m.getSenderSafeId(), code, comment);
 
                 return true;
 
@@ -2813,10 +2806,10 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                 for (Attachment att : m.getAttachments()) {
                     if (att.getFileName().equalsIgnoreCase("xjustiz_nachricht.xml")) {
                         String xjustiz = new String(att.getContent());
-                        String html="<html>Unbekannter XJustiz-Datensatztyp</html>";
+                        String html = "<html>Unbekannter XJustiz-Datensatztyp</html>";
                         if (BeaAccess.isEebRequest(xjustiz)) {
                             html = BeaAccess.getEebAsHtml(xjustiz, null);
-                            
+
 //                            EebResponseAttributes attrs = BeaAccess.getEebResponseAttributes(xjustiz);
 //                            String otherMessageId = null;
 //                            if (mh.getId().equals(attrs.getOwnMessageId())) {
@@ -2834,14 +2827,13 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
 //                                }
 //                            }
 //                            request=otherXjustiz;
-
                         } else if (BeaAccess.isEebResponse(xjustiz)) {
                             log.warn("TODO: find matching XJustiz file - see ticket https://github.com/jlawyerorg/j-lawyer-org/issues/917");
                             html = BeaAccess.getEebAsHtml(null, xjustiz);
                         } else {
                             log.error("Unknown XJustiz file type!");
                         }
-                        
+
                         System.out.println(html);
                         BeaEebDisplayDialog dlg = new BeaEebDisplayDialog(EditorsRegistry.getInstance().getMainWindow(), true);
                         dlg.setHtml(html);

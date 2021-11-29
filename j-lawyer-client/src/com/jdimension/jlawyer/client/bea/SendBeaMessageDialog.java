@@ -1874,10 +1874,15 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
         else if(this.cmbMessageType.getSelectedItem().equals("Mahnantrag"))
             messageType=Message.MESSAGETYPE_MAHN_ANTRAG;
         
+        Identity recipient=null;
+        if(this.lstTo.getModel().getSize()>0) {
+            recipient=(Identity)((DefaultListModel) this.lstTo.getModel()).elements().nextElement();
+        }
+        
         if (this.chkSaveAsDocument.isSelected()) {
-            a = new SendBeaMessageAction(dlg, this, messageType, fromSafeId, attachmentMetadata, this.cu, this.rdXjustizEeb.isSelected(), this.authority, ((DefaultListModel) this.lstTo.getModel()).elements(), this.txtSubject.getText(), ed.getText(), this.contextArchiveFile, createDocumentTag, this.txtAzSender.getText(), this.cmbAzRecipient.getEditor().getItem().toString(), folder);
+            a = new SendBeaMessageAction(dlg, this, messageType, fromSafeId, attachmentMetadata, this.cu, this.rdXjustizEeb.isSelected(), this.authority, recipient, this.txtSubject.getText(), ed.getText(), this.contextArchiveFile, createDocumentTag, this.txtAzSender.getText(), this.cmbAzRecipient.getEditor().getItem().toString(), folder);
         } else {
-            a = new SendBeaMessageAction(dlg, this, messageType, fromSafeId, attachmentMetadata, this.cu, this.rdXjustizEeb.isSelected(), this.authority, ((DefaultListModel) this.lstTo.getModel()).elements(), this.txtSubject.getText(), ed.getText(), createDocumentTag, this.txtAzSender.getText(), this.cmbAzRecipient.getEditor().getItem().toString());
+            a = new SendBeaMessageAction(dlg, this, messageType, fromSafeId, attachmentMetadata, this.cu, this.rdXjustizEeb.isSelected(), this.authority, recipient, this.txtSubject.getText(), ed.getText(), createDocumentTag, this.txtAzSender.getText(), this.cmbAzRecipient.getEditor().getItem().toString());
         }
         a.start();
 
@@ -2090,9 +2095,8 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
         Identity i = dlg.getSelection();
         if (i != null) {
             DefaultListModel model = (DefaultListModel) this.lstTo.getModel();
-            if (!model.contains(i)) {
-                model.addElement(i);
-            }
+            model.removeAllElements();
+            model.addElement(i);
         }
     }//GEN-LAST:event_mnuSearchRecipientInBeaActionPerformed
 
@@ -2239,10 +2243,15 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
             }
         }
 
+        Identity recipient=null;
+        if(this.lstTo.getModel().getSize()>0) {
+            recipient=(Identity)((DefaultListModel) this.lstTo.getModel()).elements().nextElement();
+        }
+        
         if (this.chkSaveAsDocument.isSelected()) {
-            a = new SaveBeaMessageAction(dlg, this, fromSafeId, new ArrayList(this.attachments.values()), this.cu, this.rdXjustizEeb.isSelected(), this.authority, ((DefaultListModel) this.lstTo.getModel()).elements(), this.txtSubject.getText(), ed.getText(), this.contextArchiveFile, createDocumentTag, this.txtAzSender.getText(), this.cmbAzRecipient.getSelectedItem().toString(), folder);
+            a = new SaveBeaMessageAction(dlg, this, fromSafeId, new ArrayList(this.attachments.values()), this.cu, this.rdXjustizEeb.isSelected(), this.authority, recipient, this.txtSubject.getText(), ed.getText(), this.contextArchiveFile, createDocumentTag, this.txtAzSender.getText(), this.cmbAzRecipient.getSelectedItem().toString(), folder);
         } else {
-            a = new SaveBeaMessageAction(dlg, this, fromSafeId, new ArrayList(this.attachments.values()), this.cu, this.rdXjustizEeb.isSelected(), this.authority, ((DefaultListModel) this.lstTo.getModel()).elements(), this.txtSubject.getText(), ed.getText(), createDocumentTag, this.txtAzSender.getText(), this.cmbAzRecipient.getSelectedItem().toString());
+            a = new SaveBeaMessageAction(dlg, this, fromSafeId, new ArrayList(this.attachments.values()), this.cu, this.rdXjustizEeb.isSelected(), this.authority, recipient, this.txtSubject.getText(), ed.getText(), createDocumentTag, this.txtAzSender.getText(), this.cmbAzRecipient.getSelectedItem().toString());
         }
         a.start();
 

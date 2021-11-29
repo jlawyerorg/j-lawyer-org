@@ -747,11 +747,8 @@ public class LoadBeaFolderAction extends ProgressableAction {
                 EditorsRegistry.getInstance().updateStatus("Lade Nachricht " + StringUtils.nonNull(msgh.getSubject()), true);
 
                 String to = "";
-                if (msgh.getRecipients().size() > 0) {
-                    to = msgh.getRecipients().get(0).getName();
-                    for (int j = 1; j < msgh.getRecipients().size(); j++) {
-                        to = to + ", " + msgh.getRecipients().get(j).getName();
-                    }
+                if (msgh.getRecipient()!=null) {
+                    to = msgh.getRecipient().getName();
                 }
                 final String toString = to;
 
