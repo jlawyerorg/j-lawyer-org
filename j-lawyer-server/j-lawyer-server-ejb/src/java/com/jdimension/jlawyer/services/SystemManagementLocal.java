@@ -695,5 +695,5 @@ public interface SystemManagementLocal {
 
     List<MappingTable> getMappingTables();
 
-    void addMappingTable(MappingTable table) throws Exception;
+    MappingTable addMappingTable(MappingTable table) throws Exception;
 }

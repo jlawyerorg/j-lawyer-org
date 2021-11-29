@@ -712,6 +712,13 @@ public class MappingTable implements Serializable {
         serialVersionUID = aSerialVersionUID;
     }
 
+    @Override
+    public String toString() {
+        return this.tableName;
+    }
+
+    
+    
     /**
      * @return the tableName
      */

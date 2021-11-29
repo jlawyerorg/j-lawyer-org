@@ -1053,6 +1053,8 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuFormsManager = new javax.swing.JMenuItem();
         mnuDocumentFolderTemplates = new javax.swing.JMenuItem();
         mnuDocumentOptions = new javax.swing.JMenu();
+        mnuMappingTables = new javax.swing.JMenuItem();
+        mnuMappingEntries = new javax.swing.JMenuItem();
         mnuScanOptions = new javax.swing.JMenuItem();
         mnuWordProcessor = new javax.swing.JMenuItem();
         mnuSearchIndex = new javax.swing.JMenuItem();
@@ -1505,6 +1507,24 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
 
         mnuDocumentOptions.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/package_system.png"))); // NOI18N
         mnuDocumentOptions.setText("Dokumente");
+
+        mnuMappingTables.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/calc.png"))); // NOI18N
+        mnuMappingTables.setText("Zuordnungstabellen");
+        mnuMappingTables.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuMappingTablesActionPerformed(evt);
+            }
+        });
+        mnuDocumentOptions.add(mnuMappingTables);
+
+        mnuMappingEntries.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/calc.png"))); // NOI18N
+        mnuMappingEntries.setText("Zuordnungsregeln");
+        mnuMappingEntries.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuMappingEntriesActionPerformed(evt);
+            }
+        });
+        mnuDocumentOptions.add(mnuMappingEntries);
 
         mnuScanOptions.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/scanner.png"))); // NOI18N
         mnuScanOptions.setText(bundle.getString("menu.settings.documents.scanner")); // NOI18N
@@ -2425,11 +2445,25 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
 
     private void mnuMailboxSettingsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuMailboxSettingsActionPerformed
         if (checkAdmin()) {
-                MailboxSetupDialog dlg = new MailboxSetupDialog(this, true);
-                FrameUtils.centerDialog(dlg, this);
-                dlg.setVisible(true);
-            }
+            MailboxSetupDialog dlg = new MailboxSetupDialog(this, true);
+            FrameUtils.centerDialog(dlg, this);
+            dlg.setVisible(true);
+        }
     }//GEN-LAST:event_mnuMailboxSettingsActionPerformed
+
+    private void mnuMappingTablesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuMappingTablesActionPerformed
+        if (checkAdmin()) {
+            MappingTablesDialog dlg = new MappingTablesDialog(this, true);
+            FrameUtils.centerDialog(dlg, this);
+            dlg.setVisible(true);
+        }
+    }//GEN-LAST:event_mnuMappingTablesActionPerformed
+
+    private void mnuMappingEntriesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuMappingEntriesActionPerformed
+        if (checkAdmin()) {
+
+        }
+    }//GEN-LAST:event_mnuMappingEntriesActionPerformed
 
     /**
      * @param args the command line arguments
@@ -2503,6 +2537,8 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     private javax.swing.JMenuItem mnuGroups;
     private javax.swing.JMenu mnuHelp;
     private javax.swing.JMenuItem mnuMailboxSettings;
+    private javax.swing.JMenuItem mnuMappingEntries;
+    private javax.swing.JMenuItem mnuMappingTables;
     private javax.swing.JMenuItem mnuOnlineHelp;
     private javax.swing.JMenu mnuOptions;
     private javax.swing.JMenuItem mnuPartyTypes;

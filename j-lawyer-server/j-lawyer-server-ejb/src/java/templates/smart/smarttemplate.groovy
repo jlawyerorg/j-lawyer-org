@@ -119,7 +119,29 @@ class SmartTemplate {
                 cal.add(java.util.Calendar.YEAR, 2000);
             cal.add(java.util.Calendar.DAY_OF_MONTH, Integer.parseInt(addDays));
             testDate = cal.getTime();
-            System.out.println("1");
+            return df.format(testDate);
+        } catch (Throwable t) {
+            return "??.??.????"
+        }
+        
+    }
+    
+    String FRISTBANKTAG(String fromDate, String addDays) {
+        if(fromDate==null || "".equals(fromDate))
+            return "??.??.????";
+        
+        java.text.SimpleDateFormat df=new java.text.SimpleDateFormat("dd.MM.yyyy");
+        try {
+            java.util.Date testDate = df.parse(fromDate)
+            java.util.Calendar cal = java.util.Calendar.getInstance(); 
+            cal.setTime(testDate);
+            if(cal.get(Calendar.YEAR) < 2000)
+                cal.add(java.util.Calendar.YEAR, 2000);
+            cal.add(java.util.Calendar.DAY_OF_MONTH, Integer.parseInt(addDays));
+            while(cal.get(java.util.Calendar.DAY_OF_WEEK)==java.util.Calendar.SATURDAY || cal.get(java.util.Calendar.DAY_OF_WEEK)==java.util.Calendar.SUNDAY) {
+                cal.add(java.util.Calendar.DAY_OF_MONTH, 1);
+            }
+            testDate = cal.getTime();
             return df.format(testDate);
         } catch (Throwable t) {
             return "??.??.????"

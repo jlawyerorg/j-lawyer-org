@@ -791,8 +791,10 @@ public interface SystemManagementRemote {
 
     List<MappingTable> getMappingTables();
 
-    void addMappingTable(MappingTable table) throws Exception;
+    MappingTable addMappingTable(MappingTable table) throws Exception;
 
     void deleteMappingTable(String tableName) throws Exception;
+
+    MappingTable updateMappingTable(MappingTable mt) throws Exception;
     
 }

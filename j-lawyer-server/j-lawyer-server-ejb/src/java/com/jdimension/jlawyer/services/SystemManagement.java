@@ -2218,14 +2218,40 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
 
     @Override
     @RolesAllowed({"adminRole"})
-    public void addMappingTable(MappingTable table) throws Exception {
+    public MappingTable addMappingTable(MappingTable table) throws Exception {
+        MappingTable mt=this.mappingTableFacade.findByName(table.getTableName());
+        if(mt!=null) {
+            throw new Exception ("Es existiert bereits eine Tabelle mit diesem Namen!");
+        }
         
+        this.mappingTableFacade.create(table);
+        
+        return this.mappingTableFacade.findByName(table.getTableName());
     }
 
     @Override
     @RolesAllowed({"adminRole"})
     public void deleteMappingTable(String tableName) throws Exception {
         
+        MappingTable mt=this.mappingTableFacade.findByName(tableName);
+        this.mappingTableFacade.remove(mt);
+    }
+
+    @Override
+    @RolesAllowed({"adminRole"})
+    public MappingTable updateMappingTable(MappingTable mt) throws Exception {
+        MappingTable remTable=this.mappingTableFacade.findByName(mt.getTableName());
+        if (remTable == null) {
+            throw new Exception("No mapping table with name " + mt.getTableName());
+        }
+        remTable.setKey1Name(mt.getKey1Name());
+        remTable.setKey2Name(mt.getKey2Name());
+        remTable.setKey3Name(mt.getKey3Name());
+        remTable.setSystemTable(mt.isSystemTable());
+
+        this.mappingTableFacade.edit(remTable);
+
+        return remTable;
     }
     
     
