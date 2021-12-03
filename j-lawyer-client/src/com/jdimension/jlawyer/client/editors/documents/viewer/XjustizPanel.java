@@ -704,11 +704,7 @@ public class XjustizPanel extends javax.swing.JPanel implements PreviewPanel {
         this.docId = docId;
         this.docName=docName;
         
-        if (SystemUtils.isWindows()) {
-            this.cmdOpenXjustizViewer.setEnabled(true);
-        } else {
-            this.cmdOpenXjustizViewer.setEnabled(false);
-        }
+        this.cmdOpenXjustizViewer.setEnabled(SystemUtils.isWindows());
     }
 
     /**

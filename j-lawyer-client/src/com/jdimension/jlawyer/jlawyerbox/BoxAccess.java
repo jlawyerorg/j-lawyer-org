@@ -686,6 +686,7 @@ import themes.colors.DefaultColorTheme;
  */
 public class BoxAccess {
 
+    private static String MSG_AUTH_FAIL="Auth fail";
     private String password = null;
 
     public BoxAccess(String password) {
@@ -725,7 +726,7 @@ public class BoxAccess {
                 ThreadUtils.setVisible(progress, false);
             } catch (Throwable e) {
                 String msg = e.getMessage();
-                if (msg != null && msg.contains("Auth fail")) {
+                if (msg != null && msg.contains(MSG_AUTH_FAIL)) {
                     msg = "Falsches Passwort!";
                 }
                 ThreadUtils.setLabel(output, msg);
@@ -795,7 +796,7 @@ public class BoxAccess {
                 ThreadUtils.setVisible(progress, false);
             } catch (Throwable e) {
                 String msg = e.getMessage();
-                if (msg != null && msg.contains("Auth fail")) {
+                if (msg != null && msg.contains(MSG_AUTH_FAIL)) {
                     msg = "Falsches Passwort!";
                 }
                 ThreadUtils.setLabel(output, msg);
@@ -835,7 +836,7 @@ public class BoxAccess {
                 ThreadUtils.setVisible(progress, false);
             } catch (Throwable e) {
                 String msg = e.getMessage();
-                if (msg != null && msg.contains("Auth fail")) {
+                if (msg != null && msg.contains(MSG_AUTH_FAIL)) {
                     msg = "Falsches Passwort!";
                 } else {
                     msg= "Fehler - bitte restore.log in der Freigabe der Box prüfen - " + msg;
@@ -866,7 +867,7 @@ public class BoxAccess {
                 ThreadUtils.setVisible(progress, false);
             } catch (Throwable e) {
                 String msg = e.getMessage();
-                if (msg != null && msg.contains("Auth fail")) {
+                if (msg != null && msg.contains(MSG_AUTH_FAIL)) {
                     msg = "Falsches Passwort!";
                 }
                 ThreadUtils.setLabel(output, msg);
@@ -899,7 +900,7 @@ public class BoxAccess {
                 ThreadUtils.setVisible(progress, false);
             } catch (Throwable e) {
                 String msg = e.getMessage();
-                if (msg != null && msg.contains("Auth fail")) {
+                if (msg != null && msg.contains(MSG_AUTH_FAIL)) {
                     msg = "Falsches Passwort!";
                 }
                 ThreadUtils.setLabel(output, msg);
@@ -927,7 +928,7 @@ public class BoxAccess {
                 
             } catch (Throwable e) {
                 String msg = e.getMessage();
-                if (msg != null && msg.contains("Auth fail")) {
+                if (msg != null && msg.contains(MSG_AUTH_FAIL)) {
                     msg = "Falsches Passwort!";
                 }
                 ThreadUtils.setLabel(output, msg);
@@ -955,7 +956,7 @@ public class BoxAccess {
                 
             } catch (Throwable e) {
                 String msg = e.getMessage();
-                if (msg != null && msg.contains("Auth fail")) {
+                if (msg != null && msg.contains(MSG_AUTH_FAIL)) {
                     msg = "Falsches Passwort!";
                 }
                 ThreadUtils.setLabel(output, msg);

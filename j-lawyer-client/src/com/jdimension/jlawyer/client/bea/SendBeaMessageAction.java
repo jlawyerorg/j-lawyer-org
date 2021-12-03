@@ -903,7 +903,7 @@ public class SendBeaMessageAction extends ProgressableAction {
 
                         ArchiveFileHistoryBean historyDto = new ArchiveFileHistoryBean();
                         historyDto.setChangeDate(new Date());
-                        historyDto.setChangeDescription("beA-Nachricht gesendet an " + recipientsText.toString() + ": " + msg.getSubject());
+                        historyDto.setChangeDescription("beA-Nachricht gesendet an " + recipientsText + ": " + msg.getSubject());
                         afs.addHistory(this.archiveFile.getId(), historyDto);
 
                         if(folder!=null)
