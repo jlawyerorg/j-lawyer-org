@@ -681,14 +681,13 @@ public class FileConverter {
     public static final List<String> OUTPUTTYPES = Arrays.asList("bmp", "csv", "doc", "docx", "jpg", "odp", "ods", "odt", "pdf", "png", "ppt", "pptx", "rtf", "tiff", "txt", "xls", "xlsx");
 
     public static FileConverter getInstance() {
-        String osName = System.getProperty("os.name").toLowerCase();
-        if (osName.contains("win")) {
+        if (SystemUtils.isWindows()) {
             WindowsFileConverter wfc = new WindowsFileConverter();
             return wfc;
-        } else if (osName.contains("linux")) {
+        } else if (SystemUtils.isLinux()) {
             LinuxFileConverter lfc = new LinuxFileConverter();
             return lfc;
-        } else if (osName.startsWith("mac")) {
+        } else if (SystemUtils.isMacOs()) {
             MacFileConverter mfc = new MacFileConverter();
             return mfc;
         }

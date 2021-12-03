@@ -682,6 +682,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Enumeration;
+import java.util.List;
 import javax.swing.JDialog;
 import javax.swing.JOptionPane;
 import org.apache.commons.io.FileUtils;
@@ -701,7 +702,7 @@ public class SaveBeaMessageAction extends ProgressableAction {
 
     private static final Logger log = Logger.getLogger(SaveBeaMessageAction.class.getName());
     private SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy, HH:mm");
-    private ArrayList<String> attachments = null;
+    private List<BeaAttachmentMetadata> attachments = null;
     private AppUserBean cu = null;
     private boolean readReceipt = false;
     private BeaListItem authority = null;
@@ -717,9 +718,9 @@ public class SaveBeaMessageAction extends ProgressableAction {
 
     private CaseFolder folder = null;
 
-    public SaveBeaMessageAction(ProgressIndicator i, JDialog cleanAfter, String fromSafeId, ArrayList<String> attachments, AppUserBean cu, boolean readReceipt, BeaListItem authority, Identity to, String subject, String body, String documentTag, String azSender, String azRecipient) {
+    public SaveBeaMessageAction(ProgressIndicator i, JDialog cleanAfter, String fromSafeId, List<BeaAttachmentMetadata> attachmentMetadata, AppUserBean cu, boolean readReceipt, BeaListItem authority, Identity to, String subject, String body, String documentTag, String azSender, String azRecipient) {
         super(i, false, cleanAfter);
-        this.attachments = attachments;
+        this.attachments = attachmentMetadata;
         this.cu = cu;
         this.readReceipt = readReceipt;
         this.to = to;
@@ -733,8 +734,8 @@ public class SaveBeaMessageAction extends ProgressableAction {
         this.azRecipient = azRecipient;
     }
 
-    public SaveBeaMessageAction(ProgressIndicator i, JDialog cleanAfter, String fromSafeId, ArrayList<String> attachments, AppUserBean cu, boolean readReceipt, BeaListItem authority, Identity to, String subject, String body, ArchiveFileBean af, String documentTag, String azSender, String azRecipient, CaseFolder folder) {
-        this(i, cleanAfter, fromSafeId, attachments, cu, readReceipt, authority, to, subject, body, documentTag, azSender, azRecipient);
+    public SaveBeaMessageAction(ProgressIndicator i, JDialog cleanAfter, String fromSafeId, List<BeaAttachmentMetadata> attachmentMetadata, AppUserBean cu, boolean readReceipt, BeaListItem authority, Identity to, String subject, String body, ArchiveFileBean af, String documentTag, String azSender, String azRecipient, CaseFolder folder) {
+        this(i, cleanAfter, fromSafeId, attachmentMetadata, cu, readReceipt, authority, to, subject, body, documentTag, azSender, azRecipient);
         this.archiveFile = af;
         this.folder = folder;
     }
@@ -771,21 +772,19 @@ public class SaveBeaMessageAction extends ProgressableAction {
                 msg.setReferenceJustice(this.azRecipient);
             }
 
-            if (this.archiveFile != null) {
-                msg.setReferenceNumber(this.archiveFile.getFileNumber());
-            }
-
             if (this.to != null) {
                 recipientsText = this.to.toString();
             }
 
             String senderSafeId = this.fromSafeId;
 
-            for (String url : this.attachments) {
+            for (BeaAttachmentMetadata meta : this.attachments) {
                 Attachment att = new Attachment();
-                File f = new File(url);
+                File f = new File(meta.getUrl());
                 att.setFileName(f.getName());
+                att.setAlias(meta.getAlias());
                 att.setContent(FileUtils.readFileToByteArray(f));
+                att.setType(meta.getType());
                 msg.getAttachments().add(att);
             }
 
@@ -871,10 +870,10 @@ public class SaveBeaMessageAction extends ProgressableAction {
             storeException = t;
         }
 
-        for (String url : this.attachments) {
-            File f = new File(url);
+        for (BeaAttachmentMetadata meta : this.attachments) {
+            File f = new File(meta.getUrl());
             if (f.exists()) {
-                LauncherFactory.cleanupTempFile(url);
+                LauncherFactory.cleanupTempFile(meta.getUrl());
             }
         }
 

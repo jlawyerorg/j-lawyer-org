@@ -693,6 +693,7 @@ import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.DesktopUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
+import com.jdimension.jlawyer.client.utils.SystemUtils;
 import com.jdimension.jlawyer.client.utils.SystrayUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.client.utils.VersionUtils;
@@ -840,8 +841,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             this.mnuCalculations.add(mi);
         }
 
-        String osName = System.getProperty("os.name").toLowerCase();
-        if (osName.startsWith("mac")) {
+        if (SystemUtils.isMacOs()) {
             // this is required because the macOS native menu integration provides a menu entry to quit the client
             // using this button, no #formClosing event is sent, which is where the settings are stored.
             Runtime.getRuntime().addShutdownHook(new Thread(() -> {
@@ -2221,8 +2221,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
 
     private void mnuXjustizViewerActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuXjustizViewerActionPerformed
 
-        String osName = System.getProperty("os.name").toLowerCase();
-        if (!(osName.contains("win"))) {
+        if (!(SystemUtils.isWindows())) {
             JOptionPane.showMessageDialog(this, "Der XJustiz-Viewer ist aktuell nur für Windowssysteme verfügbar.", "XJustiz-Viewer herunterladen", JOptionPane.INFORMATION_MESSAGE);
             return;
         }

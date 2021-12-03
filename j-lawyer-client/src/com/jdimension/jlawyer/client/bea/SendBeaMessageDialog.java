@@ -1791,6 +1791,30 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
+    private ArrayList<BeaAttachmentMetadata> getAttachmentMetdata() {
+
+        ArrayList<BeaAttachmentMetadata> attachmentMetadata = new ArrayList<>();
+        for (int i = 0; i < this.tblAttachments.getRowCount(); i++) {
+            String name = this.tblAttachments.getValueAt(i, 5).toString();
+            String alias = this.tblAttachments.getValueAt(i, 4).toString();
+            Boolean schriftsatz = (Boolean) this.tblAttachments.getValueAt(i, 0);
+            for (String fileName : this.attachments.keySet()) {
+                if (name.equals(fileName)) {
+                    BeaAttachmentMetadata meta = new BeaAttachmentMetadata();
+                    meta.setUrl(this.attachments.get(fileName));
+                    meta.setAlias(alias);
+                    if (schriftsatz) {
+                        meta.setType(Attachment.TYPE_SCHRIFTSATZ);
+                    } else {
+                        meta.setType(Attachment.TYPE_ATTACHMENT);
+                    }
+                    attachmentMetadata.add(meta);
+                }
+            }
+        }
+        return attachmentMetadata;
+    }
+    
     private void cmdSendActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSendActionPerformed
 
         if (this.attachments.isEmpty() && this.rdXjustizEeb.isSelected()) {
@@ -1848,25 +1872,7 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
             }
         }
 
-        ArrayList<BeaAttachmentMetadata> attachmentMetadata = new ArrayList<>();
-        for (int i = 0; i < this.tblAttachments.getRowCount(); i++) {
-            String name = this.tblAttachments.getValueAt(i, 5).toString();
-            String alias = this.tblAttachments.getValueAt(i, 4).toString();
-            Boolean schriftsatz = (Boolean) this.tblAttachments.getValueAt(i, 0);
-            for (String fileName : this.attachments.keySet()) {
-                if (name.equals(fileName)) {
-                    BeaAttachmentMetadata meta = new BeaAttachmentMetadata();
-                    meta.setUrl(this.attachments.get(fileName));
-                    meta.setAlias(alias);
-                    if (schriftsatz) {
-                        meta.setType(Attachment.TYPE_SCHRIFTSATZ);
-                    } else {
-                        meta.setType(Attachment.TYPE_ATTACHMENT);
-                    }
-                    attachmentMetadata.add(meta);
-                }
-            }
-        }
+        ArrayList<BeaAttachmentMetadata> attachmentMetadata = this.getAttachmentMetdata();
 
         String messageType=Message.MESSAGETYPE_ALLGEMEINE_NACHRICHT;
         if(this.cmbMessageType.getSelectedItem().equals("Testnachricht"))
@@ -2248,10 +2254,12 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
             recipient=(Identity)((DefaultListModel) this.lstTo.getModel()).elements().nextElement();
         }
         
+        ArrayList<BeaAttachmentMetadata> attachmentMetadata = this.getAttachmentMetdata();
+        
         if (this.chkSaveAsDocument.isSelected()) {
-            a = new SaveBeaMessageAction(dlg, this, fromSafeId, new ArrayList(this.attachments.values()), this.cu, this.rdXjustizEeb.isSelected(), this.authority, recipient, this.txtSubject.getText(), ed.getText(), this.contextArchiveFile, createDocumentTag, this.txtAzSender.getText(), this.cmbAzRecipient.getSelectedItem().toString(), folder);
+            a = new SaveBeaMessageAction(dlg, this, fromSafeId, attachmentMetadata, this.cu, this.rdXjustizEeb.isSelected(), this.authority, recipient, this.txtSubject.getText(), ed.getText(), this.contextArchiveFile, createDocumentTag, this.txtAzSender.getText(), this.cmbAzRecipient.getEditor().getItem().toString(), folder);
         } else {
-            a = new SaveBeaMessageAction(dlg, this, fromSafeId, new ArrayList(this.attachments.values()), this.cu, this.rdXjustizEeb.isSelected(), this.authority, recipient, this.txtSubject.getText(), ed.getText(), createDocumentTag, this.txtAzSender.getText(), this.cmbAzRecipient.getSelectedItem().toString());
+            a = new SaveBeaMessageAction(dlg, this, fromSafeId, attachmentMetadata, this.cu, this.rdXjustizEeb.isSelected(), this.authority, recipient, this.txtSubject.getText(), ed.getText(), createDocumentTag, this.txtAzSender.getText(), this.cmbAzRecipient.getEditor().getItem().toString());
         }
         a.start();
 

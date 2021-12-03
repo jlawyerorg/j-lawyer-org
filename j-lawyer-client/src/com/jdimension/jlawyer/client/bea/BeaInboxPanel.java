@@ -685,6 +685,7 @@ import com.jdimension.jlawyer.client.mail.sidebar.NavigateToAddressPanel;
 import com.jdimension.jlawyer.client.mail.sidebar.SaveToCasePanel;
 import com.jdimension.jlawyer.client.processing.ProgressIndicator;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.client.settings.ServerSettings;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.*;
 import com.jdimension.jlawyer.persistence.AddressBean;
@@ -774,6 +775,32 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
         this.initializing = true;
 
         initComponents();
+        
+        this.lblTempFilesWarning.setIcon(null);
+        this.lblTempFilesWarning.setText("");
+        
+        try {
+            
+            new Thread(() -> {
+                try {
+                    int tempFolders=BeaAccess.countTempFolders();
+                    int tempFoldersLimit=ServerSettings.getInstance().getSettingAsInt("jlawyer.server.bea.maxtempfolders", 800);
+                    if(tempFolders>tempFoldersLimit) {
+                        SwingUtilities.invokeLater(() -> {
+                            lblTempFilesWarning.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/messagebox_warning.png"))); // NOI18N
+                            lblTempFilesWarning.setText("Hinweis: temporäre Dateien");
+                            lblTempFilesWarning.setToolTipText("Verzeichnis " + System.lineSeparator() + "   " + BeaAccess.getTempFolder() + System.lineSeparator() + "enthält " + tempFolders + " Ordner - Verzeichnis sollte manuell bereinigt werden," + System.lineSeparator() + "anderenfalls ist mit Geschwindigkeitseinbußen zu rechnen.");
+                        });
+                    }
+                } catch (Exception ex) {
+                    log.error(ex);
+                }
+                initializing = false;
+            }).start();
+
+        } catch (Exception ex) {
+            log.error(ex);
+        }
 
         ComponentUtils.decorateSplitPane(jSplitPane1);
         ComponentUtils.decorateSplitPane(this.mainSplitter);
@@ -1069,6 +1096,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
         chkDocumentTagging = new javax.swing.JCheckBox();
         cmbCaseTag = new javax.swing.JComboBox<>();
         chkCaseTagging = new javax.swing.JCheckBox();
+        lblTempFilesWarning = new javax.swing.JLabel();
 
         mnuNewFolder.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/edit_add.png"))); // NOI18N
         mnuNewFolder.setText("neuer Ordner");
@@ -1361,6 +1389,9 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
             }
         });
 
+        lblTempFilesWarning.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/messagebox_warning.png"))); // NOI18N
+        lblTempFilesWarning.setText("Hinweis: temporäre Dateien");
+
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -1369,7 +1400,8 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                 .addContainerGap()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
                     .add(layout.createSequentialGroup()
-                        .add(0, 0, Short.MAX_VALUE)
+                        .add(lblTempFilesWarning)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .add(chkCaseTagging)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(cmbCaseTag, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
@@ -1410,7 +1442,8 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                     .add(cmbDocumentTag, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(chkDocumentTagging)
                     .add(cmbCaseTag, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(chkCaseTagging))
+                    .add(chkCaseTagging)
+                    .add(lblTempFilesWarning))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(mainSplitter, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 407, Short.MAX_VALUE)
                 .addContainerGap())
@@ -2901,6 +2934,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
     private javax.swing.JSplitPane jSplitPane1;
     private javax.swing.JToolBar jToolBar1;
     protected javax.swing.JLabel lblPanelTitle;
+    private javax.swing.JLabel lblTempFilesWarning;
     private javax.swing.JSplitPane mainSplitter;
     private javax.swing.JMenuItem mnuEmptyTrash;
     private javax.swing.JMenuItem mnuNewFolder;

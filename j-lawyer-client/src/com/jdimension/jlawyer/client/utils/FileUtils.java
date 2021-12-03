@@ -724,9 +724,7 @@ public class FileUtils extends ServerFileUtils {
 
         try {
 
-            String osName = System.getProperty("os.name").toLowerCase();
-
-            if (osName.contains("linux") || osName.startsWith("mac")) {
+            if (SystemUtils.isLinux()|| SystemUtils.isMacOs()) {
 
                 if (fileExt.startsWith(".")) {
                     fileExt = fileExt.substring(1, fileExt.length());
@@ -808,9 +806,7 @@ public class FileUtils extends ServerFileUtils {
 
         try {
 
-            String osName = System.getProperty("os.name").toLowerCase();
-
-            if (osName.contains("linux") || osName.startsWith("mac")) {
+            if (SystemUtils.isLinux()|| SystemUtils.isMacOs()) {
 
                 if (fileExt.startsWith(".")) {
                     fileExt = fileExt.substring(1, fileExt.length());
@@ -989,8 +985,6 @@ public class FileUtils extends ServerFileUtils {
             deleteOnExit = false;
         }
 
-        String osName = System.getProperty("os.name").toLowerCase();
-
         String tmpDir = System.getProperty("java.io.tmpdir");
         if (deleteAfterDays > -1) {
             tmpDir = System.getProperty("user.home") + System.getProperty("file.separator") + ".j-lawyer-client" + System.getProperty("file.separator") + "tmp-documents";
@@ -998,7 +992,7 @@ public class FileUtils extends ServerFileUtils {
         
         boolean wordOnMac=false;
 
-        if (osName.startsWith("mac")) {
+        if (SystemUtils.isMacOs()) {
 
             ClientSettings set = ClientSettings.getInstance();
             String wordProcessor = set.getConfiguration(ClientSettings.CONF_APPS_WORDPROCESSOR_KEY, ClientSettings.CONF_APPS_WORDPROCESSOR_VALUE_LO);
