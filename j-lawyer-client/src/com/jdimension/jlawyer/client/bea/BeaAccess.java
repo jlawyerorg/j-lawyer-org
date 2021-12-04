@@ -673,6 +673,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Hashtable;
+import javax.swing.ImageIcon;
 import org.apache.log4j.Logger;
 import org.ehcache.Cache;
 import org.ehcache.PersistentCacheManager;
@@ -692,6 +693,7 @@ import org.jlawyer.bea.model.MessageHeader;
 import org.jlawyer.bea.model.MessageJournalEntry;
 import org.jlawyer.bea.model.PostBox;
 import org.jlawyer.bea.model.ProcessCard;
+import org.jlawyer.bea.model.VerificationResult;
 import org.jlawyer.bea.xjustiz.EebRequestAttributes;
 import org.jlawyer.bea.xjustiz.EebResponseAttributes;
 
@@ -958,6 +960,22 @@ public class BeaAccess {
         }
         return this.importedFolderCache.get(safeId);
     }
+    
+    public VerificationResult verifyMessage(String messageId) throws BeaWrapperException {
+        this.checkValidBeaClient();
+        return this.wrapper.verifyMessage(messageId);
+    }
+    
+    public static ImageIcon getSignatureStatusIcon(String status) {
+        if(status.equalsIgnoreCase(VerificationResult.STATUS_SUCCESS)) {
+            return new javax.swing.ImageIcon(BeaAccess.class.getResource("/com/jdimension/jlawyer/client/bea/signature-success.png"));
+        } else if(status.equalsIgnoreCase(VerificationResult.STATUS_PARTIAL)) {
+            return new javax.swing.ImageIcon(BeaAccess.class.getResource("/com/jdimension/jlawyer/client/bea/signature-partial.png"));
+        } else if(status.equalsIgnoreCase(VerificationResult.STATUS_FAILED)) {
+            return new javax.swing.ImageIcon(BeaAccess.class.getResource("/com/jdimension/jlawyer/client/bea/signature-fail.png"));
+        }
+        return new javax.swing.ImageIcon(BeaAccess.class.getResource("/com/jdimension/jlawyer/client/bea/signature-unknown.png"));
+    }
 
     public Collection<Folder> getFolderStructure(String safeId) throws BeaWrapperException {
         this.checkValidBeaClient();
@@ -1138,6 +1156,17 @@ public class BeaAccess {
 
     public static MessageExport exportMessage(Message msg) throws BeaWrapperException {
         return BeaWrapper.exportMessage(msg);
+    }
+    
+    public static void addSignatureVerification(BeaAccess bea, Message msg) {
+        try {
+            VerificationResult vr = bea.verifyMessage(msg.getId());
+            msg.setVerificationHtml(vr.getHtml());
+            msg.setVerificationStatus(vr.getStatus());
+            msg.setVerificationXml(vr.getXml());
+        } catch (Throwable t) {
+            log.error("Could not verify message " + msg.getId() + " - exporting without verification data", t);
+        }
     }
 
 //    public long sendMessage(Message msg, String senderSafeId, ArrayList<String> recipientSafeIds, BeaListItem authority) throws BeaWrapperException {

@@ -856,7 +856,8 @@ public class SendBeaMessageAction extends ProgressableAction {
 
                 if (!this.isCancelled()) {
                     this.progress("Speichern in Akte " + this.archiveFile.getFileNumber());
-                    MessageExport mex = bea.exportMessage(msgEx);
+                    BeaAccess.addSignatureVerification(bea, msgEx);
+                    MessageExport mex = BeaAccess.exportMessage(msgEx);
 
                     java.util.Date receivedPrefix = msg.getReceptionTime();
                     if (receivedPrefix == null) {

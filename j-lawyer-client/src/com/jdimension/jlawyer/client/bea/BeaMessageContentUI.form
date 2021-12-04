@@ -91,6 +91,8 @@
                           <Component id="jPanel1" alignment="0" max="32767" attributes="0"/>
                           <Group type="102" alignment="0" attributes="0">
                               <Component id="cmdToPdf" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Component id="cmdVerifySignatures" min="-2" max="-2" attributes="0"/>
                               <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                           </Group>
                       </Group>
@@ -102,11 +104,14 @@
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" alignment="1" attributes="0">
                       <EmptySpace max="-2" attributes="0"/>
-                      <Component id="cmdToPdf" min="-2" max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="0" max="-2" attributes="0">
+                          <Component id="cmdVerifySignatures" max="32767" attributes="0"/>
+                          <Component id="cmdToPdf" max="32767" attributes="0"/>
+                      </Group>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="jPanel1" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
-                      <Component id="jSplitPane1" pref="342" max="32767" attributes="0"/>
+                      <Component id="jSplitPane1" pref="338" max="32767" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                   </Group>
               </Group>
@@ -166,11 +171,13 @@
                               <Component id="lblSubject" alignment="3" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <EmptySpace max="-2" attributes="0"/>
-                          <Group type="103" groupAlignment="3" attributes="0">
-                              <Component id="jLabel2" alignment="3" min="-2" max="-2" attributes="0"/>
-                              <Component id="lblFrom" alignment="3" min="-2" max="-2" attributes="0"/>
-                              <Component id="lblCaseNumber" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Group type="103" groupAlignment="0" attributes="0">
                               <Component id="lblEeb" alignment="1" min="-2" max="-2" attributes="0"/>
+                              <Group type="103" groupAlignment="3" attributes="0">
+                                  <Component id="jLabel2" alignment="3" min="-2" max="-2" attributes="0"/>
+                                  <Component id="lblFrom" alignment="3" min="-2" max="-2" attributes="0"/>
+                                  <Component id="lblCaseNumber" alignment="3" min="-2" max="-2" attributes="0"/>
+                              </Group>
                           </Group>
                           <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="3" attributes="0">
@@ -361,6 +368,17 @@
               </Properties>
               <Events>
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdToPdfActionPerformed"/>
+              </Events>
+            </Component>
+            <Component class="javax.swing.JButton" name="cmdVerifySignatures">
+              <Properties>
+                <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                  <Image iconType="3" name="/icons16/material/baseline_policy_black_24dp.png"/>
+                </Property>
+                <Property name="toolTipText" type="java.lang.String" value="Nachricht als PDF anzeigen / drucken"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdVerifySignaturesActionPerformed"/>
               </Events>
             </Component>
           </SubComponents>

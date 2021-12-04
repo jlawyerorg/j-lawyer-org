@@ -693,6 +693,7 @@ import org.jlawyer.bea.model.Identity;
 import org.jlawyer.bea.model.BeaListItem;
 import org.jlawyer.bea.model.Message;
 import org.jlawyer.bea.model.MessageExport;
+import org.jlawyer.bea.model.VerificationResult;
 
 /**
  *
@@ -816,7 +817,8 @@ public class SaveBeaMessageAction extends ProgressableAction {
                 this.progress("Speichern in Akte " + this.archiveFile.getFileNumber());
 
                 Message msgEx = bea.getMessage(sentId, fromSafeId);
-                MessageExport mex = bea.exportMessage(msgEx);
+                BeaAccess.addSignatureVerification(bea, msgEx);
+                MessageExport mex = BeaAccess.exportMessage(msgEx);
 
                 java.util.Date receivedPrefix = msg.getReceptionTime();
                 if (receivedPrefix == null) {

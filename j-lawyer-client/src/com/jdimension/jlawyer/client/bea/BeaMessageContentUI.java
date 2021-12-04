@@ -704,6 +704,7 @@ import org.jlawyer.bea.model.MessageJournalEntry;
 import org.jlawyer.bea.model.PostBox;
 import org.jlawyer.bea.model.ProcessCard;
 import org.jlawyer.bea.model.ProcessCardEntry;
+import org.jlawyer.bea.model.VerificationResult;
 
 /**
  *
@@ -723,7 +724,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
         initComponents();
 
         ComponentUtils.decorateSplitPane(jSplitPane1);
-        
+
         this.jScrollPane1.setPreferredSize(new Dimension((int) this.jScrollPane1.getSize().getWidth(), (int) this.jScrollPane1.getSize().getHeight()));
 
         this.lblSentDate.setText(" ");
@@ -823,7 +824,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
                 dlg.setInfinite(true);
                 return;
             } else {
-                BeaMessageContentUI.setMessageImpl(this, msg, this.lblSubject, this.lblSentDate, this.lblTo, this.lblFrom, this.lblCaseNumber, this.lblReferenceJustice, this.editBody, this.lstAttachments, false, this.tblJournal, this.tblProcessCard, this.lblEeb, this.jTabbedPane1);
+                BeaMessageContentUI.setMessageImpl(this, msg, this.lblSubject, this.lblSentDate, this.lblTo, this.lblFrom, this.lblCaseNumber, this.lblReferenceJustice, this.editBody, this.lstAttachments, false, this.tblJournal, this.tblProcessCard, this.lblEeb, this.jTabbedPane1, this.cmdVerifySignatures);
             }
 
         } catch (Exception ex) {
@@ -832,7 +833,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
         }
     }
 
-    public static void setMessageImpl(BeaMessageContentUI contentUI, Message msg, JLabel lblSubject, JLabel lblSentDate, JLabel lblTo, JLabel lblFrom, JLabel lblCaseNumber, JLabel lblReferenceJustice, JEditorPane editBody, JList lstAttachments, boolean edt, JTable journalTable, JTable processCardTable, JLabel lblEeb, JTabbedPane tabs) throws Exception {
+    public static void setMessageImpl(BeaMessageContentUI contentUI, Message msg, JLabel lblSubject, JLabel lblSentDate, JLabel lblTo, JLabel lblFrom, JLabel lblCaseNumber, JLabel lblReferenceJustice, JEditorPane editBody, JList lstAttachments, boolean edt, JTable journalTable, JTable processCardTable, JLabel lblEeb, JTabbedPane tabs, JButton cmdVerify) throws Exception {
         // we copy the message to avoid the "Unable to load BODYSTRUCTURE" issue
 
         if (msg.getReceptionTime() == null) {
@@ -898,6 +899,18 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
 
             }
         }
+        
+        if(!StringUtils.isEmpty(msg.getVerificationStatus())) {
+            cmdVerify.setIcon(BeaAccess.getSignatureStatusIcon(msg.getVerificationStatus()));
+            cmdVerify.setToolTipText("Status der Signaturprüfungen unbekannt");
+            if (msg.getVerificationStatus().equalsIgnoreCase(VerificationResult.STATUS_SUCCESS)) {
+                cmdVerify.setToolTipText("alle Signaturen korrekt");
+            } else if (msg.getVerificationStatus().equalsIgnoreCase(VerificationResult.STATUS_PARTIAL)) {
+                cmdVerify.setToolTipText("einige Signaturen mit unbekanntem Status");
+            } else if (msg.getVerificationStatus().equalsIgnoreCase(VerificationResult.STATUS_FAILED)) {
+                cmdVerify.setToolTipText("eine odere mehrere inkorrekte Signaturen");
+            }
+        }
 
     }
 
@@ -935,6 +948,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
         jScrollPane2 = new javax.swing.JScrollPane();
         lstAttachments = new javax.swing.JList();
         cmdToPdf = new javax.swing.JButton();
+        cmdVerifySignatures = new javax.swing.JButton();
         jPanel4 = new javax.swing.JPanel();
         jScrollPane3 = new javax.swing.JScrollPane();
         tblJournal = new javax.swing.JTable();
@@ -1027,11 +1041,12 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
                     .addComponent(lblSentDate)
                     .addComponent(lblSubject))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel2)
-                    .addComponent(lblFrom)
-                    .addComponent(lblCaseNumber)
-                    .addComponent(lblEeb))
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(lblEeb, javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(jLabel2)
+                        .addComponent(lblFrom)
+                        .addComponent(lblCaseNumber)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel3)
@@ -1109,6 +1124,14 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
             }
         });
 
+        cmdVerifySignatures.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_policy_black_24dp.png"))); // NOI18N
+        cmdVerifySignatures.setToolTipText("Nachricht als PDF anzeigen / drucken");
+        cmdVerifySignatures.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdVerifySignaturesActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);
         jPanel3Layout.setHorizontalGroup(
@@ -1120,6 +1143,8 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
                     .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(jPanel3Layout.createSequentialGroup()
                         .addComponent(cmdToPdf)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmdVerifySignatures)
                         .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
@@ -1127,11 +1152,13 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel3Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(cmdToPdf)
+                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(cmdVerifySignatures, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(cmdToPdf, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jSplitPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 342, Short.MAX_VALUE)
+                .addComponent(jSplitPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 338, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -1311,13 +1338,13 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
 
                 boolean validName = false;
                 File f = null;
-                boolean skipToNext=false;
+                boolean skipToNext = false;
                 while (!validName) {
                     JFileChooser chooser = new JFileChooser(useFolder);
                     chooser.setSelectedFile(new File(selected.toString()));
                     int result = chooser.showSaveDialog(this);
                     if (result == JFileChooser.CANCEL_OPTION) {
-                        skipToNext=true;
+                        skipToNext = true;
                         break;
                     }
 
@@ -1325,19 +1352,20 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
                     if (f == null) {
                         return;
                     }
-                    
-                    if(f.exists()) {
+
+                    if (f.exists()) {
                         int response = JOptionPane.showConfirmDialog(this, "Die Datei existiert bereits. Überschreiben?", "Datei überschreiben", JOptionPane.YES_NO_OPTION);
                         if (response == JOptionPane.YES_OPTION) {
-                            validName=true;
+                            validName = true;
                         }
                     } else {
-                        validName=true;
+                        validName = true;
                     }
 
                 }
-                if(skipToNext)
+                if (skipToNext) {
                     continue;
+                }
 
                 if (!f.exists()) {
                     f.createNewFile();
@@ -1438,6 +1466,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
             ArrayList<MessageJournalEntry> journal = bea.getMessageJournal(this.msgContainer.getId());
             this.msgContainer.setJournal(journal);
             if (this.documentId != null) {
+                BeaAccess.addSignatureVerification(bea, msgContainer);
                 MessageExport mex = BeaAccess.exportMessage(msgContainer);
                 try {
                     JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
@@ -1487,6 +1516,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
                 }
             }
             if (this.documentId != null) {
+                BeaAccess.addSignatureVerification(BeaAccess.getInstance(), msgContainer);
                 MessageExport mex = BeaAccess.exportMessage(msgContainer);
                 try {
                     JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
@@ -1527,11 +1557,58 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
         }
     }//GEN-LAST:event_cmdToPdfActionPerformed
 
+    private void cmdVerifySignaturesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdVerifySignaturesActionPerformed
+        if (this.msgContainer == null) {
+            return;
+        }
+
+        try {
+
+            String vHtml = "";
+            String vStatus = VerificationResult.STATUS_FAILED;
+            if (StringUtils.isEmpty(this.msgContainer.getVerificationHtml()) || StringUtils.isEmpty(this.msgContainer.getVerificationStatus())) {
+
+                if (!BeaAccess.hasInstance()) {
+                    BeaLoginCallback callback = null;
+                    try {
+                        callback = (BeaLoginCallback) EditorsRegistry.getInstance().getEditor(BeaInboxPanel.class.getName());
+                    } catch (Throwable t) {
+                        log.error(t);
+                    }
+
+                    BeaLoginDialog loginPanel = new BeaLoginDialog(EditorsRegistry.getInstance().getMainWindow(), true, callback);
+                    loginPanel.setVisible(true);
+                    if (!BeaAccess.hasInstance()) {
+                        ThreadUtils.showErrorDialog(this, "beA-Login fehlgeschlagen", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
+                        return;
+                    }
+                }
+                BeaAccess bea = BeaAccess.getInstance();
+                VerificationResult vr = bea.verifyMessage(this.msgContainer.getId());
+                vHtml=vr.getHtml();
+                vStatus=vr.getStatus();
+            } else {
+                vHtml=this.msgContainer.getVerificationHtml();
+                vStatus=this.msgContainer.getVerificationStatus();
+            }
+
+            BeaSignaturesVerificationDialog dlg = new BeaSignaturesVerificationDialog(EditorsRegistry.getInstance().getMainWindow(), true);
+            dlg.setHtml(vHtml);
+            dlg.setStatus(vStatus);
+            FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
+            dlg.setVisible(true);
+
+        } catch (Throwable t) {
+            ThreadUtils.showErrorDialog(this, "Fehler bei der Signaturprüfung: " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
+        }
+    }//GEN-LAST:event_cmdVerifySignaturesActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton cmdRefreshJournal;
     private javax.swing.JButton cmdRefreshProcessCard;
     private javax.swing.JButton cmdShowProcessCard;
     private javax.swing.JButton cmdToPdf;
+    private javax.swing.JButton cmdVerifySignatures;
     private javax.swing.JEditorPane editBody;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;

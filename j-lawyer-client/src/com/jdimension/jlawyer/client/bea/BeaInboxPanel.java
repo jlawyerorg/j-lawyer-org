@@ -2513,11 +2513,13 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                 byte[] data = null;
 
                 if (withAttachments) {
+                    BeaAccess.addSignatureVerification(BeaAccess.getInstance(), m);
                     export = BeaAccess.exportMessage(m);
                     data = export.getContent();
                 } else {
                     Message clone = (Message) m.clone();
                     clone.getAttachments().clear();
+                    BeaAccess.addSignatureVerification(BeaAccess.getInstance(), clone);
                     export = BeaAccess.exportMessage(clone);
                     data = export.getContent();
                 }
