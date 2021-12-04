@@ -704,6 +704,7 @@ import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.services.Keyword;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Desktop;
 import java.awt.Graphics;
 import java.awt.GridLayout;
 import java.awt.Image;
@@ -784,7 +785,7 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
             new Thread(() -> {
                 try {
                     int tempFolders=BeaAccess.countTempFolders();
-                    int tempFoldersLimit=ServerSettings.getInstance().getSettingAsInt("jlawyer.server.bea.maxtempfolders", 800);
+                    int tempFoldersLimit=ServerSettings.getInstance().getSettingAsInt("jlawyer.server.bea.maxtempfolders", 500);
                     if(tempFolders>tempFoldersLimit) {
                         SwingUtilities.invokeLater(() -> {
                             lblTempFilesWarning.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/messagebox_warning.png"))); // NOI18N
@@ -1391,6 +1392,12 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
 
         lblTempFilesWarning.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/messagebox_warning.png"))); // NOI18N
         lblTempFilesWarning.setText("Hinweis: temporäre Dateien");
+        lblTempFilesWarning.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        lblTempFilesWarning.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                lblTempFilesWarningMouseClicked(evt);
+            }
+        });
 
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(this);
         this.setLayout(layout);
@@ -2062,6 +2069,15 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
         boolean move = this.chkMoveToImported.isSelected();
         settings.setConfiguration(ClientSettings.CONF_BEA_MOVETOIMPORTEDENABLED, "" + move);
     }//GEN-LAST:event_chkMoveToImportedActionPerformed
+
+    private void lblTempFilesWarningMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblTempFilesWarningMouseClicked
+        try {
+            Desktop.getDesktop().open(new File(BeaAccess.getTempFolder()));
+        } catch (Throwable t) {
+            log.error("Could not open file explorer for bea temp folder " + BeaAccess.getTempFolder(), t);
+            JOptionPane.showMessageDialog(this, "Verzeichnis kann nicht geöffnet werden: " + t.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+    }//GEN-LAST:event_lblTempFilesWarningMouseClicked
 
     private void displayMessage() {
 
@@ -2867,7 +2883,6 @@ public class BeaInboxPanel extends javax.swing.JPanel implements SaveToCaseExecu
                             log.error("Unknown XJustiz file type!");
                         }
 
-                        System.out.println(html);
                         BeaEebDisplayDialog dlg = new BeaEebDisplayDialog(EditorsRegistry.getInstance().getMainWindow(), true);
                         dlg.setHtml(html);
                         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
