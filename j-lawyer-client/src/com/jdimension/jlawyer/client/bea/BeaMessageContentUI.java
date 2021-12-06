@@ -716,6 +716,11 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
     private static final String DATEFORMAT = "dd.MM.yyyy HH:mm";
     private Message msgContainer = null;
     private String documentId = null;
+    
+    private static ImageIcon ICON_SENDSTATUS_INVALID=new javax.swing.ImageIcon(BeaMessageContentUI.class.getResource("/com/jdimension/jlawyer/client/bea/send-invalid.png"));
+    private static ImageIcon ICON_SENDSTATUS_UNKNOWN=new javax.swing.ImageIcon(BeaMessageContentUI.class.getResource("/com/jdimension/jlawyer/client/bea/send-unknown.png"));
+    private static ImageIcon ICON_SENDSTATUS_SUCCESS=new javax.swing.ImageIcon(BeaMessageContentUI.class.getResource("/com/jdimension/jlawyer/client/bea/send-success.png"));
+    private static ImageIcon ICON_SENDSTATUS_FAIL=new javax.swing.ImageIcon(BeaMessageContentUI.class.getResource("/com/jdimension/jlawyer/client/bea/send-failed.png"));
 
     /**
      * Creates new form BeaMessageContentUI
@@ -724,6 +729,9 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
         initComponents();
 
         ComponentUtils.decorateSplitPane(jSplitPane1);
+        
+        this.lblSendStatus.setText("");
+        this.lblSendStatus.setToolTipText("");
 
         this.jScrollPane1.setPreferredSize(new Dimension((int) this.jScrollPane1.getSize().getWidth(), (int) this.jScrollPane1.getSize().getHeight()));
 
@@ -824,7 +832,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
                 dlg.setInfinite(true);
                 return;
             } else {
-                BeaMessageContentUI.setMessageImpl(this, msg, this.lblSubject, this.lblSentDate, this.lblTo, this.lblFrom, this.lblCaseNumber, this.lblReferenceJustice, this.editBody, this.lstAttachments, false, this.tblJournal, this.tblProcessCard, this.lblEeb, this.jTabbedPane1, this.cmdVerifySignatures);
+                BeaMessageContentUI.setMessageImpl(this, msg, this.lblSubject, this.lblSentDate, this.lblTo, this.lblFrom, this.lblCaseNumber, this.lblReferenceJustice, this.editBody, this.lstAttachments, false, this.tblJournal, this.tblProcessCard, this.lblEeb, this.jTabbedPane1, this.cmdVerifySignatures, this.lblSendStatus);
             }
 
         } catch (Exception ex) {
@@ -833,11 +841,11 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
         }
     }
 
-    public static void setMessageImpl(BeaMessageContentUI contentUI, Message msg, JLabel lblSubject, JLabel lblSentDate, JLabel lblTo, JLabel lblFrom, JLabel lblCaseNumber, JLabel lblReferenceJustice, JEditorPane editBody, JList lstAttachments, boolean edt, JTable journalTable, JTable processCardTable, JLabel lblEeb, JTabbedPane tabs, JButton cmdVerify) throws Exception {
+    public static void setMessageImpl(BeaMessageContentUI contentUI, Message msg, JLabel lblSubject, JLabel lblSentDate, JLabel lblTo, JLabel lblFrom, JLabel lblCaseNumber, JLabel lblReferenceJustice, JEditorPane editBody, JList lstAttachments, boolean edt, JTable journalTable, JTable processCardTable, JLabel lblEeb, JTabbedPane tabs, JButton cmdVerify, JLabel lblSndStatus) throws Exception {
         // we copy the message to avoid the "Unable to load BODYSTRUCTURE" issue
 
         if (msg.getReceptionTime() == null) {
-            log.warn("beA mesage " + msg.getId() + " - " + msg.getSubject() + " does not have a reception time yet!");
+            log.warn("beA message " + msg.getId() + " - " + msg.getSubject() + " does not have a reception time yet!");
             lblSentDate.setText("");
         } else {
             SimpleDateFormat df2 = new SimpleDateFormat(DATEFORMAT);
@@ -911,9 +919,27 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
                 cmdVerify.setToolTipText("eine odere mehrere inkorrekte Signaturen");
             }
         }
+        
+        int sendStatus=msg.getSentStatus();
+        lblSndStatus.setIcon(ICON_SENDSTATUS_UNKNOWN);
+        switch (sendStatus) {
+            case Message.SENDSTATUS_FAIL:
+                lblSndStatus.setIcon(ICON_SENDSTATUS_FAIL);
+                break;
+            case Message.SENDSTATUS_SUCCESS:
+                lblSndStatus.setIcon(ICON_SENDSTATUS_SUCCESS);
+                break;
+            case Message.SENDSTATUS_INVALID:
+                lblSndStatus.setIcon(ICON_SENDSTATUS_INVALID);
+                break;
+            default:
+                break;
+        }
+        String sendDescription=msg.getSentStatusDescription();
+        lblSndStatus.setToolTipText(sendDescription);
 
     }
-
+    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -939,7 +965,6 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
         lblTo = new javax.swing.JLabel();
         lblCaseNumber = new javax.swing.JLabel();
         lblReferenceJustice = new javax.swing.JLabel();
-        lblEeb = new javax.swing.JLabel();
         jSplitPane1 = new javax.swing.JSplitPane();
         jScrollPane1 = new javax.swing.JScrollPane();
         editBody = new javax.swing.JEditorPane();
@@ -949,6 +974,8 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
         lstAttachments = new javax.swing.JList();
         cmdToPdf = new javax.swing.JButton();
         cmdVerifySignatures = new javax.swing.JButton();
+        lblSendStatus = new javax.swing.JLabel();
+        lblEeb = new javax.swing.JLabel();
         jPanel4 = new javax.swing.JPanel();
         jScrollPane3 = new javax.swing.JScrollPane();
         tblJournal = new javax.swing.JTable();
@@ -1003,9 +1030,6 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
 
         lblReferenceJustice.setText("<AZ Justiz>");
 
-        lblEeb.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/lassists.png"))); // NOI18N
-        lblEeb.setEnabled(false);
-
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
@@ -1024,11 +1048,9 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addComponent(lblFrom, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(lblEeb)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(lblCaseNumber))
                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(lblTo, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(lblTo, javax.swing.GroupLayout.DEFAULT_SIZE, 680, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(lblReferenceJustice)))
                 .addContainerGap())
@@ -1041,12 +1063,10 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
                     .addComponent(lblSentDate)
                     .addComponent(lblSubject))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(lblEeb, javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(jLabel2)
-                        .addComponent(lblFrom)
-                        .addComponent(lblCaseNumber)))
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel2)
+                    .addComponent(lblFrom)
+                    .addComponent(lblCaseNumber))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel3)
@@ -1125,12 +1145,18 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
         });
 
         cmdVerifySignatures.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_policy_black_24dp.png"))); // NOI18N
-        cmdVerifySignatures.setToolTipText("Nachricht als PDF anzeigen / drucken");
+        cmdVerifySignatures.setToolTipText("Signaturen prüfen");
         cmdVerifySignatures.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cmdVerifySignaturesActionPerformed(evt);
             }
         });
+
+        lblSendStatus.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/jdimension/jlawyer/client/bea/send-invalid.png"))); // NOI18N
+        lblSendStatus.setText("Sendestatus");
+
+        lblEeb.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/lassists.png"))); // NOI18N
+        lblEeb.setEnabled(false);
 
         javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);
@@ -1145,6 +1171,10 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
                         .addComponent(cmdToPdf)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cmdVerifySignatures)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(lblSendStatus)
+                        .addGap(18, 18, 18)
+                        .addComponent(lblEeb)
                         .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
@@ -1154,7 +1184,9 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
                 .addContainerGap()
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(cmdVerifySignatures, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(cmdToPdf, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(cmdToPdf, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(lblSendStatus, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(lblEeb, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -1629,6 +1661,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
     private javax.swing.JLabel lblEeb;
     private javax.swing.JLabel lblFrom;
     private javax.swing.JLabel lblReferenceJustice;
+    private javax.swing.JLabel lblSendStatus;
     private javax.swing.JLabel lblSentDate;
     private javax.swing.JLabel lblSubject;
     private javax.swing.JLabel lblTo;

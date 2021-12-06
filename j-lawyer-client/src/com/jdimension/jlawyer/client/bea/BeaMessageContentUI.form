@@ -93,6 +93,10 @@
                               <Component id="cmdToPdf" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="cmdVerifySignatures" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Component id="lblSendStatus" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace type="separate" max="-2" attributes="0"/>
+                              <Component id="lblEeb" min="-2" max="-2" attributes="0"/>
                               <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                           </Group>
                       </Group>
@@ -107,6 +111,8 @@
                       <Group type="103" groupAlignment="0" max="-2" attributes="0">
                           <Component id="cmdVerifySignatures" max="32767" attributes="0"/>
                           <Component id="cmdToPdf" max="32767" attributes="0"/>
+                          <Component id="lblSendStatus" max="32767" attributes="0"/>
+                          <Component id="lblEeb" max="32767" attributes="0"/>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="jPanel1" min="-2" max="-2" attributes="0"/>
@@ -148,12 +154,10 @@
                               <Group type="102" alignment="0" attributes="0">
                                   <Component id="lblFrom" max="32767" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
-                                  <Component id="lblEeb" min="-2" max="-2" attributes="0"/>
-                                  <EmptySpace max="-2" attributes="0"/>
                                   <Component id="lblCaseNumber" min="-2" max="-2" attributes="0"/>
                               </Group>
                               <Group type="102" attributes="0">
-                                  <Component id="lblTo" max="32767" attributes="0"/>
+                                  <Component id="lblTo" pref="680" max="32767" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
                                   <Component id="lblReferenceJustice" min="-2" max="-2" attributes="0"/>
                               </Group>
@@ -171,13 +175,10 @@
                               <Component id="lblSubject" alignment="3" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <EmptySpace max="-2" attributes="0"/>
-                          <Group type="103" groupAlignment="0" attributes="0">
-                              <Component id="lblEeb" alignment="1" min="-2" max="-2" attributes="0"/>
-                              <Group type="103" groupAlignment="3" attributes="0">
-                                  <Component id="jLabel2" alignment="3" min="-2" max="-2" attributes="0"/>
-                                  <Component id="lblFrom" alignment="3" min="-2" max="-2" attributes="0"/>
-                                  <Component id="lblCaseNumber" alignment="3" min="-2" max="-2" attributes="0"/>
-                              </Group>
+                          <Group type="103" groupAlignment="3" attributes="0">
+                              <Component id="jLabel2" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="lblFrom" alignment="3" min="-2" max="-2" attributes="0"/>
+                              <Component id="lblCaseNumber" alignment="3" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="3" attributes="0">
@@ -235,14 +236,6 @@
                 <Component class="javax.swing.JLabel" name="lblReferenceJustice">
                   <Properties>
                     <Property name="text" type="java.lang.String" value="&lt;AZ Justiz&gt;"/>
-                  </Properties>
-                </Component>
-                <Component class="javax.swing.JLabel" name="lblEeb">
-                  <Properties>
-                    <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-                      <Image iconType="3" name="/icons16/lassists.png"/>
-                    </Property>
-                    <Property name="enabled" type="boolean" value="false"/>
                   </Properties>
                 </Component>
               </SubComponents>
@@ -375,11 +368,27 @@
                 <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
                   <Image iconType="3" name="/icons16/material/baseline_policy_black_24dp.png"/>
                 </Property>
-                <Property name="toolTipText" type="java.lang.String" value="Nachricht als PDF anzeigen / drucken"/>
+                <Property name="toolTipText" type="java.lang.String" value="Signaturen pr&#xfc;fen"/>
               </Properties>
               <Events>
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdVerifySignaturesActionPerformed"/>
               </Events>
+            </Component>
+            <Component class="javax.swing.JLabel" name="lblSendStatus">
+              <Properties>
+                <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                  <Image iconType="3" name="/com/jdimension/jlawyer/client/bea/send-invalid.png"/>
+                </Property>
+                <Property name="text" type="java.lang.String" value="Sendestatus"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JLabel" name="lblEeb">
+              <Properties>
+                <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+                  <Image iconType="3" name="/icons16/lassists.png"/>
+                </Property>
+                <Property name="enabled" type="boolean" value="false"/>
+              </Properties>
             </Component>
           </SubComponents>
         </Container>
