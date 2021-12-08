@@ -694,8 +694,10 @@ public class BeaEebReplyPanel extends javax.swing.JPanel {
         this.cmdEebDeny.setEnabled(enabled);
         if(enabled) {
             this.lblDescription.setText("<html><b>eEB abgeben / zur&uuml;ckweisen</b><br/>zum Anzeigen hier klicken</html>");
+            this.lblDescription.setToolTipText("es wurde ein elektronisches Empfangsbekenntnis angefordert");
         } else {
             this.lblDescription.setText("<html><b>eEB / Strukturdatensatz</b><br/>zum Anzeigen hier klicken</html>");
+            this.lblDescription.setToolTipText("Strukturdatensatz anzeigen");
         }
     }
 
