@@ -1298,6 +1298,7 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
     @Override
     public void reset() {
         this.txtSearchString.requestFocus();
+        this.txtSearchString.selectAll();
     }
 
     @Override
