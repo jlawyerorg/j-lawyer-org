@@ -666,6 +666,7 @@ package com.jdimension.jlawyer.client.editors.documents.viewer;
 import com.jdimension.jlawyer.client.launcher.LauncherFactory;
 import com.jdimension.jlawyer.client.mail.EmailUtils;
 import com.jdimension.jlawyer.client.mail.MessageContainer;
+import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.MailboxSetup;
 import java.awt.Dimension;
 import java.io.ByteArrayInputStream;
@@ -687,6 +688,10 @@ public class DocumentViewerFactory {
     private static final Logger log = Logger.getLogger(DocumentViewerFactory.class.getName());
 
     public static JComponent getDocumentViewer(String id, String fileName, boolean readOnly, String previewContent, byte[] content, int width, int height) {
+        return getDocumentViewer(null, id, fileName, readOnly, previewContent, content, width, height);
+    }
+    
+    public static JComponent getDocumentViewer(ArchiveFileBean caseDto, String id, String fileName, boolean readOnly, String previewContent, byte[] content, int width, int height) {
 
         if (fileName.toLowerCase().endsWith(".pdf")) {
             PdfImagePanel pdfP = new PdfImagePanel(fileName, content);
@@ -744,6 +749,7 @@ public class DocumentViewerFactory {
                 ep.setPreferredSize(new Dimension(width, height));
                 MailboxSetup ms=EmailUtils.getMailboxSetup(message);
                 ep.setMessage(new MessageContainer(message, message.getSubject(), true), ms);
+                ep.setCaseContext(caseDto);
                 return ep;
             } catch (Throwable t) {
                 EmailPanel ep = new EmailPanel();
@@ -831,6 +837,7 @@ public class DocumentViewerFactory {
                 bp.setMaximumSize(new Dimension(width, height));
                 bp.setPreferredSize(new Dimension(width, height));
                 bp.showContent(content);
+                bp.setCaseContext(caseDto);
                 return bp;
             } catch (Throwable t) {
                 log.error(t);

@@ -714,6 +714,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
     private static final Logger log = Logger.getLogger(MailContentUI.class.getName());
     private static final String HTML_WARNING = "<html><font color=\"red\">HTML-Inhalte werden zum Schutz vor Spam erst auf Knopfdruck im Kopfbereich dieser E-Mail oder nach Doppelklick auf diese Warnung angezeigt.<br/>Der Absender dieser E-Mail wird dann permanent als vertrauensw&uuml;rdig eingestuft.</font></html>";
     private MessageContainer msgContainer = null;
+    private ArchiveFileBean caseContext=null;
     private String cachedHtml = null;
 
     /**
@@ -775,6 +776,10 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
         this.editBody.setText(errorMessage);
     }
 
+    public void setCase(ArchiveFileBean a) {
+        this.caseContext=a;
+    }
+    
     public void setMessage(MessageContainer msgC, MailboxSetup ms) {
 
         this.cmdShowHtml.setEnabled(false);
@@ -1550,7 +1555,13 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
             return;
         }
 
-        SearchAndAssignDialog dlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true, "" + this.lblSubject.getText() + this.editBody.getText(), null);
+        String searchContext="";
+        if(this.caseContext!=null) {
+            searchContext=this.caseContext.getFileNumber();
+        } else {
+            searchContext=this.lblSubject.getText() + this.editBody.getText();
+        }
+        SearchAndAssignDialog dlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true, searchContext, null);
         dlg.setVisible(true);
         ArchiveFileBean sel = dlg.getCaseSelection();
         CaseFolder folder = dlg.getFolderSelection();

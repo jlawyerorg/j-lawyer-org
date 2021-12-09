@@ -674,9 +674,7 @@ import com.jdimension.jlawyer.client.launcher.LauncherFactory;
 import com.jdimension.jlawyer.client.launcher.ReadOnlyDocumentStore;
 import com.jdimension.jlawyer.client.processing.ProgressIndicator;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
-import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.*;
-import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.CaseFolder;
@@ -716,11 +714,12 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
     private static final String DATEFORMAT = "dd.MM.yyyy HH:mm";
     private Message msgContainer = null;
     private String documentId = null;
+    private ArchiveFileBean caseContext=null;
     
-    private static ImageIcon ICON_SENDSTATUS_INVALID=new javax.swing.ImageIcon(BeaMessageContentUI.class.getResource("/com/jdimension/jlawyer/client/bea/send-invalid.png"));
-    private static ImageIcon ICON_SENDSTATUS_UNKNOWN=new javax.swing.ImageIcon(BeaMessageContentUI.class.getResource("/com/jdimension/jlawyer/client/bea/send-unknown.png"));
-    private static ImageIcon ICON_SENDSTATUS_SUCCESS=new javax.swing.ImageIcon(BeaMessageContentUI.class.getResource("/com/jdimension/jlawyer/client/bea/send-success.png"));
-    private static ImageIcon ICON_SENDSTATUS_FAIL=new javax.swing.ImageIcon(BeaMessageContentUI.class.getResource("/com/jdimension/jlawyer/client/bea/send-failed.png"));
+    private static final ImageIcon ICON_SENDSTATUS_INVALID=new javax.swing.ImageIcon(BeaMessageContentUI.class.getResource("/com/jdimension/jlawyer/client/bea/send-invalid.png"));
+    private static final ImageIcon ICON_SENDSTATUS_UNKNOWN=new javax.swing.ImageIcon(BeaMessageContentUI.class.getResource("/com/jdimension/jlawyer/client/bea/send-unknown.png"));
+    private static final ImageIcon ICON_SENDSTATUS_SUCCESS=new javax.swing.ImageIcon(BeaMessageContentUI.class.getResource("/com/jdimension/jlawyer/client/bea/send-success.png"));
+    private static final ImageIcon ICON_SENDSTATUS_FAIL=new javax.swing.ImageIcon(BeaMessageContentUI.class.getResource("/com/jdimension/jlawyer/client/bea/send-failed.png"));
 
     /**
      * Creates new form BeaMessageContentUI
@@ -809,6 +808,10 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
 
     public void setErrorMessage(String errorMessage) {
         this.editBody.setText(errorMessage);
+    }
+    
+    public void setCase(ArchiveFileBean a) {
+        this.caseContext=a;
     }
 
     public void setMessage(org.jlawyer.bea.model.Message msg, String documentId) {
@@ -1421,10 +1424,16 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
             return;
         }
 
-        String searchContext = null;
-        if (this.msgContainer != null) {
-            searchContext = "" + msgContainer.getReferenceJustice() + msgContainer.getReferenceNumber() + msgContainer.getSubject() + msgContainer.getBody();
+        String searchContext="";
+        if(this.caseContext!=null) {
+            searchContext=this.caseContext.getFileNumber();
+        } else {
+            if (this.msgContainer != null) {
+                searchContext = msgContainer.getReferenceJustice() + msgContainer.getReferenceNumber() + msgContainer.getSubject() + msgContainer.getBody();
+            }
         }
+        
+        
         SearchAndAssignDialog dlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true, searchContext, null);
         dlg.setVisible(true);
         ArchiveFileBean sel = dlg.getCaseSelection();

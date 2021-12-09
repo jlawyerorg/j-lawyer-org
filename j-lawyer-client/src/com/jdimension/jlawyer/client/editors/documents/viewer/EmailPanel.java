@@ -664,6 +664,7 @@
 package com.jdimension.jlawyer.client.editors.documents.viewer;
 
 import com.jdimension.jlawyer.client.mail.MessageContainer;
+import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.MailboxSetup;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -686,6 +687,10 @@ public class EmailPanel extends javax.swing.JPanel implements PreviewPanel {
 
     }
 
+    public void setCaseContext(ArchiveFileBean a) {
+        this.content.setCase(a);
+    }
+    
     public void setMessage(MessageContainer msgC, MailboxSetup ms) {
         this.content.setMessage(msgC, ms);
 

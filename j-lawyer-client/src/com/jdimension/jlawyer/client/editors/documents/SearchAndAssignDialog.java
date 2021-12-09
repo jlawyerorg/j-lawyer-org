@@ -668,6 +668,7 @@ import com.jdimension.jlawyer.client.editors.files.QuickArchiveFileSearchCellRen
 import com.jdimension.jlawyer.client.editors.files.QuickArchiveFileSearchRowIdentifier;
 import com.jdimension.jlawyer.client.editors.files.QuickArchiveFileSearchTableModel;
 import com.jdimension.jlawyer.client.editors.files.QuickArchiveFileSearchThread;
+import com.jdimension.jlawyer.client.processing.ProgressableActionCallback;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
@@ -696,7 +697,7 @@ import org.apache.log4j.Logger;
  *
  * @author jens
  */
-public class SearchAndAssignDialog extends javax.swing.JDialog {
+public class SearchAndAssignDialog extends javax.swing.JDialog implements ProgressableActionCallback {
 
     private static final Logger log = Logger.getLogger(SearchAndAssignDialog.class.getName());
 
@@ -1044,8 +1045,7 @@ public class SearchAndAssignDialog extends javax.swing.JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void txtSearchStringKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtSearchStringKeyPressed
-        if (evt
-                .getKeyCode() == KeyEvent.VK_ENTER) {
+        if (evt.getKeyCode() == KeyEvent.VK_ENTER) {
             this.cmdQuickSearchActionPerformed(null);
 
         }
@@ -1053,17 +1053,15 @@ public class SearchAndAssignDialog extends javax.swing.JDialog {
 
     private void cmdQuickSearchActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdQuickSearchActionPerformed
         // perform search here
-        ThreadUtils
-                .setWaitCursor(this);
-        EditorsRegistry
-                .getInstance().updateStatus("Suche Akten...");
+        ThreadUtils.setWaitCursor(this);
+        EditorsRegistry.getInstance().updateStatus("Suche Akten...");
 
         new Thread(new QuickArchiveFileSearchThread(this, this.txtSearchString
                 .getText(), true, TagUtils
                         .getSelectedTags(popTagFilter
                         ), TagUtils
                         .getSelectedTags(popDocumentTagFilter
-                        ), this.tblResults
+                        ), this.tblResults, this
         )).start();
 
     }//GEN-LAST:event_cmdQuickSearchActionPerformed
@@ -1324,4 +1322,9 @@ public class SearchAndAssignDialog extends javax.swing.JDialog {
     private javax.swing.JTree treeFolders;
     private javax.swing.JTextField txtSearchString;
     // End of variables declaration//GEN-END:variables
+
+    @Override
+    public void actionFinished() {
+        this.updateCaseFolderStructure();
+    }
 }

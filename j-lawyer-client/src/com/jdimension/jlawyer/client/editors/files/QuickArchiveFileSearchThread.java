@@ -664,6 +664,7 @@
 package com.jdimension.jlawyer.client.editors.files;
 
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
+import com.jdimension.jlawyer.client.processing.ProgressableActionCallback;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
@@ -676,6 +677,7 @@ import java.util.HashMap;
 import javax.swing.JTable;
 import javax.swing.RowSorter;
 import javax.swing.SortOrder;
+import javax.swing.SwingUtilities;
 import javax.swing.table.TableRowSorter;
 import org.apache.log4j.Logger;
 
@@ -687,13 +689,25 @@ public class QuickArchiveFileSearchThread implements Runnable {
 
     private static final Logger log = Logger.getLogger(QuickArchiveFileSearchThread.class.getName());
 
-    private String query;
-    private Component owner;
-    private JTable target;
-    private boolean withArchive;
-    private String[] tag;
-    private String[] documentTag;
+    private final String query;
+    private final Component owner;
+    private final JTable target;
+    private final boolean withArchive;
+    private final String[] tag;
+    private final String[] documentTag;
+    private ProgressableActionCallback callback=null;
 
+    
+    public QuickArchiveFileSearchThread(Component owner, String query, boolean withArchive, String[] tag, String[] documentTag, JTable target, ProgressableActionCallback callback) {
+        this.query = query;
+        this.owner = owner;
+        this.target = target;
+        this.withArchive = withArchive;
+        this.tag = tag;
+        this.documentTag=documentTag;
+        this.callback=callback;
+    }
+    
     /**
      * Creates a new instance of QuickArchiveFileSearchThread
      */
@@ -706,6 +720,7 @@ public class QuickArchiveFileSearchThread implements Runnable {
         this.documentTag=documentTag;
     }
 
+    @Override
     public void run() {
         ArchiveFileBean[] dtos = null;
         HashMap<String, ArrayList<String>> tags = null;
@@ -746,6 +761,12 @@ public class QuickArchiveFileSearchThread implements Runnable {
         }
         EditorsRegistry.getInstance().clearStatus(true);
         ThreadUtils.setDefaultCursor(this.owner);
+        
+        if(this.callback!=null) {
+            SwingUtilities.invokeLater(() -> {
+                callback.actionFinished();
+            });
+        }
     }
 
     
