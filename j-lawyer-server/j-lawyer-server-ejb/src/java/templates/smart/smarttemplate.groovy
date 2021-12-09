@@ -64,6 +64,8 @@ class SmartTemplate {
         if(s2.isEmpty())
         s2="0";
             
+        s1=s1.replace(".", "");
+        s2=s2.replace(".", "");
         s1=s1.replace(",", ".");
         s2=s2.replace(",", ".");
     
@@ -147,6 +149,22 @@ class SmartTemplate {
             return "??.??.????"
         }
         
+    }
+    
+    String MWDJU(String gender, String male, String female, String other, String org, String undef) {
+        if(gender.endsWith("nnlich")) {
+            // avoid umlaut issues
+            return male;
+        } else if("weiblich".equalsIgnoreCase(gender)) {
+            return female;
+        } else if("divers".equalsIgnoreCase(gender)) {
+            return other;
+        } else if("juristische Person".equalsIgnoreCase(gender)) {
+            return org;
+        } else if("undefiniert".equalsIgnoreCase(gender)) {
+            return undef;
+        }
+        return "UNBEKANNTER WERT FUER GESCHLECHT: " + gender;
     }
     
 }

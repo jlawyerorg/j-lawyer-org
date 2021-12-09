@@ -1005,7 +1005,8 @@ public class LibreOfficeAccess {
                         //scriptContent=scriptContent.replace(scriptPlaceHolderKey, "\"" + scriptPlaceHolderValue + "\"");
                     }
                 }
-                
+                scriptContent=scriptContent.replace("„", "\"");
+                scriptContent=scriptContent.replace("“", "\"");
 
                 try (InputStream is = LibreOfficeAccess.class.getResourceAsStream("/templates/smart/smarttemplate.groovy");
                     InputStreamReader isr = new InputStreamReader(is);

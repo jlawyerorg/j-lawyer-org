@@ -1624,6 +1624,8 @@ public class AddDocumentFromTemplateDialog extends javax.swing.JDialog implement
                 Enumeration htEn = ht.keys();
                 while (htEn.hasMoreElements()) {
                     Object key = htEn.nextElement();
+                    if(key.toString().startsWith("[[SCRIPT:"))
+                        continue;
                     Object[] row = new Object[]{key, ht.get(key)};
                     model.addRow(row);
                 }
