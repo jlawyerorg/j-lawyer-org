@@ -1216,6 +1216,7 @@ public class QuickAddressSearchPanel extends javax.swing.JPanel implements Theme
     @Override
     public void reset() {
         this.txtSearchString.requestFocus();
+        this.txtSearchString.selectAll();
     }
 
     @Override
