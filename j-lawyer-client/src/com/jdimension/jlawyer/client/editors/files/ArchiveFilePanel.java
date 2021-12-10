@@ -1589,6 +1589,10 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.documentSelectionChanged();
         this.caseFolderPanel1.scrollToDocumentByName(fileName);
     }
+    
+    public void selectEvent(String eventId) {
+        this.tabPaneArchiveFile.setSelectedIndex(4);
+    }
 
     /**
      * This method is called from within the constructor to initialize the form.

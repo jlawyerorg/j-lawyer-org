@@ -744,7 +744,7 @@ public class ArchiveFileReviewsSearchThread implements Runnable {
                 if (b.getCalendarSetup() != null) {
                     calendar = b.getCalendarSetup().getDisplayName();
                 }
-                Object[] row = new Object[]{new ArchiveFileReviewsRowIdentifier(b.getArchiveFileKey(), reviewDateString), b.getEventTypeName(), b.getArchiveFileKey().getFileNumber(), b.getArchiveFileKey().getName(), b.getSummary(), b.getDescription(), b.getArchiveFileKey().getLawyer(), b.getAssignee(), calendar};
+                Object[] row = new Object[]{new ArchiveFileReviewsRowIdentifier(b.getArchiveFileKey(), b, reviewDateString), b.getEventTypeName(), b.getArchiveFileKey().getFileNumber(), b.getArchiveFileKey().getName(), b.getSummary(), b.getDescription(), b.getArchiveFileKey().getLawyer(), b.getAssignee(), calendar};
                 model.addRow(row);
             } catch (Throwable t) {
                 log.error(t);

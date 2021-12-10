@@ -794,6 +794,7 @@ public class CalendarPanel extends javax.swing.JPanel {
                     ((ArchiveFilePanel) editor).setArchiveFileDTO(ce.getCaseDto());
                     ((ArchiveFilePanel) editor).setOpenedFromEditorClass(this.parentClass);
                     EditorsRegistry.getInstance().setMainEditorsPaneView((Component) editor);
+                    ((ArchiveFilePanel)editor).selectEvent(null);
 
                 } catch (Exception ex) {
                     log.error("Error creating editor from class " + this.detailsEditorClass, ex);

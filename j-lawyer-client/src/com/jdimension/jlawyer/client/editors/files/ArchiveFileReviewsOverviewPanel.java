@@ -868,6 +868,7 @@ public class ArchiveFileReviewsOverviewPanel extends javax.swing.JPanel implemen
                 ((ArchiveFilePanel)editor).setArchiveFileDTO(id.getArchiveFileDTO());
                 ((ArchiveFilePanel)editor).setOpenedFromEditorClass(this.getClass().getName());
                 EditorsRegistry.getInstance().setMainEditorsPaneView((Component)editor);
+                ((ArchiveFilePanel)editor).selectEvent(id.getReviewDTO().getId());
                 
             } catch (Exception ex) {
                 log.error("Error creating editor from class " + this.detailsEditorClass, ex);
@@ -893,13 +894,14 @@ public class ArchiveFileReviewsOverviewPanel extends javax.swing.JPanel implemen
                 ((ArchiveFilePanel)editor).setArchiveFileDTO(id.getArchiveFileDTO());
                 ((ArchiveFilePanel)editor).setOpenedFromEditorClass(this.getClass().getName());
                 EditorsRegistry.getInstance().setMainEditorsPaneView((Component)editor);
+                ((ArchiveFilePanel)editor).selectEvent(id.getReviewDTO().getId());
                 
             } catch (Exception ex) {
                 log.error("Error creating editor from class " + this.detailsEditorClass, ex);
                 JOptionPane.showMessageDialog(this, "Fehler beim Laden des Editors: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             }
                 
-        } else if(evt.getClickCount()==1 && evt.getButton()==evt.BUTTON3) {
+        } else if(evt.getClickCount()==1 && evt.getButton()==MouseEvent.BUTTON3) {
             if(this.tblResults.getSelectedRowCount()<1) {
                 return;
             }
