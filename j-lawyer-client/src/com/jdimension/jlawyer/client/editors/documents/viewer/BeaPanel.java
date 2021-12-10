@@ -665,8 +665,6 @@ package com.jdimension.jlawyer.client.editors.documents.viewer;
 
 import com.jdimension.jlawyer.client.bea.BeaAccess;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
 import org.apache.log4j.Logger;
 import org.jlawyer.bea.model.Message;
 import org.jlawyer.bea.model.MessageExport;
@@ -735,7 +733,6 @@ public class BeaPanel extends javax.swing.JPanel implements PreviewPanel {
     @Override
     public void showContent(byte[] content) {
         try {
-            //InputStream source = new ByteArrayInputStream(content);
             MessageExport export=new MessageExport();
             export.setContent(content);
             Message msg=BeaAccess.getMessageFromExport(export);
