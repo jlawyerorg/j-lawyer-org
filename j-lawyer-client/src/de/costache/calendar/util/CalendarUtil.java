@@ -120,7 +120,7 @@ public class CalendarUtil {
 
     public static Collection<Date> getDates(final Date start, final Date end) {
 
-        final Set<Date> result = new HashSet<Date>();
+        final Set<Date> result = new HashSet<>();
         final Date endDay = stripTime(end);
         Date date = stripTime(start);
         result.add(date);
@@ -154,13 +154,13 @@ public class CalendarUtil {
     }
 
     public static Map<CalendarEvent, List<CalendarEvent>> getConflicting(final Collection<CalendarEvent> calendarEvents) {
-        final List<CalendarEvent> clonedCollection = new ArrayList<CalendarEvent>(calendarEvents);
+        final List<CalendarEvent> clonedCollection = new ArrayList<>(calendarEvents);
 
-        final Map<CalendarEvent, List<CalendarEvent>> conflictingEvents = new HashMap<CalendarEvent, List<CalendarEvent>>();
+        final Map<CalendarEvent, List<CalendarEvent>> conflictingEvents = new HashMap<>();
 
         for (int i = 0; i < clonedCollection.size(); i++) {
             final CalendarEvent event1 = clonedCollection.get(i);
-             conflictingEvents.put(event1, new ArrayList<CalendarEvent>());
+             conflictingEvents.put(event1, new ArrayList<>());
             for (int j = 0; j < clonedCollection.size(); j++) {
                 final CalendarEvent event2 = clonedCollection.get(j);
                 if (event2.isAllDay() || event2.isHoliday())
@@ -184,14 +184,14 @@ public class CalendarUtil {
 
             Collections.sort(conflictingEvents.get(event1));
         }
-        final Set<CalendarEvent> keys = new HashSet<CalendarEvent>(conflictingEvents.keySet());
-        final Map<CalendarEvent, List<CalendarEvent>> result = new HashMap<CalendarEvent, List<CalendarEvent>>();
+        final Set<CalendarEvent> keys = new HashSet<>(conflictingEvents.keySet());
+        final Map<CalendarEvent, List<CalendarEvent>> result = new HashMap<>();
 
         for (final CalendarEvent event : keys) {
-            final Set<CalendarEvent> visitedEvents = new HashSet<CalendarEvent>();
-            final Set<CalendarEvent> tempSet = new HashSet<CalendarEvent>();
+            final Set<CalendarEvent> visitedEvents = new HashSet<>();
+            final Set<CalendarEvent> tempSet = new HashSet<>();
             copyAll(visitedEvents, tempSet, conflictingEvents, event);
-            final List<CalendarEvent> newConflictingEventsList = new ArrayList<CalendarEvent>(tempSet);
+            final List<CalendarEvent> newConflictingEventsList = new ArrayList<>(tempSet);
             Collections.sort(newConflictingEventsList);
             result.put(event, newConflictingEventsList);
         }

@@ -453,8 +453,13 @@ public class DayContentPanel extends JPanel {
                         .darker().darker());
                 graphics2d.fillRect(2, pos, getWidth() - 4, 15);
 
-                final String eventString = sdf.format(event.getStart()) + " "
+                String eventString;
+                if(event.isAllDay()) {
+                    eventString=event.getSummary();
+                } else {
+                    eventString=sdf.format(event.getStart()) + " "
                         + sdf.format(event.getEnd()) + " " + event.getSummary();
+                }
                 int fontSize = Math.round(getHeight() * 0.5f);
                 fontSize = fontSize > 9 ? 9 : fontSize;
 
