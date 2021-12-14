@@ -735,8 +735,7 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
         this.documentsContainer=documentsContainer;
         this.caseContainer=caseContainer;
         this.readOnly=readonly;
-        if(!this.readOnly)
-            this.lblFileIcon.setCursor(new java.awt.Cursor(java.awt.Cursor.MOVE_CURSOR));
+        
         this.setDocument(doc);
         
         this.dragSource = new DragSource();
