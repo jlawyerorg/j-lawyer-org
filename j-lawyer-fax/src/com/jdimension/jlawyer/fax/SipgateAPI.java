@@ -675,7 +675,6 @@ import java.util.Iterator;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
-import org.apache.log4j.Logger;
 import org.json.simple.JsonKey;
 import org.json.simple.JsonObject;
 import org.json.simple.Jsoner;
@@ -684,6 +683,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.net.URLConnection;
 import java.util.List;
+import org.apache.log4j.Logger;
 
 /**
  *

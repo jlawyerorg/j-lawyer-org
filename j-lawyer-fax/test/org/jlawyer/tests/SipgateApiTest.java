@@ -730,7 +730,6 @@ public class SipgateApiTest {
     
     @Test
     public void testGetBalance() {
-        
         if(user==null || pwd==null) {
             System.out.println("Sipgate credentials are null, skipping test.");
             return;

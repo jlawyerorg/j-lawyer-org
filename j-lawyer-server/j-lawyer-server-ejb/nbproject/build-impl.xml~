@@ -74,7 +74,7 @@ is divided into following sections:
         <property file="nbproject/project.properties"/>
     </target>
     <target depends="-pre-init,-init-private,-init-libraries,-init-userdir,-init-user,-init-project,-init-macrodef-property" name="-do-init">
-        <!-- ejbjarproject1:property name="platform.home" value="platforms.${platform.active}.home"/>
+        <!-- <ejbjarproject1:property name="platform.home" value="platforms.${platform.active}.home"/>
         <ejbjarproject1:property name="platform.bootcp" value="platforms.${platform.active}.bootclasspath"/>
         <ejbjarproject1:property name="platform.compiler" value="platforms.${platform.active}.compile"/>
         <ejbjarproject1:property name="platform.javac.tmp" value="platforms.${platform.active}.javac"/>
@@ -110,7 +110,7 @@ is divided into following sections:
  For example like this:
      ant -Duser.properties.file=&lt;path_to_property_file&gt; jar (where you put the property "platforms.${platform.active}.home" in a .properties file)
   or ant -Dplatforms.${platform.active}.home=&lt;path_to_JDK_home&gt; jar (where no properties file is used) 
-  </fail -->
+  </fail> -->
         <!-- Ensure configuration directory exists. -->
         <mkdir dir="${meta.inf}"/>
         <property name="runmain.jvmargs" value=""/>
@@ -920,6 +920,7 @@ exists or setup the property manually. For example like this:
         <copyfiles files="${file.reference.libphonenumber-8.12.18.jar}" todir="${build.classes.dir}"/>
         <copyfiles files="${file.reference.j-lawyer-cloud.jar}" todir="${build.classes.dir}"/>
         <copyfiles files="${file.reference.jollyday-0.5.10.jar}" todir="${build.classes.dir}"/>
+        <copyfiles files="${file.reference.json-simple-2.3.0.jar}" todir="${build.classes.dir}"/>
     </target>
     <target if="is.server.weblogic" name="-library-inclusion-in-archive-weblogic">
         <basename file="${reference.j-lawyer-server-entities.dist}" property="manifest.reference.j-lawyer-server-entities.dist"/>
@@ -972,8 +973,9 @@ exists or setup the property manually. For example like this:
         <basename file="${file.reference.libphonenumber-8.12.18.jar}" property="manifest.file.reference.libphonenumber-8.12.18.jar"/>
         <basename file="${file.reference.j-lawyer-cloud.jar}" property="manifest.file.reference.j-lawyer-cloud.jar"/>
         <basename file="${file.reference.jollyday-0.5.10.jar}" property="manifest.file.reference.jollyday-0.5.10.jar"/>
+        <basename file="${file.reference.json-simple-2.3.0.jar}" property="manifest.file.reference.json-simple-2.3.0.jar"/>
         <manifest file="${build.ear.classes.dir}/META-INF/MANIFEST.MF" mode="update">
-            <attribute name="Extension-List" value="jar-1 jar-2 jar-3 jar-4 jar-5 jar-6 jar-7 jar-8 jar-9 jar-10 jar-11 jar-12 jar-13 jar-14 jar-15 jar-16 jar-17 jar-18 jar-19 jar-20 jar-21 jar-22 jar-23 jar-24 jar-25 jar-26 jar-27 jar-28 jar-29 jar-30 jar-31 jar-32 jar-33 jar-34 jar-35 jar-36 jar-37 jar-38 jar-39 jar-40 jar-41 jar-42 jar-43 jar-44 jar-45 jar-46 jar-47 jar-48 jar-49 jar-50 "/>
+            <attribute name="Extension-List" value="jar-1 jar-2 jar-3 jar-4 jar-5 jar-6 jar-7 jar-8 jar-9 jar-10 jar-11 jar-12 jar-13 jar-14 jar-15 jar-16 jar-17 jar-18 jar-19 jar-20 jar-21 jar-22 jar-23 jar-24 jar-25 jar-26 jar-27 jar-28 jar-29 jar-30 jar-31 jar-32 jar-33 jar-34 jar-35 jar-36 jar-37 jar-38 jar-39 jar-40 jar-41 jar-42 jar-43 jar-44 jar-45 jar-46 jar-47 jar-48 jar-49 jar-50 jar-51 "/>
             <attribute name="jar-1-Extension-Name" value="${manifest.reference.j-lawyer-server-entities.dist}"/>
             <attribute name="jar-2-Extension-Name" value="${manifest.reference.j-lawyer-server-api.jar}"/>
             <attribute name="jar-3-Extension-Name" value="${manifest.reference.j-lawyer-server-common.jar}"/>
@@ -1024,6 +1026,7 @@ exists or setup the property manually. For example like this:
             <attribute name="jar-48-Extension-Name" value="${manifest.file.reference.libphonenumber-8.12.18.jar}"/>
             <attribute name="jar-49-Extension-Name" value="${manifest.file.reference.j-lawyer-cloud.jar}"/>
             <attribute name="jar-50-Extension-Name" value="${manifest.file.reference.jollyday-0.5.10.jar}"/>
+            <attribute name="jar-51-Extension-Name" value="${manifest.file.reference.json-simple-2.3.0.jar}"/>
         </manifest>
     </target>
     <target depends="compile" name="library-inclusion-in-manifest">
@@ -1077,6 +1080,7 @@ exists or setup the property manually. For example like this:
         <copyfiles files="${file.reference.libphonenumber-8.12.18.jar}" todir="${dist.ear.dir}/lib"/>
         <copyfiles files="${file.reference.j-lawyer-cloud.jar}" todir="${dist.ear.dir}/lib"/>
         <copyfiles files="${file.reference.jollyday-0.5.10.jar}" todir="${dist.ear.dir}/lib"/>
+        <copyfiles files="${file.reference.json-simple-2.3.0.jar}" todir="${dist.ear.dir}/lib"/>
         <manifest file="${build.ear.classes.dir}/META-INF/MANIFEST.MF" mode="update"/>
     </target>
     <target name="-copy-meta-inf">
