@@ -724,7 +724,7 @@ public class FileUtils extends ServerFileUtils {
 
         try {
 
-            if (SystemUtils.isLinux()|| SystemUtils.isMacOs()) {
+//            if (SystemUtils.isLinux()|| SystemUtils.isMacOs()) {
 
                 if (fileExt.startsWith(".")) {
                     fileExt = fileExt.substring(1, fileExt.length());
@@ -768,19 +768,19 @@ public class FileUtils extends ServerFileUtils {
 //                //Delete the temporary file
 //                file.delete();
 //                return icon;
-            } else {
-                // Windows behaviour is default
-                //Create a temporary file with the specified extension
-                File file = File.createTempFile("icon", fileExt);
-
-                FileSystemView view = FileSystemView.getFileSystemView();
-                Icon icon = view.getSystemIcon(file);
-                this.iconCache.put(fileExt, icon);
-
-                //Delete the temporary file
-                file.delete();
-                return icon;
-            }
+//            } else {
+//                // Windows behaviour is default
+//                //Create a temporary file with the specified extension
+//                File file = File.createTempFile("icon", fileExt);
+//
+//                FileSystemView view = FileSystemView.getFileSystemView();
+//                Icon icon = view.getSystemIcon(file);
+//                this.iconCache.put(fileExt, icon);
+//
+//                //Delete the temporary file
+//                file.delete();
+//                return icon;
+//            }
 
         } catch (Throwable t) {
             log.error("Could not determine default file type icon for " + fileName, t);
@@ -806,7 +806,7 @@ public class FileUtils extends ServerFileUtils {
 
         try {
 
-            if (SystemUtils.isLinux()|| SystemUtils.isMacOs()) {
+//            if (SystemUtils.isLinux()|| SystemUtils.isMacOs()) {
 
                 if (fileExt.startsWith(".")) {
                     fileExt = fileExt.substring(1, fileExt.length());
@@ -834,19 +834,19 @@ public class FileUtils extends ServerFileUtils {
                     return icon;
                 }
 
-            } else {
-                // Windows behaviour is default
-                //Create a temporary file with the specified extension
-                File file = File.createTempFile("icon", fileExt);
-
-                FileSystemView view = FileSystemView.getFileSystemView();
-                Icon icon = view.getSystemIcon(file);
-                this.iconCache32.put(fileExt, icon);
-
-                //Delete the temporary file
-                file.delete();
-                return icon;
-            }
+//            } else {
+//                // Windows behaviour is default
+//                //Create a temporary file with the specified extension
+//                File file = File.createTempFile("icon", fileExt);
+//
+//                FileSystemView view = FileSystemView.getFileSystemView();
+//                Icon icon = view.getSystemIcon(file);
+//                this.iconCache32.put(fileExt, icon);
+//
+//                //Delete the temporary file
+//                file.delete();
+//                return icon;
+//            }
 
         } catch (Throwable t) {
             log.error("Could not determine default file type icon for " + fileName, t);
