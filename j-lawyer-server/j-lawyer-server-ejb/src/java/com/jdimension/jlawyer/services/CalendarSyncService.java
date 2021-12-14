@@ -723,12 +723,22 @@ public class CalendarSyncService implements CalendarSyncServiceLocal {
         this.fullCalendarSyncImpl();
     }
 
+    private String getEventSummary(ArchiveFileBean caseContext, ArchiveFileReviewsBean event) {
+        StringBuilder summary = new StringBuilder();
+        summary.append(caseContext.getFileNumber()).append(" ").append(event.getSummary());
+        return summary.toString();
+    }
+    
     private String getEventDescription(ArchiveFileBean caseContext, ArchiveFileReviewsBean event) {
         StringBuilder description = new StringBuilder();
-        description.append(caseContext.getFileNumber()).append(" - ").append(caseContext.getName()).append(System.lineSeparator()).append("(").append(caseContext.getReason()).append(")");
-        description.append(System.lineSeparator());
+        description.append(caseContext.getFileNumber()).append(System.lineSeparator());
+        description.append(caseContext.getName()).append(System.lineSeparator());
+        description.append("(").append(caseContext.getReason()).append(")").append(System.lineSeparator());
         description.append(System.lineSeparator());
         description.append(ServerStringUtils.nonEmpty(event.getDescription()));
+        description.append(System.lineSeparator());
+        description.append("Anwalt: ").append(ServerStringUtils.nonEmpty(caseContext.getLawyer())).append(System.lineSeparator());
+        description.append("verantwortlich: ").append(ServerStringUtils.nonEmpty(event.getAssignee()));
         return description.toString();
     }
 
@@ -746,7 +756,7 @@ public class CalendarSyncService implements CalendarSyncServiceLocal {
                 if (nc == null) {
                     return;
                 }
-                String newEventHref = nc.createEvent(event.getId(), cs.getHref(), event.getSummary(), this.getEventDescription(caseContext, event), event.getLocation(), event.getBeginDate(), event.getEndDate(), !event.hasEndDateAndTime());
+                String newEventHref = nc.createEvent(event.getId(), cs.getHref(), this.getEventSummary(caseContext, event), this.getEventDescription(caseContext, event), event.getLocation(), event.getBeginDate(), event.getEndDate(), !event.hasEndDateAndTime());
 
             } catch (Exception ex) {
                 log.error("Syncing new event to cloud failed: " + event.getId(), ex);
@@ -788,7 +798,7 @@ public class CalendarSyncService implements CalendarSyncServiceLocal {
                         return;
                     }
 
-                    String updatedEventHref = nc.updateEvent(event.getId(), cs.getHref(), event.getSummary(), this.getEventDescription(caseContext, event), event.getLocation(), event.getBeginDate(), event.getEndDate(), !event.hasEndDateAndTime());
+                    String updatedEventHref = nc.updateEvent(event.getId(), cs.getHref(), this.getEventSummary(caseContext, event), this.getEventDescription(caseContext, event), event.getLocation(), event.getBeginDate(), event.getEndDate(), !event.hasEndDateAndTime());
 
                 } catch (Exception ex) {
                     log.error("Syncing updated event to cloud failed: " + event.getId(), ex);
