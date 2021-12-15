@@ -665,26 +665,10 @@ package org.jlawyer.cloud;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.InputStream;
-import java.util.Date;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import net.fortuna.ical4j.model.component.VEvent;
 import org.aarboard.nextcloud.api.NextcloudConnector;
-import org.apache.commons.httpclient.Credentials;
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.UsernamePasswordCredentials;
-import org.apache.commons.httpclient.auth.AuthScope;
-import org.apache.jackrabbit.webdav.DavConstants;
-import org.apache.jackrabbit.webdav.MultiStatus;
-import org.apache.jackrabbit.webdav.MultiStatusResponse;
-import org.apache.jackrabbit.webdav.Status;
-import org.apache.jackrabbit.webdav.client.methods.PropFindMethod;
-import org.apache.jackrabbit.webdav.property.DavProperty;
-import org.apache.jackrabbit.webdav.property.DavPropertyIterator;
-import org.apache.jackrabbit.webdav.property.DavPropertySet;
-import org.jlawyer.cloud.calendar.CloudCalendar;
 
 /**
  *
@@ -697,7 +681,7 @@ public class NextcloudTest {
      */
     public static void main(String[] args) {
         try {
-            //NextcloudCalendarConnector nc = new NextcloudCalendarConnector("cloud.advobox.com", true, 443, "someuser", "secret");
+//            NextcloudCalendarConnector nc = new NextcloudCalendarConnector("cloud.advobox.com", true, 443, "someone", "somepwd");
             
 //            List<CloudCalendar> calendars= nc.getAllCalendars();
 //            for(CloudCalendar c: calendars) {

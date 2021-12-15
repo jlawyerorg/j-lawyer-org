@@ -692,11 +692,12 @@ import org.apache.jackrabbit.webdav.client.methods.PutMethod;
 import org.apache.jackrabbit.webdav.property.DavProperty;
 import org.apache.jackrabbit.webdav.property.DavPropertyIterator;
 import org.apache.jackrabbit.webdav.property.DavPropertySet;
-import org.apache.log4j.Logger;
 import org.jlawyer.cloud.contacts.CloudAddressBook;
 import org.jlawyer.cloud.contacts.CloudContact;
 //import org.osaf.caldav4j.methods.GetMethod;
 import org.apache.commons.httpclient.methods.GetMethod;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  *
@@ -704,7 +705,7 @@ import org.apache.commons.httpclient.methods.GetMethod;
  */
 public class NextcloudContactsConnector {
 
-    private static final Logger log = Logger.getLogger(NextcloudContactsConnector.class.getName());
+    private static final Logger log = LogManager.getLogger(NextcloudContactsConnector.class.getName());
 
     protected String subpathPrefix = null;
     protected String serverName = null;

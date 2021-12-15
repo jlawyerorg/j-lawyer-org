@@ -11,11 +11,21 @@
             <artifactId>nextcloud-api</artifactId>
             <version>11.4.0</version>
         </dependency>
-        <dependency>
+        <!-- dependency>
             <groupId>log4j</groupId>
             <artifactId>log4j</artifactId>
             <version>1.2.17</version>
-        </dependency>
+        </dependency -->
+          <dependency>
+    <groupId>org.apache.logging.log4j</groupId>
+    <artifactId>log4j-api</artifactId>
+    <version>2.16.0</version>
+  </dependency>
+  <dependency>
+    <groupId>org.apache.logging.log4j</groupId>
+    <artifactId>log4j-core</artifactId>
+    <version>2.16.0</version>
+  </dependency>
         <dependency>
             <groupId>org.apache.jackrabbit</groupId>
             <artifactId>jackrabbit-webdav</artifactId>

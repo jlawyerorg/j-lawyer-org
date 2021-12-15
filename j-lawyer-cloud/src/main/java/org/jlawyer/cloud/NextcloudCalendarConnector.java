@@ -700,7 +700,8 @@ import org.apache.jackrabbit.webdav.property.DavPropertyIterator;
 import org.apache.jackrabbit.webdav.property.DavPropertyName;
 import org.apache.jackrabbit.webdav.property.DavPropertyNameSet;
 import org.apache.jackrabbit.webdav.property.DavPropertySet;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jlawyer.cloud.calendar.CloudCalendar;
 import org.osaf.caldav4j.CalDAVCollection;
 import org.osaf.caldav4j.CalDAVConstants;
@@ -719,7 +720,7 @@ import org.osaf.caldav4j.util.GenerateQuery;
  */
 public class NextcloudCalendarConnector {
 
-    private static final Logger log = Logger.getLogger(NextcloudCalendarConnector.class.getName());
+    private static final Logger log = LogManager.getLogger(NextcloudCalendarConnector.class.getName());
 
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd");
 
