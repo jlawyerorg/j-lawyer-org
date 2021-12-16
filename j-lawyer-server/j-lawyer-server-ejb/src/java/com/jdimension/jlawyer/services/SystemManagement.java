@@ -1401,7 +1401,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         MimeMessage msg = new MimeMessage(session);
 
         String senderName = "j-lawyer Server Testmail";
-        msg.setFrom(new InternetAddress(smtpUser, senderName));
+        msg.setFrom(new InternetAddress(mailAddress, senderName));
 
         msg.setRecipients(Message.RecipientType.TO, mailAddress);
         msg.setSubject("Testnachricht, j-lawyer.org Serverdienst");
