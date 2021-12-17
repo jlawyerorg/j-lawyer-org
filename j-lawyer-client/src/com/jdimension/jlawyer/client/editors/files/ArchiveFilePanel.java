@@ -4339,9 +4339,21 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         }
 
         SendEmailDialog dlg = new SendEmailDialog(EditorsRegistry.getInstance().getMainWindow(), false);
-        //dlg.setTo(ab.getEmail());
+        
+        HashMap<String, CaseFolder> folders = new HashMap<>();
+        for (ArchiveFileDocumentsBean doc : selectedDocs) {
+            if (doc.getFolder() != null) {
+                if (!folders.containsKey(doc.getFolder().getId())) {
+                    folders.put(doc.getFolder().getId(), doc.getFolder());  
+                }
+            }
+        }
+        // if all of the selected documents are in the same folder, we can send the outgoing mail to the same folder
+        CaseFolder caseFolder=null;
+        if(folders.size()==1)
+            caseFolder=folders.get(folders.keySet().iterator().next());
 
-        dlg.setArchiveFile(dto);
+        dlg.setArchiveFile(dto, caseFolder);
         dlg.setInvolvedInCase(this.pnlInvolvedParties.getInvolvedParties());
         for (ArchiveFileAddressesBean aab : this.pnlInvolvedParties.getInvolvedParties()) {
             dlg.addParty(aab);
@@ -4384,9 +4396,21 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         SendEmailDialog dlg = new SendEmailDialog(EditorsRegistry.getInstance().getMainWindow(), false);
         dlg.setInvolvedInCase(this.pnlInvolvedParties.getInvolvedParties());
-        //dlg.setTo(ab.getEmail());
-
-        dlg.setArchiveFile(dto);
+        
+        HashMap<String, CaseFolder> folders = new HashMap<>();
+        for (ArchiveFileDocumentsBean doc : selectedDocs) {
+            if (doc.getFolder() != null) {
+                if (!folders.containsKey(doc.getFolder().getId())) {
+                    folders.put(doc.getFolder().getId(), doc.getFolder());  
+                }
+            }
+        }
+        // if all of the selected documents are in the same folder, we can send the outgoing mail to the same folder
+        CaseFolder caseFolder=null;
+        if(folders.size()==1)
+            caseFolder=folders.get(folders.keySet().iterator().next());
+        
+        dlg.setArchiveFile(dto, caseFolder);
         for (ArchiveFileAddressesBean aab : this.pnlInvolvedParties.getInvolvedParties()) {
             dlg.addParty(aab);
         }

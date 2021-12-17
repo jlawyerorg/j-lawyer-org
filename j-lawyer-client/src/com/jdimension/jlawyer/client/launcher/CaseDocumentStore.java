@@ -669,6 +669,7 @@ import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
+import com.jdimension.jlawyer.persistence.CaseFolder;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.io.File;
@@ -693,6 +694,14 @@ public class CaseDocumentStore extends ObservedDocumentStore {
 
     public ArchiveFileBean getCase() {
         return this.af;
+    }
+    
+    public CaseFolder getDocumentFolder() {
+        if(this.doc!=null) {
+            if(this.doc.getFolder()!=null)
+                return this.doc.getFolder();
+        }
+        return null;
     }
 
     @Override
@@ -719,7 +728,6 @@ public class CaseDocumentStore extends ObservedDocumentStore {
 
             } catch (Exception ex) {
                 ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Speichern des Dokuments: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
-                return;
             }
         }
     }
@@ -753,18 +761,9 @@ public class CaseDocumentStore extends ObservedDocumentStore {
 
             } catch (Exception ex) {
                 ThreadUtils.showErrorDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Speichern des Dokuments: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
-                return;
             }
         }
 
-        
-        // no longer required, we keep documents for x days and delete temporary files on startup of the client
-//        File f = new File(path);
-//        f.deleteOnExit();
-//
-//        String dir = path.substring(0, path.lastIndexOf(System.getProperty("file.separator")));
-//        File remDir = new File(dir);
-//        remDir.deleteOnExit();
     }
 
     @Override

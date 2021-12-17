@@ -814,7 +814,7 @@ public class ShareDocumentsToCloudAction extends ProgressableAction {
                             dlg.setInvolvedInCase(parties);
                         }
                         if (caseDto != null) {
-                            dlg.setArchiveFile(caseDto);
+                            dlg.setArchiveFile(caseDto, null);
                         }
                         if (recipient != null) {
                             dlg.setTo(recipient.getEmail());

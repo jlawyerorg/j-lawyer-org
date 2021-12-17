@@ -1682,7 +1682,7 @@ public class EmailInboxPanel extends javax.swing.JPanel implements SaveToCaseExe
 
             MessageContainer msgC = (MessageContainer) this.tblMails.getValueAt(this.tblMails.getSelectedRow(), 0);
 
-            ViewEmailDialog view = new ViewEmailDialog(EditorsRegistry.getInstance().getMainWindow(), false, null);
+            ViewEmailDialog view = new ViewEmailDialog(EditorsRegistry.getInstance().getMainWindow(), false, null, null);
             try {
                 view.setMessage(msgC, EmailUtils.getMailboxSetup(msgC.getMessage()));
                 view.setTitle(msgC.getMessage().getSubject());

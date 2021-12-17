@@ -666,7 +666,7 @@ package com.jdimension.jlawyer.client.launcher;
 import com.jdimension.jlawyer.client.mail.*;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
-import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
+import com.jdimension.jlawyer.persistence.CaseFolder;
 import com.jdimension.jlawyer.persistence.MailboxSetup;
 import java.io.FileInputStream;
 import java.io.InputStream;
@@ -712,10 +712,12 @@ public class EMLInternalLauncher extends InternalLauncher {
             // need to set this to avoid sending read receipts
             message.setFlag(Flag.SEEN, true);
             ArchiveFileBean archiveFile=null;
+            CaseFolder caseFolder=null;
             if(this.store instanceof CaseDocumentStore) {
                 archiveFile=((CaseDocumentStore)store).getCase();
+                caseFolder=((CaseDocumentStore)store).getDocumentFolder();
             }
-            ViewEmailDialog view = new ViewEmailDialog(EditorsRegistry.getInstance().getMainWindow(), false, archiveFile, odoc);
+            ViewEmailDialog view = new ViewEmailDialog(EditorsRegistry.getInstance().getMainWindow(), false, archiveFile, caseFolder, odoc);
             MailboxSetup ms=EmailUtils.getMailboxSetup(message);
             view.setMessage(new MessageContainer(message, message.getSubject(), true), ms);
             try {

@@ -731,6 +731,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
     private Hashtable<String, String> attachments = new Hashtable<String, String>();
 
     private ArchiveFileBean contextArchiveFile = null;
+    private CaseFolder contextArchiveFileFolder = null;
 
     private String contextDictateSign = null;
     private TextEditorPanel tp;
@@ -1080,8 +1081,11 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         this.contextDictateSign = dictateSign;
     }
 
-    public void setArchiveFile(ArchiveFileBean af) {
+    public void setArchiveFile(ArchiveFileBean af, CaseFolder cf) {
         this.contextArchiveFile = af;
+        this.contextArchiveFileFolder=cf;
+        if(this.contextArchiveFile==null)
+            this.contextArchiveFileFolder=null;
         if (af != null && af.getFileNumber() != null) {
             this.chkSaveAsDocument.setEnabled(true);
             this.chkSaveAsDocument.setText("als Dokument speichern in " + af.getFileNumber());
@@ -1773,7 +1777,6 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         }
 
         ProgressIndicator dlg = new ProgressIndicator(this, true);
-        //SendAction a=new SendAction(dlg, this, this.attachments, this.cu, this.chkReadReceipt.isSelected(), this.txtTo.getText(), this.txtCc.getText(), this.txtBcc.getText(), this.txtSubject.getText(), this.taBody.getText());
         EditorImplementation ed = (EditorImplementation) this.contentPanel.getComponent(0);
         String contentType = ed.getContentType();
         ArrayList<String> mails = EmailUtils.getAllMailAddressesFromString(this.txtTo.getText());
@@ -1790,13 +1793,12 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
             return;
         }
 
-        CaseFolder folder = null;
         if (this.chkSaveAsDocument.isSelected() || !(this.radioReviewTypeNone.isSelected())) {
             if (this.contextArchiveFile == null) {
                 SearchAndAssignDialog saDlg = new SearchAndAssignDialog(this, true, "" + this.txtSubject.getText() + ed.getText(), null);
                 saDlg.setVisible(true);
                 this.contextArchiveFile = saDlg.getCaseSelection();
-                folder = saDlg.getFolderSelection();
+                this.contextArchiveFileFolder = saDlg.getFolderSelection();
 
                 saDlg.dispose();
 
@@ -1830,10 +1832,10 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
                         return;
                     }
                 }
-                a = new SendEncryptedAction(dlg, this, new ArrayList<>(this.attachments.values()), ms, this.chkReadReceipt.isSelected(), this.txtTo.getText(), this.txtCc.getText(), this.txtBcc.getText(), this.txtSubject.getText(), ed.getText(), contentType, this.contextArchiveFile, createDocumentTag, folder);
+                a = new SendEncryptedAction(dlg, this, new ArrayList<>(this.attachments.values()), ms, this.chkReadReceipt.isSelected(), this.txtTo.getText(), this.txtCc.getText(), this.txtBcc.getText(), this.txtSubject.getText(), ed.getText(), contentType, this.contextArchiveFile, createDocumentTag, this.contextArchiveFileFolder);
             } else {
 
-                a = new SendAction(dlg, this, new ArrayList<>(this.attachments.values()), ms, this.chkReadReceipt.isSelected(), this.txtTo.getText(), this.txtCc.getText(), this.txtBcc.getText(), this.txtSubject.getText(), ed.getText(), contentType, this.contextArchiveFile, createDocumentTag, folder);
+                a = new SendAction(dlg, this, new ArrayList<>(this.attachments.values()), ms, this.chkReadReceipt.isSelected(), this.txtTo.getText(), this.txtCc.getText(), this.txtBcc.getText(), this.txtSubject.getText(), ed.getText(), contentType, this.contextArchiveFile, createDocumentTag, this.contextArchiveFileFolder);
             }
 
         } else if (this.chkEncryption.isSelected()) {
@@ -2260,7 +2262,6 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
         this.jLabel10.setEnabled(enable);
         this.jLabel12.setEnabled(enable);
         if (!enable) {
-            //this.cmbReviewAssignee.setSelectedIndex(0);
             this.cmbReviewReason.setSelectedIndex(0);
             this.txtReviewDateField.setText(null);
         }

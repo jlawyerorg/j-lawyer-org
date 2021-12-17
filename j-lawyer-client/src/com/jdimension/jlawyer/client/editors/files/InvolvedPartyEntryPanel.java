@@ -1136,7 +1136,7 @@ public class InvolvedPartyEntryPanel extends javax.swing.JPanel implements Event
         } else {
             SendEmailDialog dlg = new SendEmailDialog(EditorsRegistry.getInstance().getMainWindow(), false);
             dlg.setInvolvedInCase(this.container.getInvolvedParties());
-            dlg.setArchiveFile(this.caseDto);
+            dlg.setArchiveFile(this.caseDto, null);
             dlg.setTo(this.a.getEmail());
             ArrayList<ArchiveFileAddressesBean> involved = this.container.getInvolvedParties();
             for (ArchiveFileAddressesBean aab : involved) {
