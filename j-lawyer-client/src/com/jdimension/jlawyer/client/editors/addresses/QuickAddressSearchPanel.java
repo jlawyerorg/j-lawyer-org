@@ -686,6 +686,7 @@ import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -712,6 +713,8 @@ public class QuickAddressSearchPanel extends javax.swing.JPanel implements Theme
      */
     public QuickAddressSearchPanel() {
         initComponents();
+        
+        this.txtSearchString.putClientProperty("JTextField.showClearButton", true);
         
         UserSettings userSet = UserSettings.getInstance();
         if (userSet.isCurrentUserInRole(UserSettings.ROLE_WRITEADDRESS)) {
@@ -749,12 +752,14 @@ public class QuickAddressSearchPanel extends javax.swing.JPanel implements Theme
         this.tblResults.setModel(model);
     }
 
+    @Override
     public void setBackgroundImage(Image image) {
         this.backgroundImage = image;
         this.tblResults.setOpaque(false);
 
     }
 
+    @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
         if (this.backgroundImage != null) {
@@ -1028,16 +1033,16 @@ public class QuickAddressSearchPanel extends javax.swing.JPanel implements Theme
     }
 
     private void tblResultsMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblResultsMouseClicked
-        if (evt.getClickCount() == 2 && evt.getButton() == evt.BUTTON1) {
+        if (evt.getClickCount() == 2 && evt.getButton() == MouseEvent.BUTTON1) {
             this.useSelection();
-        } else if (evt.getClickCount() == 1 && evt.getButton() == evt.BUTTON3) {
+        } else if (evt.getClickCount() == 1 && evt.getButton() == MouseEvent.BUTTON3) {
             int selectionCount=this.tblResults.getSelectedRowCount();
             if (selectionCount < 1) {
                 return;
             }
             this.mnuOpenSelectedAddress.setEnabled(selectionCount==1);
             this.popupAddressActions.show(this.tblResults, evt.getX(), evt.getY());
-        } else if (evt.getClickCount() == 1 && evt.getButton() == evt.BUTTON1) {
+        } else if (evt.getClickCount() == 1 && evt.getButton() == MouseEvent.BUTTON1) {
             if (this.tblResults.getSelectedRowCount() == 1) {
                 try {
                     int row = this.tblResults.getSelectedRow();

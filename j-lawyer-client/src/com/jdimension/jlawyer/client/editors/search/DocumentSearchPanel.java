@@ -671,6 +671,7 @@ import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Graphics;
 import java.awt.GridLayout;
 import java.awt.Image;
+import java.awt.event.KeyEvent;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import javax.swing.JLabel;
@@ -695,23 +696,25 @@ public class DocumentSearchPanel extends javax.swing.JPanel implements Themeable
      */
     public DocumentSearchPanel() {
         initComponents();
+        this.txtSearchString.putClientProperty("JTextField.showClearButton", true);
         this.scrollResults.getVerticalScrollBar().setUnitIncrement(16);
-        String[] colNames = new String[]{"Suchergebnisse"};
-        DefaultTableModel model = new DefaultTableModel(colNames, 0);
         ((JLabel)this.cmbMaxDocs.getRenderer()).setHorizontalAlignment(SwingConstants.RIGHT);
         
     }
 
+    @Override
     public void setBackgroundImage(Image image) {
         this.backgroundImage = image;
         
 
     }
     
+    @Override
     public Image getBackgroundImage() {
         return this.backgroundImage;
     }
 
+    @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
         if (this.backgroundImage != null) {
@@ -834,22 +837,13 @@ public class DocumentSearchPanel extends javax.swing.JPanel implements Themeable
     }// </editor-fold>//GEN-END:initComponents
 
     private void txtSearchStringKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtSearchStringKeyPressed
-        if (evt.getKeyCode() == evt.VK_ENTER) {
+        if (evt.getKeyCode() == KeyEvent.VK_ENTER) {
             this.cmdQuickSearchActionPerformed(null);
         }
     }//GEN-LAST:event_txtSearchStringKeyPressed
 
     private void cmdQuickSearchActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdQuickSearchActionPerformed
         // perform search here
-        String[] colNames = new String[]{"Suchergebnisse"};
-        DefaultTableModel model = new DefaultTableModel(colNames, 0) {
-
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                //all cells false
-                return true;
-            }
-        };
         
         HitPanel hp = new HitPanel();
         hp.doLayout();

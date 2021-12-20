@@ -794,9 +794,13 @@ public class Main {
         ToolTipManager.sharedInstance().setDismissDelay(30000);
         ToolTipManager.sharedInstance().setInitialDelay(200);
 
-        FlatIntelliJLaf.install();
+        FlatIntelliJLaf.setup();
+        
 
         // https://www.formdev.com/flatlaf/customizing/
+        
+        UIManager.put( "PasswordField.showRevealButton", true );
+        
         UIManager.put("ScrollBar.width", 14);
         UIManager.put("ScrollBar.showButtons", true);
         UIManager.put("ScrollPane.smoothScrolling", true);

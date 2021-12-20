@@ -714,6 +714,9 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
     public QuickArchiveFileSearchPanel() {
         this.initializing = true;
         initComponents();
+        
+        this.txtSearchString.putClientProperty("JTextField.showClearButton", true);
+        
         UserSettings userSet = UserSettings.getInstance();
         if (userSet.isCurrentUserInRole(UserSettings.ROLE_WRITECASE)) {
             this.userCanEdit=true;
@@ -724,9 +727,7 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
         }
         
         String temp = userSet.getSetting(UserSettings.CONF_SEARCH_WITHARCHIVE, "false");
-        boolean archiveSearch = false;
         if ("true".equalsIgnoreCase(temp)) {
-            archiveSearch = true;
             this.chkIncludeArchive.setSelected(true);
         }
 
@@ -763,12 +764,14 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
 
     }
 
+    @Override
     public void setBackgroundImage(Image image) {
         this.backgroundImage = image;
         this.tblResults.setOpaque(false);
 
     }
 
+    @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
         if (this.backgroundImage != null) {
@@ -1041,7 +1044,6 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
             log.error("Error deleting archive files", ex);
             JOptionPane.showMessageDialog(this, "Fehler beim Löschen: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             EditorsRegistry.getInstance().clearStatus(false);
-            return;
         } finally {
             ThreadUtils.setDefaultCursor(this, false);
         }

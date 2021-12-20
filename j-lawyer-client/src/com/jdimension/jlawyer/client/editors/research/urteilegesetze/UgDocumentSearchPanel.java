@@ -663,25 +663,18 @@
  */
 package com.jdimension.jlawyer.client.editors.research.urteilegesetze;
 
-import com.jdimension.jlawyer.client.editors.search.*;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.ResetOnDisplayEditor;
 import com.jdimension.jlawyer.client.editors.ThemeableEditor;
-import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.DesktopUtils;
-import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.GridLayout;
 import java.awt.Image;
+import java.awt.event.KeyEvent;
 import java.text.DecimalFormat;
-import java.util.ArrayList;
-import javax.swing.JLabel;
 import javax.swing.JOptionPane;
-import javax.swing.SwingConstants;
-import javax.swing.table.DefaultTableModel;
 import org.apache.log4j.Logger;
-import org.jlawyer.search.SearchHit;
 
 /**
  *
@@ -700,43 +693,24 @@ public class UgDocumentSearchPanel extends javax.swing.JPanel implements Themeab
      */
     public UgDocumentSearchPanel() {
         initComponents();
+        this.txtSearchString.putClientProperty("JTextField.showClearButton", true);
         this.scrollResults.getVerticalScrollBar().setUnitIncrement(16);
-        String[] colNames = new String[]{"Suchergebnisse"};
-        DefaultTableModel model = new DefaultTableModel(colNames, 0);
         
-        
-//        Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
-//
-//            public void run() {
-//                ClientSettings settings = ClientSettings.getInstance();
-//                JLawyerServiceLocator locator = null;
-//                try {
-//                    locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-//                    locator.lookupSearchServiceRemote().reOpenIndex();
-//                    
-//                } catch (Throwable ex) {
-//                    log.error("Error re-opening search index", ex);
-//                    return;
-//                }
-//            }
-//        }));
-
-        /*
-         * RowSorter<TableModel> sorter = new TableRowSorter<TableModel>(model);
-         * this.tblResults.setRowSorter(sorter);
-         */
     }
 
+    @Override
     public void setBackgroundImage(Image image) {
         this.backgroundImage = image;
         
 
     }
     
+    @Override
     public Image getBackgroundImage() {
         return this.backgroundImage;
     }
 
+    @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
         if (this.backgroundImage != null) {
@@ -920,30 +894,13 @@ public class UgDocumentSearchPanel extends javax.swing.JPanel implements Themeab
     }// </editor-fold>//GEN-END:initComponents
 
     private void txtSearchStringKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtSearchStringKeyPressed
-        if (evt.getKeyCode() == evt.VK_ENTER) {
+        if (evt.getKeyCode() == KeyEvent.VK_ENTER) {
             this.cmdQuickSearchActionPerformed(null);
         }
     }//GEN-LAST:event_txtSearchStringKeyPressed
 
     private void cmdQuickSearchActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdQuickSearchActionPerformed
         // perform search here
-//        ThreadUtils.setWaitCursor(this);
-//        EditorsRegistry.getInstance().updateStatus("Suche Akten...");
-//        String tag=null;
-//        Object selectedTag=this.cmbTags.getSelectedItem();
-//        if(selectedTag!=null)
-//            tag=selectedTag.toString();
-//        new Thread(new QuickArchiveFileSearchThread(this, this.txtSearchString.getText(), this.chkIncludeArchive.isSelected(), tag, this.tblResults)).start();
-
-        String[] colNames = new String[]{"Suchergebnisse"};
-        DefaultTableModel model = new DefaultTableModel(colNames, 0) {
-
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                //all cells false
-                return true;
-            }
-        };
         
         UgHitPanel hp = new UgHitPanel();
         hp.doLayout();
@@ -975,7 +932,6 @@ public class UgDocumentSearchPanel extends javax.swing.JPanel implements Themeab
                 this.lblGotoOnlineResults.setIcon(null);
             }
             this.pnlResults.setLayout(new GridLayout(searchResult.getHits().size(),1));
-            float maxScore=100f;
             for (int i=0;i<searchResult.getHits().size();i++) {
                 UgHitPanel hp2=new UgHitPanel();
                 if(i%2==0)
@@ -989,7 +945,6 @@ public class UgDocumentSearchPanel extends javax.swing.JPanel implements Themeab
             log.error("Error performing index search", ex);
             JOptionPane.showMessageDialog(this, "Fehler bei der Suche: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             EditorsRegistry.getInstance().clearStatus();
-            return;
         }
 
     }//GEN-LAST:event_cmdQuickSearchActionPerformed
