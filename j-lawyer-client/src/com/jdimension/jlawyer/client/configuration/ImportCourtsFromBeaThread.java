@@ -786,7 +786,8 @@ public class ImportCourtsFromBeaThread implements Runnable {
                                 newCourt.setFax(StringUtils.nonNull(id.getFax()));
                                 newCourt.setPhone(StringUtils.nonNull(id.getPhone()));
                                 newCourt.setBeaSafeId(StringUtils.nonNull(id.getSafeId()));
-                                newCourt.setStreet(StringUtils.nonNull(id.getStreet()) + " " + StringUtils.nonNull(id.getStreetNumber()));
+                                newCourt.setStreet(StringUtils.nonNull(id.getStreet()));
+                                newCourt.setStreetNumber(StringUtils.nonNull(id.getStreetNumber()));
                                 newCourt.setComplimentaryClose("Mit freundlichen Grüßen");
                                 newCourt.setSalutation("Sehr geehrte Damen und Herren");
                                 newCourt = adr.createAddress(newCourt);
