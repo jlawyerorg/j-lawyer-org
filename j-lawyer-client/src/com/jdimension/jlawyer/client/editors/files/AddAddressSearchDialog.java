@@ -710,7 +710,8 @@ public class AddAddressSearchDialog extends javax.swing.JDialog {
         super(parent, modal);
         initComponents();
 
-        
+        this.txtSearchString.putClientProperty("JTextField.placeholderText", "Suche: Adressen");
+        this.txtSearchString.putClientProperty("JTextField.showClearButton", true);
         
         String[] colNames = new String[]{"Name", "Vorname", "Unternehmen", "Abteilung", "PLZ", "Ort", "Strasse", "Nr.", "Land", "Etiketten"};
         QuickAddressSearchTableModel model = new QuickAddressSearchTableModel(colNames, 0);
@@ -767,7 +768,6 @@ public class AddAddressSearchDialog extends javax.swing.JDialog {
     private void initComponents() {
 
         popTagFilter = new javax.swing.JPopupMenu();
-        jLabel1 = new javax.swing.JLabel();
         txtSearchString = new javax.swing.JTextField();
         cmdQuickSearch = new javax.swing.JButton();
         jScrollPane1 = new javax.swing.JScrollPane();
@@ -785,8 +785,6 @@ public class AddAddressSearchDialog extends javax.swing.JDialog {
                 formComponentResized(evt);
             }
         });
-
-        jLabel1.setText("Suchanfrage:");
 
         txtSearchString.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyPressed(java.awt.event.KeyEvent evt) {
@@ -870,8 +868,6 @@ public class AddAddressSearchDialog extends javax.swing.JDialog {
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 705, Short.MAX_VALUE)
                     .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
-                        .add(jLabel1)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(txtSearchString)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(cmdQuickSearch)
@@ -896,9 +892,7 @@ public class AddAddressSearchDialog extends javax.swing.JDialog {
                 .addContainerGap()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(cmdQuickSearch)
-                    .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                        .add(jLabel1)
-                        .add(txtSearchString, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                    .add(txtSearchString, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(cmdTagFilter))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
@@ -1034,7 +1028,6 @@ public class AddAddressSearchDialog extends javax.swing.JDialog {
     private javax.swing.JButton cmdQuickSearch;
     private javax.swing.JButton cmdTagFilter;
     private javax.swing.JButton cmdUseSelection;
-    private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JPopupMenu popTagFilter;

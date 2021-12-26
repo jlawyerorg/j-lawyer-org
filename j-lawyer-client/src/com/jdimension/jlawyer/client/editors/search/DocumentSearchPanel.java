@@ -697,6 +697,7 @@ public class DocumentSearchPanel extends javax.swing.JPanel implements Themeable
     public DocumentSearchPanel() {
         initComponents();
         this.txtSearchString.putClientProperty("JTextField.showClearButton", true);
+        this.txtSearchString.putClientProperty("JTextField.placeholderText", "Suche: Dokumente");
         this.scrollResults.getVerticalScrollBar().setUnitIncrement(16);
         ((JLabel)this.cmbMaxDocs.getRenderer()).setHorizontalAlignment(SwingConstants.RIGHT);
         
@@ -730,7 +731,6 @@ public class DocumentSearchPanel extends javax.swing.JPanel implements Themeable
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jLabel1 = new javax.swing.JLabel();
         txtSearchString = new javax.swing.JTextField();
         cmdQuickSearch = new javax.swing.JButton();
         lblPanelTitle = new javax.swing.JLabel();
@@ -740,9 +740,6 @@ public class DocumentSearchPanel extends javax.swing.JPanel implements Themeable
         cmbMaxDocs = new javax.swing.JComboBox();
         lblResultCount = new javax.swing.JLabel();
         jLabel3 = new javax.swing.JLabel();
-
-        jLabel1.setForeground(new java.awt.Color(255, 255, 255));
-        jLabel1.setText("Suchanfrage:");
 
         txtSearchString.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyPressed(java.awt.event.KeyEvent evt) {
@@ -796,11 +793,7 @@ public class DocumentSearchPanel extends javax.swing.JPanel implements Themeable
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(scrollResults)
                     .add(layout.createSequentialGroup()
-                        .add(jLabel1)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                            .add(txtSearchString)
-                            .add(lblResultCount, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .add(txtSearchString)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(cmbMaxDocs, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
@@ -810,7 +803,10 @@ public class DocumentSearchPanel extends javax.swing.JPanel implements Themeable
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(lblPanelTitle)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .add(jLabel3)))
+                        .add(jLabel3))
+                    .add(layout.createSequentialGroup()
+                        .add(lblResultCount)
+                        .add(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -824,7 +820,6 @@ public class DocumentSearchPanel extends javax.swing.JPanel implements Themeable
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                        .add(jLabel1)
                         .add(txtSearchString, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .add(cmbMaxDocs, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                     .add(cmdQuickSearch))
@@ -893,7 +888,6 @@ public class DocumentSearchPanel extends javax.swing.JPanel implements Themeable
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JComboBox cmbMaxDocs;
     private javax.swing.JButton cmdQuickSearch;
-    private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     protected javax.swing.JLabel lblPanelTitle;

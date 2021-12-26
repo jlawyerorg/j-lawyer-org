@@ -716,6 +716,7 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
         initComponents();
         
         this.txtSearchString.putClientProperty("JTextField.showClearButton", true);
+        this.txtSearchString.putClientProperty("JTextField.placeholderText", "Suche: Akten");
         
         UserSettings userSet = UserSettings.getInstance();
         if (userSet.isCurrentUserInRole(UserSettings.ROLE_WRITECASE)) {
@@ -800,7 +801,6 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
         popTagFilter = new javax.swing.JPopupMenu();
         popDocumentTagFilter = new javax.swing.JPopupMenu();
         cmdTagFilter = new javax.swing.JButton();
-        jLabel1 = new javax.swing.JLabel();
         txtSearchString = new javax.swing.JTextField();
         jScrollPane1 = new javax.swing.JScrollPane();
         tblResults = new javax.swing.JTable();
@@ -851,9 +851,6 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
                 cmdTagFilterMousePressed(evt);
             }
         });
-
-        jLabel1.setForeground(new java.awt.Color(255, 255, 255));
-        jLabel1.setText("Suchanfrage:");
 
         txtSearchString.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyPressed(java.awt.event.KeyEvent evt) {
@@ -963,8 +960,6 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 819, Short.MAX_VALUE)
                     .add(layout.createSequentialGroup()
-                        .add(jLabel1)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(txtSearchString)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(cmdQuickSearch)
@@ -995,9 +990,7 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(cmdQuickSearch)
-                    .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                        .add(jLabel1)
-                        .add(txtSearchString, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                    .add(txtSearchString, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(cmdTagFilter)
                     .add(chkIncludeArchive)
                     .add(cmdDocumentTagFilter))
@@ -1275,7 +1268,6 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
     private javax.swing.JButton cmdExport;
     private javax.swing.JButton cmdQuickSearch;
     private javax.swing.JButton cmdTagFilter;
-    private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;

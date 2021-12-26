@@ -726,6 +726,8 @@ public class SearchAndAssignDialog extends javax.swing.JDialog implements Progre
     public SearchAndAssignDialog(java.awt.Dialog parent, boolean modal, String searchContext, String forceCaseId) {
         super(parent, modal);
         initComponents();
+        this.txtSearchString.putClientProperty("JTextField.placeholderText", "Suche: Akten");
+        this.txtSearchString.putClientProperty("JTextField.showClearButton", true);
         this.searchContext = searchContext;
         this.forceCaseId = forceCaseId;
         FrameUtils.centerDialog(this, EditorsRegistry.getInstance().getMainWindow());
@@ -738,6 +740,8 @@ public class SearchAndAssignDialog extends javax.swing.JDialog implements Progre
     public SearchAndAssignDialog(java.awt.Frame parent, boolean modal, String searchContext, String forceCaseId) {
         super(parent, modal);
         initComponents();
+        this.txtSearchString.putClientProperty("JTextField.placeholderText", "Suche");
+        this.txtSearchString.putClientProperty("JTextField.showClearButton", true);
         this.searchContext = searchContext;
         this.forceCaseId = forceCaseId;
         FrameUtils.centerDialog(this, EditorsRegistry.getInstance().getMainWindow());
@@ -881,7 +885,6 @@ public class SearchAndAssignDialog extends javax.swing.JDialog implements Progre
         popDocumentTagFilter = new javax.swing.JPopupMenu();
         popFolders = new javax.swing.JPopupMenu();
         mnuNewFolder = new javax.swing.JMenuItem();
-        jLabel1 = new javax.swing.JLabel();
         txtSearchString = new javax.swing.JTextField();
         cmdQuickSearch = new javax.swing.JButton();
         cmdCancel = new javax.swing.JButton();
@@ -909,8 +912,6 @@ public class SearchAndAssignDialog extends javax.swing.JDialog implements Progre
                 formComponentResized(evt);
             }
         });
-
-        jLabel1.setText("Suchanfrage:");
 
         txtSearchString.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyPressed(java.awt.event.KeyEvent evt) {
@@ -1004,9 +1005,7 @@ public class SearchAndAssignDialog extends javax.swing.JDialog implements Progre
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addComponent(jLabel1)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(txtSearchString, javax.swing.GroupLayout.DEFAULT_SIZE, 499, Short.MAX_VALUE)
+                        .addComponent(txtSearchString)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cmdQuickSearch)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
@@ -1018,7 +1017,7 @@ public class SearchAndAssignDialog extends javax.swing.JDialog implements Progre
                         .addComponent(cmdUseSelection)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cmdCancel))
-                    .addComponent(split))
+                    .addComponent(split, javax.swing.GroupLayout.DEFAULT_SIZE, 777, Short.MAX_VALUE))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -1027,9 +1026,7 @@ public class SearchAndAssignDialog extends javax.swing.JDialog implements Progre
                 .addGap(19, 19, 19)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(cmdQuickSearch)
-                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(jLabel1)
-                        .addComponent(txtSearchString, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(txtSearchString, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(cmdTagFilter)
                     .addComponent(cmdDocumentTagFilter))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -1310,7 +1307,6 @@ public class SearchAndAssignDialog extends javax.swing.JDialog implements Progre
     private javax.swing.JButton cmdQuickSearch;
     private javax.swing.JButton cmdTagFilter;
     private javax.swing.JButton cmdUseSelection;
-    private javax.swing.JLabel jLabel1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JMenuItem mnuNewFolder;

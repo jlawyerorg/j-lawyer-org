@@ -694,6 +694,7 @@ public class UgDocumentSearchPanel extends javax.swing.JPanel implements Themeab
     public UgDocumentSearchPanel() {
         initComponents();
         this.txtSearchString.putClientProperty("JTextField.showClearButton", true);
+        this.txtSearchString.putClientProperty("JTextField.placeholderText", "Suche: Urteile und Gesetze");
         this.scrollResults.getVerticalScrollBar().setUnitIncrement(16);
         
     }
@@ -727,7 +728,6 @@ public class UgDocumentSearchPanel extends javax.swing.JPanel implements Themeab
     private void initComponents() {
 
         btGrpSearchTypes = new javax.swing.ButtonGroup();
-        jLabel1 = new javax.swing.JLabel();
         txtSearchString = new javax.swing.JTextField();
         cmdQuickSearch = new javax.swing.JButton();
         lblPanelTitle = new javax.swing.JLabel();
@@ -740,9 +740,6 @@ public class UgDocumentSearchPanel extends javax.swing.JPanel implements Themeab
         lblGotoOnlineResults = new javax.swing.JLabel();
         lblUgWebsite = new javax.swing.JLabel();
         jLabel4 = new javax.swing.JLabel();
-
-        jLabel1.setForeground(new java.awt.Color(255, 255, 255));
-        jLabel1.setText("Suchanfrage:");
 
         txtSearchString.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyPressed(java.awt.event.KeyEvent evt) {
@@ -836,23 +833,6 @@ public class UgDocumentSearchPanel extends javax.swing.JPanel implements Themeab
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(scrollResults, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 1017, Short.MAX_VALUE)
                     .add(layout.createSequentialGroup()
-                        .add(jLabel1)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                            .add(layout.createSequentialGroup()
-                                .add(lblResultCount, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .add(128, 128, 128))
-                            .add(layout.createSequentialGroup()
-                                .add(txtSearchString)
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                .add(cmdQuickSearch)
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                                .add(rdTypeAll)
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                                .add(rdTypeGesetze)
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                                .add(rdTypeUrteile))))
-                    .add(layout.createSequentialGroup()
                         .add(lblPanelTitle)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .add(jLabel4)
@@ -860,7 +840,20 @@ public class UgDocumentSearchPanel extends javax.swing.JPanel implements Themeab
                         .add(lblUgWebsite))
                     .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
                         .add(0, 0, Short.MAX_VALUE)
-                        .add(lblGotoOnlineResults)))
+                        .add(lblGotoOnlineResults))
+                    .add(layout.createSequentialGroup()
+                        .add(txtSearchString)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(cmdQuickSearch)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                        .add(rdTypeAll)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                        .add(rdTypeGesetze)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                        .add(rdTypeUrteile))
+                    .add(layout.createSequentialGroup()
+                        .add(lblResultCount)
+                        .add(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -875,9 +868,7 @@ public class UgDocumentSearchPanel extends javax.swing.JPanel implements Themeab
                 .add(7, 7, 7)
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
                     .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                        .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                            .add(jLabel1)
-                            .add(txtSearchString, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                        .add(org.jdesktop.layout.GroupLayout.TRAILING, txtSearchString, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .add(cmdQuickSearch))
                     .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                         .add(rdTypeUrteile)
@@ -885,8 +876,8 @@ public class UgDocumentSearchPanel extends javax.swing.JPanel implements Themeab
                         .add(rdTypeAll)))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(lblResultCount)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(scrollResults, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 362, Short.MAX_VALUE)
+                .add(10, 10, 10)
+                .add(scrollResults, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 358, Short.MAX_VALUE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(lblGotoOnlineResults)
                 .addContainerGap())
@@ -980,7 +971,6 @@ public class UgDocumentSearchPanel extends javax.swing.JPanel implements Themeab
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.ButtonGroup btGrpSearchTypes;
     private javax.swing.JButton cmdQuickSearch;
-    private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel lblGotoOnlineResults;
     protected javax.swing.JLabel lblPanelTitle;

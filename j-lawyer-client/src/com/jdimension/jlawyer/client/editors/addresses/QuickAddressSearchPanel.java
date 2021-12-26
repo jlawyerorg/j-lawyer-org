@@ -715,6 +715,7 @@ public class QuickAddressSearchPanel extends javax.swing.JPanel implements Theme
         initComponents();
         
         this.txtSearchString.putClientProperty("JTextField.showClearButton", true);
+        this.txtSearchString.putClientProperty("JTextField.placeholderText", "Suche: Adressen");
         
         UserSettings userSet = UserSettings.getInstance();
         if (userSet.isCurrentUserInRole(UserSettings.ROLE_WRITEADDRESS)) {
@@ -786,7 +787,6 @@ public class QuickAddressSearchPanel extends javax.swing.JPanel implements Theme
         mnuDuplicateSelectedAddress = new javax.swing.JMenuItem();
         mnuDeleteSelectedAddresses = new javax.swing.JMenuItem();
         popTagFilter = new javax.swing.JPopupMenu();
-        jLabel1 = new javax.swing.JLabel();
         txtSearchString = new javax.swing.JTextField();
         jScrollPane1 = new javax.swing.JScrollPane();
         tblResults = new javax.swing.JTable();
@@ -828,9 +828,6 @@ public class QuickAddressSearchPanel extends javax.swing.JPanel implements Theme
             }
         });
         popupAddressActions.add(mnuDeleteSelectedAddresses);
-
-        jLabel1.setForeground(new java.awt.Color(255, 255, 255));
-        jLabel1.setText("Suchanfrage:");
 
         txtSearchString.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyPressed(java.awt.event.KeyEvent evt) {
@@ -927,8 +924,6 @@ public class QuickAddressSearchPanel extends javax.swing.JPanel implements Theme
                     .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 651, Short.MAX_VALUE)
                     .add(jScrollPane2)
                     .add(layout.createSequentialGroup()
-                        .add(jLabel1)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(txtSearchString)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(cmdQuickSearch)
@@ -954,9 +949,7 @@ public class QuickAddressSearchPanel extends javax.swing.JPanel implements Theme
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(org.jdesktop.layout.GroupLayout.TRAILING, cmdQuickSearch)
-                    .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                        .add(jLabel1)
-                        .add(txtSearchString, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                    .add(txtSearchString, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(cmdTagFilter))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 190, Short.MAX_VALUE)
@@ -1197,7 +1190,6 @@ public class QuickAddressSearchPanel extends javax.swing.JPanel implements Theme
     private javax.swing.JButton cmdExport;
     private javax.swing.JButton cmdQuickSearch;
     private javax.swing.JButton cmdTagFilter;
-    private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel18;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
