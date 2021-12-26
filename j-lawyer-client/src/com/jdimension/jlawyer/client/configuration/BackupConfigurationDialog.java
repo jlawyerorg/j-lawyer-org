@@ -1260,11 +1260,6 @@ public class BackupConfigurationDialog extends javax.swing.JDialog {
         // this is just the hash, not usable for http basic auth
         //String password = UserSettings.getInstance().getCurrentUser().getPassword();
         
-//        String password = JOptionPane.showInputDialog(this, "Start der Datensicherung durch Passworteingabe für Nutzer " + principalId + " bestätigen: ", "");
-//                if (password == null || "".equals(password)) {
-//                    return;
-//                }
-
         RequestPasswordOptionPanel p = new RequestPasswordOptionPanel();
         JOptionPane pane = new JOptionPane(p, JOptionPane.QUESTION_MESSAGE);
         JDialog dialog = pane.createDialog(this, "Durch Passwort bestätigen");
