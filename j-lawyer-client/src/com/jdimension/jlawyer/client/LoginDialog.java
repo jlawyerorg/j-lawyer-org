@@ -735,12 +735,6 @@ public class LoginDialog extends javax.swing.JFrame {
             InputStream is = StartupSplashFrame.class.getResourceAsStream("/fonts/exo2/exo2-bold.ttf");
             Font font = Font.createFont(Font.TRUETYPE_FONT, is);
 
-//            this.lblPassword.setFont(font.deriveFont(Font.BOLD, 24));
-//            this.lblPassword.setForeground(Color.WHITE);
-//
-//            this.lblUser.setFont(font.deriveFont(Font.BOLD, 24));
-//            this.lblUser.setForeground(Color.WHITE);
-
             this.jPanel5.putClientProperty(FlatClientProperties.COMPONENT_ROUND_RECT, true);
 
             this.txtUser.setFont(font.deriveFont(Font.BOLD, 24));
