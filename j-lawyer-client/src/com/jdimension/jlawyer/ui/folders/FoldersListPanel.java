@@ -670,8 +670,7 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.List;
 import javax.swing.JSplitPane;
 
@@ -881,7 +880,7 @@ public class FoldersListPanel extends javax.swing.JPanel {
     }
     
     public String getFolderPath(String folderId) {
-        Hashtable<String,String> folderPaths=new Hashtable<>();
+        HashMap<String,String> folderPaths=new HashMap<>();
         this.collectFolderPaths(folderPaths, this.rootFolder, "");
         if(folderPaths.containsKey(folderId)) {
             return folderPaths.get(folderId);
@@ -890,7 +889,7 @@ public class FoldersListPanel extends javax.swing.JPanel {
         }
     }
     
-    private void collectFolderPaths(Hashtable<String,String> items, CaseFolder folder, String path) {
+    private void collectFolderPaths(HashMap<String,String> items, CaseFolder folder, String path) {
         String itemName = path;
         if (path.length() > 0) {
             itemName = itemName + " > ";
