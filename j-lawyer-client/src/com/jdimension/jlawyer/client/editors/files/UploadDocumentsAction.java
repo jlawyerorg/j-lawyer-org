@@ -732,8 +732,7 @@ public class UploadDocumentsAction extends ProgressableAction {
                     if (!f.isDirectory()) {
 
                         byte[] data = FileUtils.readFile(f);
-                        final long dataSize = (long) data.length;
-
+                        
                         String newName = f.getName();
                         boolean documentExists = afs.doesDocumentExist(this.archiveFileKey, newName);
                         while (documentExists) {
@@ -749,19 +748,13 @@ public class UploadDocumentsAction extends ProgressableAction {
                         }
 
                         final ArchiveFileDocumentsBean doc = afs.addDocument(this.archiveFileKey, newName, data, null);
-                        if(this.targetFolder!=null) {
-                            ArrayList<String> docId=new ArrayList<>();
-                            docId.add(doc.getId());
-                            afs.moveDocumentsToFolder(docId, this.targetFolder.getId());
-                        }
-                        SwingUtilities.invokeLater(new Runnable() {
-                            public void run() {
-                                docTarget.addDocument(doc);
-                                if(targetFolder!=null) {
-                                    ArrayList<ArchiveFileDocumentsBean> docs=new ArrayList<>();
-                                    docs.add(doc);
-                                    docTarget.moveDocumentsToFolder(docs, targetFolder);
-                                }
+//                        persisting the folder for this document is automatically done by this call (not just UI update)
+                        SwingUtilities.invokeLater(() -> {
+                            docTarget.addDocument(doc);
+                            if(targetFolder!=null) {
+                                ArrayList<ArchiveFileDocumentsBean> docs=new ArrayList<>();
+                                docs.add(doc);
+                                docTarget.moveDocumentsToFolder(docs, targetFolder);
                             }
                         });
 

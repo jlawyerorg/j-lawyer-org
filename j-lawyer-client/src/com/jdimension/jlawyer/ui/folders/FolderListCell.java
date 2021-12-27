@@ -954,7 +954,6 @@ public class FolderListCell extends javax.swing.JPanel implements DropTargetList
 
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Ändern des Ordners: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-            return;
         }
     }//GEN-LAST:event_mnuEditActionPerformed
 
@@ -975,7 +974,6 @@ public class FolderListCell extends javax.swing.JPanel implements DropTargetList
         } catch (Exception ex) {
             log.error("could not delete document folder", ex);
             JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Löschen des Ordners: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-            return;
         }
     }//GEN-LAST:event_mnuDeleteActionPerformed
 
@@ -996,7 +994,6 @@ public class FolderListCell extends javax.swing.JPanel implements DropTargetList
 
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Erstellen des Ordners: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-            return;
         }
     }//GEN-LAST:event_mnuCreateActionPerformed
 
@@ -1065,7 +1062,6 @@ public class FolderListCell extends javax.swing.JPanel implements DropTargetList
             this.setBackground(this.defaultBackground);
         }
 
-        //this.repaint();
     }
 
     /**

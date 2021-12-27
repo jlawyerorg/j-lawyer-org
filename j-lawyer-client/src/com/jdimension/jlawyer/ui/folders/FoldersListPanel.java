@@ -813,14 +813,10 @@ public class FoldersListPanel extends javax.swing.JPanel {
 
         if (folder.getChildren() != null) {
             List<CaseFolder> allChildren = folder.getChildren();
-            Collections.sort(allChildren, new Comparator() {
-                @Override
-                public int compare(Object t, Object t1) {
-                    CaseFolder f1 = (CaseFolder) t;
-                    CaseFolder f2 = (CaseFolder) t1;
-                    return f1.getName().compareTo(f2.getName());
-                }
-
+            Collections.sort(allChildren, (Object t, Object t1) -> {
+                CaseFolder f1 = (CaseFolder) t;
+                CaseFolder f2 = (CaseFolder) t1;
+                return f1.getName().compareTo(f2.getName());
             });
             for (CaseFolder child : allChildren) {
                 FolderListCell childNode = new FolderListCell(this, level, child.getName(), this.readOnly);
@@ -885,7 +881,7 @@ public class FoldersListPanel extends javax.swing.JPanel {
     }
     
     public String getFolderPath(String folderId) {
-        Hashtable<String,String> folderPaths=new Hashtable<String,String>();
+        Hashtable<String,String> folderPaths=new Hashtable<>();
         this.collectFolderPaths(folderPaths, this.rootFolder, "");
         if(folderPaths.containsKey(folderId)) {
             return folderPaths.get(folderId);
