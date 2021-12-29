@@ -4180,7 +4180,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                             return;
                         }
 
-                        newName = newName.replaceAll(" ", "-");
                         if (newName.length() == 0) {
                             JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Dateiname darf nicht leer sein.", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
                             this.lastPopupClosed = System.currentTimeMillis();
@@ -4836,7 +4835,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                             this.lastPopupClosed = System.currentTimeMillis();
                             return;
                         }
-                        newName = newName.replaceAll(" ", "-");
                         if (newName.length() == 0) {
                             JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Dateiname darf nicht leer sein.", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
                             this.lastPopupClosed = System.currentTimeMillis();
@@ -4896,7 +4894,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                     try {
                         byte[] content = remote.getDocumentContent(doc.getId());
                         String newName = doc.getName().substring(0, doc.getName().length() - curExt.length()) + ".pdf";
-                        newName = newName.replaceAll(" ", "-");
                         if (newName.length() == 0) {
                             JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Dateiname darf nicht leer sein.", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
                             return;
@@ -5232,7 +5229,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                         continue;
                     }
 
-                    newName = newName.replaceAll(" ", "-");
                     if (newName.length() == 0) {
                         JOptionPane.showMessageDialog(this, "Dateiname darf nicht leer sein.", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
                         this.lastPopupClosed = System.currentTimeMillis();
@@ -5391,7 +5387,6 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
                             byte[] content = remote.getDocumentContent(doc.getId());
                             String newName = doc.getName().substring(0, doc.getName().length() - curExt.length()) + "." + targetFormat;
-                            newName = newName.replaceAll(" ", "-");
                             if (newName.length() == 0) {
                                 JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Dateiname darf nicht leer sein.", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
                                 return;
