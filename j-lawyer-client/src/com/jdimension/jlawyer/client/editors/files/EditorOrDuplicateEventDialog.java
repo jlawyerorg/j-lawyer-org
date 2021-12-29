@@ -1101,6 +1101,7 @@ public class EditorOrDuplicateEventDialog extends javax.swing.JDialog {
         MultiCalDialog dlg = new MultiCalDialog(this.txtEventBeginDateField, this, true);
         FrameUtils.centerDialog(dlg, this);
         dlg.setVisible(true);
+        this.txtEventEndDateField.setText(this.txtEventBeginDateField.getText());
     }//GEN-LAST:event_cmdEventBeginDateSelectorActionPerformed
 
     private void cmdEventEndDateSelectorActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdEventEndDateSelectorActionPerformed
