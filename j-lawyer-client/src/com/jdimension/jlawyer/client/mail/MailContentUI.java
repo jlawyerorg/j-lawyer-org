@@ -1271,7 +1271,7 @@ public class MailContentUI extends javax.swing.JPanel implements HyperlinkListen
         mnuSave.add(mnuSearchSave);
 
         mnuSaveAsFile.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/filesave.png"))); // NOI18N
-        mnuSaveAsFile.setText("als Datei...");
+        mnuSaveAsFile.setText("als lokale Datei...");
         mnuSaveAsFile.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 mnuSaveAsFileActionPerformed(evt);

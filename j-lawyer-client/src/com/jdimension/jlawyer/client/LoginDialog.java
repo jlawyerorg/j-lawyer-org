@@ -745,7 +745,7 @@ public class LoginDialog extends javax.swing.JFrame {
 
             this.pwPassword.setFont(font.deriveFont(Font.BOLD, 24));
             this.pwPassword.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
-            this.pwPassword.putClientProperty("JTextField.placeholderText", "Passwort");
+            //this.pwPassword.putClientProperty("JTextField.placeholderText", "Passwort");
             this.pwPassword.putClientProperty("JTextField.leadingIcon", new javax.swing.ImageIcon(getClass().getResource("/com/jdimension/jlawyer/client/baseline_password_black_24dp.png")));
             //this.pwPassword.putClientProperty( "JComponent.roundRect", true );
 
