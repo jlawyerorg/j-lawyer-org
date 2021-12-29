@@ -5380,42 +5380,39 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 }
 
                 final String curExt = currentExt;
-                ProgressableActionCallback callback = new ProgressableActionCallback() {
-                    @Override
-                    public void actionFinished() {
-                        try {
-
-                            byte[] content = remote.getDocumentContent(doc.getId());
-                            String newName = doc.getName().substring(0, doc.getName().length() - curExt.length()) + "." + targetFormat;
-                            if (newName.length() == 0) {
-                                JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Dateiname darf nicht leer sein.", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
-                                return;
-                            }
-
-                            FileConverter conv = FileConverter.getInstance();
-                            String tempPath = FileUtils.createTempFile(doc.getName(), content);
-                            String tempTargetPath = conv.convertTo(tempPath, targetFormat);
-                            byte[] targetContent = FileUtils.readFile(new File(tempTargetPath));
-                            FileUtils.cleanupTempFile(tempPath);
-                            FileUtils.cleanupTempFile(tempTargetPath);
-
-                            ArchiveFileDocumentsBean newDoc = remote.addDocument(dto.getId(), newName, targetContent, doc.getDictateSign());
-
-                            if (doc.getFolder() != null) {
-                                newDoc.setFolder(doc.getFolder());
-                                ArrayList<String> documentIds = new ArrayList<>();
-                                documentIds.add(newDoc.getId());
-                                remote.moveDocumentsToFolder(documentIds, doc.getFolder().getId());
-                            } else {
-                                log.warn("document folder of source document is null when duplicating as " + targetFormat);
-                            }
-
-                            caseFolderPanel1.addDocument(newDoc);
-
-                        } catch (Exception ioe) {
-                            log.error("Error duplicating document", ioe);
-                            JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Konvertieren des Dokuments: " + ioe.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                ProgressableActionCallback callback = () -> {
+                    try {
+                        
+                        byte[] content = remote.getDocumentContent(doc.getId());
+                        String newName = doc.getName().substring(0, doc.getName().length() - curExt.length()) + "." + targetFormat;
+                        if (newName.length() == 0) {
+                            JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Dateiname darf nicht leer sein.", "Hinweis", JOptionPane.INFORMATION_MESSAGE);
+                            return;
                         }
+                        
+                        FileConverter conv = FileConverter.getInstance();
+                        String tempPath = FileUtils.createTempFile(doc.getName(), content);
+                        String tempTargetPath = conv.convertTo(tempPath, targetFormat);
+                        byte[] targetContent = FileUtils.readFile(new File(tempTargetPath));
+                        FileUtils.cleanupTempFile(tempPath);
+                        FileUtils.cleanupTempFile(tempTargetPath);
+                        
+                        ArchiveFileDocumentsBean newDoc = remote.addDocument(dto.getId(), newName, targetContent, doc.getDictateSign());
+                        
+                        if (doc.getFolder() != null) {
+                            newDoc.setFolder(doc.getFolder());
+                            ArrayList<String> documentIds = new ArrayList<>();
+                            documentIds.add(newDoc.getId());
+                            remote.moveDocumentsToFolder(documentIds, doc.getFolder().getId());
+                        } else {
+                            log.warn("document folder of source document is null when duplicating as " + targetFormat);
+                        }
+                        
+                        caseFolderPanel1.addDocument(newDoc);
+                        
+                    } catch (Exception ioe) {
+                        log.error("Error duplicating document", ioe);
+                        JOptionPane.showMessageDialog(EditorsRegistry.getInstance().getMainWindow(), "Fehler beim Konvertieren des Dokuments: " + ioe.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
                     }
                 };
 
