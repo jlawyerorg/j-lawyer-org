@@ -667,6 +667,7 @@ import com.google.i18n.phonenumbers.PhoneNumberMatch;
 import com.google.i18n.phonenumbers.PhoneNumberUtil;
 import com.jdimension.jlawyer.documents.LibreOfficeAccess;
 import com.jdimension.jlawyer.documents.PreviewGenerator;
+import com.jdimension.jlawyer.events.DocumentCreatedEvent;
 import com.jdimension.jlawyer.export.HTMLExport;
 import com.jdimension.jlawyer.persistence.*;
 import com.jdimension.jlawyer.persistence.utils.JDBCUtils;
@@ -694,6 +695,8 @@ import javax.ejb.SessionContext;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import static javax.ejb.TransactionAttributeType.REQUIRES_NEW;
+import javax.enterprise.event.Event;
+import javax.inject.Inject;
 import javax.jms.ConnectionFactory;
 import javax.jms.MessageProducer;
 import javax.jms.ObjectMessage;
@@ -713,7 +716,7 @@ import org.jlawyer.search.SearchIndexRequest;
 @SecurityDomain("j-lawyer-security")
 public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFileServiceLocal {
 
-    private static Logger log = Logger.getLogger(ArchiveFileService.class.getName());
+    private static final Logger log = Logger.getLogger(ArchiveFileService.class.getName());
     @Resource
     private SessionContext context;
     @EJB
@@ -754,6 +757,9 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     private CaseFolderSettingsFacadeLocal caseFolderSettingsFacade;
     @EJB
     private CalendarServiceLocal calendarFacade;
+    
+    @Inject
+    Event<DocumentCreatedEvent> newDocumentEvent;
 
     private static final String PS_SEARCHENHANCED_2 = "select id from cases where ucase(name) like ? or ucase(fileNumber) like ? or ucase(filenumberext) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(subjectField) like ?";
     private static final String PS_SEARCHENHANCED_4 = "select id from cases where (ucase(name) like ? or ucase(fileNumber) like ? or ucase(filenumberext) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(subjectField) like ?) and archived=0";
@@ -1617,6 +1623,12 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         } catch (Throwable t) {
             log.error("Error publishing search index request ADD", t);
         }
+        
+        DocumentCreatedEvent evt=new DocumentCreatedEvent();
+        evt.setDocumentId(docId);
+        evt.setCaseId(aFile.getId());
+        evt.setDocumentName(fileName);
+        this.newDocumentEvent.fireAsync(evt);
 
         return this.archiveFileDocumentsFacade.find(docId);
     }
