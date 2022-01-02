@@ -663,9 +663,15 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.events;
 
+import java.util.concurrent.TimeUnit;
 import javax.ejb.Singleton;
 import javax.ejb.Startup;
 import javax.enterprise.event.ObservesAsync;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.Configuration;
+import org.apache.log4j.Logger;
 import org.json.simple.Jsoner;
 
 /**
@@ -676,13 +682,28 @@ import org.json.simple.Jsoner;
 @Startup
 public class CustomHooksService implements CustomHooksServiceLocal {
 
+    private static final Logger log = Logger.getLogger(CustomHooksService.class.getName());
+
     @Override
     public void onEvent(@ObservesAsync CustomHook evt) {
-        if(evt instanceof DocumentCreatedEvent) {
-            System.out.println("received evt " + evt.getHookType().name() + ": " + ((DocumentCreatedEvent)evt).getDocumentId());
-            String evtJson=Jsoner.serialize(evt);
-            System.out.println(evtJson);
-        }
+        
+            log.info("Received custom hook event " + evt.getHookType().name());
+            String evtJson = Jsoner.serialize(evt);
+            log.debug("about to post the following event to custom hook: " + evtJson);
+
+            String BASE_URI = "https://hookb.in/8P08PQ7b1LtpLGKKLKeJ";
+
+            ClientBuilder clientBuilder=ClientBuilder.newBuilder();
+            clientBuilder.connectTimeout(5, TimeUnit.SECONDS);
+            clientBuilder.readTimeout(10, TimeUnit.SECONDS);
+
+            Client client = clientBuilder.build();
+            client.register(new HookAuthenticator("blauser", "blapwd"));
+            WebTarget webTarget = client.target(BASE_URI);
+            String returnValue = webTarget.request(javax.ws.rs.core.MediaType.APPLICATION_JSON).post(javax.ws.rs.client.Entity.entity(evtJson, javax.ws.rs.core.MediaType.APPLICATION_JSON), String.class);
+            log.debug("custom hook returned: " + returnValue);
+
+        
     }
 
     // Add business logic below. (Right-click in editor and choose

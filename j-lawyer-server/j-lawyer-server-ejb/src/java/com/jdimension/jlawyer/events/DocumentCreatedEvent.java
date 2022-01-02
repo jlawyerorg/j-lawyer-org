@@ -735,7 +735,7 @@ public class DocumentCreatedEvent extends CustomHook implements Jsonable {
         try {
             this.toJson(writable);
         } catch (final IOException e) {
-            log.error("unable to serialized to JSON: ", e);
+            log.error("unable to serialize to JSON: ", e);
             return null;
         }
         return writable.toString();
@@ -744,6 +744,7 @@ public class DocumentCreatedEvent extends CustomHook implements Jsonable {
     @Override
     public void toJson(Writer writer) throws IOException {
         final JsonObject json = new JsonObject();
+        json.put("hookType", this.hookType.name());
         json.put("documentId", this.documentId);
         json.put("caseId", this.caseId);
         json.put("documentName", this.documentName);

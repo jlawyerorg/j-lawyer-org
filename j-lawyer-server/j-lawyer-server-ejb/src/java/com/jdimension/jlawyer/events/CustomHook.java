@@ -671,13 +671,20 @@ import java.io.Serializable;
  */
 public class CustomHook implements Serializable {
     
-    private HookType hook=null;
+    protected HookType hookType=null;
     
     protected CustomHook(HookType hook) {
-        this.hook=hook;
+        this.hookType=hook;
     }
     
     public HookType getHookType() {
-        return this.hook;
+        return this.hookType;
+    }
+
+    /**
+     * @param hookType the hookType to set
+     */
+    public void setHookType(HookType hookType) {
+        this.hookType = hookType;
     }
 }

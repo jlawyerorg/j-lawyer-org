@@ -668,6 +668,8 @@ import com.google.i18n.phonenumbers.PhoneNumberUtil;
 import com.jdimension.jlawyer.documents.LibreOfficeAccess;
 import com.jdimension.jlawyer.documents.PreviewGenerator;
 import com.jdimension.jlawyer.events.DocumentCreatedEvent;
+import com.jdimension.jlawyer.events.DocumentRemovedEvent;
+import com.jdimension.jlawyer.events.DocumentUpdatedEvent;
 import com.jdimension.jlawyer.export.HTMLExport;
 import com.jdimension.jlawyer.persistence.*;
 import com.jdimension.jlawyer.persistence.utils.JDBCUtils;
@@ -758,8 +760,13 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     @EJB
     private CalendarServiceLocal calendarFacade;
     
+    // custom hooks support
     @Inject
     Event<DocumentCreatedEvent> newDocumentEvent;
+    @Inject
+    Event<DocumentRemovedEvent> removedDocumentEvent;
+    @Inject
+    Event<DocumentUpdatedEvent> updatedDocumentEvent;
 
     private static final String PS_SEARCHENHANCED_2 = "select id from cases where ucase(name) like ? or ucase(fileNumber) like ? or ucase(filenumberext) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(subjectField) like ?";
     private static final String PS_SEARCHENHANCED_4 = "select id from cases where (ucase(name) like ? or ucase(fileNumber) like ? or ucase(filenumberext) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(subjectField) like ?) and archived=0";
@@ -1378,7 +1385,8 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             throw new EJBException("Die zuletzt geänderten Akten konnten nicht ermittelt werden.", sqle);
         } finally {
             try {
-                st.close();
+                if (st!=null)
+                    st.close();
             } catch (Throwable t) {
                 log.error(t);
             }
@@ -1729,6 +1737,12 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         db.setDeletedBy(context.getCallerPrincipal().getName());
         db.setFolder(aFile.getRootFolder());
         this.archiveFileDocumentsFacade.edit(db);
+        
+        DocumentRemovedEvent evt=new DocumentRemovedEvent();
+        evt.setDocumentId(id);
+        evt.setCaseId(aFile.getId());
+        evt.setDocumentName(db.getName());
+        this.removedDocumentEvent.fireAsync(evt);
 
     }
 
@@ -1797,6 +1811,12 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
         this.archiveFileHistoryFacade.create(newHistEntry);
 
+        DocumentUpdatedEvent evt=new DocumentUpdatedEvent();
+        evt.setDocumentId(id);
+        evt.setCaseId(aId);
+        evt.setDocumentName(db.getName());
+        this.updatedDocumentEvent.fireAsync(evt);
+        
         return true;
     }
 
@@ -1964,6 +1984,12 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         } catch (Throwable t) {
             log.error("Error publishing search index request ADD", t);
         }
+        
+        DocumentUpdatedEvent evt=new DocumentUpdatedEvent();
+        evt.setDocumentId(id);
+        evt.setCaseId(aFile.getId());
+        evt.setDocumentName(db.getName());
+        this.updatedDocumentEvent.fireAsync(evt);
 
         return true;
     }
@@ -2907,6 +2933,12 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         newHistEntry.setChangeDescription("Dokumentdatum geändert: " + db.getName());
         newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
         this.archiveFileHistoryFacade.create(newHistEntry);
+        
+        DocumentUpdatedEvent evt=new DocumentUpdatedEvent();
+        evt.setDocumentId(id);
+        evt.setCaseId(aId);
+        evt.setDocumentName(db.getName());
+        this.updatedDocumentEvent.fireAsync(evt);
 
         return true;
     }
@@ -3244,6 +3276,12 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         } catch (Throwable t) {
             log.error("Error publishing search index request ADD", t);
         }
+        
+        DocumentCreatedEvent evt=new DocumentCreatedEvent();
+        evt.setDocumentId(docId);
+        evt.setCaseId(aFile.getId());
+        evt.setDocumentName(fileName);
+        this.newDocumentEvent.fireAsync(evt);
 
         return this.archiveFileDocumentsFacade.find(docId);
     }
@@ -4232,6 +4270,13 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         } catch (Throwable t) {
             log.error("Error publishing search index request ADD", t);
         }
+        
+        DocumentCreatedEvent evt=new DocumentCreatedEvent();
+        evt.setDocumentId(docId);
+        evt.setCaseId(aFile.getId());
+        evt.setDocumentName(db.getName());
+        this.newDocumentEvent.fireAsync(evt);
+        
         return true;
     }
 
