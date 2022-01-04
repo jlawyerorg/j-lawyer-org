@@ -664,6 +664,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.events;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import javax.ws.rs.client.ClientRequestContext;
 import javax.ws.rs.client.ClientRequestFilter;
@@ -696,7 +697,7 @@ public class HookAuthenticator implements ClientRequestFilter {
     private String getBasicAuthentication() {
         try {
             String userAndPassword = this.user + ":" + this.password;
-            byte[] userAndPasswordBytes = userAndPassword.getBytes("UTF-8");
+            byte[] userAndPasswordBytes = userAndPassword.getBytes(StandardCharsets.UTF_8);
             return "Basic " + Base64.getEncoder().encodeToString(userAndPasswordBytes);
         } catch (Exception ex) {
             log.error("Unable to add HTTP basic authentication header to custom hoom request headers", ex);

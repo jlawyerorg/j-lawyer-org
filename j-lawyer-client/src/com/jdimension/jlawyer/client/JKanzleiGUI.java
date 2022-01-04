@@ -1073,12 +1073,13 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuVoipSoftphoneSettings = new javax.swing.JMenuItem();
         mnuBeaSettings = new javax.swing.JMenuItem();
         mnuDrebisSettings = new javax.swing.JMenuItem();
-        jSeparator5 = new javax.swing.JPopupMenu.Separator();
+        mnuCalculations = new javax.swing.JMenu();
+        mnuAdministration = new javax.swing.JMenu();
         mnuBackupConfiguration = new javax.swing.JMenuItem();
+        mnuServerMonitor = new javax.swing.JMenuItem();
         mnuSecurity = new javax.swing.JMenuItem();
         mnuAdminConsole = new javax.swing.JMenuItem();
-        mnuServerMonitor = new javax.swing.JMenuItem();
-        mnuCalculations = new javax.swing.JMenu();
+        mnuWebHooks = new javax.swing.JMenuItem();
         mnuHelp = new javax.swing.JMenu();
         mnuDocumentMonitor = new javax.swing.JMenuItem();
         mnuOnlineHelp = new javax.swing.JMenuItem();
@@ -1670,7 +1671,13 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             }
         });
         mnuOptions.add(mnuDrebisSettings);
-        mnuOptions.add(jSeparator5);
+
+        jMenuBar1.add(mnuOptions);
+
+        mnuCalculations.setText("Berechnungen");
+        jMenuBar1.add(mnuCalculations);
+
+        mnuAdministration.setText("Administration");
 
         mnuBackupConfiguration.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/database.png"))); // NOI18N
         mnuBackupConfiguration.setText(bundle.getString("menu.settings.backup")); // NOI18N
@@ -1679,25 +1686,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
                 mnuBackupConfigurationActionPerformed(evt);
             }
         });
-        mnuOptions.add(mnuBackupConfiguration);
-
-        mnuSecurity.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/ksysv.png"))); // NOI18N
-        mnuSecurity.setText("Sicherheit");
-        mnuSecurity.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                mnuSecurityActionPerformed(evt);
-            }
-        });
-        mnuOptions.add(mnuSecurity);
-
-        mnuAdminConsole.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/konsole.png"))); // NOI18N
-        mnuAdminConsole.setText(bundle.getString("menu.settings.adminconsole")); // NOI18N
-        mnuAdminConsole.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                mnuAdminConsoleActionPerformed(evt);
-            }
-        });
-        mnuOptions.add(mnuAdminConsole);
+        mnuAdministration.add(mnuBackupConfiguration);
 
         mnuServerMonitor.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/material/baseline_show_chart_black_48dp.png"))); // NOI18N
         mnuServerMonitor.setText(bundle.getString("menu.settings.monitoring")); // NOI18N
@@ -1706,12 +1695,36 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
                 mnuServerMonitorActionPerformed(evt);
             }
         });
-        mnuOptions.add(mnuServerMonitor);
+        mnuAdministration.add(mnuServerMonitor);
 
-        jMenuBar1.add(mnuOptions);
+        mnuSecurity.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/ksysv.png"))); // NOI18N
+        mnuSecurity.setText("Sicherheit");
+        mnuSecurity.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuSecurityActionPerformed(evt);
+            }
+        });
+        mnuAdministration.add(mnuSecurity);
 
-        mnuCalculations.setText("Berechnungen");
-        jMenuBar1.add(mnuCalculations);
+        mnuAdminConsole.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/konsole.png"))); // NOI18N
+        mnuAdminConsole.setText(bundle.getString("menu.settings.adminconsole")); // NOI18N
+        mnuAdminConsole.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuAdminConsoleActionPerformed(evt);
+            }
+        });
+        mnuAdministration.add(mnuAdminConsole);
+
+        mnuWebHooks.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/baseline_webhook_black_48dp.png"))); // NOI18N
+        mnuWebHooks.setText("Web Hooks");
+        mnuWebHooks.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuWebHooksActionPerformed(evt);
+            }
+        });
+        mnuAdministration.add(mnuWebHooks);
+
+        jMenuBar1.add(mnuAdministration);
 
         mnuHelp.setText(bundle.getString("menu.?")); // NOI18N
 
@@ -2464,6 +2477,14 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         }
     }//GEN-LAST:event_mnuMappingEntriesActionPerformed
 
+    private void mnuWebHooksActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuWebHooksActionPerformed
+        if (checkAdmin()) {
+            WebHookSetupDialog dlg = new WebHookSetupDialog(this, true);
+            FrameUtils.centerDialog(dlg, this);
+            dlg.setVisible(true);
+        }
+    }//GEN-LAST:event_mnuWebHooksActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -2476,7 +2497,6 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     private javax.swing.JSeparator jSeparator2;
     private javax.swing.JSeparator jSeparator3;
     private javax.swing.JPopupMenu.Separator jSeparator4;
-    private javax.swing.JPopupMenu.Separator jSeparator5;
     private javax.swing.JLabel lblBeaStatus;
     private javax.swing.JLabel lblDrebisStatus;
     private javax.swing.JLabel lblFaxStatus;
@@ -2504,6 +2524,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     private javax.swing.JMenuItem mnuAddressOptionsTitleInAddress;
     private javax.swing.JMenuItem mnuAddressTags;
     private javax.swing.JMenuItem mnuAdminConsole;
+    private javax.swing.JMenu mnuAdministration;
     private javax.swing.JMenuItem mnuArchiveFileCustomFields;
     private javax.swing.JMenuItem mnuArchiveFileCustomFieldsInvolvements;
     private javax.swing.JMenu mnuArchiveFileOptions;
@@ -2550,6 +2571,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     private javax.swing.JMenuItem mnuUsers;
     private javax.swing.JMenu mnuView;
     private javax.swing.JMenuItem mnuVoipSoftphoneSettings;
+    private javax.swing.JMenuItem mnuWebHooks;
     private javax.swing.JMenuItem mnuWordProcessor;
     private javax.swing.JMenuItem mnuXjustizViewer;
     private javax.swing.JMenuItem mnuZipCodeImport;

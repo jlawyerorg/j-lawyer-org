@@ -698,5 +698,7 @@ public interface IntegrationServiceRemote {
     String getObservedFilePreview(String fileName) throws Exception;
 
     boolean validateExternalStorageLocation(String location) throws Exception;
+
+    String[] getHookTypes();
     
 }

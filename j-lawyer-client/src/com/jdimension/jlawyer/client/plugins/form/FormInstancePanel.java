@@ -844,7 +844,7 @@ public class FormInstancePanel extends javax.swing.JPanel {
             return;
         }
 
-        ArrayList<ArchiveFileFormEntriesBean> formEntries = new ArrayList<ArchiveFileFormEntriesBean>();
+        ArrayList<ArchiveFileFormEntriesBean> formEntries = new ArrayList<>();
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(ClientSettings.getInstance().getLookupProperties());
             for (Object key : placeHolders.keySet()) {

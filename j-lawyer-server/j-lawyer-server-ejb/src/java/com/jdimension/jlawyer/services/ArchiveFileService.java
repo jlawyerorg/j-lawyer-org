@@ -667,8 +667,13 @@ import com.google.i18n.phonenumbers.PhoneNumberMatch;
 import com.google.i18n.phonenumbers.PhoneNumberUtil;
 import com.jdimension.jlawyer.documents.LibreOfficeAccess;
 import com.jdimension.jlawyer.documents.PreviewGenerator;
+import com.jdimension.jlawyer.events.CaseCreatedEvent;
+import com.jdimension.jlawyer.events.CaseRemovedEvent;
+import com.jdimension.jlawyer.events.CaseTagChangedEvent;
+import com.jdimension.jlawyer.events.CaseUpdatedEvent;
 import com.jdimension.jlawyer.events.DocumentCreatedEvent;
 import com.jdimension.jlawyer.events.DocumentRemovedEvent;
+import com.jdimension.jlawyer.events.DocumentTagChangedEvent;
 import com.jdimension.jlawyer.events.DocumentUpdatedEvent;
 import com.jdimension.jlawyer.export.HTMLExport;
 import com.jdimension.jlawyer.persistence.*;
@@ -762,11 +767,21 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     
     // custom hooks support
     @Inject
+    Event<CaseCreatedEvent> newCaseEvent;
+    @Inject
+    Event<CaseRemovedEvent> removedCaseEvent;
+    @Inject
+    Event<CaseUpdatedEvent> updatedCaseEvent;
+    @Inject
     Event<DocumentCreatedEvent> newDocumentEvent;
     @Inject
     Event<DocumentRemovedEvent> removedDocumentEvent;
     @Inject
     Event<DocumentUpdatedEvent> updatedDocumentEvent;
+    @Inject
+    Event<CaseTagChangedEvent> caseTagChangedEvent;
+    @Inject
+    Event<DocumentTagChangedEvent> docTagChangedEvent;
 
     private static final String PS_SEARCHENHANCED_2 = "select id from cases where ucase(name) like ? or ucase(fileNumber) like ? or ucase(filenumberext) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(subjectField) like ?";
     private static final String PS_SEARCHENHANCED_4 = "select id from cases where (ucase(name) like ? or ucase(fileNumber) like ? or ucase(filenumberext) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(subjectField) like ?) and archived=0";
@@ -1083,6 +1098,10 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         } catch (Throwable t) {
             log.error("could not remove documents for archive file " + id, t);
         }
+        
+        CaseRemovedEvent evt = new CaseRemovedEvent();
+        evt.setCaseId(id);
+        this.removedCaseEvent.fireAsync(evt);
     }
 
     @Override
@@ -1188,6 +1207,11 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             aFile.setRootFolder(rootFolder);
             this.archiveFileFacade.edit(aFile);
         }
+        
+        CaseCreatedEvent evt = new CaseCreatedEvent();
+        evt.setCaseId(id);
+        this.newCaseEvent.fireAsync(evt);
+        
         return aFile;
 
     }
@@ -1319,6 +1343,10 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 this.archiveFileAddressesFacade.create(add);
             }
         }
+
+        CaseUpdatedEvent evt = new CaseUpdatedEvent();
+        evt.setCaseId(dto.getId());
+        this.updatedCaseEvent.fireAsync(evt);
 
     }
 
@@ -1551,6 +1579,11 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             aFile.setRootFolder(rootFolder);
             this.archiveFileFacade.edit(aFile);
         }
+        
+        CaseCreatedEvent evt = new CaseCreatedEvent();
+        evt.setCaseId(id);
+        this.newCaseEvent.fireAsync(evt);
+        
         return aFile;
     }
 
@@ -2113,6 +2146,12 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         newHistEntry.setChangeDescription(historyText);
         newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
         this.archiveFileHistoryFacade.create(newHistEntry);
+        
+        CaseTagChangedEvent evt = new CaseTagChangedEvent();
+        evt.setCaseId(archiveFileId);
+        evt.setActive(active);
+        evt.setTagName(tag.getTagName());
+        this.caseTagChangedEvent.fireAsync(evt);
 
     }
 
@@ -2148,6 +2187,13 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         newHistEntry.setChangeDescription(historyText);
         newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
         this.archiveFileHistoryFacade.create(newHistEntry);
+        
+        DocumentTagChangedEvent evt = new DocumentTagChangedEvent();
+        evt.setCaseId(aFile.getArchiveFileKey().getId());
+        evt.setDocumentId(documentId);
+        evt.setActive(active);
+        evt.setTagName(tag.getTagName());
+        this.docTagChangedEvent.fireAsync(evt);
 
     }
 
@@ -3375,6 +3421,10 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         newHistEntry.setChangeDescription("Aktenzeichen geändert: " + from + " --> " + to);
         newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
         this.archiveFileHistoryFacade.create(newHistEntry);
+        
+        CaseUpdatedEvent evt = new CaseUpdatedEvent();
+        evt.setCaseId(afb.getId());
+        this.updatedCaseEvent.fireAsync(evt);
 
         return true;
     }
@@ -3574,6 +3624,18 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             newHistEntry.setChangeDescription("Etikett geändert: " + fromName + " -> " + toName);
             newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
             this.archiveFileHistoryFacade.create(newHistEntry);
+            
+            CaseTagChangedEvent evt = new CaseTagChangedEvent();
+            evt.setCaseId(t.getArchiveFileKey().getId());
+            evt.setActive(false);
+            evt.setTagName(fromName);
+            this.caseTagChangedEvent.fireAsync(evt);
+
+            CaseTagChangedEvent evt2 = new CaseTagChangedEvent();
+            evt2.setCaseId(t.getArchiveFileKey().getId());
+            evt2.setActive(true);
+            evt2.setTagName(toName);
+            this.caseTagChangedEvent.fireAsync(evt2);
         }
 
     }
@@ -3595,6 +3657,20 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             newHistEntry.setChangeDescription("Etikett für Dokument " + t.getDocumentKey().getName() + " geändert: " + fromName + " -> " + toName);
             newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
             this.archiveFileHistoryFacade.create(newHistEntry);
+            
+            DocumentTagChangedEvent evt = new DocumentTagChangedEvent();
+            evt.setCaseId(t.getDocumentKey().getArchiveFileKey().getId());
+            evt.setDocumentId(t.getDocumentKey().getId());
+            evt.setActive(false);
+            evt.setTagName(fromName);
+            this.docTagChangedEvent.fireAsync(evt);
+
+            DocumentTagChangedEvent evt2 = new DocumentTagChangedEvent();
+            evt2.setCaseId(t.getDocumentKey().getArchiveFileKey().getId());
+            evt.setDocumentId(t.getDocumentKey().getId());
+            evt2.setActive(true);
+            evt2.setTagName(toName);
+            this.docTagChangedEvent.fireAsync(evt2);
         }
     }
 
@@ -3630,6 +3706,11 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         this.archiveFileAddressesFacade.create(address);
 
         address = this.archiveFileAddressesFacade.find(id);
+        
+        CaseUpdatedEvent evt = new CaseUpdatedEvent();
+        evt.setCaseId(address.getArchiveFileKey().getId());
+        this.updatedCaseEvent.fireAsync(evt);
+        
         return address;
 
     }
@@ -3706,6 +3787,10 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
         this.archiveFileHistoryFacade.create(newHistEntry);
 
+        CaseUpdatedEvent evt = new CaseUpdatedEvent();
+        evt.setCaseId(aFile.getId());
+        this.updatedCaseEvent.fireAsync(evt);
+        
         return this.archiveFileAddressesFacade.find(oldParty.getId());
     }
 
@@ -3727,6 +3812,10 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         this.archiveFileHistoryFacade.create(newHistEntry);
 
         this.archiveFileAddressesFacade.remove(db);
+        
+        CaseUpdatedEvent evt = new CaseUpdatedEvent();
+        evt.setCaseId(aFile.getId());
+        this.updatedCaseEvent.fireAsync(evt);
 
     }
 

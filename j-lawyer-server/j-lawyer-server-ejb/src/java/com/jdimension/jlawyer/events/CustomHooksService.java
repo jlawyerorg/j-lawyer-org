@@ -691,7 +691,7 @@ public class CustomHooksService implements CustomHooksServiceLocal {
             String evtJson = Jsoner.serialize(evt);
             log.debug("about to post the following event to custom hook: " + evtJson);
 
-            String BASE_URI = "https://hookb.in/8P08PQ7b1LtpLGKKLKeJ";
+            String baseUri = "https://hookb.in/8P08PQ7b1LtpLGKKLKeJ";
 
             ClientBuilder clientBuilder=ClientBuilder.newBuilder();
             clientBuilder.connectTimeout(5, TimeUnit.SECONDS);
@@ -699,7 +699,7 @@ public class CustomHooksService implements CustomHooksServiceLocal {
 
             Client client = clientBuilder.build();
             client.register(new HookAuthenticator("blauser", "blapwd"));
-            WebTarget webTarget = client.target(BASE_URI);
+            WebTarget webTarget = client.target(baseUri);
             String returnValue = webTarget.request(javax.ws.rs.core.MediaType.APPLICATION_JSON).post(javax.ws.rs.client.Entity.entity(evtJson, javax.ws.rs.core.MediaType.APPLICATION_JSON), String.class);
             log.debug("custom hook returned: " + returnValue);
 
