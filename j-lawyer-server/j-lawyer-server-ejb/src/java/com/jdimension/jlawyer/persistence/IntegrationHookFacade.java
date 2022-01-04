@@ -691,8 +691,7 @@ public class IntegrationHookFacade extends AbstractFacade<IntegrationHook> imple
     @Override
     public List<IntegrationHook> findByHookType(String hookType) {
         try {
-            List<IntegrationHook> gm = (List<IntegrationHook>) em.createNamedQuery("IntegrationHook.findByHookType").setParameter("hookType", hookType).getResultList();
-            return gm;
+            return (List<IntegrationHook>) em.createNamedQuery("IntegrationHook.findByHookType").setParameter("hookType", hookType).getResultList();
         } catch (NoResultException nre) {
             return null;
         }

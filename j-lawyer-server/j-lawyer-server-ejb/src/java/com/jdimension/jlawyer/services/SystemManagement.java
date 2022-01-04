@@ -1052,9 +1052,13 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         }
         
         int userCount=this.userBeanFacade.count();
+//        List<AppUserBean> allUsers=this.userBeanFacade.findAll();
+//        for(AppUserBean aub: allUsers) {
+//            aub.get
+//        }
         if(userCount>=limit) {
             log.error("Unable to create new user - limit has been reached (" + limit + ").");
-            throw new Exception("Die zulässige Anzahl an Nutzern für diese Installation ist überschritten. Kontaktieren Sie Ihren Systemadministrator.");
+            throw new Exception("Die zulässige Anzahl an Nutzern für diese Installation ist überschritten. Kontaktieren Sie Ihren Betreiber.");
         }
 
         StringGenerator idGen = new StringGenerator();

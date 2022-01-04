@@ -721,7 +721,6 @@ public class IntegrationHook implements Serializable {
 
     @Override
     public boolean equals(Object object) {
-        // TODO: Warning - this method won't work in the case the name fields are not set
         if (!(object instanceof IntegrationHook)) {
             return false;
         }

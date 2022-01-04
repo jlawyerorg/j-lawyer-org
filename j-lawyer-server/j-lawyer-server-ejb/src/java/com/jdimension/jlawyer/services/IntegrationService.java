@@ -664,7 +664,9 @@
 package com.jdimension.jlawyer.services;
 
 import com.jdimension.jlawyer.email.EmailTemplate;
+import com.jdimension.jlawyer.events.CustomHooksServiceLocal;
 import com.jdimension.jlawyer.events.HookType;
+import com.jdimension.jlawyer.persistence.IntegrationHook;
 import com.jdimension.jlawyer.persistence.IntegrationHookFacadeLocal;
 import com.jdimension.jlawyer.persistence.ServerSettingsBean;
 import com.jdimension.jlawyer.persistence.ServerSettingsBeanFacadeLocal;
@@ -683,6 +685,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Hashtable;
+import java.util.List;
 import javax.annotation.security.DeclareRoles;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.EJB;
@@ -708,6 +711,8 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
     private ServerSettingsBeanFacadeLocal settingsFacade;
     @EJB
     private IntegrationHookFacadeLocal hookFacade;
+    @EJB
+    private CustomHooksServiceLocal hookService;
 
     @Override
     @RolesAllowed(value = {"readArchiveFileRole"})
@@ -1040,6 +1045,35 @@ public class IntegrationService implements IntegrationServiceRemote, Integration
         }
         Arrays.sort(typeNames);
         return typeNames;
+    }
+
+    @Override
+    @RolesAllowed(value = {"adminRole"})
+    public List<IntegrationHook> getAllIntegrationHooks() throws Exception {
+        return this.hookFacade.findAll();
+    }
+
+    @Override
+    @RolesAllowed(value = {"adminRole"})
+    public IntegrationHook addIntegrationHook(IntegrationHook hook) throws Exception {
+        this.hookFacade.create(hook);
+        this.hookService.resetCache();
+        return hook;
+    }
+
+    @Override
+    @RolesAllowed(value = {"adminRole"})
+    public IntegrationHook updateIntegrationHook(IntegrationHook hook) throws Exception {
+        this.hookFacade.edit(hook);
+        this.hookService.resetCache();
+        return hook;
+    }
+
+    @Override
+    @RolesAllowed(value = {"adminRole"})
+    public void removeIntegrationHook(IntegrationHook hook) throws Exception {
+        this.hookFacade.remove(hook);
+        this.hookService.resetCache();
     }
 
 }

@@ -663,7 +663,13 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.events;
 
+import com.jdimension.jlawyer.persistence.IntegrationHook;
+import com.jdimension.jlawyer.persistence.IntegrationHookFacadeLocal;
+import com.jdimension.jlawyer.security.Crypto;
+import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
+import javax.ejb.EJB;
 import javax.ejb.Singleton;
 import javax.ejb.Startup;
 import javax.enterprise.event.ObservesAsync;
@@ -684,28 +690,54 @@ public class CustomHooksService implements CustomHooksServiceLocal {
 
     private static final Logger log = Logger.getLogger(CustomHooksService.class.getName());
 
+    @EJB
+    private IntegrationHookFacadeLocal hookFacade;
+    
+    // cache: avoid going to the database for the hooks with each event
+    private List<IntegrationHook> allHooks=null;
+    // cache: crypto is expensive
+    private HashMap<String,String> hookPwd=new HashMap<>();
+
     @Override
     public void onEvent(@ObservesAsync CustomHook evt) {
+        if(allHooks==null)
+            resetCache();
         
-            log.info("Received custom hook event " + evt.getHookType().name());
-            String evtJson = Jsoner.serialize(evt);
-            log.debug("about to post the following event to custom hook: " + evtJson);
+        for(IntegrationHook hook: allHooks) {
+            if(hook.getHookType().equals(evt.getHookType().name())) {
+                try {
+                    executeHook(hook, evt);
+                } catch (Exception ex) {
+                    log.error("failed to execute hook " + hook.getName(), ex);
+                }
+            }
+        }
+    }
+    
 
-            String baseUri = "https://hookb.in/8P08PQ7b1LtpLGKKLKeJ";
+    private void executeHook(IntegrationHook hook, CustomHook evt) throws Exception {
+        log.info("Received custom hook event " + evt.getHookType().name());
+        String evtJson = Jsoner.serialize(evt);
+        log.debug("about to post the following event to custom hook: " + evtJson);
 
-            ClientBuilder clientBuilder=ClientBuilder.newBuilder();
-            clientBuilder.connectTimeout(5, TimeUnit.SECONDS);
-            clientBuilder.readTimeout(10, TimeUnit.SECONDS);
+        ClientBuilder clientBuilder = ClientBuilder.newBuilder();
+        clientBuilder.connectTimeout(hook.getConnectionTimeout(), TimeUnit.SECONDS);
+        clientBuilder.readTimeout(hook.getReadTimeout(), TimeUnit.SECONDS);
 
-            Client client = clientBuilder.build();
-            client.register(new HookAuthenticator("blauser", "blapwd"));
-            WebTarget webTarget = client.target(baseUri);
-            String returnValue = webTarget.request(javax.ws.rs.core.MediaType.APPLICATION_JSON).post(javax.ws.rs.client.Entity.entity(evtJson, javax.ws.rs.core.MediaType.APPLICATION_JSON), String.class);
-            log.debug("custom hook returned: " + returnValue);
-
-        
+        Client client = clientBuilder.build();
+        if(hook.getAuthenticationUser()!=null && !"".equalsIgnoreCase(hook.getAuthenticationUser())) {
+            if(!this.hookPwd.containsKey(hook.getName()))
+                this.hookPwd.put(hook.getName(), Crypto.decrypt(hook.getAuthenticationPwd()));
+            client.register(new HookAuthenticator(hook.getAuthenticationUser(), this.hookPwd.get(hook.getName())));
+        }
+        WebTarget webTarget = client.target(hook.getUrl());
+        String returnValue = webTarget.request(javax.ws.rs.core.MediaType.APPLICATION_JSON).post(javax.ws.rs.client.Entity.entity(evtJson, javax.ws.rs.core.MediaType.APPLICATION_JSON), String.class);
+        log.debug("custom hook returned: " + returnValue);
     }
 
-    // Add business logic below. (Right-click in editor and choose
-    // "Insert Code > Add Business Method")
+    @Override
+    public void resetCache() {
+        this.allHooks=this.hookFacade.findAll();
+        this.hookPwd.clear();
+    }
 }

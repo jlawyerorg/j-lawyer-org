@@ -673,5 +673,7 @@ import javax.ejb.Local;
 public interface CustomHooksServiceLocal {
 
     void onEvent(CustomHook evt);
+
+    void resetCache();
     
 }

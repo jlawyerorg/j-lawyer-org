@@ -664,10 +664,12 @@
 package com.jdimension.jlawyer.services;
 
 import com.jdimension.jlawyer.email.EmailTemplate;
+import com.jdimension.jlawyer.persistence.IntegrationHook;
 import java.io.File;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Hashtable;
+import java.util.List;
 import javax.ejb.Remote;
 
 /**
@@ -700,5 +702,13 @@ public interface IntegrationServiceRemote {
     boolean validateExternalStorageLocation(String location) throws Exception;
 
     String[] getHookTypes();
+
+    List<IntegrationHook> getAllIntegrationHooks() throws Exception;
+
+    IntegrationHook addIntegrationHook(IntegrationHook hook) throws Exception;
+
+    IntegrationHook updateIntegrationHook(IntegrationHook hook) throws Exception;
+
+    void removeIntegrationHook(IntegrationHook hook) throws Exception;
     
 }

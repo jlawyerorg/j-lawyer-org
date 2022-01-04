@@ -664,27 +664,17 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package com.jdimension.jlawyer.client.configuration;
 
 import com.jdimension.jlawyer.client.settings.ClientSettings;
-import com.jdimension.jlawyer.client.settings.ServerSettings;
-import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.client.utils.CaseInsensitiveStringComparator;
 import com.jdimension.jlawyer.client.utils.ComponentUtils;
-import com.jdimension.jlawyer.client.utils.StringUtils;
-import com.jdimension.jlawyer.persistence.CalendarSetup;
+import com.jdimension.jlawyer.persistence.IntegrationHook;
 import com.jdimension.jlawyer.security.Crypto;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
-import java.awt.Color;
-import java.util.ArrayList;
 import java.util.List;
-import javax.swing.DefaultComboBoxModel;
-import javax.swing.JButton;
-import javax.swing.JColorChooser;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 import org.apache.log4j.Logger;
-import org.jlawyer.cloud.NextcloudCalendarConnector;
-import org.jlawyer.cloud.calendar.CloudCalendar;
 import themes.colors.DefaultColorTheme;
 
 /**
@@ -696,7 +686,8 @@ public class WebHookSetupDialog extends javax.swing.JDialog {
     private static final Logger log = Logger.getLogger(WebHookSetupDialog.class.getName());
 
     /**
-     * Creates new form CalendarSetupDialog
+     * Creates new form WebHookSetupDialog
+     *
      * @param parent
      * @param modal
      */
@@ -705,25 +696,23 @@ public class WebHookSetupDialog extends javax.swing.JDialog {
         initComponents();
 
         this.resetDetails();
-        
-        ServerSettings s = ServerSettings.getInstance();
-        
+
         this.tblHooks.setSelectionForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
 
         ClientSettings settings = ClientSettings.getInstance();
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            String[] hookTypes=locator.lookupIntegrationServiceRemote().getHookTypes();
-            for(String ht: hookTypes) {
+            String[] hookTypes = locator.lookupIntegrationServiceRemote().getHookTypes();
+            for (String ht : hookTypes) {
                 this.cmbType.addItem(ht);
             }
-            
-            List<CalendarSetup> calendars = locator.lookupCalendarServiceRemote().getAllCalendarSetups();
 
-            this.tblHooks.setDefaultRenderer(Object.class, new CalendarSetupTableCellRenderer());
+            List<IntegrationHook> hooks = locator.lookupIntegrationServiceRemote().getAllIntegrationHooks();
 
-            for (CalendarSetup cs : calendars) {
-                ((DefaultTableModel) this.tblHooks.getModel()).addRow(new Object[]{cs, cs.getBackground(), cs.getHref()});
+            this.tblHooks.setDefaultRenderer(Object.class, new IntegrationHookTableCellRenderer());
+
+            for (IntegrationHook ih : hooks) {
+                ((DefaultTableModel) this.tblHooks.getModel()).addRow(new Object[]{ih, ih.getHookType(), ih.getUrl()});
 
             }
             TableRowSorter<TableModel> sorter = new TableRowSorter<>(this.tblHooks.getModel());
@@ -742,8 +731,9 @@ public class WebHookSetupDialog extends javax.swing.JDialog {
 
     private void resetDetails() {
         this.txtName.setText("");
-        if(this.cmbType.getItemCount()>0)
+        if (this.cmbType.getItemCount() > 0) {
             this.cmbType.setSelectedIndex(0);
+        }
         this.txtUrl.setText("");
         this.txtPwd.setText("");
         this.txtUser.setText("");
@@ -761,7 +751,6 @@ public class WebHookSetupDialog extends javax.swing.JDialog {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        rdEventType = new javax.swing.ButtonGroup();
         jPanel1 = new javax.swing.JPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
         tblHooks = new javax.swing.JTable();
@@ -805,7 +794,7 @@ public class WebHookSetupDialog extends javax.swing.JDialog {
 
             },
             new String [] {
-                "Typ", "Name", "URL"
+                "Name", "Typ", "URL"
             }
         ) {
             boolean[] canEdit = new boolean [] {
@@ -1048,15 +1037,15 @@ public class WebHookSetupDialog extends javax.swing.JDialog {
                 this.resetDetails();
             } else {
 
-                CalendarSetup cs = (CalendarSetup) this.tblHooks.getValueAt(row, 0);
-                this.updatedUI(cs);
+                IntegrationHook ih = (IntegrationHook) this.tblHooks.getValueAt(row, 0);
+                this.updatedUI(ih);
             }
 
         }
     }//GEN-LAST:event_tblHooksMouseClicked
 
     private void cmdAddActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdAddActionPerformed
-        Object newNameObject = JOptionPane.showInputDialog(this, "Anzeigename: ", "Neuen Kalender anlegen", JOptionPane.QUESTION_MESSAGE, null, null, "neuer Kalender");
+        Object newNameObject = JOptionPane.showInputDialog(this, "Logischer Bezeichner: ", "Neuen Hook anlegen", JOptionPane.QUESTION_MESSAGE, null, null, "neuer Hook");
         if (newNameObject == null) {
             return;
         }
@@ -1065,18 +1054,21 @@ public class WebHookSetupDialog extends javax.swing.JDialog {
         try {
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
-            CalendarSetup cs = new CalendarSetup();
-            cs.setDisplayName(newNameObject.toString());
-            
-            cs.setHref(null);
-            cs.setBackground(DefaultColorTheme.COLOR_LOGO_GREEN.getRGB());
-            CalendarSetup savedCalendar = locator.lookupCalendarServiceRemote().addCalendarSetup(cs);
+            IntegrationHook ih = new IntegrationHook();
+            ih.setName(newNameObject.toString());
+            ih.setHookType(this.cmbType.getItemAt(0));
+            ih.setUrl("");
+            ih.setConnectionTimeout(3);
+            ih.setReadTimeout(5);
+            ih.setAuthenticationUser(null);
+            ih.setAuthenticationPwd(null);
 
-            ((DefaultTableModel) this.tblHooks.getModel()).addRow(new Object[]{savedCalendar, savedCalendar.getBackground(), null});
-            JOptionPane.showMessageDialog(this, "Der Kalender ist nur für '" + UserSettings.getInstance().getCurrentUser().getPrincipalId() + "' freigegeben." + System.lineSeparator() + "Kalenderberechtigungen können in der Nutzerverwaltung bearbeitet werden.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_HINT, JOptionPane.INFORMATION_MESSAGE);
+            IntegrationHook savedHook = locator.lookupIntegrationServiceRemote().addIntegrationHook(ih);
+
+            ((DefaultTableModel) this.tblHooks.getModel()).addRow(new Object[]{savedHook, savedHook.getHookType(), savedHook.getUrl()});
 
         } catch (Exception ex) {
-            log.error("Error creating new calendar", ex);
+            log.error("Error creating new integration hook", ex);
             JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
 
@@ -1088,38 +1080,38 @@ public class WebHookSetupDialog extends javax.swing.JDialog {
 
         if (row >= 0) {
 
-
-            
-            
-            
-
-            CalendarSetup cs = (CalendarSetup) this.tblHooks.getValueAt(row, 0);
-            cs.setDisplayName(this.txtName.getText());
+            IntegrationHook ih = (IntegrationHook) this.tblHooks.getValueAt(row, 0);
+            ih.setName(this.txtName.getText());
+            ih.setAuthenticationUser(this.txtUser.getText());
+            ih.setConnectionTimeout(((Number) this.spnConnectTimeout.getValue()).longValue());
+            ih.setReadTimeout(((Number) this.spnReadTimeout.getValue()).longValue());
+            ih.setUrl(this.txtUrl.getText());
             if (this.cmbType.getSelectedItem() != null) {
-                cs.setHref(((CloudCalendar) this.cmbType.getSelectedItem()).getHref());
-            } else {
-                cs.setHref(null);
+                ih.setHookType(this.cmbType.getSelectedItem().toString());
             }
             try {
-                cs.setCloudPassword(Crypto.encrypt(new String(this.txtPwd.getPassword())));
+                if (this.txtPwd.getPassword().length > 0) {
+                    ih.setAuthenticationPwd(Crypto.encrypt(new String(this.txtPwd.getPassword())));
+                } else {
+                    ih.setAuthenticationPwd("");
+                }
             } catch (Exception ex) {
-                log.error("Error accessing cloud credentials", ex);
-                JOptionPane.showMessageDialog(this, "Fehler bzgl. Nextcloud-Zugangsdaten" + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+                log.error("Error accessing hook credentials", ex);
+                JOptionPane.showMessageDialog(this, "Fehler bzgl. Authentifizierungsdaten" + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             }
-            
 
             ClientSettings settings = ClientSettings.getInstance();
             try {
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
-                CalendarSetup savedCalendar = locator.lookupCalendarServiceRemote().updateCalendarSetup(cs);
-                row=this.tblHooks.convertRowIndexToView(row);
-                ((DefaultTableModel) this.tblHooks.getModel()).setValueAt(savedCalendar, row, 0);
-                ((DefaultTableModel) this.tblHooks.getModel()).setValueAt(savedCalendar.getBackground(), row, 1);
-                ((DefaultTableModel) this.tblHooks.getModel()).setValueAt(savedCalendar.getHref(), row, 2);
+                IntegrationHook savedHook = locator.lookupIntegrationServiceRemote().updateIntegrationHook(ih);
+                row = this.tblHooks.convertRowIndexToView(row);
+                ((DefaultTableModel) this.tblHooks.getModel()).setValueAt(savedHook, row, 0);
+                ((DefaultTableModel) this.tblHooks.getModel()).setValueAt(savedHook.getHookType(), row, 1);
+                ((DefaultTableModel) this.tblHooks.getModel()).setValueAt(savedHook.getUrl(), row, 2);
 
             } catch (Exception ex) {
-                log.error("Error updating calendar setup", ex);
+                log.error("Error updating integration hook", ex);
                 JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             }
         }
@@ -1131,48 +1123,18 @@ public class WebHookSetupDialog extends javax.swing.JDialog {
         int row = this.tblHooks.getSelectedRow();
 
         if (row >= 0) {
-        
-            CalendarSetup cs = (CalendarSetup) this.tblHooks.getValueAt(row, 0);
+
+            IntegrationHook ih = (IntegrationHook) this.tblHooks.getValueAt(row, 0);
             ClientSettings settings = ClientSettings.getInstance();
             try {
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
-                List<CalendarSetup> allSetups=locator.lookupCalendarServiceRemote().getAllCalendarSetups();
-                List<CalendarSetup> setupsOfType=new ArrayList<>();
-                for(CalendarSetup cals: allSetups) {
-                    if(cals.getEventType()==cs.getEventType())
-                        setupsOfType.add(cals);
-                }
-                if(setupsOfType.size()==1) {
-                    // we must have at least one calendar per type at all times
-                    JOptionPane.showMessageDialog(this, "Kalender ist der letzte dieses Typs (WV/Frist/Termin)" + System.lineSeparator() + "Bitte erst einen alternativen Kalender anlegen und danach diesen löschen", "Kalender löschen", JOptionPane.WARNING_MESSAGE);
-                    return;
-                }
-                
-                setupsOfType.remove(cs);
-                if(locator.lookupCalendarServiceRemote().hasEvents(cs)) {
-                    // transfer events to other calendar
-                    CalendarSetup s = (CalendarSetup)JOptionPane.showInputDialog(
-                    this,
-                    "Zu löschender Kalender enthält noch Einträge - in welchen Kalender sollen diese transferiert werden?",
-                    "Kalendereinträge transferieren",
-                    JOptionPane.QUESTION_MESSAGE,
-                    null,
-                    setupsOfType.toArray(),
-                    null);
-                    
-                    if(s==null)
-                        return;
-                    
-                    locator.lookupCalendarServiceRemote().migrateEvents(cs, s);
-                }
-                
-                locator.lookupCalendarServiceRemote().removeCalendarSetup(cs);
+                locator.lookupIntegrationServiceRemote().removeIntegrationHook(ih);
                 ((DefaultTableModel) this.tblHooks.getModel()).removeRow(row);
 
                 this.resetDetails();
             } catch (Exception ex) {
-                log.error("Error removing calendar setup", ex);
+                log.error("Error removing integration hook", ex);
                 JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
             }
         }
@@ -1189,48 +1151,36 @@ public class WebHookSetupDialog extends javax.swing.JDialog {
             this.resetDetails();
         } else {
 
-            CalendarSetup cs = (CalendarSetup) this.tblHooks.getValueAt(row, 0);
-            this.updatedUI(cs);
+            IntegrationHook ih = (IntegrationHook) this.tblHooks.getValueAt(row, 0);
+            this.updatedUI(ih);
         }
     }//GEN-LAST:event_tblHooksKeyReleased
 
     private void formWindowClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosing
-        
+
     }//GEN-LAST:event_formWindowClosing
 
-    private void updatedUI(CalendarSetup cs) {
-        this.cmbType.removeAllItems();
-        if (!StringUtils.isEmpty(cs.getCloudHost()) && !StringUtils.isEmpty(cs.getCloudUser()) && !StringUtils.isEmpty(cs.getCloudPassword())) {
-            try {
-
-                NextcloudCalendarConnector nc = new NextcloudCalendarConnector(cs.getCloudHost(), cs.isCloudSsl(), cs.getCloudPort(), cs.getCloudUser(), Crypto.decrypt(cs.getCloudPassword()));
-                List<CloudCalendar> cals = nc.getAllCalendars();
-                
-                CloudCalendar selected = null;
-                for (CloudCalendar ab : cals) {
-                    ((DefaultComboBoxModel) this.cmbType.getModel()).addElement(ab);
-                    if (ab.getHref().equals(cs.getHref())) {
-                        selected = ab;
-                    }
-                }
-                this.cmbType.setSelectedItem(selected);
-            } catch (Exception ex) {
-                log.error("Error connecting to server", ex);
-                JOptionPane.showMessageDialog(this, "Kalender können nicht aus Nextcloud ermittelt werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-            }
-        }
+    private void updatedUI(IntegrationHook ih) {
+        this.cmbType.setSelectedItem(ih.getHookType());
 
         try {
-            this.txtPwd.setText(Crypto.decrypt(cs.getCloudPassword()));
+            if (ih.getAuthenticationPwd() != null && !"".equalsIgnoreCase(ih.getAuthenticationPwd())) {
+                this.txtPwd.setText(Crypto.decrypt(ih.getAuthenticationPwd()));
+            } else {
+                this.txtPwd.setText(null);
+            }
         } catch (Exception ex) {
-            log.error("Error accessing cloud credentials", ex);
+            log.error("Error accessing hook credentials", ex);
             this.txtPwd.setText("");
-            JOptionPane.showMessageDialog(this, "Fehler bzgl. Nextcloud-Zugangsdaten" + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Fehler bzgl. Hook-Zugangsdaten" + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
-        
-        this.txtName.setText(cs.getDisplayName());
-        
-        
+
+        this.txtName.setText(ih.getName());
+        this.txtUrl.setText(ih.getUrl());
+        this.txtUser.setText(ih.getAuthenticationUser());
+        this.spnConnectTimeout.setValue(ih.getConnectionTimeout());
+        this.spnReadTimeout.setValue(ih.getReadTimeout());
+
     }
 
     /**
@@ -1294,7 +1244,6 @@ public class WebHookSetupDialog extends javax.swing.JDialog {
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JSeparator jSeparator1;
-    private javax.swing.ButtonGroup rdEventType;
     private javax.swing.JSpinner spnConnectTimeout;
     private javax.swing.JSpinner spnReadTimeout;
     private javax.swing.JTable tblHooks;
