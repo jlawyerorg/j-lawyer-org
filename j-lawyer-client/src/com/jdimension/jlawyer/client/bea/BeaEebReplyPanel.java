@@ -664,8 +664,6 @@
 package com.jdimension.jlawyer.client.bea;
 
 import java.awt.Color;
-import java.awt.Component;
-import javax.swing.JButton;
 import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
 import themes.colors.DefaultColorTheme;
