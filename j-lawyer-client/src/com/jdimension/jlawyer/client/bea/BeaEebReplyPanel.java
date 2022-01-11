@@ -664,8 +664,11 @@
 package com.jdimension.jlawyer.client.bea;
 
 import java.awt.Color;
+import java.awt.Component;
+import javax.swing.JButton;
 import javax.swing.JOptionPane;
 import org.apache.log4j.Logger;
+import themes.colors.DefaultColorTheme;
 
 /**
  *
@@ -693,9 +696,13 @@ public class BeaEebReplyPanel extends javax.swing.JPanel {
         this.cmdEebConfirm.setEnabled(enabled);
         this.cmdEebDeny.setEnabled(enabled);
         if(enabled) {
+            setBackground(new java.awt.Color(255, 153, 0));
+            lblDescription.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/lassists.png")));
             this.lblDescription.setText("<html><b>eEB abgeben / zur&uuml;ckweisen</b><br/>zum Anzeigen hier klicken</html>");
             this.lblDescription.setToolTipText("es wurde ein elektronisches Empfangsbekenntnis angefordert");
         } else {
+            setBackground(DefaultColorTheme.COLOR_LOGO_GREEN);
+            lblDescription.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/lassists_grey.png")));
             this.lblDescription.setText("<html><b>eEB / Strukturdatensatz</b><br/>zum Anzeigen hier klicken</html>");
             this.lblDescription.setToolTipText("Strukturdatensatz anzeigen");
         }
