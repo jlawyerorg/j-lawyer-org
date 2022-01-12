@@ -663,16 +663,75 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.events;
 
+import java.io.IOException;
+import java.io.StringWriter;
+import java.io.Writer;
+import org.apache.log4j.Logger;
+import org.json.simple.JsonObject;
+import org.json.simple.Jsonable;
+
 /**
  *
  * @author jens
  */
-public enum HookType {
+public class CaseFormUpdatedEvent extends CustomHook implements Jsonable {
     
-    DOCUMENT_CREATED, DOCUMENT_UPDATED, DOCUMENT_REMOVED, 
-    ADDRESS_CREATED, ADDRESS_UPDATED, ADDRESS_REMOVED,
-    CASE_CREATED, CASE_UPDATED, CASE_REMOVED,
-    ADDRESSTAG_CHANGED, CASETAG_CHANGED, DOCUMENTTAG_CHANGED,
-    CASE_FORM_UPDATED;
+    private static final Logger log=Logger.getLogger(CaseFormUpdatedEvent.class.getName());
+    
+    protected String caseId=null;
+    protected String formId=null;
+    
+    public CaseFormUpdatedEvent() {
+        super(HookType.CASE_FORM_UPDATED);
+    }
+
+    @Override
+    public String toJson() {
+        final StringWriter writable = new StringWriter();
+        try {
+            this.toJson(writable);
+        } catch (final IOException e) {
+            log.error("unable to serialize to JSON: ", e);
+            return null;
+        }
+        return writable.toString();
+    }
+
+    @Override
+    public void toJson(Writer writer) throws IOException {
+        final JsonObject json = new JsonObject();
+        json.put("hookType", this.hookType.name());
+        json.put("caseId", this.caseId);
+        json.put("formId", this.formId);
+        json.toJson(writer);
+    }
+
+    /**
+     * @return the caseId
+     */
+    public String getCaseId() {
+        return caseId;
+    }
+
+    /**
+     * @param caseId the caseId to set
+     */
+    public void setCaseId(String caseId) {
+        this.caseId = caseId;
+    }
+
+    /**
+     * @return the formId
+     */
+    public String getFormId() {
+        return formId;
+    }
+
+    /**
+     * @param formId the formId to set
+     */
+    public void setFormId(String formId) {
+        this.formId = formId;
+    }
     
 }
