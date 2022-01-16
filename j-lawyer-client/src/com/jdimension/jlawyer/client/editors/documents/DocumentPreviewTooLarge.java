@@ -694,6 +694,7 @@ public class DocumentPreviewTooLarge extends javax.swing.JPanel {
         this.pnlPreview = pnlPreview;
         this.readOnly = readOnly;
         this.caseDto=caseDto;
+        this.lblHint.setText("<html><b>" + this.docDto.getName() + "</b><br/> ist zu gro&szlig; f&uuml;r eine Vorschau.</html>");
         
     }
 
@@ -706,11 +707,11 @@ public class DocumentPreviewTooLarge extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jLabel1 = new javax.swing.JLabel();
+        lblHint = new javax.swing.JLabel();
         cmdPreviewSettings = new javax.swing.JButton();
         cmdForcePreview = new javax.swing.JButton();
 
-        jLabel1.setText("Das Dokument ist zu groß für eine Vorschau.");
+        lblHint.setText("Das Dokument ist zu groß für eine Vorschau.");
 
         cmdPreviewSettings.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/package_system.png"))); // NOI18N
         cmdPreviewSettings.setText("Einstellungen anpassen");
@@ -735,23 +736,24 @@ public class DocumentPreviewTooLarge extends javax.swing.JPanel {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(lblHint, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(cmdForcePreview)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(cmdPreviewSettings))
-                    .addComponent(jLabel1))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addComponent(cmdPreviewSettings)
+                        .addGap(0, 110, Short.MAX_VALUE)))
+                .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 46, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(lblHint, javax.swing.GroupLayout.PREFERRED_SIZE, 107, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(cmdForcePreview)
                     .addComponent(cmdPreviewSettings))
-                .addContainerGap(73, Short.MAX_VALUE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -769,6 +771,6 @@ public class DocumentPreviewTooLarge extends javax.swing.JPanel {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton cmdForcePreview;
     private javax.swing.JButton cmdPreviewSettings;
-    private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel lblHint;
     // End of variables declaration//GEN-END:variables
 }
