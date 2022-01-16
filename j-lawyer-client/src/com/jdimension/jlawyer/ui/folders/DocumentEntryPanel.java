@@ -696,14 +696,13 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
     
     private static final Logger log=Logger.getLogger(DocumentEntryPanel.class.getName());
 
-    private DecimalFormat megaBytes = new DecimalFormat("0");
-    private SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyy, HH:mm");
+    private final DecimalFormat megaBytes = new DecimalFormat("0");
+    private final SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyy, HH:mm");
     private CaseFolderPanel documentsContainer=null;
     private ArchiveFilePanel caseContainer=null;
     private Color defaultBackground=null;
     private boolean readOnly=false;
     protected ArchiveFileDocumentsBean document=null;
-    private Color defaultFilenameColor=null;
     private Color defaultBackColor=null;
     private boolean highlighted=false;
     
@@ -715,7 +714,6 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
      */
     public DocumentEntryPanel() {
         initComponents();
-        this.defaultFilenameColor=this.lblFileName.getForeground();
         this.lblFolder.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
         
         this.dragSource = new DragSource();
@@ -729,7 +727,6 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
 
     public DocumentEntryPanel(ArchiveFilePanel caseContainer, CaseFolderPanel documentsContainer, ArchiveFileDocumentsBean doc, boolean readonly) {
         initComponents();
-        this.defaultFilenameColor=this.lblFileName.getForeground();
         this.lblFolder.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
         
         this.documentsContainer=documentsContainer;
@@ -754,12 +751,8 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
         
         this.highlighted=highlight;
         if(highlight) {
-            //this.lblFileName.setForeground(Color.WHITE);
-            //this.lblFileName.setFont(this.lblFileName.getFont().deriveFont(Font.BOLD));
             this.setBackground(DefaultColorTheme.COLOR_LOGO_RED);
         } else {
-            //this.lblFileName.setForeground(this.defaultFilenameColor);
-            //this.lblFileName.setFont(this.lblFileName.getFont().deriveFont(Font.PLAIN));
             this.setBackground(this.defaultBackColor);
             
             // set background to selected
@@ -941,8 +934,7 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
     }//GEN-LAST:event_lblFileIconMouseExited
 
     private void lblFileNameMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblFileNameMouseClicked
-        if ((evt.getModifiers() & InputEvent.BUTTON2_MASK) == evt.BUTTON2_MASK || (evt.getModifiers() & InputEvent.BUTTON2_DOWN_MASK) == evt.BUTTON2_DOWN_MASK || (evt.getModifiers() & InputEvent.BUTTON3_MASK) == evt.BUTTON3_MASK || (evt.getModifiers() & InputEvent.BUTTON3_DOWN_MASK) == evt.BUTTON3_DOWN_MASK) {
-            //if(this.documentsContainer.getSelectedDocuments().isEmpty())
+        if ((evt.getModifiers() & InputEvent.BUTTON2_MASK) == MouseEvent.BUTTON2_MASK || (evt.getModifiers() & InputEvent.BUTTON2_DOWN_MASK) == MouseEvent.BUTTON2_DOWN_MASK || (evt.getModifiers() & InputEvent.BUTTON3_MASK) == MouseEvent.BUTTON3_MASK || (evt.getModifiers() & InputEvent.BUTTON3_DOWN_MASK) == MouseEvent.BUTTON3_DOWN_MASK) {
             if((evt.getModifiers() & InputEvent.SHIFT_MASK) == InputEvent.SHIFT_MASK || (evt.getModifiers() & InputEvent.CTRL_MASK) == InputEvent.CTRL_MASK) {
                 this.documentClicked(evt, false);
             } else {
