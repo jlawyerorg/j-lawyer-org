@@ -785,12 +785,7 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
         chkSelected = new javax.swing.JCheckBox();
         lblFavorite = new javax.swing.JLabel();
         lblFolder = new javax.swing.JLabel();
-
-        addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                formMouseClicked(evt);
-            }
-        });
+        lblClickableSpace = new javax.swing.JLabel();
 
         lblFileIcon.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/fileicons/file_type_odt.png"))); // NOI18N
         lblFileIcon.setVerticalAlignment(javax.swing.SwingConstants.TOP);
@@ -798,11 +793,11 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 lblFileIconMouseClicked(evt);
             }
-            public void mouseExited(java.awt.event.MouseEvent evt) {
-                lblFileIconMouseExited(evt);
-            }
             public void mouseEntered(java.awt.event.MouseEvent evt) {
                 lblFileIconMouseEntered(evt);
+            }
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                lblFileIconMouseExited(evt);
             }
         });
 
@@ -812,22 +807,37 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 lblFileNameMouseClicked(evt);
             }
-            public void mouseExited(java.awt.event.MouseEvent evt) {
-                lblFileNameMouseExited(evt);
-            }
             public void mouseEntered(java.awt.event.MouseEvent evt) {
                 lblFileNameMouseEntered(evt);
+            }
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                lblFileNameMouseExited(evt);
             }
         });
 
         lblCreationDate.setFont(new java.awt.Font("Dialog", 1, 10)); // NOI18N
         lblCreationDate.setText("10.10.2020");
+        lblCreationDate.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                lblCreationDateMouseClicked(evt);
+            }
+        });
 
         lblDictateSign.setFont(new java.awt.Font("Dialog", 1, 10)); // NOI18N
         lblDictateSign.setText("DZ");
+        lblDictateSign.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                lblDictateSignMouseClicked(evt);
+            }
+        });
 
         lblFileSize.setFont(new java.awt.Font("Dialog", 1, 10)); // NOI18N
         lblFileSize.setText("3,4 MB");
+        lblFileSize.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                lblFileSizeMouseClicked(evt);
+            }
+        });
 
         chkSelected.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseReleased(java.awt.event.MouseEvent evt) {
@@ -854,21 +864,35 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
 
         lblFolder.setFont(new java.awt.Font("Dialog", 1, 10)); // NOI18N
         lblFolder.setText(">");
+        lblFolder.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                lblFolderMouseClicked(evt);
+            }
+        });
+
+        lblClickableSpace.setText(" ");
+        lblClickableSpace.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                lblClickableSpaceMouseClicked(evt);
+            }
+        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(chkSelected)
-                .addGap(2, 2, 2)
-                .addComponent(lblFavorite)
-                .addGap(18, 18, 18)
-                .addComponent(lblFileIcon)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addGroup(layout.createSequentialGroup()
+                        .addContainerGap()
+                        .addComponent(chkSelected)
+                        .addGap(2, 2, 2)
+                        .addComponent(lblFavorite)
+                        .addGap(18, 18, 18)
+                        .addComponent(lblFileIcon))
+                    .addComponent(lblClickableSpace, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(lblFileName)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(lblCreationDate)
                         .addGap(18, 18, 18)
@@ -876,28 +900,27 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
                         .addGap(18, 18, 18)
                         .addComponent(lblDictateSign)
                         .addGap(18, 18, 18)
-                        .addComponent(lblFolder)))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addComponent(lblFolder, javax.swing.GroupLayout.DEFAULT_SIZE, 72, Short.MAX_VALUE))
+                    .addComponent(lblFileName, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addGap(4, 4, 4)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(lblFileIcon, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(chkSelected, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-                            .addComponent(lblFileName, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(lblFavorite, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
-                        .addGap(3, 3, 3)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(lblCreationDate)
-                            .addComponent(lblDictateSign)
-                            .addComponent(lblFileSize)
-                            .addComponent(lblFolder))
-                        .addGap(3, 3, 3)))
-                .addGap(3, 3, 3))
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                        .addComponent(chkSelected, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+                        .addComponent(lblFileName, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(lblFavorite, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)))
+                .addGap(1, 1, 1)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(lblCreationDate)
+                    .addComponent(lblDictateSign)
+                    .addComponent(lblFileSize)
+                    .addComponent(lblFolder)
+                    .addComponent(lblClickableSpace))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -1029,9 +1052,25 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
         }
     }//GEN-LAST:event_chkSelectedKeyReleased
 
-    private void formMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_formMouseClicked
+    private void lblClickableSpaceMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblClickableSpaceMouseClicked
         this.lblFileNameMouseClicked(evt);
-    }//GEN-LAST:event_formMouseClicked
+    }//GEN-LAST:event_lblClickableSpaceMouseClicked
+
+    private void lblCreationDateMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblCreationDateMouseClicked
+        this.lblFileNameMouseClicked(evt);
+    }//GEN-LAST:event_lblCreationDateMouseClicked
+
+    private void lblFileSizeMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblFileSizeMouseClicked
+        this.lblFileNameMouseClicked(evt);
+    }//GEN-LAST:event_lblFileSizeMouseClicked
+
+    private void lblDictateSignMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblDictateSignMouseClicked
+        this.lblFileNameMouseClicked(evt);
+    }//GEN-LAST:event_lblDictateSignMouseClicked
+
+    private void lblFolderMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblFolderMouseClicked
+        this.lblFileNameMouseClicked(evt);
+    }//GEN-LAST:event_lblFolderMouseClicked
 
     private void documentUnClicked(MouseEvent evt) {
         this.caseContainer.documentSelectionChanged();
@@ -1083,6 +1122,7 @@ public class DocumentEntryPanel extends javax.swing.JPanel implements DragGestur
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JCheckBox chkSelected;
+    private javax.swing.JLabel lblClickableSpace;
     private javax.swing.JLabel lblCreationDate;
     private javax.swing.JLabel lblDictateSign;
     private javax.swing.JLabel lblFavorite;
