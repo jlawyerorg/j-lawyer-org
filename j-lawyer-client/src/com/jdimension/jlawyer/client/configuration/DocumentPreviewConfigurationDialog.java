@@ -661,122 +661,164 @@
  * For more information on this, and how to apply and follow the GNU AGPL, see
  * <https://www.gnu.org/licenses/>.
  */
-package com.jdimension.jlawyer.client.editors.documents;
+package com.jdimension.jlawyer.client.configuration;
 
-import com.jdimension.jlawyer.client.editors.documents.viewer.DocumentViewerFactory;
-import com.jdimension.jlawyer.client.editors.documents.viewer.GifJpegPngImageWithTextPanel;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
-import com.jdimension.jlawyer.client.utils.ThreadUtils;
-import com.jdimension.jlawyer.persistence.ArchiveFileBean;
-import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
-import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
-import com.jdimension.jlawyer.services.JLawyerServiceLocator;
-import java.awt.BorderLayout;
-import java.awt.FlowLayout;
-import javax.swing.JComponent;
 import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JProgressBar;
-import javax.swing.SwingUtilities;
-import org.apache.log4j.Logger;
 
 /**
  *
  * @author jens
  */
-public class LoadDocumentPreviewThread implements Runnable {
+public class DocumentPreviewConfigurationDialog extends javax.swing.JDialog {
 
-    private static final Logger log = Logger.getLogger(LoadDocumentPreviewThread.class.getName());
+    /**
+     * Creates new form OptionGroupConfigurationDialog
+     */
+    public DocumentPreviewConfigurationDialog(java.awt.Frame parent, boolean modal) {
+        super(parent, modal);
+        initComponents();
+        ((JLabel) cmbSize.getRenderer()).setHorizontalAlignment(JLabel.RIGHT);
 
-    private static boolean running = false;
-
-    private JPanel pnlPreview = null;
-    private boolean readOnly = false;
-    private ArchiveFileBean caseDto=null;
-    ArchiveFileDocumentsBean docDto=null;
-    private boolean forceAnyDocumentSize=false;
-
-    public LoadDocumentPreviewThread(ArchiveFileBean caseDto, ArchiveFileDocumentsBean value, boolean readOnly, JPanel pnlPreview, boolean forceAnyDocumentSize) {
-        this.docDto=value;
-        this.pnlPreview = pnlPreview;
-        this.readOnly = readOnly;
-        this.caseDto=caseDto;
-        this.forceAnyDocumentSize=forceAnyDocumentSize;
-    }
-
-    public static boolean isRunning() {
-        return running;
-    }
-
-    @Override
-    public void run() {
-
-        try {
-            running = true;
-            ThreadUtils.setVisible(pnlPreview, false);
-            ThreadUtils.removeAll(pnlPreview);
-            ThreadUtils.setLayout(pnlPreview, new FlowLayout());
-            JProgressBar loading = new JProgressBar();
-            loading.setIndeterminate(true);
-            ThreadUtils.addComponent(this.pnlPreview, loading);
-            ThreadUtils.setVisible(pnlPreview, true);
-            ClientSettings settings = ClientSettings.getInstance();
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            ArchiveFileServiceRemote afs = locator.lookupArchiveFileServiceRemote();
-
-            String previewText = afs.getDocumentPreview(this.docDto.getId());
-            
-            long maxPreviewBytes=2l*1024l*1024l;
-            String maxPreviewBytesString=settings.getConfiguration(ClientSettings.CONF_DOCUMENTS_MAXPREVIEWBYTES, "" + maxPreviewBytes);
-            try {
-                maxPreviewBytes=Long.parseLong(maxPreviewBytesString);
-            } catch (Throwable t) {
-                log.error("invalid setting for maximum document previes bytes: " +maxPreviewBytesString);
-            }
-            
-            
-            
-
-            JComponent preview = null;
-            if(this.docDto.getSize()>maxPreviewBytes && !this.forceAnyDocumentSize) {
-                preview=new DocumentPreviewTooLarge(this.caseDto, this.docDto, this.readOnly, this.pnlPreview);
-            } else {
-                byte[] data = afs.getDocumentContent(this.docDto.getId());
-                preview=DocumentViewerFactory.getDocumentViewer(this.caseDto, this.docDto.getId(), this.docDto.getName(), readOnly, previewText, data, this.pnlPreview.getWidth(), this.pnlPreview.getHeight());
-            }
-            
-            
-            ThreadUtils.setVisible(pnlPreview, false);
-            ThreadUtils.remove(pnlPreview, loading);
-            ThreadUtils.setLayout(pnlPreview, new BorderLayout());
-            ThreadUtils.addComponent(pnlPreview, preview, BorderLayout.CENTER);
-            ThreadUtils.setVisible(pnlPreview, true);
-
-            if (preview instanceof GifJpegPngImageWithTextPanel) {
-                // automatically scroll to the most relevant part of the text
-                // scrolling is only possible after text area has been layed out --> first add component, then do the scrolling
-                try {
-                    Thread.sleep(200);
-                } catch (Throwable t) {
-                    log.error(t);
-                }
-                final JComponent prev=preview;
-                SwingUtilities.invokeLater(() -> {
-                    ((GifJpegPngImageWithTextPanel) prev).intelligentScrolling();
-                });
-            }
-            running = false;
-        } catch (Exception ex) {
-            running = false;
-            log.error(ex);
-            SwingUtilities.invokeLater(() -> {
-                pnlPreview.setVisible(false);
-                pnlPreview.removeAll();
-                pnlPreview.add(new JLabel("Vorschau nicht verfügbar."));
-                pnlPreview.setVisible(true);
-            });
-            
+        ClientSettings set = ClientSettings.getInstance();
+        long maxPreviewBytes = 2l * 1024l * 1024l;
+        String maxPreviewBytesString = set.getConfiguration(ClientSettings.CONF_DOCUMENTS_MAXPREVIEWBYTES, "" + maxPreviewBytes);
+        if((""+1l*1024l*1024l).equals(maxPreviewBytesString)) {
+            this.cmbSize.setSelectedItem("1 MB");
+        } else if((""+2l*1024l*1024l).equals(maxPreviewBytesString)) {
+            this.cmbSize.setSelectedItem("2 MB");
+        } else if((""+3l*1024l*1024l).equals(maxPreviewBytesString)) {
+            this.cmbSize.setSelectedItem("3 MB");
+        } else if((""+5l*1024l*1024l).equals(maxPreviewBytesString)) {
+            this.cmbSize.setSelectedItem("5 MB");
+        } else if((""+10l*1024l*1024l).equals(maxPreviewBytesString)) {
+            this.cmbSize.setSelectedItem("10 MB");
+        } else if((""+Long.MAX_VALUE).equals(maxPreviewBytesString)) {
+            this.cmbSize.setSelectedItem("unbegrenzt");
+        } else {
+            this.cmbSize.setSelectedItem("2 MB");
         }
 
     }
+
+    /**
+     * This method is called from within the constructor to initialize the form.
+     * WARNING: Do NOT modify this code. The content of this method is always
+     * regenerated by the Form Editor.
+     */
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
+    private void initComponents() {
+
+        cmdClose = new javax.swing.JButton();
+        cmdSave = new javax.swing.JButton();
+        jLabel1 = new javax.swing.JLabel();
+        cmbSize = new javax.swing.JComboBox<>();
+
+        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+
+        cmdClose.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/cancel.png"))); // NOI18N
+        java.util.ResourceBundle bundle = java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/configuration/CustomFieldConfigurationDialog"); // NOI18N
+        cmdClose.setText(bundle.getString("button.close")); // NOI18N
+        cmdClose.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdCloseActionPerformed(evt);
+            }
+        });
+
+        cmdSave.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png"))); // NOI18N
+        cmdSave.setText(bundle.getString("button.save")); // NOI18N
+        cmdSave.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmdSaveActionPerformed(evt);
+            }
+        });
+
+        jLabel1.setText(bundle.getString("customfield1.name")); // NOI18N
+
+        cmbSize.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "1 MB", "2 MB", "3 MB", "5 MB", "10 MB", "unbegrenzt" }));
+
+        org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
+        getContentPane().setLayout(layout);
+        layout.setHorizontalGroup(
+            layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(layout.createSequentialGroup()
+                .addContainerGap()
+                .add(jLabel1)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(cmbSize, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
+                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .add(cmdSave)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(cmdClose)
+                .addContainerGap())
+        );
+        layout.setVerticalGroup(
+            layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
+                .addContainerGap()
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(jLabel1)
+                    .add(cmbSize, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .add(18, 18, 18)
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(cmdClose)
+                    .add(cmdSave))
+                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+
+        pack();
+    }// </editor-fold>//GEN-END:initComponents
+
+    private void cmdCloseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdCloseActionPerformed
+        this.setVisible(false);
+        this.dispose();
+    }//GEN-LAST:event_cmdCloseActionPerformed
+
+    private void cmdSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSaveActionPerformed
+        
+        ClientSettings set = ClientSettings.getInstance();
+        String maxPreviewBytesString = this.cmbSize.getSelectedItem().toString();
+        if(("1 MB").equals(maxPreviewBytesString)) {
+            set.setConfiguration(ClientSettings.CONF_DOCUMENTS_MAXPREVIEWBYTES, ""+1l*1024l*1024l);
+        } else if(("2 MB").equals(maxPreviewBytesString)) {
+            set.setConfiguration(ClientSettings.CONF_DOCUMENTS_MAXPREVIEWBYTES, ""+2l*1024l*1024l);
+        } else if(("3 MB").equals(maxPreviewBytesString)) {
+            set.setConfiguration(ClientSettings.CONF_DOCUMENTS_MAXPREVIEWBYTES, ""+3l*1024l*1024l);
+        } else if(("5 MB").equals(maxPreviewBytesString)) {
+            set.setConfiguration(ClientSettings.CONF_DOCUMENTS_MAXPREVIEWBYTES, ""+5l*1024l*1024l);
+        } else if(("10 MB").equals(maxPreviewBytesString)) {
+            set.setConfiguration(ClientSettings.CONF_DOCUMENTS_MAXPREVIEWBYTES, ""+10l*1024l*1024l);
+        } else if(("unbegrenzt").equals(maxPreviewBytesString)) {
+            set.setConfiguration(ClientSettings.CONF_DOCUMENTS_MAXPREVIEWBYTES, ""+Long.MAX_VALUE);
+        } else {
+            set.setConfiguration(ClientSettings.CONF_DOCUMENTS_MAXPREVIEWBYTES, ""+2l*1024l*1024l);
+        }
+        
+        this.setVisible(false);
+        this.dispose();
+    }//GEN-LAST:event_cmdSaveActionPerformed
+
+    /**
+     * @param args the command line arguments
+     */
+    public static void main(String args[]) {
+        java.awt.EventQueue.invokeLater(() -> {
+            new DocumentPreviewConfigurationDialog(new javax.swing.JFrame(), true).setVisible(true);
+        });
+    }
+
+    // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JComboBox<String> cmbSize;
+    private javax.swing.JButton cmdClose;
+    private javax.swing.JButton cmdSave;
+    private javax.swing.JLabel jLabel1;
+    // End of variables declaration//GEN-END:variables
+
+    @Override
+    public void setTitle(String string) {
+        super.setTitle(string);
+    }
+
 }

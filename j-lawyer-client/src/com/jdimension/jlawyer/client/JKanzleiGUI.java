@@ -1058,6 +1058,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         mnuScanOptions = new javax.swing.JMenuItem();
         mnuWordProcessor = new javax.swing.JMenuItem();
         mnuSearchIndex = new javax.swing.JMenuItem();
+        mnuDocumentPreview = new javax.swing.JMenuItem();
         mnuCustomLauncherOptions = new javax.swing.JMenuItem();
         mnuCalendarOptions = new javax.swing.JMenu();
         mnuArchiveFileOptionsReviewReasons = new javax.swing.JMenuItem();
@@ -1553,6 +1554,15 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             }
         });
         mnuDocumentOptions.add(mnuSearchIndex);
+
+        mnuDocumentPreview.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/baseline_preview_black_48dp.png"))); // NOI18N
+        mnuDocumentPreview.setText("Dokumentenvorschau");
+        mnuDocumentPreview.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuDocumentPreviewActionPerformed(evt);
+            }
+        });
+        mnuDocumentOptions.add(mnuDocumentPreview);
 
         mnuCustomLauncherOptions.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/package_system.png"))); // NOI18N
         mnuCustomLauncherOptions.setText(bundle.getString("menu.settings.documents.3rdpartyapps")); // NOI18N
@@ -2485,6 +2495,12 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
         }
     }//GEN-LAST:event_mnuWebHooksActionPerformed
 
+    private void mnuDocumentPreviewActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuDocumentPreviewActionPerformed
+        DocumentPreviewConfigurationDialog dlg=new DocumentPreviewConfigurationDialog(this, true);
+        FrameUtils.centerDialog(dlg, this);
+        dlg.setVisible(true);
+    }//GEN-LAST:event_mnuDocumentPreviewActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -2546,6 +2562,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
     private javax.swing.JMenuItem mnuDocumentFolderTemplates;
     private javax.swing.JMenuItem mnuDocumentMonitor;
     private javax.swing.JMenu mnuDocumentOptions;
+    private javax.swing.JMenuItem mnuDocumentPreview;
     private javax.swing.JMenuItem mnuDocumentTags;
     private javax.swing.JMenuItem mnuDocumentsBin;
     private javax.swing.JMenuItem mnuDrebisSettings;

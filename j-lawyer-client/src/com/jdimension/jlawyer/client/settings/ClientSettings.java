@@ -788,6 +788,8 @@ public class ClientSettings {
     public static final String CONF_APPS_WORDPROCESSOR_VALUE_LO="libreoffice";
     public static final String CONF_APPS_WORDPROCESSOR_VALUE_MSO="msoffice";
     
+    public static final String CONF_DOCUMENTS_MAXPREVIEWBYTES="client.documents.maxpreviewbytes";
+    
     private static final String ARRAY_DELIMITER="#####";
     
     private static final Logger log=Logger.getLogger(ClientSettings.class.getName());
