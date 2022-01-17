@@ -678,7 +678,6 @@ import com.jdimension.jlawyer.persistence.CalendarAccess;
 import com.jdimension.jlawyer.persistence.CalendarAccessFacadeLocal;
 import com.jdimension.jlawyer.persistence.CalendarSetup;
 import com.jdimension.jlawyer.persistence.CalendarSetupFacadeLocal;
-import com.jdimension.jlawyer.persistence.Group;
 import com.jdimension.jlawyer.persistence.utils.JDBCUtils;
 import com.jdimension.jlawyer.persistence.utils.StringGenerator;
 import com.jdimension.jlawyer.server.constants.ArchiveFileConstants;
@@ -732,8 +731,6 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
     private ArchiveFileReviewsBeanFacadeLocal archiveFileReviewsFacade;
     @EJB
     private ArchiveFileHistoryBeanFacadeLocal archiveFileHistoryFacade;
-    @EJB
-    private ArchiveFileGroupsBeanFacadeLocal caseGroupsFacade;
     @EJB
     private CalendarSyncServiceLocal calendarSync;
     @EJB
