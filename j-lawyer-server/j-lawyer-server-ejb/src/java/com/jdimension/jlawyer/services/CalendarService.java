@@ -1070,16 +1070,15 @@ public class CalendarService implements CalendarServiceRemote, CalendarServiceLo
 
             while (rs.next()) {
                 String id = rs.getString(1);
-                ArchiveFileReviewsBean rev = this.archiveFileReviewsFacade.find(id);
                 String archiveFileKey = rs.getString(2);
-                ArchiveFileBean dto = this.archiveFileFacade.find(archiveFileKey);
-
                 boolean allowed = false;
                 if (allowedCases.contains(archiveFileKey)) {
                     allowed = true;
                 }
-
+                
                 if (allowed) {
+                    ArchiveFileReviewsBean rev = this.archiveFileReviewsFacade.find(id);
+                    ArchiveFileBean dto = this.archiveFileFacade.find(archiveFileKey);
                     rev.setArchiveFileKey(dto);
                     list.add(rev);
                 }
