@@ -691,7 +691,7 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
     private JPanel resultUI;
     private JSplitPane split;
     private boolean ignoreCurrentEditor = false;
-    private JTabbedPane eventPane=null;
+    private JTabbedPane eventPane = null;
 
     /**
      * Creates a new instance of ReviewsDueTimerTask
@@ -699,17 +699,17 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
     public ReviewsDueTimerTask(Component owner, JTabbedPane eventPane, JPanel resultPanel, JSplitPane split, boolean ignoreCurrentEditor) {
         super();
         this.owner = owner;
-        this.owner = owner;
         this.resultUI = resultPanel;
         this.split = split;
         this.ignoreCurrentEditor = ignoreCurrentEditor;
-        this.eventPane=eventPane;
+        this.eventPane = eventPane;
     }
 
     public ReviewsDueTimerTask(Component owner, JTabbedPane eventPane, JPanel resultPanel, JSplitPane split) {
         this(owner, eventPane, resultPanel, split, false);
     }
 
+    @Override
     public void run() {
 
         ArrayList<ReviewDueEntry> entries = new ArrayList<>();
@@ -725,12 +725,10 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
 
             ClientSettings settings = ClientSettings.getInstance();
             JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            String ownUser = UserSettings.getInstance().getCurrentUser().getPrincipalId();
 
             ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
             CalendarServiceRemote calService = locator.lookupCalendarServiceRemote();
             Collection<ArchiveFileReviewsBean> myNewList = calService.searchReviews(ArchiveFileConstants.REVIEWSTATUS_OPEN, ArchiveFileConstants.REVIEWTYPE_ANY, null, new Date(), 2500);
-
             UserSettings.getInstance().migrateFrom(settings, UserSettings.CONF_DESKTOP_ONLYMYREVIEWS);
             String temp = UserSettings.getInstance().getSetting(UserSettings.CONF_DESKTOP_ONLYMYREVIEWS, "false");
             boolean onlyMyReviews = false;
@@ -762,7 +760,7 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
                     e.setType(ar.getEventType());
                     e.setReview(ar);
                     Collection<ArchiveFileTagsBean> tags = fileService.getTags(afb.getId());
-                    ArrayList<String> xTags = new ArrayList<String>();
+                    ArrayList<String> xTags = new ArrayList<>();
                     if (tags != null) {
                         for (ArchiveFileTagsBean aftb : tags) {
                             xTags.add(aftb.getTagName());
@@ -782,15 +780,10 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
         final ArrayList<ReviewDueEntry> list = entries;
         try {
 
-            SwingUtilities.invokeLater(
-                    new Runnable() {
-                public void run() {
-                    split.setDividerLocation(split.getDividerLocation() + 1);
-                    split.setDividerLocation(split.getDividerLocation() - 1);
-                }
-
-            }
-            );
+            SwingUtilities.invokeLater(() -> {
+                split.setDividerLocation(split.getDividerLocation() + 1);
+                split.setDividerLocation(split.getDividerLocation() - 1);
+            });
         } catch (Throwable t) {
             log.error(t);
         }
@@ -798,9 +791,10 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
         try {
             SwingUtilities.invokeLater(
                     new Runnable() {
+                @Override
                 public void run() {
                     resultUI.removeAll();
-                    
+
                     // remove all tabs except for the first one
                     for (int i = eventPane.getTabCount() - 1; i > 0; i--) {
                         eventPane.removeTabAt(i);
@@ -819,7 +813,7 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
                             ep.setEntry(list.get(k));
                             resultUI.add(ep);
                             addEventTypeTab(list.get(k).getReview().getEventTypeName());
-                            
+
                             // need new identical child, one child component cannot have two parents
                             ReviewDueEntryPanel ep2 = new ReviewDueEntryPanel(background);
                             ep2.setEntry(list.get(k));
@@ -833,7 +827,7 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
                     split.setDividerLocation(split.getDividerLocation() + 1);
                     split.setDividerLocation(split.getDividerLocation() - 1);
                 }
-                
+
                 private void addEventTypeTab(String eventTypeName) {
                     boolean hasTab = false;
                     for (int i = 0; i < eventPane.getTabCount(); i++) {
@@ -855,16 +849,16 @@ public class ReviewsDueTimerTask extends java.util.TimerTask {
                         scroll.getViewport().setOpaque(false);
                         eventPane.addTab(eventTypeName, scroll);
                     }
-                    
+
                 }
 
                 private void addEntryToTab(String eventTypeName, ReviewDueEntryPanel ep) {
-                    
+
                     for (int i = 0; i < eventPane.getTabCount(); i++) {
                         if (eventPane.getTitleAt(i).equals(eventTypeName)) {
                             JScrollPane sp = (JScrollPane) eventPane.getComponentAt(i);
                             JViewport p = (JViewport) sp.getComponent(0);
-                            ((JPanel)p.getComponent(0)).add(ep);
+                            ((JPanel) p.getComponent(0)).add(ep);
                             break;
                         }
                     }
