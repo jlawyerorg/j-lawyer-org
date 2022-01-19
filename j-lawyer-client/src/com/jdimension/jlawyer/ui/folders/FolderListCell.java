@@ -822,12 +822,6 @@ public class FolderListCell extends javax.swing.JPanel implements DropTargetList
         });
         popFolder.add(mnuCreate);
 
-        addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                formMouseClicked(evt);
-            }
-        });
-
         lblFolderName.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/jdimension/jlawyer/ui/folders/folder-empty.png"))); // NOI18N
         lblFolderName.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
@@ -888,18 +882,14 @@ public class FolderListCell extends javax.swing.JPanel implements DropTargetList
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(txtFolderName, javax.swing.GroupLayout.Alignment.TRAILING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(cmdMore, javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                .addComponent(lblFolderName)
-                                .addComponent(lblExpanded)))
-                        .addGap(0, 1, Short.MAX_VALUE))
-                    .addComponent(txtFolderName))
-                .addContainerGap())
+                    .addComponent(cmdMore, javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(lblExpanded))
+                .addContainerGap(13, Short.MAX_VALUE))
+            .addComponent(lblFolderName, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -916,11 +906,6 @@ public class FolderListCell extends javax.swing.JPanel implements DropTargetList
         setSelected(!isSelected());
         this.parent.selectionChanged();
     }//GEN-LAST:event_lblExpandedMouseClicked
-
-    private void formMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_formMouseClicked
-        setSelected(!isSelected());
-        this.parent.selectionChanged();
-    }//GEN-LAST:event_formMouseClicked
 
     private void cmdMoreMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdMoreMouseReleased
         if (this.folder.isRoot()) {
