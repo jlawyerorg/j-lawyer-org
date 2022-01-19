@@ -675,19 +675,12 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.util.HashMap;
-import javax.swing.AbstractAction;
 import javax.swing.Action;
-import javax.swing.GroupLayout;
-import javax.swing.JLabel;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.JSeparator;
 import javax.swing.KeyStroke;
-import static javax.swing.SwingConstants.LEADING;
 import javax.swing.SwingUtilities;
-import org.jdesktop.swingx.JXTitledSeparator;
-import themes.colors.DefaultColorTheme;
 
 /**
  *
@@ -718,38 +711,28 @@ public class ModuleBar extends javax.swing.JPanel {
             mi.setIcon(m.getDefaultIcon());
             mi.setRolloverIcon(m.getRolloverIcon());
             mi.setFont(new java.awt.Font("Dialog", 1, 10));
-            //mi.setForeground(new java.awt.Color(102, 102, 102));
             mi.setForeground(Color.BLACK);
             mi.setSelectedIcon(m.getRolloverIcon());
-            
-//            mi.putClientProperty("Menu.selectionForeground", Color.WHITE);
-//            mi.putClientProperty("MenuItem[MouseOver].textForeground", Color.WHITE);
-            
+                        
             JPanel caller = this;
-            mi.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent ae) {
-                    if (m.getEditorClass() != null) {
-                        Object editor = null;
-                        try {
-                            editor = EditorsRegistry.getInstance().getEditor(m.getEditorClass());
-                            if (editor instanceof PopulateOptionsEditor) {
-                                ((PopulateOptionsEditor) editor).populateOptions();
-                            }
-
-                            EditorsRegistry.getInstance().setMainEditorsPaneView((Component) editor);
-
-                        } catch (Exception ex) {
-                            //log.error("Error creating editor from class " + m.getEditorClass(), ex);
-                            JOptionPane.showMessageDialog(caller, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("error.loadingeditor") + ex.getMessage(), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.error"), JOptionPane.ERROR_MESSAGE);
+            mi.addActionListener((ActionEvent ae) -> {
+                if (m.getEditorClass() != null) {
+                    Object editor = null;
+                    try {
+                        editor = EditorsRegistry.getInstance().getEditor(m.getEditorClass());
+                        if (editor instanceof PopulateOptionsEditor) {
+                            ((PopulateOptionsEditor) editor).populateOptions();
                         }
-
-                    } else {
-                        //this.scrollMain.setViewportView(null);
-                        EditorsRegistry.getInstance().setMainEditorsPaneView(null);
+                        
+                        EditorsRegistry.getInstance().setMainEditorsPaneView((Component) editor);
+                        
+                    } catch (Exception ex) {
+                        JOptionPane.showMessageDialog(caller, java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("error.loadingeditor") + ex.getMessage(), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/JKanzleiGUI").getString("msg.title.error"), JOptionPane.ERROR_MESSAGE);
                     }
+                    
+                } else {
+                    EditorsRegistry.getInstance().setMainEditorsPaneView(null);
                 }
-
             });
             this.popSettings.add(mi);
         } else {
@@ -757,29 +740,9 @@ public class ModuleBar extends javax.swing.JPanel {
                 ModuleButton mb = (ModuleButton) buttonPane.getComponent(buttonPane.getComponentCount() - 1);
                 String formerModuleName = mb.getModule().getModuleName();
                 if (!formerModuleName.equals(m.getModuleName())) {
-                    //buttonPane.add(new JSeparator());
                     
                     buttonPane.add(new ModuleGroupLabel(m.getModuleName()));
 
-//                    JXTitledSeparator sep=new org.jdesktop.swingx.JXTitledSeparator();
-//                    sep.setTitle(m.getModuleName());
-//                    sep.setFont(new java.awt.Font("Dialog", 1, 10));
-//                    buttonPane.add(sep);
-//                    sep.setSize(50, 50);
-//                    buttonPane.doLayout();
-//                    JPanel pan=new JPanel();
-//                    //JLabel sep=new JLabel("<html><p align=\"left\"><b><u>" + m.getModuleName() + "</u></b></p></html>");
-//                    JLabel sep=new JLabel(m.getModuleName());
-//                    sep.setOpaque(true);
-//                    sep.setSize(this.getWidth(), sep.getHeight());
-//                    sep.setFont(new java.awt.Font("Dialog", 1, 12).deriveFont(Font.BOLD));
-//                    sep.setForeground(DefaultColorTheme.COLOR_LOGO_BLUE);
-//                    sep.setBackground(Color.WHITE);
-//                    sep.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
-//                    //sep.setBackground(DefaultColorTheme.COLOR_DARK_GREY);
-//                    
-//                    pan.add(sep);
-//                    buttonPane.add(pan);
                 }
             }
 
@@ -804,24 +767,20 @@ public class ModuleBar extends javax.swing.JPanel {
      */
     public void initializeHotKeys() {
         KeyboardFocusManager kfm = KeyboardFocusManager.getCurrentKeyboardFocusManager();
-        kfm.addKeyEventDispatcher(new KeyEventDispatcher() {
-            @Override
-            public boolean dispatchKeyEvent(KeyEvent e) {
-                KeyStroke keyStroke = KeyStroke.getKeyStrokeForEvent(e);
-                if (hotKeyActions.containsKey(keyStroke)) {
-                    final Action a = hotKeyActions.get(keyStroke);
-                    final ActionEvent ae = new ActionEvent(e.getSource(), e.getID(), null);
-                    SwingUtilities.invokeLater(new Runnable() {
-                        @Override
-                        public void run() {
-                            a.actionPerformed(ae);
-                        }
-                    });
-                    return true;
-                }
-                return false;
+        kfm.addKeyEventDispatcher((KeyEvent e) -> {
+            KeyStroke keyStroke = KeyStroke.getKeyStrokeForEvent(e);
+            if (hotKeyActions.containsKey(keyStroke)) {
+                final Action a = hotKeyActions.get(keyStroke);
+                final ActionEvent ae = new ActionEvent(e.getSource(), e.getID(), null);
+                SwingUtilities.invokeLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        a.actionPerformed(ae);
+                    }
+                });
+                return true;
             }
-
+            return false;
         });
     }
 
@@ -854,11 +813,6 @@ public class ModuleBar extends javax.swing.JPanel {
                 cmdSettingsMousePressed(evt);
             }
         });
-        cmdSettings.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdSettingsActionPerformed(evt);
-            }
-        });
 
         jScrollPane1.setBorder(null);
 
@@ -883,10 +837,6 @@ public class ModuleBar extends javax.swing.JPanel {
                 .addComponent(cmdSettings))
         );
     }// </editor-fold>//GEN-END:initComponents
-
-    private void cmdSettingsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSettingsActionPerformed
-        //this.popSettings.show(this.cmdSettings, evt.getX(), evt.getY());
-    }//GEN-LAST:event_cmdSettingsActionPerformed
 
     private void cmdSettingsMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_cmdSettingsMousePressed
         this.popSettings.show(this.cmdSettings, evt.getX(), evt.getY());
