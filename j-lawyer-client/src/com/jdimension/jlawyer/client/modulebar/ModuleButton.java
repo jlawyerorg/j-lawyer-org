@@ -965,7 +965,7 @@ public class ModuleButton extends javax.swing.JPanel implements EventConsumer {
 
     @Override
     public void onEvent(Event e) {
-        if (!(e.getType().intValue() == this.module.getStatusEventType())) {
+        if (e.getType().intValue() != this.module.getStatusEventType()) {
             return;
         }
 
