@@ -819,7 +819,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
         this.pnlLastChanged.setLayout(boxLayout);
         Timer timer2 = new Timer();
         TimerTask lastChangedTask = new LastChangedTimerTask(this, this.pnlLastChanged, this.jSplitPane1);
-        timer2.schedule(lastChangedTask, 1000, 29000);
+        timer2.schedule(lastChangedTask, 1000, 59000);
 
         Timer timer3 = new Timer();
         TimerTask autoUpdateTask = new AutoUpdateTimerTask(this);
@@ -827,13 +827,13 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
 
         Timer timer4 = new Timer();
         TimerTask revDueTask = new ReviewsDueTimerTask(this, this.tabPaneDue, this.pnlRevDue, this.jSplitPane1);
-        timer4.schedule(revDueTask, 1000, 31000);
+        timer4.schedule(revDueTask, 1000, 61000);
 
         BoxLayout boxLayout2=new BoxLayout(this.pnlTagged, BoxLayout.Y_AXIS);
         this.pnlTagged.setLayout(boxLayout2);
         Timer timer5 = new Timer();
         TimerTask taggedTask = new TaggedTimerTask(this, this.tabPaneTagged, this.pnlTagged, this.jSplitPane2, this.cmdTagFilter, this.cmdDocumentTagFilter, this.popTagFilter, this.popDocumentTagFilter);
-        timer5.schedule(taggedTask, 1000, 33000);
+        timer5.schedule(taggedTask, 1000, 63000);
 
         Timer timer6 = new Timer();
         TimerTask docObserverTask = new DocumentObserverTask();
@@ -859,7 +859,7 @@ public class DesktopPanel extends javax.swing.JPanel implements ThemeableEditor,
             
             Timer timer11 = new Timer();
             TimerTask tagsTask3 = new UpdateDocumentTagsTask(this, (EditArchiveFilePanel) EditorsRegistry.getInstance().getEditor(EditArchiveFilePanel.class.getName()));
-            timer11.schedule(tagsTask3, 4500, 60000);
+            timer11.schedule(tagsTask3, 6500, 60000);
         } catch (Throwable t) {
             log.error("Could not set up timer task for automatic tag updates", t);
         }

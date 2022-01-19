@@ -730,7 +730,11 @@ public interface ArchiveFileServiceRemote {
 
     Collection<ArchiveFileTagsBean> getTags(String archiveFileId) throws Exception;
     
+    HashMap<String,ArrayList<ArchiveFileTagsBean>> getTags(List<String> archiveFileId) throws Exception;
+    
     Collection<DocumentTagsBean> getDocumentTags(String documentId) throws Exception;
+    
+    HashMap<String,ArrayList<DocumentTagsBean>> getDocumentTags(List<String> documentId) throws Exception;
 
     List<String> searchTagsInUse();
     

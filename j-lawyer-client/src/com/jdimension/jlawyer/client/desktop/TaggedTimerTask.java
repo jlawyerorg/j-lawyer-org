@@ -681,7 +681,6 @@ import java.awt.event.ActionEvent;
 import java.nio.channels.ClosedChannelException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -741,7 +740,6 @@ public class TaggedTimerTask extends java.util.TimerTask {
         MenuElement[] elements = popup.getSubElements();
         for (MenuElement e : elements) {
             currentComboItems.add(((JCheckBoxMenuItem) e.getComponent()).getText());
-            //this.popTags.add(new JCheckBoxMenuItem(currentModel.getElementAt(i).toString()));
 
         }
         Collections.sort(currentComboItems);
@@ -795,6 +793,7 @@ public class TaggedTimerTask extends java.util.TimerTask {
         }
     }
 
+    @Override
     public void run() {
 
         if (running == true) {
@@ -803,13 +802,13 @@ public class TaggedTimerTask extends java.util.TimerTask {
 
         running = true;
 
-        List<ArchiveFileBean> myNewList = new ArrayList<>();
+        List<ArchiveFileBean> myNewList = null;
         List<ArchiveFileBean> filteredList = new ArrayList<>();
-        HashMap<String, List<ArchiveFileTagsBean>> tags = new HashMap<>();
+        HashMap<String, ArrayList<ArchiveFileTagsBean>> tags;
 
-        List<ArchiveFileDocumentsBean> myNewDocumentList = new ArrayList<>();
+        List<ArchiveFileDocumentsBean> myNewDocumentList = null;
         List<ArchiveFileDocumentsBean> filteredDocumentList = new ArrayList<>();
-        HashMap<String, List<DocumentTagsBean>> documentTags = new HashMap<>();
+        HashMap<String, ArrayList<DocumentTagsBean>> documentTags;
 
         String[] lastFilterDocumentTags = null;
         String[] lastFilterTags = null;
@@ -883,10 +882,12 @@ public class TaggedTimerTask extends java.util.TimerTask {
                 }
                 myNewList = filteredList;
             }
+            
+            ArrayList<String> myNewListIds=new ArrayList<>();
             for (ArchiveFileBean a : myNewList) {
-                Collection<ArchiveFileTagsBean> xTags = fileService.getTags(a.getId());
-                tags.put(a.getId(), (List<ArchiveFileTagsBean>) xTags);
+                myNewListIds.add(a.getId());
             }
+            tags=fileService.getTags(myNewListIds);
 
             myNewDocumentList = fileService.getTaggedDocuments(lastFilterDocumentTags, 200);
             if ("true".equalsIgnoreCase(temp)) {
@@ -899,10 +900,12 @@ public class TaggedTimerTask extends java.util.TimerTask {
                 }
                 myNewDocumentList = filteredDocumentList;
             }
-            for (ArchiveFileDocumentsBean a : myNewDocumentList) {
-                Collection<DocumentTagsBean> xTags = fileService.getDocumentTags(a.getId());
-                documentTags.put(a.getId(), (List<DocumentTagsBean>) xTags);
+            
+            ArrayList<String> myNewDocumentListIds=new ArrayList<>();
+            for (ArchiveFileDocumentsBean d : myNewDocumentList) {
+                myNewDocumentListIds.add(d.getId());
             }
+            documentTags=fileService.getDocumentTags(myNewDocumentListIds);
 
         } catch (EJBException | ClosedChannelException ex) {
             log.error("Error connecting to server", ex);

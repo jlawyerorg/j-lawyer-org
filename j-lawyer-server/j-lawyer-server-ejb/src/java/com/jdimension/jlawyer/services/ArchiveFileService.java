@@ -2206,6 +2206,33 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         List resultList = this.archiveFileTagsFacade.findByArchiveFileKey(aFile);
         return resultList;
     }
+    
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public HashMap<String,ArrayList<ArchiveFileTagsBean>> getTags(List<String> archiveFileId) throws Exception {
+        
+        ArrayList<String> allowedCases = null;
+        try {
+            allowedCases = SecurityUtils.getAllowedCasesForUser(context.getCallerPrincipal().getName(), this.securityFacade);
+        } catch (Exception ex) {
+            log.error("Unable to determine allowed cases for user " + context.getCallerPrincipal().getName(), ex);
+            throw new EJBException("Akten für Nutzer " + context.getCallerPrincipal().getName() + "' konnten nicht ermittelt werden.", ex);
+        }
+        
+        HashMap<String,ArrayList<ArchiveFileTagsBean>> returnList=new HashMap<>();
+        if(allowedCases==null)
+            return returnList;
+        
+        for(String aId: archiveFileId) {
+            if(allowedCases.contains(aId)) {
+                ArchiveFileBean aFile = this.archiveFileFacade.find(aId);
+                List resultList = this.archiveFileTagsFacade.findByArchiveFileKey(aFile);
+                returnList.put(aId, new ArrayList<>(resultList));
+            }
+        }
+        
+        return returnList;
+    }
 
     @Override
     @RolesAllowed({"readArchiveFileRole"})
@@ -2215,6 +2242,34 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
         List resultList = this.documentTagsFacade.findByDocumentKey(aFile);
         return resultList;
+    }
+    
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public HashMap<String,ArrayList<DocumentTagsBean>> getDocumentTags(List<String> documentId) throws Exception {
+        
+        ArrayList<String> allowedCases = null;
+        try {
+            allowedCases = SecurityUtils.getAllowedCasesForUser(context.getCallerPrincipal().getName(), this.securityFacade);
+        } catch (Exception ex) {
+            log.error("Unable to determine allowed cases for user " + context.getCallerPrincipal().getName(), ex);
+            throw new EJBException("Akten für Nutzer " + context.getCallerPrincipal().getName() + "' konnten nicht ermittelt werden.", ex);
+        }
+        
+        HashMap<String,ArrayList<DocumentTagsBean>> returnList=new HashMap<>();
+        if(allowedCases==null)
+            return returnList;
+        
+        for(String dId: documentId) {
+            ArchiveFileDocumentsBean aFile = this.archiveFileDocumentsFacade.find(dId);
+            if(allowedCases.contains(aFile.getArchiveFileKey().getId())) {
+                List resultList = this.documentTagsFacade.findByDocumentKey(aFile);
+                returnList.put(dId, new ArrayList<>(resultList));
+            }
+        }
+        
+        return returnList;
+        
     }
 
     @Override
