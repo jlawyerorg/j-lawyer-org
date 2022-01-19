@@ -795,18 +795,6 @@ public class ModuleButton extends javax.swing.JPanel implements EventConsumer {
 
         jLabel2.setText("jLabel2");
 
-        addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                formMouseClicked(evt);
-            }
-            public void mouseExited(java.awt.event.MouseEvent evt) {
-                formMouseExited(evt);
-            }
-            public void mouseEntered(java.awt.event.MouseEvent evt) {
-                formMouseEntered(evt);
-            }
-        });
-
         iconButton.setFont(new java.awt.Font("Dialog", 0, 10)); // NOI18N
         iconButton.setForeground(new java.awt.Color(255, 255, 255));
         iconButton.setBorder(null);
@@ -833,11 +821,11 @@ public class ModuleButton extends javax.swing.JPanel implements EventConsumer {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 lblModuleNameMouseClicked(evt);
             }
-            public void mouseExited(java.awt.event.MouseEvent evt) {
-                lblModuleNameMouseExited(evt);
-            }
             public void mouseEntered(java.awt.event.MouseEvent evt) {
                 lblModuleNameMouseEntered(evt);
+            }
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                lblModuleNameMouseExited(evt);
             }
         });
 
@@ -848,11 +836,11 @@ public class ModuleButton extends javax.swing.JPanel implements EventConsumer {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 lblIndicatorMouseClicked(evt);
             }
-            public void mouseExited(java.awt.event.MouseEvent evt) {
-                lblIndicatorMouseExited(evt);
-            }
             public void mouseEntered(java.awt.event.MouseEvent evt) {
                 lblIndicatorMouseEntered(evt);
+            }
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                lblIndicatorMouseExited(evt);
             }
         });
 
@@ -901,14 +889,6 @@ public class ModuleButton extends javax.swing.JPanel implements EventConsumer {
         this.iconButton.setIcon(this.getIcon());
     }//GEN-LAST:event_iconButtonMouseExited
 
-    private void formMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_formMouseEntered
-
-    }//GEN-LAST:event_formMouseEntered
-
-    private void formMouseExited(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_formMouseExited
-
-    }//GEN-LAST:event_formMouseExited
-
     private void iconButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_iconButtonActionPerformed
         actionPerformed();
     }//GEN-LAST:event_iconButtonActionPerformed
@@ -920,10 +900,6 @@ public class ModuleButton extends javax.swing.JPanel implements EventConsumer {
     private void lblIndicatorMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblIndicatorMouseClicked
         actionPerformed();
     }//GEN-LAST:event_lblIndicatorMouseClicked
-
-    private void formMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_formMouseClicked
-        actionPerformed();
-    }//GEN-LAST:event_formMouseClicked
 
     private void lblIndicatorMouseEntered(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lblIndicatorMouseEntered
         this.setBackground(this.defaultBackColor.brighter().brighter());
