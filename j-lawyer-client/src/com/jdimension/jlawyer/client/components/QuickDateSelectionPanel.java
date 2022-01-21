@@ -892,7 +892,6 @@ public class QuickDateSelectionPanel extends javax.swing.JPanel {
         clickedToggle.setSelected(true);
         for(JToggleButton tog: this.toggles) {
             if(!tog.equals(clickedToggle)) {
-                //if(clickedToggle.isSelected())
                     tog.setSelected(false);
             }
         }
