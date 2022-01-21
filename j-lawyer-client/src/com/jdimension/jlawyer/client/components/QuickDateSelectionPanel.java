@@ -665,9 +665,11 @@ package com.jdimension.jlawyer.client.components;
 
 import com.jdimension.jlawyer.client.calendar.CalendarUtils;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import javax.swing.JOptionPane;
 import javax.swing.JTextField;
+import javax.swing.JToggleButton;
 import org.apache.log4j.Logger;
 
 /**
@@ -679,18 +681,30 @@ public class QuickDateSelectionPanel extends javax.swing.JPanel {
     private static final Logger log=Logger.getLogger(QuickDateSelectionPanel.class.getName());
     protected JTextField target = null;
     protected QuickDateSelectionListener listener=null;
+    
+    private ArrayList<JToggleButton> toggles=new ArrayList<>();
 
     /**
      * Creates new form QuickDateSelectionPanel
      */
     public QuickDateSelectionPanel() {
         initComponents();
+        
+        toggles.add(this.togReview1Day);
+        toggles.add(this.togReview1Week);
+        toggles.add(this.togReview1Year);
+        toggles.add(this.togReview2Days);
+        toggles.add(this.togReview2Weeks);
+        toggles.add(this.togReview3Months);
+        toggles.add(this.togReview4Weeks);
+        toggles.add(this.togReview6Months);
+        
     }
 
     public void reset() {
-        this.togReview1Week.setSelected(false);
-        this.togReview2Weeks.setSelected(false);
-        this.togReview4Weeks.setSelected(false);
+        for(JToggleButton tog: this.toggles) {
+            tog.setSelected(false);
+        }
     }
 
     private void updateTarget() {
@@ -712,6 +726,15 @@ public class QuickDateSelectionPanel extends javax.swing.JPanel {
                 noneSelected=false;
             } else if (this.togReview2Days.isSelected()) {
                 c.add(Calendar.DAY_OF_YEAR, 2);
+                noneSelected=false;
+            } else if (this.togReview3Months.isSelected()) {
+                c.add(Calendar.MONTH, 3);
+                noneSelected=false;
+            } else if (this.togReview6Months.isSelected()) {
+                c.add(Calendar.MONTH, 6);
+                noneSelected=false;
+            } else if (this.togReview1Year.isSelected()) {
+                c.add(Calendar.YEAR, 1);
                 noneSelected=false;
             }
             
@@ -762,8 +785,12 @@ public class QuickDateSelectionPanel extends javax.swing.JPanel {
         togReview4Weeks = new javax.swing.JToggleButton();
         togReview1Day = new javax.swing.JToggleButton();
         togReview2Days = new javax.swing.JToggleButton();
+        togReview3Months = new javax.swing.JToggleButton();
+        togReview6Months = new javax.swing.JToggleButton();
+        togReview1Year = new javax.swing.JToggleButton();
 
         togReview1Week.setText("1W");
+        togReview1Week.setMargin(new java.awt.Insets(2, 4, 2, 4));
         togReview1Week.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 togReview1WeekActionPerformed(evt);
@@ -771,6 +798,7 @@ public class QuickDateSelectionPanel extends javax.swing.JPanel {
         });
 
         togReview2Weeks.setText("2W");
+        togReview2Weeks.setMargin(new java.awt.Insets(2, 4, 2, 4));
         togReview2Weeks.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 togReview2WeeksActionPerformed(evt);
@@ -778,6 +806,7 @@ public class QuickDateSelectionPanel extends javax.swing.JPanel {
         });
 
         togReview4Weeks.setText("4W");
+        togReview4Weeks.setMargin(new java.awt.Insets(2, 4, 2, 4));
         togReview4Weeks.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 togReview4WeeksActionPerformed(evt);
@@ -785,6 +814,7 @@ public class QuickDateSelectionPanel extends javax.swing.JPanel {
         });
 
         togReview1Day.setText("1T");
+        togReview1Day.setMargin(new java.awt.Insets(2, 4, 2, 4));
         togReview1Day.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 togReview1DayActionPerformed(evt);
@@ -792,9 +822,34 @@ public class QuickDateSelectionPanel extends javax.swing.JPanel {
         });
 
         togReview2Days.setText("2T");
+        togReview2Days.setMargin(new java.awt.Insets(2, 4, 2, 4));
         togReview2Days.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 togReview2DaysActionPerformed(evt);
+            }
+        });
+
+        togReview3Months.setText("3M");
+        togReview3Months.setMargin(new java.awt.Insets(2, 4, 2, 4));
+        togReview3Months.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                togReview3MonthsActionPerformed(evt);
+            }
+        });
+
+        togReview6Months.setText("6M");
+        togReview6Months.setMargin(new java.awt.Insets(2, 4, 2, 4));
+        togReview6Months.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                togReview6MonthsActionPerformed(evt);
+            }
+        });
+
+        togReview1Year.setText("1J");
+        togReview1Year.setMargin(new java.awt.Insets(2, 6, 2, 6));
+        togReview1Year.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                togReview1YearActionPerformed(evt);
             }
         });
 
@@ -802,16 +857,22 @@ public class QuickDateSelectionPanel extends javax.swing.JPanel {
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+            .addGroup(layout.createSequentialGroup()
                 .addComponent(togReview1Day)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGap(3, 3, 3)
                 .addComponent(togReview2Days)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGap(3, 3, 3)
                 .addComponent(togReview1Week)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGap(3, 3, 3)
                 .addComponent(togReview2Weeks)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(togReview4Weeks))
+                .addGap(3, 3, 3)
+                .addComponent(togReview4Weeks)
+                .addGap(3, 3, 3)
+                .addComponent(togReview3Months)
+                .addGap(3, 3, 3)
+                .addComponent(togReview6Months)
+                .addGap(3, 3, 3)
+                .addComponent(togReview1Year))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -820,67 +881,73 @@ public class QuickDateSelectionPanel extends javax.swing.JPanel {
                 .addComponent(togReview2Weeks)
                 .addComponent(togReview4Weeks)
                 .addComponent(togReview1Day)
-                .addComponent(togReview2Days))
+                .addComponent(togReview2Days)
+                .addComponent(togReview3Months)
+                .addComponent(togReview6Months)
+                .addComponent(togReview1Year))
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    private void togReview1WeekActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_togReview1WeekActionPerformed
-        if (this.togReview1Week.isSelected()) {
-            this.togReview2Weeks.setSelected(!this.togReview1Week.isSelected());
-            this.togReview4Weeks.setSelected(!this.togReview1Week.isSelected());
-            this.togReview1Day.setSelected(!this.togReview1Week.isSelected());
-            this.togReview2Days.setSelected(!this.togReview1Week.isSelected());
+    private void toggleSelection(JToggleButton clickedToggle) {
+        clickedToggle.setSelected(true);
+        for(JToggleButton tog: this.toggles) {
+            if(!tog.equals(clickedToggle)) {
+                //if(clickedToggle.isSelected())
+                    tog.setSelected(false);
+            }
         }
+    }
+    
+    private void togReview1WeekActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_togReview1WeekActionPerformed
+        this.toggleSelection(togReview1Week);
         this.updateTarget();
     }//GEN-LAST:event_togReview1WeekActionPerformed
 
     private void togReview2WeeksActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_togReview2WeeksActionPerformed
-        if (this.togReview2Weeks.isSelected()) {
-            this.togReview1Week.setSelected(!this.togReview2Weeks.isSelected());
-            this.togReview4Weeks.setSelected(!this.togReview2Weeks.isSelected());
-            this.togReview1Day.setSelected(!this.togReview2Weeks.isSelected());
-            this.togReview2Days.setSelected(!this.togReview2Weeks.isSelected());
-        }
+        this.toggleSelection(togReview2Weeks);
         this.updateTarget();
     }//GEN-LAST:event_togReview2WeeksActionPerformed
 
     private void togReview4WeeksActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_togReview4WeeksActionPerformed
-        if (this.togReview4Weeks.isSelected()) {
-            this.togReview1Week.setSelected(!this.togReview4Weeks.isSelected());
-            this.togReview2Weeks.setSelected(!this.togReview4Weeks.isSelected());
-            this.togReview1Day.setSelected(!this.togReview4Weeks.isSelected());
-            this.togReview2Days.setSelected(!this.togReview4Weeks.isSelected());
-        }
+        this.toggleSelection(togReview4Weeks);
         this.updateTarget();
     }//GEN-LAST:event_togReview4WeeksActionPerformed
 
     private void togReview1DayActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_togReview1DayActionPerformed
-        if (this.togReview1Day.isSelected()) {
-            this.togReview1Week.setSelected(!this.togReview1Day.isSelected());
-            this.togReview2Weeks.setSelected(!this.togReview1Day.isSelected());
-            this.togReview4Weeks.setSelected(!this.togReview1Day.isSelected());
-            this.togReview2Days.setSelected(!this.togReview1Day.isSelected());
-        }
+        this.toggleSelection(togReview1Day);
         this.updateTarget();
     }//GEN-LAST:event_togReview1DayActionPerformed
 
     private void togReview2DaysActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_togReview2DaysActionPerformed
-        if (this.togReview2Days.isSelected()) {
-            this.togReview1Week.setSelected(!this.togReview2Days.isSelected());
-            this.togReview2Weeks.setSelected(!this.togReview2Days.isSelected());
-            this.togReview4Weeks.setSelected(!this.togReview2Days.isSelected());
-            this.togReview1Day.setSelected(!this.togReview2Days.isSelected());
-        }
+        this.toggleSelection(togReview2Days);
         this.updateTarget();
     }//GEN-LAST:event_togReview2DaysActionPerformed
+
+    private void togReview3MonthsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_togReview3MonthsActionPerformed
+        this.toggleSelection(togReview3Months);
+        this.updateTarget();
+    }//GEN-LAST:event_togReview3MonthsActionPerformed
+
+    private void togReview6MonthsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_togReview6MonthsActionPerformed
+        this.toggleSelection(togReview6Months);
+        this.updateTarget();
+    }//GEN-LAST:event_togReview6MonthsActionPerformed
+
+    private void togReview1YearActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_togReview1YearActionPerformed
+        this.toggleSelection(togReview1Year);
+        this.updateTarget();
+    }//GEN-LAST:event_togReview1YearActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JToggleButton togReview1Day;
     private javax.swing.JToggleButton togReview1Week;
+    private javax.swing.JToggleButton togReview1Year;
     private javax.swing.JToggleButton togReview2Days;
     private javax.swing.JToggleButton togReview2Weeks;
+    private javax.swing.JToggleButton togReview3Months;
     private javax.swing.JToggleButton togReview4Weeks;
+    private javax.swing.JToggleButton togReview6Months;
     // End of variables declaration//GEN-END:variables
 
     /**
