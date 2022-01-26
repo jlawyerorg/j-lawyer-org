@@ -9,7 +9,7 @@
     <field name="doneStatus" class="java.lang.String"/>
     <field name="fileNumber" class="java.lang.String"/>
     <field name="fileName" class="java.lang.String"/>
-    <filterExpression><![CDATA[!$F{reviewTypeName}.equals("Termin")]]></filterExpression>
+    <filterExpression><![CDATA[$F{reviewTypeName}.equals("Termin")]]></filterExpression>
     <background>
         <band splitType="Stretch"/>
     </background>
@@ -41,10 +41,6 @@
     </title>
     <pageHeader>
         <band height="12" splitType="Stretch">
-                    
-            <line>
-                <reportElement x="253" y="0" width="1" height="12"/>
-            </line>
         </band>
                 
     </pageHeader>
@@ -52,11 +48,7 @@
         <!-- band height="12" splitType="Stretch"/ -->
     </columnHeader>
     <detail>
-        <band height="15" splitType="Stretch">
-            <line>
-                <reportElement x="253" y="0" width="1" height="15"/>
-            </line>
-                        
+        <band height="15" splitType="Stretch">                        
             <textField>
                 <reportElement x="0" y="0" width="70" height="15"/>
                 <textElement>

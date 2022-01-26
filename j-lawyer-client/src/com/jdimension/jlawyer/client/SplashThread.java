@@ -1096,29 +1096,15 @@ public class SplashThread implements Runnable {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                try (InputStream is4 = this.getClass().getClassLoader().getResourceAsStream("reports/reviews.jrxml");
-                        FileOutputStream os4 = new FileOutputStream(settings.getLocalReportsDirectory() + "reviews.jasper");
-                        InputStream is6 = this.getClass().getClassLoader().getResourceAsStream("reports/reviews_detail.jrxml");
-                        FileOutputStream os6 = new FileOutputStream(settings.getLocalReportsDirectory() + "reviews_detail.jasper");
-                        InputStream is5 = this.getClass().getClassLoader().getResourceAsStream("reports/archivefile.jrxml");
-                        FileOutputStream os5 = new FileOutputStream(settings.getLocalReportsDirectory() + "archivefile.jasper");
-                        InputStream is7 = this.getClass().getClassLoader().getResourceAsStream("reports/archivefile_address_detail.jrxml");
-                        FileOutputStream os7 = new FileOutputStream(settings.getLocalReportsDirectory() + "archivefile_address_detail.jasper");
-                        InputStream is8 = this.getClass().getClassLoader().getResourceAsStream("reports/archivefile_review_detail.jrxml");
-                        FileOutputStream os8 = new FileOutputStream(settings.getLocalReportsDirectory() + "archivefile_review_detail.jasper");
-                        InputStream is9 = this.getClass().getClassLoader().getResourceAsStream("reports/archivefile_cost_detail.jrxml");
-                        FileOutputStream os9 = new FileOutputStream(settings.getLocalReportsDirectory() + "archivefile_cost_detail.jasper");) {
-
-                    JasperCompileManager.compileReportToStream(is4, os4);
-                    JasperCompileManager.compileReportToStream(is5, os5);
-                    JasperCompileManager.compileReportToStream(is6, os6);
-                    JasperCompileManager.compileReportToStream(is7, os7);
-                    JasperCompileManager.compileReportToStream(is8, os8);
-                    JasperCompileManager.compileReportToStream(is9, os9);
-                } catch (Throwable t) {
-                    ThreadUtils.showErrorDialog(owner, "Fehler beim Generieren der Druckvorlagen", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
-                    log.error("Error compiling reports", t);
-
+                List<String> reportList = List.of("reviews", "reviews_detail", "archivefile", "archivefile_address_detail", "archivefile_review_detail", "archivefile_review_event_detail", "archivefile_cost_detail");
+                for (String report : reportList) {
+                    try (InputStream is = this.getClass().getClassLoader().getResourceAsStream("reports/" + report + ".jrxml")) {
+                        FileOutputStream os = new FileOutputStream(settings.getLocalReportsDirectory() + report + ".jasper");
+                        JasperCompileManager.compileReportToStream(is, os);
+                    } catch (Throwable t) {
+                        ThreadUtils.showErrorDialog(owner, "Fehler beim Generieren der Druckvorlagen", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR);
+                        log.error("Error compiling reports", t);
+                    }
                 }
             }
 

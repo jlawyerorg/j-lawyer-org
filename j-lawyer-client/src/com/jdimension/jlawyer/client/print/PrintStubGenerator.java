@@ -726,9 +726,6 @@ public class PrintStubGenerator {
         if (file.getArchiveFileReviewsBeanList() != null) {
             for (int i = 0; i < file.getArchiveFileReviewsBeanList().size(); i++) {
                 ArchiveFileReviewsBean rev = file.getArchiveFileReviewsBeanList().get(i);
-                // events are very dynamic anyways, might not need to be printed
-                if(rev.hasEndDateAndTime())
-                    continue;
                 ReviewsDetail rdet = getReviewDetail(rev, file);
                 s.getReviews().add(rdet);
             }
