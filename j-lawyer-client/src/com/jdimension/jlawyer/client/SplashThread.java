@@ -765,8 +765,8 @@ public class SplashThread implements Runnable {
         }
 
         ServerSettings serverSettings = ServerSettings.getInstance();
-        if (serverSettings.hasSetting(serverSettings.PROFILE_COMPANYNAME)) {
-            this.splash.setCompanyName(serverSettings.getSetting(serverSettings.PROFILE_COMPANYNAME, ""));
+        if (serverSettings.hasSetting(ServerSettings.PROFILE_COMPANYNAME)) {
+            this.splash.setCompanyName(serverSettings.getSetting(ServerSettings.PROFILE_COMPANYNAME, ""));
         }
 
         this.splash.setUserInfo(UserSettings.getInstance().getCurrentUserBigIcon(), UserSettings.getInstance().getCurrentUser().getPrincipalId());
@@ -957,7 +957,6 @@ public class SplashThread implements Runnable {
             } catch (Exception ex) {
                 log.error("Error compiling reports", ex);
                 ThreadUtils.showErrorDialog(owner, ex.getMessage(), java.util.ResourceBundle.getBundle("com/jdimension/jlawyer/client/SplashThread").getString("dialog.printstuberror"));
-                return;
             }
         };
         pool.execute(reportsRunnable);
@@ -1012,7 +1011,6 @@ public class SplashThread implements Runnable {
         log.info("client startup in " + (end - start) + "ms, version " + VersionUtils.getFullClientVersion());
 
         SwingUtilities.invokeLater(() -> {
-            //JKanzleiGUI gui=new JKanzleiGUI(SplashThread.addressCount, SplashThread.archiveFileCount);
             JKanzleiGUI gui = new JKanzleiGUI();
             EditorsRegistry.getInstance().setMainWindow(gui);
             ClientSettings cs = ClientSettings.getInstance();
@@ -1045,7 +1043,6 @@ public class SplashThread implements Runnable {
                 dialogContent.append("<li>W&auml;hlen Sie 'Ja' wenn diese Installation aktiv genutzt werden soll</li>");
                 dialogContent.append("</ul>");
                 dialogContent.append("</html>");
-                // int response = JOptionPane.showConfirmDialog(EditorsRegistry.getInstance().getMainWindow(), dialogContent.toString(), "j-lawyer.BOX Replikation", JOptionPane.YES_NO_OPTION);
                 int response = JOptionPane.showOptionDialog(EditorsRegistry.getInstance().getMainWindow(), dialogContent.toString(), "j-lawyer.BOX Replikation", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, null, new String[]{"Ja", "Nein"}, "Nein");
                 if (response == JOptionPane.YES_OPTION) {
                     serverSettings1.setSetting(ServerSettings.SERVERCONF_REPLICATION_ISTARGET, "0");
@@ -1318,9 +1315,7 @@ public class SplashThread implements Runnable {
             inSrc1.setEncoding("UTF-8");
             Document remoteDoc = remoteDb.parse(inSrc1);
 
-            NodeList remoteList = remoteDoc.getElementsByTagName("calculations");
-
-            remoteList = remoteDoc.getElementsByTagName("calculation");
+            NodeList remoteList = remoteDoc.getElementsByTagName("calculation");
 
             // load from server when not in cache or when version has been updated
             String calcDir = CalculationPluginUtil.getLocalDirectory();
