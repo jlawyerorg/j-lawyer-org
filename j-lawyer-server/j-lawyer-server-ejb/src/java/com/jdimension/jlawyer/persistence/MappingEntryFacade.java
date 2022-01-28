@@ -676,6 +676,9 @@ import javax.persistence.PersistenceContext;
 @Stateless
 public class MappingEntryFacade extends AbstractFacade<MappingEntry> implements MappingEntryFacadeLocal {
 
+    private static String TABLE_PARAM="mappingTable";
+    private static String KEY1_PARAM="key1Value";
+    
     @PersistenceContext(unitName = "j-lawyer-server-ejbPU")
     private EntityManager em;
 
@@ -691,7 +694,7 @@ public class MappingEntryFacade extends AbstractFacade<MappingEntry> implements 
     @Override
     public List<MappingEntry> findByTable(MappingTable mappingTable) {
         try {
-            return (List<MappingEntry>) em.createNamedQuery("MappingEntry.findByTable").setParameter("mappingTable", mappingTable).getResultList();
+            return (List<MappingEntry>) em.createNamedQuery("MappingEntry.findByTable").setParameter(TABLE_PARAM, mappingTable).getResultList();
         } catch (NoResultException nre) {
             return null;
         }
@@ -706,8 +709,8 @@ public class MappingEntryFacade extends AbstractFacade<MappingEntry> implements 
     @Override
     public List<MappingEntry> findByKey(MappingTable mappingTable, String key1) {
         try {
-            return (List<MappingEntry>) em.createNamedQuery("MappingEntry.findByKey").setParameter("mappingTable", mappingTable)
-                    .setParameter("key1Value", key1)
+            return (List<MappingEntry>) em.createNamedQuery("MappingEntry.findByKey").setParameter(TABLE_PARAM, mappingTable)
+                    .setParameter(KEY1_PARAM, key1)
                     .getResultList();
         } catch (NoResultException nre) {
             return null;
@@ -717,8 +720,8 @@ public class MappingEntryFacade extends AbstractFacade<MappingEntry> implements 
     @Override
     public List<MappingEntry> findBy2Keys(MappingTable mappingTable, String key1, String key2) {
         try {
-            return (List<MappingEntry>) em.createNamedQuery("MappingEntry.findBy2Keys").setParameter("mappingTable", mappingTable)
-                    .setParameter("key1Value", key1)
+            return (List<MappingEntry>) em.createNamedQuery("MappingEntry.findBy2Keys").setParameter(TABLE_PARAM, mappingTable)
+                    .setParameter(KEY1_PARAM, key1)
                     .setParameter("key2Value", key2)
                     .getResultList();
         } catch (NoResultException nre) {
@@ -729,8 +732,8 @@ public class MappingEntryFacade extends AbstractFacade<MappingEntry> implements 
     @Override
     public List<MappingEntry> findBy3Keys(MappingTable mappingTable, String key1, String key2, String key3) {
         try {
-            return (List<MappingEntry>) em.createNamedQuery("MappingEntry.findBy3Keys").setParameter("mappingTable", mappingTable)
-                    .setParameter("key1Value", key1)
+            return (List<MappingEntry>) em.createNamedQuery("MappingEntry.findBy3Keys").setParameter(TABLE_PARAM, mappingTable)
+                    .setParameter(KEY1_PARAM, key1)
                     .setParameter("key2Value", key2)
                     .setParameter("key3Value", key3)
                     .getResultList();

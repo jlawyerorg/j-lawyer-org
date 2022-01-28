@@ -806,8 +806,8 @@ public class FormPlugin implements Comparable {
 
     public void update() throws Exception {
         try {
-            ClientSettings settings = ClientSettings.getInstance();
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            ClientSettings cSettings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(cSettings.getLookupProperties());
             FormsServiceRemote forms = locator.lookupFormsServiceRemote();
 
             FormTypeBean newFormType = forms.getFormType(this.id);
@@ -866,8 +866,8 @@ public class FormPlugin implements Comparable {
 
     public void remove() throws Exception {
         try {
-            ClientSettings settings = ClientSettings.getInstance();
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            ClientSettings cSettings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(cSettings.getLookupProperties());
             FormsServiceRemote forms = locator.lookupFormsServiceRemote();
 
             forms.removeFormType(this.id);
@@ -881,8 +881,8 @@ public class FormPlugin implements Comparable {
     public void install() throws Exception {
 
         try {
-            ClientSettings settings = ClientSettings.getInstance();
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            ClientSettings cSettings = ClientSettings.getInstance();
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(cSettings.getLookupProperties());
             FormsServiceRemote forms = locator.lookupFormsServiceRemote();
 
             FormTypeBean newFormType = forms.addFormType(this.toFormTypeBean());

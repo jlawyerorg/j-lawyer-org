@@ -681,7 +681,7 @@ public class FormPluginEntryPanel extends javax.swing.JPanel {
     
     private FormPluginsPanel container = null;
     private FormPlugin plugin = null;
-    private JDialog parent=null;
+    private JDialog panelParent=null;
     private int state = -1;
     private FormActionCallback callback=null;
 
@@ -692,6 +692,7 @@ public class FormPluginEntryPanel extends javax.swing.JPanel {
 
     /**
      * Creates new form HitPanel
+     * @param parent
      * @param plugin
      * @param container
      * @param callback
@@ -699,7 +700,7 @@ public class FormPluginEntryPanel extends javax.swing.JPanel {
     public FormPluginEntryPanel(JDialog parent, FormPlugin plugin, FormPluginsPanel container, FormActionCallback callback) {
         initComponents();
         this.container = container;
-        this.parent=parent;
+        this.panelParent=parent;
         this.plugin = plugin;
         this.callback=callback;
 
@@ -969,8 +970,8 @@ public class FormPluginEntryPanel extends javax.swing.JPanel {
     private void cmdSettingsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSettingsActionPerformed
         
         
-        FormPluginSettingsDialog dlg = new FormPluginSettingsDialog(this.parent, true, this.plugin);
-        FrameUtils.centerDialog(dlg, this.parent);
+        FormPluginSettingsDialog dlg = new FormPluginSettingsDialog(this.panelParent, true, this.plugin);
+        FrameUtils.centerDialog(dlg, this.panelParent);
         dlg.setVisible(true);
         
     }//GEN-LAST:event_cmdSettingsActionPerformed
