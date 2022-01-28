@@ -833,9 +833,9 @@ exists or setup the property manually. For example like this:
         <copyfiles files="${file.reference.joda-time-2.1.jar}" todir="${build.classes.dir}"/>
         <copyfiles files="${file.reference.log4j-over-slf4j-1.7.30.jar}" todir="${build.classes.dir}"/>
         <copyfiles files="${file.reference.slf4j-api-1.7.30.jar}" todir="${build.classes.dir}"/>
-        <copyfiles files="${file.reference.log4j-api-2.16.0.jar}" todir="${build.classes.dir}"/>
-        <copyfiles files="${file.reference.log4j-core-2.16.0.jar}" todir="${build.classes.dir}"/>
-        <copyfiles files="${file.reference.log4j-slf4j-impl-2.16.0.jar}" todir="${build.classes.dir}"/>
+        <copyfiles files="${file.reference.log4j-api-2.17.1.jar}" todir="${build.classes.dir}"/>
+        <copyfiles files="${file.reference.log4j-core-2.17.1.jar}" todir="${build.classes.dir}"/>
+        <copyfiles files="${file.reference.log4j-slf4j-impl-2.17.1.jar}" todir="${build.classes.dir}"/>
         <copyfiles files="${file.reference.j-lawyer-drebis-stubs.jar}" todir="${build.classes.dir}"/>
         <copyfiles files="${file.reference.lucene-analyzers-common-4.7.0.jar}" todir="${build.classes.dir}"/>
         <copyfiles files="${file.reference.lucene-core-4.7.0.jar}" todir="${build.classes.dir}"/>
@@ -890,9 +890,9 @@ exists or setup the property manually. For example like this:
         <basename file="${file.reference.joda-time-2.1.jar}" property="manifest.file.reference.joda-time-2.1.jar"/>
         <basename file="${file.reference.log4j-over-slf4j-1.7.30.jar}" property="manifest.file.reference.log4j-over-slf4j-1.7.30.jar"/>
         <basename file="${file.reference.slf4j-api-1.7.30.jar}" property="manifest.file.reference.slf4j-api-1.7.30.jar"/>
-        <basename file="${file.reference.log4j-api-2.16.0.jar}" property="manifest.file.reference.log4j-api-2.16.0.jar"/>
-        <basename file="${file.reference.log4j-core-2.16.0.jar}" property="manifest.file.reference.log4j-core-2.16.0.jar"/>
-        <basename file="${file.reference.log4j-slf4j-impl-2.16.0.jar}" property="manifest.file.reference.log4j-slf4j-impl-2.16.0.jar"/>
+        <basename file="${file.reference.log4j-api-2.17.1.jar}" property="manifest.file.reference.log4j-api-2.17.1.jar"/>
+        <basename file="${file.reference.log4j-core-2.17.1.jar}" property="manifest.file.reference.log4j-core-2.17.1.jar"/>
+        <basename file="${file.reference.log4j-slf4j-impl-2.17.1.jar}" property="manifest.file.reference.log4j-slf4j-impl-2.17.1.jar"/>
         <basename file="${file.reference.j-lawyer-drebis-stubs.jar}" property="manifest.file.reference.j-lawyer-drebis-stubs.jar"/>
         <basename file="${file.reference.lucene-analyzers-common-4.7.0.jar}" property="manifest.file.reference.lucene-analyzers-common-4.7.0.jar"/>
         <basename file="${file.reference.lucene-core-4.7.0.jar}" property="manifest.file.reference.lucene-core-4.7.0.jar"/>
@@ -947,9 +947,9 @@ exists or setup the property manually. For example like this:
             <attribute name="jar-4-Extension-Name" value="${manifest.file.reference.joda-time-2.1.jar}"/>
             <attribute name="jar-5-Extension-Name" value="${manifest.file.reference.log4j-over-slf4j-1.7.30.jar}"/>
             <attribute name="jar-6-Extension-Name" value="${manifest.file.reference.slf4j-api-1.7.30.jar}"/>
-            <attribute name="jar-7-Extension-Name" value="${manifest.file.reference.log4j-api-2.16.0.jar}"/>
-            <attribute name="jar-8-Extension-Name" value="${manifest.file.reference.log4j-core-2.16.0.jar}"/>
-            <attribute name="jar-9-Extension-Name" value="${manifest.file.reference.log4j-slf4j-impl-2.16.0.jar}"/>
+            <attribute name="jar-7-Extension-Name" value="${manifest.file.reference.log4j-api-2.17.1.jar}"/>
+            <attribute name="jar-8-Extension-Name" value="${manifest.file.reference.log4j-core-2.17.1.jar}"/>
+            <attribute name="jar-9-Extension-Name" value="${manifest.file.reference.log4j-slf4j-impl-2.17.1.jar}"/>
             <attribute name="jar-10-Extension-Name" value="${manifest.file.reference.j-lawyer-drebis-stubs.jar}"/>
             <attribute name="jar-11-Extension-Name" value="${manifest.file.reference.lucene-analyzers-common-4.7.0.jar}"/>
             <attribute name="jar-12-Extension-Name" value="${manifest.file.reference.lucene-core-4.7.0.jar}"/>
@@ -1005,9 +1005,9 @@ exists or setup the property manually. For example like this:
         <copyfiles files="${file.reference.joda-time-2.1.jar}" todir="${dist.ear.dir}/lib"/>
         <copyfiles files="${file.reference.log4j-over-slf4j-1.7.30.jar}" todir="${dist.ear.dir}/lib"/>
         <copyfiles files="${file.reference.slf4j-api-1.7.30.jar}" todir="${dist.ear.dir}/lib"/>
-        <copyfiles files="${file.reference.log4j-api-2.16.0.jar}" todir="${dist.ear.dir}/lib"/>
-        <copyfiles files="${file.reference.log4j-core-2.16.0.jar}" todir="${dist.ear.dir}/lib"/>
-        <copyfiles files="${file.reference.log4j-slf4j-impl-2.16.0.jar}" todir="${dist.ear.dir}/lib"/>
+        <copyfiles files="${file.reference.log4j-api-2.17.1.jar}" todir="${dist.ear.dir}/lib"/>
+        <copyfiles files="${file.reference.log4j-core-2.17.1.jar}" todir="${dist.ear.dir}/lib"/>
+        <copyfiles files="${file.reference.log4j-slf4j-impl-2.17.1.jar}" todir="${dist.ear.dir}/lib"/>
         <copyfiles files="${file.reference.j-lawyer-drebis-stubs.jar}" todir="${dist.ear.dir}/lib"/>
         <copyfiles files="${file.reference.lucene-analyzers-common-4.7.0.jar}" todir="${dist.ear.dir}/lib"/>
         <copyfiles files="${file.reference.lucene-core-4.7.0.jar}" todir="${dist.ear.dir}/lib"/>
