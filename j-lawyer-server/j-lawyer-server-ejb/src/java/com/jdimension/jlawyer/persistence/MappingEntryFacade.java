@@ -676,8 +676,8 @@ import javax.persistence.PersistenceContext;
 @Stateless
 public class MappingEntryFacade extends AbstractFacade<MappingEntry> implements MappingEntryFacadeLocal {
 
-    private static String TABLE_PARAM="mappingTable";
-    private static String KEY1_PARAM="key1Value";
+    private static final String TABLE_PARAM="mappingTable";
+    private static final String KEY1_PARAM="key1Value";
     
     @PersistenceContext(unitName = "j-lawyer-server-ejbPU")
     private EntityManager em;
