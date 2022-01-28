@@ -142,7 +142,7 @@
             </line>
                                                                                                          
             <staticText>
-                <reportElement positionType="Float" x="10" y="229" width="390" height="17"/>
+                <reportElement positionType="Float" x="10" y="229" width="361" height="17"/>
                 <textElement>
                     <font size="12" isBold="true"/>
                 </textElement>
@@ -150,7 +150,7 @@
             </staticText>
                         
             <staticText>
-                <reportElement positionType="Float" x="283" y="229" width="80" height="17"/>
+                <reportElement positionType="Float" x="254" y="229" width="80" height="17"/>
                 <textElement>
                     <font size="12" isBold="true"/>
                 </textElement>
@@ -158,21 +158,21 @@
             </staticText>
                                
             <!-- Underline for header -->
-            <line>
+            <!-- line>
                 <reportElement positionType="Float" x="10" y="245" width="515" height="1"/>
-            </line>
+            </line -->
 
             <!-- Vertical line between "Wiedervorlagen/Fristen" and "Termine" -->     
-            <line>
+            <!-- line>
                 <reportElement positionType="Float" x="263" y="246" width="1" height="374"/>
-            </line>
+            </line -->
             <subreport>
-                <reportElement positionType="Float" x="10" y="246" width="243" height="1"/>
+                <reportElement positionType="Float" x="10" y="246" width="229" height="1"/>
                 <dataSourceExpression><![CDATA[new net.sf.jasperreports.engine.data.JRBeanCollectionDataSource($F{reviews})]]></dataSourceExpression>                
                 <subreportExpression class="java.lang.String"><![CDATA[$P{SubReportDir} + "archivefile_review_detail.jasper"]]></subreportExpression>
             </subreport>
             <subreport>
-                <reportElement positionType="Float" x="273" y="246" width="253" height="1"/>
+                <reportElement positionType="Float" x="254" y="246" width="272" height="1"/>
                 <dataSourceExpression><![CDATA[new net.sf.jasperreports.engine.data.JRBeanCollectionDataSource($F{reviews})]]></dataSourceExpression>               
                 <subreportExpression class="java.lang.String"><![CDATA[$P{SubReportDir} + "archivefile_review_event_detail.jasper"]]></subreportExpression>
             </subreport>  

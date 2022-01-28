@@ -16,14 +16,14 @@
     <detail>
         <band height="15" splitType="Stretch">                        
             <textField>
-                <reportElement x="0" y="0" width="105" height="15"/>
+                <reportElement x="0" y="0" width="120" height="15"/>
                 <textElement>
                     <font size="10" isBold="true"/>
                 </textElement>
                 <textFieldExpression class="java.util.Date"><![CDATA[$F{reviewDate}]]></textFieldExpression>
             </textField>
             <textField isStretchWithOverflow="true">
-                <reportElement x="105" y="0" width="145" height="15"/>
+                <reportElement x="120" y="0" width="145" height="15"/>
                 <textElement>
                     <font size="10"/>
                 </textElement>
