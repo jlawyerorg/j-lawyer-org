@@ -10,100 +10,25 @@
     <field name="fileNumber" class="java.lang.String"/>
     <field name="fileName" class="java.lang.String"/>
     <filterExpression><![CDATA[$F{reviewTypeName}.equals("Termin")]]></filterExpression>
-    <background>
-        <band splitType="Stretch"/>
-    </background>
-    <title>
-        <!-- band height="20" splitType="Stretch">
-                <staticText>
-                        <reportElement x="0" y="3" width="400" height="17"/>
-                        <textElement>
-                                <font size="12" isBold="true"/>
-                        </textElement>
-                        <text><![CDATA[Wiedervorlagen/Fristen]]></text>
-                </staticText>
-                
-                <staticText>
-                        <reportElement x="273" y="3" width="80" height="17"/>
-                        <textElement>
-                                <font size="12" isBold="true"/>
-                        </textElement>
-                        <text><![CDATA[Termine]]></text>
-                </staticText>
-                
-                <line>
-                        <reportElement x="0" y="19" width="525" height="1"/>
-                </line>
-                <line>
-                        <reportElement x="263" y="0" width="1" height="20"/>
-                </line>
-        </band -->
-    </title>
     <pageHeader>
-        <band height="12" splitType="Stretch">
-        </band>
-                
+        <band height="12" splitType="Stretch"/>
     </pageHeader>
-    <columnHeader>
-        <!-- band height="12" splitType="Stretch"/ -->
-    </columnHeader>
     <detail>
         <band height="15" splitType="Stretch">                        
             <textField>
-                <reportElement x="0" y="0" width="85" height="15"/>
+                <reportElement x="0" y="0" width="105" height="15"/>
                 <textElement>
                     <font size="10" isBold="true"/>
                 </textElement>
                 <textFieldExpression class="java.util.Date"><![CDATA[$F{reviewDate}]]></textFieldExpression>
             </textField>
-            <!-- textField isStretchWithOverflow="true">
-                    <reportElement x="80" y="0" width="120" height="17"/>
-                    <textElement>
-                            <font size="10"/>
-                    </textElement>
-                    <textFieldExpression class="java.lang.String"><![CDATA[$F{fileNumber}]]></textFieldExpression>
-            </textField>
             <textField isStretchWithOverflow="true">
-                    <reportElement x="200" y="0" width="120" height="17"/>
-                    <textElement>
-                            <font size="10"/>
-                    </textElement>
-                    <textFieldExpression class="java.lang.String"><![CDATA[$F{fileName}]]></textFieldExpression>
-            </textField -->
-            <textField isStretchWithOverflow="true">
-                <reportElement x="85" y="0" width="175" height="15"/>
+                <reportElement x="105" y="0" width="145" height="15"/>
                 <textElement>
                     <font size="10"/>
                 </textElement>
                 <textFieldExpression class="java.lang.String"><![CDATA[$F{reviewReason} +" (" + $F{reviewTypeName} +")"]]></textFieldExpression>                                
-            </textField>
-                        <!-- textField isStretchWithOverflow="true">
-				<reportElement x="400" y="0" width="120" height="17"/>
-				<textElement>
-					<font size="10"/>
-				</textElement>
-				<textFieldExpression class="java.lang.String"><![CDATA[$F{doneStatus}]]></textFieldExpression>
-			</textField -->
-                        
-                        
-                      
+            </textField>   
         </band>
     </detail>
-    <columnFooter>
-        <!-- band height="20" splitType="Stretch"/ -->
-    </columnFooter>
-    <pageFooter>
-        <!-- band height="30" splitType="Stretch">
-<staticText>
-                <reportElement positionType="Float" x="0" y="10" width="340" height="20"/>
-                <textElement>
-                        <font size="12" isBold="true"/>
-                </textElement>
-                <text><![CDATA[Termine   ]]></text>
-        </staticText>
-        </band -->
-    </pageFooter>
-    <summary>
-        <!-- band height="10" splitType="Stretch"/ -->
-    </summary>
 </jasperReport>
