@@ -703,7 +703,7 @@ public class ArchiveFileFormEntriesBean implements Serializable {
     @Column(name = "entry_key")
     private String entryKey;
     
-    @Column(name = "string_value")
+    @Column(name = "string_value",columnDefinition="MEDIUMTEXT")
     private String stringValue;
     
     

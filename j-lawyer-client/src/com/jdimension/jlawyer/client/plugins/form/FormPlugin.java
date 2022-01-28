@@ -705,6 +705,8 @@ public class FormPlugin implements Comparable {
     private String type = null;
     private String[] dependsOn = new String[0];
     private ArrayList<String> files = new ArrayList<String>();
+    
+    protected ArrayList<FormPluginSetting> settings=new ArrayList<>();
 
     Class scriptClass = null;
     Object scriptInstance = null;
@@ -723,7 +725,7 @@ public class FormPlugin implements Comparable {
         } catch (Throwable t) {
             log.error(t);
         }
-        return new ArrayList<String>();
+        return new ArrayList<>();
     }
 
     public Hashtable getPlaceHolderValues() {
@@ -787,7 +789,7 @@ public class FormPlugin implements Comparable {
             return ui;
 
         } catch (Throwable t) {
-            log.error(t);
+            log.error("error loading form plugin", t);
         }
         return null;
     }
@@ -835,7 +837,7 @@ public class FormPlugin implements Comparable {
 
                 char[] buffer = new char[1024];
                 int len = 0;
-                StringBuffer sb = new StringBuffer();
+                StringBuilder sb = new StringBuilder();
                 while ((len = reader.read(buffer)) > -1) {
                     sb.append(buffer, 0, len);
                 }
@@ -904,7 +906,7 @@ public class FormPlugin implements Comparable {
 
                 char[] buffer = new char[1024];
                 int len = 0;
-                StringBuffer sb = new StringBuffer();
+                StringBuilder sb = new StringBuilder();
                 while ((len = reader.read(buffer)) > -1) {
                     sb.append(buffer, 0, len);
                 }
@@ -1101,6 +1103,20 @@ public class FormPlugin implements Comparable {
      */
     public void setCaseDto(ArchiveFileBean caseDto) {
         this.caseDto = caseDto;
+    }
+
+    /**
+     * @return the settings
+     */
+    public ArrayList<FormPluginSetting> getSettings() {
+        return settings;
+    }
+
+    /**
+     * @param settings the settings to set
+     */
+    public void setSettings(ArrayList<FormPluginSetting> settings) {
+        this.settings = settings;
     }
 
 }
