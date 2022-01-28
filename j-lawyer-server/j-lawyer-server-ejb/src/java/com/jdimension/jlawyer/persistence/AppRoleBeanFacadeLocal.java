@@ -688,5 +688,6 @@ public interface AppRoleBeanFacadeLocal {
     int count();
 
     List<AppRoleBean> findByPrincipalId(String principalId);
+    List<AppRoleBean> findByRole(String role);
     
 }

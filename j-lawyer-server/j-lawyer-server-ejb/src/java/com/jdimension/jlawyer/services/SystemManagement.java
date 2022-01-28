@@ -1032,10 +1032,7 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         return this.roleBeanFacade.findByPrincipalId(principalId);
     }
 
-    @Override
-    @RolesAllowed({"adminRole"})
-    public AppUserBean createUser(AppUserBean user, List<AppRoleBean> roles) throws Exception {
-        
+    private void checkUserLimit() throws Exception {
         ServerSettingsBean s = this.settingsFacade.find(ServerSettingsKeys.SERVERCONF_USAGELIMIT_MAXUSERS);
         int limit=999;
         if (s == null) {
@@ -1052,15 +1049,21 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
             }
         }
         
-        int userCount=this.userBeanFacade.count();
-//        List<AppUserBean> allUsers=this.userBeanFacade.findAll();
-//        for(AppUserBean aub: allUsers) {
-//            aub.get
-//        }
-        if(userCount>=limit) {
-            log.error("Unable to create new user - limit has been reached (" + limit + ").");
-            throw new Exception("Die zulässige Anzahl an Nutzern für diese Installation ist überschritten. Kontaktieren Sie Ihren Betreiber.");
+        // any users allowed to log in are counted
+        List userList=this.roleBeanFacade.findByRole("loginRole");
+        if(userList!=null) {
+            if(userList.size()>limit) {
+                log.error("Unable to create new user - limit has been reached (" + limit + ").");
+                throw new Exception("Die zulässige Anzahl an Nutzern für diese Installation ist überschritten. Kontaktieren Sie Ihren Betreiber.");
+            }
         }
+    }
+    
+    @Override
+    @RolesAllowed({"adminRole"})
+    public AppUserBean createUser(AppUserBean user, List<AppRoleBean> roles) throws Exception {
+        
+        this.checkUserLimit();
 
         StringGenerator idGen = new StringGenerator();
         // create password hash
@@ -1079,6 +1082,8 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     @RolesAllowed({"adminRole"})
     public AppUserBean updateUser(AppUserBean user, List<AppRoleBean> roles) throws Exception {
 
+        this.checkUserLimit();
+        
         AppUserBean outdated = this.userBeanFacade.findByPrincipalId(user.getPrincipalId());
         if (outdated == null) {
             throw new Exception("No user with name " + user.getPrincipalId());
