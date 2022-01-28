@@ -156,16 +156,7 @@
                 </textElement>
                 <text><![CDATA[Termine]]></text>
             </staticText>
-                               
-            <!-- Underline for header -->
-            <!-- line>
-                <reportElement positionType="Float" x="10" y="245" width="515" height="1"/>
-            </line -->
 
-            <!-- Vertical line between "Wiedervorlagen/Fristen" and "Termine" -->     
-            <!-- line>
-                <reportElement positionType="Float" x="263" y="246" width="1" height="374"/>
-            </line -->
             <subreport>
                 <reportElement positionType="Float" x="10" y="246" width="229" height="1"/>
                 <dataSourceExpression><![CDATA[new net.sf.jasperreports.engine.data.JRBeanCollectionDataSource($F{reviews})]]></dataSourceExpression>                
