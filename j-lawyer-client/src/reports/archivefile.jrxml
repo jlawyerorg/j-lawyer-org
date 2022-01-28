@@ -16,7 +16,7 @@
     <variable name="year" class="java.lang.String">
         <variableExpression><![CDATA[new SimpleDateFormat("yyyy").format(new Date())]]></variableExpression>
     </variable>
-    <background>
+    <background >
         <band splitType="Stretch"/>
     </background>
     <title>
@@ -28,8 +28,8 @@
         <band height="21" splitType="Stretch"/>
     </columnHeader>
     <detail>
-        <band height="620" splitType="Stretch">
-			
+        <band height="660" splitType="Stretch">
+	
             <textField>
                 <reportElement x="10" y="20" width="500" height="20"/>
                 <textElement>
@@ -175,12 +175,9 @@
                 <reportElement positionType="Float" x="273" y="246" width="253" height="1"/>
                 <dataSourceExpression><![CDATA[new net.sf.jasperreports.engine.data.JRBeanCollectionDataSource($F{reviews})]]></dataSourceExpression>               
                 <subreportExpression class="java.lang.String"><![CDATA[$P{SubReportDir} + "archivefile_review_event_detail.jasper"]]></subreportExpression>
-            </subreport>
+            </subreport>  
         </band>               
-        <band height="51">                  
-            <break>
-                <reportElement x="10" y="0" width="515" height="1"/>
-            </break>                         
+        <band height="51">                                
             <textField>
                 <reportElement positionType="Float" x="10" y="10" width="330" height="20"/>
                 <textElement>
@@ -210,7 +207,4 @@
             </textField>
         </band>
     </pageFooter>
-    <summary>
-        <band height="14" splitType="Stretch"/>
-    </summary>
 </jasperReport>
