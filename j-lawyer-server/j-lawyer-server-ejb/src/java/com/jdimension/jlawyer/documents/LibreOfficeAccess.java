@@ -766,8 +766,6 @@ public class LibreOfficeAccess {
 
                         try {
                             TextSelection item = (TextSelection) search.nextSelection();
-//                            boolean containsn = item.getElement().getTextContent().contains("\n");
-//                            boolean containsrn = item.getElement().getTextContent().contains("\r\n");
                             item.replaceWith(value);
 
                             // remove empty chars and the line break until a line break occurs or a different character
@@ -981,7 +979,8 @@ public class LibreOfficeAccess {
             }
 
             // replace script placeholders
-            String scriptRegExKey = "(?s)\\[\\[SCRIPT\\:[.\\s\\S\\r\\n]*\\]\\]";
+            //String scriptRegExKey = "(?s)\\[\\[SCRIPT\\:[.\\s\\S\\r\\n^\\]]*\\]\\]";
+            String scriptRegExKey =     "\\[\\[SCRIPT:[^\\]]*\\]\\]";
             TextNavigation search = new TextNavigation(scriptRegExKey, outputOdt);
             while (search.hasNext()) {
                 TextSelection item = (TextSelection) search.nextSelection();
