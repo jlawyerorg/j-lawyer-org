@@ -2483,7 +2483,9 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
 
     private void mnuMappingEntriesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuMappingEntriesActionPerformed
         if (checkAdmin()) {
-
+            MappingEntriesDialog dlg = new MappingEntriesDialog(this, true);
+            FrameUtils.centerDialog(dlg, this);
+            dlg.setVisible(true);
         }
     }//GEN-LAST:event_mnuMappingEntriesActionPerformed
 

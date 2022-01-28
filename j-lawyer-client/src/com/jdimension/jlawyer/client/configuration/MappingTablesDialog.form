@@ -7,7 +7,7 @@
   </NonVisualComponents>
   <Properties>
     <Property name="defaultCloseOperation" type="int" value="2"/>
-    <Property name="title" type="java.lang.String" value="Kalender"/>
+    <Property name="title" type="java.lang.String" value="Zuordnungstabellen"/>
   </Properties>
   <SyntheticProperties>
     <SyntheticProperty name="formSizePolicy" type="int" value="1"/>
@@ -249,6 +249,9 @@
       </Properties>
     </Component>
     <Component class="javax.swing.JTextField" name="txtTableName">
+      <Properties>
+        <Property name="editable" type="boolean" value="false"/>
+      </Properties>
     </Component>
     <Component class="javax.swing.JButton" name="cmdSave">
       <Properties>

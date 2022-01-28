@@ -663,8 +663,10 @@ For more information on this, and how to apply and follow the GNU AGPL, see
  */
 package com.jdimension.jlawyer.persistence;
 
+import java.util.List;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 
 /**
@@ -684,6 +686,57 @@ public class MappingEntryFacade extends AbstractFacade<MappingEntry> implements 
 
     public MappingEntryFacade() {
         super(MappingEntry.class);
+    }
+    
+    @Override
+    public List<MappingEntry> findByTable(MappingTable mappingTable) {
+        try {
+            return (List<MappingEntry>) em.createNamedQuery("MappingEntry.findByTable").setParameter("mappingTable", mappingTable).getResultList();
+        } catch (NoResultException nre) {
+            return null;
+        }
+
+    }
+    
+    @Override
+    public void flush()  {
+        getEntityManager().flush();
+    }
+
+    @Override
+    public List<MappingEntry> findByKey(MappingTable mappingTable, String key1) {
+        try {
+            return (List<MappingEntry>) em.createNamedQuery("MappingEntry.findByKey").setParameter("mappingTable", mappingTable)
+                    .setParameter("key1Value", key1)
+                    .getResultList();
+        } catch (NoResultException nre) {
+            return null;
+        }
+    }
+
+    @Override
+    public List<MappingEntry> findBy2Keys(MappingTable mappingTable, String key1, String key2) {
+        try {
+            return (List<MappingEntry>) em.createNamedQuery("MappingEntry.findBy2Keys").setParameter("mappingTable", mappingTable)
+                    .setParameter("key1Value", key1)
+                    .setParameter("key2Value", key2)
+                    .getResultList();
+        } catch (NoResultException nre) {
+            return null;
+        }
+    }
+
+    @Override
+    public List<MappingEntry> findBy3Keys(MappingTable mappingTable, String key1, String key2, String key3) {
+        try {
+            return (List<MappingEntry>) em.createNamedQuery("MappingEntry.findBy3Keys").setParameter("mappingTable", mappingTable)
+                    .setParameter("key1Value", key1)
+                    .setParameter("key2Value", key2)
+                    .setParameter("key3Value", key3)
+                    .getResultList();
+        } catch (NoResultException nre) {
+            return null;
+        }
     }
     
 }

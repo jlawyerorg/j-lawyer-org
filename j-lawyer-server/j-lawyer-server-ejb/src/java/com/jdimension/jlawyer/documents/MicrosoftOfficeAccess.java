@@ -1021,7 +1021,7 @@ public class MicrosoftOfficeAccess {
         }
 
         //for (XWPFParagraph paragraph : xwpfParagraphs) {
-        List<XWPFRun> runs = xwpfParagraph.getRuns();
+        //List<XWPFRun> runs = xwpfParagraph.getRuns();
 
         String find = key;
         TextSegment found = xwpfParagraph.searchText(find, new PositionInParagraph());

@@ -1,3 +1,5 @@
+import templates.smart.SmartFunctions;
+
 class SmartTemplate {
 	
     double doIt(double d1) {
@@ -165,6 +167,22 @@ class SmartTemplate {
             return undef;
         }
         return "UNBEKANNTER WERT FUER GESCHLECHT: " + gender;
+    }
+    
+    String GENDERN(String word, String gender, String inCase) {
+        return SmartFunctions.gendern(word, gender, inCase);
+    }
+    
+    String ZUORDNEN(String table, String key1, String key2, String key3) {
+        return SmartFunctions.zuordnen(table, key1, key2, key3);
+    }
+    
+    String ZUORDNEN(String table, String key1, String key2) {
+        return SmartFunctions.zuordnen(table, key1, key2);
+    }
+    
+    String ZUORDNEN(String table, String key1) {
+        return SmartFunctions.zuordnen(table, key1);
     }
     
 }

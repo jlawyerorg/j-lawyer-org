@@ -763,7 +763,7 @@ public class MappingTablesDialog extends javax.swing.JDialog {
         jLabel6 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
-        setTitle("Kalender");
+        setTitle("Zuordnungstabellen");
         addWindowListener(new java.awt.event.WindowAdapter() {
             public void windowClosing(java.awt.event.WindowEvent evt) {
                 formWindowClosing(evt);
@@ -862,6 +862,8 @@ public class MappingTablesDialog extends javax.swing.JDialog {
         });
 
         jLabel1.setText("Tabellenname:");
+
+        txtTableName.setEditable(false);
 
         cmdSave.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png"))); // NOI18N
         cmdSave.setText("Übernehmen");
@@ -1023,7 +1025,7 @@ public class MappingTablesDialog extends javax.swing.JDialog {
                 JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
 
                 MappingTable savedTable = locator.lookupSystemManagementRemote().updateMappingTable(mt);
-                row = this.tblMappingTables.convertRowIndexToView(row);
+                row = this.tblMappingTables.convertRowIndexToModel(row);
                 ((DefaultTableModel) this.tblMappingTables.getModel()).setValueAt(savedTable, row, 0);
                 ((DefaultTableModel) this.tblMappingTables.getModel()).setValueAt(savedTable.isSystemTable(), row, 1);
 
@@ -1043,10 +1045,8 @@ public class MappingTablesDialog extends javax.swing.JDialog {
 
             MappingTable mt = (MappingTable) this.tblMappingTables.getValueAt(row, 0);
             if (mt.isSystemTable()) {
-                int response = JOptionPane.showConfirmDialog(this, "Es handelt sich um eine Systemtabelle. Wirklich fortfahren?", "Systemtabelle löschen", JOptionPane.YES_NO_OPTION);
-                if (response == JOptionPane.NO_OPTION) {
-                    return;
-                }
+                JOptionPane.showMessageDialog(this, "Es handelt sich um eine Systemtabelle, die nicht gelöscht werden kann.", "Systemtabelle löschen", JOptionPane.WARNING_MESSAGE);
+                return;
             }
 
             ClientSettings settings = ClientSettings.getInstance();

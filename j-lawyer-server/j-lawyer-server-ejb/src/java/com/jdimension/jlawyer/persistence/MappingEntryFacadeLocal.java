@@ -687,4 +687,10 @@ public interface MappingEntryFacadeLocal {
 
     int count();
     
+    List<MappingEntry> findByTable(MappingTable mappingTable);
+    List<MappingEntry> findByKey(MappingTable mappingTable, String key1);
+    List<MappingEntry> findBy2Keys(MappingTable mappingTable, String key1, String key2);
+    List<MappingEntry> findBy3Keys(MappingTable mappingTable, String key1, String key2, String key3);
+    
+    void flush();
 }

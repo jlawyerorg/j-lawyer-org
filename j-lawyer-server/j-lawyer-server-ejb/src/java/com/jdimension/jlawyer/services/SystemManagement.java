@@ -672,6 +672,7 @@ import com.jdimension.jlawyer.server.services.MonitoringSnapshot;
 import com.jdimension.jlawyer.server.services.ServerInformation;
 import com.jdimension.jlawyer.server.services.settings.ServerSettingsKeys;
 import com.jdimension.jlawyer.server.utils.ServerFileUtils;
+import com.jdimension.jlawyer.server.utils.ServerStringUtils;
 import com.jdimension.jlawyer.server.utils.StringUtils;
 import java.io.*;
 import java.lang.management.ManagementFactory;
@@ -2219,6 +2220,16 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
     public List<MappingTable> getMappingTables() {
         return this.mappingTableFacade.findAll();
     }
+    
+    @Override
+    @RolesAllowed({"loginRole"})
+    public List<MappingEntry> getMappingEntries(String tableName) {
+        MappingTable mt=this.mappingTableFacade.find(tableName);
+        if(mt!=null) 
+            return this.mappingEntryFacade.findByTable(mt);
+        else
+            return new ArrayList<>();
+    }
 
     @Override
     @RolesAllowed({"adminRole"})
@@ -2258,6 +2269,32 @@ public class SystemManagement implements SystemManagementRemote, SystemManagemen
         return remTable;
     }
     
-    
+    @Override
+    @RolesAllowed({"adminRole"})
+    public void updateMappingEntries(String tableName, List<MappingEntry> newEntries) throws Exception {
+        MappingTable table=this.mappingTableFacade.findByName(tableName);
+        if (table == null) {
+            throw new Exception("No mapping table with name " + tableName);
+        }
+        
+        List<MappingEntry> entries=this.mappingEntryFacade.findByTable(table);
+        for(MappingEntry e: entries) {
+            this.mappingEntryFacade.remove(e);
+        }
+        
+        // need to flush the delete because we have a uniqueness constraint spanning all keys that would be violated
+        this.mappingEntryFacade.flush();
+        
+        StringGenerator idGen=new StringGenerator();
+        for(MappingEntry e: newEntries) {
+            if(ServerStringUtils.isEmpty(e.getKey1Value()) && ServerStringUtils.isEmpty(e.getKey2Value()) && ServerStringUtils.isEmpty(e.getKey3Value())) {
+                log.warn("skipping a mapping entry with empty keys");
+                continue;
+            }
+            e.setId(idGen.getID().toString());
+            this.mappingEntryFacade.create(e);
+        }
+        
+    }
 
 }

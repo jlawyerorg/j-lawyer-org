@@ -664,6 +664,7 @@
 package org.jlawyer.test.server.ejb;
 
 import com.jdimension.jlawyer.documents.LibreOfficeAccess;
+import com.jdimension.jlawyer.persistence.AddressBean;
 import groovy.lang.Binding;
 import groovy.lang.GroovyClassLoader;
 import groovy.lang.GroovyObject;
@@ -948,6 +949,22 @@ public class LibreOfficeODFTest {
     
     @Test
     @Ignore
+    public void testSmartTemplateFristBanktag() {
+        try {
+
+            String resultString=evaluateSmartTemplate("FRISTBANKTAG(\"20.11.2021\",\"7\")");
+            Assert.assertEquals("29.11.2021", resultString);
+            
+            resultString=evaluateSmartTemplate("FRISTBANKTAG(\"19.11.21\",\"7\")");
+            Assert.assertTrue("26.11.2021".equals(resultString));
+            
+        } catch (Throwable t) {
+            Assert.fail(t.getMessage());
+        }
+    }
+    
+    @Test
+    @Ignore
     public void testSmartTemplateWennGroesser() {
         try {
 
@@ -966,6 +983,39 @@ public class LibreOfficeODFTest {
             // try with comma instead of dot
             resultString=evaluateSmartTemplate("WENNGROESSER(\"20,5\",\"10\",\"ja\",\"nein\")");
             Assert.assertEquals("ja", resultString);
+            
+        } catch (Throwable t) {
+            Assert.fail(t.getMessage());
+        }
+    }
+    
+    @Test
+    @Ignore
+    public void testSmartTemplateMWDJU() {
+        try {
+
+            AddressBean a=new AddressBean();
+            
+            a.setGender(AddressBean.GENDER_FEMALE);
+            String resultString=evaluateSmartTemplate("MWDJU(\"" + a.getGenderDisplayValue() + "\",\"male\",\"female\",\"other\",\"org\",\"undef\")");
+            Assert.assertEquals("female", resultString);
+            
+            a.setGender(AddressBean.GENDER_MALE);
+            resultString=evaluateSmartTemplate("MWDJU(\"" + a.getGenderDisplayValue() + "\",\"male\",\"female\",\"other\",\"org\",\"undef\")");
+            Assert.assertEquals("male", resultString);
+            
+            a.setGender(AddressBean.GENDER_OTHER);
+            resultString=evaluateSmartTemplate("MWDJU(\"" + a.getGenderDisplayValue() + "\",\"male\",\"female\",\"other\",\"org\",\"undef\")");
+            Assert.assertEquals("other", resultString);
+            
+            a.setGender(AddressBean.GENDER_LEGALENTITY);
+            resultString=evaluateSmartTemplate("MWDJU(\"" + a.getGenderDisplayValue() + "\",\"male\",\"female\",\"other\",\"org\",\"undef\")");
+            Assert.assertEquals("org", resultString);
+            
+            a.setGender(AddressBean.GENDER_UNDEFINED);
+            resultString=evaluateSmartTemplate("MWDJU(\"" + a.getGenderDisplayValue() + "\",\"male\",\"female\",\"other\",\"org\",\"undef\")");
+            Assert.assertEquals("undef", resultString);
+            
             
         } catch (Throwable t) {
             Assert.fail(t.getMessage());

@@ -675,7 +675,11 @@ import javax.xml.bind.annotation.XmlRootElement;
 @Table(name = "mapping_entries")
 @XmlRootElement
 @NamedQueries({
-    @NamedQuery(name = "MappingEntry.findAll", query = "SELECT m FROM MappingEntry m")})
+    @NamedQuery(name = "MappingEntry.findAll", query = "SELECT m FROM MappingEntry m"),
+    @NamedQuery(name = "MappingEntry.findByTable", query = "SELECT m FROM MappingEntry m WHERE m.mappingTable = :mappingTable"),
+    @NamedQuery(name = "MappingEntry.findByKey", query = "SELECT m FROM MappingEntry m WHERE m.mappingTable = :mappingTable AND m.key1Value = :key1Value"),
+    @NamedQuery(name = "MappingEntry.findBy2Keys", query = "SELECT m FROM MappingEntry m WHERE m.mappingTable = :mappingTable AND m.key1Value = :key1Value AND m.key2Value = :key2Value"),
+    @NamedQuery(name = "MappingEntry.findBy3Keys", query = "SELECT m FROM MappingEntry m WHERE m.mappingTable = :mappingTable AND m.key1Value = :key1Value AND m.key2Value = :key2Value AND m.key3Value = :key3Value")})
 public class MappingEntry implements Serializable {
     protected static long serialVersionUID = 1L;
     @Id

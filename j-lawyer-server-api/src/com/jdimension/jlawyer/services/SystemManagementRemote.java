@@ -790,6 +790,10 @@ public interface SystemManagementRemote {
     boolean updatePasswordForUser(String principalId, String newPassword) throws Exception;
 
     List<MappingTable> getMappingTables();
+    
+    List<MappingEntry> getMappingEntries(String tableName);
+    
+    void updateMappingEntries(String tableName, List<MappingEntry> newEntries) throws Exception;
 
     MappingTable addMappingTable(MappingTable table) throws Exception;
 
