@@ -81,10 +81,6 @@ public class HoursPanel extends JPanel {
 		for (int i = 0; i < 24; i++) {
 			y += height;
 			String hour = i + 1 + ": 00";
-//			if (i == 11)
-//				hour = "12 pm";
-//			if (i == 23)
-//				hour = "12 am";
 			int stringWidth = metrics.stringWidth(hour);
 			g.setColor(Color.gray);
 
