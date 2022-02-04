@@ -85,6 +85,14 @@ public class DayContentPanel extends JPanel {
                 if (e.isPopupTrigger() && calendar.getPopupMenu() != null) {
                     calendar.getPopupMenu().show(DayContentPanel.this,
                             e.getX(), e.getY());
+                } else {
+                
+                if(startSelection == null || endSelection == null)
+                    return;
+                Date startDate = CalendarUtil.pixelToDate(owner.getDate(), (int) startSelection.getY(), getHeight());
+                Date endDate = CalendarUtil.pixelToDate(owner.getDate(), (int) endSelection.getY(), getHeight());
+                EventRepository.get().triggerIntervalSelection(calendar,
+                        startDate, endDate);
                 }
                 for (final MouseListener ml : DayContentPanel.this.owner
                         .getOwner().getMouseListeners()) {
@@ -271,7 +279,7 @@ public class DayContentPanel extends JPanel {
 
         if (isEnabled()) {
             if (!isSelectedStrategyMonth) {
-                if (holidays.size() == 0) {
+                if (holidays.isEmpty()) {
                     graphics2d.setColor(outsideWorkingHoursColor);
                     graphics2d.fillRect(0, 0, width, workingHoursRectHeight);
                     graphics2d.fillRect(0, workingHoursEndRectYStart, width,
