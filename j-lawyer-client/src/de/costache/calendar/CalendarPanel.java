@@ -667,7 +667,9 @@ import com.jdimension.jlawyer.client.configuration.PopulateOptionsEditor;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.ThemeableEditor;
 import com.jdimension.jlawyer.client.editors.files.ArchiveFilePanel;
+import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
+import com.jdimension.jlawyer.persistence.EventTypes;
 import de.costache.calendar.events.IntervalChangedEvent;
 import de.costache.calendar.events.IntervalSelectionEvent;
 import de.costache.calendar.events.ModelChangedEvent;
@@ -709,7 +711,11 @@ public class CalendarPanel extends javax.swing.JPanel {
     private JMenu fileMenu;
     private JMenuItem exitMenuItem;
     private JCalendar jCalendar;
+    
     private JToolBar toolBar;
+    HashMap<String, EventType> calTypes = new HashMap<>();
+    
+    
     private JPopupMenu popup;
     private JMenuItem mnuOpenCase;
 
@@ -862,23 +868,32 @@ public class CalendarPanel extends javax.swing.JPanel {
     public void setData(Collection<ArchiveFileReviewsBean> dtos) {
 
         this.toolBar.removeAll();
+        this.calTypes.clear();
         
         for (CalendarEvent ce : this.jCalendar.getCalendarEvents()) {
             this.jCalendar.removeCalendarEvent(ce);
         }
 
-        HashMap<String, EventType> types = new HashMap<>();
-
         for (ArchiveFileReviewsBean rev : dtos) {
+            this.addCalendarEvent(rev);
+        }
+
+    }
+    
+    private void addCalendarEvent(ArchiveFileReviewsBean rev) {
+        
+            if(rev.getBeginDate()==null)
+                return;
+            
             CalendarEvent calendarEvent;
             if (rev.getCalendarSetup() != null) {
-                if (!types.containsKey(rev.getCalendarSetup().getId())) {
+                if (!this.calTypes.containsKey(rev.getCalendarSetup().getId())) {
                     EventType t = new EventType();
                     Color backColor=new Color(rev.getCalendarSetup().getBackground());
                     t.setBackgroundColor(backColor);
                     t.setForegroundColor(Color.WHITE);
                     t.setName(rev.getCalendarSetup().getDisplayName() + " (" + rev.getEventTypeName() + ")");
-                    types.put(rev.getCalendarSetup().getId(), t);
+                    this.calTypes.put(rev.getCalendarSetup().getId(), t);
                     
                     JLabel lbl=new JLabel();
                     lbl.setText(" " + rev.getCalendarSetup().getDisplayName() + " ");
@@ -892,9 +907,6 @@ public class CalendarPanel extends javax.swing.JPanel {
                     this.toolBar.add(lbl2);
                 }
             }
-
-            if(rev.getBeginDate()==null)
-                continue;
             
             int hour = rev.getBeginDate().getHours();
             final int min = rev.getBeginDate().getMinutes();
@@ -919,7 +931,7 @@ public class CalendarPanel extends javax.swing.JPanel {
             calendarEvent.setLocation(rev.getLocation());
 
             if (rev.getCalendarSetup() != null) {
-                calendarEvent.setType(types.get(rev.getCalendarSetup().getId()));
+                calendarEvent.setType(this.calTypes.get(rev.getCalendarSetup().getId()));
             }
 
             if (rev.getArchiveFileKey() != null) {
@@ -930,8 +942,6 @@ public class CalendarPanel extends javax.swing.JPanel {
 
             calendarEvent.setAllDay(!rev.hasEndDateAndTime());
             jCalendar.addCalendarEvent(calendarEvent);
-        }
-
     }
 
     private void bindListeners() {
@@ -995,26 +1005,39 @@ public class CalendarPanel extends javax.swing.JPanel {
         });
 
         jCalendar.addSelectionChangedListener((final SelectionChangedEvent event) -> {
-//            if (event.getCalendarEvent() != null) {
-//                if (event.getCalendarEvent().isSelected()) {
-//                    System.out.println("Event selected " + event.getCalendarEvent());
-//                } else {
-//                    System.out.println("Event deselected " + event.getCalendarEvent());
-//                }
-//            } else {
-//                System.out.println("Selection cleared");
-//            }
-//            System.out.println("\n");
+            if (event.getCalendarEvent() != null) {
+                if (event.getCalendarEvent().isSelected()) {
+                    System.out.println("Event selected " + event.getCalendarEvent());
+                } else {
+                    System.out.println("Event deselected " + event.getCalendarEvent());
+                }
+            } else {
+                System.out.println("Selection cleared ");
+            }
+            System.out.println("\n");
         });
+        
+        //jCalendar.a
 
         jCalendar.addIntervalChangedListener((final IntervalChangedEvent event) -> {
-//            System.out.println("Interval changed " + sdf.format(event.getIntervalStart()) + " "
-//                    + sdf.format(event.getIntervalEnd()) + "\n");
+            System.out.println("Interval changed " + event.getIntervalStart() + " "
+                    + event.getIntervalEnd() + "\n");
         });
 
         jCalendar.addIntervalSelectionListener((IntervalSelectionEvent event) -> {
-//            System.out.println("Interval selection changed " + sdf.format(event.getIntervalStart()) + " "
-//                    + sdf.format(event.getIntervalEnd()) + "\n");
+            System.out.println("Interval selection changed " + event.getIntervalStart() + " "
+                    + event.getIntervalEnd() + "\n");
+            
+//            ArchiveFileReviewsBean ev=new ArchiveFileReviewsBean();
+//            ev.setBeginDate(event.getIntervalStart());
+//            ev.setEndDate(event.getIntervalEnd());
+//            ev.setEventType(EventTypes.EVENTTYPE_EVENT);
+//            ev.setSummary("sum1");
+//            ev.setDescription("description");
+//            ArchiveFileBean evc=new ArchiveFileBean();
+//            ev.setArchiveFileKey(evc);
+//            this.addCalendarEvent(ev);
+            
         });
 
         popup.addPopupMenuListener(new PopupMenuListener() {
