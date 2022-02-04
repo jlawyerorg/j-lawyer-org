@@ -1767,6 +1767,14 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
 
     private void cmdSendActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdSendActionPerformed
 
+        if(StringUtils.isEmpty(this.txtSubject.getText())) {
+            int response = JOptionPane.showConfirmDialog(this, "Nachricht ohne Betreff senden?", "leerer Betreff", JOptionPane.YES_NO_OPTION);
+            if (response == JOptionPane.NO_OPTION) {
+                this.txtSubject.requestFocus();
+                return;
+            }
+        }
+        
         MailboxSetup ms = this.getSelectedMailbox();
 
         ClientSettings settings = ClientSettings.getInstance();
