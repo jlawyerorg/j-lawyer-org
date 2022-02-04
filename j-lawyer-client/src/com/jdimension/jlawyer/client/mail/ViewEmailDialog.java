@@ -812,61 +812,10 @@ public class ViewEmailDialog extends javax.swing.JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void cmdReplyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdReplyActionPerformed
-        SendEmailDialog dlg = new SendEmailDialog(EditorsRegistry.getInstance().getMainWindow(), false);
-        dlg.setArchiveFile(this.contextArchiveFile, this.contextFolder);
-
         MessageContainer msgC = this.msgContainer;
-        try {
-            Message m = msgC.getMessage();
-            MailboxSetup ms=EmailUtils.getMailboxSetup(m);
-            if(ms!=null) {
-                dlg.setFrom(ms);
-            }
-            Address[] replyTos = m.getReplyTo();
-            Address to = null;
-            if (replyTos != null) {
-                if (replyTos.length > 0) {
-                    to = replyTos[0];
-                }
-            }
-            if (to == null) {
-                to = m.getFrom()[0];
-            }
-            try {
-                dlg.setTo(MimeUtility.decodeText(to.toString()));
-            } catch (Throwable t) {
-                log.error(t);
-                dlg.setTo(to.toString());
-            }
-
-            String subject = m.getSubject();
-            if (subject == null) {
-                subject = "";
-            }
-            if (!subject.startsWith("Re: ")) {
-                subject = "Re: " + subject;
-            }
-            dlg.setSubject(subject);
-
-            String decodedTo = to.toString();
-            try {
-                decodedTo = MimeUtility.decodeText(to.toString());
-            } catch (Throwable t) {
-                log.error(t);
-            }
-            String contentType = this.content.getContentType();
-            dlg.setContentType(contentType);
-            if (contentType.toLowerCase().startsWith("text/html")) {
-                dlg.setBody(EmailUtils.getQuotedBody(EmailUtils.Html2Text(this.content.getBody()), "text/plain", decodedTo, m.getSentDate()), "text/plain");
-            } else {
-                dlg.setBody(EmailUtils.getQuotedBody(this.content.getBody(), "text/plain", decodedTo, m.getSentDate()), "text/plain");
-            }
-            dlg.setBody(EmailUtils.getQuotedBody(this.content.getBody(), "text/html", decodedTo, m.getSentDate()), "text/html");
-
-        } catch (Exception ex) {
-            log.error(ex);
-        }
-
+        Message m = msgC.getMessage();
+        SendEmailDialog dlg = EmailUtils.reply(m, this.content.getBody(), this.content.getContentType());
+        dlg.setArchiveFile(this.contextArchiveFile, this.contextFolder);
         FrameUtils.centerDialog(dlg, null);
         dlg.setVisible(true);
 

@@ -663,6 +663,7 @@
  */
 package com.jdimension.jlawyer.client.mail;
 
+import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.MailboxSetup;
@@ -693,7 +694,7 @@ import org.apache.log4j.Logger;
  */
 public class EmailUtils {
 
-    private static Logger log = Logger.getLogger(EmailUtils.class.getName());
+    private static final Logger log = Logger.getLogger(EmailUtils.class.getName());
 
     private static ArrayList<String> trashAliases;
     private static ArrayList<String> sentAliases;
@@ -704,9 +705,12 @@ public class EmailUtils {
         trashAliases = new ArrayList<>();
         trashAliases.add("Papierkorb");
         trashAliases.add("Gelöscht");
+        trashAliases.add("Trash");
 
         sentAliases = new ArrayList<>();
         sentAliases.add("Gesendet");
+        sentAliases.add("Sent");
+        sentAliases.add("Sent Items");
 
         inboxAliases = new ArrayList<>();
         inboxAliases.add("Posteingang");
@@ -1210,15 +1214,8 @@ public class EmailUtils {
 
     public static void sendReceipt(final MailboxSetup ms, String subject, String to) {
         Properties props = new Properties();
-//        props.put("mail.smtp.host", ms.getEmailOutServer());
-//        props.put("mail.smtp.user", ms.getEmailOutUser());
-//        props.put("mail.smtp.auth", true);
-//        props.put("mail.from", ms.getEmailAddress());
-//        props.put("mail.password", ms.getEmailOutPwd());
 
-        String protocol = "smtp";
         if (ms.isEmailOutSsl()) {
-            protocol = "smtps";
             props.put("mail.smtp.ssl.enable", "true");
         }
 
@@ -1283,7 +1280,6 @@ public class EmailUtils {
 
             msg.setSubject(MimeUtility.encodeText("Gelesen: " + subject, "utf-8", "B"));
             msg.setSentDate(new Date());
-            //msg.setText(this.taBody.getText());
 
             Multipart multiPart = new MimeMultipart();
 
@@ -1294,7 +1290,6 @@ public class EmailUtils {
 
             msg.setContent(multiPart);
 
-            //Transport.send(msg);
             msg.saveChanges();
             bus.send(msg);
             bus.close();
@@ -1321,5 +1316,79 @@ public class EmailUtils {
             log.error(ex);
             return html;
         }
+    }
+    
+    public static SendEmailDialog reply(Message m, String content, String contentType) {
+        SendEmailDialog dlg = new SendEmailDialog(EditorsRegistry.getInstance().getMainWindow(), false);
+        try {
+            // figure out if the message was sent from one of the users accounts
+            boolean sentByCurrentUser=false;
+            UserSettings usettings = UserSettings.getInstance();
+            AppUserBean cu = usettings.getCurrentUser();
+            List<MailboxSetup> allInboxes=usettings.getMailboxes(cu.getPrincipalId());
+            Address[] allFrom = m.getFrom();
+            for (Address toa : allFrom) {
+                for(MailboxSetup mbx: allInboxes) {
+                    if(toa.toString().toLowerCase().contains(mbx.getEmailAddress().toLowerCase())) {
+                        sentByCurrentUser=true;
+                        break;
+                    }
+                }
+                if(sentByCurrentUser)
+                    break;
+            }
+            
+            
+            MailboxSetup ms=EmailUtils.getMailboxSetup(m);
+            if(ms!=null) {
+                dlg.setFrom(ms);
+            }
+            Address[] replyTos = m.getReplyTo();
+            
+            StringBuilder toString = new StringBuilder();
+            if(sentByCurrentUser) {
+                // sent by the current user - reply to the recipient of the message
+                Address[] recs=m.getRecipients(Message.RecipientType.TO);
+                for (Address a : recs) {
+                    toString.append(MimeUtility.decodeText(a.toString())).append(", ");
+                }
+            } else {
+                // not sent by the current user - reply to the sender of the message
+                Address to = null;
+                if (replyTos != null) {
+                    if (replyTos.length > 0) {
+                        to = replyTos[0];
+                    }
+                }
+                if (to == null) {
+                    to = m.getFrom()[0];
+                }
+                toString.append(MimeUtility.decodeText(to.toString()));
+            }
+            dlg.setTo(toString.toString());
+
+            String subject = m.getSubject();
+            if (subject == null) {
+                subject = "";
+            }
+            if (!subject.startsWith("Re: ")) {
+                subject = "Re: " + subject;
+            }
+            dlg.setSubject(subject);
+
+            String decodedTo = toString.toString();
+            dlg.setContentType(contentType);
+            if (contentType.toLowerCase().startsWith("text/html")) {
+                dlg.setBody(EmailUtils.getQuotedBody(EmailUtils.Html2Text(content), "text/plain", decodedTo, m.getSentDate()), "text/plain");
+            } else {
+                dlg.setBody(EmailUtils.getQuotedBody(content, "text/plain", decodedTo, m.getSentDate()), "text/plain");
+            }
+            dlg.setBody(EmailUtils.getQuotedBody(content, "text/html", decodedTo, m.getSentDate()), "text/html");
+
+        } catch (Exception ex) {
+            log.error(ex);
+        }
+
+        return dlg;
     }
 }
