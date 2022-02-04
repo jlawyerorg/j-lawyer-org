@@ -672,6 +672,7 @@ import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.documents.PlaceHolders;
 import com.jdimension.jlawyer.email.EmailTemplate;
 import com.jdimension.jlawyer.persistence.PartyTypeBean;
+import com.jdimension.jlawyer.server.utils.ContentTypes;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Graphics;
 import java.awt.Image;
@@ -761,7 +762,6 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
     }
 
     private void refreshList() {
-        //this.lstMasterTemplates.removeAll();
         DefaultListModel model = new DefaultListModel();
         model.removeAllElements();
         this.lstMailTemplates.setModel(model);
@@ -783,6 +783,7 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
         }
     }
 
+    @Override
     public void setBackgroundImage(Image image) {
         this.backgroundImage = image;
         //this.jPanel1.setOpaque(false);
@@ -790,6 +791,7 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
 
     }
 
+    @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
         if (this.backgroundImage != null) {
@@ -1090,7 +1092,6 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
             locator.lookupIntegrationServiceRemote().saveEmailTemplate(tpl, true);
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Fehler beim Speichern der Vorlage: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-            return;
         }
         
         
@@ -1180,9 +1181,9 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
         String target=this.cmbPlaceHolderTarget.getSelectedItem().toString();
         
         EditorImplementation ed=(EditorImplementation)this.contentPanel.getComponent(0);
-        if(this.PLACEHOLDERTARGET_SUBJECT.equals(target)) {
+        if(EmailTemplatesPanel.PLACEHOLDERTARGET_SUBJECT.equals(target)) {
             this.txtSubject.setText(PlaceHolderUtils.insertAt(this.txtSubject.getText(), insert, this.txtSubject.getCaretPosition()));
-        } else if(this.PLACEHOLDERTARGET_BODY.equals(target)) {
+        } else if(EmailTemplatesPanel.PLACEHOLDERTARGET_BODY.equals(target)) {
             ed.setText(PlaceHolderUtils.insertAt(ed.getText(), insert, ed.getCaretPosition()));
         }
     }//GEN-LAST:event_cmdAddPlaceHolderActionPerformed
@@ -1197,9 +1198,9 @@ public class EmailTemplatesPanel extends javax.swing.JPanel implements Themeable
     private void cmbFormatItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cmbFormatItemStateChanged
         String sel=(String)this.cmbFormat.getSelectedItem();
         if(sel==null)
-            sel="text/plain";
+            sel=ContentTypes.TEXT_PLAIN;
 
-        if(sel.toLowerCase().indexOf("html")>-1) {
+        if(sel.toLowerCase().contains("html")) {
         
             this.contentPanel.remove(0);
             this.contentPanel.add(hp);

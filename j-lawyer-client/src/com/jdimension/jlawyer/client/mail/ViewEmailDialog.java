@@ -673,6 +673,7 @@ import com.jdimension.jlawyer.persistence.ArchiveFileAddressesBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.CaseFolder;
 import com.jdimension.jlawyer.persistence.MailboxSetup;
+import com.jdimension.jlawyer.server.utils.ContentTypes;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.io.File;
@@ -886,12 +887,12 @@ public class ViewEmailDialog extends javax.swing.JDialog {
             }
             String contentType = this.content.getContentType();
             dlg.setContentType(contentType);
-            if (contentType.toLowerCase().startsWith("text/html")) {
-                dlg.setBody(EmailUtils.getQuotedBody(EmailUtils.Html2Text(this.content.getBody()), "text/plain", decodedTo, m.getSentDate()), "text/plain");
+            if (contentType.toLowerCase().startsWith(ContentTypes.TEXT_HTML)) {
+                dlg.setBody(EmailUtils.getQuotedBody(EmailUtils.Html2Text(this.content.getBody()), ContentTypes.TEXT_PLAIN, decodedTo, m.getSentDate()), ContentTypes.TEXT_PLAIN);
             } else {
-                dlg.setBody(EmailUtils.getQuotedBody(this.content.getBody(), "text/plain", decodedTo, m.getSentDate()), "text/plain");
+                dlg.setBody(EmailUtils.getQuotedBody(this.content.getBody(), ContentTypes.TEXT_PLAIN, decodedTo, m.getSentDate()), ContentTypes.TEXT_PLAIN);
             }
-            dlg.setBody(EmailUtils.getQuotedBody(this.content.getBody(), "text/html", decodedTo, m.getSentDate()), "text/html");
+            dlg.setBody(EmailUtils.getQuotedBody(this.content.getBody(), ContentTypes.TEXT_HTML, decodedTo, m.getSentDate()), ContentTypes.TEXT_HTML);
 
         } catch (Exception ex) {
             log.error(ex);
@@ -951,12 +952,12 @@ public class ViewEmailDialog extends javax.swing.JDialog {
             }
             String contentType = this.content.getContentType();
             dlg.setContentType(contentType);
-            if (contentType.toLowerCase().startsWith("text/html")) {
-                dlg.setBody(EmailUtils.getQuotedBody(EmailUtils.Html2Text(this.content.getBody()), "text/plain", decodedFrom, m.getSentDate()), "text/plain");
+            if (contentType.toLowerCase().startsWith(ContentTypes.TEXT_HTML)) {
+                dlg.setBody(EmailUtils.getQuotedBody(EmailUtils.Html2Text(this.content.getBody()), ContentTypes.TEXT_PLAIN, decodedFrom, m.getSentDate()), ContentTypes.TEXT_PLAIN);
             } else {
-                dlg.setBody(EmailUtils.getQuotedBody(this.content.getBody(), "text/plain", decodedFrom, m.getSentDate()), "text/plain");
+                dlg.setBody(EmailUtils.getQuotedBody(this.content.getBody(), ContentTypes.TEXT_PLAIN, decodedFrom, m.getSentDate()), ContentTypes.TEXT_PLAIN);
             }
-            dlg.setBody(EmailUtils.getQuotedBody(this.content.getBody(), "text/html", decodedFrom, m.getSentDate()), "text/html");
+            dlg.setBody(EmailUtils.getQuotedBody(this.content.getBody(), ContentTypes.TEXT_HTML, decodedFrom, m.getSentDate()), ContentTypes.TEXT_HTML);
             
             try {
                 // try forwarding attachments

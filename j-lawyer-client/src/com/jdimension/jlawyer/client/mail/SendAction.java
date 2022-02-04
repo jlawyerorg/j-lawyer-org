@@ -670,7 +670,6 @@ import com.jdimension.jlawyer.client.processing.ProgressIndicator;
 import com.jdimension.jlawyer.client.processing.ProgressableAction;
 import com.jdimension.jlawyer.client.settings.ClientSettings;
 import com.jdimension.jlawyer.client.utils.FileUtils;
-import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileHistoryBean;
@@ -678,6 +677,7 @@ import com.jdimension.jlawyer.persistence.CaseFolder;
 import com.jdimension.jlawyer.persistence.DocumentTagsBean;
 import com.jdimension.jlawyer.persistence.MailboxSetup;
 import com.jdimension.jlawyer.security.Crypto;
+import com.jdimension.jlawyer.server.utils.ContentTypes;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.io.ByteArrayOutputStream;
@@ -707,7 +707,7 @@ public class SendAction extends ProgressableAction {
     private String bcc = "";
     private String subject = "";
     private String body = "";
-    private String contentType = "text/plain";
+    private String contentType = ContentTypes.TEXT_PLAIN;
     private ArchiveFileBean archiveFile = null;
     private CaseFolder caseFolder=null;
     private String documentTag = null;
@@ -748,9 +748,7 @@ public class SendAction extends ProgressableAction {
         this.progress("Verbinde...");
         Properties props = new Properties();
 
-        String protocol = "smtp";
         if (ms.isEmailOutSsl()) {
-            protocol = "smtps";
             props.put("mail.smtp.ssl.enable", "true");
         }
         
@@ -833,10 +831,6 @@ public class SendAction extends ProgressableAction {
             for (String url : this.attachments) {
                 MimeBodyPart att = new MimeBodyPart();
                 FileDataSource attFile = new FileDataSource(url);
-                
-//                att.setDataHandler(new DataHandler(attFile));
-//                att.setFileName(MimeUtility.encodeText(attFile.getName()));
-//                att.addHeader("Content-Transfer-Encoding", "base64");
                 
                 att.attachFile(url);
 

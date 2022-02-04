@@ -668,6 +668,7 @@ import com.jdimension.jlawyer.client.settings.UserSettings;
 import com.jdimension.jlawyer.persistence.AppUserBean;
 import com.jdimension.jlawyer.persistence.MailboxSetup;
 import com.jdimension.jlawyer.security.Crypto;
+import com.jdimension.jlawyer.server.utils.ContentTypes;
 import com.sun.mail.imap.IMAPFolder;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
@@ -1141,7 +1142,7 @@ public class EmailUtils {
     }
 
     public static String getQuotedBody(String body, String contentType, String decodedTo, Date date) {
-        if (contentType.toLowerCase().startsWith("text/html")) {
+        if (contentType.toLowerCase().startsWith(ContentTypes.TEXT_HTML)) {
             decodedTo = decodedTo.replaceAll("<", "&lt;");
             decodedTo = decodedTo.replaceAll(">", "&gt;");
             decodedTo = decodedTo.replaceAll("\"", "&quot;");
@@ -1378,12 +1379,12 @@ public class EmailUtils {
 
             String decodedTo = toString.toString();
             dlg.setContentType(contentType);
-            if (contentType.toLowerCase().startsWith("text/html")) {
-                dlg.setBody(EmailUtils.getQuotedBody(EmailUtils.Html2Text(content), "text/plain", decodedTo, m.getSentDate()), "text/plain");
+            if (contentType.toLowerCase().startsWith(ContentTypes.TEXT_HTML)) {
+                dlg.setBody(EmailUtils.getQuotedBody(EmailUtils.Html2Text(content), ContentTypes.TEXT_PLAIN, decodedTo, m.getSentDate()), ContentTypes.TEXT_PLAIN);
             } else {
-                dlg.setBody(EmailUtils.getQuotedBody(content, "text/plain", decodedTo, m.getSentDate()), "text/plain");
+                dlg.setBody(EmailUtils.getQuotedBody(content, ContentTypes.TEXT_PLAIN, decodedTo, m.getSentDate()), ContentTypes.TEXT_PLAIN);
             }
-            dlg.setBody(EmailUtils.getQuotedBody(content, "text/html", decodedTo, m.getSentDate()), "text/html");
+            dlg.setBody(EmailUtils.getQuotedBody(content, ContentTypes.TEXT_HTML, decodedTo, m.getSentDate()), ContentTypes.TEXT_HTML);
 
         } catch (Exception ex) {
             log.error(ex);

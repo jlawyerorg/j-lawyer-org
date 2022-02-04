@@ -678,6 +678,7 @@ import com.jdimension.jlawyer.client.utils.*;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
 import com.jdimension.jlawyer.persistence.CaseFolder;
+import com.jdimension.jlawyer.server.utils.ContentTypes;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.awt.Dimension;
@@ -789,7 +790,7 @@ public class BeaMessageContentUI extends javax.swing.JPanel implements Hyperlink
         this.lblTo.setText(" ");
         this.lblTo.setToolTipText(null);
 
-        this.editBody.setContentType("text/plain");
+        this.editBody.setContentType(ContentTypes.TEXT_PLAIN);
 
         this.editBody.setText("");
 

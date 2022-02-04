@@ -698,6 +698,7 @@ import com.jdimension.jlawyer.persistence.CalendarSetup;
 import com.jdimension.jlawyer.persistence.CaseFolder;
 import com.jdimension.jlawyer.persistence.MailboxSetup;
 import com.jdimension.jlawyer.persistence.PartyTypeBean;
+import com.jdimension.jlawyer.server.utils.ContentTypes;
 import com.jdimension.jlawyer.services.AddressServiceRemote;
 import com.jdimension.jlawyer.services.CalendarServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
@@ -1123,11 +1124,9 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
     }
 
     public void setBody(String b, String contentType) {
-        AppUserBean cu = UserSettings.getInstance().getCurrentUser();
-
         MailboxSetup ms = this.getSelectedMailbox();
 
-        if (contentType.toLowerCase().startsWith("text/plain")) {
+        if (contentType.toLowerCase().startsWith(ContentTypes.TEXT_PLAIN)) {
             if (ms != null) {
                 this.tp.setText(b + EmailUtils.Html2Text(ms.getEmailSignature()));
                 this.tp.setCaretPosition(0);
@@ -2081,7 +2080,7 @@ public class SendEmailDialog extends javax.swing.JDialog implements SendCommunic
     }//GEN-LAST:event_cmbTemplatesActionPerformed
 
     public void setContentType(String contentType) {
-        if (contentType.toLowerCase().startsWith("text/plain")) {
+        if (contentType.toLowerCase().startsWith(ContentTypes.TEXT_PLAIN)) {
             this.text.setSelected(true);
             this.textActionPerformed(null);
         } else {

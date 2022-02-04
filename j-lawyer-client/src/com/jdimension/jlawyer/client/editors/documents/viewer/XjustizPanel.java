@@ -672,6 +672,7 @@ import com.jdimension.jlawyer.client.utils.FileUtils;
 import com.jdimension.jlawyer.client.utils.SystemUtils;
 import com.jdimension.jlawyer.client.utils.ThreadUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileDocumentsBean;
+import com.jdimension.jlawyer.server.utils.ContentTypes;
 import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.util.ArrayList;
@@ -825,7 +826,7 @@ public class XjustizPanel extends javax.swing.JPanel implements PreviewPanel {
         final String htmlContent = html;
         SwingUtilities.invokeLater(() -> {
             editorPane.setEditorKit(new StyledEditorKit());
-            editorPane.setContentType("text/html");
+            editorPane.setContentType(ContentTypes.TEXT_HTML);
             
             String tdRule = "th { color: #FFFFFF; }";
             
