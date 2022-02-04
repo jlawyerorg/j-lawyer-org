@@ -911,7 +911,6 @@ public class MappingEntriesDialog extends javax.swing.JDialog {
             this.cmbMappingsActionPerformed(null);
 
         } catch (Exception ex) {
-            ex.printStackTrace();
             log.error("Error loading mappings", ex);
             JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
@@ -964,7 +963,6 @@ public class MappingEntriesDialog extends javax.swing.JDialog {
             ComponentUtils.autoSizeColumns(tblMappingTables);
 
         } catch (Exception ex) {
-            ex.printStackTrace();
             log.error("Error loading mappings", ex);
             JOptionPane.showMessageDialog(this, ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
         }
