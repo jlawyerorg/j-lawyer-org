@@ -1007,26 +1007,26 @@ public class CalendarPanel extends javax.swing.JPanel {
         jCalendar.addSelectionChangedListener((final SelectionChangedEvent event) -> {
             if (event.getCalendarEvent() != null) {
                 if (event.getCalendarEvent().isSelected()) {
-                    System.out.println("Event selected " + event.getCalendarEvent());
+                    //System.out.println("Event selected " + event.getCalendarEvent());
                 } else {
-                    System.out.println("Event deselected " + event.getCalendarEvent());
+                    //System.out.println("Event deselected " + event.getCalendarEvent());
                 }
             } else {
-                System.out.println("Selection cleared ");
+                //System.out.println("Selection cleared ");
             }
-            System.out.println("\n");
+            //System.out.println("\n");
         });
         
         //jCalendar.a
 
         jCalendar.addIntervalChangedListener((final IntervalChangedEvent event) -> {
-            System.out.println("Interval changed " + event.getIntervalStart() + " "
-                    + event.getIntervalEnd() + "\n");
+//            System.out.println("Interval changed " + event.getIntervalStart() + " "
+//                    + event.getIntervalEnd() + "\n");
         });
 
         jCalendar.addIntervalSelectionListener((IntervalSelectionEvent event) -> {
-            System.out.println("Interval selection changed " + event.getIntervalStart() + " "
-                    + event.getIntervalEnd() + "\n");
+//            System.out.println("Interval selection changed " + event.getIntervalStart() + " "
+//                    + event.getIntervalEnd() + "\n");
             
 //            ArchiveFileReviewsBean ev=new ArchiveFileReviewsBean();
 //            ev.setBeginDate(event.getIntervalStart());
