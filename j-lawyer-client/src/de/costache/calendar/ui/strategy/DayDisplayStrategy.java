@@ -15,6 +15,7 @@
  */
 package de.costache.calendar.ui.strategy;
 
+import com.jdimension.jlawyer.client.utils.ComponentUtils;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
@@ -38,6 +39,7 @@ import de.costache.calendar.ui.ContentPanel;
 import de.costache.calendar.ui.DayPanel;
 import de.costache.calendar.ui.HoursPanel;
 import de.costache.calendar.util.CalendarUtil;
+import javax.swing.JSplitPane;
 
 /**
  *
@@ -51,6 +53,7 @@ class DayDisplayStrategy implements DisplayStrategy {
     private final SimpleDateFormat sdf = new SimpleDateFormat("dd. MMMM yyyy");
     private DayPanel day;
     private JPanel displayPanel;
+    private JSplitPane split;
 
     public DayDisplayStrategy(final ContentPanel parent) {
         this.parent = parent;
@@ -71,13 +74,71 @@ class DayDisplayStrategy implements DisplayStrategy {
         calendar.getConfig().setIntervalStart(start);
         calendar.getConfig().setIntervalEnd(end);
 
-        JPanel contentsPanel = new JPanel(true);
+//        JPanel contentsPanel = new JPanel(true);
+//        contentsPanel.setLayout(new GridBagLayout());
+//        contentsPanel.setOpaque(false);
+//
+//        displayPanel = new JPanel(true);
+//        displayPanel.setOpaque(false);
+//        displayPanel.setLayout(new GridBagLayout());
+//        final GridBagConstraints gbc = new GridBagConstraints();
+//
+//        final Calendar c = CalendarUtil.copyCalendar(start, true);
+//
+//        gbc.gridx = 0;
+//        gbc.gridy = 0;
+//        gbc.weighty = 1;
+//        gbc.weightx = 0;
+//        gbc.fill = GridBagConstraints.BOTH;
+//        contentsPanel.add(new HoursPanel(parent.getOwner()), gbc);
+//
+//        day = new DayPanel(parent.getOwner(), c.getTime());
+//        gbc.gridx = 1;
+//        gbc.gridy = 0;
+//        gbc.weighty = 1;
+//        gbc.weightx = 1;
+//        day.getContentPanel().setPreferredSize(new Dimension(30, 1440));
+//        contentsPanel.add(day.getContentPanel(), gbc);
+//        c.add(Calendar.DATE, 1);
+//
+//        gbc.gridx = 0;
+//        gbc.gridy = 0;
+//        //gbc.weighty = 0.02;
+//        gbc.weighty = 0.1;
+//        gbc.insets = new Insets(0, 40, 0, swidth);
+//        displayPanel.add(day.getHeaderPanel(), gbc);
+//        gbc.gridx = 0;
+//        gbc.gridy = 1;
+//	gbc.weighty = 0.88;
+//        gbc.insets = new Insets(0, 0, 0, 0);
+//        JScrollPane content = new JScrollPane(contentsPanel);
+//        content.setOpaque(false);
+//        content.getViewport().setOpaque(false);
+//        content.setBorder(new EmptyBorder(0, 0, 0, 0));
+//        content.getViewport().setViewPosition(new Point(0, 500));
+//        content.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+//        content.getVerticalScrollBar().setUnitIncrement(16);
+//        displayPanel.add(content, gbc);
+//        gbc.gridx = 0;
+//        gbc.gridy = 2;
+//	gbc.weighty = 0.1;
+//        gbc.insets = new Insets(0, 40, 0, 0);
+//        JScrollPane contentAllDay = new JScrollPane(day.getCompleteDayPanel());
+//        contentAllDay.setOpaque(false);
+//        contentAllDay.getViewport().setOpaque(false);
+//        contentAllDay.setBorder(BorderFactory.createLineBorder(parent.getOwner().getConfig().getLineColor()));
+//        contentAllDay.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+//        contentAllDay.getVerticalScrollBar().setUnitIncrement(16);
+//        displayPanel.add(contentAllDay, gbc);
+
+
+JPanel contentsPanel = new JPanel(true);
         contentsPanel.setLayout(new GridBagLayout());
         contentsPanel.setOpaque(false);
 
         displayPanel = new JPanel(true);
         displayPanel.setOpaque(false);
-        displayPanel.setLayout(new GridBagLayout());
+        displayPanel.setLayout(new BorderLayout());
         final GridBagConstraints gbc = new GridBagConstraints();
 
         final Calendar c = CalendarUtil.copyCalendar(start, true);
@@ -98,16 +159,17 @@ class DayDisplayStrategy implements DisplayStrategy {
         contentsPanel.add(day.getContentPanel(), gbc);
         c.add(Calendar.DATE, 1);
 
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        //gbc.weighty = 0.02;
-        gbc.weighty = 0.1;
-        gbc.insets = new Insets(0, 40, 0, swidth);
-        displayPanel.add(day.getHeaderPanel(), gbc);
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-	gbc.weighty = 0.88;
-        gbc.insets = new Insets(0, 0, 0, 0);
+//        gbc.gridx = 0;
+//        gbc.gridy = 0;
+//        //gbc.weighty = 0.02;
+//        gbc.weighty = 0.1;
+//        gbc.insets = new Insets(0, 40, 0, swidth);
+        day.getHeaderPanel().setPreferredSize(new Dimension(1440,60));
+        displayPanel.add(day.getHeaderPanel(), BorderLayout.NORTH);
+//        gbc.gridx = 0;
+//        gbc.gridy = 1;
+//	gbc.weighty = 0.88;
+//        gbc.insets = new Insets(0, 0, 0, 0);
         JScrollPane content = new JScrollPane(contentsPanel);
         content.setOpaque(false);
         content.getViewport().setOpaque(false);
@@ -115,25 +177,30 @@ class DayDisplayStrategy implements DisplayStrategy {
         content.getViewport().setViewPosition(new Point(0, 500));
         content.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
         content.getVerticalScrollBar().setUnitIncrement(16);
-        displayPanel.add(content, gbc);
-        gbc.gridx = 0;
-        gbc.gridy = 2;
-	gbc.weighty = 0.1;
-        gbc.insets = new Insets(0, 40, 0, 0);
+        displayPanel.add(content, BorderLayout.CENTER);
+//        gbc.gridx = 0;
+//        gbc.gridy = 2;
+//	gbc.weighty = 0.1;
+//        gbc.insets = new Insets(0, 40, 0, 0);
         JScrollPane contentAllDay = new JScrollPane(day.getCompleteDayPanel());
         contentAllDay.setOpaque(false);
         contentAllDay.getViewport().setOpaque(false);
         contentAllDay.setBorder(BorderFactory.createLineBorder(parent.getOwner().getConfig().getLineColor()));
         contentAllDay.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
         contentAllDay.getVerticalScrollBar().setUnitIncrement(16);
-        displayPanel.add(contentAllDay, gbc);
+        //displayPanel.add(contentAllDay, gbc);
+        
+        this.split=new JSplitPane(JSplitPane.VERTICAL_SPLIT, displayPanel, contentAllDay);
+        ComponentUtils.decorateSplitPane(split);
+
     }
 
     @Override
     public void display() {
         parent.removeAll();
         parent.setLayout(new BorderLayout());
-        parent.add(displayPanel, BorderLayout.CENTER);
+        //parent.add(displayPanel, BorderLayout.CENTER);
+        parent.add(split, BorderLayout.CENTER);
         parent.validate();
         parent.repaint();
     }

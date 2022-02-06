@@ -91,8 +91,11 @@ public class DayHeaderPanel extends JPanel {
 		final Font font = new Font("Verdana", Font.BOLD, fontSize);
 		final FontMetrics metrics = g2d.getFontMetrics(font);
 		g2d.setFont(font);
+                
+                int textWidth=metrics.stringWidth(headerText);
 
-		g2d.drawString(headerText, 5, height / 2 + metrics.getHeight() / 2);
+		//g2d.drawString(headerText, 5, height / 2 + metrics.getHeight() / 2);
+                g2d.drawString(headerText, (width-textWidth)/2, height / 2 + metrics.getHeight() / 2);
 	}
 
 	/**
