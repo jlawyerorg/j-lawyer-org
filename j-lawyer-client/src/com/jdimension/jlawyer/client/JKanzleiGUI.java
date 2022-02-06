@@ -1098,11 +1098,11 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
             }
         });
         addWindowListener(new java.awt.event.WindowAdapter() {
-            public void windowClosing(java.awt.event.WindowEvent evt) {
-                formWindowClosing(evt);
-            }
             public void windowClosed(java.awt.event.WindowEvent evt) {
                 formWindowClosed(evt);
+            }
+            public void windowClosing(java.awt.event.WindowEvent evt) {
+                formWindowClosing(evt);
             }
         });
 
@@ -1684,7 +1684,7 @@ public class JKanzleiGUI extends javax.swing.JFrame implements com.jdimension.jl
 
         jMenuBar1.add(mnuOptions);
 
-        mnuCalculations.setText("Berechnungen");
+        mnuCalculations.setText("Plugins");
         jMenuBar1.add(mnuCalculations);
 
         mnuAdministration.setText("Administration");

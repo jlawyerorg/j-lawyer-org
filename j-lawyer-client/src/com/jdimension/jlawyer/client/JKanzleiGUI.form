@@ -677,7 +677,7 @@
         </Menu>
         <Menu class="javax.swing.JMenu" name="mnuCalculations">
           <Properties>
-            <Property name="text" type="java.lang.String" value="Berechnungen"/>
+            <Property name="text" type="java.lang.String" value="Plugins"/>
           </Properties>
         </Menu>
         <Menu class="javax.swing.JMenu" name="mnuAdministration">
