@@ -667,6 +667,7 @@ import com.jdimension.jlawyer.client.configuration.PopulateOptionsEditor;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.ThemeableEditor;
 import com.jdimension.jlawyer.client.editors.files.ArchiveFilePanel;
+import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 import com.jdimension.jlawyer.persistence.EventTypes;
@@ -1028,6 +1029,11 @@ public class CalendarPanel extends javax.swing.JPanel {
 //            System.out.println("Interval selection changed " + event.getIntervalStart() + " "
 //                    + event.getIntervalEnd() + "\n");
             
+
+            NewEventEntryDialog dlg=new NewEventEntryDialog(EditorsRegistry.getInstance().getMainWindow(), true);
+            FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
+            dlg.setVisible(true);
+
 //            ArchiveFileReviewsBean ev=new ArchiveFileReviewsBean();
 //            ev.setBeginDate(event.getIntervalStart());
 //            ev.setEndDate(event.getIntervalEnd());
