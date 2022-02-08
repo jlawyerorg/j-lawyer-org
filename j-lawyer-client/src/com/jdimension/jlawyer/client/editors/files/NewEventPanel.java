@@ -695,6 +695,9 @@ import org.apache.log4j.Logger;
 public class NewEventPanel extends javax.swing.JPanel implements QuickDateSelectionListener {
 
     private static final Logger log = Logger.getLogger(NewEventPanel.class.getName());
+    
+    SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm");
+    SimpleDateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
 
     protected NewEventPanelListener newEventListener = null;
 
@@ -1034,8 +1037,7 @@ public class NewEventPanel extends javax.swing.JPanel implements QuickDateSelect
 
     private void txtEventBeginDateFieldMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_txtEventBeginDateFieldMouseClicked
         if (evt.getClickCount() == 2) {
-            SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
-            this.txtEventBeginDateField.setText(df.format(new Date()));
+            this.txtEventBeginDateField.setText(dateFormat.format(new Date()));
         }
     }//GEN-LAST:event_txtEventBeginDateFieldMouseClicked
 
@@ -1051,14 +1053,13 @@ public class NewEventPanel extends javax.swing.JPanel implements QuickDateSelect
 
     private void cmbEventBeginTimeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbEventBeginTimeActionPerformed
         if (this.radioEventTypeEvent.isSelected()) {
-            SimpleDateFormat sdf = new SimpleDateFormat("HH:mm");
             try {
-                Date d = sdf.parse(this.cmbEventBeginTime.getSelectedItem().toString());
+                Date d = timeFormat.parse(this.cmbEventBeginTime.getSelectedItem().toString());
                 Calendar c = Calendar.getInstance();
                 c.setTime(d);
                 c.add(Calendar.HOUR, 1);
                 Date endDate = c.getTime();
-                this.cmbEventEndTime.setSelectedItem(sdf.format(endDate));
+                this.cmbEventEndTime.setSelectedItem(timeFormat.format(endDate));
             } catch (Exception ex) {
                 log.error(ex);
             }
@@ -1101,9 +1102,9 @@ public class NewEventPanel extends javax.swing.JPanel implements QuickDateSelect
         if (this.txtEventBeginDateField.getText().length() == 10) {
 
             Date beginDate = null;
-            SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy HH:mm");
+            SimpleDateFormat dateTimeFormat = new SimpleDateFormat("dd.MM.yyyy HH:mm");
             try {
-                beginDate = df.parse(this.txtEventBeginDateField.getText() + " " + this.cmbEventBeginTime.getSelectedItem().toString());
+                beginDate = dateTimeFormat.parse(this.txtEventBeginDateField.getText() + " " + this.cmbEventBeginTime.getSelectedItem().toString());
 
             } catch (Throwable t) {
                 log.error(t);
@@ -1116,7 +1117,7 @@ public class NewEventPanel extends javax.swing.JPanel implements QuickDateSelect
                 this.txtEventEndDateField.setText(this.txtEventBeginDateField.getText());
             }
             try {
-                endDate = df.parse(this.txtEventEndDateField.getText() + " " + this.cmbEventEndTime.getSelectedItem().toString());
+                endDate = dateTimeFormat.parse(this.txtEventEndDateField.getText() + " " + this.cmbEventEndTime.getSelectedItem().toString());
             } catch (Throwable t) {
                 log.error(t);
                 JOptionPane.showMessageDialog(this, "Ungültiges Enddatum / Zeit", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
@@ -1240,20 +1241,17 @@ public class NewEventPanel extends javax.swing.JPanel implements QuickDateSelect
     }
 
     public void setBeginDate(Date d) {
-        SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
-        this.txtEventBeginDateField.setText(df.format(d));
         
-        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm");
-        this.cmbEventBeginTime.setSelectedItem(sdf.format(d));
+        this.txtEventBeginDateField.setText(dateFormat.format(d));
+        
+        this.cmbEventBeginTime.setSelectedItem(timeFormat.format(d));
     }
 
     public void setEndDate(Date d) {
 
-        SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
-        this.txtEventEndDateField.setText(df.format(d));
+        this.txtEventEndDateField.setText(dateFormat.format(d));
         
-        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm");
-        this.cmbEventEndTime.setSelectedItem(sdf.format(d));
+        this.cmbEventEndTime.setSelectedItem(timeFormat.format(d));
     }
     
     public void setEventType(int eventType) {
