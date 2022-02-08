@@ -1741,7 +1741,9 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                 this.pnlCloudConnection.setCloudPath(u.getCloudPath());
                 this.pnlCloudConnection.setCloudPort(u.getCloudPort());
                 this.pnlCloudConnection.setCloudUser(u.getCloudUser());
-                this.pnlCloudConnection.setCloudPassword(u.getCloudPassword());
+                this.pnlCloudConnection.setCloudPassword("");
+                if(u.getCloudPassword()!=null && !"".equals(u.getCloudPassword()))
+                    this.pnlCloudConnection.setCloudPassword(Crypto.decrypt(u.getCloudPassword()));
                 this.pnlCloudConnection.setSsl(u.isCloudSsl());
 
                 this.txtVoipPassword.setText(u.getVoipPassword());
@@ -1916,7 +1918,12 @@ public class UserAdministrationDialog extends javax.swing.JDialog {
                     }
                 }
                 u.setCloudPath(cloudPath);
-                u.setCloudPassword(this.pnlCloudConnection.getCloudPassword());
+                if(this.pnlCloudConnection.getCloudPassword().length()>0) {
+                    u.setCloudPassword(Crypto.encrypt(this.pnlCloudConnection.getCloudPassword()));
+                } else {
+                    u.setCloudPassword(null);
+                }
+                
                 u.setCloudPort(this.pnlCloudConnection.getCloudPort());
                 u.setCloudSsl(this.pnlCloudConnection.isSsl());
                 u.setCloudUser(this.pnlCloudConnection.getCloudUser());
