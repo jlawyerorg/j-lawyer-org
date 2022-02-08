@@ -57,11 +57,7 @@ public class HeaderPanel extends JPanel {
 	private void init() {
 
 		this.setOpaque(false);
-
-//		String strDay = ResourceBundle.getBundle("/de/costache/calendar/calendar", this.getLocale()).getString("day");
-//		String strWeek = ResourceBundle.getBundle("/de/costache/calendar/calendar", this.getLocale()).getString("week");
-//		String strMonth = ResourceBundle.getBundle("/de/costache/calendar/calendar", this.getLocale()).getString("month");
-                
+               
                 String strDay = "Tag";
 		String strWeek = "Woche";
 		String strMonth = "Monat";

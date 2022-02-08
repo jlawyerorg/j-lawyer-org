@@ -15,14 +15,9 @@
  */
 package de.costache.calendar.ui.strategy;
 
-import de.costache.calendar.model.CalendarEvent;
-import de.costache.calendar.util.CalendarUtil;
 
 import java.awt.*;
-import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Date;
-import java.util.List;
 import themes.colors.DefaultColorTheme;
 
 /**
@@ -51,12 +46,9 @@ public class Config {
         lineColor = new Color(220, 220, 220);
         middleLineColor = new Color(240, 240, 240);
 
-        //todayHeaderBackgroundColor = new Color(240, 230, 140, 128);
         todayHeaderBackgroundColor = DefaultColorTheme.COLOR_LOGO_BLUE;
-        //dayHeaderBackgroundColor = new Color(173, 216, 230, 200);
         dayHeaderBackgroundColor = DefaultColorTheme.COLOR_LOGO_GREEN;
 
-        //todayHeaderForegroundColor = Color.black;
         todayHeaderForegroundColor = Color.white;
         dayHeaderForegroundColor = Color.black;
 
@@ -66,14 +58,11 @@ public class Config {
         workingHoursStart = 8;
         workingHoursEnd = 18;
 
-        //outsideWorkingHoursColor = new Color(148, 197, 217, 40);
         outsideWorkingHoursColor = DefaultColorTheme.COLOR_LIGHT_GREY;
-        //dayDisabledBackgroundColor = new Color(148, 197, 217, 128);
         dayDisabledBackgroundColor = DefaultColorTheme.COLOR_DARK_GREY;
 
         allDayPanelVisible = true;
 
-        //holidayBgColor = new Color(220, 220, 220);
         holidayBgColor = DefaultColorTheme.COLOR_LOGO_RED;
     }
 

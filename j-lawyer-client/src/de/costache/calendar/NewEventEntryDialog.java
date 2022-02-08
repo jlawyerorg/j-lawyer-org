@@ -664,7 +664,12 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package de.costache.calendar;
 
 import com.jdimension.jlawyer.client.editors.files.NewEventPanelListener;
+import com.jdimension.jlawyer.client.settings.ClientSettings;
+import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
 import com.jdimension.jlawyer.persistence.CalendarSetup;
+import com.jdimension.jlawyer.services.CalendarServiceRemote;
+import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import java.util.Date;
 
 /**
@@ -673,13 +678,36 @@ import java.util.Date;
  */
 public class NewEventEntryDialog extends javax.swing.JDialog implements NewEventPanelListener {
 
+    private CalendarPanel calendarPanel = null;
+    private ArchiveFileBean eventCase = null;
+
     /**
      * Creates new form NewEventEntryDialog
+     *
+     * @param calPanel
+     * @param parent
+     * @param modal
+     * @param eventCase
      */
-    public NewEventEntryDialog(java.awt.Frame parent, boolean modal) {
+    public NewEventEntryDialog(CalendarPanel calPanel, java.awt.Frame parent, boolean modal, ArchiveFileBean eventCase) {
         super(parent, modal);
         initComponents();
+        this.eventCase = eventCase;
+        this.calendarPanel = calPanel;
+        this.newEventPanel.setNewEventListener(this);
         this.newEventPanel.populateOptions();
+    }
+    
+    public void setBeginDate(Date d) {
+        this.newEventPanel.setBeginDate(d);
+    }
+    
+    public void setEndDate(Date d) {
+        this.newEventPanel.setEndDate(d);
+    }
+    
+    public void setEventType(int eventType) {
+        this.newEventPanel.setEventType(eventType);
     }
 
     /**
@@ -694,6 +722,7 @@ public class NewEventEntryDialog extends javax.swing.JDialog implements NewEvent
         newEventPanel = new com.jdimension.jlawyer.client.editors.files.NewEventPanel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        setTitle("neues Ereignis");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -701,14 +730,14 @@ public class NewEventEntryDialog extends javax.swing.JDialog implements NewEvent
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(newEventPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addComponent(newEventPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 576, Short.MAX_VALUE)
+                .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(newEventPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 636, Short.MAX_VALUE)
+                .addComponent(newEventPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 726, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -743,17 +772,15 @@ public class NewEventEntryDialog extends javax.swing.JDialog implements NewEvent
         //</editor-fold>
 
         /* Create and display the dialog */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                NewEventEntryDialog dialog = new NewEventEntryDialog(new javax.swing.JFrame(), true);
-                dialog.addWindowListener(new java.awt.event.WindowAdapter() {
-                    @Override
-                    public void windowClosing(java.awt.event.WindowEvent e) {
-                        System.exit(0);
-                    }
-                });
-                dialog.setVisible(true);
-            }
+        java.awt.EventQueue.invokeLater(() -> {
+            NewEventEntryDialog dialog = new NewEventEntryDialog(null, new javax.swing.JFrame(), true, null);
+            dialog.addWindowListener(new java.awt.event.WindowAdapter() {
+                @Override
+                public void windowClosing(java.awt.event.WindowEvent e) {
+                    System.exit(0);
+                }
+            });
+            dialog.setVisible(true);
         });
     }
 
@@ -763,6 +790,31 @@ public class NewEventEntryDialog extends javax.swing.JDialog implements NewEvent
 
     @Override
     public void addReview(int eventType, String reason, String description, Date beginDate, Date endDate, String assignee, String location, CalendarSetup calSetup) throws Exception {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        ArchiveFileReviewsBean ev = new ArchiveFileReviewsBean();
+        ev.setBeginDate(beginDate);
+        ev.setEndDate(endDate);
+        ev.setEventType(eventType);
+        ev.setSummary(reason);
+        ev.setDescription(description);
+        ev.setArchiveFileKey(this.eventCase);
+        ev.setDoneBoolean(false);
+        ev.setAssignee(assignee);
+        ev.setLocation(location);
+        ev.setCalendarSetup(calSetup);
+
+        ClientSettings settings = ClientSettings.getInstance();
+
+        JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+        CalendarServiceRemote calService = locator.lookupCalendarServiceRemote();
+
+        ArchiveFileReviewsBean reviewDto = calService.addReview(this.eventCase.getId(), ev);
+
+        this.calendarPanel.addCalendarEvent(reviewDto);
+    }
+
+    @Override
+    public void closeNewEventListener() {
+        this.setVisible(false);
+        this.dispose();
     }
 }

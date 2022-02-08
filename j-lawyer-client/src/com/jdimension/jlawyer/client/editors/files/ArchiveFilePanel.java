@@ -5524,6 +5524,11 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         return true;
     }
 
+    @Override
+    public void closeNewEventListener() {
+        // not relevant
+    }
+
     protected class DropTargetHandler implements DropTargetListener {
 
         private JPanel p = null;

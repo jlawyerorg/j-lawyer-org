@@ -666,11 +666,11 @@ package de.costache.calendar;
 import com.jdimension.jlawyer.client.configuration.PopulateOptionsEditor;
 import com.jdimension.jlawyer.client.editors.EditorsRegistry;
 import com.jdimension.jlawyer.client.editors.ThemeableEditor;
+import com.jdimension.jlawyer.client.editors.documents.SearchAndAssignDialog;
 import com.jdimension.jlawyer.client.editors.files.ArchiveFilePanel;
 import com.jdimension.jlawyer.client.utils.FrameUtils;
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileReviewsBean;
-import com.jdimension.jlawyer.persistence.EventTypes;
 import de.costache.calendar.events.IntervalChangedEvent;
 import de.costache.calendar.events.IntervalSelectionEvent;
 import de.costache.calendar.events.ModelChangedEvent;
@@ -706,7 +706,6 @@ import org.apache.log4j.Logger;
 public class CalendarPanel extends javax.swing.JPanel {
 
     private static final Logger log=Logger.getLogger(CalendarPanel.class.getName());
-    //private final SimpleDateFormat sdf = new SimpleDateFormat("dd MM yyyy HH:mm:ss:SSS");
 
     private JMenuBar menuBar;
     private JMenu fileMenu;
@@ -881,7 +880,7 @@ public class CalendarPanel extends javax.swing.JPanel {
 
     }
     
-    private void addCalendarEvent(ArchiveFileReviewsBean rev) {
+    public void addCalendarEvent(ArchiveFileReviewsBean rev) {
         
             if(rev.getBeginDate()==null)
                 return;
@@ -1030,19 +1029,23 @@ public class CalendarPanel extends javax.swing.JPanel {
 //                    + event.getIntervalEnd() + "\n");
             
 
-            NewEventEntryDialog dlg=new NewEventEntryDialog(EditorsRegistry.getInstance().getMainWindow(), true);
-            FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
+            SearchAndAssignDialog dlg = new SearchAndAssignDialog(EditorsRegistry.getInstance().getMainWindow(), true, null, null);
             dlg.setVisible(true);
+            ArchiveFileBean sel = dlg.getCaseSelection();
+            dlg.dispose();
+            
+            if(sel==null)
+                return;
 
-//            ArchiveFileReviewsBean ev=new ArchiveFileReviewsBean();
-//            ev.setBeginDate(event.getIntervalStart());
-//            ev.setEndDate(event.getIntervalEnd());
-//            ev.setEventType(EventTypes.EVENTTYPE_EVENT);
-//            ev.setSummary("sum1");
-//            ev.setDescription("description");
-//            ArchiveFileBean evc=new ArchiveFileBean();
-//            ev.setArchiveFileKey(evc);
-//            this.addCalendarEvent(ev);
+            NewEventEntryDialog dlg2=new NewEventEntryDialog(this, EditorsRegistry.getInstance().getMainWindow(), true, sel);
+            dlg2.setEventType(ArchiveFileReviewsBean.EVENTTYPE_FOLLOWUP);
+            if((event.getIntervalEnd().getTime()-event.getIntervalStart().getTime())>(30*60*1000l)) {
+                dlg2.setEventType(ArchiveFileReviewsBean.EVENTTYPE_EVENT);
+            }
+            dlg2.setBeginDate(event.getIntervalStart());
+            dlg2.setEndDate(event.getIntervalEnd());
+            FrameUtils.centerDialog(dlg2, EditorsRegistry.getInstance().getMainWindow());
+            dlg2.setVisible(true);
             
         });
 
