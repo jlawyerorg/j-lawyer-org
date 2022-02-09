@@ -1241,7 +1241,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
 
         ProgressIndicator pi = new ProgressIndicator(EditorsRegistry.getInstance().getMainWindow(), true);
         pi.setShowCancelButton(false);
-        ArchiveFileDetailLoadAction a = new ArchiveFileDetailLoadAction(pi, this, dto.getId(), this.dto, this.caseFolderPanel1, this.tblHistory, this.pnlInvolvedParties, this.tblReviewReasons, this.tagPanel, this.documentTagPanel, this.readOnly, BeaAccess.isBeaEnabled(), selectDocumentWithFileName, this.lblArchivedSince, dto.getArchivedBoolean(), this.popDocumentFavorites, this.cmbFormType, this.pnlAddForms, this.tabPaneForms, this.cmbGroup, this.tblGroups);
+        ArchiveFileDetailLoadAction a = new ArchiveFileDetailLoadAction(pi, this, dto.getId(), this.dto, this.caseFolderPanel1, this.tblHistory, this.pnlInvolvedParties, this.tblReviewReasons, this.tagPanel, this.documentTagPanel, this.readOnly, BeaAccess.isBeaEnabled(), selectDocumentWithFileName, this.lblArchivedSince, dto.getArchivedBoolean(), this.popDocumentFavorites, this.cmbFormType, this.pnlAddForms, this.tabPaneForms, this.cmbGroup, this.tblGroups, this.togCaseSync);
 
         a.start();
 
@@ -1338,6 +1338,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.txtCustom1.setText("");
         this.txtCustom2.setText("");
         this.taCustom3.setText("");
+        
+        this.togCaseSync.setEnabled(false);
 
         this.tagPanel.removeAll();
         ArrayList<String> sortedTags = new ArrayList<>();
@@ -1688,6 +1690,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         cmdSave = new javax.swing.JButton();
         cmdHeaderAddNote = new javax.swing.JButton();
         cmdFavoriteDocuments = new javax.swing.JButton();
+        togCaseSync = new javax.swing.JToggleButton();
 
         mnuSetReviewDone.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/agt_action_success.png"))); // NOI18N
         mnuSetReviewDone.setText("erledigt");
@@ -3070,6 +3073,15 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
             }
         });
 
+        togCaseSync.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/outline_no_cell_black_48dp.png"))); // NOI18N
+        togCaseSync.setToolTipText("in meine App synchronisieren");
+        togCaseSync.setSelectedIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/outline_security_update_good_black_48dp.png"))); // NOI18N
+        togCaseSync.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                togCaseSyncActionPerformed(evt);
+            }
+        });
+
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -3088,6 +3100,8 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(togCaseSync)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(cmdFavoriteDocuments)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(cmdHeaderAddNote)))
@@ -3100,10 +3114,12 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(jPanel13, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(cmdHeaderAddNote)
-                    .add(cmdFavoriteDocuments)
                     .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
                         .add(org.jdesktop.layout.GroupLayout.LEADING, lblPanelTitle, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .add(org.jdesktop.layout.GroupLayout.LEADING, jLabel2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                        .add(org.jdesktop.layout.GroupLayout.LEADING, jLabel2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
+                        .add(org.jdesktop.layout.GroupLayout.LEADING, togCaseSync, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .add(org.jdesktop.layout.GroupLayout.LEADING, cmdFavoriteDocuments, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(lblHeaderInfo)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
@@ -5295,6 +5311,24 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
         this.saveDocumentsLocally(true);
     }//GEN-LAST:event_mnuSaveDocumentsLocallyPdfActionPerformed
 
+    private void togCaseSyncActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_togCaseSyncActionPerformed
+        if (this.dto == null || this.dto.getId() == null) {
+            JOptionPane.showMessageDialog(this, "Akte muss erst gespeichert werden.", com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_HINT, JOptionPane.INFORMATION_MESSAGE);
+        }
+
+        ClientSettings settings = ClientSettings.getInstance();
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            ArchiveFileServiceRemote caseService = locator.lookupArchiveFileServiceRemote();
+            ArrayList<String> caseIds = new ArrayList<>();
+            caseIds.add(this.dto.getId());
+            caseService.enableCaseSync(caseIds, UserSettings.getInstance().getCurrentUser().getPrincipalId(), this.togCaseSync.isSelected());
+        } catch (Throwable ex) {
+            log.error("Error enabling case sync", ex);
+            JOptionPane.showMessageDialog(this, "Synchronisation kann nicht aktiviert werden: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+        }
+    }//GEN-LAST:event_togCaseSyncActionPerformed
+
     public void switchToAddressView(AddressBean selection) {
         try {
             Object editor = null;
@@ -5772,6 +5806,7 @@ public class ArchiveFilePanel extends javax.swing.JPanel implements ThemeableEdi
     private javax.swing.JTable tblHistory;
     private javax.swing.JTable tblReviewReasons;
     private javax.swing.JScrollPane tblReviewReasonsPane;
+    private javax.swing.JToggleButton togCaseSync;
     protected javax.swing.JTextField txtClaimNumber;
     protected javax.swing.JTextField txtClaimValue;
     protected javax.swing.JTextField txtCustom1;

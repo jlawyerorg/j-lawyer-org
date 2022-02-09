@@ -727,10 +727,11 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
     private JComboBox cmbGroups = null;
     private JTable tblGroups = null;
     private CaseFolderPanel caseFolders = null;
+    private JToggleButton togCaseSync=null;
 
     private SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.GERMAN);
 
-    public ArchiveFileDetailLoadAction(ProgressIndicator i, ArchiveFilePanel owner, String archiveFileKey, ArchiveFileBean caseDto, CaseFolderPanel caseFolders, JTable historyTarget, InvolvedPartiesPanel contactsForCasePanel, JTable tblReviews, JPanel tagPanel, JPanel documentTagPanel, boolean readOnly, boolean beaEnabled, String selectDocumentWithFileName, JLabel lblArchivedSince, boolean isArchived, JPopupMenu popDocumentFavorites, JComboBox formTypes, JPanel formsPanel, JTabbedPane tabPaneForms, JComboBox cmbGroups, JTable tblGroups) {
+    public ArchiveFileDetailLoadAction(ProgressIndicator i, ArchiveFilePanel owner, String archiveFileKey, ArchiveFileBean caseDto, CaseFolderPanel caseFolders, JTable historyTarget, InvolvedPartiesPanel contactsForCasePanel, JTable tblReviews, JPanel tagPanel, JPanel documentTagPanel, boolean readOnly, boolean beaEnabled, String selectDocumentWithFileName, JLabel lblArchivedSince, boolean isArchived, JPopupMenu popDocumentFavorites, JComboBox formTypes, JPanel formsPanel, JTabbedPane tabPaneForms, JComboBox cmbGroups, JTable tblGroups, JToggleButton togCaseSync) {
         super(i, false);
 
         this.caseFolders = caseFolders;
@@ -754,6 +755,7 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
         this.selectDocumentWithFileName = selectDocumentWithFileName;
         this.cmbGroups = cmbGroups;
         this.tblGroups = tblGroups;
+        this.togCaseSync=togCaseSync;
 
     }
 
@@ -1082,6 +1084,19 @@ public class ArchiveFileDetailLoadAction extends ProgressableAction {
                     }
                 }));
 
+        List<CaseSyncSettings> syncSettings=fileService.getCaseSyncs(archiveFileKey);
+        boolean syncEnabled=false;
+        for(CaseSyncSettings syncSet: syncSettings) {
+            if(syncSet.getUser().equals(UserSettings.getInstance().getCurrentUser()))
+                syncEnabled=true;
+        }
+        final boolean syncEnabled2=syncEnabled;
+        SwingUtilities.invokeLater(
+                new Thread(() -> {
+                    togCaseSync.setSelected(!syncEnabled2);
+                    togCaseSync.doClick();
+                }));
+        
         EditorsRegistry.getInstance().clearStatus(true);
         ThreadUtils.setDefaultCursor(this.owner);
 

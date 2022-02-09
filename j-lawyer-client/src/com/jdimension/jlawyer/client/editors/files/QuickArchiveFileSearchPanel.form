@@ -44,6 +44,30 @@
             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuDeleteSelectedArchiveFilesActionPerformed"/>
           </Events>
         </MenuItem>
+        <MenuItem class="javax.swing.JMenuItem" name="mnuEnableCaseSync">
+          <Properties>
+            <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+              <Image iconType="3" name="/icons16/outline_security_update_good_black_48dp.png"/>
+            </Property>
+            <Property name="text" type="java.lang.String" value="in App synchronisieren"/>
+            <Property name="toolTipText" type="java.lang.String" value="gew&#xe4;hlte Akten in der App bereitstellen"/>
+          </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuEnableCaseSyncActionPerformed"/>
+          </Events>
+        </MenuItem>
+        <MenuItem class="javax.swing.JMenuItem" name="mnuDisableCaseSync">
+          <Properties>
+            <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+              <Image iconType="3" name="/icons16/outline_no_cell_black_48dp.png"/>
+            </Property>
+            <Property name="text" type="java.lang.String" value="aus der App entfernen"/>
+            <Property name="toolTipText" type="java.lang.String" value="gew&#xe4;hlte Akten aus der App entfernen"/>
+          </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuDisableCaseSyncActionPerformed"/>
+          </Events>
+        </MenuItem>
       </SubComponents>
     </Container>
     <Container class="javax.swing.JPopupMenu" name="popTagFilter">

@@ -764,7 +764,9 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
     private CaseFolderSettingsFacadeLocal caseFolderSettingsFacade;
     @EJB
     private CalendarServiceLocal calendarFacade;
-    
+    @EJB
+    private CaseSyncSettingsFacadeLocal caseSyncFacade;
+
     // custom hooks support
     @Inject
     Event<CaseCreatedEvent> newCaseEvent;
@@ -1098,7 +1100,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         } catch (Throwable t) {
             log.error("could not remove documents for archive file " + id, t);
         }
-        
+
         CaseRemovedEvent evt = new CaseRemovedEvent();
         evt.setCaseId(id);
         this.removedCaseEvent.fireAsync(evt);
@@ -1207,11 +1209,11 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             aFile.setRootFolder(rootFolder);
             this.archiveFileFacade.edit(aFile);
         }
-        
+
         CaseCreatedEvent evt = new CaseCreatedEvent();
         evt.setCaseId(id);
         this.newCaseEvent.fireAsync(evt);
-        
+
         return aFile;
 
     }
@@ -1413,8 +1415,9 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             throw new EJBException("Die zuletzt geänderten Akten konnten nicht ermittelt werden.", sqle);
         } finally {
             try {
-                if (st!=null)
+                if (st != null) {
                     st.close();
+                }
             } catch (Throwable t) {
                 log.error(t);
             }
@@ -1579,11 +1582,11 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             aFile.setRootFolder(rootFolder);
             this.archiveFileFacade.edit(aFile);
         }
-        
+
         CaseCreatedEvent evt = new CaseCreatedEvent();
         evt.setCaseId(id);
         this.newCaseEvent.fireAsync(evt);
-        
+
         return aFile;
     }
 
@@ -1664,8 +1667,8 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         } catch (Throwable t) {
             log.error("Error publishing search index request ADD", t);
         }
-        
-        DocumentCreatedEvent evt=new DocumentCreatedEvent();
+
+        DocumentCreatedEvent evt = new DocumentCreatedEvent();
         evt.setDocumentId(docId);
         evt.setCaseId(aFile.getId());
         evt.setDocumentName(fileName);
@@ -1770,8 +1773,8 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         db.setDeletedBy(context.getCallerPrincipal().getName());
         db.setFolder(aFile.getRootFolder());
         this.archiveFileDocumentsFacade.edit(db);
-        
-        DocumentRemovedEvent evt=new DocumentRemovedEvent();
+
+        DocumentRemovedEvent evt = new DocumentRemovedEvent();
         evt.setDocumentId(id);
         evt.setCaseId(aFile.getId());
         evt.setDocumentName(db.getName());
@@ -1844,12 +1847,12 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
         this.archiveFileHistoryFacade.create(newHistEntry);
 
-        DocumentUpdatedEvent evt=new DocumentUpdatedEvent();
+        DocumentUpdatedEvent evt = new DocumentUpdatedEvent();
         evt.setDocumentId(id);
         evt.setCaseId(aId);
         evt.setDocumentName(db.getName());
         this.updatedDocumentEvent.fireAsync(evt);
-        
+
         return true;
     }
 
@@ -2017,8 +2020,8 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         } catch (Throwable t) {
             log.error("Error publishing search index request ADD", t);
         }
-        
-        DocumentUpdatedEvent evt=new DocumentUpdatedEvent();
+
+        DocumentUpdatedEvent evt = new DocumentUpdatedEvent();
         evt.setDocumentId(id);
         evt.setCaseId(aFile.getId());
         evt.setDocumentName(db.getName());
@@ -2146,7 +2149,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         newHistEntry.setChangeDescription(historyText);
         newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
         this.archiveFileHistoryFacade.create(newHistEntry);
-        
+
         CaseTagChangedEvent evt = new CaseTagChangedEvent();
         evt.setCaseId(archiveFileId);
         evt.setActive(active);
@@ -2187,7 +2190,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         newHistEntry.setChangeDescription(historyText);
         newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
         this.archiveFileHistoryFacade.create(newHistEntry);
-        
+
         DocumentTagChangedEvent evt = new DocumentTagChangedEvent();
         evt.setCaseId(aFile.getArchiveFileKey().getId());
         evt.setDocumentId(documentId);
@@ -2206,11 +2209,11 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         List resultList = this.archiveFileTagsFacade.findByArchiveFileKey(aFile);
         return resultList;
     }
-    
+
     @Override
     @RolesAllowed({"readArchiveFileRole"})
-    public HashMap<String,ArrayList<ArchiveFileTagsBean>> getTags(List<String> archiveFileId) throws Exception {
-        
+    public HashMap<String, ArrayList<ArchiveFileTagsBean>> getTags(List<String> archiveFileId) throws Exception {
+
         ArrayList<String> allowedCases = null;
         try {
             allowedCases = SecurityUtils.getAllowedCasesForUser(context.getCallerPrincipal().getName(), this.securityFacade);
@@ -2218,19 +2221,20 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             log.error("Unable to determine allowed cases for user " + context.getCallerPrincipal().getName(), ex);
             throw new EJBException("Akten für Nutzer " + context.getCallerPrincipal().getName() + "' konnten nicht ermittelt werden.", ex);
         }
-        
-        HashMap<String,ArrayList<ArchiveFileTagsBean>> returnList=new HashMap<>();
-        if(allowedCases==null)
+
+        HashMap<String, ArrayList<ArchiveFileTagsBean>> returnList = new HashMap<>();
+        if (allowedCases == null) {
             return returnList;
-        
-        for(String aId: archiveFileId) {
-            if(allowedCases.contains(aId)) {
+        }
+
+        for (String aId : archiveFileId) {
+            if (allowedCases.contains(aId)) {
                 ArchiveFileBean aFile = this.archiveFileFacade.find(aId);
                 List resultList = this.archiveFileTagsFacade.findByArchiveFileKey(aFile);
                 returnList.put(aId, new ArrayList<>(resultList));
             }
         }
-        
+
         return returnList;
     }
 
@@ -2243,11 +2247,11 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         List resultList = this.documentTagsFacade.findByDocumentKey(aFile);
         return resultList;
     }
-    
+
     @Override
     @RolesAllowed({"readArchiveFileRole"})
-    public HashMap<String,ArrayList<DocumentTagsBean>> getDocumentTags(List<String> documentId) throws Exception {
-        
+    public HashMap<String, ArrayList<DocumentTagsBean>> getDocumentTags(List<String> documentId) throws Exception {
+
         ArrayList<String> allowedCases = null;
         try {
             allowedCases = SecurityUtils.getAllowedCasesForUser(context.getCallerPrincipal().getName(), this.securityFacade);
@@ -2255,21 +2259,22 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             log.error("Unable to determine allowed cases for user " + context.getCallerPrincipal().getName(), ex);
             throw new EJBException("Akten für Nutzer " + context.getCallerPrincipal().getName() + "' konnten nicht ermittelt werden.", ex);
         }
-        
-        HashMap<String,ArrayList<DocumentTagsBean>> returnList=new HashMap<>();
-        if(allowedCases==null)
+
+        HashMap<String, ArrayList<DocumentTagsBean>> returnList = new HashMap<>();
+        if (allowedCases == null) {
             return returnList;
-        
-        for(String dId: documentId) {
+        }
+
+        for (String dId : documentId) {
             ArchiveFileDocumentsBean aFile = this.archiveFileDocumentsFacade.find(dId);
-            if(allowedCases.contains(aFile.getArchiveFileKey().getId())) {
+            if (allowedCases.contains(aFile.getArchiveFileKey().getId())) {
                 List resultList = this.documentTagsFacade.findByDocumentKey(aFile);
                 returnList.put(dId, new ArrayList<>(resultList));
             }
         }
-        
+
         return returnList;
-        
+
     }
 
     @Override
@@ -3034,8 +3039,8 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         newHistEntry.setChangeDescription("Dokumentdatum geändert: " + db.getName());
         newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
         this.archiveFileHistoryFacade.create(newHistEntry);
-        
-        DocumentUpdatedEvent evt=new DocumentUpdatedEvent();
+
+        DocumentUpdatedEvent evt = new DocumentUpdatedEvent();
         evt.setDocumentId(id);
         evt.setCaseId(aId);
         evt.setDocumentName(db.getName());
@@ -3102,7 +3107,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             }
         }
 
-        boolean threeColumns=false;
+        boolean threeColumns = false;
         HashMap<String, ArrayList<String>> list = new HashMap<>();
         try {
             con = utils.getConnection();
@@ -3167,7 +3172,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                     st.setString(index + 7, wildCard);
                 } else {
                     // with archive but no tag
-                    threeColumns=true;
+                    threeColumns = true;
                     st = con.prepareStatement("select archiveFileKey, tagName, tagName from case_tags where archiveFileKey in (" + PS_SEARCHENHANCED_2 + ")");
                     st.setString(1, wildCard);
                     st.setString(2, wildCard);
@@ -3200,41 +3205,41 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 //st = con.prepareStatement("select distinct case_tags.archiveFileKey, case_tags.tagName, document_tags.tagName from case_tags, case_documents, document_tags where case_tags.archiveFileKey in (" + "select cases.id from cases, case_tags where (ucase(cases.name) like ? or ucase(fileNumber) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(subjectField) like ?) and archived=0 and ((case_tags.tagName in (" + inClauseCase + ") and case_tags.archiveFileKey=cases.id) or (document_tags.tagName in (" + inClauseDoc + ") and document_tags.documentKey=case_documents.id and case_documents.archiveFileKey=cases.id)))");
                 //st = con.prepareStatement("select distinct case_tags.archiveFileKey, case_tags.tagName, document_tags.tagName from case_tags, case_documents, document_tags where case_tags.archiveFileKey in (" + "select cases.id from cases where (ucase(cases.name) like ? or ucase(fileNumber) like ? or ucase(filenumberext) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(subjectField) like ?) and archived=0 and ((case_tags.tagName in (" + inClauseCase + ") and case_tags.archiveFileKey=cases.id) or (document_tags.tagName in (" + inClauseDoc + ") and document_tags.documentKey=case_documents.id and case_documents.archiveFileKey=cases.id)))");
                 st = con.prepareStatement("select cid, tagname from (\n"
-                            + "select case_tags.archiveFileKey cid, case_tags.tagName tagname from case_tags\n"
-                            + "union \n"
-                            + "select cases.id cid, document_tags.tagName tagname from cases, document_tags, case_documents where document_tags.tagName in (" + inClauseDoc + ") and document_tags.documentKey=case_documents.id and case_documents.archiveFileKey=cases.id and case_documents.deleted=0\n"
-                            + ") alltags1\n"
-                            + "where cid in (\n"
-                            + "    select distinct (cid) from (\n"
-                            + "select case_tags.archiveFileKey cid, case_tags.tagName tagname from case_tags where (case_tags.tagName in (" + inClauseCase + "))\n"
-                            + "union \n"
-                            + "select cases.id cid, document_tags.tagName tagname from cases, document_tags, case_documents where document_tags.tagName in (" + inClauseDoc + ") and document_tags.documentKey=case_documents.id and case_documents.archiveFileKey=cases.id and case_documents.deleted=0\n"
-                            + ") alltags2\n"
-                            + "where cid in (select cases.id from cases where archived=0 and (ucase(cases.name) like ? or ucase(fileNumber) like ? or ucase(filenumberext) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(subjectField) like ?))\n"
-                            + ")");
-                    int index = 1;
-                    for (String t : documentTagNames) {
-                        st.setString(index, t);
-                        index = index + 1;
-                    }
-                    for (String t : tagNames) {
-                        st.setString(index, t);
-                        index = index + 1;
-                    }
-                    for (String t : documentTagNames) {
-                        st.setString(index, t);
-                        index = index + 1;
-                    }
-                    st.setString(index, wildCard);
-                    st.setString(index + 1, wildCard);
-                    st.setString(index + 2, wildCard);
-                    st.setString(index + 3, wildCard);
-                    st.setString(index + 4, wildCard);
-                    st.setString(index + 5, wildCard);
-                    st.setString(index + 6, wildCard);
-                    st.setString(index + 7, wildCard);
+                        + "select case_tags.archiveFileKey cid, case_tags.tagName tagname from case_tags\n"
+                        + "union \n"
+                        + "select cases.id cid, document_tags.tagName tagname from cases, document_tags, case_documents where document_tags.tagName in (" + inClauseDoc + ") and document_tags.documentKey=case_documents.id and case_documents.archiveFileKey=cases.id and case_documents.deleted=0\n"
+                        + ") alltags1\n"
+                        + "where cid in (\n"
+                        + "    select distinct (cid) from (\n"
+                        + "select case_tags.archiveFileKey cid, case_tags.tagName tagname from case_tags where (case_tags.tagName in (" + inClauseCase + "))\n"
+                        + "union \n"
+                        + "select cases.id cid, document_tags.tagName tagname from cases, document_tags, case_documents where document_tags.tagName in (" + inClauseDoc + ") and document_tags.documentKey=case_documents.id and case_documents.archiveFileKey=cases.id and case_documents.deleted=0\n"
+                        + ") alltags2\n"
+                        + "where cid in (select cases.id from cases where archived=0 and (ucase(cases.name) like ? or ucase(fileNumber) like ? or ucase(filenumberext) like ? or ucase(reason) like ? or ucase(custom1) like ? or ucase(custom2) like ? or ucase(custom3) like ? or ucase(subjectField) like ?))\n"
+                        + ")");
+                int index = 1;
+                for (String t : documentTagNames) {
+                    st.setString(index, t);
+                    index = index + 1;
+                }
+                for (String t : tagNames) {
+                    st.setString(index, t);
+                    index = index + 1;
+                }
+                for (String t : documentTagNames) {
+                    st.setString(index, t);
+                    index = index + 1;
+                }
+                st.setString(index, wildCard);
+                st.setString(index + 1, wildCard);
+                st.setString(index + 2, wildCard);
+                st.setString(index + 3, wildCard);
+                st.setString(index + 4, wildCard);
+                st.setString(index + 5, wildCard);
+                st.setString(index + 6, wildCard);
+                st.setString(index + 7, wildCard);
             } else {
-                threeColumns=true;
+                threeColumns = true;
                 // without archive and no tag
                 st = con.prepareStatement("select archiveFileKey, tagName, tagName from case_tags where archiveFileKey in (" + PS_SEARCHENHANCED_4 + ")");
                 st.setString(1, wildCard);
@@ -3259,8 +3264,8 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
                 if (!tagList.contains(tagName)) {
                     tagList.add(tagName);
                 }
-                
-                if(threeColumns) {
+
+                if (threeColumns) {
                     String docTagName = rs.getString(3);
                     if (!tagList.contains(docTagName)) {
                         tagList.add(docTagName);
@@ -3377,8 +3382,8 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         } catch (Throwable t) {
             log.error("Error publishing search index request ADD", t);
         }
-        
-        DocumentCreatedEvent evt=new DocumentCreatedEvent();
+
+        DocumentCreatedEvent evt = new DocumentCreatedEvent();
         evt.setDocumentId(docId);
         evt.setCaseId(aFile.getId());
         evt.setDocumentName(fileName);
@@ -3476,7 +3481,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         newHistEntry.setChangeDescription("Aktenzeichen geändert: " + from + " --> " + to);
         newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
         this.archiveFileHistoryFacade.create(newHistEntry);
-        
+
         CaseUpdatedEvent evt = new CaseUpdatedEvent();
         evt.setCaseId(afb.getId());
         this.updatedCaseEvent.fireAsync(evt);
@@ -3679,7 +3684,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             newHistEntry.setChangeDescription("Etikett geändert: " + fromName + " -> " + toName);
             newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
             this.archiveFileHistoryFacade.create(newHistEntry);
-            
+
             CaseTagChangedEvent evt = new CaseTagChangedEvent();
             evt.setCaseId(t.getArchiveFileKey().getId());
             evt.setActive(false);
@@ -3712,7 +3717,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
             newHistEntry.setChangeDescription("Etikett für Dokument " + t.getDocumentKey().getName() + " geändert: " + fromName + " -> " + toName);
             newHistEntry.setPrincipal(context.getCallerPrincipal().getName());
             this.archiveFileHistoryFacade.create(newHistEntry);
-            
+
             DocumentTagChangedEvent evt = new DocumentTagChangedEvent();
             evt.setCaseId(t.getDocumentKey().getArchiveFileKey().getId());
             evt.setDocumentId(t.getDocumentKey().getId());
@@ -3761,11 +3766,11 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         this.archiveFileAddressesFacade.create(address);
 
         address = this.archiveFileAddressesFacade.find(id);
-        
+
         CaseUpdatedEvent evt = new CaseUpdatedEvent();
         evt.setCaseId(address.getArchiveFileKey().getId());
         this.updatedCaseEvent.fireAsync(evt);
-        
+
         return address;
 
     }
@@ -3845,7 +3850,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         CaseUpdatedEvent evt = new CaseUpdatedEvent();
         evt.setCaseId(aFile.getId());
         this.updatedCaseEvent.fireAsync(evt);
-        
+
         return this.archiveFileAddressesFacade.find(oldParty.getId());
     }
 
@@ -3867,7 +3872,7 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         this.archiveFileHistoryFacade.create(newHistEntry);
 
         this.archiveFileAddressesFacade.remove(db);
-        
+
         CaseUpdatedEvent evt = new CaseUpdatedEvent();
         evt.setCaseId(aFile.getId());
         this.updatedCaseEvent.fireAsync(evt);
@@ -4414,13 +4419,13 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
         } catch (Throwable t) {
             log.error("Error publishing search index request ADD", t);
         }
-        
-        DocumentCreatedEvent evt=new DocumentCreatedEvent();
+
+        DocumentCreatedEvent evt = new DocumentCreatedEvent();
         evt.setDocumentId(docId);
         evt.setCaseId(aFile.getId());
         evt.setDocumentName(db.getName());
         this.newDocumentEvent.fireAsync(evt);
-        
+
         return true;
     }
 
@@ -4541,6 +4546,53 @@ public class ArchiveFileService implements ArchiveFileServiceRemote, ArchiveFile
 
         return result;
 
+    }
+
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public void enableCaseSync(List<String> caseIds, String principalId, boolean enabled) throws Exception {
+        AppUserBean au = this.userFacade.find(principalId);
+        if (au == null) {
+            throw new Exception("Nutzer '" + principalId + "' nicht vorhanden!");
+        }
+
+        StringGenerator idGen=new StringGenerator();
+        for (String cId : caseIds) {
+            ArchiveFileBean afb = this.archiveFileFacade.find(cId);
+            if (afb == null) {
+                log.warn("Case " + cId + " does not exist - skip setting sync settings");
+                continue;
+            }
+            CaseSyncSettings syncSet=this.caseSyncFacade.findByCaseAndUser(afb, au);
+            if (enabled) {
+                if(syncSet==null) {
+                    syncSet=new CaseSyncSettings();
+                    syncSet.setId(idGen.getID().toString());
+                    syncSet.setArchiveFileKey(afb);
+                    syncSet.setUser(au);
+                    this.caseSyncFacade.create(syncSet);
+                }
+            } else {
+                if(syncSet!=null)
+                    this.caseSyncFacade.remove(syncSet);
+            }
+        }
+    }
+
+    @Override
+    @RolesAllowed({"readArchiveFileRole"})
+    public List<CaseSyncSettings> getCaseSyncs(String caseId) {
+        ArchiveFileBean afb = this.archiveFileFacade.find(caseId);
+        if (afb == null) {
+            return new ArrayList<>();
+        }
+
+        List<CaseSyncSettings> resultList = this.caseSyncFacade.findByCase(afb);
+        for (CaseSyncSettings s : resultList) {
+            // eager load
+            AppUserBean user = s.getUser();
+        }
+        return resultList;
     }
 
 }

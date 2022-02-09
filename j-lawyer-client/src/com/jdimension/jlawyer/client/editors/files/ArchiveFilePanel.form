@@ -485,6 +485,8 @@
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="lblPanelTitle" max="32767" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
+                      <Component id="togCaseSync" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
                       <Component id="cmdFavoriteDocuments" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="cmdHeaderAddNote" min="-2" max="-2" attributes="0"/>
@@ -501,10 +503,13 @@
               <Group type="103" groupAlignment="0" attributes="0">
                   <Component id="jPanel13" min="-2" max="-2" attributes="0"/>
                   <Component id="cmdHeaderAddNote" min="-2" max="-2" attributes="0"/>
-                  <Component id="cmdFavoriteDocuments" min="-2" max="-2" attributes="0"/>
                   <Group type="103" alignment="0" groupAlignment="1" max="-2" attributes="0">
                       <Component id="lblPanelTitle" alignment="0" max="32767" attributes="0"/>
                       <Component id="jLabel2" alignment="0" max="32767" attributes="0"/>
+                  </Group>
+                  <Group type="103" alignment="0" groupAlignment="1" max="-2" attributes="0">
+                      <Component id="togCaseSync" alignment="0" max="32767" attributes="0"/>
+                      <Component id="cmdFavoriteDocuments" alignment="0" max="32767" attributes="0"/>
                   </Group>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
@@ -2346,6 +2351,20 @@
       <Events>
         <EventHandler event="mousePressed" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="cmdFavoriteDocumentsMousePressed"/>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmdFavoriteDocumentsActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JToggleButton" name="togCaseSync">
+      <Properties>
+        <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+          <Image iconType="3" name="/icons16/outline_no_cell_black_48dp.png"/>
+        </Property>
+        <Property name="toolTipText" type="java.lang.String" value="in meine App synchronisieren"/>
+        <Property name="selectedIcon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+          <Image iconType="3" name="/icons16/outline_security_update_good_black_48dp.png"/>
+        </Property>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="togCaseSyncActionPerformed"/>
       </Events>
     </Component>
   </SubComponents>

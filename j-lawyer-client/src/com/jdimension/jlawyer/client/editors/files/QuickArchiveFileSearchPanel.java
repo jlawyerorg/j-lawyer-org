@@ -798,6 +798,8 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
         mnuOpenSelectedArchiveFile = new javax.swing.JMenuItem();
         mnuDuplicateSelectedArchiveFiles = new javax.swing.JMenuItem();
         mnuDeleteSelectedArchiveFiles = new javax.swing.JMenuItem();
+        mnuEnableCaseSync = new javax.swing.JMenuItem();
+        mnuDisableCaseSync = new javax.swing.JMenuItem();
         popTagFilter = new javax.swing.JPopupMenu();
         popDocumentTagFilter = new javax.swing.JPopupMenu();
         cmdTagFilter = new javax.swing.JButton();
@@ -843,6 +845,26 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
             }
         });
         popupArchiveFileActions.add(mnuDeleteSelectedArchiveFiles);
+
+        mnuEnableCaseSync.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/outline_security_update_good_black_48dp.png"))); // NOI18N
+        mnuEnableCaseSync.setText("in App synchronisieren");
+        mnuEnableCaseSync.setToolTipText("gewählte Akten in der App bereitstellen");
+        mnuEnableCaseSync.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuEnableCaseSyncActionPerformed(evt);
+            }
+        });
+        popupArchiveFileActions.add(mnuEnableCaseSync);
+
+        mnuDisableCaseSync.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/outline_no_cell_black_48dp.png"))); // NOI18N
+        mnuDisableCaseSync.setText("aus der App entfernen");
+        mnuDisableCaseSync.setToolTipText("gewählte Akten aus der App entfernen");
+        mnuDisableCaseSync.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuDisableCaseSyncActionPerformed(evt);
+            }
+        });
+        popupArchiveFileActions.add(mnuDisableCaseSync);
 
         cmdTagFilter.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons16/favorites.png"))); // NOI18N
         cmdTagFilter.setToolTipText("nach Akten-Etiketten filtern");
@@ -1261,7 +1283,42 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
         settings.setSetting(UserSettings.CONF_SEARCH_WITHARCHIVE, "" + includeArchive);
     }//GEN-LAST:event_chkIncludeArchiveActionPerformed
 
+    private void mnuEnableCaseSyncActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuEnableCaseSyncActionPerformed
+        this.toggleCaseSync(true);
+    }//GEN-LAST:event_mnuEnableCaseSyncActionPerformed
 
+    private void mnuDisableCaseSyncActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuDisableCaseSyncActionPerformed
+        this.toggleCaseSync(false);
+    }//GEN-LAST:event_mnuDisableCaseSyncActionPerformed
+
+    private void toggleCaseSync(boolean enable) {
+        int[] selectedIndices = this.tblResults.getSelectedRows();
+        Arrays.sort(selectedIndices);
+        ArrayList<String> ids = new ArrayList<>();
+        for (int i = 0; i < selectedIndices.length; i++) {
+            QuickArchiveFileSearchRowIdentifier id = (QuickArchiveFileSearchRowIdentifier) this.tblResults.getValueAt(selectedIndices[i], 0);
+            ids.add(id.getArchiveFileDTO().getId());
+        }
+
+        ClientSettings settings = ClientSettings.getInstance();
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+
+            ArchiveFileServiceRemote fileService = locator.lookupArchiveFileServiceRemote();
+            fileService.enableCaseSync(ids, UserSettings.getInstance().getCurrentUser().getPrincipalId(), enable);
+            String status="aktiviert";
+            if(!enable)
+                status="deaktiviert";
+            JOptionPane.showMessageDialog(this, "Synchronisation für " + ids.size() + " Akten " + status, com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_HINT, JOptionPane.INFORMATION_MESSAGE);
+
+        } catch (Exception ex) {
+            log.error("Error setting case sync settings", ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim Konfigurieren der Synchronisation: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            EditorsRegistry.getInstance().clearStatus(false);
+        }
+    }
+    
+    
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JCheckBox chkIncludeArchive;
     private javax.swing.JButton cmdDocumentTagFilter;
@@ -1275,7 +1332,9 @@ public class QuickArchiveFileSearchPanel extends javax.swing.JPanel implements T
     protected javax.swing.JLabel lblPanelTitle;
     private javax.swing.JLabel lblSummary;
     private javax.swing.JMenuItem mnuDeleteSelectedArchiveFiles;
+    private javax.swing.JMenuItem mnuDisableCaseSync;
     private javax.swing.JMenuItem mnuDuplicateSelectedArchiveFiles;
+    private javax.swing.JMenuItem mnuEnableCaseSync;
     private javax.swing.JMenuItem mnuOpenSelectedArchiveFile;
     private javax.swing.JPopupMenu popDocumentTagFilter;
     private javax.swing.JPopupMenu popTagFilter;

@@ -838,4 +838,8 @@ public interface ArchiveFileServiceRemote {
 
     HashMap<String,CaseFolderSettings> getCaseFolderSettings(List<String> folderIds) throws Exception;
 
+    void enableCaseSync(List<String> caseIds, String principalId, boolean enabled) throws Exception;
+
+    List<CaseSyncSettings> getCaseSyncs(String caseId);
+
 }
