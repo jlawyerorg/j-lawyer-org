@@ -1,3 +1,5 @@
+INSERT INTO mapping_tables VALUES ('GENDERN',1,'Begriff','Geschlecht','Fall');
+
 INSERT INTO mapping_entries (id, table_name, key1_value, key2_value, key3_value, mapping_value)   VALUES ('AngeklagtermännlichNominativ', 'GENDERN', 'Angeklagter', 'männlich', 'Nominativ', 'der Angeklagte');
 INSERT INTO mapping_entries (id, table_name, key1_value, key2_value, key3_value, mapping_value)   VALUES ('AngeklagtermännlichGenitiv', 'GENDERN', 'Angeklagter', 'männlich', 'Genitiv', 'des Angeklagten');
 INSERT INTO mapping_entries (id, table_name, key1_value, key2_value, key3_value, mapping_value)   VALUES ('AngeklagtermännlichDativ', 'GENDERN', 'Angeklagter', 'männlich', 'Dativ', 'dem Angeklagten');
