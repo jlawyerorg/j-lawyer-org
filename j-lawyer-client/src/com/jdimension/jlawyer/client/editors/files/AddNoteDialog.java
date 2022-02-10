@@ -679,6 +679,7 @@ import com.jdimension.jlawyer.services.ArchiveFileServiceRemote;
 import com.jdimension.jlawyer.services.CalendarServiceRemote;
 import com.jdimension.jlawyer.services.JLawyerServiceLocator;
 import com.jdimension.jlawyer.ui.folders.CaseFolderPanel;
+import java.awt.event.KeyEvent;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import javax.swing.DefaultComboBoxModel;
@@ -738,7 +739,6 @@ public class AddNoteDialog extends javax.swing.JDialog {
         for (int i = 0; i < reviewReasons.length; i++) {
             AppOptionGroupBean aogb = (AppOptionGroupBean) reviewReasons[i];
             reviewReasonItems[i + 1] = aogb.getValue();
-            //reviewReasonItems[i+1]=reviewReasons[i];
         }
         StringUtils.sortIgnoreCase(reviewReasonItems);
         OptionsComboBoxModel reviewReasonModel = new OptionsComboBoxModel(reviewReasonItems);
@@ -763,9 +763,8 @@ public class AddNoteDialog extends javax.swing.JDialog {
 
         DefaultComboBoxModel dm = new DefaultComboBoxModel();
         dm.addElement("");
-        ArrayList<String> allTags = new ArrayList<String>();
+        ArrayList<String> allTags = new ArrayList<>();
         for (AppOptionGroupBean tag : settings.getArchiveFileTagDtos()) {
-            //dm.addElement(tag.getValue());
             allTags.add(tag.getValue());
         }
         Collections.sort(allTags);
@@ -776,9 +775,8 @@ public class AddNoteDialog extends javax.swing.JDialog {
 
         DefaultComboBoxModel dm2 = new DefaultComboBoxModel();
         dm2.addElement("");
-        ArrayList<String> allTags2 = new ArrayList<String>();
+        ArrayList<String> allTags2 = new ArrayList<>();
         for (AppOptionGroupBean tag : settings.getDocumentTagDtos()) {
-            //dm.addElement(tag.getValue());
             allTags2.add(tag.getValue());
         }
         Collections.sort(allTags2);
@@ -792,21 +790,6 @@ public class AddNoteDialog extends javax.swing.JDialog {
 
         this.initializing = false;
 
-    }
-
-    private String getFileName(String templateName, Object client, Object opponent, Object other) {
-        String name = "";
-        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
-
-        String templateFileName = templateName;
-        if (templateFileName.lastIndexOf(".") >= 0) {
-            templateFileName = templateFileName.substring(0, templateFileName.lastIndexOf("."));
-        }
-        //name=templateFileName + "_" + df.format(new Date());
-        name = df.format(new Date()) + "_" + templateFileName;
-
-        name = FileUtils.sanitizeFileName(name);
-        return name;
     }
 
     /**
@@ -1092,19 +1075,6 @@ public class AddNoteDialog extends javax.swing.JDialog {
         this.dispose();
     }//GEN-LAST:event_cmdCancelActionPerformed
 
-    private boolean hasFileExtension(String s) {
-        if (s == null) {
-            return false;
-        }
-        s = s.toLowerCase();
-        for (String ext : LauncherFactory.LO_OFFICEFILETYPES) {
-            if (s.endsWith(ext.toLowerCase())) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     private void cmdAddDocumentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdAddDocumentActionPerformed
 
         if (this.txtFileName.getText() == null || "".equals(this.txtFileName.getText())) {
@@ -1119,7 +1089,34 @@ public class AddNoteDialog extends javax.swing.JDialog {
         }
 
         ClientSettings settings = ClientSettings.getInstance();
+        EditorsRegistry.getInstance().updateStatus("Erstelle Dokument...");
+        try {
+            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
+            ArchiveFileServiceRemote afs=locator.lookupArchiveFileServiceRemote();
+            ArchiveFileDocumentsBean db = afs.addDocument(this.aFile.getId(), FileUtils.sanitizeFileName(fileName), this.htmlEditorPanel1.getText().getBytes(), "");
+            this.targetTable.addDocument(db);
+            
+            if (this.chkCaseTagging.isSelected()) {
+                Object caseTag = this.cmbCaseTag.getSelectedItem();
+                if (caseTag != null && !"".equals(caseTag)) {
+                    afs.setTag(this.aFile.getId(), new ArchiveFileTagsBean(null, caseTag.toString()), true);
+                }
+            }
+            
+            if (this.chkDocumentTagging.isSelected()) {
+                Object docTag = this.cmbDocumentTag.getSelectedItem();
+                if (docTag != null && !"".equals(docTag)) {
+                    afs.setDocumentTag(db.getId(), new DocumentTagsBean(null, docTag.toString()), true);
+                }
+            }
 
+        } catch (Exception ex) {
+            log.error("Error adding note", ex);
+            JOptionPane.showMessageDialog(this, "Fehler beim Hinzufügen der Notiz: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
+            EditorsRegistry.getInstance().clearStatus();
+            return;
+        }
+        
         if (!(this.radioReviewTypeNone.isSelected())) {
             if (this.txtReviewDateField.getText().length() != 10) {
                 JOptionPane.showMessageDialog(this, "Wiedervorlagedatum ungültig", "Dokument erstellen", JOptionPane.INFORMATION_MESSAGE);
@@ -1135,9 +1132,9 @@ public class AddNoteDialog extends javax.swing.JDialog {
             }
 
             ArchiveFileReviewsBean reviewDto = new ArchiveFileReviewsBean();
-            reviewDto.setEventType(reviewDto.EVENTTYPE_FOLLOWUP);
+            reviewDto.setEventType(ArchiveFileReviewsBean.EVENTTYPE_FOLLOWUP);
             if (this.radioReviewTypeRespite.isSelected()) {
-                reviewDto.setEventType(reviewDto.EVENTTYPE_RESPITE);
+                reviewDto.setEventType(ArchiveFileReviewsBean.EVENTTYPE_RESPITE);
             }
             reviewDto.setDoneBoolean(false);
             reviewDto.setBeginDate(d);
@@ -1168,42 +1165,13 @@ public class AddNoteDialog extends javax.swing.JDialog {
 
         }
 
-        EditorsRegistry.getInstance().updateStatus("Erstelle Dokument...");
-        try {
-            //InitialContext context = new InitialContext(settings.getLookupProperties());
-            JLawyerServiceLocator locator = JLawyerServiceLocator.getInstance(settings.getLookupProperties());
-            ArchiveFileServiceRemote afs=locator.lookupArchiveFileServiceRemote();
-            ArchiveFileDocumentsBean db = afs.addDocument(this.aFile.getId(), FileUtils.sanitizeFileName(fileName), this.htmlEditorPanel1.getText().getBytes(), "");
-            this.targetTable.addDocument(db);
-            
-            if (this.chkCaseTagging.isSelected()) {
-                Object caseTag = this.cmbCaseTag.getSelectedItem();
-                if (caseTag != null && !"".equals(caseTag)) {
-                    afs.setTag(this.aFile.getId(), new ArchiveFileTagsBean(null, caseTag.toString()), true);
-                }
-            }
-            
-            if (this.chkDocumentTagging.isSelected()) {
-                Object docTag = this.cmbDocumentTag.getSelectedItem();
-                if (docTag != null && !"".equals(docTag)) {
-                    afs.setDocumentTag(db.getId(), new DocumentTagsBean(null, docTag.toString()), true);
-                }
-            }
-
-        } catch (Exception ex) {
-            log.error("Error adding note", ex);
-            JOptionPane.showMessageDialog(this, "Fehler beim Hinzufügen der Notiz: " + ex.getMessage(), com.jdimension.jlawyer.client.utils.DesktopUtils.POPUP_TITLE_ERROR, JOptionPane.ERROR_MESSAGE);
-            EditorsRegistry.getInstance().clearStatus();
-            return;
-        }
-
         EditorsRegistry.getInstance().clearStatus();
         this.setVisible(false);
         this.dispose();
     }//GEN-LAST:event_cmdAddDocumentActionPerformed
 
     private void txtFileNameKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtFileNameKeyPressed
-        if (evt.getKeyCode() == evt.VK_ENTER) {
+        if (evt.getKeyCode() == KeyEvent.VK_ENTER) {
             this.cmdAddDocumentActionPerformed(null);
         }
     }//GEN-LAST:event_txtFileNameKeyPressed
@@ -1211,7 +1179,6 @@ public class AddNoteDialog extends javax.swing.JDialog {
     private void cmdShowReviewSelectorActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdShowReviewSelectorActionPerformed
 
         MultiCalDialog dlg = new MultiCalDialog(this.txtReviewDateField, this, true);
-        //dlg.setLocation(this.getX() + this.cmdShowReviewSelector.getX(), this.getY() + this.cmdShowReviewSelector.getY());
         FrameUtils.centerDialog(dlg, EditorsRegistry.getInstance().getMainWindow());
         dlg.setVisible(true);
     }//GEN-LAST:event_cmdShowReviewSelectorActionPerformed
@@ -1262,11 +1229,8 @@ public class AddNoteDialog extends javax.swing.JDialog {
      * @param args the command line arguments
      */
     public static void main(String args[]) {
-        java.awt.EventQueue.invokeLater(new Runnable() {
-
-            public void run() {
-                new AddNoteDialog(new javax.swing.JFrame(), true, null, null, null).setVisible(true);
-            }
+        java.awt.EventQueue.invokeLater(() -> {
+            new AddNoteDialog(new javax.swing.JFrame(), true, null, null, null).setVisible(true);
         });
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
