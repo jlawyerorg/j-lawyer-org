@@ -2173,7 +2173,7 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
         }
         double megaBytes = (double) totalSize / 1024d / 1024d * 1.7d;
         DecimalFormat df = new DecimalFormat("0.0");
-        this.lblAttachmentSize.setText("Anlagen: " + this.tblAttachments.getRowCount() + " von max. 50 | " + df.format(megaBytes) + " MB von max. 60,0 MB");
+        this.lblAttachmentSize.setText("Anlagen: " + this.tblAttachments.getRowCount() + " von max. 200 | " + df.format(megaBytes) + " MB von max. 100,0 MB");
         if (megaBytes > 60 || this.tblAttachments.getRowCount() > 50) {
             this.lblAttachmentSize.setForeground(DefaultColorTheme.COLOR_LOGO_RED);
         } else {
