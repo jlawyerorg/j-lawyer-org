@@ -660,37 +660,109 @@ specific requirements.
 if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
-*/
-package org.jlawyer.io.rest.v1;
+ */
+package org.jlawyer.io.rest.v5;
 
-import org.jlawyer.io.rest.v2.CasesEndpointV2;
-import java.util.HashSet;
-import java.util.Set;
-import javax.ws.rs.ApplicationPath;
-import javax.ws.rs.core.Application;
-import org.jlawyer.io.rest.v2.ContactsEndpointV2;
-import org.jlawyer.io.rest.v3.CasesEndpointV3;
-import org.jlawyer.io.rest.v4.CalendarEndpointV4;
-import org.jlawyer.io.rest.v4.CasesEndpointV4;
-import org.jlawyer.io.rest.v5.CasesEndpointV5;
+import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.persistence.CaseSyncSettings;
+import com.jdimension.jlawyer.services.ArchiveFileServiceLocal;
+import java.util.ArrayList;
+import java.util.List;
+import javax.annotation.Resource;
+import javax.annotation.security.RolesAllowed;
+import javax.ejb.Stateless;
+import javax.naming.InitialContext;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import org.jboss.logging.Logger;
+import org.jlawyer.io.rest.v1.pojo.RestfulCaseOverviewV1;
+import org.jlawyer.io.rest.v5.pojo.RestfulCaseSyncSettingV5;
 
-@ApplicationPath("/rest")
-public class EndpointServiceLocator extends Application
-{
+/**
+ *
+ * http://localhost:8080/j-lawyer-io/rest/cases/list
+ */
+@Stateless
+@Path("/v5/cases")
+@Consumes({"application/json"})
+@Produces({"application/json"})
+public class CasesEndpointV5 implements CasesEndpointLocalV5 {
+
+    private static final Logger log = Logger.getLogger(CasesEndpointV5.class.getName());
+
+    // when seeing something like
+    //  com.fasterxml.jackson.databind.JsonMappingException: failed to lazily initialize a collection of role: com.jdimension.jlawyer.persistence.ArchiveFileBean.archiveFileFormsBeanList, could not initialize proxy - no Session
+    // it is not necessarily an issue with fetch type eager or lazy, just put @XmlTransient to the getter of the list in the entity
+    /**
+     * Returns IDs of all cases to be synced to the requesting users devices
+     * 
+     * @param principalId user name for whom syncable cases are requested
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
     @Override
-    public Set<Class<?>> getClasses()
-    {
-        Set<Class<?>> s = new HashSet<>();
-        s.add(SecurityEndpointV1.class);
-        s.add(CasesEndpointV1.class);
-        s.add(CasesEndpointV2.class);
-        s.add(CasesEndpointV3.class);
-        s.add(CasesEndpointV4.class);
-        s.add(ContactsEndpointV1.class);
-        s.add(ContactsEndpointV2.class);
-        s.add(FormsEndpointV1.class);
-        s.add(CalendarEndpointV4.class);
-        s.add(CasesEndpointV5.class);
-        return s;
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/list/synced/{principalId}")
+    @RolesAllowed({"readArchiveFileRole"})
+    public Response getSynced(@PathParam("principalId") String principalId) {
+        try {
+
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal");
+            List<CaseSyncSettings> syncs = cases.getCaseSyncsForUser(principalId);
+            ArrayList<RestfulCaseOverviewV1> rcoList = new ArrayList<>();
+            for (CaseSyncSettings s : syncs) {
+                ArchiveFileBean afb=s.getArchiveFileKey();
+                RestfulCaseOverviewV1 rco = new RestfulCaseOverviewV1();
+                rco.setId(afb.getId());
+                rco.setName(afb.getName());
+                rco.setFileNumber(afb.getFileNumber());
+                rcoList.add(rco);
+            }
+            Response res = Response.ok(rcoList).build();
+            return res;
+        } catch (Exception ex) {
+            log.error("Can not list syncable cases", ex);
+            Response res = Response.serverError().build();
+            return res;
+        }
     }
+
+    /**
+     * Enables or disables the synchronization of a given case for the requesting user.
+     *
+     * @param syncSettings tuple of case id, user name and a boolean flag that indicates whether or not to sync
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @PUT
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/syncsettings")
+    @RolesAllowed({"readArchiveFileRole"})
+    public Response enableCaseSync(RestfulCaseSyncSettingV5 syncSettings) {
+        try {
+
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal");
+            ArrayList<String> caseIds=new ArrayList<>();
+            caseIds.add(syncSettings.getCaseId());
+            cases.enableCaseSync(caseIds, syncSettings.getPrincipalId(), syncSettings.isSync());
+            Response res = Response.ok().build();
+            return res;
+        } catch (Exception ex) {
+            log.error("Can not update sync flag for case " + syncSettings.getCaseId(), ex);
+            Response res = Response.serverError().build();
+            return res;
+        }
+    }
+
 }

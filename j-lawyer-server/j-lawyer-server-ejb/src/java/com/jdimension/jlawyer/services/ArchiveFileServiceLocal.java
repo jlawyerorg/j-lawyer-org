@@ -670,6 +670,7 @@ import com.jdimension.jlawyer.persistence.ArchiveFileGroupsBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileHistoryBean;
 import com.jdimension.jlawyer.persistence.ArchiveFileTagsBean;
 import com.jdimension.jlawyer.persistence.CaseFolder;
+import com.jdimension.jlawyer.persistence.CaseSyncSettings;
 import com.jdimension.jlawyer.persistence.DocumentFolder;
 import com.jdimension.jlawyer.persistence.DocumentFolderTemplate;
 import com.jdimension.jlawyer.persistence.PartyTypeBean;
@@ -770,5 +771,11 @@ public interface ArchiveFileServiceLocal {
     DocumentFolderTemplate getFolderTemplateById(String id);
 
     void purgeDocumentBin() throws Exception;
+    
+    void enableCaseSync(List<String> caseIds, String principalId, boolean enabled) throws Exception;
+
+    List<CaseSyncSettings> getCaseSyncs(String caseId);
+
+    List<CaseSyncSettings> getCaseSyncsForUser(String principalId) throws Exception;
     
 }
