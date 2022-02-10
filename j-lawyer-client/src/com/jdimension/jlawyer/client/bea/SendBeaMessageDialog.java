@@ -723,7 +723,6 @@ import java.util.List;
 import java.util.TooManyListenersException;
 import javax.swing.*;
 import javax.swing.event.TableModelEvent;
-import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableModel;
 import org.apache.log4j.Logger;
 import org.jlawyer.bea.model.Attachment;
@@ -813,7 +812,6 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
         }
 
         this.lblFrom.setText(cu.getPrincipalId() + "<" + fromIdentity + ">");
-        //this.tp.setText(EmailUtils.Html2Text(cu.getEmailSignature()));
         this.tp.setText("");
         this.lstTo.setModel(new DefaultListModel());
 
@@ -859,7 +857,6 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
         for (int i = 0; i < reviewReasons.length; i++) {
             AppOptionGroupBean aogb = (AppOptionGroupBean) reviewReasons[i];
             reviewReasonItems[i + 1] = aogb.getValue();
-            //reviewReasonItems[i+1]=reviewReasons[i];
         }
         StringUtils.sortIgnoreCase(reviewReasonItems);
         OptionsComboBoxModel reviewReasonModel = new OptionsComboBoxModel(reviewReasonItems);
@@ -880,7 +877,6 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
         dm.addElement("");
         ArrayList<String> allTags = new ArrayList<>();
         for (AppOptionGroupBean tag : settings.getDocumentTagDtos()) {
-            //dm.addElement(tag.getValue());
             allTags.add(tag.getValue());
         }
         Collections.sort(allTags);
@@ -907,7 +903,6 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
 
         this.tblAttachments.getModel().addTableModelListener((TableModelEvent evt) -> {
             if (evt.getColumn() >= 0 && evt.getColumn() <= 3) {
-                //updateAlias(evt.getFirstRow());
                 if (evt.getColumn() == 0) {
                     // user clicked "Schriftsatz" --> disable as attachment
                     boolean schriftsatz = (Boolean) tblAttachments.getValueAt(evt.getFirstRow(), 0);
