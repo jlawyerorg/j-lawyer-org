@@ -185,5 +185,10 @@ class SmartTemplate {
         return SmartFunctions.zuordnen(table, key1);
     }
     
+    String DATUMZEIT(String format) {
+        java.text.SimpleDateFormat df=new java.text.SimpleDateFormat(format);
+        return df.format(new java.util.Date());
+    }
+    
 }
 
