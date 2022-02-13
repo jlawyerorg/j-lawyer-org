@@ -111,6 +111,10 @@ class SmartTemplate {
     }
     
     String FRIST(String fromDate, String addDays) {
+        return FRIST(fromDate, addDays, null);
+    }
+    
+    String FRIST(String fromDate, String addDays, String format) {
         if(fromDate==null || "".equals(fromDate))
             return "??.??.????";
         
@@ -123,7 +127,11 @@ class SmartTemplate {
                 cal.add(java.util.Calendar.YEAR, 2000);
             cal.add(java.util.Calendar.DAY_OF_MONTH, Integer.parseInt(addDays));
             testDate = cal.getTime();
-            return df.format(testDate);
+            if(format==null) {
+                return df.format(testDate);
+            } else {
+                return new java.text.SimpleDateFormat(format).format(testDate);
+            }
         } catch (Throwable t) {
             return "??.??.????"
         }
@@ -131,6 +139,10 @@ class SmartTemplate {
     }
     
     String FRISTBANKTAG(String fromDate, String addDays) {
+        return FRISTBANKTAG(fromDate, addDays, null);
+    }
+    
+    String FRISTBANKTAG(String fromDate, String addDays, String format) {
         if(fromDate==null || "".equals(fromDate))
             return "??.??.????";
         
@@ -146,7 +158,11 @@ class SmartTemplate {
                 cal.add(java.util.Calendar.DAY_OF_MONTH, 1);
             }
             testDate = cal.getTime();
-            return df.format(testDate);
+            if(format==null) {
+                return df.format(testDate);
+            } else {
+                return new java.text.SimpleDateFormat(format).format(testDate);
+            }
         } catch (Throwable t) {
             return "??.??.????"
         }
