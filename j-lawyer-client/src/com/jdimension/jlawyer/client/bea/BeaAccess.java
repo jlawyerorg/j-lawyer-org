@@ -879,6 +879,10 @@ public class BeaAccess {
     public static boolean isEgvpPostBoxByUserName(String userName) {
         return BeaWrapper.isEgvpPostBoxByUserName(userName);
     }
+    
+    public boolean isVhn2Active() {
+        return this.wrapper.isVhn2Active();
+    }
 
     public static boolean isBeaEnabled() {
         ServerSettings set = ServerSettings.getInstance();

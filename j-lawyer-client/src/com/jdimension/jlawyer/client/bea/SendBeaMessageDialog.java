@@ -789,6 +789,23 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
             // leave dropdown empty
             log.error(t);
         }
+        
+        try {
+            BeaAccess bea = BeaAccess.getInstance();
+            if(bea.isVhn2Active()) {
+                this.lblVhn2.setText("Hinweis: VHN2 aktiv!");
+                this.lblVhn2.setToolTipText("Betreff und Nachrichtentext werden ignoriert");
+                this.lblVhn2.setForeground(DefaultColorTheme.COLOR_LOGO_RED);
+            } else {
+                this.lblVhn2.setText("VHN2 inaktiv");
+                this.lblVhn2.setToolTipText("Versand mit Betreff und Nachrichtentext möglich");
+                this.lblVhn2.setForeground(DefaultColorTheme.COLOR_LOGO_GREEN);
+            }
+
+        } catch (Throwable t) {
+            // assume vhn2 is active
+            log.error(t);
+        }
 
         tp = new TextEditorPanel();
 
@@ -1172,6 +1189,7 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
         jSeparator3 = new javax.swing.JToolBar.Separator();
         cmdSaveDraft = new javax.swing.JButton();
         cmdAttachmentDown = new javax.swing.JButton();
+        lblVhn2 = new javax.swing.JLabel();
         jPanel3 = new javax.swing.JPanel();
         chkSaveAsDocument = new javax.swing.JCheckBox();
         cmbDocumentTag = new javax.swing.JComboBox<>();
@@ -1401,6 +1419,8 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
             }
         });
 
+        lblVhn2.setText(" ");
+
         javax.swing.GroupLayout jPanel5Layout = new javax.swing.GroupLayout(jPanel5);
         jPanel5.setLayout(jPanel5Layout);
         jPanel5Layout.setHorizontalGroup(
@@ -1422,7 +1442,8 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
                         .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                             .addComponent(contentPanel, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addGroup(jPanel5Layout.createSequentialGroup()
-                                .addGap(0, 0, Short.MAX_VALUE)
+                                .addComponent(lblVhn2)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                 .addComponent(lblAttachmentSize))
                             .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -1456,7 +1477,9 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
                         .addComponent(cmdAttachmentDown)
                         .addGap(0, 0, Short.MAX_VALUE)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(lblAttachmentSize)
+                .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(lblAttachmentSize)
+                    .addComponent(lblVhn2))
                 .addContainerGap())
         );
 
@@ -2553,6 +2576,7 @@ public class SendBeaMessageDialog extends javax.swing.JDialog implements SendCom
     private javax.swing.JToolBar jToolBar1;
     private javax.swing.JLabel lblAttachmentSize;
     private javax.swing.JLabel lblFrom;
+    private javax.swing.JLabel lblVhn2;
     private javax.swing.JList lstTo;
     private javax.swing.JMenuItem mnuRemoveAttachment;
     private javax.swing.JMenuItem mnuRemoveRecipient;
