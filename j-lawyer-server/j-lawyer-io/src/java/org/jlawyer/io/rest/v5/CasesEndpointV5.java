@@ -664,11 +664,11 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package org.jlawyer.io.rest.v5;
 
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import com.jdimension.jlawyer.persistence.ArchiveFileHistoryBean;
 import com.jdimension.jlawyer.persistence.CaseSyncSettings;
 import com.jdimension.jlawyer.services.ArchiveFileServiceLocal;
 import java.util.ArrayList;
 import java.util.List;
-import javax.annotation.Resource;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.Stateless;
 import javax.naming.InitialContext;
@@ -682,6 +682,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import org.jboss.logging.Logger;
 import org.jlawyer.io.rest.v1.pojo.RestfulCaseOverviewV1;
+import org.jlawyer.io.rest.v5.pojo.RestfulCaseHistoryV5;
 import org.jlawyer.io.rest.v5.pojo.RestfulCaseSyncSettingV5;
 
 /**
@@ -760,6 +761,53 @@ public class CasesEndpointV5 implements CasesEndpointLocalV5 {
             return res;
         } catch (Exception ex) {
             log.error("Can not update sync flag for case " + syncSettings.getCaseId(), ex);
+            Response res = Response.serverError().build();
+            return res;
+        }
+    }
+    
+    /**
+     * Returns all history entries for a given case
+     *
+     * @param id case ID
+     * @response 401 User not authorized
+     * @response 403 User not authenticated
+     */
+    @Override
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/{id}/history")
+    @RolesAllowed({"readArchiveFileRole"})
+    public Response getHistory(@PathParam("id") String id) {
+        //http://localhost:8080/j-lawyer-io/rest/cases/0c79112f7f000101327bf357f0b6010c/history
+        try {
+
+            InitialContext ic = new InitialContext();
+            ArchiveFileServiceLocal cases = (ArchiveFileServiceLocal) ic.lookup("java:global/j-lawyer-server/j-lawyer-server-ejb/ArchiveFileService!com.jdimension.jlawyer.services.ArchiveFileServiceLocal");
+            ArchiveFileBean currentCase = cases.getArchiveFile(id);
+            if (currentCase == null) {
+                log.error("case with id " + id + " does not exist");
+                Response res = Response.serverError().build();
+                return res;
+            }
+
+            ArchiveFileHistoryBean[] history = cases.getHistoryForArchiveFile(id);
+            ArrayList<RestfulCaseHistoryV5> ddList = new ArrayList<>();
+            for (ArchiveFileHistoryBean h : history) {
+                RestfulCaseHistoryV5 dd = new RestfulCaseHistoryV5();
+                dd.setId(h.getId());
+                dd.setChangeDate(h.getChangeDate());
+                dd.setChangeDescription(h.getChangeDescription());
+                dd.setPrincipalId(h.getPrincipal());
+                dd.setCaseId(id);
+                
+                ddList.add(dd);
+            }
+
+            Response res = Response.ok(ddList).build();
+            return res;
+        } catch (Exception ex) {
+            log.error("can not get case " + id, ex);
             Response res = Response.serverError().build();
             return res;
         }

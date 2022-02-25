@@ -664,6 +664,7 @@ For more information on this, and how to apply and follow the GNU AGPL, see
 package org.jlawyer.io.rest.v1.pojo;
 
 import com.jdimension.jlawyer.persistence.ArchiveFileBean;
+import java.util.Date;
 
 /**
  *
@@ -672,6 +673,8 @@ import com.jdimension.jlawyer.persistence.ArchiveFileBean;
 public class RestfulCaseV2 extends RestfulCaseV1 {
 
     private String group=null;
+    protected Date dateCreated=null;
+    protected Date dateUpdated=null;
 
     public RestfulCaseV2() {
     }
@@ -718,6 +721,34 @@ public class RestfulCaseV2 extends RestfulCaseV1 {
      */
     public void setGroup(String group) {
         this.group = group;
+    }
+
+    /**
+     * @return the dateCreated
+     */
+    public Date getDateCreated() {
+        return dateCreated;
+    }
+
+    /**
+     * @param dateCreated the dateCreated to set
+     */
+    public void setDateCreated(Date dateCreated) {
+        this.dateCreated = dateCreated;
+    }
+
+    /**
+     * @return the dateUpdated
+     */
+    public Date getDateUpdated() {
+        return dateUpdated;
+    }
+
+    /**
+     * @param dateUpdated the dateUpdated to set
+     */
+    public void setDateUpdated(Date dateUpdated) {
+        this.dateUpdated = dateUpdated;
     }
 
    

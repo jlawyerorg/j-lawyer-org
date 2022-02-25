@@ -661,24 +661,91 @@ if any, to sign a "copyright disclaimer" for the program, if necessary.
 For more information on this, and how to apply and follow the GNU AGPL, see
 <https://www.gnu.org/licenses/>.
  */
-package org.jlawyer.io.rest.v5;
+package org.jlawyer.io.rest.v5.pojo;
 
-import javax.ejb.Local;
-import javax.ws.rs.core.Response;
-import org.jlawyer.io.rest.v5.pojo.RestfulCaseSyncSettingV5;
+import java.util.Date;
 
 /**
  *
  * @author jens
  */
-@Local
-public interface CasesEndpointLocalV5 {
+public class RestfulCaseHistoryV5 {
+    
+    protected String caseId;
+    protected String principalId;
+    protected Date changeDate;
+    protected String changeDescription;
+    protected String id;
 
-    Response getSynced(String principalId);
-    
-    Response enableCaseSync(RestfulCaseSyncSettingV5 syncSettings);
-    
-    Response getHistory(String id);
+    /**
+     * @return the caseId
+     */
+    public String getCaseId() {
+        return caseId;
+    }
+
+    /**
+     * @param caseId the caseId to set
+     */
+    public void setCaseId(String caseId) {
+        this.caseId = caseId;
+    }
+
+    /**
+     * @return the principalId
+     */
+    public String getPrincipalId() {
+        return principalId;
+    }
+
+    /**
+     * @param principalId the principalId to set
+     */
+    public void setPrincipalId(String principalId) {
+        this.principalId = principalId;
+    }
+
+    /**
+     * @return the changeDate
+     */
+    public Date getChangeDate() {
+        return changeDate;
+    }
+
+    /**
+     * @param changeDate the changeDate to set
+     */
+    public void setChangeDate(Date changeDate) {
+        this.changeDate = changeDate;
+    }
+
+    /**
+     * @return the changeDescription
+     */
+    public String getChangeDescription() {
+        return changeDescription;
+    }
+
+    /**
+     * @param changeDescription the changeDescription to set
+     */
+    public void setChangeDescription(String changeDescription) {
+        this.changeDescription = changeDescription;
+    }
+
+    /**
+     * @return the id
+     */
+    public String getId() {
+        return id;
+    }
+
+    /**
+     * @param id the id to set
+     */
+    public void setId(String id) {
+        this.id = id;
+    }
     
     
 }
